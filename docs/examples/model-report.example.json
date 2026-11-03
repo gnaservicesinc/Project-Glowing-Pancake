@@ -1,0 +1,35 @@
+{
+  "example_only": true,
+  "format_version": 1,
+  "id": "model.papercraft.v1",
+  "display_name": "Papercraft v1",
+  "intended_use": "Document classification for the contracted customer scope",
+  "architecture_family": "recipe.early_document_specialist",
+  "capability_estimates_basis_points": {
+    "language": 2800,
+    "perception": 2200,
+    "coding_reasoning": 400,
+    "science_industry": 1200,
+    "social_interaction": 300,
+    "autonomous_execution": 0
+  },
+  "evaluation": {
+    "contracted_document_task_fit_basis_points": 9000,
+    "reliability_basis_points": 8700,
+    "coverage_basis_points": 6500,
+    "confidence_basis_points": 7000,
+    "held_out_customer_tasks": 500,
+    "contamination_check_complete": true,
+    "limitations": [
+      "Evidence is strongest for the contracted document categories.",
+      "Handwriting and new categories require a separate evaluation."
+    ]
+  },
+  "deployment": {
+    "human_review_for_uncertain_results": true,
+    "external_tool_permissions": [],
+    "staged_rollout_basis_points": 1000,
+    "rollback_version_available": true
+  },
+  "report_note": "Scores and categories are fictional game abstractions, not real benchmarks or scientific AGI claims."
+}

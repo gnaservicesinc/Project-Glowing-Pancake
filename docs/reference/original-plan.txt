@@ -1,0 +1,119 @@
+A game about creating an AI startup. 
+
+Premise:
+	You are the founder and CEO of a new AI startup. The game is meant to not just teach some stuff about actual AI development (slipping in some education), choices and their outcomes (ethics), economics, resource management, business management, political, world sim, etc., to explore complex concepts in AI and the future without being preachy (It's a game, not a lecture).
+
+Inspiration:
+	I really like Plutocracy (as a general interface; I dislike some of the specifics like the whole card game/agent aspect—it’s too inelastic—but it does provide an example of a clean interface for managing business, locations in different states, negotiations, political system simulation, etc.). I don't want a copy of it or its gameplay; it’s just an example of how to do the UI and approach various systems and requiring the player to manage business across states and plan locations and builds at least to a state level; we could take it further to the county level.) Also, this game is going to be about exploring AI, ethics, and potential outcomes and should be complex enough to allow for creative outcomes and creative ways of approaching the task of AI development in ways we may not have intended (within the scope of the game, so it’s a bounded open end)
+
+
+
+
+The game starts in 2014 with playable gameplay meant to last up to 2114 (100 years) or unlimited in sandbox mode.
+
+The default game will have N domestic AI companies, with some forming at the start and others later; N international AI companies, some forming at the start and others later; and N industry heavyweights (fictional versions of companies like Google) who initially will be plodding along on a much slower AI trajectory but will go "code red" if you become too popular too fast and then throw all of their resources into AI. The game will take place in a simulated world with a more detailed and in-depth simulation for national politics, economy, etc., and a more simple one that is country-based for the world as well as some international body. The game should allow the user to develop the AI in unique ways and make choices about what tech to research, what research to use, what kinds of data to use in the training data and how to get it, choices about guardrails, where to specialize/improve abilities (prior to AGI), how to present it to lawmakers, the public, academics, etc., how to test it, how to distribute it (API B2b, a consumer app, agentic apps, etc.), development trees for the software and features, pricing, computers, data servers, hardware and purchasing, electricity usage and costs, disasters (fires, earthquakes, tornadoes, blizaard etc (region appropriate]). 
+
+When starting the game, you can set the victory conditions. 
+	They can be:
+		- World Monopoly (To win, you must become the global AI monopoly by 2114).
+		- World Domination (To win, you control the world through either soft or hard power by 2114.)
+		- World Utopia (To win, the world must end with global utopia)
+		- Profit (To win, you must end with the most money even if you’re not the most used)
+		- ASI Race (to win, you must be the first company to achieve ASI, you do not have to be the first to AGI)
+		- Simple Survival (To win, your company needs to simply still exist at the end of the 100 years. A good first play goal_
+
+License: GlPv3 / free
+
+Interface:
+	First-person click with different sets similar to the interface for Plutocracy. Locations such as the map, your office, the ML lab, HR, finance, Congress, banks, venture capital firms, meeting rooms, travel from state to state, and a physical location for the MC, etc. 
+
+
+Systems:
+	- Politics with a simulated political system influenced by world events and AI's impact and public sentiment. Both a "national" political system that is very detailed and a more simple global one with major powers like China, the EU etc.  
+	- ML design lab where design choices can be made, dataset choices, safety choices, etc.  
+	- HR system for managing, hiring, prompting, retaining employees, etc.
+	- Advertising system for choosing your message and spending your ad dollars.  
+	- Research system for developing AI technology with a complex, nonlinear system, research sharing (deciding what to keep as internal IP and what to publish for the greater good; publishing increases prestige, the ability to attract top talent, and public opinion/sentiment) 
+
+	- A system for interacting with and managing major employees like head of safety, head of model development, etc.; mismanagement can cause a board revolt or top talent to walk. For example, not prioritizing safety might get your head of safety to quit or even go on naitonal tv to call you out.
+
+	- A system for handling media events and appearances. 
+	- A system for curating and creating your public persona: are you known as a tb, a pragmatist, a radical, an open-source hero, etc.?
+	- A system for managing, choosing, customizing, and acquiring AI hardware with tech based on real-world equivalents for the years up to 2026 and reasonable future tech after, influenced by tech development.
+
+
+Distribution: 
+	1. Primary:
+		-itch.io should be either playable in the browser or available for download for Mac (Apple silicon-Arm64) (not notarized but this is common for the platform), Linux (arm64 and amd64), and Windows (arm64 and amd64).
+	2. Secondary (Linux only):
+		-snapcraft.io for Linux (arm64 and amd64) unless it ends up being browser-only, although this could be packaged to work like an app and load locally—eerie—or use a microHTTP server. (Snapcraft distribution will come once primary is done and will be done in a Ubuntu environment, so this requirement will initially be on hold.)
+
+Build:
+	-If QT is used building shuold be done with workflows in github and not locally to avoid large filesystem usage. Release builds should include copies of the relvent QT libaries and any oter libaries packaged into the app (on a mac), applicaiton linux / windows to make the portable and not dependent on a local QT install or local paths.
+	-If gamemaker is used it will have to be html5 output (consult the manual as this impacts some functions and the behavior of others) as gamemker for mac can't compile for windows etc unless github has workflow for it and it may be tricky to intergrate with snapcraft 
+	-if renpy is used it pakges it eaisly for all three disbution  platforms but it may be tricky to intergrate with snapcraft 
+	-if other is used, consider how it will be built/ pacakges for windows, mac, and linux.
+
+
+Accelration:
+	-The mac version should use metal to accelrate rending whenere possible and opengl for linux/windows. 
+
+
+When possible avoid generating an image and instead look for 
+ or other assets that 
+Choices that need to be made:
+	1. Programming language/tools:
+		-A few options are provided, QT is installed in /opt/Qt (curreent mac qt installed locally in the home path /opt/Qt/6.12.0/macos) and then workflows in GitHub can be used.
+		- Another option is "GameMaker" found in "/Applications/GameMaker LTS 2026.app" and if needed, a starter project can be created to get it set up for you.
+		- Another option is “Renpy,"  found in “ /Applications/renpy-sdk/renpy.app, " and if needed, a starter project could be created to get it set up.
+		- Another option is to do something else entirely.
+
+	2. Build system:
+		-Set it up to work with meson / ninja or make / cmake  and/ or autotools. Include a make.sh script that when run will just call the relevant tools (autoconfig / a bootstrap script / meson setup, etc., for the system we used) to create a fully optimized release build. 
+Notes for the agents file:
+
+Work Area: Keep the work area to:
+
+	- “/opt/AI Startup”
+
+	- Cleanup test files, temp files, etc., when finished running to avoid using up a lot of disk space. 
+
+	- Anything that should be saved should be put in the git repo under "/opt/AI Startup/Project-Glowing-Pancake.“
+
+	- Be sure to always add (if needed), commit, and push changes. Work not pushed may be deleted at random (this will not happen while a coding agent is actively working 	in the repo but may happen between agent runs if disk space is low and then restored before the next run)
+	- Update the .gitignore to reflect the needs of the project and exclude any build directories so we don't accidentally upload a few huned mb of test builds. 
+Repository:
+	Git Repo:
+
+
+		- git@github.com:gnaservicesinc/Project-Glowing-Pancake.git
+
+	Web:
+
+		- https://github.com/gnaservicesinc/Project-Glowing-Pancake
+
+	Local clone of git repo:
+
+		- /opt/AI Startup/Project-Glowing-Pancake
+
+
+
+Safety:
+	Safety 1. Avoid Bad Content
+		- While we do want to explore ethics and the outcome of those choices, certain things are just not okay even in a game; anything that would be unlawful or violate itch.io TOS must never appear in the game.
+		- Keep any violence fleeting and non-descriptive (if your AI launches nukes, you get a popup and a game over, not some traumatic narrative; it’s a game). 
+		- Avoid any direct or overt reference to porogngramic content. The closest one could get is to specialize their AI for romantic user engagement and related focuses such as deep personality/humor and to allow "lawful adult content for verified adult users" as a company policy choice for the product, but no adult content or overly suggestive or sexualized text or images may appear in the game directly, and any indirect illusions to it should be fleeting, humorous, and non-descriptive. 
+		- Avoid overly descriptive or romanticized/glamorized drug references; keep them fleeting and non-descriptive.
+		- Absolutely no gruesome or obscene content or hate speech of any kind.
+
+	Safety 2. User Privacy:
+		-The game should not send any information about the user to anyone else except as needed to function and should not store user data after the session except as packaged in an external save file to be kept locally on the user’s computer; no telemetry or other data should be collected, stored, or transmitted when the published / release version is used. (Any debugging code should be stripped by preprocessor statements or similar means in the release version, and when the build is run (make build or equivalent), a fully optimized release build should be the default build (to make it friendly for users who just download the repo and make it). Developers should have to pass a --debugging flag, etc. )
+
+	Safety 3. Avoiding Possible Legal Pitfalls:
+		-Avoid including video/image assets using codecs that may have patente concerns  such as HEIC due to patent encumbered HEVC (H.265) usem and newer formats like JPEG XS and JPEG XL due to involve active patent licensing pools or claims. For images use .png (or .jpg for larger images / when they don ot need to be pixle perfect) as png is entirely royalty-freee and avoid patent infenfment and .jpg as jpg is now patent-free and lacks royalty or licensing requirements, and for video use thr MPEG-4 Visual video standard as it became completely patent-free worldwide following the expiration of its final active patent.
+		-Do not include copyrighting images, text, video, or audio unless it is in the public domain, GPLv3 or equlivent licence, or was created for the projct (not downlaoded) 
+		-When generating images be sure to incude metadata in the image indicading that it was AI gentated and any info that might be useful such as what the image is for in the game etc.
+		-Avoid generating music and instead we will choose some tracks from https://ende.app/en/search and we will need to incude a credits screen that credits the songs, we should have a few in a simmilar vibe to set a conssient mood we a few for special events.
+
+
+

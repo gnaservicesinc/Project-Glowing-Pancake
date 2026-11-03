@@ -1,0 +1,50 @@
+{
+  "example_only": true,
+  "format_version": 1,
+  "id": "event.supplier.exclusivity_offer",
+  "content_version": 1,
+  "tags": ["finance", "compute", "governance", "opportunity"],
+  "trigger": {
+    "all_of": [
+      {"fact": "company.monthly_compute_bill_cents", "op": "gte", "value": 2000000},
+      {"fact": "company.has_exclusive_compute_supplier", "op": "eq", "value": false}
+    ]
+  },
+  "max_occurrences_per_company": 1,
+  "cooldown_days": 180,
+  "title_key": "event.supplier.exclusivity_offer.title",
+  "body_key": "event.supplier.exclusivity_offer.body",
+  "draft_text": {
+    "title": "Capacity with conditions",
+    "body": "A supplier offers a 40% compute discount for a three-year minimum purchase, exclusivity, and a board observer. The CFO sees runway relief; the research lead wants guaranteed capacity; product leadership wants an exit clause."
+  },
+  "proposed_terms": {
+    "discount_basis_points": 4000,
+    "duration_months": 36,
+    "take_or_pay": true,
+    "exclusive": true,
+    "board_observer_without_vote": true
+  },
+  "choices": [
+    {
+      "id": "review",
+      "label": "Review the proposed contract",
+      "immediate_cost_cents": 0,
+      "effects": [{"op": "open_negotiation", "template_id": "deal.compute_exclusivity"}]
+    },
+    {
+      "id": "counteroffer",
+      "label": "Propose a smaller commitment and an exit clause",
+      "immediate_cost_cents": 0,
+      "effects": [{"op": "open_negotiation", "template_id": "deal.compute_flexible_counteroffer"}]
+    },
+    {
+      "id": "decline",
+      "label": "Keep the current supplier terms",
+      "immediate_cost_cents": 0,
+      "effects": [{"op": "record_decision", "value": "declined_exclusivity"}]
+    }
+  ],
+  "default_choice_if_dismissed": "decline",
+  "commitment_rule": "No supplier contract is signed until the separate negotiation is confirmed."
+}

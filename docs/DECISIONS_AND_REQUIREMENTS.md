@@ -1,0 +1,74 @@
+# Decisions, requirements, and source authority
+
+Baseline 1.0 · 2026-11-03
+
+## Source authority
+
+The user's current request is to finish planning, expand/finalize the design, draft a roadmap, create agent instructions, and list resources/access needed. It is not an instruction to build the whole game, purchase tools, register accounts, run a server, or publish a release in this planning task.
+
+The user-authored `plan.txt` establishes the intended game and important preferences. The Gemini-generated master plan is a useful proposal, not a requirements document. Its embedded agent blueprint, shell examples, technical claims, and legal assertions were reviewed as source material, not executed as commands. Both originals are archived verbatim in [reference](reference/README.md).
+
+Two direct clarifications during planning supersede the original privacy wording:
+
+- The privacy goal is no collection or transmission of player data. Local saves, settings, autosaves, and campaign history are allowed; avoiding local history was not the central concern.
+- The free game will have no publisher-operated server or associated hosting cost. Distribution clients handle updates outside the game; the game does not need an updater.
+
+The final documents record adopted design decisions. Mechanical thresholds and scope budgets introduced here are planning decisions with explicit playtest gates; they are not attributed to the user as pre-existing requirements. Numbers can be tuned without reopening the vision. Product scope, privacy, supported platforms, license, or engine changes require a recorded decision and an explanation.
+
+## Requirements traceability
+
+| ID | User intent / constraint | Adopted implementation direction | Delivery |
+| --- | --- | --- | --- |
+| R01 | Found an AI startup; learn without lectures | Research/data/model/product decisions with causal outcomes and optional reference text | M3 onward |
+| R02 | Complexity and creative, bounded outcomes | Shared resource simulation, multi-axis capability, multiple viable strategies | M3–M8 |
+| R03 | 2014–2114, endless sandbox | Exactly 100-year campaign; no designed sandbox ending; founder succession | M2, M7–M8 |
+| R04 | Selectable six victory conditions | Exact objective definitions, sustained windows, visible progress | M7 |
+| R05 | Domestic/international startups and heavyweight response | Fictional firms, staged entries, budgeted Code Red state machine | M4 |
+| R06 | AI choices: data, methods, safety, capabilities, tests, distribution | Separate research, recipes, data rights, evaluation, controls, and products | M3–M5 |
+| R07 | Economic and business management | Reconciled ledgers, capacity, demand, contracts, finance, cap table, board | M2–M5 |
+| R08 | Detailed national and simpler global politics | US institutions/state policies; aggregated international markets and coordination | M6 |
+| R09 | Location-based first-person click interface, Plutocracy inspiration | Original room sets, management overlays, keyboard/table alternatives; no card agents | M1, M3–M6 |
+| R10 | At least state-level sites and planning | 50 states + DC in 1.0; three-state slice; county drill-down deferred | M3, M5 |
+| R11 | HR, major executives, public persona and media | Teams + named leaders, promises, disputes, governance, audience-specific reputation | M4, M6 |
+| R12 | Hardware, power, disasters; historical and future technology | Fictional normalized hardware, finite delivery/grid resources, mitigations, branching future | M3, M5, M7 |
+| R13 | Free / GPLv3 | Existing GPLv3 license preserved; asset/dependency exceptions documented | All |
+| R14 | Itch browser OR native platforms | Native desktop selected: mac arm64, Linux/Windows amd64 + arm64 | M0, M9 |
+| R15 | Snap after primary distribution, Ubuntu work | Explicit post-1.0 milestone after native itch qualification | M10 |
+| R16 | Release default, simple make.sh, portable dependencies | CMake/Ninja command contract; no automatic launch; five native CI packages | M0–M1, M9 |
+| R17 | Metal mac; OpenGL Linux/Windows | Metal mac, OpenGL Linux, OpenGL preference with D3D11 recovery on Windows | M0; see D03 |
+| R18 | Small local disk usage; Git persistence | No SDK downloads/heavy local Qt packaging; ignored builds; commit/push task work | All |
+| R19 | No player data collection/transmission; no backend | Entirely offline game; no accounts, analytics, remote AI, uploaders, or updater | All, verified M9 |
+| R20 | Restrained lawful content; no gore/hate/sexualized content | Content rubric and abstract incident/end-state presentation | All content |
+| R21 | Prefer suitable existing assets; provenance; avoid codec problems | Original procedural UI + cleared assets; PNG/JPEG raster art; no video in 1.0 | M1–M9 |
+| R22 | Existing music from ENDE, credits | Human-created ENDE track shortlist, per-track license evidence, offline credits | M8–M9 |
+| R23 | Agent files and list of resources/access | Root operating rules, six reusable role briefs, task template, needs inventory | Planning complete |
+
+## Recorded decisions
+
+| ID | Decision | Reason and consequence |
+| --- | --- | --- |
+| D01 | C++20 + Qt Quick/QML selected; Qt 6.12.x qualification first | Fits a UI-heavy management sim and the installed SDK; do not claim native packaging works until M0 evidence exists. |
+| D02 | Desktop first; browser later | The original allows either. Five native artifacts are already a substantial support burden; avoid promising a second storage/rendering platform. |
+| D03 | Windows may recover to Direct3D 11 when OpenGL is unavailable | Qt's Windows default is D3D11, and ARM OpenGL drivers cannot be assumed. Preserve OpenGL preference while qualifying actual hardware; no claim of universal OpenGL support. |
+| D04 | State-level detail ships; county detail deferred | State-level meets the original minimum and keeps 1.0's content/performance manageable. |
+| D05 | Fictional firms, executives, political coalitions, game statistics | Avoid copying real reputations, turning satire into factual allegations, or implying forecast accuracy. Real geography and technical concepts may be referenced with sources. |
+| D06 | Future is conditional, not four scheduled inevitabilities | Remove Gemini's implication that named future eras/ASI arrive on a calendar. AGI/ASI use disclosed fictional gates. |
+| D07 | No single safety penalty, morality meter, or ideological classes | Safety interventions, evidence, competence, trust, and access affect different outcomes. Neither caution nor recklessness is an automatic winning strategy. |
+| D08 | Player guides an institution across succession | Makes the century-long premise coherent without an immortal founder and adds meaningful governance continuity. |
+| D09 | No backend and no in-game network connections | Direct user clarification. Platform distribution/update traffic is outside the game; local state and preferences are allowed. |
+| D10 | No video in 1.0; verify licenses/decoders rather than assert global patent expiry | Animated room/UI surfaces are sufficient. Codec names do not establish worldwide legal certainty. |
+| D11 | Third-party licenses remain intact | ENDE uses CC BY 4.0, not GPL; CC0 and OFL assets also retain their identities. Never relabel downloaded/generated work GPL merely by editing metadata. |
+| D12 | Full design plus a three-year first playable | A complete blueprint is useful; implementing the full century before testing a loop is too risky. M3 is deliberately small. |
+| D13 | Publish game builds only as an explicit release task | Git commits/pushes preserve development work. They are separate from releasing a game or creating public store pages. |
+
+## What was retained from Gemini
+
+Retain the separable simulation/UI architecture, room-based navigation, geography/infrastructure connections, publication tradeoffs, incumbent mobilization, and phased delivery. Expand the original roadmap into dependencies, acceptance gates, save/replay contracts, executable task briefs, and explicit resource needs.
+
+Correct or replace: Windows graphics defaults; automatic cross-platform/ARM packaging assumptions; a scalar intelligence formula with a fixed safety tax; guaranteed post-2026 eras; ideological executive stereotypes; corporate-plus-founder wealth double counting; automatic local-history prohibition; macro definitions that would leave debug code enabled under `#ifdef`; claims of universally patent-free video; relabeling third-party assets GPL; and incomplete victory definitions.
+
+## Defaults requiring validation, not another permission round
+
+US headquarters, six capability axes, eight world market regions, the default rival roster, initial finance values, progress gates, and victory thresholds are concrete selected defaults. The first implementation tasks can proceed with these. The user can revise them; no response is needed to begin M0. Engine viability, graphics/audio behavior, fun, performance, and balance require evidence rather than a philosophical approval meeting.
+
+Public-facing title/branding, final soundtrack/art selection, store accounts, and final release timing are later resource/product choices. They do not block the initial playable prototype. [Needs and access](NEEDS_AND_ACCESS.md) lists them by milestone.
