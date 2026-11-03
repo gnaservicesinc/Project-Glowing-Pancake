@@ -5,5 +5,9 @@ These JSON files are valid, hand-auditable design examples, **not production gam
 - [Slice balance](slice-balance.example.json): opening units, recurring commitments and a training/contract example.
 - [Supplier event](supplier-event.example.json): restricted trigger/effect vocabulary and a concrete negotiation opportunity.
 - [Model report](model-report.example.json): capability estimates, separate reliability/control evidence, and limitations.
+- [Flow lifecycles](flow-lifecycles.example.json): news/hidden graphs using all five activation modes, including an owned continuous modifier.
+- [Trigger impact](trigger-impact.example.json): threshold boundaries, price direction/target expectations, and deliberately wrong negative controls.
 
 Dates/names/statistics are fictional game data. No external resources or executable expressions are loaded by these examples. Per-field units are named explicitly. JSON numeric integers represent stored units, not dollars or percentages unless the field says so.
+
+Expected assertions describe future tests; they are not evaluated scripts or passing runtime evidence. Gallery operations/facts and deal references remain illustrative until registered. The root `project-versions.json` is separate initialized project metadata; the five files here remain example-only.

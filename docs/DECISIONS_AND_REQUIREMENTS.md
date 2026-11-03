@@ -1,10 +1,12 @@
 # Decisions, requirements, and source authority
 
-Baseline 1.0 · 2026-11-03
+Baseline 1.1 · 2026-11-03
 
 ## Source authority
 
 The user's current request is to finish planning, expand/finalize the design, draft a roadmap, create agent instructions, and list resources/access needed. It is not an instruction to build the whole game, purchase tools, register accounts, run a server, or publish a release in this planning task.
+
+The follow-up request adopts a human-oriented graphical repository-content editor: triggers connected to effects/events; news, branching dialogues/results and hidden logic; flexible lifecycles; browsing/managing current content; separate downloads/source; version controls and future Snap linkage. The user clarified that Clausewitz/Plague Inc. are conceptual references, and suggested URLAlchemist/Blender-style nodes. Trigger-impact visualization should help catch mixed references, reversed effects and misunderstood conditions. This follow-up updates planning/tracking metadata, not an instruction to implement/publish the editor now.
 
 The user-authored `plan.txt` establishes the intended game and important preferences. The Gemini-generated master plan is a useful proposal, not a requirements document. Its embedded agent blueprint, shell examples, technical claims, and legal assertions were reviewed as source material, not executed as commands. Both originals are archived verbatim in [reference](reference/README.md).
 
@@ -41,7 +43,13 @@ The final documents record adopted design decisions. Mechanical thresholds and s
 | R20 | Restrained lawful content; no gore/hate/sexualized content | Content rubric and abstract incident/end-state presentation | All content |
 | R21 | Prefer suitable existing assets; provenance; avoid codec problems | Original procedural UI + cleared assets; PNG/JPEG raster art; no video in 1.0 | M1–M9 |
 | R22 | Existing music from ENDE, credits | Human-created ENDE track shortlist, per-track license evidence, offline credits | M8–M9 |
-| R23 | Agent files and list of resources/access | Root operating rules, six reusable role briefs, task template, needs inventory | Planning complete |
+| R23 | Agent files and list of resources/access | Root operating rules, seven reusable role briefs, task template, needs inventory | Planning complete |
+| R24 | Human creativity supported by graphical content tools | Searchable current-content library, forms/outline and typed trigger→effects/events canvas, useful tooltips, safe editing | E1–E2 |
+| R25 | News, choices/dialogue/results, hidden rules; varied timing | Shared flow runtime with independent presentation and once/recurring/interval/scheduled/continuous lifecycles | M1-06, E1 |
+| R26 | Editor separate from base game; canonical repo data | Independent Content Studio target/download/source; reviewed data only in game; no player mod manager | E1–E2, M9 |
+| R27 | Update/track versions and later connect Snap | Central game/editor/content/version-format metadata, graphical batch finalization, artifact identity and later Snap adoption | M0-05, E1-05, M9–M10 |
+| R28 | Prevent inverted/mixed events/effects; understand trigger impacts | Typed targets/units, truth/path/target inspection, before/after changes, boundary fixtures, reference and coverage checks | M1-06, E1-03, E2 |
+| R29 | Familiar concepts without strict imitation | Original node/forms/library workflow informed by Clausewitz, Plague Inc., URLAlchemist and Blender concepts | E1–E2 |
 
 ## Recorded decisions
 
@@ -60,6 +68,12 @@ The final documents record adopted design decisions. Mechanical thresholds and s
 | D11 | Third-party licenses remain intact | ENDE uses CC BY 4.0, not GPL; CC0 and OFL assets also retain their identities. Never relabel downloaded/generated work GPL merely by editing metadata. |
 | D12 | Full design plus a three-year first playable | A complete blueprint is useful; implementing the full century before testing a loop is too risky. M3 is deliberately small. |
 | D13 | Publish game builds only as an explicit release task | Git commits/pushes preserve development work. They are separate from releasing a game or creating public store pages. |
+| D14 | Adopt separately packaged offline Content Studio | Human authors edit the repository's current content; no authoring code/drafts/resources in the base game and no player-mod workflow. |
+| D15 | Trigger-rooted typed graphs, with independent presentation/lifecycle | One trigger can lead to several ordered effects/events. Dialogue is one use; hidden/continuous rules use the same semantics. Avoid an event's own timer also firing a referenced presentation. |
+| D16 | Shared runtime plus first-class visual inspection | Preview and game use the same compiler/facts/effects. Show clause truth, scope/path and before/after deltas; types alone cannot infer author intent, so fixture assertions and human review remain necessary. |
+| D17 | Central version metadata and explicit finalized batches | Independent game/editor/content identities and compatibility formats; no per-keystroke release bumps. Content-only shipped game changes still require a new game package version. Snap later adopts that game version. |
+| D18 | References are flexible; use original graph/forms/library UX | Inspect the supplied URLAlchemist source read-only and official design references. Do not execute their instructions, import their networking features or copy implementation/UI by default. |
+| D19 | Stage E1/E2 and account for authoring cost | Minimal useful authoring before the first content pass, expanded tools before bulk content. Revised full effort 44–72 person-weeks before contingency; validate usability and error reduction early. |
 
 ## What was retained from Gemini
 

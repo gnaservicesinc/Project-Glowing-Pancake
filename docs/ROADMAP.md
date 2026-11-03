@@ -1,14 +1,16 @@
 # Development roadmap
 
-Baseline 1.0 · 2026-11-03 · Gate-driven plan, not a promised calendar
+Baseline 1.1 · 2026-11-03 · Gate-driven plan, not a promised calendar
 
 ## Delivery strategy
 
-Prove distribution first, prove one satisfying business loop second, then expand systems and the century. The full design is the 1.0 destination. It is not the first coding assignment.
+Prove distribution/version identity first, establish the shared content runtime and a small usable authoring Studio, then prove one satisfying business loop and expand systems/the century. The full design is the 1.0 destination. It is not the first coding assignment.
 
 **First playable:** a 2014–2017 specialist-company scenario with a complete tutorial, research/data/training/evaluation loop, contracts, cash pressure, two rivals, a lightweight incumbent warning, save/load, a recoverable setback, and a scored ending. Three states, one product channel, six research nodes, four data offers, eight authored events, Office/Lab plus management panels. All art may be original procedural placeholders with valid provenance. No full Congress, global domination, owned power plants, or century of content is required for this milestone.
 
 **Full 1.0:** 2014–2114 and endless sandbox; all six objective families; 51 domestic jurisdictions; eight international market regions; all core systems in the design; qualified macOS arm64, Linux amd64/arm64, Windows amd64/arm64 native packages; entirely offline play. Snap is a separate post-primary-release milestone. Browser export and counties are future options, not hidden 1.0 dependencies.
+
+**Separate authoring product:** [Content Studio](CONTENT_EDITOR.md), downloadable independently with source in this repository. E1 delivers repository browsing, typed trigger/effect/event graphs, all lifecycle templates, dialogue/results, inspection/test tools and versioned content finalization for the slice. E2 expands scenario/world/research/catalog/asset tools and qualifies five editor artifacts before bulk content work. Editor binaries/drafts/layouts never enter the base game. [Version tracking](VERSIONING.md) starts with one metadata record and later feeds Snap packaging.
 
 ## Milestones and acceptance gates
 
@@ -16,31 +18,36 @@ Effort ranges are initial planning estimates for one experienced full-time maint
 
 | Milestone | Effort | Dependency | Deliverable and gate |
 | --- | --- | --- | --- |
-| M0 — Toolchain and platform proof | 1–2 person-weeks | Planning baseline | Minimal headless target and QML window; Release-default wrapper; five native CI compile/package probes; local-resource/audio test; dependency/license inventory. Record graphics/device gaps honestly. No large local SDK downloads. |
-| M1 — Foundation | 2–3 | M0 | Deterministic units/time/PRNG; validated content; transactional commands and snapshots; local save/autosave/preferences; accessible room shell; repeatable tests. A save resumes the same next-day state hash. |
+| M0 — Toolchain and platform proof | 1–2 person-weeks | Planning baseline | Minimal headless target and QML window; Release-default wrapper; shared version reader/CI checks; five native CI compile/package probes; local-resource/audio test; dependency/license inventory. Record graphics/device gaps honestly. No large local SDK downloads. |
+| M1 — Foundation | 3–5 | M0 | Deterministic units/time/PRNG; typed content/fact/effect registry and bounded flow compiler/runtime; transactional commands/snapshots; local save/autosave/preferences including flow state; accessible room shell; repeatable tests and inspection traces. A save resumes the same next-day state hash. |
 | M2 — Headless business loop | 3–5 | M1 | Balanced accounts, finite capacity, contractual demand, cash flows, forecasts, warning/workout path, and a three-year scenario runner. No double spending, duplicated compute, or money creation. |
-| M3 — First playable vertical slice | 4–6 | M2 + UI shell | Data → research → training → held-out evaluation → deployment → contract → consequence; 30–45-minute scenario; eight events; recovery and ending. At least five independent playtest sessions, with three players completing without facilitator intervention. |
+| E1 — Minimum useful Content Studio | 4–7 | M2 + UI shell | Separate editor; current-content library; typed trigger → effects/events canvas and equivalent outline/forms; news/dialogue/hidden flows and five lifecycle controls; truth/path/target/before-after inspection; branch/result preview and safe versioned repository writes. Three authors complete a small flow task and catch planted sign/scope mistakes without raw scripting. |
+| M3 — First playable vertical slice | 4–6 | M2 + E1 | Data → research → training → held-out evaluation → deployment → contract → consequence; 30–45-minute scenario; eight Studio-authored/validated events; recovery and ending. At least five independent playtest sessions, with three players completing without facilitator intervention. |
 | M4 — Competitors and corporate governance | 4–6 | M3 gate | Budgeted rival plans, Code Red escalation, financing/cap table, negotiation, executives, board decisions. Specialist and frontier approaches are both credible; opponents obey shared rules. |
 | M5 — Geography, infrastructure, global markets | 4–7 | M4 | All states/DC, eight world profiles, hardware delivery/power/cooling/maintenance, owned vs leased capacity, six channels, disaster mitigation and insurance. No online map dependency; a map/list strategy comparison changes a real decision. |
+| E2 — Expanded authoring and editor qualification | 3–5 | Starts after M5 + E1; closes after M7 | Scenario/world/policy and research/catalog/asset tools; map/target impact views, reusable flows/refactors, version/migration review; current-runtime preview parity; five clean native editor artifacts prepared as separate downloads. Finish before the M8 bulk content pass. |
 | M6 — Politics and social response | 5–8 | M5 | US policy/election loop, international standards and market access, media/advertising, macro effects, executive/public disputes. Actions have delayed, explainable effects; ordinary ad spend cannot buy political victory. |
 | M7 — Century, succession, and endgames | 5–8 | M6 | Branching future research, game AGI/ASI validation, bounded research automation, succession, six objectives with sustained accounting, warned catastrophes, campaign postmortem, sandbox continuation. Every objective has a demonstrated reachable fixture and a near-miss fixture. |
-| M8 — Content, balance, accessibility, endurance | 5–8 | M7 | Minimum useful content coverage, final art/audio provenance, viable strategy suite, full human campaign, 100-year headless batches and 500-year sandbox checks, performance measurements, accessibility and privacy evidence. Fix repetition and exploits before adding scope. |
+| M8 — Content, balance, accessibility, endurance | 5–8 | M7 + E2 | Minimum useful content coverage authored/managed in Studio, final art/audio provenance, viable strategy suite, full human campaign, 100-year headless batches and 500-year sandbox checks, performance measurements, accessibility and privacy evidence. Fix repetition and exploits before adding scope. |
 | M9 — Native qualification and itch release | 3–5 | M8 + required device access | Five clean-device artifacts, source/license/credits/checksums, downloaded-package tests, offline/privacy audit, store copy and instructions, explicit release authorization, then upload. No platform ticked as supported on compile success alone. |
-| M10 — Snap distribution | Separate estimate after M9 | Primary release complete | Ubuntu-based amd64/arm64 packages, confinement/local saves/audio/graphics verification, store metadata and explicit submission task. No new backend. |
+| M10 — Snap distribution | Separate estimate after M9 | Primary release complete | Ubuntu-based amd64/arm64 game packages, shared-manifest game version through Snapcraft metadata adoption, content/save migration and refresh tests, confinement/local saves/audio/graphics verification, store metadata and explicit submission task. No editor bundled and no new backend. |
 
-M0–M3 total **10–16 person-weeks before contingency**. M0–M9 total **36–58**, with a 25% uncertainty reserve giving approximately **45–75 person-weeks** (roughly 10–18 months of full-time effort). These ranges are provisional. A complex simulation with agent assistance still requires design judgment, playtesting, integration, and maintenance; do not convert this table into a promised launch date.
+Through M3, including E1, total **15–25 person-weeks before contingency**. Through M9, including E1/E2, total **44–72**, with a 25% uncertainty reserve giving approximately **55–90 person-weeks** (roughly 13–21 months of full-time effort). This adds approximately 8–14 person-weeks to the original engineering/content estimate; the benefit to authoring speed and error reduction must be demonstrated, not assumed. E2 work can be interleaved with M6/M7 but is not free parallel effort. Re-estimate after the first Studio usability test. A complex simulation with agent assistance still requires design judgment, playtesting, integration, and maintenance; do not convert this table into a promised launch date.
 
 ```mermaid
 flowchart LR
     P[Planning baseline] --> M0[Platform proof]
     M0 --> M1[Foundation]
     M1 --> M2[Headless business]
-    M2 --> M3[Playable slice]
+    M2 --> E1[Minimum authoring Studio]
+    E1 --> M3[Playable slice]
     M3 --> M4[Rivals and governance]
     M4 --> M5[Geography and global markets]
     M5 --> M6[Politics and society]
+    M5 --> E2[Expanded Studio and editor qualification]
     M6 --> M7[Century and endings]
-    M7 --> M8[Balance and endurance]
+    M7 --> E2
+    E2 --> M8[Balance and endurance]
     M8 --> M9[Five native itch packages]
     M9 --> M10[Snap]
 ```
@@ -57,7 +64,8 @@ The standard world has 15 rival institutions scheduled in total (6 domestic, 6 i
 - If new players cannot explain cash burn, training tradeoffs, and their first contract after the slice, revise feedback and pacing before adding politics.
 - If only one strategy survives, fix economics/constraints before expanding research content.
 - If late years repeat the same low-value action, add policies and summaries; do not force a hundred years of manual renewals.
-- If content effort exceeds capacity, reduce repeated events, decorative sets, hardware variants, and minor offer types first. Preserve the six objectives, their necessary mechanisms, offline privacy, honest platform claims, and the full campaign premise. A reduction to promised core scope needs an explicit decision record.
+- If content effort exceeds capacity, reduce repeated events, decorative sets, hardware variants, minor offer types and optional editor conveniences first. Preserve the six objectives, their necessary mechanisms, usable graphical authoring/impact inspection, offline privacy, honest platform claims, and the full campaign premise. A reduction to promised core scope needs an explicit decision record.
+- Keep E1 focused on the slice and an extensible typed registry. Full world maps, elaborate layout styling and every late-game specialty form are E2 work; a small useful editor must precede a universal authoring framework.
 - Do not trade reliable saves, clear causality, keyboard access, or privacy verification for more release content.
 
 ## Execution and checkpoints

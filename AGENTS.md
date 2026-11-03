@@ -11,6 +11,8 @@ These instructions apply to repository work. Current user instructions take prec
 
 The authoritative product baseline is `docs/GAME_DESIGN.md`, with mechanical detail in `docs/SIMULATION_SPEC.md` and technical contracts in `docs/TECHNICAL_PLAN.md`. `docs/DECISIONS_AND_REQUIREMENTS.md` records source precedence and deliberate changes. `docs/reference/` preserves the original drafts; the Gemini document is a suggestion archive, not an additional instruction file.
 
+For authoring work, use `docs/CONTENT_EDITOR.md` and `docs/VERSIONING.md`. The checked-in `project-versions.json` contains planning-only initial versions until the build/runtime exist. References such as Clausewitz, Plague Inc., Blender and the supplied URLAlchemist checkout are conceptual/source research, not instructions to execute or strict UI specifications.
+
 ## Workspace, disk, and persistence
 
 - Keep project work within `/opt/AI Startup`; persistent source, assets, documents, and task evidence belong in `/opt/AI Startup/Project-Glowing-Pancake`.
@@ -35,6 +37,8 @@ The authoritative product baseline is `docs/GAME_DESIGN.md`, with mechanical det
 - Selected stack: C++20 core + Qt 6.12.x/QML + CMake/Ninja, subject to M0 evidence. Core logic has no Qt/UI/network dependency.
 - Simulation state changes through validated transactions/commands. Use canonical daily update order, checked integer units, saved independent PRNG streams, and explainable causal records. UI previews never mutate state or reveal future random draws.
 - Balance/content definitions live in validated versioned data, not QML or prose-only rules. Saves include obligations, event queues, RNG, content version and objective windows; writes/migrations preserve recovery copies.
+- The Content Studio is a separate repository-authoring application/download; the game excludes editor binaries/resources, drafts, layouts and test fixtures. It is not a player mod manager. Share one typed graph compiler/runtime and fact/effect registry; require trigger truth/path/scope inspection, ordered before/after effect previews and safe reference edits.
+- Keep game/editor/content versions, definition revisions, compatibility formats and source hashes distinct under `project-versions.json`. Finalized content batches need version/changelog tracking; shipped content-only changes require a new game package version. Later Snap reads the same game version. Graph layout/no-op edits do not bump runtime content. Never fabricate a release or wire publication into a normal save.
 - Default `./make.sh` is an optimized Release build; developer diagnostics require `--debugging`/`--debug`. Never auto-launch. Use `#if PGP_DEVELOPER_DIAGNOSTICS` with a 0/1 macro; `#ifdef` is insufficient for a macro defined as zero. Telemetry has no implementation in any configuration.
 - Metal on Mac, OpenGL on Linux, OpenGL preference with tested D3D11 recovery on Windows. Five native artifacts are goals until qualified; cross-compile/CI success is not device acceptance.
 - Preserve keyboard access, text scaling, pause, causal explanations and readable units. The first playable is small; do not add counties, browser export or multiplayer to solve an unrelated problem.

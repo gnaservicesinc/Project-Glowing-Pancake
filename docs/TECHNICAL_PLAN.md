@@ -1,6 +1,6 @@
 # Technical plan
 
-Baseline 1.0 · 2026-11-03 · Proposed implementation; no game/build system exists yet
+Baseline 1.1 · 2026-11-03 · Proposed implementation; no game/build system exists yet
 
 ## 1. Stack decision
 
@@ -44,11 +44,14 @@ The following directories describe future implementation; creating this plan doe
 src/core/            # dates, IDs, units, state, commands, deterministic daily systems
 src/persistence/     # save/replay serialization and migrations, no UI dependency
 src/content/         # typed definitions, validation, scenario/catalog loading
+src/editor/          # separate Content Studio application, repository IO and authoring bridge
 src/headless/        # scenario runner, replay and benchmark commands
 src/app/             # application lifecycle and dependency wiring
 src/bridge/          # Qt models, immutable snapshots, command adapters
 qml/                 # rooms, reusable controls, tables, inspectors, accessibility
+qml/editor/          # editor-only node canvas, content browser, forms and impact tools
 data/                # versioned, validated game definitions, no executable scripts
+authoring/           # shareable layouts, fixtures and finalized content history; not game payload
 assets/              # licensed local visuals/audio/fonts, provenance and credits
 tests/               # unit, deterministic, integration, scenario and migration fixtures
 tools/               # small content/build validation tools
@@ -56,9 +59,12 @@ cmake/               # dependencies, presets, deployment support
 .github/workflows/   # validation and native build/package jobs
 docs/                # design, decisions, operating plan, and evidence
 agents/              # reusable role briefs and task handoff format
+project-versions.json # checked-in component/compatibility versions; planning values initially
 ```
 
 Dependency direction is `app → bridge/UI + persistence/content → core`; the core has no dependency on Qt, filesystem locations, JSON library types, renderer, audio, or network facilities. Persistence and content may use a pinned permissively licensed JSON library; start with `nlohmann/json` and record its exact version and MIT license at implementation. Qt types terminate at the bridge. Tests can link only the layer they exercise.
+
+The separate `pgp-editor` target depends on the same content compiler/registry/core and selected reusable presentation components. Editor-only Qt/QML, repository writers and graph layout have no reverse dependency from the game. Default builds/package manifests include the game; explicit editor builds create independent artifacts. Its graph, forms and outline share one document model. Do not introduce a browser framework or a second event interpreter to reproduce the node-editor concept.
 
 ## 4. State, commands, and UI integration
 
@@ -85,13 +91,15 @@ Forecast previews run on a copied/summary state without consuming real RNG or mu
 
 Use versioned JSON definitions for scenarios, rivals, hardware families, datasets, research nodes, model recipes, products, markets, policies, events, and objective rules. Validate required fields, units, unique IDs, references, graph cycles, ranges, and budget/ownership totals. Keep balance numbers out of QML and narrative prose. Examples in [the examples directory](examples/README.md) illustrate the format; production schemas and loaders are M1 work.
 
-An event definition has ID/version, trigger facts, eligibility, cooldown/max occurrences, speaker/context, explanatory text, choices, commitment costs, typed effects, delayed consequences, and content tags. Use a restricted expression/effect vocabulary; never execute arbitrary C++, JavaScript, Python, shell code, or remote content from a scenario/save. Localization keys live separately from mechanics. Material surprises need a traceable causal fact.
+Content flows have ID/revision, typed context, trigger facts, lifecycle, occurrence bounds, ordered effect/event graphs and content tags. News/dialogue presentations, choices/results, hidden rules, delays and continuous modifiers share a restricted expression/effect vocabulary. The graphical compiler produces a bounded normalized runtime representation. Stable registries define facts, scopes, units, operations, tooltips and ports for both editor and game; typed fan-out order and trigger/effect traces are explicit. Never execute arbitrary C++, JavaScript, Python, shell code, or remote content from a scenario/save. Localization keys live separately from mechanics. Material surprises need a traceable causal fact. [Studio contract](CONTENT_EDITOR.md), [runtime rules](SIMULATION_SPEC.md).
 
-The first release ships trusted built-in content. Locally loaded data-only scenario packs are a later feature with schema validation and a visible custom-content marker. They may alter scoring and invalidate standard objectives; they cannot enable networking. Workshop integration and executable plugins are outside 1.0.
+The first release ships only reviewed built-in runtime content. Studio authors open a selected source checkout, browse existing data and edit validated repository definitions; drafts/layouts/fixtures/recovery files are excluded from game bundles. Player mod support, external scenario-pack loading, Workshop integration and executable plugins have no commitment in this plan and would need a separate decision. The authoring tool is not a reason to add mod-loading UI or repository writes to the game.
+
+Repository changes use conflict-aware staged batches and journaled multi-file recovery. Content revisions and runtime hashes follow the shared [versioning contract](VERSIONING.md). The Studio stays entirely local, with no telemetry, model service, updater, store credentials, automatic Git push or publishing function. Agents' normal task-end Git preservation remains separate from interactive authoring.
 
 ## 6. Save/load, autosave, and campaign history
 
-Use a documented UTF-8 JSON envelope with `.pgpsave` extension for the initial format. Include format version, simulation version, content versions/hashes, seed, date, all RNG states, state revision, active commitments, queued events, objective accumulators, and bounded historical summaries. Integrity hashes detect accidental corruption, not hostile tampering or encrypted secrets. Plain-text fictional names are acceptable.
+Use a documented UTF-8 JSON envelope with `.pgpsave` extension for the initial format. Include format version, simulation version, content versions/hashes, seed, date, all RNG states, state revision, active commitments, queued event/flow instances and definition revisions, committed-effect receipts, cooldowns, owned modifiers, objective accumulators, and bounded historical summaries. Integrity hashes detect accidental corruption, not hostile tampering or encrypted secrets. Plain-text fictional names are acceptable.
 
 Local preferences and an autosave ring are allowed. Use the platform's standard writable application-data/settings locations, make them discoverable in the UI, and support a portable save location plus Save As/Export. Default: three rotating local autosaves at a completed monthly boundary and before major irreversible in-game commitments. Allow disabling autosaves. Preferences are small, local, and contain no account identity or device identifier. Do not store passwords, collect OS account names, or ask for real personal information.
 
@@ -119,10 +127,14 @@ M0/M1 will implement the following commands. They are **not available yet**:
 | `./make.sh --debugging` | Explicit developer Debug build with local diagnostic support |
 | `./make.sh --debug` | Alias for `--debugging` |
 | `./make.sh --core-only` | Build headless/core targets without downloading or requiring Qt |
+| `./make.sh --editor` | Explicitly build the separately packaged Content Studio in the selected configuration |
+| `./make.sh --all` | Explicitly build both game and editor; never imply a combined game package |
 | `./make.sh --test` | Build the selected configuration and run its appropriate tests; propagate failure |
 | `./make.sh --package` | Produce a local distributable only when explicitly requested; CI is the normal packaging path |
 | `./make.sh --clean` | Remove only known generated directories owned by this build wrapper |
 | `./make.sh --help` | Describe flags, dependencies, output paths, and configuration |
+
+`--package` packages the selected product: game by default, editor with `--editor`, separate manifests/artifacts with `--all`. No editor/debug palette, drafts, authoring fixture, recovery journal or layout may enter a base game binary/resource/package. Package the editor independently for the same five native targets, and qualify its repository IO/canvas/help as well as the shared renderer. Existing Qt deployment work is reused, but a passing game package does not certify editor behavior.
 
 Use out-of-source CMake presets under ignored `build/`. Select compiler-appropriate Release optimization, `NDEBUG`, and link-time optimization where tested; do not hardcode GCC's `-O3` into an MSVC build. Keep assertions in test targets even when the application is Release. Debug flags must never silently carry into a later default build. An explicit build preset/output directory identifies configuration.
 
@@ -130,7 +142,9 @@ Discover the local Qt path through an argument/environment override or a documen
 
 ## 9. CI, packaging, and publication
 
-On pull requests: validate docs/data, build/test the core across compiler families, and build a minimal native UI for each supported architecture as infrastructure permits. Before a tag/release candidate: run the complete five-artifact native matrix, package from clean staging directories, inspect dependencies, include source/license/credit material and checksums, and run clean-machine smoke tests. Keep artifact/cache retention short; do not store SDKs or binaries in Git. Pin action revisions and dependency versions during implementation.
+On pull requests: validate docs/data/versions, build/test the core across compiler families, and build native game/editor targets as they exist. Before each product's tag/release candidate: run its complete five-artifact native matrix, package from clean staging directories, inspect dependencies, include source/license/credit material and checksums, and run clean-machine smoke tests. Both products share toolchain caches where practical but have separate payload manifests and qualification. Keep artifact/cache retention short; do not store SDKs or binaries in Git. Pin action revisions and dependency versions during implementation.
+
+The checked-in version manifest supplies component versions to build metadata and product-specific tags; content-only changes still require a new game version when shipped. The later game Snap reads that same game version using Snapcraft metadata adoption. It does not use the editor tag/content version as its package version. Format compatibility and event-chain migrations are independent of release labels. [Versioning details](VERSIONING.md).
 
 Deploy Qt libraries, QML imports, accessibility/platform plugins, image support, audio dependencies, and compiler runtime libraries actually needed. Use Qt deployment tooling/CMake deployment APIs, `macdeployqt`, and `windeployqt` where applicable; Linux uses a controlled staging manifest and runtime-path inspection. Bundle required redistributable user-space dependencies. System libc, OS frameworks, and graphics drivers are documented exceptions; never copy arbitrary host libraries until a bundle happens to launch. Qt documents both library and QML deployment requirements. [Qt deployment guide](https://doc.qt.io/qt-6/deployment.html).
 
@@ -146,4 +160,4 @@ Publication is a separate explicit release task. A normal documentation/code pus
 
 Initial measurement targets: UI response to ordinary actions <100 ms; 60 fps on the declared minimum GPU with 30 fps recovery on low-power systems; peak working memory <1 GB for the standard 100-year campaign; saves <25 MB after normal history compaction; save/load <2 seconds on a reference SSD; headless 100-year run <60 seconds on a modern development CPU. These are targets, not measured results. Record named hardware/configuration, entity counts, and actual percentiles before publishing minimum requirements.
 
-Largest risks are platform packaging (especially ARM graphics/audio), explaining a complex simulation, boring century-scale repetition, political/economic oversimplification, unbounded feature growth, and save compatibility. M0 proves the toolchain; M3 proves one enjoyable loop; M8 proves campaign endurance; M9 proves distribution. Failed gates result in a scoped fix or a recorded product decision, never a false claim of platform support.
+Largest risks are platform packaging (especially ARM graphics/audio), explaining a complex simulation, boring century-scale repetition, political/economic oversimplification, authoring-tool complexity, unbounded feature growth, and save compatibility. M0 proves the toolchain/version path; E1 proves a useful narrow Studio before the slice's content pass; M3 proves one enjoyable loop; E2 expands authoring before M8 campaign endurance; M9 proves game distribution. Failed gates result in a scoped fix or a recorded product decision, never a false claim of platform support.

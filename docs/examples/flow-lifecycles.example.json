@@ -1,0 +1,200 @@
+{
+  "example_only": true,
+  "format_version": 1,
+  "note": "Illustrative graph/lifecycle contracts, not a complete registered production catalog. End nodes finish a segment; a continuous instance remains active until its lifecycle exits.",
+  "flows": [
+    {
+      "id": "flow.news.first_public_breakthrough",
+      "revision": 1,
+      "scope": "world",
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "world.public_breakthrough_count",
+            "op": "gte",
+            "value": 1
+          }
+        ]
+      },
+      "lifecycle": {
+        "mode": "once",
+        "occurrence_scope": "world",
+        "max_occurrences_per_scope": 1
+      },
+      "entry_node": "news",
+      "nodes": {
+        "news": {
+          "kind": "news",
+          "text_key": "flow.news.first_public_breakthrough.text",
+          "draft_text": "A new research result is now available for evaluation.",
+          "next": "end"
+        },
+        "end": {
+          "kind": "end"
+        }
+      }
+    },
+    {
+      "id": "flow.hidden.compute_review",
+      "revision": 1,
+      "scope": "company",
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "company.has_compute_lease",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "lifecycle": {
+        "mode": "recurring",
+        "repeat_policy": "after_cooldown_while_eligible",
+        "cooldown_days": 90,
+        "max_occurrences_per_scope": 4,
+        "overlap": "forbid"
+      },
+      "entry_node": "record_review",
+      "nodes": {
+        "record_review": {
+          "kind": "effect",
+          "effects": [
+            {
+              "op": "record_decision",
+              "value": "compute_review_due"
+            }
+          ],
+          "next": "end"
+        },
+        "end": {
+          "kind": "end"
+        }
+      }
+    },
+    {
+      "id": "flow.news.monthly_operations",
+      "revision": 1,
+      "scope": "company",
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "company.is_operating",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "lifecycle": {
+        "mode": "interval",
+        "every": {
+          "unit": "calendar_months",
+          "value": 1
+        },
+        "anchor_date": "2014-02-01",
+        "max_occurrences_per_scope": 12,
+        "miss_policy": "skip"
+      },
+      "entry_node": "news",
+      "nodes": {
+        "news": {
+          "kind": "news",
+          "text_key": "flow.news.monthly_operations.text",
+          "draft_text": "The monthly operations summary is ready.",
+          "next": "end"
+        },
+        "end": {
+          "kind": "end"
+        }
+      }
+    },
+    {
+      "id": "flow.news.scheduled_partner_review",
+      "revision": 1,
+      "scope": "company",
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "company.has_research_partner",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "lifecycle": {
+        "mode": "scheduled",
+        "due_date": "2014-06-01",
+        "miss_policy": "skip",
+        "max_occurrences_per_scope": 1
+      },
+      "entry_node": "news",
+      "nodes": {
+        "news": {
+          "kind": "news",
+          "text_key": "flow.news.scheduled_partner_review.text",
+          "draft_text": "Your research partnership review is due.",
+          "next": "end"
+        },
+        "end": {
+          "kind": "end"
+        }
+      }
+    },
+    {
+      "id": "flow.hidden.sustained_workload",
+      "revision": 1,
+      "scope": "company",
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "company.workload_stress_basis_points",
+            "op": "gte",
+            "value": 7000
+          }
+        ]
+      },
+      "lifecycle": {
+        "mode": "continuous",
+        "exit_when": {
+          "all_of": [
+            {
+              "fact": "company.workload_stress_basis_points",
+              "op": "lte",
+              "value": 5000
+            }
+          ]
+        },
+        "stacking": "one_per_scope",
+        "allow_reentry": true
+      },
+      "entry_node": "enter",
+      "exit_node": "exit",
+      "nodes": {
+        "enter": {
+          "kind": "effect",
+          "effects": [
+            {
+              "op": "register_owned_modifier",
+              "key": "sustained_workload",
+              "field": "research_coordination_basis_points",
+              "add_basis_points": -500
+            }
+          ],
+          "next": "end"
+        },
+        "exit": {
+          "kind": "effect",
+          "effects": [
+            {
+              "op": "remove_owned_modifier",
+              "key": "sustained_workload"
+            }
+          ],
+          "next": "end"
+        },
+        "end": {
+          "kind": "end"
+        }
+      }
+    }
+  ]
+}

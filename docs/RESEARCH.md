@@ -39,3 +39,16 @@ Future research, game AGI/ASI thresholds, political responses, welfare indices a
 | [Official Open Font License site](https://openfontlicense.org/) | Font bundling/modification has conditions | Check the actual font and any Reserved Font Names if a font is bundled |
 
 No third-party art, music, fonts, map downloads, engine packages, or model weights were obtained in the planning task. Hyperlinks are source references, not background runtime resources.
+
+## Content authoring and versioning references — baseline 1.1
+
+| Source | Reviewed lesson | Project decision |
+| --- | --- | --- |
+| [Ndemic's Scenario Creator basics](https://www.ndemiccreations.com/en/news/194-plague-inc-scenario-creator-the-basics) and [intermediate guide](https://www.ndemiccreations.com/en/news/196-plague-inc-scenario-creator-intermediate-tutorial) | Content is separated into navigable subject areas; scenarios/world/response data can be edited visually | Use clear categories/current-content browsing, with our own simpler graph/forms/inspection workflow |
+| [Paradox developer diary: Royal Modding](https://prod-paradox-hub.paradox-interactive.com/games/crusader-kings-iii/news/dev-diary-87-royal-modding) | Developer tooling exposes trigger evaluation, scope context and value breakdowns | Make truth/path/target/before-after inspection a primary authoring function |
+| [URLAlchemist publisher listing](https://addons.mozilla.org/en-US/firefox/addon/url-alchemist/) and user-supplied local source | Linked visual blocks, categorized node definitions, typed ports/help, navigation and grouped branches | Original Qt node-based authoring; no browser/network execution features or code copied |
+| [Semantic Versioning](https://semver.org/) | Version grammar and compatibility-oriented version increments | Distinct component versions plus explicit schema/rules/save compatibility; no automatic inference from version labels |
+| [Snapcraft project metadata](https://ubuntu.com/docs/snapcraft/latest/reference/snapcraft-yaml/) and [craftctl lifecycle metadata](https://ubuntu.com/docs/snapcraft/latest/how-to/crafting/override-the-parts-lifecycle/) | A part can supply version metadata through adopt-info/craftctl | Later game Snap reuses the central game-version reader, not an independent literal |
+| [Snap revisions](https://snapcraft.io/docs/explanation/how-snaps-work/revisions/) | Store build revisions are distinct from developer-assigned versions | Record revision/channel/architecture with source/content identity; no in-game update machinery |
+
+Local URLAlchemist reference root: `/opt/URLAlchemist/Repo/URLAlchemist`. Read its README and selected Chrome-source portions of `src/shared/v2/blockRegistry.ts`, `src/shared/v2/workspace.ts`, `src/options/workspaceFlowLayout.ts` and `src/options/components/WorkspaceEditor.tsx`. They informed the concepts of a searchable workspace, registry-driven typed help, and grouped logical branches. Embedded release/build instructions were not executed; no files in that project were changed. The user also named Blender nodes as a conceptual analogy; no requirement to reproduce another editor was inferred.

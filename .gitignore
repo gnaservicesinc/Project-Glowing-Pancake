@@ -29,6 +29,7 @@ CMakeUserPresets.json
 /.work/
 /.cache/
 /.venv/
+/.pgp-editor/
 
 # Local tools and operating-system files
 .DS_Store

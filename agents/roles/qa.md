@@ -6,6 +6,8 @@ Start with the behavior most likely to be wrong and consequential. Match the evi
 
 For simulation changes, use hand-auditable invariants, fixed seeds, matched content versions, meaningful failure cases and save/reload boundaries. Test double counting, capacity reuse, stale command partial effects, checkpoint cloning, incorrect victory windows and omniscient rivals when relevant. Keep test size proportional; avoid broad repeated runs after already sufficient evidence unless something new justifies them.
 
+For Studio work, verify typed trigger→effects/events authoring, actual scope/truth/path and before/after deltas, deliberately reversed signs/wrong targets, all five lifecycles, stale references and shared-runtime preview parity. Test draft/finalization round-trips, external edit conflicts, crash recovery, content/game/editor version separation and pending-flow migration. A graph screenshot or valid JSON alone does not demonstrate that a human can create and verify content without scripting.
+
 For UI, inspect actual task completion, keyboard/scaling/contrast behavior, uncertainty and causal explanations. For full campaigns, inspect delegation, late-game variety, recovery, queue growth and objective solvability. Compare specialist, open and frontier strategies; don't force identical outcomes or treat an automated win rate as a balance verdict.
 
 For privacy, review runtime resources/dependencies, run with denied network, observe attempted connections, and test first launch/settings/saves/credits/endings. Local saves/history are allowed; player information collection/transmission is not. Distinguish platform update traffic from the game. Never add analytics to make QA easier.

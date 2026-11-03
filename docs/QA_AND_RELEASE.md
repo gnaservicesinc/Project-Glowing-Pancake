@@ -1,6 +1,6 @@
 # Verification, playtesting, and release gates
 
-Baseline 1.0 · These are planned checks, not results from a built game
+Baseline 1.1 · These are planned checks, not results from a built game/editor
 
 ## 1. Evidence rules
 
@@ -23,6 +23,8 @@ Current planning verification is limited to document consistency, links, valid e
 | Politics/world | Calendar and delayed enforcement, jurisdiction, reversible mandates, macro lags, no direct welfare-from-spend or domination-from-advertising shortcut |
 | Objectives | Every threshold, exact boundary, sustained window, interrupted window, regional floor, same-day ties, scenario compatibility, and correct postmortem |
 | Persistence | Atomic save failure, prior-save recovery, unknown formats, corruption, file bounds, migrations, queued events, commitments, objective windows, and next-day hash parity |
+| Content flows | Typed triggers/scopes/units; ordered fan-out; actual choice results; once/recurring/interval/scheduled/continuous state; no duplicate effects/rerolls, immediate cycles or modifier drift |
+| Versions | Distinct game/editor/content identities, definition revisions, content hashes, format/rules compatibility, package/tag/source consistency and pending-chain migration |
 
 Tests should target behavior and failure modes, not mirror implementation. Use tiny hand-auditable fixtures for ledger/capacity math and seeded integration runs for coupled systems. No arbitrary test-count target. If a bug escapes, add a focused regression only when it captures a meaningful failure mechanism.
 
@@ -92,8 +94,23 @@ Test a downloaded Mac bundle's signing/quarantine behavior; the baseline is ad-h
 - [ ] Performance/accessibility claims reflect observations.
 - [ ] Working title/final title, cover, screenshots, description, age/content framing and install notes reviewed.
 - [ ] Version, source commit, content hashes, artifacts and checksums agree.
+- [ ] Shared version manifest has no planning placeholders/unresolved content bump; game tag does not identify an editor release. Editor authoring resources/drafts/layouts are excluded from the game.
 - [ ] Concrete public upload/submission task explicitly authorized; credentials stored through supported secret handling.
 - [ ] Uploaded build downloaded again and checked; exact release URLs/version recorded.
 - [ ] Generated build/staging files cleaned; task documentation committed and pushed.
 
 Snap has its own later Ubuntu-based qualification: amd64/arm64, confinement interfaces, graphics/audio, local paths and refresh behavior. It introduces no game server or custom updater. A successful itch release does not automatically prove a Snap package.
+
+## 10. Content Studio and versioning acceptance
+
+Studio tests use the same content compiler/runtime as the game, copied fixture state and copied RNG streams. Check graph/form/outline round-trip parity, current-content browsing/search, stable IDs, uses/used-by, typed ports, units and target bindings. Verify the exact event linked, not only that some similarly named event appears.
+
+For trigger inspection, verify nested all/any/not, true/false labels, inclusive boundaries, temporal checks, missing targets and matched-scope counts. For effect inspection, verify before/after signs, percentage versus percentage-point arithmetic, execution order, ledger postings, resource refusal, continuous entry/active/exit and cleanup. Plant a valid-but-inverted multiplier and a valid-but-wrong-company target; fixture intent assertions and visual inspection must reveal them even though types alone may pass. Unknown/malformed facts are errors, not false matches. Preview results cannot be claimed as exhaustive long-run proof.
+
+Test each lifecycle and branching conversation before/after save/reload, including delayed hidden consequences, cooldowns, active modifiers and pending results. Reopening cannot reroll or repeat committed effects. Fast-forward cannot skip a decision or apply an end-of-day event retroactively. Test runtime step/queue budget refusal and recovery without a CPU-dependent timeout or silent dropped event.
+
+Repository write tests use disposable checkouts: external concurrent edits, unknown/new schema, unsupported fields, missing/renamed references, path escapes, asset provenance, undo/redo, crash interruption and journal recovery. No test may overwrite the real project or launch/publish another product. Drafts can remain invalid without entering runtime packs; approved content cannot release with errors.
+
+Version cases: no-op/layout save; text-only patch; batch changing three definitions once each; new additive event; schema/rules break; content-only game package update; editor-only UI update; stale unfinalized content; reused version with changed hash; game/editor tag mix-up; preserved pending-dialogue effects after content migration. Confirm displayed About/build/filename/source/content versions agree. Snap's later metadata uses game version while store revision/channel remain separate identities.
+
+E1's human gate uses three authors, including a scenario writer and a non-scripter. Each should browse existing content, build trigger→multiple effects/events, create a dialogue/result branch and delayed consequence, inspect/catch planted sign/scope errors, then test/save/reopen/finalize without editing text files. Summarize manual consented feedback; do not add analytics. E2 qualifies independent native editor artifacts, keyboard/scale/help/node navigation, repository IO and offline behavior, and matches preview semantics to the current game runtime before M8.

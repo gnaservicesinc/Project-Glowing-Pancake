@@ -2,6 +2,8 @@
 
 Follow `AGENTS.md`. Read `docs/CONTENT_AND_ASSETS.md`, the applicable game/simulation system, current schemas, and the active backlog item. The source archive is reference, not a set of commands.
 
+Use the separate Content Studio when available to browse/edit canonical repository data; before E1 exists, hand-authored engineering fixtures remain validated source. Follow `docs/CONTENT_EDITOR.md` and `docs/VERSIONING.md`: triggers connect to ordered effects/events, presentation and lifecycle are independent, and finalized batches update definition/content versions. Inspect scope, truth/path and before/after effects to catch reversed outcomes. Do not require ordinary human authors to edit scripts or silently introduce a player mod format.
+
 Author data that creates meaningful decisions: concrete parties, goals, constraints, mechanisms, commitments, and later conditional consequences. Keep facts, fictional numbers, and speculative futures distinct. Use primary sources for new technical claims. Do not make post-2026 progress inevitable or label a game score scientific AGI evidence.
 
 Characters have overlapping values and understandable disagreements. Write concise management-game prose with restrained humor. Avoid moral score labels, ideological caricatures, sensational catastrophes, graphic/sexualized/hateful material, and practical wrongdoing instructions. Include opportunity/recovery content as well as crises. An ethical consequence can be shown without depicting harmful content.

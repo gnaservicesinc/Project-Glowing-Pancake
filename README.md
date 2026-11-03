@@ -2,7 +2,7 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** planning baseline 1.0, completed 2026-11-03. The repository contains the design and implementation handoff; it does not yet contain a playable game or working build commands. The next task is the M0 toolchain/packaging spike, not implementation of the entire simulation at once.
+**Current state:** planning baseline 1.1, updated 2026-11-03. The repository contains the game/editor design and implementation handoff, plus an initialized version record; it does not yet contain a playable game, editor executable, or working build commands. The next task is the M0 toolchain/packaging spike, not implementation of the entire simulation at once.
 
 ## Read the plan
 
@@ -16,9 +16,12 @@ A free, offline strategy game about founding an AI company in 2014 and guiding i
 | [Needs and access](docs/NEEDS_AND_ACCESS.md) | What is available, what is needed later, and what requires no service |
 | [Decisions and requirements](docs/DECISIONS_AND_REQUIREMENTS.md) | Original intent, AI suggestions, selected defaults, and deliberate changes |
 | [Content and assets](docs/CONTENT_AND_ASSETS.md) | Writing/art/audio direction, content counts, provenance, and licensing workflow |
+| [Content Studio](docs/CONTENT_EDITOR.md) | Separate graphical repository editor: trigger/effect/event nodes, existing-content library and impact previews |
+| [Version tracking](docs/VERSIONING.md) | Game/editor/content versions, graphical revision updates, save compatibility and later Snap integration |
 | [QA and release](docs/QA_AND_RELEASE.md) | Verification, privacy, release gates, and playtesting |
 | [Research](docs/RESEARCH.md) | Primary sources checked during planning |
 | [Project status](docs/STATUS.md) | Completed work, current limits, and next handoff |
+| [Planning history](docs/PLAN_CHANGELOG.md) | What changed between planning baselines |
 
 ## Work on the game
 
@@ -27,5 +30,7 @@ Read [AGENTS.md](AGENTS.md), then [the agent guide](agents/README.md). Role brie
 The selected stack is C++20 + Qt 6.12.x/QML with CMake/Ninja. Desktop targets are macOS arm64, Linux amd64/arm64, and Windows amd64/arm64; each must pass native packaging and device qualification before support is claimed. Browser export and Snap distribution are later work. Heavy builds belong in GitHub Actions; lightweight core checks may run locally.
 
 The game needs **no backend, hosted model, player account, analytics, or in-game updater**. Local saves, autosaves, preferences, and campaign history are normal features. Installation and updates are handled outside the game by the chosen distribution platform.
+
+Content Studio will be a separate download/source target for authors editing a development checkout, with a searchable current-content library and linked trigger → effects/events canvas, equivalent forms/outline, tooltips and before/after tests. It is excluded from the base game. [The version manifest](project-versions.json) currently reserves `0.0.0-dev` planning identities; automated version controls and packaging remain implementation tasks.
 
 Project code is licensed under [GNU GPLv3](LICENSE). Third-party assets/dependencies retain their own recorded licenses and credits. The original drafts are preserved unchanged in [the reference archive](docs/reference/README.md); the active plan above supersedes their suggestions.

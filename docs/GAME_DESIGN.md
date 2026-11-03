@@ -1,6 +1,6 @@
 # Project Glowing Pancake — final game design
 
-Design baseline 1.0 · 2026-11-03 · Working title · Implementation has not started
+Design baseline 1.1 · 2026-11-03 · Working title · Implementation has not started
 
 This is the product design for the full 1.0 game. Numeric balance targets are starting values to test, not claims about the real world. [Decisions and requirements](DECISIONS_AND_REQUIREMENTS.md) explains the relationship to the two drafts. [The roadmap](ROADMAP.md) separates the complete design from the first playable release.
 
@@ -210,3 +210,13 @@ Example: a supplier offers 40% cheaper compute for exclusivity, a board observer
 Replayability comes from rival strategy, geography, discovery pathways, demand, funding conditions, institutional choices, objectives, and world response. Authored scenario packs may add crises, starting conditions, or constraints after the base game. No procedural text generation or external service is needed.
 
 For minimum content counts, example event data, privacy rules, release criteria, and development order, use [content and assets](CONTENT_AND_ASSETS.md), [QA and release](QA_AND_RELEASE.md), and [the roadmap](ROADMAP.md).
+
+## 13. Human-authored content and the separate Studio
+
+Game content is produced with a separately downloadable graphical [Content Studio](CONTENT_EDITOR.md), whose source lives in the repository. It edits the repository's current definitions, text, scenarios and asset records. The base game ships only reviewed runtime content and has no editor, player mod manager, remote content service or authoring dependency.
+
+Authors connect trigger boxes to ordered effects/events, conditions, dialogue choices/results, delays and reusable flows. News, player dialogues and hidden logic can be once-only, recurring, scheduled, interval-based or continuously active as appropriate. A searchable library organizes existing content; forms/tooltips, a node graph and equivalent outline expose the same definition.
+
+The author can inspect why a trigger matches, its scope, which path runs, and before/after changes for each effect. Unit/sign/target checks, boundary examples, reference tracking and test previews address scripting mistakes such as inverted effects or mixed-up events. The Studio uses the same runtime as the game. Humans still judge creativity, meaning and balance.
+
+The Studio has version controls for finalized content batches, with separate game/editor/content identities and save-compatibility tracking. Later Snap packaging reads that same metadata; content editing does not publish a build or add an in-game updater. [Versioning contract](VERSIONING.md).

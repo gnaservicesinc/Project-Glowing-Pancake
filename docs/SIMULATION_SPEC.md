@@ -1,6 +1,6 @@
 # Simulation and balance specification
 
-Baseline 1.0 · 2026-11-03 · Implementation contract, with provisional balance constants
+Baseline 1.1 · 2026-11-03 · Implementation contract, with provisional balance constants
 
 Read alongside [the game design](GAME_DESIGN.md). The simulation models fictional companies and simplified world systems. Its formulas support interesting, understandable choices; they are not predictions of actual AI development, investment returns, elections, or catastrophic risk.
 
@@ -29,15 +29,39 @@ Reproducibility means identical simulation version, content hashes, seed, and co
 ## 2. Daily transaction order
 
 1. Validate and apply queued player/AI commands against the opening state. Reserve money, staff, and capacity; refuse the entire command if a prerequisite fails.
-2. Apply scheduled deliveries, effective regulations, contract transitions, and exogenous conditions. Resolve shared resource allocation from a common snapshot rather than company iteration order.
+2. Apply scheduled deliveries, effective regulations, contract transitions, exogenous conditions, due content flows, and continuous-flow entry/exit/modifiers. Resolve shared resource allocation from a common snapshot rather than company iteration order.
 3. Assign available staff and compute according to validated policies. Include serving commitments, maintenance, and outages.
 4. Advance research, data processing, training, and evaluation. Newly completed models can be deployed by a command on the next day, not retroactively.
 5. Allocate contract demand and discretionary demand simultaneously; serve capacity-limited useful work; book revenue, refunds, service costs, and contractual penalties.
 6. Accrue payroll, power, debt, taxes, and other obligations. Settle amounts on their due dates; run liquidity warnings and workouts.
 7. Perform due weekly/monthly/annual updates: rival strategy, adoption, macro effects, politics, staffing reviews, and hazard sampling.
-8. Generate event facts and consequence explanations, update objective accumulators, increment the date, and publish an immutable UI snapshot. Stop at an auto-pause boundary before processing another day.
+8. Generate event facts and consequence explanations, evaluate end-of-day reaction triggers, queue their authorized work for the next opening boundary, update objective accumulators, increment the date, and publish an immutable UI snapshot. Stop at an auto-pause boundary before processing another day.
 
 AI decisions are commands using the same validation rules. A decision requiring a player response pauses before its deadline; unresolved optional correspondence follows the disclosed default. Async jobs may prepare calculations, but only the simulation thread commits results in canonical order.
+
+The opening command-commit stage may drain accepted commands while time is paused, so a choice can show its actual committed result without advancing a whole day. This does not resample calendar/recurrence checks, repeat already consumed commands, or allow rendered frames to advance effects. The day step processes only remaining queued commands.
+
+## 2a. Content-flow runtime and graphical authoring contract
+
+The [Content Studio](CONTENT_EDITOR.md) and game share one typed content compiler, evaluator, and effect executor. A content flow has a stable ID/revision, typed scope/bindings, trigger, lifecycle, and ordered graph. Trigger boxes may lead to several effects or news/dialogue events, conditions, choices/results, delays, reusable presentations, and terminal nodes. A referenced presentation has no second automatic trigger. Hidden logic uses the same runtime without a visible window.
+
+Conditions use nested all/any/not, typed comparisons and explicit temporal predicates over registered facts. Facts expose type, unit, scope, phase and help metadata. There is no implicit number-to-boolean, money-to-rate or entity-type coercion. Eligibility inspection returns each clause's actual value/result and selected scope; unsupported facts, unresolved bindings, or malformed comparisons are validation errors, not false successes. Player-facing explanations respect what the player knows; the authoring fixture inspector can view full test state.
+
+Registered typed variables/flags, checked arithmetic expressions, related-entity selectors and bounded any/all/count quantifiers support reusable rules. Collection traversal is stable and a selector reports its resolved members/count. Duration predicates persist their start/reset state. Weighted random branches use the content stream and persist their draw/selection; they do not evaluate randomness while merely inspecting a trigger. Variable namespaces/defaults and target/occurrence scope are explicit, preventing accidental global flags.
+
+Lifecycles are once, recurring, interval, scheduled and continuous. Once/limits/cooldowns use an explicit occurrence scope. Recurring specifies re-entry or cooldown-while-still-eligible semantics. Intervals have calendar/day anchors and skip ineligible checks without later backfilling. Scheduled instances define delivery eligibility, expiry and captured versus delivery-time target resolution. Continuous flows register owned modifiers on entry and remove them on exit; they do not repeatedly alter a base value or undo a percentage with its negative. Entry/exit hysteresis and stacking are explicit.
+
+Begin-day due work executes in phase 2, before capacity/cost calculation. End-of-day reaction triggers observe committed daily facts and schedule next-boundary effects; they cannot change work already performed. Evaluation uses fact-change subscriptions plus due-time queues, with a defined daily fallback for temporal predicates. Stable ordering is phase, due date, explicit priority, scope ID, definition ID, instance ID and node order. Fan-out outputs are numbered sequences, not parallel writes. A flow may not recursively mutate facts and re-trigger itself to a fixpoint within the same phase.
+
+Within a resolution segment, typed effects commit as one validated transaction or produce a rejection with no partial effect. Choices/delays separate segments; later failure cannot roll back an already accepted earlier choice. Resource-grant/transfer effects require an authorized source and balanced accounting. New capabilities require registered tested core operations, not arbitrary embedded scripts.
+
+A sequence has ordered child subflows and an explicit continuation/return boundary; each child completes (possibly after a decision/delay) before the next begins. Cross-sibling jumps are invalid. Independent future activity requires explicit scheduling effects. An end node completes its segment; a continuous instance's active state/modifier ownership persists until its exit lifecycle resolves.
+
+Persist activation IDs, definition revisions, captured scope/context, current nodes, committed-effect receipts, selected choices, pending results, delays, occurrence counts, cooldowns, active modifier keys and relevant RNG state. Loading or reopening cannot duplicate an effect or reroll an outcome. Removed/merged scope entities follow an explicit cancel/transfer policy; reused IDs never inherit unrelated pending work. NPC choices follow their controller's policy and the same prerequisites/costs.
+
+Reject immediate graph cycles, dangling links, impossible port types and unbounded recursive subflow expansion. Intentional delayed loops require positive delay and occurrence/termination bounds. Budget evaluation/steps/queue growth deterministically; exceeding a hard runtime budget pauses with a recoverable content error and trace rather than silently dropping work, shifting dates or hanging. Bound checks must not depend on CPU speed. Test fixtures cover boundary values, stale choices, save/reload at every lifecycle transition and deliberately reversed effects/wrong targets.
+
+Trigger visualization and before/after previews execute on copied valid test state with independent copied RNG streams. Pure fact overrides can inspect conditions but are labeled as trigger-only evidence. Shared traces show resolved target, matched scopes, ordered path, committed delta/ledger posting and queued future consequences. A useful visualization explains conditional reach and uncertainty; it does not claim exhaustive proof of long-run impacts. See [versioning](VERSIONING.md) for content identity and pending-chain migrations.
 
 ## 3. Opening balance and the first experiment
 

@@ -12,6 +12,8 @@ Checked 2026-11-03. This is a staged list of resources, not a request to purchas
 | CMake and Ninja | Installed; versions reported 4.4.4 and 1.13.2 respectively. This does not prove the compiler/deployment toolchain. |
 | Other authoring tools | GameMaker and Ren'Py application bundles exist. Not selected; no extra engine setup is requested. |
 | Original design sources | Both drafts archived verbatim in Git with SHA-256 fingerprints |
+| Editor references | Official Plague Inc./Paradox guides reviewed; supplied `/opt/URLAlchemist/Repo/URLAlchemist` source inspected read-only for node/catalog/layout concepts. No code copied or reference-project commands executed. |
+| Version tracking seed | `project-versions.json` initialized with planning-only component versions and reserved first compatibility formats; no version/build automation yet |
 | Local disk | Approximately 12 GB free at planning time; transient measurement, not a durable budget. Avoid heavy SDK/package builds here. |
 
 ## Before and during M0
@@ -50,6 +52,18 @@ Players may volunteer manually written feedback. Do not embed analytics or add r
 | Broader accessibility/device feedback | Keyboard-only, high scaling, reduced motion, and screen-reader checks on actual target systems | Observed limitations, resolved blockers, precise support claims |
 
 Music is not downloaded or approved yet. ENDE currently identifies its standard license as CC BY 4.0 and allows game use; preserve each selected track's actual terms and attribution even where the site offers an attribution waiver. The site's catalog includes different creation workflows; select the human-created branch to match the project's no-generated-soundtrack preference. [ENDE license](https://ende.app/en/standard-license), [catalog](https://ende.app/en/search).
+
+## For Content Studio, E1/E2
+
+| Need | When / purpose | Access/cost expectation |
+| --- | --- | --- |
+| A writable development checkout | E1 opens canonical repository data and shared schemas/registry; a packaged game is not a project | Existing checkout is sufficient; copies/fixtures for destructive test cases |
+| Three human authoring sessions | E1: browse existing content, build a trigger/effect/dialogue flow, catch planted sign/scope mistakes, test and finalize a revision without scripting | Include a scenario author and someone without scripting experience; user-arranged or explicitly authorized contact, manual feedback only |
+| Representative content/impact fixtures | Scope/threshold/positive-negative effects, all lifecycles, dialogue results, external edit conflict and recovery | Engineering/authoring task; no cloud/model service |
+| Separate editor artifact/channel naming | E2: independently qualified downloads and exact preview-runtime compatibility | Same Qt/CI tooling; no paid node-editor SDK or new server assumed |
+| Version reader and release metadata tests | M0-05/E1-05: shared game/editor/content identity; later Snap mapping | Small repository tooling; no store access needed until an explicitly scoped publication |
+
+No installation/purchase of the referenced games or URLAlchemist is required to implement this plan. Their concepts inform our own UI. Studio assets/help/palettes and recovery files are excluded from game packages. The later Snap task concerns the game; an editor Snap is a separate future decision.
 
 ## Before public distribution, M9/M10
 

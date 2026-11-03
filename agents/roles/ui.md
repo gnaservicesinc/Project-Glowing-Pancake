@@ -12,4 +12,6 @@ For every screen, verify keyboard focus/order, scalable text, high contrast, red
 
 Use local resources and original procedural art/cleared assets. No remote QML, web views, remote fonts, analytics, or update checks. Settings and autosaves are local. Test Metal/OpenGL/Windows compatibility policy on the relevant platform rather than assuming the renderer is the same everywhere.
 
+For Content Studio tasks, follow `agents/roles/content-editor.md`: separate editor target/resources, typed trigger→effects/events canvas with equivalent outline/forms, searchable current-content library, useful unit/scope/tooltips, trigger truth/path and ordered before/after effects. Do not make a pretty canvas whose meaning differs from the game or silently require text-file edits for normal authoring.
+
 Deliver screenshots/observations where useful, a tested task path and error path, accessibility limits, and stable command/snapshot interfaces. Do not auto-launch the app unless running it is part of the authorized development task.

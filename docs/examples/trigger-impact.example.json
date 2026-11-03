@@ -1,0 +1,70 @@
+{
+  "example_only": true,
+  "format_version": 1,
+  "id": "fixture.authoring.authorized_compute_discount",
+  "intent": "Apply an already negotiated 10 percent lease-price reduction to the selected company, without changing current cash.",
+  "trigger": {
+    "all_of": [
+      {
+        "fact": "company.cash_cents",
+        "op": "gte",
+        "value": 5000000
+      },
+      {
+        "fact": "company.compute_discount_authorized",
+        "op": "eq",
+        "value": true
+      }
+    ]
+  },
+  "target_binding": "self.compute_lease",
+  "effect": {
+    "op": "apply_authorized_compute_price_multiplier",
+    "multiplier_basis_points": 9000
+  },
+  "condition_only_boundary_cases": [
+    {
+      "cash_cents": 4999999,
+      "discount_authorized": true,
+      "expected_eligible": false
+    },
+    {
+      "cash_cents": 5000000,
+      "discount_authorized": true,
+      "expected_eligible": true
+    },
+    {
+      "cash_cents": 5000001,
+      "discount_authorized": true,
+      "expected_eligible": true
+    },
+    {
+      "cash_cents": 5000000,
+      "discount_authorized": false,
+      "expected_eligible": false
+    }
+  ],
+  "valid_scenario_expectations": {
+    "requires_balanced_company_and_authorized_supplier_terms": true,
+    "before_monthly_price_cents": 3000000,
+    "after_monthly_price_cents": 2700000,
+    "monthly_price_delta_cents": -300000,
+    "immediate_cash_delta_cents": 0,
+    "expected_target": "self.compute_lease",
+    "expected_direction": "decrease"
+  },
+  "negative_controls": [
+    {
+      "description": "An inverted multiplier is valid arithmetic but contradicts the intended discount.",
+      "multiplier_basis_points": 11000,
+      "after_monthly_price_cents": 3300000,
+      "expected_failed_assertion": "monthly_price_delta_cents < 0"
+    },
+    {
+      "description": "A valid rival binding is the wrong intended target; types alone cannot infer author intent.",
+      "target_binding": "rival.compute_lease",
+      "expected_failed_assertion": "target_binding == self.compute_lease"
+    }
+  ],
+  "evidence_note": "These are expected examples to implement/test. No Studio or simulation currently executes this fixture."
+}

@@ -1,6 +1,6 @@
 # Content, art, audio, and provenance
 
-Baseline 1.0 · No production assets have been obtained yet
+Baseline 1.1 · No production assets have been obtained yet
 
 ## Writing direction
 
@@ -31,18 +31,24 @@ The 120-event budget allocates roughly 20 research/data, 20 product/customer, 20
 
 Every strategic path needs content: profitable specialist, open ecosystem, frontier lab, public-service partnership, infrastructure provider, and authority-seeking institution. Each has an early opportunity, an operational problem, a late-game scaling issue, and consequences that connect to at least two other systems.
 
-## Event authoring contract
+## Graphical content production
+
+Human authors use the separately downloaded [Content Studio](CONTENT_EDITOR.md) to browse and maintain the repository's current content. A categorized library links events/flows, scenarios, research, hardware, people, policies, localization and asset records. Trigger boxes connect to ordered effects and events; node graph, forms and outline expose one definition with searchable references and useful scope/unit/tooltips. Ordinary content editing does not require scripts or raw JSON. The base game contains only reviewed runtime data.
+
+Trigger truth/path/scope inspection and before/after effect previews are mandatory. Authors can test threshold boundaries, inspect affected targets and timed behavior, and catch inverted signs or wrong references. Human writing/review remains responsible for story meaning and balance; a valid graph is not an automatically good event. Finalized batches update versions through [the shared versioning workflow](VERSIONING.md), without publishing a game.
+
+## Event and flow authoring contract
 
 Each event needs:
 
-1. A stable ID and content version, localization keys, permitted era/scenario, content tags, cooldown and occurrence bounds.
+1. A stable ID and definition revision within a versioned content collection, localization keys, permitted era/scenario and content tags.
 2. Trigger facts based on actual simulation state, with prerequisites and an explanatory cause visible to the player.
 3. A concrete situation and a small set of distinct choices, including a reasonable defer/decline path where applicable.
-4. Immediate commitments, typed effects and due dates; no raw arbitrary code. Clearly identify terms still being negotiated.
+4. Explicit lifecycle (once, recurring, interval, scheduled or continuous), occurrence scope, overlap/cooldown/expiry settings, typed effects, ordered links and due dates; no raw arbitrary code. Clearly identify terms still being negotiated.
 5. Conditional delayed consequences tied to the actual decision and later conditions, not an invisible moral score.
-6. A test fixture for eligibility, each choice, cooldown, save/reload while pending, and the default at a disclosed deadline.
+6. A test fixture for eligibility/path/targets, threshold and effect direction, each choice/result, recurrence/continuous entry and exit, save/reload while pending, and the default at a disclosed deadline. Each state-changing segment produces an actual before/after trace.
 
-The [supplier example](examples/supplier-event.example.json) demonstrates a negotiation opportunity, not a complete production schema. Do not mechanically grant the contract just because the event opened a negotiation. Decision text and mechanical effects must agree; a choice labeled no commitment must not spend money.
+The [supplier example](examples/supplier-event.example.json) demonstrates a trigger and branching negotiation opportunity with actual-result nodes. The [lifecycle gallery](examples/flow-lifecycles.example.json) and [impact fixture](examples/trigger-impact.example.json) illustrate timing and direction checks. These are not complete production schemas. Do not mechanically grant the contract just because the event opened a negotiation. Decision text and mechanical effects must agree; a choice labeled no commitment must not spend money. News/dialogue/hidden presentation is independent of lifecycle, so a recurring or continuous rule does not need a special unrelated event language.
 
 ## Visual production
 

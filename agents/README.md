@@ -10,6 +10,7 @@ This directory contains reusable role briefs for human-directed or agent-assiste
 | [Simulation](roles/simulation.md) | Core mechanics, data validation, accounts, deterministic behavior and persistence |
 | [UI](roles/ui.md) | QML, room navigation, bridge models, accessibility and player feedback |
 | [Content/assets](roles/content.md) | Research/event data, writing, art/audio sourcing, licensing and credits |
+| [Content editor](roles/content-editor.md) | Separate graphical Studio, typed node flows, trigger/effect inspection, repository writes and version controls |
 | [QA/balance](roles/qa.md) | Behavioral tests, scenarios, exploits, playtesting, endurance and acceptance evidence |
 | [Build/release](roles/build-release.md) | CMake, make.sh, CI, deployment, source/license bundles and authorized publication |
 
@@ -20,6 +21,8 @@ One agent can use multiple briefs where a task crosses boundaries. Parallel agen
 > Complete M0-01 in docs/BACKLOG.md. Follow AGENTS.md and agents/roles/build-release.md. Inventory the current toolchain, Qt modules/licensing, hosted native-runner paths, disk constraints, and device-access gaps. Do not install large SDKs locally or publish anything. Record verified facts and the smallest next implementation task. Commit and push the task changes and report evidence.
 
 After M0-01, assign M0-02. Do not jump directly from the design to implementing the century-wide simulation. The planning baseline is complete; code/build scaffolding has not yet been created.
+
+M0-05 establishes the version-reader foundation; M1-06 establishes the shared flow runtime. E1 builds the minimum usable Studio before M3 finalizes its eight events. E2 expands authoring as schemas mature and closes before M8's content pass. Follow those gates; do not hand authors a graph that bypasses validation or differs from gameplay.
 
 ## Task and handoff format
 

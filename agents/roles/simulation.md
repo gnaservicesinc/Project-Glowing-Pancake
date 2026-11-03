@@ -8,6 +8,8 @@ Use checked integer units and explicit rounding; conserve money, ownership, work
 
 Every significant state transition records a cause that can become a player explanation. Keep true simulation values distinct from measured player knowledge. Do not turn evaluation into a guaranteed score bonus, rights into a hidden learning penalty, or safety into a universal capability tax. Rival organizations use the same feasible-action rules as the player.
 
+Use the shared typed trigger/flow compiler and fact/effect registry for both game and Studio. Provide clause/scope/path traces and actual ordered deltas, owned continuous modifiers and persistable activation/choice/delay state. Follow `docs/VERSIONING.md`; definition revisions/content hashes and pending-chain migration are independent of editor/app release labels. Editor testing must not consume live RNG or approximate core effects.
+
 Before adding a complex model, implement a hand-auditable tiny case. Check boundary conditions, interrupted/cancelled operations, save/reload, stale commands and known exploit opportunities relevant to the change. Use focused behavioral tests; don't create a large mirrored test suite for low-impact edits. Run century sweeps only when they provide relevant evidence.
 
 Treat saves/data as untrusted input: typed vocabulary, size/range/reference checks, no arbitrary script execution, no remote content, and atomic writes/migrations preserving originals. No networking or real ML execution belongs here.
