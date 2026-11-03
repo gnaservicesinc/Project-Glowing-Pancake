@@ -5,7 +5,11 @@
   "seed": 20140101,
   "starts_on": "2014-01-01",
   "ends_before": "2017-01-01",
-  "headquarters_choices": ["US-CA", "US-TX", "US-WA"],
+  "headquarters_choices": [
+    "US-CA",
+    "US-TX",
+    "US-WA"
+  ],
   "company": {
     "cash_cents": 120000000,
     "team_people": 6,
@@ -35,6 +39,13 @@
   "example_contract": {
     "monthly_revenue_cents": 2500000,
     "monthly_incremental_serving_and_support_cents": 500000,
-    "repeatable_customer_family": true
-  }
+    "repeatable_customer_family": true,
+    "daily_useful_task_commitment": 1000,
+    "inference_milli_CU_per_task": 20,
+    "reserved_inference_milli_CU_per_day": 20000,
+    "monthly_non_compute_support_cents": 500000,
+    "monthly_additional_compute_charge_cents": 0,
+    "capacity_note": "After the model qualifies, serving reserves 20 CU/day. A subsequent 60 CU/day training run leaves 20 CU/day free; compute is already paid by the lease."
+  },
+  "currency_basis": "constant_2014_cents"
 }

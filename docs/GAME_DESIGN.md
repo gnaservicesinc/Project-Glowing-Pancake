@@ -1,6 +1,6 @@
 # Project Glowing Pancake — final game design
 
-Design baseline 1.1 · 2026-11-03 · Working title · Implementation has not started
+Design baseline 1.2 · 2026-11-03 · Working title · Implementation has not started
 
 This is the product design for the full 1.0 game. Numeric balance targets are starting values to test, not claims about the real world. [Decisions and requirements](DECISIONS_AND_REQUIREMENTS.md) explains the relationship to the two drafts. [The roadmap](ROADMAP.md) separates the complete design from the first playable release.
 
@@ -43,6 +43,10 @@ Backgrounds change the opening, not permanent ceilings. The charter sets initial
 The authoritative simulation advances in whole days. Player controls are pause, normal, fast, fastest, advance one day, and advance to the next chosen milestone. Normal is initially one simulated day per real second; faster speeds are maximum rates, not guarantees. The UI stays responsive while the simulation catches up.
 
 Training completions, financing deadlines, severe incidents, insolvency warnings, board votes, and new legal obligations can auto-pause. Players configure other alerts. Delegation policies can renew contracts within a ceiling, maintain cash reserves, replace obsolete hardware, schedule evaluations, and adjust prices within a range. Every policy has limits and a decision log; it cannot spend without its budget or change the company's charter.
+
+The normal pause point is the morning briefing: today's deliveries, effective rules and due events are visible before assigning work. Required opening choices resolve before work can proceed. Separate required decisions/alerts, actionable inbox items with their actual simulated deadlines, and background news grouped in a digest. Routine bulletins do not repeatedly stop fast-forward. No choice requires a real-time reaction.
+
+Later delegation adds a short bounded research queue/standing track policy and mature-product refresh under cash, staff and spare-compute ceilings. New queue items recheck prerequisites and budgets. Refresh creates and evaluates a candidate within licensed rights before an authorized rollout; it cannot skip evaluation or displace protected serving capacity. Players can review, suspend and override each policy.
 
 The first 3-year scenario should take 30–45 minutes. A full campaign targets 12–20 hours with delegation and fast-forward. These are playtest targets. When an early year and a mature year demand the same repeated work, improve delegation before adding content.
 
@@ -90,9 +94,13 @@ Products have versions, staged rollout, rollback, deprecation notice, and compat
 
 The initial twelve template families are document classification and industrial visual inspection (B2B); coding assistance and retrieval/knowledge services (API); a general assistant and non-sexual social/companion engagement (consumer); a private organizational model and an edge-perception model (licensed/local); a research toolkit and an education model (open weights); business-workflow automation and industrial/robotic coordination (agents). Domain configurations add finance, health/scientific research, public services, lawful security analysis, and other customer tasks with their own evidence and permission requirements. These are starting configurations, not twelve rigid character classes: players may combine feasible components and target underserved tasks within the simulation's data/recipe constraints.
 
+An infrastructure provider can sell reserved owned-site compute through wholesale capacity contracts from M5, without first training a commercial model. Price, term, compatibility, uptime, energy inclusion and curtailment obligations matter; supplying a rival earns revenue but can accelerate its research. This is infrastructure revenue alongside the six model channels. Hosting does not grant duplicate delivered-AI market share, and a sold capacity slice cannot also run the seller's projects.
+
 ### Financial simulation
 
 Track cash, receivables, payables, payroll, recurring costs, capital expenditure, depreciation, debt, taxes, equity, and dividends. Show cash flow, profit/loss, balance sheet, unit economics, and 3/12-month scenarios. Forecasts include committed spending and a clearly labeled demand range. Insolvency is about liquidity and obligations, not a negative accounting profit alone.
+
+All monetary amounts use constant-2014 purchasing power, with a visible unit label; the default game does not compound nominal inflation over centuries. Real cost and financing changes still affect decisions through their explicit rules. Content thresholds, contracts and profit comparisons therefore keep the same money basis.
 
 Financing choices are founder capital, customer prepayment, grants, equity rounds, debt, strategic supplier agreements, and a later IPO. Equity dilutes a conserved cap table; rights and board seats are separate terms. Grants constrain eligible spending. Cloud credits expire and are not cash. Debt has covenants, interest, repayment dates, and refinancing risk. Going public changes disclosure and board pressure; it does not create limitless funding.
 
@@ -104,7 +112,7 @@ Negotiations use offers and counteroffers over price, duration, service levels, 
 
 The model is a designed system, not one intelligence bar. Its profile reports language, perception, coding/reasoning, scientific/industrial use, social interaction, and autonomous execution. Report cost, latency, reliability, robustness, and control/oversight separately. A model with strong benchmark results can still be commercially unsuitable or difficult to supervise.
 
-A project chooses architecture family, scale class, training recipe, dataset mixture, allocated compute, target capabilities, evaluation plan, and deployment controls. The preview flags memory/interconnect incompatibility, bottlenecks, uncertain data quality, likely training time, and serving cost. You may cancel, pause, resume, or checkpoint; consumed compute and payments are not refunded. Existing deployments continue to need capacity.
+A project chooses architecture family, scale class, training recipe, dataset mixture, allocated compute, target capabilities, evaluation plan, and deployment controls. The preview flags memory/interconnect incompatibility, bottlenecks, uncertain data quality, likely training time, and serving cost. You may cancel, pause, resume, or checkpoint; consumed compute and incurred non-refundable payments stay spent. Reversible unconsumed allocations release their reservations, while immediately delivered licenses and confirmed obligations follow their disclosed terms. Preview irreversible costs before confirmation. Existing deployments continue to need capacity, with a visible compute-per-task requirement.
 
 ### Data
 
@@ -120,11 +128,15 @@ Publishing a paper, releasing code, sharing a dataset, releasing weights, sellin
 
 Evaluation requires time, staff, and held-out evidence. Show known performance, coverage gaps, and uncertainty. The same displayed score can support different deployment judgments depending on test coverage. Test-set contamination boosts the misleading score but not real customer performance. Independent audits, interpretability, access controls, staged rollout, monitoring, and incident response reduce different risks; none is a universal safety switch.
 
+Findings describe concrete task/subgroup limitations, such as unreliable scanned tables, with their evidence and coverage. Suitable tests or field experience can discover a previously unknown failure; tests do not reveal all hidden flaws. Targeted data/retraining, a matching deployment control, or a narrower customer promise are alternative responses with real costs and fresh evaluation. A label cannot itself cure a model.
+
 **Safety is not a fixed capability penalty.** Some controls cost latency or money, some improve reliability and sales, and some fail under distribution shift. Each intervention states its modeled mechanism and limits. The mathematical abstractions are defined in [the simulation specification](SIMULATION_SPEC.md).
 
 ## 7. People, executives, the board, and public identity
 
 Staff are teams with capacity, specialties, salary, experience, morale, burnout, and institutional knowledge. Individuals are simulated only for major executives and a small number of key people. The player sets team assignments, leadership, compensation, hiring targets, working conditions, and promotion policies.
+
+From M4, negotiate cash-only or cash-plus-equity compensation from the reserved option pool, with visible vesting/departure terms. The pool is part of existing fully diluted ownership; grants cannot create a second copy of it. Enlarging it needs the required board approval and shown dilution. Equity may help retention/runway but cannot replace agreed cash payroll for free. The slice reserves its initial pool without a detailed option market.
 
 Named leaders have technical/commercial competence, values, risk tolerance, personal commitments, relationships, and promised terms. Values are overlapping priorities, not political caricatures. Someone can favor both rapid open research and careful deployment. A disagreement escalates through private concern, a documented recommendation, a deadline, and a possible departure or public disclosure. No important resignation or board removal occurs without readable causes and response opportunities, except a clearly labeled severe external emergency.
 
@@ -137,6 +149,8 @@ Public identity is an audience-specific record of claims and actions. Investors,
 The domestic map covers **50 US states and DC**, with a list/table alternative. State-level build sites have capacity, power price, grid mix, connection delay, land/building cost, cooling requirement, talent access, connectivity, taxes/incentives, water constraints, and regional hazard exposure. Values are authored, sourced where useful, and labeled as game approximations. A state does not imply identical conditions at every location.
 
 The player can lease cloud compute, colocate equipment, or build an owned site. Hardware has delivery lead time, purchase/lease terms, useful life, memory class, interconnect, power draw, maintenance, and resale/scrap value. Training, inference, and research share a finite capacity pool. Buying equipment does not grant immediate grid access or qualified operators.
+
+Compute uses one fixed scenario reference across eras. Hardware/recipe compatibility and bounded authored efficiency improvements drive upgrades; a new era does not silently redefine CU or make every old machine obsolete. Older compatible models can remain useful on legacy equipment. The exact progression is a balance result, not a promised real-world hardware-growth curve.
 
 Redundancy, backups, geographic replication, insurance, maintenance, and contracts mitigate specific hazards at a cost. Fire, storms, floods, earthquakes, heat, and grid outages are abstract disruptions to people availability, equipment, service, and finance. Staff welfare is acknowledged without injury descriptions. Preparedness changes impact; choosing a state never creates a guaranteed disaster script.
 
@@ -184,6 +198,8 @@ Select one primary objective and optional secondary goals. Progress is visible w
 | Simple Survival | The founding institution is operating and solvent at the deadline, with an active organization and meaningful product/research activity. Founder succession, an IPO, and approved mergers under retained institutional control are allowed. |
 
 An ASI objective uses a scenario family with at least one feasible ASI route; plateau-only scenarios explain that incompatibility in setup. Utopia can be reached through broadly distributed useful AI and institutions without ASI. Financial success does not automatically imply political control or social benefit.
+
+The objective panel distinguishes progress from whether the deadline remains attainable. A failed mandatory month in the final Domination/Utopia window immediately explains the irreversible breach and auto-pauses by default, offering a postmortem, continued play or a custom sandbox. A bad Monopoly month alone does not imply failure: that objective uses aggregate work over five years. Do not force players through years of a known lost objective. Default thresholds/windows remain strict; early rolling victories or grace months are separate balance choices, not hidden exceptions.
 
 Failure conditions are unresolved insolvency after a warned 30-day workout, complete loss of institutional control, final closure under enforceable orders, or a scenario-ending catastrophe. A takeover offer, bad launch, executive departure, or lost election is not automatically game over. Postmortems show causal chains, unfulfilled obligations, lessons, and alternative actions that were available at the time.
 

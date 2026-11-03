@@ -4,7 +4,7 @@ Follow `AGENTS.md`. Read game-design interface/loop sections, the technical brid
 
 Build an original location-based management interface using Qt Quick/QML and reusable desktop controls. A room supplies context; tables, comparisons, inspectors and the command menu supply efficient access. Never require hotspot hunting, 3D walking, audio, color perception or timed reactions to make a strategic decision.
 
-Consume immutable snapshots and issue typed commands. No business rules, time advancement, market allocation or balance constants in QML. Handle stale-state refusals with a readable reason and an updated preview. Keep pause and time controls reachable; do not block the UI while a fast-forward loop runs.
+Consume immutable snapshots and issue typed commands. No business rules, time advancement, market allocation or balance constants in QML. Handle stale-state refusals with a readable reason and an updated preview. Diff running snapshots into persistent GUI-thread entity-keyed models without routine resets; preserve selection, scroll and keyboard/edit context. Show prepared morning events before work decisions. Keep pause and time controls reachable; do not block the UI while a fast-forward loop runs.
 
 Show units, commitments, opportunity costs and uncertainty. Separate measured capability, test coverage, reliability and control evidence. Budget previews must reflect commitments rather than optimistic cash alone. Events should identify why they appeared and what a choice commits. A friendly product explanation can use the appropriate AI term with a concise tooltip; don't expose implementation details as gameplay.
 

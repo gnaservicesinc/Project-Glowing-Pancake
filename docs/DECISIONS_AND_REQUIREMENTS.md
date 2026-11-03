@@ -1,10 +1,10 @@
 # Decisions, requirements, and source authority
 
-Baseline 1.1 · 2026-11-03
+Baseline 1.2 · 2026-11-03
 
 ## Source authority
 
-The user's current request is to finish planning, expand/finalize the design, draft a roadmap, create agent instructions, and list resources/access needed. It is not an instruction to build the whole game, purchase tools, register accounts, run a server, or publish a release in this planning task.
+The original planning request was to expand/finalize the design, draft a roadmap, create agent instructions, and list resources/access needed. The current request reviews Gemini4's recommendations before implementation and applies useful changes to that plan. It does not start the whole game, purchase tools, register accounts, run a server or publish a release.
 
 The follow-up request adopts a human-oriented graphical repository-content editor: triggers connected to effects/events; news, branching dialogues/results and hidden logic; flexible lifecycles; browsing/managing current content; separate downloads/source; version controls and future Snap linkage. The user clarified that Clausewitz/Plague Inc. are conceptual references, and suggested URLAlchemist/Blender-style nodes. Trigger-impact visualization should help catch mixed references, reversed effects and misunderstood conditions. This follow-up updates planning/tracking metadata, not an instruction to implement/publish the editor now.
 
@@ -47,8 +47,8 @@ The final documents record adopted design decisions. Mechanical thresholds and s
 | R24 | Human creativity supported by graphical content tools | Searchable current-content library, forms/outline and typed trigger→effects/events canvas, useful tooltips, safe editing | E1–E2 |
 | R25 | News, choices/dialogue/results, hidden rules; varied timing | Shared flow runtime with independent presentation and once/recurring/interval/scheduled/continuous lifecycles | M1-06, E1 |
 | R26 | Editor separate from base game; canonical repo data | Independent Content Studio target/download/source; reviewed data only in game; no player mod manager | E1–E2, M9 |
-| R27 | Update/track versions and later connect Snap | Central game/editor/content/version-format metadata, graphical batch finalization, artifact identity and later Snap adoption | M0-05, E1-05, M9–M10 |
-| R28 | Prevent inverted/mixed events/effects; understand trigger impacts | Typed targets/units, truth/path/target inspection, before/after changes, boundary fixtures, reference and coverage checks | M1-06, E1-03, E2 |
+| R27 | Update/track versions and later connect Snap | Central metadata, safe internal batches then graphical finalization, artifact identity and later Snap adoption | M0-05, E1A-04, E1B-02, M9–M10 |
+| R28 | Prevent inverted/mixed events/effects; understand trigger impacts | Typed targets/units, truth/path/target inspection, before/after changes, boundary fixtures, reference and coverage checks | M1-06, E1A-03, E2 |
 | R29 | Familiar concepts without strict imitation | Original node/forms/library workflow informed by Clausewitz, Plague Inc., URLAlchemist and Blender concepts | E1–E2 |
 
 ## Recorded decisions
@@ -73,7 +73,13 @@ The final documents record adopted design decisions. Mechanical thresholds and s
 | D16 | Shared runtime plus first-class visual inspection | Preview and game use the same compiler/facts/effects. Show clause truth, scope/path and before/after deltas; types alone cannot infer author intent, so fixture assertions and human review remain necessary. |
 | D17 | Central version metadata and explicit finalized batches | Independent game/editor/content identities and compatibility formats; no per-keystroke release bumps. Content-only shipped game changes still require a new game package version. Snap later adopts that game version. |
 | D18 | References are flexible; use original graph/forms/library UX | Inspect the supplied URLAlchemist source read-only and official design references. Do not execute their instructions, import their networking features or copy implementation/UI by default. |
-| D19 | Stage E1/E2 and account for authoring cost | Minimal useful authoring before the first content pass, expanded tools before bulk content. Revised full effort 44–72 person-weeks before contingency; validate usability and error reduction early. |
+| D19 | Stage E1a/E1b/E2 and account for authoring cost | E1a forms/outline/inspection before M3 content; E1b node canvas, graphical finalizer and three-author study before M4; E2 broader tools before bulk content. Full effort remains a provisional 44–72 person-weeks before contingency; no promised calendar savings. |
+| D20 | Optional local playback adapter; qualify dependencies first | Qt Multimedia is absent locally. A silent build must work; first probe pinned miniaudio/stb_vorbis with restricted decoders/input. SDK SBOMs seed an actual payload inventory. No automatic Qt downgrade or decoder/legal guarantees. |
+| D21 | Constant-2014 cents and explicit strong units | Remove nominal compounding from authoritative ledgers/thresholds. Work and daily rates differ; wide checked math rounds once and covers MSVC ARM64. Real supply/cost shocks remain explicit game rules. |
+| D22 | Prepared morning decisions and resumable execution | Due deliveries/rules/flows appear before work; save phase cursor and bounded continuation frames/receipts. Undo only unconsumed reversible allocations; unchanged date is not a universal refund entitlement. |
+| D23 | Complete serving and infrastructure contracts without expanding M3 | Explicit compute per task and separate support cost in M2; wholesale owned-capacity leasing in M5 supports the promised infrastructure path. One capacity reservation and one product task attribution, no double-counted host share. |
+| D24 | Keep strict century-end objectives, expose irreversible breaches | Immediate explanation/postmortem/continuation for failed final Domination/Utopia checks. Monopoly uses aggregate final-five-year work. Rolling early victories and grace allowances are deferred balance changes. |
+| D25 | Correct selective recommendations without speculative scope | Concrete evaluation findings and bounded delegation clarify existing systems. Close option-pool mechanics in M4; defer spin-off rivals, rigid hardware curves and older-Qt support until evidence warrants them. All review dispositions are recorded, not silently treated as new user requirements. |
 
 ## What was retained from Gemini
 
@@ -82,6 +88,8 @@ Retain the separable simulation/UI architecture, room-based navigation, geograph
 Correct or replace: Windows graphics defaults; automatic cross-platform/ARM packaging assumptions; a scalar intelligence formula with a fixed safety tax; guaranteed post-2026 eras; ideological executive stereotypes; corporate-plus-founder wealth double counting; automatic local-history prohibition; macro definitions that would leave debug code enabled under `#ifdef`; claims of universally patent-free video; relabeling third-party assets GPL; and incomplete victory definitions.
 
 ## Defaults requiring validation, not another permission round
+
+The later [Gemini4 review disposition](RECOMMENDATION_REVIEW.md) records the baseline 1.2 changes, rejected details, evidence and E1 task-ID mapping. Its archived source is advisory, with the same lower precedence as the original Gemini proposal. No review recommendation authorizes starting every milestone, changing system tools or publishing a product.
 
 US headquarters, six capability axes, eight world market regions, the default rival roster, initial finance values, progress gates, and victory thresholds are concrete selected defaults. The first implementation tasks can proceed with these. The user can revise them; no response is needed to begin M0. Engine viability, graphics/audio behavior, fun, performance, and balance require evidence rather than a philosophical approval meeting.
 

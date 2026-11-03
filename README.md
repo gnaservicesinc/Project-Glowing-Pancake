@@ -2,7 +2,7 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** planning baseline 1.1, updated 2026-11-03. The repository contains the game/editor design and implementation handoff, plus an initialized version record; it does not yet contain a playable game, editor executable, or working build commands. The next task is the M0 toolchain/packaging spike, not implementation of the entire simulation at once.
+**Current state:** planning baseline 1.2, updated 2026-11-03 after a selective Gemini4 review. The repository contains the game/editor design and implementation handoff, plus an initialized version record; it does not yet contain a playable game, editor executable, or working build commands. The next task is the M0 toolchain/packaging spike, not implementation of the entire simulation at once.
 
 ## Read the plan
 
@@ -22,6 +22,7 @@ A free, offline strategy game about founding an AI company in 2014 and guiding i
 | [Research](docs/RESEARCH.md) | Primary sources checked during planning |
 | [Project status](docs/STATUS.md) | Completed work, current limits, and next handoff |
 | [Planning history](docs/PLAN_CHANGELOG.md) | What changed between planning baselines |
+| [Gemini4 review decisions](docs/RECOMMENDATION_REVIEW.md) | Adopted, corrected and deferred recommendations, evidence and implementation gates |
 
 ## Work on the game
 
@@ -32,5 +33,7 @@ The selected stack is C++20 + Qt 6.12.x/QML with CMake/Ninja. Desktop targets ar
 The game needs **no backend, hosted model, player account, analytics, or in-game updater**. Local saves, autosaves, preferences, and campaign history are normal features. Installation and updates are handled outside the game by the chosen distribution platform.
 
 Content Studio will be a separate download/source target for authors editing a development checkout, with a searchable current-content library and linked trigger → effects/events canvas, equivalent forms/outline, tooltips and before/after tests. It is excluded from the base game. [The version manifest](project-versions.json) currently reserves `0.0.0-dev` planning identities; automated version controls and packaging remain implementation tasks.
+
+E1a delivers forms/outline and inspection before the first playable's content. E1b completes the required node canvas, graphical batch finalizer and three-author study before M4. Baseline 1.2 also clarifies checked math/constant-2014 money, morning decisions and saved continuations, finite inference/wholesale capacity, persistent UI models and objective-loss feedback. These are planning changes; no runtime behavior has been tested.
 
 Project code is licensed under [GNU GPLv3](LICENSE). Third-party assets/dependencies retain their own recorded licenses and credits. The original drafts are preserved unchanged in [the reference archive](docs/reference/README.md); the active plan above supersedes their suggestions.

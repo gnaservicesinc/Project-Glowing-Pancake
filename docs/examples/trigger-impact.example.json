@@ -17,11 +17,6 @@
       }
     ]
   },
-  "target_binding": "self.compute_lease",
-  "effect": {
-    "op": "apply_authorized_compute_price_multiplier",
-    "multiplier_basis_points": 9000
-  },
   "condition_only_boundary_cases": [
     {
       "cash_cents": 4999999,
@@ -62,9 +57,19 @@
     },
     {
       "description": "A valid rival binding is the wrong intended target; types alone cannot infer author intent.",
-      "target_binding": "rival.compute_lease",
-      "expected_failed_assertion": "target_binding == self.compute_lease"
+      "expected_failed_assertion": "target == self.compute_lease",
+      "target": "rival.compute_lease"
     }
   ],
-  "evidence_note": "These are expected examples to implement/test. No Studio or simulation currently executes this fixture."
+  "evidence_note": "These are expected examples to implement/test. No Studio or simulation currently executes this fixture.",
+  "currency_basis": "constant_2014_cents",
+  "fixture_kind": "effect_preview",
+  "scope": "company",
+  "effects": [
+    {
+      "target": "self.compute_lease",
+      "op": "apply_authorized_compute_price_multiplier",
+      "multiplier_basis_points": 9000
+    }
+  ]
 }

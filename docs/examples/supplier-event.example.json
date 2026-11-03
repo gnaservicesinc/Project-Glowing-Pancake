@@ -62,7 +62,8 @@
       "effects": [
         {
           "op": "open_negotiation",
-          "template_id": "deal.compute_exclusivity"
+          "template_id": "deal.compute_exclusivity",
+          "target": "self"
         }
       ],
       "next": "review_result"
@@ -79,7 +80,8 @@
       "effects": [
         {
           "op": "open_negotiation",
-          "template_id": "deal.compute_flexible_counteroffer"
+          "template_id": "deal.compute_flexible_counteroffer",
+          "target": "self"
         }
       ],
       "next": "counter_result"
@@ -96,7 +98,8 @@
       "effects": [
         {
           "op": "record_decision",
-          "value": "declined_exclusivity"
+          "value": "declined_exclusivity",
+          "target": "self"
         }
       ],
       "next": "decline_result"
@@ -119,5 +122,6 @@
     "exclusive": true,
     "board_observer_without_vote": true
   },
-  "commitment_rule": "Only a later confirmed negotiation may create the supplier contract."
+  "commitment_rule": "Only a later confirmed negotiation may create the supplier contract.",
+  "currency_basis": "constant_2014_cents"
 }

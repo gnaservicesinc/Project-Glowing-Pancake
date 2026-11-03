@@ -1,0 +1,137 @@
+{
+  "example_only": true,
+  "format_version": 1,
+  "currency_basis": "constant_2014_cents",
+  "evidence_note": "Hand-auditable planning expectations. Static arithmetic checks do not prove a runtime, allocation optimizer, save loader or objective implementation.",
+  "wide_mul_div_cases": [
+    {
+      "a": 100000000000000,
+      "b": 100000000,
+      "denominator": 300000000,
+      "expected_round_half_up": 33333333333333,
+      "purpose": "The intermediate exceeds int64 but the result fits."
+    },
+    {
+      "a": 9223372036854775807,
+      "b": 10000,
+      "denominator": 10000,
+      "expected_round_half_up": 9223372036854775807,
+      "purpose": "Narrow only after division."
+    },
+    {
+      "a": 9223372036854775807,
+      "b": 10000,
+      "denominator": 9999,
+      "expected_error": "final_result_out_of_range"
+    },
+    {
+      "a": 10,
+      "b": 3,
+      "denominator": 0,
+      "expected_error": "invalid_denominator"
+    }
+  ],
+  "multi_factor_data_cases": [
+    {
+      "unique_units": 100000000,
+      "quality_bp": 10000,
+      "relevance_bp": 10000,
+      "coverage_bp": 10000,
+      "expected_effective_units": 100000000
+    },
+    {
+      "unique_units": 3,
+      "quality_bp": 5000,
+      "relevance_bp": 5000,
+      "coverage_bp": 5000,
+      "expected_effective_units": 0,
+      "purpose": "Round 0.375 once, not each successive half-product."
+    }
+  ],
+  "capability_case": {
+    "baseline_bp": 1000,
+    "training_gain_bp": 4000,
+    "bottleneck_bp": 5000,
+    "recipe_fit_bp": 7500,
+    "ceiling_bp": 6000,
+    "expected_capability_bp": 2500
+  },
+  "budget_scaling_case": {
+    "remaining_tasks": 10,
+    "budget_cents": 100,
+    "tentative": [
+      {
+        "product_id": "a",
+        "tasks": 5,
+        "price_cents_per_task": 10
+      },
+      {
+        "product_id": "b",
+        "tasks": 5,
+        "price_cents_per_task": 20
+      }
+    ],
+    "tentative_cost_cents": 150,
+    "scaling_numerator": 100,
+    "scaling_denominator": 150,
+    "expected_after_floor": [
+      {
+        "product_id": "a",
+        "tasks": 3
+      },
+      {
+        "product_id": "b",
+        "tasks": 3
+      }
+    ],
+    "remainder_policy": "Equal fractional remainders break by product ID; assign only if the next task fits every constraint.",
+    "expected_final": [
+      {
+        "product_id": "a",
+        "tasks": 4
+      },
+      {
+        "product_id": "b",
+        "tasks": 3
+      }
+    ],
+    "expected_cost_cents": 100,
+    "expected_outside_tasks": 3,
+    "note": "A local budget-rationing example with sufficient product capacity, not a complete multi-segment optimizer."
+  },
+  "capacity_case": {
+    "available_milli_CU_per_day": 100000,
+    "training_milli_CU_per_day": 60000,
+    "tasks_per_day": 1000,
+    "inference_milli_CU_per_task": 20,
+    "expected_serving_milli_CU_per_day": 20000,
+    "expected_free_milli_CU_per_day": 20000
+  },
+  "objective_window_cases": [
+    {
+      "objective": "world_utopia",
+      "first_month": "2104-01",
+      "last_month": "2113-12",
+      "expected_months": 120,
+      "failed_required_checks": 1,
+      "expected_feasible": false,
+      "expected_action": "Explain breach immediately; offer postmortem or continuation."
+    },
+    {
+      "objective": "world_domination",
+      "first_month": "2109-01",
+      "last_month": "2113-12",
+      "expected_months": 60,
+      "failed_required_checks": 1,
+      "expected_feasible": false
+    },
+    {
+      "objective": "world_monopoly",
+      "first_month": "2109-01",
+      "last_month": "2113-12",
+      "expected_months": 60,
+      "single_weak_month_alone_proves_failure": false,
+      "rule": "Use aggregate delivered-task sums and any defensible remaining bounds."
+    }
+  ]
+}

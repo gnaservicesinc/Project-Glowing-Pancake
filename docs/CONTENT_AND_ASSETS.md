@@ -1,6 +1,6 @@
 # Content, art, audio, and provenance
 
-Baseline 1.1 · No production assets have been obtained yet
+Baseline 1.2 · No production assets have been obtained yet
 
 ## Writing direction
 
@@ -20,7 +20,7 @@ All platform/store content rules must be rechecked near publication. The project
 | Research | Six meaningful nodes | 60 nodes across seven tracks |
 | Dataset offers | Four with distinct tradeoffs | 24 offer families with renewable/scaled variants |
 | Hardware | Small leased pool; one replacement/upgrade choice | 18 families across reference and speculative eras |
-| Products | One enterprise contract channel | 12 templates across six channels |
+| Products | One enterprise contract channel | 12 templates across six model channels; wholesale compute contracts alongside them |
 | Rivals | Two startups + bounded heavyweight warning | Six domestic, six international, three heavyweights scheduled |
 | Executive templates | Three key relationships | 24 templates, combined with local fictional name/trait generation |
 | Events | Eight definitions | 120 definitions, including recovery and opportunity events |
@@ -33,7 +33,7 @@ Every strategic path needs content: profitable specialist, open ecosystem, front
 
 ## Graphical content production
 
-Human authors use the separately downloaded [Content Studio](CONTENT_EDITOR.md) to browse and maintain the repository's current content. A categorized library links events/flows, scenarios, research, hardware, people, policies, localization and asset records. Trigger boxes connect to ordered effects and events; node graph, forms and outline expose one definition with searchable references and useful scope/unit/tooltips. Ordinary content editing does not require scripts or raw JSON. The base game contains only reviewed runtime data.
+Human authors use the separately downloaded [Content Studio](CONTENT_EDITOR.md) to browse and maintain the repository's current content. A categorized library links events/flows, scenarios, research, hardware, people, policies, localization and asset records. Trigger boxes connect to ordered effects and events; node graph, forms and outline expose one definition with searchable references and useful scope/unit/tooltips. Ordinary content editing does not require scripts or raw JSON. The base game contains only reviewed runtime data. E1a first supplies complete forms/outline and inspection for slice events; E1b completes the linked-box canvas and graphical finalizer before M4.
 
 Trigger truth/path/scope inspection and before/after effect previews are mandatory. Authors can test threshold boundaries, inspect affected targets and timed behavior, and catch inverted signs or wrong references. Human writing/review remains responsible for story meaning and balance; a valid graph is not an automatically good event. Finalized batches update versions through [the shared versioning workflow](VERSIONING.md), without publishing a game.
 
@@ -44,11 +44,11 @@ Each event needs:
 1. A stable ID and definition revision within a versioned content collection, localization keys, permitted era/scenario and content tags.
 2. Trigger facts based on actual simulation state, with prerequisites and an explanatory cause visible to the player.
 3. A concrete situation and a small set of distinct choices, including a reasonable defer/decline path where applicable.
-4. Explicit lifecycle (once, recurring, interval, scheduled or continuous), occurrence scope, overlap/cooldown/expiry settings, typed effects, ordered links and due dates; no raw arbitrary code. Clearly identify terms still being negotiated.
+4. Explicit lifecycle (once, recurring, interval, scheduled or continuous), relative/fixed anchor, occurrence scope, overlap/cooldown/expiry settings, per-effect typed targets, ordered links and due dates; no raw arbitrary code. Clearly identify terms still being negotiated.
 5. Conditional delayed consequences tied to the actual decision and later conditions, not an invisible moral score.
 6. A test fixture for eligibility/path/targets, threshold and effect direction, each choice/result, recurrence/continuous entry and exit, save/reload while pending, and the default at a disclosed deadline. Each state-changing segment produces an actual before/after trace.
 
-The [supplier example](examples/supplier-event.example.json) demonstrates a trigger and branching negotiation opportunity with actual-result nodes. The [lifecycle gallery](examples/flow-lifecycles.example.json) and [impact fixture](examples/trigger-impact.example.json) illustrate timing and direction checks. These are not complete production schemas. Do not mechanically grant the contract just because the event opened a negotiation. Decision text and mechanical effects must agree; a choice labeled no commitment must not spend money. News/dialogue/hidden presentation is independent of lifecycle, so a recurring or continuous rule does not need a special unrelated event language.
+The [supplier example](examples/supplier-event.example.json) demonstrates a trigger and branching negotiation opportunity with actual-result nodes. The [lifecycle gallery](examples/flow-lifecycles.example.json) and [impact fixture](examples/trigger-impact.example.json) illustrate timing and direction checks. These are not complete production schemas. Do not mechanically grant the contract just because the event opened a negotiation. Decision text and mechanical effects must agree; a choice labeled no commitment must not spend money. All authored money uses constant-2014 cents. Presentation urgency (required decision, actionable inbox, informational digest) is explicit and uses actual simulated deadlines. News/dialogue/hidden presentation is independent of lifecycle, so a recurring or continuous rule does not need a special unrelated event language.
 
 ## Visual production
 
@@ -64,7 +64,7 @@ Possible low-cost UI source: Kenney's asset pages identify their game assets as 
 
 Prefer ENDE's human-created catalog. Maintain a coherent, restrained ambient/electronic palette with low distraction during finance/research work. Tension tracks should signal a changed situation without making routine decisions feel like emergencies. Music can be muted independently; critical cues also appear as text/icons. No generated soundtrack and no mandatory voice acting.
 
-Use local Ogg Vorbis music only after decoder deployment is verified across the native matrix; short PCM WAV cues are the conservative effect format. Store original downloaded sources if redistribution permits, and record any encoding, edit, loop points and volume adjustment. A site license and a particular track's license are both checked; free to download is not a sufficient rights record. The ENDE standard license currently identifies CC BY 4.0 and game use. Keep attribution even where the site offers a waiver. [ENDE license](https://ende.app/en/standard-license).
+Audio uses an optional playback adapter and silent fallback, without requiring the missing local Qt Multimedia module. Probe/pin miniaudio plus stb_vorbis before adopting it; disable unneeded decoders and restrict accepted input encodings. Use local Ogg Vorbis music only after decoder deployment is verified across the native matrix; short PCM WAV cues are the conservative effect format. Store original downloaded sources if redistribution permits, and record any encoding, edit, loop points and volume adjustment. A site license and a particular track's license are both checked; free to download is not a sufficient rights record. The ENDE standard license currently identifies CC BY 4.0 and game use. Keep attribution even where the site offers a waiver. [ENDE license](https://ende.app/en/standard-license).
 
 ## License and asset register
 

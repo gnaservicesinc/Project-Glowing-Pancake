@@ -1,10 +1,10 @@
 # Version tracking and release identity
 
-Planning baseline 1.1 · 2026-11-03 · Metadata initialized; automation is future implementation
+Planning baseline 1.2 · 2026-11-03 · Metadata initialized; automation is future implementation
 
 ## 1. One source, several different identities
 
-[`project-versions.json`](../project-versions.json) is the checked-in source of game, editor, content, and compatibility versions. The initial `0.0.0-dev` values mean no application/content release exists. `phase: planning` prevents those placeholders being mistaken for publishable artifacts. Compatibility values of 1 reserve the first formats; no corresponding loader/schema has been implemented yet. Documentation baseline 1.1 is not application version 1.1.
+[`project-versions.json`](../project-versions.json) is the checked-in source of game, editor, content, and compatibility versions. The initial `0.0.0-dev` values mean no application/content release exists. `phase: planning` prevents those placeholders being mistaken for publishable artifacts. Compatibility values of 1 reserve the first formats; no corresponding loader/schema has been implemented yet. Documentation baseline 1.2 is not an application release number.
 
 | Identity | Meaning | Changes when |
 | --- | --- | --- |
@@ -52,7 +52,7 @@ Future tag conventions are `game-vX.Y.Z` and `editor-vX.Y.Z`, allowing independe
 
 ## 4. Existing saves and event chains
 
-Saves retain exact content/rules/schema identity, definition revisions for pending/active flows, node/context/choice state, cooldowns and occurrence counters. A new content version cannot silently give a pending choice different effects, reset a once-only event, or apply a continuous modifier twice.
+Saves retain exact content/rules/schema identity, definition revisions for pending/active flows, node/continuation-stack/context/choice state, daily phase cursor, cooldowns and occurrence counters. A new content version cannot silently give a pending choice different effects, reset a once-only event, or apply a continuous modifier twice.
 
 After a game/platform update, migrations either retain required retired definitions until active instances finish or explicitly map old nodes/IDs/state into compatible definitions. Any changed continuation is documented in migration metadata. Preserve the original save and offer a clear unsupported-version error when no safe path exists. A pure text correction can be compatible, but it still changes shipped content identity. Cross-version continuation is not claimed to reproduce an older ruleset's future exactly.
 
@@ -71,7 +71,7 @@ The workflow builds the game-only package from a fixed authorized release commit
 ## 6. Implementation sequence and acceptance
 
 - M0-05 implements the metadata reader/checks and shared build identity. `project-versions.json` currently supplies only the initial tracking record.
-- M1-02/M1-06 implement schema/revision/hash/event-state contracts; E1 supplies graphical batch finalization and version controls.
+- M1-02/M1-06 implement schema/revision/hash/event-state contracts. E1a supplies a small safe validation/version tool for reviewed internal snapshots; E1b wraps that same writer in graphical batch finalization/version controls before M4. Neither stage bypasses revisions, conflict checks, recovery or package identity.
 - E2 adds impact/compatibility tools for broader content and tests save continuation across content revisions.
 - M9 connects tag/version/artifact/source/itch identity; M10 connects the existing reader to Snapcraft rather than inventing new version numbers.
 

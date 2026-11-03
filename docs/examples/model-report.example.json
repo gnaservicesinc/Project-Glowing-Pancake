@@ -23,13 +23,27 @@
     "limitations": [
       "Evidence is strongest for the contracted document categories.",
       "Handwriting and new categories require a separate evaluation."
+    ],
+    "findings": [
+      {
+        "id": "finding.scanned_tables",
+        "task_scope": "Document classification on scanned tables",
+        "observed_limitation": "Layout changes reduce reliability outside the evaluated document formats.",
+        "evidence": "Held-out customer subgroup; coverage remains incomplete.",
+        "responses": [
+          "Acquire suitable licensed examples and retrain/re-evaluate.",
+          "Require human review for this subgroup, with support and latency costs.",
+          "Exclude this subgroup from the promised contract scope."
+        ]
+      }
     ]
   },
   "deployment": {
     "human_review_for_uncertain_results": true,
     "external_tool_permissions": [],
     "staged_rollout_basis_points": 1000,
-    "rollback_version_available": true
+    "rollback_version_available": true,
+    "inference_milli_CU_per_task": 20
   },
   "report_note": "Scores and categories are fictional game abstractions, not real benchmarks or scientific AGI claims."
 }

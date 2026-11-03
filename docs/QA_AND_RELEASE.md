@@ -1,6 +1,6 @@
 # Verification, playtesting, and release gates
 
-Baseline 1.1 · These are planned checks, not results from a built game/editor
+Baseline 1.2 · These are planned checks, not results from a built game/editor
 
 ## 1. Evidence rules
 
@@ -13,20 +13,22 @@ Current planning verification is limited to document consistency, links, valid e
 | Area | Required evidence |
 | --- | --- |
 | Calendar | Leap years, exact 100-year boundary, due-date phases, month settlements, succession and long sandbox dates |
-| Determinism | Matching state hashes after a fixed command sequence across toolchains/architectures; forecasts/rendering leave RNG unchanged |
-| Money and equity | Balanced postings; conserved ownership; commitments versus expenditures; no double-counted cloud power, credit revenue, dividends or terminal wealth |
-| Capacity | No compute/staff overbooking, finite serving, maintenance/outages, cancellation/resume, protected capacity and delivery delays |
-| Demand | Common-snapshot fairness; finite budgets/tasks; outside option; eligibility; refunds; free/open distribution does not invent use or revenue |
+| Determinism | Exact canonical hashes for a 1,000-day scripted fixture on Clang/GCC/MSVC and five target architectures; separately sequenced RNG draws, total-order ties, integer-only state; previews leave RNG unchanged |
+| Money and equity | Constant-2014 cents throughout; balanced postings; wide products with fitting quotients, invalid denominators/final overflow; multi-factor rounding; reserved-pool grants/vesting/departure/dilution; no duplicated cloud power, credit revenue or terminal wealth |
+| Capacity | Compute-per-task consumption and support-cost separation; no compute/staff overbooking; wholesale buyer/seller conservation, no circular resale; maintenance/outages, cancellation, serving protection and delivery delays |
+| Demand | Common-snapshot fairness; unequal prices, rational budget scaling, zero-price work, constrained residues and cross-segment supply; installed-share churn and forced exits; termination bound; all refused tasks accounted outside, no invented use/revenue |
 | Research/models | Prerequisites, checked units, diminishing returns, independent evidence, contamination, lineage and checkpoint duplication prevention |
 | People/governance | Workload/morale lags, escalating disputes, actual voting rights, conserved merger obligations, succession continuity |
 | Rival rules | Shared command validation, finite financing/capacity, imperfect information, warning period and hysteresis |
 | Politics/world | Calendar and delayed enforcement, jurisdiction, reversible mandates, macro lags, no direct welfare-from-spend or domination-from-advertising shortcut |
-| Objectives | Every threshold, exact boundary, sustained window, interrupted window, regional floor, same-day ties, scenario compatibility, and correct postmortem |
-| Persistence | Atomic save failure, prior-save recovery, unknown formats, corruption, file bounds, migrations, queued events, commitments, objective windows, and next-day hash parity |
-| Content flows | Typed triggers/scopes/units; ordered fan-out; actual choice results; once/recurring/interval/scheduled/continuous state; no duplicate effects/rerolls, immediate cycles or modifier drift |
+| Objectives | Exact final 60/120 month-end checks, aggregate Monopoly versus every-check Domination/Utopia; immediate irreversible-breach explanation/continuation, alert reload, thresholds, regional floors, ties and correct postmortem |
+| Persistence | Atomic save failure, prior-save recovery, unknown formats, corruption/bounds, migrations, morning phase cursor, nested continuation frames, installed shares, objective windows/alerts and next-day hash parity |
+| Content flows | Explicit typed targets/relative anchors; nested numbered fan-out/delay/dialogue return; depth refusal; five lifecycles; natural enter/hold/exit versus labeled synthetic cleanup; no duplicate effects/rerolls or modifier drift |
 | Versions | Distinct game/editor/content identities, definition revisions, content hashes, format/rules compatibility, package/tag/source consistency and pending-chain migration |
 
 Tests should target behavior and failure modes, not mirror implementation. Use tiny hand-auditable fixtures for ledger/capacity math and seeded integration runs for coupled systems. No arbitrary test-count target. If a bug escapes, add a focused regression only when it captures a meaningful failure mechanism.
+
+Boundary arithmetic and allocation expectations are illustrated in [simulation boundary examples](examples/simulation-boundaries.example.json). They remain design fixtures until real implementations execute them. Test that a due delivery/law/flow is visible while paused on its morning, and that reload/command draining does not apply it again. Undo may release unconsumed reservations; same-date cancellation must not refund delivered information/rights or rewind a random result.
 
 ## 3. Scenario suite
 
@@ -55,6 +57,8 @@ Inspect actual application screens at 1280×720 and higher resolutions, 100/150/
 
 Verify screen-reader labels and navigation on macOS VoiceOver and representative Windows/Linux readers before claiming corresponding support. Do not promise universal screen-reader compatibility from attached properties alone. If a map/chart cannot be read directly, its table must provide equivalent decision information. Audio never carries a critical fact alone. Save/load and error dialogs must work without a mouse.
 
+While snapshots arrive at the normal 10 Hz cap, exercise table edits, sorting, insert/remove/move, keyboard selection and scroll anchors. Persistent bridge models must update changed roles without routine resets or lost focus. Test required/actionable/informational notification routing and fast-forward deadlines; routine news must not cause popup fatigue. Held-out evidence should explain a concrete subgroup limitation without exposing all latent flaws.
+
 ## 6. Privacy and offline acceptance
 
 The privacy requirement is no collection/transmission of player information, not a ban on local persistence. Local settings, saves, autosaves, and campaign history are expected. The shipped game has no server, account system, analytics, tracking IDs, cloud dependency, crash uploader, or updater.
@@ -67,6 +71,8 @@ Required release evidence:
 4. Confirm default Release excludes developer logging/export controls; debug builds also have no telemetry path. Any support diagnostic export is explicit, local, and inspectable.
 5. Confirm only a deliberate store/source-link click opens the system browser, with no player/session payload. Offline credits remain complete.
 6. Separate the game's process from itch/Snap client update traffic in the test report. The distribution clients' connections do not justify networking in game code.
+
+M0 resource-guard tests precede the release audit: reject remote QML/images/fonts/requests, redirect attempts, remote file hosts and canonical-path escapes before transport, while approved bundled/local resources work. QML guards are not a process-wide network firewall; observe native/dependency behavior too. Audio may not request microphone/capture access.
 
 An external website URL used for attribution is not itself a background connection. Do not delete useful source credits to satisfy a superficial URL search; inspect whether anything actually loads or sends data.
 
@@ -82,7 +88,7 @@ For each of the five OS/architecture combinations, download the actual candidate
 
 Inspect bundled libraries, runtime search paths, transitive dependencies and licenses. Packages include corresponding game source/build information, third-party source/notice material as required, offline credits, installation instructions and checksums. No private paths, API keys, access tokens, local developer saves, large test outputs, or unreviewed asset files may enter a release.
 
-Test a downloaded Mac bundle's signing/quarantine behavior; the baseline is ad-hoc signed and not notarized. Installation guidance must describe that accurately and must not recommend global security disabling. Do not automatically launch from installation scripts. ARM emulation or CI compilation does not substitute for native graphics/audio acceptance.
+Test a downloaded Mac bundle's signing/quarantine behavior; the baseline is ad-hoc signed and not notarized. Verify Apple's attempted-launch → Privacy & Security → Open Anyway per-app route where available, and document managed-system restrictions honestly. Test browser ZIP and any supported itch-client route; neither Control-click nor client extraction is a guaranteed bypass. Do not recommend global security disabling or auto-launch from installation scripts. ARM emulation or CI compilation does not substitute for native graphics/audio acceptance. [Apple guidance](https://support.apple.com/en-us/102445).
 
 ## 9. Release checklist
 
@@ -105,12 +111,14 @@ Snap has its own later Ubuntu-based qualification: amd64/arm64, confinement inte
 
 Studio tests use the same content compiler/runtime as the game, copied fixture state and copied RNG streams. Check graph/form/outline round-trip parity, current-content browsing/search, stable IDs, uses/used-by, typed ports, units and target bindings. Verify the exact event linked, not only that some similarly named event appears.
 
-For trigger inspection, verify nested all/any/not, true/false labels, inclusive boundaries, temporal checks, missing targets and matched-scope counts. For effect inspection, verify before/after signs, percentage versus percentage-point arithmetic, execution order, ledger postings, resource refusal, continuous entry/active/exit and cleanup. Plant a valid-but-inverted multiplier and a valid-but-wrong-company target; fixture intent assertions and visual inspection must reveal them even though types alone may pass. Unknown/malformed facts are errors, not false matches. Preview results cannot be claimed as exhaustive long-run proof.
+For trigger inspection, verify nested all/any/not, true/false labels, inclusive boundaries, temporal/relative-anchor checks, missing targets and matched-scope counts. For effect inspection, verify before/after signs, percentage versus percentage-point arithmetic, explicit targets, order, ledger postings and resource refusal. Continuous fixtures must enter/hold/exit through normal conditions; separately labeled forced-removal probes test only cleanup. Preserve unrelated modifier/base changes. Plant a valid-but-inverted multiplier and a valid-but-wrong-company target; intent assertions and inspection must reveal them even when types pass. Unknown facts are errors, not false matches. Previews do not prove exhaustive long-run impacts.
 
 Test each lifecycle and branching conversation before/after save/reload, including delayed hidden consequences, cooldowns, active modifiers and pending results. Reopening cannot reroll or repeat committed effects. Fast-forward cannot skip a decision or apply an end-of-day event retroactively. Test runtime step/queue budget refusal and recovery without a CPU-dependent timeout or silent dropped event.
+
+Save while the first child of a nested sequence waits on a delay or dialogue, then complete it and verify each later sibling/return executes exactly once in order. Test the eight-frame boundary and excessive depth refusal. Opening/panning/zooming a graph must leave tracked layouts and runtime hashes untouched; intentional integer-coordinate moves may change layout only.
 
 Repository write tests use disposable checkouts: external concurrent edits, unknown/new schema, unsupported fields, missing/renamed references, path escapes, asset provenance, undo/redo, crash interruption and journal recovery. No test may overwrite the real project or launch/publish another product. Drafts can remain invalid without entering runtime packs; approved content cannot release with errors.
 
 Version cases: no-op/layout save; text-only patch; batch changing three definitions once each; new additive event; schema/rules break; content-only game package update; editor-only UI update; stale unfinalized content; reused version with changed hash; game/editor tag mix-up; preserved pending-dialogue effects after content migration. Confirm displayed About/build/filename/source/content versions agree. Snap's later metadata uses game version while store revision/channel remain separate identities.
 
-E1's human gate uses three authors, including a scenario writer and a non-scripter. Each should browse existing content, build trigger→multiple effects/events, create a dialogue/result branch and delayed consequence, inspect/catch planted sign/scope errors, then test/save/reopen/finalize without editing text files. Summarize manual consented feedback; do not add analytics. E2 qualifies independent native editor artifacts, keyboard/scale/help/node navigation, repository IO and offline behavior, and matches preview semantics to the current game runtime before M8.
+E1a requires an engineering walkthrough of complete forms/outline, inspector and safe reviewed internal snapshots before M3 content; it is not a claim of human usability. E1b's human gate uses three authors, including a scenario writer and a non-scripter. Each browses content, builds trigger→multiple effects/events with the canvas, creates a dialogue/result branch and delay, catches planted sign/scope errors, then tests/saves/reopens/finalizes without commands or text edits. E1b and M3 both close before M4. Summarize manual consented feedback; no analytics. E2 independently qualifies editor artifacts and current-runtime parity before M8.

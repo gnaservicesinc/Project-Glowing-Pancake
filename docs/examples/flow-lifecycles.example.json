@@ -61,7 +61,8 @@
           "effects": [
             {
               "op": "record_decision",
-              "value": "compute_review_due"
+              "value": "compute_review_due",
+              "target": "self"
             }
           ],
           "next": "end"
@@ -90,9 +91,16 @@
           "unit": "calendar_months",
           "value": 1
         },
-        "anchor_date": "2014-02-01",
         "max_occurrences_per_scope": 12,
-        "miss_policy": "skip"
+        "miss_policy": "skip",
+        "anchor": {
+          "kind": "scope_created",
+          "offset": {
+            "unit": "calendar_months",
+            "value": 1
+          },
+          "invalid_day": "clamp_to_month_end"
+        }
       },
       "entry_node": "news",
       "nodes": {
@@ -176,7 +184,8 @@
               "op": "register_owned_modifier",
               "key": "sustained_workload",
               "field": "research_coordination_basis_points",
-              "add_basis_points": -500
+              "add_basis_points": -500,
+              "target": "self"
             }
           ],
           "next": "end"
@@ -186,7 +195,8 @@
           "effects": [
             {
               "op": "remove_owned_modifier",
-              "key": "sustained_workload"
+              "key": "sustained_workload",
+              "target": "self"
             }
           ],
           "next": "end"
@@ -194,6 +204,121 @@
         "end": {
           "kind": "end"
         }
+      }
+    },
+    {
+      "id": "flow.hidden.sequence_resume",
+      "revision": 1,
+      "scope": "company",
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "company.is_operating",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "lifecycle": {
+        "mode": "once",
+        "occurrence_scope": "company",
+        "max_occurrences_per_scope": 1
+      },
+      "entry_node": "outer_sequence",
+      "nodes": {
+        "outer_sequence": {
+          "kind": "sequence",
+          "children": [
+            "inner_sequence",
+            "record_outer"
+          ],
+          "next": "complete"
+        },
+        "inner_sequence": {
+          "kind": "sequence",
+          "children": [
+            "wait",
+            "record_inner"
+          ],
+          "next": "inner_return"
+        },
+        "wait": {
+          "kind": "delay",
+          "duration_days": 14,
+          "next": "wait_return"
+        },
+        "wait_return": {
+          "kind": "end"
+        },
+        "record_inner": {
+          "kind": "effect",
+          "effects": [
+            {
+              "target": "self",
+              "op": "record_decision",
+              "value": "inner_done"
+            }
+          ],
+          "next": "inner_branch_return"
+        },
+        "inner_branch_return": {
+          "kind": "end"
+        },
+        "inner_return": {
+          "kind": "end"
+        },
+        "record_outer": {
+          "kind": "effect",
+          "effects": [
+            {
+              "target": "self",
+              "op": "record_decision",
+              "value": "outer_done"
+            }
+          ],
+          "next": "outer_return"
+        },
+        "outer_return": {
+          "kind": "end"
+        },
+        "complete": {
+          "kind": "end"
+        }
+      },
+      "saved_instance_example": {
+        "definition_revision": 1,
+        "captured_scope": "company.example",
+        "current_node": "wait",
+        "delay": {
+          "due_date": "2014-01-15",
+          "resume_node": "wait_return"
+        },
+        "continuation_stack": [
+          {
+            "sequence_node": "outer_sequence",
+            "next_child_index": 1,
+            "return_node": "complete",
+            "context": {
+              "self": "company.example"
+            }
+          },
+          {
+            "sequence_node": "inner_sequence",
+            "next_child_index": 1,
+            "return_node": "inner_return",
+            "context": {
+              "self": "company.example"
+            }
+          }
+        ],
+        "index_base": 0,
+        "expected_effect_order_after_resume": [
+          "inner_done",
+          "outer_done"
+        ],
+        "expected_occurrences_each": 1,
+        "maximum_continuation_frames": 8,
+        "evidence_note": "Illustrative saved stack at the first delayed child; no runtime has executed it."
       }
     }
   ]

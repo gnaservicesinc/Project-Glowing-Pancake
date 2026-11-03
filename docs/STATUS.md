@@ -1,38 +1,40 @@
 # Project status and next handoff
 
-Updated 2026-11-03
+Updated 2026-11-03 · Planning baseline 1.2
 
 ## Completed
 
-- Planning baseline 1.1: game design, simulation mechanics, technical architecture, requirements/decisions, roadmap, task backlog, acquisition/access inventory, content/assets, QA/release and primary research, expanded with separate graphical Content Studio and version tracking contracts.
-- Original user draft and Gemini proposal preserved verbatim with source fingerprints. The Gemini document remains advisory reference.
-- Privacy clarified: local saves, autosaves, settings and campaign history are allowed. The game collects/transmits no player information and needs no backend or in-game updater; distribution clients handle updates.
-- Root repository instructions, seven reusable agent role briefs including content-editor, task template and concrete first assignment prepared.
-- Separate Studio design: current-content library; trigger→effects/events node graphs and forms/outline; news/dialogue/hidden presentation; five lifecycles; trigger truth/path/scope and before/after effect inspection; safe authoring/version controls. References are conceptual; supplied URLAlchemist source inspected read-only.
-- Central `project-versions.json` initialized with planning-only `0.0.0-dev` game/editor/content identities and reserved first compatibility formats. Automatic version reading/bumping/build/publishing remains unimplemented.
-- Five illustrative balance/model/flow/impact JSON files supplied, including boundary/sign/wrong-target controls; these are examples, not a production loader or passing runtime tests.
+- Reviewed all 21 sections of the supplied Gemini4 recommendations against baseline 1.1 (`a218fc6`), the owning specifications, fresh local evidence and primary technical sources. [Disposition record](RECOMMENDATION_REVIEW.md) explains every adopted, corrected or deferred recommendation and its implementation gate.
+- Updated game/simulation/technical contracts, roadmap/backlog, Studio/versioning, QA, resource inventory and role briefs together. Clarified checked wide arithmetic/strong units, constant-2014 cents, prepared mornings and saved continuation stacks, explicit effects/anchors, finite inference, M5 wholesale capacity, persistent UI models and objective-breach feedback.
+- Split E1 into E1a forms/library/inspection and safe internal snapshots before M3 content, then E1b required node canvas/graphical finalizer/three-author study before M4. Full authoring scope remains required. Effort is resequenced, with no measured calendar-saving claim.
+- Added concrete scoped evaluation findings, reserved-pool equity compensation and bounded late-game policies. Deferred blanket refunds, automatic Qt downgrades, rigid hardware growth, speculative spin-off entrants and softened victory windows.
+- Preserved the two original drafts and newly archived Gemini4 review verbatim with SHA-256 fingerprints. Sources remain advisory; no embedded commands were executed. User-supplied files outside the repository are unchanged.
+- Six illustrative JSON contracts now cover balance, model report, supplier opportunity, six lifecycle graphs including nested continuation state, effect-direction controls and numerical/window boundaries. These are design examples, not production schemas or passing runtime fixtures.
+- Existing planning-only `project-versions.json` remains unchanged. No game/editor/content release identity was fabricated. Original offline privacy, separate editor packaging, content/provenance and no-auto-launch rules remain in force.
 
 ## Implementation state
 
-**M0 implementation has not started.** There is no CMake project, make.sh, CI workflow, game/editor executable, application test suite, licensed production asset collection, or public release. Build commands and Studio/version automation are future contracts. All implementation backlog items remain unchecked. E1 precedes the first playable content pass; E2 closes before bulk content.
+**M0 implementation has not started.** There is no CMake project, make.sh, CI workflow, game/editor executable, application test suite, production asset collection or public release. All 50 implementation tasks remain unchecked. E1a enables early gameplay tests; M4 requires both M3 and E1b. E2 closes before bulk content.
 
-The repository/tool inventory confirmed a public reachable GitHub remote with reported push permission, local Qt 6.12.0, CMake and Ninja. Cross-platform packages, usable graphics/audio backends, compiler completeness, actual Actions execution and native-device access remain to be proven.
+Review-time local checks confirmed Qt 6.12.0, missing Qt Multimedia CMake module, installed Qt SBOMs (one JSON parsed), default versus Apple compiler resolution and approximately 32.5 GiB free. Compiler/SDK paths need a coherent selected Xcode installation. Exact five-target Qt acquisition, Actions execution, graphics/audio backends, deployed licensing and native-device access still require M0/qualification evidence.
 
 ## Planning verification
 
-- Baseline 1.1 checks passed across 26 active Markdown documents and 67 relative file links, including fences and whitespace.
-- Five example JSON files and the planning-only version manifest parse; component placeholders and reserved compatibility values are consistent.
-- All 48 task IDs are unique, dependencies resolve and the task graph is acyclic. Seven role briefs are present.
-- Six illustrative flows cover all five lifecycle modes; node links/default choices resolve and no immediate example cycles/unreachable nodes were found.
-- Opening balance/ownership/capacity, threshold boundary and positive/negative multiplier arithmetic, roadmap totals/reserve and exact campaign interval reconcile.
-- Original draft archive bytes/SHA-256 still match both provided files. Their original whitespace remains intact.
+Static checks for this revision passed:
 
-These are static planning/example consistency checks. No game/editor/runtime/performance tests have been executed; expected fixture assertions are not passing application evidence.
+- 28 active Markdown documents and 86 relative file/anchor links; tables, fences and whitespace.
+- Six example JSON files plus the unchanged planning manifest; integer-only values and explicit effect targets.
+- 50 unique open tasks, resolved acyclic dependencies and E1a/M3/E1b/M4 gates.
+- Seven flow examples and 29 nodes covering five lifecycles; resolved/reachable acyclic links and a hand-walk of nested saved continuations in the specified order.
+- Wide/single-round arithmetic, constrained budget residues, opening finance/ownership, serving capacity, effect boundaries/direction, exact 60/120-month windows and the 36,524-day campaign interval (2100 is not a leap year).
+- Roadmap effort/reserve arithmetic; three archive hashes/bytes and all 21 review dispositions; component manifest unchanged from `a218fc6`.
+
+These are document/data/example checks only. No game/editor/runtime, UI performance, native package, human usability or balance tests have run. Expected fixture assertions are not passing application evidence. The numerical multi-segment allocation procedure remains an explicit M2-03 implementation/qualification gate, not a completed optimizer.
 
 ## Next task
 
-**M0-01 — Record toolchain and platform feasibility**, using `agents/roles/build-release.md`. Inventory installed compiler/Qt modules, license/dependency implications, five native CI acquisition paths, local disk constraints and native test access. No large local installation or store publication is needed. Then implement M0-02, the Release-default build skeleton.
+**M0-01 — Record toolchain and platform feasibility**, using `agents/roles/build-release.md`. Inventory a coherent existing compiler/SDK, Qt modules/SBOM/dependency choices, exact five-target acquisition paths, optional audio candidate, disk limits and native test access. Record actual findings without large local installs or store publication. Review-time spot checks do not close this task. Then implement M0-02, the Release-default skeleton.
 
-No user response blocks the initial M0 inspection. Later needs are store publishing access, native ARM test coverage, final art/music/branding selection and human playtest sessions; see `docs/NEEDS_AND_ACCESS.md`.
+No user answer blocks initial M0 inspection. Later needs include native ARM devices, manually arranged player/author sessions, final art/music/branding and publishing access; see [needs and access](NEEDS_AND_ACCESS.md).
 
-M0-05 will implement the shared version reader; M1-06 supplies the graph runtime/inspection traces; E1 makes that usable by human content authors. Revised full game+Studio estimate is 44–72 person-weeks before contingency (55–90 with 25% reserve), to be re-estimated after author usability testing. Planning history is in `docs/PLAN_CHANGELOG.md`.
+Provisional estimate: 13–21 person-weeks through initial M3 with E1a; 15–25 including E1b before M4; 44–72 through M9 before reserve (55–90 with 25%). Re-estimate after M0, first gameplay and author testing. [Planning history](PLAN_CHANGELOG.md) records the changes.

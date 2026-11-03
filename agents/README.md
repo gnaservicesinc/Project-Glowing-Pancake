@@ -22,7 +22,7 @@ One agent can use multiple briefs where a task crosses boundaries. Parallel agen
 
 After M0-01, assign M0-02. Do not jump directly from the design to implementing the century-wide simulation. The planning baseline is complete; code/build scaffolding has not yet been created.
 
-M0-05 establishes the version-reader foundation; M1-06 establishes the shared flow runtime. E1 builds the minimum usable Studio before M3 finalizes its eight events. E2 expands authoring as schemas mature and closes before M8's content pass. Follow those gates; do not hand authors a graph that bypasses validation or differs from gameplay.
+M0-05 establishes the version-reader foundation; M1-06 establishes the shared flow runtime. E1a builds complete forms/outline and inspection before M3 finalizes its eight events. E1b completes the required node canvas, graphical finalizer and three-author study before M4; it need not block the first gameplay tests. E2 expands authoring as schemas mature and closes before M8's content pass. Follow those gates; do not hand authors a graph that bypasses validation or differs from gameplay.
 
 ## Task and handoff format
 

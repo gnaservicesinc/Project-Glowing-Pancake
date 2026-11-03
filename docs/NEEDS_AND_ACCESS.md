@@ -8,23 +8,24 @@ Checked 2026-11-03. This is a staged list of resources, not a request to purchas
 | --- | --- |
 | Local repository | `/opt/AI Startup/Project-Glowing-Pancake`; initial `main` matched `origin/main`; existing GPLv3 license |
 | Remote repository | `gnaservicesinc/Project-Glowing-Pancake`, public; connector reports push/admin permission; SSH remote read succeeded. Actual task push must still be checked when performed. |
-| macOS Qt | `/opt/Qt/6.12.0/macos`; qmake reports 6.12.0. Other OS SDKs and actual module/deployment coverage are not yet checked. |
+| macOS Qt | `/opt/Qt/6.12.0/macos`; qmake reports 6.12.0. Review-time inspection found no Qt6Multimedia CMake module and found installed SPDX/CycloneDX SBOMs. Other OS SDK acquisition and actual deployed coverage remain M0 work. |
+| Compiler spot check | Default LLVM Clang 23.1.3 at `/usr/local/bin/clang++`; Apple Clang 21.0.0 via `/usr/bin/clang++`. `xcrun` reported compiler/SDK paths under different Xcode app roots; M0 must select/verify one coherent toolchain before Qt configuration. No compilation/linkage proof yet. |
 | CMake and Ninja | Installed; versions reported 4.4.4 and 1.13.2 respectively. This does not prove the compiler/deployment toolchain. |
 | Other authoring tools | GameMaker and Ren'Py application bundles exist. Not selected; no extra engine setup is requested. |
 | Original design sources | Both drafts archived verbatim in Git with SHA-256 fingerprints |
 | Editor references | Official Plague Inc./Paradox guides reviewed; supplied `/opt/URLAlchemist/Repo/URLAlchemist` source inspected read-only for node/catalog/layout concepts. No code copied or reference-project commands executed. |
 | Version tracking seed | `project-versions.json` initialized with planning-only component versions and reserved first compatibility formats; no version/build automation yet |
-| Local disk | Approximately 12 GB free at planning time; transient measurement, not a durable budget. Avoid heavy SDK/package builds here. |
+| Local disk | Approximately 32.5 GiB free at the baseline 1.2 spot check, superseding the earlier 12 GB observation. Transient measurement, not a durable budget; avoid heavy local SDK/package staging. |
 
 ## Before and during M0
 
 | Need | Why / how to obtain | Responsible role | Blocks |
 | --- | --- | --- | --- |
-| Confirm usable local C++20 compiler and Xcode command-line tools | Inspect existing tools; do not install a full new SDK without a demonstrated need | Build-release | Local core check |
+| Confirm usable local C++20 compiler and Xcode command-line tools | Resolve compiler/SDK through one selected existing Xcode directory, inspect actual linkage, and record paths/versions; do not change global settings or install another SDK for convenience | Build-release | Local core/Qt check |
 | Confirm GitHub Actions is enabled and workflows can run | Repository access is present; Actions permissions/runs were not exercised in planning | Build-release | Native CI probes |
-| Exact Qt patch/modules and public redistribution inventory | Pin open-source Qt inputs and checksums, inspect per-module/third-party licenses. Prefer hosted-runner SDK acquisition; no commercial Qt subscription assumed | Build-release | Reproducible native packages |
+| Exact Qt patch/modules and public redistribution inventory | Query five-target archives/modules/ABI before CI, pin inputs/checksums and reconcile installed SBOMs against deployed modules/license alternatives. Keep 6.12.x unless an evidenced decision changes it; no automatic 6.4 fallback. Prefer hosted-runner acquisition; no commercial subscription assumed | Build-release | Reproducible native packages |
 | Native Windows ARM64 and Linux ARM64 toolchain path | Verify hosted labels, MSVC/Qt packages, Linux libraries, and runner storage. Current public-runner documentation lists ARM options; actual jobs remain to be tried | Build-release | ARM artifact proof |
-| Minimal local image/audio fixtures with clear rights | Original simple PNG/JPEG/WAV and a suitably licensed Ogg test, or generated procedural fixtures; record provenance. No production art required | UI/content | Codec and deployment probe |
+| Minimal local image/audio fixtures and optional playback adapter | Original PNG/JPEG/PCM WAV plus cleared Ogg test; record provenance. Probe/pin miniaudio/stb_vorbis and restrict decoder/input features before adoption. Silent builds require no missing Qt Multimedia installation; no production art needed | UI/content | Codec and deployment probe |
 | Confirm test-device availability | Inventory mac arm64, Windows amd64/arm64, Linux amd64/arm64 devices or volunteered access. Native compile evidence alone is insufficient for GPU/audio support | QA/build-release | M0 risk assessment; full qualification at M9 |
 
 All of these start as inspections or small engineering tasks. Missing paid services are not presumed. If a CI limit would cause a cost, produce a concrete alternative/estimate before asking the user to authorize spending.
@@ -58,10 +59,10 @@ Music is not downloaded or approved yet. ENDE currently identifies its standard 
 | Need | When / purpose | Access/cost expectation |
 | --- | --- | --- |
 | A writable development checkout | E1 opens canonical repository data and shared schemas/registry; a packaged game is not a project | Existing checkout is sufficient; copies/fixtures for destructive test cases |
-| Three human authoring sessions | E1: browse existing content, build a trigger/effect/dialogue flow, catch planted sign/scope mistakes, test and finalize a revision without scripting | Include a scenario author and someone without scripting experience; user-arranged or explicitly authorized contact, manual feedback only |
+| Three human authoring sessions | E1b before M4: canvas/forms authoring, inspection, testing and graphical finalization without scripting. E1a's pre-M3 engineering walkthrough is a separate smaller gate | Include a scenario author and someone without scripting experience; user-arranged or explicitly authorized contact, manual feedback only |
 | Representative content/impact fixtures | Scope/threshold/positive-negative effects, all lifecycles, dialogue results, external edit conflict and recovery | Engineering/authoring task; no cloud/model service |
 | Separate editor artifact/channel naming | E2: independently qualified downloads and exact preview-runtime compatibility | Same Qt/CI tooling; no paid node-editor SDK or new server assumed |
-| Version reader and release metadata tests | M0-05/E1-05: shared game/editor/content identity; later Snap mapping | Small repository tooling; no store access needed until an explicitly scoped publication |
+| Version reader and release metadata tests | M0-05/E1A-04/E1B-02: safe internal snapshots then graphical batches use shared game/editor/content identity; later Snap mapping | Small repository tooling; no store access needed until an explicitly scoped publication |
 
 No installation/purchase of the referenced games or URLAlchemist is required to implement this plan. Their concepts inform our own UI. Studio assets/help/palettes and recovery files are excluded from game packages. The later Snap task concerns the game; an editor Snap is a separate future decision.
 

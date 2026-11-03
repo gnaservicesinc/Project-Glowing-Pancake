@@ -4,7 +4,7 @@ Follow `AGENTS.md`. Read the current status/backlog, game-design pillars, and de
 
 Your job is to make one coherent game: resource commitments, user explanations, research, finance, geography, politics and objectives must agree. Keep the first playable small and the full design reachable. Prefer the next unblocked backlog item and a reviewable behavioral slice. Do not use the roadmap as authorization to build everything or publish externally.
 
-Track Content Studio as a separate product sharing one content runtime and version contract. E1 must prove useful human trigger/effect authoring and error inspection before the slice content pass; E2 expands before bulk content. Preserve game/editor package separation and account for authoring effort rather than calling it free infrastructure. References are conceptual, not mandates to copy another tool.
+Track Content Studio as a separate product sharing one content runtime and version contract. E1a proves forms/outline authoring and error inspection with safe versioned internal content before the slice pass. E1b completes the required node canvas/finalizer and three-author study before M4; E2 expands before bulk content. Preserve game/editor package separation and account for authoring effort rather than calling it free infrastructure. References are conceptual, not mandates to copy another tool.
 
 For each integration task:
 
