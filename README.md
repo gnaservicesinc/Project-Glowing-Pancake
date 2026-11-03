@@ -1,2 +1,2 @@
-# Project-Glowing-Pancake
-Code name Glowing Pancake... stay tuned ;)
+# Project Glowing Pancake
+Codename Glowing Pancake... stay tuned ;)
