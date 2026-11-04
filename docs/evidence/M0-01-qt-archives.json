@@ -1,0 +1,290 @@
+{
+  "qt_version": "6.12.0",
+  "note": "Metadata and published SHA256 observations only; SDK archives were not fetched or verified against these checksums.",
+  "targets": [
+    {
+      "target": "macos-arm64",
+      "host_directory": "mac_x64",
+      "architecture": "clang_64",
+      "metadata_url": "https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/qt6_6120/qt6_6120/Updates.xml",
+      "metadata_sha256": "0932ba7a2c1f2b9978cb6199527dd4abb85a95791ce8afc72b7a1cf53943466c",
+      "metadata_bytes": 112883,
+      "packages": [
+        {
+          "package": "qt.qt6.6120.addons.qtshadertools.clang_64",
+          "version": "6.12.0-0-202609280346",
+          "display_name": "Qt Shader Tools for macOS",
+          "release_date": "2026-09-28",
+          "archives": [
+            {
+              "name": "qtshadertools-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.addons.qtshadertools.clang_64/6.12.0-0-202609280346qtshadertools-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z",
+              "published_sha256": "19999f9c72562126a31114ee07112422b9c6b4a31f04df794eba7227bc0f1292"
+            }
+          ]
+        },
+        {
+          "package": "qt.qt6.6120.clang_64",
+          "version": "6.12.0-0-202609280346",
+          "display_name": "macOS",
+          "release_date": "2026-09-28",
+          "archives": [
+            {
+              "name": "qtbase-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.clang_64/6.12.0-0-202609280346qtbase-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z",
+              "published_sha256": "1e0df66ed17ae97997971ff481983c5c0b7497a52ef52f699725701401fd80ee"
+            },
+            {
+              "name": "qtdeclarative-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/mac_x64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.clang_64/6.12.0-0-202609280346qtdeclarative-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z",
+              "published_sha256": "6b070cade4201db28ed34f65331085c3916a718bc6a30ea24c2f57e67debacea"
+            },
+            {
+              "name": "qtsvg-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z"
+            },
+            {
+              "name": "qtdoc-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z"
+            },
+            {
+              "name": "qttools-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z"
+            },
+            {
+              "name": "qttranslations-MacOS-MacOS_26-Clang-MacOS-MacOS_26-X86_64-ARM64.7z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "linux-amd64",
+      "host_directory": "linux_x64",
+      "architecture": "linux_gcc_64",
+      "metadata_url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6120/qt6_6120/Updates.xml",
+      "metadata_sha256": "615f617ad82e9c9b50e339ce19eb340901919ea29386a93843be236cb77ca5a7",
+      "metadata_bytes": 115176,
+      "packages": [
+        {
+          "package": "qt.qt6.6120.addons.qtshadertools.linux_gcc_64",
+          "version": "6.12.0-0-202609280346",
+          "display_name": "Qt Shader Tools for Linux 64",
+          "release_date": "2026-09-28",
+          "archives": [
+            {
+              "name": "qtshadertools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.addons.qtshadertools.linux_gcc_64/6.12.0-0-202609280346qtshadertools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z",
+              "published_sha256": "66892450a2baf559b230778f34f879db76d93fdc58b4241522a5d495643f00a5"
+            }
+          ]
+        },
+        {
+          "package": "qt.qt6.6120.linux_gcc_64",
+          "version": "6.12.0-0-202609280346",
+          "display_name": "Desktop",
+          "release_date": "2026-09-28",
+          "archives": [
+            {
+              "name": "qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.linux_gcc_64/6.12.0-0-202609280346qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z",
+              "published_sha256": "943023b929d0c08eafe7341700b5ed7601284410b7afd6093f950be291d1d7cd"
+            },
+            {
+              "name": "qtsvg-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+            },
+            {
+              "name": "qtdeclarative-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.linux_gcc_64/6.12.0-0-202609280346qtdeclarative-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z",
+              "published_sha256": "0c719e17ea9fbd37aa615595149dca2578985656433f27bf2846cffe4b687d3e"
+            },
+            {
+              "name": "qtdoc-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+            },
+            {
+              "name": "qttools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+            },
+            {
+              "name": "qttranslations-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+            },
+            {
+              "name": "qtwayland-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+            },
+            {
+              "name": "icu-linux-Rhel8.6-x86_64.7z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "linux-arm64",
+      "host_directory": "linux_arm64",
+      "architecture": "linux_gcc_arm64",
+      "metadata_url": "https://download.qt.io/online/qtsdkrepository/linux_arm64/desktop/qt6_6120/qt6_6120/Updates.xml",
+      "metadata_sha256": "9ad3f6beb1ac93db544946ddd544bd14fbe90ffae27953f70edcde1f59a8111c",
+      "metadata_bytes": 116779,
+      "packages": [
+        {
+          "package": "qt.qt6.6120.addons.qtshadertools.linux_gcc_arm64",
+          "version": "6.12.0-0-202609280346",
+          "display_name": "Qt Shader Tools for Linux arm64",
+          "release_date": "2026-09-28",
+          "archives": [
+            {
+              "name": "qtshadertools-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/linux_arm64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.addons.qtshadertools.linux_gcc_arm64/6.12.0-0-202609280346qtshadertools-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z",
+              "published_sha256": "68c8b1c94857c08a1dbec359d25ce2e2f643976810494e24295fbc63edb8b40e"
+            }
+          ]
+        },
+        {
+          "package": "qt.qt6.6120.linux_gcc_arm64",
+          "version": "6.12.0-0-202609280346",
+          "display_name": "Desktop",
+          "release_date": "2026-09-28",
+          "archives": [
+            {
+              "name": "qtbase-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/linux_arm64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.linux_gcc_arm64/6.12.0-0-202609280346qtbase-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z",
+              "published_sha256": "d73c10b46bfb81b7bd15e143c7d5b87d5f21ab6180b305709d67b2b356b4d38a"
+            },
+            {
+              "name": "qtsvg-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z"
+            },
+            {
+              "name": "qtdeclarative-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/linux_arm64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.linux_gcc_arm64/6.12.0-0-202609280346qtdeclarative-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z",
+              "published_sha256": "a5ca21e64e43ba72ee2586323c4720afa278e127f07a3d1c89006c66bf8e0009"
+            },
+            {
+              "name": "qtdoc-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z"
+            },
+            {
+              "name": "qttools-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z"
+            },
+            {
+              "name": "qttranslations-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z"
+            },
+            {
+              "name": "qtwayland-Linux-Ubuntu_24_04-GCC-Linux-Ubuntu_24_04-AARCH64.7z"
+            },
+            {
+              "name": "icu-linux-Debian11.6-arm64.7z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "windows-amd64",
+      "host_directory": "windows_x86",
+      "architecture": "win64_msvc2022_64",
+      "metadata_url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_msvc2022_64/Updates.xml",
+      "metadata_sha256": "ba09f355a6e42e1373b939d26d7742df7348f298a465420083b3cfd28ed2914b",
+      "metadata_bytes": 120913,
+      "packages": [
+        {
+          "package": "qt.qt6.6120.addons.qtshadertools.win64_msvc2022_64",
+          "version": "6.12.0-0-202609280346",
+          "display_name": "Qt Shader Tools for MSVC 2022 64-bit",
+          "release_date": "2026-09-28",
+          "archives": [
+            {
+              "name": "qtshadertools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_msvc2022_64/qt.qt6.6120.addons.qtshadertools.win64_msvc2022_64/6.12.0-0-202609280346qtshadertools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+              "published_sha256": "dfceb86842d60a81ff75c1c2c98d49d186efc5c6cc49f0225b3b2ed699beca4b"
+            }
+          ]
+        },
+        {
+          "package": "qt.qt6.6120.win64_msvc2022_64",
+          "version": "6.12.0-0-202609280346",
+          "display_name": "MSVC 2022 64-bit",
+          "release_date": "2026-09-28",
+          "archives": [
+            {
+              "name": "qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_msvc2022_64/qt.qt6.6120.win64_msvc2022_64/6.12.0-0-202609280346qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+              "published_sha256": "219d1b86def3be418e31d704572bc4acc91b2ec373c65595c9fb12b42bf098dc"
+            },
+            {
+              "name": "qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z"
+            },
+            {
+              "name": "qtdeclarative-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6120/qt6_6120_msvc2022_64/qt.qt6.6120.win64_msvc2022_64/6.12.0-0-202609280346qtdeclarative-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+              "published_sha256": "258146e9972fadbc1162cda31c7d7ed7e627f5022b2a848f2edb84d9c2ce27db"
+            },
+            {
+              "name": "qtdoc-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z"
+            },
+            {
+              "name": "qttools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z"
+            },
+            {
+              "name": "qttranslations-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z"
+            },
+            {
+              "name": "d3dcompiler_47-x64.7z"
+            },
+            {
+              "name": "opengl32sw-64-mesa_11_2_2-signed_sha256.7z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "windows-arm64",
+      "host_directory": "windows_arm64",
+      "architecture": "win64_msvc2022_arm64",
+      "metadata_url": "https://download.qt.io/online/qtsdkrepository/windows_arm64/desktop/qt6_6120/qt6_6120/Updates.xml",
+      "metadata_sha256": "4bb39e55e7fbef0cf2c157759bbc102d0379d5a1ffa8f721208e50f382a098cf",
+      "metadata_bytes": 121332,
+      "packages": [
+        {
+          "package": "qt.qt6.6120.addons.qtshadertools.win64_msvc2022_arm64",
+          "version": "6.12.0-0-202609280346",
+          "display_name": "Qt Shader Tools for MSVC 2022 ARM64",
+          "release_date": "2026-09-28",
+          "archives": [
+            {
+              "name": "qtshadertools-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/windows_arm64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.addons.qtshadertools.win64_msvc2022_arm64/6.12.0-0-202609280346qtshadertools-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z",
+              "published_sha256": "f971497753edb1351a98c73d2b8753dfc04f52d775393fbef5be0ed725c16d4b"
+            }
+          ]
+        },
+        {
+          "package": "qt.qt6.6120.win64_msvc2022_arm64",
+          "version": "6.12.0-0-202609280346",
+          "display_name": "MSVC 2022 ARM64",
+          "release_date": "2026-09-28",
+          "archives": [
+            {
+              "name": "qtbase-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/windows_arm64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.win64_msvc2022_arm64/6.12.0-0-202609280346qtbase-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z",
+              "published_sha256": "4734f7292a0b86ac2bf1a084fa864da521b7ef4467ba8af772f5d93903f9e6c1"
+            },
+            {
+              "name": "qtsvg-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z"
+            },
+            {
+              "name": "qtdeclarative-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z",
+              "url": "https://download.qt.io/online/qtsdkrepository/windows_arm64/desktop/qt6_6120/qt6_6120/qt.qt6.6120.win64_msvc2022_arm64/6.12.0-0-202609280346qtdeclarative-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z",
+              "published_sha256": "12a454d34aea92cd7f54ee584337b293b22ffd8138b0e24a6ae47d355dbdd833"
+            },
+            {
+              "name": "qtdoc-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z"
+            },
+            {
+              "name": "qttools-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z"
+            },
+            {
+              "name": "qttranslations-Windows-Windows_11_23H2-MSVC2022-Windows-Windows_11_23H2-AARCH64.7z"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "observed_date": "2026-11-03"
+}

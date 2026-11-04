@@ -1,6 +1,6 @@
 # Technical plan
 
-Baseline 1.2 · 2026-11-03 · Proposed implementation; no game/build system exists yet
+Baseline 1.2 · 2026-11-03 · M0 build skeleton implemented; most runtime systems remain planned
 
 ## 1. Stack decision
 
@@ -40,7 +40,8 @@ Before writing the matrix, M0-01 records actual Qt archive/module availability f
 
 ## 3. Intended source structure
 
-The following directories describe future implementation; creating this plan does not create a runnable scaffold.
+The following is the target structure. M0-02 implements `src/core`, `src/headless`,
+`tests` and `cmake`; other subsystem directories arrive with their backlog tasks.
 
 ```text
 src/core/            # dates, IDs, units, state, commands, deterministic daily systems
@@ -125,7 +126,9 @@ Developer diagnostics are compiled out by default using `PGP_DEVELOPER_DIAGNOSTI
 
 ## 8. Build command contract
 
-M0/M1 will implement the following commands. They are **not available yet**:
+M0-02 implements the build/core/test/clean/help commands below; editor/all/package
+flags are reserved and currently fail explicitly. See [building](BUILDING.md) for
+the executable subset, prerequisites and output paths.
 
 | Command | Required behavior |
 | --- | --- |

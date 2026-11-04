@@ -18,9 +18,12 @@ One agent can use multiple briefs where a task crosses boundaries. Parallel agen
 
 ## Ready-to-use starting assignment
 
-> Complete M0-01 in docs/BACKLOG.md. Follow AGENTS.md and agents/roles/build-release.md. Inventory the current toolchain, Qt modules/licensing, hosted native-runner paths, disk constraints, and device-access gaps. Do not install large SDKs locally or publish anything. Record verified facts and the smallest next implementation task. Commit and push the task changes and report evidence.
+> Complete M0-03 in docs/BACKLOG.md. Follow AGENTS.md and the UI/build-release briefs. Read docs/BUILDING.md and the M0-01 evidence. Add the original QML/graphics/resource-guard/optional-audio probe, preserve the Qt-free core and verify actual imports/dependencies. Do not install large SDKs locally or publish anything. Record verified behavior and remaining platform/device gaps. Commit and push the task changes and report evidence.
 
-After M0-01, assign M0-02. Do not jump directly from the design to implementing the century-wide simulation. The planning baseline is complete; code/build scaffolding has not yet been created.
+M0-01 and M0-02 are complete; the toolchain inventory and build/core/headless
+scaffold are implemented. M0-05 can proceed independently after M0-02, while
+M0-04 requires M0-03. Do not jump to the century-wide simulation before the
+remaining foundation gates pass.
 
 M0-05 establishes the version-reader foundation; M1-06 establishes the shared flow runtime. E1a builds complete forms/outline and inspection before M3 finalizes its eight events. E1b completes the required node canvas, graphical finalizer and three-author study before M4; it need not block the first gameplay tests. E2 expands authoring as schemas mature and closes before M8's content pass. Follow those gates; do not hand authors a graph that bypasses validation or differs from gameplay.
 

@@ -30,6 +30,8 @@ CMakeUserPresets.json
 /.cache/
 /.venv/
 /.pgp-editor/
+__pycache__/
+*.py[cod]
 
 # Local tools and operating-system files
 .DS_Store

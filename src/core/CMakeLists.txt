@@ -1,0 +1,5 @@
+add_library(pgp_core STATIC build_configuration.cpp)
+add_library(pgp::core ALIAS pgp_core)
+target_include_directories(pgp_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(pgp_core PUBLIC cxx_std_20)
+pgp_project_target(pgp_core)

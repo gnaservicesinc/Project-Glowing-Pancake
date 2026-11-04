@@ -1,0 +1,101 @@
+# Select an existing Xcode per process, before project() enables the compiler.
+# Direct core-only builds may explicitly select another compiler for comparison.
+if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+    return()
+endif()
+if(PGP_CORE_ONLY AND NOT PGP_SELECTED_DEVELOPER_DIR)
+    return()
+endif()
+
+if(PGP_SELECTED_DEVELOPER_DIR)
+    set(_pgp_developer "${PGP_SELECTED_DEVELOPER_DIR}")
+elseif(DEFINED ENV{DEVELOPER_DIR} AND NOT "$ENV{DEVELOPER_DIR}" STREQUAL "")
+    set(_pgp_developer "$ENV{DEVELOPER_DIR}")
+else()
+    execute_process(COMMAND /usr/bin/xcode-select -p
+        OUTPUT_VARIABLE _pgp_developer OUTPUT_STRIP_TRAILING_WHITESPACE
+        COMMAND_ERROR_IS_FATAL ANY)
+endif()
+file(REAL_PATH "${_pgp_developer}" _pgp_developer)
+foreach(_pgp_item IN ITEMS compiler sdk)
+    if(_pgp_item STREQUAL "compiler")
+        set(_pgp_query --find clang++)
+    else()
+        set(_pgp_query --sdk macosx --show-sdk-path)
+    endif()
+    execute_process(COMMAND "${CMAKE_COMMAND}" -E env "DEVELOPER_DIR=${_pgp_developer}"
+        /usr/bin/xcrun ${_pgp_query}
+        OUTPUT_VARIABLE _pgp_${_pgp_item} OUTPUT_STRIP_TRAILING_WHITESPACE
+        COMMAND_ERROR_IS_FATAL ANY)
+    if(_pgp_item STREQUAL "compiler")
+        # Preserve clang++ argv[0]: resolving its symlink to clang changes the
+        # link driver's default C++ runtime libraries.
+        get_filename_component(_pgp_compiler_parent "${_pgp_compiler}" DIRECTORY)
+        get_filename_component(_pgp_compiler_name "${_pgp_compiler}" NAME)
+        file(REAL_PATH "${_pgp_compiler_parent}" _pgp_compiler_parent)
+        set(_pgp_compiler "${_pgp_compiler_parent}/${_pgp_compiler_name}")
+    else()
+        file(REAL_PATH "${_pgp_sdk}" _pgp_sdk)
+    endif()
+    cmake_path(IS_PREFIX _pgp_developer "${_pgp_${_pgp_item}}" NORMALIZE _pgp_inside)
+    if(NOT _pgp_inside OR NOT EXISTS "${_pgp_${_pgp_item}}")
+        message(FATAL_ERROR "Selected Xcode does not own ${_pgp_item}: ${_pgp_${_pgp_item}}")
+    endif()
+endforeach()
+file(REAL_PATH "${_pgp_compiler}" _pgp_compiler_real)
+
+if(CMAKE_CXX_COMPILER)
+    file(REAL_PATH "${CMAKE_CXX_COMPILER}" _pgp_requested_compiler)
+    if(NOT _pgp_requested_compiler STREQUAL _pgp_compiler_real)
+        message(FATAL_ERROR "Compiler differs from selected Xcode. Use a fresh build directory.")
+    endif()
+endif()
+if(CMAKE_OSX_SYSROOT)
+    file(REAL_PATH "${CMAKE_OSX_SYSROOT}" _pgp_requested_sdk)
+    if(NOT _pgp_requested_sdk STREQUAL _pgp_sdk)
+        message(FATAL_ERROR "SDK differs from selected Xcode. Use a fresh build directory.")
+    endif()
+endif()
+foreach(_pgp_env IN ITEMS CC CXX)
+    if(DEFINED ENV{${_pgp_env}} AND NOT "$ENV{${_pgp_env}}" STREQUAL "")
+        if(_pgp_env STREQUAL "CC")
+            set(_pgp_expected_name clang)
+        else()
+            set(_pgp_expected_name clang++)
+        endif()
+        execute_process(COMMAND "${CMAKE_COMMAND}" -E env "DEVELOPER_DIR=${_pgp_developer}"
+            /usr/bin/xcrun --find "${_pgp_expected_name}"
+            OUTPUT_VARIABLE _pgp_expected OUTPUT_STRIP_TRAILING_WHITESPACE
+            COMMAND_ERROR_IS_FATAL ANY)
+        file(REAL_PATH "${_pgp_expected}" _pgp_expected)
+        file(REAL_PATH "$ENV{${_pgp_env}}" _pgp_requested)
+        if(NOT _pgp_requested STREQUAL _pgp_expected)
+            message(FATAL_ERROR "${_pgp_env} conflicts with selected Xcode; unset it for desktop builds.")
+        endif()
+    endif()
+endforeach()
+
+if(NOT CMAKE_OSX_ARCHITECTURES)
+    # CMAKE_HOST_SYSTEM_PROCESSOR is populated by project(), which must follow
+    # SDK selection. Resolve the native architecture before language setup.
+    execute_process(COMMAND /usr/bin/uname -m
+        OUTPUT_VARIABLE _pgp_architecture OUTPUT_STRIP_TRAILING_WHITESPACE
+        COMMAND_ERROR_IS_FATAL ANY)
+    if(NOT _pgp_architecture MATCHES "^(arm64|x86_64)$")
+        message(FATAL_ERROR "Unsupported native Apple architecture: ${_pgp_architecture}")
+    endif()
+    set(CMAKE_OSX_ARCHITECTURES "${_pgp_architecture}" CACHE STRING "Target architecture" FORCE)
+endif()
+if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 14.4 CACHE STRING "Minimum macOS version")
+endif()
+set(_pgp_identity "${_pgp_developer}|${_pgp_compiler}|${_pgp_sdk}|${CMAKE_OSX_ARCHITECTURES}|${CMAKE_OSX_DEPLOYMENT_TARGET}")
+if(DEFINED PGP_APPLE_TOOLCHAIN_ID AND NOT PGP_APPLE_TOOLCHAIN_ID STREQUAL _pgp_identity)
+    message(FATAL_ERROR "Cached Apple toolchain changed. Clean this configuration or use a fresh directory.")
+endif()
+set(PGP_APPLE_TOOLCHAIN_ID "${_pgp_identity}" CACHE INTERNAL "Immutable Apple build toolchain")
+set(CMAKE_CXX_COMPILER "${_pgp_compiler}" CACHE FILEPATH "Selected Xcode C++ compiler" FORCE)
+set(CMAKE_OSX_SYSROOT "${_pgp_sdk}" CACHE PATH "Selected Xcode SDK" FORCE)
+message(STATUS "Xcode: ${_pgp_developer}")
+message(STATUS "C++ compiler: ${_pgp_compiler}")
+message(STATUS "macOS SDK: ${_pgp_sdk}; architecture: ${CMAKE_OSX_ARCHITECTURES}")

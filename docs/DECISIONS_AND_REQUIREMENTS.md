@@ -4,7 +4,7 @@ Baseline 1.2 · 2026-11-03
 
 ## Source authority
 
-The original planning request was to expand/finalize the design, draft a roadmap, create agent instructions, and list resources/access needed. The current request reviews Gemini4's recommendations before implementation and applies useful changes to that plan. It does not start the whole game, purchase tools, register accounts, run a server or publish a release.
+The original planning request was to expand/finalize the design, draft a roadmap, create agent instructions, and list resources/access needed. The subsequent Gemini4 review applied useful changes to that plan. The 2026-11-03 implementation request authorizes beginning the ordered backlog and tracking progress, with code structured for later features. Work begins with M0-01/M0-02. It does not authorize purchases, account registration, running a server or publishing a release.
 
 The follow-up request adopts a human-oriented graphical repository-content editor: triggers connected to effects/events; news, branching dialogues/results and hidden logic; flexible lifecycles; browsing/managing current content; separate downloads/source; version controls and future Snap linkage. The user clarified that Clausewitz/Plague Inc. are conceptual references, and suggested URLAlchemist/Blender-style nodes. Trigger-impact visualization should help catch mixed references, reversed effects and misunderstood conditions. This follow-up updates planning/tracking metadata, not an instruction to implement/publish the editor now.
 

@@ -1,0 +1,49 @@
+{
+  "version": 5,
+  "cmakeMinimumRequired": {"major": 3, "minor": 24, "patch": 0},
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {"BUILD_TESTING": "ON"}
+    },
+    {
+      "name": "release",
+      "inherits": "base",
+      "displayName": "Release desktop skeleton",
+      "cacheVariables": {"CMAKE_BUILD_TYPE": "Release", "PGP_CORE_ONLY": "OFF"}
+    },
+    {
+      "name": "debug",
+      "inherits": "base",
+      "displayName": "Debug desktop skeleton",
+      "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug", "PGP_CORE_ONLY": "OFF"}
+    },
+    {
+      "name": "core-release",
+      "inherits": "release",
+      "displayName": "Release core without Qt",
+      "cacheVariables": {"PGP_CORE_ONLY": "ON"}
+    },
+    {
+      "name": "core-debug",
+      "inherits": "debug",
+      "displayName": "Debug core without Qt",
+      "cacheVariables": {"PGP_CORE_ONLY": "ON"}
+    }
+  ],
+  "buildPresets": [
+    {"name": "release", "configurePreset": "release"},
+    {"name": "debug", "configurePreset": "debug"},
+    {"name": "core-release", "configurePreset": "core-release"},
+    {"name": "core-debug", "configurePreset": "core-debug"}
+  ],
+  "testPresets": [
+    {"name": "release", "configurePreset": "release", "output": {"outputOnFailure": true}, "execution": {"noTestsAction": "error"}},
+    {"name": "debug", "configurePreset": "debug", "output": {"outputOnFailure": true}, "execution": {"noTestsAction": "error"}},
+    {"name": "core-release", "configurePreset": "core-release", "output": {"outputOnFailure": true}, "execution": {"noTestsAction": "error"}},
+    {"name": "core-debug", "configurePreset": "core-debug", "output": {"outputOnFailure": true}, "execution": {"noTestsAction": "error"}}
+  ]
+}

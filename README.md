@@ -2,7 +2,21 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** planning baseline 1.2, updated 2026-11-03 after a selective Gemini4 review. The repository contains the game/editor design and implementation handoff, plus an initialized version record; it does not yet contain a playable game, editor executable, or working build commands. The next task is the M0 toolchain/packaging spike, not implementation of the entire simulation at once.
+**Current state:** implementation started 2026-11-03 against planning baseline 1.2. The first M0 slice provides a C++20 core/headless build, Release/Debug presets and toolchain evidence. The game simulation, graphical UI and Content Studio are still ahead. Follow [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
+
+## Build the development skeleton
+
+```sh
+./make.sh                     # Release; validates desktop Qt dependencies
+./make.sh --core-only --test  # Release core/headless; no Qt required
+./make.sh --debug --core-only --test
+./make.sh --help
+```
+
+Builds never launch the application. The headless executable currently reports
+build configuration and usage; scenario simulation is a later task. See
+[build instructions](docs/BUILDING.md) for dependencies, Qt/Xcode selection,
+safe cleanup and available checks. No dependencies are downloaded by the build.
 
 ## Read the plan
 
@@ -21,6 +35,7 @@ A free, offline strategy game about founding an AI company in 2014 and guiding i
 | [QA and release](docs/QA_AND_RELEASE.md) | Verification, privacy, release gates, and playtesting |
 | [Research](docs/RESEARCH.md) | Primary sources checked during planning |
 | [Project status](docs/STATUS.md) | Completed work, current limits, and next handoff |
+| [Implementation log](docs/IMPLEMENTATION_LOG.md) | Task progress, verification results and implementation limits |
 | [Planning history](docs/PLAN_CHANGELOG.md) | What changed between planning baselines |
 | [Gemini4 review decisions](docs/RECOMMENDATION_REVIEW.md) | Adopted, corrected and deferred recommendations, evidence and implementation gates |
 
@@ -32,7 +47,7 @@ The selected stack is C++20 + Qt 6.12.x/QML with CMake/Ninja. Desktop targets ar
 
 The game needs **no backend, hosted model, player account, analytics, or in-game updater**. Local saves, autosaves, preferences, and campaign history are normal features. Installation and updates are handled outside the game by the chosen distribution platform.
 
-Content Studio will be a separate download/source target for authors editing a development checkout, with a searchable current-content library and linked trigger → effects/events canvas, equivalent forms/outline, tooltips and before/after tests. It is excluded from the base game. [The version manifest](project-versions.json) currently reserves `0.0.0-dev` planning identities; automated version controls and packaging remain implementation tasks.
+Content Studio will be a separate download/source target for authors editing a development checkout, with a searchable current-content library and linked trigger → effects/events canvas, equivalent forms/outline, tooltips and before/after tests. It is excluded from the base game. [The version manifest](project-versions.json) currently reserves `0.0.0-dev` planning identities; M0-05 implements the reader and build identity. Automated version controls and packaging remain implementation tasks.
 
 E1a delivers forms/outline and inspection before the first playable's content. E1b completes the required node canvas, graphical batch finalizer and three-author study before M4. Baseline 1.2 also clarifies checked math/constant-2014 money, morning decisions and saved continuations, finite inference/wholesale capacity, persistent UI models and objective-loss feedback. These are planning changes; no runtime behavior has been tested.
 

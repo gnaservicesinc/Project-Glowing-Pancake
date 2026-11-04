@@ -1,6 +1,6 @@
 # Project Glowing Pancake — final game design
 
-Design baseline 1.2 · 2026-11-03 · Working title · Implementation has not started
+Design baseline 1.2 · 2026-11-03 · Working title · M0 implementation started; gameplay remains planned
 
 This is the product design for the full 1.0 game. Numeric balance targets are starting values to test, not claims about the real world. [Decisions and requirements](DECISIONS_AND_REQUIREMENTS.md) explains the relationship to the two drafts. [The roadmap](ROADMAP.md) separates the complete design from the first playable release.
 

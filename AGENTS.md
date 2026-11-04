@@ -43,7 +43,10 @@ For authoring work, use `docs/CONTENT_EDITOR.md` and `docs/VERSIONING.md`. The c
 - Metal on Mac, OpenGL on Linux, OpenGL preference with tested D3D11 recovery on Windows. Five native artifacts are goals until qualified; cross-compile/CI success is not device acceptance.
 - Preserve keyboard access, text scaling, pause, causal explanations and readable units. The first playable is small; do not add counties, browser export or multiplayer to solve an unrelated problem.
 
-The build commands above are planned contracts until M0/M1 implements them. Do not pretend they exist or that a game has been tested merely because this document describes them.
+M0-02 implements the Release/Debug/core/test/clean/help build scaffold; see
+`docs/BUILDING.md` for the current executable subset. Editor/all/package flags
+remain reserved and fail explicitly. Do not claim gameplay, UI or package
+qualification from a passing headless build.
 
 ## Verify and hand off
 
