@@ -361,6 +361,7 @@ the exact bounds and retained origin/stream history.
 | Core Debug | 26/26 CTests pass, strict Apple Clang arm64 |
 | Focused schema/compiler | 174 content and 77 compiler checks pass |
 | Weighted branch integration | 270 checks pass: frozen seed/weight boundaries, rejection sampling, exact continuation, stream isolation, atomic rollback and corrupt history refusal |
+| [Native CI run 41895189273](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41895189273) for `2a37284` | All six jobs across five targets pass 26/26 CTests each, primitive oracle and flow/save identity steps; GCC/Clang/MSVC include native Windows arm64 |
 
 Accepted tasks remain **5/52**. M1-06 still needs daily duration state,
 registered variables/expressions and related-entity selectors/quantifiers;

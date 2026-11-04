@@ -17,6 +17,10 @@ M0 remains open. See the
   choices. Broader variables/expressions, duration and selectors/quantifiers
   remain required work. [Runtime evidence](evidence/M1-06-runtime.md) and
   [weighted-branch evidence](evidence/M1-06-weighted-branches.md)
+- Weighted-branch commit `2a37284` passes 26/26 CTests in each of all six native
+  jobs across five targets, including GCC/Clang/MSVC and native Windows arm64.
+  [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41895189273)
+  qualifies this core behavior; native Qt deployment remains a separate gate.
 - M1-04 now writes/loads the entire implemented checkpoint with exact resumed
   state, recovery copies, strict identity/integrity checks, three autosave slots,
   preferences, Unicode filenames, portable/standard paths and export. Campaign

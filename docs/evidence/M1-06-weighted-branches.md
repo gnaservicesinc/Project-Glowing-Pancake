@@ -87,7 +87,20 @@ malformed saves: wrong sample/outcome/stream/visit, orphan records, wrong node,
 unknown/missing fields, fractional/narrowed integers, truncated history and an
 unselected continuation. Failed loads preserve the live runtime.
 
-Native CI results are recorded after observation in the implementation log.
+Implementation commit: `2a37284`. [Native CI run 41895189273](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41895189273)
+completed successfully on all six jobs across five targets: macOS arm64 Apple
+Clang, Linux amd64 GCC/Clang, Linux arm64 GCC, Windows amd64 MSVC and Windows
+arm64 MSVC. Every job log reports 26/26 CTests passing, including the weighted
+branch oracle/reload test, plus the primitive oracle and flow/save identity
+steps. No compiler/test warnings were observed in those logs.
+
+The separate deterministic foundation flow demo also matched uninterrupted
+state on 2014-01-15 in every job. Its final serialized-state SHA-256 was
+`6bf78ec35c30595d02b3e7467d57d833e9a55dd3fe9376bb2be69ff8e2646324`
+on all six; this checks save-format parity alongside the weighted test's frozen
+sample/stream oracle. The task's two owned local build trees were cleaned after
+verification; source, fixtures and evidence remain committed.
+
 No graphical app launch, business-economics scenario, native package or release
 is part of these checks. The next bounded flow slice is persisted daily
 duration start/reset semantics.
