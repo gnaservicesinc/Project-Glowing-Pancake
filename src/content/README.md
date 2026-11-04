@@ -24,6 +24,23 @@ engineering example is
 [`tests/content/fixtures/foundation.json`](../../tests/content/fixtures/foundation.json).
 It is outside game resources and is not a reviewed playable pack.
 
+An optional `variables` array declares at most 512 scoped story values. Each has
+`id`, `scope`, `type` (`integer`, `boolean`, `text`), `unit`, `minimum`, `maximum`,
+`default` and `help`, plus optional `visibility`. IDs cannot replace owning system
+facts. Variables are facts with explicit defaults, so ordinary typed comparisons
+can read them; sparse per-entity overrides are saved locally.
+
+Expression values are `{"literal":2,"unit":"count"}`, `{"fact":"story.offers"}`,
+`{"add":[left,right]}`, `{"subtract":[left,right]}` or
+`{"scale":{"value":expression,"numerator":3,"denominator":2}}`.
+Arithmetic requires integer matching units and uses checked operations; scale
+rounds signed halves away from zero once. Trees are bounded to depth 16/128
+terms and ratios to one million, with positive denominators. A comparison's
+`value` may be an expression. Assignment uses
+`{"op":"set_variable","target":"self","variable":"story.offers","value":expression}`
+and requires the variable's declared scope/type/unit/range. Later refusal rolls
+back prior assignments in the same operation. This is typed data, not scripting.
+
 Each definition has `id`, `kind` and `revision`. Current typed payloads are:
 
 | Kind | Required payload fields |

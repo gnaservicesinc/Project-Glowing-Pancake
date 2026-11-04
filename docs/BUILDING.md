@@ -3,7 +3,8 @@
 M0-02 implements build entry points and the headless scaffold. M0-03 adds the
 development interface probe, resource guards and optional playback adapter.
 M0-05 validates the shared component versions and embeds configure-time identity.
-There is no game simulation, Content Studio or distributable package yet.
+The engineering simulation foundation exists; the business scenario, Content
+Studio and distributable package remain later work.
 The [implementation log](IMPLEMENTATION_LOG.md) records acceptance evidence.
 
 ## Requirements and commands
@@ -40,6 +41,28 @@ configuration. User saves and unrelated outputs are outside cleanup.
 existing `/opt/Qt/6.12.0/macos` as a build-time fallback. No such path is embedded
 in the core/headless executable's runtime dependencies.
 
+## Routine Mac implementation
+
+Use one incremental optimized Mac build per batch. Choose the core build for
+Qt-free changes or the desktop build when the interface/bridge changes. Keep
+the owned build tree between batches, then run only the small focused checks
+for the changed behavior and relevant failure path. For a duration-runtime
+change, for example:
+
+```sh
+./make.sh --core-only --jobs 2
+ctest --test-dir build/core-release -R '^runtime.duration$' --output-on-failure
+```
+
+Use Debug for a specific investigation. Repeating Release and Debug builds,
+running the full suite, and waiting for the remote native matrix are reserved
+for a demonstrated concern or explicit release preparation. The preserved
+six-job native matrix in `.github/workflows/core-primitives.yml` runs only on
+manual `workflow_dispatch`; normal pushes and pull requests do not start it.
+Cross-platform regression, packaging and clean-device qualification remain
+release gates and do not block bounded Mac implementation. Keep portable code,
+offline behavior, safe local saves and explicit app launch throughout.
+
 ## Compiler and configuration isolation
 
 On macOS, set `DEVELOPER_DIR` to an existing Xcode `Contents/Developer` directory
@@ -63,9 +86,9 @@ cmake --build --preset core-release
 ctest --preset core-release
 ```
 
-On Windows, use a developer shell for the native MSVC architecture. Windows and
-Linux qualification will occur in M0-04; these commands have only been run on
-macOS so far. Direct desktop CMake also selects/verifies one Xcode before enabling
+On Windows, use a developer shell for the native MSVC architecture. Existing
+native foundation evidence does not qualify Windows/Linux graphics or packages;
+those checks remain deferred release work. Direct desktop CMake selects/verifies one Xcode before enabling
 the compiler. Direct core-only CMake may select another compiler explicitly for
 comparison. Use a separate directory for that experiment:
 
@@ -137,7 +160,7 @@ These targets remain Qt-free. The separately packaged editor is later work.
 The engineering foundation can be inspected without Qt:
 
 ```sh
-./make.sh --core-only --test --jobs 2
+./make.sh --core-only --jobs 2
 build/core-release/bin/pgp-headless --foundation-demo
 build/core-release/bin/pgp-headless --validate-content tests/content/fixtures/foundation.json
 build/core-release/bin/pgp-headless --flow-demo tests/content/fixtures/foundation.json

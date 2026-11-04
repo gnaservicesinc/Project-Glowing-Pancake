@@ -22,11 +22,22 @@ private:
 };
 
 enum class Comparison { equal, not_equal, less, less_equal, greater, greater_equal };
+enum class ExpressionKind { literal, fact, add, subtract, scale };
+struct Expression {
+    ExpressionKind kind = ExpressionKind::literal;
+    Scalar value{std::int64_t{0}};
+    Unit unit = Unit::none;
+    std::string fact{};
+    std::vector<Expression> children{};
+    std::uint32_t numerator = 0;
+    std::uint32_t denominator = 1;
+};
 struct FactClause {
     std::string fact;
     Comparison comparison;
     Scalar value;
     Unit unit;
+    std::optional<Expression> expression{};
 };
 enum class ConditionKind { clause, all_of, any_of, not_condition, holds_for_days };
 struct Condition {
@@ -41,6 +52,7 @@ struct Effect {
     std::string target; // Explicit self/world; resolution retains its typed scope.
     Scope target_scope;
     std::map<std::string, Scalar, std::less<>> arguments;
+    std::optional<Expression> value_expression{};
 };
 
 enum class LifecycleMode { once, recurring, interval, scheduled, continuous };
@@ -123,12 +135,16 @@ struct Collection {
     std::uint32_t schema;
     std::string content_version;
     std::map<std::string, Definition, std::less<>> definitions;
+    std::vector<FactMetadata> variables{};
     [[nodiscard]] const Definition* find(std::string_view id) const;
 };
 
 // The parser owns no files or sockets. Caller supplies a bounded local byte
 // string. Success returns a fully validated typed collection, never partial data.
 [[nodiscard]] Collection load_collection(std::string_view document, const Registry& registry);
+// Shared static expression contract used by both the loader and compiler.
+[[nodiscard]] std::pair<ValueType, Unit> expression_type(const Expression& expression, Scope scope, const Registry& registry);
+[[nodiscard]] Registry registry_with_variables(const Registry& registry, const std::vector<FactMetadata>& variables);
 [[nodiscard]] std::string_view definition_kind(const Definition& definition);
 
 } // namespace pgp::content

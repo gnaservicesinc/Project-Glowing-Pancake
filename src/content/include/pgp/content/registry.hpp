@@ -51,6 +51,7 @@ struct FactMetadata {
     Visibility visibility = Visibility::player_known;
     std::string provider = "foundation";
     std::vector<std::string> dependencies;
+    std::optional<Scalar> default_value{};
 };
 struct EffectMetadata {
     std::string id;
@@ -71,6 +72,7 @@ public:
     Registry();
     void register_system(std::string id, std::vector<std::string> dependencies);
     void register_fact(FactMetadata metadata);
+    void register_variable(FactMetadata metadata, Scalar default_value);
     void register_effect(EffectMetadata metadata);
     [[nodiscard]] const FactMetadata* fact(std::string_view id) const;
     [[nodiscard]] const EffectMetadata* effect(std::string_view id) const;

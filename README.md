@@ -2,14 +2,14 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** 5 of 52 tasks accepted as of 2026-11-04, with additional implemented work under M1-03/04/06. The foundation executes typed events, weighted narrative branches, daily duration predicates, delays, choices and owned modifiers; saves resume their exact state. Local settings, recovery copies, autosave policy, immutable worker snapshots and persistent entity models exist. Broader flow expressions and platform prerequisite qualification remain open. Business gameplay and Content Studio are still ahead. Follow [playability checkpoints](docs/PLAYABILITY.md), [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
+**Current state:** 5 of 52 tasks accepted as of 2026-11-04, with additional implemented work under M1-03/04/06. The foundation executes typed events, weighted narrative branches, daily duration predicates, scoped variables, checked expressions, delays, choices and owned modifiers; saves resume their exact state. Local settings, recovery copies, autosave policy, immutable worker snapshots and persistent entity models exist. Broader flow expressions and platform prerequisite qualification remain open. Business gameplay and Content Studio are still ahead. Follow [playability checkpoints](docs/PLAYABILITY.md), [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
 
 ## Build the development skeleton
 
 ```sh
 ./make.sh                     # Release; builds the probe, never launches
-./make.sh --core-only --test  # Release core/headless; no Qt required
-./make.sh --debug --core-only --test
+./make.sh --core-only        # Release core/headless; no Qt required
+ctest --test-dir build/core-release -R '^runtime.variables$' --output-on-failure
 ./make.sh --help
 ```
 

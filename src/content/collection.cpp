@@ -83,6 +83,124 @@ Scope scope(const Json& value, const std::string& path) {
     if (name == "state") return Scope::state;
     fail("scope", path, "Unsupported scope");
 }
+Unit unit(const Json& value, const std::string& path) {
+    const auto name = text(value, path, 64);
+    for (unsigned ordinal = 0; ordinal <= static_cast<unsigned>(Unit::count); ++ordinal) {
+        const auto candidate = static_cast<Unit>(ordinal);
+        if (unit_name(candidate) == name) return candidate;
+    }
+    fail("unit", path, "Unknown registered unit");
+}
+Scalar expression_scalar(const Json& value, const std::string& path) {
+    if (value.is_boolean()) return boolean(value, path);
+    if (value.is_number_integer()) return integer(value, path, std::numeric_limits<std::int64_t>::min());
+    if (!value.is_string()) fail("type", path, "Expression literal must be integer, boolean or text");
+    const auto result = value.get<std::string>();
+    if (result.size() > 4096 || result.find('\0') != std::string::npos) fail("range", path, "Expression text exceeds its bound or contains NUL");
+    return result;
+}
+Expression expression(const Json& value, const std::string& path, std::size_t depth = 0, std::size_t* inherited_count = nullptr) {
+    std::size_t own_count = 0;
+    auto* count = inherited_count ? inherited_count : &own_count;
+    if (depth > 16 || ++*count > 128) fail("budget", path, "Expression nesting/term budget exceeded");
+    if (!value.is_object()) fail("type", path, "Expected a typed expression object");
+    Expression result;
+    if (value.contains("literal")) {
+        fields(value, path, {"literal", "unit"}, {"literal", "unit"});
+        result.kind = ExpressionKind::literal; result.value = expression_scalar(value.at("literal"), child(path, "literal"));
+        result.unit = unit(value.at("unit"), child(path, "unit"));
+    } else if (value.contains("fact")) {
+        fields(value, path, {"fact"}, {"fact"});
+        result.kind = ExpressionKind::fact; result.fact = id(value.at("fact"), child(path, "fact"));
+    } else if (value.contains("add") || value.contains("subtract")) {
+        const auto name = value.contains("add") ? "add" : "subtract";
+        fields(value, path, {name}, {name}); array(value.at(name), child(path, name), 2, true);
+        if (value.at(name).size() != 2) fail("type", path, "Binary arithmetic requires exactly two expressions");
+        result.kind = value.contains("add") ? ExpressionKind::add : ExpressionKind::subtract;
+        for (std::size_t i = 0; i < 2; ++i)
+            result.children.push_back(expression(value.at(name)[i], child(child(path, name), std::to_string(i)), depth + 1, count));
+    } else if (value.contains("scale")) {
+        fields(value, path, {"scale"}, {"scale"});
+        const auto scale_path = child(path, "scale"); const auto& scaled = value.at("scale");
+        fields(scaled, scale_path, {"value", "numerator", "denominator"}, {"value", "numerator", "denominator"});
+        result.kind = ExpressionKind::scale;
+        result.numerator = static_cast<std::uint32_t>(integer(scaled.at("numerator"), child(scale_path, "numerator"), 0, 1'000'000));
+        result.denominator = positive(scaled.at("denominator"), child(scale_path, "denominator"));
+        result.children.push_back(expression(scaled.at("value"), child(scale_path, "value"), depth + 1, count));
+    } else fail("operation", path, "Unknown expression operation");
+    return result;
+}
+std::pair<ValueType, Unit> expression_type_impl(const Expression& value, Scope context, const Registry& registry,
+                                              std::size_t depth, std::size_t& count) {
+    const std::string path = "/expression";
+    if (depth > 16 || ++count > 128) fail("budget", path, "Expression nesting/term budget exceeded");
+    const auto zero = value.value == Scalar{std::int64_t{0}};
+    if (value.kind == ExpressionKind::literal) {
+        if (!value.fact.empty() || !value.children.empty() || value.numerator != 0 || value.denominator != 1)
+            fail("typed_shape", path, "Literal has incompatible expression payloads");
+        if (static_cast<unsigned>(value.unit) > static_cast<unsigned>(Unit::count)) fail("unit", path, "Unknown expression unit");
+        if (std::holds_alternative<std::int64_t>(value.value)) {
+            if (value.unit == Unit::none || value.unit == Unit::boolean) fail("unit", path, "Integer literal requires an integer unit");
+            return {ValueType::integer, value.unit};
+        }
+        if (std::holds_alternative<bool>(value.value)) {
+            if (value.unit != Unit::boolean) fail("unit", path, "Boolean literal requires boolean unit");
+            return {ValueType::boolean, value.unit};
+        }
+        const auto& literal = std::get<std::string>(value.value);
+        if (value.unit != Unit::none) fail("unit", path, "Text literal requires unit none");
+        if (literal.size() > 4096 || literal.find('\0') != std::string::npos) fail("range", path, "Text literal is outside its bound");
+        return {ValueType::text, value.unit};
+    }
+    if (!zero || value.unit != Unit::none) fail("typed_shape", path, "Nonliteral expressions cannot carry literal value/unit payloads");
+    if (value.kind == ExpressionKind::fact) {
+        if (!value.children.empty() || value.numerator != 0 || value.denominator != 1 || !valid_id(value.fact))
+            fail("typed_shape", path, "Fact expression has incompatible payloads or invalid ID");
+        const auto* metadata = registry.fact(value.fact);
+        if (!metadata) fail("unknown_fact", path, "Expression fact has no registered provider");
+        if (metadata->scope != context) fail("scope", path, "Expression cannot read another scope");
+        return {metadata->type, metadata->unit};
+    }
+    if (!value.fact.empty()) fail("typed_shape", path, "Arithmetic expressions cannot carry a fact ID");
+    if (value.kind == ExpressionKind::scale) {
+        if (value.children.size() != 1 || value.numerator > 1'000'000 || value.denominator == 0 || value.denominator > 1'000'000)
+            fail("typed_shape", path, "Scale requires one value and bounded integer fraction");
+        const auto result = expression_type_impl(value.children.front(), context, registry, depth + 1, count);
+        if (result.first != ValueType::integer) fail("type", path, "Scale requires an integer expression");
+        return result;
+    }
+    if ((value.kind != ExpressionKind::add && value.kind != ExpressionKind::subtract) || value.children.size() != 2 ||
+        value.numerator != 0 || value.denominator != 1) fail("typed_shape", path, "Binary arithmetic requires exactly two values");
+    const auto left = expression_type_impl(value.children[0], context, registry, depth + 1, count);
+    const auto right = expression_type_impl(value.children[1], context, registry, depth + 1, count);
+    if (left.first != ValueType::integer || right.first != ValueType::integer) fail("type", path, "Arithmetic requires integer expressions");
+    if (left.second != right.second) fail("unit", path, "Arithmetic operand units must match exactly");
+    return left;
+}
+FactMetadata variable(const Json& value, const std::string& path) {
+    fields(value, path, {"id", "scope", "type", "unit", "minimum", "maximum", "default", "help", "visibility"},
+                        {"id", "scope", "type", "unit", "minimum", "maximum", "default", "help"});
+    FactMetadata result{};
+    result.id = id(value.at("id"), child(path, "id")); result.scope = scope(value.at("scope"), child(path, "scope"));
+    const auto type = text(value.at("type"), child(path, "type"), 16);
+    if (type == "integer") result.type = ValueType::integer;
+    else if (type == "boolean") result.type = ValueType::boolean;
+    else if (type == "text") result.type = ValueType::text;
+    else fail("type", child(path, "type"), "Variable must have integer, boolean or text type");
+    result.unit = unit(value.at("unit"), child(path, "unit"));
+    result.minimum = integer(value.at("minimum"), child(path, "minimum"), std::numeric_limits<std::int64_t>::min());
+    result.maximum = integer(value.at("maximum"), child(path, "maximum"), std::numeric_limits<std::int64_t>::min());
+    result.default_value = expression_scalar(value.at("default"), child(path, "default"));
+    result.help = text(value.at("help"), child(path, "help"), 2048);
+    result.ports = {{"scope", PortType::scope, result.scope, Unit::none, false},
+                    {"value", PortType::value, result.scope, result.unit, true}};
+    if (value.contains("visibility")) {
+        const auto visibility = text(value.at("visibility"), child(path, "visibility"), 32);
+        if (visibility == "hidden_truth") result.visibility = Visibility::hidden_truth;
+        else if (visibility != "player_known") fail("visibility", child(path, "visibility"), "Unknown variable visibility");
+    }
+    return result;
+}
 pgp::core::OrdinalDay date(const Json& value, const std::string& path) {
     const auto iso = text(value, path, 10);
     if (iso.size() != 10 || iso[4] != '-' || iso[7] != '-') fail("date", path, "Expected YYYY-MM-DD");
@@ -192,6 +310,14 @@ Condition condition(const Json& value, const std::string& path, Scope context, c
     if (fact->type != ValueType::integer && comparison != Comparison::equal && comparison != Comparison::not_equal)
         fail("type", path, "Only integer facts permit ordering comparisons");
     Scalar literal;
+    if (value.at("value").is_object()) {
+        auto rhs = expression(value.at("value"), child(path, "value"));
+        const auto type = expression_type(rhs, context, registry);
+        if (type.first != fact->type) fail("type", path, "Expression comparison type mismatch");
+        if (type.second != fact->unit) fail("unit", path, "Expression comparison unit mismatch");
+        FactClause clause{fact_id, comparison, std::int64_t{0}, fact->unit}; clause.expression = std::move(rhs);
+        return {ConditionKind::clause, std::move(clause), {}};
+    }
     if (fact->type == ValueType::integer) literal = integer(value.at("value"), child(path, "value"), fact->minimum, fact->maximum);
     else if (fact->type == ValueType::boolean) literal = boolean(value.at("value"), child(path, "value"));
     else literal = text(value.at("value"), child(path, "value"));
@@ -209,6 +335,20 @@ Effect effect(const Json& value, const std::string& path, Scope context, const R
     const auto operation = id(value.at("op"), child(path, "op"));
     const auto* metadata = registry.effect(operation);
     if (!metadata) fail("unknown_effect", path, "Required operation/system is not registered");
+    if (operation == "set_variable") {
+        fields(value, path, {"op", "target", "variable", "value"}, {"op", "target", "variable", "value"});
+        if (text(value.at("target"), child(path, "target"), 128) != "self") fail("target", path, "Variable assignment requires explicit self target");
+        const auto name = id(value.at("variable"), child(path, "variable"));
+        const auto* registered = registry.fact(name);
+        if (!registered || !registered->default_value) fail("unknown_variable", path, "Assignment requires a registered writable variable");
+        if (registered->scope != context) fail("scope", path, "Variable assignment scope mismatch");
+        auto rhs = expression(value.at("value"), child(path, "value"));
+        const auto type = expression_type(rhs, context, registry);
+        if (type.first != registered->type) fail("type", path, "Variable expression type mismatch");
+        if (type.second != registered->unit) fail("unit", path, "Variable expression unit mismatch");
+        Effect result{operation, "self", context, {{"variable", name}}}; result.value_expression = std::move(rhs);
+        return result;
+    }
     const auto target = text(value.at("target"), child(path, "target"), 128);
     Scope target_scope;
     if (target == "self") target_scope = context;
@@ -598,6 +738,44 @@ std::string_view definition_kind(const Definition& definition) {
     if (std::holds_alternative<FlowDefinition>(definition.data)) return "flow";
     return "deal";
 }
+std::pair<ValueType, Unit> expression_type(const Expression& value, Scope context, const Registry& registry) {
+    if (context != Scope::company && context != Scope::world && context != Scope::state)
+        fail("scope", "/expression", "Expression scope is invalid");
+    std::size_t count = 0;
+    return expression_type_impl(value, context, registry, 0, count);
+}
+Registry registry_with_variables(const Registry& registry, const std::vector<FactMetadata>& variables) {
+    if (variables.size() > 512) fail("budget", "/variables", "Variable declaration budget exceeded");
+    Registry result = registry;
+    std::set<std::string> names;
+    const auto same_ports = [](const auto& left, const auto& right) {
+        return left.size() == right.size() && std::equal(left.begin(), left.end(), right.begin(), [](const auto& a, const auto& b) {
+            return a.name == b.name && a.type == b.type && a.scope == b.scope && a.unit == b.unit && a.output == b.output;
+        });
+    };
+    for (const auto& metadata : variables) {
+        const auto path = child("/variables", metadata.id);
+        if (!names.insert(metadata.id).second) fail("duplicate_id", path, "Variable ID is declared twice");
+        const std::vector<PortMetadata> ports{{"scope", PortType::scope, metadata.scope, Unit::none, false},
+                                               {"value", PortType::value, metadata.scope, metadata.unit, true}};
+        if (!metadata.default_value || !same_ports(metadata.ports, ports) || metadata.provider != "foundation" ||
+            !metadata.dependencies.empty() || metadata.boundary != Boundary::committed_result)
+            fail("typed_shape", path, "Content variables need explicit defaults and standard foundation metadata");
+        if (const auto* existing = result.fact(metadata.id)) {
+            if (!existing->default_value) fail("duplicate_id", path, "Variable collides with an owning system fact");
+            if (existing->scope != metadata.scope || existing->type != metadata.type || existing->unit != metadata.unit ||
+                existing->minimum != metadata.minimum || existing->maximum != metadata.maximum || existing->help != metadata.help ||
+                existing->default_value != metadata.default_value || existing->visibility != metadata.visibility ||
+                existing->boundary != metadata.boundary || existing->provider != metadata.provider ||
+                existing->dependencies != metadata.dependencies || !same_ports(existing->ports, metadata.ports))
+                fail("variable", path, "Variable declaration differs from the installed registry");
+        } else {
+            try { result.register_variable(metadata, *metadata.default_value); }
+            catch (const std::invalid_argument& error) { fail("variable", path, error.what()); }
+        }
+    }
+    return result;
+}
 Collection load_collection(std::string_view document, const Registry& registry) {
     if (document.size() > maximum_document_bytes) fail("budget", "/", "Content document exceeds one MiB");
     std::vector<std::set<std::string>> keys;
@@ -615,7 +793,7 @@ Collection load_collection(std::string_view document, const Registry& registry) 
     Json root;
     try { root = Json::parse(document.begin(), document.end(), callback, true, false); }
     catch (const Json::exception&) { fail("json", "/", "Malformed JSON document"); }
-    fields(root, "", {"content_schema", "content_version", "currency_basis", "definitions"},
+    fields(root, "", {"content_schema", "content_version", "currency_basis", "definitions", "variables"},
            {"content_schema", "content_version", "currency_basis", "definitions"});
     if (integer(root.at("content_schema"), "/content_schema", 1, maximum_integer) != content_schema)
         fail("unsupported_schema", "/content_schema", "Only content schema 1 can be loaded");
@@ -625,6 +803,12 @@ Collection load_collection(std::string_view document, const Registry& registry) 
         fail("unit", "/currency_basis", "All authoritative money uses constant-2014 cents");
     const auto& definitions = root.at("definitions"); array(definitions, "/definitions", 2048, true);
     Collection result{content_schema, version, {}};
+    if (root.contains("variables")) {
+        array(root.at("variables"), "/variables", 512);
+        for (std::size_t i = 0; i < root.at("variables").size(); ++i)
+            result.variables.push_back(variable(root.at("variables")[i], child("/variables", std::to_string(i))));
+    }
+    const auto installed_registry = registry_with_variables(registry, result.variables);
     for (std::size_t i = 0; i < definitions.size(); ++i) {
         const auto& value = definitions[i]; const auto path = child("/definitions", std::to_string(i));
         if (!value.is_object() || !value.contains("id") || !value.contains("kind") || !value.contains("revision"))
@@ -636,7 +820,7 @@ Collection load_collection(std::string_view document, const Registry& registry) 
         auto payload = [&]() -> DefinitionData {
             if (kind == "scenario") return scenario(value, path);
             if (kind == "research") return research(value, path);
-            if (kind == "flow") return flow(value, path, registry);
+            if (kind == "flow") return flow(value, path, installed_registry);
             if (kind == "deal") {
                 fields(value, path, {"id", "kind", "revision", "minimum_payment_cents", "minimum_duration_days"},
                        {"id", "kind", "revision", "minimum_payment_cents", "minimum_duration_days"});
@@ -647,7 +831,7 @@ Collection load_collection(std::string_view document, const Registry& registry) 
         }();
         result.definitions.emplace(name, Definition{name, revision, std::move(payload)});
     }
-    validate_references(result, registry);
+    validate_references(result, installed_registry);
     return result;
 }
 } // namespace pgp::content

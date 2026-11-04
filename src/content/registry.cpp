@@ -41,6 +41,21 @@ void validate_common(std::string_view id, std::string_view help) {
     if (!valid_id(id) || help.empty() || help.size() > 2048)
         throw std::invalid_argument("Registry entries need stable IDs and bounded help");
 }
+void validate_default(const FactMetadata& metadata) {
+    if (!metadata.default_value) return;
+    const auto& value = *metadata.default_value;
+    if (metadata.type == ValueType::integer) {
+        const auto* number = std::get_if<std::int64_t>(&value);
+        if (!number || *number < metadata.minimum || *number > metadata.maximum)
+            throw std::invalid_argument("Variable default exceeds its registered type/range");
+    } else if (metadata.type == ValueType::boolean) {
+        if (!std::holds_alternative<bool>(value)) throw std::invalid_argument("Variable default requires boolean without coercion");
+    } else if (metadata.type == ValueType::text) {
+        const auto* text = std::get_if<std::string>(&value);
+        if (!text || text->size() > 4096 || text->find('\0') != std::string::npos)
+            throw std::invalid_argument("Variable default requires bounded text without NUL");
+    } else throw std::invalid_argument("Reference variables are unavailable");
+}
 } // namespace
 
 bool valid_id(std::string_view id) {
@@ -101,8 +116,13 @@ void Registry::register_fact(FactMetadata metadata) {
         }
     }
     if (!value_output) throw std::invalid_argument("Fact needs an output value port");
+    validate_default(metadata);
     const auto id = metadata.id;
     if (!facts_.emplace(id, std::move(metadata)).second) throw std::invalid_argument("Duplicate fact ID");
+}
+void Registry::register_variable(FactMetadata metadata, Scalar default_value) {
+    metadata.default_value = std::move(default_value);
+    register_fact(std::move(metadata));
 }
 void Registry::register_effect(EffectMetadata metadata) {
     validate_common(metadata.id, metadata.help);
@@ -185,6 +205,13 @@ Registry foundation_registry() {
            "Register one owned modifier; do not repeatedly mutate its base value.");
     effect("remove_owned_modifier", {{"key", ValueType::text, Unit::none, 0, 0, true, "", "Owner-local modifier key.", {}}},
            "Remove only this activation's modifier with the named key.");
+    result.register_effect({"set_variable", {Scope::company, Scope::world, Scope::state},
+        {{"variable", ValueType::text, Unit::none, 0, 0, true, "", "Registered scoped variable ID.", {}}},
+        "Assign a checked typed expression to an explicitly scoped variable.",
+        {{"target", PortType::scope, Scope::company, Unit::none, false},
+         {"in", PortType::execution, Scope::company, Unit::none, false},
+         {"out", PortType::execution, Scope::company, Unit::none, true}},
+        Boundary::prepared_morning, Visibility::player_known, "foundation", {}});
     return result;
 }
 } // namespace pgp::content

@@ -59,6 +59,12 @@ accepts a read-only observation reader/date and emits start/elapsed/result
 traces. A missing reader/date is unknown; explicit absent history is unsatisfied;
 stale samples are unknown. Hidden descendants redact temporal history without
 reading it. Current fact clauses and cached duration truth are distinct outputs.
-Related-entity selectors/quantifiers, registered variables and checked expression
-trees still require shared schema/compiler/runtime extensions. M1-06 remains
-open for those forms and its prerequisite gate.
+Content-declared scoped variables are registered as typed facts with explicit
+defaults, ranges and visibility. Checked expression trees support typed literals,
+same-scope fact/variable reads, matching-unit integer add/subtract and rational
+scale with one signed half-up rounding. Comparisons can use an expression on
+their right side. `set_variable` assigns a matching typed expression through the
+same transaction and receipts as other effects; no arbitrary script runs.
+Hidden RHS expressions redact the entire player clause before hidden reads.
+Related-entity selectors/quantifiers remain future extensions. M1-06 stays open
+for them and deferred platform qualification; Mac gameplay development proceeds.

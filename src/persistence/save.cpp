@@ -135,16 +135,28 @@ std::vector<std::string> parse_strings(const Json& value,std::size_t maximum=max
 }
 Json world_json(const WorldState& world) {
     Json facts=Json::object();for (const auto& [name,value]:world.facts) facts[name]=scalar(value);
+    Json variables=Json::array();
+    for (const auto& variable:world.variables) variables.push_back({
+        {"binding",binding(variable.binding)},{"variable_id",variable.variable_id},{"value",scalar(variable.value)}});
     Json enabled=nullptr;if (world.enabled_flows) enabled=strings(*world.enabled_flows);
     return Json{{"simulation",simulation_json(world.simulation)},{"company_id",world.company_id},
         {"world_id",world.world_id},{"state_id",world.state_id},{"campaign_start",world.campaign_start.value()},
         {"scope_created",world.scope_created.value()},{"root_seed",world.root_seed},{"enabled_flows",std::move(enabled)},
         {"facts",std::move(facts)},{"counterparty_cash_cents",world.counterparty_cash.value()},
-        {"decisions",strings(world.decisions)},{"negotiations",strings(world.negotiations)}};
+        {"decisions",strings(world.decisions)},{"negotiations",strings(world.negotiations)},{"variables",std::move(variables)}};
 }
-WorldState parse_world(const Json& value) {
-    detail::fields(value,"world",{"simulation","company_id","world_id","state_id","campaign_start","scope_created",
+WorldState parse_world(const Json& value,const CompiledProgram& program) {
+    if (!value.is_object()) detail::invalid("world","Expected object");
+    Json prior_shape=Json::object();
+    for (const auto& [name,ignored]:value.items()) {
+        (void)ignored;
+        if (name!="variables") prior_shape[name]=nullptr;
+    }
+    detail::fields(prior_shape,"world",{"simulation","company_id","world_id","state_id","campaign_start","scope_created",
                                    "root_seed","enabled_flows","facts","counterparty_cash_cents","decisions","negotiations"});
+    if (!value.contains("variables") && std::any_of(program.registry.facts().begin(),program.registry.facts().end(),[](const auto& entry) {
+        return entry.second.default_value.has_value();
+    })) detail::invalid("variables","Registered variables require an explicit value collection");
     WorldState result;
     result.simulation=parse_simulation(value.at("simulation"));
     result.company_id=detail::text(value.at("company_id"),"company_id",128);
@@ -161,6 +173,15 @@ WorldState parse_world(const Json& value) {
     for (const auto& [name,item]:facts.items()) {
         if (name.size()>128) detail::invalid("fact","Fact ID is oversized");
         result.facts.emplace(name,parse_scalar(item));
+    }
+    if (value.contains("variables")) {
+        const auto& variables=value.at("variables");
+        detail::array(variables,"variables",maximum_records);
+        for (const auto& item:variables) {
+            detail::fields(item,"variable",{"binding","variable_id","value"});
+            result.variables.push_back({parse_binding(item.at("binding")),
+                detail::text(item.at("variable_id"),"variable_id",128),parse_scalar(item.at("value"))});
+        }
     }
     return result;
 }
@@ -432,7 +453,7 @@ LoadedSave decode_save(const runtime::CompiledProgram& program,std::string_view 
         if (digest!=sha256(body.dump())) throw PersistenceError("integrity","Save checksum does not match; use its recovery copy or another autosave");
         const auto sequence=detail::u64(body.at("autosave_sequence"),"autosave_sequence");
         const auto& state=body.at("checkpoint");detail::fields(state,"checkpoint",{"world","runtime"});
-        runtime::Checkpoint checkpoint{parse_world(state.at("world")),parse_runtime(state.at("runtime"),program)};
+        runtime::Checkpoint checkpoint{parse_world(state.at("world"),program),parse_runtime(state.at("runtime"),program)};
         runtime::validate_checkpoint(program,checkpoint);
         return {std::move(identity),std::move(checkpoint),sequence};
     } catch (const PersistenceError&) {throw;}

@@ -33,7 +33,7 @@ void scalar_valid(const content::Scalar& value, const content::FactMetadata& met
         return;
     case content::ValueType::text: {
         const auto* text = std::get_if<std::string>(&value);
-        if (!text || text->empty() || text->size() > 4096 || text->find('\0') != std::string::npos)
+        if (!text || (!metadata.default_value && text->empty()) || text->size() > 4096 || text->find('\0') != std::string::npos)
             invalid("Fact requires bounded text: " + metadata.id);
         return;
     }
@@ -112,12 +112,20 @@ WorldState foundation_world(core::Cents cash) {
     return world;
 }
 std::vector<std::string> supported_effects() {
-    return {"adjust_cash", "record_decision", "open_negotiation", "register_owned_modifier", "remove_owned_modifier"};
+    return {"adjust_cash", "record_decision", "open_negotiation", "register_owned_modifier", "remove_owned_modifier", "set_variable"};
 }
 content::Scalar read_fact(const WorldState& world, const content::FactMetadata& metadata,
                           const ScopeBinding& binding) {
     if (!binding_exists(world, binding) || binding.scope != metadata.scope)
         invalid("Fact scope binding does not exist or has the wrong type");
+    if (metadata.default_value) {
+        const auto found = std::find_if(world.variables.begin(), world.variables.end(), [&](const auto& value) {
+            return value.binding == binding && value.variable_id == metadata.id;
+        });
+        const auto& value = found == world.variables.end() ? *metadata.default_value : found->value;
+        scalar_valid(value, metadata);
+        return value;
+    }
     if (metadata.id == "company.cash_cents") return world.simulation.cash.value();
     const auto found = world.facts.find(metadata.id);
     if (found == world.facts.end()) invalid("Missing owning fact provider value: " + metadata.id);
@@ -147,8 +155,19 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
         invalid("Invalid world identity, date, counterparty or count");
     for (const auto& [id, value] : world.facts) {
         const auto* metadata = program.registry.fact(id);
-        if (!metadata || id == "company.cash_cents") invalid("Unknown or duplicated owning world fact");
+        if (!metadata || metadata->default_value || id == "company.cash_cents") invalid("Unknown or duplicated owning world fact");
         scalar_valid(value, *metadata);
+    }
+    if (world.variables.size() > maximum_records) invalid("Variable value count budget exceeded");
+    std::optional<std::pair<ScopeBinding, std::string>> previous_variable;
+    for (const auto& variable : world.variables) {
+        const auto identity = std::pair{variable.binding, variable.variable_id};
+        const auto* metadata = program.registry.fact(variable.variable_id);
+        if (!metadata || !metadata->default_value || !binding_exists(world, variable.binding) ||
+            metadata->scope != variable.binding.scope || (previous_variable && identity <= *previous_variable))
+            invalid("Variable value has an unknown owner, wrong scope or duplicate/noncanonical identity");
+        scalar_valid(variable.value, *metadata);
+        previous_variable = identity;
     }
     if (world.enabled_flows) {
         if (world.enabled_flows->size() > 512) invalid("Enabled flow count budget exceeded");
@@ -384,6 +403,14 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
             if (!before || !after || *before < 0 || *after < 0 || core::checked_subtract(*after, *before) != amount ||
                 core::checked_subtract(*before, *after) != receipt.counterparty_delta.value())
                 invalid("Cash transfer receipt is unbalanced");
+        } else if (receipt.operation == "set_variable") {
+            if (receipt.counterparty_delta != core::Cents{0}) invalid("Variable receipt changes counterparty cash");
+            const auto& variable_id = std::get<std::string>(owner.effects[receipt.effect_index].arguments.at("variable"));
+            const auto* metadata = program.registry.fact(variable_id);
+            if (!metadata || !metadata->default_value || metadata->scope != receipt.target.scope)
+                invalid("Variable receipt has no registered scoped variable");
+            scalar_valid(receipt.before, *metadata);
+            scalar_valid(receipt.after, *metadata);
         } else {
             if (receipt.counterparty_delta != core::Cents{0}) invalid("Non-cash receipt changes counterparty");
             const auto* before = std::get_if<std::int64_t>(&receipt.before);

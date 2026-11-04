@@ -94,6 +94,37 @@ void complete(Checkpoint& checkpoint, Activation& activation, const CompiledProg
 }
 void apply_effect(Checkpoint& checkpoint, Activation& activation, const content::Effect& effect,
                   std::size_t index, const CompiledProgram& program) {
+    if (effect.operation == "set_variable") {
+        const auto& variable_id = std::get<std::string>(effect.arguments.at("variable"));
+        const auto* metadata = program.registry.fact(variable_id);
+        if (!metadata || !metadata->default_value || metadata->scope != activation.binding.scope ||
+            effect.target != "self" || effect.target_scope != activation.binding.scope || !effect.value_expression)
+            fail(RuntimeReason::effect_rejected, "Assignment requires a registered variable in the explicit self scope.");
+        const auto facts = [&](const auto& field, const auto& binding) { return read_fact(checkpoint.world, field, binding); };
+        const auto evaluated = evaluate_expression(*effect.value_expression, activation.binding, program.registry, facts);
+        if (!evaluated) fail(RuntimeReason::effect_rejected, "Assignment value is unavailable.");
+        const auto* number = std::get_if<std::int64_t>(&*evaluated);
+        const auto* text = std::get_if<std::string>(&*evaluated);
+        const bool valid = metadata->type == content::ValueType::integer ?
+            (number && *number >= metadata->minimum && *number <= metadata->maximum) :
+            metadata->type == content::ValueType::boolean ? std::holds_alternative<bool>(*evaluated) :
+            (text && text->size() <= 4096 && text->find('\0') == std::string::npos);
+        if (!valid) fail(RuntimeReason::effect_rejected, "Assignment exceeds the variable's registered type or range.");
+        const auto before = read_fact(checkpoint.world, *metadata, activation.binding);
+        auto& values = checkpoint.world.variables;
+        const auto found = std::find_if(values.begin(), values.end(), [&](const auto& value) {
+            return value.binding == activation.binding && value.variable_id == variable_id;
+        });
+        if (found == values.end()) {
+            record_budget(values.size());
+            values.push_back({activation.binding, variable_id, *evaluated});
+            std::sort(values.begin(), values.end(), [](const auto& left, const auto& right) {
+                return std::tie(left.binding, left.variable_id) < std::tie(right.binding, right.variable_id);
+            });
+        } else found->value = *evaluated;
+        add_receipt(checkpoint, activation, index, effect.operation, before, *evaluated);
+        return;
+    }
     if (effect.target != "self" || effect.target_scope != activation.binding.scope ||
         activation.binding.scope != content::Scope::company)
         fail(RuntimeReason::effect_rejected, "The foundation operation requires its explicit company self target.");

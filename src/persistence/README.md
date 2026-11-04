@@ -20,7 +20,7 @@ The UTF-8 JSON envelope contains:
 - `autosave_sequence`: explicit unsigned generation, zero for ordinary saves;
 - `checkpoint.world`: one owning core state, scope identities/dates, root seed,
   enabled flow roots, extra registered facts, the authorized cash counterparty,
-  decision markers and pending negotiation references;
+  decision markers, pending negotiation references and scoped variable values;
 - `checkpoint.runtime`: activation/revision/context/current node, start/wait/due
   dates, bounded continuation frames, lifecycle eligibility/count/cooldown/anchor
   state, owned modifiers, effect receipts, presentations/selected choices and
@@ -36,6 +36,15 @@ references and unsupported identities fail. The default byte cap is 25 MiB;
 callers can select a stricter bound up to a 64 MiB hard ceiling. No original is
 deleted or guessed into a future format. Development saves require the exact
 game/content/rules identity; no migration is claimed yet.
+
+The world `variables` array stores explicit overrides of registered defaults.
+Each strict record has `binding`, `variable_id` and the existing typed `value`
+wrapper; integer, boolean and text values retain their types without coercion.
+Runtime validation requires registered IDs, matching scope/type/range and unique
+canonical ordering. The bounded array is always emitted, including when empty
+defaults apply. Earlier saves may omit it only when the program registry has no
+registered variable defaults. Registry defaults are part of the canonical content
+identity, so changed defaults cannot silently reinterpret an existing save.
 
 Weighted-branch records retain the activation/node visit, resolved day, flow/node
 and branch IDs, bounded sample, and narrative-stream states before/after the

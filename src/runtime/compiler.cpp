@@ -29,6 +29,39 @@ Json scalar_json(const Scalar& scalar, const std::string& path) {
               path, "Scalar text must be nonempty and bounded");
     return std::visit([](const auto& value) { return Json(value); }, scalar);
 }
+Json expression_json(const Expression& expression, const std::string& path, std::size_t depth, std::size_t& count) {
+    if (depth > 16 || ++count > 128) fail("budget", path, "Expression nesting/term budget exceeded");
+    const bool zero = expression.value == Scalar{std::int64_t{0}};
+    if (expression.kind == ExpressionKind::literal) {
+        shape(expression.fact.empty() && expression.children.empty() && expression.numerator == 0 && expression.denominator == 1,
+              path, "Literal has incompatible expression payloads");
+        if (const auto* text = std::get_if<std::string>(&expression.value))
+            shape(text->size() <= 4096 && text->find('\0') == std::string::npos, path, "Literal text is outside its bound");
+        return {{"literal", std::visit([](const auto& value) { return Json(value); }, expression.value)}, {"unit", unit_name(expression.unit)}};
+    }
+    shape(zero && expression.unit == Unit::none, path, "Nonliteral expression cannot carry a literal value/unit");
+    if (expression.kind == ExpressionKind::fact) {
+        shape(expression.children.empty() && expression.numerator == 0 && expression.denominator == 1,
+              path, "Fact expression has incompatible payloads");
+        return {{"fact", expression.fact}};
+    }
+    shape(expression.fact.empty(), path, "Arithmetic expression cannot carry a fact ID");
+    if (expression.kind == ExpressionKind::scale) {
+        shape(expression.children.size() == 1 && expression.numerator <= 1'000'000 && expression.denominator >= 1 && expression.denominator <= 1'000'000,
+              path, "Scale requires one value and a bounded integer fraction");
+        return {{"scale", {{"value", expression_json(expression.children.front(), path_child(path, "scale/value"), depth + 1, count)},
+                           {"numerator", expression.numerator}, {"denominator", expression.denominator}}}};
+    }
+    shape((expression.kind == ExpressionKind::add || expression.kind == ExpressionKind::subtract) && expression.children.size() == 2 &&
+          expression.numerator == 0 && expression.denominator == 1, path, "Binary arithmetic requires exactly two values");
+    Json children = Json::array();
+    for (std::size_t i = 0; i < 2; ++i) children.push_back(expression_json(expression.children[i], path_child(path, std::to_string(i)), depth + 1, count));
+    return {{expression.kind == ExpressionKind::add ? "add" : "subtract", std::move(children)}};
+}
+Json expression_json(const Expression& expression, const std::string& path) {
+    std::size_t count = 0;
+    return expression_json(expression, path, 0, count);
+}
 std::string comparison_name(Comparison comparison, const std::string& path) {
     switch (comparison) {
     case Comparison::equal: return "eq";
@@ -53,8 +86,9 @@ Json condition_json(const Condition& condition, const std::string& path,
     if (condition.kind == ConditionKind::clause) {
         shape(condition.clause.has_value() && condition.children.empty(), path, "Clause must contain only one fact comparison");
         const auto& clause = *condition.clause;
+        if (clause.expression) shape(clause.value == Scalar{std::int64_t{0}}, path, "Expression comparisons need the zero scalar placeholder");
         return {{"fact", clause.fact}, {"op", comparison_name(clause.comparison, path)},
-                {"unit", unit_name(clause.unit)}, {"value", scalar_json(clause.value, path)}};
+                {"unit", unit_name(clause.unit)}, {"value", clause.expression ? expression_json(*clause.expression, path_child(path, "value")) : scalar_json(clause.value, path)}};
     }
     shape(!condition.clause.has_value() && !condition.children.empty() && condition.children.size() <= 128,
           path, "Aggregate conditions require children and no fact payload");
@@ -137,6 +171,13 @@ Json effect_json(const Effect& effect, Scope scope, const std::string& path) {
     else if (effect.target == "world") target_scope = Scope::world;
     else fail("target", path, "Explicit registered effect target required");
     shape(effect.target_scope == target_scope, path, "Normalized effect target scope is inconsistent");
+    if (effect.operation == "set_variable") {
+        shape(effect.target == "self" && effect.value_expression.has_value() && effect.arguments.size() == 1 && effect.arguments.contains("variable"),
+              path, "Variable assignment requires self, one variable ID and a typed expression");
+        return {{"op", effect.operation}, {"target", effect.target}, {"variable", scalar_json(effect.arguments.at("variable"), path)},
+                {"value", expression_json(*effect.value_expression, path_child(path, "value"))}};
+    }
+    shape(!effect.value_expression, path, "Only variable assignment carries a value expression");
     Json result{{"op", effect.operation}, {"target", effect.target}};
     for (const auto& [name, value] : effect.arguments) {
         shape(name != "op" && name != "target", path, "Effect arguments cannot overwrite operation/target");
@@ -237,6 +278,19 @@ Json collection_json(const Collection& collection) {
     shape(!collection.definitions.empty() && collection.definitions.size() <= 512, "/definitions", "Definition count budget exceeded");
     Json result{{"content_schema", collection.schema}, {"content_version", collection.content_version},
                 {"currency_basis", "constant_2014_cents"}, {"definitions", Json::array()}};
+    if (!collection.variables.empty()) {
+        std::vector<const FactMetadata*> variables;
+        for (const auto& variable : collection.variables) variables.push_back(&variable);
+        std::sort(variables.begin(), variables.end(), [](const auto* a, const auto* b) { return a->id < b->id; });
+        result["variables"] = Json::array();
+        for (const auto* variable : variables) {
+            const auto type = variable->type == ValueType::integer ? "integer" : variable->type == ValueType::boolean ? "boolean" : "text";
+            result["variables"].push_back({{"id", variable->id}, {"scope", scope_name(variable->scope)}, {"type", type},
+                {"unit", unit_name(variable->unit)}, {"minimum", variable->minimum}, {"maximum", variable->maximum},
+                {"default", std::visit([](const auto& value) { return Json(value); }, *variable->default_value)},
+                {"help", variable->help}, {"visibility", variable->visibility == Visibility::hidden_truth ? "hidden_truth" : "player_known"}});
+        }
+    }
     for (const auto& [name, definition] : collection.definitions)
         result["definitions"].push_back(definition_json(definition, name));
     return result;
@@ -329,7 +383,10 @@ void validate_scalar(const Scalar& scalar, const FactMetadata& metadata, const s
         if (!std::holds_alternative<bool>(scalar)) fail("type", path, "Fact value must be a boolean without coercion");
     } else if (metadata.type == ValueType::text) {
         if (!std::holds_alternative<std::string>(scalar)) fail("type", path, "Fact value must be text without coercion");
-        (void)scalar_json(scalar, path);
+        if (metadata.default_value) {
+            const auto& text = std::get<std::string>(scalar);
+            shape(text.size() <= 4096 && text.find('\0') == std::string::npos, path, "Variable text is outside its bound");
+        } else (void)scalar_json(scalar, path);
     } else fail("type", path, "Reference facts are not registered executable comparisons");
 }
 void validate_condition(const Condition& condition, const ScopeBinding& binding, const Registry& registry,
@@ -355,7 +412,12 @@ void validate_condition(const Condition& condition, const ScopeBinding& binding,
         (void)comparison_name(clause.comparison, path);
         if (metadata->type != ValueType::integer && clause.comparison != Comparison::equal && clause.comparison != Comparison::not_equal)
             fail("type", path, "Only integer facts support ordering comparisons");
-        validate_scalar(clause.value, *metadata, path);
+        if (clause.expression) {
+            shape(clause.value == Scalar{std::int64_t{0}}, path, "Expression comparison needs a zero scalar placeholder");
+            const auto type = validate_expression(*clause.expression, binding.scope, registry);
+            if (type.type != metadata->type) fail("type", path, "Comparison expression type mismatch");
+            if (type.unit != metadata->unit) fail("unit", path, "Comparison expression unit mismatch");
+        } else validate_scalar(clause.value, *metadata, path);
         return;
     }
     shape(!condition.clause && !condition.children.empty() && condition.children.size() <= 128 &&
@@ -375,9 +437,34 @@ bool compare(const Scalar& actual, const Scalar& expected, Comparison comparison
     }
     throw std::logic_error("Validated comparison became invalid");
 }
+bool expression_hidden(const Expression& expression, const Registry& registry) {
+    if (expression.kind == ExpressionKind::fact)
+        return registry.fact(expression.fact)->visibility == Visibility::hidden_truth;
+    return std::any_of(expression.children.begin(), expression.children.end(), [&](const auto& child) {
+        return expression_hidden(child, registry);
+    });
+}
+Scalar execute_expression(const Expression& expression, const ScopeBinding& binding, const Registry& registry, const FactReader& read) {
+    if (expression.kind == ExpressionKind::literal) return expression.value;
+    if (expression.kind == ExpressionKind::fact) {
+        if (!read) fail("provider", "/expression", "Expression fact requires a pure reader");
+        const auto& metadata = *registry.fact(expression.fact);
+        auto actual = read(metadata, binding);
+        validate_scalar(actual, metadata, "/expression/" + expression.fact);
+        return actual;
+    }
+    const auto left = std::get<std::int64_t>(execute_expression(expression.children[0], binding, registry, read));
+    if (expression.kind == ExpressionKind::scale) {
+        const std::uint64_t factors[]{expression.numerator};
+        return core::signed_mul_div_round_half_up(left, factors, static_cast<std::uint64_t>(expression.denominator));
+    }
+    const auto right = std::get<std::int64_t>(execute_expression(expression.children[1], binding, registry, read));
+    return expression.kind == ExpressionKind::add ? core::checked_add(left, right) : core::checked_subtract(left, right);
+}
 bool has_hidden_descendant(const Condition& condition, const Registry& registry) {
     if (condition.kind == ConditionKind::clause)
-        return registry.fact(condition.clause->fact)->visibility == Visibility::hidden_truth;
+        return registry.fact(condition.clause->fact)->visibility == Visibility::hidden_truth ||
+            (condition.clause->expression && expression_hidden(*condition.clause->expression, registry));
     return std::any_of(condition.children.begin(), condition.children.end(), [&](const auto& child) {
         return has_hidden_descendant(child, registry);
     });
@@ -428,14 +515,16 @@ std::optional<bool> inspect(const Condition& condition, const ScopeBinding& bind
     if (condition.kind == ConditionKind::clause) {
         const auto& clause = *condition.clause;
         const auto& metadata = *registry.fact(clause.fact);
-        if (mode == InspectionMode::player_known && metadata.visibility == Visibility::hidden_truth) {
+        if (mode == InspectionMode::player_known && (metadata.visibility == Visibility::hidden_truth ||
+            (clause.expression && expression_hidden(*clause.expression, registry)))) {
             traces.push_back({path, clause.fact, binding, clause.unit, clause.comparison, {}, {}, {}, true});
             return std::nullopt;
         }
         const auto actual = read(metadata, binding);
         validate_scalar(actual, metadata, path);
-        const auto result = compare(actual, clause.value, clause.comparison);
-        traces.push_back({path, clause.fact, binding, clause.unit, clause.comparison, actual, clause.value, result, false});
+        const auto expected = clause.expression ? execute_expression(*clause.expression, binding, registry, read) : clause.value;
+        const auto result = compare(actual, expected, clause.comparison);
+        traces.push_back({path, clause.fact, binding, clause.unit, clause.comparison, actual, expected, result, false});
         return result;
     }
     if (condition.kind == ConditionKind::not_condition) {
@@ -483,13 +572,14 @@ CompileError::CompileError(std::string code, std::string path, std::string detai
 CompiledProgram compile_collection(const Collection& collection, const Registry& registry,
                                    std::optional<std::vector<std::string>> available_effects) {
     try {
+        auto installed_registry = registry_with_variables(registry, collection.variables);
         auto canonical = collection_json(collection).dump();
-        auto normalized = load_collection(canonical, registry);
+        auto normalized = load_collection(canonical, installed_registry);
         validate_sequence_regions(normalized);
         if (available_effects) {
             std::set<std::string> available;
             for (const auto& operation : *available_effects)
-                if (!registry.effect(operation) || !available.insert(operation).second)
+                if (!installed_registry.effect(operation) || !available.insert(operation).second)
                     fail("provider", "/registry", "Available effect operations must be distinct registered operations");
             for (const auto& [name, definition] : normalized.definitions) {
                 const auto* flow = std::get_if<FlowDefinition>(&definition.data);
@@ -500,10 +590,25 @@ CompiledProgram compile_collection(const Collection& collection, const Registry&
             }
         }
         auto lints = find_lints(normalized);
-        return {std::move(normalized), registry, std::move(lints), std::move(canonical)};
+        return {std::move(normalized), std::move(installed_registry), std::move(lints), std::move(canonical)};
     } catch (const CompileError&) { throw; }
     catch (const ValidationError& error) { throw CompileError(error.code(), error.path(), error.what()); }
     catch (const std::exception& error) { throw CompileError("typed_shape", "/", error.what()); }
+}
+ExpressionType validate_expression(const Expression& expression, Scope scope, const Registry& registry) {
+    try {
+        const auto [type, unit] = content::expression_type(expression, scope, registry);
+        return {type, unit};
+    } catch (const ValidationError& error) { throw CompileError(error.code(), error.path(), error.what()); }
+}
+std::optional<Scalar> evaluate_expression(const Expression& expression, const ScopeBinding& binding,
+                                         const Registry& registry, const FactReader& read, InspectionMode mode) {
+    if (!valid_id(binding.id)) fail("scope", "/expression", "Expression binding needs a stable bounded identifier");
+    if (mode != InspectionMode::author_fixture && mode != InspectionMode::player_known)
+        fail("visibility", "/expression", "Unknown expression inspection mode");
+    (void)validate_expression(expression, binding.scope, registry);
+    if (mode == InspectionMode::player_known && expression_hidden(expression, registry)) return std::nullopt;
+    return execute_expression(expression, binding, registry, read);
 }
 
 ConditionTrace evaluate_condition(const Condition& condition, const ScopeBinding& binding,

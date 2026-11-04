@@ -13,7 +13,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M1-02 | Complete | Typed content schema/registry, bounded offline loader, 11-definition engineering fixture and 140 validation assertions; [evidence](evidence/M1-02-content.md) |
 | M1-03 | In progress | Local commands, morning continuation, immutable worker and stable model diffs pass; M0-03 prerequisite qualification remains open; [evidence](evidence/M1-03-commands.md) |
 | M1-04 | In progress | Exact current-state file saves, recovery, autosaves/settings/export and application persistence policy implemented; full flow contract/prerequisites remain open; [evidence](evidence/M1-04-persistence.md) |
-| M1-06 | In progress | Schema-1 compiler/executor, five lifecycles, nested waits/choices, owned modifiers, saved weighted branches and daily duration predicates implemented; variables/expressions/selectors remain required; [runtime](evidence/M1-06-runtime.md), [branches](evidence/M1-06-weighted-branches.md), [durations](evidence/M1-06-duration.md) |
+| M1-06 | In progress | Schema-1 compiler/executor, five lifecycles, nested waits/choices, owned modifiers, weighted branches, durations, scoped variables and checked expressions implemented; related selectors/quantifiers remain required; [runtime](evidence/M1-06-runtime.md), [branches](evidence/M1-06-weighted-branches.md), [durations](evidence/M1-06-duration.md) |
 | M1-07 | Planned | Built-in major-event detection, scheduled/seeded world occurrences and news through the shared runtime; [event contract](EVENT_SYSTEM.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
@@ -397,3 +397,33 @@ variables/flags, checked expressions and related-entity selectors/quantifiers;
 M1-04 persists their future state. M0-03's native Qt/deployment gate, M1-07
 occurrence dispatch and M2 business mechanics remain open. Next: the bounded
 variable/expression vocabulary and its checked assignment/save contract.
+
+## Mac-first development and variable/expression batch — 2026-11-04
+
+The user prioritized implementation on this Mac and deferred extensive
+cross-platform/release regression until release preparation. The native matrix
+now runs only by manual dispatch. Routine work uses one optimized incremental
+local build and a small changed-behavior check, with Debug/broader testing for a
+specific problem. Build trees remain for reuse; deferred platform qualification
+does not block Mac development.
+
+Content now declares scoped integer/boolean/text variables with explicit units,
+ranges, defaults and visibility. Variables are registered typed facts; owning
+system facts cannot be replaced. Bounded expression trees provide literals,
+same-scope fact reads, checked addition/subtraction and rational scaling with
+one signed half-up rounding. Expressions work in comparison thresholds and
+transactional `set_variable` effects. Sparse scoped overrides, defaults through
+content identity, and actual before/after receipts survive save/reload. A later
+range/overflow refusal rolls back prior assignments in that operation. Hidden
+expression inputs are redacted before player inspection reads them.
+
+Verified on Apple Clang arm64 with `./make.sh --core-only --jobs 4`: build passes.
+The focused `runtime.variables` CTest passes (0.01 seconds): ordered assignments,
+flag/threshold expressions, delayed save/resume, unchanged RNG, rollback and
+unit/scope/privacy checks. Full suite, Debug, native matrix and packaging were
+deliberately not run for this batch. Build outputs are retained and ignored.
+
+Related-entity selectors/quantifiers remain M1-06 work as real business entities
+arrive. Next Mac gameplay work: M2-01 balanced accounts and obligations, with
+M1-05's room shell alongside the business loop. No platform/release qualification
+or formal completion of the remaining flow-language task is claimed.

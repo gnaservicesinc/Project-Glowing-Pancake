@@ -6,7 +6,9 @@ Baseline 1.2 · These are planned checks, not results from a built game/editor
 
 Close a task when its intended behavior has evidence. Distinguish documentation review, unit tests, headless integration, rendered UI inspection, physical-device checks, human playtesting, and actual release download verification. Passing one does not imply the others. Record the commit, content version, scenario seed, compiler/OS/architecture, relevant hardware, and observed result.
 
-Current planning verification is limited to document consistency, links, valid example JSON, source preservation, and simple arithmetic. No game binary, application tests, benchmarks, accessibility certification, or five-platform runtime acceptance exists yet.
+During Mac implementation, use one incremental optimized local build per batch and small focused checks for the changed behavior and relevant failure path. Retain owned build trees between batches. Use Debug or broader regression when a specific failure or unresolved concern calls for it; duplicate Release/Debug runs and remote-matrix waits are not routine feature work. Documentation-only changes need consistency checks.
+
+The full verification inventory below remains for owning milestone and release preparation. Cross-platform matrices, full regression, packaging and device qualification are deferred until explicit release preparation and do not block bounded Mac implementation. The six-job native workflow is manual-only. Keep portable code, offline operation, safe saves and explicit app launch during development; record unperformed gates without claiming platform qualification. Existing foundation evidence is tracked in the implementation log.
 
 ## 2. Core invariants and meaningful tests
 

@@ -85,6 +85,13 @@ struct ConditionTrace {
     std::vector<DurationTrace> durations;
 };
 using FactReader = std::function<content::Scalar(const content::FactMetadata&, const ScopeBinding&)>;
+struct ExpressionType { content::ValueType type; content::Unit unit; };
+[[nodiscard]] ExpressionType validate_expression(const content::Expression& expression,
+                                                content::Scope scope, const content::Registry& registry);
+[[nodiscard]] std::optional<content::Scalar> evaluate_expression(
+    const content::Expression& expression, const ScopeBinding& binding,
+    const content::Registry& registry, const FactReader& read,
+    InspectionMode mode = InspectionMode::author_fixture);
 
 // Pure inspection: no random-stream or mutable-state handle is accepted.
 // Every clause is inspected in authored order, including unselected clauses.

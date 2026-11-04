@@ -23,7 +23,7 @@ E1a forms/inspection are required before the slice presentation.
 ## Inspect the foundation now
 
 ```sh
-./make.sh --core-only --test --jobs 2
+./make.sh --core-only --jobs 2
 build/core-release/bin/pgp-headless --foundation-demo
 build/core-release/bin/pgp-headless --validate-content tests/content/fixtures/foundation.json
 build/core-release/bin/pgp-headless --flow-demo tests/content/fixtures/foundation.json

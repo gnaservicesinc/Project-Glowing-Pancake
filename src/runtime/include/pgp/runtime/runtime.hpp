@@ -18,6 +18,12 @@ inline constexpr std::size_t maximum_steps_per_operation = 4096;
 // The core state is the sole owner of company cash, date, revisions and RNG.
 // Other foundation facts have no implemented business owner yet. Their keys
 // must be registered, and cash may never also appear in this map.
+struct VariableValue {
+    ScopeBinding binding;
+    std::string variable_id;
+    content::Scalar value{std::int64_t{0}};
+    auto operator<=>(const VariableValue&) const = default;
+};
 struct WorldState {
     core::SimulationState simulation;
     std::string company_id = "company.player";
@@ -35,6 +41,8 @@ struct WorldState {
     core::Cents counterparty_cash{0};
     std::vector<std::string> decisions;
     std::vector<std::string> negotiations;
+    // Sparse overrides; an absent value reads its registered scoped default.
+    std::vector<VariableValue> variables{};
     auto operator<=>(const WorldState&) const = default;
 };
 
