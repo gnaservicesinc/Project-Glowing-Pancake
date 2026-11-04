@@ -1,7 +1,7 @@
 # M1-01 — Deterministic state primitives
 
-Implemented 2026-11-04. Native CI parity is pending the first workflow run;
-M1-01 remains unchecked until the five-target/compiler acceptance passes.
+Implemented 2026-11-04. Linux and Windows native parity passes; the hosted Mac
+job is pending. M1-01 remains unchecked until all five targets pass.
 
 ## Modules and bounds
 
@@ -93,6 +93,38 @@ Windows uses the Visual Studio generator with explicit x64/ARM64 target; the
 [ARM inventory](https://github.com/actions/partner-runner-images/blob/main/images/arm-windows-11-image.md)
 records available tools. These jobs neither package nor qualify Qt graphics,
 audio or clean devices; M0-03/04 remain separate gates.
+
+The first run found hosted Windows images had moved to Visual Studio 2026.
+The workflow now discovers the installed instance with bundled `vswhere`,
+matches its major version to CMake's advertised generators and selects that
+exact instance. No compiler installation or downgrade is hidden in the job.
+
+[Native run 41863103816](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41863103816)
+tests implementation `56bf6db` plus workflow correction `8dcf6e5`. Decoded job
+logs establish the results below; the list-jobs API returned stale queued
+snapshots during this observation and was not treated as completion evidence.
+
+| Native target/compiler | Result |
+| --- | --- |
+| Linux amd64 GCC 13.3.0 | 13/13 CTests and exact golden match |
+| Linux arm64 GCC 13.3.0 | 13/13 CTests and exact golden match |
+| Linux amd64 Clang 18.1.3 | 13/13 CTests and exact golden match |
+| Windows amd64 MSVC 19.51.36260.0 / VS 18 2026 | 13/13 CTests and exact golden match |
+| Windows arm64 MSVC 19.51.36260.0 / VS 18 2026 | 13/13 CTests and exact golden match |
+| Mac arm64 | Hosted job pending; local Apple Clang 21.0.0 passes |
+
+Every completed native job records normalized fixture SHA-256
+`fa9f8690ae06f649aa0f7f6332c28b46ccd5af7b0819744d84528a62089a0868`.
+Windows logs directly identify `Hostarm64/arm64/cl.exe` and
+`Hostx64/x64/cl.exe`, confirming native compiler hosts as well as targets.
+All five completed jobs successfully finalized/uploaded evidence and completed
+post-job cleanup without logged errors.
+
+Resume the pending
+[Mac job](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41863103816/job/126690116324)
+before marking M1-01 complete. At the last observation it had no assigned runner,
+executed steps or failure annotations. Local native Mac tests pass; the hosted
+five-target acceptance is deliberately still open.
 
 ```sh
 ./make.sh --core-only --test --jobs 2

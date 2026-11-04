@@ -171,7 +171,10 @@ comparisons pass. Headless linkage remains system-only. Independent module and
 integration reviews found no blocking issue.
 
 Added a pinned core-only native workflow for all five targets with GCC, Clang
-and MSVC, including native Windows ARM64. First CI parity is pending;
+and MSVC, including native Windows ARM64. All Linux/Windows jobs pass 13 CTests
+and the exact frozen fixture; hosted Mac is waiting for runner assignment.
+The first Windows run found VS 2026 images instead of VS 2022; generator/instance
+discovery now uses bundled vswhere and CMake capabilities and passes both targets.
 **M1-01 remains in progress, 3 of 52 tasks complete**. This is not gameplay,
 production JSON/save loading, a market allocator or M0 deployment qualification.
 The next step is native parity; M1-02 content registry/validation follows.

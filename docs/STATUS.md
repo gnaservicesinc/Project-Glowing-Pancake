@@ -14,7 +14,8 @@ M0 remains open. See the
   Gregorian dates, seven saved RNG streams and strict integer-token readers.
   Core Release/Debug each pass 13 CTests; desktop Release passes 19. An
   independent oracle freezes 1,000 daily checksums. Native five-target compiler
-  parity remains pending; [primitive evidence](evidence/M1-01-primitives.md)
+  parity passes on Linux and Windows; hosted Mac is pending.
+  [Primitive evidence](evidence/M1-01-primitives.md)
   records bounds and excludes gameplay/save-loader/allocator claims.
 
 - Inventoried the coherent existing Apple compiler/SDK and Qt modules/SBOMs,
@@ -59,7 +60,7 @@ M0 remains open. See the
 
 The build scaffold, shared version identity, deterministic primitives, CLI and development QML interface probe exist; gameplay,
 Content Studio, production content/assets and packages do not. A core-only native CI
-workflow exists; its first parity result is pending. The headless
+workflow passes Linux/Windows parity; hosted Mac is pending. The headless
 command currently prints usage/build configuration, not scenario outcomes.
 49 implementation tasks remain unchecked. E1a enables early gameplay tests;
 M4 requires both M3 and E1b. E2 closes before bulk content.
