@@ -10,6 +10,7 @@ The [backlog](BACKLOG.md) records acceptance gates and the
 | Foundation demonstration | Atomic cash reservations, stale-command refusals, irreversible commitments and morning-choice continuation | Runnable with `pgp-headless --foundation-demo` |
 | Event and save demonstration | Real event execution, nested delays/choices, owned modifiers, local save/reload and exact resumed state | Runnable with `pgp-headless --flow-demo FILE [--save FILE.pgpsave]` |
 | Opening accounts demonstration | Two actual calendar months of costs, one data license, balanced reports and exact pre-settlement save/resume | Runnable with `pgp-headless --accounts-demo FILE`; [evidence](evidence/M2-01-accounts.md) |
+| Shared capacity demonstration | 60-day concurrent serving/training, protected shared compute/staff, separate support costs and exact reload | Runnable with `pgp-headless --capacity-demo FILE`; [evidence](evidence/M2-02-capacity.md) |
 | M2-04: first business simulation | A three-year command-line scenario, reconciled accounts, finite capacity, contract economics, solvency and recovery | Requires foundation flows/persistence and M2-01 through M2-04 |
 | M3-02: first player-facing scenario | Office/Lab decisions, data/research/training/evaluation, contracts, news and choices, start to ending | Requires M2, the UI shell, E1a authoring/inspection and the baseline event pack |
 | M3-03: feature evaluation build | The scenario with delegation, warnings, recovery and scoring | Earliest complete slice for ordinary feature feedback |
@@ -29,6 +30,7 @@ build/core-release/bin/pgp-headless --foundation-demo
 build/core-release/bin/pgp-headless --validate-content tests/content/fixtures/foundation.json
 build/core-release/bin/pgp-headless --flow-demo tests/content/fixtures/foundation.json
 build/core-release/bin/pgp-headless --accounts-demo tests/content/fixtures/foundation.json
+build/core-release/bin/pgp-headless --capacity-demo tests/content/fixtures/foundation.json
 # Explicit optional save path; use a chosen local .pgpsave filename:
 build/core-release/bin/pgp-headless --flow-demo tests/content/fixtures/foundation.json --save /chosen/local/demo.pgpsave
 ```
@@ -55,7 +57,7 @@ their selected outcomes across delays, choices and saves; the
 Daily duration predicates also preserve their opening-sample start/reset state
 and exact thresholds through choices and reload; see [duration evidence](evidence/M1-06-duration.md).
 M1-07 then adds
-built-in occurrence detection/dispatch. M2-01 implements the opening accounts;
-M2-02/03/04 complete capacity, contracts and the first business loop.
+built-in occurrence detection/dispatch. M2-01/02 implement opening accounts and
+shared capacity; M2-03/04 complete contracts and the first business loop.
 The UI shell can proceed alongside those core modules. Accepted-task counts
 remain conservative while the full contracts and prerequisites are open.

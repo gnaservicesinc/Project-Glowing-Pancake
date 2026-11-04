@@ -2,7 +2,7 @@ add_executable(pgp-build-configuration-test build_configuration_test.cpp)
 target_link_libraries(pgp-build-configuration-test PRIVATE pgp::core)
 pgp_project_target(pgp-build-configuration-test)
 add_test(NAME core.build-configuration COMMAND pgp-build-configuration-test)
-foreach(pgp_primitive_test checked_arithmetic state_primitives integer_codec constrained_residue simulation accounts)
+foreach(pgp_primitive_test checked_arithmetic state_primitives integer_codec constrained_residue simulation accounts capacity)
     string(REPLACE "_" "-" pgp_primitive_target "${pgp_primitive_test}")
     add_executable(pgp-${pgp_primitive_target}-test ${pgp_primitive_test}_test.cpp)
     target_link_libraries(pgp-${pgp_primitive_target}-test PRIVATE pgp::core)
@@ -44,6 +44,10 @@ add_test(NAME headless.accounts-demo COMMAND pgp-headless --accounts-demo
     "${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json")
 set_tests_properties(headless.accounts-demo PROPERTIES
     PASS_REGULAR_EXPRESSION "Cash: 97200000")
+add_test(NAME headless.capacity-demo COMMAND pgp-headless --capacity-demo
+    "${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json")
+set_tests_properties(headless.capacity-demo PROPERTIES
+    PASS_REGULAR_EXPRESSION "training: 60 CU/day, 3600 CU complete")
 add_test(NAME headless.validate-content COMMAND pgp-headless --validate-content
     "${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json")
 set_tests_properties(headless.validate-content PROPERTIES

@@ -36,6 +36,10 @@ AccountsState& accounts(SimulationState& state) {
     if (!state.accounts) refuse(CommandReason::invalid_status, "This engineering fixture has no business accounts.");
     return *state.accounts;
 }
+CapacityState& capacity(SimulationState& state) {
+    if (!state.capacity) refuse(CommandReason::invalid_status, "This checkpoint has no capacity sources.");
+    return *state.capacity;
+}
 bool valid_text(std::string_view text) {
     return !text.empty() && text.size() <= 256 &&
         std::all_of(text.begin(), text.end(), [](unsigned char character) {
@@ -128,6 +132,21 @@ void validate(const SimulationState& state) {
             (ledger.closed_through ? advance_days(*ledger.closed_through, Days{1}) != state.date : ledger.starts_on != state.date) ||
             std::any_of(ledger.postings.begin(), ledger.postings.end(), [&](const auto& entry) { return entry.day > state.date; }))
             invalid("Business accounts do not reconcile with the saved cash or daily cursor");
+    }
+    if (state.capacity) {
+        validate_capacity(*state.capacity);
+        const auto& pool = *state.capacity;
+        if (!state.accounts || pool.owner != state.accounts->owner || pool.starts_on != state.accounts->starts_on ||
+            pool.closed_through != state.accounts->closed_through)
+            invalid("Capacity and accounts do not share the same owner and daily cursor");
+        for (const auto& project : pool.projects) {
+            if (project.monthly_support_cost == Cents{0}) continue;
+            const auto term = std::find_if(state.accounts->recurring.begin(), state.accounts->recurring.end(),
+                [&](const auto& obligation) { return obligation.id == "support/" + project.id; });
+            if (term == state.accounts->recurring.end() || term->monthly_amount != project.monthly_support_cost ||
+                term->starts_on != project.starts_on || term->ends_before != project.stopped_on)
+                invalid("Serving support terms differ from their owning capacity commitment");
+        }
     }
     if (state.reservations.size() > simulation_reservation_limit ||
         state.opening_actions.size() > simulation_opening_limit ||
@@ -353,6 +372,7 @@ CommandResult Simulation::submit(const Command& command) {
                 (void)receipt(next, "cancel_unconsumed_reservation", action.id);
             } else if constexpr (std::is_same_v<Action, AdvanceDay>) {
                 const auto cash_before = next.cash;
+                if (next.capacity) close_capacity_day(*next.capacity, next.date);
                 if (next.accounts) {
                     close_accounts_day(*next.accounts, next.date, reserved_cash(next));
                     next.cash = accounts_report(*next.accounts).cash;
@@ -420,6 +440,22 @@ CommandResult Simulation::submit(const Command& command) {
                 invest_equity(accounts(next), next.date, action.investor, action.proceeds, action.acquired, action.key);
                 next.cash = accounts_report(*next.accounts).cash;
                 (void)receipt(next, "invest_equity", 0, checked_unit_subtract(next.cash, before));
+            } else if constexpr (std::is_same_v<Action, ReserveProject>) {
+                reserve_project(capacity(next), next.date, action.project);
+                if (action.project.monthly_support_cost.value() > 0)
+                    add_recurring(accounts(next), {"support/" + action.project.id, action.project.monthly_support_cost,
+                        next.date, std::nullopt, "Serving support: " + action.project.id});
+                (void)receipt(next, "reserve_project");
+            } else if constexpr (std::is_same_v<Action, CancelProject>) {
+                cancel_project(capacity(next), next.date, action.id);
+                const auto found = std::find_if(next.capacity->projects.begin(), next.capacity->projects.end(),
+                    [&](const auto& project) { return project.id == action.id; });
+                if (found->monthly_support_cost.value() > 0)
+                    end_recurring(accounts(next), "support/" + found->id, next.date);
+                (void)receipt(next, "cancel_project");
+            } else if constexpr (std::is_same_v<Action, SetEffectiveCapacity>) {
+                update_effective_capacity(capacity(next), next.date, action.source_id, action.available);
+                (void)receipt(next, "capacity_availability");
             }
         }, command.action);
         validate(next);
@@ -444,6 +480,7 @@ std::shared_ptr<const SimulationSnapshot> Simulation::snapshot() const {
     return std::make_shared<const SimulationSnapshot>(SimulationSnapshot{
         state_.revision, state_.date, state_.phase, state_.paused, state_.cash,
         available(state_), state_.pending_choice, state_.reservations,
-        state_.accounts ? std::optional{accounts_report(*state_.accounts)} : std::nullopt});
+        state_.accounts ? std::optional{accounts_report(*state_.accounts)} : std::nullopt,
+        state_.capacity ? std::optional{capacity_report(*state_.capacity)} : std::nullopt});
 }
 } // namespace pgp::core

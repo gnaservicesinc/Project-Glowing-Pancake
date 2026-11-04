@@ -4,7 +4,7 @@ Updated 2026-11-04 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03, M1-03/04/06 and M2-01 have implemented work awaiting their remaining gates.** M0-03's local
+**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03, M1-03/04/06 and M2-01/02 have implemented work awaiting their remaining gates.** M0-03's local
 interface/resource/audio implementation passes; native/deployment gates remain.
 M0 remains open. See the
 [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
@@ -23,7 +23,14 @@ block Mac implementation. Keep build caches between batches.
   including a reload before settlement. An optimized Mac build and eight focused
   CTests pass; [accounts evidence](evidence/M2-01-accounts.md) records the
   implemented contract and limits. Formal acceptance retains M1-03's open
-  prerequisite; capacity/contracts and liquidity workouts remain ahead.
+  prerequisite; contracts and liquidity workouts remain ahead.
+- M2-02 now reserves shared source capacity and staff, checks memory/interconnect
+  compatibility, protects serving during outages and records actual finite work.
+  Cancellation preserves completed work and past costs; non-compute support has
+  its own prorated obligation. The 60-day engineering example completes 3,600 CU
+  of training plus 60,000 serving tasks on one 100 CU/day lease and resumes
+  exactly. An optimized Mac build and seven focused CTests pass.
+  [Capacity evidence](evidence/M2-02-capacity.md) records scope and limits.
 
 - M1-06 now compiles/executes the current typed schema: five lifecycles,
   nested sequence/subflow delays and choices, selected root sources, owned
@@ -121,7 +128,7 @@ block Mac implementation. Keep build caches between batches.
 
 The build scaffold, shared version identity, deterministic primitives, typed
 content/compiler/runtime, transactional state, local persistence/campaign policy,
-worker/model bridge, opening business accounts, CLI and development QML interface probe exist.
+worker/model bridge, opening business accounts, shared project capacity, CLI and development QML interface probe exist.
 Business gameplay, Content Studio, finalized runtime
 content and packages do not. Existing native CI proves primitive parity on all
 five targets; the expanded foundation suite is checked separately. The headless
@@ -158,10 +165,10 @@ These are document/data/example checks only. No game/editor/runtime, UI performa
 
 ## Next task
 
-**Next Mac gameplay implementation: M2-02 shared capacity and project commitments**,
-using the implemented accounts, commands, flow runtime and saves. Demonstrate
-20 CU/day serving alongside 60 CU/day training without double billing leased
-compute/power; cancellation releases only unconsumed reversible commitments.
+**Next Mac gameplay implementation: M2-03 contracts and demand allocation**,
+using the implemented accounts, shared capacity, commands, flow runtime and saves.
+Freeze the finite common-snapshot allocation procedure with hand-worked unequal
+prices, rational budgets, free products and capacity contention before coding.
 Add related selectors/
 quantifiers as their real owning entities arrive; retain that unfinished
 M1-06 work rather than inventing entities to close a checkbox. M1-07 adds built-in

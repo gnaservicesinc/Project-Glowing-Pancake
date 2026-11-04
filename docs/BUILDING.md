@@ -74,6 +74,14 @@ It isolates the authored opening accounts, consumes one $12,000 data license,
 settles January and February, and compares a resumed checkpoint. Its expected
 cash is $972,000; it does not exercise contracts or a viable three-year strategy.
 
+`pgp-headless --capacity-demo FILE` uses the same engineering content fixture
+to run 60 days of 20 CU/day serving plus 60 CU/day training on a single
+100 CU/day lease. It includes a separate $5,000/month support obligation and
+the one-time data license, ending with $962,000 cash after settled January and
+February costs. The targeted checks are `core.capacity`,
+`runtime.capacity-integration` and `headless.capacity-demo`. Customer demand,
+revenue and model qualification remain later mechanics.
+
 ## Compiler and configuration isolation
 
 On macOS, set `DEVELOPER_DIR` to an existing Xcode `Contents/Developer` directory

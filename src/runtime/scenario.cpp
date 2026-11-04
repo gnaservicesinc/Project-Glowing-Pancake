@@ -34,6 +34,13 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     }
     core::validate_accounts(accounts);
     world.simulation.accounts = std::move(accounts);
+    std::vector<core::CapacitySource> sources;
+    if (scenario->leased_capacity.value() > 0)
+        sources.push_back({"lease.initial", "cloud.pool.initial", world.company_id, "supplier.compute.initial",
+            core::CapacitySourceKind::leased, scenario->leased_capacity, scenario->leased_capacity,
+            0, "general", scenario->lease_energy_included});
+    world.simulation.capacity = core::opening_capacity(std::move(sources), scenario->team_people,
+        scenario->starts_on, world.company_id);
     world.facts.at("company.has_compute_lease") = scenario->leased_capacity.value() > 0;
     if (const auto lease = scenario->monthly_commitments.find("compute_lease");
         lease != scenario->monthly_commitments.end())

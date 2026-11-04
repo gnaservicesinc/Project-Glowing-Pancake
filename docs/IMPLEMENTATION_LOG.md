@@ -16,6 +16,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M1-06 | In progress | Schema-1 compiler/executor, five lifecycles, nested waits/choices, owned modifiers, weighted branches, durations, scoped variables and checked expressions implemented; related selectors/quantifiers remain required; [runtime](evidence/M1-06-runtime.md), [branches](evidence/M1-06-weighted-branches.md), [durations](evidence/M1-06-duration.md) |
 | M1-07 | Planned | Built-in major-event detection, scheduled/seeded world occurrences and news through the shared runtime; [event contract](EVENT_SYSTEM.md) |
 | M2-01 | Implemented on Mac; prerequisite open | Balanced accounts, actual-month costs, invoices, debt/equity, protected settlements and pure projections through commands/exact saves; [evidence](evidence/M2-01-accounts.md) |
+| M2-02 | Implemented on Mac; prerequisite open | Shared source/staff reservations, compatibility, serving-first outage allocation, actual finite work, cancellation, support costs and exact reload; [evidence](evidence/M2-02-capacity.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
 ## First implementation slice
@@ -450,3 +451,25 @@ the full suite, Debug, native matrix, packaging and device checks were not run.
 Formal accepted count remains **5/52**, retaining M1-03's prerequisite gate.
 The implemented M2-01 work is ready for M2-02 shared capacity and commitments;
 contracts, a viable three-year strategy and liquidity recovery remain M2-03/04.
+
+## M2-02 shared capacity and commitments — 2026-11-04
+
+Implemented source ownership/compatibility, shared compute/staff reservations,
+protected serving, proportional outage allocation, actual finite work and
+cancellation. Separate support obligations accrue through accounts; projects
+do not bill the lease/power again. Exact daily work/source histories and
+simulation/account cursors resume together. [Evidence](evidence/M2-02-capacity.md)
+and the [module contract](../src/core/CAPACITY.md) record the semantics/limits.
+
+One optimized incremental Mac build and seven focused CTests pass. Capacity
+domain checks pass 88 assertions and command/save integration passes 52; the
+affected accounting and autosave boundaries also pass. The runnable 60-day
+example completes 3,600 CU training alongside 60,000 engineering serving tasks,
+retains exact reload parity, and leaves $962,000 cash after settled costs,
+support and one data license. No full/native/Debug/package qualification ran.
+
+Formal accepted count stays **5/52**, with M2-01/02 now implemented locally while
+their prerequisite gates remain open. Next Mac work is M2-03 contracts/demand:
+freeze the common-snapshot finite allocation procedure and hand-work rational
+budget/capacity cases before coding. The three-year solvent/recovery scenario
+then follows under M2-04.

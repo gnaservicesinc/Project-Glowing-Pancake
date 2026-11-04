@@ -49,3 +49,11 @@ target_compile_definitions(pgp-accounts-integration-test PRIVATE
 pgp_project_target(pgp-accounts-integration-test)
 add_test(NAME runtime.accounts-integration COMMAND pgp-accounts-integration-test)
 set_tests_properties(runtime.accounts-integration PROPERTIES TIMEOUT 30)
+add_executable(pgp-capacity-integration-test capacity_integration_test.cpp)
+target_link_libraries(pgp-capacity-integration-test PRIVATE pgp::persistence)
+target_include_directories(pgp-capacity-integration-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-capacity-integration-test PRIVATE
+    PGP_RUNTIME_FIXTURE_PATH="${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json")
+pgp_project_target(pgp-capacity-integration-test)
+add_test(NAME runtime.capacity-integration COMMAND pgp-capacity-integration-test)
+set_tests_properties(runtime.capacity-integration PROPERTIES TIMEOUT 30)

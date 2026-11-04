@@ -271,7 +271,7 @@ void validate_accounts(const AccountsState& state) {
         text_valid(obligation.id, 128); text_valid(obligation.cause);
         (void)from_ordinal(obligation.starts_on);
         if (!keys.insert(obligation.id).second || obligation.monthly_amount.value() <= 0 || obligation.starts_on < state.starts_on ||
-            (obligation.ends_before && *obligation.ends_before <= obligation.starts_on))
+            (obligation.ends_before && *obligation.ends_before < obligation.starts_on))
             invalid("Recurring obligation identity, amount or term is invalid");
         if (obligation.ends_before) (void)from_ordinal(*obligation.ends_before);
     }
@@ -402,6 +402,17 @@ void add_recurring(AccountsState& state, RecurringObligation obligation) {
     mutate(state, [&](auto& candidate) {
         if (obligation.starts_on < current_day(candidate)) invalid("A new obligation cannot accrue in the past");
         candidate.recurring.push_back(std::move(obligation));
+    });
+}
+void end_recurring(AccountsState& state, std::string_view id, OrdinalDay ends_before) {
+    mutate(state, [&](auto& candidate) {
+        require_day(candidate, ends_before);
+        const auto found = std::find_if(candidate.recurring.begin(), candidate.recurring.end(),
+            [&](const auto& obligation) { return obligation.id == id; });
+        if (found == candidate.recurring.end() || ends_before < found->starts_on ||
+            (found->ends_before && *found->ends_before <= ends_before))
+            invalid("Recurring service is missing or has already ended");
+        found->ends_before = ends_before;
     });
 }
 void issue_invoice(AccountsState& state, OrdinalDay day, Invoice invoice) {

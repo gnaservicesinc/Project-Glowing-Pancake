@@ -1,6 +1,6 @@
 # Implementation backlog
 
-Baseline 1.2 with 2026-11-04 event clarification · **5 of 52 tasks accepted; additional implementation under M0-03, M1-03/04/06 and M2-01**.
+Baseline 1.2 with 2026-11-04 event clarification · **5 of 52 tasks accepted; additional implementation under M0-03, M1-03/04/06 and M2-01/02**.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Dependencies refer to completed acceptance criteria, not merely the presence of a commit. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
 ## M0 — Toolchain and platform proof
@@ -77,6 +77,16 @@ $972,000 and resumes exactly from before settlement. See
 [evidence](evidence/M2-01-accounts.md). Formal acceptance retains M1-03's open
 prerequisite; this batch does not claim a viable three-year strategy. Next:
 M2-02 shared capacity and commitments.
+
+**M2-02 Mac implementation, 2026-11-04:** shared leased/owned-source identity,
+staff and compatibility checks, finite project work, protected serving,
+proportional outage allocation, cancellation and separate non-compute support
+are implemented through commands and exact saves. The 60-day example combines
+20 CU/day serving with 60 CU/day training on one 100 CU/day lease. An optimized
+Mac build and seven focused CTests pass; [evidence](evidence/M2-02-capacity.md)
+records the remaining catalog/contract/history limits. Formal acceptance retains
+M2-01's open prerequisite. Next: M2-03 contracts/demand with a frozen finite
+allocation procedure before implementation.
 
 ## E1a — Slice authoring through forms and inspection
 

@@ -98,6 +98,9 @@ void validate_accounts(const AccountsState& state);
 void record_cash(AccountsState& state, OrdinalDay day, Cents delta, Account offset,
                  std::string cause, std::string key);
 void add_recurring(AccountsState& state, RecurringObligation obligation);
+// Stop future service from the current morning, retaining prior accruals. An
+// exclusive end equal to the start represents cancellation before first work.
+void end_recurring(AccountsState& state, std::string_view id, OrdinalDay ends_before);
 void issue_invoice(AccountsState& state, OrdinalDay day, Invoice invoice);
 void settle_invoice(AccountsState& state, OrdinalDay day, std::string_view id,
                     Cents amount, Cents protected_cash, std::string key);

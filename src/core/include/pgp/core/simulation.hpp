@@ -2,6 +2,7 @@
 
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/accounts.hpp>
+#include <pgp/core/capacity.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
@@ -85,6 +86,7 @@ struct SimulationState {
     // nullopt preserves legacy engineering fixtures without inventing history.
     // Business scenarios reconcile the cash projection against their ledger.
     std::optional<AccountsState> accounts{};
+    std::optional<CapacityState> capacity{};
     auto operator<=>(const SimulationState&) const = default;
 };
 
@@ -98,6 +100,7 @@ struct SimulationSnapshot {
     std::optional<std::uint64_t> pending_choice;
     std::vector<ReservationRow> reservations;
     std::optional<AccountsReport> accounts{};
+    std::optional<CapacityReport> capacity{};
 };
 
 struct ReserveFunds { std::string name; Cents amount; bool reversible = true; };
@@ -112,10 +115,14 @@ struct SettleInvoice { std::string id; Cents amount; std::string key; };
 struct DrawDebt { Debt debt; std::string cause; };
 struct RepayDebt { std::string id; Cents amount; std::string key; };
 struct InvestEquity { std::string investor; Cents proceeds; BasisPoints acquired; std::string key; };
+struct ReserveProject { CapacityProject project; };
+struct CancelProject { std::string id; };
+struct SetEffectiveCapacity { std::string source_id; MilliCUPerDay available; };
 using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReservation,
                                    AdvanceDay, SetPaused, ResolveOpeningChoice,
                                    AddRecurringObligation, IssueInvoice, SettleInvoice,
-                                   DrawDebt, RepayDebt, InvestEquity>;
+                                   DrawDebt, RepayDebt, InvestEquity,
+                                   ReserveProject, CancelProject, SetEffectiveCapacity>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

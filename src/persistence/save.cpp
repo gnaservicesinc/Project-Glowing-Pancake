@@ -3,6 +3,7 @@
 #include <pgp/core/build_identity.hpp>
 #include "json_support.hpp"
 #include "accounts_json.hpp"
+#include "capacity_json.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -83,14 +84,17 @@ Json simulation_json(const core::SimulationState& state) {
         {"opening_cursor",state.opening_cursor},{"pending_choice",optional_id(state.pending_choice)},
         {"receipts",std::move(receipts)},{"random_streams",std::move(random)},
         {"accounting_mode",state.accounts?"business":"foundation"},
-        {"accounts",state.accounts?detail::accounts_json(*state.accounts):Json(nullptr)}};
+        {"accounts",state.accounts?detail::accounts_json(*state.accounts):Json(nullptr)},
+        {"capacity_mode",state.capacity?"business":"foundation"},
+        {"capacity",state.capacity?detail::capacity_json(*state.capacity):Json(nullptr)}};
 }
 core::SimulationState parse_simulation(const Json& value) {
     if (!value.is_object()) detail::invalid("simulation","Expected object");
     Json prior_shape=Json::object();
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
-        if (name!="accounts" && name!="accounting_mode") prior_shape[name]=nullptr;
+        if (name!="accounts" && name!="accounting_mode" && name!="capacity" && name!="capacity_mode")
+            prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"simulation",{"revision","date","end_date","phase","paused","cash_cents",
         "next_reservation_id","next_receipt_id","reservations","opening_actions","opening_cursor",
@@ -111,6 +115,17 @@ core::SimulationState parse_simulation(const Json& value) {
         if (mode=="business") result.accounts=detail::parse_accounts(value.at("accounts"));
         else if (mode!="foundation" || !value.at("accounts").is_null())
             detail::invalid("simulation/accounting_mode","Accounting mode does not match its ledger");
+    }
+    // Capacity was absent from original foundation and accounts-only
+    // checkpoints. An old shape keeps its explicit absence without free sources
+    // or reconstructed staff/project history.
+    if (value.contains("capacity") != value.contains("capacity_mode"))
+        detail::invalid("simulation/capacity_mode","Capacity mode and state must be present together");
+    if (value.contains("capacity_mode")) {
+        const auto mode=detail::text(value.at("capacity_mode"),"simulation/capacity_mode",16);
+        if (mode=="business") result.capacity=detail::parse_capacity(value.at("capacity"));
+        else if (mode!="foundation" || !value.at("capacity").is_null())
+            detail::invalid("simulation/capacity_mode","Capacity mode does not match its state");
     }
     result.next_reservation_id=detail::u64(value.at("next_reservation_id"),"next_reservation_id");
     result.next_receipt_id=detail::u64(value.at("next_receipt_id"),"next_receipt_id");

@@ -71,7 +71,9 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::SettleInvoice>(command.action) ||
         std::holds_alternative<core::DrawDebt>(command.action) ||
         std::holds_alternative<core::RepayDebt>(command.action) ||
-        std::holds_alternative<core::InvestEquity>(command.action);
+        std::holds_alternative<core::InvestEquity>(command.action) ||
+        std::holds_alternative<core::ReserveProject>(command.action) ||
+        std::holds_alternative<core::CancelProject>(command.action);
     auto result = operate([&](auto& candidate) { return candidate.submit(command); }, irreversible);
     if (std::holds_alternative<core::AdvanceDay>(command.action) && !result.command.accepted() &&
         result.command.reason != runtime::RuntimeReason::stale_revision)

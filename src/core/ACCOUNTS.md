@@ -19,6 +19,8 @@ Recurring terms accrue daily using the difference between successive cumulative
 floors of `monthly_cents * active_days / actual_days_in_month`. Mid-month starts
 and exclusive ends charge only active days; a full month recognizes exactly its
 authored monthly amount. Accrual creates a payable due at that month's end.
+Ending a recurring service preserves prior accruals. Its exclusive end may equal
+its start when cancellation happens before any service is consumed.
 Debt terms specify a **monthly** basis-point rate. Daily interest uses the current
 principal and the actual calendar-month denominator, carrying fractional cents
 within that month; the remainder resets at the next month. Interest creates a
