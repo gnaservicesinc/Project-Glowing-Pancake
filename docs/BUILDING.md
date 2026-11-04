@@ -122,8 +122,11 @@ dependencies. `src/headless` supplies the CLI and links that library. Public cor
 headers live under `src/core/include/pgp/core`; project-only build options are an
 interface target in `cmake/ProjectOptions.cmake`. Tests link the layer exercised.
 `src/app` wires the probe/controller to independent graphics/resource/audio
-targets in `src/platform`; QML stays in `qml/probe`. Add domain primitives in
-M1-01 without reversing these dependencies. Content, persistence and the separately packaged
+targets in `src/platform`; QML stays in `qml/probe`. M1-01 adds Qt-free strong
+units/IDs, checked arithmetic, calendar, RNG and integer-token parsing in core.
+The [1,000-day primitive fixture](evidence/M1-01-primitives.md) is a test-only
+target and is compared against an independent oracle by CTest/native CI.
+Content, persistence and the separately packaged
 editor will be separate targets as their backlog tasks arrive.
 
 `project-versions.json` remains unchanged: all three component versions are

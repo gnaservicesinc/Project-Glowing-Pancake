@@ -1,6 +1,6 @@
 # Implementation backlog
 
-Baseline 1.2 with 2026-11-04 event clarification · **3 of 52 tasks complete; M0-03 in progress**.
+Baseline 1.2 with 2026-11-04 event clarification · **3 of 52 tasks complete; M0-03 and M1-01 in progress**.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Dependencies refer to completed acceptance criteria, not merely the presence of a commit. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
 ## M0 — Toolchain and platform proof
@@ -18,6 +18,9 @@ from the pure renderer-selection tests.
 - [x] **M0-05 — Implement shared version identity.** Role: build-release. Depends: M0-02. Read and validate `project-versions.json`; expose game/editor/content and compatibility versions to build metadata, filenames and diagnostics; distinguish planning placeholders from release candidates. Test numeric CMake version handling, semantic version comparison, independent product tags and release-readiness checks. Snap integration remains M10; no publication is performed. **Completed 2026-11-04:** shared offline reader, generated C++ identity, headless/probe diagnostics and prospective product artifact stems; [verification and limits](IMPLEMENTATION_LOG.md#m0-05-shared-version-identity--2026-11-04). Core Release/Debug each pass 7 CTests, desktop Release passes 13, and 21 identity/11 wrapper checks pass. Actual content/migration/package release gates remain open and release readiness fails closed.
 
 ## M1 — Foundation
+
+M1-01's local implementation passes; native parity remains pending. See
+[primitive evidence](evidence/M1-01-primitives.md).
 
 - [ ] **M1-01 — Deterministic state primitives.** Role: simulation. Depends: M0-02. Implement typed IDs and distinct money/work/capacity/rate/day types, constant-2014 cents, checked wide multiply/divide with one rounding and portable ARM64/MSVC coverage, Gregorian stepping, named PRNG streams and total-order iteration/sorts. Sequence RNG draws in separate statements and reject floating-point authoritative JSON. Test leap years, near-limit products with representable quotients, final overflow/invalid denominators, small multi-factor values and constrained residues. A fixed 1,000-day scripted fixture must match exact canonical hashes across Clang/GCC/MSVC and all five architecture jobs, using a minimal primitive-only state before later systems exist.
 - [ ] **M1-02 — Content registry and validation.** Role: simulation/content. Depends: M1-01. Define versioned schemas, definition revisions and typed loaders, with fact/effect scope/unit/help/port metadata shared by editor/runtime. Reject duplicate/dangling IDs, unit/range errors, prerequisite cycles, immediate/unbounded flow cycles, invalid ownership totals and executable/remote content. Examples become fixtures only after validation exists.

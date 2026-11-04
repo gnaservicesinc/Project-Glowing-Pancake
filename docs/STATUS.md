@@ -4,11 +4,18 @@ Updated 2026-11-04 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**3 of 52 tasks complete: M0-01, M0-02 and M0-05; M0-03 is in progress.** M0-03's local
+**3 of 52 tasks complete: M0-01, M0-02 and M0-05; M0-03 and M1-01 are in progress.** M0-03's local
 interface/resource/audio implementation passes; native/deployment gates remain.
 M0 remains open. See the
 [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
 [build instructions](BUILDING.md) for runnable commands.
+
+- M1-01 implements strong units/IDs, portable checked wide arithmetic,
+  Gregorian dates, seven saved RNG streams and strict integer-token readers.
+  Core Release/Debug each pass 12 CTests; desktop Release passes 18. An
+  independent oracle freezes 1,000 daily checksums. Native five-target compiler
+  parity remains pending; [primitive evidence](evidence/M1-01-primitives.md)
+  records bounds and excludes gameplay/save-loader/allocator claims.
 
 - Inventoried the coherent existing Apple compiler/SDK and Qt modules/SBOMs,
   performed C++20 and Qt Core CLI compile/link/run probes, and recorded exact
@@ -50,8 +57,9 @@ M0 remains open. See the
 
 ## Implementation state
 
-The build scaffold, shared version identity, CLI and development QML interface probe exist; gameplay,
-Content Studio, production content/assets, CI workflows and packages do not. The headless
+The build scaffold, shared version identity, deterministic primitives, CLI and development QML interface probe exist; gameplay,
+Content Studio, production content/assets and packages do not. A core-only native CI
+workflow exists; its first parity result is pending. The headless
 command currently prints usage/build configuration, not scenario outcomes.
 49 implementation tasks remain unchecked. E1a enables early gameplay tests;
 M4 requires both M3 and E1b. E2 closes before bulk content.
@@ -81,10 +89,9 @@ These are document/data/example checks only. No game/editor/runtime, UI performa
 
 ## Next task
 
-**Next independently unblocked implementation: M1-01 deterministic state
-primitives**, including strong units, checked arithmetic, Gregorian dates and
-saved independent RNG streams. Its five-architecture/compiler parity acceptance
-must remain open until actually exercised. M0-05 is complete; versioned content,
+**Current implementation: finish M1-01 native compiler/architecture parity**
+for the implemented deterministic primitives. Acceptance remains open until
+actually exercised. M1-02 content registry/validation follows. M0-05 is complete; versioned content,
 save migrations and packaging are later work.
 
 The 2026-11-04 event clarification adds M1-07 (built-in detection/dispatch) and

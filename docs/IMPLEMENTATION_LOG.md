@@ -153,3 +153,25 @@ Next independently unblocked code work is M1-01 deterministic primitives; native
 M0-03 qualification remains an open platform gate. After verification, this
 task's three wrapper-owned build trees and small root scratch checker are
 removed; unrelated ignored Finder files are preserved.
+
+## M1-01 deterministic primitives — 2026-11-04
+
+Implemented Qt-free strong units/IDs, one portable checked 128-bit arithmetic
+path, Gregorian dates, seven independently saved SplitMix64 streams and strict
+authoritative integer-token readers. A test-only 1,000-day fixture matches an
+independent Python big-integer/date oracle, including every daily checksum and
+exact final state. Midpoint token/RNG restoration and preview-copy isolation
+pass. [Detailed contracts, evidence and limits](evidence/M1-01-primitives.md)
+identify the intermediate bounds, algorithm and frozen fixture fingerprint.
+
+Local core Release/Debug each passed 12 CTests and desktop Release passed 18;
+six verifier unit tests were subsequently added to CTest. Existing 11 wrapper
+checks pass. Strict LLVM, ASan/UBSan and 200,000 independent arithmetic oracle
+comparisons pass. Headless linkage remains system-only. Independent module and
+integration reviews found no blocking issue.
+
+Added a pinned core-only native workflow for all five targets with GCC, Clang
+and MSVC, including native Windows ARM64. First CI parity is pending;
+**M1-01 remains in progress, 3 of 52 tasks complete**. This is not gameplay,
+production JSON/save loading, a market allocator or M0 deployment qualification.
+The next step is native parity; M1-02 content registry/validation follows.

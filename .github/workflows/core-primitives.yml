@@ -1,0 +1,107 @@
+name: Core primitive parity
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: core-primitives-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  primitives:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS arm64 Apple Clang
+            runner: macos-15
+            architecture: ARM64
+            cc: clang
+            cxx: clang++
+          - name: Linux amd64 GCC
+            runner: ubuntu-24.04
+            architecture: X64
+            cc: gcc
+            cxx: g++
+          - name: Linux arm64 GCC
+            runner: ubuntu-24.04-arm
+            architecture: ARM64
+            cc: gcc
+            cxx: g++
+          - name: Linux amd64 Clang
+            runner: ubuntu-24.04
+            architecture: X64
+            cc: clang
+            cxx: clang++
+          - name: Windows amd64 MSVC
+            runner: windows-2025
+            architecture: X64
+            vs_platform: x64
+          - name: Windows arm64 MSVC
+            runner: windows-11-arm
+            architecture: ARM64
+            vs_platform: ARM64
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify native runner architecture
+        shell: bash
+        env:
+          EXPECTED_ARCHITECTURE: ${{ matrix.architecture }}
+          OBSERVED_ARCHITECTURE: ${{ runner.arch }}
+          PGP_PYTHON: ${{ runner.os == 'Windows' && 'python' || 'python3' }}
+        run: |
+          test "$OBSERVED_ARCHITECTURE" = "$EXPECTED_ARCHITECTURE"
+          cmake --version
+          "$PGP_PYTHON" --version
+      - name: Configure core with GCC or Clang
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: |
+          "$CXX" --version
+          cmake -S . -B build/ci-core -G Ninja -DPGP_CORE_ONLY=ON -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Configure core with native MSVC
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          PGP_VS_PLATFORM: ${{ matrix.vs_platform }}
+        run: |
+          cmake -S . -B build/ci-core -G "Visual Studio 17 2022" -A $env:PGP_VS_PLATFORM -DPGP_CORE_ONLY=ON -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build core and tests
+        run: cmake --build build/ci-core --config Release --parallel 2
+      - name: Run core contracts and oracle comparison
+        run: ctest --test-dir build/ci-core --build-config Release --output-on-failure --no-tests=error --output-junit ctest-results.xml
+      - name: Record canonical fixture on Unix
+        if: runner.os != 'Windows'
+        run: python3 tools/check_primitive_fixture.py --executable build/ci-core/bin/pgp-primitive-fixture --output build/ci-core/primitive-observed.json
+      - name: Record canonical fixture on Windows
+        if: runner.os == 'Windows'
+        run: python tools/check_primitive_fixture.py --executable build/ci-core/bin/Release/pgp-primitive-fixture.exe --output build/ci-core/primitive-observed.json
+      # These are tiny test records, not game/editor packages or SDK caches.
+      - name: Retain compiler and parity evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: primitive-evidence-${{ matrix.runner }}-${{ matrix.cxx || 'msvc' }}
+          path: |
+            build/ci-core/CMakeCache.txt
+            build/ci-core/CMakeFiles/*/CMakeCXXCompiler.cmake
+            build/ci-core/Testing/Temporary/LastTest.log
+            build/ci-core/ctest-results.xml
+            build/ci-core/primitive-observed.json
+          retention-days: 7
+          if-no-files-found: warn

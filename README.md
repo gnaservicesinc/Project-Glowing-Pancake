@@ -2,7 +2,7 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** 3 of 52 tasks complete as of 2026-11-04: toolchain inventory, core/headless build and shared version identity. M0-03 has a locally tested QML/Metal interface probe, reusable offline resource guards and optional native/silent audio. Cross-platform/deployment qualification remains open. Game simulation and Content Studio are still ahead. Follow [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
+**Current state:** 3 of 52 tasks complete as of 2026-11-04: toolchain inventory, core/headless build and shared version identity. M1-01 deterministic primitives pass locally; native compiler/architecture parity is pending CI. M0-03 has a locally tested QML/Metal interface probe, reusable offline resource guards and optional native/silent audio; cross-platform/deployment qualification remains open. Game simulation and Content Studio are still ahead. Follow [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
 
 ## Build the development skeleton
 
