@@ -164,8 +164,8 @@ exact final state. Midpoint token/RNG restoration and preview-copy isolation
 pass. [Detailed contracts, evidence and limits](evidence/M1-01-primitives.md)
 identify the intermediate bounds, algorithm and frozen fixture fingerprint.
 
-Local core Release/Debug each passed 12 CTests and desktop Release passed 18;
-six verifier unit tests were subsequently added to CTest. Existing 11 wrapper
+Local core Release/Debug each passed 13 CTests and desktop Release passed 19,
+including six verifier unit checks. Existing 11 wrapper
 checks pass. Strict LLVM, ASan/UBSan and 200,000 independent arithmetic oracle
 comparisons pass. Headless linkage remains system-only. Independent module and
 integration reviews found no blocking issue.

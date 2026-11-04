@@ -79,7 +79,20 @@ jobs:
         env:
           PGP_VS_PLATFORM: ${{ matrix.vs_platform }}
         run: |
-          cmake -S . -B build/ci-core -G "Visual Studio 17 2022" -A $env:PGP_VS_PLATFORM -DPGP_CORE_ONLY=ON -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
+          if (-not (Test-Path $vswhere)) { throw "Bundled vswhere is unavailable: $vswhere" }
+          $instances = @(& $vswhere -latest -products '*' -format json -utf8 | ConvertFrom-Json)
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($instances.Count -ne 1) { throw 'Expected one latest installed Visual Studio instance' }
+          $instance = $instances[0]
+          $major = ([version]$instance.installationVersion).Major
+          $capabilities = cmake -E capabilities | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $generators = @($capabilities.generators | Where-Object { $_.name -like "Visual Studio $major *" })
+          if ($generators.Count -ne 1) { throw "Expected one CMake generator for installed Visual Studio major $major" }
+          $generator = $generators[0].name
+          Write-Host "Using $generator at $($instance.installationPath), target $env:PGP_VS_PLATFORM"
+          cmake -S . -B build/ci-core -G $generator "-DCMAKE_GENERATOR_INSTANCE=$($instance.installationPath)" -A $env:PGP_VS_PLATFORM -DPGP_CORE_ONLY=ON -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build core and tests
         run: cmake --build build/ci-core --config Release --parallel 2

@@ -12,7 +12,7 @@ M0 remains open. See the
 
 - M1-01 implements strong units/IDs, portable checked wide arithmetic,
   Gregorian dates, seven saved RNG streams and strict integer-token readers.
-  Core Release/Debug each pass 12 CTests; desktop Release passes 18. An
+  Core Release/Debug each pass 13 CTests; desktop Release passes 19. An
   independent oracle freezes 1,000 daily checksums. Native five-target compiler
   parity remains pending; [primitive evidence](evidence/M1-01-primitives.md)
   records bounds and excludes gameplay/save-loader/allocator claims.

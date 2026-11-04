@@ -70,8 +70,8 @@ otherwise eligible residues. This fixed local example is not M2-03's optimizer.
 
 | Check | Observed result |
 | --- | --- |
-| Core Release and Debug | 12/12 CTests each, including all 1,000 oracle checksums; six verifier unit tests subsequently added |
-| Desktop Release | 18/18 CTests; existing resource/audio/graphics tests pass |
+| Core Release and Debug | 13/13 CTests each, including all 1,000 oracle checksums and six verifier unit checks |
+| Desktop Release | 19/19 CTests; existing resource/audio/graphics tests pass |
 | Build wrapper | Existing 11/11 cleanup/configuration/failure checks pass |
 | Independent arithmetic checks | Strict LLVM warnings, ASan/UBSan and 200,000 two/three-factor comparisons against native unsigned-128 scratch oracle pass |
 | Permanent boundary tests | Exhaustive small arithmetic, intermediate/final overflow, signed minima, invalid denominators, single-round formulas, Gregorian endpoints/centuries and all 36,524 campaign days, typed ranges, RNG vectors/rejection/stream independence pass |
