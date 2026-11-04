@@ -3,6 +3,7 @@
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/accounts.hpp>
 #include <pgp/core/capacity.hpp>
+#include <pgp/core/market.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
@@ -87,6 +88,7 @@ struct SimulationState {
     // Business scenarios reconcile the cash projection against their ledger.
     std::optional<AccountsState> accounts{};
     std::optional<CapacityState> capacity{};
+    std::optional<MarketState> market{};
     auto operator<=>(const SimulationState&) const = default;
 };
 
@@ -101,6 +103,7 @@ struct SimulationSnapshot {
     std::vector<ReservationRow> reservations;
     std::optional<AccountsReport> accounts{};
     std::optional<CapacityReport> capacity{};
+    std::optional<MarketReport> market{};
 };
 
 struct ReserveFunds { std::string name; Cents amount; bool reversible = true; };
@@ -118,11 +121,20 @@ struct InvestEquity { std::string investor; Cents proceeds; BasisPoints acquired
 struct ReserveProject { CapacityProject project; };
 struct CancelProject { std::string id; };
 struct SetEffectiveCapacity { std::string source_id; MilliCUPerDay available; };
+struct EnableMarket {};
+struct AddMarketProduct { MarketProduct product; };
+struct AddMarketSegment { MarketSegment segment; };
+struct SetMarketProductAvailable { std::string id; bool available; };
+struct AcceptContract { MarketContract contract; };
+struct StartContract { std::string id; };
+struct CancelContract { std::string id; };
 using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReservation,
                                    AdvanceDay, SetPaused, ResolveOpeningChoice,
                                    AddRecurringObligation, IssueInvoice, SettleInvoice,
                                    DrawDebt, RepayDebt, InvestEquity,
-                                   ReserveProject, CancelProject, SetEffectiveCapacity>;
+                                   ReserveProject, CancelProject, SetEffectiveCapacity,
+                                   EnableMarket, AddMarketProduct, AddMarketSegment,
+                                   SetMarketProductAvailable, AcceptContract, StartContract, CancelContract>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

@@ -3,6 +3,9 @@
 2026-11-04. Selected kernel procedure for the next implementation batch, following
 the [customer-allocation contract](../SIMULATION_SPEC.md#customer-allocation).
 These are hand-worked design cases, not passing market-runtime evidence.
+The subsequent [market implementation evidence](M2-03-market.md) records the
+implemented procedure and its focused checks; this document preserves the
+design selected before coding.
 
 ## Common-snapshot procedure
 

@@ -1,0 +1,99 @@
+#include <pgp/content/market_setup.hpp>
+
+#include <nlohmann/json.hpp>
+
+#include <algorithm>
+#include <stdexcept>
+
+namespace pgp::content {
+namespace {
+void shape(const MarketSetup& setup, core::OrdinalDay starts_on) {
+    if (setup.offers.size() > core::market_product_limit || setup.segments.size() > core::market_segment_limit ||
+        setup.contracts.size() > core::market_contract_limit)
+        throw std::invalid_argument("Market setup exceeds its catalog bounds");
+    for (const auto& offer : setup.offers) {
+        const auto& row = offer.serving;
+        if (row.id != offer.product.capacity_project_id || row.source_id != "lease.initial" ||
+            row.kind != core::ProjectKind::serving || row.status != core::ProjectStatus::active ||
+            row.starts_on != starts_on || row.stopped_on || row.total_work.value() != 0 ||
+            row.completed_work.value() != 0 || row.useful_tasks != 0 || row.cause != "Market service: " + offer.product.id ||
+            core::required_inference(row.tasks_per_day, row.inference_milli_CU_per_task).value() != row.requested.value())
+            throw std::invalid_argument("Market setup contains incompatible serving state");
+    }
+    for (const auto& contract : setup.contracts)
+        if (contract.terms.accepted_on != starts_on || contract.terms.status != core::ContractStatus::pending ||
+            contract.terms.started_on || contract.terms.stopped_on)
+            throw std::invalid_argument("Market setup contains previously consumed contract state");
+    for (const auto& segment : setup.segments)
+        if (segment.preferences.size() > core::market_product_limit)
+            throw std::invalid_argument("Market preference count exceeds its catalog bound");
+}
+}
+void apply_market_setup(const MarketSetup& setup, core::MarketState& market,
+                        core::AccountsState& accounts, core::CapacityState& capacity,
+                        core::OrdinalDay starts_on) {
+    shape(setup, starts_on);
+    auto next_market = market;
+    auto next_accounts = accounts;
+    auto next_capacity = capacity;
+    for (const auto& offer : setup.offers) {
+        core::reserve_project(next_capacity, starts_on, offer.serving);
+        if (offer.serving.monthly_support_cost.value() > 0)
+            core::add_recurring(next_accounts, {"support/" + offer.serving.id, offer.serving.monthly_support_cost,
+                starts_on, std::nullopt, "Serving support: " + offer.serving.id});
+        core::add_market_product(next_market, next_capacity, offer.product);
+    }
+    for (const auto& segment : setup.segments) core::add_market_segment(next_market, segment);
+    for (const auto& contract : setup.contracts) {
+        core::accept_contract(next_market, next_capacity, starts_on, contract.terms);
+        if (contract.start_immediately) core::start_contract(next_market, next_capacity, starts_on, contract.terms.id);
+    }
+    core::validate_market_links(next_market, next_accounts, next_capacity);
+    market = std::move(next_market); accounts = std::move(next_accounts); capacity = std::move(next_capacity);
+}
+std::string canonical_market_setup_bytes(const MarketSetup& setup, core::OrdinalDay starts_on) {
+    shape(setup, starts_on);
+    using Json = nlohmann::json;
+    Json offers = Json::array(), segments = Json::array(), contracts = Json::array();
+    std::vector<const MarketOfferDefinition*> ordered_offers;
+    for (const auto& offer : setup.offers) ordered_offers.push_back(&offer);
+    std::sort(ordered_offers.begin(), ordered_offers.end(), [](auto a, auto b) { return a->product.id < b->product.id; });
+    for (const auto* offer : ordered_offers) {
+        const auto& row = offer->serving;
+        offers.push_back({{"id",offer->product.id},{"capacity_project_id",row.id},
+            {"price_cents_per_task",offer->product.price_per_task.value()},{"available",offer->product.available},
+            {"tasks_per_day",row.tasks_per_day},{"inference_milli_CU_per_task",row.inference_milli_CU_per_task.value()},
+            {"staff",row.staff},{"minimum_memory_mib",row.minimum_memory_mib},{"interconnect",row.interconnect},
+            {"monthly_support_cost_cents",row.monthly_support_cost.value()}});
+    }
+    std::vector<const core::MarketSegment*> ordered_segments;
+    for (const auto& segment : setup.segments) ordered_segments.push_back(&segment);
+    std::sort(ordered_segments.begin(), ordered_segments.end(), [](auto a, auto b) { return a->id < b->id; });
+    for (const auto* row : ordered_segments) {
+        auto preferences = row->preferences;
+        std::sort(preferences.begin(), preferences.end(), [](const auto& a, const auto& b) { return a.product_id < b.product_id; });
+        Json prefs = Json::array();
+        for (const auto& preference : preferences) prefs.push_back({{"product_id",preference.product_id},
+            {"utility",preference.utility},{"willingness_to_pay_cents",preference.willingness_to_pay.value()},
+            {"switching_cost",preference.switching_cost},{"eligible",preference.eligible}});
+        segments.push_back({{"id",row->id},{"daily_tasks",row->daily_tasks},{"daily_budget_cents",row->daily_budget.value()},
+            {"outside_utility",row->outside_utility},{"reservation_threshold",row->reservation_threshold},
+            {"maximum_monthly_migration_basis_points",row->maximum_monthly_migration.value()},
+            {"preferences",std::move(prefs)}});
+    }
+    std::vector<const StartingContractDefinition*> ordered_contracts;
+    for (const auto& contract : setup.contracts) ordered_contracts.push_back(&contract);
+    std::sort(ordered_contracts.begin(), ordered_contracts.end(), [](auto a, auto b) { return a->terms.id < b->terms.id; });
+    for (const auto* contract : ordered_contracts) {
+        const auto& row = contract->terms;
+        contracts.push_back({{"id",row.id},{"segment_id",row.segment_id},{"product_id",row.product_id},
+            {"tasks_per_day",row.tasks_per_day},{"monthly_fee_cents",row.monthly_fee.value()},
+            {"usage_price_cents",row.usage_price.value()},{"service_credit_basis_points",row.service_credit_basis_points.value()},
+            {"missing_task_penalty_cents",row.missing_task_penalty.value()},{"missed_start_penalty_cents",row.missed_start_penalty.value()},
+            {"cancellation_penalty_cents",row.cancellation_penalty.value()},
+            {"start_by",core::iso_date(row.start_by)},{"ends_before",core::iso_date(row.ends_before)},
+            {"cause",row.cause},{"start_immediately",contract->start_immediately}});
+    }
+    return Json{{"offers",std::move(offers)},{"segments",std::move(segments)},{"contracts",std::move(contracts)}}.dump();
+}
+}

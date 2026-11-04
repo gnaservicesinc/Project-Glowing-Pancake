@@ -17,7 +17,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M1-07 | Planned | Built-in major-event detection, scheduled/seeded world occurrences and news through the shared runtime; [event contract](EVENT_SYSTEM.md) |
 | M2-01 | Implemented on Mac; prerequisite open | Balanced accounts, actual-month costs, invoices, debt/equity, protected settlements and pure projections through commands/exact saves; [evidence](evidence/M2-01-accounts.md) |
 | M2-02 | Implemented on Mac; prerequisite open | Shared source/staff reservations, compatibility, serving-first outage allocation, actual finite work, cancellation, support costs and exact reload; [evidence](evidence/M2-02-capacity.md) |
-| M2-03 | Design prepared | [Selected finite kernel and hand cases](evidence/M2-03-allocation-design.md); contracts/resource priority, installed shares and implementation remain open |
+| M2-03 | Implemented on Mac; prerequisite open | Finite allocation, contracts/resource priority, billing/credits/deadlines and installed shares through typed scenarios/exact saves; [evidence](evidence/M2-03-market.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
 ## First implementation slice
@@ -474,3 +474,26 @@ their prerequisite gates remain open. Next Mac work is M2-03 contracts/demand:
 freeze the common-snapshot finite allocation procedure and hand-work rational
 budget/capacity cases before coding. The three-year solvent/recovery scenario
 then follows under M2-04.
+
+## M2-03 contracts and demand allocation — 2026-11-04
+
+Implemented the finite common-snapshot allocation kernel, contract-priority
+resource planning, actual-demand serving, calendar-month fees/usage, netted
+service credits, penalties/deadlines and monthly installed shares. Typed scenario
+data supplies prices, utility/eligibility, profiles and terms; canonical content
+identity and exact saves preserve the complete business boundary. Switching costs
+use incumbency, and customer fees/usage share one budget. [Evidence](evidence/M2-03-market.md)
+and the [module contract](../src/core/MARKET.md) record semantics and limits.
+
+The optimized incremental Mac build and eight focused CTests pass. Allocation
+has 1,677 checks, content/setup has 56 and contract/save integration has 68.
+The authored example delivers 59,000 tasks, bills $50,000 over January/February
+and leaves $1,012,000 after baseline/support costs and one license. A Jan31 save
+resumes identically. Review added immutable-eligibility reload checks; affected
+targets were rebuilt and their focused checks pass. No full/native/Debug/package
+qualification was run.
+
+Formal accepted count stays **5/52** while the prerequisite gates remain open.
+Next work is M2-04's three-year scenario and liquidity workout/rescue/closure.
+The current fixture starts with an engineering product; M3 still owns actual
+research/model qualification. Work pauses at this M2-03 handoff per user request.

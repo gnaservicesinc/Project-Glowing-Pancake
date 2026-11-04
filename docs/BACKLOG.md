@@ -1,6 +1,6 @@
 # Implementation backlog
 
-Baseline 1.2 with 2026-11-04 event clarification · **5 of 52 tasks accepted; additional implementation under M0-03, M1-03/04/06 and M2-01/02**.
+Baseline 1.2 with 2026-11-04 event clarification · **5 of 52 tasks accepted; additional implementation under M0-03, M1-03/04/06 and M2-01/02/03**.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Dependencies refer to completed acceptance criteria, not merely the presence of a commit. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
 ## M0 — Toolchain and platform proof
@@ -94,6 +94,14 @@ budget scaling, explicit residual/outside accounting, shared capacity rounding,
 a `P+E+1` round proof and hand-worked unequal/free-price/contention cases. This is
 design evidence only; contracts, resource priority, installed shares and runtime
 implementation remain open.
+
+**M2-03 Mac implementation, 2026-11-04:** the selected finite allocation kernel,
+protected contract supply, actual fees/usage/credits/penalties, deadlines,
+installed shares and incumbent-based switching are now implemented. Typed
+scenario data defines the business setup, and exact saves reconcile budgets,
+invoices and actual serving. An optimized Mac build and eight focused CTests pass;
+[evidence](evidence/M2-03-market.md) records tests and limits. Formal acceptance
+retains M2-02's prerequisite gate. Next: M2-04's three-year solvent/recovery paths.
 
 ## E1a — Slice authoring through forms and inspection
 

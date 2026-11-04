@@ -57,6 +57,7 @@ struct ProjectDayWork {
     MilliCU work{0};
     std::uint64_t useful_tasks = 0;
     std::uint32_t assigned_staff = 0;
+    std::uint64_t protected_tasks = 0;
     auto operator<=>(const ProjectDayWork&) const = default;
 };
 struct CapacityDay {
@@ -102,4 +103,15 @@ void cancel_project(CapacityState& state, OrdinalDay day, std::string_view proje
 void update_effective_capacity(CapacityState& state, OrdinalDay day,
                                std::string_view source_id, MilliCUPerDay effective);
 void close_capacity_day(CapacityState& state, OrdinalDay day);
+// A common daily plan: contract tasks precede discretionary serving, then
+// finite projects. Omitted serving rows do no work; unused compute can train.
+struct ServingRequest {
+    std::string project_id;
+    std::uint64_t protected_tasks = 0;
+    std::uint64_t additional_tasks = 0;
+};
+[[nodiscard]] CapacityDay preview_capacity_day(const CapacityState& state, OrdinalDay day,
+                                               const std::vector<ServingRequest>& serving);
+void close_capacity_day(CapacityState& state, OrdinalDay day,
+                        const std::vector<ServingRequest>& serving);
 } // namespace pgp::core

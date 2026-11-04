@@ -225,10 +225,11 @@ void validate_capacity(const CapacityState& state) {
                 throw std::overflow_error("Project useful task history overflow");
             total.tasks += used.useful_tasks;
             if (row.kind == ProjectKind::serving) {
-                if (used.useful_tasks > row.tasks_per_day || required_inference(used.useful_tasks, row.inference_milli_CU_per_task) != used.work)
+                if (used.useful_tasks > row.tasks_per_day || used.protected_tasks > used.useful_tasks ||
+                    required_inference(used.useful_tasks, row.inference_milli_CU_per_task) != used.work)
                     invalid("Serving history credits work without its exact inference cost");
             } else {
-                if (used.useful_tasks != 0 || total.work > row.total_work)
+                if (used.useful_tasks != 0 || used.protected_tasks != 0 || total.work > row.total_work)
                     invalid("Finite work history exceeds its goal or invents useful serving tasks");
                 if (total.work == row.total_work && (row.status != ProjectStatus::completed || !row.stopped_on || *row.stopped_on != day.day))
                     invalid("Finite work must complete on the exact day its goal is reached");
@@ -309,42 +310,84 @@ void update_effective_capacity(CapacityState& state, OrdinalDay day, std::string
         found->effective = effective;
     });
 }
-void close_capacity_day(CapacityState& state, OrdinalDay day) {
-    mutate(state, [&](auto& candidate) {
-        require_day(candidate, day);
-        CapacityDay record; record.day = day;
-        std::vector<std::int64_t> allocations(candidate.projects.size(), 0);
-        for (const auto& supply : candidate.sources) {
-            std::vector<Claim> serving, other;
-            for (std::size_t i = 0; i < candidate.projects.size(); ++i) {
-                const auto& row = candidate.projects[i];
-                if (row.status != ProjectStatus::active || row.source_id != supply.id) continue;
-                Claim claim{i, demand(row), row.kind == ProjectKind::serving ?
-                    static_cast<std::uint64_t>(row.inference_milli_CU_per_task.value()) : 1};
-                (row.kind == ProjectKind::serving ? serving : other).push_back(claim);
-            }
-            const auto protected_used = allocate(serving, supply.effective.value(), candidate);
-            const auto other_used = allocate(other, checked_subtract(supply.effective.value(), protected_used), candidate);
-            for (const auto& claim : serving) allocations[claim.project_index] = claim.assigned;
-            for (const auto& claim : other) allocations[claim.project_index] = claim.assigned;
-            record.sources.push_back({supply.id, supply.effective, MilliCU{checked_add(protected_used, other_used)}});
+CapacityDay preview_capacity_day(const CapacityState& state, OrdinalDay day,
+                                 const std::vector<ServingRequest>& serving) {
+    validate_capacity(state);
+    require_day(state, day);
+    if (serving.size() > capacity_project_limit) invalid("Daily serving plan exceeds its record bound");
+    std::map<std::string, ServingRequest> requests;
+    for (const auto& request : serving) {
+        const auto found = std::find_if(state.projects.begin(), state.projects.end(),
+            [&](const auto& row) { return row.id == request.project_id; });
+        if (found == state.projects.end() || found->kind != ProjectKind::serving || found->status != ProjectStatus::active ||
+            request.protected_tasks > found->tasks_per_day ||
+            request.additional_tasks > found->tasks_per_day - request.protected_tasks ||
+            !requests.emplace(request.project_id, request).second)
+            invalid("Daily serving request has an invalid project, task count or duplicate identity");
+    }
+    CapacityDay record; record.day = day;
+    std::vector<std::int64_t> allocations(state.projects.size(), 0), protected_work(state.projects.size(), 0);
+    for (const auto& supply : state.sources) {
+        std::vector<Claim> priority, discretionary, other;
+        for (std::size_t i = 0; i < state.projects.size(); ++i) {
+            const auto& row = state.projects[i];
+            if (row.status != ProjectStatus::active || row.source_id != supply.id) continue;
+            if (row.kind != ProjectKind::serving) { other.push_back({i, demand(row), 1}); continue; }
+            const auto found = requests.find(row.id);
+            if (found == requests.end()) continue;
+            const auto quantum = static_cast<std::uint64_t>(row.inference_milli_CU_per_task.value());
+            priority.push_back({i, required_inference(found->second.protected_tasks, row.inference_milli_CU_per_task).value(), quantum});
+            discretionary.push_back({i, required_inference(found->second.additional_tasks, row.inference_milli_CU_per_task).value(), quantum});
         }
+        const auto priority_used = allocate(priority, supply.effective.value(), state);
+        const auto extra_used = allocate(discretionary, checked_subtract(supply.effective.value(), priority_used), state);
+        const auto serving_used = checked_add(priority_used, extra_used);
+        const auto other_used = allocate(other, checked_subtract(supply.effective.value(), serving_used), state);
+        for (const auto& claim : priority) {
+            protected_work[claim.project_index] = claim.assigned;
+            allocations[claim.project_index] = claim.assigned;
+        }
+        for (const auto& claim : discretionary)
+            allocations[claim.project_index] = checked_add(allocations[claim.project_index], claim.assigned);
+        for (const auto& claim : other) allocations[claim.project_index] = claim.assigned;
+        record.sources.push_back({supply.id, supply.effective, MilliCU{checked_add(serving_used, other_used)}});
+    }
+    for (std::size_t i = 0; i < state.projects.size(); ++i) {
+        const auto& row = state.projects[i];
+        if (row.status != ProjectStatus::active) continue;
+        const bool serves = row.kind == ProjectKind::serving;
+        const auto tasks = serves ? maximum_tasks(MilliCU{allocations[i]}, row.inference_milli_CU_per_task) : 0;
+        const auto priority = serves ? maximum_tasks(MilliCU{protected_work[i]}, row.inference_milli_CU_per_task) : 0;
+        record.projects.push_back({row.id, MilliCU{allocations[i]}, tasks, row.staff, priority});
+    }
+    std::sort(record.sources.begin(), record.sources.end(), [](const auto& a, const auto& b) { return a.source_id < b.source_id; });
+    std::sort(record.projects.begin(), record.projects.end(), [](const auto& a, const auto& b) { return a.project_id < b.project_id; });
+    return record;
+}
+void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<ServingRequest>& serving) {
+    mutate(state, [&](auto& candidate) {
+        auto record = preview_capacity_day(candidate, day, serving);
         for (std::size_t i = 0; i < candidate.projects.size(); ++i) {
             auto& row = candidate.projects[i];
             if (row.status != ProjectStatus::active) continue;
-            const auto work = MilliCU{allocations[i]};
-            const auto tasks = row.kind == ProjectKind::serving ? maximum_tasks(work, row.inference_milli_CU_per_task) : 0;
+            const auto found = std::find_if(record.projects.begin(), record.projects.end(), [&](const auto& used) { return used.project_id == row.id; });
+            const auto work = found->work;
+            const auto tasks = found->useful_tasks;
             if (tasks > std::numeric_limits<std::uint64_t>::max() - row.useful_tasks)
                 throw std::overflow_error("Project useful task total overflow");
             row.completed_work = checked_unit_add(row.completed_work, work); row.useful_tasks += tasks;
-            record.projects.push_back({row.id, work, tasks, row.staff});
             if (row.kind != ProjectKind::serving && row.completed_work == row.total_work) {
                 row.status = ProjectStatus::completed; row.stopped_on = day;
             }
         }
-        std::sort(record.sources.begin(), record.sources.end(), [](const auto& a, const auto& b) { return a.source_id < b.source_id; });
-        std::sort(record.projects.begin(), record.projects.end(), [](const auto& a, const auto& b) { return a.project_id < b.project_id; });
         candidate.days.push_back(std::move(record)); candidate.closed_through = day;
     });
+}
+void close_capacity_day(CapacityState& state, OrdinalDay day) {
+    std::vector<ServingRequest> serving;
+    for (const auto& row : state.projects)
+        if (row.status == ProjectStatus::active && row.kind == ProjectKind::serving)
+            serving.push_back({row.id, 0, row.tasks_per_day});
+    close_capacity_day(state, day, serving);
 }
 } // namespace pgp::core

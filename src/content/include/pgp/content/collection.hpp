@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pgp/content/registry.hpp>
+#include <pgp/content/market_setup.hpp>
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/units.hpp>
 
@@ -116,6 +117,7 @@ struct ScenarioDefinition {
     std::map<std::string, pgp::core::BasisPoints, std::less<>> ownership;
     std::vector<std::string> research;
     std::vector<std::string> flows;
+    std::optional<MarketSetup> market{};
 };
 struct ResearchDefinition {
     std::vector<std::string> all_of;

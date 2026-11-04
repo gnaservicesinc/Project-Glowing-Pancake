@@ -2,15 +2,15 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** 5 of 52 tasks accepted as of 2026-11-04, with additional implemented work under M1-03/04/06 and M2-01/02. Business accounts provide balanced postings, actual-month costs, protected settlements, invoices, debt, equity and cash projections. Shared compute/staff commitments now execute training and protected serving together, with outages, compatibility, cancellation and separate support costs. Commands and exact saves preserve both systems. The foundation executes typed flows, weighted branches, durations, scoped variables, expressions, delays, choices and modifiers. Local settings, recovery copies, autosave policy and immutable worker/models exist. Related-entity flows and deferred platform prerequisites remain open. Contracts, playable rooms and Content Studio are still ahead. Follow [playability checkpoints](docs/PLAYABILITY.md), [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
+**Current state:** 5 of 52 tasks accepted as of 2026-11-04, with additional implemented work under M1-03/04/06 and M2-01/02/03. Business accounts and shared compute/staff now support contracts, actual-demand serving, finite budget/capacity allocation, credits/penalties, deadlines and installed customer shares. Typed scenario data defines market terms and serving profiles; commands and exact saves preserve accounting and work together. The foundation executes typed flows, weighted branches, durations, scoped variables, expressions, delays, choices and modifiers. Local settings, recovery copies, autosave policy and immutable worker/models exist. Related-entity flows and deferred platform prerequisites remain open. The three-year recovery scenario, playable rooms and Content Studio are still ahead. Follow [playability checkpoints](docs/PLAYABILITY.md), [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
 
 ## Build the development skeleton
 
 ```sh
 ./make.sh                     # Release; builds the probe, never launches
 ./make.sh --core-only        # Release core/headless; no Qt required
-ctest --test-dir build/core-release -R '^(core.capacity|runtime.capacity-integration|headless.capacity-demo)$' --output-on-failure
-build/core-release/bin/pgp-headless --capacity-demo tests/content/fixtures/foundation.json
+ctest --test-dir build/core-release -R '^(core.allocation|content.market-setup|runtime.market-integration|headless.market-demo)$' --output-on-failure
+build/core-release/bin/pgp-headless --market-demo tests/content/fixtures/market.json
 ./make.sh --help
 ```
 

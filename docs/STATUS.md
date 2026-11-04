@@ -4,7 +4,7 @@ Updated 2026-11-04 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03, M1-03/04/06 and M2-01/02 have implemented work awaiting their remaining gates.** M0-03's local
+**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03, M1-03/04/06 and M2-01/02/03 have implemented work awaiting their remaining gates.** M0-03's local
 interface/resource/audio implementation passes; native/deployment gates remain.
 M0 remains open. See the
 [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
@@ -23,7 +23,7 @@ block Mac implementation. Keep build caches between batches.
   including a reload before settlement. An optimized Mac build and eight focused
   CTests pass; [accounts evidence](evidence/M2-01-accounts.md) records the
   implemented contract and limits. Formal acceptance retains M1-03's open
-  prerequisite; contracts and liquidity workouts remain ahead.
+  prerequisite; liquidity workouts remain ahead.
 - M2-02 now reserves shared source capacity and staff, checks memory/interconnect
   compatibility, protects serving during outages and records actual finite work.
   Cancellation preserves completed work and past costs; non-compute support has
@@ -31,6 +31,14 @@ block Mac implementation. Keep build caches between batches.
   of training plus 60,000 serving tasks on one 100 CU/day lease and resumes
   exactly. An optimized Mac build and seven focused CTests pass.
   [Capacity evidence](evidence/M2-02-capacity.md) records scope and limits.
+- M2-03 now executes bounded common-snapshot allocation, protected contractual
+  serving, actual-month fees/usage, netted service credits, penalties/deadlines
+  and monthly installed shares with incumbent-based switching. Typed scenario
+  data supplies market terms, utilities and profiles. Exact saves reconcile
+  customer budgets, invoices and actual work. An optimized Mac build and eight
+  focused CTests pass; the authored two-month example bills $50,000 for 59,000
+  useful tasks and leaves $1,012,000 after costs/license. [Market evidence](evidence/M2-03-market.md)
+  distinguishes engineering starting products from M3 model qualification.
 
 - M1-06 now compiles/executes the current typed schema: five lifecycles,
   nested sequence/subflow delays and choices, selected root sources, owned
@@ -129,7 +137,7 @@ block Mac implementation. Keep build caches between batches.
 The build scaffold, shared version identity, deterministic primitives, typed
 content/compiler/runtime, transactional state, local persistence/campaign policy,
 worker/model bridge, opening business accounts, shared project capacity, CLI and development QML interface probe exist.
-Business gameplay, Content Studio, finalized runtime
+The complete business scenario, player-facing gameplay, Content Studio, finalized runtime
 content and packages do not. Existing native CI proves primitive parity on all
 five targets; the expanded foundation suite is checked separately. The headless
 command validates local content, demonstrates commands/flows and can explicitly
@@ -161,17 +169,20 @@ Historical planning-baseline checks passed before implementation:
 - Wide/single-round arithmetic, constrained budget residues, opening finance/ownership, serving capacity, effect boundaries/direction, exact 60/120-month windows and the 36,524-day campaign interval (2100 is not a leap year).
 - Roadmap effort/reserve arithmetic; three archive hashes/bytes and all 21 review dispositions; component manifest unchanged from `a218fc6`.
 
-These are document/data/example checks only. No game/editor/runtime, UI performance, native package, human usability or balance tests have run. Expected fixture assertions are not passing application evidence. The numerical multi-segment allocation procedure remains an explicit M2-03 implementation/qualification gate, not a completed optimizer.
+Those historical checks cover planning documents/data/examples only. Current
+runtime evidence is recorded above and in the implementation log; UI performance,
+native packages, human usability and balance remain later gates. M2-03 now
+implements the bounded allocation policy described in its local evidence; it
+does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac gameplay implementation: M2-03 contracts and demand allocation**,
-using the implemented accounts, shared capacity, commands, flow runtime and saves.
-Freeze the finite common-snapshot allocation procedure with hand-worked unequal
-prices, rational budgets, free products and capacity contention before coding.
-The [selected kernel design](evidence/M2-03-allocation-design.md) now records a
-`P+E+1` round bound and those hand cases; contract terms and the common resource
-priority boundary must be connected during implementation.
+**Next Mac gameplay implementation: M2-04 three-year scenario and liquidity recovery**,
+using accounts, contracts, shared capacity and exact saves. Add the 30-day
+workout/rescue/closure state and a scenario runner with a demonstrably solvent
+strategy. The [allocation design](evidence/M2-03-allocation-design.md) now has
+[implemented market evidence](evidence/M2-03-market.md), including its contract
+resource priority boundary.
 Add related selectors/
 quantifiers as their real owning entities arrive; retain that unfinished
 M1-06 work rather than inventing entities to close a checkbox. M1-07 adds built-in

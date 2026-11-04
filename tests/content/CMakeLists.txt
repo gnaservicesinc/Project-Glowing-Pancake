@@ -4,3 +4,10 @@ target_include_directories(pgp-content-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR
 target_compile_definitions(pgp-content-test PRIVATE PGP_CONTENT_FIXTURE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/foundation.json")
 pgp_project_target(pgp-content-test)
 add_test(NAME content.registry-validation COMMAND pgp-content-test)
+add_executable(pgp-market-setup-test market_setup_test.cpp)
+target_link_libraries(pgp-market-setup-test PRIVATE pgp::persistence)
+target_include_directories(pgp-market-setup-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-market-setup-test PRIVATE
+    PGP_MARKET_CONTENT_FIXTURE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/market.json")
+pgp_project_target(pgp-market-setup-test)
+add_test(NAME content.market-setup COMMAND pgp-market-setup-test)

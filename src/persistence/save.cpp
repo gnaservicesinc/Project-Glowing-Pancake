@@ -4,6 +4,7 @@
 #include "json_support.hpp"
 #include "accounts_json.hpp"
 #include "capacity_json.hpp"
+#include "market_json.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -86,14 +87,17 @@ Json simulation_json(const core::SimulationState& state) {
         {"accounting_mode",state.accounts?"business":"foundation"},
         {"accounts",state.accounts?detail::accounts_json(*state.accounts):Json(nullptr)},
         {"capacity_mode",state.capacity?"business":"foundation"},
-        {"capacity",state.capacity?detail::capacity_json(*state.capacity):Json(nullptr)}};
+        {"capacity",state.capacity?detail::capacity_json(*state.capacity):Json(nullptr)},
+        {"market_mode",state.market?"business":"foundation"},
+        {"market",state.market?detail::market_json(*state.market):Json(nullptr)}};
 }
 core::SimulationState parse_simulation(const Json& value) {
     if (!value.is_object()) detail::invalid("simulation","Expected object");
     Json prior_shape=Json::object();
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
-        if (name!="accounts" && name!="accounting_mode" && name!="capacity" && name!="capacity_mode")
+        if (name!="accounts" && name!="accounting_mode" && name!="capacity" && name!="capacity_mode" &&
+            name!="market" && name!="market_mode")
             prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"simulation",{"revision","date","end_date","phase","paused","cash_cents",
@@ -126,6 +130,16 @@ core::SimulationState parse_simulation(const Json& value) {
         if (mode=="business") result.capacity=detail::parse_capacity(value.at("capacity"));
         else if (mode!="foundation" || !value.at("capacity").is_null())
             detail::invalid("simulation/capacity_mode","Capacity mode does not match its state");
+    }
+    // Older engineering and accounts/capacity checkpoints did not own a market.
+    // Keep that explicit absence; never reconstruct contracts or prior revenue.
+    if (value.contains("market") != value.contains("market_mode"))
+        detail::invalid("simulation/market_mode","Market mode and state must be present together");
+    if (value.contains("market_mode")) {
+        const auto mode=detail::text(value.at("market_mode"),"simulation/market_mode",16);
+        if (mode=="business") result.market=detail::parse_market(value.at("market"));
+        else if (mode!="foundation" || !value.at("market").is_null())
+            detail::invalid("simulation/market_mode","Market mode does not match its state");
     }
     result.next_reservation_id=detail::u64(value.at("next_reservation_id"),"next_reservation_id");
     result.next_receipt_id=detail::u64(value.at("next_receipt_id"),"next_receipt_id");

@@ -79,8 +79,18 @@ to run 60 days of 20 CU/day serving plus 60 CU/day training on a single
 100 CU/day lease. It includes a separate $5,000/month support obligation and
 the one-time data license, ending with $962,000 cash after settled January and
 February costs. The targeted checks are `core.capacity`,
-`runtime.capacity-integration` and `headless.capacity-demo`. Customer demand,
-revenue and model qualification remain later mechanics.
+`runtime.capacity-integration` and `headless.capacity-demo`. This capacity-only
+example excludes customer demand/revenue; the market example below exercises
+those systems. Model qualification remains M3 work.
+
+`pgp-headless --market-demo tests/content/fixtures/market.json` loads a typed
+enterprise scenario with contract terms, utilities and inference/support prices
+from data. Through March 1 it delivers 59,000 tasks, bills exactly $50,000 and
+leaves $1,012,000 after baseline/support/license costs, with exact reload parity.
+Focused checks are `core.allocation`, `content.market-setup`,
+`runtime.market-integration` and `headless.market-demo`. The fixture starts with
+an engineering product; research/model qualification and a three-year strategy
+remain later tasks.
 
 ## Compiler and configuration isolation
 

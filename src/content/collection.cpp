@@ -580,9 +580,96 @@ FlowDefinition flow(const Json& value, const std::string& path, const Registry& 
     if (reached.size() != result.nodes.size()) fail("unreachable_node", path, "Every node must be reachable from entry or continuous exit");
     return result;
 }
+MarketSetup market_setup(const Json& value, const std::string& path, const ScenarioDefinition& scenario) {
+    fields(value, path, {"offers","segments","contracts"}, {"offers","segments","contracts"});
+    MarketSetup result;
+    array(value.at("offers"), child(path,"offers"), core::market_product_limit);
+    for (const auto& offer : value.at("offers")) {
+        fields(offer,path,{"id","capacity_project_id","price_cents_per_task","available","tasks_per_day",
+            "inference_milli_CU_per_task","staff","minimum_memory_mib","interconnect","monthly_support_cost_cents"},
+            {"id","capacity_project_id","price_cents_per_task","available","tasks_per_day",
+            "inference_milli_CU_per_task","staff","minimum_memory_mib","interconnect","monthly_support_cost_cents"});
+        MarketOfferDefinition row;
+        row.product = {id(offer.at("id"),path),id(offer.at("capacity_project_id"),path),
+            core::Cents{integer(offer.at("price_cents_per_task"),path,0,core::market_price_limit)},
+            boolean(offer.at("available"),path)};
+        row.serving.id = row.product.capacity_project_id;
+        row.serving.source_id = "lease.initial";
+        row.serving.kind = core::ProjectKind::serving;
+        row.serving.starts_on = scenario.starts_on;
+        row.serving.tasks_per_day = static_cast<std::uint64_t>(integer(offer.at("tasks_per_day"),path,1,core::market_task_limit));
+        row.serving.inference_milli_CU_per_task = core::MilliCU{integer(offer.at("inference_milli_CU_per_task"),path,1)};
+        row.serving.requested = core::MilliCUPerDay{core::required_inference(
+            row.serving.tasks_per_day,row.serving.inference_milli_CU_per_task).value()};
+        row.serving.staff = positive(offer.at("staff"),path,1'000'000);
+        row.serving.minimum_memory_mib = unsigned_integer(offer.at("minimum_memory_mib"),path);
+        row.serving.interconnect = id(offer.at("interconnect"),path);
+        row.serving.monthly_support_cost = core::Cents{integer(offer.at("monthly_support_cost_cents"),path)};
+        row.serving.cause = "Market service: " + row.product.id;
+        result.offers.push_back(std::move(row));
+    }
+    array(value.at("segments"),child(path,"segments"),core::market_segment_limit);
+    for (const auto& segment : value.at("segments")) {
+        fields(segment,path,{"id","daily_tasks","daily_budget_cents","outside_utility","reservation_threshold",
+            "maximum_monthly_migration_basis_points","preferences"},
+            {"id","daily_tasks","daily_budget_cents","outside_utility","reservation_threshold",
+            "maximum_monthly_migration_basis_points","preferences"});
+        core::MarketSegment row;
+        row.id = id(segment.at("id"),path);
+        row.daily_tasks = static_cast<std::uint64_t>(integer(segment.at("daily_tasks"),path,0,core::market_task_limit));
+        row.daily_budget = core::Cents{integer(segment.at("daily_budget_cents"),path)};
+        row.outside_utility = static_cast<std::uint64_t>(integer(segment.at("outside_utility"),path,0,core::market_utility_limit));
+        row.reservation_threshold = static_cast<std::uint64_t>(integer(segment.at("reservation_threshold"),path,0,core::market_utility_limit));
+        row.maximum_monthly_migration = core::BasisPoints{integer(segment.at("maximum_monthly_migration_basis_points"),path,0,10000)};
+        array(segment.at("preferences"),child(path,"preferences"),core::market_product_limit);
+        for (const auto& preference : segment.at("preferences")) {
+            fields(preference,path,{"product_id","utility","willingness_to_pay_cents","switching_cost","eligible"},
+                {"product_id","utility","willingness_to_pay_cents","switching_cost","eligible"});
+            row.preferences.push_back({id(preference.at("product_id"),path),
+                static_cast<std::uint64_t>(integer(preference.at("utility"),path,0,core::market_utility_limit)),
+                core::Cents{integer(preference.at("willingness_to_pay_cents"),path,0,core::market_price_limit)},
+                static_cast<std::uint64_t>(integer(preference.at("switching_cost"),path,0,core::market_utility_limit)),
+                boolean(preference.at("eligible"),path)});
+        }
+        result.segments.push_back(std::move(row));
+    }
+    array(value.at("contracts"),child(path,"contracts"),core::market_contract_limit);
+    for (const auto& contract : value.at("contracts")) {
+        fields(contract,path,{"id","segment_id","product_id","tasks_per_day","monthly_fee_cents","usage_price_cents",
+            "service_credit_basis_points","missing_task_penalty_cents","missed_start_penalty_cents","cancellation_penalty_cents",
+            "start_by","ends_before","cause","start_immediately"},
+            {"id","segment_id","product_id","tasks_per_day","monthly_fee_cents","usage_price_cents",
+            "service_credit_basis_points","missing_task_penalty_cents","missed_start_penalty_cents","cancellation_penalty_cents",
+            "start_by","ends_before","cause","start_immediately"});
+        core::MarketContract row;
+        row.id = id(contract.at("id"),path); row.segment_id = id(contract.at("segment_id"),path);
+        row.product_id = id(contract.at("product_id"),path);
+        row.tasks_per_day = static_cast<std::uint64_t>(integer(contract.at("tasks_per_day"),path,1,core::market_task_limit));
+        row.monthly_fee = core::Cents{integer(contract.at("monthly_fee_cents"),path)};
+        row.usage_price = core::Cents{integer(contract.at("usage_price_cents"),path,0,core::market_price_limit)};
+        row.service_credit_basis_points = core::BasisPoints{integer(contract.at("service_credit_basis_points"),path,0,10000)};
+        row.missing_task_penalty = core::Cents{integer(contract.at("missing_task_penalty_cents"),path,0,core::market_price_limit)};
+        row.missed_start_penalty = core::Cents{integer(contract.at("missed_start_penalty_cents"),path)};
+        row.cancellation_penalty = core::Cents{integer(contract.at("cancellation_penalty_cents"),path)};
+        row.accepted_on = scenario.starts_on;
+        row.start_by = date(contract.at("start_by"),path); row.ends_before = date(contract.at("ends_before"),path);
+        row.cause = text(contract.at("cause"),path,256);
+        if (row.ends_before > scenario.ends_before) fail("range",path,"Contract extends past scenario ending");
+        result.contracts.push_back({std::move(row),boolean(contract.at("start_immediately"),path)});
+    }
+    auto ledger = core::opening_accounts(scenario.cash,scenario.starts_on);
+    std::vector<core::CapacitySource> sources;
+    if (scenario.leased_capacity.value() > 0)
+        sources.push_back({"lease.initial","cloud.pool.initial","company.player","supplier.compute.initial",
+            core::CapacitySourceKind::leased,scenario.leased_capacity,scenario.leased_capacity,0,"general",scenario.lease_energy_included});
+    auto capacity = core::opening_capacity(std::move(sources),scenario.team_people,scenario.starts_on);
+    auto market = core::opening_market(scenario.starts_on);
+    apply_market_setup(result,market,ledger,capacity,scenario.starts_on);
+    return result;
+}
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -619,6 +706,11 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         if (cents > maximum_integer - total_commitments) fail("range", path, "Commitment sum overflows cents storage");
         total_commitments += cents;
         result.monthly_commitments.emplace(name, pgp::core::Cents{cents});
+    }
+    if (value.contains("market")) {
+        try { result.market = market_setup(value.at("market"),child(path,"market"),result); }
+        catch (const ValidationError&) { throw; }
+        catch (const std::exception& error) { fail("market",child(path,"market"),error.what()); }
     }
     return result;
 }

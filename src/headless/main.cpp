@@ -3,13 +3,14 @@
 #include "content_validation.hpp"
 #include "flow_demo.hpp"
 #include "accounts_demo.hpp"
+#include "market_demo.hpp"
 
 #include <iostream>
 #include <string_view>
 
 namespace {
 constexpr std::string_view usage =
-    "Usage: pgp-headless [--help | --build-info | --foundation-demo | --validate-content FILE | --accounts-demo FILE | --capacity-demo FILE | --flow-demo FILE [--save FILE]]\n"
+    "Usage: pgp-headless [--help | --build-info | --foundation-demo | --validate-content FILE | --accounts-demo FILE | --capacity-demo FILE | --market-demo FILE | --flow-demo FILE [--save FILE]]\n"
     "Development foundation; business scenario simulation is not implemented yet.\n";
 }
 
@@ -36,6 +37,10 @@ int main(int argc, char* argv[]) {
     }
     if (argc == 3 && std::string_view{argv[1]} == "--capacity-demo") {
         try { run_capacity_demo(argv[2], std::cout); return 0; }
+        catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
+    }
+    if (argc == 3 && std::string_view{argv[1]} == "--market-demo") {
+        try { run_market_demo(argv[2], std::cout); return 0; }
         catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
     }
     if ((argc == 3 || (argc == 5 && std::string_view{argv[3]} == "--save")) &&

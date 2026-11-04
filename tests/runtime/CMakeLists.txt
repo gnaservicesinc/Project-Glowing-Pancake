@@ -57,3 +57,11 @@ target_compile_definitions(pgp-capacity-integration-test PRIVATE
 pgp_project_target(pgp-capacity-integration-test)
 add_test(NAME runtime.capacity-integration COMMAND pgp-capacity-integration-test)
 set_tests_properties(runtime.capacity-integration PROPERTIES TIMEOUT 30)
+add_executable(pgp-market-integration-test market_integration_test.cpp)
+target_link_libraries(pgp-market-integration-test PRIVATE pgp::persistence)
+target_include_directories(pgp-market-integration-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-market-integration-test PRIVATE
+    PGP_RUNTIME_FIXTURE_PATH="${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json")
+pgp_project_target(pgp-market-integration-test)
+add_test(NAME runtime.market-integration COMMAND pgp-market-integration-test)
+set_tests_properties(runtime.market-integration PROPERTIES TIMEOUT 30)

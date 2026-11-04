@@ -40,6 +40,10 @@ CapacityState& capacity(SimulationState& state) {
     if (!state.capacity) refuse(CommandReason::invalid_status, "This checkpoint has no capacity sources.");
     return *state.capacity;
 }
+MarketState& market(SimulationState& state) {
+    if (!state.market) refuse(CommandReason::invalid_status, "This checkpoint has no customer market.");
+    return *state.market;
+}
 bool valid_text(std::string_view text) {
     return !text.empty() && text.size() <= 256 &&
         std::all_of(text.begin(), text.end(), [](unsigned char character) {
@@ -147,6 +151,10 @@ void validate(const SimulationState& state) {
                 term->starts_on != project.starts_on || term->ends_before != project.stopped_on)
                 invalid("Serving support terms differ from their owning capacity commitment");
         }
+    }
+    if (state.market) {
+        if (!state.accounts || !state.capacity) invalid("A market requires accounts and shared capacity");
+        validate_market_links(*state.market, *state.accounts, *state.capacity);
     }
     if (state.reservations.size() > simulation_reservation_limit ||
         state.opening_actions.size() > simulation_opening_limit ||
@@ -372,7 +380,9 @@ CommandResult Simulation::submit(const Command& command) {
                 (void)receipt(next, "cancel_unconsumed_reservation", action.id);
             } else if constexpr (std::is_same_v<Action, AdvanceDay>) {
                 const auto cash_before = next.cash;
-                if (next.capacity) close_capacity_day(*next.capacity, next.date);
+                if (next.market)
+                    close_market_day(*next.market, accounts(next), capacity(next), next.date);
+                else if (next.capacity) close_capacity_day(*next.capacity, next.date);
                 if (next.accounts) {
                     close_accounts_day(*next.accounts, next.date, reserved_cash(next));
                     next.cash = accounts_report(*next.accounts).cash;
@@ -456,6 +466,29 @@ CommandResult Simulation::submit(const Command& command) {
             } else if constexpr (std::is_same_v<Action, SetEffectiveCapacity>) {
                 update_effective_capacity(capacity(next), next.date, action.source_id, action.available);
                 (void)receipt(next, "capacity_availability");
+            } else if constexpr (std::is_same_v<Action, EnableMarket>) {
+                if (next.market) refuse(CommandReason::invalid_status, "The customer market is already active.");
+                (void)capacity(next);
+                next.market = opening_market(next.date, accounts(next).owner);
+                (void)receipt(next, "enable_market");
+            } else if constexpr (std::is_same_v<Action, AddMarketProduct>) {
+                add_market_product(market(next), capacity(next), action.product);
+                (void)receipt(next, "add_market_product");
+            } else if constexpr (std::is_same_v<Action, AddMarketSegment>) {
+                add_market_segment(market(next), action.segment);
+                (void)receipt(next, "add_market_segment");
+            } else if constexpr (std::is_same_v<Action, SetMarketProductAvailable>) {
+                set_product_available(market(next), action.id, action.available);
+                (void)receipt(next, "market_product_availability");
+            } else if constexpr (std::is_same_v<Action, AcceptContract>) {
+                accept_contract(market(next), capacity(next), next.date, action.contract);
+                (void)receipt(next, "accept_contract");
+            } else if constexpr (std::is_same_v<Action, StartContract>) {
+                start_contract(market(next), capacity(next), next.date, action.id);
+                (void)receipt(next, "start_contract");
+            } else if constexpr (std::is_same_v<Action, CancelContract>) {
+                cancel_contract(market(next), accounts(next), next.date, action.id);
+                (void)receipt(next, "cancel_contract");
             }
         }, command.action);
         validate(next);
@@ -481,6 +514,7 @@ std::shared_ptr<const SimulationSnapshot> Simulation::snapshot() const {
         state_.revision, state_.date, state_.phase, state_.paused, state_.cash,
         available(state_), state_.pending_choice, state_.reservations,
         state_.accounts ? std::optional{accounts_report(*state_.accounts)} : std::nullopt,
-        state_.capacity ? std::optional{capacity_report(*state_.capacity)} : std::nullopt});
+        state_.capacity ? std::optional{capacity_report(*state_.capacity)} : std::nullopt,
+        state_.market ? std::optional{market_report(*state_.market)} : std::nullopt});
 }
 } // namespace pgp::core

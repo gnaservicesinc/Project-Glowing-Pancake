@@ -58,7 +58,8 @@ Json capacity_json(const core::CapacityState& state) {
             {"used_milli_CU",source.used.value()}});
         for (const auto& project:closed.projects) project_work.push_back({
             {"project_id",project.project_id},{"work_milli_CU",project.work.value()},
-            {"useful_tasks",project.useful_tasks},{"assigned_staff",project.assigned_staff}});
+            {"useful_tasks",project.useful_tasks},{"assigned_staff",project.assigned_staff},
+            {"protected_tasks",project.protected_tasks}});
         days.push_back({{"day",closed.day.value()},{"sources",std::move(source_usage)},{"projects",std::move(project_work)}});
     }
     return {{"owner",state.owner},{"starts_on",state.starts_on.value()},
@@ -115,9 +116,16 @@ core::CapacityState parse_capacity(const Json& value) {
             invalid("capacity/day/projects","Project work history exceeds its total record bound");
         project_records+=project_work.size();
         for (const auto& project:project_work) {
-            fields(project,"capacity/project_work",{"project_id","work_milli_CU","useful_tasks","assigned_staff"});
+            if (!project.is_object()) invalid("capacity/project_work","Expected object");
+            Json prior_shape=Json::object();
+            for (const auto& [name,ignored]:project.items()) {
+                (void)ignored;
+                if (name!="protected_tasks") prior_shape[name]=nullptr;
+            }
+            fields(prior_shape,"capacity/project_work",{"project_id","work_milli_CU","useful_tasks","assigned_staff"});
             row.projects.push_back({label(project.at("project_id")),work(project.at("work_milli_CU")),
-                u64(project.at("useful_tasks"),"capacity/project_work/useful_tasks"),staff(project.at("assigned_staff"))});
+                u64(project.at("useful_tasks"),"capacity/project_work/useful_tasks"),staff(project.at("assigned_staff")),
+                project.contains("protected_tasks")?u64(project.at("protected_tasks"),"capacity/project_work/protected_tasks"):0});
         }
         result.days.push_back(std::move(row));
     }
