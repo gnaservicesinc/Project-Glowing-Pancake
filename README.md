@@ -2,7 +2,7 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** 4 of 52 tasks complete as of 2026-11-04: toolchain inventory, core/headless build, shared version identity and deterministic primitives. M1-01 passes all six native compiler jobs across five targets, including exact 1,000-day fixture parity. M0-03 has a locally tested QML/Metal interface probe, reusable offline resource guards and optional native/silent audio; cross-platform/deployment qualification remains open. Game simulation and Content Studio are still ahead. Follow [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
+**Current state:** 5 of 52 tasks complete as of 2026-11-04. Typed content validation and the command/state foundation are implemented, alongside the existing build, deterministic primitives and local interface probe. The command batch includes immutable worker snapshots and persistent entity models; M1-03 acceptance still requires M0-03 native/deployment qualification. Business gameplay and Content Studio are still ahead. Follow [playability checkpoints](docs/PLAYABILITY.md), [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
 
 ## Build the development skeleton
 
@@ -13,8 +13,9 @@ A free, offline strategy game about founding an AI company in 2014 and guiding i
 ./make.sh --help
 ```
 
-Builds never launch the application. The headless executable currently reports
-build configuration and usage; scenario simulation is a later task. See
+Builds never launch the application. The headless executable reports build
+configuration, validates local content and runs a foundation engineering demo;
+the business scenario remains a later task. See
 [build instructions](docs/BUILDING.md) for dependencies, Qt/Xcode selection,
 safe cleanup, explicit probe launch and available checks. No dependencies are
 downloaded by the build. [Local M0-03 evidence](docs/evidence/M0-03-local-probe.md)

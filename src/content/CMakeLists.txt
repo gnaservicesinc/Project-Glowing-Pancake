@@ -1,0 +1,6 @@
+add_library(pgp_content STATIC registry.cpp collection.cpp)
+add_library(pgp::content ALIAS pgp_content)
+target_include_directories(pgp_content PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(pgp_content SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_link_libraries(pgp_content PUBLIC pgp::core)
+pgp_project_target(pgp_content)

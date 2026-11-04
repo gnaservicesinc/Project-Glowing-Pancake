@@ -1,0 +1,6 @@
+add_executable(pgp-content-test collection_test.cpp)
+target_link_libraries(pgp-content-test PRIVATE pgp::content)
+target_include_directories(pgp-content-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-content-test PRIVATE PGP_CONTENT_FIXTURE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/foundation.json")
+pgp_project_target(pgp-content-test)
+add_test(NAME content.registry-validation COMMAND pgp-content-test)

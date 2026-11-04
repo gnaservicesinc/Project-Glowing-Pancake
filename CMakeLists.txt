@@ -57,11 +57,13 @@ include(CTest)
 include(cmake/ProjectOptions.cmake)
 
 add_subdirectory(src/core)
+add_subdirectory(src/content)
 add_subdirectory(src/headless)
 
 if(NOT PGP_CORE_ONLY)
     find_package(Qt6 6.12.0 EXACT REQUIRED COMPONENTS Core Gui Network Qml Quick QuickControls2)
     qt_standard_project_setup()
+    add_subdirectory(src/bridge)
     add_subdirectory(src/platform/resources)
     add_subdirectory(src/platform/graphics)
     add_subdirectory(src/platform/audio)

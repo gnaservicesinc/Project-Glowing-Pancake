@@ -9,6 +9,9 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M0-02 | Complete | [CMake/build entry points](BUILDING.md), separate core/headless targets, four configurations and safety checks below |
 | M0-03 | In progress | Local QML/Metal probe, reusable resource guards and optional native/silent audio implemented; native Windows/Linux/deployment qualification remains open |
 | M0-05 | Complete | Shared version manifest validation, generated core/headless/probe metadata, product tags/artifact stems and fail-closed readiness; verification below |
+| M1-01 | Complete | Strong units, checked arithmetic, dates, saved RNG streams and exact 1,000-day primitive parity across six native compiler jobs/five targets |
+| M1-02 | Complete | Typed content schema/registry, bounded offline loader, 11-definition engineering fixture and 140 validation assertions; [evidence](evidence/M1-02-content.md) |
+| M1-03 | In progress | Local commands, morning continuation, immutable worker and stable model diffs pass; M0-03 prerequisite qualification remains open; [evidence](evidence/M1-03-commands.md) |
 | M1-07 | Planned | Built-in major-event detection, scheduled/seeded world occurrences and news through the shared runtime; [event contract](EVENT_SYSTEM.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
@@ -189,3 +192,64 @@ M1-02 content registry/validation is next. M0-03/04's native graphics/audio/
 deployment gates remain open. This task's three wrapper-owned build trees and
 small arithmetic/primitive scratch outputs were removed; unrelated Finder files
 were preserved. No product release, SDK installation or app launch occurred.
+
+## M1-02 and local M1-03 implementation batch — 2026-11-04
+
+This batch implements several linked foundation steps: the typed content
+boundary, atomic commands/morning state, the immutable worker/model bridge and
+two inspectable headless paths. **5 of 52 tasks are accepted; 47 remain
+unchecked.** M1-02 is complete. M1-03's local implementation passes, but its
+checkbox remains open because M0-03 native/deployment acceptance is still open.
+No dependency or gameplay gate was bypassed. [Playability checkpoints](PLAYABILITY.md)
+identify M2-04 as the first business-simulation evaluation and M3-02/03 as the
+player-facing scenario/recovery/scoring slice.
+
+`pgp::content` validates versioned typed definitions and extensible
+system/fact/effect metadata, rejects malformed/duplicate/remote/executable
+shapes, checks units/scopes/references/ownership/cycles and bounds parser/graph
+work. Eleven engineering definitions adapt the opening balance and seven flow
+examples. New catalog families require typed schemas alongside their owning
+mechanics; unsupported kinds fail explicitly. The pinned nlohmann/json 3.12.0
+header and MIT license are vendored with exact source/size/SHA-256 records; no
+download occurs during builds. [Schema](../src/content/README.md) and
+[content evidence](evidence/M1-02-content.md) document the actual subset.
+
+Core commands revalidate observed revisions and commit complete copied-state
+transactions or stable refusals. They distinguish reserved/consumed funds,
+irreversible terms and protected future dependencies. Prepared mornings and
+suspended choices resume without repeating work; snapshots omit RNG/future
+queues. The Qt adapter serializes commands on one worker thread, caps running
+snapshots at 10 Hz, and delivers each command result separately. GUI model diffs
+use stable IDs, role-specific updates and insert/remove/move notifications;
+routine updates never reset the collection. Full-width IDs/cents cross QML as
+decimal strings. [Command evidence](evidence/M1-03-commands.md) records bounds.
+
+Independent review caught and corrected invalidation of future commitments,
+exponential validation through converging graph branches, an eight-frame
+off-by-one, missing intrinsic registry ranges and driver-stop error visibility.
+The resulting regressions exercise those specific failures.
+
+| Check | Actual result on existing arm64 Mac |
+| --- | --- |
+| `./make.sh --core-only --test --jobs 2` | Release: 19/19 CTests, including content/command integration and the original primitive oracle |
+| `./make.sh --test --jobs 2` | Desktop Release: 26/26 CTests |
+| `./make.sh --debug --test --jobs 2` | Desktop Debug: 26/26 CTests; final content boundary additions recompiled and 4/4 affected content CLI/loader checks pass |
+| `pgp-content-test` | 140 assertions, including all five lifecycle schemas, duplicate keys, integer/seed limits, wrong scope/unit/reference, ownership/cycles, exact 8/9 frames and bounded converging branches |
+| Core command tests | Stale/overspend/overflow/bounds leave exact state unchanged; partial cancellation, protected dependencies, suspended/prepared restore, final date and unchanged RNG pass |
+| Bridge tests | 200 row updates preserve selection/persistent index anchors across sorting and structural changes without resets; changed-role/precision/thread checks pass |
+| Queued worker tests | Serialized stale rejection, immutable prior snapshot, run/pause, required opening choice and explicit halt on revision exhaustion pass |
+| CLI examples | Foundation demo resumes at 2014-01-02 with cash 50,000 cents, exactly once; local fixture validates as schema 1, version `0.0.0-dev`, 11 definitions; missing/invalid files fail |
+| Dependency hashes and linkage | Pinned header/license SHA-256 match; Release headless links only system libc++/libSystem, with no Qt |
+
+The expanded native CI runs the 19 Qt-free contracts across the existing six
+compiler jobs/five targets; results are recorded separately once observed.
+The existing optional Qt TaskTree/asset-downloader warning remains unchanged;
+the selected imports and tests pass without downloading it.
+
+There is still no business scenario, executed content flow, disk save, playable
+room shell, editor or game package. The bridge checks prove persistent indexes
+and selection, not live QML scroll/edit focus or 200% room-view qualification;
+those arrive with M1-05. M1-06 flow execution, M1-04 persistence and M1-07 event
+dispatch are next core work; M2 starts balanced business mechanics. Manifest
+versions stay unchanged. Builds launch no graphical application and no product
+was published.

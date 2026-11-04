@@ -1,12 +1,14 @@
 #include <pgp/core/build_identity.hpp>
+#include "foundation_demo.hpp"
+#include "content_validation.hpp"
 
 #include <iostream>
 #include <string_view>
 
 namespace {
 constexpr std::string_view usage =
-    "Usage: pgp-headless [--help | --build-info]\n"
-    "Development scaffold; scenario simulation is not implemented yet.\n";
+    "Usage: pgp-headless [--help | --build-info | --foundation-demo | --validate-content FILE]\n"
+    "Development foundation; business scenario simulation is not implemented yet.\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -20,6 +22,12 @@ int main(int argc, char* argv[]) {
         std::cout << "Simulation: not implemented\n";
         return 0;
     }
+    if (argc == 2 && std::string_view{argv[1]} == "--foundation-demo") {
+        try { run_foundation_demo(std::cout); return 0; }
+        catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
+    }
+    if (argc == 3 && std::string_view{argv[1]} == "--validate-content")
+        return validate_content_file(argv[2], std::cout, std::cerr);
     std::cerr << "Unknown or extra arguments.\n" << usage;
     return 2;
 }

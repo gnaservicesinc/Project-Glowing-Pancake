@@ -1,0 +1,5 @@
+add_executable(pgp-snapshot-model-test snapshot_model_test.cpp)
+target_link_libraries(pgp-snapshot-model-test PRIVATE pgp::bridge)
+pgp_project_target(pgp-snapshot-model-test)
+add_test(NAME bridge.snapshot-model COMMAND pgp-snapshot-model-test)
+set_tests_properties(bridge.snapshot-model PROPERTIES TIMEOUT 15)

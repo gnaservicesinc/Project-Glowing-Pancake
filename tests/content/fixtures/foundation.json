@@ -1,0 +1,471 @@
+{
+  "content_schema": 1,
+  "content_version": "0.0.0-dev",
+  "currency_basis": "constant_2014_cents",
+  "definitions": [
+    {
+      "id": "scenario.foundation",
+      "kind": "scenario",
+      "revision": 1,
+      "starts_on": "2014-01-01",
+      "ends_before": "2017-01-01",
+      "seed": 20140101,
+      "cash_cents": 120000000,
+      "team_people": 6,
+      "capacity_milli_CU_per_day": 100000,
+      "lease_energy_included": true,
+      "ownership_basis_points": {
+        "founder_trust": 5500,
+        "cofounder": 2000,
+        "seed_investor": 2000,
+        "option_pool": 500
+      },
+      "monthly_commitments_cents": {
+        "payroll_with_benefits": 7200000,
+        "office_and_admin": 1800000,
+        "compute_lease": 1800000
+      },
+      "headquarters_choices": [
+        "US-CA",
+        "US-TX",
+        "US-WA"
+      ],
+      "research": [
+        "research.foundation"
+      ],
+      "flows": [
+        "flow.news.first_public_breakthrough",
+        "flow.hidden.compute_review",
+        "flow.news.monthly_operations",
+        "flow.news.scheduled_partner_review",
+        "flow.hidden.sustained_workload",
+        "flow.hidden.sequence_resume",
+        "flow.supplier.exclusivity_offer"
+      ]
+    },
+    {
+      "id": "research.foundation",
+      "kind": "research",
+      "revision": 1,
+      "prerequisites": {
+        "all_of": [],
+        "any_of": []
+      },
+      "cash_cents": 1200000,
+      "staff_days": 60,
+      "work_milli_CU": 3600000
+    },
+    {
+      "id": "deal.compute_exclusivity",
+      "kind": "deal",
+      "revision": 1,
+      "minimum_payment_cents": 0,
+      "minimum_duration_days": 1095
+    },
+    {
+      "id": "deal.compute_flexible_counteroffer",
+      "kind": "deal",
+      "revision": 1,
+      "minimum_payment_cents": 0,
+      "minimum_duration_days": 30
+    },
+    {
+      "id": "flow.news.first_public_breakthrough",
+      "revision": 1,
+      "scope": "world",
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "world.public_breakthrough_count",
+            "op": "gte",
+            "value": 1
+          }
+        ]
+      },
+      "lifecycle": {
+        "mode": "once",
+        "occurrence_scope": "world",
+        "max_occurrences_per_scope": 1
+      },
+      "entry_node": "news",
+      "nodes": {
+        "news": {
+          "kind": "news",
+          "text_key": "flow.news.first_public_breakthrough.text",
+          "next": "end"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "kind": "flow"
+    },
+    {
+      "id": "flow.hidden.compute_review",
+      "revision": 1,
+      "scope": "company",
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "company.has_compute_lease",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "lifecycle": {
+        "mode": "recurring",
+        "repeat_policy": "after_cooldown_while_eligible",
+        "cooldown_days": 90,
+        "max_occurrences_per_scope": 4,
+        "overlap": "forbid"
+      },
+      "entry_node": "record_review",
+      "nodes": {
+        "record_review": {
+          "kind": "effect",
+          "effects": [
+            {
+              "op": "record_decision",
+              "value": "compute_review_due",
+              "target": "self"
+            }
+          ],
+          "next": "end"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "kind": "flow"
+    },
+    {
+      "id": "flow.news.monthly_operations",
+      "revision": 1,
+      "scope": "company",
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "company.is_operating",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "lifecycle": {
+        "mode": "interval",
+        "every": {
+          "unit": "calendar_months",
+          "value": 1
+        },
+        "max_occurrences_per_scope": 12,
+        "miss_policy": "skip",
+        "anchor": {
+          "kind": "scope_created",
+          "offset": {
+            "unit": "calendar_months",
+            "value": 1
+          },
+          "invalid_day": "clamp_to_month_end"
+        }
+      },
+      "entry_node": "news",
+      "nodes": {
+        "news": {
+          "kind": "news",
+          "text_key": "flow.news.monthly_operations.text",
+          "next": "end"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "kind": "flow"
+    },
+    {
+      "id": "flow.news.scheduled_partner_review",
+      "revision": 1,
+      "scope": "company",
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "company.has_research_partner",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "lifecycle": {
+        "mode": "scheduled",
+        "due_date": "2014-06-01",
+        "miss_policy": "skip",
+        "max_occurrences_per_scope": 1
+      },
+      "entry_node": "news",
+      "nodes": {
+        "news": {
+          "kind": "news",
+          "text_key": "flow.news.scheduled_partner_review.text",
+          "next": "end"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "kind": "flow"
+    },
+    {
+      "id": "flow.hidden.sustained_workload",
+      "revision": 1,
+      "scope": "company",
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "company.workload_stress_basis_points",
+            "op": "gte",
+            "value": 7000
+          }
+        ]
+      },
+      "lifecycle": {
+        "mode": "continuous",
+        "exit_when": {
+          "all_of": [
+            {
+              "fact": "company.workload_stress_basis_points",
+              "op": "lte",
+              "value": 5000
+            }
+          ]
+        },
+        "stacking": "one_per_scope",
+        "allow_reentry": true
+      },
+      "entry_node": "enter",
+      "exit_node": "exit",
+      "nodes": {
+        "enter": {
+          "kind": "effect",
+          "effects": [
+            {
+              "op": "register_owned_modifier",
+              "key": "sustained_workload",
+              "field": "research_coordination_basis_points",
+              "add_basis_points": -500,
+              "target": "self"
+            }
+          ],
+          "next": "end"
+        },
+        "exit": {
+          "kind": "effect",
+          "effects": [
+            {
+              "op": "remove_owned_modifier",
+              "key": "sustained_workload",
+              "target": "self"
+            }
+          ],
+          "next": "end"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "kind": "flow"
+    },
+    {
+      "id": "flow.hidden.sequence_resume",
+      "revision": 1,
+      "scope": "company",
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "company.is_operating",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      },
+      "lifecycle": {
+        "mode": "once",
+        "occurrence_scope": "company",
+        "max_occurrences_per_scope": 1
+      },
+      "entry_node": "outer_sequence",
+      "nodes": {
+        "outer_sequence": {
+          "kind": "sequence",
+          "children": [
+            "inner_sequence",
+            "record_outer"
+          ],
+          "next": "complete"
+        },
+        "inner_sequence": {
+          "kind": "sequence",
+          "children": [
+            "wait",
+            "record_inner"
+          ],
+          "next": "inner_return"
+        },
+        "wait": {
+          "kind": "delay",
+          "duration_days": 14,
+          "next": "wait_return"
+        },
+        "wait_return": {
+          "kind": "end"
+        },
+        "record_inner": {
+          "kind": "effect",
+          "effects": [
+            {
+              "target": "self",
+              "op": "record_decision",
+              "value": "inner_done"
+            }
+          ],
+          "next": "inner_branch_return"
+        },
+        "inner_branch_return": {
+          "kind": "end"
+        },
+        "inner_return": {
+          "kind": "end"
+        },
+        "record_outer": {
+          "kind": "effect",
+          "effects": [
+            {
+              "target": "self",
+              "op": "record_decision",
+              "value": "outer_done"
+            }
+          ],
+          "next": "outer_return"
+        },
+        "outer_return": {
+          "kind": "end"
+        },
+        "complete": {
+          "kind": "end"
+        }
+      },
+      "kind": "flow"
+    },
+    {
+      "id": "flow.supplier.exclusivity_offer",
+      "revision": 1,
+      "scope": "company",
+      "tags": [
+        "finance",
+        "compute",
+        "governance",
+        "opportunity"
+      ],
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "company.monthly_compute_bill_cents",
+            "op": "gte",
+            "value": 2000000
+          },
+          {
+            "fact": "company.has_exclusive_compute_supplier",
+            "op": "eq",
+            "value": false
+          }
+        ]
+      },
+      "lifecycle": {
+        "mode": "once",
+        "occurrence_scope": "company",
+        "max_occurrences_per_scope": 1,
+        "overlap": "forbid"
+      },
+      "entry_node": "offer",
+      "nodes": {
+        "offer": {
+          "kind": "dialogue",
+          "title_key": "supplier.exclusivity.title",
+          "text_key": "supplier.exclusivity.offer",
+          "choices": [
+            {
+              "id": "review",
+              "next": "review_effect",
+              "label_key": "supplier.choice.review"
+            },
+            {
+              "id": "counteroffer",
+              "next": "counter_effect",
+              "label_key": "supplier.choice.counteroffer"
+            },
+            {
+              "id": "decline",
+              "next": "decline_effect",
+              "label_key": "supplier.choice.decline"
+            }
+          ],
+          "default_choice_if_dismissed": "decline"
+        },
+        "review_effect": {
+          "kind": "effect",
+          "effects": [
+            {
+              "op": "open_negotiation",
+              "template_id": "deal.compute_exclusivity",
+              "target": "self"
+            }
+          ],
+          "next": "review_result"
+        },
+        "review_result": {
+          "kind": "result",
+          "text_key": "supplier.exclusivity.review_result",
+          "show_committed_changes": true,
+          "next": "end"
+        },
+        "counter_effect": {
+          "kind": "effect",
+          "effects": [
+            {
+              "op": "open_negotiation",
+              "template_id": "deal.compute_flexible_counteroffer",
+              "target": "self"
+            }
+          ],
+          "next": "counter_result"
+        },
+        "counter_result": {
+          "kind": "result",
+          "text_key": "supplier.exclusivity.counter_result",
+          "show_committed_changes": true,
+          "next": "end"
+        },
+        "decline_effect": {
+          "kind": "effect",
+          "effects": [
+            {
+              "op": "record_decision",
+              "value": "declined_exclusivity",
+              "target": "self"
+            }
+          ],
+          "next": "decline_result"
+        },
+        "decline_result": {
+          "kind": "result",
+          "text_key": "supplier.exclusivity.decline_result",
+          "show_committed_changes": true,
+          "next": "end"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "kind": "flow"
+    }
+  ]
+}

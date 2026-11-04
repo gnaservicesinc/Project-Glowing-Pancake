@@ -4,11 +4,24 @@ Updated 2026-11-04 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**4 of 52 tasks complete: M0-01, M0-02, M0-05 and M1-01; M0-03 is in progress.** M0-03's local
+**5 of 52 tasks complete: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03 and M1-03 are in progress.** M0-03's local
 interface/resource/audio implementation passes; native/deployment gates remain.
 M0 remains open. See the
 [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
 [build instructions](BUILDING.md) for runnable commands.
+
+- M1-02 implements typed content collections and extensible system/fact/effect
+  metadata, with strict units, scopes, references, ownership, graph and input
+  bounds. Eleven engineering definitions normalize the opening balance and
+  seven example flows. Future catalog families fail explicitly; the loader
+  neither executes effects nor finalizes release content.
+  [Content evidence](evidence/M1-02-content.md)
+- M1-03's local batch implements atomic revision-checked commands, prepared
+  morning/choice continuations, protected reservations, immutable snapshots, a
+  single-worker Qt adapter and persistent GUI models. Core Release passes 19
+  CTests; desktop Release/Debug pass 26 each. The M0-03 prerequisite remains open;
+  file saves and live room-view qualification remain their own tasks.
+  [Command evidence](evidence/M1-03-commands.md)
 
 - M1-01 implements strong units/IDs, portable checked wide arithmetic,
   Gregorian dates, seven saved RNG streams and strict integer-token readers.
@@ -59,12 +72,18 @@ M0 remains open. See the
 
 ## Implementation state
 
-The build scaffold, shared version identity, deterministic primitives, CLI and development QML interface probe exist; gameplay,
-Content Studio, production content/assets and packages do not. A core-only native CI
-workflow passes primitive parity on all five targets. The headless
-command currently prints usage/build configuration, not scenario outcomes.
-48 implementation tasks remain unchecked. E1a enables early gameplay tests;
+The build scaffold, shared version identity, deterministic primitives, typed
+content boundary, transactional state, worker/model bridge, CLI and development
+QML interface probe exist. Business gameplay, Content Studio, finalized runtime
+content and packages do not. Existing native CI proves primitive parity on all
+five targets; the expanded foundation suite is checked separately. The headless
+command also validates local content and demonstrates atomic commands/morning
+continuation. [Playability checkpoints](PLAYABILITY.md) separate this engineering
+demonstration from the M2 business scenario and M3 player-facing slice.
+E1a enables early gameplay tests;
 M4 requires both M3 and E1b. E2 closes before bulk content.
+47 implementation tasks remain unchecked, including the locally implemented
+M1-03 task awaiting its prerequisite gate.
 
 M0-01 supersedes review-time spot checks: the Xcode roots resolve to one
 installation, three installed SPDX files were parsed, and exact Qt archive
@@ -91,11 +110,13 @@ These are document/data/example checks only. No game/editor/runtime, UI performa
 
 ## Next task
 
-**Next independently unblocked implementation: M1-02 content registry and
-validation**, including versioned definitions and typed fact/effect metadata
-shared by runtime/editor. M1-01's six native parity jobs pass; content loading,
-gameplay, commands and full save handling remain later work. M0-05 is complete; versioned content,
-save migrations and packaging are later work.
+**Next gameplay-enabling implementation: M1-06 shared flow runtime**, using the
+typed registry and transactional state. M1-03 has a locally tested worker/model
+implementation; its formal acceptance remains gated by M0-03. M1-04 file saves
+and M1-07 event detection follow the flow runtime. M1-05's room shell can proceed
+alongside core work; M2-01 then begins the balanced business accounts. These
+local implementations do not close the outstanding platform gate. Content
+finalization, save migrations and packaging remain later work.
 
 The 2026-11-04 event clarification adds M1-07 (built-in detection/dispatch) and
 M3-05 (AI-assisted playable base-event pack), with human stories augmenting the

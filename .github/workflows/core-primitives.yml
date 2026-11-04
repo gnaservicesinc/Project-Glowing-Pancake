@@ -1,4 +1,4 @@
-name: Core primitive parity
+name: Core foundation and primitive parity
 
 on:
   push:
@@ -96,7 +96,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build core and tests
         run: cmake --build build/ci-core --config Release --parallel 2
-      - name: Run core contracts and oracle comparison
+      - name: Run core content command contracts and primitive oracle comparison
         run: ctest --test-dir build/ci-core --build-config Release --output-on-failure --no-tests=error --output-junit ctest-results.xml
       - name: Record canonical fixture on Unix
         if: runner.os != 'Windows'

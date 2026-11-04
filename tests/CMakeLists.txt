@@ -2,7 +2,7 @@ add_executable(pgp-build-configuration-test build_configuration_test.cpp)
 target_link_libraries(pgp-build-configuration-test PRIVATE pgp::core)
 pgp_project_target(pgp-build-configuration-test)
 add_test(NAME core.build-configuration COMMAND pgp-build-configuration-test)
-foreach(pgp_primitive_test checked_arithmetic state_primitives integer_codec constrained_residue)
+foreach(pgp_primitive_test checked_arithmetic state_primitives integer_codec constrained_residue simulation)
     string(REPLACE "_" "-" pgp_primitive_target "${pgp_primitive_test}")
     add_executable(pgp-${pgp_primitive_target}-test ${pgp_primitive_test}_test.cpp)
     target_link_libraries(pgp-${pgp_primitive_target}-test PRIVATE pgp::core)
@@ -30,6 +30,19 @@ add_test(NAME core.build-identity COMMAND pgp-build-identity-test)
 add_test(NAME tools.project-versions COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tools/tests/test_project_versions.py")
 add_test(NAME headless.help COMMAND pgp-headless --help)
+add_test(NAME headless.foundation-demo COMMAND pgp-headless --foundation-demo)
+set_tests_properties(headless.foundation-demo PROPERTIES
+    PASS_REGULAR_EXPRESSION "Resume opening choice once; cash: 50000; phase: work_ready")
+add_subdirectory(content)
+add_test(NAME headless.validate-content COMMAND pgp-headless --validate-content
+    "${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json")
+set_tests_properties(headless.validate-content PROPERTIES
+    PASS_REGULAR_EXPRESSION "Valid content schema 1; version 0.0.0-dev; definitions 11")
+add_test(NAME headless.reject-invalid-content COMMAND pgp-headless --validate-content
+    "${PROJECT_SOURCE_DIR}/project-versions.json")
+add_test(NAME headless.reject-missing-content COMMAND pgp-headless --validate-content
+    "${CMAKE_CURRENT_BINARY_DIR}/absent-content-input.json")
+set_tests_properties(headless.reject-invalid-content headless.reject-missing-content PROPERTIES WILL_FAIL TRUE)
 set_tests_properties(headless.help PROPERTIES PASS_REGULAR_EXPRESSION "Usage: pgp-headless")
 add_test(NAME headless.build-info COMMAND pgp-headless --build-info)
 set_tests_properties(headless.build-info PROPERTIES
@@ -40,6 +53,7 @@ add_test(NAME headless.reject-extra COMMAND pgp-headless --help extra)
 set_tests_properties(headless.reject-extra PROPERTIES WILL_FAIL TRUE)
 
 if(NOT PGP_CORE_ONLY)
+    add_subdirectory(bridge)
     add_subdirectory(resources)
     add_subdirectory(graphics)
     add_test(NAME probe.build-info COMMAND pgp-probe --build-info)
