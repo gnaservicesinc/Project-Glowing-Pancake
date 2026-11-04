@@ -1,6 +1,6 @@
 # Technical plan
 
-Baseline 1.2 · 2026-11-03 · M0 build skeleton implemented; most runtime systems remain planned
+Baseline 1.2 · 2026-11-03 · M0 build and local interface/resource/audio probe implemented; gameplay remains planned
 
 ## 1. Stack decision
 
@@ -41,7 +41,8 @@ Before writing the matrix, M0-01 records actual Qt archive/module availability f
 ## 3. Intended source structure
 
 The following is the target structure. M0-02 implements `src/core`, `src/headless`,
-`tests` and `cmake`; other subsystem directories arrive with their backlog tasks.
+`tests` and `cmake`; M0-03 adds `src/app`, `src/platform` adapters and `qml/probe`.
+Other subsystems arrive with their backlog tasks.
 
 ```text
 src/core/            # dates, IDs, units, state, commands, deterministic daily systems

@@ -47,6 +47,9 @@ M0-02 implements the Release/Debug/core/test/clean/help build scaffold; see
 `docs/BUILDING.md` for the current executable subset. Editor/all/package flags
 remain reserved and fail explicitly. Do not claim gameplay, UI or package
 qualification from a passing headless build.
+M0-03's local interface/resource/audio probe is implemented; its native and
+deployment qualification remains open. Read `docs/evidence/M0-03-local-probe.md`
+before repeating or extending those checks.
 
 ## Verify and hand off
 

@@ -1,0 +1,7 @@
+{
+  "files": ["office.png", "paper.jpg"],
+  "origin": "Original procedural geometry and grain from tools/generate_probe_images.py; no source imagery or AI image service",
+  "purpose": "M0 PNG/JPEG local decoding and interface fixtures; provisional art",
+  "license": "GPL-3.0-only",
+  "source": "tools/generate_probe_images.py"
+}

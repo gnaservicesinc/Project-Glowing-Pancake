@@ -1,0 +1,4 @@
+# Keep pinned upstream source byte-for-byte, including its original whitespace.
+# Project-owned sources retain normal whitespace checks.
+third_party/audio/miniaudio/miniaudio.h -whitespace
+third_party/audio/stb/stb_vorbis.c -whitespace

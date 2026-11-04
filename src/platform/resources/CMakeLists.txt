@@ -1,0 +1,5 @@
+add_library(pgp_resources STATIC resource_guards.cpp)
+add_library(pgp::resources ALIAS pgp_resources)
+target_include_directories(pgp_resources PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(pgp_resources PUBLIC Qt6::Core Qt6::Qml Qt6::Network)
+pgp_project_target(pgp_resources)

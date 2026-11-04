@@ -1,20 +1,21 @@
 # Building the development skeleton
 
-M0-02 implements build entry points and the headless scaffold. There is no game
-window, simulation, Content Studio, playback backend or distributable package yet.
+M0-02 implements build entry points and the headless scaffold. M0-03 adds the
+development interface probe, resource guards and optional playback adapter.
+There is no game simulation, Content Studio or distributable package yet.
 The [implementation log](IMPLEMENTATION_LOG.md) records acceptance evidence.
 
 ## Requirements and commands
 
 Use CMake 3.24+, Ninja, a C++20 compiler and Bash for `make.sh`. CTest is bundled
 with CMake. The desktop configuration additionally requires Qt **6.12.0** Core,
-Gui, Qml, Quick and QuickControls2. It currently validates discovery without
+Gui, Network, Qml, Quick and QuickControls2. It builds the probe without
 linking Qt into core/headless targets. Qt Multimedia is not required. Nothing
 downloads dependencies or launches a program during builds.
 
 | Command | Implemented behavior |
 | --- | --- |
-| `./make.sh` | Optimized Release desktop skeleton in `build/release` |
+| `./make.sh` | Optimized Release interface probe in `build/release`; no launch |
 | `./make.sh --test` | Build then run CTest; propagate failures |
 | `./make.sh --debugging` or `--debug` | Debug in `build/debug`, local developer diagnostics enabled |
 | `./make.sh --core-only` | Release in `build/core-release`, no Qt discovery/linkage |
@@ -74,14 +75,52 @@ ctest --test-dir .work/other-compiler --output-on-failure
 Direct CMake trees have no wrapper ownership marker. The wrapper refuses to adopt
 or clean them. Keep direct and wrapper output directories separate.
 
+## Explicit interface and audio checks
+
+After a desktop build, launch only when wanted:
+
+```sh
+build/release/bin/pgp-probe
+build/release/bin/pgp-probe --smoke-test
+build/release/bin/pgp-probe --smoke-test --text-scale 2
+```
+
+The smoke command resizes to 1280×720, checks local image readiness, keyboard
+activation/Tab order, accessible name, visible focus and sound-button fixture
+loading, then exits. The native-audio build can play the tone during this explicit
+smoke command; default builds remain silent. Add
+`--screenshot /absolute/path.png` to save a local image. `--software` explicitly
+probes the software renderer. `--text-scale` accepts finite values from 1 to 2.
+These are development-probe commands, including in Release; full game UI,
+reader/device/privacy and deployed-package acceptance remains unqualified.
+
+CTest uses offscreen resource/CLI checks and silent audio tests; it never opens
+a visible probe window or audio output device. Native playback requires an
+explicit separate configuration and manual invocation:
+
+```sh
+cmake -S . -B .work/native-audio -G Ninja -DCMAKE_PREFIX_PATH=/path/to/Qt -DPGP_ENABLE_AUDIO=ON
+cmake --build .work/native-audio --parallel 2
+ctest --test-dir .work/native-audio --output-on-failure
+.work/native-audio/bin/pgp-audio-test --native-play
+```
+
+`PGP_ENABLE_AUDIO` defaults OFF. Either mode decodes bounded local PCM16 WAV/Ogg;
+native mode additionally compiles the pinned vendored playback backend. The app
+plays only when Check sound is activated. Failed/unavailable/lost devices retain
+silence. No Qt Multimedia or FFmpeg runtime is needed; no build fetches audio
+sources. See [local evidence](evidence/M0-03-local-probe.md) and
+[audio dependencies/limits](evidence/M0-03-audio.md).
+
 ## Extension points
 
 `src/core` builds `pgp::core`, a standard C++ library without Qt or network
 dependencies. `src/headless` supplies the CLI and links that library. Public core
 headers live under `src/core/include/pgp/core`; project-only build options are an
 interface target in `cmake/ProjectOptions.cmake`. Tests link the layer exercised.
-Add domain primitives in M1-01 and application/resource code in M0-03 without
-reversing those dependencies. Content, persistence and the separately packaged
+`src/app` wires the probe/controller to independent graphics/resource/audio
+targets in `src/platform`; QML stays in `qml/probe`. Add domain primitives in
+M1-01 without reversing these dependencies. Content, persistence and the separately packaged
 editor will be separate targets as their backlog tasks arrive.
 
 `project-versions.json` remains unchanged: this is a development skeleton, not a

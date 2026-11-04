@@ -24,10 +24,12 @@ add_subdirectory(src/core)
 add_subdirectory(src/headless)
 
 if(NOT PGP_CORE_ONLY)
-    # Validate the selected desktop SDK now; UI/resources arrive in M0-03.
-    # The simulation/headless targets intentionally do not link these libraries.
-    find_package(Qt6 6.12.0 EXACT REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2)
-    message(STATUS "Qt ${Qt6_VERSION} desktop dependencies found; QML probe is M0-03")
+    find_package(Qt6 6.12.0 EXACT REQUIRED COMPONENTS Core Gui Network Qml Quick QuickControls2)
+    qt_standard_project_setup()
+    add_subdirectory(src/platform/resources)
+    add_subdirectory(src/platform/graphics)
+    add_subdirectory(src/platform/audio)
+    add_subdirectory(src/app)
 endif()
 
 if(BUILD_TESTING)

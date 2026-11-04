@@ -1,0 +1,15 @@
+qt_add_executable(pgp-probe
+    main.cpp probe_controller.cpp probe_controller.hpp probe_smoke.cpp probe_smoke.hpp)
+target_link_libraries(pgp-probe PRIVATE
+    pgp::core pgp::resources pgp::graphics pgp::audio
+    Qt6::Quick Qt6::QuickControls2)
+pgp_project_target(pgp-probe)
+
+qt_add_resources(pgp-probe probe_ui
+    PREFIX "/pgp" BASE "${PROJECT_SOURCE_DIR}/qml"
+    FILES "${PROJECT_SOURCE_DIR}/qml/probe/Main.qml")
+qt_add_resources(pgp-probe probe_images
+    PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+    FILES "${PROJECT_SOURCE_DIR}/assets/probe/images/office.png"
+          "${PROJECT_SOURCE_DIR}/assets/probe/images/paper.jpg"
+          "${PROJECT_SOURCE_DIR}/assets/probe/audio/tone.wav")

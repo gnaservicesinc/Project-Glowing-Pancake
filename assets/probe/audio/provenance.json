@@ -1,0 +1,57 @@
+{
+  "format": 1,
+  "purpose": "M0 local decoding/playback probe; a test tone, not a soundtrack",
+  "creator": "Project Glowing Pancake procedural generator, authored with Codex",
+  "source": "generate.py; PCM generated from a sine equation, with no sampled source",
+  "license": "CC0-1.0",
+  "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "generation": {
+    "command": "python3 assets/probe/audio/generate.py --ffmpeg /usr/local/bin/ffmpeg",
+    "wav": {
+      "frequency_hz": 440,
+      "sample_rate_hz": 48000,
+      "frames": 9600,
+      "channels": 2,
+      "sample_bits": 16,
+      "byte_order": "little-endian",
+      "peak_amplitude": 4096
+    },
+    "ogg_encoder_command": [
+      "ffmpeg",
+      "-nostdin",
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-fflags",
+      "+bitexact",
+      "-i",
+      "tone.wav",
+      "-map_metadata",
+      "-1",
+      "-fflags",
+      "+bitexact",
+      "-c:a",
+      "vorbis",
+      "-strict",
+      "experimental",
+      "-flags:a",
+      "+bitexact",
+      "-q:a",
+      "3",
+      "tone.ogg"
+    ],
+    "ffmpeg_version": "ffmpeg version git-2026-09-15-7797fb3 Copyright (c) 2000-2026 the FFmpeg developers",
+    "note": "FFmpeg is an installed authoring tool; neither its binary nor libraries are game dependencies. Bitexact flags remove volatile encoder/container metadata; different encoder versions may still produce different bytes."
+  },
+  "files": {
+    "tone.wav": {
+      "bytes": 38444,
+      "sha256": "efc9c0988f3fa7623a7a08beb7e908a46213a0b584dbe00feee3f2adb498a0a2"
+    },
+    "tone.ogg": {
+      "bytes": 4254,
+      "sha256": "619971c0669c1e5b312eb4e3f8c4bde7a23d30aefaf8f6072dc7b0048edb7950"
+    }
+  }
+}

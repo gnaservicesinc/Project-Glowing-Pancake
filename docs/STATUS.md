@@ -4,7 +4,9 @@ Updated 2026-11-03 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**2 of 50 tasks complete: M0-01 and M0-02.** M0 remains open. See the
+**2 of 50 tasks complete: M0-01 and M0-02; M0-03 is in progress.** Its local
+interface/resource/audio implementation passes; native/deployment gates remain.
+M0 remains open. See the
 [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
 [build instructions](BUILDING.md) for runnable commands.
 
@@ -24,6 +26,13 @@ Updated 2026-11-03 · Implementation started against planning baseline 1.2
 - Component versions remain the planning placeholders pending M0-05. No game
   release identity, package, workflow execution or cross-platform support claim
   was created.
+- Added `pgp-probe`, original bundled PNG/JPEG art, independent graphics/resource/
+  audio libraries and an always-available silent mode. Metal checks pass at
+  1280×720 with 100%/200% text, visible keyboard focus and accessible button name;
+  explicit offscreen software also passes. Desktop Release/Debug and native-audio
+  Release each pass 10 CTests; core-only still passes five without Qt/audio.
+  [Local evidence and screenshot](evidence/M0-03-local-probe.md) and
+  [audio evidence](evidence/M0-03-audio.md) record actual results and limits.
 
 ## Completed planning
 
@@ -37,8 +46,8 @@ Updated 2026-11-03 · Implementation started against planning baseline 1.2
 
 ## Implementation state
 
-The build scaffold and CLI exist; gameplay, QML UI, Content Studio, production
-content/assets, CI workflows and distributable packages do not. The headless
+The build scaffold, CLI and development QML interface probe exist; gameplay,
+Content Studio, production content/assets, CI workflows and packages do not. The headless
 command currently prints usage/build configuration, not scenario outcomes.
 48 implementation tasks remain unchecked. E1a enables early gameplay tests;
 M4 requires both M3 and E1b. E2 closes before bulk content.
@@ -48,13 +57,14 @@ installation, three installed SPDX files were parsed, and exact Qt archive
 metadata was found for all five targets. Approximately 23.35 GiB was free during
 inventory. Qt Multimedia is absent; it is not required. Desktop discovery warns
 about optional `Qt6QmlAssetDownloaderPrivate` needing absent `Qt6TaskTree`;
-M0-03 must establish the actual selected runtime import/deployment closure.
-Archive-body acquisition, Actions execution, graphics/audio, deployed licensing
-and native-device qualification remain unproved.
+The selected Basic-controls imports render without that unused plugin, and local
+Metal/Core Audio evidence now exists. Archive-body acquisition, Actions execution,
+Windows/Linux graphics/audio, deployed licensing/relocation and clean-device
+qualification remain unproved.
 
 ## Planning verification
 
-Static checks for this revision passed:
+Historical planning-baseline checks passed before implementation:
 
 - 28 active Markdown documents and 86 relative file/anchor links; tables, fences and whitespace.
 - Six example JSON files plus the unchanged planning manifest; integer-only values and explicit effect targets.
@@ -67,13 +77,12 @@ These are document/data/example checks only. No game/editor/runtime, UI performa
 
 ## Next task
 
-**M0-03 — Prove QML, graphics, and local audio deployment**, using the UI and
-build-release briefs. Add the original small UI probe, Metal/local images and
-accessible control, URL/resource and denying QML network guards before engine
-loading, and pinned optional playback with silent fallback. Preserve the core
-boundary and qualify actual runtime dependencies, including the optional-plugin
-warning. No large local installs or store publication. M0-05 (shared version
-identity) is also unblocked by M0-02; M0-04 follows M0-03.
+**Finish M0-03 qualification**, using the UI/build-release briefs and the checked
+local evidence. Run native Linux OpenGL and Windows OpenGL/D3D11 recovery,
+resource/audio checks and deployed import/dependency/license/relocation probes on
+hosted/native environments. Preserve the small local disk budget. Physical loss/
+driver/reader gaps must remain explicit. No store publication. M0-05 (shared
+version identity) is independently unblocked; M0-04 follows M0-03.
 
 No user answer blocks initial M0 inspection. Later needs include native ARM devices, manually arranged player/author sessions, final art/music/branding and publishing access; see [needs and access](NEEDS_AND_ACCESS.md).
 

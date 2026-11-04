@@ -7,7 +7,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | --- | --- | --- |
 | M0-01 | Complete | [Toolchain evidence](evidence/M0-01-toolchain.md), two reproducible inventory tools and [five-target metadata observations](evidence/M0-01-qt-archives.json); no SDK installation |
 | M0-02 | Complete | [CMake/build entry points](BUILDING.md), separate core/headless targets, four configurations and safety checks below |
-| M0-03 | Next | QML/renderer/resource-denial and optional local playback probe |
+| M0-03 | In progress | Local QML/Metal probe, reusable resource guards and optional native/silent audio implemented; native Windows/Linux/deployment qualification remains open |
 
 ## First implementation slice
 
@@ -21,7 +21,7 @@ Each configuration has its own output directory. Tests check actual Release/Debu
 diagnostic behavior and command failures. Wrapper checks cover toolchain identity,
 cleanup ownership, symlink rejection and error propagation.
 
-## Verification — 2026-11-03
+## M0-01/M0-02 verification — 2026-11-03
 
 Native arm64 Mac, Apple Clang 21.0.0 with one canonical Xcode-beta/SDK 27.3,
 CMake 4.4.4, Ninja 1.13.2; Qt 6.12.0 for desktop discovery. Full paths and
@@ -59,10 +59,43 @@ Required Qt components resolve. Qt reports an optional plugin warning:
 actual selected QML imports/deployed closure; the unused tool/plugin warning is
 recorded without suppressing it or downloading another SDK.
 
-No Linux/Windows compiler, CI workflow, renderer/audio device, deployed Qt closure
-or clean package has been tested. The build currently has no audio dependency;
-playback and the explicit silent application adapter arrive in M0-03. M0 is not
-complete. M0-05 is independently unblocked; the next sequential task is M0-03.
+At the end of M0-02 no renderer/audio device, native CI/deployment or package had
+been tested. The build then had no audio dependency. The following M0-03 entry
+records the new presentation targets and evidence; M0 remains incomplete.
 
 There is no playable game, graphical editor, deployed package or public release
 at this stage. Building never launches an application.
+
+## M0-03 local implementation — 2026-11-03
+
+Implemented a runnable QML preview with original local art, accessible controls
+and lazy sound activation; independent graphics, resource-policy and audio
+targets preserve the Qt-free core. The guards precede QML loading. Remote
+resources/requests and canonical file escapes are denied; approved local reads
+work without a network transport path in the manager.
+
+- Desktop Release and Debug: **10/10 CTests each**; optional native-audio Release:
+  **10/10**; core-only Release: **5/5**, with unchanged system-only linkage.
+- Explicit Metal render at **1280×720**, 100%/200% text: bundled PNG/JPEG, Space/
+  Tab behavior, accessible name and visible focus pass. Explicit offscreen
+  software smoke also passes.
+- The actual sound-button activation path also passes in default-silent and
+  native-audio app smokes, including extraction/loading of the bundled fixture.
+- Explicit native test opens **Core Audio**, consumes the short tone and returns
+  non-playing; mute/volume and simulated device-loss/silent behavior pass. Human
+  listening and physical cable/device removal are unverified.
+- Source review corrected non-finite text-scale input. Larger-text testing led
+  to automatic focus-reveal scrolling. Original fixture provenance and exact
+  upstream audio source/license hashes are checked in.
+
+[Local evidence/screenshot](evidence/M0-03-local-probe.md) and
+[audio evidence](evidence/M0-03-audio.md) include reproducible commands and API/
+dependency limits. **M0-03 remains unchecked** until native Windows/Linux and
+deployed-closure qualifications pass. Two complete tasks plus this implemented
+local substep is the progress measure; there is no new product release.
+
+Documentation/data checks passed: 32 active Markdown documents, 116 relative
+file links, JSON parsing and all six pinned source/license/audio fixture hashes.
+After verification, this turn's three wrapper-owned build trees and root/agent
+scratch builds were removed. Source assets and the checked screenshot/evidence
+remain; unrelated ignored Finder files were preserved.

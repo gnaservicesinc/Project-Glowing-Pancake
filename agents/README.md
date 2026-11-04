@@ -18,7 +18,7 @@ One agent can use multiple briefs where a task crosses boundaries. Parallel agen
 
 ## Ready-to-use starting assignment
 
-> Complete M0-03 in docs/BACKLOG.md. Follow AGENTS.md and the UI/build-release briefs. Read docs/BUILDING.md and the M0-01 evidence. Add the original QML/graphics/resource-guard/optional-audio probe, preserve the Qt-free core and verify actual imports/dependencies. Do not install large SDKs locally or publish anything. Record verified behavior and remaining platform/device gaps. Commit and push the task changes and report evidence.
+> Finish M0-03 qualification in docs/BACKLOG.md. Follow AGENTS.md and the UI/build-release briefs. Read docs/BUILDING.md and docs/evidence/M0-03-local-probe.md. The local UI/Metal/resource/audio implementation exists and passes; native Windows/Linux renderers, recovery and deployed closure still require evidence. Run those probes on hosted/native environments without large local SDK installs or publication. Preserve the core boundary and record device gaps. Commit and push the task changes.
 
 M0-01 and M0-02 are complete; the toolchain inventory and build/core/headless
 scaffold are implemented. M0-05 can proceed independently after M0-02, while

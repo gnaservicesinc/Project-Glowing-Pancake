@@ -1,0 +1,5 @@
+add_library(pgp_graphics STATIC graphics_policy.cpp)
+add_library(pgp::graphics ALIAS pgp_graphics)
+target_include_directories(pgp_graphics PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(pgp_graphics PUBLIC Qt6::Quick)
+pgp_project_target(pgp_graphics)

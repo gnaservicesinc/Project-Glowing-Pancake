@@ -2,12 +2,12 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** implementation started 2026-11-03 against planning baseline 1.2. The first M0 slice provides a C++20 core/headless build, Release/Debug presets and toolchain evidence. The game simulation, graphical UI and Content Studio are still ahead. Follow [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
+**Current state:** implementation started 2026-11-03 against planning baseline 1.2. The core/headless build and toolchain inventory are complete; M0-03 now has a locally tested QML/Metal interface probe, reusable offline resource guards and optional native/silent audio. Cross-platform/deployment qualification remains open. Game simulation and Content Studio are still ahead. Follow [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
 
 ## Build the development skeleton
 
 ```sh
-./make.sh                     # Release; validates desktop Qt dependencies
+./make.sh                     # Release; builds the probe, never launches
 ./make.sh --core-only --test  # Release core/headless; no Qt required
 ./make.sh --debug --core-only --test
 ./make.sh --help
@@ -16,7 +16,9 @@ A free, offline strategy game about founding an AI company in 2014 and guiding i
 Builds never launch the application. The headless executable currently reports
 build configuration and usage; scenario simulation is a later task. See
 [build instructions](docs/BUILDING.md) for dependencies, Qt/Xcode selection,
-safe cleanup and available checks. No dependencies are downloaded by the build.
+safe cleanup, explicit probe launch and available checks. No dependencies are
+downloaded by the build. [Local M0-03 evidence](docs/evidence/M0-03-local-probe.md)
+includes the rendered view and remaining qualification gates.
 
 ## Read the plan
 

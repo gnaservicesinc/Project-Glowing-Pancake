@@ -1,0 +1,8 @@
+{
+  "file": "checker.png",
+  "origin": "Original procedural test fixture authored with Codex assistance",
+  "method": "2 by 2 RGBA checker; alternating #2080ffff and #ffd040ff pixels; PNG encoded with Python standard-library struct and zlib",
+  "license": "GPL-3.0-only (repository license)",
+  "created": "2026-11-03",
+  "distribution": "Test fixture only; excluded from game resources and packages"
+}

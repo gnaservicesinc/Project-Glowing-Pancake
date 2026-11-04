@@ -11,3 +11,14 @@ add_test(NAME headless.reject-unknown COMMAND pgp-headless --not-a-command)
 set_tests_properties(headless.reject-unknown PROPERTIES WILL_FAIL TRUE)
 add_test(NAME headless.reject-extra COMMAND pgp-headless --help extra)
 set_tests_properties(headless.reject-extra PROPERTIES WILL_FAIL TRUE)
+
+if(NOT PGP_CORE_ONLY)
+    add_subdirectory(resources)
+    add_subdirectory(graphics)
+    add_test(NAME probe.reject-nonfinite-scale COMMAND pgp-probe --text-scale nan)
+    add_test(NAME probe.reject-screenshot-without-smoke COMMAND pgp-probe --screenshot unused.png)
+    set_tests_properties(probe.reject-nonfinite-scale probe.reject-screenshot-without-smoke
+        PROPERTIES WILL_FAIL TRUE ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    # GUI rendering runs only through an explicitly invoked probe, not CTest.
+    # That preserves the build wrapper's no-auto-launch contract.
+endif()

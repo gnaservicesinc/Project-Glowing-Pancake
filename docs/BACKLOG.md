@@ -1,9 +1,15 @@
 # Implementation backlog
 
-Baseline 1.2 · Implementation started 2026-11-03: **2 of 50 tasks complete**.
+Baseline 1.2 · Implementation started 2026-11-03: **2 of 50 tasks complete; M0-03 in progress**.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Dependencies refer to completed acceptance criteria, not merely the presence of a commit. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
 ## M0 — Toolchain and platform proof
+
+M0-03 local implementation is complete and passing on Mac; its checkbox stays
+open for native Windows/Linux and deployed-closure qualification. See
+[local evidence](evidence/M0-03-local-probe.md) and
+[audio evidence](evidence/M0-03-audio.md). No platform support gate is inferred
+from the pure renderer-selection tests.
 
 - [x] **M0-01 — Record toolchain and platform feasibility.** Role: build-release. Depends: planning. Inspect installed tools and coherent Xcode compiler/SDK selection, actual Qt modules, SBOM/license alternatives, runner availability, disk budget and native test access. Query exact Qt archives/modules/ABI/acquisition paths for all five targets before writing workflows; keep 6.12.x unless an evidenced decision changes it. Record optional audio candidates and dependencies. Produce a reproducible inventory without large local installs; reconcile SDK SBOMs against intended deployed modules. Review-time spot checks do not close this task. **Completed 2026-11-03:** [inventory and CLI linkage evidence](evidence/M0-01-toolchain.md), reproducible inventory tools and five-target metadata/checksum observations. Runtime deployment/device gaps remain explicit.
 - [x] **M0-02 — Create Release-default build entry points.** Role: build-release. Depends: M0-01. Add CMake/Ninja configuration, `make.sh` and documented flags, a minimal core/headless executable, and ignored out-of-source outputs. Resolve macOS Qt compiler/SDK from one selected Xcode installation before first configure and reject mismatched cached toolchains. No-argument build is Release; core-only requires no Qt; audio has a silent fallback without required Qt Multimedia. Clean removes only owned outputs, tests propagate failure, and no build auto-launches. **Completed 2026-11-03:** [build instructions](BUILDING.md) and [verification record](IMPLEMENTATION_LOG.md). Four configurations build/test, Qt-free headless linkage, wrapper cleanup/failure tests, no audio dependency. Actual playback/silent adapter is M0-03.
