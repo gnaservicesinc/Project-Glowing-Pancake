@@ -466,19 +466,20 @@ void validate_references(const Collection& collection, const Registry& registry)
     std::map<std::string, std::vector<std::string>, std::less<>> subflow_edges;
     for (const auto& [name, definition] : collection.definitions) {
         const auto path = child("/definitions", name);
-        if (const auto* item = std::get_if<ScenarioDefinition>(&definition.data)) {
-            for (const auto& target : item->research) (void)reference(target, "research", path);
-            for (const auto& target : item->flows) (void)reference(target, "flow", path);
-        } else if (const auto* item = std::get_if<ResearchDefinition>(&definition.data)) {
+        if (const auto* scenario_definition = std::get_if<ScenarioDefinition>(&definition.data)) {
+            for (const auto& target : scenario_definition->research) (void)reference(target, "research", path);
+            for (const auto& target : scenario_definition->flows) (void)reference(target, "flow", path);
+        } else if (const auto* research_definition = std::get_if<ResearchDefinition>(&definition.data)) {
             auto& links = research_edges[name];
-            links = item->all_of; links.insert(links.end(), item->any_of.begin(), item->any_of.end());
+            links = research_definition->all_of;
+            links.insert(links.end(), research_definition->any_of.begin(), research_definition->any_of.end());
             for (const auto& target : links) (void)reference(target, "research", path);
-        } else if (const auto* item = std::get_if<FlowDefinition>(&definition.data)) {
+        } else if (const auto* flow_definition = std::get_if<FlowDefinition>(&definition.data)) {
             auto& links = subflow_edges[name];
-            for (const auto& [node_id, node_value] : item->nodes) {
+            for (const auto& [node_id, node_value] : flow_definition->nodes) {
                 if (node_value.kind == NodeKind::subflow) {
                     const auto& target = reference(node_value.subflow_id, "flow", child(path, node_id));
-                    if (std::get<FlowDefinition>(target.data).scope != item->scope)
+                    if (std::get<FlowDefinition>(target.data).scope != flow_definition->scope)
                         fail("scope", path, "Subflow context scope mismatch");
                     links.push_back(node_value.subflow_id);
                 }

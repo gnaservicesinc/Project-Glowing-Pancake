@@ -19,9 +19,10 @@ The fixture is excluded from game resources. Loading it does not mean that any
 flow has executed or its placeholder research/deal semantics are playable.
 
 Observed locally: the Release content target compiles under Apple Clang with
-project warnings treated as errors. The initial direct test run passed **134
-checks** in about 0.2 seconds. Subsequent boundary tests are included in the root
-integration run; the implementation log records that final result.
+project warnings treated as errors. The final direct test run passes **140
+checks**, including the review's boundary regressions. Core Release passes 19
+CTests; desktop Release/Debug pass 26 each. The implementation log records the
+full integration commands and limits.
 
 Checks cover exact opening balances/ownership/units; all five lifecycle modes;
 ordered nested sequence/delay shapes; strict integer tokens and lossless uint64

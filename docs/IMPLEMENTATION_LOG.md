@@ -253,3 +253,16 @@ those arrive with M1-05. M1-06 flow execution, M1-04 persistence and M1-07 event
 dispatch are next core work; M2 starts balanced business mechanics. Manifest
 versions stay unchanged. Builds launch no graphical application and no product
 was published.
+
+The batch was committed/pushed as `fdbd460`. Verification outputs were removed
+using the wrapper's selected-tree ownership checks; the small command-test
+scratch executable was removed separately. Unrelated Finder files and existing
+arithmetic scratch data were preserved.
+
+The first expanded native run,
+[41868492196](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41868492196),
+passes Mac and all three Linux compiler jobs. Both native MSVC builds reject
+reused if-initializer names under warning C4456 with warnings-as-errors. The
+validator now gives each typed pointer a distinct name, preserving the strict
+compiler policy. Local syntax checking with additional `-Wshadow -Werror`
+passes; the corrected native run is recorded after observation.
