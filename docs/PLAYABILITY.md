@@ -46,10 +46,12 @@ This distinguishes useful engineering progress from a passed platform gate.
 M1-06 now executes the current typed schema and M1-04 persists its whole state.
 Application policy performs recovery saves before irreversible actions and
 monthly/final autosaves, preserving live play on IO errors. The broader flow
-language (variables/expressions, duration predicates and related-entity selectors/
+language (variables/expressions and related-entity selectors/
 quantifiers) still needs implementation. Weighted narrative branches now retain
 their selected outcomes across delays, choices and saves; the
 [test evidence](evidence/M1-06-weighted-branches.md) is an engineering check.
+Daily duration predicates also preserve their opening-sample start/reset state
+and exact thresholds through choices and reload; see [duration evidence](evidence/M1-06-duration.md).
 M1-07 then adds
 built-in occurrence detection/dispatch. M2 supplies the first business loop.
 The UI shell can proceed alongside those core modules. Accepted-task counts

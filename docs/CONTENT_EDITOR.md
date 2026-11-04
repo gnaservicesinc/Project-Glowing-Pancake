@@ -30,6 +30,14 @@ Simple flows are simple: one trigger linked to one effect or news item. Larger f
 
 The registered vocabulary also supports scoped story flags/typed variables, bounded arithmetic/value comparisons, related-entity selectors, any/all/count matching, “holds for N days” predicates and explicitly weighted random branches. This supplies expressive systemic authoring within the game's available concepts. Selected collections are traversed in stable order; bindings and selected-target counts are inspectable. A shared variable has a named scope/default and cannot accidentally become a global flag. Random branch weights, source stream and resolved outcome are visible in the test trace; reopening a result does not draw again. Unavailable engine operations require a registry/core extension rather than a free-form script escape hatch.
 
+Duration help must explain elapsed-day boundaries, the last daily observation
+and any reset. First true on D satisfies N days on D+N. Timers sample the opening
+snapshot before content effects and retain it through choices. Exit timers
+measure scope history before entry and across reentry, rather than the age of an
+activation. Author fixtures show saved start/elapsed/result alongside current
+fact values; missing sampling context is unknown. Player views redact hidden
+history. The shared [daily contract](SIMULATION_SPEC.md) governs these meanings.
+
 ```mermaid
 flowchart LR
     T[Trigger: monthly review] --> C{Cash below reserve?}

@@ -176,7 +176,7 @@ ContinuationFrame parse_frame(const Json& value) {
         detail::text(value.at("return_node"),"return_node",128,true),parse_binding(value.at("binding"))};
 }
 Json runtime_json(const RuntimeState& state) {
-    Json activations=Json::array(),lifecycles=Json::array(),modifiers=Json::array(),receipts=Json::array(),presentations=Json::array(),random_resolutions=Json::array();
+    Json activations=Json::array(),lifecycles=Json::array(),modifiers=Json::array(),receipts=Json::array(),presentations=Json::array(),random_resolutions=Json::array(),duration_states=Json::array();
     for (const auto& activation:state.activations) {
         Json frames=Json::array();for (const auto& frame:activation.frames) frames.push_back(frame_json(frame));
         activations.push_back({{"id",activation.id},{"definition_id",activation.definition_id},{"definition_revision",activation.definition_revision},
@@ -209,18 +209,46 @@ Json runtime_json(const RuntimeState& state) {
         {"activation_id",resolution.activation_id},{"node_visit",resolution.node_visit},{"day",resolution.day.value()},
         {"flow_id",resolution.flow_id},{"node_id",resolution.node_id},{"branch_id",resolution.branch_id},
         {"sample",resolution.sample},{"stream_before",resolution.stream_before},{"stream_after",resolution.stream_after}});
+    for (const auto& duration:state.duration_states) duration_states.push_back({
+        {"definition_id",duration.definition_id},{"definition_revision",duration.definition_revision},
+        {"predicate_id",duration.predicate_id},{"binding",binding(duration.binding)},
+        {"observed_on",duration.observed_on.value()},{"true_since",optional_day(duration.true_since)}});
     return Json{{"next_activation_id",state.next_activation_id},{"next_receipt_id",state.next_receipt_id},
         {"next_presentation_id",state.next_presentation_id},{"prepared_day",optional_day(state.prepared_day)},
         {"activations",std::move(activations)},{"lifecycles",std::move(lifecycles)},{"modifiers",std::move(modifiers)},
         {"receipts",std::move(receipts)},{"presentations",std::move(presentations)},
-        {"random_resolutions",std::move(random_resolutions)},{"narrative_origin",optional_id(state.narrative_origin)}};
+        {"random_resolutions",std::move(random_resolutions)},{"narrative_origin",optional_id(state.narrative_origin)},
+        {"duration_states",std::move(duration_states)},{"duration_sampled_day",optional_day(state.duration_sampled_day)}};
+}
+bool uses_duration(const content::Condition& condition) {
+    return condition.kind==content::ConditionKind::holds_for_days ||
+        std::any_of(condition.children.begin(),condition.children.end(),uses_duration);
 }
 RuntimeState parse_runtime(const Json& value,const CompiledProgram& program) {
+    if (!value.is_object()) detail::invalid("runtime","Expected object");
+    if (value.contains("duration_states")!=value.contains("duration_sampled_day"))
+        detail::invalid("duration_states","Duration history and its sampled-day cursor must be present together");
+    // Check the prior format-1 shapes without copying the potentially large
+    // record arrays. The additive duration field is validated separately below.
+    Json prior_shape=Json::object();
+    for (const auto& [name,ignored]:value.items()) {
+        (void)ignored;
+        if (name!="duration_states" && name!="duration_sampled_day") prior_shape[name]=nullptr;
+    }
+    if (!value.contains("duration_states")) {
+        for (const auto& [definition_id,definition]:program.collection.definitions) {
+            (void)definition_id;
+            const auto* flow=std::get_if<content::FlowDefinition>(&definition.data);
+            if (flow && (uses_duration(flow->trigger) ||
+                (flow->lifecycle.exit_when && uses_duration(*flow->lifecycle.exit_when))))
+                detail::invalid("duration_states","Duration-bearing content requires explicit predicate history");
+        }
+    }
     // Format 1's earlier deterministic checkpoints have no stochastic history.
     // Permit the paired additive fields to be absent only for deterministic
     // content, while all other shape checks stay strict.
     if (value.contains("random_resolutions"))
-        detail::fields(value,"runtime",{"next_activation_id","next_receipt_id","next_presentation_id","prepared_day",
+        detail::fields(prior_shape,"runtime",{"next_activation_id","next_receipt_id","next_presentation_id","prepared_day",
             "activations","lifecycles","modifiers","receipts","presentations","random_resolutions","narrative_origin"});
     else {
         for (const auto& [definition_id,definition]:program.collection.definitions) {
@@ -230,7 +258,7 @@ RuntimeState parse_runtime(const Json& value,const CompiledProgram& program) {
                 return entry.second.kind==content::NodeKind::random;
             })) detail::invalid("random_resolutions","Random-bearing content requires explicit resolution history");
         }
-        detail::fields(value,"runtime",{"next_activation_id","next_receipt_id","next_presentation_id","prepared_day",
+        detail::fields(prior_shape,"runtime",{"next_activation_id","next_receipt_id","next_presentation_id","prepared_day",
             "activations","lifecycles","modifiers","receipts","presentations"});
     }
     RuntimeState result;
@@ -314,6 +342,18 @@ RuntimeState parse_runtime(const Json& value,const CompiledProgram& program) {
                 detail::text(item.at("node_id"),"node_id",128),detail::text(item.at("branch_id"),"branch_id",128),
                 detail::u64(item.at("sample"),"sample"),detail::u64(item.at("stream_before"),"stream_before"),
                 detail::u64(item.at("stream_after"),"stream_after")});
+        }
+    }
+    if (value.contains("duration_states")) {
+        result.duration_sampled_day=parse_day(value.at("duration_sampled_day"));
+        const auto& durations=value.at("duration_states");
+        detail::array(durations,"duration_states",maximum_records);
+        for (const auto& item:durations) {
+            detail::fields(item,"duration_state",{"definition_id","definition_revision","predicate_id","binding","observed_on","true_since"});
+            result.duration_states.push_back({detail::text(item.at("definition_id"),"definition_id",128),
+                static_cast<std::uint32_t>(detail::u64(item.at("definition_revision"),"definition_revision",max_u32)),
+                detail::text(item.at("predicate_id"),"predicate_id",128),parse_binding(item.at("binding")),
+                OrdinalDay{detail::i64(item.at("observed_on"),"observed_on")},parse_day(item.at("true_since"))});
         }
     }
     return result;

@@ -1,5 +1,7 @@
 #include <pgp/runtime/runtime.hpp>
 
+#include "duration.hpp"
+
 #include <algorithm>
 #include <functional>
 #include <iterator>
@@ -266,16 +268,21 @@ void execute(Checkpoint& checkpoint, Activation& activation, const CompiledProgr
     }
 }
 bool condition_met(const content::Condition& condition, const ScopeBinding& binding,
-                   const CompiledProgram& program, const WorldState& world,
-                   RuntimeResult& result, const std::string& path) {
+                   const CompiledProgram& program, const Checkpoint& checkpoint,
+                   RuntimeResult& result, const std::string& path, std::string_view definition_id) {
+    const auto& world = checkpoint.world;
     const auto reader = [&](const auto& metadata, const auto& scope) { return read_fact(world, metadata, scope); };
+    const auto durations = detail::saved_duration_reader(checkpoint.runtime, definition_id);
     const auto authoritative = evaluate_condition(condition, binding, program.registry, reader,
-                                                   InspectionMode::author_fixture, path);
+        InspectionMode::author_fixture, path, durations, world.simulation.date);
     // Runtime result traces are safe to show to players. Full fixture traces
     // remain available by explicitly invoking the pure author inspector.
-    auto visible = evaluate_condition(condition, binding, program.registry, reader, InspectionMode::player_known, path);
+    auto visible = evaluate_condition(condition, binding, program.registry, reader,
+        InspectionMode::player_known, path, durations, world.simulation.date);
     result.clauses.insert(result.clauses.end(), std::make_move_iterator(visible.clauses.begin()),
                           std::make_move_iterator(visible.clauses.end()));
+    result.durations.insert(result.durations.end(), std::make_move_iterator(visible.durations.begin()),
+                            std::make_move_iterator(visible.durations.end()));
     return authoritative.result.value();
 }
 void ensure_lifecycles(Checkpoint& checkpoint, const CompiledProgram& program) {
@@ -342,14 +349,15 @@ void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResu
         fail(RuntimeReason::morning_not_ready, "Resolve the core opening work before running content.");
     if (state.prepared_day == today || has_choice(state)) return;
     ensure_lifecycles(checkpoint, program);
+    detail::observe_durations(checkpoint, program, steps);
     // Continuous exits resolve before the new day's capacity or cost queries.
     for (auto& entry : state.lifecycles) {
         const auto& definition = flow(program, entry.definition_id);
         if (definition.lifecycle.mode != content::LifecycleMode::continuous || !entry.active_activation || entry.last_checked == today) continue;
         auto& active = activation_by_id(state, *entry.active_activation);
         entry.last_checked = today;
-        if (!active.exiting && condition_met(*definition.lifecycle.exit_when, entry.binding, program, world,
-                                             result, "flows/" + entry.definition_id + "/exit_when")) {
+        if (!active.exiting && condition_met(*definition.lifecycle.exit_when, entry.binding, program, checkpoint,
+                result, "flows/" + entry.definition_id + "/exit_when", entry.definition_id)) {
             active.current_flow = active.definition_id;
             active.current_node = definition.exit_node;
             active.frames.clear(); active.due.reset(); active.wait_started.reset(); active.presentation_id.reset();
@@ -380,8 +388,8 @@ void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResu
         if (entry.last_checked == today) continue;
         const auto& definition = flow(program, entry.definition_id);
         entry.last_checked = today;
-        const bool eligible = condition_met(definition.trigger, entry.binding, program, world, result,
-                                             "flows/" + entry.definition_id + "/trigger");
+        const bool eligible = condition_met(definition.trigger, entry.binding, program, checkpoint, result,
+                                             "flows/" + entry.definition_id + "/trigger", entry.definition_id);
         entry.was_eligible = eligible;
         bool due_now = true;
         if (definition.lifecycle.mode == content::LifecycleMode::interval)
@@ -433,6 +441,8 @@ RuntimeResult transaction(const CompiledProgram& program, Checkpoint& original, 
         result.explanation = "The content operation was committed.";
     } catch (const Failure& failure) {
         result.reason = failure.reason; result.explanation = failure.detail;
+    } catch (const detail::DurationBudgetExceeded& error) {
+        result.reason = RuntimeReason::budget_exceeded; result.explanation = error.what();
     } catch (const std::overflow_error&) {
         result.reason = RuntimeReason::arithmetic_overflow; result.explanation = "Checked arithmetic refused the operation; nothing changed.";
     } catch (const std::exception& error) {
@@ -442,6 +452,7 @@ RuntimeResult transaction(const CompiledProgram& program, Checkpoint& original, 
         result.explanation += " The candidate operation was rolled back; no state changed.";
         for (auto& path : result.paths) path.detail = "Rolled-back candidate: " + path.detail;
         for (auto& clause : result.clauses) clause.path = "rolled_back_candidate/" + clause.path;
+        for (auto& duration : result.durations) duration.path = "rolled_back_candidate/" + duration.path;
     }
     return result;
 }

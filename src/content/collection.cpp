@@ -147,6 +147,17 @@ Condition condition(const Json& value, const std::string& path, Scope context, c
     auto* count = inherited_count ? inherited_count : &own_count;
     if (depth > 16 || ++*count > 128) fail("budget", path, "Condition nesting/count budget exceeded");
     if (!value.is_object()) fail("type", path, "Expected condition object");
+    if (value.contains("holds_for_days")) {
+        fields(value, path, {"holds_for_days"}, {"holds_for_days"});
+        const auto temporal_path = child(path, "holds_for_days");
+        const auto& temporal = value.at("holds_for_days");
+        fields(temporal, temporal_path, {"id", "days", "condition"}, {"id", "days", "condition"});
+        Condition result{ConditionKind::holds_for_days, std::nullopt, {}};
+        result.predicate_id = id(temporal.at("id"), child(temporal_path, "id"));
+        result.duration_days = positive(temporal.at("days"), child(temporal_path, "days"));
+        result.children.push_back(condition(temporal.at("condition"), child(temporal_path, "condition"), context, registry, depth + 1, count));
+        return result;
+    }
     for (auto name : {"all_of", "any_of", "not"}) {
         if (value.contains(name)) {
             fields(value, path, {name}, {name});
@@ -185,6 +196,12 @@ Condition condition(const Json& value, const std::string& path, Scope context, c
     else if (fact->type == ValueType::boolean) literal = boolean(value.at("value"), child(path, "value"));
     else literal = text(value.at("value"), child(path, "value"));
     return {ConditionKind::clause, FactClause{fact_id, comparison, std::move(literal), fact->unit}, {}};
+}
+void unique_predicates(const Condition& condition_value, const std::string& path, std::set<std::string>& seen) {
+    if (condition_value.kind == ConditionKind::holds_for_days && !seen.insert(condition_value.predicate_id).second)
+        fail("duplicate_id", path, "Duration predicate IDs must be unique across a flow's trigger and exit condition");
+    for (std::size_t i = 0; i < condition_value.children.size(); ++i)
+        unique_predicates(condition_value.children[i], child(path, std::to_string(i)), seen);
 }
 Effect effect(const Json& value, const std::string& path, Scope context, const Registry& registry) {
     if (!value.is_object() || !value.contains("op") || !value.contains("target"))
@@ -378,6 +395,9 @@ FlowDefinition flow(const Json& value, const std::string& path, const Registry& 
     FlowDefinition result{context, condition(value.at("trigger"), child(path, "trigger"), context, registry),
                           lifecycle(value.at("lifecycle"), child(path, "lifecycle"), context, registry),
                           id(value.at("entry_node"), child(path, "entry_node")), "", {}, 0, {}};
+    std::set<std::string> predicate_ids;
+    unique_predicates(result.trigger, child(path, "trigger"), predicate_ids);
+    if (result.lifecycle.exit_when) unique_predicates(*result.lifecycle.exit_when, child(path, "lifecycle/exit_when"), predicate_ids);
     if (value.contains("exit_node")) result.exit_node = id(value.at("exit_node"), child(path, "exit_node"));
     if ((result.lifecycle.mode == LifecycleMode::continuous) != !result.exit_node.empty())
         fail("lifecycle", path, "Only continuous flows require an exit node");

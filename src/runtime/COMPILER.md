@@ -53,6 +53,12 @@ random nodes. Canonical identity retains ordered branch IDs, weights and edges;
 compilation and pure condition inspection consume no randomness. Execution and
 exact saved outcomes are documented in the
 [weighted-branch evidence](../../docs/evidence/M1-06-weighted-branches.md).
-Duration predicates, related-entity selectors/quantifiers, registered variables
-and checked expression trees still require shared schema/compiler/runtime
-extensions. M1-06 remains open for those forms and its prerequisite gate.
+Daily duration predicates also compile and execute through the
+[saved temporal contract](../../docs/evidence/M1-06-duration.md). Pure inspection
+accepts a read-only observation reader/date and emits start/elapsed/result
+traces. A missing reader/date is unknown; explicit absent history is unsatisfied;
+stale samples are unknown. Hidden descendants redact temporal history without
+reading it. Current fact clauses and cached duration truth are distinct outputs.
+Related-entity selectors/quantifiers, registered variables and checked expression
+trees still require shared schema/compiler/runtime extensions. M1-06 remains
+open for those forms and its prerequisite gate.

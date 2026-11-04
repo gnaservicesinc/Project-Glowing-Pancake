@@ -138,6 +138,17 @@ struct RandomResolution {
     std::uint64_t stream_after = 0;
     auto operator<=>(const RandomResolution&) const = default;
 };
+// Scope condition history, sampled once at the prepared-morning boundary.
+// A false sample has no true_since; the first true sample has zero elapsed days.
+struct DurationState {
+    std::string definition_id;
+    std::uint32_t definition_revision = 0;
+    std::string predicate_id;
+    ScopeBinding binding;
+    core::OrdinalDay observed_on{0};
+    std::optional<core::OrdinalDay> true_since;
+    auto operator<=>(const DurationState&) const = default;
+};
 struct RuntimeState {
     std::uint64_t next_activation_id = 1;
     std::uint64_t next_receipt_id = 1;
@@ -152,6 +163,8 @@ struct RuntimeState {
     // while detecting truncated resolution history on restore.
     std::optional<std::uint64_t> narrative_origin;
     std::vector<RandomResolution> random_resolutions;
+    std::vector<DurationState> duration_states;
+    std::optional<core::OrdinalDay> duration_sampled_day;
     auto operator<=>(const RuntimeState&) const = default;
 };
 struct Checkpoint {
@@ -181,6 +194,7 @@ struct RuntimeResult {
     std::vector<TraceEntry> paths;
     std::vector<ClauseTrace> clauses;
     bool committed = false;
+    std::vector<DurationTrace> durations{};
     [[nodiscard]] bool accepted() const noexcept { return reason == RuntimeReason::accepted; }
 };
 

@@ -41,9 +41,16 @@ calendar, including non-leap 2100. The initial headquarters vocabulary is US-CA,
 US-TX and US-WA. Additional scenario geography is a later schema extension.
 
 Conditions are registered fact clauses (`fact`, `op`, `value`, optional `unit`)
-or nested `all_of`, `any_of` or `not`. Comparisons are `eq/ne/lt/lte/gt/gte`;
+or nested `all_of`, `any_of`, `not` or `holds_for_days`. Comparisons are `eq/ne/lt/lte/gt/gte`;
 boolean/text facts only allow equality/inequality. Scope, scalar type, unit and
 range are checked without coercions. Missing vocabulary is an explicit error.
+
+`holds_for_days` contains an object with a stable `id`, integer `days` in
+1–1,000,000 and one nested `condition`. Predicate IDs are unique across a flow's
+trigger and exit condition; another flow has its own namespace. Existing
+condition depth/count limits include duration wrappers. Runtime uses elapsed
+daily observations and persists resets; see the
+[duration evidence](../../docs/evidence/M1-06-duration.md).
 
 Lifecycle modes are `once`, bounded `recurring`, bounded anchored `interval`,
 `scheduled`, and `continuous` with an explicit exit condition/node. Intervals

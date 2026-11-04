@@ -14,9 +14,11 @@ M0 remains open. See the
   nested sequence/subflow delays and choices, selected root sources, owned
   modifiers, bounded atomic effects and committed/candidate traces. Weighted
   narrative branches also preserve exact outcomes across saves, delays and
-  choices. Broader variables/expressions, duration and selectors/quantifiers
+  choices. Daily duration predicates retain sampled start/reset state and exact
+  elapsed-day thresholds through reload. Broader variables/expressions and selectors/quantifiers
   remain required work. [Runtime evidence](evidence/M1-06-runtime.md) and
   [weighted-branch evidence](evidence/M1-06-weighted-branches.md)
+  and [duration evidence](evidence/M1-06-duration.md).
 - Weighted-branch commit `2a37284` passes 26/26 CTests in each of all six native
   jobs across five targets, including GCC/Clang/MSVC and native Windows arm64.
   [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41895189273)
@@ -136,9 +138,9 @@ These are document/data/example checks only. No game/editor/runtime, UI performa
 ## Next task
 
 **Next gameplay-enabling implementation: finish M1-06's broader flow language**
-and persist its additional pending state: next implement daily duration
-predicates with saved start/reset state, then registered variables/expressions
-and related selectors/quantifiers. Weighted narrative branches are implemented.
+and persist its additional pending state: next implement registered scoped
+variables/flags and checked expressions, then related selectors/quantifiers.
+Weighted narrative branches and daily duration predicates are implemented.
 Then M1-07 adds built-in committed-fact/seeded occurrence dispatch. M1-03 has a
 locally tested worker/model implementation; its formal acceptance remains gated
 by M0-03. M1-05's room shell can proceed alongside core work; M2-01 begins the

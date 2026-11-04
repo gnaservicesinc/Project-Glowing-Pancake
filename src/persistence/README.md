@@ -24,7 +24,7 @@ The UTF-8 JSON envelope contains:
 - `checkpoint.runtime`: activation/revision/context/current node, start/wait/due
   dates, bounded continuation frames, lifecycle eligibility/count/cooldown/anchor
   state, owned modifiers, effect receipts, presentations/selected choices and
-  committed weighted-branch resolutions;
+  committed weighted-branch resolutions and duration-predicate observations;
 - `sha256`: integrity of the canonical envelope without this field.
 
 Core state includes the exact day/phase/opening cursor, revision, cash,
@@ -50,6 +50,19 @@ nodes. Random-bearing content requires an explicit list and origin, including
 an empty list and null origin before its first draw. All fields inside a present
 record are required and unknown fields still fail. The exact definition hash
 continues to prevent loading a checkpoint against changed branch content.
+
+Duration observations retain the definition ID/revision, predicate ID, bound
+scope, last observed day and nullable start of its current uninterrupted true
+period. The encoder always emits the bounded `duration_states` array. Earlier
+format-1 checkpoints may omit it and its paired `duration_sampled_day` cursor
+only if the loaded collection has no duration predicate in any trigger or
+continuous-exit condition, including disabled and reusable flows. Duration-bearing
+content requires both fields even before the first observation: an empty list
+and null cursor. Each record has exactly those six fields; its observation day
+matches the saved prepass cursor. Runtime validation checks dates, complete
+owning roots and the prepared/choice boundary without advancing time or sampling
+randomness. The content schema/save format remain development format 1; this
+additive reader compatibility does not claim a migration between definitions.
 
 Decoder depth is capped at 64. Its JSON event budget defaults to two million and
 can be configured up to eight million. Encoding checks the identical byte/depth/

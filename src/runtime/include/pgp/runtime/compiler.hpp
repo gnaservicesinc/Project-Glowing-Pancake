@@ -61,11 +61,28 @@ struct ClauseTrace {
     std::optional<bool> result;
     bool redacted;
 };
+struct DurationObservation {
+    core::OrdinalDay observed_on;
+    std::optional<core::OrdinalDay> true_since;
+};
+using DurationReader = std::function<std::optional<DurationObservation>(std::string_view, const ScopeBinding&)>;
+struct DurationTrace {
+    std::string path;
+    std::string predicate_id;
+    ScopeBinding binding;
+    std::uint32_t required_days;
+    std::optional<core::OrdinalDay> observed_on;
+    std::optional<core::OrdinalDay> true_since;
+    std::optional<std::int64_t> elapsed_days;
+    std::optional<bool> result;
+    bool redacted = false;
+};
 struct ConditionTrace {
     // Unknown in player mode when hidden clauses determine the outcome.
-    // Author-fixture/runtime evaluation always returns a known result.
+    // Temporal predicates also need a current saved observation to be known.
     std::optional<bool> result;
     std::vector<ClauseTrace> clauses;
+    std::vector<DurationTrace> durations;
 };
 using FactReader = std::function<content::Scalar(const content::FactMetadata&, const ScopeBinding&)>;
 
@@ -75,7 +92,9 @@ using FactReader = std::function<content::Scalar(const content::FactMetadata&, c
     const content::Condition& condition, const ScopeBinding& binding,
     const content::Registry& registry, const FactReader& read,
     InspectionMode mode = InspectionMode::author_fixture,
-    std::string root_path = "trigger");
+    std::string root_path = "trigger",
+    const DurationReader& durations = {},
+    std::optional<core::OrdinalDay> inspection_day = std::nullopt);
 
 struct ResolvedAnchor {
     core::OrdinalDay first_due;

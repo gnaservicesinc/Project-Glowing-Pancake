@@ -54,6 +54,18 @@ Conditions use nested all/any/not, typed comparisons and explicit temporal predi
 
 Registered typed variables/flags, checked arithmetic expressions, related-entity selectors and bounded any/all/count quantifiers support reusable rules. Collection traversal is stable and a selector reports its resolved members/count. Duration predicates persist their start/reset state. Weighted random branches use the content stream and persist their draw/selection; they do not evaluate randomness while merely inspecting a trigger. Variable namespaces/defaults and target/occurrence scope are explicit, preventing accidental global flags.
 
+Daily `holds_for_days` predicates measure elapsed observed days: first true on
+day D starts at zero and satisfies N on D+N; a false sample resets the run and
+missing observation dates restart it. Sample all enabled roots' trigger and exit
+predicates after core opening work, before content effects, independently of
+cooldowns, interval eligibility or active continuations. Nested predicates sample
+inner before outer; boolean short-circuiting cannot suppress a reset. Exit
+predicates measure the scope condition's history, including before activation
+and across reentry; they do not imply activation age. The saved daily sample is
+frozen through choices and repeated preparation. Later content effects are
+observed the next morning. Inspection reads saved history without updating it;
+player inspection hides timing/history when any descendant fact is hidden.
+
 Lifecycles are once, recurring, interval, scheduled and continuous. Once/limits/cooldowns use an explicit occurrence scope. Recurring specifies re-entry or cooldown-while-still-eligible semantics. Intervals use one typed anchor: `campaign_start`, `scope_created`, `month_start`, or `fixed_date` with an ISO date, plus an explicit first-due offset. Calendar-month anchors name day-of-month and end-of-month clamping; `month_start` means the first calendar-month boundary on/after scope creation, then the offset. Resolve and save anchors at activation; skip ineligible checks without later backfilling. Scheduled instances define delivery eligibility, expiry and captured versus delivery-time target resolution. Continuous flows register owned modifiers on entry and remove them on exit; they do not repeatedly alter a base value or undo a percentage with its negative. Entry/exit hysteresis and stacking are explicit.
 
 Begin-day due work executes in phase 2, before capacity/cost calculation. End-of-day reaction triggers observe committed daily facts and schedule next-boundary effects; they cannot change work already performed. Evaluation uses fact-change subscriptions plus due-time queues, with a defined daily fallback for temporal predicates. Stable ordering is phase, due date, explicit priority, scope ID, definition ID, instance ID and node order. Fan-out outputs are numbered sequences, not parallel writes. A flow may not recursively mutate facts and re-trigger itself to a fixpoint within the same phase.

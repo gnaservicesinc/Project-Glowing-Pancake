@@ -13,7 +13,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M1-02 | Complete | Typed content schema/registry, bounded offline loader, 11-definition engineering fixture and 140 validation assertions; [evidence](evidence/M1-02-content.md) |
 | M1-03 | In progress | Local commands, morning continuation, immutable worker and stable model diffs pass; M0-03 prerequisite qualification remains open; [evidence](evidence/M1-03-commands.md) |
 | M1-04 | In progress | Exact current-state file saves, recovery, autosaves/settings/export and application persistence policy implemented; full flow contract/prerequisites remain open; [evidence](evidence/M1-04-persistence.md) |
-| M1-06 | In progress | Schema-1 compiler/executor, five lifecycles, nested waits/choices, owned modifiers, traces and saved weighted narrative branches implemented; duration/variables/expressions/selectors remain required; [runtime](evidence/M1-06-runtime.md), [branches](evidence/M1-06-weighted-branches.md) |
+| M1-06 | In progress | Schema-1 compiler/executor, five lifecycles, nested waits/choices, owned modifiers, saved weighted branches and daily duration predicates implemented; variables/expressions/selectors remain required; [runtime](evidence/M1-06-runtime.md), [branches](evidence/M1-06-weighted-branches.md), [durations](evidence/M1-06-duration.md) |
 | M1-07 | Planned | Built-in major-event detection, scheduled/seeded world occurrences and news through the shared runtime; [event contract](EVENT_SYSTEM.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
@@ -368,3 +368,31 @@ registered variables/expressions and related-entity selectors/quantifiers;
 M1-04 will persist their added state. Native/deployment prerequisite acceptance,
 M1-07 built-in occurrence dispatch and M2 business mechanics remain open. Next:
 implement duration predicates with explicit elapsed-day and daily reset rules.
+
+## M1-06 duration slice — 2026-11-04
+
+Implemented typed `holds_for_days` conditions, per-flow predicate identity,
+elapsed D+N boundaries, daily start/reset observations, nested postorder
+sampling and pure author/player temporal traces. Enabled roots sample one
+opening snapshot even when cooldown/interval/active/boolean gating would skip
+their execution. Choices preserve that day's sample. Continuous exit timers
+explicitly measure scope history rather than activation age.
+
+Exact saves retain complete owned observations and the daily sample cursor.
+Independent review found and closed dropped-root history and stale dialogue
+sample gaps. Invalid/stale histories and budget failures refuse atomically;
+older saves without temporal fields remain readable for non-duration content.
+[Evidence](evidence/M1-06-duration.md) records the full contracts and limits.
+
+| Verification | Observed result |
+| --- | --- |
+| Core Release | 27/27 CTests pass, strict Apple Clang arm64 |
+| Core Debug | 27/27 CTests pass, strict Apple Clang arm64 |
+| Focused schema/compiler | 206 content and 147 compiler checks pass |
+| Duration integration | 119 checks pass: elapsed/reset/gap/nesting, frozen snapshots, continuous exits, exact threshold reload, privacy and refusal/rollback |
+
+Accepted tasks remain **5/52**. M1-06 still needs registered scoped
+variables/flags, checked expressions and related-entity selectors/quantifiers;
+M1-04 persists their future state. M0-03's native Qt/deployment gate, M1-07
+occurrence dispatch and M2 business mechanics remain open. Next: the bounded
+variable/expression vocabulary and its checked assignment/save contract.

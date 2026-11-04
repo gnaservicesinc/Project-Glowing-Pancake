@@ -168,6 +168,52 @@ int main() {
     rejects(random_loop.dump(), "unbounded_cycle");
     definition(random_loop, "flow.test")["max_node_visits"] = 16;
     check(load_collection(random_loop.dump(), registry).definitions.size() == 12, "Weighted delayed recurrence requires and accepts a finite visit budget");
+
+    const auto holds = [](Json child, std::string name = "test.operating", int days = 2) {
+        return Json{{"holds_for_days", {{"id", std::move(name)}, {"days", days}, {"condition", std::move(child)}}}};
+    };
+    auto duration = source; auto duration_flow = simple_flow();
+    duration_flow["trigger"] = holds(duration_flow["trigger"]);
+    duration["definitions"].push_back(duration_flow);
+    const auto duration_collection = load_collection(duration.dump(), registry);
+    const auto& predicate = std::get<FlowDefinition>(duration_collection.find("flow.test")->data).trigger;
+    check(predicate.kind == ConditionKind::holds_for_days && predicate.predicate_id == "test.operating" &&
+          predicate.duration_days == 2 && predicate.children.size() == 1 && predicate.children[0].clause->fact == "company.is_operating",
+          "Duration predicate retains stable ID, elapsed-day requirement and typed child condition");
+    for (const auto days : {-1, 0, 1'000'001})
+        mutated(duration, "range", [days](auto& value) { definition(value, "flow.test")["trigger"]["holds_for_days"]["days"] = days; });
+    mutated(duration, "type", [](auto& value) { definition(value, "flow.test")["trigger"]["holds_for_days"]["days"] = true; });
+    mutated(duration, "integer_token", [](auto& value) { definition(value, "flow.test")["trigger"]["holds_for_days"]["days"] = 1.5; });
+    mutated(duration, "missing_field", [](auto& value) { definition(value, "flow.test")["trigger"]["holds_for_days"].erase("id"); });
+    mutated(duration, "missing_field", [](auto& value) { definition(value, "flow.test")["trigger"]["holds_for_days"].erase("condition"); });
+    mutated(duration, "identifier", [](auto& value) { definition(value, "flow.test")["trigger"]["holds_for_days"]["id"] = "../invalid"; });
+    mutated(duration, "unknown_field", [](auto& value) { definition(value, "flow.test")["trigger"]["fact"] = "company.is_operating"; });
+    mutated(duration, "unknown_field", [](auto& value) { definition(value, "flow.test")["trigger"]["holds_for_days"]["script"] = "run()"; });
+    mutated(duration, "type", [](auto& value) { definition(value, "flow.test")["trigger"]["holds_for_days"]["condition"] = Json::array(); });
+    mutated(duration, "duplicate_id", [](auto& value) {
+        auto& trigger_value = definition(value, "flow.test")["trigger"];
+        const auto original = trigger_value;
+        trigger_value = {{"all_of", {original, original}}};
+    });
+    auto duration_max = duration;
+    definition(duration_max, "flow.test")["trigger"]["holds_for_days"]["days"] = 1'000'000;
+    check(load_collection(duration_max.dump(), registry).definitions.size() == 12, "Maximum bounded elapsed-day duration is accepted");
+    auto repeated_id = duration;
+    auto second_duration_flow = duration_flow; second_duration_flow["id"] = "flow.test_second";
+    repeated_id["definitions"].push_back(second_duration_flow);
+    check(load_collection(repeated_id.dump(), registry).definitions.size() == 13, "Duration IDs are namespaced per flow, not global flags");
+    auto continuous_duration = source;
+    auto& duration_continuous = definition(continuous_duration, "flow.hidden.sustained_workload");
+    duration_continuous["trigger"] = holds(duration_continuous["trigger"]);
+    duration_continuous["lifecycle"]["exit_when"] = holds(duration_continuous["lifecycle"]["exit_when"]);
+    rejects(continuous_duration.dump(), "duplicate_id");
+    duration_continuous["lifecycle"]["exit_when"]["holds_for_days"]["id"] = "test.recovered";
+    check(load_collection(continuous_duration.dump(), registry).definitions.size() == 11, "Distinct trigger/exit duration histories coexist in one flow");
+    auto duration_deep = source; auto nested_predicate = simple_flow();
+    for (int i = 0; i < 17; ++i)
+        nested_predicate["trigger"] = holds(nested_predicate["trigger"], "test.depth" + std::to_string(i));
+    duration_deep["definitions"].push_back(nested_predicate);
+    rejects(duration_deep.dump(), "budget");
     auto nested = source; auto branch = simple_flow(); branch["entry_node"] = "sequence0";
     for (int i = 0; i < 9; ++i) branch["nodes"]["sequence" + std::to_string(i)] =
         {{"kind", "sequence"}, {"children", {i == 8 ? "end" : "sequence" + std::to_string(i + 1)}}, {"next", "end"}};

@@ -38,6 +38,11 @@ Condition cash_condition(Comparison comparison = Comparison::greater_equal, std:
 Condition boolean_condition(bool value = true) {
     return {ConditionKind::clause, FactClause{"company.is_operating", Comparison::equal, value, Unit::boolean}, {}};
 }
+Condition duration_condition(Condition child, std::string id = "test.operating", std::uint32_t days = 2) {
+    Condition result{ConditionKind::holds_for_days, {}, {std::move(child)}};
+    result.predicate_id = std::move(id); result.duration_days = days;
+    return result;
+}
 Collection chain(const Collection& original, unsigned frames) {
     auto result = original;
     for (unsigned frame = 0; frame <= frames; ++frame) {
@@ -257,6 +262,148 @@ void weighted_branches(const Collection& fixture, const Registry& registry) {
     }
     rejects([&] { (void)compile_collection(changed, registry); }, "budget");
 }
+void duration_compilation(const Collection& fixture, const Registry& registry) {
+    auto collection = fixture;
+    const auto name = "flow.hidden.compute_review";
+    const auto legacy = compile_collection(collection, registry).canonical_content_bytes;
+    require(legacy.find("holds_for_days") == std::string::npos, "Legacy conditions serialize without added temporal payloads");
+    flow(collection, name).trigger = duration_condition(boolean_condition());
+    const auto program = compile_collection(collection, registry);
+    require(compile_collection(load_collection(program.canonical_content_bytes, registry), registry).canonical_content_bytes == program.canonical_content_bytes,
+            "Duration conditions round-trip with stable ID, elapsed days and typed child");
+    auto changed = collection; flow(changed, name).trigger.predicate_id = "test.other_operating";
+    require(compile_collection(changed, registry).canonical_content_bytes != program.canonical_content_bytes,
+            "Duration identity changes affect content identity and saved history compatibility");
+    changed = collection; ++flow(changed, name).trigger.duration_days;
+    require(compile_collection(changed, registry).canonical_content_bytes != program.canonical_content_bytes,
+            "Elapsed-day threshold changes affect canonical identity");
+    changed = collection; flow(changed, name).trigger.children.front() = boolean_condition(false);
+    require(compile_collection(changed, registry).canonical_content_bytes != program.canonical_content_bytes,
+            "Duration child semantics affect canonical identity");
+    changed = collection; flow(changed, name).trigger.children.clear();
+    rejects([&] { (void)compile_collection(changed, registry); }, "typed_shape");
+    changed = collection; flow(changed, name).trigger.clause = boolean_condition().clause;
+    rejects([&] { (void)compile_collection(changed, registry); }, "typed_shape");
+    changed = collection; flow(changed, name).trigger.children.push_back(boolean_condition());
+    rejects([&] { (void)compile_collection(changed, registry); }, "typed_shape");
+    changed = collection; flow(changed, name).trigger.duration_days = 0;
+    rejects([&] { (void)compile_collection(changed, registry); }, "typed_shape");
+    changed = collection; flow(changed, name).trigger.duration_days = 1'000'001;
+    rejects([&] { (void)compile_collection(changed, registry); }, "range");
+    changed = fixture; flow(changed, name).trigger.predicate_id = "test.extra";
+    rejects([&] { (void)compile_collection(changed, registry); }, "typed_shape");
+    changed = fixture; flow(changed, name).trigger.duration_days = 1;
+    rejects([&] { (void)compile_collection(changed, registry); }, "typed_shape");
+    changed = collection; flow(changed, name).trigger = {ConditionKind::all_of, {},
+        {duration_condition(boolean_condition()), duration_condition(boolean_condition())}};
+    rejects([&] { (void)compile_collection(changed, registry); }, "duplicate_id");
+    changed = collection;
+    auto& continuous = flow(changed, "flow.hidden.sustained_workload");
+    continuous.trigger = duration_condition(boolean_condition());
+    continuous.lifecycle.exit_when = duration_condition(boolean_condition(false));
+    rejects([&] { (void)compile_collection(changed, registry); }, "duplicate_id");
+    changed = collection;
+    auto& deep = flow(changed, name).trigger;
+    for (int i = 0; i < 17; ++i) deep = duration_condition(std::move(deep), "test.depth" + std::to_string(i));
+    rejects([&] { (void)compile_collection(changed, registry); }, "budget");
+}
+void duration_inspection(Registry registry) {
+    const ScopeBinding company{Scope::company, "company.player"};
+    auto predicate = duration_condition(boolean_condition());
+    bool current_fact = true;
+    int fact_reads = 0;
+    FactReader facts = [&](const FactMetadata&, const ScopeBinding& scope) -> Scalar {
+        ++fact_reads; require(scope == company, "Temporal child facts preserve the exact bound entity");
+        return current_fact;
+    };
+    int duration_reads = 0;
+    std::optional<DurationObservation> observed;
+    DurationReader history = [&](std::string_view id, const ScopeBinding& scope) {
+        ++duration_reads;
+        require(id == predicate.predicate_id && scope == company, "Temporal reader receives named predicate and exact bound scope");
+        return observed;
+    };
+    auto inspect_duration = [&](std::optional<core::OrdinalDay> today = core::OrdinalDay{2}) {
+        return evaluate_condition(predicate, company, registry, facts, InspectionMode::author_fixture, "trigger", history, today);
+    };
+    const auto no_context = evaluate_condition(predicate, company, registry, facts);
+    require(!no_context.result && no_context.durations.size() == 1 && !no_context.durations[0].result,
+            "Pure temporal inspection without saved history/day is unknown");
+    require(!inspect_duration(std::nullopt).result && duration_reads == 0,
+            "Missing inspection date does not query or fabricate duration history");
+    require(!evaluate_condition(predicate, company, registry, facts, InspectionMode::author_fixture,
+                               "trigger", {}, core::OrdinalDay{2}).result,
+            "An inspection day alone does not invent a duration provider");
+    require(inspect_duration().result == false, "A supplied provider with no history is not yet eligible");
+    observed = DurationObservation{core::OrdinalDay{0}, core::OrdinalDay{0}};
+    const auto started = inspect_duration(core::OrdinalDay{0});
+    require(started.result == false && started.durations[0].elapsed_days == 0,
+            "The first true observation starts at zero elapsed days");
+    observed = DurationObservation{core::OrdinalDay{1}, core::OrdinalDay{0}};
+    require(inspect_duration(core::OrdinalDay{1}).result == false, "One day below the required elapsed duration stays false");
+    observed = DurationObservation{core::OrdinalDay{2}, core::OrdinalDay{0}};
+    const auto boundary = inspect_duration();
+    require(boundary.result == true && boundary.durations[0].elapsed_days == 2 &&
+                boundary.durations[0].observed_on == core::OrdinalDay{2} && boundary.durations[0].true_since == core::OrdinalDay{0} &&
+                boundary.durations[0].path == "trigger/holds_for_days" &&
+                boundary.clauses[0].path == "trigger/holds_for_days/condition",
+            "Exact elapsed-day boundary and saved start/observation dates are inspectable");
+    current_fact = false;
+    const auto cached = inspect_duration();
+    require(cached.result == true && cached.clauses[0].result == false,
+            "Later same-day fact changes cannot rewrite the saved daily duration result");
+    observed = DurationObservation{core::OrdinalDay{2}, {}};
+    require(inspect_duration().result == false && !inspect_duration().durations[0].true_since,
+            "A saved false daily observation resets eligibility without inventing a start");
+    observed = DurationObservation{core::OrdinalDay{1}, core::OrdinalDay{0}};
+    const auto stale = inspect_duration();
+    require(!stale.result && stale.durations[0].observed_on == core::OrdinalDay{1} && !stale.durations[0].elapsed_days,
+            "Stale daily history stays unknown instead of extrapolating through unobserved days");
+    observed = DurationObservation{core::OrdinalDay{3}, core::OrdinalDay{0}};
+    rejects([&] { (void)inspect_duration(); }, "duration");
+    observed = DurationObservation{core::OrdinalDay{2}, core::OrdinalDay{3}};
+    rejects([&] { (void)inspect_duration(); }, "duration");
+    observed = DurationObservation{core::OrdinalDay{std::numeric_limits<std::int64_t>::max()}, {}};
+    rejects([&] { (void)inspect_duration(); }, "duration");
+    observed = DurationObservation{core::OrdinalDay{2}, core::OrdinalDay{std::numeric_limits<std::int64_t>::min()}};
+    rejects([&] { (void)inspect_duration(); }, "duration");
+    observed = DurationObservation{core::OrdinalDay{2}, core::OrdinalDay{0}};
+    rejects([&] { (void)inspect_duration(core::OrdinalDay{std::numeric_limits<std::int64_t>::max()}); }, "duration");
+
+    auto hidden_metadata = *registry.fact("company.is_operating");
+    hidden_metadata.id = "test.hidden_operating"; hidden_metadata.visibility = Visibility::hidden_truth;
+    registry.register_fact(hidden_metadata);
+    auto hidden_child = boolean_condition(); hidden_child.clause->fact = hidden_metadata.id;
+    predicate = duration_condition({ConditionKind::any_of, {}, {boolean_condition(false), hidden_child}});
+    duration_reads = 0; fact_reads = 0;
+    const auto redacted = evaluate_condition(predicate, company, registry, facts, InspectionMode::player_known,
+                                             "trigger", history, core::OrdinalDay{2});
+    require(!redacted.result && duration_reads == 0 && fact_reads == 1 && redacted.durations[0].redacted &&
+                !redacted.durations[0].observed_on && !redacted.durations[0].true_since && !redacted.durations[0].elapsed_days &&
+                !redacted.durations[0].result && redacted.clauses.size() == 2 && redacted.clauses[0].result == true &&
+                redacted.clauses[1].redacted,
+            "Even publicly decisive current truth cannot reveal hidden duration history or invoke its reader");
+    const auto author = inspect_duration();
+    require(author.result == true && !author.durations[0].redacted && duration_reads == 1,
+            "Author inspection deliberately reads copied hidden duration history");
+
+    predicate = duration_condition(duration_condition(boolean_condition(), "test.inner", 1));
+    const auto nested = evaluate_condition(predicate, company, registry, facts, InspectionMode::author_fixture,
+        "trigger", [](std::string_view, const ScopeBinding&) -> std::optional<DurationObservation> {
+            return DurationObservation{core::OrdinalDay{2}, core::OrdinalDay{0}};
+        }, core::OrdinalDay{2});
+    require(nested.result == true && nested.durations.size() == 2 && nested.durations[0].predicate_id == "test.operating" &&
+                nested.durations[1].predicate_id == "test.inner" && nested.clauses.size() == 1,
+            "Nested duration traces preserve authored order and inspect their underlying clauses");
+    predicate = duration_condition(boolean_condition()); predicate.children.push_back(boolean_condition());
+    rejects([&] { (void)inspect_duration(); }, "typed_shape");
+    predicate = duration_condition(boolean_condition(), "../invalid");
+    rejects([&] { (void)inspect_duration(); }, "identifier");
+    predicate = duration_condition(boolean_condition(), "test.operating", 0);
+    rejects([&] { (void)inspect_duration(); }, "range");
+    predicate = duration_condition(duration_condition(boolean_condition()));
+    rejects([&] { (void)inspect_duration(); }, "duplicate_id");
+}
 core::OrdinalDay date(int year, unsigned month, unsigned day) { return core::to_ordinal({year, month, day}); }
 void calendars() {
     const auto january = date(2014, 1, 31);
@@ -294,6 +441,8 @@ int main() {
         const auto collection = load_collection(source, registry);
         compilation(collection, registry, source);
         weighted_branches(collection, registry);
+        duration_compilation(collection, registry);
+        duration_inspection(registry);
         inspection(registry); calendars();
         std::cout << checks << " compiler, trace, canonical-identity and calendar checks passed\n";
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

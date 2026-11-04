@@ -28,11 +28,13 @@ struct FactClause {
     Scalar value;
     Unit unit;
 };
-enum class ConditionKind { clause, all_of, any_of, not_condition };
+enum class ConditionKind { clause, all_of, any_of, not_condition, holds_for_days };
 struct Condition {
     ConditionKind kind;
     std::optional<FactClause> clause;
     std::vector<Condition> children;
+    std::string predicate_id{};
+    std::uint32_t duration_days = 0;
 };
 struct Effect {
     std::string operation;

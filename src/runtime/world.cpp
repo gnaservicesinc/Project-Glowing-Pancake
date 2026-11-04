@@ -1,5 +1,7 @@
 #include <pgp/runtime/runtime.hpp>
 
+#include "duration.hpp"
+
 #include <algorithm>
 #include <limits>
 #include <set>
@@ -189,6 +191,7 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
     identities(state.presentations, state.next_presentation_id);
     if (state.prepared_day && (*state.prepared_day != world.simulation.date || world.simulation.phase != core::DayPhase::work_ready))
         invalid("Prepared runtime day differs from core date");
+    detail::validate_duration_states(checkpoint, program);
     BranchSelections selections;
     for (const auto& resolution : state.random_resolutions)
         selections.insert_or_assign({resolution.activation_id, resolution.flow_id, resolution.node_id}, &resolution);
