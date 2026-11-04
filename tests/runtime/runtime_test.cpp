@@ -6,6 +6,7 @@
 #include <iterator>
 #include <limits>
 #include <stdexcept>
+#include <string_view>
 
 using namespace pgp;
 namespace {
@@ -34,8 +35,8 @@ runtime::Checkpoint initial(std::vector<std::string> enabled, std::int64_t cash 
     checkpoint.world.enabled_flows = std::move(enabled);
     return checkpoint;
 }
-const runtime::Activation& activation(const runtime::Checkpoint& checkpoint, const std::string& id,
-                                      runtime::ActivationStatus status) {
+runtime::Activation activation(const runtime::Checkpoint& checkpoint, std::string_view id,
+                               runtime::ActivationStatus status) {
     const auto found = std::find_if(checkpoint.runtime.activations.begin(), checkpoint.runtime.activations.end(), [&](const auto& item) {
         return item.definition_id == id && item.status == status;
     });
@@ -84,7 +85,7 @@ void full_fixture_and_replay() {
     accepted(instance.prepare_opening(0));
     const auto waiting = instance.checkpoint();
     check(!waiting.runtime.prepared_day && waiting.world.simulation.paused, "Required choice suspends prepared morning");
-    const auto& delayed = activation(waiting, "flow.hidden.sequence_resume", runtime::ActivationStatus::delayed);
+    const auto delayed = activation(waiting, "flow.hidden.sequence_resume", runtime::ActivationStatus::delayed);
     check(delayed.frames.size() == 2 && delayed.current_node == "wait" && delayed.due == core::OrdinalDay{14}, "Two nested frames save exact delay boundary");
     check(runtime::modifier_total(waiting.runtime, {content::Scope::company, waiting.world.company_id}, "research_coordination_basis_points") == -500,
           "Continuous entry owns one modifier");
