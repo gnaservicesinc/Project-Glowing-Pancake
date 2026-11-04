@@ -88,6 +88,13 @@ records the remaining catalog/contract/history limits. Formal acceptance retains
 M2-01's open prerequisite. Next: M2-03 contracts/demand with a frozen finite
 allocation procedure before implementation.
 
+**M2-03 design preparation, 2026-11-04:** the
+[selected allocation kernel](evidence/M2-03-allocation-design.md) records rational
+budget scaling, explicit residual/outside accounting, shared capacity rounding,
+a `P+E+1` round proof and hand-worked unequal/free-price/contention cases. This is
+design evidence only; contracts, resource priority, installed shares and runtime
+implementation remain open.
+
 ## E1a — Slice authoring through forms and inspection
 
 - [ ] **E1A-01 — Separate editor and current-content library.** Role: content-editor. Depends: M2-04, M1-05, M0-05. Add a separate target/resources/package profile opening an explicitly selected checkout. Browse/search/filter current and draft slice content; support undo/redo, IDs/uses/used-by and conflict-aware writes. Unknown schemas are read-only; installed game folders and paths outside the selected project are not edited.

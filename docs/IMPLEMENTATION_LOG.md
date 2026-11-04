@@ -17,6 +17,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M1-07 | Planned | Built-in major-event detection, scheduled/seeded world occurrences and news through the shared runtime; [event contract](EVENT_SYSTEM.md) |
 | M2-01 | Implemented on Mac; prerequisite open | Balanced accounts, actual-month costs, invoices, debt/equity, protected settlements and pure projections through commands/exact saves; [evidence](evidence/M2-01-accounts.md) |
 | M2-02 | Implemented on Mac; prerequisite open | Shared source/staff reservations, compatibility, serving-first outage allocation, actual finite work, cancellation, support costs and exact reload; [evidence](evidence/M2-02-capacity.md) |
+| M2-03 | Design prepared | [Selected finite kernel and hand cases](evidence/M2-03-allocation-design.md); contracts/resource priority, installed shares and implementation remain open |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
 ## First implementation slice

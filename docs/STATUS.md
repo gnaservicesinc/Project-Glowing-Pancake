@@ -169,6 +169,9 @@ These are document/data/example checks only. No game/editor/runtime, UI performa
 using the implemented accounts, shared capacity, commands, flow runtime and saves.
 Freeze the finite common-snapshot allocation procedure with hand-worked unequal
 prices, rational budgets, free products and capacity contention before coding.
+The [selected kernel design](evidence/M2-03-allocation-design.md) now records a
+`P+E+1` round bound and those hand cases; contract terms and the common resource
+priority boundary must be connected during implementation.
 Add related selectors/
 quantifiers as their real owning entities arrive; retain that unfinished
 M1-06 work rather than inventing entities to close a checkbox. M1-07 adds built-in
