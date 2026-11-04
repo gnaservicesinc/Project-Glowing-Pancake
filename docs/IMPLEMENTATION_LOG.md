@@ -390,6 +390,7 @@ older saves without temporal fields remain readable for non-duration content.
 | Core Debug | 27/27 CTests pass, strict Apple Clang arm64 |
 | Focused schema/compiler | 206 content and 147 compiler checks pass |
 | Duration integration | 119 checks pass: elapsed/reset/gap/nesting, frozen snapshots, continuous exits, exact threshold reload, privacy and refusal/rollback |
+| [Native CI run 41903737919](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41903737919) for `543c451` | All six jobs across five targets pass 27/27 CTests, with matching primitive/content/resumed-state hashes and no compiler/test warnings; includes native Windows arm64 MSVC |
 
 Accepted tasks remain **5/52**. M1-06 still needs registered scoped
 variables/flags, checked expressions and related-entity selectors/quantifiers;

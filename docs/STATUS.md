@@ -23,6 +23,11 @@ M0 remains open. See the
   jobs across five targets, including GCC/Clang/MSVC and native Windows arm64.
   [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41895189273)
   qualifies this core behavior; native Qt deployment remains a separate gate.
+- Duration commit `543c451` also passes 27/27 CTests in each of all six native
+  jobs across five targets, with matching resumed-state hashes.
+  [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41903737919)
+  verifies the expanded core suite; M1-06's remaining forms and platform gate
+  remain open.
 - M1-04 now writes/loads the entire implemented checkpoint with exact resumed
   state, recovery copies, strict identity/integrity checks, three autosave slots,
   preferences, Unicode filenames, portable/standard paths and export. Campaign

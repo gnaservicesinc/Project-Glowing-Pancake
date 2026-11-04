@@ -97,7 +97,16 @@ history/cursors, wrong ownership/dates/types, duplicate rows and legacy input.
 Pure author/player traces verify cached/current distinction and hidden-history
 redaction without reads or mutation.
 
-Native CI results are recorded after observation in the implementation log.
+Implementation commit `543c451` passes [native CI run 41903737919](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41903737919)
+in all six jobs across five targets: macOS arm64 Apple Clang, Linux amd64
+GCC/Clang, Linux arm64 GCC, Windows amd64 MSVC and Windows arm64 MSVC.
+Every job log confirms 27/27 CTests, including duration and weighted branches,
+with no compiler/test warnings or errors. The separate deterministic foundation
+flow demo matches uninterrupted state on 2014-01-15 everywhere; its serialized
+state SHA-256 is `bb51ca52e0cbae783c38ca8c41ad461c12ed50a57d78a0ebcf0c27e4e55711f2`
+in all six jobs. This also verifies save-format parity for the additive fields.
+The two owned local build trees were cleaned after verification.
+
 No graphical launch, player-facing business scenario, package or release was
 created. The next bounded flow slice is registered scoped variables/flags and
 checked value expressions; related entities require real owning state later.
