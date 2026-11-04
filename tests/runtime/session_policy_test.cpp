@@ -102,8 +102,10 @@ void consumption_and_suspended_month() {
     auto program = integration_fixture::program(PGP_RUNTIME_FIXTURE_PATH, false);
     auto initial = runtime::begin_scenario(program, "scenario.foundation", "US-CA");
     initial.world.enabled_flows = std::vector<std::string>{};
-    initial.world.simulation.date = core::OrdinalDay{30}; // Jan31.
     core::Simulation reserved{initial.world.simulation};
+    for (unsigned day = 0; day < 30; ++day)
+        require(reserved.submit({reserved.snapshot()->revision, core::AdvanceDay{}}).accepted(),
+                "Accrue the opening month before the Jan31 choice fixture");
     const auto reservation = reserved.submit({reserved.snapshot()->revision,
         core::ReserveFunds{"Scheduled delivery", core::Cents{100}, true}});
     require(reservation.accepted(), "Reservation setup");

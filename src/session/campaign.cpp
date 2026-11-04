@@ -65,7 +65,13 @@ OperationResult Campaign::submit(const core::Command& command) {
     const auto* reservation = std::get_if<core::ReserveFunds>(&command.action);
     const bool irreversible = (reservation && !reservation->reversible) ||
         std::holds_alternative<core::ConsumeReservation>(command.action) ||
-        std::holds_alternative<core::ResolveOpeningChoice>(command.action);
+        std::holds_alternative<core::ResolveOpeningChoice>(command.action) ||
+        std::holds_alternative<core::AddRecurringObligation>(command.action) ||
+        std::holds_alternative<core::IssueInvoice>(command.action) ||
+        std::holds_alternative<core::SettleInvoice>(command.action) ||
+        std::holds_alternative<core::DrawDebt>(command.action) ||
+        std::holds_alternative<core::RepayDebt>(command.action) ||
+        std::holds_alternative<core::InvestEquity>(command.action);
     auto result = operate([&](auto& candidate) { return candidate.submit(command); }, irreversible);
     if (std::holds_alternative<core::AdvanceDay>(command.action) && !result.command.accepted() &&
         result.command.reason != runtime::RuntimeReason::stale_revision)

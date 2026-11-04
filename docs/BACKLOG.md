@@ -1,6 +1,6 @@
 # Implementation backlog
 
-Baseline 1.2 with 2026-11-04 event clarification · **5 of 52 tasks accepted; M0-03 and M1-03/04/06 in progress**.
+Baseline 1.2 with 2026-11-04 event clarification · **5 of 52 tasks accepted; additional implementation under M0-03, M1-03/04/06 and M2-01**.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Dependencies refer to completed acceptance criteria, not merely the presence of a commit. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
 ## M0 — Toolchain and platform proof
@@ -67,6 +67,16 @@ M2-01; related-entity authoring grows with actual business state. See the
 - [ ] **M2-02 — Shared capacity and project commitments.** Role: simulation. Depends: M2-01. Lease allocation, staff assignments, project reservations, actual work, and serving protection. Define checked compute-per-task inference profiles and separate non-compute support costs; demonstrate the slice's 20 CU/day serving reservation alongside 60 CU/day training. Daily assigned CU never exceed effective CU; lease power/support is not billed twice; cancellation releases only unconsumed reversible commitments. Prepare capacity ownership/compatibility contracts for later wholesale leasing without adding it to the slice.
 - [ ] **M2-03 — Contracts and demand allocation.** Role: simulation. Depends: M2-02. One enterprise segment, outside option, eligibility, price, useful-work demand, finite inference, refunds and deadlines. Freeze the common-snapshot task/budget/capacity allocation procedure and a justified deterministic work bound. Hand-work unequal prices, rational budget scaling, zero-price work, capacity contention and rounding residues before coding; never truncate a budget ratio to zero or silently lose refused tasks. Persist monthly installed shares and make switching costs depend on incumbency. Contract fees/usage cannot spend a segment budget twice. No entity-order advantage; M5 expands regions/channels.
 - [ ] **M2-04 — Three-year scenario and liquidity recovery.** Role: QA/simulation. Depends: M2-03, M1-04. Exercise the opening balance, settlements, scenario runner, 30-day workout, rescue and closure paths. Reports reconcile; saved continuation matches uninterrupted play; a solvent strategy is demonstrable.
+
+**M2-01 Mac implementation, 2026-11-04:** balanced causal postings, reservations
+versus recognized costs, actual-calendar-month accrual/settlement, partial
+receivables/payables, debt/interest/principal, equity conservation and pure
+projections are implemented through scenario/commands/saves. The optimized Mac
+build and eight focused CTests pass; the two-month opening example reconciles to
+$972,000 and resumes exactly from before settlement. See
+[evidence](evidence/M2-01-accounts.md). Formal acceptance retains M1-03's open
+prerequisite; this batch does not claim a viable three-year strategy. Next:
+M2-02 shared capacity and commitments.
 
 ## E1a — Slice authoring through forms and inspection
 

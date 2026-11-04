@@ -41,3 +41,11 @@ target_include_directories(pgp-variables-test SYSTEM PRIVATE "${PROJECT_SOURCE_D
 pgp_project_target(pgp-variables-test)
 add_test(NAME runtime.variables COMMAND pgp-variables-test)
 set_tests_properties(runtime.variables PROPERTIES TIMEOUT 30)
+add_executable(pgp-accounts-integration-test accounts_integration_test.cpp)
+target_link_libraries(pgp-accounts-integration-test PRIVATE pgp::persistence)
+target_include_directories(pgp-accounts-integration-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-accounts-integration-test PRIVATE
+    PGP_RUNTIME_FIXTURE_PATH="${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json")
+pgp_project_target(pgp-accounts-integration-test)
+add_test(NAME runtime.accounts-integration COMMAND pgp-accounts-integration-test)
+set_tests_properties(runtime.accounts-integration PROPERTIES TIMEOUT 30)

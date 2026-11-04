@@ -140,6 +140,12 @@ void apply_effect(Checkpoint& checkpoint, Activation& activation, const content:
             reserved = core::checked_add(reserved, reservation.reserved.value());
         if (after < reserved || pool < 0)
             fail(RuntimeReason::effect_rejected, "A cash transfer lacks unreserved funds or an authorized counterparty balance.");
+        // The foundation transfer has no business revenue semantics. Keep it
+        // separate from customer invoices and explicit costs in the journal.
+        if (world.simulation.accounts && amount != 0)
+            core::record_cash(*world.simulation.accounts, world.simulation.date, core::Cents{amount},
+                core::Account::equity, "foundation_cash_transfer",
+                "flow.transfer:" + std::to_string(state.next_receipt_id));
         world.simulation.cash = core::Cents{after};
         world.counterparty_cash = core::Cents{pool};
         add_receipt(checkpoint, activation, index, effect.operation, before, after,

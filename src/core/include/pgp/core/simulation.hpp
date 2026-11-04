@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pgp/core/calendar.hpp>
+#include <pgp/core/accounts.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
@@ -14,8 +15,8 @@
 
 namespace pgp::core {
 
-// Foundation commands reserve cash, not recognized accounting expenses. M2 adds
-// domain ledgers. This module never supplies forecasts with hidden random state.
+// Reservations are commitments; consumption recognizes an expense in scenarios
+// with accounts. Forecasts never receive hidden random state.
 enum class DayPhase { opening, awaiting_choice, work_ready, finished };
 enum class ReservationStatus { active, completed, cancelled };
 enum class CommandReason {
@@ -81,6 +82,9 @@ struct SimulationState {
     std::optional<std::uint64_t> pending_choice;
     std::vector<TransactionReceipt> receipts;
     RandomSnapshot random = RandomStreams{0}.snapshot();
+    // nullopt preserves legacy engineering fixtures without inventing history.
+    // Business scenarios reconcile the cash projection against their ledger.
+    std::optional<AccountsState> accounts{};
     auto operator<=>(const SimulationState&) const = default;
 };
 
@@ -93,6 +97,7 @@ struct SimulationSnapshot {
     Cents available;
     std::optional<std::uint64_t> pending_choice;
     std::vector<ReservationRow> reservations;
+    std::optional<AccountsReport> accounts{};
 };
 
 struct ReserveFunds { std::string name; Cents amount; bool reversible = true; };
@@ -101,8 +106,16 @@ struct CancelReservation { std::uint64_t id; };
 struct AdvanceDay {};
 struct SetPaused { bool paused; };
 struct ResolveOpeningChoice { std::uint64_t id; bool accept; };
+struct AddRecurringObligation { RecurringObligation obligation; };
+struct IssueInvoice { Invoice invoice; };
+struct SettleInvoice { std::string id; Cents amount; std::string key; };
+struct DrawDebt { Debt debt; std::string cause; };
+struct RepayDebt { std::string id; Cents amount; std::string key; };
+struct InvestEquity { std::string investor; Cents proceeds; BasisPoints acquired; std::string key; };
 using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReservation,
-                                   AdvanceDay, SetPaused, ResolveOpeningChoice>;
+                                   AdvanceDay, SetPaused, ResolveOpeningChoice,
+                                   AddRecurringObligation, IssueInvoice, SettleInvoice,
+                                   DrawDebt, RepayDebt, InvestEquity>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

@@ -22,12 +22,19 @@ std::uint64_t take_id(std::uint64_t& next) {
     }
     return next++;
 }
-Cents available(const SimulationState& state) {
+Cents reserved_cash(const SimulationState& state) {
     Cents reserved{0};
     for (const auto& row : state.reservations) {
         reserved = checked_unit_add(reserved, row.reserved);
     }
-    return checked_unit_subtract(state.cash, reserved);
+    return reserved;
+}
+Cents available(const SimulationState& state) {
+    return checked_unit_subtract(state.cash, reserved_cash(state));
+}
+AccountsState& accounts(SimulationState& state) {
+    if (!state.accounts) refuse(CommandReason::invalid_status, "This engineering fixture has no business accounts.");
+    return *state.accounts;
 }
 bool valid_text(std::string_view text) {
     return !text.empty() && text.size() <= 256 &&
@@ -77,6 +84,8 @@ void consume(SimulationState& state, std::uint64_t id, Cents amount) {
                "Consumption exceeds the unconsumed reserved amount.");
     }
     state.cash = checked_unit_subtract(state.cash, amount);
+    if (state.accounts) record_cash(*state.accounts, state.date, Cents{-amount.value()}, Account::expenses,
+        row.name, "reservation.consume:" + std::to_string(state.next_receipt_id));
     row.reserved = checked_unit_subtract(row.reserved, amount);
     row.consumed = checked_unit_add(row.consumed, amount);
     if (row.reserved == Cents{0}) {
@@ -111,6 +120,14 @@ void validate(const SimulationState& state) {
     (void)from_ordinal(state.end_date);
     if (state.date > state.end_date || state.cash.value() < 0) {
         invalid("Invalid campaign dates or negative unfinanced cash");
+    }
+    if (state.accounts) {
+        validate_accounts(*state.accounts);
+        const auto& ledger = *state.accounts;
+        if (accounts_report(ledger).cash != state.cash || ledger.starts_on > state.date ||
+            (ledger.closed_through ? advance_days(*ledger.closed_through, Days{1}) != state.date : ledger.starts_on != state.date) ||
+            std::any_of(ledger.postings.begin(), ledger.postings.end(), [&](const auto& entry) { return entry.day > state.date; }))
+            invalid("Business accounts do not reconcile with the saved cash or daily cursor");
     }
     if (state.reservations.size() > simulation_reservation_limit ||
         state.opening_actions.size() > simulation_opening_limit ||
@@ -335,7 +352,12 @@ CommandResult Simulation::submit(const Command& command) {
                 row.status = ReservationStatus::cancelled;
                 (void)receipt(next, "cancel_unconsumed_reservation", action.id);
             } else if constexpr (std::is_same_v<Action, AdvanceDay>) {
-                (void)receipt(next, "advance_day");
+                const auto cash_before = next.cash;
+                if (next.accounts) {
+                    close_accounts_day(*next.accounts, next.date, reserved_cash(next));
+                    next.cash = accounts_report(*next.accounts).cash;
+                }
+                (void)receipt(next, "advance_day", 0, checked_unit_subtract(next.cash, cash_before));
                 next.date = advance_days(next.date, Days{1});
                 if (next.date == next.end_date) {
                     next.phase = DayPhase::finished;
@@ -368,6 +390,36 @@ CommandResult Simulation::submit(const Command& command) {
                 next.pending_choice.reset();
                 next.phase = DayPhase::opening;
                 prepare_opening(next);
+            } else if constexpr (std::is_same_v<Action, AddRecurringObligation>) {
+                if (action.obligation.starts_on < next.date)
+                    refuse(CommandReason::invalid_argument, "A new obligation cannot accrue before its accepted date.");
+                add_recurring(accounts(next), action.obligation);
+                (void)receipt(next, "add_recurring_obligation");
+            } else if constexpr (std::is_same_v<Action, IssueInvoice>) {
+                issue_invoice(accounts(next), next.date, action.invoice);
+                (void)receipt(next, "issue_invoice");
+            } else if constexpr (std::is_same_v<Action, SettleInvoice>) {
+                const auto before = next.cash;
+                settle_invoice(accounts(next), next.date, action.id, action.amount, reserved_cash(next), action.key);
+                next.cash = accounts_report(*next.accounts).cash;
+                (void)receipt(next, "settle_invoice", 0, checked_unit_subtract(next.cash, before));
+            } else if constexpr (std::is_same_v<Action, DrawDebt>) {
+                if (action.debt.drawn_on != next.date)
+                    refuse(CommandReason::invalid_argument, "Debt must record its actual acceptance date.");
+                const auto before = next.cash;
+                draw_debt(accounts(next), next.date, action.debt, action.cause);
+                next.cash = accounts_report(*next.accounts).cash;
+                (void)receipt(next, "draw_debt", 0, checked_unit_subtract(next.cash, before));
+            } else if constexpr (std::is_same_v<Action, RepayDebt>) {
+                const auto before = next.cash;
+                repay_debt(accounts(next), next.date, action.id, action.amount, reserved_cash(next), action.key);
+                next.cash = accounts_report(*next.accounts).cash;
+                (void)receipt(next, "repay_debt", 0, checked_unit_subtract(next.cash, before));
+            } else if constexpr (std::is_same_v<Action, InvestEquity>) {
+                const auto before = next.cash;
+                invest_equity(accounts(next), next.date, action.investor, action.proceeds, action.acquired, action.key);
+                next.cash = accounts_report(*next.accounts).cash;
+                (void)receipt(next, "invest_equity", 0, checked_unit_subtract(next.cash, before));
             }
         }, command.action);
         validate(next);
@@ -391,6 +443,7 @@ CommandResult Simulation::submit(const Command& command) {
 std::shared_ptr<const SimulationSnapshot> Simulation::snapshot() const {
     return std::make_shared<const SimulationSnapshot>(SimulationSnapshot{
         state_.revision, state_.date, state_.phase, state_.paused, state_.cash,
-        available(state_), state_.pending_choice, state_.reservations});
+        available(state_), state_.pending_choice, state_.reservations,
+        state_.accounts ? std::optional{accounts_report(*state_.accounts)} : std::nullopt});
 }
 } // namespace pgp::core

@@ -24,6 +24,16 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     world.simulation.date = scenario->starts_on;
     world.simulation.end_date = scenario->ends_before;
     world.simulation.random = core::RandomStreams{scenario->seed}.snapshot();
+    auto accounts = core::opening_accounts(scenario->cash, scenario->starts_on, world.company_id);
+    accounts.holdings.clear();
+    for (const auto& [holder, shares] : scenario->ownership)
+        accounts.holdings.push_back({holder, shares, holder == "option_pool"});
+    for (const auto& [id, monthly] : scenario->monthly_commitments) {
+        if (monthly.value() > 0)
+            core::add_recurring(accounts, {id, monthly, scenario->starts_on, std::nullopt, id});
+    }
+    core::validate_accounts(accounts);
+    world.simulation.accounts = std::move(accounts);
     world.facts.at("company.has_compute_lease") = scenario->leased_capacity.value() > 0;
     if (const auto lease = scenario->monthly_commitments.find("compute_lease");
         lease != scenario->monthly_commitments.end())

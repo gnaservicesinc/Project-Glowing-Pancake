@@ -4,7 +4,7 @@ Updated 2026-11-04 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03 and M1-03/04/06 are in progress.** M0-03's local
+**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03, M1-03/04/06 and M2-01 have implemented work awaiting their remaining gates.** M0-03's local
 interface/resource/audio implementation passes; native/deployment gates remain.
 M0 remains open. See the
 [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
@@ -14,6 +14,16 @@ M0 remains open. See the
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- M2-01 now implements balanced accounts, daily actual-month accrual, protected
+  month-end/overdue settlements, receivables/payables, debt/interest/repayment,
+  conserving equity dilution and pure cash projections. Scenario creation,
+  commands, snapshots, autosave policy and strict exact saves share the ledger.
+  The opening example leaves **$972,000** after two months and one $12,000 license,
+  including a reload before settlement. An optimized Mac build and eight focused
+  CTests pass; [accounts evidence](evidence/M2-01-accounts.md) records the
+  implemented contract and limits. Formal acceptance retains M1-03's open
+  prerequisite; capacity/contracts and liquidity workouts remain ahead.
 
 - M1-06 now compiles/executes the current typed schema: five lifecycles,
   nested sequence/subflow delays and choices, selected root sources, owned
@@ -111,7 +121,7 @@ block Mac implementation. Keep build caches between batches.
 
 The build scaffold, shared version identity, deterministic primitives, typed
 content/compiler/runtime, transactional state, local persistence/campaign policy,
-worker/model bridge, CLI and development QML interface probe exist.
+worker/model bridge, opening business accounts, CLI and development QML interface probe exist.
 Business gameplay, Content Studio, finalized runtime
 content and packages do not. Existing native CI proves primitive parity on all
 five targets; the expanded foundation suite is checked separately. The headless
@@ -148,14 +158,16 @@ These are document/data/example checks only. No game/editor/runtime, UI performa
 
 ## Next task
 
-**Next Mac gameplay implementation: M2-01 accounts and obligations**, using the
-locally implemented commands, flow runtime and saves. Add related selectors/
+**Next Mac gameplay implementation: M2-02 shared capacity and project commitments**,
+using the implemented accounts, commands, flow runtime and saves. Demonstrate
+20 CU/day serving alongside 60 CU/day training without double billing leased
+compute/power; cancellation releases only unconsumed reversible commitments.
+Add related selectors/
 quantifiers as their real owning entities arrive; retain that unfinished
 M1-06 work rather than inventing entities to close a checkbox. M1-07 adds built-in
 committed-fact/seeded occurrence dispatch. M1-03 has a
 locally tested worker/model implementation; its formal acceptance remains gated
-by M0-03. M1-05's room shell can proceed alongside core work; M2-01 begins the
-balanced business accounts after the foundation contracts. These
+by M0-03. M1-05's room shell can proceed alongside core work. These
 local implementations do not close the outstanding platform gate. Content
 finalization, save migrations and packaging remain later work.
 

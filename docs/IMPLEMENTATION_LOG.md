@@ -15,6 +15,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M1-04 | In progress | Exact current-state file saves, recovery, autosaves/settings/export and application persistence policy implemented; full flow contract/prerequisites remain open; [evidence](evidence/M1-04-persistence.md) |
 | M1-06 | In progress | Schema-1 compiler/executor, five lifecycles, nested waits/choices, owned modifiers, weighted branches, durations, scoped variables and checked expressions implemented; related selectors/quantifiers remain required; [runtime](evidence/M1-06-runtime.md), [branches](evidence/M1-06-weighted-branches.md), [durations](evidence/M1-06-duration.md) |
 | M1-07 | Planned | Built-in major-event detection, scheduled/seeded world occurrences and news through the shared runtime; [event contract](EVENT_SYSTEM.md) |
+| M2-01 | Implemented on Mac; prerequisite open | Balanced accounts, actual-month costs, invoices, debt/equity, protected settlements and pure projections through commands/exact saves; [evidence](evidence/M2-01-accounts.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
 ## First implementation slice
@@ -427,3 +428,25 @@ Related-entity selectors/quantifiers remain M1-06 work as real business entities
 arrive. Next Mac gameplay work: M2-01 balanced accounts and obligations, with
 M1-05's room shell alongside the business loop. No platform/release qualification
 or formal completion of the remaining flow-language task is claimed.
+
+## M2-01 accounts and obligations — 2026-11-04
+
+Implemented balanced posting-derived accounts, actual-calendar-month recurring
+costs, protected partial settlements, receivables/payables, monthly debt
+interest/explicit repayment, conserving equity investment and pure cash
+projections. Scenario creation uses the authored opening terms. Commands,
+immutable reports, recovery/autosave policy and strict exact saves share the
+same ledger/cursor boundary. Legacy foundation saves retain their explicit
+absence of financial history. [Evidence](evidence/M2-01-accounts.md) and the
+[module contract](../src/core/ACCOUNTS.md) describe timing, rounding and limits.
+
+One optimized incremental Mac build passes, followed by eight distinct focused
+CTests at the changed accounting/command/save boundaries. The domain test passes
+80 checks and command/save integration passes 59. The runnable opening example
+leaves **$972,000** after two calendar months and one $12,000 data license, with
+an exact Jan31 pre-settlement reload. An added test was rebuilt incrementally;
+the full suite, Debug, native matrix, packaging and device checks were not run.
+
+Formal accepted count remains **5/52**, retaining M1-03's prerequisite gate.
+The implemented M2-01 work is ready for M2-02 shared capacity and commitments;
+contracts, a viable three-year strategy and liquidity recovery remain M2-03/04.

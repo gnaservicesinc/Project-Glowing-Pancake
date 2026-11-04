@@ -9,6 +9,7 @@ The [backlog](BACKLOG.md) records acceptance gates and the
 | --- | --- | --- |
 | Foundation demonstration | Atomic cash reservations, stale-command refusals, irreversible commitments and morning-choice continuation | Runnable with `pgp-headless --foundation-demo` |
 | Event and save demonstration | Real event execution, nested delays/choices, owned modifiers, local save/reload and exact resumed state | Runnable with `pgp-headless --flow-demo FILE [--save FILE.pgpsave]` |
+| Opening accounts demonstration | Two actual calendar months of costs, one data license, balanced reports and exact pre-settlement save/resume | Runnable with `pgp-headless --accounts-demo FILE`; [evidence](evidence/M2-01-accounts.md) |
 | M2-04: first business simulation | A three-year command-line scenario, reconciled accounts, finite capacity, contract economics, solvency and recovery | Requires foundation flows/persistence and M2-01 through M2-04 |
 | M3-02: first player-facing scenario | Office/Lab decisions, data/research/training/evaluation, contracts, news and choices, start to ending | Requires M2, the UI shell, E1a authoring/inspection and the baseline event pack |
 | M3-03: feature evaluation build | The scenario with delegation, warnings, recovery and scoring | Earliest complete slice for ordinary feature feedback |
@@ -27,6 +28,7 @@ E1a forms/inspection are required before the slice presentation.
 build/core-release/bin/pgp-headless --foundation-demo
 build/core-release/bin/pgp-headless --validate-content tests/content/fixtures/foundation.json
 build/core-release/bin/pgp-headless --flow-demo tests/content/fixtures/foundation.json
+build/core-release/bin/pgp-headless --accounts-demo tests/content/fixtures/foundation.json
 # Explicit optional save path; use a chosen local .pgpsave filename:
 build/core-release/bin/pgp-headless --flow-demo tests/content/fixtures/foundation.json --save /chosen/local/demo.pgpsave
 ```
@@ -46,13 +48,14 @@ This distinguishes useful engineering progress from a passed platform gate.
 M1-06 now executes the current typed schema and M1-04 persists its whole state.
 Application policy performs recovery saves before irreversible actions and
 monthly/final autosaves, preserving live play on IO errors. The broader flow
-language (variables/expressions and related-entity selectors/
-quantifiers) still needs implementation. Weighted narrative branches now retain
+language still needs related-entity selectors/quantifiers; scoped variables and
+checked expressions are implemented. Weighted narrative branches now retain
 their selected outcomes across delays, choices and saves; the
 [test evidence](evidence/M1-06-weighted-branches.md) is an engineering check.
 Daily duration predicates also preserve their opening-sample start/reset state
 and exact thresholds through choices and reload; see [duration evidence](evidence/M1-06-duration.md).
 M1-07 then adds
-built-in occurrence detection/dispatch. M2 supplies the first business loop.
+built-in occurrence detection/dispatch. M2-01 implements the opening accounts;
+M2-02/03/04 complete capacity, contracts and the first business loop.
 The UI shell can proceed alongside those core modules. Accepted-task counts
 remain conservative while the full contracts and prerequisites are open.

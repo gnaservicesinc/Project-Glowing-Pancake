@@ -63,6 +63,17 @@ Cross-platform regression, packaging and clean-device qualification remain
 release gates and do not block bounded Mac implementation. Keep portable code,
 offline behavior, safe local saves and explicit app launch throughout.
 
+The opening accounts example is runnable without Qt or a game window:
+
+```sh
+build/core-release/bin/pgp-headless --accounts-demo tests/content/fixtures/foundation.json
+ctest --test-dir build/core-release -R '^(core.accounts|runtime.accounts-integration|headless.accounts-demo)$' --output-on-failure
+```
+
+It isolates the authored opening accounts, consumes one $12,000 data license,
+settles January and February, and compares a resumed checkpoint. Its expected
+cash is $972,000; it does not exercise contracts or a viable three-year strategy.
+
 ## Compiler and configuration isolation
 
 On macOS, set `DEVELOPER_DIR` to an existing Xcode `Contents/Developer` directory

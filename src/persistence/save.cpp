@@ -2,6 +2,7 @@
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/core/build_identity.hpp>
 #include "json_support.hpp"
+#include "accounts_json.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -80,10 +81,18 @@ Json simulation_json(const core::SimulationState& state) {
         {"next_reservation_id",state.next_reservation_id},{"next_receipt_id",state.next_receipt_id},
         {"reservations",std::move(reservations)},{"opening_actions",std::move(opening)},
         {"opening_cursor",state.opening_cursor},{"pending_choice",optional_id(state.pending_choice)},
-        {"receipts",std::move(receipts)},{"random_streams",std::move(random)}};
+        {"receipts",std::move(receipts)},{"random_streams",std::move(random)},
+        {"accounting_mode",state.accounts?"business":"foundation"},
+        {"accounts",state.accounts?detail::accounts_json(*state.accounts):Json(nullptr)}};
 }
 core::SimulationState parse_simulation(const Json& value) {
-    detail::fields(value,"simulation",{"revision","date","end_date","phase","paused","cash_cents",
+    if (!value.is_object()) detail::invalid("simulation","Expected object");
+    Json prior_shape=Json::object();
+    for (const auto& [name,ignored]:value.items()) {
+        (void)ignored;
+        if (name!="accounts" && name!="accounting_mode") prior_shape[name]=nullptr;
+    }
+    detail::fields(prior_shape,"simulation",{"revision","date","end_date","phase","paused","cash_cents",
         "next_reservation_id","next_receipt_id","reservations","opening_actions","opening_cursor",
         "pending_choice","receipts","random_streams"});
     core::SimulationState result;
@@ -93,6 +102,16 @@ core::SimulationState parse_simulation(const Json& value) {
     result.phase=parse_enum<core::DayPhase>(value.at("phase"),phase_names);
     result.paused=detail::boolean(value.at("paused"),"paused");
     result.cash=Cents{detail::i64(value.at("cash_cents"),"cash_cents")};
+    // Only the original shape predating both fields is a legacy foundation
+    // checkpoint. New business saves cannot silently lose their ledger.
+    if (value.contains("accounts") != value.contains("accounting_mode"))
+        detail::invalid("simulation/accounting_mode","Accounting mode and accounts must be present together");
+    if (value.contains("accounting_mode")) {
+        const auto mode=detail::text(value.at("accounting_mode"),"simulation/accounting_mode",16);
+        if (mode=="business") result.accounts=detail::parse_accounts(value.at("accounts"));
+        else if (mode!="foundation" || !value.at("accounts").is_null())
+            detail::invalid("simulation/accounting_mode","Accounting mode does not match its ledger");
+    }
     result.next_reservation_id=detail::u64(value.at("next_reservation_id"),"next_reservation_id");
     result.next_receipt_id=detail::u64(value.at("next_receipt_id"),"next_receipt_id");
     result.opening_cursor=static_cast<std::size_t>(detail::u64(value.at("opening_cursor"),"opening_cursor",core::simulation_opening_limit));
