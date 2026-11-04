@@ -47,7 +47,9 @@ Collection chain(const Collection& original, unsigned frames) {
         payload.lifecycle.occurrence_scope = Scope::company;
         payload.nodes.clear();
         payload.entry_node = frame == frames ? "done" : "call";
-        payload.nodes.emplace("done", Node{.kind = NodeKind::end});
+        Node terminal{};
+        terminal.kind = NodeKind::end;
+        payload.nodes.emplace("done", std::move(terminal));
         if (frame != frames) {
             Node call{};
             call.kind = NodeKind::subflow; call.next = "done";
