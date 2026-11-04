@@ -2,12 +2,15 @@
 
 M0-02 implements build entry points and the headless scaffold. M0-03 adds the
 development interface probe, resource guards and optional playback adapter.
+M0-05 validates the shared component versions and embeds configure-time identity.
 There is no game simulation, Content Studio or distributable package yet.
 The [implementation log](IMPLEMENTATION_LOG.md) records acceptance evidence.
 
 ## Requirements and commands
 
-Use CMake 3.24+, Ninja, a C++20 compiler and Bash for `make.sh`. CTest is bundled
+Use CMake 3.24+, Ninja, a C++20 compiler, Python 3.10+ (standard library only),
+and Bash for `make.sh`. Python validates metadata at build time; the built core,
+headless executable and probe have no Python runtime dependency. CTest is bundled
 with CMake. The desktop configuration additionally requires Qt **6.12.0** Core,
 Gui, Network, Qml, Quick and QuickControls2. It builds the probe without
 linking Qt into core/headless targets. Qt Multimedia is not required. Nothing
@@ -123,8 +126,42 @@ targets in `src/platform`; QML stays in `qml/probe`. Add domain primitives in
 M1-01 without reversing these dependencies. Content, persistence and the separately packaged
 editor will be separate targets as their backlog tasks arrive.
 
-`project-versions.json` remains unchanged: this is a development skeleton, not a
-release. The shared version reader/build metadata is M0-05. No dependency fetch,
+`project-versions.json` remains unchanged: all three component versions are
+`0.0.0-dev`, with `phase: planning`. A Release build selects optimization; it does
+not turn those placeholders into a release. Configuration validates the manifest
+through the same offline reader used by diagnostics and future packaging tools.
+CMake receives the game's numeric SemVer core; the full suffix/build metadata
+remains in the generated core identity.
+
+```sh
+build/core-release/bin/pgp-headless --build-info
+python3 tools/project_versions.py read
+python3 tools/project_versions.py compare 0.2.0-rc.2 0.2.0-rc.10
+python3 tools/project_versions.py tag --product editor
+python3 tools/project_versions.py artifact --product game --os macos --arch arm64
+python3 tools/project_versions.py check-release --product game --tag game-v0.0.0-dev
+```
+
+`compare` prints -1/0/1 using SemVer precedence, including numeric prerelease
+ordering and ignoring build metadata for precedence. Artifact stems identify a
+prospective product/version/target; no archive is created and development binary
+names stay `pgp-headless`/`pgp-probe`. Probe `--version` and `--build-info` use the
+same identity (the latter exits before graphics/resource/audio setup).
+
+Git commit/state are explicitly a **configure-time observation**. The wrapper
+configures on every build. A direct `cmake --build` may retain the old observation
+after an ordinary source edit or new commit; rerun `cmake --preset core-release`
+(or the corresponding preset) before relying on it. Manifest/reader changes
+automatically trigger CMake reconfiguration. Exported trees or unavailable Git
+show `unavailable`, never an invented clean commit. The manifest SHA-256 is the
+raw version-file hash; runtime content hashing does not exist yet and is reported
+as `unavailable`.
+
+`check-release` inspects live Git and component identity, reports known blockers,
+and always exits nonzero with `release_ready: false` while later content,
+migration, payload-reuse and package qualification gates lack implementations.
+Passing a version/tag comparison cannot qualify a package. See the exact
+[version contract and remaining gates](VERSIONING.md). No dependency fetch,
 package upload or product-version rewrite is hidden in configuration.
 
 Build behavior follows the CMake contracts for [presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html),

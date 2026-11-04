@@ -1,5 +1,23 @@
 # Planning history
 
+## Event baseline clarification — 2026-11-04
+
+The user clarified that human-authored events augment a built-in playable
+baseline. AI-assisted development must also create major-event detection,
+news, random world incidents and technology developments. Add M1-07 for the
+shared detection/dispatch path and M3-05 for the eight-definition playable
+base-event pack; the backlog now has 52 tasks. This clarifies existing event
+scope and keeps the eight/120 coverage budgets, separate Studio and human
+authoring requirements. See [event coverage and tasks](EVENT_SYSTEM.md).
+
+Specify typed domain facts, data-defined occurrence rules, shared validated
+effects and localized presentation as extension boundaries. New systems use
+the same deterministic runtime, occurrence receipts, saved random streams and
+versioning. Ordinary news and baseline activity do not depend on manually
+written branching stories. AI assistance happens during development; gameplay
+remains local and offline. No production event runtime or playable-content
+acceptance is claimed by this design clarification.
+
 ## Baseline 1.2 — 2026-11-03
 
 Review all 21 sections of the supplied Gemini4 assessment against baseline 1.1 (`a218fc6`), current local evidence and primary technical documentation. Archive the review verbatim with a fingerprint and record every adopt/adjust/defer decision in [the review disposition](RECOMMENDATION_REVIEW.md). Source documents remain advisory; the original drafts and user-supplied files are unchanged.

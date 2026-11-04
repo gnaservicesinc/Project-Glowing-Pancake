@@ -1,6 +1,6 @@
 # Version tracking and release identity
 
-Planning baseline 1.2 · 2026-11-03 · Metadata initialized; automation is future implementation
+Planning baseline 1.2 · Updated 2026-11-04 · M0-05 identity reader implemented; content/release automation remains future work
 
 ## 1. One source, several different identities
 
@@ -68,9 +68,64 @@ Snap Store revisions identify uploaded builds separately from our developer-assi
 
 The workflow builds the game-only package from a fixed authorized release commit, validates the same content manifest as itch, attaches matching source/licenses/credits, and publishes only under the explicit release task. No editor binary or authoring cache enters the base game Snap. A future editor Snap would be a separately scoped product, not part of M10 by default.
 
-## 6. Implementation sequence and acceptance
+## 6. Implemented identity reader and remaining gates
 
-- M0-05 implements the metadata reader/checks and shared build identity. `project-versions.json` currently supplies only the initial tracking record.
+M0-05 adds [`tools/project_versions.py`](../tools/project_versions.py), a Python
+3.10+ standard-library build tool shared by CMake and future packaging consumers.
+It accepts only manifest format 1 with the exact declared fields, project ID,
+three valid SemVer strings and three positive compatibility integers. Duplicate
+JSON keys, unknown/missing fields, booleans/floating-point compatibility values,
+unknown phases and oversized/malformed data are rejected. Numeric version cores
+and compatibility values are bounded to 2,147,483,647 for the CMake/C++ metadata
+contract. SemVer comparison itself supports larger numeric identifiers within
+the tool's 256-character version limit.
+
+Accepted phases are `planning`, `development`, `release-candidate`, and `release`.
+The checked-in manifest remains `planning` with all `0.0.0-dev` placeholders;
+there is no product/content release. Changing phase is an explicit future source
+edit. A release-phase product cannot retain a prerelease suffix. Game/editor tags
+are independently derived, and a previous-version check uses the requested
+product's released history. Build metadata does not affect SemVer precedence and
+cannot make a reused version newer.
+
+[`cmake/VersionIdentity.cmake`](../cmake/VersionIdentity.cmake) runs validation
+before `project()`, supplies only the game's numeric core to CMake's version
+field, and preserves full versions in generated immutable
+[`BuildIdentity`](../src/core/include/pgp/core/build_identity.hpp). Core/headless
+have no Qt, Python-runtime or network dependency. The shared diagnostics also
+report compatibility integers, target OS/architecture, raw manifest SHA-256,
+configure-time Git commit/state and independent prospective game/editor artifact
+stems. A stem is a naming input, not an existing package. Product binary names
+remain unchanged. The runtime collection hash is explicitly `unavailable` until
+M1 validation implements it; the version-file hash is never substituted for it.
+
+Source identity is a snapshot at configuration, clearly labeled in diagnostics.
+The wrapper configures on each invocation; direct `cmake --build` alone need not
+notice a source edit/commit, so reconfigure before relying on that observation.
+Missing Git/exported trees report unavailable identity. See
+[build commands](BUILDING.md) for the CLI and explicit reconfigure instructions.
+
+The `check-release` command checks phase/placeholders, exact product tag,
+optional previous-version precedence and live Git cleanliness. It reports the
+isolated identity gate separately and **always returns nonzero with
+`release_ready: false`** until the following owning gates exist:
+
+- M1/E1: validated runtime collection hash, finalized content→game bump
+  requirements and compatibility/migration evidence.
+- M9: released-history/payload-reuse enforcement, dependency/source/license
+  manifest, native package and clean-device evidence.
+
+M10 later consumes the existing identity for game-only Snap metadata and
+qualified refresh behavior; it does not block the primary release's readiness.
+
+These checks cannot be supplied as a handful of command-line approval booleans.
+The current tool does not finalize content, rewrite manifests, create tags,
+publish artifacts or imply save compatibility. Future gate implementations must
+use actual owning artifacts and maintain this fail-closed behavior.
+
+## 7. Implementation sequence and acceptance
+
+- M0-05 implements the metadata reader/checks and shared build identity described above. The initial planning record remains unchanged; later release gates remain open.
 - M1-02/M1-06 implement schema/revision/hash/event-state contracts. E1a supplies a small safe validation/version tool for reviewed internal snapshots; E1b wraps that same writer in graphical batch finalization/version controls before M4. Neither stage bypasses revisions, conflict checks, recovery or package identity.
 - E2 adds impact/compatibility tools for broader content and tests save continuation across content revisions.
 - M9 connects tag/version/artifact/source/itch identity; M10 connects the existing reader to Snapcraft rather than inventing new version numbers.

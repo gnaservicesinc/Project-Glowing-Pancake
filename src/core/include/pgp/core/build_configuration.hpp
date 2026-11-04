@@ -4,7 +4,7 @@
 
 namespace pgp::core {
 
-// Development configuration only. Product identity is the separate M0-05 task.
+// Optimization/diagnostics configuration; product identity is in build_identity.hpp.
 struct BuildConfiguration {
     std::string_view configuration;
     bool developer_diagnostics;

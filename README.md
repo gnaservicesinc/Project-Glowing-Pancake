@@ -2,7 +2,7 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** implementation started 2026-11-03 against planning baseline 1.2. The core/headless build and toolchain inventory are complete; M0-03 now has a locally tested QML/Metal interface probe, reusable offline resource guards and optional native/silent audio. Cross-platform/deployment qualification remains open. Game simulation and Content Studio are still ahead. Follow [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
+**Current state:** 3 of 52 tasks complete as of 2026-11-04: toolchain inventory, core/headless build and shared version identity. M0-03 has a locally tested QML/Metal interface probe, reusable offline resource guards and optional native/silent audio. Cross-platform/deployment qualification remains open. Game simulation and Content Studio are still ahead. Follow [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
 
 ## Build the development skeleton
 
@@ -32,6 +32,7 @@ includes the rendered view and remaining qualification gates.
 | [Needs and access](docs/NEEDS_AND_ACCESS.md) | What is available, what is needed later, and what requires no service |
 | [Decisions and requirements](docs/DECISIONS_AND_REQUIREMENTS.md) | Original intent, AI suggestions, selected defaults, and deliberate changes |
 | [Content and assets](docs/CONTENT_AND_ASSETS.md) | Writing/art/audio direction, content counts, provenance, and licensing workflow |
+| [Built-in events](docs/EVENT_SYSTEM.md) | AI implementation tasks, playable base-event coverage, news and modular story extensions |
 | [Content Studio](docs/CONTENT_EDITOR.md) | Separate graphical repository editor: trigger/effect/event nodes, existing-content library and impact previews |
 | [Version tracking](docs/VERSIONING.md) | Game/editor/content versions, graphical revision updates, save compatibility and later Snap integration |
 | [QA and release](docs/QA_AND_RELEASE.md) | Verification, privacy, release gates, and playtesting |
@@ -49,7 +50,14 @@ The selected stack is C++20 + Qt 6.12.x/QML with CMake/Ninja. Desktop targets ar
 
 The game needs **no backend, hosted model, player account, analytics, or in-game updater**. Local saves, autosaves, preferences, and campaign history are normal features. Installation and updates are handled outside the game by the chosen distribution platform.
 
-Content Studio will be a separate download/source target for authors editing a development checkout, with a searchable current-content library and linked trigger → effects/events canvas, equivalent forms/outline, tooltips and before/after tests. It is excluded from the base game. [The version manifest](project-versions.json) currently reserves `0.0.0-dev` planning identities; M0-05 implements the reader and build identity. Automated version controls and packaging remain implementation tasks.
+Content Studio will be a separate download/source target for authors editing a development checkout, with a searchable current-content library and linked trigger → effects/events canvas, equivalent forms/outline, tooltips and before/after tests. It is excluded from the base game. [The version manifest](project-versions.json) reserves `0.0.0-dev` planning identities; M0-05 adds the validated reader and shared build identity. Automated content version controls and packaging remain later implementation tasks.
+
+Built-in rules will detect major simulated events and supply news, random world
+incidents and technology developments. AI-assisted development creates the
+playable baseline; human-authored stories enrich it. [The event contract and AI
+assignments](docs/EVENT_SYSTEM.md) describe the shared runtime and extension
+boundaries. This content/runtime work is planned; the game will run it locally
+and offline.
 
 E1a delivers forms/outline and inspection before the first playable's content. E1b completes the required node canvas, graphical batch finalizer and three-author study before M4. Baseline 1.2 also clarifies checked math/constant-2014 money, morning decisions and saved continuations, finite inference/wholesale capacity, persistent UI models and objective-loss feedback. These are planning changes; no runtime behavior has been tested.
 

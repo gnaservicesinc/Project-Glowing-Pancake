@@ -1,4 +1,4 @@
-#include <pgp/core/build_configuration.hpp>
+#include <pgp/core/build_identity.hpp>
 
 #include <iostream>
 #include <string_view>
@@ -15,11 +15,9 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     if (argc == 2 && std::string_view{argv[1]} == "--build-info") {
-        const auto build = pgp::core::build_configuration();
-        std::cout << "Project Glowing Pancake development scaffold\n"
-                  << "Configuration: " << build.configuration << '\n'
-                  << "Developer diagnostics: " << (build.developer_diagnostics ? "on" : "off") << '\n'
-                  << "Simulation: not implemented\n";
+        std::cout << "Project Glowing Pancake development scaffold\n";
+        pgp::core::write_build_identity(std::cout);
+        std::cout << "Simulation: not implemented\n";
         return 0;
     }
     std::cerr << "Unknown or extra arguments.\n" << usage;

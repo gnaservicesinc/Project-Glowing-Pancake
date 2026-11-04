@@ -1,10 +1,10 @@
 # Project status and next handoff
 
-Updated 2026-11-03 · Implementation started against planning baseline 1.2
+Updated 2026-11-04 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**2 of 50 tasks complete: M0-01 and M0-02; M0-03 is in progress.** Its local
+**3 of 52 tasks complete: M0-01, M0-02 and M0-05; M0-03 is in progress.** M0-03's local
 interface/resource/audio implementation passes; native/deployment gates remain.
 M0 remains open. See the
 [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
@@ -23,9 +23,13 @@ M0 remains open. See the
   build (five CTests), and eleven wrapper cleanup/exit-code checks. Release
   headless runtime linkage contains only system libc++/libSystem. No application
   is launched by a build, and no dependency is downloaded.
-- Component versions remain the planning placeholders pending M0-05. No game
-  release identity, package, workflow execution or cross-platform support claim
-  was created.
+- M0-05 now validates the shared manifest and embeds game/editor/content,
+  compatibility, target and configure-time source identity in core/headless and
+  probe diagnostics. SemVer ordering, independent tags and prospective artifact
+  names share one offline reader. Core Release/Debug pass 7 CTests each; desktop
+  Release passes 13; identity and wrapper suites pass 21 and 11 checks. Component
+  versions remain planning placeholders, the runtime content hash is explicitly
+  unavailable, and release readiness fails closed pending actual later gates.
 - Added `pgp-probe`, original bundled PNG/JPEG art, independent graphics/resource/
   audio libraries and an always-available silent mode. Metal checks pass at
   1280×720 with 100%/200% text, visible keyboard focus and accessible button name;
@@ -46,10 +50,10 @@ M0 remains open. See the
 
 ## Implementation state
 
-The build scaffold, CLI and development QML interface probe exist; gameplay,
+The build scaffold, shared version identity, CLI and development QML interface probe exist; gameplay,
 Content Studio, production content/assets, CI workflows and packages do not. The headless
 command currently prints usage/build configuration, not scenario outcomes.
-48 implementation tasks remain unchecked. E1a enables early gameplay tests;
+49 implementation tasks remain unchecked. E1a enables early gameplay tests;
 M4 requires both M3 and E1b. E2 closes before bulk content.
 
 M0-01 supersedes review-time spot checks: the Xcode roots resolve to one
@@ -77,12 +81,25 @@ These are document/data/example checks only. No game/editor/runtime, UI performa
 
 ## Next task
 
+**Next independently unblocked implementation: M1-01 deterministic state
+primitives**, including strong units, checked arithmetic, Gregorian dates and
+saved independent RNG streams. Its five-architecture/compiler parity acceptance
+must remain open until actually exercised. M0-05 is complete; versioned content,
+save migrations and packaging are later work.
+
+The 2026-11-04 event clarification adds M1-07 (built-in detection/dispatch) and
+M3-05 (AI-assisted playable base-event pack), with human stories augmenting the
+baseline. The eight-flow matrix covers milestones, evaluation/data recovery,
+contract results, liquidity, rivals, supplier opportunities, random world demand
+and recovery. See [event coverage, AI assignments and modular extension
+rules](EVENT_SYSTEM.md). These two tasks remain planned, with prerequisites.
+
 **Finish M0-03 qualification**, using the UI/build-release briefs and the checked
 local evidence. Run native Linux OpenGL and Windows OpenGL/D3D11 recovery,
 resource/audio checks and deployed import/dependency/license/relocation probes on
 hosted/native environments. Preserve the small local disk budget. Physical loss/
-driver/reader gaps must remain explicit. No store publication. M0-05 (shared
-version identity) is independently unblocked; M0-04 follows M0-03.
+driver/reader gaps must remain explicit. No store publication. M0-04 follows
+M0-03; M0 remains open despite M0-05 completion.
 
 No user answer blocks initial M0 inspection. Later needs include native ARM devices, manually arranged player/author sessions, final art/music/branding and publishing access; see [needs and access](NEEDS_AND_ACCESS.md).
 

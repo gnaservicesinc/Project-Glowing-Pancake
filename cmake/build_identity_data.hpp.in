@@ -1,0 +1,22 @@
+#pragma once
+
+namespace pgp::core::identity_data {
+inline constexpr BuildIdentity identity{
+    .project_id = "@PGP_VERSION_PROJECT_ID@",
+    .phase = "@PGP_VERSION_PHASE@",
+    .game_version = "@PGP_VERSION_GAME@",
+    .editor_version = "@PGP_VERSION_EDITOR@",
+    .content_version = "@PGP_VERSION_CONTENT@",
+    .content_schema = @PGP_VERSION_CONTENT_SCHEMA@,
+    .simulation_rules = @PGP_VERSION_SIMULATION_RULES@,
+    .save_format = @PGP_VERSION_SAVE_FORMAT@,
+    .source_commit = "@PGP_VERSION_SOURCE_COMMIT@",
+    .source_state = "@PGP_VERSION_SOURCE_STATE@",
+    .manifest_sha256 = "@PGP_VERSION_MANIFEST_SHA256@",
+    .runtime_content_hash = "unavailable",
+    .target_os = "@PGP_TARGET_OS@",
+    .target_architecture = "@PGP_TARGET_ARCHITECTURE@",
+    .game_artifact_stem = "@PGP_GAME_ARTIFACT_STEM@",
+    .editor_artifact_stem = "@PGP_EDITOR_ARTIFACT_STEM@"
+};
+} // namespace pgp::core::identity_data

@@ -23,17 +23,19 @@ All platform/store content rules must be rechecked near publication. The project
 | Products | One enterprise contract channel | 12 templates across six model channels; wholesale compute contracts alongside them |
 | Rivals | Two startups + bounded heavyweight warning | Six domestic, six international, three heavyweights scheduled |
 | Executive templates | Three key relationships | 24 templates, combined with local fictional name/trait generation |
-| Events | Eight definitions | 120 definitions, including recovery and opportunity events |
+| Events | Eight baseline definitions with selected story enrichment | 120 definitions across systemic rules and richer stories, including recovery and opportunity events |
 | Visual symbols | About 25 original/simple icons | About 60 reusable icons |
 | Music | Silent or one cleared test track | Five ambient, two tension/event tracks; short cues as needed |
 
-The 120-event budget allocates roughly 20 research/data, 20 product/customer, 20 people/board, 20 finance/competition, 20 infrastructure/community, and 20 policy/world definitions. At least one-third should offer opportunities or recovery rather than new punishment. Systemic facts also generate ordinary news/status messages without needing 120 elaborate branching stories.
+The 120-event budget allocates roughly 20 research/data, 20 product/customer, 20 people/board, 20 finance/competition, 20 infrastructure/community, and 20 policy/world definitions. At least one-third should offer opportunities or recovery rather than new punishment. These are coverage budgets for built-in rules and richer stories together, not a requirement to manually write 120 elaborate branching stories. Committed systemic facts generate ordinary news/status messages through localized templates. Coding agents create the base rules, seeded/scheduled world incidents and initial content during repository development; human stories augment them. The [event-system coverage matrix and AI assignments](EVENT_SYSTEM.md) define the eight-flow playable baseline and modular extension checks. No runtime model or live news feed is required.
 
 Every strategic path needs content: profitable specialist, open ecosystem, frontier lab, public-service partnership, infrastructure provider, and authority-seeking institution. Each has an early opportunity, an operational problem, a late-game scaling issue, and consequences that connect to at least two other systems.
 
 ## Graphical content production
 
 Human authors use the separately downloaded [Content Studio](CONTENT_EDITOR.md) to browse and maintain the repository's current content. A categorized library links events/flows, scenarios, research, hardware, people, policies, localization and asset records. Trigger boxes connect to ordered effects and events; node graph, forms and outline expose one definition with searchable references and useful scope/unit/tooltips. Ordinary content editing does not require scripts or raw JSON. The base game contains only reviewed runtime data. E1a first supplies complete forms/outline and inspection for slice events; E1b completes the linked-box canvas and graphical finalizer before M4.
+
+Built-in and AI-assisted definitions are first-class entries in the same library, with source/authoring provenance where relevant. Engineering fixtures may be created before Studio exists; reviewed slice content is inspected, managed and finalized through the E1a pipeline. Human creation of every event is not a prerequisite. Human review remains responsible for meaning, clarity and balance, and selected stories can attach to a baseline occurrence without duplicating its mechanics.
 
 Trigger truth/path/scope inspection and before/after effect previews are mandatory. Authors can test threshold boundaries, inspect affected targets and timed behavior, and catch inverted signs or wrong references. Human writing/review remains responsible for story meaning and balance; a valid graph is not an automatically good event. Finalized batches update versions through [the shared versioning workflow](VERSIONING.md), without publishing a game.
 
@@ -43,12 +45,14 @@ Each event needs:
 
 1. A stable ID and definition revision within a versioned content collection, localization keys, permitted era/scenario and content tags.
 2. Trigger facts based on actual simulation state, with prerequisites and an explanatory cause visible to the player.
-3. A concrete situation and a small set of distinct choices, including a reasonable defer/decline path where applicable.
+3. A concrete situation or truthful news template; an actionable event has a small set of distinct choices, including a reasonable defer/decline path where applicable. Informational bulletins need no artificial choice.
 4. Explicit lifecycle (once, recurring, interval, scheduled or continuous), relative/fixed anchor, occurrence scope, overlap/cooldown/expiry settings, per-effect typed targets, ordered links and due dates; no raw arbitrary code. Clearly identify terms still being negotiated.
 5. Conditional delayed consequences tied to the actual decision and later conditions, not an invisible moral score.
 6. A test fixture for eligibility/path/targets, threshold and effect direction, each choice/result, recurrence/continuous entry and exit, save/reload while pending, and the default at a disclosed deadline. Each state-changing segment produces an actual before/after trace.
 
 The [supplier example](examples/supplier-event.example.json) demonstrates a trigger and branching negotiation opportunity with actual-result nodes. The [lifecycle gallery](examples/flow-lifecycles.example.json) and [impact fixture](examples/trigger-impact.example.json) illustrate timing and direction checks. These are not complete production schemas. Do not mechanically grant the contract just because the event opened a negotiation. Decision text and mechanical effects must agree; a choice labeled no commitment must not spend money. All authored money uses constant-2014 cents. Presentation urgency (required decision, actionable inbox, informational digest) is explicit and uses actual simulated deadlines. News/dialogue/hidden presentation is independent of lifecycle, so a recurring or continuous rule does not need a special unrelated event language.
+
+Baseline detectors and story layers share a source occurrence/receipt. Declare whether a story replaces its presentation or follows it; neither path may reapply the system result. News may report only known committed results, with uncertainty disclosed. Seeded world incidents need explicit eligibility, chance, bounds, cooldown and expiry; they do not invent an effect solely to justify a headline.
 
 ## Visual production
 

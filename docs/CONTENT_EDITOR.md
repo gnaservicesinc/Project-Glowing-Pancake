@@ -4,7 +4,7 @@ Planning baseline 1.2 · 2026-11-03 · Design specification; no editor is implem
 
 ## 1. Purpose and product boundary
 
-Build **Glowing Pancake Content Studio**, a separate offline desktop application for human authors to create, inspect, organize, test, and maintain the game's repository content. Creativity and writing belong to the author; the tool makes conditions, targets, consequences, and mistakes visible. Editing ordinary content must not require hand-written scripts, JSON, or a programming background.
+Build **Glowing Pancake Content Studio**, a separate offline desktop application for human authors to create, inspect, organize, test, and maintain the game's repository content. The game also includes built-in systemic events and AI-assisted development content; humans enrich that baseline with stories and creative decisions. The tool makes conditions, targets, consequences, and mistakes visible and provides the same validation path for all origins. Editing ordinary content must not require hand-written scripts, JSON, or a programming background.
 
 The Studio is available as its own download and as source in this repository. It opens an explicitly selected development checkout and edits the canonical content there. The base game contains neither the editor nor its editing interfaces. This is a production authoring tool, not a player mod manager, Workshop client, or way to modify an installed game. Release packaging creates the game's validated content from reviewed repository data.
 
@@ -82,6 +82,8 @@ The library shows the content already in the selected checkout and all draft con
 Search by title, stable ID, text, tag, content type, presentation, lifecycle, scope, era/region, status, validation problem, and revision. Tables show status, references, revision and warnings. Opening an item selects its graph/form and highlights where it fits. “Used by” and “Uses” follow references in both directions. A filtered view can list all recurring events, all hidden logic, all dialogue awaiting text, or all flows affecting a chosen value.
 
 Provide create-from-template, duplicate with new IDs, rename display title, explicit ID refactoring, enable/disable, compare revisions, bulk tag, and safe delete. Deletion lists affected references and blocks dangling links; replacement/refactoring updates references as one reviewed change. Never confuse two similarly named events: show both display title and stable ID at links, search results, previews, and replacement dialogs. Existing manual edits are first-class repository content, not a separate lower-quality import path.
+
+Built-in baseline rules and AI-assisted repository definitions are equally browsable, editable and inspectable. Show their source occurrence dependencies and whether a story replaces a baseline presentation or schedules a follow-up, so authors can catch a duplicated consequence. E1a manages/finalizes the eight-flow [playable baseline](EVENT_SYSTEM.md); the game does not need a human to create each occurrence manually. Runtime AI and live news ingestion are outside this tool/game boundary.
 
 Draft definitions can be saved under `data/drafts/` and committed for collaboration; they are excluded from playable content. An invalid draft stays a draft and shows problems. Reviewed content cannot enter a release pack with errors. The library distinguishes enabled, disabled, draft, deprecated, and invalid definitions without relying on color alone.
 

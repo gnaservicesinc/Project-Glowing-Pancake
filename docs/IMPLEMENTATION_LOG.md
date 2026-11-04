@@ -8,6 +8,9 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M0-01 | Complete | [Toolchain evidence](evidence/M0-01-toolchain.md), two reproducible inventory tools and [five-target metadata observations](evidence/M0-01-qt-archives.json); no SDK installation |
 | M0-02 | Complete | [CMake/build entry points](BUILDING.md), separate core/headless targets, four configurations and safety checks below |
 | M0-03 | In progress | Local QML/Metal probe, reusable resource guards and optional native/silent audio implemented; native Windows/Linux/deployment qualification remains open |
+| M0-05 | Complete | Shared version manifest validation, generated core/headless/probe metadata, product tags/artifact stems and fail-closed readiness; verification below |
+| M1-07 | Planned | Built-in major-event detection, scheduled/seeded world occurrences and news through the shared runtime; [event contract](EVENT_SYSTEM.md) |
+| M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
 ## First implementation slice
 
@@ -99,3 +102,54 @@ file links, JSON parsing and all six pinned source/license/audio fixture hashes.
 After verification, this turn's three wrapper-owned build trees and root/agent
 scratch builds were removed. Source assets and the checked screenshot/evidence
 remain; unrelated ignored Finder files were preserved.
+
+## M0-05 shared version identity — 2026-11-04
+
+Implemented one standard-library Python reader for the checked-in manifest,
+SemVer precedence, independent game/editor tags and prospective artifact names.
+CMake validates before `project()`, passes its numeric version core separately,
+and generates an immutable C++ identity without Qt/Python runtime dependencies.
+Headless and probe diagnostics use that identity, including compatibility IDs,
+target, version-file hash and explicitly configure-time Git commit/state.
+
+The manifest remains unchanged: game/editor/content `0.0.0-dev`, phase
+`planning`, compatibility integers 1. The runtime collection hash is
+`unavailable`; a version-file hash is not substituted for it. The release checker
+rejects planning identities and always reports `release_ready: false` until
+content/migration/payload/package gates have actual implementations. Prospective
+filenames create no archives. No version, tag, content release or package was
+published. Python 3.10+ is now a documented build-time requirement only.
+
+| Check | Actual result |
+| --- | --- |
+| `./make.sh --core-only --test --jobs 2` | Release: 7/7 CTests pass |
+| `./make.sh --core-only --debug --test --jobs 2` | Debug: 7/7 CTests pass |
+| `./make.sh --test --jobs 2` | Desktop Release: 13/13 CTests pass, including probe identity and existing resource/audio/graphics contracts |
+| `python3 tools/tests/test_project_versions.py` | 21 tests pass: strict JSON/manifest fields and integers, malformed/deep data, SemVer precedence, CMake prerelease handling, independent tags/stems, source observations and fail-closed release checks |
+| `python3 tools/tests/test_build_wrapper.py` | Existing 11/11 cleanup/configuration/failure checks pass |
+| Headless `--build-info` and `otool -L` | Planning identities/compatibility and `macos/arm64` shown; only system libc++/libSystem runtime linkage |
+| Planning `check-release` invocation | Expected exit 1, identity blockers and remaining gates reported; `release_ready: false` |
+| Independent integration review | SemVer order/metadata/malformed cases pass; event dependency and opportunity-coverage gaps corrected |
+| Documentation/data consistency | Relative file links, code fences, seven planning JSON files, 52 unique tasks and acyclic dependencies pass; whitespace check passes |
+
+Native arm64 Mac using the existing Apple Clang 21.0.0/Xcode SDK and Qt 6.12.0;
+no new SDKs downloaded. The existing optional Qt TaskTree/plugin warning remains
+recorded in M0-03 evidence. These are build/identity checks, with no new visible
+window, audio device, graphics/deployment qualification or gameplay claim.
+Direct CMake builds need reconfiguration to refresh Git observations after source
+edits/commits; diagnostics and build instructions state that scope explicitly.
+
+The user also clarified event production and expansion. Added M1-07 and M3-05,
+[the event contract](EVENT_SYSTEM.md) and [AI task brief](../agents/tasks/base-events.md).
+The eight-definition slice budget now covers a built-in playable baseline and
+selective story enrichment together. Minimal rival fact producers precede pack
+validation, and three opportunity/recovery paths are explicit. Domain modules
+will share typed facts/effects, transactions, persistence and one flow runtime.
+These are planned event tasks; no event runtime or playable pack was implemented
+in this foundation task.
+
+Progress is **3 of 52 tasks complete; 49 unchecked**, with M0-03 still in progress.
+Next independently unblocked code work is M1-01 deterministic primitives; native
+M0-03 qualification remains an open platform gate. After verification, this
+task's three wrapper-owned build trees and small root scratch checker are
+removed; unrelated ignored Finder files are preserved.

@@ -219,7 +219,9 @@ Music is licensed existing music, selected primarily from ENDE.APP: coherent amb
 
 ## 12. Content and replayability
 
-Events combine systemic triggers with authored characters and specific dilemmas. Choices expose immediate commitments, plausible benefits, uncertainty, and affected audiences; hidden outcomes may exist, but hidden arbitrary penalties do not. Each major system needs opportunities, recoveries, and tradeoffs as well as crises.
+Built-in rules supply the playable event baseline: detect major simulated developments, report news and technology milestones, and create bounded scheduled or seeded world incidents. Not every occurrence needs a human-written story. Coding agents implement and populate that baseline during development; human-authored characters, negotiations and dilemmas augment it. The running game uses validated local definitions and templates, with no remote AI or live news feed. The [event contract and coverage matrix](EVENT_SYSTEM.md) assign this work explicitly.
+
+Events combine those systemic causes with selected richer stories. Choices expose immediate commitments, plausible benefits, uncertainty, and affected audiences; hidden outcomes may exist, but hidden arbitrary penalties do not. Each major system needs opportunities, recoveries, and tradeoffs as well as crises. Routine developments become a digest; significant actionable events expose their actual commitments and deadlines.
 
 Example: a supplier offers 40% cheaper compute for exclusivity, a board observer, and a three-year take-or-pay contract. The CFO favors runway relief; product leadership worries about lock-in; the chief scientist wants guaranteed capacity. The player may accept, negotiate volume/exit terms, choose a smaller plan, or delay the next model. Later power constraints or changing demand determine whether the deal was wise. No choice is scored as intrinsically virtuous.
 
@@ -227,9 +229,9 @@ Replayability comes from rival strategy, geography, discovery pathways, demand, 
 
 For minimum content counts, example event data, privacy rules, release criteria, and development order, use [content and assets](CONTENT_AND_ASSETS.md), [QA and release](QA_AND_RELEASE.md), and [the roadmap](ROADMAP.md).
 
-## 13. Human-authored content and the separate Studio
+## 13. Content production and the separate Studio
 
-Game content is produced with a separately downloadable graphical [Content Studio](CONTENT_EDITOR.md), whose source lives in the repository. It edits the repository's current definitions, text, scenarios and asset records. The base game ships only reviewed runtime content and has no editor, player mod manager, remote content service or authoring dependency.
+Game content includes built-in systemic rules, AI-assisted development content and human-authored stories, managed with a separately downloadable graphical [Content Studio](CONTENT_EDITOR.md), whose source lives in the repository. It edits the repository's current definitions, text, scenarios and asset records. All content shares validation/versioning; engineering fixtures may precede Studio, and the reviewed slice pack passes the E1a authoring path before M3 presentation. The base game ships only reviewed runtime content and has no editor, player mod manager, remote content service or authoring dependency.
 
 Authors connect trigger boxes to ordered effects/events, conditions, dialogue choices/results, delays and reusable flows. News, player dialogues and hidden logic can be once-only, recurring, scheduled, interval-based or continuously active as appropriate. A searchable library organizes existing content; forms/tooltips, a node graph and equivalent outline expose the same definition.
 

@@ -3,6 +3,7 @@
 
 #include <pgp/graphics/graphics_policy.hpp>
 #include <pgp/resources/resource_guards.hpp>
+#include <pgp/core/build_identity.hpp>
 
 #include <QCommandLineParser>
 #include <QGuiApplication>
@@ -16,6 +17,7 @@
 #include <QDebug>
 
 #include <cmath>
+#include <iostream>
 
 int main(int argc, char* argv[]) {
     QGuiApplication application(argc, argv);
@@ -23,14 +25,21 @@ int main(int argc, char* argv[]) {
     // including macOS systems whose default tab policy skips buttons.
     QGuiApplication::styleHints()->setTabFocusBehavior(Qt::TabFocusAllControls);
     QCoreApplication::setApplicationName(QStringLiteral("Project Glowing Pancake - interface probe"));
+    QCoreApplication::setApplicationVersion(QString::fromUtf8(pgp::core::build_identity().game_version));
     QCommandLineParser parser;
     parser.setApplicationDescription(QStringLiteral("M0 interface/resource/audio probe; simulation is not connected."));
     parser.addHelpOption();
+    parser.addVersionOption();
+    parser.addOption({QStringLiteral("build-info"), QStringLiteral("Print configure-time build identity, then exit.")});
     parser.addOption({QStringLiteral("smoke-test"), QStringLiteral("Render, check keyboard/images, then exit.")});
     parser.addOption({QStringLiteral("software"), QStringLiteral("Explicit software-renderer probe.")});
     parser.addOption({QStringLiteral("screenshot"), QStringLiteral("Write screenshot during --smoke-test."), QStringLiteral("path")});
     parser.addOption({QStringLiteral("text-scale"), QStringLiteral("Probe text scale (1 to 2)."), QStringLiteral("factor"), QStringLiteral("1")});
     parser.process(application);
+    if (parser.isSet(QStringLiteral("build-info"))) {
+        pgp::core::write_build_identity(std::cout);
+        return 0;
+    }
     bool valid_scale = false;
     const auto scale = parser.value(QStringLiteral("text-scale")).toDouble(&valid_scale);
     if (!valid_scale || !std::isfinite(scale) || scale < 1.0 || scale > 2.0 ||

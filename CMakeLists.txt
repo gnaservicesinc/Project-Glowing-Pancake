@@ -10,9 +10,45 @@ endif()
 option(PGP_CORE_ONLY "Build without looking for Qt or desktop dependencies" OFF)
 include(cmake/AppleToolchain.cmake)
 
-# Component/release identity comes from project-versions.json in M0-05.
-# Do not invent a product version for this development skeleton.
-project(ProjectGlowingPancake LANGUAGES CXX)
+include(cmake/VersionIdentity.cmake)
+# CMake's VERSION field accepts the numeric core, never a SemVer suffix.
+project(ProjectGlowingPancake VERSION "${PGP_VERSION_GAME_NUMERIC}" LANGUAGES CXX)
+
+string(TOLOWER "${CMAKE_SYSTEM_NAME}" PGP_TARGET_OS)
+if(APPLE)
+    set(PGP_TARGET_OS macos)
+endif()
+set(pgp_architecture "${CMAKE_SYSTEM_PROCESSOR}")
+if(APPLE AND CMAKE_OSX_ARCHITECTURES)
+    set(pgp_architecture "${CMAKE_OSX_ARCHITECTURES}")
+elseif(MSVC AND CMAKE_CXX_COMPILER_ARCHITECTURE_ID)
+    set(pgp_architecture "${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}")
+endif()
+string(TOLOWER "${pgp_architecture}" pgp_architecture)
+if(pgp_architecture MATCHES "^(arm64|aarch64)$")
+    set(PGP_TARGET_ARCHITECTURE arm64)
+elseif(pgp_architecture MATCHES "^(amd64|x86_64|x64)$")
+    set(PGP_TARGET_ARCHITECTURE amd64)
+else()
+    set(PGP_TARGET_ARCHITECTURE unqualified)
+endif()
+if(NOT PGP_TARGET_OS MATCHES "^(macos|linux|windows)$")
+    set(PGP_TARGET_OS unqualified)
+endif()
+foreach(pgp_product game editor)
+    string(TOUPPER "${pgp_product}" pgp_product_upper)
+    if(PGP_TARGET_OS STREQUAL "unqualified" OR PGP_TARGET_ARCHITECTURE STREQUAL "unqualified")
+        set(PGP_${pgp_product_upper}_ARTIFACT_STEM unqualified)
+    else()
+        execute_process(COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/project_versions.py"
+            artifact --product "${pgp_product}" --os "${PGP_TARGET_OS}" --arch "${PGP_TARGET_ARCHITECTURE}"
+            RESULT_VARIABLE pgp_artifact_result OUTPUT_VARIABLE PGP_${pgp_product_upper}_ARTIFACT_STEM
+            ERROR_VARIABLE pgp_artifact_error OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if(NOT pgp_artifact_result EQUAL 0)
+            message(FATAL_ERROR "Cannot derive artifact identity: ${pgp_artifact_error}")
+        endif()
+    endif()
+endforeach()
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

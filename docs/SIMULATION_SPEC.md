@@ -70,6 +70,14 @@ Trigger visualization and before/after previews execute on copied valid test sta
 
 Continuous-preview fixtures cover entry, an unchanged active tick, and exit through the normal lifecycle evaluator. Supply a valid fixture transition that satisfies exit conditions; merely advancing a day need not do so. A separately labeled synthetic cleanup probe may force removal on copied state, but proves only cleanup, not natural exit eligibility/timing. Compare this modifier's contribution and preserve concurrent base/other-modifier changes; do not demand every field return to an old absolute baseline. Re-entry and reload must not duplicate ownership.
 
+## 2b. Built-in event sources and news
+
+The [event-system contract](EVENT_SYSTEM.md) defines the playable baseline and extension rules. Owning systems publish typed facts only from committed results, with a source receipt/occurrence, scope, date/phase and knowledge visibility. Registered detectors use changed facts and due-time boundaries to identify major developments, threshold entry/re-entry and scheduled/seeded world incidents. They activate the existing shared flow runtime; they do not supply another effect executor or apply a completed system result twice.
+
+An occurrence key connects its cause, semantic fact and scope to consumed activations, optional story layers and news. Persist that identity, selected random outcome/bindings, occurrence limits, cooldowns and pending flow state; reloading, revisiting an inbox item or changing a definition revision cannot repeat the same underlying consequence. A story declares presentation replacement or explicit follow-up to the existing occurrence. Baseline and story cannot independently charge or reward the same incident.
+
+Seeded incidents declare integer chance/weights, eligibility, cadence, bounds, no-event outcome and expiry in data. Use the owning system's saved stream for its sampling, and narrative/content randomness only for narrative branches; producing a headline draws nothing. End-of-day detections queue next-opening work; scheduled opening occurrences follow phase 2. News projects actual committed outcomes with player-visible causes. Group ordinary developments in a digest while retaining source records and required decisions/deadlines. No live news ingestion or runtime AI is part of simulation.
+
 ## 3. Opening balance and the first experiment
 
 The vertical slice covers 2014-01-01 through 2017-01-01. It offers three headquarters choices (California, Texas, Washington), cloud leasing, six research nodes, four dataset offers, one enterprise contract family, one product channel, two startup rivals, and one heavyweight with a limited warning/mobilization behavior. It is a three-year game with a complete start, tutorial, recovery route, and ending.

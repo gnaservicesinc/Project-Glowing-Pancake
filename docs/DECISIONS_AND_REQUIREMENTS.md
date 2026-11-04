@@ -8,6 +8,8 @@ The original planning request was to expand/finalize the design, draft a roadmap
 
 The follow-up request adopts a human-oriented graphical repository-content editor: triggers connected to effects/events; news, branching dialogues/results and hidden logic; flexible lifecycles; browsing/managing current content; separate downloads/source; version controls and future Snap linkage. The user clarified that Clausewitz/Plague Inc. are conceptual references, and suggested URLAlchemist/Blender-style nodes. Trigger-impact visualization should help catch mixed references, reversed effects and misunderstood conditions. This follow-up updates planning/tracking metadata, not an instruction to implement/publish the editor now.
 
+The 2026-11-04 continuation explicitly assigns AI-assisted development of playable base events: detecting major simulated developments, news, random world incidents and technology progress. Human-made events augment that baseline with more interesting stories rather than being required for every occurrence. Systems must support modular growth. This changes the content-production assumption and task coverage; the game's offline/no-remote-AI boundary remains. [Event contract and assignments](EVENT_SYSTEM.md) record the adopted implementation direction.
+
 The user-authored `plan.txt` establishes the intended game and important preferences. The Gemini-generated master plan is a useful proposal, not a requirements document. Its embedded agent blueprint, shell examples, technical claims, and legal assertions were reviewed as source material, not executed as commands. Both originals are archived verbatim in [reference](reference/README.md).
 
 Two direct clarifications during planning supersede the original privacy wording:
@@ -50,6 +52,8 @@ The final documents record adopted design decisions. Mechanical thresholds and s
 | R27 | Update/track versions and later connect Snap | Central metadata, safe internal batches then graphical finalization, artifact identity and later Snap adoption | M0-05, E1A-04, E1B-02, M9–M10 |
 | R28 | Prevent inverted/mixed events/effects; understand trigger impacts | Typed targets/units, truth/path/target inspection, before/after changes, boundary fixtures, reference and coverage checks | M1-06, E1A-03, E2 |
 | R29 | Familiar concepts without strict imitation | Original node/forms/library workflow informed by Clausewitz, Plague Inc., URLAlchemist and Blender concepts | E1–E2 |
+| R30 | AI tasks create playable built-in events; human stories augment them | Typed causal detection, bounded scheduled/seeded world incidents, technology/news templates and an eight-flow baseline using the shared runtime | M1-07, M3-05, M8-01 |
+| R31 | Add/expand systems with modular behavior | Small system providers, explicit registry/dependency contracts, shared occurrence/effect/persistence boundaries and extension fixtures | M1 onward |
 
 ## Recorded decisions
 
@@ -80,6 +84,8 @@ The final documents record adopted design decisions. Mechanical thresholds and s
 | D23 | Complete serving and infrastructure contracts without expanding M3 | Explicit compute per task and separate support cost in M2; wholesale owned-capacity leasing in M5 supports the promised infrastructure path. One capacity reservation and one product task attribution, no double-counted host share. |
 | D24 | Keep strict century-end objectives, expose irreversible breaches | Immediate explanation/postmortem/continuation for failed final Domination/Utopia checks. Monopoly uses aggregate final-five-year work. Rolling early victories and grace allowances are deferred balance changes. |
 | D25 | Correct selective recommendations without speculative scope | Concrete evaluation findings and bounded delegation clarify existing systems. Close option-pool mechanics in M4; defer spin-off rivals, rigid hardware curves and older-Qt support until evidence warrants them. All review dispositions are recorded, not silently treated as new user requirements. |
+| D26 | Built-in event baseline plus selective human story enrichment | Coding agents implement/populate causal news and bounded world events in repository development. Eight/120 budgets cover baseline and stories together; no runtime AI/live news service. All origins use the shared Studio/validation/versioning path. |
+| D27 | Modular event providers share one runtime | New systems register typed facts/effects and publish committed occurrences; stories reuse occurrence identity to avoid duplicate consequences. Data-only additions reuse existing operations; new mechanics require tested core changes, without dynamic plugins or another event interpreter. |
 
 ## What was retained from Gemini
 
