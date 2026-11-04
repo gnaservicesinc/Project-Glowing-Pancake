@@ -172,9 +172,20 @@ integration reviews found no blocking issue.
 
 Added a pinned core-only native workflow for all five targets with GCC, Clang
 and MSVC, including native Windows ARM64. All Linux/Windows jobs pass 13 CTests
-and the exact frozen fixture; hosted Mac is waiting for runner assignment.
+and the exact frozen fixture. Hosted Mac subsequently passed the same checks.
 The first Windows run found VS 2026 images instead of VS 2022; generator/instance
 discovery now uses bundled vswhere and CMake capabilities and passes both targets.
-**M1-01 remains in progress, 3 of 52 tasks complete**. This is not gameplay,
+**M1-01 is complete, 4 of 52 tasks complete; 48 unchecked**. Implementation
+`56bf6db` plus CI correction `8dcf6e5` passes all six jobs in
+[native run 41863103816](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41863103816).
+Every native job passes 13 CTests and the exact normalized fixture SHA-256
+`fa9f8690ae06f649aa0f7f6332c28b46ccd5af7b0819744d84528a62089a0868`.
+Windows logs directly confirm Hostarm64/arm64 and Hostx64/x64 compiler tools;
+Mac uses Apple Clang 17, Linux GCC 13/Clang 18 and Windows MSVC 19.51.
+Evidence uploads and final cleanup completed without logged errors.
+This is not gameplay,
 production JSON/save loading, a market allocator or M0 deployment qualification.
-The next step is native parity; M1-02 content registry/validation follows.
+M1-02 content registry/validation is next. M0-03/04's native graphics/audio/
+deployment gates remain open. This task's three wrapper-owned build trees and
+small arithmetic/primitive scratch outputs were removed; unrelated Finder files
+were preserved. No product release, SDK installation or app launch occurred.

@@ -1,7 +1,7 @@
 # M1-01 — Deterministic state primitives
 
-Implemented 2026-11-04. Linux and Windows native parity passes; the hosted Mac
-job is pending. M1-01 remains unchecked until all five targets pass.
+Completed 2026-11-04. All six native compiler jobs pass across all five targets,
+including exact 1,000-day canonical fixture parity.
 
 ## Modules and bounds
 
@@ -111,20 +111,23 @@ snapshots during this observation and was not treated as completion evidence.
 | Linux amd64 Clang 18.1.3 | 13/13 CTests and exact golden match |
 | Windows amd64 MSVC 19.51.36260.0 / VS 18 2026 | 13/13 CTests and exact golden match |
 | Windows arm64 MSVC 19.51.36260.0 / VS 18 2026 | 13/13 CTests and exact golden match |
-| Mac arm64 | Hosted job pending; local Apple Clang 21.0.0 passes |
+| Mac arm64 Apple Clang 17.0.0 (clang-1700.0.13.5) | 13/13 CTests and exact golden match; local Apple Clang 21.0.0 also passes |
 
-Every completed native job records normalized fixture SHA-256
+Every native job records normalized fixture SHA-256
 `fa9f8690ae06f649aa0f7f6332c28b46ccd5af7b0819744d84528a62089a0868`.
 Windows logs directly identify `Hostarm64/arm64/cl.exe` and
 `Hostx64/x64/cl.exe`, confirming native compiler hosts as well as targets.
-All five completed jobs successfully finalized/uploaded evidence and completed
+All six jobs successfully finalized/uploaded evidence and completed
 post-job cleanup without logged errors.
 
-Resume the pending
-[Mac job](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41863103816/job/126690116324)
-before marking M1-01 complete. At the last observation it had no assigned runner,
-executed steps or failure annotations. Local native Mac tests pass; the hosted
-five-target acceptance is deliberately still open.
+The [Mac job](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41863103816/job/126690116324)
+waited for runner assignment, then completed on `macos-15-arm64`, including
+13/13 CTests in 1.18 seconds and evidence artifact `13342016386`. Windows ARM64/
+amd64 artifacts are `13339748796` / `13340817152`; Linux GCC amd64/arm64 and
+Clang amd64 artifacts are `13341531320`, `13341860128`, `13340437822`. Artifact
+retention is seven days; the checked-in golden/fingerprint and run links preserve
+the durable test contract and observed result. This closes M1-01 primitive
+parity, while M0 graphics/audio/deployment acceptance stays separate.
 
 ```sh
 ./make.sh --core-only --test --jobs 2
