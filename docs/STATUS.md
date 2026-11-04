@@ -22,6 +22,10 @@ M0 remains open. See the
   CTests; desktop Release/Debug pass 26 each. The M0-03 prerequisite remains open;
   file saves and live room-view qualification remain their own tasks.
   [Command evidence](evidence/M1-03-commands.md)
+- The expanded Qt-free foundation suite passes 19/19 CTests in all six native
+  jobs/five targets after an MSVC naming-warning correction, including native
+  Windows ARM64. [Native result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41869067266)
+  covers content/commands and the original primitive oracle, not deployed Qt.
 
 - M1-01 implements strong units/IDs, portable checked wide arithmetic,
   Gregorian dates, seven saved RNG streams and strict integer-token readers.

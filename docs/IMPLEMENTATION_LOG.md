@@ -266,3 +266,11 @@ reused if-initializer names under warning C4456 with warnings-as-errors. The
 validator now gives each typed pointer a distinct name, preserving the strict
 compiler policy. Local syntax checking with additional `-Wshadow -Werror`
 passes; the corrected native run is recorded after observation.
+
+[Corrected run 41869067266](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41869067266)
+tests `73d84bd` and **passes all six native jobs**. Decoded job logs confirm
+19/19 CTests for Mac arm64 Apple Clang 17, Linux amd64/arm64 GCC 13,
+Linux amd64 Clang 18, Windows amd64 MSVC 19.51 and native Windows arm64 MSVC 19.51.
+The original primitive oracle also passes in every job. This qualifies the
+Qt-free foundation contracts across the five targets; it does not close M0's
+graphics/audio/deployment gate or claim a playable game.
