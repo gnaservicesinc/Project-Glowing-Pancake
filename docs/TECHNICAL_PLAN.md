@@ -42,12 +42,15 @@ Before writing the matrix, M0-01 records actual Qt archive/module availability f
 
 The following is the target structure. M0-02 implements `src/core`, `src/headless`,
 `tests` and `cmake`; M0-03 adds `src/app`, `src/platform` adapters and `qml/probe`.
-Other subsystems arrive with their backlog tasks.
+M1 now adds typed content, executable flow runtime, local persistence and a
+campaign policy owner. The room shell/editor and business systems remain ahead.
 
 ```text
 src/core/            # dates, IDs, units, state, commands, deterministic daily systems
 src/persistence/     # save/replay serialization and migrations, no UI dependency
 src/content/         # typed definitions, validation, scenario/catalog loading
+src/runtime/         # shared flow compiler, typed inspection and executor
+src/session/         # campaign command owner and local persistence policy
 src/editor/          # separate Content Studio application, repository IO and authoring bridge
 src/headless/        # scenario runner, replay and benchmark commands
 src/app/             # application lifecycle and dependency wiring

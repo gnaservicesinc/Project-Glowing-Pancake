@@ -1,19 +1,14 @@
 #include "content_validation.hpp"
+#include "content_file.hpp"
 
 #include <pgp/content/collection.hpp>
 
-#include <fstream>
 #include <ostream>
 #include <string>
 
 int validate_content_file(const char* path, std::ostream& output, std::ostream& errors) {
     try {
-        std::ifstream input(path, std::ios::binary);
-        if (!input) { errors << "Cannot open local content file.\n"; return 3; }
-        std::string document(pgp::content::maximum_document_bytes + 1, '\0');
-        input.read(document.data(), static_cast<std::streamsize>(document.size()));
-        if (input.bad()) { errors << "Cannot read local content file.\n"; return 3; }
-        document.resize(static_cast<std::size_t>(input.gcount()));
+        const auto document = read_content_file(path);
         const auto collection = pgp::content::load_collection(document, pgp::content::foundation_registry());
         output << "Valid content schema " << collection.schema << "; version " << collection.content_version
                << "; definitions " << collection.definitions.size() << '\n';

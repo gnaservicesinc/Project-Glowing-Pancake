@@ -104,6 +104,20 @@ jobs:
       - name: Record canonical fixture on Windows
         if: runner.os == 'Windows'
         run: python tools/check_primitive_fixture.py --executable build/ci-core/bin/Release/pgp-primitive-fixture.exe --output build/ci-core/primitive-observed.json
+      - name: Record flow and resumed save identity on Unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          build/ci-core/bin/pgp-headless --flow-demo tests/content/fixtures/foundation.json > build/ci-core/flow-observed.txt
+          cat build/ci-core/flow-observed.txt
+      - name: Record flow and resumed save identity on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $flow = & build/ci-core/bin/Release/pgp-headless.exe --flow-demo tests/content/fixtures/foundation.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $flow | Set-Content build/ci-core/flow-observed.txt -Encoding utf8
+          Get-Content build/ci-core/flow-observed.txt
       # These are tiny test records, not game/editor packages or SDK caches.
       - name: Retain compiler and parity evidence
         if: always()
@@ -116,5 +130,6 @@ jobs:
             build/ci-core/Testing/Temporary/LastTest.log
             build/ci-core/ctest-results.xml
             build/ci-core/primitive-observed.json
+            build/ci-core/flow-observed.txt
           retention-days: 7
           if-no-files-found: warn

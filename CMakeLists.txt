@@ -58,6 +58,9 @@ include(cmake/ProjectOptions.cmake)
 
 add_subdirectory(src/core)
 add_subdirectory(src/content)
+add_subdirectory(src/runtime)
+add_subdirectory(src/persistence)
+add_subdirectory(src/session)
 add_subdirectory(src/headless)
 
 if(NOT PGP_CORE_ONLY)

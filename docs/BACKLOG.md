@@ -1,6 +1,6 @@
 # Implementation backlog
 
-Baseline 1.2 with 2026-11-04 event clarification · **5 of 52 tasks complete; M0-03 and M1-03 in progress**.
+Baseline 1.2 with 2026-11-04 event clarification · **5 of 52 tasks accepted; M0-03 and M1-03/04/06 in progress**.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Dependencies refer to completed acceptance criteria, not merely the presence of a commit. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
 ## M0 — Toolchain and platform proof
@@ -29,6 +29,18 @@ M1-01 passes locally and in all six native compiler jobs across five targets. Se
 - [ ] **M1-05 — Accessible room shell.** Role: UI. Depends: M1-03. Office/Lab navigation, shared status/time controls, inbox, inspector, compact management view, keyboard focus, text scaling, pause/step controls, and local settings. Verify at 1280×720 and 200% scaling without blocking core actions. At running snapshot rates, test sorted rows, insert/remove/move, scroll anchors, selection and keyboard/edit focus without routine model resets.
 - [ ] **M1-06 — Shared trigger/flow compiler and runtime.** Role: simulation with content-editor brief. Depends: M1-02, M1-03. Implement typed triggers, explicit per-effect targets, relative/fixed interval anchors, news/dialogue/hidden nodes, five lifecycles and owned modifiers. Ordered sequences/subflows use a persistable continuation stack bounded initially to eight frames; reject excess nesting and lint early-branch delays. Expose clause/path/target/delta traces and natural continuous entry/tick/exit plus separately labeled synthetic cleanup probes. Verify nested waits/choices, timing, receipts, budgets and concurrent-modifier cleanup; M1-04 adds reload parity.
 - [ ] **M1-07 — Detect and dispatch built-in world events.** Role: simulation/content; AI implementation task. Depends: M1-06, M1-04. Implement the [base-event contract](EVENT_SYSTEM.md): typed committed facts detect major milestones; scheduled and seeded occurrence rules supply world incidents and technology developments; localized news summarizes actual outcomes. Use the shared registry/flow runtime and validated effects, with stable occurrence identities, scoped deduplication/cooldowns, bounded queues and saved stream state. Test replay/reload without duplicate consequences or rerolls, preview isolation, quiet-period pacing and adding a registered event family without editing UI logic. Human-authored stories may extend the same occurrences; they are not required for ordinary world activity.
+
+**M1-04/06 implementation batch, 2026-11-04:** schema-1 compilation, all five
+lifecycles, nested sequence/subflow waits/choices, modifier ownership, traces,
+bounded execution, exact file reload, recovery/autosave/settings/export and
+application persistence policy are implemented. [Runtime evidence](evidence/M1-06-runtime.md),
+[save evidence](evidence/M1-04-persistence.md) and [integration log](IMPLEMENTATION_LOG.md)
+record the tested behavior. Both tasks remain unchecked: M1-06 still needs the
+specification's broader variable/expression, duration, related-entity/quantifier
+and weighted-random semantics, plus its prerequisite gate; M1-04 waits for those
+runtime/pending-state requirements and prerequisite acceptance. Unknown forms
+fail explicitly today. UI save/room discovery remains M1-05. This implementation
+does not complete the business scenario or alter the promised scope.
 
 ## M2 — Headless business loop
 

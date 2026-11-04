@@ -12,6 +12,8 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M1-01 | Complete | Strong units, checked arithmetic, dates, saved RNG streams and exact 1,000-day primitive parity across six native compiler jobs/five targets |
 | M1-02 | Complete | Typed content schema/registry, bounded offline loader, 11-definition engineering fixture and 140 validation assertions; [evidence](evidence/M1-02-content.md) |
 | M1-03 | In progress | Local commands, morning continuation, immutable worker and stable model diffs pass; M0-03 prerequisite qualification remains open; [evidence](evidence/M1-03-commands.md) |
+| M1-04 | In progress | Exact current-state file saves, recovery, autosaves/settings/export and application persistence policy implemented; full flow contract/prerequisites remain open; [evidence](evidence/M1-04-persistence.md) |
+| M1-06 | In progress | Schema-1 compiler/executor, five lifecycles, nested waits/choices, owned modifiers and traces implemented; broader flow language remains required; [evidence](evidence/M1-06-runtime.md) |
 | M1-07 | Planned | Built-in major-event detection, scheduled/seeded world occurrences and news through the shared runtime; [event contract](EVENT_SYSTEM.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
@@ -274,3 +276,70 @@ Linux amd64 Clang 18, Windows amd64 MSVC 19.51 and native Windows arm64 MSVC 19.
 The original primitive oracle also passes in every job. This qualifies the
 Qt-free foundation contracts across the five targets; it does not close M0's
 graphics/audio/deployment gate or claim a playable game.
+
+## M1-06 executable flows and M1-04 local saves — 2026-11-04
+
+This batch adds the executable flow compiler/runtime, persistent checkpoint IO,
+scenario initialization, campaign autosave policy and a runnable event/save
+demonstration. **5 of 52 tasks remain accepted**: both tasks stay in progress
+while their complete contracts and prerequisites remain open. The broader
+variable/expression, duration-predicate, related-entity selector/quantifier and
+weighted-random flow forms still need implementation; unsupported forms fail
+explicitly. This is recorded in [compiler scope](../src/runtime/COMPILER.md),
+[runtime evidence](evidence/M1-06-runtime.md) and
+[save evidence](evidence/M1-04-persistence.md). No scope was removed to pass tests.
+
+`pgp::runtime` compiles and revalidates typed definitions, reports waits that
+block later numbered siblings, rejects illegal cross-sibling jumps, inspects
+typed clauses with hidden-player redaction, and resolves calendar anchors
+without month-end drift. It executes all five current lifecycles and existing
+news/dialogue/result/effect/sequence/subflow/delay nodes. Eight saved frames
+retain context and return position across nested waits and choices. Owned
+modifiers enter/exit naturally without removing concurrent contributions;
+synthetic cleanup is explicitly labeled. Transactions retain actual committed
+receipts and distinguish rejected candidate traces. Cash fixtures conserve a
+caller-provided counterparty pool; full accounts remain M2 work.
+
+`pgp::persistence` serializes every implemented checkpoint field, validates
+format/rules/content identity and integrity, and rejects corrupt/future/oversized/
+malformed inputs. Native temporary-sibling flush/replacement preserves the
+previous valid file. Settings, explicit export, standard/portable locations,
+Unicode filenames and a three-generation ring are implemented. Canonical
+definition hashes identify actual supported content; full shipped localization/
+asset collection finalization remains later work. The writer enforces the same
+byte/depth/event budgets as its reader before committing a file.
+
+`pgp::session` applies recovery saves before accepted irreversible reservations,
+consumption and core/flow choices. Rejected commands write nothing; precommit IO
+failure retains live state. Monthly and scenario-end writes preserve completed
+play on failure and request a driver halt, including required opening choices
+and midmonth endings. Failed loads retain current play and the selected file.
+[Policy contract](../src/session/README.md) explains driver obligations. The
+new scenario helper initializes authored cash/date/seed/headquarters and selected
+root flows; referenced subflows do not also activate independently.
+
+| Verification | Observed result on the existing arm64 Mac |
+| --- | --- |
+| Core Release build/CTest | 25/25 pass, with warnings treated as errors |
+| Desktop Debug build/CTest | 32/32 pass; existing optional TaskTree warning remains unchanged |
+| Compiler tests | 62 assertions: malformed typed input, provider availability, canonical identity, 8/9 frames, cross-sibling boundaries, typed/redacted traces and calendar anchors |
+| Runtime tests | 541 assertions: lifecycle timing, exact copied continuation, real nested subflow execution, owned-modifier preservation, balanced cash, atomic failure and strict restore validation |
+| Persistence tests | 135 assertions: SHA-256 vectors/binary padding, corruption/version/UTF-8/unsigned bounds, exact runtime reload, atomic backups/conflicts, ring recovery/generations, Unicode paths and settings |
+| File-save integration | Save during a nested delay, resume to a dialogue with both frames intact, save/reload there, execute inner/outer effects once and compare entire next-day serialized state with uninterrupted execution |
+| Application policy | Actual precommit recovery snapshots, no writes for refused/disabled commands, month boundary into a core choice, monthly IO failure retaining play, midmonth ending save and automatic-error halt |
+| Actual CLI disk example | `--flow-demo tests/content/fixtures/foundation.json --save build/core-release/flow-demo-output.pgpsave` saves/reloads and matches uninterrupted state on 2014-01-15 |
+| Independent integrity check | Python `hashlib.sha256` over the actual saved canonical payload matches its stored digest |
+
+Independent review found and fixed illegal sibling-region jumps, malformed
+continuation ancestry/delay timing, inconsistent modifier/receipt ownership,
+misleading rejected traces, backup-only ring generations and application
+autosave boundaries. An early test failure was a truncated standard SHA-256
+input literal; independent Python output confirmed and corrected that test,
+then binary padding-boundary vectors were added. Final local suites pass.
+
+Native CI for this expanded 25-contract suite is recorded after observation.
+There is still no business scenario, player-facing Office/Lab game, editor,
+finalized content pack, deployed package or release. Full flow-language support
+and M1-07 built-in occurrence detection precede the next foundation acceptance;
+M2 remains the first business-economics evaluation. Manifest component/format
+identities remain unchanged. Tests use owned scratch files, never personal saves.

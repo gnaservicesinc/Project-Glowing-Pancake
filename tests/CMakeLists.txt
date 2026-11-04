@@ -34,6 +34,12 @@ add_test(NAME headless.foundation-demo COMMAND pgp-headless --foundation-demo)
 set_tests_properties(headless.foundation-demo PROPERTIES
     PASS_REGULAR_EXPRESSION "Resume opening choice once; cash: 50000; phase: work_ready")
 add_subdirectory(content)
+add_subdirectory(runtime)
+add_subdirectory(persistence)
+add_test(NAME headless.flow-demo COMMAND pgp-headless --flow-demo
+    "${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json")
+set_tests_properties(headless.flow-demo PROPERTIES
+    PASS_REGULAR_EXPRESSION "Matched uninterrupted state on 2014-01-15")
 add_test(NAME headless.validate-content COMMAND pgp-headless --validate-content
     "${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json")
 set_tests_properties(headless.validate-content PROPERTIES

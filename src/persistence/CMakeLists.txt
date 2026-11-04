@@ -1,0 +1,6 @@
+add_library(pgp_persistence STATIC sha256.cpp storage.cpp settings.cpp save.cpp)
+add_library(pgp::persistence ALIAS pgp_persistence)
+target_include_directories(pgp_persistence PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(pgp_persistence SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_link_libraries(pgp_persistence PUBLIC pgp::runtime)
+pgp_project_target(pgp_persistence)

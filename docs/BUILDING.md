@@ -130,7 +130,9 @@ target and is compared against an independent oracle by CTest/native CI.
 vendored JSON reader and typed registry/collection validation. JSON types stay
 out of core and public content headers. `src/bridge` supplies a serialized Qt
 worker and persistent reservation model; it does not add a playable room shell.
-Persistence and the separately packaged editor remain later targets.
+`src/runtime` adds executable typed flows/inspection, `src/persistence` adds
+strict save/settings IO, and `src/session` applies campaign autosave/load policy.
+These targets remain Qt-free. The separately packaged editor is later work.
 
 The engineering foundation can be inspected without Qt:
 
@@ -138,11 +140,14 @@ The engineering foundation can be inspected without Qt:
 ./make.sh --core-only --test --jobs 2
 build/core-release/bin/pgp-headless --foundation-demo
 build/core-release/bin/pgp-headless --validate-content tests/content/fixtures/foundation.json
+build/core-release/bin/pgp-headless --flow-demo tests/content/fixtures/foundation.json
 ```
 
 The demonstration exercises reservations, stale commands, irreversible terms
-and a suspended morning choice using copied in-memory state. It is not a
-business scenario or file-save implementation. Validation reads at most 1 MiB
+and a suspended morning choice using copied in-memory state. The flow demo
+executes the seven normalized flows and verifies exact serialized continuation;
+add `--save /chosen/local/demo.pgpsave` to write/read that explicit local path.
+Neither demonstration is the business scenario. Validation reads at most 1 MiB
 plus one sentinel byte from the selected local file, returns typed diagnostics
 and never writes content. Engineering fixtures are not finalized game content.
 See [playability checkpoints](PLAYABILITY.md) for the path to feature testing.

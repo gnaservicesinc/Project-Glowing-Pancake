@@ -46,6 +46,7 @@ Thumbs.db
 *.pgpsave
 *.pgpsave.tmp
 *.pgpsave.bak
+*.pgpsave.bak.tmp
 *.pgpreplay
 
 # Local credentials and signing material

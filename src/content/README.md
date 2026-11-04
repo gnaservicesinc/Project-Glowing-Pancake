@@ -92,6 +92,9 @@ asset/localization catalog schemas arrive with their owning mechanics; they
 currently fail `unsupported_kind`. Their fields are not accepted as unvalidated
 opaque objects. Research here validates resource/prerequisite definitions, not
 the complete M3 research mechanics. The deal record is negotiation-reference
-metadata, not a signed contract. M1-06 adds compilation, timing, traces, receipts,
-owned-modifier execution and runtime effect dispatch; M1-04 adds save loading.
-Runtime collection hashing/finalization and editor IO remain their later tasks.
+metadata, not a signed contract. The [runtime adapter](../runtime/COMPILER.md)
+now compiles and executes this schema with timing, traces, receipts, owned
+modifiers and effect dispatch. The [persistence adapter](../persistence/README.md)
+loads exact saved state. Broader flow-language extensions remain M1-06 work.
+Canonical definition identity exists; full shipped asset/localization collection
+hashing/finalization and editor IO remain later authoring/packaging tasks.

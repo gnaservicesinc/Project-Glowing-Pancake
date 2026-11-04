@@ -2,7 +2,7 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** 5 of 52 tasks complete as of 2026-11-04. Typed content validation and the command/state foundation are implemented, alongside the existing build, deterministic primitives and local interface probe. The command batch includes immutable worker snapshots and persistent entity models; M1-03 acceptance still requires M0-03 native/deployment qualification. Business gameplay and Content Studio are still ahead. Follow [playability checkpoints](docs/PLAYABILITY.md), [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
+**Current state:** 5 of 52 tasks accepted as of 2026-11-04, with additional implemented work under M1-03/04/06. The foundation executes typed events, delays, choices and owned modifiers; saves resume their exact state. Local settings, recovery copies, autosave policy, immutable worker snapshots and persistent entity models exist. Broader flow expressions and platform prerequisite qualification remain open. Business gameplay and Content Studio are still ahead. Follow [playability checkpoints](docs/PLAYABILITY.md), [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
 
 ## Build the development skeleton
 
@@ -14,7 +14,7 @@ A free, offline strategy game about founding an AI company in 2014 and guiding i
 ```
 
 Builds never launch the application. The headless executable reports build
-configuration, validates local content and runs a foundation engineering demo;
+configuration, validates local content and runs command/event/save engineering demonstrations;
 the business scenario remains a later task. See
 [build instructions](docs/BUILDING.md) for dependencies, Qt/Xcode selection,
 safe cleanup, explicit probe launch and available checks. No dependencies are

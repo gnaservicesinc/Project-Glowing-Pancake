@@ -4,11 +4,25 @@ Updated 2026-11-04 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**5 of 52 tasks complete: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03 and M1-03 are in progress.** M0-03's local
+**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03 and M1-03/04/06 are in progress.** M0-03's local
 interface/resource/audio implementation passes; native/deployment gates remain.
 M0 remains open. See the
 [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
 [build instructions](BUILDING.md) for runnable commands.
+
+- M1-06 now compiles/executes the current typed schema: five lifecycles,
+  nested sequence/subflow delays and choices, selected root sources, owned
+  modifiers, bounded atomic effects and committed/candidate traces. Broader
+  variables/expressions, duration, selectors/quantifiers and random branches
+  remain required work. [Runtime evidence](evidence/M1-06-runtime.md)
+- M1-04 now writes/loads the entire implemented checkpoint with exact resumed
+  state, recovery copies, strict identity/integrity checks, three autosave slots,
+  preferences, Unicode filenames, portable/standard paths and export. Campaign
+  policy saves before irreversible consumption/choices and at monthly/final
+  boundaries, preserving live state on errors. Core Release passes 25 CTests;
+  desktop Debug passes 32. [Save evidence](evidence/M1-04-persistence.md)
+  and [application policy](../src/session/README.md) describe the implemented
+  subset. These tasks remain open for their full contracts/prerequisites.
 
 - M1-02 implements typed content collections and extensible system/fact/effect
   metadata, with strict units, scopes, references, ownership, graph and input
@@ -77,12 +91,13 @@ M0 remains open. See the
 ## Implementation state
 
 The build scaffold, shared version identity, deterministic primitives, typed
-content boundary, transactional state, worker/model bridge, CLI and development
-QML interface probe exist. Business gameplay, Content Studio, finalized runtime
+content/compiler/runtime, transactional state, local persistence/campaign policy,
+worker/model bridge, CLI and development QML interface probe exist.
+Business gameplay, Content Studio, finalized runtime
 content and packages do not. Existing native CI proves primitive parity on all
 five targets; the expanded foundation suite is checked separately. The headless
-command also validates local content and demonstrates atomic commands/morning
-continuation. [Playability checkpoints](PLAYABILITY.md) separate this engineering
+command validates local content, demonstrates commands/flows and can explicitly
+save/reload suspended continuations. [Playability checkpoints](PLAYABILITY.md) separate this engineering
 demonstration from the M2 business scenario and M3 player-facing slice.
 E1a enables early gameplay tests;
 M4 requires both M3 and E1b. E2 closes before bulk content.
@@ -114,11 +129,13 @@ These are document/data/example checks only. No game/editor/runtime, UI performa
 
 ## Next task
 
-**Next gameplay-enabling implementation: M1-06 shared flow runtime**, using the
-typed registry and transactional state. M1-03 has a locally tested worker/model
-implementation; its formal acceptance remains gated by M0-03. M1-04 file saves
-and M1-07 event detection follow the flow runtime. M1-05's room shell can proceed
-alongside core work; M2-01 then begins the balanced business accounts. These
+**Next gameplay-enabling implementation: finish M1-06's broader flow language**
+and persist its additional pending state: registered variables/expressions,
+duration predicates, related selectors/quantifiers and weighted random branches.
+Then M1-07 adds built-in committed-fact/seeded occurrence dispatch. M1-03 has a
+locally tested worker/model implementation; its formal acceptance remains gated
+by M0-03. M1-05's room shell can proceed alongside core work; M2-01 begins the
+balanced business accounts after the foundation contracts. These
 local implementations do not close the outstanding platform gate. Content
 finalization, save migrations and packaging remain later work.
 
