@@ -13,7 +13,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M1-02 | Complete | Typed content schema/registry, bounded offline loader, 11-definition engineering fixture and 140 validation assertions; [evidence](evidence/M1-02-content.md) |
 | M1-03 | In progress | Local commands, morning continuation, immutable worker and stable model diffs pass; M0-03 prerequisite qualification remains open; [evidence](evidence/M1-03-commands.md) |
 | M1-04 | In progress | Exact current-state file saves, recovery, autosaves/settings/export and application persistence policy implemented; full flow contract/prerequisites remain open; [evidence](evidence/M1-04-persistence.md) |
-| M1-06 | In progress | Schema-1 compiler/executor, five lifecycles, nested waits/choices, owned modifiers and traces implemented; broader flow language remains required; [evidence](evidence/M1-06-runtime.md) |
+| M1-06 | In progress | Schema-1 compiler/executor, five lifecycles, nested waits/choices, owned modifiers, traces and saved weighted narrative branches implemented; duration/variables/expressions/selectors remain required; [runtime](evidence/M1-06-runtime.md), [branches](evidence/M1-06-weighted-branches.md) |
 | M1-07 | Planned | Built-in major-event detection, scheduled/seeded world occurrences and news through the shared runtime; [event contract](EVENT_SYSTEM.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
@@ -343,3 +343,27 @@ finalized content pack, deployed package or release. Full flow-language support
 and M1-07 built-in occurrence detection precede the next foundation acceptance;
 M2 remains the first business-economics evaluation. Manifest component/format
 identities remain unchanged. Tests use owned scratch files, never personal saves.
+
+## M1-06 weighted-branch slice — 2026-11-04
+
+Implemented explicit narrative-stream weighted branches through content
+validation, canonical compilation, bounded execution, committed/candidate traces
+and strict save/reload. Saved selections survive delays, choices and nested
+sequence/subflow returns without rerolls. Downstream refusal rolls back the
+draw and all candidate consequences. Independent review identified and closed
+unselected continuation, unrelated-flow history and truncated-history gaps.
+[Evidence and save compatibility](evidence/M1-06-weighted-branches.md) document
+the exact bounds and retained origin/stream history.
+
+| Verification | Observed result |
+| --- | --- |
+| Core Release | 26/26 CTests pass, strict Apple Clang arm64 |
+| Core Debug | 26/26 CTests pass, strict Apple Clang arm64 |
+| Focused schema/compiler | 174 content and 77 compiler checks pass |
+| Weighted branch integration | 270 checks pass: frozen seed/weight boundaries, rejection sampling, exact continuation, stream isolation, atomic rollback and corrupt history refusal |
+
+Accepted tasks remain **5/52**. M1-06 still needs daily duration state,
+registered variables/expressions and related-entity selectors/quantifiers;
+M1-04 will persist their added state. Native/deployment prerequisite acceptance,
+M1-07 built-in occurrence dispatch and M2 business mechanics remain open. Next:
+implement duration predicates with explicit elapsed-day and daily reset rules.

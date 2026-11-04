@@ -134,6 +134,40 @@ int main() {
     auto recursive = source; auto subflow = simple_flow(); subflow["entry_node"] = "call";
     subflow["nodes"]["call"] = {{"kind", "subflow"}, {"flow_id", "flow.test"}, {"next", "end"}};
     recursive["definitions"].push_back(subflow); rejects(recursive.dump(), "subflow_cycle");
+
+    auto random = source; auto random_flow = simple_flow(); random_flow["entry_node"] = "draw";
+    random_flow["nodes"]["draw"] = {{"kind", "random"}, {"stream", "narrative"},
+        {"branches", {{{"id", "incident"}, {"weight", 3}, {"next", "end"}},
+                      {{"id", "no_event"}, {"weight", 7}, {"next", "end"}}}}};
+    random["definitions"].push_back(random_flow);
+    const auto random_collection = load_collection(random.dump(), registry);
+    const auto& draw = std::get<FlowDefinition>(random_collection.find("flow.test")->data).nodes.at("draw");
+    check(draw.kind == NodeKind::random && draw.random_stream == "narrative" && draw.branches.size() == 2 &&
+          draw.branches[0].id == "incident" && draw.branches[0].weight == 3 && draw.branches[1].id == "no_event",
+          "Weighted narrative branches preserve ordered outcome IDs and integer weights");
+    mutated(random, "missing_field", [](auto& value) { definition(value, "flow.test")["nodes"]["draw"].erase("stream"); });
+    mutated(random, "operation", [](auto& value) { definition(value, "flow.test")["nodes"]["draw"]["stream"] = "research"; });
+    mutated(random, "unknown_field", [](auto& value) { definition(value, "flow.test")["nodes"]["draw"]["next"] = "end"; });
+    mutated(random, "budget", [](auto& value) { definition(value, "flow.test")["nodes"]["draw"]["branches"] = Json::array(); });
+    mutated(random, "budget", [](auto& value) { definition(value, "flow.test")["nodes"]["draw"]["branches"].erase(1); });
+    mutated(random, "budget", [](auto& value) {
+        auto& branches = definition(value, "flow.test")["nodes"]["draw"]["branches"];
+        for (int i = 2; i < 33; ++i) branches.push_back({{"id", "outcome" + std::to_string(i)}, {"weight", 1}, {"next", "end"}});
+    });
+    for (const auto weight : {-1, 0, 1'000'001})
+        mutated(random, "range", [weight](auto& value) { definition(value, "flow.test")["nodes"]["draw"]["branches"][0]["weight"] = weight; });
+    mutated(random, "type", [](auto& value) { definition(value, "flow.test")["nodes"]["draw"]["branches"][0]["weight"] = true; });
+    mutated(random, "duplicate_id", [](auto& value) { definition(value, "flow.test")["nodes"]["draw"]["branches"][1]["id"] = "incident"; });
+    mutated(random, "identifier", [](auto& value) { definition(value, "flow.test")["nodes"]["draw"]["branches"][1]["id"] = "../bad"; });
+    mutated(random, "unknown_field", [](auto& value) { definition(value, "flow.test")["nodes"]["draw"]["branches"][0]["script"] = "run()"; });
+    mutated(random, "dangling_reference", [](auto& value) { definition(value, "flow.test")["nodes"]["draw"]["branches"][0]["next"] = "missing"; });
+    mutated(random, "immediate_cycle", [](auto& value) { definition(value, "flow.test")["nodes"]["draw"]["branches"][0]["next"] = "draw"; });
+    auto random_loop = random;
+    definition(random_loop, "flow.test")["nodes"]["draw"]["branches"][0]["next"] = "wait";
+    definition(random_loop, "flow.test")["nodes"]["wait"] = {{"kind", "delay"}, {"duration_days", 1}, {"next", "draw"}};
+    rejects(random_loop.dump(), "unbounded_cycle");
+    definition(random_loop, "flow.test")["max_node_visits"] = 16;
+    check(load_collection(random_loop.dump(), registry).definitions.size() == 12, "Weighted delayed recurrence requires and accepts a finite visit budget");
     auto nested = source; auto branch = simple_flow(); branch["entry_node"] = "sequence0";
     for (int i = 0; i < 9; ++i) branch["nodes"]["sequence" + std::to_string(i)] =
         {{"kind", "sequence"}, {"children", {i == 8 ? "end" : "sequence" + std::to_string(i + 1)}}, {"next", "end"}};

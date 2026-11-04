@@ -144,6 +144,7 @@ Json node_json(const Node& node, Scope scope, const std::string& path) {
     const bool sequence = node.kind == NodeKind::sequence;
     const bool delay = node.kind == NodeKind::delay;
     const bool subflow = node.kind == NodeKind::subflow;
+    const bool random = node.kind == NodeKind::random;
     shape((effect ? !node.effects.empty() : node.effects.empty()) && node.effects.size() <= 64 &&
               (presentation ? !node.text_key.empty() : node.text_key.empty()) &&
               (dialogue ? !node.title_key.empty() : node.title_key.empty()) &&
@@ -151,7 +152,9 @@ Json node_json(const Node& node, Scope scope, const std::string& path) {
               (dialogue ? !node.default_choice.empty() : node.default_choice.empty()) &&
               (sequence ? !node.children.empty() : node.children.empty()) && node.children.size() <= 64 &&
               (delay ? node.delay_days != 0 : node.delay_days == 0) &&
-              (subflow ? !node.subflow_id.empty() : node.subflow_id.empty()),
+              (subflow ? !node.subflow_id.empty() : node.subflow_id.empty()) &&
+              (random ? node.branches.size() >= 2 && node.branches.size() <= 32 : node.branches.empty()) &&
+              (random ? !node.random_stream.empty() : node.random_stream.empty()),
           path, "Node contains missing or incompatible typed payloads");
     Json result;
     switch (node.kind) {
@@ -173,9 +176,14 @@ Json node_json(const Node& node, Scope scope, const std::string& path) {
     case NodeKind::delay: result["kind"] = "delay"; result["duration_days"] = node.delay_days; break;
     case NodeKind::sequence: result["kind"] = "sequence"; result["children"] = node.children; break;
     case NodeKind::subflow: result["kind"] = "subflow"; result["flow_id"] = node.subflow_id; break;
+    case NodeKind::random:
+        result["kind"] = "random"; result["stream"] = node.random_stream; result["branches"] = Json::array();
+        for (const auto& branch : node.branches)
+            result["branches"].push_back({{"id", branch.id}, {"weight", branch.weight}, {"next", branch.next}});
+        break;
     default: fail("operation", path, "Unknown typed node kind");
     }
-    if (node.kind == NodeKind::end || dialogue) shape(node.next.empty(), path, "Terminal/dialogue node cannot have an implicit next link");
+    if (node.kind == NodeKind::end || dialogue || random) shape(node.next.empty(), path, "Terminal/branch node cannot have an implicit next link");
     else { shape(!node.next.empty(), path, "Node requires an explicit next link"); result["next"] = node.next; }
     return result;
 }
@@ -230,6 +238,7 @@ std::vector<std::string> edges(const Node& node) {
     auto result = node.children;
     if (!node.next.empty()) result.push_back(node.next);
     for (const auto& choice : node.choices) result.push_back(choice.next);
+    for (const auto& branch : node.branches) result.push_back(branch.next);
     return result;
 }
 void validate_sequence_regions(const Collection& collection) {

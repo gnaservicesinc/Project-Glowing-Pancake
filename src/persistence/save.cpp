@@ -176,7 +176,7 @@ ContinuationFrame parse_frame(const Json& value) {
         detail::text(value.at("return_node"),"return_node",128,true),parse_binding(value.at("binding"))};
 }
 Json runtime_json(const RuntimeState& state) {
-    Json activations=Json::array(),lifecycles=Json::array(),modifiers=Json::array(),receipts=Json::array(),presentations=Json::array();
+    Json activations=Json::array(),lifecycles=Json::array(),modifiers=Json::array(),receipts=Json::array(),presentations=Json::array(),random_resolutions=Json::array();
     for (const auto& activation:state.activations) {
         Json frames=Json::array();for (const auto& frame:activation.frames) frames.push_back(frame_json(frame));
         activations.push_back({{"id",activation.id},{"definition_id",activation.definition_id},{"definition_revision",activation.definition_revision},
@@ -205,14 +205,34 @@ Json runtime_json(const RuntimeState& state) {
             {"title_key",presentation.title_key},{"text_key",presentation.text_key},{"choices",std::move(choices)},
             {"resolved",presentation.resolved},{"selected_choice",presentation.selected_choice}});
     }
+    for (const auto& resolution:state.random_resolutions) random_resolutions.push_back({
+        {"activation_id",resolution.activation_id},{"node_visit",resolution.node_visit},{"day",resolution.day.value()},
+        {"flow_id",resolution.flow_id},{"node_id",resolution.node_id},{"branch_id",resolution.branch_id},
+        {"sample",resolution.sample},{"stream_before",resolution.stream_before},{"stream_after",resolution.stream_after}});
     return Json{{"next_activation_id",state.next_activation_id},{"next_receipt_id",state.next_receipt_id},
         {"next_presentation_id",state.next_presentation_id},{"prepared_day",optional_day(state.prepared_day)},
         {"activations",std::move(activations)},{"lifecycles",std::move(lifecycles)},{"modifiers",std::move(modifiers)},
-        {"receipts",std::move(receipts)},{"presentations",std::move(presentations)}};
+        {"receipts",std::move(receipts)},{"presentations",std::move(presentations)},
+        {"random_resolutions",std::move(random_resolutions)},{"narrative_origin",optional_id(state.narrative_origin)}};
 }
-RuntimeState parse_runtime(const Json& value) {
-    detail::fields(value,"runtime",{"next_activation_id","next_receipt_id","next_presentation_id","prepared_day",
-                                      "activations","lifecycles","modifiers","receipts","presentations"});
+RuntimeState parse_runtime(const Json& value,const CompiledProgram& program) {
+    // Format 1's earlier deterministic checkpoints have no stochastic history.
+    // Permit the paired additive fields to be absent only for deterministic
+    // content, while all other shape checks stay strict.
+    if (value.contains("random_resolutions"))
+        detail::fields(value,"runtime",{"next_activation_id","next_receipt_id","next_presentation_id","prepared_day",
+            "activations","lifecycles","modifiers","receipts","presentations","random_resolutions","narrative_origin"});
+    else {
+        for (const auto& [definition_id,definition]:program.collection.definitions) {
+            (void)definition_id;
+            const auto* flow=std::get_if<content::FlowDefinition>(&definition.data);
+            if (flow && std::any_of(flow->nodes.begin(),flow->nodes.end(),[](const auto& entry) {
+                return entry.second.kind==content::NodeKind::random;
+            })) detail::invalid("random_resolutions","Random-bearing content requires explicit resolution history");
+        }
+        detail::fields(value,"runtime",{"next_activation_id","next_receipt_id","next_presentation_id","prepared_day",
+            "activations","lifecycles","modifiers","receipts","presentations"});
+    }
     RuntimeState result;
     result.next_activation_id=detail::u64(value.at("next_activation_id"),"next_activation_id");
     result.next_receipt_id=detail::u64(value.at("next_receipt_id"),"next_receipt_id");
@@ -280,6 +300,21 @@ RuntimeState parse_runtime(const Json& value) {
             presentation.choices.push_back({detail::text(choice.at("id"),"id",128),detail::text(choice.at("label_key"),"label_key",256)});
         }
         result.presentations.push_back(std::move(presentation));
+    }
+    if (value.contains("random_resolutions")) {
+        result.narrative_origin=parse_id(value.at("narrative_origin"));
+        const auto& resolutions=value.at("random_resolutions");
+        detail::array(resolutions,"random_resolutions",maximum_records);
+        for (const auto& item:resolutions) {
+            detail::fields(item,"random_resolution",{"activation_id","node_visit","day","flow_id","node_id",
+                "branch_id","sample","stream_before","stream_after"});
+            result.random_resolutions.push_back({detail::u64(item.at("activation_id"),"activation_id"),
+                static_cast<std::uint32_t>(detail::u64(item.at("node_visit"),"node_visit",max_u32)),
+                OrdinalDay{detail::i64(item.at("day"),"day")},detail::text(item.at("flow_id"),"flow_id",128),
+                detail::text(item.at("node_id"),"node_id",128),detail::text(item.at("branch_id"),"branch_id",128),
+                detail::u64(item.at("sample"),"sample"),detail::u64(item.at("stream_before"),"stream_before"),
+                detail::u64(item.at("stream_after"),"stream_after")});
+        }
     }
     return result;
 }
@@ -357,7 +392,7 @@ LoadedSave decode_save(const runtime::CompiledProgram& program,std::string_view 
         if (digest!=sha256(body.dump())) throw PersistenceError("integrity","Save checksum does not match; use its recovery copy or another autosave");
         const auto sequence=detail::u64(body.at("autosave_sequence"),"autosave_sequence");
         const auto& state=body.at("checkpoint");detail::fields(state,"checkpoint",{"world","runtime"});
-        runtime::Checkpoint checkpoint{parse_world(state.at("world")),parse_runtime(state.at("runtime"))};
+        runtime::Checkpoint checkpoint{parse_world(state.at("world")),parse_runtime(state.at("runtime"),program)};
         runtime::validate_checkpoint(program,checkpoint);
         return {std::move(identity),std::move(checkpoint),sequence};
     } catch (const PersistenceError&) {throw;}

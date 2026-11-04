@@ -62,7 +62,8 @@ struct Lifecycle {
     bool allow_reentry = false;
 };
 struct Choice { std::string id; std::string label_key; std::string next; };
-enum class NodeKind { end, effect, news, dialogue, result, delay, sequence, subflow };
+struct WeightedBranch { std::string id; std::uint32_t weight; std::string next; };
+enum class NodeKind { end, effect, news, dialogue, result, delay, sequence, subflow, random };
 struct Node {
     NodeKind kind;
     std::string next;
@@ -74,6 +75,8 @@ struct Node {
     std::vector<std::string> children;
     std::uint32_t delay_days = 0;
     std::string subflow_id;
+    std::vector<WeightedBranch> branches;
+    std::string random_stream;
 };
 struct FlowDefinition {
     Scope scope;

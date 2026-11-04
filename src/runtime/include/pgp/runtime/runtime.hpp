@@ -122,6 +122,22 @@ struct Presentation {
     std::string selected_choice;
     auto operator<=>(const Presentation&) const = default;
 };
+// One committed narrative selection per executed node visit. The activation
+// retains the bound scope; content identity retains the ordered branch weights.
+// Keeping the sample and stream transition lets reload validate the selection
+// without drawing from the authoritative stream again.
+struct RandomResolution {
+    std::uint64_t activation_id = 0;
+    std::uint32_t node_visit = 0;
+    core::OrdinalDay day{0};
+    std::string flow_id;
+    std::string node_id;
+    std::string branch_id;
+    std::uint64_t sample = 0;
+    std::uint64_t stream_before = 0;
+    std::uint64_t stream_after = 0;
+    auto operator<=>(const RandomResolution&) const = default;
+};
 struct RuntimeState {
     std::uint64_t next_activation_id = 1;
     std::uint64_t next_receipt_id = 1;
@@ -132,6 +148,10 @@ struct RuntimeState {
     std::vector<OwnedModifier> modifiers;
     std::vector<EffectReceipt> receipts;
     std::vector<Presentation> presentations;
+    // Captured at the first branch, allowing already-advanced starting streams
+    // while detecting truncated resolution history on restore.
+    std::optional<std::uint64_t> narrative_origin;
+    std::vector<RandomResolution> random_resolutions;
     auto operator<=>(const RuntimeState&) const = default;
 };
 struct Checkpoint {

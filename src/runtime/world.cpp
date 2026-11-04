@@ -55,8 +55,11 @@ void date_valid(core::OrdinalDay date) { (void)core::from_ordinal(date); }
 // A saved stack explicitly identifies each currently open numbered child or
 // subflow. Do not traverse child ports here: entering one would need another
 // frame, while its normal return may legitimately have completed already.
+using BranchKey = std::tuple<std::uint64_t, std::string, std::string>;
+using BranchSelections = std::map<BranchKey, const RandomResolution*>;
 bool region_reaches(const content::FlowDefinition& definition, const std::string& start,
-                     const std::string& target) {
+                     const std::string& target, std::string_view flow_id,
+                     std::uint64_t activation_id, const BranchSelections& selections) {
     std::vector<std::string> pending{start};
     std::set<std::string> visited;
     while (!pending.empty()) {
@@ -68,6 +71,14 @@ bool region_reaches(const content::FlowDefinition& definition, const std::string
         const auto& entry = found->second;
         if (!entry.next.empty()) pending.push_back(entry.next);
         for (const auto& choice : entry.choices) pending.push_back(choice.next);
+        if (entry.kind == content::NodeKind::random) {
+            const auto selected = selections.find({activation_id, std::string(flow_id), id});
+            // Crossing a random node requires its committed outcome. An
+            // unvisited node cannot explain a saved delay/choice after it.
+            if (selected != selections.end())
+                for (const auto& branch : entry.branches)
+                    if (branch.id == selected->second->branch_id) pending.push_back(branch.next);
+        }
     }
     return false;
 }
@@ -171,13 +182,16 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
     }
     if (state.activations.size() > maximum_activations || state.lifecycles.size() > 512 ||
         state.modifiers.size() > maximum_activations || state.receipts.size() > maximum_records ||
-        state.presentations.size() > maximum_records)
+        state.presentations.size() > maximum_records || state.random_resolutions.size() > maximum_records)
         invalid("Runtime collection count budget exceeded");
     identities(state.activations, state.next_activation_id);
     identities(state.receipts, state.next_receipt_id);
     identities(state.presentations, state.next_presentation_id);
     if (state.prepared_day && (*state.prepared_day != world.simulation.date || world.simulation.phase != core::DayPhase::work_ready))
         invalid("Prepared runtime day differs from core date");
+    BranchSelections selections;
+    for (const auto& resolution : state.random_resolutions)
+        selections.insert_or_assign({resolution.activation_id, resolution.flow_id, resolution.node_id}, &resolution);
     std::map<std::pair<std::string, ScopeBinding>, std::uint32_t> counts;
     for (const auto& activation : state.activations) {
         const auto& root = flow(program, activation.definition_id);
@@ -199,7 +213,7 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
             const auto& owner = node(program, frame.flow_id, frame.sequence_node);
             const auto& frame_flow = flow(program, frame.flow_id);
             if (frame.flow_id != expected_flow || frame_flow.scope != activation.binding.scope ||
-                !region_reaches(frame_flow, region_entry, frame.sequence_node) ||
+                !region_reaches(frame_flow, region_entry, frame.sequence_node, frame.flow_id, activation.id, selections) ||
                 frame.binding != activation.binding || frame.return_node != owner.next ||
                 (!frame.return_node.empty() && !flow(program, frame.flow_id).nodes.contains(frame.return_node)))
                 invalid("Invalid continuation return/context");
@@ -215,7 +229,7 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
             } else invalid("Unknown continuation frame kind");
         }
         if (activation.current_flow != expected_flow ||
-            !region_reaches(flow(program, expected_flow), region_entry, activation.current_node))
+            !region_reaches(flow(program, expected_flow), region_entry, activation.current_node, expected_flow, activation.id, selections))
             invalid("Current node escaped its saved continuation region");
         switch (activation.status) {
         case ActivationStatus::ready:
@@ -287,6 +301,58 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
             });
             if (owner->active_activation != activation.id) invalid("Live activation is not its occurrence scope's sole active instance");
         }
+    std::map<std::uint64_t, std::uint32_t> last_random_visit;
+    std::optional<core::OrdinalDay> last_random_day;
+    if (state.narrative_origin.has_value() != !state.random_resolutions.empty())
+        invalid("Random resolution history and its starting stream must be retained together");
+    auto last_random_state = state.narrative_origin;
+    std::map<std::string, std::set<std::string>, std::less<>> called_flows;
+    for (const auto& resolution : state.random_resolutions) {
+        const auto& activation = by_id(state.activations, resolution.activation_id);
+        const auto& owner = node(program, resolution.flow_id, resolution.node_id);
+        auto [allowed, inserted] = called_flows.try_emplace(activation.definition_id);
+        if (inserted) {
+            std::vector<std::string> pending{activation.definition_id};
+            while (!pending.empty()) {
+                const auto id = std::move(pending.back()); pending.pop_back();
+                if (!allowed->second.insert(id).second) continue;
+                for (const auto& [node_id, entry] : flow(program, id).nodes) {
+                    (void)node_id;
+                    if (entry.kind == content::NodeKind::subflow) pending.push_back(entry.subflow_id);
+                }
+            }
+        }
+        date_valid(resolution.day);
+        if (owner.kind != content::NodeKind::random || owner.random_stream != "narrative" ||
+            !allowed->second.contains(resolution.flow_id) ||
+            flow(program, resolution.flow_id).scope != activation.binding.scope ||
+            resolution.day < activation.started_on || resolution.day > world.simulation.date ||
+            (last_random_day && resolution.day < *last_random_day) ||
+            resolution.node_visit == 0 || resolution.node_visit > activation.node_visits ||
+            resolution.node_visit <= last_random_visit[activation.id] ||
+            (last_random_state && resolution.stream_before != *last_random_state))
+            invalid("Random resolution has an invalid node, scope, date, visit or stream transition");
+        std::uint64_t total = 0;
+        for (const auto& branch : owner.branches) total += branch.weight;
+        core::SplitMix64 copied{resolution.stream_before};
+        const auto sample = copied.bounded(total);
+        if (sample != resolution.sample || copied.state() != resolution.stream_after)
+            invalid("Random resolution differs from its saved stream draw");
+        auto remaining = sample;
+        const content::WeightedBranch* selected = nullptr;
+        for (const auto& branch : owner.branches) {
+            if (remaining < branch.weight) { selected = &branch; break; }
+            remaining -= branch.weight;
+        }
+        if (!selected || selected->id != resolution.branch_id)
+            invalid("Random resolution differs from its authored weighted outcome");
+        last_random_visit[activation.id] = resolution.node_visit;
+        last_random_day = resolution.day;
+        last_random_state = resolution.stream_after;
+    }
+    if (last_random_state && *last_random_state !=
+        world.simulation.random[static_cast<std::size_t>(core::RandomStream::narrative)])
+        invalid("Saved narrative stream does not continue its resolved branch history");
     std::set<std::tuple<std::uint64_t, ScopeBinding, std::string>> modifier_keys;
     for (const auto& modifier : state.modifiers) {
         const auto& activation = by_id(state.activations, modifier.activation_id);

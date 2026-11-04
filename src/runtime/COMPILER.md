@@ -48,9 +48,11 @@ The compiler-specific executable initially passes 62 behavioral checks under
 Apple Clang with warnings treated as errors, including additional `-Wshadow`.
 The integrated implementation log records the final suite and native results.
 
-The current executable vocabulary is schema 1's typed comparison/all/any/not
-conditions and its existing node/lifecycle forms. The broader simulation plan's
-duration predicates, related-entity selectors/quantifiers, registered variables,
-checked expression trees and weighted random branch nodes still require shared
-schema/compiler/runtime extensions. This foundation must not be reported as
-implementing those unimplemented forms.
+The executable vocabulary also includes explicit narrative-stream weighted
+random nodes. Canonical identity retains ordered branch IDs, weights and edges;
+compilation and pure condition inspection consume no randomness. Execution and
+exact saved outcomes are documented in the
+[weighted-branch evidence](../../docs/evidence/M1-06-weighted-branches.md).
+Duration predicates, related-entity selectors/quantifiers, registered variables
+and checked expression trees still require shared schema/compiler/runtime
+extensions. M1-06 remains open for those forms and its prerequisite gate.

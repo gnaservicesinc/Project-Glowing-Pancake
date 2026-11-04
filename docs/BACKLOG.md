@@ -36,11 +36,17 @@ bounded execution, exact file reload, recovery/autosave/settings/export and
 application persistence policy are implemented. [Runtime evidence](evidence/M1-06-runtime.md),
 [save evidence](evidence/M1-04-persistence.md) and [integration log](IMPLEMENTATION_LOG.md)
 record the tested behavior. Both tasks remain unchecked: M1-06 still needs the
-specification's broader variable/expression, duration, related-entity/quantifier
-and weighted-random semantics, plus its prerequisite gate; M1-04 waits for those
+specification's broader variable/expression, duration and related-entity/quantifier
+semantics, plus its prerequisite gate; M1-04 waits for those
 runtime/pending-state requirements and prerequisite acceptance. Unknown forms
 fail explicitly today. UI save/room discovery remains M1-05. This implementation
 does not complete the business scenario or alter the promised scope.
+
+**M1-06 weighted-branch slice, 2026-11-04:** explicit narrative-stream weighted
+branches now validate, execute, trace and save their selected outcomes. Delays,
+choices and nested calls resume without rerolls; downstream failures roll back
+the draw and all candidate consequences. [Evidence](evidence/M1-06-weighted-branches.md)
+records the bounds, history validation and tests. The accepted count stays 5/52.
 
 ## M2 — Headless business loop
 

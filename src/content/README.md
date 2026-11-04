@@ -52,7 +52,13 @@ anchors with explicit offset and month-end clamp policy. These are typed
 contracts; date scheduling and lifecycle execution belong to M1-06.
 
 Nodes are `end`, `effect`, `news`, `dialogue`, `result`, positive-day `delay`,
-ordered `sequence`, or `subflow`. Presentations store localization keys;
+ordered `sequence`, `subflow`, or weighted `random`. A random node requires
+`stream: "narrative"` and 2–32 ordered `branches`, each with a unique `id`,
+positive integer `weight` (at most 1,000,000) and explicit `next`. An outcome
+linked to `end` represents no event. Every outcome participates in graph, cycle,
+sequence-region and continuation-depth checks. Other source streams are refused
+until their owning systems provide the appropriate occurrence semantics.
+Presentations store localization keys;
 illustrative draft prose and saved-instance annotations are not runtime fields.
 Each dialogue has unique choices and an existing dismissal default. Every node
 is reachable from entry or the continuous exit. Node links and subflow references

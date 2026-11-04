@@ -71,9 +71,10 @@ The initial schema supports the foundation's scalar/all/any/not trigger shapes,
 news, hidden effects, dialogue/results, delays, sequences and subflow nodes.
 Future vocabulary requires a typed schema and an actual owning implementation;
 arbitrary scripts, remote content and executable plugins have no runtime path.
-No stochastic branch node exists in this initial schema. These deterministic
-flows preserve the authoritative random streams unchanged; later seeded event
-sources use their saved owning stream under M1-07.
+The original seven engineering flows preserve the authoritative random streams
+unchanged. A subsequent [weighted-branch slice](M1-06-weighted-branches.md) adds
+explicit narrative sampling and persisted selected outcomes. Built-in seeded
+event sources still require their owning occurrence dispatcher under M1-07.
 
 ## Transaction and explanation rules
 

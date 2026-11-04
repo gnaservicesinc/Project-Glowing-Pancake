@@ -23,7 +23,8 @@ The UTF-8 JSON envelope contains:
   decision markers and pending negotiation references;
 - `checkpoint.runtime`: activation/revision/context/current node, start/wait/due
   dates, bounded continuation frames, lifecycle eligibility/count/cooldown/anchor
-  state, owned modifiers, effect receipts and presentations/selected choices;
+  state, owned modifiers, effect receipts, presentations/selected choices and
+  committed weighted-branch resolutions;
 - `sha256`: integrity of the canonical envelope without this field.
 
 Core state includes the exact day/phase/opening cursor, revision, cash,
@@ -35,6 +36,20 @@ references and unsupported identities fail. The default byte cap is 25 MiB;
 callers can select a stricter bound up to a 64 MiB hard ceiling. No original is
 deleted or guessed into a future format. Development saves require the exact
 game/content/rules identity; no migration is claimed yet.
+
+Weighted-branch records retain the activation/node visit, resolved day, flow/node
+and branch IDs, bounded sample, and narrative-stream states before/after the
+draw. Reload validates those records against the loaded branch weights without
+consuming the live stream. A pending delay or choice therefore resumes the
+already selected path. `narrative_origin` is null before the first branch and
+otherwise retains that branch's starting stream state, so validation can check
+the complete history from its first draw. The additive `random_resolutions` and
+`narrative_origin` fields are always emitted together. Earlier deterministic
+format-1 checkpoints may omit both only when the loaded collection has no random
+nodes. Random-bearing content requires an explicit list and origin, including
+an empty list and null origin before its first draw. All fields inside a present
+record are required and unknown fields still fail. The exact definition hash
+continues to prevent loading a checkpoint against changed branch content.
 
 Decoder depth is capped at 64. Its JSON event budget defaults to two million and
 can be configured up to eight million. Encoding checks the identical byte/depth/

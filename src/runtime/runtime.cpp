@@ -202,6 +202,37 @@ void execute(Checkpoint& checkpoint, Activation& activation, const CompiledProgr
             activation.wait_started = checkpoint.world.simulation.date;
             activation.status = ActivationStatus::delayed;
             break;
+        case content::NodeKind::random: {
+            record_budget(checkpoint.runtime.random_resolutions.size());
+            std::uint64_t total = 0;
+            std::string weights;
+            for (const auto& branch : entry.branches) {
+                // Compiler bounds 32 positive weights to one million each.
+                total += branch.weight;
+                if (!weights.empty()) weights += ",";
+                weights += branch.id + "=" + std::to_string(branch.weight);
+            }
+            auto& saved = checkpoint.world.simulation.random[static_cast<std::size_t>(core::RandomStream::narrative)];
+            const auto before = saved;
+            if (!checkpoint.runtime.narrative_origin) checkpoint.runtime.narrative_origin = before;
+            core::SplitMix64 stream{before};
+            const auto sample = stream.bounded(total);
+            auto remaining = sample;
+            const content::WeightedBranch* selected = nullptr;
+            for (const auto& branch : entry.branches) {
+                if (remaining < branch.weight) { selected = &branch; break; }
+                remaining -= branch.weight;
+            }
+            if (!selected) fail(RuntimeReason::invalid_state, "The weighted branch has no selected outcome.");
+            saved = stream.state();
+            checkpoint.runtime.random_resolutions.push_back({activation.id, activation.node_visits,
+                checkpoint.world.simulation.date, activation.current_flow, activation.current_node,
+                selected->id, sample, before, saved});
+            append_trace(result, activation, "Resolved narrative branch " + selected->id +
+                "; weights [" + weights + "]; sample " + std::to_string(sample) + "/" + std::to_string(total));
+            activation.current_node = selected->next;
+            break;
+        }
         case content::NodeKind::sequence:
             if (activation.frames.size() >= maximum_continuation_frames)
                 fail(RuntimeReason::budget_exceeded, "The continuation stack exceeds eight frames.");

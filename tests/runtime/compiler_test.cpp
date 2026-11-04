@@ -191,6 +191,72 @@ void inspection(Registry registry) {
     require(evaluate_condition(hidden_condition, company, registry, read).result == true && reads == 1,
             "Author-fixture inspection deliberately uses full copied-state knowledge");
 }
+void weighted_branches(const Collection& fixture, const Registry& registry) {
+    auto collection = fixture;
+    const auto name = "flow.hidden.compute_review";
+    auto& definition = flow(collection, name);
+    definition.entry_node = "draw";
+    definition.nodes.clear();
+    Node terminal{}; terminal.kind = NodeKind::end;
+    Node draw{}; draw.kind = NodeKind::random; draw.random_stream = "narrative";
+    draw.branches = {{"incident", 3, "wait"}, {"no_event", 7, "end"}};
+    Node wait{}; wait.kind = NodeKind::delay; wait.delay_days = 1; wait.next = "end";
+    definition.nodes.emplace("draw", draw); definition.nodes.emplace("wait", wait);
+    definition.nodes.emplace("end", terminal);
+    const auto program = compile_collection(collection, registry);
+    require(compile_collection(load_collection(program.canonical_content_bytes, registry), registry).canonical_content_bytes == program.canonical_content_bytes,
+            "Weighted nodes round-trip with ordered explicit outcomes and stream");
+    const auto original = collection;
+    auto changed = original;
+    std::reverse(flow(changed, name).nodes.at("draw").branches.begin(), flow(changed, name).nodes.at("draw").branches.end());
+    require(compile_collection(changed, registry).canonical_content_bytes != program.canonical_content_bytes,
+            "Weighted branch order affects deterministic outcome identity");
+    changed = original; ++flow(changed, name).nodes.at("draw").branches[0].weight;
+    require(compile_collection(changed, registry).canonical_content_bytes != program.canonical_content_bytes,
+            "Weighted branch weights affect content identity");
+    changed = original; flow(changed, name).nodes.at("draw").branches[0].id = "other_incident";
+    require(compile_collection(changed, registry).canonical_content_bytes != program.canonical_content_bytes,
+            "Weighted branch stable IDs affect persisted selection identity");
+    changed = original; flow(changed, name).nodes.at("draw").next = "end";
+    rejects([&] { (void)compile_collection(changed, registry); }, "typed_shape");
+    changed = original; flow(changed, name).nodes.at("draw").random_stream = "research";
+    rejects([&] { (void)compile_collection(changed, registry); }, "operation");
+    changed = original; flow(changed, name).nodes.at("end").random_stream = "narrative";
+    rejects([&] { (void)compile_collection(changed, registry); }, "typed_shape");
+    changed = original; flow(changed, name).nodes.at("end").branches = draw.branches;
+    rejects([&] { (void)compile_collection(changed, registry); }, "typed_shape");
+    changed = original; flow(changed, name).nodes.at("draw").branches.resize(1);
+    rejects([&] { (void)compile_collection(changed, registry); }, "typed_shape");
+    changed = original; flow(changed, name).nodes.at("draw").branches[0].weight = 0;
+    rejects([&] { (void)compile_collection(changed, registry); }, "range");
+    changed = original; flow(changed, name).nodes.at("draw").branches[0].weight = 1'000'001;
+    rejects([&] { (void)compile_collection(changed, registry); }, "range");
+    changed = original; flow(changed, name).nodes.at("draw").branches[0].next = "draw";
+    rejects([&] { (void)compile_collection(changed, registry); }, "immediate_cycle");
+
+    Node sequence{}; sequence.kind = NodeKind::sequence; sequence.children = {"draw", "end"}; sequence.next = "end";
+    flow(collection, name).entry_node = "sequence";
+    flow(collection, name).nodes.emplace("sequence", sequence);
+    const auto sequenced = compile_collection(collection, registry);
+    require(std::any_of(sequenced.lints.begin(), sequenced.lints.end(), [](const auto& lint) {
+        return lint.path.ends_with("sequence/children/0") && lint.code == "waiting_sibling";
+    }), "A waiting random outcome propagates its sequence sibling timing lint");
+    changed = collection;
+    flow(changed, name).nodes.at("sequence").children[1] = "wait";
+    rejects([&] { (void)compile_collection(changed, registry); }, "cross_sibling");
+
+    changed = fixture;
+    auto& nested = flow(changed, name);
+    nested.nodes.clear(); nested.entry_node = "draw";
+    draw.branches = {{"nested", 1, "sequence0"}, {"no_event", 1, "end"}};
+    nested.nodes.emplace("draw", draw); nested.nodes.emplace("end", terminal);
+    for (int i = 0; i < 9; ++i) {
+        Node child{}; child.kind = NodeKind::sequence; child.next = "end";
+        child.children = {i == 8 ? "end" : "sequence" + std::to_string(i + 1)};
+        nested.nodes.emplace("sequence" + std::to_string(i), std::move(child));
+    }
+    rejects([&] { (void)compile_collection(changed, registry); }, "budget");
+}
 core::OrdinalDay date(int year, unsigned month, unsigned day) { return core::to_ordinal({year, month, day}); }
 void calendars() {
     const auto january = date(2014, 1, 31);
@@ -225,7 +291,9 @@ int main() {
         if (!input) throw std::runtime_error("Cannot open runtime compiler fixture");
         const std::string source{std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>()};
         const auto registry = foundation_registry();
-        compilation(load_collection(source, registry), registry, source);
+        const auto collection = load_collection(source, registry);
+        compilation(collection, registry, source);
+        weighted_branches(collection, registry);
         inspection(registry); calendars();
         std::cout << checks << " compiler, trace, canonical-identity and calendar checks passed\n";
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

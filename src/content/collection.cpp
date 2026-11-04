@@ -342,6 +342,24 @@ Node node(const Json& value, const std::string& path, Scope context, const Regis
     } else if (kind == "subflow") {
         fields(value, path, {"kind", "flow_id", "next"}, {"kind", "flow_id", "next"});
         result.kind = NodeKind::subflow; result.subflow_id = id(value.at("flow_id"), child(path, "flow_id"));
+    } else if (kind == "random") {
+        fields(value, path, {"kind", "stream", "branches"}, {"kind", "stream", "branches"});
+        result.kind = NodeKind::random;
+        result.random_stream = text(value.at("stream"), child(path, "stream"), 32);
+        if (result.random_stream != "narrative") fail("operation", child(path, "stream"), "Story branches require the saved narrative stream");
+        const auto branches_path = child(path, "branches");
+        array(value.at("branches"), branches_path, 32, true);
+        if (value.at("branches").size() < 2) fail("budget", branches_path, "Random nodes require 2..32 explicit outcomes");
+        std::set<std::string> branches;
+        for (std::size_t i = 0; i < value.at("branches").size(); ++i) {
+            const auto& branch = value.at("branches")[i];
+            const auto branch_path = child(branches_path, std::to_string(i));
+            fields(branch, branch_path, {"id", "weight", "next"}, {"id", "weight", "next"});
+            auto branch_id = id(branch.at("id"), child(branch_path, "id"));
+            if (!branches.insert(branch_id).second) fail("duplicate_id", branch_path, "Duplicate random branch ID");
+            result.branches.push_back({std::move(branch_id), positive(branch.at("weight"), child(branch_path, "weight")),
+                                       id(branch.at("next"), child(branch_path, "next"))});
+        }
     } else fail("operation", path, "Unsupported node kind");
     if (value.contains("next")) result.next = id(value.at("next"), child(path, "next"));
     return result;
@@ -350,6 +368,7 @@ std::vector<std::string> edges(const Node& node) {
     std::vector<std::string> result = node.children;
     if (!node.next.empty()) result.push_back(node.next);
     for (const auto& choice : node.choices) result.push_back(choice.next);
+    for (const auto& branch : node.branches) result.push_back(branch.next);
     return result;
 }
 FlowDefinition flow(const Json& value, const std::string& path, const Registry& registry) {
@@ -529,6 +548,7 @@ void validate_references(const Collection& collection, const Registry& registry)
             depths.emplace(source, 0); pending.push_back(source);
             if (!item.next.empty()) dependents[key(flow_id, item.next)].emplace_back(source, 0);
             for (const auto& choice : item.choices) dependents[key(flow_id, choice.next)].emplace_back(source, 0);
+            for (const auto& branch : item.branches) dependents[key(flow_id, branch.next)].emplace_back(source, 0);
             for (const auto& target : item.children) dependents[key(flow_id, target)].emplace_back(source, 1);
             if (item.kind == NodeKind::subflow) {
                 const auto& nested = std::get<FlowDefinition>(collection.definitions.at(item.subflow_id).data);

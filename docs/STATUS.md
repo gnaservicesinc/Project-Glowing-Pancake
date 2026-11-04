@@ -12,9 +12,11 @@ M0 remains open. See the
 
 - M1-06 now compiles/executes the current typed schema: five lifecycles,
   nested sequence/subflow delays and choices, selected root sources, owned
-  modifiers, bounded atomic effects and committed/candidate traces. Broader
-  variables/expressions, duration, selectors/quantifiers and random branches
-  remain required work. [Runtime evidence](evidence/M1-06-runtime.md)
+  modifiers, bounded atomic effects and committed/candidate traces. Weighted
+  narrative branches also preserve exact outcomes across saves, delays and
+  choices. Broader variables/expressions, duration and selectors/quantifiers
+  remain required work. [Runtime evidence](evidence/M1-06-runtime.md) and
+  [weighted-branch evidence](evidence/M1-06-weighted-branches.md)
 - M1-04 now writes/loads the entire implemented checkpoint with exact resumed
   state, recovery copies, strict identity/integrity checks, three autosave slots,
   preferences, Unicode filenames, portable/standard paths and export. Campaign
@@ -130,8 +132,9 @@ These are document/data/example checks only. No game/editor/runtime, UI performa
 ## Next task
 
 **Next gameplay-enabling implementation: finish M1-06's broader flow language**
-and persist its additional pending state: registered variables/expressions,
-duration predicates, related selectors/quantifiers and weighted random branches.
+and persist its additional pending state: next implement daily duration
+predicates with saved start/reset state, then registered variables/expressions
+and related selectors/quantifiers. Weighted narrative branches are implemented.
 Then M1-07 adds built-in committed-fact/seeded occurrence dispatch. M1-03 has a
 locally tested worker/model implementation; its formal acceptance remains gated
 by M0-03. M1-05's room shell can proceed alongside core work; M2-01 begins the
