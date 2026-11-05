@@ -41,7 +41,8 @@ Json capacity_json(const core::CapacityState& state) {
         {"id",source.id},{"physical_id",source.physical_id},{"owner",source.owner},{"provider",source.provider},
         {"kind",enum_json(source.kind,source_names)},
         {"nominal_milli_CU_per_day",source.nominal.value()},{"effective_milli_CU_per_day",source.effective.value()},
-        {"memory_mib",source.memory_mib},{"interconnect",source.interconnect},{"energy_included",source.energy_included}});
+        {"memory_mib",source.memory_mib},{"interconnect",source.interconnect},{"energy_included",source.energy_included},
+        {"available_from",optional_day(source.available_from)}});
     for (const auto& project:state.projects) projects.push_back({
         {"id",project.id},{"source_id",project.source_id},{"kind",enum_json(project.kind,project_names)},
         {"status",enum_json(project.status,status_names)},{"starts_on",project.starts_on.value()},
@@ -77,12 +78,13 @@ core::CapacityState parse_capacity(const Json& value) {
     const auto& sources=value.at("sources");array(sources,"capacity/sources",core::capacity_source_limit);
     for (const auto& source:sources) {
         fields(source,"capacity/source",{"id","physical_id","owner","provider","kind","nominal_milli_CU_per_day",
-            "effective_milli_CU_per_day","memory_mib","interconnect","energy_included"});
+            "effective_milli_CU_per_day","memory_mib","interconnect","energy_included"},{"available_from"});
         result.sources.push_back({label(source.at("id")),label(source.at("physical_id")),label(source.at("owner")),
             label(source.at("provider")),parse_enum<core::CapacitySourceKind>(source.at("kind"),source_names),
             rate(source.at("nominal_milli_CU_per_day")),rate(source.at("effective_milli_CU_per_day")),
             u64(source.at("memory_mib"),"capacity/source/memory_mib"),label(source.at("interconnect")),
-            boolean(source.at("energy_included"),"capacity/source/energy_included")});
+            boolean(source.at("energy_included"),"capacity/source/energy_included"),
+            source.contains("available_from")?parse_optional_day(source.at("available_from")):std::nullopt});
     }
     const auto& projects=value.at("projects");array(projects,"capacity/projects",core::capacity_project_limit);
     for (const auto& project:projects) {

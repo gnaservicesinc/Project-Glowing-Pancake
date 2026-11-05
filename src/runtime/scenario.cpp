@@ -54,6 +54,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         content::apply_market_setup(*scenario->market,*world.simulation.market,*world.simulation.accounts,
             *world.simulation.capacity,scenario->starts_on);
     }
+    if (!scenario->business_offers.empty()) world.simulation.business_offers=core::BusinessOffersState{scenario->business_offers,{}};
     world.facts.at("company.has_compute_lease") = scenario->leased_capacity.value() > 0;
     if (const auto lease = scenario->monthly_commitments.find("compute_lease");
         lease != scenario->monthly_commitments.end())
@@ -63,6 +64,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     else if (headquarters == "US-TX") world.state_id = "state.us_tx";
     else if (headquarters == "US-WA") world.state_id = "state.us_wa";
     else throw std::invalid_argument("Headquarters has no implemented scope binding");
+    initialize_competition(world,program,scenario->rivals);
     validate_checkpoint(program, checkpoint);
     return checkpoint;
 }

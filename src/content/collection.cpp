@@ -416,7 +416,7 @@ Interval interval(const Json& value, const std::string& path, bool allow_zero = 
     return {unit == "days" ? IntervalUnit::days : IntervalUnit::calendar_months,
             static_cast<std::uint32_t>(integer(value.at("value"), child(path, "value"), allow_zero ? 0 : 1, 1'000'000))};
 }
-Lifecycle lifecycle(const Json& value, const std::string& path, Scope context, const Registry& registry) {
+Lifecycle lifecycle(const Json& value, const std::string& path, Scope context, const Registry& registry,bool committed=false) {
     if (!value.is_object() || !value.contains("mode")) fail("missing_field", path, "Lifecycle mode required");
     const auto mode = text(value.at("mode"), child(path, "mode"), 32);
     Lifecycle result{LifecycleMode::once, context, 1, 0, std::nullopt, std::nullopt, std::nullopt, std::nullopt, false};
@@ -428,7 +428,7 @@ Lifecycle lifecycle(const Json& value, const std::string& path, Scope context, c
                {"mode", "max_occurrences_per_scope", "cooldown_days", "repeat_policy"});
         result.mode = LifecycleMode::recurring;
         result.max_occurrences = positive(value.at("max_occurrences_per_scope"), child(path, "max_occurrences_per_scope"));
-        result.cooldown_days = positive(value.at("cooldown_days"), child(path, "cooldown_days"));
+        result.cooldown_days = static_cast<std::uint32_t>(integer(value.at("cooldown_days"),child(path,"cooldown_days"),committed?0:1,std::numeric_limits<std::uint32_t>::max()));
         if (text(value.at("repeat_policy"), path) != "after_cooldown_while_eligible") fail("operation", path, "Unsupported repeat policy");
     } else if (mode == "interval") {
         fields(value, path, {"mode", "occurrence_scope", "max_occurrences_per_scope", "overlap", "every", "anchor", "miss_policy"},
@@ -552,7 +552,7 @@ FlowDefinition flow(const Json& value, const std::string& path, const Registry& 
            {"id", "kind", "revision", "scope", "trigger", "lifecycle", "entry_node", "nodes"});
     const auto context = scope(value.at("scope"), child(path, "scope"));
     FlowDefinition result{context, condition(value.at("trigger"), child(path, "trigger"), context, registry),
-                          lifecycle(value.at("lifecycle"), child(path, "lifecycle"), context, registry),
+                          lifecycle(value.at("lifecycle"), child(path, "lifecycle"), context, registry,value.contains("on_committed")),
                           id(value.at("entry_node"), child(path, "entry_node")), "", {}, 0, {}};
     if (value.contains("on_committed")) {
         const auto source_path = child(path, "on_committed");
@@ -718,7 +718,7 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -760,10 +760,33 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         try { result.lab = load_lab_catalog(value.at("lab").dump()); }
         catch (const std::exception& error) { fail("lab", child(path,"lab"), error.what()); }
     }
+    try {
+        if (value.contains("business_offers")) result.business_offers=load_business_offer_catalog(value.at("business_offers").dump());
+        if (value.contains("rivals")) result.rivals=load_rival_definitions(value.at("rivals").dump());
+        if (!result.rivals.empty() && !result.lab) fail("rivals",path,"Slice rivals require the shared lab catalog");
+        for (const auto& offer:result.business_offers)
+            if (offer.available_from<result.starts_on || offer.available_before>result.ends_before)
+                fail("business_offers",path,"Offer window must lie within the scenario");
+    } catch (const ValidationError&) { throw; }
+    catch (const std::exception& error) { fail("world_setup",path,error.what()); }
     if (value.contains("market")) {
         try { result.market = market_setup(value.at("market"),child(path,"market"),result); }
         catch (const ValidationError&) { throw; }
         catch (const std::exception& error) { fail("market",child(path,"market"),error.what()); }
+    }
+    if (value.contains("service_catalog")) {
+        try {
+            result.service_catalog=market_setup(value.at("service_catalog"),child(path,"service_catalog"),result);
+            if (!result.service_catalog->contracts.empty()) fail("service_catalog",path,"Service templates cannot create accepted contracts");
+            for (const auto& segment:result.service_catalog->segments) {
+                if (!result.market) fail("service_catalog",path,"Service preferences require an existing scenario market");
+                const auto base=std::find_if(result.market->segments.begin(),result.market->segments.end(),[&](const auto& row){return row.id==segment.id;});
+                if (base==result.market->segments.end()) fail("service_catalog",path,"Service preferences reference an unknown customer segment");
+                auto expected=*base,actual=segment; expected.preferences.clear(); actual.preferences.clear();
+                if (expected!=actual) fail("service_catalog",path,"Service preferences cannot change customer demand or budgets");
+            }
+        } catch (const ValidationError&) { throw; }
+        catch (const std::exception& error) { fail("service_catalog",path,error.what()); }
     }
     if (value.contains("business_plan")) {
         const auto plan_path = child(path,"business_plan");
@@ -840,7 +863,17 @@ void validate_references(const Collection& collection, const Registry& registry)
         if (const auto* scenario_definition = std::get_if<ScenarioDefinition>(&definition.data)) {
             for (const auto& target : scenario_definition->research) (void)reference(target, "research", path);
             if (scenario_definition->lab) {
-                try { (void)scenario_lab_catalog(collection, *scenario_definition); }
+                try {
+                    const auto catalog=scenario_lab_catalog(collection, *scenario_definition);
+                    for (const auto& rival:scenario_definition->rivals) {
+                        const auto recipe=std::find_if(catalog.recipes.begin(),catalog.recipes.end(),[&](const auto& row){return row.id==rival.recipe_id;});
+                        const auto data=std::find_if(catalog.data.begin(),catalog.data.end(),[&](const auto& row){return row.id==rival.data_id;});
+                        if (recipe==catalog.recipes.end() || data==catalog.data.end() || !recipe->requires_research.empty() ||
+                            recipe->minimum_memory_mib!=0 || recipe->interconnect!="general" ||
+                            rival.training_work<recipe->minimum_work || rival.training_work>recipe->maximum_work || rival.cash<data->price)
+                            fail("rivals",path,"Rival routine must have affordable data, a known starting recipe and finite work");
+                    }
+                }
                 catch (const std::exception& error) { fail("lab", child(path,"lab"), error.what()); }
             }
             std::set<std::string> subscriptions;
@@ -874,8 +907,21 @@ void validate_references(const Collection& collection, const Registry& registry)
                     for (const auto& argument : metadata->arguments) {
                         if (argument.type == ValueType::reference) {
                             const auto found = effect_value.arguments.find(argument.name);
-                            if (found != effect_value.arguments.end())
-                                (void)reference(std::get<std::string>(found->second), argument.reference_kind, child(path, node_id));
+                            if (found == effect_value.arguments.end()) continue;
+                            const auto& target=std::get<std::string>(found->second);
+                            if (argument.reference_kind=="business_offer" || argument.reference_kind=="market_segment") {
+                                bool exists=false;
+                                for (const auto& [candidate_id,candidate]:collection.definitions) {
+                                    (void)candidate_id;
+                                    const auto* scenario=std::get_if<ScenarioDefinition>(&candidate.data);
+                                    if (!scenario) continue;
+                                    if (argument.reference_kind=="business_offer")
+                                        exists=exists || std::any_of(scenario->business_offers.begin(),scenario->business_offers.end(),[&](const auto& row){return row.id==target;});
+                                    else if (scenario->market)
+                                        exists=exists || std::any_of(scenario->market->segments.begin(),scenario->market->segments.end(),[&](const auto& row){return row.id==target;});
+                                }
+                                if (!exists) fail("dangling_reference",child(path,node_id),"Referenced scenario offer or market segment does not exist");
+                            } else (void)reference(target, argument.reference_kind, child(path, node_id));
                         }
                     }
                 }
@@ -1010,7 +1056,7 @@ Collection load_collection(std::string_view document, const Registry& registry) 
     Json root;
     try { root = Json::parse(document.begin(), document.end(), callback, true, false); }
     catch (const Json::exception&) { fail("json", "/", "Malformed JSON document"); }
-    fields(root, "", {"content_schema", "content_version", "currency_basis", "definitions", "variables"},
+    fields(root, "", {"content_schema", "content_version", "currency_basis", "definitions", "variables", "messages"},
            {"content_schema", "content_version", "currency_basis", "definitions"});
     if (integer(root.at("content_schema"), "/content_schema", 1, maximum_integer) != content_schema)
         fail("unsupported_schema", "/content_schema", "Only content schema 1 can be loaded");
@@ -1020,6 +1066,14 @@ Collection load_collection(std::string_view document, const Registry& registry) 
         fail("unit", "/currency_basis", "All authoritative money uses constant-2014 cents");
     const auto& definitions = root.at("definitions"); array(definitions, "/definitions", 2048, true);
     Collection result{content_schema, version, {}};
+    if (root.contains("messages")) {
+        const auto& messages=root.at("messages");
+        if (!messages.is_object() || messages.size()>4096) fail("messages","/messages","Expected bounded localized message table");
+        for (const auto& [key,value]:messages.items()) {
+            if (!valid_id(key)) fail("messages","/messages","Message keys must be stable identifiers");
+            result.messages.emplace(key,text(value,child("/messages",key),4096));
+        }
+    }
     if (root.contains("variables")) {
         array(root.at("variables"), "/variables", 512);
         for (std::size_t i = 0; i < root.at("variables").size(); ++i)

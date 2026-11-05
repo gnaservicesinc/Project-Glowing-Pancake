@@ -86,6 +86,22 @@ CommittedSource parse_committed_source(const Json& value) {
     }
     detail::invalid("committed_source/unit","Unsupported fact unit");
 }
+Json business_offers_json(const core::BusinessOffersState& state) {
+    Json accepted=Json::array();
+    for (const auto& row:state.accepted) accepted.push_back({{"offer_id",row.offer_id},{"accepted_on",row.accepted_on.value()},{"expires_before",row.expires_before.value()}});
+    return {{"catalog",Json::parse(content::canonical_business_offer_catalog(state.catalog))},{"accepted",std::move(accepted)}};
+}
+core::BusinessOffersState parse_business_offers(const Json& value) {
+    detail::fields(value,"business_offers",{"catalog","accepted"}); core::BusinessOffersState result;
+    result.catalog=content::load_business_offer_catalog(value.at("catalog").dump());
+    detail::array(value.at("accepted"),"business_offers/accepted",32);
+    for (const auto& row:value.at("accepted")) {
+        detail::fields(row,"business_offer_acceptance",{"offer_id","accepted_on","expires_before"});
+        result.accepted.push_back({detail::text(row.at("offer_id"),"business_offer/id",64),OrdinalDay{detail::i64(row.at("accepted_on"),"business_offer/accepted_on")},
+            OrdinalDay{detail::i64(row.at("expires_before"),"business_offer/expires_before")}});
+    }
+    return result;
+}
 Json simulation_json(const core::SimulationState& state) {
     Json reservations=Json::array(),opening=Json::array(),receipts=Json::array(),random=Json::object();
     for (const auto& row:state.reservations) reservations.push_back({{"id",row.id},{"name",row.name},
@@ -113,7 +129,9 @@ Json simulation_json(const core::SimulationState& state) {
         {"liquidity_mode",state.liquidity?"business":"foundation"},
         {"liquidity",state.liquidity?detail::liquidity_json(*state.liquidity):Json(nullptr)},
         {"lab_mode",state.lab?"training":"foundation"},
-        {"lab",state.lab?detail::lab_json(*state.lab):Json(nullptr)}};
+        {"lab",state.lab?detail::lab_json(*state.lab):Json(nullptr)},
+        {"business_offers_mode",state.business_offers?"catalog":"foundation"},
+        {"business_offers",state.business_offers?business_offers_json(*state.business_offers):Json(nullptr)}};
 }
 core::SimulationState parse_simulation(const Json& value) {
     if (!value.is_object()) detail::invalid("simulation","Expected object");
@@ -121,7 +139,8 @@ core::SimulationState parse_simulation(const Json& value) {
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
         if (name!="accounts" && name!="accounting_mode" && name!="capacity" && name!="capacity_mode" &&
-            name!="market" && name!="market_mode" && name!="liquidity" && name!="liquidity_mode" && name!="lab" && name!="lab_mode")
+            name!="market" && name!="market_mode" && name!="liquidity" && name!="liquidity_mode" && name!="lab" && name!="lab_mode" &&
+            name!="business_offers" && name!="business_offers_mode")
             prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"simulation",{"revision","date","end_date","phase","paused","cash_cents",
@@ -134,6 +153,12 @@ core::SimulationState parse_simulation(const Json& value) {
     result.phase=parse_enum<core::DayPhase>(value.at("phase"),phase_names);
     result.paused=detail::boolean(value.at("paused"),"paused");
     result.cash=Cents{detail::i64(value.at("cash_cents"),"cash_cents")};
+    if (value.contains("business_offers")!=value.contains("business_offers_mode")) detail::invalid("business_offers","Offer mode and state must be present together");
+    if (value.contains("business_offers_mode")) {
+        const auto mode=detail::text(value.at("business_offers_mode"),"business_offers_mode",16);
+        if (mode=="catalog") result.business_offers=parse_business_offers(value.at("business_offers"));
+        else if (mode!="foundation" || !value.at("business_offers").is_null()) detail::invalid("business_offers","Offer mode differs from its state");
+    }
     if (value.contains("lab") != value.contains("lab_mode")) detail::invalid("lab_mode","Lab mode and state must be present together");
     if (value.contains("lab_mode")) {
         const auto mode=detail::text(value.at("lab_mode"),"lab_mode",16);
@@ -221,6 +246,28 @@ std::vector<std::string> parse_strings(const Json& value,std::size_t maximum=max
     for (const auto& item:value) result.push_back(detail::text(item,"string",4096));
     return result;
 }
+Json competition_json(const CompetitionState& state) {
+    Json companies=Json::array(),notices=Json::array();
+    for (const auto& row:state.companies) companies.push_back({{"definition_id",row.definition_id},{"simulation",simulation_json(row.simulation)},
+        {"attempted",row.attempted},{"warned_on",optional_day(row.warned_on)},{"published_on",optional_day(row.published_on)}});
+    for (const auto& row:state.notices) notices.push_back({{"company_id",row.company_id},{"kind",row.kind},{"day",row.day.value()},{"response_due",optional_day(row.response_due)}});
+    return {{"companies",std::move(companies)},{"notices",std::move(notices)}};
+}
+CompetitionState parse_competition(const Json& value) {
+    detail::fields(value,"competition",{"companies","notices"}); CompetitionState result;
+    detail::array(value.at("companies"),"competition/companies",32); detail::array(value.at("notices"),"competition/notices",128);
+    for (const auto& row:value.at("companies")) {
+        detail::fields(row,"competition/company",{"definition_id","simulation","attempted","warned_on","published_on"});
+        result.companies.push_back({detail::text(row.at("definition_id"),"competition/definition_id",64),parse_simulation(row.at("simulation")),
+            detail::boolean(row.at("attempted"),"competition/attempted"),parse_day(row.at("warned_on")),parse_day(row.at("published_on"))});
+    }
+    for (const auto& row:value.at("notices")) {
+        detail::fields(row,"competition/notice",{"company_id","kind","day","response_due"});
+        result.notices.push_back({detail::text(row.at("company_id"),"competition/company_id",64),detail::text(row.at("kind"),"competition/kind",32),
+            OrdinalDay{detail::i64(row.at("day"),"competition/day")},parse_day(row.at("response_due"))});
+    }
+    return result;
+}
 Json world_json(const WorldState& world) {
     Json facts=Json::object();for (const auto& [name,value]:world.facts) facts[name]=scalar(value);
     Json variables=Json::array();
@@ -231,14 +278,15 @@ Json world_json(const WorldState& world) {
         {"world_id",world.world_id},{"state_id",world.state_id},{"campaign_start",world.campaign_start.value()},
         {"scope_created",world.scope_created.value()},{"root_seed",world.root_seed},{"enabled_flows",std::move(enabled)},
         {"facts",std::move(facts)},{"counterparty_cash_cents",world.counterparty_cash.value()},
-        {"decisions",strings(world.decisions)},{"negotiations",strings(world.negotiations)},{"variables",std::move(variables)}};
+        {"decisions",strings(world.decisions)},{"negotiations",strings(world.negotiations)},{"variables",std::move(variables)},
+        {"competition_mode",world.competition?"bounded":"foundation"},{"competition",world.competition?competition_json(*world.competition):Json(nullptr)}};
 }
 WorldState parse_world(const Json& value,const CompiledProgram& program) {
     if (!value.is_object()) detail::invalid("world","Expected object");
     Json prior_shape=Json::object();
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
-        if (name!="variables") prior_shape[name]=nullptr;
+        if (name!="variables" && name!="competition" && name!="competition_mode") prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"world",{"simulation","company_id","world_id","state_id","campaign_start","scope_created",
                                    "root_seed","enabled_flows","facts","counterparty_cash_cents","decisions","negotiations"});
@@ -246,6 +294,12 @@ WorldState parse_world(const Json& value,const CompiledProgram& program) {
         return entry.second.default_value.has_value();
     })) detail::invalid("variables","Registered variables require an explicit value collection");
     WorldState result;
+    if (value.contains("competition")!=value.contains("competition_mode")) detail::invalid("competition","Competition mode and state must be present together");
+    if (value.contains("competition_mode")) {
+        const auto mode=detail::text(value.at("competition_mode"),"competition_mode",16);
+        if (mode=="bounded") result.competition=parse_competition(value.at("competition"));
+        else if (mode!="foundation" || !value.at("competition").is_null()) detail::invalid("competition","Competition mode differs from its state");
+    }
     result.simulation=parse_simulation(value.at("simulation"));
     result.company_id=detail::text(value.at("company_id"),"company_id",128);
     result.world_id=detail::text(value.at("world_id"),"world_id",128);

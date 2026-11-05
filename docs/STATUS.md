@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**19 of 52 steps complete for Mac feature development; `M3` First Playable is the active priority.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01 and E1A-01 through E1A-03.
+**20 of 52 steps complete for Mac feature development; M3-02 presentation/tutorial is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-05 and E1A-01 through E1A-03.
 On 2026-11-05, core/runtime/session daily validation and state-copy bottlenecks were
 eliminated, reducing the three-year business scenario test (`session.business-scenario`)
 from **174.34s to ~5.4s** and `session.business-recovery` from **8.09s to ~0.4s**.
@@ -18,6 +18,18 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- M3-05 implements the eight base-event families in `data/runtime/first-playable.json`,
+  real research/evaluation/pilot causes, dated demand incidents, paid supplier and
+  recovery terms, two financed startup routines and a heavyweight that waits 90
+  days after a visible customer-delivery warning. The baseline starts without a
+  product and finishes 2017-01-01 with **$2,298,658.09**, 4,001,600 delivered tasks
+  and no new financing. Interrupted and uninterrupted states match exactly.
+  All **55/55** optimized Mac CTests pass in **8.88s**, including **188** event,
+  rival, Studio and complete-scenario checks. Removing redundant daily history
+  replay/copies also reduces the existing business test to 2.01s. The pack is
+  browsable and inspectable through Studio; player controls/tutorial remain
+  M3-02, and snapshot finalization remains E1A-04/05. [Module contract](../src/runtime/BASE_EVENTS.md).
 
 - M3-01 supplies four data offers, six research nodes, resource-bounded training,
   checkpoint lineage and held-out subgroup evaluation through shared commands,
@@ -229,10 +241,11 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac implementation: M3-05 playable base events and bounded rivals, followed directly by M3-02 and M3-03.**
-The data/research/train/evaluate loop (`M3-01`) is implemented and tested. Wire the eight-flow
-base-event pack and two bounded rivals (`M3-05`), playable Office/Lab panels and
-tutorial (`M3-02`), and delegation/recovery/scoring (`M3-03`). Remaining Content
+**Next Mac implementation: M3-02 playable Office/Lab panels and tutorial, followed by M3-03.**
+The lab loop (`M3-01`) and eight-event/rival baseline (`M3-05`) are implemented.
+Connect the authored scenario, headquarters selection, model qualification,
+training/evaluation/deployment controls, actual offer terms and visible rivals
+to a complete player-facing loop (`M3-02`), then delegation/recovery/scoring (`M3-03`). Remaining Content
 Studio tasks (`E1A-04`, `E1A-05`, `E1b`) follow after the `M3` playable slice works
 end-to-end. Platform packaging remains deferred.
 
@@ -241,7 +254,8 @@ M3-05 (AI-assisted playable base-event pack), with human stories augmenting the
 baseline. The eight-flow matrix covers milestones, evaluation/data recovery,
 contract results, liquidity, rivals, supplier opportunities, random world demand
 and recovery. See [event coverage, AI assignments and modular extension
-rules](EVENT_SYSTEM.md). M3-05 remains planned with prerequisites.
+rules](EVENT_SYSTEM.md). The Mac event-pack implementation is complete; the full
+interactive scenario and later author/release gates remain open.
 
 Native platform, package/device, human study and public-release tasks remain
 recorded for their owning milestones. Continue the Mac feature sequence without

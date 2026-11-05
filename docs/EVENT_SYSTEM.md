@@ -1,6 +1,6 @@
 # Built-in events, news, and story layers
 
-Updated 2026-11-04 · Committed facts, scheduled/seeded incidents and the news digest run in engineering fixtures. The playable pack is planned.
+Updated 2026-11-05 · The eight-flow Mac baseline, bounded rivals, paid opportunities and exact saves run in the three-year headless scenario. Player presentation is M3-02; content snapshot finalization remains E1A-04/05.
 
 ## Playable baseline
 
@@ -23,17 +23,17 @@ Use fictional organizations and publications. Distinguish a sourced historical r
 
 ## First-playable coverage
 
-The eight-definition M3 budget includes built-in coverage plus selected richer stories. It does not require eight elaborate human-written dialogues in addition to the baseline. The following eight representative flows are the minimum coverage assignment; identifiers are proposed authoring IDs, not a production schema or validated pack. Concrete thresholds, weights, deadlines and terms are data chosen and tested with the slice.
+The eight-definition M3 budget includes built-in coverage plus selected richer stories. It does not require eight elaborate human-written dialogues in addition to the baseline. These eight flows are implemented in `data/runtime/first-playable.json`. Concrete thresholds, weights, deadlines and terms are validated data. The pack remains internal development content; M3-02 supplies its complete player-facing presentation.
 
-| Proposed flow | Detection or occurrence | Player-facing result | Important fixture |
+| Flow | Detection or occurrence | Player-facing result | Important fixture |
 | --- | --- | --- | --- |
 | `slice.research_milestone` | A research node completes for this company | Technology-development bulletin with newly available options and their prerequisites | Completion emits once; loading or repeating the briefing grants nothing again |
 | `slice.evaluation_finding` | A held-out evaluation commits a concrete finding | Actionable summary of task/subgroup evidence, with an eligible existing data-offer/retest recovery option and its license/compute costs | Evidence agrees with the result; unavailable data is not offered; opening the report acquires no license or capability |
 | `slice.pilot_result` | Pilot acceptance, delivery or service failure commits | Customer news with the actual contract outcome and obligations | Acceptance and failure use real receipts; no second payment or premature serving |
 | `slice.liquidity_warning` | Runway/reserve crosses a warning boundary | Finance alert linking forecast, commitments and the workout path | Entry/recovery/re-entry boundaries; no daily repeat while unchanged |
-| `slice.rival_notice` | A bounded rival routine or heavyweight warning becomes visible | Competitive news with the disclosed response window | Hidden rival information stays hidden; warning never creates unbudgeted rival capacity |
+| `slice.rival_notice` | A financed rival experiment completes or a heavyweight observes actual customer delivery | Competitive news with the disclosed 90-day warning | Private training does not trigger the heavyweight; warning never creates unbudgeted capacity |
 | `slice.supplier_offer` | A seeded, eligible supplier opportunity at a defined review boundary | Optional cheaper/smaller capacity offer with actual terms | Decline has no commitment; acceptance validates capacity, cash and contract rights |
-| `slice.market_shift` | A bounded seeded external demand condition for the slice's enterprise segment | World/business bulletin showing a temporary demand change and expiry | Owned modifier applies/removes once, stays within validated bounds and never changes already settled work |
+| `slice.market_shift` | A bounded seeded external demand condition for the slice's enterprise segment | World/business bulletin showing a temporary demand change and expiry | Owned modifier applies/expires once, stays within validated bounds and never changes already settled work |
 | `slice.recovery_opportunity` | A recoverable setback and eligible smaller pilot or staged-payment offer | A practical recovery choice with costs, constraints and later consequences | A viable recovery route and a rejected/unaffordable path; no money or contract created by merely opening the offer |
 
 These use the slice's research, evaluation, contract, finance and demand systems. M3-05 also supplies the minimal bounded rival routines/visible heavyweight-warning fact producers through shared commands, so the pack can resolve and test its real rival facts before M3-02 presents them. Full M4 rival planning is outside the slice. Random world coverage starts with a small business-demand incident, not a new global disaster or political simulation. Geography/hazards, elections/policy and conditional future developments add providers/definitions with their owning M5–M7 systems. The evaluation response, supplier offer and recovery offer provide three explicit opportunity/recovery paths; at full coverage, retain the existing one-third minimum. A normal session need not force every random incident to occur; matched seeded fixtures must demonstrate each.
@@ -74,7 +74,7 @@ Build only the interfaces demanded by the next system. This contract does not au
 The ordered [backlog](BACKLOG.md) owns task completion and dependencies. [The implementation brief](../agents/tasks/base-events.md) makes these assignments concrete:
 
 - **M1-07:** Implement base-event detection, occurrence dispatch and truthful news projection after the shared runtime and save system. Test causal receipts, threshold edges, overlay deduplication, persisted random outcomes, digest priority and bounded queues.
-- **M3-05:** Create and validate the eight-definition playable baseline after the slice mechanics and E1a exist. Supply the minimal bounded rival/visible-warning fact producers through shared commands. Coding agents author the baseline rules/templates/fixtures; use Studio to inspect/manage/finalize the reviewed pack through the same version workflow. Attach richer story treatment selectively. Run a seeded headless demonstration and pending-occurrence reload checks.
+- **M3-05:** Create and validate the eight-definition baseline after the slice mechanics and shared forms/inspection exist. Supply bounded rival/visible-warning producers through shared commands. Coding agents author the rules/templates/fixtures and inspect them through Studio. Internal snapshot/version finalization follows E1A-04/05 after M3-03 in the current Mac queue. Attach richer story treatment selectively. Run a seeded headless demonstration and pending-occurrence reload checks.
 - **M5–M7 / M8-01:** Extend coverage alongside each implemented system, then audit the full base pack, opportunities/recovery, repetition and human story enrichment. Do not claim century coverage from the slice fixtures.
 
 M1-07 now supports `on_committed` subscriptions for settled project completion
@@ -87,5 +87,7 @@ Scheduled and bounded interval roots can use the markets or hazards stream at
 entry, with an explicit quiet outcome. Those samples share the existing graph,
 rollback and save rules. The weekly digest groups ordinary headlines and keeps
 decisions and active liquidity deadlines in the action tier. The eight-flow
-playable pack and its concrete technology, research and recovery providers
-remain M3-05 work. [Seeded incident and digest evidence](evidence/M1-07-seeded-digest.md)
+playable pack now supplies concrete research/evaluation/pilot providers, real
+supplier/recovery terms, demand expiry and bounded rivals. Its complete three-year
+baseline and interrupted continuation match. [Implementation contract, limits
+and seeds](../src/runtime/BASE_EVENTS.md). [Original seeded-incident evidence](evidence/M1-07-seeded-digest.md)

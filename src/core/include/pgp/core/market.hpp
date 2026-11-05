@@ -109,6 +109,12 @@ struct MarketAdoption {
     std::vector<InstalledShare> shares;
     auto operator<=>(const MarketAdoption&) const = default;
 };
+struct MarketDemandChange {
+    std::string id, segment_id;
+    OrdinalDay starts_on{0}, expires_before{0};
+    BasisPointDelta delta{0};
+    auto operator<=>(const MarketDemandChange&) const = default;
+};
 struct MarketState {
     std::string owner = "company.player";
     OrdinalDay starts_on{0};
@@ -118,6 +124,7 @@ struct MarketState {
     std::vector<MarketContract> contracts;
     std::vector<MarketDay> days;
     std::vector<MarketAdoption> adoptions;
+    std::vector<MarketDemandChange> demand_changes{};
     auto operator<=>(const MarketState&) const = default;
 };
 struct MarketReport {
@@ -137,12 +144,19 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
                            const CapacityState& capacity);
 void add_market_product(MarketState& state, const CapacityState& capacity, MarketProduct product);
 void add_market_segment(MarketState& state, MarketSegment segment);
+void add_market_preference(MarketState& state,std::string_view segment_id,MarketPreference preference);
 void set_product_available(MarketState& state, std::string_view product_id, bool available);
+[[nodiscard]] std::uint64_t effective_market_demand(const MarketState& state, const MarketSegment& segment, OrdinalDay day);
+void add_market_demand_change(MarketState& state, OrdinalDay day, MarketDemandChange change);
 void accept_contract(MarketState& state, const CapacityState& capacity, OrdinalDay day, MarketContract contract);
+void validate_contract_acceptance(const MarketState& state, const CapacityState& capacity,
+                                  OrdinalDay day, const MarketContract& contract);
 void start_contract(MarketState& state, const CapacityState& capacity, OrdinalDay day, std::string_view contract_id);
 void cancel_contract(MarketState& state, AccountsState& accounts, OrdinalDay day, std::string_view contract_id);
 // Atomically plan contracts first, allocate residual demand/budgets, close actual
 // serving/training work and recognize invoices. Caller closes accounts next.
+// validate_io=false is reserved for an already copied enclosing transaction;
+// it appends in place and relies on that caller to discard any failed candidate.
 void close_market_day(MarketState& state, AccountsState& accounts,
                       CapacityState& capacity, OrdinalDay day, bool validate_io = true);
 } // namespace pgp::core

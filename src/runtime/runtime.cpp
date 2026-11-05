@@ -153,6 +153,29 @@ void apply_effect(Checkpoint& checkpoint, Activation& activation, const content:
         world.counterparty_cash = core::Cents{pool};
         add_receipt(checkpoint, activation, index, effect.operation, before, after,
                     core::Cents{core::checked_subtract(0, amount)});
+    } else if (effect.operation == "accept_business_offer") {
+        auto& simulation=world.simulation;
+        if (!simulation.business_offers || !simulation.accounts || !simulation.capacity)
+            fail(RuntimeReason::effect_rejected,"This scenario has no business offer accounts or capacity.");
+        core::Cents protected_cash{0}; for (const auto& row:simulation.reservations) protected_cash=core::checked_unit_add(protected_cash,row.reserved);
+        const auto before=simulation.cash.value();
+        core::accept_business_offer(*simulation.business_offers,*simulation.accounts,*simulation.capacity,simulation.market,simulation.date,
+            std::get<std::string>(effect.arguments.at("offer_id")),protected_cash);
+        simulation.cash=core::accounts_report(*simulation.accounts).cash;
+        add_receipt(checkpoint,activation,index,effect.operation,before,simulation.cash.value());
+    } else if (effect.operation == "temporary_demand_change") {
+        auto& simulation=world.simulation;
+        if (!simulation.market) fail(RuntimeReason::effect_rejected,"This scenario has no customer market.");
+        const auto& segment_id=std::get<std::string>(effect.arguments.at("segment_id"));
+        const auto segment=std::find_if(simulation.market->segments.begin(),simulation.market->segments.end(),[&](const auto& row){return row.id==segment_id;});
+        if (segment==simulation.market->segments.end()) fail(RuntimeReason::effect_rejected,"Demand incident refers to an unavailable segment.");
+        const auto customer=*segment;
+        const auto before=core::effective_market_demand(*simulation.market,customer,simulation.date);
+        const auto duration=std::get<std::int64_t>(effect.arguments.at("duration_days"));
+        core::add_market_demand_change(*simulation.market,simulation.date,{"occurrence."+std::to_string(activation.id)+"."+std::to_string(index),segment_id,
+            simulation.date,core::advance_days(simulation.date,core::Days{duration}),core::BasisPointDelta{std::get<std::int64_t>(effect.arguments.at("delta_bp"))}});
+        add_receipt(checkpoint,activation,index,effect.operation,static_cast<std::int64_t>(before),
+            static_cast<std::int64_t>(core::effective_market_demand(*simulation.market,customer,simulation.date)));
     } else if (effect.operation == "record_decision") {
         record_budget(world.decisions.size());
         const auto& marker = std::get<std::string>(effect.arguments.at("value"));
@@ -651,14 +674,15 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             fail(RuntimeReason::morning_not_ready, "Resolve required content choices and prepare the morning before work.");
         const auto prior_day = next.world.simulation.date;
         core::Simulation core_state{std::move(next.world.simulation), core::TrustedSimulationState{}};
-        const auto outcome = core_state.submit(command);
+        const auto outcome = core_state.submit_in_transaction(command);
         if (!outcome.accepted()) {
             if (outcome.reason == core::CommandReason::campaign_finished) fail(RuntimeReason::campaign_finished, outcome.explanation);
             if (outcome.reason == core::CommandReason::arithmetic_overflow) fail(RuntimeReason::arithmetic_overflow, outcome.explanation);
             if (outcome.reason == core::CommandReason::limit_exceeded) fail(RuntimeReason::budget_exceeded, outcome.explanation);
             fail(RuntimeReason::effect_rejected, outcome.explanation);
         }
-        next.world.simulation = core_state.checkpoint();
+        next.world.simulation = std::move(core_state).release_checkpoint();
+        if (next.world.simulation.date!=prior_day) advance_competition(next.world,program_,prior_day);
         const auto cash_after_submit = next.world.simulation.cash;
         const auto phase_after_submit = next.world.simulation.phase;
         if (next.world.simulation.phase == core::DayPhase::closed) next.world.facts.at("company.is_operating") = false;

@@ -192,16 +192,17 @@ const CommittedFactMetadata* Registry::committed_fact(std::string_view id) const
 }
 Registry foundation_registry() {
     Registry result;
+    result.register_system("slice",{"foundation"});
     const auto maximum = std::numeric_limits<std::int64_t>::max();
     const auto minimum = std::numeric_limits<std::int64_t>::min();
-    auto number = [&](std::string id, Scope scope, Unit unit, std::int64_t low, std::int64_t high, std::string help) {
+    auto number = [&](std::string id, Scope scope, Unit unit, std::int64_t low, std::int64_t high, std::string help,std::string provider="foundation") {
         result.register_fact({std::move(id), scope, ValueType::integer, unit, low, high, std::move(help),
-            {{"scope", PortType::scope, scope, Unit::none, false}, {"value", PortType::value, scope, unit, true}}, Boundary::committed_result, Visibility::player_known, "foundation", {}});
+            {{"scope", PortType::scope, scope, Unit::none, false}, {"value", PortType::value, scope, unit, true}}, Boundary::committed_result, Visibility::player_known, std::move(provider), {}});
     };
-    auto boolean = [&](std::string id, std::string help, Scope scope = Scope::company) {
+    auto boolean = [&](std::string id, std::string help, Scope scope = Scope::company,std::string provider="foundation") {
         result.register_fact({std::move(id), scope, ValueType::boolean, Unit::boolean, 0, 1, std::move(help),
             {{"scope", PortType::scope, scope, Unit::none, false},
-             {"value", PortType::value, scope, Unit::boolean, true}}, Boundary::committed_result, Visibility::player_known, "foundation", {}});
+             {"value", PortType::value, scope, Unit::boolean, true}}, Boundary::committed_result, Visibility::player_known, std::move(provider), {}});
     };
     number("company.cash_cents", Scope::company, Unit::constant_2014_cents, minimum, maximum,
            "Available company cash in constant-2014 cents at the current phase.");
@@ -231,15 +232,33 @@ Registry foundation_registry() {
     boolean("project.is_completed", "Whether the finite project finished its work.", Scope::project);
     boolean("contract.is_active", "Whether this contract currently serves.", Scope::contract);
     boolean("contract.missed_start", "Whether this contract missed its start deadline.", Scope::contract);
+    boolean("project.lab_research_completed","Whether actual lab research work completed for this project.",Scope::project,"slice");
+    boolean("project.has_evaluation_finding","Whether this completed evaluation recorded a concrete covered-subgroup finding.",Scope::project,"slice");
+    number("contract.outcome_tasks",Scope::contract,Unit::count,0,static_cast<std::int64_t>(core::market_task_limit),
+        "Actual useful tasks in the committed contract settlement; failure can deliver zero.","slice");
+    boolean("company.in_liquidity_workout","Whether an actual warned liquidity workout is active.",Scope::company,"slice");
+    boolean("company.has_evaluation_finding","Whether completed player evidence contains a concrete limitation.",Scope::company,"slice");
+    boolean("company.has_enterprise_segment","Whether the first-playable enterprise customer segment exists.",Scope::company,"slice");
+    boolean("company.market_shift_active","Whether an unexpired external demand change is already active.",Scope::company,"slice");
+    boolean("company.supplier_offer_eligible","Whether an unaccepted supplier offer is currently affordable and feasible.",Scope::company,"slice");
+    boolean("company.recovery_offer_eligible","Whether a real available product can honor an unaccepted recovery pilot.",Scope::company,"slice");
+    number("company.competitive_notice_count",Scope::company,Unit::count,0,128,
+        "Number of visible rival publications, budget decisions, closures and disclosed heavyweight warnings; never private scores.","slice");
     result.register_committed_fact({"capacity.project_completed", Scope::company, Scope::project, "project.completed_milli_cu",
         "Finite project work completed at settlement. Dispatch on the next prepared morning."});
     result.register_committed_fact({"market.contract_missed_start", Scope::company, Scope::contract, "contract.missed_start",
         "An accepted contract missed its start deadline at settlement. Dispatch on the next prepared morning."});
-    auto effect = [&](std::string id, std::vector<ArgumentMetadata> args, std::string help) {
+    result.register_committed_fact({"lab.research_completed",Scope::company,Scope::project,"project.lab_research_completed",
+        "Actual research completion; publishing this fact grants no additional knowledge.","slice"});
+    result.register_committed_fact({"lab.evaluation_finding",Scope::company,Scope::project,"project.has_evaluation_finding",
+        "Actual independently recorded evaluation limitation, with its named subgroup evidence.","slice"});
+    result.register_committed_fact({"market.pilot_outcome",Scope::company,Scope::contract,"contract.outcome_tasks",
+        "Actual first service, final service or missed-start settlement and its useful work.","slice"});
+    auto effect = [&](std::string id, std::vector<ArgumentMetadata> args, std::string help,std::string provider="foundation") {
         result.register_effect({std::move(id), {Scope::company}, std::move(args), std::move(help),
             {{"target", PortType::scope, Scope::company, Unit::none, false},
              {"in", PortType::execution, Scope::company, Unit::none, false},
-             {"out", PortType::execution, Scope::company, Unit::none, true}}, Boundary::prepared_morning, Visibility::player_known, "foundation", {}});
+             {"out", PortType::execution, Scope::company, Unit::none, true}}, Boundary::prepared_morning, Visibility::player_known, std::move(provider), {}});
     };
     effect("adjust_cash", {{"amount_cents", ValueType::integer, Unit::constant_2014_cents, minimum, maximum,
            true, "", "Signed cash delta in constant-2014 cents.", {}}}, "Request a checked company cash delta through a transaction.");
@@ -248,6 +267,14 @@ Registry foundation_registry() {
     effect("open_negotiation", {{"template_id", ValueType::reference, Unit::none, 0, 0, true, "deal",
            "Registered deal template; opening it creates no payment or signed contract.", {}}},
            "Open a referenced negotiation; a later confirmed command creates commitments.");
+    effect("accept_business_offer",{{"offer_id",ValueType::reference,Unit::none,0,0,true,"business_offer",
+        "Scenario-owned business offer ID; acceptance rechecks cash, availability and capacity.",{}}},
+        "Accept the disclosed lease or recovery pilot through the same validated business transaction as ordinary commands.","slice");
+    effect("temporary_demand_change",{
+        {"segment_id",ValueType::reference,Unit::none,0,0,true,"market_segment","Existing customer segment ID.",{}},
+        {"delta_bp",ValueType::integer,Unit::basis_point_delta,-2500,2500,true,"","Temporary external demand change, with existing contract promises protected.",{}},
+        {"duration_days",ValueType::integer,Unit::days,1,90,true,"","Exclusive expiry after this many days.",{}}},
+        "Commit one bounded dated demand modifier owned by this occurrence; it never changes settled work.","slice");
     effect("register_owned_modifier", {
            {"key", ValueType::text, Unit::none, 0, 0, true, "", "Owner-local modifier key.", {}},
            {"field", ValueType::text, Unit::none, 0, 0, true, "", "Registered modifiable field.", {"research_coordination_basis_points"}},

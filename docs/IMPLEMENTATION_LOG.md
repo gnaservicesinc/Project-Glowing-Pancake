@@ -709,7 +709,7 @@ The baseline model's independent scanned-table interval is 2468–2768 bp. A
 targeted licensed mixture and another 60-day run produce 5641–5941 bp, with no
 evaluation capability bonus. Mid-training and pending-evaluation reloads match
 exactly. Strict saves check catalog identity, payments, prerequisite timing,
-lineage, actual work and draw history. `--lab-demo assets/content/first-playable.json`
+lineage, actual work and draw history. `--lab-demo data/runtime/first-playable.json`
 exercises the recovery path without launching a GUI.
 
 Verification: optimized incremental Mac build; all **54/54 CTests pass in 13.40s**,
@@ -717,5 +717,38 @@ including **88 lab assertions in 0.10s**; headless demo and `git diff --check` p
 The pre-existing business test accounts for 10.28s of the suite. Broader native
 qualification remains deferred. Deployment qualification, human-review/narrow-scope
 responses and Office/Lab controls remain M3-02; no complete playable slice is
-claimed. [Owning module contract](../src/core/LAB.md). Current count: **19/52**.
-Next: M3-05's eight event families and bounded rival routines.
+claimed. [Owning module contract](../src/core/LAB.md). Count at this batch: **19/52**.
+The next batch implements M3-05's eight event families and bounded rival routines.
+
+## M3-05 eight base-event families and bounded rivals — 2026-11-05
+
+The Studio-browsable collection `data/runtime/first-playable.json` supplies eight
+flows and localizable English messages. Actual research/evaluation/pilot
+settlements supply captured causes. Paid supplier/recovery offers, dated demand
+changes, two startup routines and a financed heavyweight share ordinary command,
+ledger, capacity, choice and save boundaries. Heavyweight warning follows actual
+customer delivery and preserves a 90-day response window. Private model training
+does not trigger it. Optional story roots are not required by the baseline.
+
+The baseline starts without a product, trains and independently evaluates,
+deploys the narrower service, then learns and verifies targeted data before
+expansion. Seed **20140101** finishes **2017-01-01** with **229,865,809 cents**,
+**4,001,600 useful tasks**, four competitive notices and no new debt/equity.
+Saving at mobilization and resuming produces the exact uninterrupted state.
+Content remains internal `0.0.0-dev`; canonical SHA256 is
+`3340d13fb552771ded1f5f796de4a0fd01fe64e14e64e736fbb770d195911df6`.
+[Module contracts, exact seeds and runnable commands](../src/runtime/BASE_EVENTS.md)
+
+Verification: optimized incremental Mac build, **55/55 CTests in 8.88s**, including
+**188** focused event/rival/Studio/scenario checks; both headless demonstrations,
+content validation and `git diff --check` pass. Deep load/save checks still replay
+all histories; daily commands avoid redundant replay and nested history copies.
+The existing business test falls from 10.28s to 2.01s despite the larger feature
+set. Studio fact defaults now retain a scoped variable when adding compatible
+read-only game facts, preserving its counter/refactor behavior.
+
+Count: **20/52 Mac feature steps**. Next: M3-02's player controls, actual model
+qualification, headquarters choice, event/rival presentation and tutorial, then
+M3-03 delegation/scoring. Graphical snapshot finalization, human studies and
+native/release qualification retain their separate gates. No player-ready UI,
+finalized content version or release is claimed by this headless batch.

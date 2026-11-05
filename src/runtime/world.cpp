@@ -141,7 +141,8 @@ WorldState foundation_world(core::Cents cash) {
     return world;
 }
 std::vector<std::string> supported_effects() {
-    return {"adjust_cash", "record_decision", "open_negotiation", "register_owned_modifier", "remove_owned_modifier", "set_variable"};
+    return {"adjust_cash", "record_decision", "open_negotiation", "register_owned_modifier", "remove_owned_modifier", "set_variable",
+        "accept_business_offer", "temporary_demand_change"};
 }
 content::Scalar read_fact(const WorldState& world, const content::FactMetadata& metadata,
                           const ScopeBinding& binding) {
@@ -159,11 +160,26 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
         if (metadata.id == "project.completed_milli_cu") return project.completed_work.value();
         if (metadata.id == "project.is_active") return project.status == core::ProjectStatus::active;
         if (metadata.id == "project.is_completed") return project.status == core::ProjectStatus::completed;
+        if (metadata.id == "project.lab_research_completed") {
+            if (!world.simulation.lab) return false;
+            return std::any_of(world.simulation.lab->research.begin(),world.simulation.lab->research.end(),[&](const auto& row){return row.project_id==project.id && row.completed;});
+        }
+        if (metadata.id == "project.has_evaluation_finding") {
+            if (!world.simulation.lab) return false;
+            return std::any_of(world.simulation.lab->evaluations.begin(),world.simulation.lab->evaluations.end(),[&](const auto& row) {
+                return row.project_id==project.id && row.completed && !row.findings.empty();
+            });
+        }
     }
     if (binding.scope == Scope::contract && market && market->owner == world.company_id) {
         const auto& contract = related_row(market->contracts, binding.id);
         if (metadata.id == "contract.is_active") return contract.status == core::ContractStatus::active;
         if (metadata.id == "contract.missed_start") return contract.status == core::ContractStatus::missed;
+        if (metadata.id == "contract.outcome_tasks") {
+            for (auto day=market->days.rbegin();day!=market->days.rend();++day)
+                for (const auto& row:day->contracts) if (row.contract_id==contract.id) return static_cast<std::int64_t>(row.delivered_tasks);
+            return std::int64_t{0};
+        }
     }
     if (!binding_exists(world, binding))
         invalid("Fact scope binding does not exist or has the wrong type");
@@ -176,6 +192,33 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
         return value;
     }
     if (metadata.id == "company.cash_cents") return world.simulation.cash.value();
+    if (metadata.id == "company.monthly_compute_bill_cents" && world.simulation.business_offers) {
+        auto bill=std::get<std::int64_t>(world.facts.at(metadata.id));
+        const auto& offers=*world.simulation.business_offers;
+        for (const auto& accepted:offers.accepted) if (accepted.accepted_on<=world.simulation.date && world.simulation.date<accepted.expires_before) {
+            const auto offer=std::find_if(offers.catalog.begin(),offers.catalog.end(),[&](const auto& row){return row.id==accepted.offer_id;});
+            if (offer!=offers.catalog.end() && offer->kind==core::BusinessOfferKind::compute_lease)
+                bill=core::checked_add(bill,offer->monthly_amount.value());
+        }
+        return bill;
+    }
+    if (metadata.id == "company.in_liquidity_workout") return world.simulation.liquidity && world.simulation.liquidity->status==core::LiquidityStatus::workout;
+    if (metadata.id == "company.has_evaluation_finding") return world.simulation.lab && std::any_of(
+        world.simulation.lab->evaluations.begin(),world.simulation.lab->evaluations.end(),[](const auto& row){return row.completed && !row.findings.empty();});
+    if (metadata.id == "company.competitive_notice_count") return static_cast<std::int64_t>(world.competition?world.competition->notices.size():0);
+    if (metadata.id == "company.has_enterprise_segment") return market && std::any_of(market->segments.begin(),market->segments.end(),[](const auto& row){return row.id=="segment.enterprise";});
+    if (metadata.id == "company.market_shift_active") return market && std::any_of(market->demand_changes.begin(),market->demand_changes.end(),[&](const auto& row) {
+        return row.starts_on<=world.simulation.date && world.simulation.date<row.expires_before;
+    });
+    if (metadata.id == "company.supplier_offer_eligible" || metadata.id == "company.recovery_offer_eligible") {
+        const auto& state=world.simulation;
+        if (!state.business_offers || !state.accounts || !state.capacity) return false;
+        const auto kind=metadata.id=="company.supplier_offer_eligible"?core::BusinessOfferKind::compute_lease:core::BusinessOfferKind::recovery_pilot;
+        core::Cents protected_cash{0}; for (const auto& row:state.reservations) protected_cash=core::checked_unit_add(protected_cash,row.reserved);
+        return std::any_of(state.business_offers->catalog.begin(),state.business_offers->catalog.end(),[&](const auto& offer) {
+            return offer.kind==kind && core::business_offer_eligible(*state.business_offers,offer,*state.accounts,*state.capacity,state.market,state.date,protected_cash);
+        });
+    }
     const auto found = world.facts.find(metadata.id);
     if (found == world.facts.end()) invalid("Missing owning fact provider value: " + metadata.id);
     scalar_valid(found->second, metadata);
@@ -244,10 +287,18 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             (void)id;
             const auto* scenario = std::get_if<content::ScenarioDefinition>(&definition.data);
             if (!scenario || !scenario->lab || scenario->starts_on != world.campaign_start ||
-                scenario->ends_before != world.simulation.end_date || scenario->seed != world.root_seed) continue;
+                scenario->ends_before != world.simulation.end_date) continue;
             matching_lab_scenario = true;
-            if (world.simulation.lab && world.simulation.lab->catalog == content::scenario_lab_catalog(program.collection, *scenario))
+            if (world.simulation.lab && world.simulation.lab->catalog == content::scenario_lab_catalog(program.collection, *scenario)) {
                 matching_catalog = true;
+                if (scenario->business_offers.empty()?world.simulation.business_offers.has_value():
+                    (!world.simulation.business_offers || world.simulation.business_offers->catalog!=scenario->business_offers))
+                    invalid("Saved business offer catalog differs from its scenario");
+                std::vector<std::string> expected,actual;
+                for (const auto& rival:scenario->rivals) expected.push_back(rival.id);
+                if (world.competition) for (const auto& rival:world.competition->companies) actual.push_back(rival.definition_id);
+                if (expected!=actual || (scenario->rivals.empty() && world.competition)) invalid("Saved rival roster differs from its scenario");
+            }
         }
         if ((matching_lab_scenario || world.simulation.lab) && !matching_catalog)
             invalid("Saved lab catalog or presence differs from the authored scenario");
@@ -255,6 +306,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             core::RandomStreams{world.root_seed}.snapshot()[static_cast<std::size_t>(core::RandomStream::research)])
             invalid("Lab research stream origin differs from its campaign seed");
     }
+    validate_competition(world,program,validate_core_simulation);
     if (world.simulation.phase == core::DayPhase::closed &&
         (!world.facts.contains("company.is_operating") || world.facts.at("company.is_operating") != content::Scalar{false}))
         invalid("Closed company still claims an operating business fact");
@@ -267,7 +319,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
         invalid("Invalid world identity, date, counterparty or count");
     for (const auto& [id, value] : world.facts) {
         const auto* metadata = program.registry.fact(id);
-        if (!metadata || metadata->default_value || id == "company.cash_cents" || business_member_scope(metadata->scope))
+        if (!metadata || metadata->default_value || id == "company.cash_cents" || metadata->provider=="slice" || business_member_scope(metadata->scope))
             invalid("Unknown or duplicated owning world fact");
         scalar_valid(value, *metadata);
     }
@@ -572,7 +624,29 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             if (receipt.counterparty_delta != core::Cents{0}) invalid("Non-cash receipt changes counterparty");
             const auto* before = std::get_if<std::int64_t>(&receipt.before);
             if (!before) invalid("Effect receipt has the wrong before-value type");
-            if (receipt.operation == "record_decision" || receipt.operation == "open_negotiation") {
+            if (receipt.operation == "accept_business_offer") {
+                const auto* after=std::get_if<std::int64_t>(&receipt.after);
+                if (!after || !world.simulation.business_offers || *before<0 || *after<0) invalid("Business offer receipt lacks its actual committed state");
+                const auto& id=std::get<std::string>(owner.effects[receipt.effect_index].arguments.at("offer_id"));
+                const auto& offers=world.simulation.business_offers->catalog;
+                const auto offer=std::find_if(offers.begin(),offers.end(),[&](const auto& row){return row.id==id;});
+                if (offer==offers.end() || core::checked_subtract(*before,*after)!=offer->setup_cost.value() ||
+                    std::none_of(world.simulation.business_offers->accepted.begin(),world.simulation.business_offers->accepted.end(),[&](const auto& row){return row.offer_id==id && row.accepted_on==receipt.day;}))
+                    invalid("Business offer receipt differs from the actual disclosed cost and acceptance");
+            } else if (receipt.operation == "temporary_demand_change") {
+                if (!world.simulation.market || !std::holds_alternative<std::int64_t>(receipt.after)) invalid("Demand receipt has no customer market");
+                const auto& arguments=owner.effects[receipt.effect_index].arguments;
+                const auto identity="occurrence."+std::to_string(activation.id)+"."+std::to_string(receipt.effect_index);
+                const auto& changes=world.simulation.market->demand_changes;
+                const auto change=std::find_if(changes.begin(),changes.end(),[&](const auto& row){return row.id==identity;});
+                const auto after=std::get<std::int64_t>(receipt.after);
+                if (*before<0 || after<0 || static_cast<std::uint64_t>(*before)>core::market_task_limit || static_cast<std::uint64_t>(after)>core::market_task_limit ||
+                    change==changes.end() || change->starts_on!=receipt.day || change->segment_id!=std::get<std::string>(arguments.at("segment_id")) ||
+                    change->delta.value()!=std::get<std::int64_t>(arguments.at("delta_bp")) ||
+                    (change->delta.value()>0 && after<*before) || (change->delta.value()<0 && after>*before) ||
+                    change->expires_before!=core::advance_days(receipt.day,core::Days{std::get<std::int64_t>(arguments.at("duration_days"))}))
+                    invalid("Demand receipt differs from its actual owned modifier or expiry");
+            } else if (receipt.operation == "record_decision" || receipt.operation == "open_negotiation") {
                 const auto* after = std::get_if<std::string>(&receipt.after);
                 const auto argument = receipt.operation == "record_decision" ? "value" : "template_id";
                 const auto& authored = std::get<std::string>(owner.effects[receipt.effect_index].arguments.at(argument));

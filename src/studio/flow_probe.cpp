@@ -22,6 +22,8 @@ runtime::Checkpoint start_fixture(const runtime::CompiledProgram& program, const
     if (fixture.seed) {
         state.world.root_seed = *fixture.seed;
         state.world.simulation.random = core::RandomStreams{*fixture.seed}.snapshot();
+        if (state.world.simulation.lab) state.world.simulation.lab->research_stream_origin=
+            state.world.simulation.random[static_cast<std::size_t>(core::RandomStream::research)];
     }
     return state;
 }

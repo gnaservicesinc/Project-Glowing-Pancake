@@ -26,7 +26,9 @@ void run_lab_demo(const char* path, std::ostream& output) {
     using namespace pgp;
     const auto registry=content::foundation_registry();
     const auto program=runtime::compile_collection(content::load_collection(read_content_file(path),registry),registry,runtime::supported_effects());
-    runtime::Runtime engine{program,runtime::begin_scenario(program,"scenario.first_playable","US-CA")};
+    auto initial=runtime::begin_scenario(program,"scenario.first_playable","US-CA");
+    initial.world.enabled_flows=std::vector<std::string>{};
+    runtime::Runtime engine{program,std::move(initial)};
     const auto ready=engine.prepare_opening(engine.checkpoint().world.simulation.revision);
     if (!ready.accepted()) throw std::runtime_error(ready.explanation);
     core::TrainingRequest training{"baseline","recipe.document_baseline","",{"data.licensed_documents"},

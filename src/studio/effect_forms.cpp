@@ -1,6 +1,7 @@
 #include "graph_forms.hpp"
 
 #include <algorithm>
+#include <set>
 
 namespace pgp::studio::detail {
 namespace {
@@ -14,8 +15,21 @@ std::vector<FormOption> argument_choices(const Collection& collection, const Arg
     if (argument.type == ValueType::boolean) return boolean_choices();
     std::vector<FormOption> options;
     if (argument.type == ValueType::reference) {
+        std::set<std::string> included;
         for (const auto& [id, definition] : collection.definitions)
             if (definition_kind(definition) == argument.reference_kind) options.push_back({id, id});
+        for (const auto& [id,definition]:collection.definitions) {
+            (void)id;
+            const auto* scenario=std::get_if<ScenarioDefinition>(&definition.data);
+            if (!scenario) continue;
+            if (argument.reference_kind=="business_offer") {
+                for (const auto& offer:scenario->business_offers)
+                    if (included.insert(offer.id).second) options.push_back({offer.id,offer.name});
+            } else if (argument.reference_kind=="market_segment" && scenario->market) {
+                for (const auto& segment:scenario->market->segments)
+                    if (included.insert(segment.id).second) options.push_back({segment.id,segment.id});
+            }
+        }
     } else {
         for (const auto& choice : argument.choices) options.push_back({choice, choice});
     }

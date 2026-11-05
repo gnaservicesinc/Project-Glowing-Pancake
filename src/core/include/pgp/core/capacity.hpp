@@ -21,6 +21,8 @@ struct CapacitySource {
     std::uint64_t memory_mib = 0;
     std::string interconnect = "general";
     bool energy_included = true;
+    // Absent only for legacy sources present since the campaign started.
+    std::optional<OrdinalDay> available_from{};
     auto operator<=>(const CapacitySource&) const = default;
 };
 enum class ProjectKind { training, research, evaluation, serving };
@@ -99,6 +101,7 @@ struct CapacityReport {
 [[nodiscard]] CapacityReport capacity_report(const CapacityState& state);
 void validate_capacity(const CapacityState& state);
 void reserve_project(CapacityState& state, OrdinalDay day, CapacityProject project);
+void add_capacity_source(CapacityState& state, OrdinalDay day, CapacitySource source);
 void cancel_project(CapacityState& state, OrdinalDay day, std::string_view project_id);
 void update_effective_capacity(CapacityState& state, OrdinalDay day,
                                std::string_view source_id, MilliCUPerDay effective);
@@ -111,7 +114,7 @@ struct ServingRequest {
     std::uint64_t additional_tasks = 0;
 };
 [[nodiscard]] CapacityDay preview_capacity_day(const CapacityState& state, OrdinalDay day,
-                                               const std::vector<ServingRequest>& serving);
+                                               const std::vector<ServingRequest>& serving,bool validate_input=true);
 void close_capacity_day(CapacityState& state, OrdinalDay day,
                         const std::vector<ServingRequest>& serving, bool validate_io = true);
 } // namespace pgp::core

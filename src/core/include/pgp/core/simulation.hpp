@@ -6,6 +6,7 @@
 #include <pgp/core/market.hpp>
 #include <pgp/core/liquidity.hpp>
 #include <pgp/core/lab.hpp>
+#include <pgp/core/business_offers.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
@@ -93,6 +94,7 @@ struct SimulationState {
     std::optional<MarketState> market{};
     std::optional<LiquidityState> liquidity{};
     std::optional<LabState> lab{};
+    std::optional<BusinessOffersState> business_offers{};
     auto operator<=>(const SimulationState&) const = default;
 };
 
@@ -110,6 +112,7 @@ struct SimulationSnapshot {
     std::optional<MarketReport> market{};
     std::optional<LiquidityReport> liquidity{};
     std::optional<LabReport> lab{};
+    std::optional<BusinessOffersState> business_offers{};
 };
 
 struct ReserveFunds { std::string name; Cents amount; bool reversible = true; };
@@ -130,6 +133,7 @@ struct SetEffectiveCapacity { std::string source_id; MilliCUPerDay available; };
 struct EnableMarket {};
 struct AddMarketProduct { MarketProduct product; };
 struct AddMarketSegment { MarketSegment segment; };
+struct AddMarketPreference { std::string segment_id; MarketPreference preference; };
 struct SetMarketProductAvailable { std::string id; bool available; };
 struct AcceptContract { MarketContract contract; };
 struct StartContract { std::string id; };
@@ -140,14 +144,17 @@ struct StartResearch { std::string research_id; LabAllocation allocation; };
 struct StartTraining { TrainingRequest request; };
 struct CloneModel { std::string source_id, id; };
 struct StartEvaluation { std::string id, model_id, plan_id; LabAllocation allocation; };
+struct AcceptBusinessOffer { std::string id; };
+struct AddMarketDemandChange { MarketDemandChange change; };
 using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReservation,
                                    AdvanceDay, SetPaused, ResolveOpeningChoice,
                                    AddRecurringObligation, IssueInvoice, SettleInvoice,
                                    DrawDebt, RepayDebt, InvestEquity,
                                    ReserveProject, CancelProject, SetEffectiveCapacity,
-                                   EnableMarket, AddMarketProduct, AddMarketSegment,
+                                   EnableMarket, AddMarketProduct, AddMarketSegment, AddMarketPreference,
                                    SetMarketProductAvailable, AcceptContract, StartContract, CancelContract,
-                                   AcknowledgeLiquidityWarning, BuyData, StartResearch, StartTraining, CloneModel, StartEvaluation>;
+                                   AcknowledgeLiquidityWarning, BuyData, StartResearch, StartTraining, CloneModel, StartEvaluation,
+                                   AcceptBusinessOffer, AddMarketDemandChange>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;
@@ -167,9 +174,14 @@ public:
     Simulation(SimulationState initial, TrustedSimulationState) noexcept : state_{std::move(initial)} {}
     explicit Simulation(Cents cash);
     [[nodiscard]] CommandResult submit(const Command& command);
+    // The caller already owns a copied transaction candidate and MUST discard
+    // this Simulation on refusal. Avoid a second full-history copy in that case.
+    [[nodiscard]] CommandResult submit_in_transaction(const Command& command);
+    [[nodiscard]] SimulationState release_checkpoint() && noexcept { return std::move(state_); }
     [[nodiscard]] std::shared_ptr<const SimulationSnapshot> snapshot() const;
     [[nodiscard]] const SimulationState& checkpoint() const noexcept { return state_; }
 private:
+    [[nodiscard]] CommandResult submit_impl(const Command& command,bool outer_transaction);
     SimulationState state_;
 };
 

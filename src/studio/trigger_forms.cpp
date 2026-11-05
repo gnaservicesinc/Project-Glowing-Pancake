@@ -319,7 +319,10 @@ void expression_fields(FormBuilder& builder, const Expression& expression, const
         kinds.push_back({"subtract", "Subtract"});
         kinds.push_back({"scale", "Multiply by a ratio"});
     }
-    const auto default_fact = facts.empty() ? std::string{} : facts.front().value;
+    // A scoped variable read starts from that variable. New built-in facts must
+    // not redirect an authored counter assignment to an unrelated game count.
+    const auto current=type.default_value?std::find_if(facts.begin(),facts.end(),[&](const auto& option){return option.value==type.id;}):facts.end();
+    const auto default_fact=current!=facts.end()?current->value:(facts.empty()?std::string{}:facts.front().value);
     const Expression literal{ExpressionKind::literal, default_scalar(type), type.unit};
     builder.add("kind", "Expression type", expression_kind(expression.kind),
                 "Arithmetic keeps the current expression as its first operand. Entered values and fact reads replace it.",

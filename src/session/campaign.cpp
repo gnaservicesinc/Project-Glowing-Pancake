@@ -107,7 +107,8 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::BuyData>(command.action) ||
         std::holds_alternative<core::StartResearch>(command.action) ||
         std::holds_alternative<core::StartTraining>(command.action) ||
-        std::holds_alternative<core::StartEvaluation>(command.action);
+        std::holds_alternative<core::StartEvaluation>(command.action) ||
+        std::holds_alternative<core::AcceptBusinessOffer>(command.action);
     auto result = operate([&](auto& candidate) { return candidate.submit(command); }, irreversible);
     if (std::holds_alternative<core::AdvanceDay>(command.action) && !result.command.accepted() &&
         result.command.reason != runtime::RuntimeReason::stale_revision)

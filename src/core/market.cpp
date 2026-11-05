@@ -162,6 +162,29 @@ MarketState opening_market(OrdinalDay starts_on, std::string owner) {
     validate_market(state);
     return state;
 }
+std::uint64_t effective_market_demand(const MarketState& state, const MarketSegment& segment, OrdinalDay day) {
+    std::int64_t delta=0;
+    for (const auto& change:state.demand_changes)
+        if (change.segment_id==segment.id && change.starts_on<=day && day<change.expires_before)
+            delta=checked_add(delta,change.delta.value());
+    const auto factor=std::clamp(checked_add(10000,delta),INT64_C(5000),INT64_C(15000));
+    const auto demand=std::min(market_task_limit,mul_div_round_half_up(segment.daily_tasks,static_cast<std::uint64_t>(factor),10000));
+    std::uint64_t promised=0;
+    for (const auto& contract:state.contracts)
+        if (contract.segment_id==segment.id && contract.started_on && *contract.started_on<=day && day<contract.ends_before &&
+            (!contract.stopped_on || day<*contract.stopped_on)) promised+=contract.tasks_per_day;
+    return std::max(demand,promised); // Existing signed work is not cancelled by a demand shock.
+}
+void add_market_demand_change(MarketState& state, OrdinalDay day, MarketDemandChange change) {
+    mutate(state,[&](auto& next) {
+        require_day(next,day);
+        if (change.starts_on!=day) invalid("Demand changes cannot rewrite settled customer work");
+        for (const auto& prior:next.demand_changes)
+            if (prior.segment_id==change.segment_id && prior.expires_before>day)
+                invalid("A segment cannot stack overlapping external demand incidents");
+        next.demand_changes.push_back(std::move(change));
+    });
+}
 MarketReport market_report(const MarketState& state) {
     MarketReport report;
     for (const auto& day : state.days) {
@@ -194,6 +217,23 @@ void validate_market(const MarketState& state) {
             invalid("Market daily close cursor differs from complete history");
     } else if (!state.days.empty()) invalid("Market daily history has no close cursor");
     const auto latest = current_day(state);
+    if (state.demand_changes.size()>64) invalid("External demand incident history exceeds its bound");
+    std::set<std::string_view> change_ids;
+    for (const auto& change:state.demand_changes) {
+        text_valid(change.id); (void)find_id(state.segments,change.segment_id);
+        if (!change_ids.insert(change.id).second || change.starts_on<state.starts_on || change.starts_on>latest ||
+            change.expires_before<=change.starts_on || change.expires_before.value()-change.starts_on.value()>90 ||
+            change.delta.value()<-2500 || change.delta.value()>2500 || change.delta.value()==0)
+            invalid("External demand incident has invalid identity, duration or magnitude");
+    }
+    std::vector<const MarketDemandChange*> ordered_changes;
+    for (const auto& change:state.demand_changes) ordered_changes.push_back(&change);
+    std::sort(ordered_changes.begin(),ordered_changes.end(),[](const auto* a,const auto* b) {
+        return std::tie(a->segment_id,a->starts_on,a->id)<std::tie(b->segment_id,b->starts_on,b->id);
+    });
+    for (std::size_t i=1;i<ordered_changes.size();++i)
+        if (ordered_changes[i-1]->segment_id==ordered_changes[i]->segment_id && ordered_changes[i-1]->expires_before>ordered_changes[i]->starts_on)
+            invalid("Saved external demand incidents overlap for the same segment");
     std::unordered_set<std::string_view> ids, projects;
     ids.reserve(state.products.size());
     projects.reserve(state.products.size());
@@ -348,7 +388,7 @@ void validate_market(const MarketState& state) {
             const auto dd = dd_it == delivered_discretionary.end() ? 0 : dd_it->second;
             const auto pr = pr_it == promised.end() ? 0 : pr_it->second;
             const auto ch = ch_it == charges.end() ? Cents{0} : ch_it->second;
-            if (!daily_segments.insert(segment.id).second || row.demand != segment.daily_tasks || row.budget != segment.daily_budget ||
+            if (!daily_segments.insert(segment.id).second || row.demand != effective_market_demand(state,segment,day.day) || row.budget != segment.daily_budget ||
                 row.contract_tasks != dc || row.discretionary_tasks != dd ||
                 row.contract_tasks > row.demand || row.discretionary_tasks > row.demand || row.outside_tasks > row.demand ||
                 row.contract_tasks + row.discretionary_tasks + row.outside_tasks != row.demand || pr > row.demand ||
@@ -493,35 +533,49 @@ void set_product_available(MarketState& state, std::string_view product_id, bool
         found->available = value;
     });
 }
-void accept_contract(MarketState& state, const CapacityState& capacity, OrdinalDay day, MarketContract contract) {
-    mutate(state, [&](auto& next) {
-        require_day(next, day);
-        if (contract.status != ContractStatus::pending || contract.accepted_on != day || contract.started_on || contract.stopped_on)
+void add_market_preference(MarketState& state,std::string_view segment_id,MarketPreference preference_row) {
+    mutate(state,[&](auto& next) {
+        const auto found=std::find_if(next.segments.begin(),next.segments.end(),[&](const auto& row){return row.id==segment_id;});
+        if (found==next.segments.end() || preference(*found,preference_row.product_id)) invalid("A new customer preference needs an existing segment and a new product");
+        found->preferences.push_back(std::move(preference_row));
+        std::sort(found->preferences.begin(),found->preferences.end(),[](const auto& a,const auto& b){return a.product_id<b.product_id;});
+    });
+}
+void validate_contract_acceptance(const MarketState& state,const CapacityState& capacity,OrdinalDay day,const MarketContract& contract) {
+        require_day(state, day);
+        if (contract.status != ContractStatus::pending || contract.accepted_on != day || contract.started_on || contract.stopped_on ||
+            state.contracts.size()>=market_contract_limit || std::any_of(state.contracts.begin(),state.contracts.end(),[&](const auto& row){return row.id==contract.id;}))
             invalid("A newly accepted contract must record today's acceptance without prior delivery state");
-        const auto& segment = find_id(next.segments, contract.segment_id);
-        const auto& product_row = find_id(next.products, contract.product_id);
+        const auto& segment = find_id(state.segments, contract.segment_id);
+        const auto& product_row = find_id(state.products, contract.product_id);
         const auto* pref = preference(segment, product_row.id);
         if (!pref || !pref->eligible || contract.usage_price > pref->willingness_to_pay)
             invalid("Customer contract fails eligibility or agreed usage-price willingness");
-        next.contracts.push_back(std::move(contract));
         std::map<std::string, std::uint64_t> segment_tasks, product_tasks;
         std::map<std::string, Cents> segment_cost;
-        for (const auto& row : next.contracts) {
-            if (row.status != ContractStatus::pending && row.status != ContractStatus::active) continue;
+        const auto include=[&](const auto& row) {
+            if (row.status != ContractStatus::pending && row.status != ContractStatus::active) return;
             segment_tasks[row.segment_id] += row.tasks_per_day;
             product_tasks[row.product_id] += row.tasks_per_day;
             const auto worst_fee = Cents{row.monthly_fee.value() / 28 + (row.monthly_fee.value() % 28 != 0 ? 1 : 0)};
             auto [cost, fresh] = segment_cost.try_emplace(row.segment_id, Cents{0}); (void)fresh;
             cost->second = checked_unit_add(cost->second, checked_unit_add(worst_fee, multiplied(row.usage_price, row.tasks_per_day)));
-        }
+        };
+        for (const auto& row:state.contracts) include(row);
+        include(contract);
         for (const auto& [id, tasks] : segment_tasks) {
-            const auto& customer = find_id(next.segments, id);
+            const auto& customer = find_id(state.segments, id);
             if (tasks > customer.daily_tasks || segment_cost.at(id) > customer.daily_budget)
                 invalid("Accepted contracts exceed the same customer's task demand or daily budget");
         }
         for (const auto& [id, tasks] : product_tasks)
-            if (tasks > project(capacity, find_id(next.products, id)).tasks_per_day)
+            if (tasks > project(capacity, find_id(state.products, id)).tasks_per_day)
                 invalid("Accepted contract tasks exceed the product's committed serving profile");
+}
+void accept_contract(MarketState& state, const CapacityState& capacity, OrdinalDay day, MarketContract contract) {
+    mutate(state, [&](auto& next) {
+        validate_contract_acceptance(next,capacity,day,contract);
+        next.contracts.push_back(std::move(contract));
         std::sort(next.contracts.begin(), next.contracts.end(), [](const auto& a, const auto& b) { return a.id < b.id; });
     });
 }
@@ -550,7 +604,11 @@ void cancel_contract(MarketState& state, AccountsState& accounts, OrdinalDay day
 void close_market_day(MarketState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day, bool validate_io) {
     if (validate_io) validate_market_links(state, accounts, capacity);
     require_day(state, day);
-    auto next = state; auto ledger = accounts; auto pool = capacity;
+    MarketState market_candidate; AccountsState ledger_candidate; CapacityState capacity_candidate;
+    if (validate_io) { market_candidate=state; ledger_candidate=accounts; capacity_candidate=capacity; }
+    auto& next=validate_io?market_candidate:state;
+    auto& ledger=validate_io?ledger_candidate:accounts;
+    auto& pool=validate_io?capacity_candidate:capacity;
     std::set<std::string> linked;
     for (const auto& product_row : next.products) linked.insert(product_row.capacity_project_id);
     for (const auto& row : pool.projects)
@@ -578,7 +636,7 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
         const bool enabled = available(row, pool);
         full_requests.push_back({profile.id, enabled ? contracts : 0, enabled ? profile.tasks_per_day - contracts : 0});
     }
-    const auto plan = preview_capacity_day(pool, day, full_requests);
+    const auto plan = preview_capacity_day(pool, day, full_requests,validate_io);
     std::map<std::string, std::uint64_t> delivered_contracts;
     std::map<std::string, std::uint64_t> product_contract_delivered;
     for (const auto& [id, claims] : product_contracts) {
@@ -618,8 +676,9 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
     for (const auto& row : next.segments) {
         const auto reserved = segment_reserved[row.id];
         const auto charged = segment_charged.contains(row.id) ? segment_charged.at(row.id) : Cents{0};
-        if (reserved > row.daily_tasks || charged > row.daily_budget) invalid("Contract work exceeds the customer's single task/budget snapshot");
-        AllocationSegment segment{row.id, row.daily_tasks - reserved, checked_unit_subtract(row.daily_budget, charged),
+        const auto demand=effective_market_demand(next,row,day);
+        if (reserved > demand || charged > row.daily_budget) invalid("Contract work exceeds the customer's single task/budget snapshot");
+        AllocationSegment segment{row.id, demand - reserved, checked_unit_subtract(row.daily_budget, charged),
                                   weight(row.outside_utility, row.reservation_threshold), {}};
         const auto outside_share = installed(next, row.id, "outside");
         for (const auto& pref : row.preferences) {
@@ -630,7 +689,7 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
             const auto switching = mul_div_round_half_up(pref.switching_cost, other_installed, 10000);
             const auto utility = pref.utility > switching ? pref.utility - switching : 0;
             const auto adoption_cap = std::min<std::uint64_t>(10000, old_share + static_cast<std::uint64_t>(row.maximum_monthly_migration.value()));
-            const auto limit = mul_div_floor(row.daily_tasks, adoption_cap, 10000).quotient;
+            const auto limit = mul_div_floor(demand, adoption_cap, 10000).quotient;
             segment.edges.push_back({product_row.id, weight(utility, row.reservation_threshold), limit});
         }
         segments.push_back(std::move(segment));
@@ -668,7 +727,7 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
             }
         }
         if (reason.empty()) reason = "none";
-        record.segments.push_back({result.id, segment.daily_tasks, segment.daily_budget, segment_contract_delivered[result.id],
+        record.segments.push_back({result.id, effective_market_demand(next,segment,day), segment.daily_budget, segment_contract_delivered[result.id],
             delivered, result.outside_tasks + missing_contract, charged, result.remaining_budget, std::move(reason)});
     }
     std::vector<ServingRequest> actual_requests;
@@ -689,6 +748,6 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
     }
     // Accounts intentionally remains on this day's close boundary; the parent
     // transaction settles it after all market consequences are recognized.
-    state = std::move(next); accounts = std::move(ledger); capacity = std::move(pool);
+    if (validate_io) { state=std::move(next); accounts=std::move(ledger); capacity=std::move(pool); }
 }
 } // namespace pgp::core

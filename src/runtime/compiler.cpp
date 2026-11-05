@@ -293,6 +293,9 @@ Json definition_json(const Definition& definition, const std::string& key) {
         for (const auto& [name, value] : scenario->ownership) result["ownership_basis_points"][name] = value.value();
         result["research"] = scenario->research; result["flows"] = scenario->flows;
         if (scenario->lab) result["lab"] = Json::parse(canonical_lab_catalog(*scenario->lab));
+        if (!scenario->business_offers.empty()) result["business_offers"]=Json::parse(canonical_business_offer_catalog(scenario->business_offers));
+        if (!scenario->rivals.empty()) result["rivals"]=Json::parse(canonical_rival_definitions(scenario->rivals));
+        if (scenario->service_catalog) result["service_catalog"]=Json::parse(canonical_market_setup_bytes(*scenario->service_catalog,scenario->starts_on));
         if (scenario->market)
             result["market"] = Json::parse(canonical_market_setup_bytes(*scenario->market,scenario->starts_on));
         if (scenario->business_plan)
@@ -307,6 +310,7 @@ Json collection_json(const Collection& collection) {
     shape(!collection.definitions.empty() && collection.definitions.size() <= 512, "/definitions", "Definition count budget exceeded");
     Json result{{"content_schema", collection.schema}, {"content_version", collection.content_version},
                 {"currency_basis", "constant_2014_cents"}, {"definitions", Json::array()}};
+    if (!collection.messages.empty()) result["messages"]=collection.messages;
     if (!collection.variables.empty()) {
         std::vector<const FactMetadata*> variables;
         for (const auto& variable : collection.variables) variables.push_back(&variable);

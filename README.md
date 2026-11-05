@@ -2,7 +2,11 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** 19 of 52 steps complete for Mac feature development as of 2026-11-05, with the data/research/train/evaluate loop (`M3-01`) implemented and `M3-05` -> `M3-02` -> `M3-03` prioritized next. The headless lab demonstration buys data, completes research and finite training, discovers a scanned-table weakness and verifies targeted-data recovery with exact save continuation. Platform and release qualification remain separately deferred under the user’s instruction. A headless three-year business runner combines accounts, shared compute/staff, contracts, installed shares and warned liquidity recovery (now running in ~1.3s per 3-year campaign after eliminating $O(N^2)$ per-day validation overhead). Authored policies exercise expansion, equity rescue and closure through ordinary commands and exact saves. The foundation executes typed flows, weighted branches, durations, scoped variables, expressions, related-entity quantifiers, delays, choices and modifiers. Local settings, recovery copies, autosave policy and immutable worker/models exist. The local campaign shell connects Office, Lab and Inbox to the business simulation, and Content Studio (`E1A-01`–`E1A-03`) browses collections, edits typed flows and inspects impacts on copied scenario state. Remaining Studio tasks (`E1A-04`, `E1A-05`, `E1b`) are queued after the `M3` playable slice works end-to-end. Follow [playability checkpoints](docs/PLAYABILITY.md), [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
+**Current state:** 20 of 52 steps complete for Mac feature development as of 2026-11-05. The data/research/train/evaluate loop (`M3-01`) and eight-event baseline with bounded rivals (`M3-05`) are implemented. A headless 2014–2017 strategy starts without a product, discovers a subgroup weakness, retrains on targeted data and finishes solvent through actual customer work. Saved continuation matches uninterrupted execution.
+
+The Office/Lab/Inbox shell and separate Content Studio forms/inspection exist. **M3-02 is next:** connect the new mechanics, headquarters choices, offers, rivals and tutorial to a complete player-facing scenario. M3-03 adds delegation and scoring. The current headless demonstration does not establish a complete playable interface or release qualification.
+
+Platform and release checks remain separately deferred. Remaining Studio snapshot/canvas work (`E1A-04`, `E1A-05`, `E1b`) follows the M3 feature slice. Follow [playability checkpoints](docs/PLAYABILITY.md), [status](docs/STATUS.md), [implementation checks](docs/IMPLEMENTATION_LOG.md) and the ordered [backlog](docs/BACKLOG.md).
 
 ## Build the development skeleton
 
@@ -12,7 +16,8 @@ A free, offline strategy game about founding an AI company in 2014 and guiding i
 ./make.sh --editor           # Separate Content Studio
 ctest --test-dir build/core-release -R '^(core.liquidity|runtime.liquidity-integration|session.business-scenario)$' --output-on-failure
 build/core-release/bin/pgp-headless --business-run tests/content/fixtures/business.json expansion
-build/core-release/bin/pgp-headless --lab-demo assets/content/first-playable.json
+build/core-release/bin/pgp-headless --lab-demo data/runtime/first-playable.json
+build/core-release/bin/pgp-headless --events-demo data/runtime/first-playable.json
 ./make.sh --help
 ```
 
@@ -55,14 +60,10 @@ The selected stack is C++20 + Qt 6.12.x/QML with CMake/Ninja. Desktop targets ar
 
 The game needs **no backend, hosted model, player account, analytics, or in-game updater**. Local saves, autosaves, preferences, and campaign history are normal features. Installation and updates are handled outside the game by the chosen distribution platform.
 
-Content Studio builds as a separate target with a checkout library and a typed draft outline. Authors can configure triggers, lifecycles, execution nodes and scoped variables, then save and reopen drafts. Flow inspection shows trigger truth, actual effects, ledger entries and suspended continuations on isolated fixtures. The trigger → effects/events canvas is planned. The game build excludes the Studio target and its resources. [The version manifest](project-versions.json) reserves `0.0.0-dev` planning identities; M0-05 adds the validated reader and shared build identity. Automated content version controls and packaging remain later implementation tasks.
+Content Studio builds as a separate target with a checkout library and a typed draft outline. Authors can configure triggers, lifecycles, execution nodes and scoped variables, then save and reopen drafts. Flow inspection shows trigger truth, actual effects, ledger entries and suspended continuations on isolated fixtures. The trigger → effects/events canvas is planned. The game build excludes the Studio target and its resources. [The version manifest](project-versions.json) reserves `0.0.0-dev` planning identities; M0-05 supplies the validated reader and shared build identity. Automated content version controls and packaging remain later implementation tasks.
 
-Built-in rules already dispatch committed project and contract facts, bounded
-seeded world incidents and weekly news in engineering content. AI-assisted
-development creates the playable baseline, with human-authored stories as
-extensions. The eight-flow playable pack remains ahead. [Event contract and AI
-assignments](docs/EVENT_SYSTEM.md)
+Built-in rules dispatch actual research, evaluation and pilot outcomes, seeded demand incidents, paid supplier/recovery opportunities and competitive notices through one shared runtime. The eight-flow pack is in `data/runtime/first-playable.json`, with localizable English messages and a complete baseline-only headless run. [Event contract](docs/EVENT_SYSTEM.md) · [Implementation and seeds](src/runtime/BASE_EVENTS.md)
 
-E1a delivers forms/outline and inspection before the first playable's content. E1b completes the required node canvas, graphical batch finalizer and three-author study before M4. Baseline 1.2 also clarifies checked math/constant-2014 money, morning decisions and saved continuations, finite inference/wholesale capacity, persistent UI models and objective-loss feedback. These are planning changes; no runtime behavior has been tested.
+E1a forms/inspection share the runtime; internal content snapshot finalization remains ahead. E1b completes the required node canvas, graphical finalizer and three-author study before M4. Human playtests, full rival planning, century systems and the six final objectives retain their later acceptance gates.
 
 Project code is licensed under [GNU GPLv3](LICENSE). Third-party assets/dependencies retain their own recorded licenses and credits. The original drafts are preserved unchanged in [the reference archive](docs/reference/README.md); the active plan above supersedes their suggestions.

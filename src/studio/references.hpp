@@ -9,6 +9,10 @@ void visit_definition_references(Definition& definition, const content::Registry
     if (auto* scenario = std::get_if<content::ScenarioDefinition>(&definition.data)) {
         for (auto& target : scenario->research) visit(target);
         for (auto& target : scenario->flows) visit(target);
+        if (scenario->lab) {
+            for (auto& recipe:scenario->lab->recipes) for (auto& target:recipe.requires_research) visit(target);
+            for (auto& evaluation:scenario->lab->evaluations) for (auto& target:evaluation.requires_research) visit(target);
+        }
     } else if (auto* research = std::get_if<content::ResearchDefinition>(&definition.data)) {
         for (auto& target : research->all_of) visit(target);
         for (auto& target : research->any_of) visit(target);

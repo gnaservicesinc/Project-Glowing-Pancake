@@ -148,7 +148,8 @@ void validate_capacity(const CapacityState& state) {
             row.nominal.value() <= 0 || row.effective > row.nominal ||
             (row.kind != CapacitySourceKind::leased && row.kind != CapacitySourceKind::owned) ||
             (row.kind == CapacitySourceKind::owned && row.provider != row.owner) ||
-            (row.kind == CapacitySourceKind::leased && row.provider == row.owner))
+            (row.kind == CapacitySourceKind::leased && row.provider == row.owner) ||
+            (row.available_from && (*row.available_from < state.starts_on || *row.available_from > latest)))
             invalid("Capacity source has duplicate ownership, impossible output or an invalid provider");
     }
     std::unordered_map<std::string_view, const CapacityProject*> projects;
@@ -161,6 +162,7 @@ void validate_capacity(const CapacityState& state) {
         const auto& supply = source(state, row.source_id);
         if (!projects.emplace(row.id, &row).second || row.starts_on < state.starts_on || row.starts_on > latest ||
             row.requested.value() <= 0 || row.staff == 0 || row.staff > state.available_staff ||
+            (supply.available_from && row.starts_on < *supply.available_from) ||
             row.minimum_memory_mib > supply.memory_mib || row.interconnect != supply.interconnect || row.monthly_support_cost.value() < 0)
             invalid("Project identity, date, staff or source compatibility is invalid");
         switch (row.kind) {
@@ -209,7 +211,9 @@ void validate_capacity(const CapacityState& state) {
     for (std::size_t day_index = 0; day_index < state.days.size(); ++day_index) {
         const auto& day = state.days[day_index];
         if (day.day.value() != checked_add(state.starts_on.value(), static_cast<std::int64_t>(day_index)) ||
-            day.sources.size() != state.sources.size() || day.projects.size() > state.projects.size())
+            day.sources.size() != static_cast<std::size_t>(std::count_if(state.sources.begin(),state.sources.end(),[&](const auto& supply) {
+                return !supply.available_from || *supply.available_from <= day.day;
+            })) || day.projects.size() > state.projects.size())
             invalid("Daily capacity history is incomplete or out of order");
         work_records += day.projects.size();
         if (work_records > capacity_work_record_limit) invalid("Capacity work history exceeds its deterministic bound");
@@ -256,7 +260,8 @@ void validate_capacity(const CapacityState& state) {
             const auto& supply = source(state, used.source_id);
             const auto recorded = source_use.find(used.source_id);
             const auto actual = recorded == source_use.end() ? MilliCU{0} : recorded->second;
-            if (used.effective > supply.nominal || used.used.value() > used.effective.value() || actual != used.used)
+            if ((supply.available_from && *supply.available_from > day.day) ||
+                used.effective > supply.nominal || used.used.value() > used.effective.value() || actual != used.used)
                 invalid("Daily work exceeds effective capacity or differs from source consumption");
         }
     }
@@ -300,6 +305,14 @@ void reserve_project(CapacityState& state, OrdinalDay day, CapacityProject row) 
         if (reserved > source(candidate, source_id).effective.value())
             invalid("A new project cannot exceed currently effective source capacity");
         std::sort(candidate.projects.begin(), candidate.projects.end(), [](const auto& a, const auto& b) { return a.id < b.id; });
+    });
+}
+void add_capacity_source(CapacityState& state, OrdinalDay day, CapacitySource row) {
+    mutate(state,[&](auto& candidate) {
+        require_day(candidate,day);
+        if (row.available_from != day) invalid("A new source must record its actual first availability day");
+        candidate.sources.push_back(std::move(row));
+        std::sort(candidate.sources.begin(),candidate.sources.end(),[](const auto& a,const auto& b){return a.id < b.id;});
     });
 }
 void cancel_project(CapacityState& state, OrdinalDay day, std::string_view project_id) {
@@ -377,8 +390,8 @@ CapacityDay preview_capacity_day_unchecked(const CapacityState& state, OrdinalDa
 } // namespace
 
 CapacityDay preview_capacity_day(const CapacityState& state, OrdinalDay day,
-                                 const std::vector<ServingRequest>& serving) {
-    validate_capacity(state);
+                                 const std::vector<ServingRequest>& serving,bool validate_input) {
+    if (validate_input) validate_capacity(state);
     return preview_capacity_day_unchecked(state, day, serving);
 }
 void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<ServingRequest>& serving, bool validate_io) {

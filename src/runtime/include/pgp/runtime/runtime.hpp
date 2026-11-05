@@ -2,6 +2,7 @@
 
 #include <pgp/runtime/compiler.hpp>
 #include <pgp/core/simulation.hpp>
+#include <pgp/runtime/competition.hpp>
 
 #include <map>
 #include <optional>
@@ -43,6 +44,7 @@ struct WorldState {
     std::vector<std::string> negotiations;
     // Sparse overrides; an absent value reads its registered scoped default.
     std::vector<VariableValue> variables{};
+    std::optional<CompetitionState> competition{};
     auto operator<=>(const WorldState&) const = default;
 };
 

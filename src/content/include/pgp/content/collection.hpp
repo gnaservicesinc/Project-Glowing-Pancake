@@ -4,6 +4,7 @@
 #include <pgp/content/market_setup.hpp>
 #include <pgp/content/business_plan.hpp>
 #include <pgp/content/lab_catalog.hpp>
+#include <pgp/content/world_setup.hpp>
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
@@ -137,6 +138,10 @@ struct ScenarioDefinition {
     std::optional<MarketSetup> market{};
     std::optional<BusinessPlan> business_plan{};
     std::optional<core::LabCatalog> lab{};
+    std::vector<core::BusinessOffer> business_offers{};
+    std::vector<RivalDefinition> rivals{};
+    // Deployable templates, not active products or prepaid serving workloads.
+    std::optional<MarketSetup> service_catalog{};
 };
 struct ResearchDefinition {
     std::vector<std::string> all_of;
@@ -157,6 +162,7 @@ struct Collection {
     std::string content_version;
     std::map<std::string, Definition, std::less<>> definitions;
     std::vector<FactMetadata> variables{};
+    std::map<std::string,std::string,std::less<>> messages{};
     [[nodiscard]] const Definition* find(std::string_view id) const;
 };
 

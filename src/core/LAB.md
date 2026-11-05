@@ -3,7 +3,7 @@
 `lab.hpp` owns delivered data licenses, research attempts, checkpoint lineage and
 evaluation evidence. Scenarios supply a validated catalog; the shared compiler
 hash includes every numeric input. The first-playable catalog is
-`assets/content/first-playable.json`: four fictional data offers, six research
+`data/runtime/first-playable.json`: four fictional data offers, six research
 nodes, five recipes and three evaluation plans. No real dataset or ML execution
 is included. Fictional use rights have no bearing on the game's asset licenses.
 
@@ -41,7 +41,7 @@ payments, prerequisite timing, model formula and every evaluation draw. Older
 engineering saves retain an absent lab; a lab scenario cannot silently drop it.
 History/draw replay is confined to load/save validation, not daily advancement.
 
-Run `build/release/bin/pgp-headless --lab-demo assets/content/first-playable.json`
+Run `build/release/bin/pgp-headless --lab-demo data/runtime/first-playable.json`
 for a baseline finding and targeted recovery. `runtime.lab-integration` covers a
 hand-calculated arithmetic case, malformed data/saves, paid unlocks/retries,
 resource/payment failures, cancellation, outage recovery, clone/mixture exploits,

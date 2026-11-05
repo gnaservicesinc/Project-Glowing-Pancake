@@ -34,7 +34,9 @@ runtime::CompiledProgram compile(const Json& doc) {
     return runtime::compile_collection(content::load_collection(doc.dump(),registry),registry,runtime::supported_effects());
 }
 runtime::Runtime engine(const runtime::CompiledProgram& program) {
-    runtime::Runtime result{program, runtime::begin_scenario(program,"scenario.first_playable","US-CA")};
+    auto initial=runtime::begin_scenario(program,"scenario.first_playable","US-CA");
+    initial.world.enabled_flows=std::vector<std::string>{}; // Isolate lab behavior from optional opportunity choices.
+    runtime::Runtime result{program,std::move(initial)};
     const auto ready = result.prepare_opening(result.checkpoint().world.simulation.revision);
     if (!ready.accepted()) throw std::runtime_error(ready.explanation);
     return result;

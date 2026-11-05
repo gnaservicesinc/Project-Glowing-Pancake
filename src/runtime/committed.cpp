@@ -10,7 +10,7 @@ namespace pgp::runtime::detail {
 namespace {
 using Sources = std::vector<CommittedSource>;
 using content::Scope;
-struct Subject { std::string id; std::string cause; };
+struct Subject { std::string id; std::string cause; std::optional<content::Scalar> result{}; };
 using Subjects = std::vector<Subject>;
 
 Subjects completed_projects(const WorldState& world, core::OrdinalDay day) {
@@ -31,6 +31,52 @@ Subjects missed_contracts(const WorldState& world, core::OrdinalDay day) {
                 result.push_back({row.id, row.cause});
     return result;
 }
+Subjects completed_research(const WorldState& world,core::OrdinalDay day) {
+    Subjects result;
+    if (!world.simulation.lab || !world.simulation.capacity) return result;
+    for (const auto& run:world.simulation.lab->research) {
+        const auto& projects=world.simulation.capacity->projects;
+        const auto work=std::find_if(projects.begin(),projects.end(),[&](const auto& row){return row.id==run.project_id;});
+        if (run.completed && work!=projects.end() && work->stopped_on==day)
+            result.push_back({run.project_id,"Completed research: "+run.research_id,content::Scalar{true}});
+    }
+    return result;
+}
+Subjects evaluation_findings(const WorldState& world,core::OrdinalDay day) {
+    Subjects result;
+    if (!world.simulation.lab || !world.simulation.capacity) return result;
+    for (const auto& evidence:world.simulation.lab->evaluations) {
+        const auto& plans=world.simulation.lab->catalog.evaluations;
+        const auto plan=std::find_if(plans.begin(),plans.end(),[&](const auto& row){return row.id==evidence.plan_id;});
+        if (plan==plans.end() || !plan->independent) continue;
+        const auto& projects=world.simulation.capacity->projects;
+        const auto work=std::find_if(projects.begin(),projects.end(),[&](const auto& row){return row.id==evidence.project_id;});
+        if (evidence.completed && !evidence.findings.empty() && work!=projects.end() && work->stopped_on==day)
+            result.push_back({evidence.project_id,"Evaluation "+evidence.id+": "+evidence.findings.front(),content::Scalar{true}});
+    }
+    return result;
+}
+Subjects pilot_outcomes(const WorldState& world,core::OrdinalDay day) {
+    Subjects result;
+    if (!world.simulation.market || day<world.simulation.market->starts_on) return result;
+    const auto& market=*world.simulation.market;
+    const auto offset=static_cast<std::uint64_t>(day.value()-market.starts_on.value());
+    if (offset>=market.days.size()) return result;
+    const auto& settled=market.days[static_cast<std::size_t>(offset)];
+    for (const auto& outcome:settled.contracts) {
+        const auto contract=std::find_if(market.contracts.begin(),market.contracts.end(),[&](const auto& row){return row.id==outcome.contract_id;});
+        if (contract==market.contracts.end()) throw std::invalid_argument("Pilot outcome has no owning contract");
+        bool previous_failure=false;
+        if (offset>0) for (const auto& prior:market.days[static_cast<std::size_t>(offset-1)].contracts)
+            if (prior.contract_id==outcome.contract_id) previous_failure=prior.delivered_tasks<prior.promised_tasks;
+        const bool first_failure=outcome.delivered_tasks<outcome.promised_tasks && !previous_failure;
+        const bool missed=contract->status==core::ContractStatus::missed && contract->stopped_on==day;
+        if (contract->started_on!=day && core::advance_days(day,core::Days{1})!=contract->ends_before && !first_failure && !missed) continue;
+        result.push_back({contract->id,contract->cause+": delivered "+std::to_string(outcome.delivered_tasks)+" / "+std::to_string(outcome.promised_tasks)+
+            " promised tasks"+(missed?"; missed start deadline":""),content::Scalar{static_cast<std::int64_t>(outcome.delivered_tasks)}});
+    }
+    return result;
+}
 struct Provider {
     std::string_view id;
     Scope subject;
@@ -40,6 +86,9 @@ struct Provider {
 constexpr Provider providers[]{
     {"capacity.project_completed", Scope::project, "project.completed_milli_cu", completed_projects},
     {"market.contract_missed_start", Scope::contract, "contract.missed_start", missed_contracts},
+    {"lab.research_completed",Scope::project,"project.lab_research_completed",completed_research},
+    {"lab.evaluation_finding",Scope::project,"project.has_evaluation_finding",evaluation_findings},
+    {"market.pilot_outcome",Scope::contract,"contract.outcome_tasks",pilot_outcomes},
 };
 [[noreturn]] void invalid(const char* explanation) { throw std::invalid_argument(explanation); }
 const Provider& provider_for(const content::Registry& registry, std::string_view id) {
@@ -66,7 +115,7 @@ Sources committed_sources(const WorldState& world, const content::Registry& regi
     result.reserve(subjects.size());
     for (auto& subject : subjects) {
         ScopeBinding bound{provider.subject, std::move(subject.id)};
-        auto value = read_fact(world, fact, bound);
+        auto value = subject.result?std::move(*subject.result):read_fact(world, fact, bound);
         result.push_back({std::string(fact_id), std::move(bound), settled, fact.unit, std::move(value), std::move(subject.cause)});
     }
     return result;
@@ -111,7 +160,7 @@ void validate_committed_sources(const CompiledProgram& program, const Checkpoint
     if (state.prepared_day && owners.size() != subscriptions.size())
         invalid("Prepared morning is missing an enabled committed source lifecycle");
 
-    std::set<std::pair<std::string_view, ScopeBinding>> seen;
+    std::set<std::tuple<std::string_view, ScopeBinding,core::OrdinalDay>> seen;
     std::map<std::string_view, core::OrdinalDay, std::less<>> last_started;
     for (const auto& active : state.activations) {
         const auto found = subscriptions.find(active.definition_id);
@@ -121,7 +170,7 @@ void validate_committed_sources(const CompiledProgram& program, const Checkpoint
         const auto& source = *active.committed_source;
         const auto owner = owners.find(active.definition_id);
         if (owner == owners.end() || !owner->second->last_checked || active.started_on > *owner->second->last_checked ||
-            !seen.emplace(source.fact_id, source.subject).second)
+            !seen.emplace(source.fact_id, source.subject,source.settled_on).second)
             invalid("Committed cause has no processed owner or was already consumed");
         const auto& sources = sources_on(found->second->on_committed, active.binding, active.started_on);
         const auto expected = std::lower_bound(sources.begin(), sources.end(), source.subject.id,

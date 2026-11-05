@@ -108,6 +108,7 @@ void prepare_opening(SimulationState& state) {
     if (state.phase != DayPhase::opening) {
         return;
     }
+    if (state.business_offers) expire_business_offers(*state.business_offers,*state.capacity,state.date);
     while (state.opening_cursor < state.opening_actions.size()) {
         const auto& due = state.opening_actions[state.opening_cursor];
         if (due.due > state.date) {
@@ -126,7 +127,7 @@ void prepare_opening(SimulationState& state) {
     state.phase = DayPhase::work_ready;
 }
 
-void validate(const SimulationState& state) {
+void validate(const SimulationState& state,bool deep=true) {
     const auto invalid = [](const char* message) { throw std::invalid_argument{message}; };
     (void)from_ordinal(state.date);
     (void)from_ordinal(state.end_date);
@@ -134,15 +135,15 @@ void validate(const SimulationState& state) {
         invalid("Invalid campaign dates or negative unfinanced cash");
     }
     if (state.accounts) {
-        if (!state.market && !state.liquidity) validate_accounts(*state.accounts);
+        if (deep && !state.market && !state.liquidity) validate_accounts(*state.accounts);
         const auto& ledger = *state.accounts;
         if (accounts_report(ledger).cash != state.cash || ledger.starts_on > state.date ||
             (ledger.closed_through ? advance_days(*ledger.closed_through, Days{1}) != state.date : ledger.starts_on != state.date) ||
-            std::any_of(ledger.postings.begin(), ledger.postings.end(), [&](const auto& entry) { return entry.day > state.date; }))
+            (deep && std::any_of(ledger.postings.begin(), ledger.postings.end(), [&](const auto& entry) { return entry.day > state.date; })))
             invalid("Business accounts do not reconcile with the saved cash or daily cursor");
     }
     if (state.capacity) {
-        if (!state.market) validate_capacity(*state.capacity);
+        if (deep && !state.market) validate_capacity(*state.capacity);
         const auto& pool = *state.capacity;
         if (!state.accounts || pool.owner != state.accounts->owner || pool.starts_on != state.accounts->starts_on ||
             pool.closed_through != state.accounts->closed_through)
@@ -158,15 +159,21 @@ void validate(const SimulationState& state) {
     }
     if (state.market) {
         if (!state.accounts || !state.capacity) invalid("A market requires accounts and shared capacity");
-        validate_market_links(*state.market, *state.accounts, *state.capacity);
+        if (deep) validate_market_links(*state.market, *state.accounts, *state.capacity);
+        else if (state.market->owner!=state.accounts->owner || state.market->closed_through!=state.accounts->closed_through)
+            invalid("Market settlement differs from the owned account cursor");
     }
     if (state.lab) {
         if (!state.accounts || !state.capacity) invalid("Lab requires business accounts and shared capacity");
         validate_lab(*state.lab, *state.capacity, *state.accounts, state.random, false);
     }
+    if (state.business_offers) {
+        if (!state.accounts || !state.capacity) invalid("Business offers require accounts and capacity");
+        validate_business_offers(*state.business_offers,*state.accounts,*state.capacity,state.market,false);
+    }
     if (state.liquidity) {
         if (!state.accounts) invalid("Liquidity requires owned business accounts");
-        validate_liquidity_links(*state.liquidity, *state.accounts, !state.market);
+        validate_liquidity_links(*state.liquidity, *state.accounts, deep && !state.market);
         if ((state.liquidity->status == LiquidityStatus::closed) != (state.phase == DayPhase::closed) ||
             (liquidity_report(*state.liquidity).pending_warning && !state.paused))
             invalid("Liquidity closure or required warning differs from the daily phase");
@@ -316,6 +323,7 @@ std::string_view to_string(CommandReason value) noexcept {
 void validate_simulation(const SimulationState& state) {
     validate(state);
     if (state.lab) validate_lab(*state.lab, *state.capacity, *state.accounts, state.random);
+    if (state.business_offers) validate_business_offers(*state.business_offers,*state.accounts,*state.capacity,state.market);
 }
 
 Simulation::Simulation(Cents cash) : Simulation{[cash] {
@@ -336,6 +344,12 @@ Simulation::Simulation(SimulationState initial) : state_{std::move(initial)} {
 }
 
 CommandResult Simulation::submit(const Command& command) {
+    return submit_impl(command,false);
+}
+CommandResult Simulation::submit_in_transaction(const Command& command) {
+    return submit_impl(command,true);
+}
+CommandResult Simulation::submit_impl(const Command& command,bool outer_transaction) {
     if (command.expected_revision != state_.revision) {
         return {CommandReason::stale_revision, state_.revision, {}, {},
                 "The company changed after this action was prepared. Review the current state."};
@@ -347,7 +361,7 @@ CommandResult Simulation::submit(const Command& command) {
         if (state_.phase == DayPhase::finished || state_.phase == DayPhase::closed) {
             refuse(CommandReason::campaign_finished, "The campaign ended; its final accounts remain available for inspection.");
         }
-        auto next = state_;
+        auto next = outer_transaction?std::move(state_):state_;
         ++next.revision;
         std::optional<std::uint64_t> new_reservation;
         const auto command_receipt = next.next_receipt_id;
@@ -525,6 +539,9 @@ CommandResult Simulation::submit(const Command& command) {
             } else if constexpr (std::is_same_v<Action, AddMarketSegment>) {
                 add_market_segment(market(next), action.segment);
                 (void)receipt(next, "add_market_segment");
+            } else if constexpr (std::is_same_v<Action, AddMarketPreference>) {
+                add_market_preference(market(next),action.segment_id,action.preference);
+                (void)receipt(next,"introduce_customer_product");
             } else if constexpr (std::is_same_v<Action, SetMarketProductAvailable>) {
                 set_product_available(market(next), action.id, action.available);
                 (void)receipt(next, "market_product_availability");
@@ -563,11 +580,24 @@ CommandResult Simulation::submit(const Command& command) {
                     action.id, action.model_id, action.plan_id, action.allocation, reserved_cash(next));
                 next.cash = accounts_report(*next.accounts).cash;
                 (void)receipt(next, "start_evaluation", 0, checked_unit_subtract(next.cash, before));
+            } else if constexpr (std::is_same_v<Action, AcceptBusinessOffer>) {
+                if (!next.business_offers) refuse(CommandReason::invalid_status,"This scenario has no business offers.");
+                const auto before=next.cash;
+                accept_business_offer(*next.business_offers,accounts(next),capacity(next),next.market,next.date,action.id,reserved_cash(next));
+                next.cash=accounts_report(*next.accounts).cash;
+                (void)receipt(next,"accept_business_offer",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, AddMarketDemandChange>) {
+                add_market_demand_change(market(next),next.date,action.change);
+                (void)receipt(next,"external_demand_change");
             }
         }, command.action);
         if (next.liquidity && !std::holds_alternative<AdvanceDay>(command.action))
             refresh_liquidity(*next.liquidity,*next.accounts);
-        validate(next);
+        // The input was validated at construction; every daily subsystem owns
+        // its checked append. Replaying the full ledger/capacity/market history
+        // here would turn a campaign into quadratic validation work. External
+        // restores, explicit state validation and non-daily commands stay deep.
+        validate(next,!std::holds_alternative<AdvanceDay>(command.action));
         state_ = std::move(next);
         return {CommandReason::accepted, state_.revision, command_receipt, new_reservation,
                 "The action was committed."};
@@ -593,6 +623,7 @@ std::shared_ptr<const SimulationSnapshot> Simulation::snapshot() const {
         state_.capacity ? std::optional{capacity_report(*state_.capacity)} : std::nullopt,
         state_.market ? std::optional{market_report(*state_.market)} : std::nullopt,
         state_.liquidity ? std::optional{liquidity_report(*state_.liquidity)} : std::nullopt,
-        state_.lab ? std::optional{lab_report(*state_.lab, *state_.capacity)} : std::nullopt});
+        state_.lab ? std::optional{lab_report(*state_.lab, *state_.capacity)} : std::nullopt,
+        state_.business_offers});
 }
 } // namespace pgp::core
