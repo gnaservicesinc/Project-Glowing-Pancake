@@ -1,13 +1,13 @@
 {
   "assets": [],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "a55565fbf1a22b59b8166a4729f99823b0df918e581ee0d52dc0a238a9bf7563",
+  "collection_hash": "479c32eb0b657602357f087450b0d1ead27cb6cf50837ec7651c11fba921915e",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.3.0-dev.1",
+  "content_version": "0.4.0-dev.1",
   "definitions": [
     {
       "id": "research.data_deduplication",
@@ -54,26 +54,26 @@
     {
       "id": "scenario.world_competition",
       "kind": "scenario",
-      "revision": 2,
-      "semantic_hash": "2e6d4e91b86acd637c67a9dd0b6da5eecac3f0d72dd2c8ccbd59013628583fc1"
+      "revision": 3,
+      "semantic_hash": "cbcdef9e6b34e89fc5a3f5d303307bc4c5068da1982489ae1176f6ecca3d784a"
     },
     {
       "id": "scenario.world_expanded",
       "kind": "scenario",
-      "revision": 2,
-      "semantic_hash": "10b9a877fb469415c9bd42473ec9a22e4ebfd1c8bbad21151b3a43a9e345d8b9"
+      "revision": 3,
+      "semantic_hash": "deeb7bf210bae8a40a8320f7bcd1bf9181c05d1c7909277de6e66c200773ab18"
     },
     {
       "id": "scenario.world_forgiving",
       "kind": "scenario",
-      "revision": 2,
-      "semantic_hash": "230b2ca2277145a7ca3939f76d2f0840eb51188bd617b81d7a917df1afd15e51"
+      "revision": 3,
+      "semantic_hash": "991afa407c48dfefb43d8ce9ac4761061d9fa89055925fe2f57921da08207062"
     },
     {
       "id": "scenario.world_reduced",
       "kind": "scenario",
-      "revision": 2,
-      "semantic_hash": "febf5e6e5428bce3d41cf0d063d17971cd913813117e4e65a322ed496d86b398"
+      "revision": 3,
+      "semantic_hash": "3ff7dede3b1b857081f4c0325c0908a911d77c5eb9b548b4dae9eb1726a7920e"
     },
     {
       "id": "slice.evaluation_finding",
@@ -125,7 +125,7 @@
     }
   ],
   "format": 1,
-  "generation": 3,
+  "generation": 4,
   "messages_hash": "229e14da301917150b15a80e264cb4033d1159bd18f1b6491171eca3476b6b68",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
@@ -180,5 +180,5 @@
       "slice.recovery_opportunity"
     ]
   },
-  "source_hash": "89acabcf8537b1b786faef7336cf23f5e7851bde5f9ea42d84db38052d51eba5"
+  "source_hash": "60382480c87b0d7edaab3c851c413db38dcb9f46a0e2ee615227690f90ea8a07"
 }

@@ -4,8 +4,8 @@
 #include <QVariantList>
 
 namespace pgp::bridge {
-// Player-facing adapters. Only measured lab evidence and public rival notices
-// enter these models; commands return to the campaign's serialized worker.
+// Player-facing evidence, public notices and explicitly requested due diligence.
+// Commands return to the campaign's serialized worker.
 class ManagementController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool available READ available NOTIFY changed)
@@ -38,12 +38,36 @@ class ManagementController final : public QObject {
     Q_PROPERTY(QString ending READ ending NOTIFY changed)
     Q_PROPERTY(bool plannedCompetition READ plannedCompetition NOTIFY changed)
     Q_PROPERTY(QString competitionSummary READ competitionSummary NOTIFY changed)
+    Q_PROPERTY(bool governanceAvailable READ governanceAvailable NOTIFY changed)
+    Q_PROPERTY(QString ownershipText READ ownershipText NOTIFY changed)
+    Q_PROPERTY(QString boardText READ boardText NOTIFY changed)
+    Q_PROPERTY(StableListModel* corporateFinance READ corporateFinance CONSTANT)
+    Q_PROPERTY(StableListModel* executives READ executives CONSTANT)
+    Q_PROPERTY(StableListModel* boardMotions READ boardMotions CONSTANT)
+    Q_PROPERTY(StableListModel* corporateDisputes READ corporateDisputes CONSTANT)
+    Q_PROPERTY(StableListModel* mergerTargets READ mergerTargets CONSTANT)
 public:
     explicit ManagementController(QObject* parent=nullptr);
     void update(CampaignSnapshotPtr snapshot,const runtime::CompiledProgram& program,bool replace);
     bool available() const;
     bool plannedCompetition() const;
     QString competitionSummary() const;
+    bool governanceAvailable() const;
+    QString ownershipText() const {return ownership_text_;}
+    QString boardText() const {return board_text_;}
+    StableListModel* corporateFinance() const {return corporate_finance_;}
+    StableListModel* executives() const {return executives_;}
+    StableListModel* boardMotions() const {return board_motions_;}
+    StableListModel* corporateDisputes() const {return corporate_disputes_;}
+    StableListModel* mergerTargets() const {return merger_targets_;}
+    Q_INVOKABLE void negotiateFinance(QString id);
+    Q_INVOKABLE void appointExecutive(QString id,bool hybrid);
+    Q_INVOKABLE void proposePool(QString basisPoints);
+    Q_INVOKABLE void voteBoard(QString id,bool support);
+    Q_INVOKABLE void respondDispute(QString id,bool waiver);
+    Q_INVOKABLE QString acquisitionPreview(QString id,bool equity);
+    Q_INVOKABLE void proposeAcquisition(QString id,bool equity);
+    Q_INVOKABLE void transferSubsidiaryFunds(QString id,QString dollars,bool funding);
     StableListModel* dataOffers() const { return data_; }
     StableListModel* researchTopics() const { return research_; }
     StableListModel* models() const { return models_; }
@@ -99,6 +123,8 @@ signals:
     void changed();
     void actionRequested(pgp::core::CommandAction action);
     void competitiveResponseRequested(QString id,bool accept);
+    void acquisitionRequested(QString id,bool equity);
+    void groupTransferRequested(QString id,pgp::core::Cents amount,bool funding);
     void noticeRaised(QString text);
 private:
     bool editable();
@@ -108,5 +134,11 @@ private:
     StableListModel *funding_,*specialists_,*policies_,*decisions_,*alerts_;
     StableListModel *data_,*research_,*models_,*evidence_,*offers_,*products_,*contracts_,*rivals_,*payables_;
     StableListModel *heavyweights_,*competitive_offers_;
+    StableListModel *corporate_finance_,*executives_,*board_motions_,*corporate_disputes_,*merger_targets_;
+    QString ownership_text_,board_text_;
+    const runtime::CompiledProgram* program_=nullptr;
+    std::optional<std::uint64_t> acquisition_preview_revision_;
+    QString acquisition_preview_target_;
+    bool acquisition_preview_equity_=false;
 };
 }

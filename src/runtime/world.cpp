@@ -307,6 +307,11 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                 if (scenario->management ? (!world.simulation.management || world.simulation.management->catalog!=*scenario->management ||
                     core::opening_staff_count(*world.simulation.capacity)!=scenario->team_people) : world.simulation.management.has_value())
                     invalid("Saved management rules or opening staff differ from the scenario");
+                if (world.simulation.management && world.simulation.management->governance) {
+                    std::vector<core::EquityHolding> initial;
+                    for (const auto& [holder,shares]:scenario->ownership) initial.push_back({holder,shares,holder=="option_pool"});
+                    if (world.simulation.management->governance->opening_holdings!=initial) invalid("Corporate opening ownership differs from the scenario");
+                }
                 if (scenario->service_catalog ? (!world.simulation.deployments || world.simulation.deployments->catalog!=content::service_definitions(*scenario->service_catalog)) : world.simulation.deployments.has_value())
                     invalid("Saved service catalog differs from its authored qualification rules");
                 if (scenario->business_offers.empty()?world.simulation.business_offers.has_value():
@@ -326,6 +331,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             invalid("Lab research stream origin differs from its campaign seed");
     }
     validate_competition(world,program,validate_core_simulation);
+    validate_acquisitions(world,program,validate_core_simulation);
     if (world.simulation.phase == core::DayPhase::closed &&
         (!world.facts.contains("company.is_operating") || world.facts.at("company.is_operating") != content::Scalar{false}))
         invalid("Closed company still claims an operating business fact");

@@ -530,35 +530,53 @@ void repay_debt(AccountsState& state, OrdinalDay day, std::string_view id, Cents
         debt.principal = checked_unit_subtract(debt.principal, amount);
     });
 }
-void invest_equity(AccountsState& state, OrdinalDay day, std::string investor, Cents proceeds, BasisPoints acquired, std::string key) {
-    mutate(state, [&](auto& candidate) {
-        require_day(candidate, day); text_valid(investor, 128); user_key_valid(key);
-        if (proceeds.value() <= 0 || acquired.value() == 0) invalid("Equity investment needs positive cash and ownership");
-        auto existing = std::find_if(candidate.holdings.begin(), candidate.holdings.end(), [&](const auto& row) { return row.holder == investor; });
-        if (existing != candidate.holdings.end() && existing->reserved_pool) invalid("A reserved option pool cannot act as an investor");
-        struct Remainder { std::size_t at; std::uint64_t fraction; std::string holder; };
-        std::vector<Remainder> remainders;
-        std::int64_t allocated = 0;
-        const auto retained = static_cast<std::uint64_t>(10000 - acquired.value());
-        for (std::size_t i = 0; i < candidate.holdings.size(); ++i) {
-            auto& holding = candidate.holdings[i];
-            const auto portion = mul_div_floor(static_cast<std::uint64_t>(holding.shares.value()), retained, 10000);
-            holding.shares = BasisPoints{portion.quotient};
-            allocated = checked_add(allocated, holding.shares.value());
-            remainders.push_back({i, portion.remainder, holding.holder});
-        }
-        std::sort(remainders.begin(), remainders.end(), [](const auto& a, const auto& b) {
-            if (a.fraction != b.fraction) return a.fraction > b.fraction;
-            return a.holder < b.holder;
-        });
-        const auto residue = static_cast<std::size_t>(static_cast<std::int64_t>(retained) - allocated);
-        for (std::size_t i = 0; i < residue; ++i) {
-            auto& shares = candidate.holdings[remainders[i].at].shares;
-            shares = BasisPoints{checked_add(shares.value(), 1)};
-        }
-        if (existing == candidate.holdings.end()) candidate.holdings.push_back({investor, acquired, false});
-        else existing->shares = BasisPoints{checked_add(existing->shares.value(), acquired.value())};
-        append(candidate, day, Account::cash, Account::equity, proceeds, "Equity investment: " + investor, std::move(key));
+void dilute_holdings(std::vector<EquityHolding>& holdings,std::string investor,BasisPoints acquired) {
+    if (investor.empty() || investor.size()>128 || acquired.value()==0)
+        invalid("An ownership issue needs an identified holder and positive shares");
+    std::int64_t initial=0;for (const auto& h:holdings) initial=checked_add(initial,h.shares.value());
+    if (initial!=10000 || holdings.empty()) invalid("Ownership dilution requires a conserving initial cap table");
+    struct Remainder { std::size_t at; std::uint64_t fraction; std::string holder; };
+    std::vector<Remainder> remainders;
+    std::int64_t allocated=0;
+    const auto retained=static_cast<std::uint64_t>(10000-acquired.value());
+    for (std::size_t i=0;i<holdings.size();++i) {
+        auto& holding=holdings[i];
+        const auto portion=mul_div_floor(static_cast<std::uint64_t>(holding.shares.value()),retained,10000);
+        holding.shares=BasisPoints{portion.quotient};
+        allocated=checked_add(allocated,holding.shares.value());
+        remainders.push_back({i,portion.remainder,holding.holder});
+    }
+    std::sort(remainders.begin(),remainders.end(),[](const auto& a,const auto& b) {
+        return a.fraction!=b.fraction?a.fraction>b.fraction:a.holder<b.holder;
+    });
+    const auto residue=static_cast<std::size_t>(static_cast<std::int64_t>(retained)-allocated);
+    if (residue>remainders.size()) invalid("Ownership issue requires a conserving initial cap table");
+    for (std::size_t i=0;i<residue;++i) {
+        auto& shares=holdings[remainders[i].at].shares;
+        shares=BasisPoints{checked_add(shares.value(),1)};
+    }
+    const auto existing=std::find_if(holdings.begin(),holdings.end(),[&](const auto& h){return h.holder==investor;});
+    if (existing==holdings.end()) holdings.push_back({std::move(investor),acquired,false});
+    else existing->shares=BasisPoints{checked_add(existing->shares.value(),acquired.value())};
+}
+void invest_equity(AccountsState& state,OrdinalDay day,std::string investor,Cents proceeds,BasisPoints acquired,std::string key) {
+    mutate(state,[&](auto& candidate) {
+        require_day(candidate,day);text_valid(investor,128);user_key_valid(key);
+        if (proceeds.value()<=0) invalid("Equity investment needs positive cash");
+        for (const auto& h:candidate.holdings) if (h.holder==investor && h.reserved_pool)
+            invalid("A reserved option pool cannot act as an investor");
+        dilute_holdings(candidate.holdings,investor,acquired);
+        append(candidate,day,Account::cash,Account::equity,proceeds,"Equity investment: "+investor,std::move(key));
+    });
+}
+void issue_asset_equity(AccountsState& state,OrdinalDay day,std::string investor,Cents value,BasisPoints acquired,std::string key) {
+    mutate(state,[&](auto& candidate) {
+        require_day(candidate,day);text_valid(investor,128);user_key_valid(key);
+        if (value.value()<=0) invalid("Noncash equity requires actual acquired assets");
+        for (const auto& h:candidate.holdings) if (h.holder==investor && h.reserved_pool)
+            invalid("An acquisition cannot issue external ownership to the reserved pool");
+        dilute_holdings(candidate.holdings,investor,acquired);
+        append(candidate,day,Account::assets,Account::equity,value,"Equity consideration: "+investor,std::move(key));
     });
 }
 void close_accounts_day(AccountsState& state, OrdinalDay day, Cents protected_cash, bool validate_io) {

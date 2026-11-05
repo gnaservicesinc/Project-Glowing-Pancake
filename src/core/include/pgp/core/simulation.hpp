@@ -166,7 +166,8 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    SetMarketProductAvailable, SetMarketPrice, AcceptContract, StartContract, CancelContract,
                                    AcknowledgeLiquidityWarning, BuyData, StartResearch, PublishResearch, AcquireResearchInsight, StartTraining, CloneModel, StartEvaluation,
                                    AcceptBusinessOffer, AddMarketDemandChange, DeployModel,
-                                   TakeFinancing,HireSpecialist,AddDelegationPolicy,SetDelegationEnabled,ReviewDelegation,AcknowledgeManagementNotice,RenewComputeLease>;
+                                   TakeFinancing,HireSpecialist,AddDelegationPolicy,SetDelegationEnabled,ReviewDelegation,AcknowledgeManagementNotice,RenewComputeLease,
+                                   NegotiateCorporateFinance,AppointExecutive,ProposePoolExpansion,VoteBoardMotion,RespondCorporateDispute,TransferCompanyOwnership,TransferGroupFunds>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

@@ -104,6 +104,9 @@ OperationResult Campaign::operate(
     // due-day work; the player can still finance, pay or cancel explicitly.
     if (after.world.simulation.date!=prior_day) {
         const auto& state=after.world.simulation;
+        if (state.management && state.management->governance) for (const auto& motion:state.management->governance->motions)
+            if (motion.status==core::BoardMotionStatus::expired && motion.resolved_on==state.date)
+                pause_notice="The board response deadline passed without a vote. The proposal expired without spending or dilution.";
         if (state.accounts) for (const auto& debt:state.accounts->debts)
             if (debt.principal.value()>0 && debt.due==state.date)
                 pause_notice="Deadline today: debt principal is due. Review Accounts and the actual payment before continuing time.";
@@ -121,7 +124,8 @@ OperationResult Campaign::operate(
             if (offer.status==runtime::CompetitiveOfferStatus::expired && offer.resolved_on==state.date)
                 pause_notice="A funded agreement reached its deadline. Review the recorded outcome in Office → Rivals.";
     }
-    return {std::move(outcome), {}, liquidity_halt || core::required_management_notice(after.world.simulation) || pause_notice.has_value(),std::move(pause_notice)};
+    if (core::required_governance_notice(after.world.simulation)) pause_notice="A corporate concern or outcome needs review in Office → Board and people. Its response deadline is saved.";
+    return {std::move(outcome), {}, liquidity_halt || core::required_management_notice(after.world.simulation) || core::required_governance_notice(after.world.simulation) || pause_notice.has_value(),std::move(pause_notice)};
 }
 OperationResult Campaign::prepare_opening(std::uint64_t expected_revision) {
     auto result = operate([&](auto& candidate) { return candidate.prepare_opening(expected_revision); }, false);
@@ -153,7 +157,8 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::AcceptBusinessOffer>(command.action) ||
         std::holds_alternative<core::TakeFinancing>(command.action) || std::holds_alternative<core::HireSpecialist>(command.action) ||
         std::holds_alternative<core::AddDelegationPolicy>(command.action) || std::holds_alternative<core::RenewComputeLease>(command.action) ||
-        std::holds_alternative<core::ReviewDelegation>(command.action);
+        std::holds_alternative<core::ReviewDelegation>(command.action) ||
+        std::holds_alternative<core::AppointExecutive>(command.action) || std::holds_alternative<core::VoteBoardMotion>(command.action) || std::holds_alternative<core::RespondCorporateDispute>(command.action);
     auto result = operate([&](auto& candidate) { return candidate.submit(command); }, irreversible);
     if (std::holds_alternative<core::AdvanceDay>(command.action) && !result.command.accepted() &&
         result.command.reason != runtime::RuntimeReason::stale_revision)
@@ -162,6 +167,12 @@ OperationResult Campaign::submit(const core::Command& command) {
 }
 OperationResult Campaign::respond_competitive_offer(std::uint64_t revision,std::string_view id,bool accept) {
     return operate([&](auto& candidate){return candidate.respondToCompetitiveOffer(revision,id,accept);},true);
+}
+OperationResult Campaign::propose_acquisition(std::uint64_t revision,std::string_view id,bool equity) {
+    return operate([&](auto& candidate){return candidate.proposeAcquisition(revision,id,equity);},true);
+}
+OperationResult Campaign::transfer_subsidiary_funds(std::uint64_t revision,std::string_view id,core::Cents amount,bool funding) {
+    return operate([&](auto& candidate){return candidate.transferSubsidiaryFunds(revision,id,amount,funding);},true);
 }
 OperationResult Campaign::choose(std::uint64_t expected_revision, std::uint64_t presentation_id,
                                  std::string_view choice_id) {

@@ -676,6 +676,7 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             fail(RuntimeReason::morning_not_ready, "Resolve required content choices and prepare the morning before work.");
         const auto prior_day = next.world.simulation.date;
         auto actual=command;IndustryAllocations assignments;
+        if (std::holds_alternative<core::TransferCompanyOwnership>(actual.action) || std::holds_alternative<core::TransferGroupFunds>(actual.action)) fail(RuntimeReason::effect_rejected,"Company control and group transfers require the owning bilateral runtime transaction.");
         if (auto* day=std::get_if<core::AdvanceDay>(&actual.action)) {
             if (day->market_allocation || !day->industry_adoptions.empty()) fail(RuntimeReason::effect_rejected,"Industry allocation is supplied only by the shared world market.");
             assignments=prepare_competition_day(next.world,program_);
@@ -693,6 +694,8 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             fail(RuntimeReason::effect_rejected, outcome.explanation);
         }
         next.world.simulation = std::move(core_state).release_checkpoint();
+        complete_approved_acquisitions(next.world,program_);
+        core::prepare_governance(next.world.simulation);
         if (next.world.simulation.date!=prior_day) advance_competition(next.world,program_,prior_day,assignments);
         update_competitive_offers(next.world,program_);
         update_heavyweight_responses(next.world,program_);
@@ -709,7 +712,8 @@ RuntimeResult Runtime::submit(const core::Command& command) {
         }
         core_already_validated = (next.world.simulation.cash == cash_after_submit &&
                                   next.world.simulation.phase == phase_after_submit &&
-                                  next.world.simulation.phase != core::DayPhase::opening);
+                                  next.world.simulation.phase != core::DayPhase::opening &&
+                                  !std::holds_alternative<core::VoteBoardMotion>(command.action));
     });
 }
 RuntimeResult Runtime::respondToCompetitiveOffer(std::uint64_t expected_revision,std::string_view offer_id,bool accept) {
@@ -718,6 +722,21 @@ RuntimeResult Runtime::respondToCompetitiveOffer(std::uint64_t expected_revision
             fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required choices before answering an offer.");
         respond_to_competitive_offer(next.world,program_,offer_id,accept);
         update_heavyweight_responses(next.world,program_);
+    });
+}
+RuntimeResult Runtime::proposeAcquisition(std::uint64_t expected_revision,std::string_view target,bool equity) {
+    return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto&,auto&,auto&) {
+        if (has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date || next.world.simulation.phase!=core::DayPhase::work_ready)
+            fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required choices before negotiating a merger.");
+        propose_acquisition(next.world,program_,target,equity);
+    });
+}
+RuntimeResult Runtime::transferSubsidiaryFunds(std::uint64_t expected_revision,std::string_view target,core::Cents amount,bool funding) {
+    return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto&,auto&,auto&) {
+        if (has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date || next.world.simulation.phase!=core::DayPhase::work_ready)
+            fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required choices before transferring group funds.");
+        --next.world.simulation.revision;
+        transfer_subsidiary_funds(next.world,target,amount,funding);
     });
 }
 RuntimeResult Runtime::synthetic_cleanup(std::uint64_t expected_revision, std::uint64_t activation_id) {

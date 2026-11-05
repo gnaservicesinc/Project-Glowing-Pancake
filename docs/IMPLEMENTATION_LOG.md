@@ -1138,3 +1138,65 @@ Count: **28/52 Mac feature steps**. Next: **M4-03 funding, executives,
 negotiation and board**. Human playtests/author studies remain deferred until all
 components exist and the user is ready for v1. No testers were contacted.
 [Owning contract](../src/runtime/HEAVYWEIGHTS.md).
+
+## M4-03 — Corporate governance and conserved acquisitions · 2026-11-05
+
+Authored counteroffers now create dated board motions before committing real
+financing. Alternatives in one negotiation cannot be accepted twice. Disclosed
+seat positions use actual cash and dilution; a majority records its votes and
+rights separately from ownership. Debt has a real cash covenant, concern/formal
+recommendation/response dates, a paid one-time waiver and warned acceleration.
+Later breaches reopen a response path; acknowledgment never clears principal.
+
+Named executives negotiate cash-only or hybrid compensation with paid signing,
+recurring payroll and dated staff. Grants reserve the existing fully diluted
+pool, vest by cumulative entitlement and dilute exactly once. Approved pool
+expansion shows its pro-rata dilution. An unmet actual publication commitment
+has a response window before departure; vested claims and past costs remain,
+while the unvested remainder returns. Duplicate/repeated engagements fail.
+Capital history replays from the authored opening cap table on restore.
+
+Bilateral cash/equity acquisitions pay the actual seller holdings, record
+noncash equity consideration correctly and preserve the complete operating
+subsidiary, including licenses, products, staff, debt, invoices and contracts.
+Paid owner funding and dividends reconcile both cash legs in one world revision.
+Dividends are limited to undistributed operating profit earned after acquisition,
+actual cash and the authored reserve/forecast obligations. Consolidated book
+figures eliminate investment assets, pre-acquisition earnings and internal
+dividends. The first target's unprofitability correctly refused a dividend;
+the paid route uses a business with an actually earned surplus. No profit or
+subsidy is invented to make an acquisition appear successful.
+
+The incremental optimized Mac build and **64/64 CTests pass in 19.79s** (four
+workers), including **77 corporate checks**. They cover grant/cliff/dilution,
+repeat/rehire refusal, actual publication resolution/departure, alternative
+counteroffers, ignored votes, covenants/cure/waiver/acceleration, cash/equity
+mergers, earned/unearned dividends, funding, group conservation, stale/failed
+commands, forged continuations and exact pending/active/completed saves.
+The full suite also retains the existing accounting, competition, heavyweight,
+management, bridge and Studio checks.
+
+The bundled **Metal 1280×720 / 200% text** path uses real QML controls to agree
+hybrid compensation, choose financing, add a strategic board seat, approve pool
+dilution and a cash acquisition, fund the subsidiary and receive an earned
+$1,000 dividend. It also completes publication/adoption, pricing, a funded pilot,
+contracts, policies and the supplier setback. All grant ownership is vested by
+the solvent 2017 ending: **$374,040.93**, followed by an exact **22,183,897-byte**
+reload under the unchanged 25 MiB cap. The terms and paid subsidiary captures
+remain readable with scrolling at 200%. These are engineering routes, not human
+balance/usability or platform/package qualification.
+
+The shared writer finalizes content **0.4.0-dev.1**, generation 4, hash
+`479c32eb0b657602357f087450b0d1ead27cb6cf50837ec7651c11fba921915e`.
+Four full-roster scenarios advance from revision 2 to 3; the other 15 definitions
+stay revision 2. All five scenarios / 15 headquarters prepared-save checks pass
+without lints. Game/editor stay **0.0.0-dev**, phase planning, with required game
+**0.1.0-dev.1** unresolved and release readiness false. No cross-content migration
+or publication is implied. Game resources retain only their explicit runtime
+content/QML lists, excluding drafts, fixtures and editor resources.
+
+Count: **29/52 Mac feature steps**. Next: **M5-01 offline domestic map and owned
+infrastructure**. Century objectives, succession and broad catalog authoring
+remain later components. Human player/author studies remain deferred until all
+components exist and the user is ready for v1; no testers were contacted.
+[Owning contract and bounds](../src/runtime/CORPORATE.md).

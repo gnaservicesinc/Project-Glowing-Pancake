@@ -902,6 +902,10 @@ void validate_references(const Collection& collection, const Registry& registry)
             if (scenario_definition->lab) {
                 try {
                     const auto catalog=scenario_lab_catalog(collection, *scenario_definition);
+                    if (scenario_definition->management && scenario_definition->management->governance)
+                        for (const auto& executive:scenario_definition->management->governance->executives)
+                            if (!executive.publication_research.empty() && std::none_of(catalog.research.begin(),catalog.research.end(),[&](const auto& r){return r.id==executive.publication_research;}))
+                                fail("governance",path,"Executive publication promise requires an actual research node in this scenario");
                     for (const auto& rival:scenario_definition->rivals) {
                         const auto recipe=std::find_if(catalog.recipes.begin(),catalog.recipes.end(),[&](const auto& row){return row.id==rival.recipe_id;});
                         const auto data=std::find_if(catalog.data.begin(),catalog.data.end(),[&](const auto& row){return row.id==rival.data_id;});

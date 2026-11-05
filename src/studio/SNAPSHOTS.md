@@ -19,7 +19,7 @@ M4-01 introduces four competition presets at revision 1, leaving the original
 the real prepared-save roundtrip. Game/editor and the unresolved required game
 version remain as above; older content saves are refused without a migration.
 
-The current M4-02 snapshot is **0.3.0-dev.1**, generation 3, hash
+The M4-02 snapshot is **0.3.0-dev.1**, generation 3, hash
 `a55565fbf1a22b59b8166a4729f99823b0df918e581ee0d52dc0a238a9bf7563`.
 Four full-roster presets add heavyweight response policies and public financing
 disclosures. The shared competitive-notice cursor now allows 4,096 notices,
@@ -28,6 +28,14 @@ definition signature, so the writer correctly advances all 19 definitions to
 revision 2. All five scenarios / 15 prepared headquarters saves round-trip with
 no lints. Generations 1 and 2 remain immutable. Game/editor stay 0.0.0-dev with
 the unresolved game requirement above; this is internal development content.
+
+The current M4-03 snapshot is **0.4.0-dev.1**, generation 4, hash
+`479c32eb0b657602357f087450b0d1ead27cb6cf50837ec7651c11fba921915e`.
+The four full-roster scenarios add negotiated financing, board rules, executive
+compensation/promises and conserved acquisition/group-transfer terms; those four
+advance from revision 2 to 3. The other 15 definitions remain revision 2. All
+five scenarios / 15 prepared headquarters saves round-trip without lints.
+Game/editor and unresolved release requirements remain as above.
 
 ## Graphical author workflow
 
@@ -110,7 +118,7 @@ Edit a current-version collection through Studio and save it to a separate
 ```sh
 build/release/bin/pgp-content-tool review --checkout "$PWD" \
   --source data/drafts/reviewed-slice.json \
-  --version 0.2.1-dev.1 --summary 'Correct the reviewed supplier message.' \
+  --version 0.4.1-dev.1 --summary 'Correct the reviewed supplier message.' \
   --plan .work/reviewed-slice-plan.json
 build/release/bin/pgp-content-tool finalize --checkout "$PWD" \
   --plan .work/reviewed-slice-plan.json

@@ -1,6 +1,7 @@
 #include "management_controller.hpp"
 #include "flow_presentation.hpp"
 #include "heavyweight_presentation.hpp"
+#include "governance_presentation.hpp"
 #include <pgp/core/integer_codec.hpp>
 #include <QRegularExpression>
 #include <algorithm>
@@ -78,7 +79,8 @@ std::optional<core::ResearchInsight> public_insight(const runtime::WorldState& w
 ManagementController::ManagementController(QObject* parent):QObject(parent),funding_(new StableListModel(this)),specialists_(new StableListModel(this)),
     policies_(new StableListModel(this)),decisions_(new StableListModel(this)),alerts_(new StableListModel(this)),data_(new StableListModel(this)),research_(new StableListModel(this)),
     models_(new StableListModel(this)),evidence_(new StableListModel(this)),offers_(new StableListModel(this)),products_(new StableListModel(this)),
-    contracts_(new StableListModel(this)),rivals_(new StableListModel(this)),payables_(new StableListModel(this)),heavyweights_(new StableListModel(this)),competitive_offers_(new StableListModel(this)) {}
+    contracts_(new StableListModel(this)),rivals_(new StableListModel(this)),payables_(new StableListModel(this)),heavyweights_(new StableListModel(this)),competitive_offers_(new StableListModel(this)),corporate_finance_(new StableListModel(this)),executives_(new StableListModel(this)),
+    board_motions_(new StableListModel(this)),corporate_disputes_(new StableListModel(this)),merger_targets_(new StableListModel(this)) {}
 bool ManagementController::available() const { return snapshot_ && state().lab && state().deployments; }
 bool ManagementController::plannedCompetition() const {return snapshot_ && snapshot_->checkpoint.world.competition && snapshot_->checkpoint.world.competition->setup.has_value();}
 QString ManagementController::competitionSummary() const {
@@ -91,6 +93,7 @@ QString ManagementController::competitionSummary() const {
 }
 const core::SimulationState& ManagementController::state() const { return snapshot_->checkpoint.world.simulation; }
 void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::CompiledProgram& program,bool replace) {
+    program_=&program;if (replace) acquisition_preview_revision_.reset();
     snapshot_=std::move(snapshot);
     std::vector<CampaignRow> data,research,models,evidence,offers,products,contracts,rivals,payables,funding,specialists,policies,decisions,alerts;
     const auto& s=state();
@@ -224,6 +227,8 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
     set(data_,std::move(data));set(research_,std::move(research));set(models_,std::move(models));set(evidence_,std::move(evidence));set(offers_,std::move(offers));set(products_,std::move(products));set(contracts_,std::move(contracts));set(rivals_,std::move(rivals));set(payables_,std::move(payables));
     set(funding_,std::move(funding));set(specialists_,std::move(specialists));set(policies_,std::move(policies));set(decisions_,std::move(decisions));set(alerts_,std::move(alerts));
     auto response=heavyweight_models(snapshot_->checkpoint,program);set(heavyweights_,std::move(response.responses));set(competitive_offers_,std::move(response.offers));
+    auto corporate=governance_models(snapshot_->checkpoint,program);ownership_text_=std::move(corporate.ownership);board_text_=std::move(corporate.board);
+    set(corporate_finance_,std::move(corporate.financing));set(executives_,std::move(corporate.executives));set(board_motions_,std::move(corporate.motions));set(corporate_disputes_,std::move(corporate.disputes));set(merger_targets_,std::move(corporate.targets));
     emit changed();
 }
 QVariantList ManagementController::recipes() const {
@@ -439,4 +444,38 @@ void ManagementController::authorizeRenewal(QString offer,QString budget,QString
 void ManagementController::setPolicyEnabled(QString id,bool enabled) {if (editable()) emit actionRequested(core::SetDelegationEnabled{id.toStdString(),enabled});}
 void ManagementController::renewLease(QString id) {if (editable()) emit actionRequested(core::RenewComputeLease{id.toStdString()});}
 void ManagementController::acknowledgeAlert(QString id) {if (editable()) emit actionRequested(core::AcknowledgeManagementNotice{id.toStdString()});}
+}
+
+namespace pgp::bridge {
+bool ManagementController::governanceAvailable() const {return snapshot_ && state().management && state().management->governance.has_value();}
+void ManagementController::negotiateFinance(QString id) {if (editable()) emit actionRequested(core::NegotiateCorporateFinance{id.toStdString()});}
+void ManagementController::appointExecutive(QString id,bool hybrid) {if (editable()) emit actionRequested(core::AppointExecutive{id.toStdString(),hybrid});}
+void ManagementController::proposePool(QString bp) {
+    if (!editable()) return;
+    try {emit actionRequested(core::ProposePoolExpansion{core::BasisPoints{integer(bp,2000)}});}
+    catch (const std::exception& e) {emit noticeRaised(QString::fromUtf8(e.what()));}
+}
+void ManagementController::voteBoard(QString id,bool support) {if (editable()) emit actionRequested(core::VoteBoardMotion{id.toStdString(),support});}
+void ManagementController::respondDispute(QString id,bool waiver) {if (editable()) emit actionRequested(core::RespondCorporateDispute{id.toStdString(),waiver});}
+QString ManagementController::acquisitionPreview(QString id,bool equity) {
+    acquisition_preview_revision_.reset();if (!editable() || !program_) return {};
+    try {
+        const auto result=acquisition_terms(snapshot_->checkpoint,*program_,id.toStdString(),equity);
+        acquisition_preview_revision_=state().revision;acquisition_preview_target_=id;acquisition_preview_equity_=equity;return result;
+    } catch (const std::exception& e) {emit noticeRaised(QString::fromUtf8(e.what()));return {};}
+}
+void ManagementController::proposeAcquisition(QString id,bool equity) {
+    if (!editable()) return;
+    if (!acquisition_preview_revision_ || *acquisition_preview_revision_!=state().revision || acquisition_preview_target_!=id || acquisition_preview_equity_!=equity) {
+        emit noticeRaised(tr("The company changed after due diligence. Review the current seller counteroffer again."));return;
+    }
+    acquisition_preview_revision_.reset();emit acquisitionRequested(std::move(id),equity);
+}
+}
+namespace pgp::bridge {
+void ManagementController::transferSubsidiaryFunds(QString id,QString dollars,bool funding) {
+    if (!editable()) return;
+    try {const auto amount=policy_money(dollars);if (amount.value()<=0) throw std::invalid_argument("Group transfer must be positive");emit groupTransferRequested(std::move(id),amount,funding);}
+    catch (const std::exception& e) {emit noticeRaised(QString::fromUtf8(e.what()));}
+}
 }

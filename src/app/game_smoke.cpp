@@ -201,6 +201,7 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
         bool requested=false;
         bool published=false,adopted=false,priced=false,final_saved=false;
         bool responses=false,paper_declined=false,pilot_accepted=false,pilot_paid=false;
+        bool corporate=false,corporate_completed=false,dividend_paid=false;
         QString competitive_pilot,competitive_paper;
         std::int64_t before_agreement_cash=0;
     };
@@ -355,6 +356,18 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             if (checkpoint->checkpoint!=smoke->saved->checkpoint || !campaign.paused()) {fail("exact playable campaign reload");return;}
             press("officeTab");play();smoke->phase=21;return;
         case 21:
+            if (smoke->corporate_completed && !smoke->dividend_paid && state.phase==core::DayPhase::work_ready) {
+                const auto& acquisition=checkpoint->checkpoint.world.competition->acquisitions.front();
+                const auto found=std::find_if(checkpoint->checkpoint.world.competition->companies.begin(),checkpoint->checkpoint.world.competition->companies.end(),[&](const auto& rival){return rival.definition_id==acquisition.target;});
+                if (found==checkpoint->checkpoint.world.competition->companies.end()) {fail("owned dividend counterparty");return;}
+                const auto& subsidiary=found->simulation;
+                if (core::accounts_report(*subsidiary.accounts).profit>core::checked_unit_add(acquisition.acquired_profit,core::Cents{100000}) && subsidiary.cash.value()>50000000) {
+                    if (!pause()) return;press("officeTab");press("office_governance");
+                    if (!set("corporatePageChoice",QStringLiteral("mergers")) || !set("groupTransferField",QStringLiteral("1000.00"))) {fail("earned dividend form");return;}
+                    manager->mergerTargets()->setSelectedId(QString::fromStdString(acquisition.target));
+                    if (press("dividendSubsidiaryButton")) smoke->phase=67;return;
+                }
+            }
             if (smoke->responses && state.phase!=core::DayPhase::finished) {
                 const auto& agreements=checkpoint->checkpoint.world.competition->offers;
                 if (!smoke->paper_declined) for (const auto& offer:agreements)
@@ -398,10 +411,12 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
                 if (!smoke->published || !smoke->adopted || !smoke->priced || rivals.releases.size()<2 || rivals.adoptions.empty() ||
                     std::any_of(rivals.companies.begin(),rivals.companies.end(),[](const auto& row){return !row.planning->entered_on;})) {fail("staged entry, public research, pricing or shared adoption was not exercised");return;}
                 if (smoke->responses && (!smoke->paper_declined || !smoke->pilot_accepted || !smoke->pilot_paid || manager->heavyweights()->rowCount()!=3)) {fail("public response briefing or real funded agreement path was not exercised");return;}
+                if (smoke->corporate && (!smoke->corporate_completed || !smoke->dividend_paid || state.management->governance->grants.front().unvested.value()!=0)) {fail("corporate route or full cumulative vesting was not exercised");return;}
                 if (!smoke->final_saved) {smoke->saved=checkpoint;campaign.saveTo(save_url);smoke->phase=39;return;}
             }
             if (!capture({})) {fail("ending capture");return;}
             if (competition) qInfo()<<"Competition UI additions passed: standard fifteen-company default, staged entry, explicit research publication/adoption, current prices and exact complete-roster save; bytes"<<std::filesystem::file_size(save_path);
+            if (smoke->corporate) qInfo()<<"Corporate UI additions passed: cash-plus-equity executive, alternative financing counteroffer, strategic board seat, approved pool dilution, reviewed cash acquisition, retained subsidiary obligations, actual capital funding/earned dividend with group elimination, full cumulative vesting and exact reload";
             if (smoke->responses) qInfo()<<"Heavyweight UI additions passed: public pressure/finite-budget briefings, declined publication terms, reviewed funded pilot, real milestone payment and exact response/deal reload";
             qInfo()<<"Playable UI smoke passed: Texas start, fixed equity financing, hired specialist, bounded evaluation/renewal policies, milestone, paid data/research, subgroup finding, deployments, contract, exact reload, mandatory setback/restoration, rivals and scored solvent 2017 ending; cash cents"<<state.cash.value()<<"text scale"<<campaign.textScalePercent()<<"renderer"<<graphics::name(expected);
             timer->stop();QCoreApplication::exit(0);return;
@@ -414,6 +429,12 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             if (press("hireSpecialistButton")) smoke->phase=32;return;
         case 32:
             if (state.capacity->available_staff!=7 || state.management->specialists.size()!=1) {fail("paid specialist hire");return;}
+            if (competition && manager->governanceAvailable()) {
+                smoke->corporate=true;press("office_governance");
+                if (!set("corporatePageChoice",QStringLiteral("people"))) {fail("corporate people selector");return;}
+                manager->executives()->setSelectedId(QStringLiteral("executive.finance"));
+                if (press("appointEquityButton")) smoke->phase=50;return;
+            }
             press("labTab");press("lab_data");manager->dataOffers()->setSelectedId(QStringLiteral("data.licensed_documents"));
             if (press("buyDataButton")) smoke->phase=2;return;
         case 33:
@@ -454,6 +475,61 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
         case 42:
             if (manager->competitiveOffers()->row(smoke->competitive_pilot).value(QStringLiteral("fields")).toMap().value(QStringLiteral("status"))!=QStringLiteral("active") || state.cash.value()!=smoke->before_agreement_cash) {fail("acceptance failed or paid an unearned pilot fee");return;}
             smoke->pilot_accepted=true;play();smoke->phase=21;return;
+        case 50:
+            if (!capture(QStringLiteral("-executive-terms"))) {fail("executive terms capture");return;}
+            if (!key(window,visual_button(window.contentItem(),QStringLiteral("OK")),Qt::Key_Space)) {fail("executive terms keyboard");return;}
+            smoke->phase=51;return;
+        case 51:
+            if (!state.management->governance || state.management->governance->appointments.size()!=1 || state.capacity->available_staff!=8 || state.management->governance->grants.size()!=1) {fail("agreed executive cash/equity staff");return;}
+            if (!set("corporatePageChoice",QStringLiteral("finance"))) {fail("corporate financing selector");return;}
+            manager->corporateFinance()->setSelectedId(QStringLiteral("corporate.round_small"));
+            if (press("negotiateFinanceButton")) smoke->phase=52;return;
+        case 52: case 55: case 58: case 62:
+            if (state.management->governance->motions.empty() || state.management->governance->motions.back().status!=core::BoardMotionStatus::pending) {fail("reviewed board proposal");return;}
+            if (!set("corporatePageChoice",QStringLiteral("board"))) {fail("corporate board selector");return;}
+            manager->boardMotions()->setSelectedId(QString::fromStdString(state.management->governance->motions.back().id));
+            if (press("voteBoardYesButton")) ++smoke->phase;return;
+        case 53: case 56: case 59: case 63:
+            if (smoke->phase==53 && !capture(QStringLiteral("-board-vote"))) {fail("board terms capture");return;}
+            if (!key(window,visual_button(window.contentItem(),QStringLiteral("OK")),Qt::Key_Space)) {fail("board vote keyboard confirmation");return;}
+            ++smoke->phase;return;
+        case 54:
+            if (!state.management->governance->motions.back().executed) {fail("negotiated finance vote did not commit");return;}
+            if (!set("corporatePageChoice",QStringLiteral("finance"))) {fail("strategic finance selector");return;}
+            manager->corporateFinance()->setSelectedId(QStringLiteral("corporate.strategic_equity"));
+            if (press("negotiateFinanceButton")) smoke->phase=55;return;
+        case 57:
+            if (!state.management->governance->motions.back().executed) {fail("strategic board seat funding");return;}
+            if (!set("corporatePageChoice",QStringLiteral("people"))) {fail("pool expansion selector");return;}
+            if (press("proposePoolButton")) smoke->phase=58;return;
+        case 60:
+            if (!state.management->governance->motions.back().executed || !set("corporatePageChoice",QStringLiteral("mergers"))) {fail("approved pool expansion");return;}
+            manager->mergerTargets()->setSelectedId(QStringLiteral("company.roster.domestic.3"));
+            if (press("reviewMergerButton")) smoke->phase=61;return;
+        case 61:
+            if (!capture(QStringLiteral("-merger-terms"))) {fail("merger terms capture");return;}
+            if (!key(window,visual_button(window.contentItem(),QStringLiteral("OK")),Qt::Key_Space)) {fail("merger counteroffer keyboard");return;}
+            smoke->phase=62;return;
+        case 64:
+            if (!state.management->governance->motions.back().executed || checkpoint->checkpoint.world.competition->acquisitions.size()!=1 || !checkpoint->checkpoint.world.competition->acquisitions.front().completed_on) {fail("actual bilateral acquisition");return;}
+            if (!set("corporatePageChoice",QStringLiteral("mergers"))) {fail("subsidiary view selector");return;}
+            manager->mergerTargets()->setSelectedId(QStringLiteral("company.roster.domestic.3"));reveal_top(item("mergerTargetSelectionDetail"));
+            if (!capture(QStringLiteral("-subsidiary"))) {fail("subsidiary retained obligations capture");return;}
+            smoke->corporate_completed=true;if (!set("groupTransferField",QStringLiteral("1000.00"))) {fail("subsidiary funding field");return;}
+            if (press("fundSubsidiaryButton")) smoke->phase=65;return;
+        case 65: case 67:
+            if (smoke->phase==67 && !capture(QStringLiteral("-dividend-terms"))) {fail("dividend terms capture");return;}
+            if (!key(window,visual_button(window.contentItem(),QStringLiteral("OK")),Qt::Key_Space)) {fail("group transfer confirmation keyboard");return;}
+            ++smoke->phase;return;
+        case 66:
+            if (checkpoint->checkpoint.world.competition->acquisitions.front().transfers.size()!=1 || !checkpoint->checkpoint.world.competition->acquisitions.front().transfers.front().funding) {fail("real bilateral subsidiary capital");return;}
+            press("labTab");press("lab_data");manager->dataOffers()->setSelectedId(QStringLiteral("data.licensed_documents"));
+            if (press("buyDataButton")) smoke->phase=2;return;
+        case 68:
+            if (checkpoint->checkpoint.world.competition->acquisitions.front().transfers.size()!=2 || checkpoint->checkpoint.world.competition->acquisitions.front().transfers.back().funding) {fail("real earned subsidiary dividend");return;}
+            smoke->dividend_paid=true;reveal_top(item("mergerTargetSelectionDetail"));
+            if (!capture(QStringLiteral("-dividend-paid"))) {fail("earned dividend result capture");return;}
+            play();smoke->phase=21;return;
         case 43:
             if (manager->competitiveOffers()->row(smoke->competitive_paper).value(QStringLiteral("fields")).toMap().value(QStringLiteral("status"))!=QStringLiteral("declined")) {fail("explicit publication offer decline");return;}
             reveal_top(item("heavyweightBriefingDetail"));if (!capture(QStringLiteral("-response"))) {fail("public pressure briefing capture");return;}

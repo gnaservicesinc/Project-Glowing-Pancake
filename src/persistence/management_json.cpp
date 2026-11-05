@@ -1,4 +1,5 @@
 #include "management_json.hpp"
+#include "governance_json.hpp"
 #include <pgp/content/management_catalog.hpp>
 namespace pgp::persistence::detail {
 namespace {
@@ -17,12 +18,16 @@ Json management_json(const core::ManagementState& m) {
     for (const auto& d:m.decisions) decisions.push_back({{"policy",d.policy_id},{"result",d.result_id},{"explanation",d.explanation},{"day",d.day.value()},{"commitment",d.commitment.value()},{"accepted",d.accepted}});
     for (const auto& n:m.notices) notices.push_back({{"id",n.id},{"kind",n.kind},{"subject",n.subject},{"day",n.day.value()},
         {"deadline",n.deadline?Json(n.deadline->value()):Json(nullptr)},{"required",n.required},{"acknowledged",n.acknowledged}});
-    return {{"catalog",Json::parse(content::canonical_management_catalog(m.catalog))},{"financing",std::move(financing)},{"specialists",std::move(specialists)},
+    Json result{{"catalog",Json::parse(content::canonical_management_catalog(m.catalog))},{"financing",std::move(financing)},{"specialists",std::move(specialists)},
         {"policies",std::move(policies)},{"decisions",std::move(decisions)},{"notices",std::move(notices)},{"reviewed_on",m.reviewed_on?Json(m.reviewed_on->value()):Json(nullptr)}};
+    if (m.governance) result["governance"]=governance_json(*m.governance);
+    return result;
 }
-core::ManagementState parse_management(const Json& j) {
+core::ManagementState parse_management(const Json& source) {
+    auto j=source;std::optional<core::GovernanceState> governance;
+    if (j.contains("governance")) {governance=parse_governance(j.at("governance"));j.erase("governance");}
     fields(j,"management",{"catalog","financing","specialists","policies","decisions","notices","reviewed_on"});
-    core::ManagementState m;m.catalog=content::load_management_catalog(j.at("catalog").dump());
+    core::ManagementState m;m.governance=std::move(governance);m.catalog=content::load_management_catalog(j.at("catalog").dump());
     if (!j.at("reviewed_on").is_null()) m.reviewed_on=day(j.at("reviewed_on"));
     array(j.at("financing"),"management/financing",8);array(j.at("specialists"),"management/specialists",8);
     array(j.at("policies"),"management/policies",8);array(j.at("decisions"),"management/decisions",128);array(j.at("notices"),"management/notices",256);

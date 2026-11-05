@@ -108,7 +108,7 @@ ColumnLayout {
         visible: panel.room === "office"
         Repeater {
             model: [{id:"offers",label:qsTr("Compare offers")}, {id:"products",label:qsTr("Services")}, {id:"contracts",label:qsTr("Contracts")},
-                    {id:"rivals",label:qsTr("Rivals")}, {id:"accounts",label:qsTr("Accounts")}, {id:"funding",label:qsTr("Funding and team")}, {id:"policies",label:qsTr("Policies and alerts")}, {id:"score",label:qsTr("Slice score")}]
+                    {id:"rivals",label:qsTr("Rivals")}, {id:"accounts",label:qsTr("Accounts")}, {id:"funding",label:qsTr("Funding and team")}, {id:"governance",label:qsTr("Board and people")}, {id:"policies",label:qsTr("Policies and alerts")}, {id:"score",label:qsTr("Slice score")}]
             Button {
                 required property var modelData
                 objectName: "office_" + modelData.id
@@ -390,6 +390,88 @@ ColumnLayout {
         visible: panel.room === "office" && panel.officeSection === "score"
         Copy { text: manager.scoreText }
         Copy { text: qsTr("Survival is awarded at the ending; work counts actual delivered tasks. Profit excludes financing proceeds. Evidence counts independently measured domains used by deployed checkpoints. Ownership points reflect retained founder stake. Scores remain provisional while time can advance.") }
+    }
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: panel.room === "office" && panel.officeSection === "governance"
+        Copy { visible: !manager.governanceAvailable; text: qsTr("Select a full competition preset in a new campaign for negotiated financing, executives, board and mergers.") }
+        Choice { id: corporatePage; objectName: "corporatePageChoice"; label: qsTr("Company governance section"); visible: manager.governanceAvailable; options: [{id:"people",label:qsTr("People and ownership")},{id:"finance",label:qsTr("Negotiate financing")},{id:"board",label:qsTr("Board votes and disputes")},{id:"mergers",label:qsTr("Acquisitions and subsidiaries")}] }
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: manager.governanceAvailable && corporatePage.value === "people"
+            Copy { objectName: "ownershipSummary"; text: manager.ownershipText }
+            Selection { objectName: "executiveSelection"; heading: qsTr("Executive candidates and agreed terms"); rows: manager.executives }
+            Action { objectName: "appointCashButton"; text: qsTr("Review cash-only appointment"); enabled: panel.editable && manager.executives.selectedRow.actionable === true; onClicked: corporateDialog.review("hireCash", manager.executives.selectedId, manager.executives.selectedRow.detail || "") }
+            Action { objectName: "appointEquityButton"; text: qsTr("Review cash-plus-equity appointment"); enabled: panel.editable && manager.executives.selectedRow.actionable === true && (manager.executives.selectedRow.fields || {}).hybrid === true; onClicked: corporateDialog.review("hireEquity", manager.executives.selectedId, manager.executives.selectedRow.detail || "") }
+            Field { id: poolBp; objectName: "poolExpansionField"; label: qsTr("New pool allocation in basis points (100 = 1%)"); value: "500" }
+            Action { objectName: "proposePoolButton"; text: qsTr("Propose explicit pool-expansion dilution to board"); onClicked: manager.proposePool(poolBp.value) }
+        }
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: manager.governanceAvailable && corporatePage.value === "finance"
+            Copy { text: qsTr("Compare the available counteroffers. Submitting terms creates a board motion; cash, dilution, interest and a representative commit only if the board approves.") }
+            Selection { objectName: "corporateFinanceSelection"; heading: qsTr("Financing counteroffers"); rows: manager.corporateFinance }
+            Action { objectName: "negotiateFinanceButton"; text: qsTr("Submit selected counteroffer to board"); enabled: panel.editable && manager.corporateFinance.selectedRow.actionable === true; onClicked: manager.negotiateFinance(manager.corporateFinance.selectedId) }
+        }
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: manager.governanceAvailable && corporatePage.value === "board"
+            Copy { objectName: "boardSummary"; text: manager.boardText }
+            Selection { objectName: "boardMotionSelection"; heading: qsTr("Board motions and recorded votes"); rows: manager.boardMotions }
+            Action { objectName: "voteBoardYesButton"; text: qsTr("Review and vote in support"); enabled: panel.editable && manager.boardMotions.selectedRow.actionable === true; onClicked: corporateDialog.review("voteYes", manager.boardMotions.selectedId, manager.boardMotions.selectedRow.detail || "") }
+            Action { objectName: "voteBoardNoButton"; text: qsTr("Vote against selected motion"); enabled: panel.editable && manager.boardMotions.selectedRow.actionable === true; onClicked: manager.voteBoard(manager.boardMotions.selectedId, false) }
+            Selection { objectName: "corporateDisputeSelection"; heading: qsTr("Corporate concerns and response windows"); rows: manager.corporateDisputes }
+            Action { objectName: "acknowledgeCorporateButton"; text: qsTr("Acknowledge cause and response window"); enabled: panel.editable && manager.corporateDisputes.selectedRow.actionable === true; onClicked: manager.respondDispute(manager.corporateDisputes.selectedId, false) }
+            Action { objectName: "waiveCovenantButton"; text: qsTr("Review paid covenant waiver"); enabled: panel.editable && (manager.corporateDisputes.selectedRow.fields || {}).waiver === true; onClicked: corporateDialog.review("waiver", manager.corporateDisputes.selectedId, (manager.corporateDisputes.selectedRow.detail || "") + "\n" + qsTr("The agreed waiver fee is shown in the financing counteroffer. This permanently waives the cash-floor covenant and preserves principal, interest and maturity.")) }
+        }
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: manager.governanceAvailable && corporatePage.value === "mergers"
+            Selection { objectName: "mergerTargetSelection"; heading: qsTr("Acquisition targets and owned subsidiaries"); rows: manager.mergerTargets }
+            Choice { id: mergerPackage; objectName: "mergerPackageChoice"; label: qsTr("Negotiated consideration"); options: [{id:"cash",label:qsTr("All cash")},{id:"equity",label:qsTr("Half cash plus equity counteroffer")}] }
+            Action {
+                objectName: "reviewMergerButton"
+                text: qsTr("Review seller due diligence and submit terms")
+                enabled: panel.editable && manager.mergerTargets.selectedRow.actionable === true
+                onClicked: {
+                    const id = manager.mergerTargets.selectedId
+                    const equity = mergerPackage.value === "equity"
+                    const terms = manager.acquisitionPreview(id, equity)
+                    if (terms.length > 0) corporateDialog.review(equity ? "mergerEquity" : "mergerCash", id, terms)
+                }
+            }
+            Field { id: groupDollars; objectName: "groupTransferField"; label: qsTr("Group transfer amount, dollars"); value: "1000.00" }
+            Action { objectName: "fundSubsidiaryButton"; text: qsTr("Review paid subsidiary capital funding"); enabled: panel.editable && (manager.mergerTargets.selectedRow.fields || {}).owned === true; onClicked: { corporateDialog.groupAmount = groupDollars.value; corporateDialog.review("groupFund", manager.mergerTargets.selectedId, qsTr("Transfer $%1 from your company's available cash to its owned subsidiary as capital? Cash is conserved; the payment is an investment, not an expense or product revenue.").arg(groupDollars.value) + "\n" + (manager.mergerTargets.selectedRow.detail || "")) } }
+            Action { objectName: "dividendSubsidiaryButton"; text: qsTr("Review earned-profit dividend"); enabled: panel.editable && (manager.mergerTargets.selectedRow.fields || {}).owned === true; onClicked: { corporateDialog.groupAmount = groupDollars.value; corporateDialog.review("groupDividend", manager.mergerTargets.selectedId, qsTr("Request $%1 of actual undistributed profit earned since acquisition? The subsidiary must retain its cash floor and projected bills. Internal dividend income is eliminated from group profit.").arg(groupDollars.value) + "\n" + (manager.mergerTargets.selectedRow.detail || "")) } }
+        }
+    }
+    Dialog {
+        id: corporateDialog
+        objectName: "corporateConfirmation"
+        property string actionKind: ""
+        property string subjectId: ""
+        property string terms: ""
+        property string groupAmount: ""
+        function review(kind, subject, detail) { actionKind = kind; subjectId = subject; terms = detail; open() }
+        title: actionKind === "hireEquity" ? qsTr("Agree cash-plus-equity compensation?") : actionKind === "hireCash" ? qsTr("Agree cash-only compensation?") : qsTr("Confirm reviewed corporate terms?")
+        modal: true
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(720, Overlay.overlay.width - 36)
+        height: Math.min(620, Overlay.overlay.height - 60)
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        contentItem: ScrollView {
+            id: corporateTerms
+            clip: true
+            contentWidth: availableWidth
+            Label { width: corporateTerms.availableWidth; text: corporateDialog.terms; textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: panel.textSize }
+        }
+        onAccepted: {
+            if (actionKind === "hireCash" || actionKind === "hireEquity") manager.appointExecutive(subjectId, actionKind === "hireEquity")
+            else if (actionKind === "voteYes") manager.voteBoard(subjectId, true)
+            else if (actionKind === "waiver") manager.respondDispute(subjectId, true)
+            else if (actionKind === "groupFund" || actionKind === "groupDividend") manager.transferSubsidiaryFunds(subjectId, groupAmount, actionKind === "groupFund")
+            else manager.proposeAcquisition(subjectId, actionKind === "mergerEquity")
+        }
     }
     Dialog {
         id: fundingDialog

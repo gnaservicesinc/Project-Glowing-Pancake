@@ -159,7 +159,7 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
             offer(6,"hire",specialist.id,120,HireSpecialist{specialist.id});
     for (const auto& debt:s.accounts->debts) if (debt.principal.value()>0 && advance_days(s.date,Days{7})>=debt.due && affordable(debt.principal))
         offer(7,"repay",debt.id,900,RepayDebt{debt.id,debt.principal,"rival.repay/"+debt.id});
-    if (s.cash<protected_runway) for (const auto& financing:s.management->catalog.financing)
+    if (rival.parent_company.empty() && s.cash<protected_runway) for (const auto& financing:s.management->catalog.financing)
         if (std::none_of(s.management->financing.begin(),s.management->financing.end(),[&](const auto& row){return row.offer_id==financing.id;}))
             offer(7,"finance",financing.id,800,TakeFinancing{financing.id});
     if (compute.value()<definition.training_rate.value()/2 && s.business_offers) for (const auto& growth:s.business_offers->catalog)
@@ -202,6 +202,7 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
     for (auto& segment:state.market->segments) segment.preferences.clear();
     state.deployments=DeploymentState{content::service_definitions(*authored.service_catalog),{}};
     state.management=ManagementState{*authored.management,{},{},{},{},{},{}};state.management->catalog.setbacks.clear();
+    state.management->catalog.governance.reset();
     state.management->catalog.scoring.founder="founder";
     if (definition.response) {state.management->catalog.financing.clear();state.capacity->sources.front().effective=MilliCUPerDay{0};}
     if (!definition.response && world.competition->setup->catchup_cash.value()>0) state.management->catalog.financing.push_back({"finance.disclosed_catchup","Disclosed finite catch-up equity",world.competition->setup->catchup_cash,world.competition->setup->catchup_acquired,BasisPoints{0},Days{0}});

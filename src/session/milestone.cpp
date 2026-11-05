@@ -20,6 +20,17 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
         }
         if (s.liquidity) if (const auto deadline=core::liquidity_report(*s.liquidity).deadline) consider(*deadline);
         if (s.management) {
+            if (s.management->governance) {
+                const auto& g=*s.management->governance;const auto& c=*s.management->catalog.governance;
+                for (const auto& m:g.motions) if (m.status==core::BoardMotionStatus::pending) consider(m.deadline);
+                for (const auto& d:g.disputes) if (d.status==core::CorporateDisputeStatus::concern || d.status==core::CorporateDisputeStatus::formal) {
+                    consider(d.deadline);if (d.status==core::CorporateDisputeStatus::concern) consider(core::advance_days(d.opened_on,c.concern_period));
+                }
+                for (const auto& a:g.appointments) if (!a.departed_on) {
+                    const auto it=std::find_if(c.executives.begin(),c.executives.end(),[&](const auto& e){return e.id==a.candidate;});
+                    if (it!=c.executives.end() && !it->publication_research.empty() && std::none_of(s.lab->publications.begin(),s.lab->publications.end(),[&](const auto& p){return p.research_id==it->publication_research;})) consider(core::advance_days(a.hired_on,it->promise_term));
+                }
+            }
             for (const auto& setback:s.management->catalog.setbacks) {
                 if (setback.announced_on<=s.date && s.date<setback.starts_on) consider(setback.starts_on);
                 if (setback.starts_on<=s.date && s.date<setback.ends_before) consider(setback.ends_before);

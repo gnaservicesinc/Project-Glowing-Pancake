@@ -1,6 +1,7 @@
 #pragma once
 #include <pgp/core/lab.hpp>
 #include <pgp/core/market.hpp>
+#include <pgp/core/governance.hpp>
 
 namespace pgp::core {
 struct SimulationState;
@@ -39,6 +40,7 @@ struct ManagementCatalog {
     std::uint32_t maximum_policy_runs=12;
     Cents default_policy_budget{0},default_reserve_floor{0},default_monthly_ceiling{0};
     std::uint32_t default_policy_runs=1;
+    std::optional<GovernanceCatalog> governance{};
     auto operator<=>(const ManagementCatalog&) const = default;
 };
 struct ManagementAcceptance {
@@ -82,6 +84,7 @@ struct ManagementState {
     std::vector<DelegationDecision> decisions;
     std::vector<ManagementNotice> notices;
     std::optional<OrdinalDay> reviewed_on;
+    std::optional<GovernanceState> governance{};
     auto operator<=>(const ManagementState&) const = default;
 };
 struct TakeFinancing { std::string id; };

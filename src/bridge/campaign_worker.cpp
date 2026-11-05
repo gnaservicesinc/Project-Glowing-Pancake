@@ -141,6 +141,16 @@ void CampaignWorker::respondCompetitiveOffer(std::uint64_t token,std::uint64_t r
     try {complete(token,campaign_.respond_competitive_offer(revision,id,accept));}
     catch (const std::exception& error) {pauseDriver();emit noticeRaised(error_text(error));publish();emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));}
 }
+void CampaignWorker::proposeAcquisition(std::uint64_t token,std::uint64_t revision,std::string id,bool equity) {
+    requireOwningThread();
+    try {complete(token,campaign_.propose_acquisition(revision,id,equity));}
+    catch (const std::exception& error) {pauseDriver();emit noticeRaised(error_text(error));publish();emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));}
+}
+void CampaignWorker::transferSubsidiaryFunds(std::uint64_t token,std::uint64_t revision,std::string id,core::Cents amount,bool funding) {
+    requireOwningThread();
+    try {complete(token,campaign_.transfer_subsidiary_funds(revision,id,amount,funding));}
+    catch (const std::exception& error) {pauseDriver();emit noticeRaised(error_text(error));publish();emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));}
+}
 void CampaignWorker::choose(std::uint64_t token,std::uint64_t expected_revision,
                             std::uint64_t presentation_id,std::string choice_id) {
     requireOwningThread();

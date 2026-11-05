@@ -120,6 +120,16 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
         QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,revision,id=id.toStdString(),accept]{worker->respondCompetitiveOffer(token,revision,id,accept);},Qt::QueuedConnection);
     });
     connect(management_,&ManagementController::noticeRaised,this,&CampaignController::setNotice);
+    connect(management_,&ManagementController::groupTransferRequested,this,[this](QString id,core::Cents amount,bool funding) {
+        if (!paused() || !beginOperation()) return;
+        const auto revision=snapshot_->checkpoint.world.simulation.revision;
+        QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,revision,id=id.toStdString(),amount,funding]{worker->transferSubsidiaryFunds(token,revision,id,amount,funding);},Qt::QueuedConnection);
+    });
+    connect(management_,&ManagementController::acquisitionRequested,this,[this](QString id,bool equity) {
+        if (!paused() || !beginOperation()) return;
+        const auto revision=snapshot_->checkpoint.world.simulation.revision;
+        QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,revision,id=id.toStdString(),equity]{worker->proposeAcquisition(token,revision,id,equity);},Qt::QueuedConnection);
+    });
     (void)persistence::encode_settings(settings_);
     worker_ = new CampaignWorker(std::move(program),std::move(checkpoint),std::move(paths),settings_);
     worker_->moveToThread(&thread_);

@@ -108,6 +108,7 @@ void prepare_opening(SimulationState& state) {
     if (state.phase != DayPhase::opening) {
         return;
     }
+    prepare_governance(state);
     prepare_management(state);
     if (state.business_offers) expire_business_offers(*state.business_offers,*state.capacity,state.date);
     while (state.opening_cursor < state.opening_actions.size()) {
@@ -168,7 +169,7 @@ void validate(const SimulationState& state,bool deep=true) {
         if (!state.accounts || !state.capacity) invalid("Lab requires business accounts and shared capacity");
         validate_lab(*state.lab, *state.capacity, *state.accounts, state.random, false);
     }
-    if (state.management) validate_management(state,deep);
+    if (state.management) {validate_management(state,deep);validate_governance(state,deep);}
     if (state.deployments) {
         if (!state.lab || !state.market || !state.capacity) invalid("Deployments require lab, market and capacity");
         if (deep) validate_deployments(*state.deployments,*state.lab,*state.capacity,*state.market);
@@ -429,6 +430,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     (!next.market && (action.market_allocation || !action.industry_adoptions.empty())))
                     refuse(CommandReason::invalid_argument,"Shared industry context requires an actual market and allocation.");
                 if (required_management_notice(next)) refuse(CommandReason::morning_not_ready,"Acknowledge the capacity setback and its recovery date before advancing.");
+                if (required_governance_notice(next)) refuse(CommandReason::morning_not_ready,"Review the corporate concern, deadline or outcome before advancing.");
                 if (next.liquidity && liquidity_report(*next.liquidity).pending_warning)
                     refuse(CommandReason::morning_not_ready, "Acknowledge the insolvency warning and its 30-day response window before advancing.");
                 if (next.liquidity && next.liquidity->status == LiquidityStatus::workout &&
@@ -452,6 +454,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 }
                 (void)receipt(next, "advance_day", 0, checked_unit_subtract(next.cash, cash_before));
                 next.date = advance_days(next.date, Days{1});
+                prepare_governance(next);
                 prepare_management(next);
                 if (next.liquidity) {
                     observe_liquidity(*next.liquidity, *next.accounts, next.date, false);
@@ -521,7 +524,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 (void)receipt(next, "repay_debt", 0, checked_unit_subtract(next.cash, before));
             } else if constexpr (std::is_same_v<Action, InvestEquity>) {
                 const auto before = next.cash;
-                invest_equity(accounts(next), next.date, action.investor, action.proceeds, action.acquired, action.key);
+                company_equity(next, action.investor, action.proceeds, action.acquired, action.key);
                 next.cash = accounts_report(*next.accounts).cash;
                 (void)receipt(next, "invest_equity", 0, checked_unit_subtract(next.cash, before));
             } else if constexpr (std::is_same_v<Action, ReserveProject>) {
@@ -639,6 +642,35 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 const auto before=next.cash;take_financing(next,action.id);(void)receipt(next,"take_financing",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, HireSpecialist>) {
                 const auto before=next.cash;hire_specialist(next,action.id,reserved_cash(next));(void)receipt(next,"hire_specialist",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, NegotiateCorporateFinance>) {
+                negotiate_corporate_finance(next,action.terms_id);(void)receipt(next,"negotiate_corporate_finance");
+            } else if constexpr (std::is_same_v<Action, TransferCompanyOwnership>) {
+                if (!next.accounts || (next.management && next.management->governance) || action.parent.empty() || action.parent.size()>64 || action.parent==next.accounts->owner ||
+                    std::any_of(next.accounts->holdings.begin(),next.accounts->holdings.end(),[](const auto& h){return h.holder.starts_with("parent/");}))
+                    refuse(CommandReason::dependent_commitment,"This company cannot transfer its control or outstanding executive rights through a simple merger.");
+                for (auto& h:next.accounts->holdings) h.shares=BasisPoints{0};
+                next.accounts->holdings.push_back({"parent/"+action.parent,BasisPoints{10000},false});
+                (void)receipt(next,"transfer_company_ownership");
+            } else if constexpr (std::is_same_v<Action, TransferGroupFunds>) {
+                if (!next.accounts || action.amount.value()<=0 || action.sequence==0 || action.sequence>2048 || action.parent.empty() || action.target.empty() || action.parent==action.target ||
+                    next.accounts->owner!=(action.parent_leg?action.parent:action.target)) refuse(CommandReason::invalid_argument,"Group transfers require real consideration and identified parent/subsidiary legs.");
+                if (!action.parent_leg && std::none_of(next.accounts->holdings.begin(),next.accounts->holdings.end(),[&](const auto& h){return h.holder=="parent/"+action.parent && h.shares.value()==10000;}))
+                    refuse(CommandReason::dependent_commitment,"The sending subsidiary lacks full retained parent control.");
+                const bool outgoing=action.funding==action.parent_leg;
+                if (outgoing && action.amount>checked_unit_subtract(next.cash,reserved_cash(next))) refuse(CommandReason::insufficient_funds,"Group transfer exceeds actual unreserved cash.");
+                const auto offset=action.funding?(action.parent_leg?Account::assets:Account::equity):(action.parent_leg?Account::revenue:Account::equity);
+                const auto key="group."+std::string(action.funding?"funding/":"dividend/")+action.target+"/"+std::to_string(action.sequence);
+                record_cash(*next.accounts,next.date,Cents{outgoing?-action.amount.value():action.amount.value()},offset,action.funding?"Owned subsidiary capital":"Earned subsidiary dividend",key);
+                next.cash=accounts_report(*next.accounts).cash;
+                (void)receipt(next,action.funding?"subsidiary_funding":"subsidiary_dividend",0,Cents{outgoing?-action.amount.value():action.amount.value()});
+            } else if constexpr (std::is_same_v<Action, AppointExecutive>) {
+                const auto before=next.cash;appoint_executive(next,action.candidate,action.hybrid,reserved_cash(next));(void)receipt(next,"appoint_executive",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, ProposePoolExpansion>) {
+                propose_pool_expansion(next,action.shares);(void)receipt(next,"propose_pool_expansion");
+            } else if constexpr (std::is_same_v<Action, VoteBoardMotion>) {
+                const auto before=next.cash;vote_board_motion(next,action.id,action.support,reserved_cash(next));(void)receipt(next,"vote_board_motion",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, RespondCorporateDispute>) {
+                const auto before=next.cash;respond_corporate_dispute(next,action.id,action.buy_waiver,reserved_cash(next));(void)receipt(next,"respond_corporate_dispute",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, AddDelegationPolicy>) {
                 add_delegation_policy(next,action.policy);(void)receipt(next,"authorize_delegation");
             } else if constexpr (std::is_same_v<Action, SetDelegationEnabled>) {
@@ -662,6 +694,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 (void)receipt(next,"external_demand_change");
             }
         }, command.action);
+        if (!std::holds_alternative<AdvanceDay>(command.action)) prepare_governance(next);
         if (next.liquidity && !std::holds_alternative<AdvanceDay>(command.action))
             refresh_liquidity(*next.liquidity,*next.accounts);
         // The input was validated at construction; every daily subsystem owns

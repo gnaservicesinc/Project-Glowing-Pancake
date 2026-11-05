@@ -134,7 +134,7 @@ void validate_competition(const WorldState& world,const CompiledProgram& program
     if (!world.competition) return;
     if (world.competition->setup) {competition_detail::validate_planning(world,program,deep);return;}
     const auto& competition=*world.competition;
-    if (!competition.releases.empty() || !competition.adoptions.empty() || !competition.offers.empty() || std::any_of(competition.companies.begin(),competition.companies.end(),[](const auto& row){return row.planning.has_value() || row.response.has_value();}))
+    if (!competition.releases.empty() || !competition.adoptions.empty() || !competition.offers.empty() || !competition.acquisitions.empty() || std::any_of(competition.companies.begin(),competition.companies.end(),[](const auto& row){return row.planning.has_value() || row.response.has_value() || !row.parent_company.empty();}))
         invalid("Legacy bounded competition cannot adopt an undeclared planner or industry state");
     if (competition.companies.size()>32 || competition.notices.size()>128 || !world.simulation.lab)
         invalid("Competition state exceeds its bounds or has no lab catalog");

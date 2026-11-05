@@ -50,6 +50,7 @@ void policy_shape(const SimulationState& state,const DelegationPolicy& p) {
 }
 }
 void validate_management_catalog(const ManagementCatalog& c) {
+    if (c.governance) validate_governance_catalog(*c.governance);
     if (c.default_policy_budget.value()<=0 || c.default_reserve_floor.value()<0 || c.default_monthly_ceiling.value()<=0 ||
         c.default_policy_runs==0 || c.default_policy_runs>c.maximum_policy_runs || c.financing.size()>8 || c.specialists.size()>8 || c.setbacks.size()>8 || c.maximum_policy_runs==0 || c.maximum_policy_runs>12 ||
         c.minimum_evaluation_interval.value()<7 || c.minimum_evaluation_interval.value()>365 || c.scoring.task_target==0 ||
@@ -79,7 +80,7 @@ void validate_management_catalog(const ManagementCatalog& c) {
 void take_financing(SimulationState& s,std::string_view id) {
     auto& m=management(s);const auto& offer=find(m.catalog.financing,id);
     if (accepted(m.financing,id)) invalid("This financing offer has already been used; terms cannot be rerolled");
-    if (offer.term.value()==0) invest_equity(*s.accounts,s.date,"investor/"+offer.id,offer.proceeds,offer.acquired,"financing/"+offer.id);
+    if (offer.term.value()==0) company_equity(s,"investor/"+offer.id,offer.proceeds,offer.acquired,"financing/"+offer.id);
     else draw_debt(*s.accounts,s.date,{"financing/"+offer.id,offer.proceeds,offer.monthly_interest,s.date,advance_days(s.date,offer.term),0,std::nullopt},"Financing: "+offer.name);
     m.financing.push_back({offer.id,s.date});s.cash=accounts_report(*s.accounts).cash;
 }
@@ -245,7 +246,7 @@ void validate_management(const SimulationState& s,bool deep) {
                 !paid("debt/financing/"+offer.id,row.day,offer.proceeds,Account::cash,Account::debt)) invalid("Financing differs from its real debt/proceeds");
         }
     }
-    if (s.capacity->staff_additions.size()!=m.specialists.size()) invalid("Team additions lack their actual hired specialists");
+    if (s.capacity->staff_additions.size()!=m.specialists.size()+(m.governance?m.governance->appointments.size():0)) invalid("Team additions lack their actual hired specialists or executives");
     for (const auto& row:m.specialists) {
         const auto& offer=find(m.catalog.specialists,row.offer_id);
         if (!ids.insert(row.offer_id).second || row.day<s.accounts->starts_on || row.day>s.date) invalid("Specialist acceptance repeats or has an invalid date");

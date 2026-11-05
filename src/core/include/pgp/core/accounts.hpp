@@ -109,6 +109,10 @@ void repay_debt(AccountsState& state, OrdinalDay day, std::string_view id,
                 Cents amount, Cents protected_cash, std::string key);
 void invest_equity(AccountsState& state, OrdinalDay day, std::string investor,
                    Cents proceeds, BasisPoints acquired, std::string key);
+// Conserving Hamilton dilution, also shared by approved pool expansions and
+// noncash acquisition consideration. Neither helper creates cash.
+void dilute_holdings(std::vector<EquityHolding>& holdings,std::string investor,BasisPoints acquired);
+void issue_asset_equity(AccountsState&,OrdinalDay,std::string investor,Cents value,BasisPoints acquired,std::string key);
 // Accrue exactly the next day, then collect due receivables and pay due
 // obligations in (due,id) order from unreserved cash. Unpaid amounts persist.
 // Principal repayment requires repay_debt; maturity is visible in projections.

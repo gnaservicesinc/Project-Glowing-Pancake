@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**28 of 52 steps complete for Mac feature development. M4-03 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02 and M4-01/02.
+**29 of 52 steps complete for Mac feature development. M5-01 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02 and M4-01 through M4-03.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -23,6 +23,22 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- M4-03 adds alternative financing counteroffers, explicit seat-based board
+  votes, real debt/covenants and paid waivers; named executives agree cash-only
+  or cash-plus-equity compensation and concrete publication promises. Grants
+  reserve the existing pool, vest cumulatively, dilute once and keep earned
+  ownership on warned departure. Approved pool expansion discloses dilution.
+  Cash/equity acquisitions preserve every subsidiary obligation and service;
+  capital funding and earned dividends conserve both ledgers and group totals.
+  All **64/64 optimized Mac CTests pass in 19.79s**, including **77 corporate
+  checks**. The bundled **1280×720 / 200% text Metal** path exercises financing,
+  compensation, board/pool votes, acquisition, actual group funding/dividend and
+  full vesting, then finishes with **$374,040.93** and an exact **22,183,897-byte**
+  reload. The shared writer finalizes content **0.4.0-dev.1**, generation 4,
+  advancing four full-roster scenarios to revision 3; all 15 headquarters/save
+  checks pass. Game/editor remain planning placeholders and release gates stay
+  unresolved. [Corporate contract](../src/runtime/CORPORATE.md).
 
 - M4-02 adds public-evidence heavyweight reviews, watch/mobilize/compete/
   consolidate states, two-review hysteresis and at least 90 days' warning.
@@ -364,11 +380,12 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation: M4-03 funding, executives, negotiation and board.** Add
-conserved negotiated ownership/grants, vesting/departure treatment, covenants,
-board/role obligations and straightforward mergers through shared transactions.
-The full-roster planning, shared market and finite heavyweight response are
-implemented. Human validation remains deferred as specified below.
+**Next implementation: M5-01 offline domestic map and owned infrastructure.**
+Add licensed 50-state/DC geometry with a list alternative, owned sites, power /
+cooling and grid queues, compatible hardware delivery and paid staff/maintenance.
+Site choices must change a feasible plan; optional executive appointments/travel
+must preserve ordinary remote management. Human validation remains deferred as
+specified below.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

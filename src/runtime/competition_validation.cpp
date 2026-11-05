@@ -43,6 +43,9 @@ void resources(const WorldState& world,const CompiledProgram& program,const Riva
             if (posting.amount!=offer.proceeds || posting.credit!=(equity?Account::equity:Account::debt) ||
                 std::none_of(state.management->financing.begin(),state.management->financing.end(),[&](const auto& row){return row.offer_id==id && row.day==posting.day;}))
                 invalid("Rival cash bypassed its finite authorized financing offer");
+        } else if (posting.key.starts_with("group.funding/") && rival.parent_company==world.company_id && posting.credit==Account::equity) {
+            // The cross-company acquisition validator reconciles both actual
+            // legs; this is paid owner capital, not a replacement subsidy.
         } else if (posting.credit!=Account::receivables || !posting.document_id.starts_with("market.")) invalid("Rival invented cash, a hidden subsidy or non-customer revenue");
     }
     std::set<std::string> projects;

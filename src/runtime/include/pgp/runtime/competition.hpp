@@ -2,6 +2,7 @@
 #include <pgp/core/simulation.hpp>
 #include <pgp/content/world_setup.hpp>
 #include <pgp/runtime/heavyweight.hpp>
+#include <pgp/runtime/mergers.hpp>
 #include <map>
 
 namespace pgp::runtime {
@@ -35,6 +36,7 @@ struct RivalCompany {
     std::optional<core::OrdinalDay> warned_on, published_on;
     std::optional<RivalPlanState> planning{};
     std::optional<HeavyweightState> response{};
+    std::string parent_company{};
     auto operator<=>(const RivalCompany&) const = default;
 };
 struct RivalNotice {
@@ -56,6 +58,7 @@ struct CompetitionState {
     std::vector<PublicProductRelease> releases{};
     std::vector<core::MarketAdoption> adoptions{};
     std::vector<CompetitiveOffer> offers{};
+    std::vector<AcquisitionRecord> acquisitions{};
     auto operator<=>(const CompetitionState&) const = default;
 };
 [[nodiscard]] const content::RivalDefinition& rival_definition(const CompiledProgram& program,std::string_view id);

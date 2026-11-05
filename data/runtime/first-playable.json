@@ -1,6 +1,6 @@
 {
   "content_schema": 1,
-  "content_version": "0.3.0-dev.1",
+  "content_version": "0.4.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -1129,6 +1129,153 @@
             "term_days": 365
           }
         ],
+        "governance": {
+          "acquisition_equity_bp": 2000,
+          "acquisition_premium_cents": 10000000,
+          "board": [
+            {
+              "cash_floor_cents": 0,
+              "id": "board.founder",
+              "maximum_dilution_bp": 3000,
+              "name": "Founder",
+              "player": true,
+              "seats": 2
+            },
+            {
+              "cash_floor_cents": 10000000,
+              "id": "board.cofounder",
+              "maximum_dilution_bp": 1500,
+              "name": "Cofounder",
+              "player": false,
+              "seats": 1
+            },
+            {
+              "cash_floor_cents": 20000000,
+              "id": "board.seed",
+              "maximum_dilution_bp": 1200,
+              "name": "Seed investor",
+              "player": false,
+              "seats": 1
+            },
+            {
+              "cash_floor_cents": 30000000,
+              "id": "board.independent",
+              "maximum_dilution_bp": 1000,
+              "name": "Independent director",
+              "player": false,
+              "seats": 1
+            }
+          ],
+          "concern_period_days": 7,
+          "executives": [
+            {
+              "cash_salary_cents": 1800000,
+              "cliff_days": 90,
+              "commercial": 55,
+              "hybrid_grant_bp": 150,
+              "hybrid_salary_cents": 1300000,
+              "id": "executive.research",
+              "name": "Mara Hart",
+              "priorities": "Publish reproducible methods; preserve an explicit evaluation budget.",
+              "promise_term_days": 360,
+              "publication_research": "research.reproducible_tooling",
+              "risk_tolerance": 60,
+              "role": "Research director",
+              "signing_cost_cents": 1500000,
+              "technical": 88,
+              "vesting_days": 720
+            },
+            {
+              "cash_salary_cents": 1000000,
+              "cliff_days": 90,
+              "commercial": 88,
+              "hybrid_grant_bp": 100,
+              "hybrid_salary_cents": 750000,
+              "id": "executive.finance",
+              "name": "Samir Vale",
+              "priorities": "Cash runway, candid forecasts and written compensation terms.",
+              "promise_term_days": 0,
+              "publication_research": "",
+              "risk_tolerance": 35,
+              "role": "Finance director",
+              "signing_cost_cents": 1500000,
+              "technical": 40,
+              "vesting_days": 720
+            },
+            {
+              "cash_salary_cents": 1600000,
+              "cliff_days": 90,
+              "commercial": 85,
+              "hybrid_grant_bp": 125,
+              "hybrid_salary_cents": 1100000,
+              "id": "executive.product",
+              "name": "Nico Rowan",
+              "priorities": "Reliable service promises and affordable, steady product delivery.",
+              "promise_term_days": 0,
+              "publication_research": "",
+              "risk_tolerance": 48,
+              "role": "Product director",
+              "signing_cost_cents": 1500000,
+              "technical": 72,
+              "vesting_days": 720
+            }
+          ],
+          "financing": [
+            {
+              "acquired_bp": 600,
+              "board_seat": false,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.round_small",
+              "monthly_interest_bp": 0,
+              "name": "Smaller independent round",
+              "negotiation": "growth.round",
+              "proceeds_cents": 40000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
+            },
+            {
+              "acquired_bp": 1000,
+              "board_seat": true,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.round_large",
+              "monthly_interest_bp": 0,
+              "name": "Larger independent round",
+              "negotiation": "growth.round",
+              "proceeds_cents": 60000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
+            },
+            {
+              "acquired_bp": 0,
+              "board_seat": false,
+              "covenant_cash_floor_cents": 10000000,
+              "id": "corporate.runway_debt",
+              "monthly_interest_bp": 50,
+              "name": "Runway loan with cash covenant",
+              "negotiation": "runway.debt",
+              "proceeds_cents": 40000000,
+              "term_days": 730,
+              "waiver_fee_cents": 500000
+            },
+            {
+              "acquired_bp": 1200,
+              "board_seat": true,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.strategic_equity",
+              "monthly_interest_bp": 0,
+              "name": "Strategic research partnership capital",
+              "negotiation": "strategic.round",
+              "proceeds_cents": 30000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
+            }
+          ],
+          "maximum_pool_expansion_bp": 1000,
+          "response_window_days": 30,
+          "subsidiary_cash_floor_cents": 10000000,
+          "subsidiary_reserve_days": 30,
+          "vote_window_days": 14
+        },
         "maximum_policy_runs": 12,
         "minimum_evaluation_interval_days": 30,
         "scoring": {
@@ -1197,7 +1344,7 @@
         "research.efficient_serving",
         "research.reproducible_tooling"
       ],
-      "revision": 2,
+      "revision": 3,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -2932,6 +3079,153 @@
             "term_days": 365
           }
         ],
+        "governance": {
+          "acquisition_equity_bp": 2000,
+          "acquisition_premium_cents": 10000000,
+          "board": [
+            {
+              "cash_floor_cents": 0,
+              "id": "board.founder",
+              "maximum_dilution_bp": 3000,
+              "name": "Founder",
+              "player": true,
+              "seats": 2
+            },
+            {
+              "cash_floor_cents": 10000000,
+              "id": "board.cofounder",
+              "maximum_dilution_bp": 1500,
+              "name": "Cofounder",
+              "player": false,
+              "seats": 1
+            },
+            {
+              "cash_floor_cents": 20000000,
+              "id": "board.seed",
+              "maximum_dilution_bp": 1200,
+              "name": "Seed investor",
+              "player": false,
+              "seats": 1
+            },
+            {
+              "cash_floor_cents": 30000000,
+              "id": "board.independent",
+              "maximum_dilution_bp": 1000,
+              "name": "Independent director",
+              "player": false,
+              "seats": 1
+            }
+          ],
+          "concern_period_days": 7,
+          "executives": [
+            {
+              "cash_salary_cents": 1800000,
+              "cliff_days": 90,
+              "commercial": 55,
+              "hybrid_grant_bp": 150,
+              "hybrid_salary_cents": 1300000,
+              "id": "executive.research",
+              "name": "Mara Hart",
+              "priorities": "Publish reproducible methods; preserve an explicit evaluation budget.",
+              "promise_term_days": 360,
+              "publication_research": "research.reproducible_tooling",
+              "risk_tolerance": 60,
+              "role": "Research director",
+              "signing_cost_cents": 1500000,
+              "technical": 88,
+              "vesting_days": 720
+            },
+            {
+              "cash_salary_cents": 1000000,
+              "cliff_days": 90,
+              "commercial": 88,
+              "hybrid_grant_bp": 100,
+              "hybrid_salary_cents": 750000,
+              "id": "executive.finance",
+              "name": "Samir Vale",
+              "priorities": "Cash runway, candid forecasts and written compensation terms.",
+              "promise_term_days": 0,
+              "publication_research": "",
+              "risk_tolerance": 35,
+              "role": "Finance director",
+              "signing_cost_cents": 1500000,
+              "technical": 40,
+              "vesting_days": 720
+            },
+            {
+              "cash_salary_cents": 1600000,
+              "cliff_days": 90,
+              "commercial": 85,
+              "hybrid_grant_bp": 125,
+              "hybrid_salary_cents": 1100000,
+              "id": "executive.product",
+              "name": "Nico Rowan",
+              "priorities": "Reliable service promises and affordable, steady product delivery.",
+              "promise_term_days": 0,
+              "publication_research": "",
+              "risk_tolerance": 48,
+              "role": "Product director",
+              "signing_cost_cents": 1500000,
+              "technical": 72,
+              "vesting_days": 720
+            }
+          ],
+          "financing": [
+            {
+              "acquired_bp": 600,
+              "board_seat": false,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.round_small",
+              "monthly_interest_bp": 0,
+              "name": "Smaller independent round",
+              "negotiation": "growth.round",
+              "proceeds_cents": 40000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
+            },
+            {
+              "acquired_bp": 1000,
+              "board_seat": true,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.round_large",
+              "monthly_interest_bp": 0,
+              "name": "Larger independent round",
+              "negotiation": "growth.round",
+              "proceeds_cents": 60000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
+            },
+            {
+              "acquired_bp": 0,
+              "board_seat": false,
+              "covenant_cash_floor_cents": 10000000,
+              "id": "corporate.runway_debt",
+              "monthly_interest_bp": 50,
+              "name": "Runway loan with cash covenant",
+              "negotiation": "runway.debt",
+              "proceeds_cents": 40000000,
+              "term_days": 730,
+              "waiver_fee_cents": 500000
+            },
+            {
+              "acquired_bp": 1200,
+              "board_seat": true,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.strategic_equity",
+              "monthly_interest_bp": 0,
+              "name": "Strategic research partnership capital",
+              "negotiation": "strategic.round",
+              "proceeds_cents": 30000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
+            }
+          ],
+          "maximum_pool_expansion_bp": 1000,
+          "response_window_days": 30,
+          "subsidiary_cash_floor_cents": 10000000,
+          "subsidiary_reserve_days": 30,
+          "vote_window_days": 14
+        },
         "maximum_policy_runs": 12,
         "minimum_evaluation_interval_days": 30,
         "scoring": {
@@ -3000,7 +3294,7 @@
         "research.efficient_serving",
         "research.reproducible_tooling"
       ],
-      "revision": 2,
+      "revision": 3,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -4735,6 +5029,153 @@
             "term_days": 365
           }
         ],
+        "governance": {
+          "acquisition_equity_bp": 2000,
+          "acquisition_premium_cents": 10000000,
+          "board": [
+            {
+              "cash_floor_cents": 0,
+              "id": "board.founder",
+              "maximum_dilution_bp": 3000,
+              "name": "Founder",
+              "player": true,
+              "seats": 2
+            },
+            {
+              "cash_floor_cents": 10000000,
+              "id": "board.cofounder",
+              "maximum_dilution_bp": 1500,
+              "name": "Cofounder",
+              "player": false,
+              "seats": 1
+            },
+            {
+              "cash_floor_cents": 20000000,
+              "id": "board.seed",
+              "maximum_dilution_bp": 1200,
+              "name": "Seed investor",
+              "player": false,
+              "seats": 1
+            },
+            {
+              "cash_floor_cents": 30000000,
+              "id": "board.independent",
+              "maximum_dilution_bp": 1000,
+              "name": "Independent director",
+              "player": false,
+              "seats": 1
+            }
+          ],
+          "concern_period_days": 7,
+          "executives": [
+            {
+              "cash_salary_cents": 1800000,
+              "cliff_days": 90,
+              "commercial": 55,
+              "hybrid_grant_bp": 150,
+              "hybrid_salary_cents": 1300000,
+              "id": "executive.research",
+              "name": "Mara Hart",
+              "priorities": "Publish reproducible methods; preserve an explicit evaluation budget.",
+              "promise_term_days": 360,
+              "publication_research": "research.reproducible_tooling",
+              "risk_tolerance": 60,
+              "role": "Research director",
+              "signing_cost_cents": 1500000,
+              "technical": 88,
+              "vesting_days": 720
+            },
+            {
+              "cash_salary_cents": 1000000,
+              "cliff_days": 90,
+              "commercial": 88,
+              "hybrid_grant_bp": 100,
+              "hybrid_salary_cents": 750000,
+              "id": "executive.finance",
+              "name": "Samir Vale",
+              "priorities": "Cash runway, candid forecasts and written compensation terms.",
+              "promise_term_days": 0,
+              "publication_research": "",
+              "risk_tolerance": 35,
+              "role": "Finance director",
+              "signing_cost_cents": 1500000,
+              "technical": 40,
+              "vesting_days": 720
+            },
+            {
+              "cash_salary_cents": 1600000,
+              "cliff_days": 90,
+              "commercial": 85,
+              "hybrid_grant_bp": 125,
+              "hybrid_salary_cents": 1100000,
+              "id": "executive.product",
+              "name": "Nico Rowan",
+              "priorities": "Reliable service promises and affordable, steady product delivery.",
+              "promise_term_days": 0,
+              "publication_research": "",
+              "risk_tolerance": 48,
+              "role": "Product director",
+              "signing_cost_cents": 1500000,
+              "technical": 72,
+              "vesting_days": 720
+            }
+          ],
+          "financing": [
+            {
+              "acquired_bp": 600,
+              "board_seat": false,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.round_small",
+              "monthly_interest_bp": 0,
+              "name": "Smaller independent round",
+              "negotiation": "growth.round",
+              "proceeds_cents": 40000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
+            },
+            {
+              "acquired_bp": 1000,
+              "board_seat": true,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.round_large",
+              "monthly_interest_bp": 0,
+              "name": "Larger independent round",
+              "negotiation": "growth.round",
+              "proceeds_cents": 60000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
+            },
+            {
+              "acquired_bp": 0,
+              "board_seat": false,
+              "covenant_cash_floor_cents": 10000000,
+              "id": "corporate.runway_debt",
+              "monthly_interest_bp": 50,
+              "name": "Runway loan with cash covenant",
+              "negotiation": "runway.debt",
+              "proceeds_cents": 40000000,
+              "term_days": 730,
+              "waiver_fee_cents": 500000
+            },
+            {
+              "acquired_bp": 1200,
+              "board_seat": true,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.strategic_equity",
+              "monthly_interest_bp": 0,
+              "name": "Strategic research partnership capital",
+              "negotiation": "strategic.round",
+              "proceeds_cents": 30000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
+            }
+          ],
+          "maximum_pool_expansion_bp": 1000,
+          "response_window_days": 30,
+          "subsidiary_cash_floor_cents": 10000000,
+          "subsidiary_reserve_days": 30,
+          "vote_window_days": 14
+        },
         "maximum_policy_runs": 12,
         "minimum_evaluation_interval_days": 30,
         "scoring": {
@@ -4803,7 +5244,7 @@
         "research.efficient_serving",
         "research.reproducible_tooling"
       ],
-      "revision": 2,
+      "revision": 3,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -6538,6 +6979,153 @@
             "term_days": 365
           }
         ],
+        "governance": {
+          "acquisition_equity_bp": 2000,
+          "acquisition_premium_cents": 10000000,
+          "board": [
+            {
+              "cash_floor_cents": 0,
+              "id": "board.founder",
+              "maximum_dilution_bp": 3000,
+              "name": "Founder",
+              "player": true,
+              "seats": 2
+            },
+            {
+              "cash_floor_cents": 10000000,
+              "id": "board.cofounder",
+              "maximum_dilution_bp": 1500,
+              "name": "Cofounder",
+              "player": false,
+              "seats": 1
+            },
+            {
+              "cash_floor_cents": 20000000,
+              "id": "board.seed",
+              "maximum_dilution_bp": 1200,
+              "name": "Seed investor",
+              "player": false,
+              "seats": 1
+            },
+            {
+              "cash_floor_cents": 30000000,
+              "id": "board.independent",
+              "maximum_dilution_bp": 1000,
+              "name": "Independent director",
+              "player": false,
+              "seats": 1
+            }
+          ],
+          "concern_period_days": 7,
+          "executives": [
+            {
+              "cash_salary_cents": 1800000,
+              "cliff_days": 90,
+              "commercial": 55,
+              "hybrid_grant_bp": 150,
+              "hybrid_salary_cents": 1300000,
+              "id": "executive.research",
+              "name": "Mara Hart",
+              "priorities": "Publish reproducible methods; preserve an explicit evaluation budget.",
+              "promise_term_days": 360,
+              "publication_research": "research.reproducible_tooling",
+              "risk_tolerance": 60,
+              "role": "Research director",
+              "signing_cost_cents": 1500000,
+              "technical": 88,
+              "vesting_days": 720
+            },
+            {
+              "cash_salary_cents": 1000000,
+              "cliff_days": 90,
+              "commercial": 88,
+              "hybrid_grant_bp": 100,
+              "hybrid_salary_cents": 750000,
+              "id": "executive.finance",
+              "name": "Samir Vale",
+              "priorities": "Cash runway, candid forecasts and written compensation terms.",
+              "promise_term_days": 0,
+              "publication_research": "",
+              "risk_tolerance": 35,
+              "role": "Finance director",
+              "signing_cost_cents": 1500000,
+              "technical": 40,
+              "vesting_days": 720
+            },
+            {
+              "cash_salary_cents": 1600000,
+              "cliff_days": 90,
+              "commercial": 85,
+              "hybrid_grant_bp": 125,
+              "hybrid_salary_cents": 1100000,
+              "id": "executive.product",
+              "name": "Nico Rowan",
+              "priorities": "Reliable service promises and affordable, steady product delivery.",
+              "promise_term_days": 0,
+              "publication_research": "",
+              "risk_tolerance": 48,
+              "role": "Product director",
+              "signing_cost_cents": 1500000,
+              "technical": 72,
+              "vesting_days": 720
+            }
+          ],
+          "financing": [
+            {
+              "acquired_bp": 600,
+              "board_seat": false,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.round_small",
+              "monthly_interest_bp": 0,
+              "name": "Smaller independent round",
+              "negotiation": "growth.round",
+              "proceeds_cents": 40000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
+            },
+            {
+              "acquired_bp": 1000,
+              "board_seat": true,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.round_large",
+              "monthly_interest_bp": 0,
+              "name": "Larger independent round",
+              "negotiation": "growth.round",
+              "proceeds_cents": 60000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
+            },
+            {
+              "acquired_bp": 0,
+              "board_seat": false,
+              "covenant_cash_floor_cents": 10000000,
+              "id": "corporate.runway_debt",
+              "monthly_interest_bp": 50,
+              "name": "Runway loan with cash covenant",
+              "negotiation": "runway.debt",
+              "proceeds_cents": 40000000,
+              "term_days": 730,
+              "waiver_fee_cents": 500000
+            },
+            {
+              "acquired_bp": 1200,
+              "board_seat": true,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.strategic_equity",
+              "monthly_interest_bp": 0,
+              "name": "Strategic research partnership capital",
+              "negotiation": "strategic.round",
+              "proceeds_cents": 30000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
+            }
+          ],
+          "maximum_pool_expansion_bp": 1000,
+          "response_window_days": 30,
+          "subsidiary_cash_floor_cents": 10000000,
+          "subsidiary_reserve_days": 30,
+          "vote_window_days": 14
+        },
         "maximum_policy_runs": 12,
         "minimum_evaluation_interval_days": 30,
         "scoring": {
@@ -6606,7 +7194,7 @@
         "research.efficient_serving",
         "research.reproducible_tooling"
       ],
-      "revision": 2,
+      "revision": 3,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,

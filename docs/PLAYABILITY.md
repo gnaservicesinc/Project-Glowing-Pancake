@@ -21,6 +21,7 @@ independent human validation and release qualification remain open.
 | M3-03: feature evaluation build | The scenario with delegation, warnings, recovery and scoring | Implemented on Mac; finite policies, actual deadline stops, warned setback, financing/specialist routes and transparent score |
 | M4-01: full rival planning | Default 15-company roster; 7/20-company alternatives; budgeted weekly strategies, shared customers, pricing and public research | Implemented on Mac; exact three-year standard/expanded saves and bundled 200% Metal ending |
 | M4-02: heavyweight response and agreements | Public pressure, 90-day warning, finite paid mobilization/withdrawal and escrowed publication/pilot fees | Implemented on Mac; hysteresis/failure/save checks and actual keyboard accept/decline/paid milestone at 200% text |
+| M4-03: corporate governance and acquisitions | Negotiated capital, executive cash/equity terms, cumulative vesting, board votes, covenants, retained subsidiaries and conserving group transfers | Implemented on Mac; 77 corporate checks and the bundled 200% Metal path through a solvent ending/exact reload |
 | M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Deferred until all components are in place and the user is ready for v1 work; no sessions conducted |
 
 There is no calendar estimate inferred from task counts: tasks vary substantially
@@ -97,10 +98,26 @@ reserves its own fee and pays once on fulfillment. Ignoring or missing terms
 releases unspent funds; no extra demand or customer work is created.
 [Response and agreement contract](../src/runtime/HEAVYWEIGHTS.md).
 
-The funded efficient headless route finishes the standard and expanded presets
-with $2,086,666.76 and $1,993,686.26 respectively. The bundled standard-roster UI
-route declines a publication offer, completes a paid pilot and finishes with
-$1,547,040.93. These are deterministic engineering routes, not a human balance
+Office → **Board and people** exposes compensation, ownership, financing
+counteroffers, board positions/votes and warned disputes. Choose cash-only or
+hybrid executive terms with real payroll. Grants use the reserved pool, vest
+cumulatively and retain earned ownership on departure. Compare alternative
+financing terms, then submit a motion and vote; a new equity percentage and a
+board seat are separate rights. Cash covenants and publication promises show
+real response deadlines and remedies.
+
+The acquisitions page reviews actual seller due diligence before a cash/equity
+proposal. A completed purchase retains the subsidiary's licenses, products,
+staff, contracts, debt and bills. Paid owner funding and dividends use actual
+cash; a dividend requires undistributed profit earned after acquisition and
+retained cash for future bills. Group figures eliminate internal investment
+assets and dividend income. [Corporate rules](../src/runtime/CORPORATE.md).
+
+The M4-02 funded efficient headless routes finished the standard and expanded
+presets with $2,086,666.76 and $1,993,686.26 respectively. The current bundled
+corporate UI route also hires an executive, approves financing/pool motions,
+acquires an operating startup, funds it and receives an earned dividend, then
+finishes with $374,040.93. These are deterministic engineering routes, not a human balance
 assessment. [Shared-market and planning contract](../src/runtime/COMPETITION.md).
 
 The original introductory rendered Mac smoke exercises this path at 1280×720 with 100% and 200% text,
@@ -149,4 +166,4 @@ and exact thresholds through choices and reload; see [duration evidence](evidenc
 M1-07 then adds
 built-in occurrence detection/dispatch. M2-01 through M2-04 implement accounts,
 shared capacity, contracts and the three-year scenario with warned recovery.
-The playable campaign connects those modules through ordinary controls. The current count is 28 completed Mac feature steps. M3-01 through M3-03, M3-05, E1A-04's internal snapshots, E1A-05's authoring walkthrough, E1B-01/02's typed canvas and graphical finalizer, and M4-01/02's full competition and heavyweight responses are implemented. Per the 2026-11-05 user instruction, human player/author studies wait until all components are in place and the user is ready for v1 work. The [session kit](playtests/M3-session-guide.md) is prepared for later; no sessions are being arranged. Later components proceed with engineering checks. Deferred platform and release work stays recorded in the backlog.
+The playable campaign connects those modules through ordinary controls. The current count is 29 completed Mac feature steps. M3-01 through M3-03, M3-05, E1A-04's internal snapshots, E1A-05's authoring walkthrough, E1B-01/02's typed canvas and graphical finalizer, and M4-01/02/03's competition, heavyweight responses and corporate governance are implemented. Per the 2026-11-05 user instruction, human player/author studies wait until all components are in place and the user is ready for v1 work. The [session kit](playtests/M3-session-guide.md) is prepared for later; no sessions are being arranged. Later components proceed with engineering checks. Deferred platform and release work stays recorded in the backlog.

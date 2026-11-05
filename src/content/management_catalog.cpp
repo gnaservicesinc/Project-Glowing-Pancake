@@ -1,4 +1,5 @@
 #include <pgp/content/management_catalog.hpp>
+#include <pgp/content/governance_catalog.hpp>
 #include <nlohmann/json.hpp>
 #include <limits>
 #include <set>
@@ -20,7 +21,7 @@ std::uint32_t count(const Json& j,std::uint32_t maximum) {const auto v=integer(j
 }
 core::ManagementCatalog load_management_catalog(std::string_view bytes) {
     if (bytes.size()>32768) invalid();std::vector<std::set<std::string>> keys;std::size_t tokens=0;
-    const auto j=Json::parse(bytes.begin(),bytes.end(),[&](int depth,Json::parse_event_t event,Json& value) {
+    auto j=Json::parse(bytes.begin(),bytes.end(),[&](int depth,Json::parse_event_t event,Json& value) {
         if (depth>16 || ++tokens>8192) invalid();
         if (event==Json::parse_event_t::object_start) keys.emplace_back();
         else if (event==Json::parse_event_t::object_end) keys.pop_back();
@@ -28,8 +29,10 @@ core::ManagementCatalog load_management_catalog(std::string_view bytes) {
         else if (event==Json::parse_event_t::value && value.is_number_float()) invalid();
         return true;
     });
+    std::optional<core::GovernanceCatalog> governance;
+    if (j.contains("governance")) {governance=load_governance_catalog(j.at("governance").dump());j.erase("governance");}
     fields(j,{"financing","specialists","setbacks","scoring","minimum_evaluation_interval_days","maximum_policy_runs","default_policy_budget_cents","default_reserve_floor_cents","default_monthly_ceiling_cents","default_policy_runs"});
-    core::ManagementCatalog c;
+    core::ManagementCatalog c;c.governance=std::move(governance);
     array(j.at("financing"),8);array(j.at("specialists"),8);array(j.at("setbacks"),8);
     for (auto row:j.at("financing")) {
         bool announced=false;
@@ -67,9 +70,11 @@ std::string canonical_management_catalog(const core::ManagementCatalog& c) {
     for (const auto& row:c.specialists) specialists.push_back({{"id",row.id},{"name",row.name},{"signing_cost_cents",row.signing_cost.value()},{"monthly_salary_cents",row.monthly_salary.value()}});
     for (const auto& row:c.setbacks) setbacks.push_back({{"id",row.id},{"name",row.name},{"source_id",row.source_id},{"announced_on",core::iso_date(row.announced_on)},
         {"starts_on",core::iso_date(row.starts_on)},{"ends_before",core::iso_date(row.ends_before)},{"reduced_milli_CU_per_day",row.reduced_capacity.value()}});
-    return Json{{"financing",std::move(financing)},{"specialists",std::move(specialists)},{"setbacks",std::move(setbacks)},
+    Json result{{"financing",std::move(financing)},{"specialists",std::move(specialists)},{"setbacks",std::move(setbacks)},
         {"scoring",{{"task_target",c.scoring.task_target},{"weights",c.scoring.weights},{"founder",c.scoring.founder},{"opening_founder_share_bp",c.scoring.opening_founder_share.value()}}},
         {"minimum_evaluation_interval_days",c.minimum_evaluation_interval.value()},{"maximum_policy_runs",c.maximum_policy_runs},{"default_policy_budget_cents",c.default_policy_budget.value()},
-        {"default_reserve_floor_cents",c.default_reserve_floor.value()},{"default_monthly_ceiling_cents",c.default_monthly_ceiling.value()},{"default_policy_runs",c.default_policy_runs}}.dump();
+        {"default_reserve_floor_cents",c.default_reserve_floor.value()},{"default_monthly_ceiling_cents",c.default_monthly_ceiling.value()},{"default_policy_runs",c.default_policy_runs}};
+    if (c.governance) result["governance"]=Json::parse(canonical_governance_catalog(*c.governance));
+    return result.dump();
 }
 }
