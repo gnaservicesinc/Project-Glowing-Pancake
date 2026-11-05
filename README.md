@@ -2,11 +2,11 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** 22 of 52 steps complete for Mac feature development as of 2026-11-05. The bundled 2014–2017 campaign is playable through the Office, Lab and Inbox: choose headquarters, license data, research, train, evaluate, qualify a service, compare contracts and respond to events/rivals. The guide can be hidden and reopened. Full keyboard runs at 100% and 200% text reach the ending solvent and reload exactly.
+**Current state:** 23 of 52 steps complete for Mac feature development as of 2026-11-05. The bundled 2014–2017 campaign is playable through the Office, Lab and Inbox: choose headquarters, license data, research, train, evaluate, qualify a service, compare contracts and respond to events/rivals. The guide can be hidden and reopened. Full keyboard runs at 100% and 200% text reach the ending solvent and reload exactly.
 
-M3-03 adds bounded evaluation/lease-renewal policies, configurable pauses, real deadline/milestone stops, a recoverable supplier setback, paid hiring, fixed financing and transparent slice scores. The efficient document-specialist route is profitable through the ending without new financing. **M3-04 now needs real playtest sessions.** The century campaign and release qualification remain later steps. The separate Content Studio has authoring forms and inspection; its final snapshot/canvas work is still open.
+M3-03 adds bounded evaluation/lease-renewal policies, configurable pauses, real deadline/milestone stops, a recoverable supplier setback, paid hiring, fixed financing and transparent slice scores. The efficient document-specialist route is profitable through the ending without new financing. **Human playtests and author studies are deferred until all components are in place and the user is ready for v1 work.** They do not block implementation. The century campaign and release qualification remain later steps. The separate Content Studio has authoring forms, inspection and a validated internal snapshot writer; its walkthrough/canvas work is still open.
 
-Platform and release checks remain separately deferred. Remaining Studio snapshot/canvas work (`E1A-04`, `E1A-05`, `E1b`) follows the M3 feature slice. Follow [playability checkpoints](docs/PLAYABILITY.md), [status](docs/STATUS.md), [implementation checks](docs/IMPLEMENTATION_LOG.md) and the ordered [backlog](docs/BACKLOG.md).
+Platform and release checks remain separately deferred. The first finalized internal content snapshot is 0.1.0-dev.1; game/editor versions remain planning placeholders with an unresolved game-version requirement. E1A-05's walkthrough and E1B-01/02's canvas/finalizer are next, followed by M4 component work. Follow [playability checkpoints](docs/PLAYABILITY.md), [status](docs/STATUS.md), [implementation checks](docs/IMPLEMENTATION_LOG.md) and the ordered [backlog](docs/BACKLOG.md).
 
 ## Build and play
 
@@ -65,6 +65,6 @@ Content Studio builds as a separate target with a checkout library and a typed d
 
 Built-in rules dispatch actual research, evaluation and pilot outcomes, seeded demand incidents, paid supplier/recovery opportunities and competitive notices through one shared runtime. The eight-flow pack is in `data/runtime/first-playable.json`, with localizable English messages and a complete baseline-only headless run. [Event contract](docs/EVENT_SYSTEM.md) · [Implementation and seeds](src/runtime/BASE_EVENTS.md)
 
-E1a forms/inspection share the runtime; internal content snapshot finalization remains ahead. E1b completes the required node canvas, graphical finalizer and three-author study before M4. Human playtests, full rival planning, century systems and the six final objectives retain their later acceptance gates.
+E1a forms/inspection and the internal snapshot writer share the runtime. E1b completes the required node canvas and graphical finalizer before M4 component work; its three-author study waits for v1 preparation. Human validation, full rival planning, century systems and the six final objectives retain their later acceptance gates.
 
 Project code is licensed under [GNU GPLv3](LICENSE). Third-party assets/dependencies retain their own recorded licenses and credits. The original drafts are preserved unchanged in [the reference archive](docs/reference/README.md); the active plan above supersedes their suggestions.

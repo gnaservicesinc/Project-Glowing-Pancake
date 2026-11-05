@@ -1,6 +1,10 @@
 # One validated reader also serves future packaging tools. Python is build-time only.
 find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_LIST_DIR}/../authoring/content-state.json"
+    "${CMAKE_CURRENT_LIST_DIR}/../authoring/content-history.json"
+    "${CMAKE_CURRENT_LIST_DIR}/../data/runtime/content-manifest.json"
+    "${CMAKE_CURRENT_LIST_DIR}/../data/runtime/first-playable.json"
     "${CMAKE_CURRENT_LIST_DIR}/../project-versions.json"
     "${CMAKE_CURRENT_LIST_DIR}/../tools/project_versions.py")
 execute_process(

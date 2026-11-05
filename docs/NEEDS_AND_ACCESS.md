@@ -30,7 +30,12 @@ Checked 2026-11-03. This is a staged list of resources, not a request to purchas
 
 All of these start as inspections or small engineering tasks. Missing paid services are not presumed. If a CI limit would cause a cost, produce a concrete alternative/estimate before asking the user to authorize spending.
 
-## By the first playable, M3
+## Human feedback at v1 preparation; slice resources during implementation
+
+Per the 2026-11-05 user instruction, no testers are available and independent
+player/author sessions wait until all components are in place and the user is
+ready for v1 work. These resources do not block component implementation. The
+[session kit](playtests/M3-session-guide.md) is prepared for later use.
 
 | Need | Minimal useful resource | Cost/access expectation |
 | --- | --- | --- |
@@ -59,7 +64,7 @@ Music is not downloaded or approved yet. ENDE currently identifies its standard 
 | Need | When / purpose | Access/cost expectation |
 | --- | --- | --- |
 | A writable development checkout | E1 opens canonical repository data and shared schemas/registry; a packaged game is not a project | Existing checkout is sufficient; copies/fixtures for destructive test cases |
-| Three human authoring sessions | E1b before M4: canvas/forms authoring, inspection, testing and graphical finalization without scripting. E1a's pre-M3 engineering walkthrough is a separate smaller gate | Include a scenario author and someone without scripting experience; user-arranged or explicitly authorized contact, manual feedback only |
+| Three human authoring sessions | Deferred to v1 preparation after all components are in place: canvas/forms authoring, inspection, testing and graphical finalization without scripting. E1A-05's engineering walkthrough remains a separate implementation step | Include a scenario author and someone without scripting experience; user-arranged or explicitly authorized contact, manual feedback only |
 | Representative content/impact fixtures | Scope/threshold/positive-negative effects, all lifecycles, dialogue results, external edit conflict and recovery | Engineering/authoring task; no cloud/model service |
 | Separate editor artifact/channel naming | E2: independently qualified downloads and exact preview-runtime compatibility | Same Qt/CI tooling; no paid node-editor SDK or new server assumed |
 | Version reader and release metadata tests | M0-05/E1A-04/E1B-02: safe internal snapshots then graphical batches use shared game/editor/content identity; later Snap mapping | Small repository tooling; no store access needed until an explicitly scoped publication |

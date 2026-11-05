@@ -1,3 +1,4 @@
+#include "../content/slice_fixture.hpp"
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/runtime/scenario.hpp>
@@ -14,8 +15,8 @@ using Json=nlohmann::json;
 int checks=0;
 void check(bool condition,const char* why) {++checks;if (!condition) throw std::runtime_error(why);}
 runtime::CompiledProgram compile(Json doc,bool setbacks=true) {
-    doc["definitions"][0]["flows"]=Json::array();doc["definitions"][0]["rivals"]=Json::array();
-    if (!setbacks) doc["definitions"][0]["management"]["setbacks"]=Json::array();
+    pgp_test::scenario_doc(doc)["flows"]=Json::array();pgp_test::scenario_doc(doc)["rivals"]=Json::array();
+    if (!setbacks) pgp_test::scenario_doc(doc)["management"]["setbacks"]=Json::array();
     const auto registry=content::foundation_registry();return runtime::compile_collection(content::load_collection(doc.dump(),registry),registry);
 }
 runtime::Runtime begin(const runtime::CompiledProgram& program) {
@@ -47,7 +48,7 @@ void training(runtime::Runtime& engine) {
 }
 void bounds(const Json& source) {
     for (int i=0;i<8;++i) {
-        auto doc=source;auto& c=doc["definitions"][0]["management"];
+        auto doc=source;auto& c=pgp_test::scenario_doc(doc)["management"];
         if (i==0) c["scoring"]["weights"][0]=99;
         if (i==1) c["maximum_policy_runs"]=100000;
         if (i==2) c["minimum_evaluation_interval_days"]=0;

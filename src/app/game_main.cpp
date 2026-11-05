@@ -57,6 +57,9 @@ int main(int argc, char* argv[]) {
         } else bytes=persistence::read_bounded(path(parser.value(QStringLiteral("content"))),content::maximum_document_bytes);
         const auto registry = content::foundation_registry();
         auto program = runtime::compile_collection(content::load_collection(bytes,registry),registry);
+        if (bundled && core::build_identity().runtime_content_hash!="unavailable" &&
+            persistence::save_identity(program).content_hash!=core::build_identity().runtime_content_hash)
+            throw std::runtime_error("Bundled content differs from its finalized build manifest. Rebuild from a consistent snapshot.");
         std::string scenario_id=parser.value(QStringLiteral("scenario")).toStdString();
         if (scenario_id.empty()) for (const auto& [id,definition]:program.collection.definitions)
             if (std::holds_alternative<content::ScenarioDefinition>(definition.data)) { scenario_id=id;break; }

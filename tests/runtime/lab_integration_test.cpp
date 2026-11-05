@@ -1,3 +1,4 @@
+#include "../content/slice_fixture.hpp"
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/runtime/scenario.hpp>
@@ -30,7 +31,7 @@ core::TrainingRequest training(std::string id, std::vector<std::string> data = {
     return {std::move(id), "recipe.document_baseline", "", std::move(data), "lease.initial", core::MilliCUPerDay{60000}, 4, core::MilliCU{3600000}};
 }
 runtime::CompiledProgram compile(Json doc) {
-    doc["definitions"][0]["management"]["setbacks"]=Json::array(); // Isolate lab arithmetic; management integration owns dated outages.
+    pgp_test::scenario_doc(doc)["management"]["setbacks"]=Json::array(); // Isolate lab arithmetic; management integration owns dated outages.
     const auto registry = content::foundation_registry();
     return runtime::compile_collection(content::load_collection(doc.dump(),registry),registry,runtime::supported_effects());
 }
@@ -51,20 +52,20 @@ void malformed_save(const runtime::CompiledProgram& program, Json doc) {
 void content_boundaries(const Json& source, const runtime::CompiledProgram& program) {
     for (unsigned mutation = 0; mutation < 7; ++mutation) {
         auto doc = source;
-        auto& catalog = doc["definitions"][0]["lab"];
+        auto& catalog = pgp_test::scenario_doc(doc)["lab"];
         if (mutation == 0) catalog["data"][0]["unique_units"] = 1.0;
         if (mutation == 1) catalog["data"].push_back(catalog["data"][0]);
         if (mutation == 2) catalog["recipes"][0]["compute_scale_milli_CU"] = 0;
         if (mutation == 3) catalog["recipes"][0]["requires_research"] = Json::array({"research.missing"});
         if (mutation == 4) catalog["data"][0]["unknown"] = true;
         if (mutation == 5) catalog["evaluations"][0]["uncertainty_bp"] = 10001;
-        if (mutation == 6) doc["definitions"][1]["prerequisites"]["all_of"] = Json::array({doc["definitions"][1]["id"]});
+        if (mutation == 6) pgp_test::definition(doc,"research.efficient_image_features")["prerequisites"]["all_of"] = Json::array({pgp_test::definition(doc,"research.efficient_image_features")["id"]});
         bool rejected = false;
         try { (void)compile(doc); } catch (const std::exception&) { rejected = true; }
         check(rejected,"Malformed authored lab data was accepted");
     }
     auto changed = source;
-    changed["definitions"][0]["lab"]["data"][0]["price_cents"] = 1;
+    pgp_test::scenario_doc(changed)["lab"]["data"][0]["price_cents"] = 1;
     check(persistence::save_identity(compile(changed)).content_hash != persistence::save_identity(program).content_hash,
           "Lab balance data was omitted from canonical content identity");
 }

@@ -13,7 +13,7 @@ int main() {
         std::cerr << "Runtime identity differs from the validated manifest\n";
         return 1;
     }
-    if (identity.runtime_content_hash != "unavailable" ||
+    if (identity.runtime_content_hash != PGP_EXPECTED_RUNTIME_CONTENT_HASH ||
         identity.content_schema == 0 || identity.simulation_rules == 0 || identity.save_format == 0) {
         std::cerr << "Missing compatibility identity or fabricated content hash\n";
         return 1;

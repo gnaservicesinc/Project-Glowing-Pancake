@@ -189,6 +189,18 @@ void atomic_write(const std::filesystem::path& path,std::string_view bytes,
     }
 }
 
+void write_staged_file(const std::filesystem::path& path,std::string_view bytes) {
+    if (bytes.size()>64U*1024U*1024U || path.filename().empty()) throw PersistenceError("limit","Staged file exceeds its bound or has no filename");
+    write_exclusive(path,bytes);sync_directory(path.parent_path());
+}
+void replace_staged_file(const std::filesystem::path& staged,const std::filesystem::path& target) {
+    if (!existing_regular(staged)) throw PersistenceError("missing_file","The staged transaction file is unavailable");
+    (void)existing_regular(target);
+    replace(staged,target);sync_directory(target.parent_path());
+    if (staged.parent_path()!=target.parent_path()) sync_directory(staged.parent_path());
+}
+void flush_local_directory(const std::filesystem::path& path) {sync_directory(path);}
+
 std::filesystem::path standard_data_directory() {
 #ifdef _WIN32
     const auto required=GetEnvironmentVariableW(L"LOCALAPPDATA",nullptr,0);

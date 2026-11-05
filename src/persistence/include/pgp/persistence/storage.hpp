@@ -28,6 +28,13 @@ void atomic_write(const std::filesystem::path& path, std::string_view bytes,
                   std::size_t maximum_bytes = default_maximum_save_bytes,
                   std::optional<bool> expected_exists = std::nullopt);
 
+// Journal writers can store immutable staged copies and replace only after
+// owning backups/conflict checks. These primitives do not provide a complete
+// transaction; ordinary saves/settings must continue to use atomic_write.
+void write_staged_file(const std::filesystem::path& path,std::string_view bytes);
+void replace_staged_file(const std::filesystem::path& staged,const std::filesystem::path& target);
+void flush_local_directory(const std::filesystem::path& path);
+
 // No directory is created by this query. Portable callers may choose another
 // local directory explicitly. No account name/device identity is recorded.
 [[nodiscard]] std::filesystem::path standard_data_directory();

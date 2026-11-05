@@ -4,8 +4,9 @@ M0-02 implements build entry points and the headless scaffold. M0-03 adds the
 development interface probe, resource guards and optional playback adapter.
 M0-05 validates the shared component versions and embeds configure-time identity.
 The engineering simulation runs headless or in the desktop room shell.
-An opt-in Content Studio target browses local checkout data. Full authoring,
-the player-facing scenario and distributable packages remain later work.
+An opt-in Content Studio target browses/edits local checkout data and builds the
+maintainer snapshot CLI. The bundled campaign is playable; full authoring and
+distributable packages remain later work.
 The [implementation log](IMPLEMENTATION_LOG.md) records acceptance evidence.
 
 ## Requirements and commands
@@ -69,6 +70,24 @@ the editor payload for future deployment qualification.
 
 To check loading, filtering and in-memory draft edits without showing a window, run
 `QT_QPA_PLATFORM=offscreen build/release/bin/pgp-editor --software --check-view --project "$PWD"`.
+
+### Validate and finalize internal content
+
+The editor build also provides the Qt-free `pgp-content-tool`, separate from the
+game payload. Its explicit review/finalize/check/recover operations share the
+runtime validator and journaled batch writer:
+
+```sh
+build/release/bin/pgp-content-tool --help
+build/release/bin/pgp-content-tool check --checkout "$PWD"
+```
+
+See [snapshot commands and recovery](../src/studio/SNAPSHOTS.md) for a reviewed
+draft promotion. The current content snapshot is 0.1.0-dev.1. Game/editor
+remain 0.0.0-dev; its game-version requirement is deliberately unresolved and
+release readiness is false. Builds embed the validated record's collection
+hash; pending transactions block configuration until recovery. Finalization
+does not publish, commit or automatically launch either application.
 
 `QT_ROOT` is an alternative to `--qt-root`; ordinary CMake prefix discovery via
 `CMAKE_PREFIX_PATH` is also supported. On this Mac only, the wrapper can use the

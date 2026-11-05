@@ -1,3 +1,4 @@
+#include "../content/slice_fixture.hpp"
 #include <pgp/session/slice_run.hpp>
 #include <pgp/persistence/save.hpp>
 #include <pgp/runtime/scenario.hpp>
@@ -23,8 +24,8 @@ void roundtrip(const runtime::CompiledProgram& program,const runtime::Runtime& g
 }
 void run() {
     std::ifstream file{PGP_SLICE_CONTENT_PATH}; auto doc=nlohmann::json::parse(file);
-    doc["definitions"][0]["flows"]=nlohmann::json::array();doc["definitions"][0]["rivals"]=nlohmann::json::array();
-    doc["definitions"][0]["management"]["setbacks"]=nlohmann::json::array(); // Isolate qualification; setback boundaries have their own integration test.
+    pgp_test::scenario_doc(doc)["flows"]=nlohmann::json::array();pgp_test::scenario_doc(doc)["rivals"]=nlohmann::json::array();
+    pgp_test::scenario_doc(doc)["management"]["setbacks"]=nlohmann::json::array(); // Isolate qualification; setback boundaries have their own integration test.
     const auto registry=content::foundation_registry();
     const auto program=runtime::compile_collection(content::load_collection(doc.dump(),registry),registry);
     runtime::Runtime game{program,runtime::begin_scenario(program,"scenario.first_playable","US-CA")};
@@ -81,7 +82,7 @@ void run() {
     roundtrip(program,game);
     // Even otherwise usable evidence cannot grant commercial rights.
     auto uncleared=doc;
-    uncleared["definitions"][0]["lab"]["data"][1]["commercial_use"]=false;
+    pgp_test::scenario_doc(uncleared)["lab"]["data"][1]["commercial_use"]=false;
     const auto restricted_program=runtime::compile_collection(content::load_collection(uncleared.dump(),registry),registry);
     auto restricted=qualified;restricted.world.simulation.lab->catalog.data[1].commercial_use=false;
     runtime::Runtime restricted_game{restricted_program,std::move(restricted)};

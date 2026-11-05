@@ -13,7 +13,7 @@ inline constexpr BuildIdentity identity{
     .source_commit = "@PGP_VERSION_SOURCE_COMMIT@",
     .source_state = "@PGP_VERSION_SOURCE_STATE@",
     .manifest_sha256 = "@PGP_VERSION_MANIFEST_SHA256@",
-    .runtime_content_hash = "unavailable",
+    .runtime_content_hash = "@PGP_VERSION_RUNTIME_CONTENT_HASH@",
     .target_os = "@PGP_TARGET_OS@",
     .target_architecture = "@PGP_TARGET_ARCHITECTURE@",
     .game_artifact_stem = "@PGP_GAME_ARTIFACT_STEM@",

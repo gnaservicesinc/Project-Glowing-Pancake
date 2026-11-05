@@ -1,3 +1,4 @@
+#include "../content/slice_fixture.hpp"
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/session/slice_run.hpp>
@@ -40,8 +41,8 @@ void refused(runtime::Runtime& engine,core::CommandAction action) {
     check(before==engine.checkpoint(),"Rejected event command changed cash, resources, source history or RNG");
 }
 Json isolated(Json document,std::string_view id) {
-    document["definitions"][0]["flows"]=Json::array({id});
-    document["definitions"][0]["rivals"]=Json::array();
+    pgp_test::scenario_doc(document)["flows"]=Json::array({id});
+    pgp_test::scenario_doc(document)["rivals"]=Json::array();
     return document;
 }
 runtime::Runtime begin(const runtime::CompiledProgram& program) {
@@ -87,11 +88,11 @@ void pack_and_studio(const Json& source,const runtime::CompiledProgram& program)
     check(opportunities>=3,"Opportunity/recovery coverage fell below one third");
     for (unsigned mutation=0;mutation<7;++mutation) {
         auto doc=source;
-        if (mutation==0) doc["definitions"][0]["rivals"][2]["warning_lead_days"]=89;
-        if (mutation==1) doc["definitions"][0]["business_offers"][0]["capacity_milli_CU_per_day"]=0;
-        if (mutation==2) doc["definitions"][0]["rivals"][0]["recipe_id"]="recipe.missing";
-        if (mutation==3) doc["definitions"][0]["business_offers"][0]["setup_cost_cents"]=1.0;
-        if (mutation==4) doc["definitions"][0]["service_catalog"]["segments"][0]["daily_tasks"]=1;
+        if (mutation==0) pgp_test::named_row(pgp_test::scenario_doc(doc)["rivals"],"company.northstar")["warning_lead_days"]=89;
+        if (mutation==1) pgp_test::named_row(pgp_test::scenario_doc(doc)["business_offers"],"offer.supplier_small")["capacity_milli_CU_per_day"]=0;
+        if (mutation==2) pgp_test::named_row(pgp_test::scenario_doc(doc)["rivals"],"company.cedar")["recipe_id"]="recipe.missing";
+        if (mutation==3) pgp_test::named_row(pgp_test::scenario_doc(doc)["business_offers"],"offer.supplier_small")["setup_cost_cents"]=1.0;
+        if (mutation==4) pgp_test::scenario_doc(doc)["service_catalog"]["segments"][0]["daily_tasks"]=1;
         for (auto& row:doc["definitions"]) {
             if (mutation==5 && row["id"]=="slice.supplier_offer") row["nodes"]["accept"]["effects"][0]["offer_id"]="offer.missing";
             if (mutation==6 && row["id"]=="slice.market_shift") row["nodes"]["increase"]["effects"][0]["segment_id"]="segment.missing";
@@ -113,7 +114,7 @@ void pack_and_studio(const Json& source,const runtime::CompiledProgram& program)
 #endif
 }
 void supplier_paths(const Json& source) {
-    auto doc=isolated(source,"slice.supplier_offer"); doc["definitions"][0]["seed"]=seed_for(2,1,2);
+    auto doc=isolated(source,"slice.supplier_offer"); pgp_test::scenario_doc(doc)["seed"]=seed_for(2,1,2);
     const auto program=compile(doc); auto engine=begin(program); step(engine,13);
     check(engine.current_state().runtime.presentations.empty(),"Supplier offer fired before its review boundary");
     step(engine); const auto pending=engine.checkpoint(); const auto choice=waiting(engine);
@@ -162,14 +163,14 @@ void supplier_paths(const Json& source) {
     check(!constrained.choose(revision(constrained),choice,"accept").accepted() && constrained.checkpoint()==before,
           "Unaffordable supplier acceptance partially committed its expense/source");
     accepted(constrained.choose(revision(constrained),choice,"decline"));
-    auto quiet_doc=doc; quiet_doc["definitions"][0]["seed"]=seed_for(2,0,1); auto quiet=begin(compile(quiet_doc)); step(quiet,14);
+    auto quiet_doc=doc; pgp_test::scenario_doc(quiet_doc)["seed"]=seed_for(2,0,1); auto quiet=begin(compile(quiet_doc)); step(quiet,14);
     check(quiet.current_state().runtime.presentations.empty() && quiet.current_state().world.simulation.business_offers->accepted.empty(),"Quiet supplier outcome was not quiet");
-    auto poor_doc=doc; poor_doc["definitions"][0]["cash_cents"]=50000; auto poor=begin(compile(poor_doc)); step(poor,14);
+    auto poor_doc=doc; pgp_test::scenario_doc(poor_doc)["cash_cents"]=50000; auto poor=begin(compile(poor_doc)); step(poor,14);
     check(poor.current_state().runtime.activations.empty(),"An unaffordable supplier offer was presented");
 }
 void demand_paths(const Json& source) {
     for (const bool up:{false,true}) {
-        auto doc=isolated(source,"slice.market_shift"); doc["definitions"][0]["seed"]=up?seed_for(4,2,3):seed_for(4,3,4);
+        auto doc=isolated(source,"slice.market_shift"); pgp_test::scenario_doc(doc)["seed"]=up?seed_for(4,2,3):seed_for(4,3,4);
         const auto program=compile(doc); auto engine=begin(program); step(engine,45);
         const auto snapshot=engine.checkpoint(); const auto& market=*snapshot.world.simulation.market;
         const auto expected=up?6000U:4000U;
@@ -188,7 +189,7 @@ void demand_paths(const Json& source) {
         invalid_save(program,std::move(malformed));
         refused(engine,core::AddMarketDemandChange{{"rewrite","segment.enterprise",core::OrdinalDay{0},core::OrdinalDay{90},core::BasisPointDelta{1000}}});
     }
-    auto quiet_doc=isolated(source,"slice.market_shift"); quiet_doc["definitions"][0]["seed"]=seed_for(4,0,2);
+    auto quiet_doc=isolated(source,"slice.market_shift"); pgp_test::scenario_doc(quiet_doc)["seed"]=seed_for(4,0,2);
     auto quiet=begin(compile(quiet_doc)); step(quiet,45);
     check(quiet.current_state().world.simulation.market->demand_changes.empty() && quiet.current_state().runtime.presentations.empty(),"No-event world condition changed demand or published news");
 }
@@ -201,7 +202,7 @@ void research_and_finance(const Json& source) {
     check(research.current_state().world.simulation.lab->research.size()==4,"Research news granted duplicate knowledge");
     const auto research_saved=research.checkpoint(); accepted(research.prepare_opening(revision(research)));
     check(research.checkpoint()==research_saved,"Repeating a research bulletin granted or dispatched work twice");
-    auto doc=isolated(source,"slice.liquidity_warning"); doc["definitions"][0]["cash_cents"]=100000;
+    auto doc=isolated(source,"slice.liquidity_warning"); pgp_test::scenario_doc(doc)["cash_cents"]=100000;
     const auto program=compile(doc); auto finance=begin(program); step(finance,31);
     check(occurrences(finance.checkpoint(),"slice.liquidity_warning")==1,"Real liquidity warning did not start its finance alert");
     const auto deadline=core::liquidity_report(*finance.current_state().world.simulation.liquidity).deadline;
@@ -296,8 +297,8 @@ void full_baseline_and_rivals(const Json& source,const runtime::CompiledProgram&
     check(persistence::decode_save(program,final_bytes).checkpoint==final,"Final baseline history, expiry and competitive evidence did not persist exactly");
     // An additional optional story root must not carry missing baseline mechanics.
     auto story=source;
-    auto extra=story["definitions"][7]; extra["id"]="story.optional"; extra["on_committed"]="lab.research_completed"; extra["tags"]=Json::array({"story"});
-    story["definitions"].push_back(extra); story["definitions"][0]["flows"].push_back("story.optional");
+    auto extra=pgp_test::definition(story,"slice.research_milestone"); extra["id"]="story.optional"; extra["on_committed"]="lab.research_completed"; extra["tags"]=Json::array({"story"});
+    story["definitions"].push_back(extra); pgp_test::scenario_doc(story)["flows"].push_back("story.optional");
     // Duplicate baseline subscriptions are forbidden even for story overlays;
     // make this optional root a once-only presentation with its own trigger.
     story["definitions"].back().erase("on_committed"); story["definitions"].back()["lifecycle"]={{"mode","once"},{"max_occurrences_per_scope",1}};
@@ -307,7 +308,7 @@ void full_baseline_and_rivals(const Json& source,const runtime::CompiledProgram&
               << core::market_report(*final.world.simulation.market).delivered_tasks << "; source hash " << persistence::save_identity(program).content_hash << '\n';
 }
 void rival_nonfiring_and_budget(const Json& source) {
-    auto doc=source; doc["definitions"][0]["rivals"][0]["cash_cents"]=1200000;
+    auto doc=source; pgp_test::named_row(pgp_test::scenario_doc(doc)["rivals"],"company.cedar")["cash_cents"]=1200000;
     const auto program=compile(doc);
     auto initial=runtime::begin_scenario(program,"scenario.first_playable","US-CA"); initial.world.enabled_flows=std::vector<std::string>{};
     runtime::Runtime engine{program,std::move(initial)}; accepted(engine.prepare_opening(revision(engine))); step(engine,9);

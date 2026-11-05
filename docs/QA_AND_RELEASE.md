@@ -15,6 +15,13 @@ behavior with focused checks as complete. Deferred platform/deployment
 prerequisites do not block closing game-feature steps. Their qualification
 requirements remain in the release inventory below and the owning backlog tasks.
 
+Per the 2026-11-05 user instruction, independent player playtests and human
+author studies wait until all components are in place and the user is ready
+for v1 work. M3-04 and E1B-03 remain open without blocking M4 or other component
+implementation. Keep the [prepared session kit](playtests/M3-session-guide.md)
+for that phase; do not arrange testers during implementation. Automated and
+rendered engineering checks continue and do not count as human evidence.
+
 ## 2. Core invariants and meaningful tests
 
 | Area | Required evidence |
@@ -52,7 +59,7 @@ Automated policy runs prove specified mechanics, not fun or factual truth. Keep 
 
 ## 4. Human playtests
 
-At M3, recruit at least five independent sessions, including two players without ML background. Target three unaided completions of the 30–45-minute scenario. Record completion, points of confusion, whether players can explain cash burn and model evaluation, decisions they found meaningful, and whether they saw a recoverable setback. Feedback is manual and consented; no game telemetry.
+When the user begins v1 preparation after the components are in place, run the deferred M3-04 study: at least five independent sessions, including two players without ML background, with three unaided completions of the 30–45-minute scenario. Record completion, points of confusion, whether players can explain cash burn and model evaluation, decisions they found meaningful, and whether they saw a recoverable setback. Feedback is manual and consented; no game telemetry. The E1B-03 three-author study is deferred to the same phase. Neither study is currently underway.
 
 At M8, complete at least one full human century campaign and focused late-game sessions across the other objectives. Check that delegation handles routine work and that endgame choices differ from opening choices. Ask players to explain a consequence before showing a designer explanation; confusion exposes a UI/model problem. Evaluate plausible alternative strategies, rather than whether players agree with the game's implied politics.
 

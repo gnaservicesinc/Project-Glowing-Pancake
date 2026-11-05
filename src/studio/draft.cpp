@@ -77,6 +77,8 @@ bool DraftDocument::undo() { return restore(undo_, redo_); }
 bool DraftDocument::redo() { return restore(redo_, undo_); }
 
 void DraftDocument::save(const fs::path& new_name) {
+    if (fs::exists(detail::checked_path(checkout_,".pgp-editor/snapshot-transaction")))
+        throw PersistenceError("pending_snapshot","Recover the pending content snapshot before saving drafts.");
     const bool replace_current = new_name.empty();
     if (replace_current && !is_draft())
         throw PersistenceError("path", "Give this copy a new draft filename.");

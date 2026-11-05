@@ -4,8 +4,13 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**22 of 52 steps complete for Mac feature development. M3-04 requires real playtest sessions; E1A-04 is the next autonomous implementation step.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05 and E1A-01 through E1A-03.
+**23 of 52 steps complete for Mac feature development. E1A-05 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05 and E1A-01 through E1A-04.
+**Per the 2026-11-05 user instruction, human testing waits until all components
+are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
+and do not block later component implementation. The local session kit is
+prepared for that later phase; no testers are being arranged and no human
+sessions have been conducted.
 On 2026-11-05, core/runtime/session daily validation and state-copy bottlenecks were
 eliminated, reducing the three-year business scenario test (`session.business-scenario`)
 from **174.34s to ~5.4s** and `session.business-recovery` from **8.09s to ~0.4s**.
@@ -18,6 +23,19 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- E1A-04 adds the shared internal snapshot writer and explicit maintainer CLI:
+  review, finalize, check and recover. It validates with the actual compiler,
+  runtime and save loader; records one revision increment per changed definition;
+  preserves drafts; rejects stale plans; and journals multi-file replacements
+  with rollback or committed-generation verification. The first reviewed
+  content snapshot is **0.1.0-dev.1**, with 15 revision-1 definitions and all
+  three headquarters opening/save checks. Builds and the bundled game use its
+  exact collection hash. Game/editor stay **0.0.0-dev**; the required game bump
+  to **0.1.0-dev.1** is unresolved and release readiness remains false.
+  All **59/59 optimized Mac CTests pass in 13.09s**, including **76 snapshot
+  assertions**, and the finalized content completes the 200% text Metal smoke.
+  [Writer commands and recovery](../src/studio/SNAPSHOTS.md).
 
 - M3-03 adds finite evaluation and paid lease-renewal policies with saved
   budgets/cursors, conservative term commitments, reserve/resource checks,
@@ -206,8 +224,9 @@ block Mac implementation. Keep build caches between batches.
   probe diagnostics. SemVer ordering, independent tags and prospective artifact
   names share one offline reader. Core Release/Debug pass 7 CTests each; desktop
   Release passes 13; identity and wrapper suites pass 21 and 11 checks. Component
-  versions remain planning placeholders, the runtime content hash is explicitly
-  unavailable, and release readiness fails closed pending actual later gates.
+  versions were planning placeholders and the runtime content hash was
+  unavailable at that stage. E1A-04 now supplies finalized internal content
+  identity; release readiness still fails closed pending actual later gates.
 - Added `pgp-probe`, original bundled PNG/JPEG art, independent graphics/resource/
   audio libraries and an always-available silent mode. Metal checks pass at
   1280×720 with 100%/200% text, visible keyboard focus and accessible button name;
@@ -228,20 +247,17 @@ block Mac implementation. Keep build caches between batches.
 
 ## Implementation state
 
-The build scaffold, shared version identity, deterministic primitives, typed
-content/compiler/runtime, transactional state, local persistence/campaign policy,
-worker/model bridge, business accounts, shared project capacity, contracts,
-liquidity recovery, a three-year CLI scenario and development QML probe exist.
-Content Studio can browse the local library, edit typed flows and save drafts.
-The Studio tests flow impacts on isolated scenario state. The player scenario, finalized runtime content and
-packages remain open. Existing native CI proves primitive parity on all
-five targets; the expanded foundation suite is checked separately. The headless
-command validates local content, demonstrates commands/flows and can explicitly
-save/reload suspended continuations. [Playability checkpoints](PLAYABILITY.md) separate this engineering
-demonstration from the M2 business scenario and M3 player-facing slice.
-E1a enables early gameplay tests;
-M4 requires both M3 and E1b. E2 closes before bulk content.
-34 steps remain unchecked, including the deferred platform/release work.
+The Mac game runs the complete 2014–2017 slice through ordinary Office/Lab
+controls, with lab qualification, paid contracts, bounded rivals, recovery,
+delegation, exact saves and scoring. Content Studio browses the checkout,
+edits typed flows through forms/outline and inspects copied runtime state.
+The shared maintainer writer now finalizes validated internal snapshots.
+E1A-05's engineering walkthrough and E1B-01/02's canvas/graphical finalizer
+remain before M4 component work. E2 expands authoring as later schemas arrive.
+Human studies wait for v1 preparation after all components are in place.
+29 steps remain unchecked, including those studies and deferred platform/release
+work. [Playability checkpoints](PLAYABILITY.md) distinguish implemented paths
+from unperformed human and release qualification.
 
 M0-01 supersedes review-time spot checks: the Xcode roots resolve to one
 installation, three installed SPDX files were parsed, and exact Qt archive
@@ -272,17 +288,16 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next gate: M3-04's five independent human sessions, including two non-ML players.**
-Three must finish the 30–45-minute scenario unaided and explain cash burn,
-evaluation and contract outcomes. Scripted agents are not substitutes for those
-sessions. Prepare local consent/facilitator/report materials and fix material
-comprehension issues from real feedback. No tester contact is automatic.
+**Next implementation: E1A-05's engineering authoring walkthrough**, then
+E1B-01/02's canvas and graphical finalizer, followed by M4 component work.
 
-**Next autonomous implementation: E1A-04 validated internal content snapshots**,
-then E1A-05's repository walkthrough and the E1b canvas/finalization work.
-Those authoring tasks can progress while human sessions are arranged. M4 retains
-its M3 human-validation and E1b qualification gates. Native packaging remains
-deferred.
+**Deferred until v1 preparation:** M3-04's five independent human sessions
+(including two non-ML players and three unaided completions) and E1B-03's
+three-author study. The user has no testers available and wants all components
+in place first. Keep their acceptance criteria and the
+[prepared session kit](playtests/M3-session-guide.md); do not schedule sessions
+or treat their absence as an implementation blocker. Engineering runs are not
+substitutes for later human evidence. Native packaging remains deferred.
 
 The 2026-11-04 event clarification adds M1-07 (built-in detection/dispatch) and
 M3-05 (AI-assisted playable base-event pack), with human stories augmenting the

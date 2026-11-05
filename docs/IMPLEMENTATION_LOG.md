@@ -838,3 +838,51 @@ required (including two non-ML players, three unaided completions). Local sessio
 materials can be prepared while E1A-04 snapshot finalization and the remaining
 editor work proceed. The goal remains active; no human study is fabricated.
 [Owning mechanics and limits](../src/core/MANAGEMENT.md).
+
+## E1A-04 — Reviewed internal content snapshots — 2026-11-05
+
+Added the shared Qt-free snapshot writer and explicit `pgp-content-tool`
+review/finalize/check/recover commands. Actual collection compilation, prepared
+scenario openings and exact save roundtrips supply validation. A reviewed plan
+includes semantic/text changes, once-per-batch definition revisions, versions,
+hashes, summary and proposed writes. Finalization recomputes that plan, rejects
+stale source/version evidence and preserves separate draft bytes. Durable
+multi-file staging, a checksummed recovery journal and a last-written sequence
+marker restore an incomplete generation or verify a committed one. Concurrent
+third versions are preserved. Formatting/no-op edits do not bump content;
+formatting writes still receive distinct transaction markers.
+
+The first internal snapshot is **0.1.0-dev.1**, generation 1, with **15 revision-1
+definitions**, one scenario and all **three headquarters opening/save checks**.
+Collection hash:
+`a09060be69908bea63cd9b6fa04e06f275f1226cfaf6977a7e0d7ec647b0c26f`.
+The runtime manifest, immutable baseline, history and root versions are linked
+by the final content-state marker. Game/editor remain **0.0.0-dev**, phase
+planning; the required game version **0.1.0-dev.1** is unresolved. CMake embeds
+the verified record's hash and the bundled game compares its actual compiled
+resource to it. The normal game resource list excludes all authoring/editor
+files. Release checking reports snapshot integrity and unresolved version
+requirements separately and remains fail-closed. Saves from older content are
+explicitly refused by the existing exact-content loader; migration is not claimed.
+
+Verification: **59/59 optimized Mac CTests in 13.09s**, including **76 snapshot
+assertions** covering text/three-definition batches, no-ops, old-save refusal,
+stale plans, game-version resolution, interrupted staging/replacement/commit,
+formatting-only rollback and concurrent-edit preservation. Version-reader tests
+cover linked artifact integrity and pending-transaction refusal. Normalized
+collection sorting exposed positional assumptions in slice tests; those now
+select stable scenario/research/rival/offer IDs without weakening assertions.
+A complete explicit Metal game smoke at **1280×720, 200% text** passes against
+the finalized hash through a scored solvent 2017 ending. `git diff --check` passes.
+[Writer commands, artifacts and recovery limits](../src/studio/SNAPSHOTS.md).
+
+Prepared the local human-session kit, blank reports/results and explicit fresh
+session launcher. **No human sessions have been conducted.** The user then
+clarified that all components must be in place before v1 human testing begins.
+M3-04 and E1B-03 remain open and are deferred to that phase; they do not block
+M4 or later component implementation. The kit is held for later use, with no
+recruitment or sessions underway. The roadmap, dependencies and role guidance
+now reflect that instruction.
+
+Count: **23/52 Mac feature steps**. Next: E1A-05's reproducible engineering
+walkthrough, then E1B-01/02 canvas/graphical finalization and M4 components.

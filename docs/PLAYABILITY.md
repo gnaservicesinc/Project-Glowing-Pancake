@@ -19,7 +19,7 @@ independent human validation and release qualification remain open.
 | M3-05: base events and bounded rivals | Eight flow families, paid opportunities, temporary demand, financed competition and exact three-year continuation | Runnable with `pgp-headless --events-demo data/runtime/first-playable.json`; [contract/seeds](../src/runtime/BASE_EVENTS.md) |
 | M3-02: first player-facing scenario | Office/Lab decisions, data/research/training/evaluation, contracts, news and choices, start to ending | Implemented on Mac; Metal keyboard runs at 100%/200% text complete and reload exactly |
 | M3-03: feature evaluation build | The scenario with delegation, warnings, recovery and scoring | Implemented on Mac; finite policies, actual deadline stops, warned setback, financing/specialist routes and transparent score |
-| M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Human testing follows the playable build |
+| M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Deferred until all components are in place and the user is ready for v1 work; no sessions conducted |
 
 There is no calendar estimate inferred from task counts: tasks vary substantially
 in size, and native packaging, authors and players have separate evidence gates.
@@ -122,4 +122,4 @@ and exact thresholds through choices and reload; see [duration evidence](evidenc
 M1-07 then adds
 built-in occurrence detection/dispatch. M2-01 through M2-04 implement accounts,
 shared capacity, contracts and the three-year scenario with warned recovery.
-The playable campaign connects those modules through ordinary controls. The current count is 22 completed Mac feature steps. M3-01 through M3-03 and M3-05 are implemented; M3-04 needs five independent human sessions. Content snapshot/canvas implementation can continue while those sessions are arranged. Deferred platform and release work stays recorded in the backlog.
+The playable campaign connects those modules through ordinary controls. The current count is 23 completed Mac feature steps. M3-01 through M3-03, M3-05 and E1A-04's internal content snapshots are implemented. Per the 2026-11-05 user instruction, human player/author studies wait until all components are in place and the user is ready for v1 work. The [session kit](playtests/M3-session-guide.md) is prepared for later; no sessions are being arranged. E1A-05, the canvas/finalizer and later components proceed with engineering checks. Deferred platform and release work stays recorded in the backlog.

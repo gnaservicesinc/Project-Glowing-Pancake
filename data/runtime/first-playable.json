@@ -1,43 +1,135 @@
 {
   "content_schema": 1,
-  "content_version": "0.0.0-dev",
+  "content_version": "0.1.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
-      "id": "scenario.first_playable",
-      "kind": "scenario",
+      "cash_cents": 50000,
+      "id": "research.data_deduplication",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [],
+        "any_of": []
+      },
       "revision": 1,
-      "starts_on": "2014-01-01",
-      "ends_before": "2017-01-01",
-      "seed": 20140101,
-      "cash_cents": 120000000,
-      "team_people": 6,
+      "staff_days": 6,
+      "work_milli_CU": 60000
+    },
+    {
+      "cash_cents": 50000,
+      "id": "research.efficient_image_features",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 6,
+      "work_milli_CU": 60000
+    },
+    {
+      "cash_cents": 50000,
+      "id": "research.efficient_serving",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.reproducible_tooling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 6,
+      "work_milli_CU": 60000
+    },
+    {
+      "cash_cents": 50000,
+      "id": "research.held_out_evaluation",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 6,
+      "work_milli_CU": 60000
+    },
+    {
+      "cash_cents": 50000,
+      "id": "research.reproducible_tooling",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 6,
+      "work_milli_CU": 60000
+    },
+    {
+      "cash_cents": 50000,
+      "id": "research.sequence_modeling",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.reproducible_tooling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 6,
+      "work_milli_CU": 60000
+    },
+    {
+      "business_offers": [
+        {
+          "available_before": "2017-01-01",
+          "available_from": "2014-01-01",
+          "capacity_milli_CU_per_day": 0,
+          "id": "offer.enterprise_service",
+          "kind": "enterprise_contract",
+          "monthly_amount_cents": 2500000,
+          "name": "Opening enterprise document service",
+          "product_id": "product.documents",
+          "renewable": false,
+          "segment_id": "segment.enterprise",
+          "setup_cost_cents": 0,
+          "tasks_per_day": 1000,
+          "term_days": 1096
+        },
+        {
+          "available_before": "2017-01-01",
+          "available_from": "2014-01-01",
+          "capacity_milli_CU_per_day": 0,
+          "id": "offer.recovery_pilot",
+          "kind": "recovery_pilot",
+          "monthly_amount_cents": 4500000,
+          "name": "Narrow document pilot",
+          "product_id": "product.documents",
+          "renewable": false,
+          "segment_id": "segment.enterprise",
+          "setup_cost_cents": 0,
+          "tasks_per_day": 500,
+          "term_days": 90
+        },
+        {
+          "available_before": "2017-01-01",
+          "available_from": "2014-01-01",
+          "capacity_milli_CU_per_day": 30000,
+          "id": "offer.supplier_small",
+          "kind": "compute_lease",
+          "monthly_amount_cents": 400000,
+          "name": "Small fixed-term cloud lease",
+          "product_id": "",
+          "renewable": true,
+          "segment_id": "",
+          "setup_cost_cents": 100000,
+          "tasks_per_day": 0,
+          "term_days": 180
+        }
+      ],
       "capacity_milli_CU_per_day": 100000,
-      "lease_energy_included": true,
-      "ownership_basis_points": {
-        "founder_trust": 5500,
-        "cofounder": 2000,
-        "seed_investor": 2000,
-        "option_pool": 500
-      },
-      "monthly_commitments_cents": {
-        "payroll_with_benefits": 7200000,
-        "office_and_admin": 1800000,
-        "compute_lease": 1800000
-      },
-      "headquarters_choices": [
-        "US-CA",
-        "US-TX",
-        "US-WA"
-      ],
-      "research": [
-        "research.efficient_image_features",
-        "research.sequence_modeling",
-        "research.data_deduplication",
-        "research.held_out_evaluation",
-        "research.efficient_serving",
-        "research.reproducible_tooling"
-      ],
+      "cash_cents": 120000000,
+      "ends_before": "2017-01-01",
       "flows": [
         "slice.research_milestone",
         "slice.evaluation_finding",
@@ -48,442 +140,506 @@
         "slice.market_shift",
         "slice.recovery_opportunity"
       ],
+      "headquarters_choices": [
+        "US-CA",
+        "US-TX",
+        "US-WA"
+      ],
+      "id": "scenario.first_playable",
+      "kind": "scenario",
       "lab": {
         "data": [
           {
-            "id": "data.open_documents",
-            "name": "Open document corpus",
-            "provenance": "Fictional in-game offer; no real training corpus is bundled.",
-            "rights": "Open commercial use with attribution",
-            "price_cents": 0,
-            "unique_units": 800000,
-            "quality_bp": 8500,
-            "relevance_bp": {
-              "documents": 10000,
-              "scanned_tables": 4000
-            },
+            "commercial_use": true,
+            "contamination_bp": 0,
             "coverage_bp": {
-              "documents": 10000,
-              "scanned_tables": 1500
+              "documents": 6000,
+              "scanned_tables": 10000
             },
-            "contamination_bp": 200,
-            "commercial_use": true
-          },
-          {
-            "id": "data.licensed_documents",
-            "name": "Licensed business documents",
-            "provenance": "Fictional in-game offer; no real training corpus is bundled.",
-            "rights": "Perpetual commercial training and model distribution",
-            "price_cents": 1200000,
-            "unique_units": 1000000,
-            "quality_bp": 9000,
-            "relevance_bp": {
-              "documents": 10000,
-              "scanned_tables": 2500
-            },
-            "coverage_bp": {
-              "documents": 10000,
-              "scanned_tables": 1000
-            },
-            "contamination_bp": 600,
-            "commercial_use": true
-          },
-          {
             "id": "data.consented_scans",
             "name": "Consented scanned tables",
-            "provenance": "Fictional in-game offer; no real training corpus is bundled.",
-            "rights": "Consented commercial training and model distribution",
             "price_cents": 800000,
-            "unique_units": 500000,
+            "provenance": "Fictional in-game offer; no real training corpus is bundled.",
             "quality_bp": 9500,
             "relevance_bp": {
               "documents": 7000,
               "scanned_tables": 10000
             },
-            "coverage_bp": {
-              "documents": 6000,
-              "scanned_tables": 10000
-            },
-            "contamination_bp": 0,
-            "commercial_use": true
+            "rights": "Consented commercial training and model distribution",
+            "unique_units": 500000
           },
           {
+            "commercial_use": true,
+            "contamination_bp": 600,
+            "coverage_bp": {
+              "documents": 10000,
+              "scanned_tables": 1000
+            },
+            "id": "data.licensed_documents",
+            "name": "Licensed business documents",
+            "price_cents": 1200000,
+            "provenance": "Fictional in-game offer; no real training corpus is bundled.",
+            "quality_bp": 9000,
+            "relevance_bp": {
+              "documents": 10000,
+              "scanned_tables": 2500
+            },
+            "rights": "Perpetual commercial training and model distribution",
+            "unique_units": 1000000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 200,
+            "coverage_bp": {
+              "documents": 10000,
+              "scanned_tables": 1500
+            },
+            "id": "data.open_documents",
+            "name": "Open document corpus",
+            "price_cents": 0,
+            "provenance": "Fictional in-game offer; no real training corpus is bundled.",
+            "quality_bp": 8500,
+            "relevance_bp": {
+              "documents": 10000,
+              "scanned_tables": 4000
+            },
+            "rights": "Open commercial use with attribution",
+            "unique_units": 800000
+          },
+          {
+            "commercial_use": false,
+            "contamination_bp": 1800,
+            "coverage_bp": {
+              "documents": 9000,
+              "scanned_tables": 3000
+            },
             "id": "data.uncleared_archive",
             "name": "Uncleared archive",
-            "provenance": "Fictional in-game offer; no real training corpus is bundled.",
-            "rights": "Research only; commercial clearance unavailable",
             "price_cents": 400000,
-            "unique_units": 2000000,
+            "provenance": "Fictional in-game offer; no real training corpus is bundled.",
             "quality_bp": 5500,
             "relevance_bp": {
               "documents": 10000,
               "scanned_tables": 7000
             },
-            "coverage_bp": {
-              "documents": 9000,
-              "scanned_tables": 3000
-            },
-            "contamination_bp": 1800,
-            "commercial_use": false
+            "rights": "Research only; commercial clearance unavailable",
+            "unique_units": 2000000
           }
         ],
-        "research": [],
+        "evaluations": [
+          {
+            "cash_cents": 500000,
+            "coverage_bp": {
+              "documents": 10000,
+              "scanned_tables": 10000
+            },
+            "id": "evaluation.audit",
+            "independent": true,
+            "name": "Broader independent audit",
+            "required_bp": {
+              "documents": 6000,
+              "scanned_tables": 5500
+            },
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "uncertainty_bp": 60,
+            "work_milli_CU": 120000
+          },
+          {
+            "cash_cents": 100000,
+            "coverage_bp": {
+              "documents": 10000,
+              "scanned_tables": 0
+            },
+            "id": "evaluation.headline",
+            "independent": false,
+            "name": "Headline benchmark (training overlap possible)",
+            "required_bp": {
+              "documents": 6000,
+              "scanned_tables": 5500
+            },
+            "requires_research": [],
+            "uncertainty_bp": 150,
+            "work_milli_CU": 30000
+          },
+          {
+            "cash_cents": 200000,
+            "coverage_bp": {
+              "documents": 10000,
+              "scanned_tables": 10000
+            },
+            "id": "evaluation.held_out",
+            "independent": true,
+            "name": "Independent documents and scanned-table holdout",
+            "required_bp": {
+              "documents": 6000,
+              "scanned_tables": 5500
+            },
+            "requires_research": [
+              "research.held_out_evaluation"
+            ],
+            "uncertainty_bp": 150,
+            "work_milli_CU": 60000
+          }
+        ],
         "recipes": [
           {
-            "id": "recipe.document_baseline",
-            "name": "Compact document classifier",
-            "requires_research": [],
             "baseline_bp": {
               "documents": 3000,
               "scanned_tables": 1500
-            },
-            "gain_bp": {
-              "documents": 6000,
-              "scanned_tables": 6500
             },
             "ceiling_bp": {
               "documents": 9200,
               "scanned_tables": 9000
             },
+            "compute_scale_milli_CU": 1800000,
+            "data_scale": {
+              "documents": 220000,
+              "scanned_tables": 100000
+            },
             "fit_bp": {
               "documents": 10000,
               "scanned_tables": 10000
             },
+            "gain_bp": {
+              "documents": 6000,
+              "scanned_tables": 6500
+            },
+            "id": "recipe.deduplicated",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "maximum_work_milli_CU": 14400000,
+            "minimum_memory_mib": 0,
+            "minimum_work_milli_CU": 60000,
+            "name": "Deduplicated document recipe",
+            "preview_uncertainty_bp": 600,
+            "requires_research": [
+              "research.data_deduplication"
+            ]
+          },
+          {
+            "baseline_bp": {
+              "documents": 3000,
+              "scanned_tables": 1500
+            },
+            "ceiling_bp": {
+              "documents": 9200,
+              "scanned_tables": 9000
+            },
+            "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
               "scanned_tables": 120000
             },
-            "compute_scale_milli_CU": 1800000,
-            "minimum_work_milli_CU": 60000,
-            "maximum_work_milli_CU": 14400000,
-            "preview_uncertainty_bp": 600,
+            "fit_bp": {
+              "documents": 10000,
+              "scanned_tables": 10000
+            },
+            "gain_bp": {
+              "documents": 6000,
+              "scanned_tables": 6500
+            },
+            "id": "recipe.document_baseline",
             "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
-            "interconnect": "general"
+            "minimum_work_milli_CU": 60000,
+            "name": "Compact document classifier",
+            "preview_uncertainty_bp": 600,
+            "requires_research": []
           },
           {
-            "id": "recipe.sequence",
-            "name": "Sequence document model",
-            "requires_research": [
-              "research.sequence_modeling"
-            ],
             "baseline_bp": {
               "documents": 3000,
               "scanned_tables": 1500
+            },
+            "ceiling_bp": {
+              "documents": 9200,
+              "scanned_tables": 9000
+            },
+            "compute_scale_milli_CU": 1800000,
+            "data_scale": {
+              "documents": 300000,
+              "scanned_tables": 120000
+            },
+            "fit_bp": {
+              "documents": 10000,
+              "scanned_tables": 10000
+            },
+            "gain_bp": {
+              "documents": 6000,
+              "scanned_tables": 6500
+            },
+            "id": "recipe.efficient",
+            "inference_milli_CU_per_task": 12,
+            "interconnect": "general",
+            "maximum_work_milli_CU": 14400000,
+            "minimum_memory_mib": 0,
+            "minimum_work_milli_CU": 60000,
+            "name": "Reproducible efficient service",
+            "preview_uncertainty_bp": 300,
+            "requires_research": [
+              "research.efficient_serving",
+              "research.reproducible_tooling"
+            ]
+          },
+          {
+            "baseline_bp": {
+              "documents": 2700,
+              "scanned_tables": 2200
+            },
+            "ceiling_bp": {
+              "documents": 9200,
+              "scanned_tables": 9000
+            },
+            "compute_scale_milli_CU": 1800000,
+            "data_scale": {
+              "documents": 300000,
+              "scanned_tables": 120000
+            },
+            "fit_bp": {
+              "documents": 9000,
+              "scanned_tables": 10000
+            },
+            "gain_bp": {
+              "documents": 6000,
+              "scanned_tables": 6500
+            },
+            "id": "recipe.image_features",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "maximum_work_milli_CU": 14400000,
+            "minimum_memory_mib": 0,
+            "minimum_work_milli_CU": 60000,
+            "name": "Scanned-image feature recipe",
+            "preview_uncertainty_bp": 600,
+            "requires_research": [
+              "research.efficient_image_features"
+            ]
+          },
+          {
+            "baseline_bp": {
+              "documents": 3000,
+              "scanned_tables": 1500
+            },
+            "ceiling_bp": {
+              "documents": 9200,
+              "scanned_tables": 9000
+            },
+            "compute_scale_milli_CU": 1800000,
+            "data_scale": {
+              "documents": 300000,
+              "scanned_tables": 120000
+            },
+            "fit_bp": {
+              "documents": 10000,
+              "scanned_tables": 10000
             },
             "gain_bp": {
               "documents": 6500,
               "scanned_tables": 6800
             },
-            "ceiling_bp": {
-              "documents": 9200,
-              "scanned_tables": 9000
-            },
-            "fit_bp": {
-              "documents": 10000,
-              "scanned_tables": 10000
-            },
-            "data_scale": {
-              "documents": 300000,
-              "scanned_tables": 120000
-            },
-            "compute_scale_milli_CU": 1800000,
-            "minimum_work_milli_CU": 60000,
-            "maximum_work_milli_CU": 14400000,
-            "preview_uncertainty_bp": 600,
+            "id": "recipe.sequence",
             "inference_milli_CU_per_task": 20,
-            "minimum_memory_mib": 0,
-            "interconnect": "general"
-          },
-          {
-            "id": "recipe.deduplicated",
-            "name": "Deduplicated document recipe",
-            "requires_research": [
-              "research.data_deduplication"
-            ],
-            "baseline_bp": {
-              "documents": 3000,
-              "scanned_tables": 1500
-            },
-            "gain_bp": {
-              "documents": 6000,
-              "scanned_tables": 6500
-            },
-            "ceiling_bp": {
-              "documents": 9200,
-              "scanned_tables": 9000
-            },
-            "fit_bp": {
-              "documents": 10000,
-              "scanned_tables": 10000
-            },
-            "data_scale": {
-              "documents": 220000,
-              "scanned_tables": 100000
-            },
-            "compute_scale_milli_CU": 1800000,
-            "minimum_work_milli_CU": 60000,
+            "interconnect": "general",
             "maximum_work_milli_CU": 14400000,
+            "minimum_memory_mib": 0,
+            "minimum_work_milli_CU": 60000,
+            "name": "Sequence document model",
             "preview_uncertainty_bp": 600,
-            "inference_milli_CU_per_task": 20,
-            "minimum_memory_mib": 0,
-            "interconnect": "general"
-          },
-          {
-            "id": "recipe.image_features",
-            "name": "Scanned-image feature recipe",
             "requires_research": [
-              "research.efficient_image_features"
-            ],
-            "baseline_bp": {
-              "documents": 2700,
-              "scanned_tables": 2200
-            },
-            "gain_bp": {
-              "documents": 6000,
-              "scanned_tables": 6500
-            },
-            "ceiling_bp": {
-              "documents": 9200,
-              "scanned_tables": 9000
-            },
-            "fit_bp": {
-              "documents": 9000,
-              "scanned_tables": 10000
-            },
-            "data_scale": {
-              "documents": 300000,
-              "scanned_tables": 120000
-            },
-            "compute_scale_milli_CU": 1800000,
-            "minimum_work_milli_CU": 60000,
-            "maximum_work_milli_CU": 14400000,
-            "preview_uncertainty_bp": 600,
-            "inference_milli_CU_per_task": 20,
-            "minimum_memory_mib": 0,
-            "interconnect": "general"
-          },
-          {
-            "id": "recipe.efficient",
-            "name": "Reproducible efficient service",
-            "requires_research": [
-              "research.efficient_serving",
-              "research.reproducible_tooling"
-            ],
-            "baseline_bp": {
-              "documents": 3000,
-              "scanned_tables": 1500
-            },
-            "gain_bp": {
-              "documents": 6000,
-              "scanned_tables": 6500
-            },
-            "ceiling_bp": {
-              "documents": 9200,
-              "scanned_tables": 9000
-            },
-            "fit_bp": {
-              "documents": 10000,
-              "scanned_tables": 10000
-            },
-            "data_scale": {
-              "documents": 300000,
-              "scanned_tables": 120000
-            },
-            "compute_scale_milli_CU": 1800000,
-            "minimum_work_milli_CU": 60000,
-            "maximum_work_milli_CU": 14400000,
-            "preview_uncertainty_bp": 300,
-            "inference_milli_CU_per_task": 12,
-            "minimum_memory_mib": 0,
-            "interconnect": "general"
+              "research.sequence_modeling"
+            ]
           }
         ],
-        "evaluations": [
+        "research": []
+      },
+      "lease_energy_included": true,
+      "management": {
+        "default_monthly_ceiling_cents": 400000,
+        "default_policy_budget_cents": 10000000,
+        "default_policy_runs": 3,
+        "default_reserve_floor_cents": 10000000,
+        "financing": [
           {
-            "id": "evaluation.headline",
-            "name": "Headline benchmark (training overlap possible)",
-            "requires_research": [],
-            "coverage_bp": {
-              "documents": 10000,
-              "scanned_tables": 0
-            },
-            "required_bp": {
-              "documents": 6000,
-              "scanned_tables": 5500
-            },
-            "uncertainty_bp": 150,
-            "independent": false,
-            "work_milli_CU": 30000,
-            "cash_cents": 100000
+            "acquired_bp": 1800,
+            "id": "finance.bridge_equity",
+            "monthly_interest_bp": 0,
+            "name": "Bridge equity: 18% ownership",
+            "proceeds_cents": 30000000,
+            "term_days": 0
           },
           {
-            "id": "evaluation.held_out",
-            "name": "Independent documents and scanned-table holdout",
-            "requires_research": [
-              "research.held_out_evaluation"
-            ],
-            "coverage_bp": {
-              "documents": 10000,
-              "scanned_tables": 10000
-            },
-            "required_bp": {
-              "documents": 6000,
-              "scanned_tables": 5500
-            },
-            "uncertainty_bp": 150,
-            "independent": true,
-            "work_milli_CU": 60000,
-            "cash_cents": 200000
-          },
+            "acquired_bp": 0,
+            "id": "finance.working_capital",
+            "monthly_interest_bp": 100,
+            "name": "Working-capital loan: 1% monthly interest",
+            "proceeds_cents": 25000000,
+            "term_days": 365
+          }
+        ],
+        "maximum_policy_runs": 12,
+        "minimum_evaluation_interval_days": 30,
+        "scoring": {
+          "founder": "founder_trust",
+          "opening_founder_share_bp": 5500,
+          "task_target": 4000000,
+          "weights": [
+            25,
+            25,
+            20,
+            20,
+            10
+          ]
+        },
+        "setbacks": [
           {
-            "id": "evaluation.audit",
-            "name": "Broader independent audit",
-            "requires_research": [
-              "research.held_out_evaluation",
-              "research.reproducible_tooling"
-            ],
-            "coverage_bp": {
-              "documents": 10000,
-              "scanned_tables": 10000
-            },
-            "required_bp": {
-              "documents": 6000,
-              "scanned_tables": 5500
-            },
-            "uncertainty_bp": 60,
-            "independent": true,
-            "work_milli_CU": 120000,
-            "cash_cents": 500000
+            "announced_on": "2014-04-17",
+            "ends_before": "2014-05-15",
+            "id": "setback.supplier_maintenance",
+            "name": "Scheduled supplier cooling maintenance",
+            "reduced_milli_CU_per_day": 60000,
+            "source_id": "lease.initial",
+            "starts_on": "2014-05-01"
+          }
+        ],
+        "specialists": [
+          {
+            "id": "specialist.evaluation",
+            "monthly_salary_cents": 600000,
+            "name": "Evaluation and service specialist",
+            "signing_cost_cents": 200000
           }
         ]
       },
-      "business_offers": [
-        {
-          "id": "offer.supplier_small",
-          "name": "Small fixed-term cloud lease",
-          "kind": "compute_lease",
-          "available_from": "2014-01-01",
-          "available_before": "2017-01-01",
-          "term_days": 180,
-          "setup_cost_cents": 100000,
-          "monthly_amount_cents": 400000,
-          "capacity_milli_CU_per_day": 30000,
-          "segment_id": "",
-          "product_id": "",
-          "tasks_per_day": 0,
-          "renewable": true
-        },
-        {
-          "id": "offer.recovery_pilot",
-          "name": "Narrow document pilot",
-          "kind": "recovery_pilot",
-          "available_from": "2014-01-01",
-          "available_before": "2017-01-01",
-          "term_days": 90,
-          "setup_cost_cents": 0,
-          "monthly_amount_cents": 4500000,
-          "capacity_milli_CU_per_day": 0,
-          "segment_id": "segment.enterprise",
-          "product_id": "product.documents",
-          "tasks_per_day": 500
-        },
-        {
-          "id": "offer.enterprise_service",
-          "name": "Opening enterprise document service",
-          "kind": "enterprise_contract",
-          "available_from": "2014-01-01",
-          "available_before": "2017-01-01",
-          "term_days": 1096,
-          "setup_cost_cents": 0,
-          "monthly_amount_cents": 2500000,
-          "capacity_milli_CU_per_day": 0,
-          "segment_id": "segment.enterprise",
-          "product_id": "product.documents",
-          "tasks_per_day": 1000
-        }
-      ],
-      "rivals": [
-        {
-          "id": "company.cedar",
-          "name": "Cedar Signal",
-          "seed": 4101,
-          "cash_cents": 120000000,
-          "monthly_payroll_cents": 1800000,
-          "monthly_lease_cents": 900000,
-          "capacity_milli_CU_per_day": 60000,
-          "training_milli_CU_per_day": 60000,
-          "staff": 4,
-          "start_after_days": 10,
-          "warning_lead_days": 0,
-          "player_deployment_threshold": 0,
-          "recipe_id": "recipe.document_baseline",
-          "data_id": "data.licensed_documents",
-          "training_work_milli_CU": 3600000
-        },
-        {
-          "id": "company.pinebridge",
-          "name": "Pinebridge Models",
-          "seed": 4102,
-          "cash_cents": 120000000,
-          "monthly_payroll_cents": 1800000,
-          "monthly_lease_cents": 900000,
-          "capacity_milli_CU_per_day": 60000,
-          "training_milli_CU_per_day": 60000,
-          "staff": 4,
-          "start_after_days": 25,
-          "warning_lead_days": 0,
-          "player_deployment_threshold": 0,
-          "recipe_id": "recipe.document_baseline",
-          "data_id": "data.licensed_documents",
-          "training_work_milli_CU": 3600000
-        },
-        {
-          "id": "company.northstar",
-          "name": "Northstar Compute Group",
-          "seed": 4103,
-          "cash_cents": 500000000,
-          "monthly_payroll_cents": 5000000,
-          "monthly_lease_cents": 5000000,
-          "capacity_milli_CU_per_day": 200000,
-          "training_milli_CU_per_day": 120000,
-          "staff": 4,
-          "start_after_days": 0,
-          "warning_lead_days": 90,
-          "player_deployment_threshold": 1,
-          "recipe_id": "recipe.document_baseline",
-          "data_id": "data.licensed_documents",
-          "training_work_milli_CU": 7200000
-        }
-      ],
       "market": {
+        "contracts": [],
         "offers": [],
         "segments": [
           {
-            "id": "segment.enterprise",
-            "daily_tasks": 5000,
             "daily_budget_cents": 600000,
-            "outside_utility": 300,
-            "reservation_threshold": 0,
+            "daily_tasks": 5000,
+            "id": "segment.enterprise",
             "maximum_monthly_migration_basis_points": 10000,
-            "preferences": []
+            "outside_utility": 300,
+            "preferences": [],
+            "reservation_threshold": 0
           }
-        ],
-        "contracts": []
+        ]
       },
+      "monthly_commitments_cents": {
+        "compute_lease": 1800000,
+        "office_and_admin": 1800000,
+        "payroll_with_benefits": 7200000
+      },
+      "ownership_basis_points": {
+        "cofounder": 2000,
+        "founder_trust": 5500,
+        "option_pool": 500,
+        "seed_investor": 2000
+      },
+      "research": [
+        "research.efficient_image_features",
+        "research.sequence_modeling",
+        "research.data_deduplication",
+        "research.held_out_evaluation",
+        "research.efficient_serving",
+        "research.reproducible_tooling"
+      ],
+      "revision": 1,
+      "rivals": [
+        {
+          "capacity_milli_CU_per_day": 60000,
+          "cash_cents": 120000000,
+          "data_id": "data.licensed_documents",
+          "id": "company.cedar",
+          "monthly_lease_cents": 900000,
+          "monthly_payroll_cents": 1800000,
+          "name": "Cedar Signal",
+          "player_deployment_threshold": 0,
+          "recipe_id": "recipe.document_baseline",
+          "seed": 4101,
+          "staff": 4,
+          "start_after_days": 10,
+          "training_milli_CU_per_day": 60000,
+          "training_work_milli_CU": 3600000,
+          "warning_lead_days": 0
+        },
+        {
+          "capacity_milli_CU_per_day": 200000,
+          "cash_cents": 500000000,
+          "data_id": "data.licensed_documents",
+          "id": "company.northstar",
+          "monthly_lease_cents": 5000000,
+          "monthly_payroll_cents": 5000000,
+          "name": "Northstar Compute Group",
+          "player_deployment_threshold": 1,
+          "recipe_id": "recipe.document_baseline",
+          "seed": 4103,
+          "staff": 4,
+          "start_after_days": 0,
+          "training_milli_CU_per_day": 120000,
+          "training_work_milli_CU": 7200000,
+          "warning_lead_days": 90
+        },
+        {
+          "capacity_milli_CU_per_day": 60000,
+          "cash_cents": 120000000,
+          "data_id": "data.licensed_documents",
+          "id": "company.pinebridge",
+          "monthly_lease_cents": 900000,
+          "monthly_payroll_cents": 1800000,
+          "name": "Pinebridge Models",
+          "player_deployment_threshold": 0,
+          "recipe_id": "recipe.document_baseline",
+          "seed": 4102,
+          "staff": 4,
+          "start_after_days": 25,
+          "training_milli_CU_per_day": 60000,
+          "training_work_milli_CU": 3600000,
+          "warning_lead_days": 0
+        }
+      ],
+      "seed": 20140101,
       "service_catalog": {
+        "contracts": [],
         "offers": [
           {
-            "id": "product.documents",
-            "capacity_project_id": "serving.documents",
-            "price_cents_per_task": 150,
             "available": true,
-            "tasks_per_day": 2000,
+            "capacity_project_id": "serving.document_specialist",
+            "id": "product.document_specialist",
             "inference_milli_CU_per_task": 20,
-            "staff": 1,
-            "minimum_memory_mib": 0,
             "interconnect": "general",
+            "minimum_memory_mib": 0,
+            "monthly_support_cost_cents": 700000,
+            "price_cents_per_task": 150,
+            "required_bp": [
+              6000,
+              0
+            ],
+            "required_recipe": "recipe.efficient",
+            "review_credit_bp": [
+              0,
+              0
+            ],
+            "review_monthly_cost_cents": 0,
+            "review_staff": 0,
+            "review_tasks_per_day": 0,
+            "staff": 1,
+            "tasks_per_day": 3000
+          },
+          {
+            "available": true,
+            "capacity_project_id": "serving.documents",
+            "id": "product.documents",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "minimum_memory_mib": 0,
             "monthly_support_cost_cents": 500000,
+            "price_cents_per_task": 150,
             "required_bp": [
               6000,
               0
@@ -492,21 +648,21 @@
               0,
               0
             ],
-            "review_staff": 0,
             "review_monthly_cost_cents": 0,
-            "review_tasks_per_day": 0
+            "review_staff": 0,
+            "review_tasks_per_day": 0,
+            "staff": 1,
+            "tasks_per_day": 2000
           },
           {
-            "id": "product.documents_tables",
-            "capacity_project_id": "serving.documents_tables",
-            "price_cents_per_task": 150,
             "available": true,
-            "tasks_per_day": 2000,
+            "capacity_project_id": "serving.documents_tables",
+            "id": "product.documents_tables",
             "inference_milli_CU_per_task": 20,
-            "staff": 1,
-            "minimum_memory_mib": 0,
             "interconnect": "general",
+            "minimum_memory_mib": 0,
             "monthly_support_cost_cents": 500000,
+            "price_cents_per_task": 150,
             "required_bp": [
               6000,
               5500
@@ -515,634 +671,305 @@
               0,
               3500
             ],
-            "review_staff": 1,
             "review_monthly_cost_cents": 1500000,
-            "review_tasks_per_day": 500
-          },
-          {
-            "id": "product.document_specialist",
-            "capacity_project_id": "serving.document_specialist",
-            "price_cents_per_task": 150,
-            "available": true,
-            "tasks_per_day": 3000,
-            "inference_milli_CU_per_task": 20,
+            "review_staff": 1,
+            "review_tasks_per_day": 500,
             "staff": 1,
-            "minimum_memory_mib": 0,
-            "interconnect": "general",
-            "monthly_support_cost_cents": 700000,
-            "required_bp": [
-              6000,
-              0
-            ],
-            "review_credit_bp": [
-              0,
-              0
-            ],
-            "review_staff": 0,
-            "review_monthly_cost_cents": 0,
-            "review_tasks_per_day": 0,
-            "required_recipe": "recipe.efficient"
+            "tasks_per_day": 2000
           }
         ],
         "segments": [
           {
-            "id": "segment.enterprise",
-            "daily_tasks": 5000,
             "daily_budget_cents": 600000,
-            "outside_utility": 300,
-            "reservation_threshold": 0,
+            "daily_tasks": 5000,
+            "id": "segment.enterprise",
             "maximum_monthly_migration_basis_points": 10000,
+            "outside_utility": 300,
             "preferences": [
               {
-                "product_id": "product.documents",
-                "utility": 1500,
-                "willingness_to_pay_cents": 150,
-                "switching_cost": 100,
-                "eligible": true
-              },
-              {
-                "product_id": "product.documents_tables",
-                "utility": 2000,
-                "willingness_to_pay_cents": 150,
-                "switching_cost": 100,
-                "eligible": true
-              },
-              {
+                "eligible": true,
                 "product_id": "product.document_specialist",
-                "utility": 1800,
-                "willingness_to_pay_cents": 150,
                 "switching_cost": 100,
-                "eligible": true
+                "utility": 1800,
+                "willingness_to_pay_cents": 150
+              },
+              {
+                "eligible": true,
+                "product_id": "product.documents",
+                "switching_cost": 100,
+                "utility": 1500,
+                "willingness_to_pay_cents": 150
+              },
+              {
+                "eligible": true,
+                "product_id": "product.documents_tables",
+                "switching_cost": 100,
+                "utility": 2000,
+                "willingness_to_pay_cents": 150
               }
-            ]
-          }
-        ],
-        "contracts": []
-      },
-      "management": {
-        "financing": [
-          {
-            "id": "finance.bridge_equity",
-            "name": "Bridge equity: 18% ownership",
-            "proceeds_cents": 30000000,
-            "acquired_bp": 1800,
-            "monthly_interest_bp": 0,
-            "term_days": 0
-          },
-          {
-            "id": "finance.working_capital",
-            "name": "Working-capital loan: 1% monthly interest",
-            "proceeds_cents": 25000000,
-            "acquired_bp": 0,
-            "monthly_interest_bp": 100,
-            "term_days": 365
-          }
-        ],
-        "specialists": [
-          {
-            "id": "specialist.evaluation",
-            "name": "Evaluation and service specialist",
-            "signing_cost_cents": 200000,
-            "monthly_salary_cents": 600000
-          }
-        ],
-        "setbacks": [
-          {
-            "id": "setback.supplier_maintenance",
-            "name": "Scheduled supplier cooling maintenance",
-            "source_id": "lease.initial",
-            "announced_on": "2014-04-17",
-            "starts_on": "2014-05-01",
-            "ends_before": "2014-05-15",
-            "reduced_milli_CU_per_day": 60000
-          }
-        ],
-        "scoring": {
-          "task_target": 4000000,
-          "weights": [
-            25,
-            25,
-            20,
-            20,
-            10
-          ],
-          "founder": "founder_trust",
-          "opening_founder_share_bp": 5500
-        },
-        "minimum_evaluation_interval_days": 30,
-        "maximum_policy_runs": 12,
-        "default_policy_budget_cents": 10000000,
-        "default_reserve_floor_cents": 10000000,
-        "default_monthly_ceiling_cents": 400000,
-        "default_policy_runs": 3
-      }
-    },
-    {
-      "id": "research.efficient_image_features",
-      "kind": "research",
-      "revision": 1,
-      "prerequisites": {
-        "all_of": [],
-        "any_of": []
-      },
-      "cash_cents": 50000,
-      "staff_days": 6,
-      "work_milli_CU": 60000
-    },
-    {
-      "id": "research.sequence_modeling",
-      "kind": "research",
-      "revision": 1,
-      "prerequisites": {
-        "all_of": [
-          "research.reproducible_tooling"
-        ],
-        "any_of": []
-      },
-      "cash_cents": 50000,
-      "staff_days": 6,
-      "work_milli_CU": 60000
-    },
-    {
-      "id": "research.data_deduplication",
-      "kind": "research",
-      "revision": 1,
-      "prerequisites": {
-        "all_of": [],
-        "any_of": []
-      },
-      "cash_cents": 50000,
-      "staff_days": 6,
-      "work_milli_CU": 60000
-    },
-    {
-      "id": "research.held_out_evaluation",
-      "kind": "research",
-      "revision": 1,
-      "prerequisites": {
-        "all_of": [],
-        "any_of": []
-      },
-      "cash_cents": 50000,
-      "staff_days": 6,
-      "work_milli_CU": 60000
-    },
-    {
-      "id": "research.efficient_serving",
-      "kind": "research",
-      "revision": 1,
-      "prerequisites": {
-        "all_of": [
-          "research.reproducible_tooling"
-        ],
-        "any_of": []
-      },
-      "cash_cents": 50000,
-      "staff_days": 6,
-      "work_milli_CU": 60000
-    },
-    {
-      "id": "research.reproducible_tooling",
-      "kind": "research",
-      "revision": 1,
-      "prerequisites": {
-        "all_of": [],
-        "any_of": []
-      },
-      "cash_cents": 50000,
-      "staff_days": 6,
-      "work_milli_CU": 60000
-    },
-    {
-      "id": "slice.research_milestone",
-      "kind": "flow",
-      "revision": 1,
-      "scope": "company",
-      "trigger": {
-        "fact": "company.is_operating",
-        "op": "eq",
-        "value": true
-      },
-      "lifecycle": {
-        "mode": "recurring",
-        "max_occurrences_per_scope": 16,
-        "cooldown_days": 0,
-        "repeat_policy": "after_cooldown_while_eligible"
-      },
-      "entry_node": "news",
-      "nodes": {
-        "news": {
-          "kind": "news",
-          "text_key": "slice.research.completed",
-          "next": "end"
-        },
-        "end": {
-          "kind": "end"
-        }
-      },
-      "tags": [
-        "base_event",
-        "slice"
-      ],
-      "on_committed": "lab.research_completed"
-    },
-    {
-      "id": "slice.evaluation_finding",
-      "kind": "flow",
-      "revision": 1,
-      "scope": "company",
-      "trigger": {
-        "fact": "company.is_operating",
-        "op": "eq",
-        "value": true
-      },
-      "lifecycle": {
-        "mode": "recurring",
-        "max_occurrences_per_scope": 32,
-        "cooldown_days": 0,
-        "repeat_policy": "after_cooldown_while_eligible"
-      },
-      "entry_node": "news",
-      "nodes": {
-        "news": {
-          "kind": "news",
-          "text_key": "slice.evaluation.finding",
-          "next": "end"
-        },
-        "end": {
-          "kind": "end"
-        }
-      },
-      "tags": [
-        "base_event",
-        "slice"
-      ],
-      "on_committed": "lab.evaluation_finding"
-    },
-    {
-      "id": "slice.pilot_result",
-      "kind": "flow",
-      "revision": 1,
-      "scope": "company",
-      "trigger": {
-        "fact": "company.is_operating",
-        "op": "eq",
-        "value": true
-      },
-      "lifecycle": {
-        "mode": "recurring",
-        "max_occurrences_per_scope": 32,
-        "cooldown_days": 0,
-        "repeat_policy": "after_cooldown_while_eligible"
-      },
-      "entry_node": "news",
-      "nodes": {
-        "news": {
-          "kind": "news",
-          "text_key": "slice.pilot.outcome",
-          "next": "end"
-        },
-        "end": {
-          "kind": "end"
-        }
-      },
-      "tags": [
-        "base_event",
-        "slice"
-      ],
-      "on_committed": "market.pilot_outcome"
-    },
-    {
-      "id": "slice.liquidity_warning",
-      "kind": "flow",
-      "revision": 1,
-      "scope": "company",
-      "trigger": {
-        "fact": "company.in_liquidity_workout",
-        "op": "eq",
-        "value": true
-      },
-      "lifecycle": {
-        "mode": "continuous",
-        "exit_when": {
-          "fact": "company.in_liquidity_workout",
-          "op": "eq",
-          "value": false
-        },
-        "stacking": "one_per_scope",
-        "allow_reentry": true
-      },
-      "entry_node": "news",
-      "nodes": {
-        "news": {
-          "kind": "news",
-          "text_key": "slice.finance.workout",
-          "next": "end"
-        },
-        "recovered": {
-          "kind": "result",
-          "text_key": "slice.finance.recovered",
-          "next": "end"
-        },
-        "end": {
-          "kind": "end"
-        }
-      },
-      "tags": [
-        "base_event",
-        "slice"
-      ],
-      "exit_node": "recovered"
-    },
-    {
-      "id": "slice.rival_notice",
-      "kind": "flow",
-      "revision": 1,
-      "scope": "company",
-      "trigger": {
-        "fact": "company.competitive_notice_count",
-        "op": "gt",
-        "value": {
-          "fact": "company.last_competitive_notice"
-        }
-      },
-      "lifecycle": {
-        "mode": "recurring",
-        "max_occurrences_per_scope": 16,
-        "cooldown_days": 7,
-        "repeat_policy": "after_cooldown_while_eligible"
-      },
-      "entry_node": "news",
-      "nodes": {
-        "news": {
-          "kind": "news",
-          "text_key": "slice.rival.notice",
-          "next": "record"
-        },
-        "record": {
-          "kind": "effect",
-          "effects": [
-            {
-              "op": "set_variable",
-              "target": "self",
-              "variable": "company.last_competitive_notice",
-              "value": {
-                "fact": "company.competitive_notice_count"
-              }
-            }
-          ],
-          "next": "end"
-        },
-        "end": {
-          "kind": "end"
-        }
-      },
-      "tags": [
-        "base_event",
-        "slice"
-      ]
-    },
-    {
-      "id": "slice.supplier_offer",
-      "kind": "flow",
-      "revision": 1,
-      "scope": "company",
-      "trigger": {
-        "fact": "company.supplier_offer_eligible",
-        "op": "eq",
-        "value": true
-      },
-      "lifecycle": {
-        "mode": "interval",
-        "every": {
-          "unit": "days",
-          "value": 90
-        },
-        "max_occurrences_per_scope": 8,
-        "miss_policy": "skip",
-        "anchor": {
-          "kind": "campaign_start",
-          "offset": {
-            "unit": "days",
-            "value": 14
-          },
-          "invalid_day": "clamp_to_month_end"
-        }
-      },
-      "entry_node": "sample",
-      "nodes": {
-        "sample": {
-          "kind": "random",
-          "stream": "markets",
-          "branches": [
-            {
-              "id": "no_event",
-              "weight": 1,
-              "next": "end"
-            },
-            {
-              "id": "offer",
-              "weight": 1,
-              "next": "choice"
-            }
-          ]
-        },
-        "choice": {
-          "kind": "dialogue",
-          "title_key": "slice.supplier.title",
-          "text_key": "slice.supplier.text",
-          "default_choice_if_dismissed": "decline",
-          "choices": [
-            {
-              "id": "accept",
-              "label_key": "slice.supplier.accept",
-              "next": "accept"
-            },
-            {
-              "id": "decline",
-              "label_key": "slice.supplier.decline",
-              "next": "end"
-            }
-          ]
-        },
-        "accept": {
-          "kind": "effect",
-          "effects": [
-            {
-              "op": "accept_business_offer",
-              "target": "self",
-              "offer_id": "offer.supplier_small"
-            }
-          ],
-          "next": "result"
-        },
-        "result": {
-          "kind": "result",
-          "text_key": "slice.supplier.accepted",
-          "next": "end"
-        },
-        "end": {
-          "kind": "end"
-        }
-      },
-      "tags": [
-        "base_event",
-        "slice"
-      ]
-    },
-    {
-      "id": "slice.market_shift",
-      "kind": "flow",
-      "revision": 1,
-      "scope": "company",
-      "trigger": {
-        "all_of": [
-          {
-            "fact": "company.has_enterprise_segment",
-            "op": "eq",
-            "value": true
-          },
-          {
-            "fact": "company.market_shift_active",
-            "op": "eq",
-            "value": false
+            ],
+            "reservation_threshold": 0
           }
         ]
       },
+      "starts_on": "2014-01-01",
+      "team_people": 6
+    },
+    {
+      "entry_node": "news",
+      "id": "slice.evaluation_finding",
+      "kind": "flow",
       "lifecycle": {
-        "mode": "interval",
+        "cooldown_days": 0,
+        "max_occurrences_per_scope": 32,
+        "mode": "recurring",
+        "occurrence_scope": "company",
+        "repeat_policy": "after_cooldown_while_eligible"
+      },
+      "nodes": {
+        "end": {
+          "kind": "end"
+        },
+        "news": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "slice.evaluation.finding"
+        }
+      },
+      "on_committed": "lab.evaluation_finding",
+      "revision": 1,
+      "scope": "company",
+      "tags": [
+        "base_event",
+        "slice"
+      ],
+      "trigger": {
+        "fact": "company.is_operating",
+        "op": "eq",
+        "unit": "boolean",
+        "value": true
+      }
+    },
+    {
+      "entry_node": "news",
+      "exit_node": "recovered",
+      "id": "slice.liquidity_warning",
+      "kind": "flow",
+      "lifecycle": {
+        "allow_reentry": true,
+        "exit_when": {
+          "fact": "company.in_liquidity_workout",
+          "op": "eq",
+          "unit": "boolean",
+          "value": false
+        },
+        "mode": "continuous",
+        "occurrence_scope": "company",
+        "stacking": "one_per_scope"
+      },
+      "nodes": {
+        "end": {
+          "kind": "end"
+        },
+        "news": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "slice.finance.workout"
+        },
+        "recovered": {
+          "kind": "result",
+          "next": "end",
+          "show_committed_changes": true,
+          "text_key": "slice.finance.recovered"
+        }
+      },
+      "revision": 1,
+      "scope": "company",
+      "tags": [
+        "base_event",
+        "slice"
+      ],
+      "trigger": {
+        "fact": "company.in_liquidity_workout",
+        "op": "eq",
+        "unit": "boolean",
+        "value": true
+      }
+    },
+    {
+      "entry_node": "sample",
+      "id": "slice.market_shift",
+      "kind": "flow",
+      "lifecycle": {
+        "anchor": {
+          "invalid_day": "clamp_to_month_end",
+          "kind": "campaign_start",
+          "offset": {
+            "unit": "days",
+            "value": 45
+          }
+        },
         "every": {
           "unit": "days",
           "value": 90
         },
         "max_occurrences_per_scope": 12,
         "miss_policy": "skip",
-        "anchor": {
-          "kind": "campaign_start",
-          "offset": {
-            "unit": "days",
-            "value": 45
-          },
-          "invalid_day": "clamp_to_month_end"
-        }
+        "mode": "interval",
+        "occurrence_scope": "company"
       },
-      "entry_node": "sample",
       "nodes": {
-        "sample": {
-          "kind": "random",
-          "stream": "markets",
-          "branches": [
-            {
-              "id": "no_event",
-              "weight": 2,
-              "next": "end"
-            },
-            {
-              "id": "increase",
-              "weight": 1,
-              "next": "increase"
-            },
-            {
-              "id": "decrease",
-              "weight": 1,
-              "next": "decrease"
-            }
-          ]
-        },
-        "increase": {
-          "kind": "effect",
-          "effects": [
-            {
-              "op": "temporary_demand_change",
-              "target": "self",
-              "segment_id": "segment.enterprise",
-              "delta_bp": 2000,
-              "duration_days": 30
-            }
-          ],
-          "next": "up_news"
-        },
         "decrease": {
-          "kind": "effect",
           "effects": [
             {
-              "op": "temporary_demand_change",
-              "target": "self",
-              "segment_id": "segment.enterprise",
               "delta_bp": -2000,
-              "duration_days": 30
+              "duration_days": 30,
+              "op": "temporary_demand_change",
+              "segment_id": "segment.enterprise",
+              "target": "self"
             }
           ],
+          "kind": "effect",
           "next": "down_news"
-        },
-        "up_news": {
-          "kind": "news",
-          "text_key": "slice.demand.increase",
-          "next": "wait"
         },
         "down_news": {
           "kind": "news",
-          "text_key": "slice.demand.decrease",
-          "next": "wait"
-        },
-        "wait": {
-          "kind": "delay",
-          "next": "expired",
-          "duration_days": 30
-        },
-        "expired": {
-          "kind": "news",
-          "text_key": "slice.demand.expired",
-          "next": "end"
+          "next": "wait",
+          "text_key": "slice.demand.decrease"
         },
         "end": {
           "kind": "end"
+        },
+        "expired": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "slice.demand.expired"
+        },
+        "increase": {
+          "effects": [
+            {
+              "delta_bp": 2000,
+              "duration_days": 30,
+              "op": "temporary_demand_change",
+              "segment_id": "segment.enterprise",
+              "target": "self"
+            }
+          ],
+          "kind": "effect",
+          "next": "up_news"
+        },
+        "sample": {
+          "branches": [
+            {
+              "id": "no_event",
+              "next": "end",
+              "weight": 2
+            },
+            {
+              "id": "increase",
+              "next": "increase",
+              "weight": 1
+            },
+            {
+              "id": "decrease",
+              "next": "decrease",
+              "weight": 1
+            }
+          ],
+          "kind": "random",
+          "stream": "markets"
+        },
+        "up_news": {
+          "kind": "news",
+          "next": "wait",
+          "text_key": "slice.demand.increase"
+        },
+        "wait": {
+          "duration_days": 30,
+          "kind": "delay",
+          "next": "expired"
         }
       },
+      "revision": 1,
+      "scope": "company",
       "tags": [
         "base_event",
         "slice"
-      ]
-    },
-    {
-      "id": "slice.recovery_opportunity",
-      "kind": "flow",
-      "revision": 1,
-      "scope": "company",
+      ],
       "trigger": {
         "all_of": [
           {
-            "fact": "company.recovery_offer_eligible",
+            "fact": "company.has_enterprise_segment",
             "op": "eq",
+            "unit": "boolean",
             "value": true
           },
           {
-            "any_of": [
-              {
-                "fact": "company.has_evaluation_finding",
-                "op": "eq",
-                "value": true
-              },
-              {
-                "fact": "company.in_liquidity_workout",
-                "op": "eq",
-                "value": true
-              }
-            ]
+            "fact": "company.market_shift_active",
+            "op": "eq",
+            "unit": "boolean",
+            "value": false
           }
         ]
-      },
+      }
+    },
+    {
+      "entry_node": "news",
+      "id": "slice.pilot_result",
+      "kind": "flow",
       "lifecycle": {
-        "mode": "once",
-        "max_occurrences_per_scope": 1
+        "cooldown_days": 0,
+        "max_occurrences_per_scope": 32,
+        "mode": "recurring",
+        "occurrence_scope": "company",
+        "repeat_policy": "after_cooldown_while_eligible"
       },
-      "entry_node": "choice",
       "nodes": {
+        "end": {
+          "kind": "end"
+        },
+        "news": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "slice.pilot.outcome"
+        }
+      },
+      "on_committed": "market.pilot_outcome",
+      "revision": 1,
+      "scope": "company",
+      "tags": [
+        "base_event",
+        "slice"
+      ],
+      "trigger": {
+        "fact": "company.is_operating",
+        "op": "eq",
+        "unit": "boolean",
+        "value": true
+      }
+    },
+    {
+      "entry_node": "choice",
+      "id": "slice.recovery_opportunity",
+      "kind": "flow",
+      "lifecycle": {
+        "max_occurrences_per_scope": 1,
+        "mode": "once",
+        "occurrence_scope": "company"
+      },
+      "nodes": {
+        "accept": {
+          "effects": [
+            {
+              "offer_id": "offer.recovery_pilot",
+              "op": "accept_business_offer",
+              "target": "self"
+            }
+          ],
+          "kind": "effect",
+          "next": "result"
+        },
         "choice": {
-          "kind": "dialogue",
-          "title_key": "slice.recovery.title",
-          "text_key": "slice.recovery.text",
-          "default_choice_if_dismissed": "decline",
           "choices": [
             {
               "id": "accept",
@@ -1154,66 +981,264 @@
               "label_key": "slice.recovery.decline",
               "next": "end"
             }
-          ]
-        },
-        "accept": {
-          "kind": "effect",
-          "effects": [
-            {
-              "op": "accept_business_offer",
-              "target": "self",
-              "offer_id": "offer.recovery_pilot"
-            }
           ],
-          "next": "result"
-        },
-        "result": {
-          "kind": "result",
-          "text_key": "slice.recovery.accepted",
-          "next": "end"
+          "default_choice_if_dismissed": "decline",
+          "kind": "dialogue",
+          "text_key": "slice.recovery.text",
+          "title_key": "slice.recovery.title"
         },
         "end": {
           "kind": "end"
+        },
+        "result": {
+          "kind": "result",
+          "next": "end",
+          "show_committed_changes": true,
+          "text_key": "slice.recovery.accepted"
         }
       },
+      "revision": 1,
+      "scope": "company",
       "tags": [
         "base_event",
         "slice"
-      ]
-    }
-  ],
-  "variables": [
+      ],
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "company.recovery_offer_eligible",
+            "op": "eq",
+            "unit": "boolean",
+            "value": true
+          },
+          {
+            "any_of": [
+              {
+                "fact": "company.has_evaluation_finding",
+                "op": "eq",
+                "unit": "boolean",
+                "value": true
+              },
+              {
+                "fact": "company.in_liquidity_workout",
+                "op": "eq",
+                "unit": "boolean",
+                "value": true
+              }
+            ]
+          }
+        ]
+      }
+    },
     {
-      "id": "company.last_competitive_notice",
+      "entry_node": "news",
+      "id": "slice.research_milestone",
+      "kind": "flow",
+      "lifecycle": {
+        "cooldown_days": 0,
+        "max_occurrences_per_scope": 16,
+        "mode": "recurring",
+        "occurrence_scope": "company",
+        "repeat_policy": "after_cooldown_while_eligible"
+      },
+      "nodes": {
+        "end": {
+          "kind": "end"
+        },
+        "news": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "slice.research.completed"
+        }
+      },
+      "on_committed": "lab.research_completed",
+      "revision": 1,
       "scope": "company",
-      "type": "integer",
-      "unit": "count",
-      "minimum": 0,
-      "maximum": 128,
-      "default": 0,
-      "help": "Last competitive notice included in a player briefing.",
-      "visibility": "player_known"
+      "tags": [
+        "base_event",
+        "slice"
+      ],
+      "trigger": {
+        "fact": "company.is_operating",
+        "op": "eq",
+        "unit": "boolean",
+        "value": true
+      }
+    },
+    {
+      "entry_node": "news",
+      "id": "slice.rival_notice",
+      "kind": "flow",
+      "lifecycle": {
+        "cooldown_days": 7,
+        "max_occurrences_per_scope": 16,
+        "mode": "recurring",
+        "occurrence_scope": "company",
+        "repeat_policy": "after_cooldown_while_eligible"
+      },
+      "nodes": {
+        "end": {
+          "kind": "end"
+        },
+        "news": {
+          "kind": "news",
+          "next": "record",
+          "text_key": "slice.rival.notice"
+        },
+        "record": {
+          "effects": [
+            {
+              "op": "set_variable",
+              "target": "self",
+              "value": {
+                "fact": "company.competitive_notice_count"
+              },
+              "variable": "company.last_competitive_notice"
+            }
+          ],
+          "kind": "effect",
+          "next": "end"
+        }
+      },
+      "revision": 1,
+      "scope": "company",
+      "tags": [
+        "base_event",
+        "slice"
+      ],
+      "trigger": {
+        "fact": "company.competitive_notice_count",
+        "op": "gt",
+        "unit": "count",
+        "value": {
+          "fact": "company.last_competitive_notice"
+        }
+      }
+    },
+    {
+      "entry_node": "sample",
+      "id": "slice.supplier_offer",
+      "kind": "flow",
+      "lifecycle": {
+        "anchor": {
+          "invalid_day": "clamp_to_month_end",
+          "kind": "campaign_start",
+          "offset": {
+            "unit": "days",
+            "value": 14
+          }
+        },
+        "every": {
+          "unit": "days",
+          "value": 90
+        },
+        "max_occurrences_per_scope": 8,
+        "miss_policy": "skip",
+        "mode": "interval",
+        "occurrence_scope": "company"
+      },
+      "nodes": {
+        "accept": {
+          "effects": [
+            {
+              "offer_id": "offer.supplier_small",
+              "op": "accept_business_offer",
+              "target": "self"
+            }
+          ],
+          "kind": "effect",
+          "next": "result"
+        },
+        "choice": {
+          "choices": [
+            {
+              "id": "accept",
+              "label_key": "slice.supplier.accept",
+              "next": "accept"
+            },
+            {
+              "id": "decline",
+              "label_key": "slice.supplier.decline",
+              "next": "end"
+            }
+          ],
+          "default_choice_if_dismissed": "decline",
+          "kind": "dialogue",
+          "text_key": "slice.supplier.text",
+          "title_key": "slice.supplier.title"
+        },
+        "end": {
+          "kind": "end"
+        },
+        "result": {
+          "kind": "result",
+          "next": "end",
+          "show_committed_changes": true,
+          "text_key": "slice.supplier.accepted"
+        },
+        "sample": {
+          "branches": [
+            {
+              "id": "no_event",
+              "next": "end",
+              "weight": 1
+            },
+            {
+              "id": "offer",
+              "next": "choice",
+              "weight": 1
+            }
+          ],
+          "kind": "random",
+          "stream": "markets"
+        }
+      },
+      "revision": 1,
+      "scope": "company",
+      "tags": [
+        "base_event",
+        "slice"
+      ],
+      "trigger": {
+        "fact": "company.supplier_offer_eligible",
+        "op": "eq",
+        "unit": "boolean",
+        "value": true
+      }
     }
   ],
   "messages": {
-    "slice.research.completed": "Research completed. The new method unlocks its listed recipes or evaluation options; this bulletin grants no additional research.",
-    "slice.evaluation.finding": "Held-out evidence found a task limitation. Read the named subgroup result in the Lab. Compare the available consented scans ($8,000), paid retraining and a fresh test, or limit the product promise. Opening this report buys nothing.",
-    "slice.pilot.outcome": "Customer settlement recorded. The attached cause reports actual delivery or a missed start. Fees, credits and penalties are already in the accounts; this bulletin creates no second payment.",
-    "slice.finance.workout": "An actual liquidity warning opened a 30-day response window. Review unpaid obligations, cash commitments and financing. This alert does not reset the deadline.",
-    "slice.finance.recovered": "The warned obligations have been resolved. Past expenses and the original response window remain in the accounts.",
-    "slice.rival.notice": "A competitor has a new public development. Check the visible company notices and any dated warning. Private scores and research plans are not disclosed. A heavyweight warning provides at least 90 days before its financed work can start.",
-    "slice.supplier.title": "A smaller cloud lease",
-    "slice.supplier.text": "Optional: 30 CU/day for 180 days, $1,000 setup and $4,000 per calendar month including power. This adds a separate source; it does not replace or refund the initial lease. Capacity ends at the disclosed expiry.",
-    "slice.supplier.accept": "Accept disclosed terms",
-    "slice.supplier.decline": "Decline without a commitment",
-    "slice.supplier.accepted": "The lease is signed. Its source, setup expense, monthly obligation and expiry are recorded. Declining would have created no commitment.",
-    "slice.demand.increase": "A fictional business spending cycle raises enterprise demand by 20% for 30 days. Customer budgets and existing signed commitments do not change.",
     "slice.demand.decrease": "A fictional business spending cycle lowers discretionary enterprise demand by 20% for 30 days. Existing signed task promises remain protected.",
     "slice.demand.expired": "The temporary demand condition has expired. Base demand resumes; completed work and settled bills are unchanged.",
-    "slice.recovery.title": "A narrower pilot",
-    "slice.recovery.text": "A customer offers a 90-day document-only pilot: 500 useful tasks/day for $45,000/month. It needs an eligible available product, protected serving capacity and existing support. Acceptance starts real service today; payment follows actual delivery. No setup payment or new capital is granted.",
+    "slice.demand.increase": "A fictional business spending cycle raises enterprise demand by 20% for 30 days. Customer budgets and existing signed commitments do not change.",
+    "slice.evaluation.finding": "Held-out evidence found a task limitation. Read the named subgroup result in the Lab. Compare the available consented scans ($8,000), paid retraining and a fresh test, or limit the product promise. Opening this report buys nothing.",
+    "slice.finance.recovered": "The warned obligations have been resolved. Past expenses and the original response window remain in the accounts.",
+    "slice.finance.workout": "An actual liquidity warning opened a 30-day response window. Review unpaid obligations, cash commitments and financing. This alert does not reset the deadline.",
+    "slice.pilot.outcome": "Customer settlement recorded. The attached cause reports actual delivery or a missed start. Fees, credits and penalties are already in the accounts; this bulletin creates no second payment.",
     "slice.recovery.accept": "Accept disclosed terms",
+    "slice.recovery.accepted": "The narrower pilot is active. Actual useful work, fees and service credits will flow through the ordinary market and accounts.",
     "slice.recovery.decline": "Decline without a commitment",
-    "slice.recovery.accepted": "The narrower pilot is active. Actual useful work, fees and service credits will flow through the ordinary market and accounts."
-  }
+    "slice.recovery.text": "A customer offers a 90-day document-only pilot: 500 useful tasks/day for $45,000/month. It needs an eligible available product, protected serving capacity and existing support. Acceptance starts real service today; payment follows actual delivery. No setup payment or new capital is granted.",
+    "slice.recovery.title": "A narrower pilot",
+    "slice.research.completed": "Research completed. The new method unlocks its listed recipes or evaluation options; this bulletin grants no additional research.",
+    "slice.rival.notice": "A competitor has a new public development. Check the visible company notices and any dated warning. Private scores and research plans are not disclosed. A heavyweight warning provides at least 90 days before its financed work can start.",
+    "slice.supplier.accept": "Accept disclosed terms",
+    "slice.supplier.accepted": "The lease is signed. Its source, setup expense, monthly obligation and expiry are recorded. Declining would have created no commitment.",
+    "slice.supplier.decline": "Decline without a commitment",
+    "slice.supplier.text": "Optional: 30 CU/day for 180 days, $1,000 setup and $4,000 per calendar month including power. This adds a separate source; it does not replace or refund the initial lease. Capacity ends at the disclosed expiry.",
+    "slice.supplier.title": "A smaller cloud lease"
+  },
+  "variables": [
+    {
+      "default": 0,
+      "help": "Last competitive notice included in a player briefing.",
+      "id": "company.last_competitive_notice",
+      "maximum": 128,
+      "minimum": 0,
+      "scope": "company",
+      "type": "integer",
+      "unit": "count",
+      "visibility": "player_known"
+    }
+  ]
 }

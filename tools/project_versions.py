@@ -105,6 +105,8 @@ def validate_manifest(data: object) -> dict:
 
 
 def load_manifest(path: Path) -> dict:
+    if (path.parent / ".pgp-editor" / "snapshot-transaction").exists():
+        raise VersionError("recover the pending internal content snapshot before reading/building versions")
     raw = path.read_bytes()
     if len(raw) > 65_536:
         raise VersionError("version manifest exceeds 64 KiB")
@@ -163,9 +165,76 @@ def identity_errors(manifest: dict, product: str, tag: str, previous: str | None
     return errors
 
 
+def content_snapshot_record(root: Path, manifest: dict) -> dict:
+    """Verify owned snapshot records; compiler/scenario checks belong to the C++ writer.
+
+    No caller-provided approval flags can manufacture runtime or release evidence.
+    """
+    try:
+        def read(relative: str) -> tuple[bytes, dict]:
+            if not isinstance(relative, str):
+                raise VersionError("snapshot record path must be a string")
+            path = Path(relative)
+            if path.is_absolute() or any(part in (".", "..") for part in path.parts):
+                raise VersionError("snapshot record contains an unsafe relative path")
+            current = root
+            for part in path.parts:
+                current = current / part
+                if current.is_symlink():
+                    raise VersionError("snapshot record paths cannot follow symbolic links")
+            with current.open("rb") as source:
+                raw = source.read(4 * 1024 * 1024 + 1)
+            if len(raw) > 4 * 1024 * 1024:
+                raise VersionError("snapshot record exceeds its byte bound")
+            value = json.loads(raw.decode("utf-8"), object_pairs_hook=_object)
+            if not isinstance(value, dict):
+                raise VersionError("snapshot record must be an object")
+            return raw, value
+
+        if (root / ".pgp-editor" / "snapshot-transaction").exists():
+            raise VersionError("snapshot finalization is incomplete; recovery is required")
+        _, state = read("authoring/content-state.json")
+        runtime_bytes, runtime = read("data/runtime/content-manifest.json")
+        history_bytes, history = read("authoring/content-history.json")
+        snapshot_path = state["snapshot"]
+        if not isinstance(snapshot_path, str) or not snapshot_path.startswith("authoring/snapshots/"):
+            raise VersionError("finalized baseline is outside authoring snapshots")
+        snapshot_bytes, snapshot = read(snapshot_path)
+        if state["format"] != 1 or runtime["format"] != 1 or history["format"] != 1:
+            raise VersionError("unsupported snapshot record format")
+        for raw, key in ((runtime_bytes, "runtime_manifest_hash"), (history_bytes, "history_hash"),
+                         (snapshot_bytes, "snapshot_hash")):
+            if hashlib.sha256(raw).hexdigest() != state[key]:
+                raise VersionError("snapshot records differ from their final commit marker")
+        if (state["generation"] != runtime["generation"] or
+                state["generation"] != history["batches"][-1]["generation"]):
+            raise VersionError("snapshot generations disagree")
+        if (state["content_version"] != manifest["components"]["content"] or
+                state["content_version"] != snapshot["content_version"] or
+                runtime["compatibility"] != manifest["compatibility"]):
+            raise VersionError("snapshot content/compatibility differs from the project manifest")
+        digest = state["collection_hash"]
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest) or runtime["collection_hash"] != digest:
+            raise VersionError("runtime collection hash is missing or inconsistent")
+        target = state["target"]
+        if not isinstance(target, str) or not target.startswith("data/runtime/") or target == "data/runtime/content-manifest.json":
+            raise VersionError("snapshot target is not a reviewed runtime collection")
+        target_bytes, _ = read(target)
+        if hashlib.sha256(target_bytes).hexdigest() != runtime["source_hash"]:
+            raise VersionError("runtime source changed after finalization; review or reconcile it")
+        requirement = state["required_game_version"]
+        resolved = compare_versions(manifest["components"]["game"], requirement) >= 0
+        return {"record_valid": True, "collection_hash": digest, "required_game_version": requirement,
+                "game_version_requirement_resolved": resolved, "errors": []}
+    except (OSError, ValueError, KeyError, IndexError, TypeError, RecursionError) as error:
+        return {"record_valid": False, "collection_hash": "unavailable", "required_game_version": None,
+                "game_version_requirement_resolved": False, "errors": [str(error)]}
+
+
 def cmake_values(manifest: dict, path: Path) -> str:
     values = {"PROJECT_ID": manifest["project_id"], "PHASE": manifest["phase"],
-              "MANIFEST_SHA256": hashlib.sha256(path.read_bytes()).hexdigest()}
+              "MANIFEST_SHA256": hashlib.sha256(path.read_bytes()).hexdigest(),
+              "RUNTIME_CONTENT_HASH": content_snapshot_record(path.parent, manifest)["collection_hash"]}
     for name, value in manifest["components"].items():
         parsed = parse_version(value)
         values[name.upper()] = value
@@ -217,10 +286,14 @@ def main(arguments: list[str] | None = None) -> int:
             source = source_identity(args.manifest.parent)
             if source["state"] != "clean":
                 errors.append("a known clean Git source commit is required")
-            remaining = ["validated runtime collection hash and finalized content-to-game version requirements",
+            snapshot = content_snapshot_record(args.manifest.parent, manifest)
+            snapshot_gate = snapshot["record_valid"] and snapshot["game_version_requirement_resolved"]
+            if snapshot["record_valid"] and not snapshot["game_version_requirement_resolved"]:
+                snapshot["errors"].append(f"content requires game version {snapshot['required_game_version']} or newer")
+            remaining = [
                          "save/content migrations and published-version payload-reuse checks",
                          "dependency/source/license manifest and native package/device qualification"]
-            print(json.dumps({"product": args.product, "identity_gate_passed": not errors,
+            print(json.dumps({"product": args.product, "content_snapshot_record": snapshot, "content_snapshot_gate_passed": snapshot_gate, "identity_gate_passed": not errors,
                               "identity_errors": errors, "source": source,
                               "release_ready": False, "remaining_gates": remaining}, indent=2))
             # Until later gates have an owning implementation, this command fails closed.

@@ -1,15 +1,15 @@
 {
-  "manifest_format": 1,
-  "project_id": "project-glowing-pancake",
-  "phase": "planning",
-  "components": {
-    "game": "0.0.0-dev",
-    "editor": "0.0.0-dev",
-    "content": "0.0.0-dev"
-  },
   "compatibility": {
     "content_schema": 1,
-    "simulation_rules": 1,
-    "save_format": 1
-  }
+    "save_format": 1,
+    "simulation_rules": 1
+  },
+  "components": {
+    "content": "0.1.0-dev.1",
+    "editor": "0.0.0-dev",
+    "game": "0.0.0-dev"
+  },
+  "manifest_format": 1,
+  "phase": "planning",
+  "project_id": "project-glowing-pancake"
 }

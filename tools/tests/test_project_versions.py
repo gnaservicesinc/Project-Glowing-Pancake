@@ -185,6 +185,59 @@ class VersionContractTests(unittest.TestCase):
             self.assertFalse(report["release_ready"])
             self.assertTrue(report["remaining_gates"])
 
+    def test_pending_snapshot_blocks_manifest_reads(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            path = root / "project-versions.json"
+            path.write_text(json.dumps(BASE))
+            (root / ".pgp-editor/snapshot-transaction").mkdir(parents=True)
+            with self.assertRaises(versions.VersionError):
+                versions.load_manifest(path)
+
+    def test_snapshot_record_integrity_and_game_requirement(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            manifest = deepcopy(BASE)
+            manifest["components"]["content"] = "0.1.0-dev.1"
+            target = {"content_version": "0.1.0-dev.1", "definitions": []}
+            target_bytes = json.dumps(target).encode()
+            runtime = {"format": 1, "generation": 1, "content_version": "0.1.0-dev.1",
+                       "collection_hash": "a" * 64, "compatibility": manifest["compatibility"],
+                       "source_hash": versions.hashlib.sha256(target_bytes).hexdigest()}
+            history = {"format": 1, "batches": [{"generation": 1}]}
+            runtime_bytes, history_bytes = json.dumps(runtime).encode(), json.dumps(history).encode()
+            state = {"format": 1, "generation": 1, "content_version": "0.1.0-dev.1",
+                     "collection_hash": "a" * 64, "required_game_version": "0.1.0-dev.1",
+                     "target": "data/runtime/current.json", "snapshot": "authoring/snapshots/000001.collection.json",
+                     "runtime_manifest_hash": versions.hashlib.sha256(runtime_bytes).hexdigest(),
+                     "history_hash": versions.hashlib.sha256(history_bytes).hexdigest(),
+                     "snapshot_hash": versions.hashlib.sha256(target_bytes).hexdigest()}
+            for relative, raw in (("data/runtime/current.json", target_bytes),
+                                  ("authoring/snapshots/000001.collection.json", target_bytes),
+                                  ("data/runtime/content-manifest.json", runtime_bytes),
+                                  ("authoring/content-history.json", history_bytes),
+                                  ("authoring/content-state.json", json.dumps(state).encode())):
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(raw)
+            report = versions.content_snapshot_record(root, manifest)
+            self.assertTrue(report["record_valid"])
+            self.assertFalse(report["game_version_requirement_resolved"])
+            manifest["components"]["game"] = "0.1.0-dev.2"
+            self.assertTrue(versions.content_snapshot_record(root, manifest)["game_version_requirement_resolved"])
+            (root / "data/runtime/current.json").write_bytes(target_bytes + b"\n")
+            self.assertFalse(versions.content_snapshot_record(root, manifest)["record_valid"])
+            (root / "data/runtime/current.json").write_bytes(target_bytes)
+            for key in ("snapshot", "target"):
+                malformed = deepcopy(state)
+                malformed[key] = None
+                (root / "authoring/content-state.json").write_text(json.dumps(malformed))
+                self.assertFalse(versions.content_snapshot_record(root, manifest)["record_valid"])
+            (root / "authoring/content-state.json").write_text(json.dumps(state))
+            (root / "authoring/content-history.json").write_text("{}")
+            self.assertFalse(versions.content_snapshot_record(root, manifest)["record_valid"])
+
+
     @unittest.skipUnless(shutil.which("cmake"), "CMake is unavailable")
     def test_emitted_cmake_preserves_prerelease_and_numeric_core(self):
         data = deepcopy(BASE)

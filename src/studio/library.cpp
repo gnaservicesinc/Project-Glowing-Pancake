@@ -91,6 +91,7 @@ void collect(const fs::path& root, const fs::path& folder, Origin origin, std::v
     for (const auto& entry : fs::recursive_directory_iterator(root / folder)) {
         if (++visited > maximum_entries) refuse("The selected checkout exceeds the library scan limit.");
         const auto type = entry.symlink_status();
+        if (entry.path().lexically_relative(root)==fs::path{"data/runtime/content-manifest.json"}) continue;
         if ((!fs::is_regular_file(type) && !fs::is_symlink(type)) || entry.path().extension() != ".json") continue;
         if (candidates.size() >= maximum_documents) refuse("The selected checkout exceeds the library document limit.");
         candidates.push_back({entry.path().lexically_relative(root), origin});

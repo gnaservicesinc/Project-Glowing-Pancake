@@ -1,5 +1,15 @@
 # Planning history
 
+## Components before v1 human testing — 2026-11-05
+
+The user clarified that no testers are available and human testing will not
+begin until all components are in place and the user is ready to work on v1.
+Defer M3-04 player sessions and E1B-03 author sessions to that phase. Keep their
+criteria and the prepared local kit; no sessions are claimed or being arranged.
+E1A-05 and E1B-01/02 engineering work proceeds, then M4 and later components.
+Move the human gates to release acceptance rather than treating unavailable
+testers as an implementation dependency. Mac engineering verification continues.
+
 ## Event baseline clarification — 2026-11-04
 
 The user clarified that human-authored events augment a built-in playable

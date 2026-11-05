@@ -1,10 +1,10 @@
 # Version tracking and release identity
 
-Planning baseline 1.2 · Updated 2026-11-04 · M0-05 identity reader implemented; content/release automation remains future work
+Planning baseline 1.2 · Updated 2026-11-05 · M0-05 identity and E1A-04 internal snapshot writer implemented; graphical finalization and release gates remain open
 
 ## 1. One source, several different identities
 
-[`project-versions.json`](../project-versions.json) is the checked-in source of game, editor, content, and compatibility versions. The initial `0.0.0-dev` values mean no application/content release exists. `phase: planning` prevents those placeholders being mistaken for publishable artifacts. Compatibility values of 1 reserve the first formats; no corresponding loader/schema has been implemented yet. Documentation baseline 1.2 is not an application release number.
+[`project-versions.json`](../project-versions.json) is the checked-in source of game, editor, content, and compatibility versions. Game/editor remain `0.0.0-dev`; the first reviewed internal content snapshot is `0.1.0-dev.1`. `phase: planning` remains and prevents these development identities being mistaken for publishable artifacts. Compatibility values of 1 identify the implemented initial content/runtime/save contracts; cross-revision save migrations remain future work. Documentation baseline 1.2 is not an application release number.
 
 | Identity | Meaning | Changes when |
 | --- | --- | --- |
@@ -23,7 +23,7 @@ A human-readable release version identifies one immutable published payload. Nev
 
 ## 2. Authoring workflow and version controls
 
-Ordinary saves preserve drafts/work in progress and mark pending content changes. They do not create a public version, tag, commit, push, or store upload. The Studio has a visible **Finalize content revision** action:
+Ordinary saves preserve drafts/work in progress and mark pending content changes. They do not create a public version, tag, commit, push, or store upload. E1A-04 implements the following workflow through the shared writer and maintainer CLI. E1B-02 will expose a visible **Finalize content revision** action using that same writer:
 
 1. Gather the selected content change set and compare with the last finalized content snapshot. Include referenced text/assets and show the actual file/semantic diff.
 2. Validate the collection, references, trigger/effect graphs, lifecycle rules, units, and required local test fixtures. Invalid drafts may be saved but cannot enter the reviewed runtime collection.
@@ -34,13 +34,13 @@ Ordinary saves preserve drafts/work in progress and mark pending content changes
 
 The author can finalize several changes together. Autosave and canvas moves do not spam version history. A no-op save, pure formatting change, graph layout, bookmarks or local editor preferences do not bump runtime content or definition revisions. A disabled definition remains reviewed content whose enabling could affect play; changes to it are versioned. Draft-only edits remain outside the runtime version until promoted.
 
-The future root `CHANGELOG.md` summarizes game releases; `authoring/content-history.json` records finalized content batches, versions, changed IDs/revisions, compatibility declarations and summaries. Editor release entries are separate. These files are planned outputs, not present implementation. The planning history is [PLAN_CHANGELOG.md](PLAN_CHANGELOG.md).
+The future root `CHANGELOG.md` summarizes game releases. The implemented `authoring/content-history.json` records finalized internal batches, versions, changed IDs/revisions, compatibility declarations, validation and summaries. `authoring/content-state.json` links the immutable baseline, history and runtime manifest by hashes; it is replaced last. Editor release entries remain separate future outputs. See [snapshot commands and recovery](../src/studio/SNAPSHOTS.md) and [planning history](PLAN_CHANGELOG.md).
 
 No tool can reliably infer intent or compatibility from a diff alone. Registry/schema differences, changed references, and fixture results support the author/reviewer. A content major bump never makes a missing save migration acceptable by itself.
 
 ## 3. Hashes, build metadata, and release readiness
 
-Generate a runtime content manifest during validation/build. It records content version, schema/rules requirements, enabled definitions and revisions, normalized definition hashes, localization and asset hashes, and the complete collection hash. Canonicalization uses a documented encoding, key ordering, normalized paths and explicitly classified semantic fields. Exclude only known authoring-only fields; never accidentally exclude visible text, effect order, timing, target bindings or asset changes.
+Finalization generates `data/runtime/content-manifest.json`. The internal slice record contains content/compatibility versions, reviewed definitions/revisions and semantic hashes, scenario flow roots, message hash, source hash and complete collection hash. It includes disabled reviewed definitions. The current slice has no external asset references, so its asset list is empty; broader asset provenance/hashing arrives with E2. Canonical bytes come from the shared typed normalizer; [the writer contract](../src/studio/SNAPSHOTS.md) documents included semantics and separate authoring metadata. Visible text, effect order, timing and target bindings affect identity. A build reads these artifacts without rewriting versions.
 
 The editor graph is the editable logical source. A shared compiler produces a bounded normalized runtime representation for both preview and game packaging. Layout/comments stay in authoring files. The collection hash represents shipped semantics/assets; a source hash can additionally identify the full authoring document. A cosmetic shipped text correction changes content identity even if it does not affect simulation state hashes.
 
@@ -81,8 +81,10 @@ contract. SemVer comparison itself supports larger numeric identifiers within
 the tool's 256-character version limit.
 
 Accepted phases are `planning`, `development`, `release-candidate`, and `release`.
-The checked-in manifest remains `planning` with all `0.0.0-dev` placeholders;
-there is no product/content release. Changing phase is an explicit future source
+The checked-in manifest remains `planning`, with game/editor `0.0.0-dev` and
+internal content `0.1.0-dev.1`; there is no published product/content release.
+The snapshot records an unresolved game requirement of `0.1.0-dev.1`.
+Changing phase is an explicit future source
 edit. A release-phase product cannot retain a prerelease suffix. Game/editor tags
 are independently derived, and a previous-version check uses the requested
 product's released history. Build metadata does not affect SemVer precedence and
@@ -96,22 +98,28 @@ have no Qt, Python-runtime or network dependency. The shared diagnostics also
 report compatibility integers, target OS/architecture, raw manifest SHA-256,
 configure-time Git commit/state and independent prospective game/editor artifact
 stems. A stem is a naming input, not an existing package. Product binary names
-remain unchanged. The runtime collection hash is explicitly `unavailable` until
-M1 validation implements it; the version-file hash is never substituted for it.
+remain unchanged. E1A-04 supplies the finalized runtime collection hash after
+the metadata reader verifies the record's linked files, source bytes and versions.
+Absent/invalid records report it as `unavailable`; the version-file hash is never
+substituted. The bundled game independently compiles its actual resource and
+refuses a mismatch with an available configured hash.
 
 Source identity is a snapshot at configuration, clearly labeled in diagnostics.
-The wrapper configures on each invocation; direct `cmake --build` alone need not
-notice a source edit/commit, so reconfigure before relying on that observation.
+The wrapper configures on each invocation; CMake also watches the version and
+snapshot/runtime files. Direct `cmake --build` alone need not notice an unrelated
+source edit/commit, so reconfigure before relying on that observation.
 Missing Git/exported trees report unavailable identity. See
 [build commands](BUILDING.md) for the CLI and explicit reconfigure instructions.
 
 The `check-release` command checks phase/placeholders, exact product tag,
-optional previous-version precedence and live Git cleanliness. It reports the
-isolated identity gate separately and **always returns nonzero with
+optional previous-version precedence and live Git cleanliness. It separately
+reports the identity gate, snapshot record integrity and whether the actual game
+version meets the recorded content requirement. The Python record check does
+not replace the C++ compiler/runtime validation. The command **always returns nonzero with
 `release_ready: false`** until the following owning gates exist:
 
-- M1/E1: validated runtime collection hash, finalized content→game bump
-  requirements and compatibility/migration evidence.
+- E2: cross-revision compatibility/migration evidence beyond the current explicit
+  exact-content save refusal policy.
 - M9: released-history/payload-reuse enforcement, dependency/source/license
   manifest, native package and clean-device evidence.
 
@@ -119,14 +127,18 @@ M10 later consumes the existing identity for game-only Snap metadata and
 qualified refresh behavior; it does not block the primary release's readiness.
 
 These checks cannot be supplied as a handful of command-line approval booleans.
-The current tool does not finalize content, rewrite manifests, create tags,
-publish artifacts or imply save compatibility. Future gate implementations must
-use actual owning artifacts and maintain this fail-closed behavior.
+The metadata reader does not finalize content or rewrite manifests. The separate
+`pgp-content-tool` implements internal finalization through the journaled shared
+writer, records required game bumps and preserves draft bytes. Neither tool
+creates tags, publishes artifacts or implies cross-content save compatibility.
+Future gate implementations must use actual owning artifacts and maintain this
+fail-closed behavior. A pending snapshot transaction blocks configuration and
+must be recovered before building.
 
 ## 7. Implementation sequence and acceptance
 
-- M0-05 implements the metadata reader/checks and shared build identity described above. The initial planning record remains unchanged; later release gates remain open.
-- M1-02/M1-06 implement schema/revision/hash/event-state contracts. E1a supplies a small safe validation/version tool for reviewed internal snapshots; E1b wraps that same writer in graphical batch finalization/version controls before M4. Neither stage bypasses revisions, conflict checks, recovery or package identity.
+- M0-05 implements the metadata reader/checks and shared build identity described above. The project remains in planning phase; later release gates remain open.
+- M1-02/M1-06 implement schema/revision/hash/event-state contracts. E1A-04 supplies the safe validation/version tool and first reviewed internal snapshot. E1B-02 wraps that same writer in graphical batch finalization/version controls before M4 component work. Neither stage bypasses revisions, conflict checks, recovery or package identity. Human author qualification waits for v1 preparation after all components are in place, per the 2026-11-05 user instruction.
 - E2 adds impact/compatibility tools for broader content and tests save continuation across content revisions.
 - M9 connects tag/version/artifact/source/itch identity; M10 connects the existing reader to Snapcraft rather than inventing new version numbers.
 
