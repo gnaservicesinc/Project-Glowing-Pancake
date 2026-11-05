@@ -56,9 +56,9 @@ rows. M1-03 remains open while M0-03 native/deployment acceptance is outstanding
 This distinguishes useful engineering progress from a passed platform gate.
 M1-06 now executes the current typed schema and M1-04 persists its whole state.
 Application policy performs recovery saves before irreversible actions and
-monthly/final autosaves, preserving live play on IO errors. The broader flow
-language still needs related-entity selectors/quantifiers; scoped variables and
-checked expressions are implemented. Weighted narrative branches now retain
+monthly/final autosaves, preserving live play on IO errors. Scoped variables,
+checked expressions and [related-entity selectors](evidence/M1-06-selectors.md)
+are implemented. Weighted narrative branches now retain
 their selected outcomes across delays, choices and saves; the
 [test evidence](evidence/M1-06-weighted-branches.md) is an engineering check.
 Daily duration predicates also preserve their opening-sample start/reset state

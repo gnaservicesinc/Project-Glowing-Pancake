@@ -58,7 +58,7 @@ calendar, including non-leap 2100. The initial headquarters vocabulary is US-CA,
 US-TX and US-WA. Additional scenario geography is a later schema extension.
 
 Conditions are registered fact clauses (`fact`, `op`, `value`, optional `unit`)
-or nested `all_of`, `any_of`, `not` or `holds_for_days`. Comparisons are `eq/ne/lt/lte/gt/gte`;
+or nested `all_of`, `any_of`, `not`, `holds_for_days` or `related`. Comparisons are `eq/ne/lt/lte/gt/gte`;
 boolean/text facts only allow equality/inequality. Scope, scalar type, unit and
 range are checked without coercions. Missing vocabulary is an explicit error.
 
@@ -68,6 +68,25 @@ trigger and exit condition; another flow has its own namespace. Existing
 condition depth/count limits include duration wrappers. Runtime uses elapsed
 daily observations and persists resets; see the
 [duration evidence](../../docs/evidence/M1-06-duration.md).
+
+A related-entity predicate binds its `where` condition to each member of a
+registered relation. This example requires exactly one active project:
+
+```json
+{"related":{"relation":"company.projects","match":"count","op":"eq","value":1,
+            "where":{"fact":"project.is_active","op":"eq","value":true}}}
+```
+
+`match` accepts `any`, `all` or `count`. Only `count` takes a comparison and
+integer threshold from zero through the relation's member bound. An empty
+collection gives false for `any`, true for `all`, and a count of zero. The
+foundation registers `company.capacity_sources`, `company.projects`,
+`capacity_source.projects` and `company.contracts`; members include historical
+rows where applicable. Use member facts to filter by active or completed state.
+Nested selectors follow declared owner/member scopes. A duration may wrap
+the aggregate and keeps the flow owner's daily history. Member predicates
+cannot declare their own timers. Effects and lifecycle ownership stay on their
+existing explicit scopes.
 
 Lifecycle modes are `once`, bounded `recurring`, bounded anchored `interval`,
 `scheduled`, and `continuous` with an explicit exit condition/node. Intervals
@@ -97,7 +116,7 @@ map argument names to their registered units. Targets must match allowed scopes.
 registered choices; strings never become expressions. Facts/effects have typed
 ports, help, units/ranges, scopes, phase boundary, knowledge visibility,
 provider and dependency metadata. Engine modules extend a `Registry` through
-checked `register_system`, `register_fact` and `register_effect`; dependencies
+checked `register_system`, `register_fact`, `register_effect` and `register_relation`; dependencies
 must already exist, so registration cannot create cycles. Registry entries
 describe available semantics; registration alone does not execute an operation.
 

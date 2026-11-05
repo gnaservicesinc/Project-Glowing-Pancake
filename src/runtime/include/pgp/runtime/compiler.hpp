@@ -77,14 +77,34 @@ struct DurationTrace {
     std::optional<bool> result;
     bool redacted = false;
 };
+struct RelatedMatch {
+    ScopeBinding binding;
+    std::optional<bool> result;
+};
+struct SelectionTrace {
+    std::string path;
+    std::string relation;
+    ScopeBinding owner;
+    content::QuantifierKind kind;
+    std::optional<content::CountComparison> count;
+    std::vector<RelatedMatch> members{};
+    std::optional<std::size_t> minimum_matches{};
+    std::optional<std::size_t> maximum_matches{};
+    std::optional<bool> result{};
+    bool redacted = false;
+};
 struct ConditionTrace {
     // Unknown in player mode when hidden clauses determine the outcome.
     // Temporal predicates also need a current saved observation to be known.
     std::optional<bool> result;
     std::vector<ClauseTrace> clauses;
     std::vector<DurationTrace> durations;
+    std::vector<SelectionTrace> selections;
+    std::size_t inspected_nodes = 0;
 };
 using FactReader = std::function<content::Scalar(const content::FactMetadata&, const ScopeBinding&)>;
+using RelationReader = std::function<std::vector<ScopeBinding>(const content::RelationMetadata&, const ScopeBinding&)>;
+inline constexpr std::size_t maximum_condition_inspection_nodes = 16'384;
 struct ExpressionType { content::ValueType type; content::Unit unit; };
 [[nodiscard]] ExpressionType validate_expression(const content::Expression& expression,
                                                 content::Scope scope, const content::Registry& registry);
@@ -101,7 +121,8 @@ struct ExpressionType { content::ValueType type; content::Unit unit; };
     InspectionMode mode = InspectionMode::author_fixture,
     std::string root_path = "trigger",
     const DurationReader& durations = {},
-    std::optional<core::OrdinalDay> inspection_day = std::nullopt);
+    std::optional<core::OrdinalDay> inspection_day = std::nullopt,
+    const RelationReader& relations = {});
 
 struct ResolvedAnchor {
     core::OrdinalDay first_due;

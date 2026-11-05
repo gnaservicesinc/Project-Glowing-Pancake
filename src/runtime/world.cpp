@@ -17,8 +17,17 @@ bool binding_exists(const WorldState& world, const ScopeBinding& binding) {
     case content::Scope::company: return binding.id == world.company_id;
     case content::Scope::world: return binding.id == world.world_id;
     case content::Scope::state: return binding.id == world.state_id;
+    case content::Scope::capacity_source: case content::Scope::project: case content::Scope::contract: return false;
     }
     return false;
+}
+template<class Row> const Row& related_row(const std::vector<Row>& rows, std::string_view id) {
+    const auto found = std::find_if(rows.begin(), rows.end(), [id](const auto& row) { return row.id == id; });
+    if (found == rows.end()) invalid("Related entity binding does not exist");
+    return *found;
+}
+bool business_member_scope(content::Scope scope) {
+    return scope == content::Scope::capacity_source || scope == content::Scope::project || scope == content::Scope::contract;
 }
 void scalar_valid(const content::Scalar& value, const content::FactMetadata& metadata) {
     switch (metadata.type) {
@@ -116,7 +125,27 @@ std::vector<std::string> supported_effects() {
 }
 content::Scalar read_fact(const WorldState& world, const content::FactMetadata& metadata,
                           const ScopeBinding& binding) {
-    if (!binding_exists(world, binding) || binding.scope != metadata.scope)
+    using content::Scope;
+    if (binding.scope != metadata.scope)
+        invalid("Fact scope binding has the wrong type");
+    const auto& pool = world.simulation.capacity;
+    const auto& market = world.simulation.market;
+    if (binding.scope == Scope::capacity_source && pool && pool->owner == world.company_id) {
+        const auto& source = related_row(pool->sources, binding.id);
+        if (metadata.id == "capacity_source.effective_milli_cu_per_day") return source.effective.value();
+    }
+    if (binding.scope == Scope::project && pool && pool->owner == world.company_id) {
+        const auto& project = related_row(pool->projects, binding.id);
+        if (metadata.id == "project.completed_milli_cu") return project.completed_work.value();
+        if (metadata.id == "project.is_active") return project.status == core::ProjectStatus::active;
+        if (metadata.id == "project.is_completed") return project.status == core::ProjectStatus::completed;
+    }
+    if (binding.scope == Scope::contract && market && market->owner == world.company_id) {
+        const auto& contract = related_row(market->contracts, binding.id);
+        if (metadata.id == "contract.is_active") return contract.status == core::ContractStatus::active;
+        if (metadata.id == "contract.missed_start") return contract.status == core::ContractStatus::missed;
+    }
+    if (!binding_exists(world, binding))
         invalid("Fact scope binding does not exist or has the wrong type");
     if (metadata.default_value) {
         const auto found = std::find_if(world.variables.begin(), world.variables.end(), [&](const auto& value) {
@@ -131,6 +160,39 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
     if (found == world.facts.end()) invalid("Missing owning fact provider value: " + metadata.id);
     scalar_valid(found->second, metadata);
     return found->second;
+}
+std::vector<ScopeBinding> read_relation(const WorldState& world, const content::RelationMetadata& metadata,
+                                       const ScopeBinding& owner) {
+    using content::Scope;
+    if (owner.scope != metadata.owner_scope) invalid("Relation owner has the wrong type");
+    std::vector<ScopeBinding> members;
+    const auto& pool = world.simulation.capacity;
+    const auto& market = world.simulation.market;
+    if (owner.scope == Scope::company && owner.id == world.company_id) {
+        if (metadata.id == "company.capacity_sources") {
+            if (pool && pool->owner == owner.id)
+                for (const auto& source : pool->sources) members.push_back({Scope::capacity_source, source.id});
+            return members;
+        }
+        if (metadata.id == "company.projects") {
+            if (pool && pool->owner == owner.id)
+                for (const auto& project : pool->projects) members.push_back({Scope::project, project.id});
+            return members;
+        }
+        if (metadata.id == "company.contracts") {
+            if (market && market->owner == owner.id)
+                for (const auto& contract : market->contracts) members.push_back({Scope::contract, contract.id});
+            return members;
+        }
+    }
+    if (owner.scope == Scope::capacity_source && metadata.id == "capacity_source.projects" &&
+        pool && pool->owner == world.company_id) {
+        (void)related_row(pool->sources, owner.id);
+        for (const auto& project : pool->projects)
+            if (project.source_id == owner.id) members.push_back({Scope::project, project.id});
+        return members;
+    }
+    invalid("Relation has no runtime provider or owning binding");
 }
 std::int64_t modifier_total(const RuntimeState& state, const ScopeBinding& binding, std::string_view field) {
     std::int64_t total = 0;
@@ -160,7 +222,8 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
         invalid("Invalid world identity, date, counterparty or count");
     for (const auto& [id, value] : world.facts) {
         const auto* metadata = program.registry.fact(id);
-        if (!metadata || metadata->default_value || id == "company.cash_cents") invalid("Unknown or duplicated owning world fact");
+        if (!metadata || metadata->default_value || id == "company.cash_cents" || business_member_scope(metadata->scope))
+            invalid("Unknown or duplicated owning world fact");
         scalar_valid(value, *metadata);
     }
     if (world.variables.size() > maximum_records) invalid("Variable value count budget exceeded");
@@ -190,14 +253,23 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
             invalid("Negotiation references missing deal template");
     }
     const auto operations = supported_effects();
+    const auto reader = [&](const auto& metadata, const auto& bound) { return read_fact(world, metadata, bound); };
+    const auto relations = [&](const auto& metadata, const auto& bound) { return read_relation(world, metadata, bound); };
+    std::size_t inspected_nodes = 0;
+    const auto inspect = [&](const auto& condition, const auto& binding) {
+        const auto inspected = evaluate_condition(condition, binding, program.registry, reader,
+            InspectionMode::author_fixture, "checkpoint", {}, {}, relations);
+        if (!inspected.selections.empty()) inspected_nodes += inspected.inspected_nodes;
+        if (inspected_nodes > 2 * maximum_records)
+            throw CompileError("budget", "checkpoint", "Checkpoint condition inspection budget exceeded");
+    };
     for (const auto& [id, definition] : program.collection.definitions) {
         (void)id;
         if (const auto* value = std::get_if<content::FlowDefinition>(&definition.data)) {
             const auto binding = ScopeBinding{value->scope, value->scope == content::Scope::company ? world.company_id :
                 value->scope == content::Scope::world ? world.world_id : world.state_id};
-            const auto reader = [&](const auto& metadata, const auto& bound) { return read_fact(world, metadata, bound); };
-            (void)evaluate_condition(value->trigger, binding, program.registry, reader);
-            if (value->lifecycle.exit_when) (void)evaluate_condition(*value->lifecycle.exit_when, binding, program.registry, reader);
+            inspect(value->trigger, binding);
+            if (value->lifecycle.exit_when) inspect(*value->lifecycle.exit_when, binding);
             for (const auto& [node_id, entry] : value->nodes) {
                 (void)node_id;
                 for (const auto& effect : entry.effects)

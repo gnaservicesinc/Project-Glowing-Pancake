@@ -60,9 +60,12 @@ block Mac implementation. Keep build caches between batches.
   choices. Daily duration predicates retain sampled start/reset state and exact
   elapsed-day thresholds through reload. Content-declared scoped variables,
   flags, checked value expressions and transactional assignment are implemented.
-  Related-entity selectors/quantifiers remain required work. [Runtime evidence](evidence/M1-06-runtime.md) and
-  [weighted-branch evidence](evidence/M1-06-weighted-branches.md)
-  and [duration evidence](evidence/M1-06-duration.md).
+  Related-entity selectors now bind compute sources, projects and contracts
+  with stable-order any/all/count matching and privacy-aware traces.
+  [Runtime evidence](evidence/M1-06-runtime.md),
+  [weighted branches](evidence/M1-06-weighted-branches.md),
+  [duration predicates](evidence/M1-06-duration.md) and
+  [selectors](evidence/M1-06-selectors.md).
 - Weighted-branch commit `2a37284` passes 26/26 CTests in each of all six native
   jobs across five targets, including GCC/Clang/MSVC and native Windows arm64.
   [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41895189273)
@@ -70,8 +73,7 @@ block Mac implementation. Keep build caches between batches.
 - Duration commit `543c451` also passes 27/27 CTests in each of all six native
   jobs across five targets, with matching resumed-state hashes.
   [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41903737919)
-  verifies the expanded core suite; M1-06's remaining forms and platform gate
-  remain open.
+  verifies that core revision. M1-06 retains the M1-03 prerequisite gate.
 - M1-04 now writes/loads the entire implemented checkpoint with exact resumed
   state, recovery copies, strict identity/integrity checks, three autosave slots,
   preferences, Unicode filenames, portable/standard paths and export. Campaign
@@ -191,9 +193,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac implementation: M1-06 related-entity selectors and quantifiers.**
-Use implemented business entities and their typed ownership and relations. M1-07
-then adds built-in committed-fact and seeded occurrence dispatch. M1-03 retains
+**Next Mac implementation: M1-07 built-in event dispatch.**
+Use the shared flow and save boundaries to dispatch committed business facts
+and bounded seeded occurrences. M1-03 retains
 the M0-03 prerequisite gate. Content finalization, save migrations and packaging
 remain later work.
 

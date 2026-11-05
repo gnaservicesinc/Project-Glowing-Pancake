@@ -41,13 +41,24 @@ struct FactClause {
     Unit unit;
     std::optional<Expression> expression{};
 };
-enum class ConditionKind { clause, all_of, any_of, not_condition, holds_for_days };
+enum class QuantifierKind { any, all, count };
+struct CountComparison {
+    Comparison comparison;
+    std::uint32_t value;
+};
+struct Quantifier {
+    QuantifierKind kind;
+    std::string relation;
+    std::optional<CountComparison> count{};
+};
+enum class ConditionKind { clause, all_of, any_of, not_condition, holds_for_days, quantified };
 struct Condition {
     ConditionKind kind;
     std::optional<FactClause> clause;
     std::vector<Condition> children;
     std::string predicate_id{};
     std::uint32_t duration_days = 0;
+    std::optional<Quantifier> quantifier{};
 };
 struct Effect {
     std::string operation;

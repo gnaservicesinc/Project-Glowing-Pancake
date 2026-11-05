@@ -73,9 +73,32 @@ std::string comparison_name(Comparison comparison, const std::string& path) {
     }
     fail("operation", path, "Unknown typed comparison");
 }
+std::string_view quantifier_name(QuantifierKind kind, const std::string& path) {
+    switch (kind) {
+    case QuantifierKind::any: return "any";
+    case QuantifierKind::all: return "all";
+    case QuantifierKind::count: return "count";
+    }
+    fail("operation", path, "Unknown typed quantifier");
+}
 Json condition_json(const Condition& condition, const std::string& path,
                     std::size_t depth, std::size_t& count) {
     if (depth > 16 || ++count > 128) fail("budget", path, "Condition nesting/count budget exceeded");
+    shape(condition.quantifier.has_value() == (condition.kind == ConditionKind::quantified),
+          path, "Only related conditions carry a quantifier");
+    if (condition.quantifier) {
+        shape(!condition.clause && condition.children.size() == 1 && condition.predicate_id.empty() && condition.duration_days == 0,
+              path, "A related condition requires one member predicate and no fact or duration payload");
+        const auto& quantified = *condition.quantifier;
+        shape(quantified.count.has_value() == (quantified.kind == QuantifierKind::count), path, "Only count has a comparison payload");
+        Json related{{"relation", quantified.relation}, {"match", quantifier_name(quantified.kind, path)},
+            {"where", condition_json(condition.children.front(), path_child(path, "related/where"), depth + 1, count)}};
+        if (quantified.count) {
+            related["op"] = comparison_name(quantified.count->comparison, path);
+            related["value"] = quantified.count->value;
+        }
+        return {{"related", std::move(related)}};
+    }
     if (condition.kind == ConditionKind::holds_for_days) {
         shape(!condition.clause && condition.children.size() == 1 && !condition.predicate_id.empty() && condition.duration_days != 0,
               path, "Duration predicates need one child, stable ID and positive days without a fact payload");
@@ -393,16 +416,36 @@ void validate_scalar(const Scalar& scalar, const FactMetadata& metadata, const s
         } else (void)scalar_json(scalar, path);
     } else fail("type", path, "Reference facts are not registered executable comparisons");
 }
-void validate_condition(const Condition& condition, const ScopeBinding& binding, const Registry& registry,
+void validate_condition(const Condition& condition, Scope scope, const Registry& registry,
                         const std::string& path, std::size_t depth, std::size_t& count,
-                        std::set<std::string>& predicates) {
+                        std::set<std::string>& predicates, bool member = false) {
     if (depth > 16 || ++count > 128) fail("budget", path, "Condition nesting/count budget exceeded");
+    shape(condition.quantifier.has_value() == (condition.kind == ConditionKind::quantified),
+          path, "Only related conditions carry a quantifier");
+    if (condition.quantifier) {
+        shape(!condition.clause && condition.children.size() == 1 && condition.predicate_id.empty() && condition.duration_days == 0,
+              path, "A related condition requires one member predicate and no fact or duration payload");
+        const auto& quantified = *condition.quantifier;
+        (void)quantifier_name(quantified.kind, path);
+        const auto* relation = registry.relation(quantified.relation);
+        if (!relation) fail("unknown_relation", path, "Selector has no registered provider");
+        if (relation->owner_scope != scope) fail("scope", path, "Selector owner scope differs from condition context");
+        shape(quantified.count.has_value() == (quantified.kind == QuantifierKind::count), path, "Only count has a comparison payload");
+        if (quantified.count) {
+            (void)comparison_name(quantified.count->comparison, path);
+            if (quantified.count->value > relation->maximum_members) fail("range", path, "Count exceeds the registered member bound");
+        }
+        validate_condition(condition.children.front(), relation->member_scope, registry, path_child(path, "related/where"),
+                           depth + 1, count, predicates, true);
+        return;
+    }
     if (condition.kind == ConditionKind::holds_for_days) {
+        if (member) fail("scope", path, "A duration can wrap a selector, but member conditions cannot own duration history");
         shape(!condition.clause && condition.children.size() == 1, path, "Duration predicate requires exactly one child without a fact payload");
         if (!valid_id(condition.predicate_id)) fail("identifier", path, "Duration predicate requires a stable bounded ID");
         if (condition.duration_days == 0 || condition.duration_days > 1'000'000) fail("range", path, "Duration requires 1..1,000,000 elapsed days");
         if (!predicates.insert(condition.predicate_id).second) fail("duplicate_id", path, "Duration predicate IDs must be unique within a condition");
-        validate_condition(condition.children.front(), binding, registry, path_child(path, "holds_for_days/condition"), depth + 1, count, predicates);
+        validate_condition(condition.children.front(), scope, registry, path_child(path, "holds_for_days/condition"), depth + 1, count, predicates);
         return;
     }
     shape(condition.predicate_id.empty() && condition.duration_days == 0, path, "Only duration predicates carry temporal payloads");
@@ -411,14 +454,14 @@ void validate_condition(const Condition& condition, const ScopeBinding& binding,
         const auto& clause = *condition.clause;
         const auto* metadata = registry.fact(clause.fact);
         if (!metadata) fail("unknown_fact", path, "Fact has no registered provider");
-        if (metadata->scope != binding.scope) fail("scope", path, "Fact scope differs from binding");
+        if (metadata->scope != scope) fail("scope", path, "Fact scope differs from binding");
         if (metadata->unit != clause.unit) fail("unit", path, "Fact unit differs from comparison unit");
         (void)comparison_name(clause.comparison, path);
         if (metadata->type != ValueType::integer && clause.comparison != Comparison::equal && clause.comparison != Comparison::not_equal)
             fail("type", path, "Only integer facts support ordering comparisons");
         if (clause.expression) {
             shape(clause.value == Scalar{std::int64_t{0}}, path, "Expression comparison needs a zero scalar placeholder");
-            const auto type = validate_expression(*clause.expression, binding.scope, registry);
+            const auto type = validate_expression(*clause.expression, scope, registry);
             if (type.type != metadata->type) fail("type", path, "Comparison expression type mismatch");
             if (type.unit != metadata->unit) fail("unit", path, "Comparison expression unit mismatch");
         } else validate_scalar(clause.value, *metadata, path);
@@ -428,7 +471,7 @@ void validate_condition(const Condition& condition, const ScopeBinding& binding,
               (condition.kind == ConditionKind::all_of || condition.kind == ConditionKind::any_of ||
                (condition.kind == ConditionKind::not_condition && condition.children.size() == 1)), path, "Malformed condition aggregate");
     for (std::size_t i = 0; i < condition.children.size(); ++i)
-        validate_condition(condition.children[i], binding, registry, path_child(path, std::to_string(i)), depth + 1, count, predicates);
+        validate_condition(condition.children[i], scope, registry, path_child(path, std::to_string(i)), depth + 1, count, predicates, member);
 }
 bool compare(const Scalar& actual, const Scalar& expected, Comparison comparison) {
     switch (comparison) {
@@ -466,6 +509,8 @@ Scalar execute_expression(const Expression& expression, const ScopeBinding& bind
     return expression.kind == ExpressionKind::add ? core::checked_add(left, right) : core::checked_subtract(left, right);
 }
 bool has_hidden_descendant(const Condition& condition, const Registry& registry) {
+    if (condition.quantifier && registry.relation(condition.quantifier->relation)->visibility == Visibility::hidden_truth)
+        return true;
     if (condition.kind == ConditionKind::clause)
         return registry.fact(condition.clause->fact)->visibility == Visibility::hidden_truth ||
             (condition.clause->expression && expression_hidden(*condition.clause->expression, registry));
@@ -477,25 +522,94 @@ void duration_date(core::OrdinalDay day, const std::string& path) {
     try { (void)core::from_ordinal(day); }
     catch (const std::exception&) { fail("duration", path, "Duration observation date is outside the supported Gregorian calendar"); }
 }
-std::optional<bool> inspect(const Condition& condition, const ScopeBinding& binding, const Registry& registry,
-                            const FactReader& read, InspectionMode mode, const std::string& path,
-                            std::vector<ClauseTrace>& traces, std::vector<DurationTrace>& duration_traces,
-                            const DurationReader& durations, std::optional<core::OrdinalDay> inspection_day) {
+bool valid_binding_id(const ScopeBinding& binding) {
+    switch (binding.scope) {
+    case Scope::world: case Scope::company: case Scope::state: return valid_id(binding.id);
+    case Scope::capacity_source: case Scope::project: case Scope::contract:
+        // Business commands permit bounded display-friendly IDs.
+        return !binding.id.empty() && binding.id.size() <= 100 &&
+            std::none_of(binding.id.begin(), binding.id.end(), [](unsigned char ch) { return ch < 32 || ch == 127; });
+    }
+    return false;
+}
+struct Inspection {
+    const Registry& registry;
+    const FactReader& read;
+    InspectionMode mode;
+    const DurationReader& durations;
+    std::optional<core::OrdinalDay> inspection_day;
+    const RelationReader& relations;
+    ConditionTrace trace{};
+
+    std::optional<bool> inspect(const Condition& condition, const ScopeBinding& binding, const std::string& path);
+    std::optional<bool> inspect_selection(const Condition& condition, const ScopeBinding& binding, const std::string& path);
+};
+std::optional<bool> count_result(const CountComparison& count, std::int64_t minimum, std::int64_t maximum) {
+    const auto threshold = static_cast<std::int64_t>(count.value);
+    if ((count.comparison == Comparison::equal || count.comparison == Comparison::not_equal) &&
+        minimum < maximum && minimum <= threshold && threshold <= maximum) return std::nullopt;
+    const bool low = compare(minimum, threshold, count.comparison);
+    const bool high = compare(maximum, threshold, count.comparison);
+    return low == high ? std::optional<bool>{low} : std::nullopt;
+}
+std::optional<bool> Inspection::inspect_selection(const Condition& condition, const ScopeBinding& binding,
+                                                 const std::string& path) {
+    const auto& quantified = *condition.quantifier;
+    const auto& relation = *registry.relation(quantified.relation);
+    SelectionTrace selected{path, relation.id, binding, quantified.kind, quantified.count};
+    const auto index = trace.selections.size();
+    trace.selections.push_back(selected);
+    if (mode == InspectionMode::player_known && relation.visibility == Visibility::hidden_truth) {
+        trace.selections[index].redacted = true;
+        return std::nullopt;
+    }
+    if (!relations) fail("provider", path, "A pure relation reader is required");
+    auto members = relations(relation, binding);
+    if (members.size() > relation.maximum_members) fail("budget", path, "Related collection exceeds its registered member bound");
+    std::sort(members.begin(), members.end());
+    for (std::size_t i = 0; i < members.size(); ++i) {
+        const auto& member = members[i];
+        if (member.scope != relation.member_scope || !valid_binding_id(member) || (i > 0 && member == members[i - 1]))
+            fail("scope", path, "Relation provider returned an invalid or duplicate member binding");
+    }
+    std::int64_t minimum = 0, maximum = 0;
+    selected.members.reserve(members.size());
+    for (std::size_t i = 0; i < members.size(); ++i) {
+        const auto result = inspect(condition.children.front(), members[i], path_child(path_child(path, "where"), std::to_string(i)));
+        if (result == true) ++minimum;
+        if (result != false) ++maximum;
+        selected.members.push_back({std::move(members[i]), result});
+    }
+    selected.minimum_matches = static_cast<std::size_t>(minimum);
+    selected.maximum_matches = static_cast<std::size_t>(maximum);
+    const auto size = static_cast<std::uint32_t>(selected.members.size());
+    switch (quantified.kind) {
+    case QuantifierKind::any: selected.result = count_result({Comparison::greater, 0}, minimum, maximum); break;
+    case QuantifierKind::all: selected.result = count_result({Comparison::equal, size}, minimum, maximum); break;
+    case QuantifierKind::count: selected.result = count_result(*quantified.count, minimum, maximum); break;
+    }
+    const auto result = selected.result;
+    trace.selections[index] = std::move(selected);
+    return result;
+}
+std::optional<bool> Inspection::inspect(const Condition& condition, const ScopeBinding& binding, const std::string& path) {
+    if (++trace.inspected_nodes > maximum_condition_inspection_nodes)
+        fail("budget", path, "Expanded condition inspection budget exceeded");
+    if (condition.quantifier) return inspect_selection(condition, binding, path_child(path, "related"));
     if (condition.kind == ConditionKind::holds_for_days) {
         const auto duration_path = path_child(path, "holds_for_days");
-        DurationTrace trace{duration_path, condition.predicate_id, binding, condition.duration_days, {}, {}, {}, {}};
-        const auto index = duration_traces.size();
-        duration_traces.push_back(trace);
+        DurationTrace observation_trace{duration_path, condition.predicate_id, binding, condition.duration_days, {}, {}, {}, {}};
+        const auto index = trace.durations.size();
+        trace.durations.push_back(observation_trace);
         // Current facts remain inspectable, but cached daily observations own
         // temporal truth even if a later same-day command changed those facts.
-        (void)inspect(condition.children.front(), binding, registry, read, mode, path_child(duration_path, "condition"),
-                      traces, duration_traces, durations, inspection_day);
+        (void)inspect(condition.children.front(), binding, path_child(duration_path, "condition"));
         if (mode == InspectionMode::player_known && has_hidden_descendant(condition.children.front(), registry)) {
-            trace.redacted = true;
+            observation_trace.redacted = true;
         } else if (durations && inspection_day) {
             duration_date(*inspection_day, duration_path);
             const auto observation = durations(condition.predicate_id, binding);
-            if (!observation) trace.result = false;
+            if (!observation) observation_trace.result = false;
             else {
                 duration_date(observation->observed_on, duration_path);
                 if (observation->observed_on > *inspection_day) fail("duration", duration_path, "Duration observation is in the future");
@@ -503,46 +617,44 @@ std::optional<bool> inspect(const Condition& condition, const ScopeBinding& bind
                     duration_date(*observation->true_since, duration_path);
                     if (*observation->true_since > observation->observed_on) fail("duration", duration_path, "Duration start follows its observation date");
                 }
-                trace.observed_on = observation->observed_on;
-                trace.true_since = observation->true_since;
+                observation_trace.observed_on = observation->observed_on;
+                observation_trace.true_since = observation->true_since;
                 if (observation->observed_on == *inspection_day) {
                     if (observation->true_since) {
-                        trace.elapsed_days = core::checked_subtract(inspection_day->value(), observation->true_since->value());
-                        trace.result = *trace.elapsed_days >= condition.duration_days;
-                    } else trace.result = false;
+                        observation_trace.elapsed_days = core::checked_subtract(inspection_day->value(), observation->true_since->value());
+                        observation_trace.result = *observation_trace.elapsed_days >= condition.duration_days;
+                    } else observation_trace.result = false;
                 }
             }
         }
-        duration_traces[index] = trace;
-        return trace.result;
+        trace.durations[index] = observation_trace;
+        return observation_trace.result;
     }
     if (condition.kind == ConditionKind::clause) {
         const auto& clause = *condition.clause;
         const auto& metadata = *registry.fact(clause.fact);
         if (mode == InspectionMode::player_known && (metadata.visibility == Visibility::hidden_truth ||
             (clause.expression && expression_hidden(*clause.expression, registry)))) {
-            traces.push_back({path, clause.fact, binding, clause.unit, clause.comparison, {}, {}, {}, true});
+            trace.clauses.push_back({path, clause.fact, binding, clause.unit, clause.comparison, {}, {}, {}, true});
             return std::nullopt;
         }
         const auto actual = read(metadata, binding);
         validate_scalar(actual, metadata, path);
         const auto expected = clause.expression ? execute_expression(*clause.expression, binding, registry, read) : clause.value;
         const auto result = compare(actual, expected, clause.comparison);
-        traces.push_back({path, clause.fact, binding, clause.unit, clause.comparison, actual, expected, result, false});
+        trace.clauses.push_back({path, clause.fact, binding, clause.unit, clause.comparison, actual, expected, result, false});
         return result;
     }
     if (condition.kind == ConditionKind::not_condition) {
-        const auto result = inspect(condition.children.front(), binding, registry, read, mode, path_child(path, "not"),
-                                    traces, duration_traces, durations, inspection_day);
+        const auto result = inspect(condition.children.front(), binding, path_child(path, "not"));
         return result ? std::optional<bool>{!*result} : std::nullopt;
     }
     const bool all = condition.kind == ConditionKind::all_of;
     bool unknown = false;
     bool decisive = false;
     for (std::size_t i = 0; i < condition.children.size(); ++i) {
-        const auto result = inspect(condition.children[i], binding, registry, read, mode,
-                                    path_child(path_child(path, all ? "all_of" : "any_of"), std::to_string(i)),
-                                    traces, duration_traces, durations, inspection_day);
+        const auto result = inspect(condition.children[i], binding,
+                                    path_child(path_child(path, all ? "all_of" : "any_of"), std::to_string(i)));
         if (!result) unknown = true;
         else if (*result != all) decisive = true;
     }
@@ -607,7 +719,7 @@ ExpressionType validate_expression(const Expression& expression, Scope scope, co
 }
 std::optional<Scalar> evaluate_expression(const Expression& expression, const ScopeBinding& binding,
                                          const Registry& registry, const FactReader& read, InspectionMode mode) {
-    if (!valid_id(binding.id)) fail("scope", "/expression", "Expression binding needs a stable bounded identifier");
+    if (!valid_binding_id(binding)) fail("scope", "/expression", "Expression binding needs a stable bounded identifier");
     if (mode != InspectionMode::author_fixture && mode != InspectionMode::player_known)
         fail("visibility", "/expression", "Unknown expression inspection mode");
     (void)validate_expression(expression, binding.scope, registry);
@@ -618,17 +730,18 @@ std::optional<Scalar> evaluate_expression(const Expression& expression, const Sc
 ConditionTrace evaluate_condition(const Condition& condition, const ScopeBinding& binding,
                                    const Registry& registry, const FactReader& read,
                                    InspectionMode mode, std::string root_path,
-                                   const DurationReader& durations, std::optional<core::OrdinalDay> inspection_day) {
-    if (!valid_id(binding.id)) fail("scope", root_path, "Binding needs a stable bounded entity identifier");
+                                   const DurationReader& durations, std::optional<core::OrdinalDay> inspection_day,
+                                   const RelationReader& relations) {
+    if (!valid_binding_id(binding)) fail("scope", root_path, "Binding needs a stable bounded entity identifier");
     if (mode != InspectionMode::author_fixture && mode != InspectionMode::player_known)
         fail("visibility", root_path, "Unknown inspection mode");
     if (!read) fail("provider", root_path, "A pure fact reader is required");
     std::size_t count = 0;
     std::set<std::string> predicates;
-    validate_condition(condition, binding, registry, root_path, 0, count, predicates);
-    ConditionTrace result;
-    result.result = inspect(condition, binding, registry, read, mode, root_path, result.clauses, result.durations, durations, inspection_day);
-    return result;
+    validate_condition(condition, binding.scope, registry, root_path, 0, count, predicates);
+    Inspection inspector{registry, read, mode, durations, inspection_day, relations};
+    inspector.trace.result = inspector.inspect(condition, binding, root_path);
+    return std::move(inspector.trace);
 }
 
 ResolvedAnchor resolve_anchor(const Anchor& anchor, core::OrdinalDay campaign_start, core::OrdinalDay scope_created) {

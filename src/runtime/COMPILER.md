@@ -66,5 +66,11 @@ scale with one signed half-up rounding. Comparisons can use an expression on
 their right side. `set_variable` assigns a matching typed expression through the
 same transaction and receipts as other effects; no arbitrary script runs.
 Hidden RHS expressions redact the entire player clause before hidden reads.
-Related-entity selectors/quantifiers remain future extensions. M1-06 stays open
-for them and deferred platform qualification; Mac gameplay development proceeds.
+Related-entity selectors resolve registered owner/member scopes using a pure
+reader over authoritative business rows. Members are sorted by stable ID, with
+duplicate/wrong-type provider results refused. Inspection reports each member's
+truth and lower/upper match counts. A hidden relation is not read in player mode;
+hidden member facts contribute only uncertainty. Empty collections match
+`all`, fail `any` and count zero. Expanded inspections stop after 16,384
+condition nodes; prepared mornings and checkpoint validation additionally
+bound aggregate work. M1-06 remains open for prerequisite qualification.

@@ -259,13 +259,53 @@ bool semver(std::string_view value) {
     return true;
 }
 
+Comparison comparison_op(const Json& value, const std::string& path) {
+    const auto op = text(value, path, 8);
+    if (op == "eq") return Comparison::equal;
+    if (op == "ne") return Comparison::not_equal;
+    if (op == "lt") return Comparison::less;
+    if (op == "lte") return Comparison::less_equal;
+    if (op == "gt") return Comparison::greater;
+    if (op == "gte") return Comparison::greater_equal;
+    fail("operation", path, "Unregistered comparison");
+}
+
 Condition condition(const Json& value, const std::string& path, Scope context, const Registry& registry,
-                    std::size_t depth = 0, std::size_t* inherited_count = nullptr) {
+                    std::size_t depth = 0, std::size_t* inherited_count = nullptr, bool member = false) {
     std::size_t own_count = 0;
     auto* count = inherited_count ? inherited_count : &own_count;
     if (depth > 16 || ++*count > 128) fail("budget", path, "Condition nesting/count budget exceeded");
     if (!value.is_object()) fail("type", path, "Expected condition object");
+    if (value.contains("related")) {
+        fields(value, path, {"related"}, {"related"});
+        const auto related_path = child(path, "related");
+        const auto& related = value.at("related");
+        fields(related, related_path, {"relation", "match", "where", "op", "value"}, {"relation", "match", "where"});
+        auto relation_id = id(related.at("relation"), child(related_path, "relation"));
+        const auto* relation = registry.relation(relation_id);
+        if (!relation) fail("unknown_relation", related_path, "Selector has no registered provider");
+        if (relation->owner_scope != context) fail("scope", related_path, "Selector owner scope differs from condition context");
+        const auto match = text(related.at("match"), child(related_path, "match"), 8);
+        Quantifier quantified{QuantifierKind::any, std::move(relation_id)};
+        if (match == "all") quantified.kind = QuantifierKind::all;
+        else if (match == "count") {
+            if (!related.contains("op") || !related.contains("value"))
+                fail("missing_field", related_path, "Count requires a comparison and an integer threshold");
+            quantified.kind = QuantifierKind::count;
+            quantified.count = CountComparison{comparison_op(related.at("op"), child(related_path, "op")),
+                static_cast<std::uint32_t>(integer(related.at("value"), child(related_path, "value"), 0,
+                    static_cast<std::int64_t>(relation->maximum_members)))};
+        } else if (match != "any") fail("operation", related_path, "Unregistered related-entity quantifier");
+        if (match != "count" && (related.contains("op") || related.contains("value")))
+            fail("typed_shape", related_path, "Only count accepts a comparison and threshold");
+        Condition result{ConditionKind::quantified, std::nullopt, {}};
+        result.quantifier = std::move(quantified);
+        result.children.push_back(condition(related.at("where"), child(related_path, "where"),
+                                            relation->member_scope, registry, depth + 1, count, true));
+        return result;
+    }
     if (value.contains("holds_for_days")) {
+        if (member) fail("scope", path, "A duration can wrap a selector, but member conditions cannot own duration history");
         fields(value, path, {"holds_for_days"}, {"holds_for_days"});
         const auto temporal_path = child(path, "holds_for_days");
         const auto& temporal = value.at("holds_for_days");
@@ -282,11 +322,11 @@ Condition condition(const Json& value, const std::string& path, Scope context, c
             Condition result{name == std::string_view("all_of") ? ConditionKind::all_of :
                              name == std::string_view("any_of") ? ConditionKind::any_of : ConditionKind::not_condition,
                              std::nullopt, {}};
-            if (name == std::string_view("not")) result.children.push_back(condition(value.at(name), child(path, name), context, registry, depth + 1, count));
+            if (name == std::string_view("not")) result.children.push_back(condition(value.at(name), child(path, name), context, registry, depth + 1, count, member));
             else {
                 array(value.at(name), child(path, name), 128, true);
                 for (std::size_t i = 0; i < value.at(name).size(); ++i)
-                    result.children.push_back(condition(value.at(name)[i], child(child(path, name), std::to_string(i)), context, registry, depth + 1, count));
+                    result.children.push_back(condition(value.at(name)[i], child(child(path, name), std::to_string(i)), context, registry, depth + 1, count, member));
             }
             return result;
         }
@@ -298,15 +338,7 @@ Condition condition(const Json& value, const std::string& path, Scope context, c
     if (fact->scope != context) fail("scope", path, "Fact scope differs from flow context");
     if (value.contains("unit") && text(value.at("unit"), child(path, "unit"), 64) != unit_name(fact->unit))
         fail("unit", child(path, "unit"), "Fact comparison unit mismatch; no implicit conversions");
-    const auto op = text(value.at("op"), child(path, "op"), 8);
-    Comparison comparison;
-    if (op == "eq") comparison = Comparison::equal;
-    else if (op == "ne") comparison = Comparison::not_equal;
-    else if (op == "lt") comparison = Comparison::less;
-    else if (op == "lte") comparison = Comparison::less_equal;
-    else if (op == "gt") comparison = Comparison::greater;
-    else if (op == "gte") comparison = Comparison::greater_equal;
-    else fail("operation", child(path, "op"), "Unregistered comparison");
+    const auto comparison = comparison_op(value.at("op"), child(path, "op"));
     if (fact->type != ValueType::integer && comparison != Comparison::equal && comparison != Comparison::not_equal)
         fail("type", path, "Only integer facts permit ordering comparisons");
     Scalar literal;
@@ -878,7 +910,7 @@ std::string_view definition_kind(const Definition& definition) {
     return "deal";
 }
 std::pair<ValueType, Unit> expression_type(const Expression& value, Scope context, const Registry& registry) {
-    if (context != Scope::company && context != Scope::world && context != Scope::state)
+    if (static_cast<unsigned>(context) > static_cast<unsigned>(Scope::contract))
         fail("scope", "/expression", "Expression scope is invalid");
     std::size_t count = 0;
     return expression_type_impl(value, context, registry, 0, count);

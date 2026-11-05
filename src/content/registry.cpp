@@ -1,4 +1,5 @@
 #include <pgp/content/registry.hpp>
+#include <pgp/core/market.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -6,7 +7,7 @@
 
 namespace pgp::content {
 namespace {
-bool valid_scope(Scope value) { return value == Scope::world || value == Scope::company || value == Scope::state; }
+bool valid_scope(Scope value) { return static_cast<unsigned>(value) <= static_cast<unsigned>(Scope::contract); }
 bool valid_unit(Unit value) { return static_cast<unsigned>(value) <= static_cast<unsigned>(Unit::count); }
 bool compatible(ValueType type, Unit unit) {
     if (!valid_unit(unit)) return false;
@@ -66,7 +67,10 @@ bool valid_id(std::string_view id) {
 }
 std::string_view scope_name(Scope scope) {
     switch (scope) { case Scope::world: return "world"; case Scope::company: return "company";
-    case Scope::state: return "state"; }
+    case Scope::state: return "state";
+    case Scope::capacity_source: return "capacity_source";
+    case Scope::project: return "project";
+    case Scope::contract: return "contract"; }
     throw std::invalid_argument("Unknown scope");
 }
 std::string_view unit_name(Unit unit) {
@@ -159,6 +163,19 @@ const FactMetadata* Registry::fact(std::string_view id) const {
 const EffectMetadata* Registry::effect(std::string_view id) const {
     const auto found = effects_.find(id); return found == effects_.end() ? nullptr : &found->second;
 }
+void Registry::register_relation(RelationMetadata metadata) {
+    validate_common(metadata.id, metadata.help);
+    validate_provider(metadata.provider, {});
+    if (!valid_scope(metadata.owner_scope) || !valid_scope(metadata.member_scope) ||
+        metadata.maximum_members == 0 || metadata.maximum_members > maximum_relation_members ||
+        static_cast<unsigned>(metadata.visibility) > static_cast<unsigned>(Visibility::hidden_truth))
+        throw std::invalid_argument("Invalid relation scope, member bound or visibility");
+    const auto id = metadata.id;
+    if (!relations_.emplace(id, std::move(metadata)).second) throw std::invalid_argument("Duplicate relation ID");
+}
+const RelationMetadata* Registry::relation(std::string_view id) const {
+    const auto found = relations_.find(id); return found == relations_.end() ? nullptr : &found->second;
+}
 Registry foundation_registry() {
     Registry result;
     const auto maximum = std::numeric_limits<std::int64_t>::max();
@@ -167,10 +184,10 @@ Registry foundation_registry() {
         result.register_fact({std::move(id), scope, ValueType::integer, unit, low, high, std::move(help),
             {{"scope", PortType::scope, scope, Unit::none, false}, {"value", PortType::value, scope, unit, true}}, Boundary::committed_result, Visibility::player_known, "foundation", {}});
     };
-    auto boolean = [&](std::string id, std::string help) {
-        result.register_fact({std::move(id), Scope::company, ValueType::boolean, Unit::boolean, 0, 1, std::move(help),
-            {{"scope", PortType::scope, Scope::company, Unit::none, false},
-             {"value", PortType::value, Scope::company, Unit::boolean, true}}, Boundary::committed_result, Visibility::player_known, "foundation", {}});
+    auto boolean = [&](std::string id, std::string help, Scope scope = Scope::company) {
+        result.register_fact({std::move(id), scope, ValueType::boolean, Unit::boolean, 0, 1, std::move(help),
+            {{"scope", PortType::scope, scope, Unit::none, false},
+             {"value", PortType::value, scope, Unit::boolean, true}}, Boundary::committed_result, Visibility::player_known, "foundation", {}});
     };
     number("company.cash_cents", Scope::company, Unit::constant_2014_cents, minimum, maximum,
            "Available company cash in constant-2014 cents at the current phase.");
@@ -184,6 +201,22 @@ Registry foundation_registry() {
     boolean("company.has_compute_lease", "Whether the company has a current compute lease.");
     boolean("company.has_research_partner", "Whether the company has a current research partnership.");
     boolean("company.is_operating", "Whether company operations remain active.");
+    result.register_relation({"company.capacity_sources", Scope::company, Scope::capacity_source, core::capacity_source_limit,
+        "Compute sources controlled by this company, including leased supply."});
+    result.register_relation({"company.projects", Scope::company, Scope::project, core::capacity_project_limit,
+        "This company's capacity projects, including completed and cancelled work."});
+    result.register_relation({"capacity_source.projects", Scope::capacity_source, Scope::project, core::capacity_project_limit,
+        "This company's projects assigned to the selected compute source."});
+    result.register_relation({"company.contracts", Scope::company, Scope::contract, core::market_contract_limit,
+        "This company's accepted contracts, including pending and historical contracts."});
+    number("capacity_source.effective_milli_cu_per_day", Scope::capacity_source, Unit::milli_CU_per_day, 0, maximum,
+        "Effective daily compute capacity after supply changes.");
+    number("project.completed_milli_cu", Scope::project, Unit::milli_CU, 0, maximum,
+        "Actual compute work recorded for this project.");
+    boolean("project.is_active", "Whether the project is still active.", Scope::project);
+    boolean("project.is_completed", "Whether the finite project finished its work.", Scope::project);
+    boolean("contract.is_active", "Whether this contract currently serves.", Scope::contract);
+    boolean("contract.missed_start", "Whether this contract missed its start deadline.", Scope::contract);
     auto effect = [&](std::string id, std::vector<ArgumentMetadata> args, std::string help) {
         result.register_effect({std::move(id), {Scope::company}, std::move(args), std::move(help),
             {{"target", PortType::scope, Scope::company, Unit::none, false},

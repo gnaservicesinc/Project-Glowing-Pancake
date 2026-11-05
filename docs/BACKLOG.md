@@ -35,12 +35,9 @@ lifecycles, nested sequence/subflow waits/choices, modifier ownership, traces,
 bounded execution, exact file reload, recovery/autosave/settings/export and
 application persistence policy are implemented. [Runtime evidence](evidence/M1-06-runtime.md),
 [save evidence](evidence/M1-04-persistence.md) and [integration log](IMPLEMENTATION_LOG.md)
-record the tested behavior. Both tasks remain unchecked: M1-06 still needs the
-specification's related-entity/quantifier
-semantics, plus its prerequisite gate; M1-04 waits for those
-runtime/pending-state requirements and prerequisite acceptance. Unknown forms
-fail explicitly today. UI save/room discovery is implemented in M1-05. This implementation
-does not complete the business scenario or alter the promised scope.
+record the original tested behavior. Both tasks remain unchecked pending
+prerequisite acceptance. Later batches below extend the runtime and exercise
+the exact save boundary. UI save/room discovery is implemented in M1-05.
 
 **M1-06 weighted-branch slice, 2026-11-04:** explicit narrative-stream weighted
 branches now validate, execute, trace and save their selected outcomes. Delays,
@@ -53,6 +50,13 @@ validate, sample, trace and persist their starts/resets. A shared morning
 snapshot, saved sample cursor, nested postorder evaluation and complete enabled
 root histories preserve exact thresholds through choices/reload. [Evidence](evidence/M1-06-duration.md)
 records scope-history exit semantics and remaining work. Accepted count: 5/52.
+
+**M1-06 selector slice, 2026-11-04:** related compute sources, projects and
+contracts now validate and execute with bounded any/all/count semantics.
+The opening timer over completed project work reloads exactly, with the same
+effect and RNG state. [Mac evidence](evidence/M1-06-selectors.md) records the
+stable ordering, privacy rules and verification. The M1-03 gate keeps M1-06
+open. Next Mac batch is M1-07.
 
 **Mac-first batch, 2026-11-04:** scoped variables/flags, checked expressions and
 transactional `set_variable` assignments now extend that shared runtime and save

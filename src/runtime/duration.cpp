@@ -42,6 +42,9 @@ void sample_tree(const content::Condition& condition, const LifecycleState& life
     const auto facts = [&](const auto& metadata, const auto& binding) {
         return read_fact(checkpoint.world, metadata, binding);
     };
+    const auto relations = [&](const auto& metadata, const auto& owner) {
+        return read_relation(checkpoint.world, metadata, owner);
+    };
     const DurationReader durations = [&](std::string_view predicate_id, const ScopeBinding& binding)
         -> std::optional<DurationObservation> {
         if (binding != lifecycle.binding) throw std::invalid_argument("Duration query changed scope");
@@ -51,8 +54,8 @@ void sample_tree(const content::Condition& condition, const LifecycleState& life
         return DurationObservation{state.observed_on, state.true_since};
     };
     const auto inspected = evaluate_condition(condition.children.front(), lifecycle.binding,
-        program.registry, facts, InspectionMode::author_fixture, "duration_sample", durations, today);
-    charge(steps, inspected.clauses.size() + inspected.durations.size());
+        program.registry, facts, InspectionMode::author_fixture, "duration_sample", durations, today, relations);
+    charge(steps, inspected.selections.empty() ? inspected.clauses.size() + inspected.durations.size() : inspected.inspected_nodes);
     if (!inspected.result) throw std::invalid_argument("A daily duration sample lacks its nested observation");
     if (found == index.end()) {
         if (states.size() >= maximum_records)

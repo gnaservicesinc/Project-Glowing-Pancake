@@ -203,6 +203,7 @@ struct RuntimeResult {
     std::vector<ClauseTrace> clauses;
     bool committed = false;
     std::vector<DurationTrace> durations{};
+    std::vector<SelectionTrace> selections{};
     [[nodiscard]] bool accepted() const noexcept { return reason == RuntimeReason::accepted; }
 };
 
@@ -211,6 +212,9 @@ struct RuntimeResult {
 [[nodiscard]] content::Scalar read_fact(const WorldState& world,
                                       const content::FactMetadata& metadata,
                                       const ScopeBinding& binding);
+[[nodiscard]] std::vector<ScopeBinding> read_relation(const WorldState& world,
+                                                    const content::RelationMetadata& metadata,
+                                                    const ScopeBinding& owner);
 [[nodiscard]] std::int64_t modifier_total(const RuntimeState& state,
                                          const ScopeBinding& binding, std::string_view field);
 // Strict reload validation, with no due work, RNG draws or state mutation.
