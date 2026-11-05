@@ -156,7 +156,12 @@ gates. E1A-02 extends the same working document with typed flow forms.
 continuous exit predicates. Registry-backed forms edit comparisons, typed
 operands and arithmetic, related members, counts and elapsed-day timers.
 Exact draft round-trip and rejected edits pass on Mac. Lifecycle, execution
-and reference edits remain in this task. [Trigger form evidence](evidence/E1A-02-triggers.md)
+and reference edits were staged separately. [Trigger form evidence](evidence/E1A-02-triggers.md)
+
+**E1A-02 lifecycle slice:** create scoped flows, select scenario activation
+roots and configure all five lifecycles. Draft flow renames update typed
+references in the collection in one undoable change. Ordered execution
+editing remains in this task. [Lifecycle form evidence](evidence/E1A-02-lifecycles.md)
 
 ## E1b — Required node canvas and author qualification
 

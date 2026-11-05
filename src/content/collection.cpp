@@ -3,8 +3,6 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
-#include <array>
-#include <charconv>
 #include <functional>
 #include <deque>
 #include <limits>
@@ -203,20 +201,9 @@ FactMetadata variable(const Json& value, const std::string& path) {
 }
 pgp::core::OrdinalDay date(const Json& value, const std::string& path) {
     const auto iso = text(value, path, 10);
-    if (iso.size() != 10 || iso[4] != '-' || iso[7] != '-') fail("date", path, "Expected YYYY-MM-DD");
-    std::array<int, 3> parts{};
-    constexpr std::array<std::size_t, 3> starts{0, 5, 8};
-    constexpr std::array<std::size_t, 3> lengths{4, 2, 2};
-    for (std::size_t i = 0; i < parts.size(); ++i) {
-        const auto* begin = iso.data() + starts[i];
-        const auto* end = begin + lengths[i];
-        if (!std::all_of(begin, end, [](char c) { return c >= '0' && c <= '9'; })) fail("date", path, "Non-numeric date");
-        const auto parsed = std::from_chars(begin, end, parts[i]);
-        if (parsed.ec != std::errc{} || parsed.ptr != end) fail("date", path, "Invalid date");
-    }
-    try {
-        return pgp::core::to_ordinal({parts[0], static_cast<unsigned>(parts[1]), static_cast<unsigned>(parts[2])});
-    } catch (const std::out_of_range&) { fail("date", path, "Invalid Gregorian date"); }
+    try { return pgp::core::parse_iso_date(iso); }
+    catch (const std::invalid_argument& error) { fail("date", path, error.what()); }
+    catch (const std::out_of_range&) { fail("date", path, "Invalid Gregorian date"); }
 }
 bool semver(std::string_view value) {
     if (value.empty() || value.size() > 128) return false;

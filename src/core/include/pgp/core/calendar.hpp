@@ -4,6 +4,7 @@
 
 #include <compare>
 #include <string>
+#include <string_view>
 
 namespace pgp::core {
 
@@ -22,5 +23,6 @@ struct CivilDate {
 [[nodiscard]] CivilDate from_ordinal(OrdinalDay date);
 [[nodiscard]] OrdinalDay advance_days(OrdinalDay date, Days duration);
 [[nodiscard]] std::string iso_date(OrdinalDay date);
+[[nodiscard]] OrdinalDay parse_iso_date(std::string_view date);
 
 } // namespace pgp::core

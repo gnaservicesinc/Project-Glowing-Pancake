@@ -98,4 +98,18 @@ std::string iso_date(OrdinalDay date) {
     return result;
 }
 
+OrdinalDay parse_iso_date(std::string_view date) {
+    if (date.size() != 10 || date[4] != '-' || date[7] != '-')
+        throw std::invalid_argument("Expected YYYY-MM-DD");
+    const auto digits = [](std::string_view part) {
+        unsigned value = 0;
+        for (const auto digit : part) {
+            if (digit < '0' || digit > '9') throw std::invalid_argument("Non-numeric date");
+            value = value * 10 + static_cast<unsigned>(digit - '0');
+        }
+        return value;
+    };
+    return to_ordinal({static_cast<int>(digits(date.substr(0, 4))), digits(date.substr(5, 2)), digits(date.substr(8, 2))});
+}
+
 } // namespace pgp::core

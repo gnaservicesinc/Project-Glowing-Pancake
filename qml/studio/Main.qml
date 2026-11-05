@@ -198,8 +198,8 @@ ApplicationWindow {
                         wrapMode: Text.WrapAnywhere
                     }
                     Button {
-                        visible: inspector.entry.kind === "flow" && inspector.entry.validation === "Validated"
-                        text: qsTr("Edit flow")
+                        visible: !!inspector.entry.revision && inspector.entry.validation === "Validated"
+                        text: inspector.entry.kind === "flow" ? qsTr("Edit flow") : qsTr("Open working collection")
                         onClicked: studio.beginDraft(inspector.entry.file, inspector.entry.id)
                     }
                     GroupBox {
@@ -214,11 +214,42 @@ ApplicationWindow {
                                 textFormat: Text.PlainText
                                 wrapMode: Text.WrapAnywhere
                             }
+                            ComboBox {
+                                Layout.fillWidth: true
+                                visible: studio.workingFlows.length > 0
+                                Accessible.name: qsTr("Working flow")
+                                model: studio.workingFlows
+                                currentIndex: find(studio.workingFlow)
+                                onActivated: studio.selectWorkingFlow(currentText)
+                            }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                TextField {
+                                    id: newFlowId
+                                    Layout.fillWidth: true
+                                    maximumLength: 128
+                                    placeholderText: qsTr("New flow ID")
+                                    Accessible.name: qsTr("New flow ID")
+                                }
+                                ComboBox {
+                                    id: newFlowScope
+                                    Accessible.name: qsTr("New flow scope")
+                                    model: studio.flowScopes
+                                    textRole: "label"
+                                    valueRole: "value"
+                                }
+                                Button {
+                                    text: qsTr("Create flow")
+                                    enabled: newFlowId.text.length > 0 && newFlowScope.currentIndex >= 0
+                                    onClicked: { if (studio.createFlow(newFlowId.text, newFlowScope.currentValue)) newFlowId.clear() }
+                                }
+                            }
                             FlowForms {
                                 Layout.fillWidth: true
+                                visible: studio.workingFlow.length > 0
                                 author: studio
                             }
-                            Label { text: qsTr("Flow tags"); font.bold: true }
+                            Label { visible: studio.workingFlow.length > 0; text: qsTr("Flow tags"); font.bold: true }
                             Flow {
                                 Layout.fillWidth: true
                                 spacing: 6
@@ -233,6 +264,7 @@ ApplicationWindow {
                             }
                             RowLayout {
                                 Layout.fillWidth: true
+                                visible: studio.workingFlow.length > 0
                                 TextField {
                                     id: tag
                                     Layout.fillWidth: true

@@ -62,6 +62,8 @@ class Browser final : public QObject {
     Q_PROPERTY(QString message READ message NOTIFY changed)
     Q_PROPERTY(bool editing READ editing NOTIFY draftChanged)
     Q_PROPERTY(QString workingFlow READ workingFlow NOTIFY draftChanged)
+    Q_PROPERTY(QStringList workingFlows READ workingFlows NOTIFY formChanged)
+    Q_PROPERTY(QVariantList flowScopes READ flowScopes NOTIFY formChanged)
     Q_PROPERTY(QString workingFile READ workingFile NOTIFY draftChanged)
     Q_PROPERTY(QStringList workingTags READ workingTags NOTIFY draftChanged)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY draftChanged)
@@ -79,11 +81,13 @@ public:
     [[nodiscard]] QString message() const { return message_; }
     [[nodiscard]] bool editing() const noexcept { return draft_ != nullptr; }
     [[nodiscard]] QString workingFlow() const { return text(flow_); }
+    [[nodiscard]] const QStringList& workingFlows() const noexcept { return working_flows_; }
+    [[nodiscard]] const QVariantList& flowScopes() const noexcept { return flow_scopes_; }
     [[nodiscard]] QString workingFile() const {
         return draft_ ? QString::fromStdU16String(draft_->relative_file().generic_u16string()) : QString{};
     }
     [[nodiscard]] QStringList workingTags() const {
-        return draft_ ? strings(std::get<content::FlowDefinition>(draft_->collection().definitions.at(flow_).data).tags) : QStringList{};
+        return draft_ && !flow_.empty() ? strings(std::get<content::FlowDefinition>(draft_->collection().definitions.at(flow_).data).tags) : QStringList{};
     }
     [[nodiscard]] bool canUndo() const noexcept { return draft_ && draft_->can_undo(); }
     [[nodiscard]] bool canRedo() const noexcept { return draft_ && draft_->can_redo(); }
@@ -164,15 +168,31 @@ public:
                 std::filesystem::path{file.toStdU16String()});
             const auto key = id.toStdString();
             const auto* definition = next->collection().find(key);
-            if (!definition || !std::holds_alternative<content::FlowDefinition>(definition->data))
-                throw std::invalid_argument("Select a validated flow to edit.");
-            flow_ = key;
+            if (!definition) throw std::invalid_argument("Select a validated definition to open its collection.");
+            flow_ = std::holds_alternative<content::FlowDefinition>(definition->data) ? key : std::string{};
             draft_ = std::move(next);
             outline_key_ = "flow";
         });
     }
-    Q_INVOKABLE bool changeTag(const QString& tag, bool remove) {
+    Q_INVOKABLE void selectWorkingFlow(const QString& id) {
+        if (!draft_ || !working_flows_.contains(id) || id == workingFlow()) return;
+        flow_ = id.toStdString();
+        outline_key_ = "flow";
+        refreshForm();
+        emit draftChanged();
+    }
+    Q_INVOKABLE bool createFlow(const QString& id, const QString& scope) {
         if (!draft_) return false;
+        return edit([&] {
+            auto key = id.trimmed().toStdString();
+            if (studio::create_flow(*draft_, key, scope.toStdString())) {
+                flow_ = std::move(key);
+                outline_key_ = "flow";
+            }
+        });
+    }
+    Q_INVOKABLE bool changeTag(const QString& tag, bool remove) {
+        if (!draft_ || flow_.empty()) return false;
         return edit([&] {
             auto candidate = draft_->collection();
             auto& tags = std::get<content::FlowDefinition>(candidate.definitions.at(flow_).data).tags;
@@ -241,7 +261,8 @@ private:
         fields_.clear();
         form_.reset();
         outline_index_ = -1;
-        if (draft_) {
+        refreshWorkingFlows();
+        if (draft_ && !flow_.empty()) {
             const auto rows = studio::flow_outline(*draft_, flow_);
             const auto find_row = [&] {
                 return std::find_if(rows.begin(), rows.end(), [&](const auto& row) { return row.key == outline_key_; });
@@ -272,6 +293,24 @@ private:
         }
         emit formChanged();
     }
+    void refreshWorkingFlows() {
+        const auto previous = std::move(working_flows_);
+        working_flows_ = {};
+        flow_scopes_.clear();
+        if (!draft_) return;
+        for (const auto& [id, definition] : draft_->collection().definitions)
+            if (std::holds_alternative<content::FlowDefinition>(definition.data)) working_flows_.push_back(text(id));
+        for (const auto& scope : studio::flow_scope_options(*draft_))
+            flow_scopes_.push_back(QVariantMap{{QStringLiteral("value"), text(scope.value)}, {QStringLiteral("label"), text(scope.label)}});
+        if (working_flows_.contains(workingFlow())) return;
+        // A rename and its undo/redo both replace exactly one outline root.
+        QStringList added;
+        for (const auto& id : working_flows_)
+            if (!previous.contains(id)) added.push_back(id);
+        if (added.size() == 1) flow_ = added.front().toStdString();
+        else flow_ = working_flows_.isEmpty() ? std::string{} : working_flows_.front().toStdString();
+        outline_key_ = "flow";
+    }
     void refresh() {
         QVariantList visible;
         for (const auto& entry : source_) {
@@ -294,6 +333,8 @@ private:
     std::string flow_;
     QString draft_message_;
     QVariantList outline_, fields_;
+    QStringList working_flows_;
+    QVariantList flow_scopes_;
     std::optional<studio::FlowForm> form_;
     std::string outline_key_;
     qsizetype outline_index_ = -1;

@@ -49,5 +49,7 @@ private:
     std::vector<FormField> fields_;
 };
 [[nodiscard]] std::vector<OutlineRow> flow_outline(const DraftDocument& draft, std::string_view flow);
+[[nodiscard]] std::vector<FormOption> flow_scope_options(const DraftDocument& draft);
+bool create_flow(DraftDocument& draft, std::string_view id, std::string_view scope);
 
 } // namespace pgp::studio

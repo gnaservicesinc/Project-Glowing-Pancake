@@ -1,6 +1,7 @@
 #include <pgp/studio/library.hpp>
 
 #include "checkout.hpp"
+#include "references.hpp"
 #include <pgp/core/build_identity.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/persistence/storage.hpp>
@@ -97,25 +98,7 @@ void collect(const fs::path& root, const fs::path& folder, Origin origin, std::v
 }
 std::vector<std::string> uses(const content::Definition& definition, const content::Registry& registry) {
     std::set<std::string> targets;
-    if (const auto* scenario = std::get_if<content::ScenarioDefinition>(&definition.data)) {
-        targets.insert(scenario->research.begin(), scenario->research.end());
-        targets.insert(scenario->flows.begin(), scenario->flows.end());
-    } else if (const auto* research = std::get_if<content::ResearchDefinition>(&definition.data)) {
-        targets.insert(research->all_of.begin(), research->all_of.end());
-        targets.insert(research->any_of.begin(), research->any_of.end());
-    } else if (const auto* flow = std::get_if<content::FlowDefinition>(&definition.data)) {
-        for (const auto& [node_id, node] : flow->nodes) {
-            (void)node_id;
-            if (node.kind == content::NodeKind::subflow) targets.insert(node.subflow_id);
-            for (const auto& effect : node.effects) {
-                for (const auto& argument : registry.effect(effect.operation)->arguments) {
-                    const auto found = effect.arguments.find(argument.name);
-                    if (argument.type == content::ValueType::reference && found != effect.arguments.end())
-                        targets.insert(std::get<std::string>(found->second));
-                }
-            }
-        }
-    }
+    detail::visit_definition_references(definition, registry, [&](const auto& target) { targets.insert(target); });
     return {targets.begin(), targets.end()};
 }
 LibraryDocument inspect(const Library& library, const Candidate& candidate, const content::Registry& registry,

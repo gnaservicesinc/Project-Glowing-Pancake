@@ -97,6 +97,22 @@ std::string_view lifecycle_label(LifecycleMode mode) {
     }
     throw std::invalid_argument("Unknown lifecycle.");
 }
+std::vector<FormOption> node_choices(const FlowDefinition& flow) {
+    std::vector<FormOption> result;
+    for (const auto& [id, node] : flow.nodes)
+        result.push_back({id, id + " · " + std::string(node_label(node.kind))});
+    return result;
+}
+std::string available_node_id(const FlowDefinition& flow, std::string_view base) {
+    auto id = std::string(base);
+    for (unsigned suffix = 2; flow.nodes.contains(id); ++suffix)
+        id = std::string(base) + "." + std::to_string(suffix);
+    return id;
+}
+bool seeded_root(const FlowDefinition& flow) {
+    const auto& entry = flow.nodes.at(flow.entry_node);
+    return entry.kind == NodeKind::random && entry.random_stream != "narrative";
+}
 void FormBuilder::add_document(std::string key, std::string label, std::string value, std::string help,
                                FormControl control, DocumentChange change, std::vector<FormOption> options) {
     FormField field;
@@ -136,14 +152,9 @@ std::vector<OutlineRow> flow_outline(const DraftDocument& draft, std::string_vie
 }
 FlowForm FlowForm::open(const DraftDocument& draft, std::string_view flow, std::string_view row) {
     detail::FormBuilder builder{draft, flow};
-    if (row == "flow") {
-        builder.note("Definition", std::string(flow));
-        builder.note("Flow scope", std::string(content::scope_name(builder.flow.scope)));
-        builder.note("Entry node", builder.flow.entry_node);
-    } else if (row == "lifecycle") {
-        builder.note("Lifecycle", std::string(detail::lifecycle_label(builder.flow.lifecycle.mode)));
-        builder.note("Occurrence scope", std::string(content::scope_name(builder.flow.lifecycle.occurrence_scope)));
-    } else if (row.starts_with("node/")) {
+    if (row == "flow") detail::build_flow_settings(builder);
+    else if (row == "lifecycle") detail::build_lifecycle_form(builder);
+    else if (row.starts_with("node/")) {
         const auto& node = builder.flow.nodes.at(std::string(row.substr(5)));
         builder.note("Node type", std::string(detail::node_label(node.kind)));
         if (!node.next.empty()) builder.note("Continue at", node.next);

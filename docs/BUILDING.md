@@ -51,8 +51,9 @@ editor also accepts an absolute checkout folder in the window. It can search
 and filter validated definitions, follow their uses and used-by links, and
 report invalid and unsupported documents. It reads `data/runtime/`,
 `data/drafts/` and the existing engineering collection fixtures as separate
-sources. Select a validated flow and use **Edit flow tags** to make a typed
-working draft. Use **Save as draft** with a new lowercase `.json` filename to
+sources. Select a validated flow and use **Edit flow** to make a typed working
+draft. The working collection can create flows, edit predicates and lifecycle
+timing, and rename referenced flow IDs. Use **Save as draft** with a new lowercase `.json` filename to
 copy a reviewed or engineering collection into `data/drafts/`. Drafts can be
 saved in place with undo/redo and source conflict checks. The regular game
 build disables the editor. An opt-in `ContentStudio` install component defines

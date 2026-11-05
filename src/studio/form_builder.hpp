@@ -16,6 +16,9 @@ using namespace pgp::content;
 [[nodiscard]] Condition default_condition(const Registry& registry, Scope scope);
 [[nodiscard]] std::string_view node_label(NodeKind kind);
 [[nodiscard]] std::string_view lifecycle_label(LifecycleMode mode);
+[[nodiscard]] std::vector<FormOption> node_choices(const FlowDefinition& flow);
+[[nodiscard]] std::string available_node_id(const FlowDefinition& flow, std::string_view base);
+[[nodiscard]] bool seeded_root(const FlowDefinition& flow);
 
 class FormBuilder {
 public:
@@ -39,6 +42,8 @@ private:
 };
 void append_trigger_outline(std::vector<OutlineRow>& rows, const DraftDocument& draft, const FlowDefinition& flow);
 bool build_trigger_form(FormBuilder& builder, std::string_view row);
+void build_flow_settings(FormBuilder& builder);
+void build_lifecycle_form(FormBuilder& builder);
 
 // Used by both comparison operands and scoped variable effects.
 using ExpressionAccess = std::function<Expression&(FlowDefinition&)>;

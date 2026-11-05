@@ -39,6 +39,14 @@ void marker(const fs::path& root, int schema) {
         "{\"manifest_format\":1,\"project_id\":\"project-glowing-pancake\",\"compatibility\":{\"content_schema\":" +
         std::to_string(schema) + "}}");
 }
+constexpr auto authoring_source = "data/runtime/current.json";
+void prepare_authoring_checkout(const fs::path& root) {
+    marker(root, 1);
+    fs::create_directory(root / ".git");
+    put(root / "CMakeLists.txt", "# development fixture\n");
+    put(root / "src/content/collection.cpp", "// source tree marker\n");
+    put(root / authoring_source, persistence::read_bounded(PGP_STUDIO_FIXTURE_PATH));
+}
 const studio::LibraryDocument& document(const studio::Library& library, const fs::path& path) {
     const auto found = std::find_if(library.documents.begin(), library.documents.end(),
         [&](const auto& entry) { return entry.relative_path == path; });
@@ -211,13 +219,8 @@ void typed_drafts_and_external_conflicts() {
 void typed_trigger_forms() {
     Scratch scratch;
     const auto root = scratch.root;
-    marker(root, 1);
-    fs::create_directory(root / ".git");
-    put(root / "CMakeLists.txt", "# development fixture\n");
-    put(root / "src/content/collection.cpp", "// source tree marker\n");
-    const fs::path source{"data/runtime/current.json"};
-    put(root / source, persistence::read_bounded(PGP_STUDIO_FIXTURE_PATH));
-    studio::DraftDocument draft{root, source};
+    prepare_authoring_checkout(root);
+    studio::DraftDocument draft{root, authoring_source};
     constexpr auto id = "flow.supplier.exclusivity_offer";
     auto open = [&](std::string_view row) { return studio::FlowForm::open(draft, id, row); };
     auto change = [&](std::string_view row, std::string_view field, std::string_view value = {}) {
@@ -281,6 +284,85 @@ void typed_trigger_forms() {
     require(canonical(reopened) == canonical(draft) && !reopened.dirty(),
             "Save and reopen must retain the exact shared compiler representation");
 }
+void lifecycle_forms_and_references() {
+    using namespace content;
+    Scratch scratch;
+    prepare_authoring_checkout(scratch.root);
+    studio::DraftDocument draft{scratch.root, authoring_source};
+    auto id = std::string("flow.form.review");
+    require(studio::create_flow(draft, id, "company"), "Create a typed company flow in the working collection");
+    auto select = [&]() -> const FlowDefinition& {
+        return std::get<FlowDefinition>(draft.collection().definitions.at(id).data);
+    };
+    const auto change = [&](std::string_view row, std::string_view field, std::string_view value) {
+        require(studio::FlowForm::open(draft, id, row).apply(draft, field, value), "Expected lifecycle or definition edit");
+    };
+    require(select().scope == Scope::company && select().nodes.at("end").kind == NodeKind::end &&
+            select().lifecycle.mode == LifecycleMode::once, "New flows need a valid once lifecycle, guard and terminal");
+    rejected([&] { (void)studio::create_flow(draft, id, "world"); }, "Reject duplicate flow IDs");
+    rejected([&] { (void)studio::create_flow(draft, "flow.invalid", "project"); }, "Member scope cannot become a flow root");
+    change("flow", "scenario/scenario.foundation", "true");
+    change("lifecycle", "mode", "recurring");
+    change("lifecycle", "maximum", "4");
+    change("lifecycle", "cooldown", "17");
+    require(select().lifecycle.cooldown_days == 17 && select().lifecycle.max_occurrences == 4,
+            "Recurring form must retain exact cooldown and occurrence bound");
+    change("lifecycle", "mode", "interval");
+    change("lifecycle", "interval_unit", "months");
+    change("lifecycle", "interval", "1");
+    change("lifecycle", "anchor", "fixed_date");
+    change("lifecycle", "anchor_date", "2016-01-31");
+    change("lifecycle", "offset_unit", "months");
+    change("lifecycle", "offset", "1");
+    const auto interval = studio::FlowForm::open(draft, id, "lifecycle");
+    require(std::any_of(interval.fields().begin(), interval.fields().end(), [](const auto& field) {
+        return field.label == "First due at scenario opening" && field.value == "2016-02-29";
+    }), "Fixed month anchors must use the real scheduler's leap-day clamp");
+    change("lifecycle", "mode", "scheduled");
+    change("lifecycle", "due", "2016-02-29");
+    try {
+        (void)studio::FlowForm::open(draft, id, "lifecycle").apply(draft, "due", "2015-02-29");
+        throw std::runtime_error("Accepted an impossible scheduled date");
+    } catch (const std::out_of_range&) {
+        require(core::iso_date(*select().lifecycle.due_date) == "2016-02-29", "Invalid date leaves the draft unchanged");
+    }
+    change("trigger", "kind", "duration");
+    change("lifecycle", "mode", "continuous");
+    change("lifecycle", "reentry", "true");
+    const auto& exit = *select().lifecycle.exit_when;
+    require(exit.kind == ConditionKind::not_condition && exit.children.front().kind == ConditionKind::holds_for_days &&
+            exit.children.front().predicate_id != select().trigger.predicate_id && select().lifecycle.allow_reentry,
+            "Continuous defaults need an independent, editable exit timer");
+    change("exit/0", "days", "3");
+    change("lifecycle", "mode", "once");
+    require(!select().lifecycle.exit_when && select().exit_node.empty() && select().nodes.size() == 1,
+            "Switching away from continuous drops only the unused terminal");
+    rejected([&] {
+        (void)studio::FlowForm::open(draft, "flow.hidden.sustained_workload", "lifecycle").apply(draft, "mode", "once");
+    }, "Lifecycle conversion must preserve existing exit actions and owned modifier authoring");
+
+    require(studio::create_flow(draft, "flow.form.caller", "company"), "Create a refactor fixture flow");
+    auto candidate = draft.collection();
+    auto& caller = std::get<FlowDefinition>(candidate.definitions.at("flow.form.caller").data);
+    Node nested{};
+    nested.kind = NodeKind::subflow;
+    nested.subflow_id = id;
+    nested.next = "end";
+    caller.nodes.emplace("call", std::move(nested));
+    caller.entry_node = "call";
+    require(draft.replace(candidate), "Install the typed reference fixture");
+    change("flow", "id", "flow.form.renamed");
+    const auto scenario_has = [&](std::string_view target) {
+        const auto& scenario = std::get<ScenarioDefinition>(draft.collection().definitions.at("scenario.foundation").data);
+        return includes(scenario.flows, target);
+    };
+    require(!draft.collection().find(id) && draft.collection().find("flow.form.renamed") &&
+            scenario_has("flow.form.renamed") && !scenario_has(id) &&
+            std::get<FlowDefinition>(draft.collection().definitions.at("flow.form.caller").data).nodes.at("call").subflow_id == "flow.form.renamed",
+            "Rename must atomically update scenario and subflow references");
+    require(draft.undo() && scenario_has(id), "Undo restores both a definition ID and its uses");
+    require(draft.redo() && scenario_has("flow.form.renamed"), "Redo reapplies the refactor atomically");
+}
 } // namespace
 
 int main() {
@@ -288,6 +370,7 @@ int main() {
         inspect_source_and_drafts();
         typed_drafts_and_external_conflicts();
         typed_trigger_forms();
+        lifecycle_forms_and_references();
         std::cout << checks << " Studio library checks passed\n";
         return 0;
     } catch (const std::exception& error) {
