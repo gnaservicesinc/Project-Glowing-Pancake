@@ -81,12 +81,14 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
     if(key=="regional_markets") definition_kind="regional_markets";
     if(key=="resilience") definition_kind="site_resilience";
     if(array_key=="flows") definition_kind="flow";
+    if(parent.find("/prerequisites/")!=std::string_view::npos) definition_kind="research";
     if(array_key=="headquarters_choices") {add("US-CA","California");add("US-TX","Texas");add("US-WA","Washington");}
     if(!definition_kind.empty()) {
         if(key=="regional_markets" || key=="resilience") add("","Disabled");
         for(const auto& [id,d]:draft.collection().definitions) if(content::definition_kind(d)==definition_kind) add(id);
     }
     const auto* def=draft.collection().find(scenario);
+    if(!def || !std::holds_alternative<content::ScenarioDefinition>(def->data)) return out;
     const auto& s=std::get<content::ScenarioDefinition>(def->data);
     if(key=="recipe_id" || key=="required_recipe" || array_key=="recipes") {
         if(s.lab) for(const auto& row:s.lab->recipes) add(row.id,row.name);
@@ -99,7 +101,7 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
     }
     if(key=="source_id") add("lease.initial","Opening compute lease");
     if(key=="founder") for(const auto& [id,amount]:s.ownership) {(void)amount;add(id);}
-    if(array_key=="research" || array_key=="requires_research") {
+    if(array_key=="research" || array_key=="requires_research" || array_key=="all_of" || array_key=="any_of") {
         for(const auto& [id,d]:draft.collection().definitions) if(std::holds_alternative<content::ResearchDefinition>(d.data)) add(id);
         if(s.lab && (path.find("/planning/")!=path.npos || array_key=="requires_research"))
             for(const auto& row:s.lab->research) add(row.id);

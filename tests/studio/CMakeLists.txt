@@ -26,7 +26,8 @@ target_compile_definitions(pgp-world-forms-test PRIVATE PGP_WORLD_SOURCE="${PROJ
     PGP_WORLD_VERSIONS="${PROJECT_SOURCE_DIR}/project-versions.json" PGP_WORLD_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
 if(NOT PGP_CORE_ONLY)
     target_sources(pgp-world-forms-test PRIVATE "${PROJECT_SOURCE_DIR}/src/studio/app/world_controller.cpp"
-        "${PROJECT_SOURCE_DIR}/src/studio/app/world_controller.hpp")
+        "${PROJECT_SOURCE_DIR}/src/studio/app/world_controller.hpp"
+        "${PROJECT_SOURCE_DIR}/src/studio/app/catalog_controller.cpp")
     target_link_libraries(pgp-world-forms-test PRIVATE Qt6::Core)
     target_include_directories(pgp-world-forms-test PRIVATE "${PROJECT_SOURCE_DIR}/src/studio/app")
     target_compile_definitions(pgp-world-forms-test PRIVATE PGP_WORLD_QT=1)
@@ -35,6 +36,13 @@ else()
 endif()
 pgp_project_target(pgp-world-forms-test)
 add_test(NAME studio.world-forms COMMAND pgp-world-forms-test)
+add_executable(pgp-catalog-test catalog_test.cpp)
+target_link_libraries(pgp-catalog-test PRIVATE pgp::studio_library)
+target_include_directories(pgp-catalog-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-catalog-test PRIVATE PGP_CATALOG_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json"
+    PGP_CATALOG_VERSIONS="${PROJECT_SOURCE_DIR}/project-versions.json" PGP_CATALOG_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
+pgp_project_target(pgp-catalog-test)
+add_test(NAME studio.catalogs COMMAND pgp-catalog-test)
 if(NOT PGP_CORE_ONLY)
     add_executable(pgp-snapshot-controller-test snapshot_controller_test.cpp
         "${PROJECT_SOURCE_DIR}/src/studio/app/snapshot_controller.cpp"

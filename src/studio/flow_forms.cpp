@@ -145,8 +145,12 @@ void FormBuilder::action(std::string key, std::string label, std::string help, C
 
 std::vector<OutlineRow> flow_outline(const DraftDocument& draft, std::string_view id) {
     const auto& flow = detail::find_flow(draft, id);
-    std::vector<OutlineRow> rows{{"flow", "Flow settings"}, {"lifecycle", "Lifecycle"}};
-    detail::append_trigger_outline(rows, draft, flow);
+    std::vector<OutlineRow> rows{{"flow", "Flow settings"}};
+    if (flow.group) rows.push_back({"group", "Named group ports"});
+    else {
+        rows.push_back({"lifecycle", "Lifecycle"});
+        detail::append_trigger_outline(rows, draft, flow);
+    }
     detail::append_variable_outline(rows, draft, flow.scope);
     detail::append_execution_outline(rows, draft, flow);
     return rows;
@@ -154,6 +158,7 @@ std::vector<OutlineRow> flow_outline(const DraftDocument& draft, std::string_vie
 FlowForm FlowForm::open(const DraftDocument& draft, std::string_view flow, std::string_view row) {
     detail::FormBuilder builder{draft, flow};
     if (row == "flow") detail::build_flow_settings(builder);
+    else if (row == "group") detail::build_group_form(builder);
     else if (row == "lifecycle") detail::build_lifecycle_form(builder);
     else if (row == "variables" || row.starts_with("variables/")) detail::build_variable_form(builder, row);
     else if (row == "execution" || row.starts_with("node/")) detail::build_execution_form(builder, row);

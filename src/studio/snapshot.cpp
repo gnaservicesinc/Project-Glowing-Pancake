@@ -1,6 +1,7 @@
 #include "snapshot_internal.hpp"
 #include "snapshot_version.hpp"
 #include "checkout.hpp"
+#include <pgp/studio/assets.hpp>
 #include <pgp/core/build_identity.hpp>
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
@@ -39,12 +40,34 @@ Json signature(Json definition,const Json& source) {
     definition.erase("revision");std::set<std::string> refs;text_refs(definition,refs);
     Json messages=Json::object();const auto& all=source.value("messages",Json::object());
     for (const auto& key:refs) if (all.contains(key)) messages[key]=all.at(key);
-    return {{"definition",std::move(definition)},{"messages",std::move(messages)},{"variables",source.value("variables",Json::array())}};
+    Json result{{"definition",std::move(definition)},{"messages",std::move(messages)},{"variables",source.value("variables",Json::array())}};
+    Json translations=Json::object();
+    if (source.contains("translations")) for (const auto& [locale, entries]:source.at("translations").items())
+        for (const auto& key:refs) if (entries.contains(key)) translations[locale][key]=entries.at(key);
+    if (!translations.empty()) result["translations"]=std::move(translations);
+    return result;
 }
 Json changed_text(const Json& old,const Json& next) {
     const auto a=old.value("messages",Json::object()),b=next.value("messages",Json::object());
     std::set<std::string> keys;for (const auto& [k,v]:a.items()){(void)v;keys.insert(k);}for (const auto& [k,v]:b.items()){(void)v;keys.insert(k);}
     Json changes=Json::array();for (const auto& key:keys) if (!a.contains(key) || !b.contains(key) || a.at(key)!=b.at(key)) changes.push_back(key);return changes;
+}
+Json validate_assets(PreparedSnapshot& plan,const fs::path& root,const content::Collection& collection) {
+    Json result=Json::array();
+    if (collection.asset_records.empty()) return result;
+    AssetRegister registry{root};
+    plan.asset_observations["assets/manifest.json"]={registry.manifest_hash(),content::maximum_document_bytes};
+    for (const auto& [id,expected]:collection.asset_records) {
+        const auto seal=registry.seal(id);
+        if (seal.fingerprint!=expected) snapshot_refuse("asset_conflict","The pinned asset record changed. Review and pin the current record: "+id);
+        const auto& r=seal.record;
+        plan.asset_observations[r.path]={r.sha256,16U*1024U*1024U};
+        plan.asset_observations[r.license_evidence_path]={seal.evidence_hash,content::maximum_document_bytes};
+        result.push_back({{"id",id},{"path",r.path},{"sha256",r.sha256},{"record_hash",expected},
+            {"kind",r.kind},{"credit_text",r.credit_text},{"license_id",r.license_id},{"license_evidence_path",r.license_evidence_path},
+            {"license_evidence_hash",seal.evidence_hash}});
+    }
+    return result;
 }
 Json validate_runtime(const runtime::CompiledProgram& program) {
     std::size_t scenarios=0;
@@ -163,6 +186,7 @@ PreparedSnapshot prepare_snapshot(const fs::path& root,const SnapshotRequest& re
     }
     auto final_program=compile_source(candidate.dump(),content::foundation_registry());
     candidate=snapshot_parse(final_program.canonical_content_bytes);
+    const auto assets=validate_assets(plan,root,final_program.collection);
     const auto validation=validate_runtime(final_program);
     auto required=runtime_changed?snapshot_game_bump(versions.at("components").at("game").get<std::string>(),feature):previous_requirement;
     if (!previous_requirement.empty() && (required.empty() || snapshot_compare(previous_requirement,required)>0)) required=previous_requirement;
@@ -194,7 +218,7 @@ PreparedSnapshot prepare_snapshot(const fs::path& root,const SnapshotRequest& re
         Json manifest{{"format",1},{"generation",generation},{"content_version",proposed_version},{"collection",request.target.generic_string()},
             {"collection_hash",plan.result.collection_hash},{"source_hash",persistence::sha256(snapshot_bytes)},{"compatibility",versions.at("compatibility")},
             {"definitions",std::move(definition_manifest)},{"scenario_flow_roots",std::move(scenario_roots)},
-            {"messages_hash",hash(candidate.value("messages",Json::object()))},{"assets",Json::array()},{"save_policy",request.save_policy}};
+            {"messages_hash",hash(candidate.value("messages",Json::object()))},{"assets",assets},{"save_policy",request.save_policy}};
         // Immutable collections retain the full bodies. Keep their hashes and
         // revision links here so successive scenario edits cannot multiply
         // entire catalogues inside the bounded history metadata.
@@ -229,6 +253,7 @@ PreparedSnapshot prepare_snapshot(const fs::path& root,const SnapshotRequest& re
     for (const auto& file:plan.writes) { (void)snapshot_parse(file.after);actual_files.push_back({{"path",file.path.generic_string()},
         {"before_hash",file.before?Json(persistence::sha256(*file.before)):Json(nullptr)},{"after_hash",persistence::sha256(file.after)}}); }
     Json observed=Json::object();for (const auto& [path,bytes]:plan.observed) observed[path.generic_string()]=bytes?Json(persistence::sha256(*bytes)):Json(nullptr);
+    for (const auto& [path,identity]:plan.asset_observations) observed[path.generic_string()]=identity.first;
     Json text_changes=Json::array();const auto old_messages=old.value("messages",Json::object()),new_messages=candidate.value("messages",Json::object());
     for (const auto& key:texts) {
         const auto name=key.get<std::string>();
@@ -237,6 +262,10 @@ PreparedSnapshot prepare_snapshot(const fs::path& root,const SnapshotRequest& re
     Json collection_changes=Json::array();
     if (old.value("variables",Json::array())!=candidate.value("variables",Json::array()))
         collection_changes.push_back({{"path","variables"},{"before",old.value("variables",Json::array())},{"after",candidate.value("variables",Json::array())}});
+    if (old.value("translations",Json::object())!=candidate.value("translations",Json::object()))
+        collection_changes.push_back({{"path","translations"},{"before",old.value("translations",Json::object())},{"after",candidate.value("translations",Json::object())}});
+    if (old.value("asset_records",Json::object())!=candidate.value("asset_records",Json::object()))
+        collection_changes.push_back({{"path","asset_records"},{"before",old.value("asset_records",Json::object())},{"after",assets}});
     Json report{{"format",1},{"runtime_changed",runtime_changed},{"result",result_json(plan.result)},{"changes",changes},{"changed_text_keys",texts},
         {"text_changes",std::move(text_changes)},{"collection_changes",std::move(collection_changes)},
         {"versions_before",versions_before},{"versions_after",versions.at("components")},
@@ -267,6 +296,11 @@ SnapshotResult check_snapshot(const std::filesystem::path& selected) {
     const auto current=compile_source(required_read(plan,root,target,content::maximum_document_bytes),content::foundation_registry());
     if (state.at("collection_hash")!=persistence::sha256(current.canonical_content_bytes) || versions.at("components").at("content")!=state.at("content_version")) snapshot_refuse("pending_content","Runtime source has unfinalized semantic/version changes.");
     if (versions.at("compatibility")!=history.at("batches").back().at("compatibility")) snapshot_refuse("compatibility","Live compatibility versions differ from the finalized evidence.");
+    const auto assets=validate_assets(plan,root,current.collection);
+    if (!assets.empty()) {
+        const auto manifest=snapshot_parse(required_read(plan,root,runtime_manifest));
+        if (manifest.at("assets")!=assets) snapshot_refuse("asset_conflict","The runtime manifest differs from the pinned asset records.");
+    }
     const auto required=state.at("required_game_version").get<std::string>();
     return {state.at("generation").get<std::uint64_t>(),state.at("content_version").get<std::string>(),state.at("collection_hash").get<std::string>(),required,
         snapshot_compare(versions.at("components").at("game").get<std::string>(),required)>=0};

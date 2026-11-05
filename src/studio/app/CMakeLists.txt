@@ -1,5 +1,6 @@
 qt_add_executable(pgp-editor main.cpp probe_controller.cpp probe_controller.hpp canvas_controller.cpp canvas_controller.hpp
-    snapshot_controller.cpp snapshot_controller.hpp world_controller.cpp world_controller.hpp)
+    snapshot_controller.cpp snapshot_controller.hpp world_controller.cpp world_controller.hpp catalog_controller.cpp
+    asset_controller.cpp asset_controller.hpp)
 target_link_libraries(pgp-editor PRIVATE pgp::bridge pgp::studio_library pgp::graphics pgp::resources
     Qt6::Quick Qt6::QuickControls2)
 target_include_directories(pgp-editor SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
@@ -12,7 +13,10 @@ qt_add_resources(pgp-editor studio_ui
           "${PROJECT_SOURCE_DIR}/qml/studio/FlowCanvas.qml"
           "${PROJECT_SOURCE_DIR}/qml/studio/CanvasNode.qml"
           "${PROJECT_SOURCE_DIR}/qml/studio/SnapshotReview.qml"
-          "${PROJECT_SOURCE_DIR}/qml/studio/WorldForms.qml")
+          "${PROJECT_SOURCE_DIR}/qml/studio/WorldForms.qml"
+          "${PROJECT_SOURCE_DIR}/qml/studio/CatalogActions.qml"
+          "${PROJECT_SOURCE_DIR}/qml/studio/AssetEditor.qml"
+          "${PROJECT_SOURCE_DIR}/qml/studio/GroupTools.qml")
 qt_add_resources(pgp-editor studio_map_ui PREFIX "/pgp/studio" BASE "${PROJECT_SOURCE_DIR}/qml/game"
     FILES "${PROJECT_SOURCE_DIR}/qml/game/DomesticMap.qml")
 qt_add_resources(pgp-editor studio_map PREFIX "/pgp/studio" BASE "${PROJECT_SOURCE_DIR}/assets/maps"

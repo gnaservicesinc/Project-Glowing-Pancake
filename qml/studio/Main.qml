@@ -51,6 +51,12 @@ ApplicationWindow {
                 font.bold: true
             }
             Button {
+                objectName: "openAssetRegister"
+                text: qsTr("Assets and credits")
+                enabled: studio.checkout.length > 0
+                onClicked: { if (studio.openAssets()) assetEditor.open() }
+            }
+            Button {
                 objectName: "openContentRevision"
                 text: qsTr("Review content revision")
                 enabled: studio.checkout.length > 0
@@ -123,7 +129,8 @@ ApplicationWindow {
             Layout.fillWidth: true
             Button { text: qsTr("Browse library"); checkable: true; checked: window.showLibrary; onClicked: window.showLibrary = true }
             Button { text: qsTr("Build flow"); enabled: !studio.worldController.hasStaged && !studio.worldController.hasUnapplied; checkable: true; checked: !window.showLibrary && !studio.worldMode; onClicked: { studio.selectWorkspace(false); window.showLibrary = false } }
-            Button { objectName: "showStudioWorld"; text: qsTr("Scenario and world"); checkable: true; checked: !window.showLibrary && studio.worldMode; onClicked: { studio.selectWorkspace(true); window.showLibrary = false } }
+            Button { objectName: "showStudioWorld"; text: qsTr("Scenario and world"); checkable: true; checked: !window.showLibrary && studio.worldMode && !studio.worldController.catalogMode; onClicked: { studio.selectWorkspace(true,false); window.showLibrary = false } }
+            Button { objectName: "showStudioCatalog"; text: qsTr("Catalogs"); checkable: true; checked: !window.showLibrary && studio.worldMode && studio.worldController.catalogMode; onClicked: { studio.selectWorkspace(true,true); window.showLibrary = false } }
             Button { objectName: "showStudioCanvas"; text: qsTr("Canvas"); visible: !window.showLibrary && !studio.worldMode; checkable: true; checked: !window.outlineMode && !window.inspectorOnly; onClicked: { window.outlineMode = false; window.inspectorOnly = false } }
             Button { text: qsTr("Outline"); visible: !window.showLibrary && !studio.worldMode; checkable: true; checked: window.outlineMode && !window.inspectorOnly; onClicked: { window.outlineMode = true; window.inspectorOnly = false } }
             Button { objectName: "showStudioSettings"; text: qsTr("Settings and test"); visible: !window.showLibrary && !studio.worldMode && window.width < 1100; onClicked: window.inspectorOnly = true }
@@ -221,7 +228,8 @@ ApplicationWindow {
                     }
                     Label {
                         visible: !!inspector.entry.id
-                        text: (inspector.entry.origin || "") + " · " + (inspector.entry.validation || "")
+                        text: (inspector.entry.origin || "") + " · " + (inspector.entry.validation || "") +
+                            (inspector.entry.state ? " · " + inspector.entry.state : "")
                     }
                     Label {
                         Layout.fillWidth: true
@@ -353,6 +361,12 @@ ApplicationWindow {
                                 outlineObjectName: "hiddenFormOutline"
                                 outlineFocusTarget: centerOutline.outlineView
                             }
+                            Button {
+                                objectName: "openGroupTools"
+                                text: qsTr("Reusable flow groups")
+                                visible: studio.workingFlow.length > 0
+                                onClicked: groupTools.open()
+                            }
                             FlowInspection {
                                 Layout.fillWidth: true
                                 inspector: studio.probeController
@@ -427,6 +441,8 @@ ApplicationWindow {
         id: revisionReview
         finalizer: studio.snapshotController
     }
+    AssetEditor { id: assetEditor; author: studio.assetController; session: studio }
+    GroupTools { id: groupTools; author: studio }
     Connections {
         target: studio
         function onDraftChanged() {

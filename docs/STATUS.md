@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**33 of 52 steps complete for Mac feature development. E2-02 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03 and E2-01.
+**34 of 52 steps complete for Mac feature development. E2-03 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03 and E2-01/02.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -23,6 +23,20 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- E2-02 adds catalog search and structured edits for research, recipes,
+  data, hardware, products and people. Reviewed renames show typed uses
+  across the collection and commit through shared undo. The library retains
+  disabled and deprecated definitions. Locale tables retain their English
+  fallback and follow key refactors. The asset register supports local
+  import, hash and provenance verification, and pinned credits checked
+  by the snapshot writer. Reusable groups have named typed inputs and
+  outputs, exact saved continuations and receipts for bound destinations.
+  All **71 optimized Mac CTests passed**, including **69 catalog checks**.
+  The **1280×720 Metal** catalog and world walkthroughs passed at **200%
+  text**. The catalog run exercised rename review, localization, asset credit
+  editing and pinning, group binding and exact reopen of a **788,839-byte**
+  draft. The shipped collection is still **0.7.0-dev.1**. [Studio workflow](../src/studio/CATALOGS.md).
 
 - E2-01 adds the separate scenario/world workspace on the shared typed
   document. Forms cover current opening resources, ownership, rivals, slice
@@ -402,9 +416,10 @@ edits typed flows through forms/outline and inspects copied runtime state.
 The shared writer finalizes validated internal snapshots through both graphical
 review and the maintainer CLI. E1A-05 demonstrates the authoring path, E1B-01
 supplies the typed canvas and E1B-02 completes graphical review/finalization.
-E2-01 supplies scenario/world/policy forms; E2-02 expands catalog and reusable-flow tools.
+E2-01 and E2-02 supply scenario forms, catalogs, localization, asset credits
+and typed reusable flows.
 Human studies wait for v1 preparation after all components are in place.
-19 steps remain unchecked, including those studies and deferred platform/release
+18 steps remain unchecked, including those studies and deferred platform/release
 work. [Playability checkpoints](PLAYABILITY.md) distinguish implemented paths
 from unperformed human and release qualification.
 
@@ -437,9 +452,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation is E2-02, research/catalog/asset and reusable-flow tools.**
-Expand catalog editing, localization/provenance, reusable typed groups and
-safe reference refactoring/impact search on the same working document.
+**Next implementation is E2-03, cross-revision content and save review.**
+Compare finalized generations, run matched fixtures, and validate explicit
+node and identity migrations with pending saves and retained originals.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

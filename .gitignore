@@ -34,6 +34,9 @@ CMakeUserPresets.json
 /authoring/layouts/*.bak
 /authoring/layouts/*.bak.tmp
 /authoring/layouts/*.layout.json.tmp
+/assets/manifest.json.bak
+/assets/manifest.json.tmp
+/assets/manifest.json.bak.tmp
 __pycache__/
 *.py[cod]
 

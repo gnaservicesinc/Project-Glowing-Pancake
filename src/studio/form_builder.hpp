@@ -44,6 +44,7 @@ void append_trigger_outline(std::vector<OutlineRow>& rows, const DraftDocument& 
 bool build_trigger_form(FormBuilder& builder, std::string_view row);
 void build_flow_settings(FormBuilder& builder);
 void build_lifecycle_form(FormBuilder& builder);
+void build_group_form(FormBuilder& builder);
 void append_variable_outline(std::vector<OutlineRow>& rows, const DraftDocument& draft, Scope scope);
 void build_variable_form(FormBuilder& builder, std::string_view row);
 

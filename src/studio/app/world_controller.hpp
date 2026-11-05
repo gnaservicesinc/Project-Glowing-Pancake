@@ -1,5 +1,6 @@
 #pragma once
 #include <pgp/studio/world_forms.hpp>
+#include <pgp/studio/catalog.hpp>
 #include <QObject>
 #include <QVariantList>
 #include <QVariantMap>
@@ -27,6 +28,15 @@ class WorldController final : public QObject {
     Q_PROPERTY(QString selectedState READ selectedState NOTIFY changed)
     Q_PROPERTY(QVariantMap mapGeometry READ mapGeometry NOTIFY changed)
     Q_PROPERTY(QString mapCredit READ mapCredit NOTIFY changed)
+    Q_PROPERTY(bool catalogMode READ catalogMode NOTIFY changed)
+    Q_PROPERTY(QVariantList catalogEntries READ catalogEntries NOTIFY changed)
+    Q_PROPERTY(QVariantList catalogTemplates READ catalogTemplates NOTIFY changed)
+    Q_PROPERTY(QVariantList referenceUses READ referenceUses NOTIFY changed)
+    Q_PROPERTY(QVariantList renameChanges READ renameChanges NOTIFY changed)
+    Q_PROPERTY(QString selectedIdentity READ selectedIdentity NOTIFY changed)
+    Q_PROPERTY(QString selectedFamily READ selectedFamily NOTIFY changed)
+    Q_PROPERTY(bool selectedDeprecated READ selectedDeprecated NOTIFY changed)
+    Q_PROPERTY(bool canDeprecate READ canDeprecate NOTIFY changed)
 public:
     WorldController();
     void set_document(DraftDocument*,std::string_view scenario={});
@@ -50,6 +60,27 @@ public:
     QString selectedState() const {return selected_state_;}
     QVariantMap mapGeometry() const;
     QString mapCredit() const;
+    bool catalogMode() const {return catalog_mode_;}
+    QVariantList catalogEntries() const {return catalog_entries_;}
+    QVariantList catalogTemplates() const {return catalog_templates_;}
+    QVariantList referenceUses() const {return reference_uses_;}
+    QVariantList renameChanges() const {return rename_changes_;}
+    QString selectedIdentity() const {return QString::fromStdString(identity_);}
+    QString selectedFamily() const {return QString::fromStdString(family_);}
+    bool selectedDeprecated() const;
+    bool canDeprecate() const;
+    Q_INVOKABLE bool setCatalogMode(bool);
+    Q_INVOKABLE void selectCatalogEntry(QString path);
+    Q_INVOKABLE bool reviewRename(QString newId);
+    Q_INVOKABLE bool applyRename();
+    Q_INVOKABLE bool cloneCatalogEntry(QString newId);
+    Q_INVOKABLE bool beginCatalogTemplate(QString sourcePath);
+    Q_INVOKABLE bool removeIdentity();
+    Q_INVOKABLE bool deprecateIdentity(bool);
+    Q_INVOKABLE void followReference(QString owner, QString path);
+    Q_INVOKABLE void openSelectedFlow();
+    Q_INVOKABLE QString messageValue(QString key,QString locale,bool fallback=false) const;
+    Q_INVOKABLE bool saveMessage(QString key,QString locale,QString value);
     Q_INVOKABLE void selectScenario(QString);
     Q_INVOKABLE void selectSection(QString);
     Q_INVOKABLE void filter(QString);
@@ -69,6 +100,8 @@ signals:
     void changed();
     void pendingChanged();
     void documentEdited();
+    void identityRenamed(QString family,QString before,QString after);
+    void flowRequested(QString id);
 private:
     template<class Action> bool perform(Action action) {
         try {message_.clear();action();return true;}
@@ -76,11 +109,19 @@ private:
     }
     void refresh();
     void project_form();
+    void project_catalog();
+    const CatalogIndex& catalog();
     DraftDocument* draft_=nullptr;
     std::uint64_t revision_=0,ticket_=0,staged_revision_=0;
     std::string scenario_,path_,search_;
     bool adding_=false;
+    bool catalog_mode_=false;
     std::optional<WorldForm> form_;
+    std::optional<CatalogIndex> catalog_index_;
+    std::uint64_t catalog_revision_=UINT64_MAX;
+    std::optional<RefactorPlan> rename_plan_;
+    std::string identity_,family_,identity_path_,rename_target_;
+    QVariantList catalog_entries_,catalog_templates_,reference_uses_,rename_changes_;
     std::map<std::string,std::map<std::string,std::string,std::less<>>,std::less<>> staged_;
     QVariantList scenarios_,sections_,fields_,templates_,states_;
     QVariantMap map_;

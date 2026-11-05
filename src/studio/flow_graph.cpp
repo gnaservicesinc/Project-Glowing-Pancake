@@ -178,8 +178,19 @@ struct Builder {
         }
     }
     void build() {
-        node("flow", "flow", data.flow, "Automatic root: false starts none, true runs entry. Calls use incoming context. " + std::string(lifecycle_label(flow.lifecycle.mode)), "flow", flow.scope);
+        node("flow", "flow", data.flow, flow.group ? "Reusable group. Callers supply the scope and named variables." :
+            "Automatic root: false starts none, true runs entry. Calls use incoming context. " + std::string(lifecycle_label(flow.lifecycle.mode)), "flow", flow.scope);
         scoped_input("flow", "flow", flow.scope);
+        if (flow.group) {
+            node("group", "group", "Named ports", "Inputs read the caller's variables. Outputs use the caller's destinations.", "value", flow.scope);
+            for (const auto& entry : *flow.group) {
+                const auto& field=*document.registry().fact(entry.variable);
+                GraphEndpoint endpoint;endpoint.row="group";
+                (void)port("group",entry.name,entry.name + " · " + unit_label(field.unit),PortType::value,flow.scope,
+                    entry.output,std::move(endpoint),field.unit,field.type,field.help,{},false);
+            }
+            execution_link("flow", "entry", "When called", "flow", "entry", flow.entry_node);
+        } else {
         GraphEndpoint trigger; trigger.kind = GraphBinding::condition; trigger.row = "trigger"; trigger.tree_path = "trigger";
         trigger.condition_target = [](FlowDefinition& target) -> Condition& { return target.trigger; };
         const auto trigger_in = port("flow", "trigger", "Eligibility", PortType::condition, flow.scope, false, std::move(trigger), Unit::boolean, ValueType::boolean);
@@ -194,6 +205,7 @@ struct Builder {
             edge(condition(*flow.lifecycle.exit_when, "exit", flow.scope, [](FlowDefinition& target) -> Condition& { return *target.lifecycle.exit_when; }), exit_in, "Exit true", "condition", "exit");
             execution_link("lifecycle", "exit", "On exit", "lifecycle", "exit_node", flow.exit_node);
         }
+        }
         for (const auto& [id, current] : flow.nodes) {
             const auto key = "node/" + id;
             std::string detail = std::string(scope_name(flow.scope));
@@ -207,6 +219,15 @@ struct Builder {
             GraphEndpoint input; input.kind = GraphBinding::execution; input.row = key; input.node_id = id;
             (void)port(key, "in", "Execute", PortType::execution, flow.scope, false, std::move(input));
             if (!current.next.empty()) execution_link(key, "next", "Continue", key, "next", current.next);
+            if (current.kind == NodeKind::subflow && !current.group_bindings.empty()) {
+                const auto& called=find_flow(document,current.subflow_id);
+                for (const auto& entry : *called.group) {
+                    const auto& field=*document.registry().fact(entry.variable);
+                    GraphEndpoint endpoint;endpoint.row=key;
+                    (void)port(key,"binding/"+entry.name,entry.name + " · " + current.group_bindings.at(entry.name),
+                        PortType::value,flow.scope,entry.output,std::move(endpoint),field.unit,field.type,field.help,{},false);
+                }
+            }
             for (std::size_t i = 0; i < current.children.size(); ++i) execution_link(key, "child/" + std::to_string(i), "Step " + std::to_string(i + 1), key + "/child/" + std::to_string(i), "next", current.children.at(i));
             for (std::size_t i = 0; i < current.choices.size(); ++i) execution_link(key, "choice/" + std::to_string(i), "Choice · " + current.choices.at(i).id, key + "/choice/" + std::to_string(i), "next", current.choices.at(i).next);
             for (std::size_t i = 0; i < current.branches.size(); ++i) execution_link(key, "branch/" + std::to_string(i), "Weight " + std::to_string(current.branches.at(i).weight) + " · " + current.branches.at(i).id, key + "/branch/" + std::to_string(i), "next", current.branches.at(i).next);

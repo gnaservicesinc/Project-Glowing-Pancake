@@ -15,6 +15,7 @@ struct PreparedSnapshot {
     SnapshotResult result;
     std::vector<SnapshotFile> writes;
     std::map<std::filesystem::path,std::optional<std::string>> observed;
+    std::map<std::filesystem::path,std::pair<std::string,std::size_t>> asset_observations;
 };
 [[noreturn]] void snapshot_refuse(std::string code,std::string message);
 [[nodiscard]] SnapshotJson snapshot_parse(std::string_view bytes,std::size_t maximum_bytes=4U*1024U*1024U);

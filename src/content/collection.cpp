@@ -516,8 +516,16 @@ Node node(const Json& value, const std::string& path, Scope context, const Regis
         result.kind = NodeKind::sequence; result.children = identifiers(value.at("children"), child(path, "children"), 64);
         if (result.children.empty()) fail("budget", path, "Sequence needs at least one child");
     } else if (kind == "subflow") {
-        fields(value, path, {"kind", "flow_id", "next"}, {"kind", "flow_id", "next"});
+        fields(value, path, {"kind", "flow_id", "next", "bindings"}, {"kind", "flow_id", "next"});
         result.kind = NodeKind::subflow; result.subflow_id = id(value.at("flow_id"), child(path, "flow_id"));
+        if (value.contains("bindings")) {
+            const auto& bindings = value.at("bindings");
+            if (!bindings.is_object() || bindings.size() > 16) fail("group", path, "Expected up to 16 named group bindings");
+            for (const auto& [name, binding] : bindings.items()) {
+                if (!valid_id(name)) fail("group", path, "Invalid group port name");
+                result.group_bindings.emplace(name, id(binding, child(path, name)));
+            }
+        }
     } else if (kind == "random") {
         fields(value, path, {"kind", "stream", "branches"}, {"kind", "stream", "branches"});
         result.kind = NodeKind::random;
@@ -548,7 +556,7 @@ std::vector<std::string> edges(const Node& node) {
     return result;
 }
 FlowDefinition flow(const Json& value, const std::string& path, const Registry& registry) {
-    fields(value, path, {"id", "kind", "revision", "scope", "trigger", "lifecycle", "entry_node", "exit_node", "nodes", "max_node_visits", "tags", "on_committed"},
+    fields(value, path, {"id", "kind", "revision", "scope", "trigger", "lifecycle", "entry_node", "exit_node", "nodes", "max_node_visits", "tags", "on_committed", "group_ports"},
            {"id", "kind", "revision", "scope", "trigger", "lifecycle", "entry_node", "nodes"});
     const auto context = scope(value.at("scope"), child(path, "scope"));
     FlowDefinition result{context, condition(value.at("trigger"), child(path, "trigger"), context, registry),
@@ -570,6 +578,26 @@ FlowDefinition flow(const Json& value, const std::string& path, const Registry& 
     if ((result.lifecycle.mode == LifecycleMode::continuous) != !result.exit_node.empty())
         fail("lifecycle", path, "Only continuous flows require an exit node");
     if (value.contains("max_node_visits")) result.max_node_visits = positive(value.at("max_node_visits"), child(path, "max_node_visits"), 100'000);
+    if (value.contains("group_ports")) {
+        const auto& ports = value.at("group_ports");
+        array(ports, child(path, "group_ports"), 16);
+        result.group.emplace();
+        std::set<std::string> names, variables;
+        for (const auto& port : ports) {
+            const auto where = child(path, "group_ports");
+            fields(port, where, {"name", "variable", "direction"}, {"name", "variable", "direction"});
+            auto name = id(port.at("name"), where);
+            auto variable = id(port.at("variable"), where);
+            const auto direction = text(port.at("direction"), where);
+            const auto* fact = registry.fact(variable);
+            if ((direction != "input" && direction != "output") || !fact || !fact->default_value || fact->scope != context ||
+                !names.insert(name).second || !variables.insert(variable).second)
+                fail("group", where, "Group ports need distinct names and scoped variables with explicit input/output direction");
+            result.group->push_back({std::move(name), std::move(variable), direction == "output"});
+        }
+        if (!result.on_committed.empty() || result.lifecycle.mode != LifecycleMode::once)
+            fail("group", path, "Reusable groups have call and return only");
+    }
     if (value.contains("tags")) result.tags = identifiers(value.at("tags"), child(path, "tags"), 32);
     const auto& nodes = value.at("nodes");
     if (!nodes.is_object() || nodes.empty() || nodes.size() > 512) fail("budget", child(path, "nodes"), "Expected 1..512 named nodes");
@@ -583,6 +611,7 @@ FlowDefinition flow(const Json& value, const std::string& path, const Registry& 
         if (!result.nodes.contains(target)) fail("dangling_reference", child(path, name), "Node link does not exist");
     const auto& entry = result.nodes.at(result.entry_node);
     const bool incident_root = entry.kind == NodeKind::random && entry.random_stream != "narrative";
+    if (result.group && incident_root) fail("group", path, "A seeded world incident must remain a scenario root");
     for (const auto& [name, item] : result.nodes) {
         if (item.kind == NodeKind::random && item.random_stream != "narrative" && name != result.entry_node)
             fail("incident_boundary", child(path, name), "Only a root entry can sample a system incident");
@@ -1077,7 +1106,9 @@ void validate_references(const Collection& collection, const Registry& registry)
             }
             std::set<std::string> subscriptions;
             for (const auto& target : scenario_definition->flows) {
-                const auto& source = std::get<FlowDefinition>(reference(target, "flow", path).data).on_committed;
+                const auto& root = std::get<FlowDefinition>(reference(target, "flow", path).data);
+                if (root.group) fail("group", path, "Enable a caller in the scenario instead of a reusable group");
+                const auto& source = root.on_committed;
                 if (!source.empty() && !subscriptions.insert(source).second)
                     fail("duplicate_subscription", path, "One baseline flow may subscribe to a committed fact per scenario");
             }
@@ -1088,6 +1119,9 @@ void validate_references(const Collection& collection, const Registry& registry)
             for (const auto& target : links) (void)reference(target, "research", path);
         } else if (const auto* flow_definition = std::get_if<FlowDefinition>(&definition.data)) {
             auto& links = subflow_edges[name];
+            std::set<std::string_view> read_only;
+            if (flow_definition->group) for (const auto& port : *flow_definition->group)
+                if (!port.output) read_only.insert(port.variable);
             for (const auto& [node_id, node_value] : flow_definition->nodes) {
                 if (node_value.kind == NodeKind::subflow) {
                     const auto& target = reference(node_value.subflow_id, "flow", child(path, node_id));
@@ -1099,9 +1133,24 @@ void validate_references(const Collection& collection, const Registry& registry)
                     const auto& called_entry = called.nodes.at(called.entry_node);
                     if (called_entry.kind == NodeKind::random && called_entry.random_stream != "narrative")
                         fail("incident_boundary", path, "A system incident root cannot be called as a subflow");
+                    if (node_value.group_bindings.size() != (called.group ? called.group->size() : 0))
+                        fail("group", child(path, node_id), "Bind every named group port exactly once");
+                    std::set<std::string_view> bound;
+                    if (called.group) for (const auto& port : *called.group) {
+                        const auto binding = node_value.group_bindings.find(port.name);
+                        const auto* local = registry.fact(port.variable);
+                        const auto* actual = binding == node_value.group_bindings.end() ? nullptr : registry.fact(binding->second);
+                        if (!actual || !actual->default_value || actual->scope != called.scope || actual->type != local->type ||
+                            actual->unit != local->unit || actual->minimum != local->minimum || actual->maximum != local->maximum ||
+                            actual->visibility != local->visibility || !bound.insert(actual->id).second ||
+                            (port.output && read_only.contains(actual->id)))
+                            fail("group", child(path, node_id), "Group binding must match type, scope, unit, range and visibility with a distinct writable output");
+                    }
                     links.push_back(node_value.subflow_id);
                 }
                 for (const auto& effect_value : node_value.effects) {
+                    if (effect_value.operation == "set_variable" && read_only.contains(std::get<std::string>(effect_value.arguments.at("variable"))))
+                        fail("group", child(path, node_id), "An input port cannot receive an assignment");
                     const auto* metadata = registry.effect(effect_value.operation);
                     for (const auto& argument : metadata->arguments) {
                         if (argument.type == ValueType::reference) {
@@ -1257,7 +1306,7 @@ Collection load_collection(std::string_view document, const Registry& registry) 
     Json root;
     try { root = Json::parse(document.begin(), document.end(), callback, true, false); }
     catch (const Json::exception&) { fail("json", "/", "Malformed JSON document"); }
-    fields(root, "", {"content_schema", "content_version", "currency_basis", "definitions", "variables", "messages"},
+    fields(root, "", {"content_schema", "content_version", "currency_basis", "definitions", "variables", "messages", "translations", "asset_records"},
            {"content_schema", "content_version", "currency_basis", "definitions"});
     if (integer(root.at("content_schema"), "/content_schema", 1, maximum_integer) != content_schema)
         fail("unsupported_schema", "/content_schema", "Only content schema 1 can be loaded");
@@ -1275,6 +1324,33 @@ Collection load_collection(std::string_view document, const Registry& registry) 
             result.messages.emplace(key,text(value,child("/messages",key),4096));
         }
     }
+    if (root.contains("translations")) {
+        const auto& translations = root.at("translations");
+        if (!translations.is_object() || translations.size() > 32) fail("messages", "/translations", "Expected up to 32 locale tables");
+        for (const auto& [locale, entries] : translations.items()) {
+            const auto lower = [](char c) { return c >= 'a' && c <= 'z'; };
+            const auto upper = [](char c) { return c >= 'A' && c <= 'Z'; };
+            const bool language = (locale.size() == 2 || locale.size() == 5) && lower(locale[0]) && lower(locale[1]);
+            if (!language || locale == "en" || (locale.size() == 5 && (locale[2] != '-' || !upper(locale[3]) || !upper(locale[4]))))
+                fail("messages", "/translations", "Use a non-English default locale such as fr or fr-CA");
+            if (!entries.is_object() || entries.empty() || entries.size() > result.messages.size())
+                fail("messages", child("/translations",locale), "Expected localized values for existing default keys");
+            for (const auto& [key, value] : entries.items()) {
+                if (!result.messages.contains(key)) fail("messages", child("/translations",locale), "A translation needs an existing English key");
+                result.translations[locale].emplace(key, text(value,child("/translations",key),4096));
+            }
+        }
+    }
+    if (root.contains("asset_records")) {
+        const auto& assets=root.at("asset_records");
+        if (!assets.is_object() || assets.size()>128) fail("assets","/asset_records","Expected a bounded asset record index");
+        for (const auto& [asset,value]:assets.items()) {
+            auto digest=text(value,child("/asset_records",asset),64);
+            if (!valid_id(asset) || digest.size()!=64 || digest.find_first_not_of("0123456789abcdef")!=std::string::npos)
+                fail("assets","/asset_records","Asset records use stable IDs and exact SHA-256 fingerprints");
+            result.asset_records.emplace(asset,std::move(digest));
+        }
+    }
     if (root.contains("variables")) {
         array(root.at("variables"), "/variables", 512);
         for (std::size_t i = 0; i < root.at("variables").size(); ++i)
@@ -1282,12 +1358,14 @@ Collection load_collection(std::string_view document, const Registry& registry) 
     }
     const auto installed_registry = registry_with_variables(registry, result.variables);
     for (std::size_t i = 0; i < definitions.size(); ++i) {
-        const auto& value = definitions[i]; const auto path = child("/definitions", std::to_string(i));
+        auto value = definitions[i]; const auto path = child("/definitions", std::to_string(i));
         if (!value.is_object() || !value.contains("id") || !value.contains("kind") || !value.contains("revision"))
             fail("missing_field", path, "Definitions need ID, kind, and positive revision");
         const auto name = id(value.at("id"), child(path, "id"));
         const auto kind = text(value.at("kind"), child(path, "kind"), 64);
         const auto revision = positive(value.at("revision"), child(path, "revision"), std::numeric_limits<std::uint32_t>::max());
+        const bool deprecated = value.contains("deprecated") && boolean(value.at("deprecated"), child(path,"deprecated"));
+        value.erase("deprecated");
         if (result.definitions.contains(name)) fail("duplicate_id", path, "Definition ID already exists");
         auto payload = [&]() -> DefinitionData {
             if (kind == "scenario") return scenario(value, path);
@@ -1307,9 +1385,22 @@ Collection load_collection(std::string_view document, const Registry& registry) 
             }
             fail("unsupported_kind", child(path, "kind"), "No typed schema/provider for this definition kind");
         }();
-        result.definitions.emplace(name, Definition{name, revision, std::move(payload)});
+        result.definitions.emplace(name, Definition{name, revision, std::move(payload), deprecated});
     }
     validate_references(result, installed_registry);
     return result;
+}
+const std::string* Collection::message(std::string_view key, std::string_view locale) const {
+    const auto localized = [&](std::string_view language) -> const std::string* {
+        const auto table = translations.find(language);
+        if (table == translations.end()) return nullptr;
+        const auto entry = table->second.find(key);
+        return entry == table->second.end() ? nullptr : &entry->second;
+    };
+    if (const auto* value = localized(locale)) return value;
+    const auto separator = locale.find('-');
+    if (separator != std::string_view::npos) if (const auto* value = localized(locale.substr(0,separator))) return value;
+    const auto fallback = messages.find(key);
+    return fallback == messages.end() ? nullptr : &fallback->second;
 }
 } // namespace pgp::content

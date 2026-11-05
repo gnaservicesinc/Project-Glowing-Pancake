@@ -81,7 +81,7 @@ GraphTraces graph_traces(const runtime::CompiledProgram& program, std::string_vi
             }
         } catch (const std::exception& error) { result[root] = {"unknown", std::string{"Inspection error · "} + error.what()}; }
     };
-    inspect(runtime::FlowPredicate::trigger, "trigger");
+    if (!flow->group) inspect(runtime::FlowPredicate::trigger, "trigger");
     if (flow->lifecycle.exit_when) inspect(runtime::FlowPredicate::exit_when, "exit");
     std::map<std::string,std::size_t,std::less<>> receipt_counts;
     for (const auto& receipt : checkpoint.runtime.receipts) if (receipt.flow_id == flow_id) {
@@ -91,7 +91,8 @@ GraphTraces graph_traces(const runtime::CompiledProgram& program, std::string_vi
             binding(receipt.target) + " · " + receipt.operation + " · " + detail::scalar_text(receipt.before) + " → " +
             detail::scalar_text(receipt.after) + " · counterparty " + std::to_string(receipt.counterparty_delta.value()) + " cents"};
         result[node] = {"committed", "Contains actual committed effect receipts. See each effect's target and before/after values."};
-        result[key + "@target"] = {"observed", "Actual committed target · " + binding(receipt.target)};
+        result[key + "@target"] = {"observed", "Actual committed target · " + binding(receipt.target) +
+            (receipt.bound_variable.empty() ? "" : " · " + receipt.bound_variable)};
     }
     for (const auto& presentation : checkpoint.runtime.presentations) if (presentation.flow_id == flow_id && presentation.resolved) {
         const auto found = flow->nodes.find(presentation.node_id); if (found == flow->nodes.end()) continue;

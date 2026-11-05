@@ -50,7 +50,7 @@ std::vector<FormOption> mode_choices(const FlowDefinition& flow) {
     }
     return result;
 }
-void rename_definition(Collection& collection, const Registry& registry, const std::string& from, std::string_view to) {
+void rename_flow(Collection& collection, const std::string& from, std::string_view to) {
     if (from == to) return;
     if (!valid_id(to) || collection.definitions.contains(to))
         throw std::invalid_argument("Choose an unused stable definition ID.");
@@ -58,12 +58,17 @@ void rename_definition(Collection& collection, const Registry& registry, const s
     if (renamed.empty()) throw std::invalid_argument("The definition no longer exists.");
     renamed.key() = to;
     renamed.mapped().id = to;
+    renamed.mapped().revision = 1;
     collection.definitions.insert(std::move(renamed));
     for (auto& [id, definition] : collection.definitions) {
         (void)id;
-        visit_definition_references(definition, registry, [&](std::string& target) {
-            if (target == from) target = to;
-        });
+        if (auto* scenario = std::get_if<ScenarioDefinition>(&definition.data))
+            for (auto& target : scenario->flows) if (target == from) target = to;
+        if (auto* flow = std::get_if<FlowDefinition>(&definition.data))
+            for (auto& [node_id, node] : flow->nodes) {
+                (void)node_id;
+                if (node.kind == NodeKind::subflow && node.subflow_id == from) node.subflow_id = to;
+            }
     }
 }
 void collect_reachable(const FlowDefinition& flow, const std::string& node, std::set<std::string>& reached) {
@@ -189,15 +194,25 @@ void build_flow_settings(FormBuilder& builder) {
     const auto& registry = builder.draft.registry();
     builder.add_document("id", "Definition ID", builder.id,
                          "Renaming updates typed references in this collection. Existing save compatibility is checked during finalization.",
-                         FormControl::text, [id = builder.id, &registry](Collection& collection, FlowDefinition&, std::string_view value) {
-        rename_definition(collection, registry, id, value);
+                         FormControl::text, [id = builder.id](Collection& collection, FlowDefinition&, std::string_view value) {
+        rename_flow(collection, id, value);
     });
     builder.note("Flow scope", std::string(scope_name(builder.flow.scope)), "Choose the scope when creating a flow.");
+    const bool deprecated=builder.draft.collection().definitions.at(builder.id).deprecated;
+    builder.add_document("deprecated", "Catalog status", deprecated ? "true" : "false",
+        "Deprecation keeps the flow and existing references available. Scenario enrollment controls execution.",
+        FormControl::choice,[id=builder.id](Collection& collection, FlowDefinition&, std::string_view value) {
+            collection.definitions.at(id).deprecated=value=="true";
+        },{{"false","Current"},{"true","Deprecated"}});
     add_link_fields(builder, "entry", "Entry node", builder.flow.entry_node,
                     [](FlowDefinition& flow) -> std::string& { return flow.entry_node; });
     builder.add("visit_limit", "Node visit limit", std::to_string(builder.flow.max_node_visits),
                 "A positive limit is required for a cycle that includes a delay. Zero uses the default for acyclic paths.", FormControl::integer,
                 [](FlowDefinition& flow, std::string_view value) { flow.max_node_visits = parse_count(value, 0, 100'000); });
+    if (builder.flow.group) {
+        builder.note("Activation source", "Called from another flow", "The caller owns the lifecycle, scope and return.");
+        return;
+    }
     if (builder.flow.lifecycle.mode == LifecycleMode::once || builder.flow.lifecycle.mode == LifecycleMode::recurring) {
         std::vector<FormOption> sources{{"", "Normal lifecycle check"}};
         for (const auto& [id, source] : registry.committed_facts())

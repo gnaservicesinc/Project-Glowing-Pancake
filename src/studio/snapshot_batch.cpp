@@ -28,6 +28,13 @@ void verify_observed(const fs::path& root,const std::map<fs::path,std::optional<
     for (const auto& [path,before]:observed)
         if (snapshot_read(root,path)!=before) snapshot_refuse("conflict","A source, draft or version file changed after review: "+path.generic_string());
 }
+void verify_assets(const fs::path& root,const PreparedSnapshot& plan) {
+    for (const auto& [path,identity]:plan.asset_observations) {
+        const auto bytes=snapshot_read(root,path,identity.second);
+        if (!bytes || persistence::sha256(*bytes)!=identity.first)
+            snapshot_refuse("asset_conflict","An asset or its provenance changed after review: "+path.generic_string());
+    }
+}
 void clean_owned_journal(const fs::path& root,const SnapshotJson& journal) {
     // Every entry is enumerated; unexpected files are preserved for inspection.
     const auto base=fs::path{pending};std::set<fs::path> expected{base/"journal.json"};
@@ -97,6 +104,7 @@ void write_snapshot_batch(const fs::path& root,const PreparedSnapshot& plan,cons
     }
     if (observer) observer(SnapshotWritePhase::staged,0);
     verify_observed(root,plan.observed);
+    verify_assets(root,plan);
     for (std::size_t i=0;i<plan.writes.size();++i) {
         const auto& file=plan.writes[i];directory(root,file.path.parent_path());
         if (snapshot_read(root,file.path)!=file.before) snapshot_refuse("conflict","A reviewed destination changed before replacement: "+file.path.generic_string());
@@ -105,6 +113,7 @@ void write_snapshot_batch(const fs::path& root,const PreparedSnapshot& plan,cons
         // Recheck after staging the durable replacement, immediately before the
         // atomic single-file rename. The marker is always the final target.
         if (snapshot_read(root,file.path)!=file.before) snapshot_refuse("conflict","Concurrent edit was preserved before replacement.");
+        if (file.path==marker) verify_assets(root,plan);
         persistence::replace_staged_file(root/replacement,root/file.path);
         if (observer) observer(file.path==marker?SnapshotWritePhase::committed:SnapshotWritePhase::replaced,i);
     }

@@ -223,7 +223,8 @@ Json node_json(const Node& node, Scope scope, const std::string& path) {
               (dialogue ? !node.default_choice.empty() : node.default_choice.empty()) &&
               (sequence ? !node.children.empty() : node.children.empty()) && node.children.size() <= 64 &&
               (delay ? node.delay_days != 0 : node.delay_days == 0) &&
-              (subflow ? !node.subflow_id.empty() : node.subflow_id.empty()) &&
+              (subflow ? !node.subflow_id.empty() && node.group_bindings.size() <= 16 :
+                  node.subflow_id.empty() && node.group_bindings.empty()) &&
               (random ? node.branches.size() >= 2 && node.branches.size() <= 32 : node.branches.empty()) &&
               (random ? !node.random_stream.empty() : node.random_stream.empty()),
           path, "Node contains missing or incompatible typed payloads");
@@ -246,7 +247,10 @@ Json node_json(const Node& node, Scope scope, const std::string& path) {
         break;
     case NodeKind::delay: result["kind"] = "delay"; result["duration_days"] = node.delay_days; break;
     case NodeKind::sequence: result["kind"] = "sequence"; result["children"] = node.children; break;
-    case NodeKind::subflow: result["kind"] = "subflow"; result["flow_id"] = node.subflow_id; break;
+    case NodeKind::subflow:
+        result["kind"] = "subflow"; result["flow_id"] = node.subflow_id;
+        if (!node.group_bindings.empty()) result["bindings"] = node.group_bindings;
+        break;
     case NodeKind::random:
         result["kind"] = "random"; result["stream"] = node.random_stream; result["branches"] = Json::array();
         for (const auto& branch : node.branches)
@@ -272,6 +276,11 @@ Json definition_json(const Definition& definition, const std::string& key) {
         if (flow->max_node_visits) result["max_node_visits"] = flow->max_node_visits;
         if (!flow->tags.empty()) result["tags"] = flow->tags;
         if (!flow->on_committed.empty()) result["on_committed"] = flow->on_committed;
+        if (flow->group) {
+            result["group_ports"] = Json::array();
+            for (const auto& port : *flow->group) result["group_ports"].push_back({
+                {"name", port.name}, {"variable", port.variable}, {"direction", port.output ? "output" : "input"}});
+        }
         result["nodes"] = Json::object();
         for (const auto& [name, node] : flow->nodes) result["nodes"][name] = node_json(node, flow->scope, path_child(path_child(path, "nodes"), name));
     } else if (const auto* research = std::get_if<ResearchDefinition>(&definition.data)) {
@@ -314,6 +323,7 @@ Json definition_json(const Definition& definition, const std::string& key) {
     } else if (const auto* catalog=std::get_if<core::ResilienceCatalog>(&definition.data)) {
         result["kind"]="site_resilience";result["catalog"]=Json::parse(canonical_resilience_catalog(*catalog));
     } else fail("unsupported_kind", path, "Unknown typed definition variant");
+    if (definition.deprecated) result["deprecated"] = true;
     return result;
 }
 Json collection_json(const Collection& collection) {
@@ -321,6 +331,8 @@ Json collection_json(const Collection& collection) {
     Json result{{"content_schema", collection.schema}, {"content_version", collection.content_version},
                 {"currency_basis", "constant_2014_cents"}, {"definitions", Json::array()}};
     if (!collection.messages.empty()) result["messages"]=collection.messages;
+    if (!collection.translations.empty()) result["translations"] = collection.translations;
+    if (!collection.asset_records.empty()) result["asset_records"] = collection.asset_records;
     if (!collection.variables.empty()) {
         std::vector<const FactMetadata*> variables;
         for (const auto& variable : collection.variables) variables.push_back(&variable);

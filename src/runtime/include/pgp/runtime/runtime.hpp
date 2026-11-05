@@ -123,6 +123,8 @@ struct EffectReceipt {
     content::Scalar before{std::int64_t{0}};
     content::Scalar after{std::int64_t{0}};
     core::Cents counterparty_delta{0};
+    std::string bound_variable{};
+    std::vector<std::string> group_calls{};
     auto operator<=>(const EffectReceipt&) const = default;
 };
 enum class PresentationKind { news, dialogue, result };

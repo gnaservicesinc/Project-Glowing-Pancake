@@ -2,6 +2,7 @@
 
 #include "duration.hpp"
 #include "committed.hpp"
+#include "group_bindings.hpp"
 
 #include <algorithm>
 #include <array>
@@ -481,7 +482,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     for (const auto& activation : state.activations) {
         const auto& root = flow(program, activation.definition_id);
         const auto* definition = program.collection.find(activation.definition_id);
-        if (!binding_exists(world, activation.binding) || activation.binding.scope != root.scope ||
+        if (root.group || !binding_exists(world, activation.binding) || activation.binding.scope != root.scope ||
             activation.definition_revision != definition->revision || activation.frames.size() > maximum_continuation_frames ||
             flow(program, activation.current_flow).scope != activation.binding.scope)
             invalid("Activation definition revision, scope or frame budget mismatch");
@@ -552,7 +553,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     std::set<std::pair<std::string, ScopeBinding>> lifecycle_keys;
     for (const auto& entry : state.lifecycles) {
         const auto& definition = flow(program, entry.definition_id);
-        if (!binding_exists(world, entry.binding) || entry.binding.scope != definition.scope ||
+        if (definition.group || !binding_exists(world, entry.binding) || entry.binding.scope != definition.scope ||
             (world.enabled_flows && std::find(world.enabled_flows->begin(), world.enabled_flows->end(), entry.definition_id) == world.enabled_flows->end()) ||
             !lifecycle_keys.emplace(entry.definition_id, entry.binding).second ||
             counts[{entry.definition_id, entry.binding}] != entry.occurrences ||
@@ -697,6 +698,8 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
         if (receipt.operation != "lifecycle_cleanup" &&
             (owner.kind != content::NodeKind::effect || receipt.effect_index >= owner.effects.size() ||
              owner.effects[receipt.effect_index].operation != receipt.operation)) invalid("Effect receipt differs from definition");
+        if (receipt.operation != "set_variable" && (!receipt.bound_variable.empty() || !receipt.group_calls.empty()))
+            invalid("Only a typed variable output can carry group binding evidence");
         if (receipt.operation == "adjust_cash") {
             const auto* before = std::get_if<std::int64_t>(&receipt.before);
             const auto* after = std::get_if<std::int64_t>(&receipt.after);
@@ -707,7 +710,16 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
         } else if (receipt.operation == "set_variable") {
             if (receipt.counterparty_delta != core::Cents{0}) invalid("Variable receipt changes counterparty cash");
             const auto& variable_id = std::get<std::string>(owner.effects[receipt.effect_index].arguments.at("variable"));
-            const auto* metadata = program.registry.fact(variable_id);
+            auto target = std::string_view{variable_id};
+            if (detail::group_port(flow(program, receipt.flow_id), variable_id)) {
+                target = detail::resolve_group_variable(program, activation.definition_id, receipt.flow_id,
+                    receipt.group_calls, target, true);
+                if (receipt.bound_variable != target || receipt.group_calls.empty())
+                    invalid("Saved group output differs from its authored call binding");
+            } else if (!receipt.bound_variable.empty() || !receipt.group_calls.empty()) {
+                invalid("Saved variable receipt has unexpected group binding evidence");
+            }
+            const auto* metadata = program.registry.fact(target);
             if (!metadata || !metadata->default_value || metadata->scope != receipt.target.scope)
                 invalid("Variable receipt has no registered scoped variable");
             scalar_valid(receipt.before, *metadata);

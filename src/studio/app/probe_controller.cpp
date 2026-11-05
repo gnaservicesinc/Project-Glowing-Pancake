@@ -251,7 +251,9 @@ void ProbeController::refresh_report() {
     for (const auto& receipt : probe_->state().runtime.receipts)
         lines << QStringLiteral("%1 · %2 / %3 · effect %4 · %5 · %6 · %7 → %8 · counterparty %9 cents")
             .arg(text(core::iso_date(receipt.day)), text(receipt.flow_id), text(receipt.node_id), number(receipt.effect_index + 1),
-                 text(receipt.operation), binding(receipt.target), scalar(receipt.before), scalar(receipt.after),
+                 text(receipt.operation), binding(receipt.target) +
+                     (receipt.bound_variable.empty() ? QString{} : QStringLiteral(" · ") + text(receipt.bound_variable)),
+                 scalar(receipt.before), scalar(receipt.after),
                  QString::number(static_cast<qlonglong>(receipt.counterparty_delta.value())));
     lines << QStringLiteral("\nContinuation queue");
     for (const auto& activation : probe_->state().runtime.activations) {

@@ -3,6 +3,7 @@
 #include "duration.hpp"
 #include "committed.hpp"
 #include "competition_internal.hpp"
+#include "group_bindings.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -99,12 +100,23 @@ void complete(Checkpoint& checkpoint, Activation& activation, const CompiledProg
 void apply_effect(Checkpoint& checkpoint, Activation& activation, const content::Effect& effect,
                   std::size_t index, const CompiledProgram& program) {
     if (effect.operation == "set_variable") {
-        const auto& variable_id = std::get<std::string>(effect.arguments.at("variable"));
+        const auto& declared = std::get<std::string>(effect.arguments.at("variable"));
+        const auto& executing = flow(program, activation.current_flow);
+        std::vector<std::string> calls;
+        if (executing.group) for (const auto& frame : activation.frames)
+            if (frame.kind == FrameKind::subflow) calls.push_back(frame.sequence_node);
+        const auto bound = [&](std::string_view id, bool write) {
+            if (!detail::group_port(executing, id)) return id;
+            return detail::resolve_group_variable(program, activation.definition_id, activation.current_flow, calls, id, write);
+        };
+        const std::string variable_id{bound(declared, true)};
         const auto* metadata = program.registry.fact(variable_id);
         if (!metadata || !metadata->default_value || metadata->scope != activation.binding.scope ||
             effect.target != "self" || effect.target_scope != activation.binding.scope || !effect.value_expression)
             fail(RuntimeReason::effect_rejected, "Assignment requires a registered variable in the explicit self scope.");
-        const auto facts = [&](const auto& field, const auto& binding) { return read_fact(checkpoint.world, field, binding); };
+        const auto facts = [&](const auto& field, const auto& binding) {
+            return read_fact(checkpoint.world, *program.registry.fact(bound(field.id, false)), binding);
+        };
         const auto evaluated = evaluate_expression(*effect.value_expression, activation.binding, program.registry, facts);
         if (!evaluated) fail(RuntimeReason::effect_rejected, "Assignment value is unavailable.");
         const auto* number = std::get_if<std::int64_t>(&*evaluated);
@@ -127,6 +139,11 @@ void apply_effect(Checkpoint& checkpoint, Activation& activation, const content:
             });
         } else found->value = *evaluated;
         add_receipt(checkpoint, activation, index, effect.operation, before, *evaluated);
+        if (detail::group_port(executing, declared)) {
+            auto& receipt = checkpoint.runtime.receipts.back();
+            receipt.bound_variable = variable_id;
+            receipt.group_calls = std::move(calls);
+        }
         return;
     }
     if (effect.target != "self" || effect.target_scope != activation.binding.scope ||
@@ -372,7 +389,7 @@ void ensure_lifecycles(Checkpoint& checkpoint, const CompiledProgram& program) {
     const auto& world = checkpoint.world;
     for (const auto& [id, definition] : program.collection.definitions) {
         const auto* current = std::get_if<content::FlowDefinition>(&definition.data);
-        if (!current) continue;
+        if (!current || current->group) continue;
         if (world.enabled_flows && std::find(world.enabled_flows->begin(), world.enabled_flows->end(), id) == world.enabled_flows->end()) continue;
         const auto binding = binding_for(world, current->scope);
         const auto found = std::find_if(state.lifecycles.begin(), state.lifecycles.end(), [&](const auto& entry) {

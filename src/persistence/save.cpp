@@ -530,10 +530,14 @@ Json runtime_json(const RuntimeState& state) {
     }
     for (const auto& modifier:state.modifiers) modifiers.push_back({{"activation_id",modifier.activation_id},
         {"binding",binding(modifier.binding)},{"key",modifier.key},{"field",modifier.field},{"add_basis_points",modifier.add_basis_points}});
-    for (const auto& receipt:state.receipts) receipts.push_back({{"id",receipt.id},{"activation_id",receipt.activation_id},
+    for (const auto& receipt:state.receipts) {
+        receipts.push_back({{"id",receipt.id},{"activation_id",receipt.activation_id},
         {"revision",receipt.revision},{"day",receipt.day.value()},{"flow_id",receipt.flow_id},{"node_id",receipt.node_id},
         {"effect_index",receipt.effect_index},{"operation",receipt.operation},{"target",binding(receipt.target)},
         {"before",scalar(receipt.before)},{"after",scalar(receipt.after)},{"counterparty_delta_cents",receipt.counterparty_delta.value()}});
+        if (!receipt.bound_variable.empty()) receipts.back()["bound_variable"]=receipt.bound_variable;
+        if (!receipt.group_calls.empty()) receipts.back()["group_calls"]=receipt.group_calls;
+    }
     for (const auto& presentation:state.presentations) {
         Json choices=Json::array();for (const auto& choice:presentation.choices) choices.push_back({{"id",choice.id},{"label_key",choice.label_key}});
         presentations.push_back({{"id",presentation.id},{"activation_id",presentation.activation_id},{"day",presentation.day.value()},
@@ -650,13 +654,15 @@ RuntimeState parse_runtime(const Json& value,const CompiledProgram& program) {
     const auto& receipts=value.at("receipts");detail::array(receipts,"receipts",maximum_records);
     for (const auto& item:receipts) {
         detail::fields(item,"effect_receipt",{"id","activation_id","revision","day","flow_id","node_id","effect_index",
-            "operation","target","before","after","counterparty_delta_cents"});
+            "operation","target","before","after","counterparty_delta_cents"},{"bound_variable","group_calls"});
         result.receipts.push_back({detail::u64(item.at("id"),"id"),detail::u64(item.at("activation_id"),"activation_id"),
             detail::u64(item.at("revision"),"revision"),OrdinalDay{detail::i64(item.at("day"),"day")},
             detail::text(item.at("flow_id"),"flow_id",128),detail::text(item.at("node_id"),"node_id",128),
             static_cast<std::size_t>(detail::u64(item.at("effect_index"),"effect_index",512)),
             detail::text(item.at("operation"),"operation",128),parse_binding(item.at("target")),parse_scalar(item.at("before")),
             parse_scalar(item.at("after")),Cents{detail::i64(item.at("counterparty_delta_cents"),"counterparty_delta_cents")}});
+        if (item.contains("bound_variable")) result.receipts.back().bound_variable=detail::text(item.at("bound_variable"),"bound_variable",128);
+        if (item.contains("group_calls")) result.receipts.back().group_calls=parse_strings(item.at("group_calls"),runtime::maximum_continuation_frames);
     }
     const auto& presentations=value.at("presentations");detail::array(presentations,"presentations",maximum_records);
     for (const auto& item:presentations) {

@@ -1,11 +1,18 @@
 #include "flow_presentation.hpp"
 
 #include <QCoreApplication>
+#include <QLocale>
 #include <algorithm>
 
 namespace pgp::bridge {
 namespace {
 QString text(std::string_view value) { return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size())); }
+const std::string* localized(const content::Collection& collection, std::string_view key) {
+    if (collection.translations.empty()) return collection.message(key);
+    auto locale = QLocale().name();
+    locale.replace(QLatin1Char('_'), QLatin1Char('-'));
+    return collection.message(key, locale.toStdString());
+}
 }
 QString cu(std::int64_t amount) {
     const auto whole = amount / 1000;
@@ -22,7 +29,7 @@ QString readable(std::string_view source) {
     return result;
 }
 QString choice_label(const runtime::PresentedChoice& choice, const content::Collection* collection) {
-    if (collection) if (const auto found=collection->messages.find(choice.label_key);found!=collection->messages.end()) return text(found->second);
+    if (collection) if (const auto* value=localized(*collection,choice.label_key)) return text(*value);
     const auto id = text(choice.id).toLower();
     if (id.contains(QStringLiteral("accept"))) return QStringLiteral("Accept");
     if (id.contains(QStringLiteral("decline")) || id.contains(QStringLiteral("reject"))) return QStringLiteral("Decline");
@@ -31,8 +38,8 @@ QString choice_label(const runtime::PresentedChoice& choice, const content::Coll
     return readable(choice.id);
 }
 QString presentation_heading(const runtime::Presentation& row, const content::Collection& collection) {
-    const auto found=collection.messages.find(row.title_key);
-    return found==collection.messages.end()?presentation_title(row.kind):text(found->second);
+    const auto* value=localized(collection,row.title_key);
+    return value?text(*value):presentation_title(row.kind);
 }
 QString presentation_title(runtime::PresentationKind kind) {
     if (kind == runtime::PresentationKind::dialogue) return QStringLiteral("Campaign decision");
@@ -45,7 +52,7 @@ QString presentation_context(const runtime::Checkpoint& checkpoint, const runtim
         const auto localized = QCoreApplication::translate("CampaignNews", row.text_key.c_str());
         if (localized != text(row.text_key)) context = localized;
     }
-    if (collection) if (const auto found=collection->messages.find(row.text_key);found!=collection->messages.end()) context=text(found->second);
+    if (collection) if (const auto* value=localized(*collection,row.text_key)) context=text(*value);
     const auto& activations = checkpoint.runtime.activations;
     const auto found = std::lower_bound(activations.begin(), activations.end(), row.activation_id,
         [](const auto& activation, std::uint64_t id) { return activation.id < id; });

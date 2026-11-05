@@ -59,7 +59,8 @@ void WorldController::set_document(DraftDocument* d,std::string_view preferred) 
         staged_revision_=prior_revision;setUnapplied({});
     }
     draft_=d;revision_=d?d->edit_revision():0;
-    if(replaced) staged_.clear();
+    if(replaced) {staged_.clear();catalog_index_.reset();catalog_mode_=false;}
+    if(edited) {rename_plan_.reset();rename_changes_.clear();}
     else if(edited && hasStaged()) message_=QStringLiteral("The document changed while these sections were staged. Their values are preserved; discard the stale batch and review the current document.");
     if(replaced) {setUnapplied({});path_.clear();search_.clear();scenario_.clear();selected_state_.clear();}
     if(!preferred.empty()) {scenario_=preferred;path_.clear();}
@@ -74,8 +75,9 @@ void WorldController::refresh() {
     if(!selected || !std::holds_alternative<content::ScenarioDefinition>(selected->data)) {
         scenario_=scenarios_.isEmpty()?std::string{}:scenarios_.front().toMap().value(QStringLiteral("value")).toString().toStdString();path_.clear();
     }
-    if(scenario_.empty()) {emit changed();return;}
-    const auto rows=world_outline(*draft_,scenario_);
+    if(scenario_.empty() && !catalog_mode_) {emit changed();return;}
+    const auto rows=catalog_mode_?catalog_outline(*draft_,scenario_):world_outline(*draft_,scenario_);
+    if(rows.empty()) {emit changed();return;}
     while(std::none_of(rows.begin(),rows.end(),[&](const auto& r){return r.key==path_;})) {
         const auto slash=path_.rfind('/');
         path_=slash==std::string::npos || slash<12?rows.front().key:path_.substr(0,slash);
@@ -84,8 +86,9 @@ void WorldController::refresh() {
         if(!search_.empty() && !text(row.search).contains(text(search_),Qt::CaseInsensitive)) continue;
         sections_.push_back(QVariantMap{{"key",text(row.key)},{"label",QString(static_cast<qsizetype>(row.depth*2),QChar{0x00a0})+text(row.label)}});
     }
-    for(const auto& row:world_states(*draft_,scenario_)) states_.push_back(QVariantMap{{"id",text(row.id)},{"label",text(row.label)},{"path",text(row.path)}});
-    form_=WorldForm::open(*draft_,scenario_,path_);project_form();emit changed();
+    if(!scenario_.empty()) for(const auto& row:world_states(*draft_,scenario_)) states_.push_back(QVariantMap{{"id",text(row.id)},{"label",text(row.label)},{"path",text(row.path)}});
+    form_=catalog_mode_?WorldForm::open_catalog(*draft_,scenario_,path_):WorldForm::open(*draft_,scenario_,path_);
+    project_form();project_catalog();emit changed();
 }
 void WorldController::project_form() {
     fields_.clear();templates_.clear();++ticket_;
@@ -113,7 +116,8 @@ void WorldController::selectSection(QString path) {
     if(!draft_) return;
     perform([&] {
         if(hasUnapplied()) throw std::invalid_argument("Apply, stage or reset the current fields before selecting another section.");
-        (void)WorldForm::open(*draft_,scenario_,path.toStdString());
+        if(catalog_mode_) (void)WorldForm::open_catalog(*draft_,scenario_,path.toStdString());
+        else (void)WorldForm::open(*draft_,scenario_,path.toStdString());
         path_=path.toStdString();adding_=false;refresh();
     });
 }
@@ -138,7 +142,7 @@ bool WorldController::apply(QString token,QVariantMap values) {
         else {
             auto batch=staged_;for(const auto& [key,value]:changes) batch[path_][key]=value;
             std::vector<WorldSectionChange> sections;for(const auto& [path,entries]:batch) sections.push_back({path,entries});
-            changed=apply_world_batch(*draft_,scenario_,sections);
+            changed=apply_world_batch(*draft_,scenario_,sections,catalog_mode_);
         }
         staged_.clear();setUnapplied({});
         adding_=false;
@@ -163,7 +167,7 @@ bool WorldController::applyStaged() {
         if(hasUnapplied()) throw std::invalid_argument("Stage or reset the current fields before applying the staged batch.");
         if(hasStaged() && staged_revision_!=draft_->edit_revision()) throw std::invalid_argument("The staged batch is stale. Discard it and review the current document.");
         std::vector<WorldSectionChange> sections;for(const auto& [path,entries]:staged_) sections.push_back({path,entries});
-        const auto changed=apply_world_batch(*draft_,scenario_,sections);staged_.clear();
+        const auto changed=apply_world_batch(*draft_,scenario_,sections,catalog_mode_);staged_.clear();
         if(changed) emit documentEdited();else refresh();
     });
 }
@@ -175,7 +179,9 @@ bool WorldController::beginAppend(QString index) {
     return perform([&] {
         bool valid=false;const auto n=index.toULongLong(&valid);
         if(!draft_ || !form_ || !form_->can_append() || !valid || hasStaged()) throw std::invalid_argument("Apply staged sections, then choose a list and an available entry template.");
-        form_=WorldForm::append(*draft_,scenario_,path_,static_cast<std::size_t>(n));adding_=true;project_form();emit changed();
+        form_=catalog_mode_?WorldForm::append_catalog(*draft_,scenario_,path_,static_cast<std::size_t>(n)):
+            WorldForm::append(*draft_,scenario_,path_,static_cast<std::size_t>(n));
+        adding_=true;project_form();emit changed();
     });
 }
 void WorldController::cancelAppend() {setUnapplied({});adding_=false;if(draft_) refresh();}

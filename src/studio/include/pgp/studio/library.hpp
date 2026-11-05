@@ -15,6 +15,7 @@ struct DefinitionEntry {
     std::vector<std::string> tags;
     std::vector<std::string> uses;
     std::vector<std::string> used_by;
+    std::string state{};
 };
 struct LibraryDocument {
     std::filesystem::path relative_path;

@@ -69,8 +69,13 @@ void rename_uses(Collection& collection, std::string_view before, std::string_vi
         if (!flow) continue;
         rename_uses(flow->trigger, before, after);
         if (flow->lifecycle.exit_when) rename_uses(*flow->lifecycle.exit_when, before, after);
+        if (flow->group) for (auto& port : *flow->group) if (port.variable == before) port.variable = after;
         for (auto& [node_id, node] : flow->nodes) {
             (void)node_id;
+            for (auto& [name, variable] : node.group_bindings) {
+                (void)name;
+                if (variable == before) variable = after;
+            }
             for (auto& effect : node.effects) {
                 if (effect.operation == "set_variable") {
                     auto& target = std::get<std::string>(effect.arguments.at("variable"));

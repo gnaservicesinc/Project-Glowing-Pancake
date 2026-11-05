@@ -1,5 +1,6 @@
 #include "graph_forms.hpp"
 #include "references.hpp"
+#include <pgp/studio/reusable_flow.hpp>
 
 #include <algorithm>
 #include <set>
@@ -52,7 +53,8 @@ std::vector<FormOption> subflow_choices(const FormBuilder& builder) {
     const auto& collection = builder.draft.collection();
     for (const auto& [id, definition] : collection.definitions) {
         const auto* flow = std::get_if<FlowDefinition>(&definition.data);
-        if (!flow || id == builder.id || flow->scope != builder.flow.scope || !flow->on_committed.empty() || seeded_root(*flow))
+        if (!flow || id == builder.id || flow->scope != builder.flow.scope || !flow->on_committed.empty() || seeded_root(*flow) ||
+            (flow->group && !flow->group->empty()))
             continue;
         std::set<std::string> visited;
         if (!reaches_caller(collection, *flow, builder.id, visited)) options.push_back({id, id});
@@ -186,10 +188,21 @@ void node_fields(FormBuilder& builder, const std::string& id, const Node& node, 
             auto end = new_terminal(flow, "child_end");
             access(flow).children.push_back(std::move(end));
         });
-    if (node.kind == NodeKind::subflow)
-        builder.add("subflow", "Reusable flow", node.subflow_id, "Call a compatible flow in the same scope, then resume at Continue at.",
-                    FormControl::choice, [access](FlowDefinition& flow, std::string_view value) { access(flow).subflow_id = value; },
-                    subflow_choices(builder));
+    if (node.kind == NodeKind::subflow) {
+        const auto* definition = builder.draft.collection().find(node.subflow_id);
+        const auto& target = std::get<FlowDefinition>(definition->data);
+        if (target.group && !target.group->empty()) {
+            builder.note("Reusable group", node.subflow_id + " · revision " + std::to_string(definition->revision),
+                "The pinned collection selects the exact group definition. The call resumes at Continue at.");
+            for (const auto& port : *target.group)
+                builder.add("binding/" + port.name, (port.output ? "Output · " : "Input · ") + port.name,
+                    node.group_bindings.at(port.name), "Select a caller variable with the exact port contract.",
+                    FormControl::choice, [access, name = port.name](FlowDefinition& flow, std::string_view value) {
+                        access(flow).group_bindings.at(name) = value;
+                    }, group_variable_options(builder.draft, builder.flow.scope, &port, &builder.flow));
+        } else builder.add("subflow", "Reusable flow", node.subflow_id, "Call a compatible flow in the same scope, then resume at Continue at.",
+            FormControl::choice, [access](FlowDefinition& flow, std::string_view value) { access(flow).subflow_id = value; }, subflow_choices(builder));
+    }
     if (node.kind == NodeKind::random) {
         std::vector<FormOption> streams{{"narrative", "Narrative"}};
         const auto mode = builder.flow.lifecycle.mode;

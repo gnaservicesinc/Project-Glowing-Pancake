@@ -1,7 +1,7 @@
 #include <pgp/studio/library.hpp>
+#include <pgp/studio/catalog.hpp>
 
 #include "checkout.hpp"
-#include "references.hpp"
 #include <pgp/core/build_identity.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/persistence/storage.hpp>
@@ -97,11 +97,6 @@ void collect(const fs::path& root, const fs::path& folder, Origin origin, std::v
         candidates.push_back({entry.path().lexically_relative(root), origin});
     }
 }
-std::vector<std::string> uses(const content::Definition& definition, const content::Registry& registry) {
-    std::set<std::string> targets;
-    detail::visit_definition_references(definition, registry, [&](const auto& target) { targets.insert(target); });
-    return {targets.begin(), targets.end()};
-}
 LibraryDocument inspect(const Library& library, const Candidate& candidate, const content::Registry& registry,
                         std::size_t& indexed) {
     LibraryDocument document{};
@@ -143,11 +138,28 @@ LibraryDocument inspect(const Library& library, const Candidate& candidate, cons
     document.validation = Validation::validated;
     document.content_version = program.collection.content_version;
     document.canonical_hash = persistence::sha256(program.canonical_content_bytes);
+    const auto catalog=catalog_index(program);
+    std::set<std::string> enabled;
+    for(const auto& [id, definition]:program.collection.definitions) {
+        (void)id;
+        if(const auto* scenario=std::get_if<content::ScenarioDefinition>(&definition.data))
+            enabled.insert(scenario->flows.begin(),scenario->flows.end());
+    }
+    const bool has_scenarios=std::any_of(program.collection.definitions.begin(),program.collection.definitions.end(),
+        [](const auto& entry){return std::holds_alternative<content::ScenarioDefinition>(entry.second.data);});
+    std::map<std::string,std::set<std::string>,std::less<>> by_owner;
+    for(const auto& reference:catalog.references) by_owner[reference.owner].insert(reference.id);
     std::map<std::string, std::vector<std::string>, std::less<>> reverse;
     for (const auto& [id, definition] : program.collection.definitions) {
         DefinitionEntry entry{id, std::string(content::definition_kind(definition)), definition.revision, {},
-                              uses(definition, program.registry), {}};
-        if (const auto* flow = std::get_if<content::FlowDefinition>(&definition.data)) entry.tags = flow->tags;
+                              {}, {}};
+        const auto& uses=by_owner[id];
+        entry.uses.assign(uses.begin(),uses.end());
+        if (const auto* flow = std::get_if<content::FlowDefinition>(&definition.data)) {
+            entry.tags = flow->tags;
+            entry.state=flow->group?"Reusable group":!has_scenarios || enabled.contains(id)?"Enabled":"Disabled";
+        }
+        if(definition.deprecated) entry.state=entry.state.empty()?"Deprecated":entry.state+" · Deprecated";
         for (const auto& target : entry.uses) reverse[target].push_back(id);
         document.definitions.push_back(std::move(entry));
     }

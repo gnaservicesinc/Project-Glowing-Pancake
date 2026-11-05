@@ -96,6 +96,11 @@ struct Lifecycle {
 };
 struct Choice { std::string id; std::string label_key; std::string next; };
 struct WeightedBranch { std::string id; std::uint32_t weight; std::string next; };
+struct GroupPort {
+    std::string name;
+    std::string variable;
+    bool output = false;
+};
 enum class NodeKind { end, effect, news, dialogue, result, delay, sequence, subflow, random };
 struct Node {
     NodeKind kind;
@@ -110,6 +115,7 @@ struct Node {
     std::string subflow_id;
     std::vector<WeightedBranch> branches;
     std::string random_stream;
+    std::map<std::string, std::string, std::less<>> group_bindings{};
 };
 struct FlowDefinition {
     Scope scope;
@@ -122,6 +128,9 @@ struct FlowDefinition {
     std::uint32_t max_node_visits = 0;
     std::vector<std::string> tags;
     std::string on_committed{};
+    // A group can only be called. Its named ports alias explicitly bound
+    // scoped variables for the duration of the saved subflow call.
+    std::optional<std::vector<GroupPort>> group{};
 };
 [[nodiscard]] std::optional<core::RandomStream> random_branch_stream(std::string_view name);
 [[nodiscard]] bool is_incident_stream(core::RandomStream stream) noexcept;
@@ -164,14 +173,19 @@ struct Definition {
     std::string id;
     std::uint32_t revision;
     DefinitionData data;
+    bool deprecated = false;
 };
+using MessageTable = std::map<std::string,std::string,std::less<>>;
 struct Collection {
     std::uint32_t schema;
     std::string content_version;
     std::map<std::string, Definition, std::less<>> definitions;
     std::vector<FactMetadata> variables{};
-    std::map<std::string,std::string,std::less<>> messages{};
+    MessageTable messages{};
+    std::map<std::string,MessageTable,std::less<>> translations{};
+    std::map<std::string,std::string,std::less<>> asset_records{};
     [[nodiscard]] const Definition* find(std::string_view id) const;
+    [[nodiscard]] const std::string* message(std::string_view key, std::string_view locale = "en") const;
 };
 
 // The parser owns no files or sockets. Caller supplies a bounded local byte

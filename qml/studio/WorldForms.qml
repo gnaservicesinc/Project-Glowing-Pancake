@@ -10,6 +10,7 @@ ColumnLayout {
     property var pending: ({})
     property string observedTicket: ""
     property bool mapMode: false
+    property bool catalogRecords: true
     property bool showFields: false
     readonly property bool hasPending: Object.keys(pending).length > 0
     onPendingChanged: { if (author) author.setUnapplied(pending) }
@@ -86,28 +87,29 @@ ColumnLayout {
             Layout.fillWidth: true; Layout.fillHeight: true
             Layout.preferredWidth: forms.width * 0.38
             RowLayout {
-                Button { text: qsTr("Sections"); checkable: true; checked: !forms.mapMode; enabled: !forms.hasPending; onClicked: forms.mapMode = false }
-                Button { objectName: "worldMapTab"; text: qsTr("States map and list"); checkable: true; checked: forms.mapMode; enabled: !forms.hasPending && author.states.length > 0; onClicked: forms.mapMode = true }
+                Button { text: qsTr("Sections"); checkable: true; checked: !forms.mapMode && (!author.catalogMode || !forms.catalogRecords); enabled: !forms.hasPending; onClicked: { forms.mapMode = false; forms.catalogRecords = false } }
+                Button { visible: author.catalogMode; text: qsTr("Catalog records"); checkable: true; checked: forms.catalogRecords; enabled: !forms.hasPending; onClicked: forms.catalogRecords = true }
+                Button { objectName: "worldMapTab"; visible: !author.catalogMode; text: qsTr("States map and list"); checkable: true; checked: forms.mapMode; enabled: !forms.hasPending && author.states.length > 0; onClicked: forms.mapMode = true }
             }
             TextField {
                 objectName: "worldSectionSearch"
-                visible: !forms.mapMode
+                visible: author.catalogMode || !forms.mapMode
                 Layout.fillWidth: true
                 maximumLength: 256
                 enabled: !forms.hasPending && !author.adding
-                placeholderText: qsTr("Find scoring, policy, rival, region or field")
-                Accessible.name: qsTr("Search scenario and world sections")
+                placeholderText: author.catalogMode ? qsTr("Find catalog family, title or ID") : qsTr("Find scoring, policy, rival, region or field")
+                Accessible.name: qsTr("Search authoring records and sections")
                 onTextEdited: author.filter(text)
             }
             DomesticMap {
                 objectName: "worldDomesticMap"
-                visible: forms.mapMode
+                visible: forms.mapMode && !author.catalogMode
                 Layout.fillWidth: true; Layout.preferredHeight: Math.max(70, Math.min(180, forms.height * 0.25))
                 geometry: author.mapGeometry
                 selectedId: author.selectedState
                 onStatePicked: id => { if (!forms.hasPending && !author.adding) { author.selectState(id); forms.showFields = true } }
             }
-            Button { visible: forms.mapMode; text: qsTr("Map credits"); onClicked: mapCredits.open() }
+            Button { visible: forms.mapMode && !author.catalogMode; text: qsTr("Map credits"); onClicked: mapCredits.open() }
             ScrollView {
                 Layout.fillWidth: true; Layout.fillHeight: true; Layout.minimumHeight: 60
                 ListView {
@@ -116,13 +118,14 @@ ColumnLayout {
                     clip: true
                     activeFocusOnTab: true
                     enabled: !forms.hasPending && !author.adding
-                    model: forms.mapMode ? author.states : author.sections
+                    model: author.catalogMode ? (forms.catalogRecords ? author.catalogEntries : author.sections) : (forms.mapMode ? author.states : author.sections)
                     keyNavigationEnabled: true
                     Accessible.name: forms.mapMode ? qsTr("Domestic state profiles") : qsTr("Scenario and world sections")
                     Keys.onReturnPressed: {
                         const row = model[currentIndex]
                         if (!row) return
-                        if (forms.mapMode) author.selectState(row.id)
+                        if (author.catalogMode && forms.catalogRecords) author.selectCatalogEntry(row.key)
+                        else if (!author.catalogMode && forms.mapMode) author.selectState(row.id)
                         else author.selectSection(row.key)
                         forms.showFields = true
                     }
@@ -131,10 +134,11 @@ ColumnLayout {
                         required property int index
                         width: ListView.view.width
                         text: modelData.label
-                        highlighted: forms.mapMode ? modelData.id === author.selectedState : ListView.isCurrentItem
+                        highlighted: !author.catalogMode && forms.mapMode ? modelData.id === author.selectedState : ListView.isCurrentItem
                         onClicked: {
                             sections.currentIndex = index
-                            if (forms.mapMode) author.selectState(modelData.id)
+                            if (author.catalogMode && forms.catalogRecords) author.selectCatalogEntry(modelData.key)
+                            else if (!author.catalogMode && forms.mapMode) author.selectState(modelData.id)
                             else author.selectSection(modelData.key)
                             forms.showFields = true
                         }
@@ -156,6 +160,12 @@ ColumnLayout {
                     Layout.fillWidth: true; wrapMode: Text.Wrap
                     text: author.adding ? qsTr("New entry from a validated template. Give it a distinct identity and adjust its terms, then apply the whole entry.")
                         : qsTr("Edit this section, then apply its fields together. Nested sections appear in the section list. Units and references use the game's typed content contract.")
+                }
+                CatalogActions {
+                    visible: author.catalogMode && !author.adding
+                    Layout.fillWidth: true
+                    author: forms.author
+                    ready: !forms.hasPending && !author.hasStaged
                 }
                 Repeater {
                     model: author.fields
@@ -224,6 +234,7 @@ ColumnLayout {
                 Label { Layout.fillWidth: true; text: author.message || session.draftMessage; visible: text.length > 0; wrapMode: Text.WrapAnywhere; font.bold: true }
                 Label { Layout.fillWidth: true; text: author.stagedSummary; visible: text.length > 0; wrapMode: Text.WrapAnywhere }
                 GroupBox {
+                    visible: !author.catalogMode
                     title: qsTr("Scenario templates")
                     Layout.fillWidth: true
                     ColumnLayout {
@@ -236,6 +247,7 @@ ColumnLayout {
                     }
                 }
                 GroupBox {
+                    visible: !author.catalogMode
                     title: qsTr("Test the actual opening")
                     Layout.fillWidth: true
                     ColumnLayout {
