@@ -924,3 +924,52 @@ Count: **24/52 Mac feature steps**. Next: E1B-01 typed node canvas, then E1B-02
 graphical finalization and M4 components. M3-04 and E1B-03 remain deferred until
 all components are in place and the user is ready for v1 human testing.
 [Reproducible commands and manual path](../src/studio/WALKTHROUGH.md).
+
+## E1B-01 — Typed node canvas — 2026-11-05
+
+Content Studio now projects the existing typed document as node boxes with
+execution, predicate, value and entity ports. The contextual searchable palette,
+port connections and shared form/outline selection use one compiler/undo/save
+boundary. Exact kind/type/unit/reference/scope matching blocks coercions;
+literal-only effects refuse live expressions. Owned predicate/value connections
+copy trees and repair duplicated duration IDs. Execution retargeting prunes only
+abandoned unreachable routes, with complete shared undo. Atomic effect order,
+numbered children, choices, weighted branches and subflow returns stay explicit.
+
+The canvas adds pointer dragging, keyboard grid moves/pan, zoom, a box navigator,
+stable automatic layout and separate layout undo/save. Shared layout files use
+bounded integer coordinates, explicit writes, source/version conflict checks and
+recoverable prior files. Dragging writes position only on release. Opening,
+selection and viewport gestures do not change runtime identity or revisions;
+local views restore through ignored session metadata. The game resources remain
+separate from all Studio/canvas/layout/draft/test payloads.
+
+Runtime overlays derive from actual copied checkpoints: current clause values,
+truth and selected scopes; committed receipts/targets; real selected outcomes;
+and saved waiting children, queued siblings and nested call/return locations.
+Synthetic cleanup remains separately labeled. A nested helper can show its
+incoming-call context even when its independent automatic trigger is false.
+Compiler notices explain why later numbered children wait. No canvas operation
+predicts a future random branch or mutates a live campaign/RNG.
+
+Verification: **60/60 optimized Mac CTests in 12.18s**, including **84 canvas
+assertions** for graph/form roundtrips, typed refusals, stale models, timing-ID
+repair, arithmetic, safe retarget/undo, actual sibling/nested-call waits, RNG and
+exact reload, layout conflicts/bounds/links/future data and local view storage.
+The explicit Metal QML walkthrough at **1280×720** extends the 36-submission
+forms example with actual pointer port clicks and header dragging, contextual
+creation, shared undo, visible queued ports, layout save/reopen and local
+viewport restore. It verifies no layout write before pointer release and no
+content changes from layout/pan/zoom. Native resize checks wait for settled Qt
+geometry, then verify **900-pixel pane navigation** and **200% canvas zoom**.
+Rendered inspection shows the selected waiting sequence, queued Step 2/return,
+compiler notice and actual cash trace. Main reviewed content remains
+**0.1.0-dev.1**, hash
+`a09060be69908bea63cd9b6fa04e06f275f1226cfaf6977a7e0d7ec647b0c26f`.
+No human, screen-reader, non-Mac device or packaged-release qualification is
+inferred from these engineering checks.
+
+Count: **25/52 Mac feature steps**. Next: E1B-02 graphical review/finalization
+using the existing journaled writer, then M4 components. Human studies remain
+deferred until all components are in place and the user is ready for v1 work.
+[Canvas controls, storage and reproducible check](../src/studio/CANVAS.md).

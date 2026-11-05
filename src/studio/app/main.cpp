@@ -1,5 +1,7 @@
 #include "probe_controller.hpp"
+#include "canvas_controller.hpp"
 #include "walkthrough.hpp"
+#include "canvas_walkthrough.hpp"
 
 #include <pgp/core/build_identity.hpp>
 #include <pgp/graphics/graphics_policy.hpp>
@@ -72,11 +74,13 @@ QString control(studio::FormControl kind) {
 class Browser final : public QObject {
     Q_OBJECT
     Q_PROPERTY(QObject* probeController READ probeController CONSTANT)
+    Q_PROPERTY(QObject* canvasController READ canvasController CONSTANT)
     Q_PROPERTY(QVariantList rows READ rows NOTIFY changed)
     Q_PROPERTY(QString checkout READ checkout NOTIFY changed)
     Q_PROPERTY(QString message READ message NOTIFY changed)
     Q_PROPERTY(bool editing READ editing NOTIFY draftChanged)
     Q_PROPERTY(QString workingFlow READ workingFlow NOTIFY draftChanged)
+    Q_PROPERTY(QString workingVersion READ workingVersion NOTIFY draftChanged)
     Q_PROPERTY(QStringList workingFlows READ workingFlows NOTIFY formChanged)
     Q_PROPERTY(QVariantList flowScopes READ flowScopes NOTIFY formChanged)
     Q_PROPERTY(QString workingFile READ workingFile NOTIFY draftChanged)
@@ -91,12 +95,22 @@ class Browser final : public QObject {
     Q_PROPERTY(qsizetype outlineIndex READ outlineIndex NOTIFY formChanged)
     Q_PROPERTY(QString formTicket READ formTicket NOTIFY formChanged)
 public:
+    Browser() {
+        connect(&canvas_, &studio::CanvasController::documentEdited, this, [this] {
+            draft_message_.clear(); refreshForm(); emit draftChanged();
+        });
+        connect(&canvas_, &studio::CanvasController::selectionRequested, this, [this](const QString& key) {
+            outline_key_ = key.toStdString(); refreshForm(); canvas_.remember_selection();
+        });
+    }
     [[nodiscard]] QObject* probeController() noexcept { return &probe_; }
+    [[nodiscard]] QObject* canvasController() noexcept { return &canvas_; }
     [[nodiscard]] const QVariantList& rows() const noexcept { return visible_; }
     [[nodiscard]] QString checkout() const { return checkout_; }
     [[nodiscard]] QString message() const { return message_; }
     [[nodiscard]] bool editing() const noexcept { return draft_ != nullptr; }
     [[nodiscard]] QString workingFlow() const { return text(flow_); }
+    [[nodiscard]] QString workingVersion() const { return draft_ ? text(draft_->collection().content_version) : QString{}; }
     [[nodiscard]] const QStringList& workingFlows() const noexcept { return working_flows_; }
     [[nodiscard]] const QVariantList& flowScopes() const noexcept { return flow_scopes_; }
     [[nodiscard]] QString workingFile() const {
@@ -115,8 +129,8 @@ public:
     [[nodiscard]] qsizetype outlineIndex() const noexcept { return outline_index_; }
     [[nodiscard]] QString formTicket() const { return QString::number(static_cast<qulonglong>(form_ticket_)); }
     Q_INVOKABLE bool openCheckout(const QString& folder) {
-        if (draftDirty()) {
-            message_ = QStringLiteral("Save or close the working draft before opening a checkout.");
+        if (draftDirty() || (canvas_.hasLayoutEdits() && folder != checkout_)) {
+            message_ = QStringLiteral("Save or close the working content/layout drafts before opening another checkout.");
             emit changed();
             return false;
         }
@@ -186,14 +200,15 @@ public:
             const auto* definition = next->collection().find(key);
             if (!definition) throw std::invalid_argument("Select a validated definition to open its collection.");
             flow_ = std::holds_alternative<content::FlowDefinition>(definition->data) ? key : std::string{};
+            canvas_.set_document(nullptr, {}, {});
             draft_ = std::move(next);
-            outline_key_ = "flow";
+            outline_key_.clear();
         });
     }
     Q_INVOKABLE void selectWorkingFlow(const QString& id) {
         if (!draft_ || !working_flows_.contains(id) || id == workingFlow()) return;
         flow_ = id.toStdString();
-        outline_key_ = "flow";
+        outline_key_.clear();
         refreshForm();
         emit draftChanged();
     }
@@ -230,7 +245,9 @@ public:
     Q_INVOKABLE void selectOutline(const QString& key) {
         if (!draft_) return;
         outline_key_ = key.toStdString();
+        canvas_.set_selection(key, true);
         refreshForm();
+        canvas_.remember_selection();
     }
     Q_INVOKABLE bool changeForm(const QString& ticket, const QString& key, const QString& value) {
         return edit([&] {
@@ -253,6 +270,8 @@ public:
         return true;
     }
     Q_INVOKABLE void closeDraft() {
+        canvas_.set_document(nullptr, {}, {});
+        canvas_.discard_layouts();
         draft_.reset();
         flow_.clear();
         draft_message_.clear();
@@ -285,6 +304,8 @@ private:
         outline_index_ = -1;
         refreshWorkingFlows();
         if (draft_ && !flow_.empty()) {
+            canvas_.set_document(draft_.get(), flow_, std::filesystem::path{checkout_.toStdU16String()});
+            if (outline_key_.empty()) outline_key_ = canvas_.restored_row().toStdString();
             const auto rows = studio::flow_outline(*draft_, flow_);
             const auto find_row = [&] {
                 return std::find_if(rows.begin(), rows.end(), [&](const auto& row) { return row.key == outline_key_; });
@@ -303,6 +324,7 @@ private:
                     {QStringLiteral("label"), indent + text(row.label)}});
             }
             form_ = studio::FlowForm::open(*draft_, flow_, selected->key);
+            canvas_.set_selection(text(selected->key));
             for (const auto& field : form_->fields()) {
                 QVariantList options;
                 for (const auto& option : field.options)
@@ -314,6 +336,7 @@ private:
                     {QStringLiteral("ticket"), formTicket()}});
             }
         }
+        else canvas_.set_document(nullptr, {}, {});
         probe_.set_document(draft_ ? &draft_->program() : nullptr, flow_);
         emit formChanged();
     }
@@ -364,6 +387,8 @@ private:
     std::string outline_key_;
     qsizetype outline_index_ = -1;
     std::uint64_t form_ticket_ = 0;
+    // Destruct before the draft so the final ignored view flush has live data.
+    studio::CanvasController canvas_;
 };
 } // namespace
 
@@ -380,14 +405,17 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("software"), QStringLiteral("Use software rendering.")});
     parser.addOption({QStringLiteral("check-view"), QStringLiteral("Load and inspect the library view without showing a window.")});
     parser.addOption({QStringLiteral("walkthrough"), QStringLiteral("Run the engineering authoring walkthrough in an explicit fresh checkout copy and write a new local report."), QStringLiteral("report.json")});
+    parser.addOption({QStringLiteral("canvas-walkthrough"), QStringLiteral("Run the forms and typed canvas engineering walkthrough on a fresh checkout copy."), QStringLiteral("report.json")});
     parser.addOption({QStringLiteral("screenshot"), QStringLiteral("Save the walkthrough's rendered editor window to a new PNG."), QStringLiteral("file.png")});
     parser.process(application);
+    const bool canvas_walkthrough = parser.isSet(QStringLiteral("canvas-walkthrough"));
+    const bool run_walkthrough = parser.isSet(QStringLiteral("walkthrough")) || canvas_walkthrough;
     if (!parser.positionalArguments().isEmpty() ||
-        ((parser.isSet(QStringLiteral("check-view")) || parser.isSet(QStringLiteral("walkthrough"))) && !parser.isSet(QStringLiteral("project"))) ||
-        (parser.isSet(QStringLiteral("check-view")) && parser.isSet(QStringLiteral("walkthrough"))) ||
-        (parser.isSet(QStringLiteral("screenshot")) && !parser.isSet(QStringLiteral("walkthrough")))) parser.showHelp(2);
+        ((parser.isSet(QStringLiteral("check-view")) || run_walkthrough) && !parser.isSet(QStringLiteral("project"))) ||
+        (parser.isSet(QStringLiteral("check-view")) && run_walkthrough) || (parser.isSet(QStringLiteral("walkthrough")) && canvas_walkthrough) ||
+        (parser.isSet(QStringLiteral("screenshot")) && !run_walkthrough)) parser.showHelp(2);
     try {
-        for (const auto& option : {QStringLiteral("walkthrough"), QStringLiteral("screenshot")})
+        for (const auto& option : {QStringLiteral("walkthrough"), QStringLiteral("canvas-walkthrough"), QStringLiteral("screenshot")})
             if (parser.isSet(option) && std::filesystem::exists(std::filesystem::path{parser.value(option).toStdU16String()}))
                 throw std::invalid_argument("Choose new walkthrough report/screenshot filenames; existing output was preserved.");
         Browser browser;
@@ -496,10 +524,12 @@ int main(int argc, char* argv[]) {
                 qCritical().noquote() << message;
                 QCoreApplication::exit(4);
             });
-        if (parser.isSet(QStringLiteral("walkthrough"))) window->resize(1280, 720);
+        if (run_walkthrough) window->resize(1280, 720);
         window->show();
-        if (parser.isSet(QStringLiteral("walkthrough"))) {
+        if (run_walkthrough) {
+            window->setProperty("outlineMode", true);
             auto report = studio::run_authoring_walkthrough(browser, *window);
+            if (canvas_walkthrough) { report.insert(QStringLiteral("canvas"), studio::run_canvas_walkthrough(browser, *window)); }
             if (guards->denied_requests.load() != 0) throw std::runtime_error("The walkthrough attempted a blocked resource request.");
             report.insert(QStringLiteral("renderer"), window->rendererInterface()->graphicsApi() == QSGRendererInterface::Metal ? QStringLiteral("Metal") :
                 window->rendererInterface()->graphicsApi() == QSGRendererInterface::Software ? QStringLiteral("Software") : QStringLiteral("Other native backend"));
@@ -514,11 +544,12 @@ int main(int argc, char* argv[]) {
                 if (image.isNull() || !image.save(parser.value(QStringLiteral("screenshot")), "PNG")) throw std::runtime_error("The editor walkthrough screenshot failed.");
             }
             const auto bytes = QJsonDocument{report}.toJson(QJsonDocument::Indented);
-            persistence::atomic_write(std::filesystem::path{parser.value(QStringLiteral("walkthrough")).toStdU16String()},
+            persistence::atomic_write(std::filesystem::path{parser.value(canvas_walkthrough ? QStringLiteral("canvas-walkthrough") : QStringLiteral("walkthrough")).toStdU16String()},
                 std::string_view{bytes.constData(), static_cast<std::size_t>(bytes.size())},
                 [](std::string_view) { throw std::invalid_argument("Choose a new walkthrough report filename."); }, 4U * 1024U * 1024U, false);
             std::cout << "Studio engineering walkthrough passed: QML form edits, keyboard outline, sign/scope inspection, branching dialogue, delayed exact reload, five lifecycle reopens and separate draft; "
-                << report.value(QStringLiteral("form_submissions")).toInt() << " form submissions; renderer " << report.value(QStringLiteral("renderer")).toString().toStdString() << '\n';
+                << report.value(QStringLiteral("form_submissions")).toInt() << " form submissions; renderer " << report.value(QStringLiteral("renderer")).toString().toStdString()
+                << (canvas_walkthrough ? "; canvas ports/palette, typed refusals, shared undo, integer layouts and local viewport reopen passed" : "") << '\n';
             return 0;
         }
         return application.exec();

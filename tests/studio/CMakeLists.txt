@@ -13,3 +13,10 @@ target_compile_definitions(pgp-snapshot-test PRIVATE PGP_SNAPSHOT_SOURCE="${PROJ
     PGP_VERSION_SOURCE="${PROJECT_SOURCE_DIR}/project-versions.json" PGP_SNAPSHOT_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
 pgp_project_target(pgp-snapshot-test)
 add_test(NAME studio.snapshots COMMAND pgp-snapshot-test)
+add_executable(pgp-canvas-test canvas_test.cpp)
+target_link_libraries(pgp-canvas-test PRIVATE pgp::studio_library)
+target_include_directories(pgp-canvas-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-canvas-test PRIVATE PGP_CANVAS_FIXTURE="${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json"
+    PGP_CANVAS_VERSIONS="${PROJECT_SOURCE_DIR}/project-versions.json" PGP_CANVAS_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
+pgp_project_target(pgp-canvas-test)
+add_test(NAME studio.canvas COMMAND pgp-canvas-test)

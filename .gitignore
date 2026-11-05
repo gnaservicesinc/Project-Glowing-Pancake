@@ -30,6 +30,10 @@ CMakeUserPresets.json
 /.cache/
 /.venv/
 /.pgp-editor/
+# Recoverable previous non-semantic layouts; current layouts remain reviewable.
+/authoring/layouts/*.bak
+/authoring/layouts/*.bak.tmp
+/authoring/layouts/*.layout.json.tmp
 __pycache__/
 *.py[cod]
 

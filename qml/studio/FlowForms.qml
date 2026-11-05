@@ -7,6 +7,12 @@ ColumnLayout {
     required property QtObject author
     property string errorKey
     property string errorText
+    property bool showOutline: true
+    property bool showFields: true
+    property bool fillOutline: false
+    property string outlineObjectName: "flowOutline"
+    property alias outlineView: outline
+    property QtObject outlineFocusTarget
 
     function selectAt(index) {
         const row = author.flowOutline[index]
@@ -28,7 +34,8 @@ ColumnLayout {
                     return
                 }
             }
-            outline.forceActiveFocus(Qt.OtherFocusReason)
+            if (forms.showOutline) outline.forceActiveFocus(Qt.OtherFocusReason)
+            else if (forms.outlineFocusTarget && forms.outlineFocusTarget.visible) forms.outlineFocusTarget.forceActiveFocus(Qt.OtherFocusReason)
         })
         return true
     }
@@ -37,14 +44,16 @@ ColumnLayout {
         function onFormChanged() { forms.errorKey = ""; forms.errorText = "" }
     }
 
-    Label { text: qsTr("Flow outline"); font.bold: true }
+    Label { visible: forms.showOutline; text: qsTr("Flow outline"); font.bold: true }
     ScrollView {
+        visible: forms.showOutline
         Layout.fillWidth: true
+        Layout.fillHeight: forms.fillOutline
         Layout.preferredHeight: 190
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
         ListView {
             id: outline
-            objectName: "flowOutline"
+            objectName: forms.outlineObjectName
             clip: true
             activeFocusOnTab: true
             keyNavigationEnabled: false
@@ -79,7 +88,7 @@ ColumnLayout {
     }
     Repeater {
         id: fieldRepeater
-        model: forms.author.formFields
+        model: forms.showFields ? forms.author.formFields : []
         delegate: ColumnLayout {
             id: row
             required property var modelData

@@ -4,15 +4,19 @@ import QtQuick.Layouts
 
 ApplicationWindow {
     id: window
-    width: 1100
-    height: 700
+    width: 1280
+    height: 800
     minimumWidth: 720
     minimumHeight: 480
     title: qsTr("Glowing Pancake Content Studio")
     visible: false
     property bool closeWindowAfterDiscard: false
+    property bool showLibrary: true
+    property bool outlineMode: false
+    property bool inspectorOnly: false
+    property bool wasEditing: false
     onClosing: event => {
-        if (studio.draftDirty) {
+        if (studio.draftDirty || studio.canvasController.hasLayoutEdits) {
             event.accepted = false
             closeWindowAfterDiscard = true
             discardDraft.open()
@@ -39,11 +43,13 @@ ApplicationWindow {
         anchors.margins: 20
         spacing: 12
         Label {
+            visible: window.showLibrary || !studio.editing
             text: qsTr("Content library")
             font.pixelSize: 25
             font.bold: true
         }
         RowLayout {
+            visible: window.showLibrary || !studio.editing
             Layout.fillWidth: true
             TextField {
                 id: folder
@@ -61,12 +67,14 @@ ApplicationWindow {
             }
         }
         Label {
+            visible: window.showLibrary || !studio.editing
             Layout.fillWidth: true
             text: studio.message || qsTr("Choose a local development checkout to browse its definitions.")
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
         }
         RowLayout {
+            visible: window.showLibrary || !studio.editing
             Layout.fillWidth: true
             TextField {
                 id: query
@@ -101,13 +109,24 @@ ApplicationWindow {
                 onActivated: window.updateFilter()
             }
         }
+        RowLayout {
+            visible: studio.editing
+            Layout.fillWidth: true
+            Button { text: qsTr("Browse library"); checkable: true; checked: window.showLibrary; onClicked: window.showLibrary = true }
+            Button { text: qsTr("Build flow"); checkable: true; checked: !window.showLibrary; onClicked: window.showLibrary = false }
+            Button { objectName: "showStudioCanvas"; text: qsTr("Canvas"); visible: !window.showLibrary; checkable: true; checked: !window.outlineMode && !window.inspectorOnly; onClicked: { window.outlineMode = false; window.inspectorOnly = false } }
+            Button { text: qsTr("Outline"); visible: !window.showLibrary; checkable: true; checked: window.outlineMode && !window.inspectorOnly; onClicked: { window.outlineMode = true; window.inspectorOnly = false } }
+            Button { objectName: "showStudioSettings"; text: qsTr("Settings and test"); visible: !window.showLibrary && window.width < 1100; onClicked: window.inspectorOnly = true }
+            Label { Layout.fillWidth: true; text: studio.workingFlow + qsTr(" · content %1").arg(studio.workingVersion) + (studio.canvasController.hasLayoutEdits ? qsTr(" · unsaved layout moves") : ""); wrapMode: Text.Wrap }
+        }
         GridLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            columns: window.width < 1000 ? 1 : 2
+            columns: window.width < 1100 ? 1 : 2
             columnSpacing: 16
             rowSpacing: 16
             ScrollView {
+                visible: window.showLibrary || !studio.editing
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredWidth: window.width * 0.45
@@ -133,16 +152,43 @@ ApplicationWindow {
                     }
                 }
             }
+            ColumnLayout {
+                visible: studio.editing && !window.showLibrary && (window.width >= 1100 || !window.inspectorOnly)
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.preferredWidth: Math.max(480, window.width - 480)
+                FlowCanvas {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    visible: !window.outlineMode
+                    author: studio.canvasController
+                    inspector: studio.probeController
+                }
+                FlowForms {
+                    id: centerOutline
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    visible: window.outlineMode
+                    author: studio
+                    showFields: false
+                    fillOutline: true
+                }
+            }
             ScrollView {
                 id: inspector
                 objectName: "studioInspector"
+                visible: window.showLibrary || !studio.editing || window.width >= 1100 || window.inspectorOnly
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.preferredWidth: window.width * 0.45
+                Layout.preferredWidth: studio.editing && !window.showLibrary ? 400 : window.width * 0.45
+                Layout.minimumWidth: studio.editing && !window.showLibrary ? 330 : 0
                 contentWidth: availableWidth
                 readonly property var entry: library.currentIndex >= 0 ? studio.rows[library.currentIndex] || {} : {}
                 ColumnLayout {
                     width: inspector.availableWidth
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        visible: window.showLibrary || !studio.editing
                     Label {
                         Layout.fillWidth: true
                         text: inspector.entry.id || qsTr("Select a library row")
@@ -207,6 +253,7 @@ ApplicationWindow {
                         text: inspector.entry.kind === "flow" ? qsTr("Edit flow") : qsTr("Open working collection")
                         onClicked: studio.beginDraft(inspector.entry.file, inspector.entry.id)
                     }
+                    }
                     GroupBox {
                         Layout.fillWidth: true
                         visible: studio.editing
@@ -218,6 +265,28 @@ ApplicationWindow {
                                 text: studio.workingFlow + "\n" + studio.workingFile
                                 textFormat: Text.PlainText
                                 wrapMode: Text.WrapAnywhere
+                            }
+                            RowLayout {
+                                Button { objectName: "undoStudioContent"; text: qsTr("Undo content"); enabled: studio.canUndo; onClicked: studio.undo() }
+                                Button { objectName: "redoStudioContent"; text: qsTr("Redo content"); enabled: studio.canRedo; onClicked: studio.redo() }
+                                Button { objectName: "saveExistingDraft"; text: qsTr("Save draft"); enabled: studio.existingDraft && studio.draftDirty; onClicked: studio.saveDraft("") }
+                            }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                TextField {
+                                    id: draftName
+                                    objectName: "draftFilename"
+                                    Layout.fillWidth: true
+                                    maximumLength: 133
+                                    placeholderText: qsTr("new-draft.json")
+                                    Accessible.name: qsTr("New draft filename")
+                                }
+                                Button {
+                                    objectName: "saveDraftAs"
+                                    text: qsTr("Save as draft")
+                                    enabled: draftName.text.length > 0
+                                    onClicked: { if (studio.saveDraft(draftName.text.trim())) draftName.clear() }
+                                }
                             }
                             ComboBox {
                                 objectName: "workingFlow"
@@ -257,6 +326,9 @@ ApplicationWindow {
                                 Layout.fillWidth: true
                                 visible: studio.workingFlow.length > 0
                                 author: studio
+                                showOutline: false
+                                outlineObjectName: "hiddenFormOutline"
+                                outlineFocusTarget: centerOutline.outlineView
                             }
                             FlowInspection {
                                 Layout.fillWidth: true
@@ -292,37 +364,11 @@ ApplicationWindow {
                                     onClicked: { if (studio.changeTag(tag.text, false)) tag.clear() }
                                 }
                             }
-                            RowLayout {
-                                Button { text: qsTr("Undo"); enabled: studio.canUndo; onClicked: studio.undo() }
-                                Button { text: qsTr("Redo"); enabled: studio.canRedo; onClicked: studio.redo() }
-                                Button {
-                                    text: qsTr("Save draft")
-                                    enabled: studio.existingDraft && studio.draftDirty
-                                    onClicked: studio.saveDraft("")
-                                }
-                            }
-                            RowLayout {
-                                Layout.fillWidth: true
-                                TextField {
-                                    id: draftName
-                                    objectName: "draftFilename"
-                                    Layout.fillWidth: true
-                                    maximumLength: 133
-                                    placeholderText: qsTr("new-draft.json")
-                                    Accessible.name: qsTr("New draft filename")
-                                }
-                                Button {
-                                    objectName: "saveDraftAs"
-                                    text: qsTr("Save as draft")
-                                    enabled: draftName.text.length > 0
-                                    onClicked: { if (studio.saveDraft(draftName.text.trim())) draftName.clear() }
-                                }
-                            }
                             Button {
                                 objectName: "closeWorkingDraft"
                                 text: qsTr("Close draft")
                                 onClicked: {
-                                    if (studio.draftDirty) {
+                                    if (studio.draftDirty || studio.canvasController.hasLayoutEdits) {
                                         window.closeWindowAfterDiscard = false
                                         discardDraft.open()
                                     } else studio.closeDraft()
@@ -346,12 +392,20 @@ ApplicationWindow {
         id: discardDraft
         anchors.centerIn: parent
         modal: true
-        title: qsTr("Discard unsaved draft changes?")
+        title: qsTr("Discard unsaved content or layout changes?")
         standardButtons: Dialog.Discard | Dialog.Cancel
         onDiscarded: {
             studio.closeDraft()
             if (window.closeWindowAfterDiscard) window.close()
             close()
+        }
+    }
+    Connections {
+        target: studio
+        function onDraftChanged() {
+            if (studio.editing && !window.wasEditing) window.showLibrary = false
+            if (!studio.editing) window.showLibrary = true
+            window.wasEditing = studio.editing
         }
     }
 }

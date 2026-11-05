@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**24 of 52 steps complete for Mac feature development. E1B-01 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05 and E1A-01 through E1A-05.
+**25 of 52 steps complete for Mac feature development. E1B-02 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05 and E1B-01.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -23,6 +23,20 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- E1B-01 adds the typed node canvas on the same document/compiler as the
+  forms/outline: execution, predicate, value and entity ports; searchable
+  contextual creation; shared logical undo/save; and exact type/unit/scope
+  rejection. Saved-runtime overlays show clause truth, target receipts, actual
+  selected branches and waiting siblings/nested subflow returns. Grid moves
+  commit on drag release; shared layout files have independent undo/save,
+  bounded integer metadata, external-conflict refusal and recovery copies.
+  Selection/pan/zoom stay in ignored local session data. All **60/60 optimized
+  Mac CTests pass in 12.18s**, including **84 canvas assertions**. The actual
+  Metal QML pointer/keyboard walkthrough at **1280×720** also verifies palette
+  creation, rejected ports, exact waits/reload, layout/viewport reopen,
+  **900-pixel pane switching** and **200% canvas zoom** without runtime changes.
+  [Canvas contract and commands](../src/studio/CANVAS.md).
 
 - E1A-05 supplies the reproducible editor engineering walkthrough: **36 actual
   QML form submissions**, keyboard outline, a branching/delayed flow, funded
@@ -264,10 +278,11 @@ controls, with lab qualification, paid contracts, bounded rivals, recovery,
 delegation, exact saves and scoring. Content Studio browses the checkout,
 edits typed flows through forms/outline and inspects copied runtime state.
 The shared maintainer writer now finalizes validated internal snapshots and
-E1A-05 demonstrates the narrow authoring path. E1B-01/02's canvas/graphical
-finalizer remain before M4 component work. E2 expands authoring as later schemas arrive.
+E1A-05 demonstrates the narrow authoring path and E1B-01 supplies the typed
+canvas. E1B-02's graphical finalizer remains before M4 component work.
+E2 expands authoring as later schemas arrive.
 Human studies wait for v1 preparation after all components are in place.
-28 steps remain unchecked, including those studies and deferred platform/release
+27 steps remain unchecked, including those studies and deferred platform/release
 work. [Playability checkpoints](PLAYABILITY.md) distinguish implemented paths
 from unperformed human and release qualification.
 
@@ -300,8 +315,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation: E1B-01's typed node canvas**, then E1B-02's graphical
-finalizer, followed by M4 component work.
+**Next implementation: E1B-02's graphical batch finalizer**, followed by M4
+component work. It wraps the existing journaled snapshot writer and version
+requirements in a reviewable author workflow.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

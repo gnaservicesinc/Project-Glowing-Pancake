@@ -71,6 +71,15 @@ the editor payload for future deployment qualification.
 To check loading, filtering and in-memory draft edits without showing a window, run
 `QT_QPA_PLATFORM=offscreen build/release/bin/pgp-editor --software --check-view --project "$PWD"`.
 
+**Build flow** now provides a typed canvas beside selected-box settings, with
+the same outline as a keyboard alternative. Select an output and a compatible
+input, or use its searchable creation palette. Save content and non-semantic
+layout moves separately; viewport/selection stay in ignored local session data.
+The [canvas guide](../src/studio/CANVAS.md) includes controls, limits and the
+explicit `--canvas-walkthrough REPORT.json [--screenshot FILE.png]` engineering
+check on a fresh checkout copy. It tests actual pointer/keyboard interaction;
+it does not conduct a human study or publish content.
+
 ### Validate and finalize internal content
 
 The editor build also provides the Qt-free `pgp-content-tool`, separate from the

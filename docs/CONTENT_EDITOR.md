@@ -1,6 +1,6 @@
 # Content Studio — graphical repository authoring
 
-Planning baseline 1.2 · 2026-11-03 · Design specification; no editor is implemented yet
+Planning baseline 1.2 · Updated 2026-11-05 · E1a and the E1B-01 canvas implemented on Mac; graphical finalization, broader tools and human qualification remain open
 
 ## 1. Purpose and product boundary
 
@@ -108,6 +108,19 @@ Show the bounded continuation stack when a sequence is waiting, including the ne
 Ordinary authors configure boxes through forms with named units, constrained operations, reference pickers, clear defaults, and useful tooltips. Tooltips explain what a field means, its unit, its scope, when it is evaluated, a small example, and relevant restrictions. Help is generated from the same fact/effect registry as validation. A summary sentence updates as a condition/effect is edited. Raw data inspection is optional and never the only way to fix an error.
 
 A complete outline/list view exposes the same structure and settings for keyboard use, screen readers, and large graphs. The graphical canvas does not become a second independent source of logic: graph, outline and forms edit the same document. Shared layout lives in `authoring/layouts/<flow_id>.layout.json` as integer logical coordinates on a defined grid, written only after intentional layout edits. Keep pan/zoom, selection, open tabs and other session state in ignored `.work/editor-session.json`. Merely opening/panning a graph must leave tracked files unchanged. Layout/comments with no gameplay meaning do not alter runtime content hashes or versions.
+
+**Implemented E1B-01:** the canvas projects the current typed flow, including
+nested predicates/values, scoped targets, ordered effects, choices, sequences,
+delays and subflows. Connections/creation share the document compiler and undo
+boundary with forms; incompatible type/unit/scope, cycles and invalid return
+regions are refused. Predicate/value connections copy owned trees and repair
+duplicate timer IDs; they do not invent runtime shared references. The current
+palette is contextual and searchable. Explicit integer layout saves have conflict
+checks/backups, and selection/viewport restore locally. Actual runtime overlays
+show receipts, truth, selected outcomes and pending sibling/call returns.
+[Controls, bounded scope and engineering evidence](../src/studio/CANVAS.md).
+The broader interaction inventory above remains the completed-product design;
+graphical finalization is E1B-02 and expanded catalog/group tools remain E2.
 
 ## 6. Preventing reversed effects and mistaken triggers
 

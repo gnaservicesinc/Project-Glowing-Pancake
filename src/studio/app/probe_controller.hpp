@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QVariantList>
+#include <QVariantMap>
 
 #include <memory>
 
@@ -20,6 +21,7 @@ class ProbeController final : public QObject {
     Q_PROPERTY(QString fixtureInfo READ fixtureInfo NOTIFY changed)
     Q_PROPERTY(QString report READ report NOTIFY changed)
     Q_PROPERTY(QVariantList presentations READ presentations NOTIFY changed)
+    Q_PROPERTY(QVariantMap graphTrace READ graphTrace NOTIFY changed)
     Q_PROPERTY(QStringList cleanupOwners READ cleanupOwners NOTIFY changed)
 public:
     ProbeController();
@@ -33,6 +35,7 @@ public:
     [[nodiscard]] QString fixtureInfo() const { return fixture_info_; }
     [[nodiscard]] QString report() const { return report_; }
     [[nodiscard]] QVariantList presentations() const;
+    [[nodiscard]] QVariantMap graphTrace() const;
     [[nodiscard]] QStringList cleanupOwners() const;
     Q_INVOKABLE QStringList headquarters(const QString& scenario) const;
     Q_INVOKABLE bool start(const QString& scenario, const QString& headquarters, const QString& seed, bool isolate);
@@ -58,5 +61,7 @@ private:
     core::OrdinalDay until_{0};
     bool synthetic_ = false;
     std::vector<BoundarySample> boundaries_;
+    mutable bool graph_trace_dirty_ = true;
+    mutable QVariantMap graph_trace_;
 };
 } // namespace pgp::studio

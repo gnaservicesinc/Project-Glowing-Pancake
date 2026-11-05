@@ -336,8 +336,8 @@ void append_node_outline(std::vector<OutlineRow>& rows, const FlowDefinition& fl
 } // namespace
 
 void add_link_fields(FormBuilder& builder, std::string key, std::string label, const std::string& target, LinkAccess access) {
-    builder.add(key, std::move(label), target, "Retarget this link only. The compiler rejects dangling, unreachable or incompatible paths.",
-                FormControl::choice, [access](FlowDefinition& flow, std::string_view value) { access(flow) = value; },
+    builder.add(key, std::move(label), target, "Retarget this link and remove only paths no longer reachable from entry/exit. Undo restores the whole change. The compiler rejects cycles and incompatible continuations.",
+                FormControl::choice, [access](FlowDefinition& flow, std::string_view value) { access(flow) = value; prune_unused(flow); },
                 node_choices(builder.flow));
     builder.add(key + "/insert", "Insert on this link", {}, "Keep the current continuation after the new node or authored branch.",
                 FormControl::choice, [access, &draft = builder.draft](FlowDefinition& flow, std::string_view choice) {

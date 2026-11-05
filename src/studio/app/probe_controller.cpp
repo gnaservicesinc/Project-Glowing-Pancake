@@ -3,6 +3,7 @@
 #include "flow_presentation.hpp"
 
 #include <pgp/core/integer_codec.hpp>
+#include <pgp/studio/flow_graph.hpp>
 
 #include <algorithm>
 #include <stdexcept>
@@ -63,6 +64,7 @@ ProbeController::ProbeController() {
     connect(&timer_, &QTimer::timeout, this, &ProbeController::advance_one);
 }
 void ProbeController::set_document(const runtime::CompiledProgram* program, std::string flow_id) {
+    graph_trace_dirty_ = true;
     if (flow_ != flow_id) boundaries_.clear();
     flow_ = std::move(flow_id);
     if ((!program && !program_) ||
@@ -190,7 +192,16 @@ QVariantList ProbeController::presentations() const {
     }
     return rows;
 }
+QVariantMap ProbeController::graphTrace() const {
+    if (!graph_trace_dirty_) return graph_trace_;
+    graph_trace_dirty_ = false; graph_trace_.clear();
+    if (probe_ && program_ && !flow_.empty())
+        for (const auto& [key, trace] : graph_traces(*program_, flow_, probe_->state(), step_ ? &step_->trace : nullptr, synthetic_))
+            graph_trace_.insert(text(key), QVariantMap{{QStringLiteral("state"), text(trace.state)}, {QStringLiteral("detail"), text(trace.detail)}});
+    return graph_trace_;
+}
 void ProbeController::refresh_report() {
+    graph_trace_dirty_ = true;
     if (!probe_ || !program_) { report_.clear(); return; }
     QStringList lines;
     lines << QStringLiteral("Current fixture · %1").arg(date());
