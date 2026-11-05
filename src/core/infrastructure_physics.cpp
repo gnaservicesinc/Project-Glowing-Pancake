@@ -103,7 +103,10 @@ MeterSample meter_site(const SimulationState& s,const OwnedSite& owned,OrdinalDa
     for (const auto& output:plan.hardware) if (output.powered) {
         auto it=std::find_if(orders.begin(),orders.end(),[&](const auto& h){return h.id==output.order_id;});if (it==orders.end()) invalid("Meter has no actual hardware owner");
         const auto& f=family(s,*it);const auto nominal=static_cast<std::uint64_t>(f.capacity.value());std::uint64_t used=0;
-        for (const auto& row:usage.sources) if (row.source_id==it->source_id) used=static_cast<std::uint64_t>(row.used.value());
+        for (const auto& row : usage.sources) {
+            if (row.source_id == it->source_id)
+                used = static_cast<std::uint64_t>(checked_unit_add(row.used, row.wholesale_used).value());
+        }
         if (used>static_cast<std::uint64_t>(output.effective.value())) invalid("Owned work bypassed its grid, cooling or staffing budget");
         const auto factors=std::array<std::uint64_t,4>{f.active_it_watts-f.idle_it_watts,used,24,pue(state,owned.cooling)};
         const auto variable=mul_div_floor(factors,nominal);
@@ -123,6 +126,20 @@ MeterSample meter_site(const SimulationState& s,const OwnedSite& owned,OrdinalDa
 }
 }
 SitePowerPreview preview_site_power(const SimulationState& s,std::string_view id,OrdinalDay day) {return power_plan(s,site(s,id),day);}
+Cents wholesale_electricity(const SimulationState& s,std::string_view source_id,MilliCU work) {
+    const auto& orders=infrastructure(s).hardware;
+    const auto order=std::find_if(orders.begin(),orders.end(),[&](const auto& row){return row.source_id==source_id;});
+    if (order==orders.end()) invalid("Wholesale electricity requires an owned hardware order");
+    const auto& owned=site(s,order->site_id);
+    const auto& terms=profile(s,owned);
+    const auto& hardware=family(s,*order);
+    if (work.value()>hardware.capacity.value()) invalid("Wholesale electricity exceeds the rack's rated work");
+    const auto factors=std::array<std::uint64_t,5>{hardware.active_it_watts-hardware.idle_it_watts,
+        static_cast<std::uint64_t>(work.value()),24,pue(terms,owned.cooling),terms.electricity_millicents_per_kwh};
+    // Watt-hours with milli-PUE at milli-cents per kWh. Charge only
+    // incremental electricity and round down once to whole cents.
+    return Cents{mul_div_floor(factors,static_cast<std::uint64_t>(hardware.capacity.value())*1'000'000'000U).quotient};
+}
 CashProjection project_company_cash(const SimulationState& s,OrdinalDay through,Cents protected_cash) {
     if (!s.accounts) invalid("A company forecast requires accounts");
     const auto terms=forecast_terms(s);

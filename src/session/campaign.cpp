@@ -175,6 +175,9 @@ OperationResult Campaign::respond_competitive_offer(std::uint64_t revision,std::
 OperationResult Campaign::propose_acquisition(std::uint64_t revision,std::string_view id,bool equity) {
     return operate([&](auto& candidate){return candidate.proposeAcquisition(revision,id,equity);},true);
 }
+OperationResult Campaign::sign_wholesale(std::uint64_t revision,std::string_view plan,std::string_view source,std::string_view buyer) {
+    return operate([&](auto& candidate){return candidate.signWholesale(revision,plan,source,buyer);},true);
+}
 OperationResult Campaign::transfer_subsidiary_funds(std::uint64_t revision,std::string_view id,core::Cents amount,bool funding) {
     return operate([&](auto& candidate){return candidate.transferSubsidiaryFunds(revision,id,amount,funding);},true);
 }

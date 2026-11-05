@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**30 of 52 steps complete for Mac feature development. M5-02 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03 and M5-01.
+**31 of 52 steps complete for Mac feature development. M5-03 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03 and M5-01/02.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -23,6 +23,20 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- M5-02 adds 48 customer groups across eight regions, twelve templates in
+  six product channels, territory selection and regional delivery reports.
+  Monthly installed work shapes switching. On-premise and open deployments
+  consume a shared customer hardware budget. Funded wholesale agreements
+  reserve exclusive slices of commissioned racks in the planned rosters.
+  The integration run earned **$12,499.28 operating profit over 47 days**
+  with two racks, four contracts and no trained model. All **68 optimized
+  Mac CTests** pass, including 48 regional and wholesale checks. The
+  bundled 1280×720 / 200% Metal check signs and settles an agreement and
+  reloads the exact **832,298-byte** save. A separate standard-roster run
+  reaches 2017 solvent and reloads its **19,677,487-byte** save. Reviewed
+  content **0.6.0-dev.1**, generation 6, passes all 15 headquarters save checks.
+  [Player controls and settlement rules](../src/runtime/REGIONAL_MARKETS.md).
 
 - M5-01 adds the offline map and searchable list for all 50 states and DC.
   State profiles change construction cost, grid waits, water, cooling, hiring
@@ -394,11 +408,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation: M5-02 international profiles and product channels.**
-Add eight regions, six model channels, twelve product templates and shared
-regional useful-work accounting. Implement paid wholesale reservations from
-owned capacity with compatibility, curtailment terms and balanced ledgers.
-An infrastructure provider needs a viable revenue path without model training.
+**Next implementation is M5-03, hazards, resilience and insurance.**
+Add authored seasonal exposure, distinct backup and replication effects,
+physical outages and financial insurance settlements.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

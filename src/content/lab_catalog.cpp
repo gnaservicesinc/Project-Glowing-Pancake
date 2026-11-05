@@ -75,10 +75,14 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
     core::LabCatalog catalog;
     for (const auto field : {"data", "research", "recipes", "evaluations"}) array(doc.at(field));
     for (const auto& row : doc.at("data")) {
-        fields(row, {"id", "name", "provenance", "rights", "price_cents", "unique_units", "quality_bp", "relevance_bp", "coverage_bp", "contamination_bp", "commercial_use"});
+        auto shape = row;
+        const bool open_release = shape.contains("open_weight_release") && boolean(shape.at("open_weight_release"));
+        shape.erase("open_weight_release");
+        fields(shape, {"id", "name", "provenance", "rights", "price_cents", "unique_units", "quality_bp", "relevance_bp", "coverage_bp", "contamination_bp", "commercial_use"});
         catalog.data.push_back({text(row.at("id")), text(row.at("name")), text(row.at("provenance")), text(row.at("rights")),
             core::Cents{integer(row.at("price_cents"))}, integer(row.at("unique_units")), core::BasisPoints{integer(row.at("quality_bp"))},
-            profile(row.at("relevance_bp")), profile(row.at("coverage_bp")), core::BasisPoints{integer(row.at("contamination_bp"))}, boolean(row.at("commercial_use"))});
+            profile(row.at("relevance_bp")), profile(row.at("coverage_bp")), core::BasisPoints{integer(row.at("contamination_bp"))},
+            boolean(row.at("commercial_use")), open_release});
     }
     for (const auto& row : doc.at("research")) {
         fields(row, {"id", "all_of", "any_of", "cash_cents", "staff_days", "experiment_milli_CU"});
@@ -106,10 +110,13 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
 }
 std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
     Json data = Json::array(), research = Json::array(), recipes = Json::array(), evaluations = Json::array();
-    for (const auto* row : ordered(catalog.data)) data.push_back({{"id",row->id},{"name",row->name},{"provenance",row->provenance},{"rights",row->rights},
+    for (const auto* row : ordered(catalog.data)) {
+        data.push_back({{"id",row->id},{"name",row->name},{"provenance",row->provenance},{"rights",row->rights},
         {"price_cents",row->price.value()},{"unique_units",row->unique_units},{"quality_bp",row->quality.value()},
         {"relevance_bp",profile_json(row->relevance)},{"coverage_bp",profile_json(row->coverage)},
-        {"contamination_bp",row->contamination.value()},{"commercial_use",row->commercial_use}});
+            {"contamination_bp",row->contamination.value()},{"commercial_use",row->commercial_use}});
+        if (row->open_weight_release) data.back()["open_weight_release"] = true;
+    }
     for (const auto* row : ordered(catalog.research)) research.push_back({{"id",row->id},{"all_of",row->all_of},{"any_of",row->any_of},
         {"cash_cents",row->cash.value()},{"staff_days",row->staff_days.value()},{"experiment_milli_CU",row->experiment_work.value()}});
     for (const auto* row : ordered(catalog.recipes)) recipes.push_back({{"id",row->id},{"name",row->name},{"requires_research",row->requires_research},

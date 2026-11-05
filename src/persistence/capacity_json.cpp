@@ -6,7 +6,7 @@
 
 namespace pgp::persistence::detail {
 namespace {
-constexpr std::array<std::string_view,2> source_names{"leased","owned"};
+constexpr std::array<std::string_view,3> source_names{"leased","owned","imported"};
 constexpr std::array<std::string_view,4> project_names{"training","research","evaluation","serving"};
 constexpr std::array<std::string_view,3> status_names{"active","completed","cancelled"};
 template<class Enum,std::size_t Size> Json enum_json(Enum value,const std::array<std::string_view,Size>& names) {
@@ -37,13 +37,18 @@ std::uint32_t staff(const Json& value) {
 
 Json capacity_json(const core::CapacityState& state) {
     Json sources=Json::array(),projects=Json::array(),days=Json::array();
-    for (const auto& source:state.sources) sources.push_back({
+    for (const auto& source:state.sources) {
+        sources.push_back({
         {"id",source.id},{"physical_id",source.physical_id},{"owner",source.owner},{"provider",source.provider},
         {"kind",enum_json(source.kind,source_names)},
         {"nominal_milli_CU_per_day",source.nominal.value()},{"effective_milli_CU_per_day",source.effective.value()},
         {"memory_mib",source.memory_mib},{"interconnect",source.interconnect},{"energy_included",source.energy_included},
-        {"available_from",optional_day(source.available_from)}});
-    for (const auto& project:state.projects) projects.push_back({
+            {"available_from",optional_day(source.available_from)}});
+        if (source.wholesale_reserved.value() != 0)
+            sources.back()["wholesale_reserved_milli_CU_per_day"] = source.wholesale_reserved.value();
+    }
+    for (const auto& project:state.projects) {
+        projects.push_back({
         {"id",project.id},{"source_id",project.source_id},{"kind",enum_json(project.kind,project_names)},
         {"status",enum_json(project.status,status_names)},{"starts_on",project.starts_on.value()},
         {"stopped_on",optional_day(project.stopped_on)},{"requested_milli_CU_per_day",project.requested.value()},
@@ -51,12 +56,19 @@ Json capacity_json(const core::CapacityState& state) {
         {"total_work_milli_CU",project.total_work.value()},{"completed_work_milli_CU",project.completed_work.value()},
         {"tasks_per_day",project.tasks_per_day},{"inference_milli_CU_per_task",project.inference_milli_CU_per_task.value()},
         {"useful_tasks",project.useful_tasks},{"monthly_support_cost_cents",project.monthly_support_cost.value()},
-        {"cause",project.cause}});
+            {"cause",project.cause}});
+        if (project.customer_inference) projects.back()["customer_inference"] = true;
+    }
     for (const auto& closed:state.days) {
         Json source_usage=Json::array(),project_work=Json::array();
-        for (const auto& source:closed.sources) source_usage.push_back({
-            {"source_id",source.source_id},{"effective_milli_CU_per_day",source.effective.value()},
-            {"used_milli_CU",source.used.value()}});
+        for (const auto& source:closed.sources) {
+            source_usage.push_back({{"source_id",source.source_id},{"effective_milli_CU_per_day",source.effective.value()},
+                                    {"used_milli_CU",source.used.value()}});
+            if (source.wholesale_available.value() != 0 || source.wholesale_used.value() != 0) {
+                source_usage.back()["wholesale_available_milli_CU_per_day"] = source.wholesale_available.value();
+                source_usage.back()["wholesale_used_milli_CU"] = source.wholesale_used.value();
+            }
+        }
         for (const auto& project:closed.projects) project_work.push_back({
             {"project_id",project.project_id},{"work_milli_CU",project.work.value()},
             {"useful_tasks",project.useful_tasks},{"assigned_staff",project.assigned_staff},
@@ -89,20 +101,21 @@ core::CapacityState parse_capacity(const Json& value) {
     const auto& sources=value.at("sources");array(sources,"capacity/sources",core::capacity_source_limit);
     for (const auto& source:sources) {
         fields(source,"capacity/source",{"id","physical_id","owner","provider","kind","nominal_milli_CU_per_day",
-            "effective_milli_CU_per_day","memory_mib","interconnect","energy_included"},{"available_from"});
+            "effective_milli_CU_per_day","memory_mib","interconnect","energy_included"},{"available_from","wholesale_reserved_milli_CU_per_day"});
         result.sources.push_back({label(source.at("id")),label(source.at("physical_id")),label(source.at("owner")),
             label(source.at("provider")),parse_enum<core::CapacitySourceKind>(source.at("kind"),source_names),
             rate(source.at("nominal_milli_CU_per_day")),rate(source.at("effective_milli_CU_per_day")),
             u64(source.at("memory_mib"),"capacity/source/memory_mib"),label(source.at("interconnect")),
             boolean(source.at("energy_included"),"capacity/source/energy_included"),
-            source.contains("available_from")?parse_optional_day(source.at("available_from")):std::nullopt});
+            source.contains("available_from")?parse_optional_day(source.at("available_from")):std::nullopt,
+            source.contains("wholesale_reserved_milli_CU_per_day") ? rate(source.at("wholesale_reserved_milli_CU_per_day")) : core::MilliCUPerDay{0}});
     }
     const auto& projects=value.at("projects");array(projects,"capacity/projects",core::capacity_project_limit);
     for (const auto& project:projects) {
         fields(project,"capacity/project",{"id","source_id","kind","status","starts_on","stopped_on","requested_milli_CU_per_day",
             "staff","minimum_memory_mib","interconnect","total_work_milli_CU","completed_work_milli_CU","tasks_per_day",
-            "inference_milli_CU_per_task","useful_tasks","monthly_support_cost_cents","cause"});
-        result.projects.push_back({label(project.at("id")),label(project.at("source_id")),
+            "inference_milli_CU_per_task","useful_tasks","monthly_support_cost_cents","cause"},{"customer_inference"});
+        result.projects.push_back({label(project.at("id")),text(project.at("source_id"),"capacity/source_id",100,true),
             parse_enum<core::ProjectKind>(project.at("kind"),project_names),
             parse_enum<core::ProjectStatus>(project.at("status"),status_names),day(project.at("starts_on")),
             parse_optional_day(project.at("stopped_on")),rate(project.at("requested_milli_CU_per_day")),staff(project.at("staff")),
@@ -111,7 +124,8 @@ core::CapacityState parse_capacity(const Json& value) {
             u64(project.at("tasks_per_day"),"capacity/project/tasks_per_day"),work(project.at("inference_milli_CU_per_task")),
             u64(project.at("useful_tasks"),"capacity/project/useful_tasks"),
             core::Cents{i64(project.at("monthly_support_cost_cents"),"capacity/project/monthly_support_cost_cents")},
-            label(project.at("cause"))});
+            label(project.at("cause")), project.contains("customer_inference") &&
+                boolean(project.at("customer_inference"),"capacity/customer_inference")});
     }
     const auto& days=value.at("days");array(days,"capacity/days",core::capacity_day_limit);
     std::size_t project_records=0;
@@ -121,8 +135,11 @@ core::CapacityState parse_capacity(const Json& value) {
         row.day=day(closed.at("day"));
         const auto& source_usage=closed.at("sources");array(source_usage,"capacity/day/sources",core::capacity_source_limit);
         for (const auto& source:source_usage) {
-            fields(source,"capacity/source_usage",{"source_id","effective_milli_CU_per_day","used_milli_CU"});
-            row.sources.push_back({label(source.at("source_id")),rate(source.at("effective_milli_CU_per_day")),work(source.at("used_milli_CU"))});
+            fields(source,"capacity/source_usage",{"source_id","effective_milli_CU_per_day","used_milli_CU"},
+                {"wholesale_available_milli_CU_per_day","wholesale_used_milli_CU"});
+            row.sources.push_back({label(source.at("source_id")),rate(source.at("effective_milli_CU_per_day")),work(source.at("used_milli_CU")),
+                source.contains("wholesale_available_milli_CU_per_day") ? rate(source.at("wholesale_available_milli_CU_per_day")) : core::MilliCUPerDay{0},
+                source.contains("wholesale_used_milli_CU") ? work(source.at("wholesale_used_milli_CU")) : core::MilliCU{0}});
         }
         const auto& project_work=closed.at("projects");array(project_work,"capacity/day/projects",core::capacity_project_limit);
         if (project_work.size()>core::capacity_work_record_limit-project_records)

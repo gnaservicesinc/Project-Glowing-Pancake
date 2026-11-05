@@ -2,6 +2,7 @@
 
 #include "duration.hpp"
 #include "committed.hpp"
+#include "competition_internal.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -678,8 +679,11 @@ RuntimeResult Runtime::submit(const core::Command& command) {
         auto actual=command;IndustryAllocations assignments;
         if (std::holds_alternative<core::TransferCompanyOwnership>(actual.action) || std::holds_alternative<core::TransferGroupFunds>(actual.action)) fail(RuntimeReason::effect_rejected,"Company control and group transfers require the owning bilateral runtime transaction.");
         if (auto* day=std::get_if<core::AdvanceDay>(&actual.action)) {
-            if (day->market_allocation || !day->industry_adoptions.empty()) fail(RuntimeReason::effect_rejected,"Industry allocation is supplied only by the shared world market.");
+            if (day->market_allocation || !day->industry_adoptions.empty() || !day->wholesale_work.empty())
+                fail(RuntimeReason::effect_rejected,"Industry allocations and wholesale work belong to the shared world settlement.");
+            competition_detail::refresh_wholesale(next.world,program_,true);
             assignments=prepare_competition_day(next.world,program_);
+            day->wholesale_work=competition_detail::settle_wholesale(next.world,program_,assignments);
             if (const auto it=assignments.find(next.world.company_id);it!=assignments.end()) {
                 day->market_allocation=it->second;day->industry_adoptions=industry_adoption_snapshot(next.world);
             }
@@ -697,6 +701,7 @@ RuntimeResult Runtime::submit(const core::Command& command) {
         complete_approved_acquisitions(next.world,program_);
         core::prepare_governance(next.world.simulation);
         if (next.world.simulation.date!=prior_day) advance_competition(next.world,program_,prior_day,assignments);
+        else competition_detail::refresh_wholesale(next.world,program_);
         update_competitive_offers(next.world,program_);
         update_heavyweight_responses(next.world,program_);
         const auto cash_after_submit = next.world.simulation.cash;
@@ -729,6 +734,13 @@ RuntimeResult Runtime::proposeAcquisition(std::uint64_t expected_revision,std::s
         if (has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date || next.world.simulation.phase!=core::DayPhase::work_ready)
             fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required choices before negotiating a merger.");
         propose_acquisition(next.world,program_,target,equity);
+    });
+}
+RuntimeResult Runtime::signWholesale(std::uint64_t expected_revision,std::string_view plan,std::string_view source,std::string_view buyer) {
+    return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto&,auto&,auto&) {
+        if (has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date || next.world.simulation.phase!=core::DayPhase::work_ready)
+            fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required choices before signing wholesale capacity.");
+        sign_wholesale(next.world,program_,plan,source,buyer);
     });
 }
 RuntimeResult Runtime::transferSubsidiaryFunds(std::uint64_t expected_revision,std::string_view target,core::Cents amount,bool funding) {

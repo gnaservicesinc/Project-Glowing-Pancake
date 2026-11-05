@@ -173,15 +173,27 @@ void demand_paths(const Json& source) {
         auto doc=isolated(source,"slice.market_shift"); pgp_test::scenario_doc(doc)["seed"]=up?seed_for(4,2,3):seed_for(4,3,4);
         const auto program=compile(doc); auto engine=begin(program); step(engine,45);
         const auto snapshot=engine.checkpoint(); const auto& market=*snapshot.world.simulation.market;
+        const auto enterprise=std::find_if(market.segments.begin(),market.segments.end(),[](const auto& row){return row.id=="segment.enterprise";});
+        check(enterprise!=market.segments.end(),"The demand incident lost its enterprise customers");
+        std::uint64_t other_demand=0;
+        for (const auto& row:market.segments) if (row.id!=enterprise->id) other_demand+=row.daily_tasks;
+        const auto settled_enterprise_demand=[&](const core::MarketState& current) {
+            const auto& day=current.days.back();
+            if (day.total_demand) return *day.total_demand-other_demand;
+            const auto stored=std::find_if(day.segments.begin(),day.segments.end(),[&](const auto& row){return row.segment_id==enterprise->id;});
+            if (stored==day.segments.end()) throw std::runtime_error("The settled day omitted its enterprise demand");
+            return stored->demand;
+        };
         const auto expected=up?6000U:4000U;
-        check(market.demand_changes.size()==1 && market.days.back().segments.front().demand==5000 &&
-            core::effective_market_demand(market,market.segments.front(),core::OrdinalDay{45})==expected,
+        check(market.demand_changes.size()==1 && settled_enterprise_demand(market)==5000 &&
+            core::effective_market_demand(market,*enterprise,core::OrdinalDay{45})==expected,
             "Demand incident did not change actual future demand or rewrote settled demand");
         runtime::Runtime resumed{program,persistence::decode_save(program,persistence::encode_save(program,snapshot)).checkpoint};
         for (unsigned i=0;i<30;++i) { step(engine); step(resumed); check(engine.checkpoint()==resumed.checkpoint(),"Saved demand outcome rerolled or expired differently"); }
-        check(core::effective_market_demand(*engine.current_state().world.simulation.market,market.segments.front(),core::OrdinalDay{75})==5000,
+        check(settled_enterprise_demand(*engine.current_state().world.simulation.market)==expected &&
+            core::effective_market_demand(*engine.current_state().world.simulation.market,*enterprise,core::OrdinalDay{75})==5000,
               "Demand modifier did not expire once at its exclusive date");
-        step(engine); check(engine.current_state().world.simulation.market->days.back().segments.front().demand==5000,"Expired demand still changed customer work");
+        step(engine); check(settled_enterprise_demand(*engine.current_state().world.simulation.market)==5000,"Expired demand still changed customer work");
         const auto before=engine.checkpoint(); accepted(engine.prepare_opening(revision(engine)));
         check(engine.checkpoint()==before,"Reopening prepared event news consumed a draw or repeated a consequence");
         auto malformed=Json::parse(persistence::encode_save(program,engine.checkpoint()));

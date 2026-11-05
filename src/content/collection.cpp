@@ -629,14 +629,15 @@ FlowDefinition flow(const Json& value, const std::string& path, const Registry& 
     if (reached.size() != result.nodes.size()) fail("unreachable_node", path, "Every node must be reachable from entry or continuous exit");
     return result;
 }
-MarketSetup market_setup(const Json& value, const std::string& path, const ScenarioDefinition& scenario,bool templates=false) {
+MarketSetup parse_market_setup(const Json& value, const std::string& path, core::OrdinalDay starts_on, core::OrdinalDay ends_before) {
     fields(value, path, {"offers","segments","contracts"}, {"offers","segments","contracts"});
     MarketSetup result;
     array(value.at("offers"), child(path,"offers"), core::market_product_limit);
     for (const auto& offer : value.at("offers")) {
         fields(offer,path,{"id","capacity_project_id","price_cents_per_task","available","tasks_per_day",
             "inference_milli_CU_per_task","staff","minimum_memory_mib","interconnect","monthly_support_cost_cents",
-             "required_bp","review_credit_bp","review_staff","review_monthly_cost_cents","review_tasks_per_day","required_recipe"},
+             "required_bp","review_credit_bp","review_staff","review_monthly_cost_cents","review_tasks_per_day","required_recipe",
+             "channel","monthly_migration_bp","required_research"},
             {"id","capacity_project_id","price_cents_per_task","available","tasks_per_day",
             "inference_milli_CU_per_task","staff","minimum_memory_mib","interconnect","monthly_support_cost_cents"});
         MarketOfferDefinition row;
@@ -646,7 +647,7 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
         row.serving.id = row.product.capacity_project_id;
         row.serving.source_id = "lease.initial";
         row.serving.kind = core::ProjectKind::serving;
-        row.serving.starts_on = scenario.starts_on;
+        row.serving.starts_on = starts_on;
         row.serving.tasks_per_day = static_cast<std::uint64_t>(integer(offer.at("tasks_per_day"),path,1,core::market_task_limit));
         row.serving.inference_milli_CU_per_task = core::MilliCU{integer(offer.at("inference_milli_CU_per_task"),path,1)};
         row.serving.requested = core::MilliCUPerDay{core::required_inference(
@@ -670,12 +671,20 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
         } else if (offer.contains("review_credit_bp") || offer.contains("review_staff") || offer.contains("review_monthly_cost_cents") || offer.contains("review_tasks_per_day"))
             fail("service_catalog",path,"Review control needs explicit task requirements");
         if (offer.contains("required_recipe")) row.required_recipe=id(offer.at("required_recipe"),path);
+        if (offer.contains("channel")) row.product.channel = core::parse_channel(text(offer.at("channel"),path,32));
+        if (offer.contains("monthly_migration_bp"))
+            row.product.monthly_migration = core::BasisPoints{integer(offer.at("monthly_migration_bp"),path,0,10000)};
+        if (offer.contains("required_research")) {
+            array(offer.at("required_research"),path,16);
+            for (const auto& research : offer.at("required_research")) row.required_research.push_back(id(research,path));
+        }
         result.offers.push_back(std::move(row));
     }
     array(value.at("segments"),child(path,"segments"),core::market_segment_limit);
     for (const auto& segment : value.at("segments")) {
         fields(segment,path,{"id","daily_tasks","daily_budget_cents","outside_utility","reservation_threshold",
-            "maximum_monthly_migration_basis_points","preferences"},
+            "maximum_monthly_migration_basis_points","preferences","region","customer_compute_milli_CU_per_day",
+            "customer_memory_mib","customer_interconnect","requires_local"},
             {"id","daily_tasks","daily_budget_cents","outside_utility","reservation_threshold",
             "maximum_monthly_migration_basis_points","preferences"});
         core::MarketSegment row;
@@ -685,6 +694,16 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
         row.outside_utility = static_cast<std::uint64_t>(integer(segment.at("outside_utility"),path,0,core::market_utility_limit));
         row.reservation_threshold = static_cast<std::uint64_t>(integer(segment.at("reservation_threshold"),path,0,core::market_utility_limit));
         row.maximum_monthly_migration = core::BasisPoints{integer(segment.at("maximum_monthly_migration_basis_points"),path,0,10000)};
+        if (segment.contains("region")) {
+            row.region_id = id(segment.at("region"),path);
+            row.customer_compute = core::MilliCUPerDay{integer(segment.at("customer_compute_milli_CU_per_day"),path,0,1'000'000'000)};
+            row.customer_memory_mib = unsigned_integer(segment.at("customer_memory_mib"),path);
+            row.customer_interconnect = id(segment.at("customer_interconnect"),path);
+            row.requires_local = boolean(segment.at("requires_local"),path);
+        } else if (segment.contains("customer_compute_milli_CU_per_day") || segment.contains("customer_memory_mib") ||
+                   segment.contains("customer_interconnect") || segment.contains("requires_local")) {
+            fail("market",path,"Customer hardware fields require a regional segment");
+        }
         array(segment.at("preferences"),child(path,"preferences"),core::market_product_limit);
         for (const auto& preference : segment.at("preferences")) {
             fields(preference,path,{"product_id","utility","willingness_to_pay_cents","switching_cost","eligible"},
@@ -715,12 +734,16 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
         row.missing_task_penalty = core::Cents{integer(contract.at("missing_task_penalty_cents"),path,0,core::market_price_limit)};
         row.missed_start_penalty = core::Cents{integer(contract.at("missed_start_penalty_cents"),path)};
         row.cancellation_penalty = core::Cents{integer(contract.at("cancellation_penalty_cents"),path)};
-        row.accepted_on = scenario.starts_on;
+        row.accepted_on = starts_on;
         row.start_by = date(contract.at("start_by"),path); row.ends_before = date(contract.at("ends_before"),path);
         row.cause = text(contract.at("cause"),path,256);
-        if (row.ends_before > scenario.ends_before) fail("range",path,"Contract extends past scenario ending");
+        if (row.ends_before > ends_before) fail("range",path,"Contract extends past scenario ending");
         result.contracts.push_back({std::move(row),boolean(contract.at("start_immediately"),path)});
     }
+    return result;
+}
+MarketSetup market_setup(const Json& value, const std::string& path, const ScenarioDefinition& scenario, bool templates=false) {
+    auto result = parse_market_setup(value, path, scenario.starts_on, scenario.ends_before);
     auto ledger = core::opening_accounts(scenario.cash,scenario.starts_on);
     std::vector<core::CapacitySource> sources;
     if (scenario.leased_capacity.value() > 0)
@@ -734,9 +757,81 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
     } else apply_market_setup(result,market,ledger,capacity,scenario.starts_on);
     return result;
 }
+RegionalMarkets parse_regional_markets(const Json& value, const std::string& path) {
+    fields(value,path,{"kind","id","revision","regions","products","wholesale"},
+        {"kind","id","revision","regions","products","wholesale"});
+    const std::set<std::string> required_regions{
+        "region.us","region.canada","region.europe","region.china","region.india","region.asia_pacific",
+        "region.latin_america","region.africa_middle_east"
+    };
+    RegionalMarkets catalog;
+    array(value.at("regions"),path,required_regions.size());
+    std::set<std::string> seen_regions;
+    for (const auto& region : value.at("regions")) {
+        fields(region,path,{"id","name","description"},{"id","name","description"});
+        auto region_id = id(region.at("id"),path);
+        if (!required_regions.contains(region_id) || !seen_regions.insert(region_id).second)
+            fail("regional_markets",path,"Unknown or duplicate world region");
+        catalog.regions.push_back({std::move(region_id),text(region.at("name"),path,100),text(region.at("description"),path,512)});
+    }
+    if (seen_regions != required_regions) fail("regional_markets",path,"The catalog must cover all eight market regions");
+    catalog.products = parse_market_setup(value.at("products"),child(path,"products"),core::OrdinalDay{0},core::OrdinalDay{1});
+    if (!catalog.products.contracts.empty() || catalog.products.offers.size()!=12 || catalog.products.segments.size()!=48)
+        fail("regional_markets",path,"Author twelve launch templates and six customer groups per region without initial commitments");
+    std::map<core::ProductChannel,std::size_t> channels;
+    auto market = core::opening_market();
+    for (const auto& offer : catalog.products.offers) {
+        if (offer.product.channel == core::ProductChannel::legacy || ++channels[offer.product.channel] > 2)
+            fail("regional_markets",path,"Each of the six model channels needs two templates");
+        market.products.push_back(offer.product);
+    }
+    std::set<std::string> expected_segments;
+    for (const auto& region : catalog.regions) {
+        for (const auto* group : {"enterprise","developers","consumers","public_services","science","industrial"}) {
+            if (region.id == "region.us" && std::string_view{group} == "enterprise") expected_segments.insert("segment.enterprise");
+            else expected_segments.insert("segment." + region.id.substr(7) + "." + group);
+        }
+    }
+    for (const auto& segment : catalog.products.segments) {
+        if (!seen_regions.contains(segment.region_id)) fail("regional_markets",path,"Unknown region on customer segment");
+        const auto prefix = "segment." + segment.region_id.substr(7) + ".";
+        const bool matching_region = segment.id == "segment.enterprise" ? segment.region_id == "region.us" : segment.id.starts_with(prefix);
+        if (!matching_region || expected_segments.erase(segment.id) != 1 ||
+            segment.daily_tasks == 0 || segment.daily_budget.value() <= 0)
+            fail("regional_markets",path,"Customer groups require the corresponding region, demand and budget");
+    }
+    market.segments = catalog.products.segments;
+    core::validate_market(market);
+    const auto services = service_definitions(catalog.products);
+    for (const auto& service : services) {
+        const auto feasible = std::any_of(service.preferences.begin(), service.preferences.end(), [&](const auto& preference) {
+            const auto segment = std::find_if(market.segments.begin(),market.segments.end(),[&](const auto& row) { return row.id==preference.segment_id; });
+            return preference.preference.eligible && core::market_access(service.product,*segment) &&
+                (!core::customer_hosted(service.product.channel) || segment->customer_compute.value()>0);
+        });
+        if (!feasible) fail("regional_markets",path,"Every template needs eligible customers and local compute when required");
+    }
+    array(value.at("wholesale"),path,8);
+    std::set<std::string> plan_ids;
+    for (const auto& plan : value.at("wholesale")) {
+        fields(plan,path,{"id","name","capacity_milli_CU_per_day","minimum_memory_mib","interconnect","term_days",
+            "daily_fee_cents","energy_included","availability_bp"},{"id","name","capacity_milli_CU_per_day","minimum_memory_mib",
+            "interconnect","term_days","daily_fee_cents","energy_included","availability_bp"});
+        auto plan_id = id(plan.at("id"),path);
+        if (!plan_ids.insert(plan_id).second) fail("regional_markets",path,"Duplicate wholesale plan");
+        catalog.wholesale.push_back({std::move(plan_id),text(plan.at("name"),path,100),
+            core::MilliCUPerDay{integer(plan.at("capacity_milli_CU_per_day"),path,1,1'000'000'000)},
+            static_cast<std::uint64_t>(integer(plan.at("minimum_memory_mib"),path,1,16'777'216)),
+            id(plan.at("interconnect"),path),core::Days{integer(plan.at("term_days"),path,1,366)},
+            core::Cents{integer(plan.at("daily_fee_cents"),path,1,100'000'000)},boolean(plan.at("energy_included"),path),
+            core::BasisPoints{integer(plan.at("availability_bp"),path,1,10000)}});
+    }
+    if (catalog.wholesale.empty()) fail("regional_markets",path,"At least one funded wholesale plan is required");
+    return catalog;
+}
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -831,6 +926,11 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         catch (const std::exception& error) { fail("service_catalog",path,error.what()); }
     }
     if (result.management && !result.service_catalog) fail("management",path,"Management/scoring requires the qualified service catalog");
+    if (value.contains("regional_markets")) {
+        if (!result.market || !result.service_catalog || !result.infrastructure)
+            fail("regional_markets",path,"Regional scenarios need an opening market, qualified services and owned infrastructure");
+        result.regional_markets = id(value.at("regional_markets"),path);
+    }
     if (value.contains("business_plan")) {
         const auto plan_path = child(path,"business_plan");
         const auto& plan = value.at("business_plan");
@@ -905,9 +1005,22 @@ void validate_references(const Collection& collection, const Registry& registry)
         const auto path = child("/definitions", name);
         if (const auto* scenario_definition = std::get_if<ScenarioDefinition>(&definition.data)) {
             for (const auto& target : scenario_definition->research) (void)reference(target, "research", path);
+            if (!scenario_definition->regional_markets.empty()) {
+                (void)reference(scenario_definition->regional_markets,"regional_markets",path);
+                (void)scenario_market_setup(collection, *scenario_definition);
+            }
             if (scenario_definition->lab) {
                 try {
                     const auto catalog=scenario_lab_catalog(collection, *scenario_definition);
+                    const auto services = scenario_services(collection, *scenario_definition);
+                    for (const auto& service : services) {
+                        for (const auto& required : service.required_research)
+                            if (std::none_of(catalog.research.begin(), catalog.research.end(), [&](const auto& row) { return row.id==required; }))
+                                fail("regional_markets",path,"A channel requires research outside this scenario");
+                        if (!service.required_recipe.empty() &&
+                            std::none_of(catalog.recipes.begin(), catalog.recipes.end(), [&](const auto& row) { return row.id==service.required_recipe; }))
+                            fail("regional_markets",path,"A channel requires a recipe outside this scenario");
+                    }
                     if (scenario_definition->infrastructure) for (const auto& hardware:scenario_definition->infrastructure->hardware)
                         for (const auto& required:hardware.requires_research) if (std::none_of(catalog.research.begin(),catalog.research.end(),[&](const auto& research){return research.id==required;}))
                             fail("infrastructure",path,"Hardware integration requires a known scenario research node");
@@ -927,7 +1040,7 @@ void validate_references(const Collection& collection, const Registry& registry)
                                 fail("rivals",path,"Weekly rival planning requires explicit roster settings, market, services and management terms");
                             for (const auto& id:rival.planning->research) if (std::none_of(catalog.research.begin(),catalog.research.end(),[&](const auto& row){return row.id==id;})) fail("rivals",path,"Rival research priority is not in this scenario");
                             for (const auto& id:rival.planning->recipes) if (std::none_of(catalog.recipes.begin(),catalog.recipes.end(),[&](const auto& row){return row.id==id;})) fail("rivals",path,"Rival recipe priority is not in this scenario");
-                            for (const auto& id:rival.planning->services) if (std::none_of(scenario_definition->service_catalog->offers.begin(),scenario_definition->service_catalog->offers.end(),[&](const auto& row){return row.product.id==id;})) fail("rivals",path,"Rival service priority is not in this scenario");
+                            for (const auto& id:rival.planning->services) if (std::none_of(services.begin(),services.end(),[&](const auto& row){return row.product.id==id;})) fail("rivals",path,"Rival service priority is not in this scenario");
                             if (rival.response) {
                                 const auto& p=*rival.response;const auto& management=*scenario_definition->management;
                                 if (std::none_of(management.specialists.begin(),management.specialists.end(),[&](const auto& row){return row.id==p.specialist_id;}) ||
@@ -1063,6 +1176,7 @@ std::string_view definition_kind(const Definition& definition) {
     if (std::holds_alternative<ScenarioDefinition>(definition.data)) return "scenario";
     if (std::holds_alternative<ResearchDefinition>(definition.data)) return "research";
     if (std::holds_alternative<FlowDefinition>(definition.data)) return "flow";
+    if (std::holds_alternative<RegionalMarkets>(definition.data)) return "regional_markets";
     return "deal";
 }
 bool is_incident_stream(core::RandomStream stream) noexcept {
@@ -1166,6 +1280,7 @@ Collection load_collection(std::string_view document, const Registry& registry) 
             if (kind == "scenario") return scenario(value, path);
             if (kind == "research") return research(value, path);
             if (kind == "flow") return flow(value, path, installed_registry);
+            if (kind == "regional_markets") return parse_regional_markets(value,path);
             if (kind == "deal") {
                 fields(value, path, {"id", "kind", "revision", "minimum_payment_cents", "minimum_duration_days"},
                        {"id", "kind", "revision", "minimum_payment_cents", "minimum_duration_days"});

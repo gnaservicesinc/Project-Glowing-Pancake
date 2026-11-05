@@ -117,6 +117,7 @@ void issue_asset_equity(AccountsState&,OrdinalDay,std::string investor,Cents val
 // copying the full ledger inside each site's work loop. Restore remains deep.
 void accrue_metered_expense(AccountsState&,OrdinalDay,std::string meter,Cents amount,std::string cause,bool validate_io=true);
 void record_owned_depreciation(AccountsState&,OrdinalDay,std::string reference,Cents amount,bool validate_io=true);
+[[nodiscard]] std::uint64_t record_wholesale_cash(AccountsState&,OrdinalDay,std::string_view contract,Cents amount,bool seller);
 void dispose_owned_asset(AccountsState&,OrdinalDay,std::string reference,Cents cost,Cents depreciation,Cents proceeds);
 // Accrue exactly the next day, then collect due receivables and pay due
 // obligations in (due,id) order from unreserved cash. Unpaid amounts persist.

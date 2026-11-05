@@ -147,6 +147,7 @@ struct ScenarioDefinition {
     std::optional<core::ManagementCatalog> management{};
     std::optional<CompetitionSetup> competition{};
     std::optional<core::InfrastructureCatalog> infrastructure{};
+    std::string regional_markets{};
 };
 struct ResearchDefinition {
     std::vector<std::string> all_of;
@@ -156,7 +157,7 @@ struct ResearchDefinition {
     pgp::core::MilliCU work;
 };
 struct DealDefinition { pgp::core::Cents minimum_payment; pgp::core::Days minimum_duration; };
-using DefinitionData = std::variant<ScenarioDefinition, ResearchDefinition, FlowDefinition, DealDefinition>;
+using DefinitionData = std::variant<ScenarioDefinition, ResearchDefinition, FlowDefinition, DealDefinition, RegionalMarkets>;
 struct Definition {
     std::string id;
     std::uint32_t revision;
@@ -178,5 +179,8 @@ struct Collection {
 [[nodiscard]] std::pair<ValueType, Unit> expression_type(const Expression& expression, Scope scope, const Registry& registry);
 [[nodiscard]] Registry registry_with_variables(const Registry& registry, const std::vector<FactMetadata>& variables);
 [[nodiscard]] std::string_view definition_kind(const Definition& definition);
+[[nodiscard]] const RegionalMarkets* regional_markets(const Collection& collection, const ScenarioDefinition& scenario);
+[[nodiscard]] MarketSetup scenario_market_setup(const Collection& collection, const ScenarioDefinition& scenario);
+[[nodiscard]] std::vector<core::ServiceDefinition> scenario_services(const Collection& collection, const ScenarioDefinition& scenario);
 
 } // namespace pgp::content

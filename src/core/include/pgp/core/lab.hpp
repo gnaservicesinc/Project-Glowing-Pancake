@@ -24,6 +24,7 @@ struct DataOffer {
     LabProfile coverage = empty_lab_profile;
     BasisPoints contamination{0};
     bool commercial_use = true;
+    bool open_weight_release = false;
     auto operator<=>(const DataOffer&) const = default;
 };
 struct LabResearch {

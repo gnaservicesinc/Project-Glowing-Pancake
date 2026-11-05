@@ -6,7 +6,7 @@
 
 namespace pgp::core {
 
-inline constexpr std::size_t market_segment_limit = 16;
+inline constexpr std::size_t market_segment_limit = allocation_segment_limit;
 inline constexpr std::size_t market_product_limit = 64;
 inline constexpr std::size_t market_contract_limit = 256;
 inline constexpr std::size_t market_day_limit = 40960;
@@ -15,11 +15,19 @@ inline constexpr std::uint64_t market_task_limit = 1'000'000'000;
 inline constexpr std::int64_t market_price_limit = 100'000'000;
 inline constexpr std::uint64_t market_utility_limit = 1'000'000;
 
+enum class ProductChannel { legacy, business, api, consumer, licensed, open_weights, agent };
+[[nodiscard]] std::string_view channel_key(ProductChannel channel);
+[[nodiscard]] ProductChannel parse_channel(std::string_view key);
+[[nodiscard]] bool customer_hosted(ProductChannel channel);
+
 struct MarketProduct {
     std::string id;
     std::string capacity_project_id;
     Cents price_per_task{0};
     bool available = true;
+    ProductChannel channel = ProductChannel::legacy;
+    BasisPoints monthly_migration{10000};
+    std::string region_id{};
     auto operator<=>(const MarketProduct&) const = default;
 };
 struct MarketPreference {
@@ -38,6 +46,11 @@ struct MarketSegment {
     std::uint64_t reservation_threshold = 0;
     BasisPoints maximum_monthly_migration{10000};
     std::vector<MarketPreference> preferences;
+    std::string region_id{};
+    MilliCUPerDay customer_compute{0};
+    std::uint64_t customer_memory_mib = 0;
+    std::string customer_interconnect{};
+    bool requires_local = false;
     auto operator<=>(const MarketSegment&) const = default;
 };
 enum class ContractStatus { pending, active, completed, missed, cancelled };
@@ -76,6 +89,7 @@ struct MarketDelivery {
     std::string product_id;
     std::uint64_t tasks = 0;
     Cents charged{0};
+    MilliCU customer_compute{0};
     auto operator<=>(const MarketDelivery&) const = default;
 };
 struct MarketSegmentDay {
@@ -96,6 +110,7 @@ struct MarketDay {
     std::vector<MarketDelivery> discretionary;
     std::vector<MarketSegmentDay> segments;
     std::uint64_t allocation_rounds = 0;
+    std::optional<std::uint64_t> total_demand{};
     auto operator<=>(const MarketDay&) const = default;
 };
 struct InstalledShare {
@@ -153,6 +168,9 @@ struct MarketReport {
 [[nodiscard]] MarketState opening_market(OrdinalDay starts_on = OrdinalDay{0},
                                          std::string owner = "company.player");
 [[nodiscard]] MarketReport market_report(const MarketState& state);
+[[nodiscard]] bool regional_market(const MarketState& state);
+[[nodiscard]] bool market_access(const MarketProduct& product, const MarketSegment& segment);
+[[nodiscard]] BasisPoints market_migration(const MarketProduct& product, const MarketSegment& segment);
 void validate_market(const MarketState& state);
 void validate_market_links(const MarketState& state, const AccountsState& accounts,
                            const CapacityState& capacity);
@@ -190,11 +208,14 @@ struct MarketOpportunity {
 // single company and for shared multi-company demand. It never closes work.
 [[nodiscard]] MarketOpportunity market_opportunity(const MarketState& state, const CapacityState& capacity, OrdinalDay day,
     const std::vector<MarketAdoption>* industry_adoptions = nullptr);
+[[nodiscard]] CapacityDay preview_market_work(const MarketState& state, const CapacityState& capacity, OrdinalDay day,
+    const AllocationResult& assigned, const std::vector<MarketAdoption>& industry_adoptions);
 // An industry allocation is checked against this company's actual opportunity;
 // other providers count as outside in its own report. The world coordinator
 // additionally conserves the single customer demand/budget across all sellers.
 void close_market_day(MarketState& state, AccountsState& accounts,
                       CapacityState& capacity, OrdinalDay day, bool validate_io = true,
                       const AllocationResult* assigned = nullptr,
-                      const std::vector<MarketAdoption>* industry_adoptions = nullptr);
+                      const std::vector<MarketAdoption>* industry_adoptions = nullptr,
+                      std::span<const WholesaleUse> wholesale = {});
 } // namespace pgp::core

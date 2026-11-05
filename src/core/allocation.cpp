@@ -21,23 +21,26 @@ std::uint64_t add(std::uint64_t left, std::uint64_t right) {
         throw std::overflow_error("Allocation unsigned sum overflow");
     return left + right;
 }
-std::uint64_t cost(std::uint64_t tasks, Cents price) {
-    return mul_div_floor(tasks, static_cast<std::uint64_t>(price.value()), 1).quotient;
+std::uint64_t cost(std::uint64_t tasks, std::uint64_t rate) {
+    return mul_div_floor(tasks, rate, 1).quotient;
 }
 struct Product {
     std::string id;
     Cents price{0};
     std::uint64_t remaining = 0;
+    std::uint64_t local_rate = 0;
 };
 struct Edge {
     std::size_t product = 0;
     std::uint64_t weight = 0;
     std::uint64_t remaining = 0;
+    std::uint64_t retained = 0;
 };
 struct Segment {
     std::string id;
     std::uint64_t remaining = 0;
     std::uint64_t budget = 0;
+    std::uint64_t local_compute = 0;
     std::uint64_t outside_weight = 0;
     std::vector<Edge> edges;
     std::vector<std::uint64_t> delivered;
@@ -46,7 +49,8 @@ struct Segment {
 bool eligible(const Segment& segment, const Edge& edge, const std::vector<Product>& products) {
     const auto& product = products[edge.product];
     return edge.weight != 0 && edge.remaining != 0 && product.remaining != 0 &&
-           static_cast<std::uint64_t>(product.price.value()) <= segment.budget;
+           static_cast<std::uint64_t>(product.price.value()) <= segment.budget &&
+           product.local_rate <= segment.local_compute;
 }
 AllocationOutsideReason refusal_reason(const Segment& segment, const std::vector<Product>& products) {
     bool positive_weight = false, available_product = false, available_edge = false, affordable = false;
@@ -64,12 +68,85 @@ AllocationOutsideReason refusal_reason(const Segment& segment, const std::vector
     if (!available_product) return AllocationOutsideReason::capacity;
     if (!available_edge) return AllocationOutsideReason::edge_limit;
     if (!affordable) return AllocationOutsideReason::budget;
-    return AllocationOutsideReason::no_eligible_product;
+    return AllocationOutsideReason::customer_compute;
 }
 void send_outside(Segment& segment, std::uint64_t tasks, AllocationOutsideReason reason) {
     if (tasks > segment.remaining) invalid("Allocation outside work exceeds remaining demand");
     segment.remaining -= tasks;
     if (tasks != 0) segment.outside[reason] = add(segment.outside[reason], tasks);
+}
+using Claims = std::vector<std::vector<std::uint64_t>>;
+template<class Rate>
+void constrain_claims(std::vector<std::uint64_t>& claims, const std::vector<Product>& products,
+                      std::uint64_t budget, Rate rate, bool keep_free) {
+    std::uint64_t total = 0;
+    for (std::size_t p = 0; p < products.size(); ++p) total = add(total, cost(claims[p], rate(products[p])));
+    if (total <= budget) return;
+
+    struct Remainder { std::size_t product; std::uint64_t fraction; std::uint64_t maximum; };
+    std::vector<Remainder> remainders;
+    std::uint64_t spent = 0;
+    for (std::size_t p = 0; p < products.size(); ++p) {
+        const auto unit = rate(products[p]);
+        if (keep_free && unit == 0) continue;
+        const auto maximum = claims[p];
+        const auto scaled = mul_div_floor(maximum, budget, total);
+        claims[p] = scaled.quotient;
+        spent = add(spent, cost(scaled.quotient, unit));
+        if (scaled.remainder != 0) remainders.push_back({p, scaled.remainder, maximum});
+    }
+    std::sort(remainders.begin(), remainders.end(), [&](const auto& left, const auto& right) {
+        if (left.fraction != right.fraction) return left.fraction > right.fraction;
+        return products[left.product].id < products[right.product].id;
+    });
+    for (const auto& remainder : remainders) {
+        const auto p = remainder.product;
+        const auto unit = rate(products[p]);
+        if (claims[p] < remainder.maximum && unit <= budget - spent) {
+            ++claims[p];
+            spent = add(spent, unit);
+        }
+    }
+}
+void conserve_segment(Claims& claims, std::size_t index, const Segment& segment, const std::vector<Product>& products) {
+    constrain_claims(claims[index], products, segment.local_compute, [](const auto& product) { return product.local_rate; }, true);
+    constrain_claims(claims[index], products, segment.budget, [](const auto& product) {
+        return static_cast<std::uint64_t>(product.price.value());
+    }, false);
+}
+void commit_claims(Claims& claims, std::vector<Segment>& segments, std::vector<Product>& products) {
+    for (std::size_t p = 0; p < products.size(); ++p) {
+        std::uint64_t total = 0;
+        std::vector<WeightedQuota> weights;
+        for (std::size_t s = 0; s < segments.size(); ++s) {
+            total = add(total, claims[s][p]);
+            if (claims[s][p] != 0) weights.push_back({segments[s].id, claims[s][p]});
+        }
+        if (total <= products[p].remaining) continue;
+        for (const auto& quota : apportion_units(products[p].remaining, weights)) {
+            const auto found = std::lower_bound(segments.begin(), segments.end(), quota.id,
+                [](const auto& segment, const auto& id) { return segment.id < id; });
+            claims[static_cast<std::size_t>(found - segments.begin())][p] = quota.units;
+        }
+    }
+    for (std::size_t s = 0; s < segments.size(); ++s) {
+        auto& segment = segments[s];
+        for (auto& edge : segment.edges) {
+            const auto p = edge.product;
+            const auto delivered = claims[s][p];
+            const auto charged = cost(delivered, static_cast<std::uint64_t>(products[p].price.value()));
+            const auto used = cost(delivered, products[p].local_rate);
+            if (delivered > segment.remaining || delivered > edge.remaining || delivered > products[p].remaining ||
+                charged > segment.budget || used > segment.local_compute)
+                invalid("Allocation exceeded demand, budget, buyer compute or product supply");
+            segment.remaining -= delivered;
+            segment.budget -= charged;
+            segment.local_compute -= used;
+            edge.remaining -= delivered;
+            products[p].remaining -= delivered;
+            segment.delivered[p] = add(segment.delivered[p], delivered);
+        }
+    }
 }
 } // namespace
 
@@ -114,9 +191,9 @@ AllocationResult allocate_demand(std::span<const AllocationProduct> input_produc
     for (const auto& product : input_products) {
         text_valid(product.id);
         if (product.id == outside_id || product.price.value() < 0 || product.price.value() > allocation_price_limit ||
-            product.capacity > allocation_task_limit)
+            product.capacity > allocation_task_limit || product.customer_compute_per_task.value() > 1'000'000'000)
             invalid("Product has a reserved identity, invalid price or excessive capacity");
-        products.push_back({product.id, product.price, product.capacity});
+        products.push_back({product.id, product.price, product.capacity, static_cast<std::uint64_t>(product.customer_compute_per_task.value())});
     }
     std::sort(products.begin(), products.end(), [](const auto& left, const auto& right) { return left.id < right.id; });
     std::map<std::string, std::size_t, std::less<>> product_indices;
@@ -131,14 +208,16 @@ AllocationResult allocate_demand(std::span<const AllocationProduct> input_produc
         edge_count += segment.edges.size();
         if (edge_count > allocation_edge_limit) invalid("Allocation edge count exceeds its bound");
         Segment row{segment.id, segment.tasks, static_cast<std::uint64_t>(segment.budget.value()),
+                    static_cast<std::uint64_t>(segment.customer_compute.value()),
                     segment.outside_weight, {}, std::vector<std::uint64_t>(products.size(), 0), {}};
         std::set<std::string> edge_ids;
         for (const auto& edge : segment.edges) {
             const auto found = product_indices.find(edge.product_id);
             if (found == product_indices.end() || !edge_ids.insert(edge.product_id).second || edge.weight > allocation_weight_limit ||
-                (edge.task_limit && *edge.task_limit > allocation_task_limit))
+                (edge.task_limit && *edge.task_limit > allocation_task_limit) || edge.retained_tasks > allocation_task_limit)
                 invalid("Allocation edge has an unknown/duplicate product, excessive weight or task limit");
-            row.edges.push_back({found->second, edge.weight, edge.task_limit.value_or(allocation_task_limit)});
+            const auto limit = edge.task_limit.value_or(allocation_task_limit);
+            row.edges.push_back({found->second, edge.weight, limit, std::min(edge.retained_tasks, limit)});
         }
         std::sort(row.edges.begin(), row.edges.end(), [](const auto& left, const auto& right) { return left.product < right.product; });
         segments.push_back(std::move(row));
@@ -149,9 +228,30 @@ AllocationResult allocate_demand(std::span<const AllocationProduct> input_produc
 
     AllocationResult result;
     result.round_bound = products.size() + edge_count + 1;
+    const bool has_retention = std::any_of(segments.begin(), segments.end(), [&](const auto& segment) {
+        return std::any_of(segment.edges.begin(), segment.edges.end(), [&](const auto& edge) {
+            return edge.retained != 0 && eligible(segment, edge, products);
+        });
+    });
+    if (has_retention) {
+        Claims claims(segments.size(), std::vector<std::uint64_t>(products.size(), 0));
+        for (std::size_t s = 0; s < segments.size(); ++s) {
+            const auto& segment = segments[s];
+            std::vector<WeightedQuota> incumbents;
+            std::uint64_t retained = 0;
+            for (const auto& edge : segment.edges) if (edge.retained != 0 && eligible(segment, edge, products)) {
+                incumbents.push_back({products[edge.product].id, edge.retained});
+                retained = add(retained, edge.retained);
+            }
+            for (const auto& quota : apportion_units(std::min(retained, segment.remaining), incumbents))
+                claims[s][product_indices.at(quota.id)] = quota.units;
+            conserve_segment(claims, s, segment, products);
+        }
+        commit_claims(claims, segments, products);
+    }
     while (std::any_of(segments.begin(), segments.end(), [](const auto& segment) { return segment.remaining != 0; })) {
         if (++result.rounds > result.round_bound) invalid("Allocation exhausted its proved finite round bound");
-        std::vector<std::vector<std::uint64_t>> claims(segments.size(), std::vector<std::uint64_t>(products.size(), 0));
+        Claims claims(segments.size(), std::vector<std::uint64_t>(products.size(), 0));
         std::vector<std::vector<bool>> eligible_before(segments.size());
         std::vector<bool> supplied_before;
         for (const auto& product : products) supplied_before.push_back(product.remaining != 0);
@@ -175,63 +275,9 @@ AllocationResult allocate_demand(std::span<const AllocationProduct> input_produc
                     claims[s][p] = std::min(quota.units, edge->remaining);
                 }
             }
-            std::uint64_t tentative_cost = 0;
-            for (std::size_t p = 0; p < products.size(); ++p) tentative_cost = add(tentative_cost, cost(claims[s][p], products[p].price));
-            if (tentative_cost > segment.budget) {
-                struct Remainder { std::size_t product; std::uint64_t fraction; std::uint64_t maximum; };
-                std::vector<Remainder> remainders;
-                std::uint64_t spent = 0;
-                for (std::size_t p = 0; p < products.size(); ++p) {
-                    const auto maximum = claims[s][p];
-                    const auto scaled = mul_div_floor(maximum, segment.budget, tentative_cost);
-                    claims[s][p] = scaled.quotient;
-                    spent = add(spent, cost(scaled.quotient, products[p].price));
-                    if (scaled.remainder != 0) remainders.push_back({p, scaled.remainder, maximum});
-                }
-                std::sort(remainders.begin(), remainders.end(), [&](const auto& left, const auto& right) {
-                    if (left.fraction != right.fraction) return left.fraction > right.fraction;
-                    return products[left.product].id < products[right.product].id;
-                });
-                for (const auto& remainder : remainders) {
-                    const auto p = remainder.product;
-                    const auto price = static_cast<std::uint64_t>(products[p].price.value());
-                    if (claims[s][p] < remainder.maximum && price <= segment.budget - spent) {
-                        ++claims[s][p];
-                        spent = add(spent, price);
-                    }
-                }
-            }
+            conserve_segment(claims, s, segment, products);
         }
-        for (std::size_t p = 0; p < products.size(); ++p) {
-            std::uint64_t total = 0;
-            std::vector<WeightedQuota> weights;
-            for (std::size_t s = 0; s < segments.size(); ++s) {
-                total = add(total, claims[s][p]);
-                if (claims[s][p] != 0) weights.push_back({segments[s].id, claims[s][p]});
-            }
-            if (total <= products[p].remaining) continue;
-            for (const auto& quota : apportion_units(products[p].remaining, weights)) {
-                const auto found = std::lower_bound(segments.begin(), segments.end(), quota.id,
-                    [](const auto& segment, const auto& id) { return segment.id < id; });
-                const auto s = static_cast<std::size_t>(found - segments.begin());
-                claims[s][p] = quota.units;
-            }
-        }
-        for (std::size_t s = 0; s < segments.size(); ++s) {
-            auto& segment = segments[s];
-            for (auto& edge : segment.edges) {
-                const auto p = edge.product;
-                const auto delivered = claims[s][p];
-                const auto charged = cost(delivered, products[p].price);
-                if (delivered > segment.remaining || delivered > edge.remaining || delivered > products[p].remaining || charged > segment.budget)
-                    invalid("Allocation candidate exceeded demand, budget, edge or product supply");
-                segment.remaining -= delivered;
-                segment.budget -= charged;
-                edge.remaining -= delivered;
-                products[p].remaining -= delivered;
-                segment.delivered[p] = add(segment.delivered[p], delivered);
-            }
-        }
+        commit_claims(claims, segments, products);
         if (std::any_of(segments.begin(), segments.end(), [](const auto& segment) { return segment.remaining != 0; })) {
             bool progress = false;
             for (std::size_t p = 0; p < products.size(); ++p)
@@ -247,7 +293,7 @@ AllocationResult allocate_demand(std::span<const AllocationProduct> input_produc
         row.id = segment.id;
         row.remaining_budget = Cents{segment.budget};
         for (std::size_t p = 0; p < products.size(); ++p)
-            if (segment.delivered[p] != 0) row.deliveries.push_back({products[p].id, segment.delivered[p], Cents{cost(segment.delivered[p], products[p].price)}});
+            if (segment.delivered[p] != 0) row.deliveries.push_back({products[p].id, segment.delivered[p], Cents{cost(segment.delivered[p], static_cast<std::uint64_t>(products[p].price.value()))}});
         for (const auto& [reason, tasks] : segment.outside) {
             row.outside.push_back({reason, tasks});
             row.outside_tasks = add(row.outside_tasks, tasks);

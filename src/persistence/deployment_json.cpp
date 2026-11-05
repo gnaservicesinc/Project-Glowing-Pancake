@@ -23,9 +23,15 @@ Json deployment_json(const core::DeploymentState& state) {
             {"staff",w.staff},{"memory",w.minimum_memory_mib},{"interconnect",w.interconnect},{"support",w.monthly_support_cost.value()},
             {"cause",w.cause},{"required",profile(row.required)},{"review_credit",profile(row.review_credit)},{"review_staff",row.review_staff},
             {"review_cost",row.review_monthly_cost.value()},{"review_tasks",row.review_tasks_per_day},{"preferences",std::move(preferences)},{"required_recipe",row.required_recipe}});
+        if (p.channel != core::ProductChannel::legacy) catalog.back()["channel"] = core::channel_key(p.channel);
+        if (p.monthly_migration.value() != 10000) catalog.back()["migration"] = p.monthly_migration.value();
+        if (!row.required_research.empty()) catalog.back()["research"] = row.required_research;
     }
-    for (const auto& row:state.records) records.push_back({{"service",row.service_id},{"model",row.model_id},{"evidence",row.evidence_id},
-        {"project",row.project_id},{"review",row.human_review},{"day",row.deployed_on.value()}});
+    for (const auto& row:state.records) {
+        records.push_back({{"service",row.service_id},{"model",row.model_id},{"evidence",row.evidence_id},
+            {"project",row.project_id},{"review",row.human_review},{"day",row.deployed_on.value()}});
+        if (!row.region_id.empty()) records.back()["region"] = row.region_id;
+    }
     return {{"catalog",std::move(catalog)},{"records",std::move(records)}};
 }
 core::DeploymentState parse_deployment(const Json& j) {
@@ -35,10 +41,17 @@ core::DeploymentState parse_deployment(const Json& j) {
     core::DeploymentState state;
     for (const auto& row:j.at("catalog")) {
         fields(row,"deployment/service",{"id","project","price","available","source","starts","tasks","inference","staff","memory",
-            "interconnect","support","cause","required","review_credit","review_staff","review_cost","review_tasks","preferences"},{"required_recipe"});
+            "interconnect","support","cause","required","review_credit","review_staff","review_cost","review_tasks","preferences"},
+            {"required_recipe","channel","migration","research"});
         core::ServiceDefinition value;
         value.product={label(row.at("id")),label(row.at("project")),cents(row.at("price")),boolean(row.at("available"),"deployment/available")};
         if (row.contains("required_recipe")) value.required_recipe=text(row.at("required_recipe"),"deployment/required_recipe",64,true);
+        if (row.contains("channel")) value.product.channel = core::parse_channel(label(row.at("channel")));
+        if (row.contains("migration")) value.product.monthly_migration = core::BasisPoints{i64(row.at("migration"),"deployment/migration")};
+        if (row.contains("research")) {
+            array(row.at("research"), "deployment/research", 16);
+            for (const auto& prerequisite : row.at("research")) value.required_research.push_back(label(prerequisite));
+        }
         auto& w=value.serving; w.id=value.product.capacity_project_id; w.source_id=label(row.at("source"));
         w.kind=core::ProjectKind::serving; w.starts_on=core::OrdinalDay{i64(row.at("starts"),"deployment/starts")};
         w.tasks_per_day=u64(row.at("tasks"),"deployment/tasks",core::market_task_limit);
@@ -59,9 +72,10 @@ core::DeploymentState parse_deployment(const Json& j) {
         state.catalog.push_back(std::move(value));
     }
     for (const auto& row:j.at("records")) {
-        fields(row,"deployment/record",{"service","model","evidence","project","review","day"});
+        fields(row,"deployment/record",{"service","model","evidence","project","review","day"},{"region"});
         state.records.push_back({label(row.at("service")),label(row.at("model")),label(row.at("evidence")),label(row.at("project")),
-            boolean(row.at("review"),"deployment/review"),core::OrdinalDay{i64(row.at("day"),"deployment/day")}});
+            boolean(row.at("review"),"deployment/review"),core::OrdinalDay{i64(row.at("day"),"deployment/day")},
+            row.contains("region") ? label(row.at("region")) : std::string{}});
     }
     core::validate_service_catalog(state.catalog);
     return state;

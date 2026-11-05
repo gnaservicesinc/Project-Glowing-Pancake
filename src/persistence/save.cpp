@@ -283,6 +283,42 @@ std::vector<std::string> parse_strings(const Json& value,std::size_t maximum=max
     for (const auto& item:value) result.push_back(detail::text(item,"string",4096));
     return result;
 }
+Json wholesale_json(const std::vector<WholesaleContract>& contracts) {
+    Json result=Json::array();
+    for (const auto& contract:contracts) {
+        Json days=Json::array();
+        for (const auto& row:contract.days) days.push_back(Json::array({
+            row.available.value(),row.used.value(),row.service_credit.value(),row.electricity.value(),row.seller_posting,row.buyer_posting}));
+        result.push_back({{"id",contract.id},{"plan",contract.plan_id},{"source",contract.source_id},{"buyer",contract.buyer_id},
+            {"starts_on",contract.starts_on.value()},{"ends_before",contract.ends_before.value()},{"terminated_on",optional_day(contract.terminated_on)},
+            {"reservation",contract.reservation_id},{"daily_ceiling_cents",contract.daily_ceiling.value()},{"days",std::move(days)}});
+    }
+    return result;
+}
+std::vector<WholesaleContract> parse_wholesale(const Json& value) {
+    detail::array(value,"wholesale",wholesale_contract_limit);
+    std::vector<WholesaleContract> result;
+    for (const auto& contract:value) {
+        detail::fields(contract,"wholesale/contract",{"id","plan","source","buyer","starts_on","ends_before",
+            "terminated_on","reservation","daily_ceiling_cents","days"});
+        WholesaleContract row{detail::text(contract.at("id"),"wholesale/id",64),detail::text(contract.at("plan"),"wholesale/plan",64),
+            detail::text(contract.at("source"),"wholesale/source",128),detail::text(contract.at("buyer"),"wholesale/buyer",64),
+            OrdinalDay{detail::i64(contract.at("starts_on"),"wholesale/starts_on")},OrdinalDay{detail::i64(contract.at("ends_before"),"wholesale/ends_before")},
+            parse_day(contract.at("terminated_on")),detail::u64(contract.at("reservation"),"wholesale/reservation"),
+            Cents{detail::i64(contract.at("daily_ceiling_cents"),"wholesale/daily_ceiling_cents")},{}};
+        const auto& days=contract.at("days");
+        detail::array(days,"wholesale/days",wholesale_day_limit);
+        for (const auto& day:days) {
+            detail::array(day,"wholesale/day",6);
+            if (day.size()!=6) detail::invalid("wholesale/day","A settlement needs all six fields");
+            row.days.push_back({core::MilliCUPerDay{detail::i64(day.at(0),"wholesale/available")},core::MilliCU{detail::i64(day.at(1),"wholesale/used")},
+                Cents{detail::i64(day.at(2),"wholesale/credit")},Cents{detail::i64(day.at(3),"wholesale/electricity")},
+                detail::u64(day.at(4),"wholesale/seller_posting"),detail::u64(day.at(5),"wholesale/buyer_posting")});
+        }
+        result.push_back(std::move(row));
+    }
+    return result;
+}
 Json competition_json(const CompetitionState& state) {
     Json companies=Json::array(),notices=Json::array();
     detail::CompetitionHistoryBudget history_budget;
@@ -315,6 +351,7 @@ Json competition_json(const CompetitionState& state) {
         result["setup"]=Json::parse(content::canonical_competition_setup(*state.setup));
         result["offers"]=detail::competitive_offers_json(state.offers);
         if (!state.acquisitions.empty()) result["acquisitions"]=detail::acquisitions_json(state.acquisitions);
+        if (!state.wholesale.empty()) result["wholesale"]=wholesale_json(state.wholesale);
         result["releases"]=Json::array();for (const auto& row:state.releases) result["releases"].push_back({{"company",row.company_id},{"product",row.product_id},{"day",row.day.value()}});
         result["adoptions"]=Json::array();for (const auto& row:state.adoptions) {
             Json shares=Json::array();for (const auto& share:row.shares) shares.push_back({{"product",share.product_id},{"share",share.share.value()}});
@@ -324,13 +361,14 @@ Json competition_json(const CompetitionState& state) {
     return result;
 }
 CompetitionState parse_competition(const Json& value) {
-    detail::fields(value,"competition",{"companies","notices"},{"setup","releases","adoptions","offers","acquisitions"}); CompetitionState result;
+    detail::fields(value,"competition",{"companies","notices"},{"setup","releases","adoptions","offers","acquisitions","wholesale"}); CompetitionState result;
     if (value.contains("acquisitions")) result.acquisitions=detail::parse_acquisitions(value.at("acquisitions"));
     if (value.contains("offers")) result.offers=detail::parse_competitive_offers(value.at("offers"));
+    if (value.contains("wholesale")) result.wholesale=parse_wholesale(value.at("wholesale"));
     if (value.contains("setup")) {
         if (!value.contains("releases") || !value.contains("adoptions")) detail::invalid("competition","Planned competition lost public market state");
         result.setup=content::load_competition_setup(value.at("setup").dump());
-        detail::array(value.at("releases"),"competition/releases",64);
+        detail::array(value.at("releases"),"competition/releases",core::allocation_product_limit);
         for (const auto& row:value.at("releases")) {
             detail::fields(row,"competition/release",{"company","product","day"});
             result.releases.push_back({detail::text(row.at("company"),"company",128),detail::text(row.at("product"),"product",128),OrdinalDay{detail::i64(row.at("day"),"day")}});
@@ -339,14 +377,15 @@ CompetitionState parse_competition(const Json& value) {
         for (const auto& row:value.at("adoptions")) {
             detail::fields(row,"competition/adoption",{"day","segment","observed","shares"});
             core::MarketAdoption adoption{OrdinalDay{detail::i64(row.at("day"),"day")},detail::text(row.at("segment"),"segment",128),detail::u64(row.at("observed"),"observed"),{}};
-            detail::array(row.at("shares"),"competition/shares",core::market_product_limit+1);
+            detail::array(row.at("shares"),"competition/shares",core::allocation_product_limit+1);
             for (const auto& share:row.at("shares")) {
                 detail::fields(share,"competition/share",{"product","share"});
                 adoption.shares.push_back({detail::text(share.at("product"),"product",256),core::BasisPoints{detail::i64(share.at("share"),"share")}});
             }
             result.adoptions.push_back(std::move(adoption));
         }
-    } else if (value.contains("releases") || value.contains("adoptions") || value.contains("offers") || value.contains("acquisitions")) detail::invalid("competition","Public industry state has no authored setup");
+    } else if (value.contains("releases") || value.contains("adoptions") || value.contains("offers") ||
+        value.contains("acquisitions") || value.contains("wholesale")) detail::invalid("competition","Public industry state has no authored setup");
     detail::array(value.at("companies"),"competition/companies",32); detail::array(value.at("notices"),"competition/notices",result.setup?4096:128);
     detail::CompetitionHistoryBudget history_budget;
     for (const auto& row:value.at("companies")) {

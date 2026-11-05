@@ -38,6 +38,7 @@ void conserved(const std::vector<AllocationProduct>& products, const std::vector
         const auto& row = segment(result, input.id);
         std::uint64_t tasks = row.outside_tasks;
         std::int64_t spend = 0;
+        std::int64_t customer_work = 0;
         for (const auto& value : row.deliveries) {
             const auto product = std::find_if(products.begin(), products.end(), [&](const auto& item) { return item.id == value.product_id; });
             const auto edge = std::find_if(input.edges.begin(), input.edges.end(), [&](const auto& item) { return item.product_id == value.product_id; });
@@ -48,11 +49,13 @@ void conserved(const std::vector<AllocationProduct>& products, const std::vector
                   "Allocation exceeded the segment-product migration limit");
             tasks += value.tasks;
             spend = checked_add(spend, value.cost.value());
+            customer_work = checked_add(customer_work, product->customer_compute_per_task.value()*static_cast<std::int64_t>(value.tasks));
             product_tasks[value.product_id] += value.tasks;
         }
         check(tasks == input.tasks, "Allocation lost demand instead of delivering it or recording outside work");
         check(checked_add(spend, row.remaining_budget.value()) == input.budget.value(),
               "Allocation spent the customer budget twice or lost its remainder");
+        check(customer_work <= input.customer_compute.value(), "Vendors used the same customer hardware twice");
         check(std::accumulate(row.outside.begin(), row.outside.end(), std::uint64_t{0},
             [](auto total, const auto& value) { return total + value.tasks; }) == row.outside_tasks,
             "Outside tasks lack complete reason records");
@@ -176,6 +179,37 @@ void bounds_and_apportionment() {
     malformed_segments.assign(allocation_segment_limit + 1, segments.front());
     refuses([&] { (void)allocate_demand(products, malformed_segments); });
 }
+void customer_hardware_and_incumbents() {
+    std::vector<AllocationProduct> products{
+        {"vendor.open", Cents{0}, 10, MilliCU{2}},
+        {"vendor.licensed", Cents{4}, 10, MilliCU{2}}
+    };
+    std::vector<AllocationSegment> segments{
+        {"public", 10, Cents{100}, 0, {{"vendor.open", 1, {}}, {"vendor.licensed", 1, {}}}, MilliCUPerDay{12}}
+    };
+    auto result=allocate_demand(products,segments);
+    check(delivered(result,"public","vendor.open")==3 && delivered(result,"public","vendor.licensed")==3 &&
+        segment(result,"public").outside_tasks==4 && segment(result,"public").outside.front().reason==AllocationOutsideReason::customer_compute,
+        "Both vendors must share one 12-milli-CU hardware budget");
+    conserved(products,segments,result);
+    segments.push_back({"science",10,Cents{100},0,{{"vendor.licensed",1,{}}},MilliCUPerDay{20}});
+    result=allocate_demand(products,segments);
+    check(delivered(result,"public","vendor.licensed")+delivered(result,"science","vendor.licensed")==10 &&
+        delivered(result,"public","vendor.open")+delivered(result,"public","vendor.licensed")==6,
+        "A local vendor's finite supported service must contend across both segments");
+    conserved(products,segments,result);
+    segments.pop_back();
+    segments.front().edges={{"vendor.open",10,{}},{"vendor.licensed",1,5,5}};
+    result=allocate_demand(products,segments);
+    check(delivered(result,"public","vendor.licensed")==5 && delivered(result,"public","vendor.open")==1,
+        "A feasible incumbent must retain its installed workload before discretionary switching");
+    conserved(products,segments,result);
+    products.back().capacity=0;
+    result=allocate_demand(products,segments);
+    check(delivered(result,"public","vendor.licensed")==0 && delivered(result,"public","vendor.open")==6,
+        "An unavailable incumbent must release its work to eligible alternatives");
+    conserved(products,segments,result);
+}
 void small_constrained_cases() {
     // Small independently varied budgets, free prices, edge limits and shared
     // supplies exercise conservation and the catalog-sized progress argument.
@@ -183,13 +217,15 @@ void small_constrained_cases() {
         std::vector<AllocationProduct> products;
         std::vector<AllocationSegment> segments;
         for (std::uint64_t p = 0; p < 3; ++p)
-            products.push_back({"product." + std::to_string(p), Cents{(sample + p * 3) % 12}, (sample * 5 + p * 7) % 31});
+            products.push_back({"product." + std::to_string(p), Cents{(sample + p * 3) % 12},
+                (sample * 5 + p * 7) % 31,MilliCU{(sample+p)%3}});
         for (std::uint64_t s = 0; s < 3; ++s) {
             AllocationSegment row{"segment." + std::to_string(s), (sample * 3 + s * 7) % 21,
-                                  Cents{(sample * 7 + s * 11) % 61}, (sample + s) % 4, {}};
+                                  Cents{(sample * 7 + s * 11) % 61}, (sample + s) % 4, {},MilliCUPerDay{(sample*9+s*13)%40}};
             for (std::uint64_t p = 0; p < 3; ++p)
                 row.edges.push_back({products[static_cast<std::size_t>(p)].id, (sample * 2 + s * 3 + p) % 9,
-                    (sample + s + p) % 2 == 0 ? std::optional{(sample + s * 5 + p) % 16} : std::nullopt});
+                    (sample + s + p) % 2 == 0 ? std::optional{(sample + s * 5 + p) % 16} : std::nullopt,
+                    (sample+s+p)%4});
             segments.push_back(std::move(row));
         }
         const auto result = allocate_demand(products, segments);
@@ -206,6 +242,7 @@ int main() {
         hand_cases();
         edge_limits_and_empty_outcomes();
         bounds_and_apportionment();
+        customer_hardware_and_incumbents();
         small_constrained_cases();
         std::cout << checks << " allocation checks passed\n";
         return 0;

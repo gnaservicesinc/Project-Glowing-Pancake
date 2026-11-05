@@ -32,6 +32,8 @@ class ManagementController final : public QObject {
     Q_PROPERTY(QVariantList evaluations READ evaluations NOTIFY changed)
     Q_PROPERTY(QVariantList sources READ sources NOTIFY changed)
     Q_PROPERTY(QVariantList services READ services NOTIFY changed)
+    Q_PROPERTY(QVariantList launchRegions READ launchRegions NOTIFY changed)
+    Q_PROPERTY(StableListModel* regionalMarkets READ regionalMarkets CONSTANT)
     Q_PROPERTY(QVariantMap recommended READ recommended NOTIFY changed)
     Q_PROPERTY(QString briefing READ briefing NOTIFY changed)
     Q_PROPERTY(QString guide READ guide NOTIFY changed)
@@ -75,6 +77,8 @@ public:
     StableListModel* offers() const { return offers_; }
     StableListModel* products() const { return products_; }
     StableListModel* contracts() const { return contracts_; }
+    StableListModel* regionalMarkets() const { return regional_markets_; }
+    QVariantList launchRegions() const { return launch_regions_; }
     StableListModel* rivals() const { return rivals_; }
     StableListModel* heavyweights() const {return heavyweights_;}
     StableListModel* competitiveOffers() const {return competitive_offers_;}
@@ -113,7 +117,7 @@ public:
     Q_INVOKABLE void train(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent={});
     Q_INVOKABLE void clone(QString id);
     Q_INVOKABLE void evaluate(QString model,QString plan,QString source,QString rate,QString staff);
-    Q_INVOKABLE void deploy(QString service,QString model,QString evidence,QString source,bool review);
+    Q_INVOKABLE void deploy(QString service,QString model,QString evidence,QString source,bool review,QString region);
     Q_INVOKABLE void acceptOffer(QString id);
     Q_INVOKABLE void respondCompetitiveOffer(QString id,bool accept);
     Q_INVOKABLE void cancelContract(QString id);
@@ -135,6 +139,8 @@ private:
     StableListModel *data_,*research_,*models_,*evidence_,*offers_,*products_,*contracts_,*rivals_,*payables_;
     StableListModel *heavyweights_,*competitive_offers_;
     StableListModel *corporate_finance_,*executives_,*board_motions_,*corporate_disputes_,*merger_targets_;
+    StableListModel *regional_markets_;
+    QVariantList launch_regions_;
     QString ownership_text_,board_text_;
     const runtime::CompiledProgram* program_=nullptr;
     std::optional<std::uint64_t> acquisition_preview_revision_;

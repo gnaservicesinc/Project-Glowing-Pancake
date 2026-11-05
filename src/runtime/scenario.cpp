@@ -52,7 +52,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     }
     if (scenario->market) {
         world.simulation.market = core::opening_market(scenario->starts_on,world.company_id);
-        content::apply_market_setup(*scenario->market,*world.simulation.market,*world.simulation.accounts,
+        content::apply_market_setup(content::scenario_market_setup(program.collection,*scenario),*world.simulation.market,*world.simulation.accounts,
             *world.simulation.capacity,scenario->starts_on);
     }
     if (scenario->management) world.simulation.management=core::ManagementState{*scenario->management,{},{},{},{},{},{}};
@@ -61,7 +61,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         core::GovernanceState corporate;corporate.opening_holdings=world.simulation.accounts->holdings;
         world.simulation.management->governance=std::move(corporate);
     }
-    if (scenario->service_catalog) world.simulation.deployments=core::DeploymentState{content::service_definitions(*scenario->service_catalog),{}};
+    if (scenario->service_catalog) world.simulation.deployments=core::DeploymentState{content::scenario_services(program.collection,*scenario),{}};
     if (!scenario->business_offers.empty()) world.simulation.business_offers=core::BusinessOffersState{scenario->business_offers,{}};
     world.facts.at("company.has_compute_lease") = scenario->leased_capacity.value() > 0;
     if (const auto lease = scenario->monthly_commitments.find("compute_lease");

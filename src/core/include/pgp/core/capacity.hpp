@@ -4,12 +4,13 @@
 
 #include <cstdint>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
 
 namespace pgp::core {
-enum class CapacitySourceKind { leased, owned };
+enum class CapacitySourceKind { leased, owned, imported };
 struct CapacitySource {
     std::string id;
     std::string physical_id;
@@ -23,6 +24,7 @@ struct CapacitySource {
     bool energy_included = true;
     // Absent only for legacy sources present since the campaign started.
     std::optional<OrdinalDay> available_from{};
+    MilliCUPerDay wholesale_reserved{0};
     auto operator<=>(const CapacitySource&) const = default;
 };
 enum class ProjectKind { training, research, evaluation, serving };
@@ -46,12 +48,15 @@ struct CapacityProject {
     std::uint64_t useful_tasks = 0;
     Cents monthly_support_cost{0};
     std::string cause;
+    bool customer_inference = false;
     auto operator<=>(const CapacityProject&) const = default;
 };
 struct SourceDayUsage {
     std::string source_id;
     MilliCUPerDay effective{0};
     MilliCU used{0};
+    MilliCUPerDay wholesale_available{0};
+    MilliCU wholesale_used{0};
     auto operator<=>(const SourceDayUsage&) const = default;
 };
 struct ProjectDayWork {
@@ -103,6 +108,7 @@ struct CapacityReport {
 };
 [[nodiscard]] MilliCU required_inference(std::uint64_t tasks, MilliCU cost_per_task);
 [[nodiscard]] std::uint64_t maximum_tasks(MilliCU available, MilliCU cost_per_task);
+[[nodiscard]] MilliCUPerDay company_capacity(const CapacitySource& source);
 [[nodiscard]] CapacityState opening_capacity(std::vector<CapacitySource> sources,
                                              std::uint32_t staff, OrdinalDay starts_on = OrdinalDay{0},
                                              std::string owner = "company.player");
@@ -117,7 +123,12 @@ void add_capacity_source(CapacityState& state, OrdinalDay day, CapacitySource so
 void cancel_project(CapacityState& state, OrdinalDay day, std::string_view project_id);
 void update_effective_capacity(CapacityState& state, OrdinalDay day,
                                std::string_view source_id, MilliCUPerDay effective);
-void close_capacity_day(CapacityState& state, OrdinalDay day, bool validate_io = true);
+struct WholesaleUse {
+    std::string source_id;
+    MilliCU work{0};
+};
+void close_capacity_day(CapacityState& state, OrdinalDay day, bool validate_io = true,
+                        std::span<const WholesaleUse> wholesale = {});
 // A common daily plan: contract tasks precede discretionary serving, then
 // finite projects. Omitted serving rows do no work; unused compute can train.
 struct ServingRequest {
@@ -128,5 +139,6 @@ struct ServingRequest {
 [[nodiscard]] CapacityDay preview_capacity_day(const CapacityState& state, OrdinalDay day,
                                                const std::vector<ServingRequest>& serving,bool validate_input=true);
 void close_capacity_day(CapacityState& state, OrdinalDay day,
-                        const std::vector<ServingRequest>& serving, bool validate_io = true);
+                        const std::vector<ServingRequest>& serving, bool validate_io = true,
+                        std::span<const WholesaleUse> wholesale = {});
 } // namespace pgp::core

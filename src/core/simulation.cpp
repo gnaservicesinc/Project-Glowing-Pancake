@@ -428,6 +428,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 row.status = ReservationStatus::cancelled;
                 (void)receipt(next, "cancel_unconsumed_reservation", action.id);
             } else if constexpr (std::is_same_v<Action, AdvanceDay>) {
+                if (!action.wholesale_work.empty() && (!outer_transaction || !next.infrastructure || !next.capacity))
+                    refuse(CommandReason::invalid_argument,"Only the world can settle exported work from an owned site.");
                 if ((!action.industry_adoptions.empty() && !action.market_allocation) ||
                     (!next.market && (action.market_allocation || !action.industry_adoptions.empty())))
                     refuse(CommandReason::invalid_argument,"Shared industry context requires an actual market and allocation.");
@@ -447,8 +449,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if (next.market)
                     close_market_day(*next.market, accounts(next), capacity(next), next.date, false,
                         action.market_allocation ? &*action.market_allocation : nullptr,
-                        action.industry_adoptions.empty()?nullptr:&action.industry_adoptions);
-                else if (next.capacity) close_capacity_day(*next.capacity, next.date, false);
+                        action.market_allocation ? &action.industry_adoptions : nullptr, action.wholesale_work);
+                else if (next.capacity) close_capacity_day(*next.capacity, next.date, false, action.wholesale_work);
                 if (next.lab) close_lab_day(*next.lab, *next.capacity, next.date, next.random);
                 close_infrastructure_day(next);
                 if (next.accounts) {
@@ -532,6 +534,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 next.cash = accounts_report(*next.accounts).cash;
                 (void)receipt(next, "invest_equity", 0, checked_unit_subtract(next.cash, before));
             } else if constexpr (std::is_same_v<Action, ReserveProject>) {
+                if (action.project.customer_inference)
+                    refuse(CommandReason::invalid_argument, "Customer hardware is assigned by a qualified local deployment.");
                 if (next.lab && action.project.id.starts_with("lab/"))
                     refuse(CommandReason::invalid_argument, "Lab projects must be created through their data, training, research or evaluation command.");
                 if (next.deployments && action.project.kind==ProjectKind::serving)
@@ -574,8 +578,10 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if (next.management) for (auto& policy:next.management->policies) policy.enabled=false;
                 (void)receipt(next,"withdraw_operations");
             } else if constexpr (std::is_same_v<Action, SetEffectiveCapacity>) {
-                if (next.infrastructure && std::any_of(next.capacity->sources.begin(),next.capacity->sources.end(),[&](const auto& source){return source.id==action.source_id && source.kind==CapacitySourceKind::owned;}))
-                    refuse(CommandReason::invalid_argument,"Owned capacity follows actual site power, operators and hardware; change the site power budget.");
+                if (next.capacity && std::any_of(next.capacity->sources.begin(),next.capacity->sources.end(),[&](const auto& source){
+                    return source.id==action.source_id && (source.kind==CapacitySourceKind::imported ||
+                        (next.infrastructure && source.kind==CapacitySourceKind::owned));
+                })) refuse(CommandReason::invalid_argument,"Owned and imported capacity follow actual site power and supplier terms.");
                 update_effective_capacity(capacity(next), next.date, action.source_id, action.available);
                 (void)receipt(next, "capacity_availability");
             } else if constexpr (std::is_same_v<Action, BuildOwnedSite>) {

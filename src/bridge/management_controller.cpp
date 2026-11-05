@@ -6,6 +6,7 @@
 #include <QRegularExpression>
 #include <algorithm>
 #include <limits>
+#include <map>
 #include <stdexcept>
 
 namespace pgp::bridge {
@@ -19,12 +20,65 @@ QString money(core::Cents v) {
     return (raw<0?QStringLiteral("−$"):QStringLiteral("$"))+whole+QStringLiteral(".%1").arg(magnitude%100,2,10,QLatin1Char('0'));
 }
 QString percent(core::BasisPoints v) { return QStringLiteral("%1.%2%").arg(v.value()/100).arg(v.value()%100,2,10,QLatin1Char('0')); }
+QString channel_name(core::ProductChannel channel) {
+    using core::ProductChannel;
+    switch (channel) {
+    case ProductChannel::legacy: return QStringLiteral("Document service");
+    case ProductChannel::business: return QStringLiteral("Business contracts");
+    case ProductChannel::api: return QStringLiteral("Developer API");
+    case ProductChannel::consumer: return QStringLiteral("Consumer application");
+    case ProductChannel::licensed: return QStringLiteral("Licensed / on-premise");
+    case ProductChannel::open_weights: return QStringLiteral("Open weights");
+    case ProductChannel::agent: return QStringLiteral("Agent service");
+    }
+    return {};
+}
 QString interval(const core::LabProfile& lower,const core::LabProfile& upper) {
     return QStringLiteral("Documents %1–%2 · scanned tables %3–%4").arg(percent(lower[0]),percent(upper[0]),percent(lower[1]),percent(upper[1]));
 }
 template<class Rows> const auto* find(const Rows& rows,std::string_view id) {
     const auto it=std::find_if(rows.begin(),rows.end(),[&](const auto& row){return row.id==id;});
     return it==rows.end()?nullptr:&*it;
+}
+std::vector<CampaignRow> regional_rows(const runtime::WorldState& world,const content::RegionalMarkets& catalog) {
+    const auto& market=*world.simulation.market;
+    const auto day=market.closed_through.value_or(world.simulation.date);
+    struct Totals {std::uint64_t industry=0,own=0;core::MilliCU buyer_compute{0};};
+    std::map<std::string,Totals,std::less<>> delivery;
+    const auto add=[&](const core::MarketState& seller,bool own) {
+        if (seller.closed_through!=day) return;
+        const auto& settled=seller.days.back();
+        for (const auto& row:settled.discretionary) {
+            auto& segment=delivery[row.segment_id];
+            segment.industry+=row.tasks;if (own) segment.own+=row.tasks;
+            segment.buyer_compute=core::checked_unit_add(segment.buyer_compute,row.customer_compute);
+        }
+        for (const auto& row:settled.contracts) {
+            const auto* contract=find(seller.contracts,row.contract_id);
+            auto& segment=delivery[contract->segment_id];
+            segment.industry+=row.delivered_tasks;if (own) segment.own+=row.delivered_tasks;
+        }
+    };
+    add(market,true);
+    if (world.competition) for (const auto& rival:world.competition->companies)
+        if (rival.simulation.market) add(*rival.simulation.market,false);
+    std::vector<CampaignRow> rows;
+    for (const auto& region:catalog.regions) {
+        std::uint64_t demand=0,useful=0,own=0;
+        QStringList breakdown;
+        for (const auto& segment:market.segments) if (segment.region_id==region.id) {
+            const auto potential=core::effective_market_demand(market,segment,day);
+            const auto& delivered=delivery[segment.id];
+            demand+=potential;useful+=delivered.industry;own+=delivered.own;
+            breakdown.push_back(QStringLiteral("%1 · %2 of %3 useful tasks · yours %4\n%5 customer budget · %6 / %7 CU on local hardware%8")
+                .arg(readable(segment.id),number(delivered.industry),number(potential),number(delivered.own),money(segment.daily_budget),
+                    cu(delivered.buyer_compute.value()),cu(segment.customer_compute.value()),segment.requires_local?QStringLiteral(" · local processing required"):QString{}));
+        }
+        const auto details=text(region.description)+QStringLiteral("\n\n")+breakdown.join(QStringLiteral("\n\n"));
+        rows.push_back({text(region.id),text(region.name),QStringLiteral("%1 useful tasks · %2 yours · %3 outside")
+            .arg(number(useful),number(own),number(demand-useful)),details,market.closed_through?text(core::iso_date(day)):QStringLiteral("Opening estimates")});
+    }
+    return rows;
 }
 std::int64_t integer(QString input,std::int64_t maximum) {
     static const QRegularExpression pattern{QStringLiteral("^[0-9]{1,12}$")};
@@ -80,7 +134,7 @@ ManagementController::ManagementController(QObject* parent):QObject(parent),fund
     policies_(new StableListModel(this)),decisions_(new StableListModel(this)),alerts_(new StableListModel(this)),data_(new StableListModel(this)),research_(new StableListModel(this)),
     models_(new StableListModel(this)),evidence_(new StableListModel(this)),offers_(new StableListModel(this)),products_(new StableListModel(this)),
     contracts_(new StableListModel(this)),rivals_(new StableListModel(this)),payables_(new StableListModel(this)),heavyweights_(new StableListModel(this)),competitive_offers_(new StableListModel(this)),corporate_finance_(new StableListModel(this)),executives_(new StableListModel(this)),
-    board_motions_(new StableListModel(this)),corporate_disputes_(new StableListModel(this)),merger_targets_(new StableListModel(this)) {}
+    board_motions_(new StableListModel(this)),corporate_disputes_(new StableListModel(this)),merger_targets_(new StableListModel(this)),regional_markets_(new StableListModel(this)) {}
 bool ManagementController::available() const { return snapshot_ && state().lab && state().deployments; }
 bool ManagementController::plannedCompetition() const {return snapshot_ && snapshot_->checkpoint.world.competition && snapshot_->checkpoint.world.competition->setup.has_value();}
 QString ManagementController::competitionSummary() const {
@@ -97,6 +151,17 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
     snapshot_=std::move(snapshot);
     std::vector<CampaignRow> data,research,models,evidence,offers,products,contracts,rivals,payables,funding,specialists,policies,decisions,alerts;
     const auto& s=state();
+    const auto& world=snapshot_->checkpoint.world;
+    const auto* definition=program.collection.find(world.scenario_id);
+    const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
+    const auto* regions=scenario?content::regional_markets(program.collection,*scenario):nullptr;
+    if (replace) {
+        launch_regions_.clear();
+        if (regions) {
+            launch_regions_.push_back(option("",QStringLiteral("All eligible regions")));
+            for (const auto& region:regions->regions) launch_regions_.push_back(option(region.id,text(region.name)));
+        }
+    }
     if (s.lab) {
         const auto report=core::lab_report(*s.lab,*s.capacity);
         for (const auto& row:report.data_offers) {
@@ -159,8 +224,10 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             if (s.deployments) for (const auto& d:s.deployments->records) if (d.service_id==row.id) deployment=&d;
             products.push_back({text(row.id),readable(row.id),work?number(work->tasks_per_day)+QStringLiteral(" tasks/day · ")+money(work->monthly_support_cost)+QStringLiteral(" support/month"):QString{},
                 deployment?QStringLiteral("Model %1 · evidence %2\nControl: %3\n%4 useful tasks delivered\nSource %5 · %6 CU/day · %7 staff\nRetargeting a service preserves contracts and delivery history.")
-                    .arg(text(deployment->model_id),text(deployment->evidence_id),deployment->human_review?QStringLiteral("Paid human review; lower throughput"):QStringLiteral("Measured model only"),number(work->useful_tasks),text(work->source_id),cu(work->requested.value()),QString::number(work->staff)):QStringLiteral("Engineering service"),
-                work && work->status==core::ProjectStatus::active?QStringLiteral("Serving"):QStringLiteral("Stopped"),false,{{QStringLiteral("projectId"),text(row.capacity_project_id)},{QStringLiteral("priceCents"),QString::number(row.price_per_task.value())}}});
+                    .arg(text(deployment->model_id),text(deployment->evidence_id),deployment->human_review?QStringLiteral("Paid human review; lower throughput"):QStringLiteral("Measured model only"),number(work->useful_tasks),work->customer_inference?QStringLiteral("Customer hardware"):text(work->source_id),cu(work->requested.value()),QString::number(work->staff)):QStringLiteral("Engineering service"),
+                work && work->status==core::ProjectStatus::active?QStringLiteral("Serving"):QStringLiteral("Stopped"),false,{{QStringLiteral("projectId"),text(row.capacity_project_id)},{QStringLiteral("priceCents"),QString::number(row.price_per_task.value())},{QStringLiteral("freeWeights"),row.channel==core::ProductChannel::open_weights}}});
+            const auto* region=regions?find(regions->regions,row.region_id):nullptr;
+            products.back().detail+=QStringLiteral("\n%1 · %2").arg(channel_name(row.channel),region?text(region->name):QStringLiteral("All eligible regions"));
             products.back().detail+=QStringLiteral("\nCurrent price: %1 per task. Price changes preserve past invoices and signed contract prices.").arg(money(row.price_per_task));
         }
         for (const auto& row:s.market->contracts) {
@@ -224,6 +291,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             alertDetail(n),n.acknowledged?QStringLiteral("Acknowledged"):n.required?QStringLiteral("Required before work"):QStringLiteral("Actionable / informational"),!n.acknowledged});
     }
     auto set=[&](StableListModel* model,std::vector<CampaignRow> rows){if (replace) model->beginCampaign(std::move(rows)); else model->setRows(std::move(rows));};
+    set(regional_markets_,regions?regional_rows(world,*regions):std::vector<CampaignRow>{});
     set(data_,std::move(data));set(research_,std::move(research));set(models_,std::move(models));set(evidence_,std::move(evidence));set(offers_,std::move(offers));set(products_,std::move(products));set(contracts_,std::move(contracts));set(rivals_,std::move(rivals));set(payables_,std::move(payables));
     set(funding_,std::move(funding));set(specialists_,std::move(specialists));set(policies_,std::move(policies));set(decisions_,std::move(decisions));set(alerts_,std::move(alerts));
     auto response=heavyweight_models(snapshot_->checkpoint,program);set(heavyweights_,std::move(response.responses));set(competitive_offers_,std::move(response.offers));
@@ -260,7 +328,7 @@ QVariantList ManagementController::sources() const {
     for (const auto& row:state().capacity->sources) {
         std::int64_t reserved=0;
         for (const auto& work:state().capacity->projects) if (work.source_id==row.id && work.status==core::ProjectStatus::active) reserved=core::checked_add(reserved,work.requested.value());
-        result.push_back(option(row.id,readable(row.id)+QStringLiteral(" · ")+cu(std::max<std::int64_t>(0,row.effective.value()-reserved))+QStringLiteral(" CU/day free")));
+        result.push_back(option(row.id,readable(row.id)+QStringLiteral(" · ")+cu(std::max<std::int64_t>(0,core::company_capacity(row).value()-reserved))+QStringLiteral(" CU/day free")));
     }
     return result;
 }
@@ -268,7 +336,17 @@ QVariantList ManagementController::services() const {
     QVariantList result; if (!available()) return result;
     auto ordered=state().deployments->catalog;
     std::stable_sort(ordered.begin(),ordered.end(),[](const auto& a,const auto& b){return a.required_recipe.size()<b.required_recipe.size();});
-    for (const auto& row:ordered) { auto item=option(row.product.id,readable(row.product.id));item.insert(QStringLiteral("reviewAllowed"),row.review_staff>0);result.push_back(item); }
+    for (const auto& row:ordered) {
+        const auto channel=row.product.channel;
+        auto label=readable(row.product.id);
+        if (channel!=core::ProductChannel::legacy) label+=QStringLiteral(" · ")+channel_name(channel);
+        auto item=option(row.product.id,std::move(label));
+        item.insert(QStringLiteral("reviewAllowed"),row.review_staff>0);
+        item.insert(QStringLiteral("reviewRequired"),channel==core::ProductChannel::agent);
+        item.insert(QStringLiteral("customerHardware"),core::customer_hosted(channel));
+        item.insert(QStringLiteral("existing"),find(state().market->products,row.product.id)!=nullptr);
+        result.push_back(item);
+    }
     return result;
 }
 QVariantMap ManagementController::recommended() const {
@@ -349,7 +427,7 @@ QVariantMap ManagementController::trainingPreview(QString recipe,QString source,
         const auto capacity=core::capacity_report(*state().capacity);
         const auto* recipe_rules=find(state().lab->catalog.recipes,req.recipe_id);
         const bool compatible=supply && recipe_rules && supply->memory_mib>=recipe_rules->minimum_memory_mib && supply->interconnect==recipe_rules->interconnect;
-        const bool free=compatible && supply->effective.value()-reserved>=req.daily_compute.value() && capacity.available_staff-capacity.assigned_staff>=req.staff;
+        const bool free=compatible && core::company_capacity(*supply).value()-reserved>=req.daily_compute.value() && capacity.available_staff-capacity.assigned_staff>=req.staff;
         core::Cents protected_cash{0};for (const auto& reservation:state().reservations) protected_cash=core::checked_unit_add(protected_cash,reservation.reserved);
         const auto horizon=core::Days{std::min<std::int64_t>(90,p.minimum_days.value())};
         const auto forecast=core::project_company_cash(state(),core::advance_days(state().date,horizon),protected_cash);
@@ -365,11 +443,16 @@ QString ManagementController::servicePreview(QString id,QString model,bool revie
     for (const auto& row:state().deployments->catalog) if (row.product.id==id.toStdString()) {
         const auto* m=find(state().lab->models,model.toStdString());
         const auto* recipe=m?find(state().lab->catalog.recipes,m->recipe_id):nullptr;
-        return QStringLiteral("Model lower bound requirements: documents ≥ %1; scanned tables ≥ %2\n%3 tasks/day · %4 staff · %5 support/month\n%6\n%7\nDeployment reserves real serving capacity. Existing customer promises survive replacement; consumed costs remain.")
+        QStringList prerequisites;
+        for (const auto& research:row.required_research) prerequisites.push_back(readable(research));
+        const auto hardware=core::customer_hosted(row.product.channel)?QStringLiteral("Uses the customer's shared local hardware."):QStringLiteral("Reserves serving capacity on the selected source.");
+        const auto rights=row.product.channel==core::ProductChannel::open_weights?QStringLiteral("\nWeight release is free and requires redistribution rights across the training lineage."):QString{};
+        return QStringLiteral("Model lower bounds · documents ≥ %1 · scanned tables ≥ %2\n%3 tasks/day · %4 staff · %5 support/month\n%6\n%7\n%8%9%10")
             .arg(percent(row.required[0]),percent(row.required[1]),number(review?row.review_tasks_per_day:row.serving.tasks_per_day),QString::number(row.serving.staff+(review?row.review_staff:0)),
                 money(core::checked_unit_add(row.serving.monthly_support_cost,review?row.review_monthly_cost:core::Cents{0})),
                 recipe?cu(core::required_inference(review?row.review_tasks_per_day:row.serving.tasks_per_day,recipe->inference_per_task).value())+QStringLiteral(" CU/day using this checkpoint"):QStringLiteral("Choose a checkpoint to see serving compute"),
-                QStringLiteral("Discretionary price %1/task. Review credits: documents %2; scanned tables %3. Controls change the service, not measured model capability.").arg(money(row.product.price_per_task),percent(review?row.review_credit[0]:core::BasisPoints{0}),percent(review?row.review_credit[1]:core::BasisPoints{0})));
+                QStringLiteral("Discretionary price %1/task · review credits %2 documents and %3 scanned tables.").arg(money(row.product.price_per_task),percent(review?row.review_credit[0]:core::BasisPoints{0}),percent(review?row.review_credit[1]:core::BasisPoints{0})),
+                hardware,prerequisites.isEmpty()?QString{}:QStringLiteral("\nRequired research · %1.").arg(prerequisites.join(QStringLiteral(", "))),rights);
     }
     return {};
 }
@@ -401,8 +484,8 @@ void ManagementController::clone(QString id) { if (editable()) emit actionReques
 void ManagementController::evaluate(QString model,QString plan,QString source,QString rate,QString staff) {
     if (!editable()) return; try { emit actionRequested(core::StartEvaluation{nextId(QStringLiteral("evaluation.")).toStdString(),model.toStdString(),plan.toStdString(),allocation(source,rate,staff)}); } catch (const std::exception& e) { emit noticeRaised(QString::fromUtf8(e.what())); }
 }
-void ManagementController::deploy(QString service,QString model,QString evidence,QString source,bool review) {
-    if (editable()) emit actionRequested(core::DeployModel{service.toStdString(),model.toStdString(),evidence.toStdString(),source.toStdString(),review});
+void ManagementController::deploy(QString service,QString model,QString evidence,QString source,bool review,QString region) {
+    if (editable()) emit actionRequested(core::DeployModel{service.toStdString(),model.toStdString(),evidence.toStdString(),source.toStdString(),review,region.toStdString()});
 }
 void ManagementController::acceptOffer(QString id) { if (editable()) emit actionRequested(core::AcceptBusinessOffer{id.toStdString()}); }
 void ManagementController::respondCompetitiveOffer(QString id,bool accept) {if (editable()) emit competitiveResponseRequested(std::move(id),accept);}

@@ -328,8 +328,16 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                     for (const auto& [holder,shares]:scenario->ownership) initial.push_back({holder,shares,holder=="option_pool"});
                     if (world.simulation.management->governance->opening_holdings!=initial) invalid("Corporate opening ownership differs from the scenario");
                 }
-                if (scenario->service_catalog ? (!world.simulation.deployments || world.simulation.deployments->catalog!=content::service_definitions(*scenario->service_catalog)) : world.simulation.deployments.has_value())
+                if (scenario->service_catalog ? (!world.simulation.deployments || world.simulation.deployments->catalog!=content::scenario_services(program.collection,*scenario)) : world.simulation.deployments.has_value())
                     invalid("Saved service catalog differs from its authored qualification rules");
+                if (!scenario->regional_markets.empty()) {
+                    auto expected = content::scenario_market_setup(program.collection,*scenario).segments;
+                    if (!world.simulation.market) invalid("Regional scenario has no saved market");
+                    auto actual = world.simulation.market->segments;
+                    for (auto& segment : expected) segment.preferences.clear();
+                    for (auto& segment : actual) segment.preferences.clear();
+                    if (actual != expected) invalid("Saved regional customer terms differ from their authored profiles");
+                }
                 if (scenario->business_offers.empty()?world.simulation.business_offers.has_value():
                     (!world.simulation.business_offers || world.simulation.business_offers->catalog!=scenario->business_offers))
                     invalid("Saved business offer catalog differs from its scenario");

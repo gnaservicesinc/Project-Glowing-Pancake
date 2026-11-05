@@ -36,9 +36,13 @@ void count_records(std::size_t& count,std::size_t added) {
 
 Json market_json(const core::MarketState& state) {
     Json products=Json::array(),segments=Json::array(),contracts=Json::array(),days=Json::array(),adoptions=Json::array();
-    for (const auto& product:state.products) products.push_back({
-        {"id",product.id},{"capacity_project_id",product.capacity_project_id},
-        {"price_per_task_cents",product.price_per_task.value()},{"available",product.available}});
+    for (const auto& product:state.products) {
+        products.push_back({{"id",product.id},{"capacity_project_id",product.capacity_project_id},
+            {"price_per_task_cents",product.price_per_task.value()},{"available",product.available}});
+        if (product.channel != core::ProductChannel::legacy) products.back()["channel"] = core::channel_key(product.channel);
+        if (product.monthly_migration.value() != 10000) products.back()["monthly_migration_bp"] = product.monthly_migration.value();
+        if (!product.region_id.empty()) products.back()["region"] = product.region_id;
+    }
     for (const auto& segment:state.segments) {
         Json preferences=Json::array();
         for (const auto& preference:segment.preferences) preferences.push_back({
@@ -50,6 +54,14 @@ Json market_json(const core::MarketState& state) {
             {"reservation_threshold",segment.reservation_threshold},
             {"maximum_monthly_migration_basis_points",segment.maximum_monthly_migration.value()},
             {"preferences",std::move(preferences)}});
+        if (!segment.region_id.empty()) {
+            auto& encoded = segments.back();
+            encoded["region"] = segment.region_id;
+            encoded["customer_compute_milli_CU_per_day"] = segment.customer_compute.value();
+            encoded["customer_memory_mib"] = segment.customer_memory_mib;
+            encoded["customer_interconnect"] = segment.customer_interconnect;
+            encoded["requires_local"] = segment.requires_local;
+        }
     }
     for (const auto& contract:state.contracts) contracts.push_back({
         {"id",contract.id},{"segment_id",contract.segment_id},{"product_id",contract.product_id},
@@ -70,9 +82,12 @@ Json market_json(const core::MarketState& state) {
             {"delivered_tasks",contract.delivered_tasks},{"gross_fee_cents",contract.gross_fee.value()},
             {"service_credit_cents",contract.service_credit.value()},{"usage_charge_cents",contract.usage_charge.value()},
             {"penalty_cents",contract.penalty.value()}});
-        for (const auto& delivery:closed.discretionary) discretionary.push_back({
-            {"segment_id",delivery.segment_id},{"product_id",delivery.product_id},
-            {"tasks",delivery.tasks},{"charged_cents",delivery.charged.value()}});
+        for (const auto& delivery:closed.discretionary) {
+            discretionary.push_back({{"segment_id",delivery.segment_id},{"product_id",delivery.product_id},
+                {"tasks",delivery.tasks},{"charged_cents",delivery.charged.value()}});
+            if (delivery.customer_compute.value() != 0)
+                discretionary.back()["customer_compute_milli_CU"] = delivery.customer_compute.value();
+        }
         for (const auto& segment:closed.segments) segment_results.push_back({
             {"segment_id",segment.segment_id},{"demand",segment.demand},{"budget_cents",segment.budget.value()},
             {"contract_tasks",segment.contract_tasks},{"discretionary_tasks",segment.discretionary_tasks},
@@ -81,6 +96,7 @@ Json market_json(const core::MarketState& state) {
         days.push_back({{"day",closed.day.value()},{"contracts",std::move(contract_results)},
             {"discretionary",std::move(discretionary)},{"segments",std::move(segment_results)},
             {"allocation_rounds",closed.allocation_rounds}});
+        if (closed.total_demand) days.back()["total_demand"] = *closed.total_demand;
     }
     for (const auto& adoption:state.adoptions) {
         Json shares=Json::array();
@@ -132,19 +148,32 @@ core::MarketState parse_market(const Json& value) {
     }
     const auto& products=value.at("products");array(products,"market/products",core::market_product_limit);
     for (const auto& product:products) {
-        fields(product,"market/product",{"id","capacity_project_id","price_per_task_cents","available"});
+        fields(product,"market/product",{"id","capacity_project_id","price_per_task_cents","available"},{"channel","monthly_migration_bp","region"});
         result.products.push_back({label(product.at("id")),label(product.at("capacity_project_id")),
-            cents(product.at("price_per_task_cents")),boolean(product.at("available"),"market/product/available")});
+            cents(product.at("price_per_task_cents")),boolean(product.at("available"),"market/product/available"),
+            product.contains("channel") ? core::parse_channel(label(product.at("channel"))) : core::ProductChannel::legacy,
+            core::BasisPoints{product.contains("monthly_migration_bp") ? i64(product.at("monthly_migration_bp"),"market/product/migration") : 10000},
+            product.contains("region") ? label(product.at("region")) : std::string{}});
     }
     const auto& segments=value.at("segments");array(segments,"market/segments",core::market_segment_limit);
     for (const auto& segment:segments) {
         fields(segment,"market/segment",{"id","daily_tasks","daily_budget_cents","outside_utility","reservation_threshold",
-            "maximum_monthly_migration_basis_points","preferences"});
+            "maximum_monthly_migration_basis_points","preferences"},
+            {"region","customer_compute_milli_CU_per_day","customer_memory_mib","customer_interconnect","requires_local"});
         core::MarketSegment row;
         row.id=label(segment.at("id"));row.daily_tasks=tasks(segment.at("daily_tasks"));
         row.daily_budget=cents(segment.at("daily_budget_cents"));row.outside_utility=utility(segment.at("outside_utility"));
         row.reservation_threshold=utility(segment.at("reservation_threshold"));
         row.maximum_monthly_migration=core::BasisPoints{i64(segment.at("maximum_monthly_migration_basis_points"),"market/migration")};
+        if (segment.contains("region")) {
+            row.region_id = label(segment.at("region"));
+            row.customer_compute = core::MilliCUPerDay{i64(segment.at("customer_compute_milli_CU_per_day"),"market/customer_compute")};
+            row.customer_memory_mib = u64(segment.at("customer_memory_mib"),"market/customer_memory");
+            row.customer_interconnect = text(segment.at("customer_interconnect"),"market/customer_interconnect",64,true);
+            row.requires_local = boolean(segment.at("requires_local"),"market/requires_local");
+        } else if (segment.size() != 7) {
+            invalid("market/segment", "Customer hardware fields require a region");
+        }
         const auto& preferences=segment.at("preferences");array(preferences,"market/preferences",core::market_product_limit);
         for (const auto& preference:preferences) {
             fields(preference,"market/preference",{"product_id","utility","willingness_to_pay_cents","switching_cost","eligible"});
@@ -170,9 +199,11 @@ core::MarketState parse_market(const Json& value) {
     const auto& days=value.at("days");array(days,"market/days",core::market_day_limit);
     std::size_t records=0;
     for (const auto& closed:days) {
-        fields(closed,"market/day",{"day","contracts","discretionary","segments","allocation_rounds"});
+        fields(closed,"market/day",{"day","contracts","discretionary","segments","allocation_rounds"},{"total_demand"});
         core::MarketDay row;row.day=day(closed.at("day"));
         row.allocation_rounds=u64(closed.at("allocation_rounds"),"market/allocation_rounds");
+        if (closed.contains("total_demand"))
+            row.total_demand = u64(closed.at("total_demand"),"market/total_demand",core::market_segment_limit*core::market_task_limit);
         const auto& contract_results=closed.at("contracts");array(contract_results,"market/day/contracts",core::market_contract_limit);
         count_records(records,contract_results.size());
         for (const auto& contract:contract_results) {
@@ -185,9 +216,10 @@ core::MarketState parse_market(const Json& value) {
         const auto& discretionary=closed.at("discretionary");array(discretionary,"market/day/discretionary",core::market_segment_limit*core::market_product_limit);
         count_records(records,discretionary.size());
         for (const auto& delivery:discretionary) {
-            fields(delivery,"market/delivery",{"segment_id","product_id","tasks","charged_cents"});
+            fields(delivery,"market/delivery",{"segment_id","product_id","tasks","charged_cents"},{"customer_compute_milli_CU"});
             row.discretionary.push_back({label(delivery.at("segment_id")),label(delivery.at("product_id")),
-                tasks(delivery.at("tasks")),cents(delivery.at("charged_cents"))});
+                tasks(delivery.at("tasks")),cents(delivery.at("charged_cents")),
+                core::MilliCU{delivery.contains("customer_compute_milli_CU") ? i64(delivery.at("customer_compute_milli_CU"),"market/delivery/compute") : 0}});
         }
         const auto& segment_results=closed.at("segments");array(segment_results,"market/day/segments",core::market_segment_limit);
         count_records(records,segment_results.size());

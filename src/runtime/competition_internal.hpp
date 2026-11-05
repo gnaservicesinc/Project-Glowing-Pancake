@@ -18,4 +18,8 @@ void prepare_rival_morning(WorldState&,const CompiledProgram&,RivalCompany&);
 void collect_public_results(WorldState&,core::OrdinalDay);
 void append_industry_adoption(WorldState&,core::OrdinalDay);
 void validate_industry(const WorldState&,bool);
+[[nodiscard]] bool operating(const core::SimulationState&);
+void refresh_wholesale(WorldState&,const CompiledProgram&,bool settling=false);
+[[nodiscard]] std::vector<core::WholesaleUse> settle_wholesale(WorldState&,const CompiledProgram&,const IndustryAllocations&);
+void validate_wholesale(const WorldState&,const CompiledProgram&,bool deep);
 }

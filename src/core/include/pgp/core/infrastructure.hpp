@@ -133,6 +133,7 @@ void validate_infrastructure_catalog(const InfrastructureCatalog&);
 void validate_infrastructure(const SimulationState&,bool deep=true);
 [[nodiscard]] SiteBuildPreview preview_site_build(const SimulationState&,const BuildOwnedSite&);
 [[nodiscard]] SitePowerPreview preview_site_power(const SimulationState&,std::string_view site_id,OrdinalDay);
+[[nodiscard]] Cents wholesale_electricity(const SimulationState&,std::string_view source_id,MilliCU work);
 [[nodiscard]] SiteAppointment preview_site_appointment(const SimulationState&,const ScheduleSiteAppointment&);
 [[nodiscard]] ExecutiveLocation executive_location(const SimulationState&);
 [[nodiscard]] CashProjection project_company_cash(const SimulationState&,OrdinalDay,Cents protected_cash=Cents{0});

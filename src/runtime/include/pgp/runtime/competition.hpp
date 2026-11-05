@@ -3,6 +3,7 @@
 #include <pgp/content/world_setup.hpp>
 #include <pgp/runtime/heavyweight.hpp>
 #include <pgp/runtime/mergers.hpp>
+#include <pgp/runtime/wholesale.hpp>
 #include <map>
 
 namespace pgp::runtime {
@@ -59,6 +60,7 @@ struct CompetitionState {
     std::vector<core::MarketAdoption> adoptions{};
     std::vector<CompetitiveOffer> offers{};
     std::vector<AcquisitionRecord> acquisitions{};
+    std::vector<WholesaleContract> wholesale{};
     auto operator<=>(const CompetitionState&) const = default;
 };
 [[nodiscard]] const content::RivalDefinition& rival_definition(const CompiledProgram& program,std::string_view id);
@@ -66,7 +68,8 @@ using IndustryAllocations=std::map<std::string,core::AllocationResult,std::less<
 void initialize_competition(WorldState& world,const CompiledProgram& program,const std::vector<content::RivalDefinition>& definitions,
     const std::optional<content::CompetitionSetup>& setup = {});
 [[nodiscard]] IndustryAllocations prepare_competition_day(WorldState& world,const CompiledProgram& program);
-[[nodiscard]] std::vector<core::MarketAdoption> industry_adoption_snapshot(const WorldState& world);
+[[nodiscard]] std::vector<core::MarketAdoption> industry_adoption_snapshot(const WorldState& world,
+    std::optional<core::OrdinalDay> work_day = {});
 void advance_competition(WorldState& world,const CompiledProgram& program,core::OrdinalDay prior_day,const IndustryAllocations& assignments = {});
 void validate_public_insight(const WorldState& world,const core::ResearchInsight& insight);
 void validate_competition(const WorldState& world,const CompiledProgram& program,bool deep);

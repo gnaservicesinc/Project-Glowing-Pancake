@@ -12,6 +12,10 @@ class InfrastructureController final : public QObject {
     Q_PROPERTY(StableListModel* hardware READ hardware CONSTANT)
     Q_PROPERTY(StableListModel* calendar READ calendar CONSTANT)
     Q_PROPERTY(StableListModel* notices READ notices CONSTANT)
+    Q_PROPERTY(StableListModel* wholesaleContracts READ wholesaleContracts CONSTANT)
+    Q_PROPERTY(QVariantList wholesalePlans READ wholesalePlans NOTIFY changed)
+    Q_PROPERTY(QVariantList wholesaleSources READ wholesaleSources NOTIFY changed)
+    Q_PROPERTY(QVariantList wholesaleBuyers READ wholesaleBuyers NOTIFY changed)
     Q_PROPERTY(QVariantList rackOptions READ rackOptions NOTIFY catalogChanged)
     Q_PROPERTY(QVariantMap mapGeometry READ mapGeometry NOTIFY catalogChanged)
     Q_PROPERTY(QString mapCredit READ mapCredit NOTIFY catalogChanged)
@@ -25,13 +29,17 @@ class InfrastructureController final : public QObject {
     Q_PROPERTY(bool canConfirm READ canConfirm NOTIFY reviewChanged)
 public:
     explicit InfrastructureController(QObject* parent=nullptr);
-    void update(CampaignSnapshotPtr,bool replace);
+    void update(CampaignSnapshotPtr,const runtime::CompiledProgram&,bool replace);
     [[nodiscard]] bool available() const {return snapshot_ && state().infrastructure.has_value();}
     StableListModel* states() const {return states_;}
     StableListModel* sites() const {return sites_;}
     StableListModel* hardware() const {return hardware_;}
     StableListModel* calendar() const {return calendar_;}
     StableListModel* notices() const {return notices_;}
+    StableListModel* wholesaleContracts() const {return wholesale_contracts_;}
+    QVariantList wholesalePlans() const {return wholesale_plans_;}
+    QVariantList wholesaleSources() const {return wholesale_sources_;}
+    QVariantList wholesaleBuyers() const {return wholesale_buyers_;}
     QVariantList rackOptions() const {return rack_options_;}
     QVariantMap mapGeometry() const {return map_;}
     QString mapCredit() const;
@@ -53,6 +61,7 @@ public:
     Q_INVOKABLE void reviewClose(QString site);
     Q_INVOKABLE void reviewCancel(QString appointment);
     Q_INVOKABLE void reviewLease();
+    Q_INVOKABLE void reviewWholesale(QString plan,QString source,QString buyer);
     Q_INVOKABLE void confirm();
     Q_INVOKABLE void dismissReview();
 signals:
@@ -60,16 +69,20 @@ signals:
     void catalogChanged();
     void reviewChanged();
     void actionRequested(core::CommandAction);
+    void wholesaleRequested(QString plan,QString source,QString buyer);
     void noticeRaised(QString);
 private:
     const core::SimulationState& state() const {return snapshot_->checkpoint.world.simulation;}
     template<class Make> void review(Make&&);
     void loadMap();
-    StableListModel *states_,*sites_,*hardware_,*calendar_,*notices_;
+    struct WholesaleReview {std::uint64_t expected_revision;QString plan,source,buyer;};
+    StableListModel *states_,*sites_,*hardware_,*calendar_,*notices_,*wholesale_contracts_;
     CampaignSnapshotPtr snapshot_;
+    const runtime::CompiledProgram* program_ = nullptr;
     QVariantList rack_options_;
+    QVariantList wholesale_plans_,wholesale_sources_,wholesale_buyers_;
     QVariantMap map_;
     QString map_terms_,review_text_;
-    std::optional<core::Command> review_;
+    std::optional<std::variant<core::Command,WholesaleReview>> review_;
 };
 }

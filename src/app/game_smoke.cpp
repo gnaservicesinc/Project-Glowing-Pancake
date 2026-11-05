@@ -571,9 +571,10 @@ void schedule_infrastructure_smoke(QQuickWindow& window,pgp::bridge::CampaignCon
         switch (smoke->phase) {
         case 0: {
             if (!campaign.welcome() || std::filesystem::exists(save_path) || window.rendererInterface()->graphicsApi()!=expected) {fail("fresh headquarters chooser and requested renderer required");return;}
-            auto* hq=item("headquartersChoice");auto* setup=item("competitionChoice");int intro=-1;const auto choices=campaign.scenarios();
-            for (qsizetype i=0;i<choices.size();++i) if (choices.at(i).toMap().value(QStringLiteral("id"))==QStringLiteral("scenario.first_playable")) intro=static_cast<int>(i);
-            if (!hq || !setup || intro<0 || !hq->setProperty("currentIndex",1) || !setup->setProperty("currentIndex",intro)) {fail("headquarters/scenario selection");return;}
+            auto* hq=item("headquartersChoice");auto* setup=item("competitionChoice");int index=-1;const auto choices=campaign.scenarios();
+            const auto scenario=campaign.management()->launchRegions().isEmpty()?QStringLiteral("scenario.first_playable"):QStringLiteral("scenario.world_competition");
+            for (qsizetype i=0;i<choices.size();++i) if (choices.at(i).toMap().value(QStringLiteral("id"))==scenario) index=static_cast<int>(i);
+            if (!hq || !setup || index<0 || !hq->setProperty("currentIndex",1) || !setup->setProperty("currentIndex",index)) {fail("headquarters/scenario selection");return;}
             campaign.setDaysPerSecond(60);if (press("newCampaignButton")) next(1);return;
         }
         case 1:
@@ -658,6 +659,10 @@ void schedule_infrastructure_smoke(QQuickWindow& window,pgp::bridge::CampaignCon
             if (s.date<*s.infrastructure->initial_lease_ends_before || !campaign.paused()) {if (campaign.paused()) press("nextSiteMilestone");return;}
             if (s.capacity->sources.front().effective.value()!=0 || s.infrastructure->sites.front().meters.empty() || !infra->leaseStatus().contains(QStringLiteral("ended"))) {fail("initial lease continued or metered site vanished");return;}
             reveal_top(item("ownedSiteList"));if (!capture(QStringLiteral("-meter"))) {fail("meter capture");return;}
+            if (!infra->wholesalePlans().isEmpty()) {
+                if (!set("ownedPowerBudget","text",QString::number(s.infrastructure->sites.front().grid_watts/1000))) {fail("restore power for wholesale");return;}
+                if (press("reviewOwnedPower")) next(26);return;
+            }
             smoke->saved=snap;campaign.saveTo(save_url);next(23);return;
         case 23:
             if (!std::filesystem::is_regular_file(save_path)) {fail("owned site save missing");return;}
@@ -667,8 +672,25 @@ void schedule_infrastructure_smoke(QQuickWindow& window,pgp::bridge::CampaignCon
             campaign.loadFrom(save_url);next(25);return;
         case 25:
             if (snap->generation!=smoke->saved->generation+1 || snap->checkpoint!=smoke->saved->checkpoint || !campaign.paused() || !capture({})) {fail("exact owned site, travel, lease or ledger reload failed");return;}
-            qInfo().noquote()<<"Infrastructure smoke passed"<<graphics::name(expected)<<"text="<<campaign.textScalePercent()<<"51 states, map pointer and keyboard list, paid construction, calendar conflict, management during travel, owned Lab work, curtailment, lease notice, exact save"<<std::filesystem::file_size(save_path)<<"bytes";
+            qInfo().noquote()<<"Infrastructure smoke passed"<<graphics::name(expected)<<"text="<<campaign.textScalePercent()<<"51 states, map pointer and keyboard list, paid construction, calendar conflict, management during travel, owned Lab work, curtailment, lease notice, wholesale agreements"<<infra->wholesaleContracts()->rowCount()<<"exact save"<<std::filesystem::file_size(save_path)<<"bytes";
             timer->stop();QCoreApplication::exit(0);return;
+        case 26:confirm(27);return;
+        case 27:
+            if (press("operationsWholesale") && press("reviewWholesale")) next(28);return;
+        case 28:
+            if (!infra->reviewText().contains(QStringLiteral("proportional fee credit")) || !capture(QStringLiteral("-wholesale"))) {fail("wholesale terms and credit review");return;}
+            confirm(29);return;
+        case 29:
+            if (infra->wholesaleContracts()->rowCount()!=1) {fail("wholesale agreement did not commit");return;}
+            if (press("stepButton")) next(30);return;
+        case 30: {
+            const auto& contract=snap->checkpoint.world.competition->wholesale.front();
+            if (contract.days.size()!=1 || contract.days.front().seller_posting==0 || contract.days.front().buyer_posting==0) {fail("wholesale payment did not settle bilaterally");return;}
+            if (!press("officeTab") || !press("office_markets")) return;
+            if (campaign.management()->regionalMarkets()->rowCount()!=8) {fail("regional work report is incomplete");return;}
+            reveal_top(item("regionalMarketSelectionDetail"));if (!capture(QStringLiteral("-regions"))) {fail("regional report capture");return;}
+            smoke->saved=snap;campaign.saveTo(save_url);next(23);return;
+        }
         default:fail("unexpected smoke phase");return;
         }
     });

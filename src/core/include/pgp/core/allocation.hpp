@@ -9,9 +9,9 @@
 
 namespace pgp::core {
 
-inline constexpr std::size_t allocation_segment_limit = 16;
-inline constexpr std::size_t allocation_product_limit = 64;
-inline constexpr std::size_t allocation_edge_limit = 1024;
+inline constexpr std::size_t allocation_segment_limit = 64;
+inline constexpr std::size_t allocation_product_limit = 512;
+inline constexpr std::size_t allocation_edge_limit = 8192;
 inline constexpr std::uint64_t allocation_task_limit = 1'000'000'000;
 inline constexpr std::int64_t allocation_price_limit = 100'000'000;
 inline constexpr std::uint64_t allocation_weight_limit = 1'000'000'000'000;
@@ -34,11 +34,13 @@ struct AllocationProduct {
     std::string id;
     Cents price{0};
     std::uint64_t capacity = 0;
+    MilliCU customer_compute_per_task{0};
 };
 struct AllocationEdge {
     std::string product_id;
     std::uint64_t weight = 0;
     std::optional<std::uint64_t> task_limit;
+    std::uint64_t retained_tasks = 0;
 };
 struct AllocationSegment {
     std::string id;
@@ -46,6 +48,7 @@ struct AllocationSegment {
     Cents budget{0};
     std::uint64_t outside_weight = 0;
     std::vector<AllocationEdge> edges;
+    MilliCUPerDay customer_compute{0};
 };
 struct AllocationDelivery {
     std::string product_id;
@@ -54,7 +57,7 @@ struct AllocationDelivery {
     auto operator<=>(const AllocationDelivery&) const = default;
 };
 enum class AllocationOutsideReason {
-    preference, no_eligible_product, zero_utility, budget, capacity, edge_limit
+    preference, no_eligible_product, zero_utility, budget, capacity, edge_limit, customer_compute
 };
 struct AllocationOutside {
     AllocationOutsideReason reason = AllocationOutsideReason::preference;

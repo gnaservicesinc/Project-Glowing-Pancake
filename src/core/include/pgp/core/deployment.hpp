@@ -18,12 +18,14 @@ struct ServiceDefinition {
     std::uint64_t review_tasks_per_day = 0;
     std::vector<ServicePreference> preferences;
     std::string required_recipe{};
+    std::vector<std::string> required_research{};
     auto operator<=>(const ServiceDefinition&) const = default;
 };
 struct DeploymentRecord {
     std::string service_id, model_id, evidence_id, project_id;
     bool human_review = false;
     OrdinalDay deployed_on{0};
+    std::string region_id{};
     auto operator<=>(const DeploymentRecord&) const = default;
 };
 struct DeploymentState {
@@ -34,6 +36,7 @@ struct DeploymentState {
 struct DeployModel {
     std::string service_id, model_id, evidence_id, source_id;
     bool human_review = false;
+    std::string region_id{};
 };
 void validate_service_catalog(const std::vector<ServiceDefinition>& catalog);
 void validate_deployments(const DeploymentState& state, const LabState& lab,

@@ -1,8 +1,2487 @@
 {
   "content_schema": 1,
-  "content_version": "0.5.0-dev.1",
+  "content_version": "0.6.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
+    {
+      "id": "market.global_launch",
+      "kind": "regional_markets",
+      "products": {
+        "contracts": [],
+        "offers": [
+          {
+            "available": true,
+            "capacity_project_id": "serving.coding_api",
+            "channel": "api",
+            "id": "product.coding_api",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "minimum_memory_mib": 0,
+            "monthly_migration_bp": 4500,
+            "monthly_support_cost_cents": 400000,
+            "price_cents_per_task": 83,
+            "required_bp": [
+              6000,
+              0
+            ],
+            "required_recipe": "recipe.sequence",
+            "required_research": [
+              "research.reproducible_tooling"
+            ],
+            "review_credit_bp": [
+              0,
+              0
+            ],
+            "review_monthly_cost_cents": 0,
+            "review_staff": 0,
+            "review_tasks_per_day": 0,
+            "staff": 1,
+            "tasks_per_day": 2600
+          },
+          {
+            "available": true,
+            "capacity_project_id": "serving.document_classification",
+            "channel": "business",
+            "id": "product.document_classification",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "minimum_memory_mib": 0,
+            "monthly_migration_bp": 1800,
+            "monthly_support_cost_cents": 500000,
+            "price_cents_per_task": 124,
+            "required_bp": [
+              5900,
+              0
+            ],
+            "review_credit_bp": [
+              0,
+              0
+            ],
+            "review_monthly_cost_cents": 0,
+            "review_staff": 0,
+            "review_tasks_per_day": 0,
+            "staff": 1,
+            "tasks_per_day": 2000
+          },
+          {
+            "available": true,
+            "capacity_project_id": "serving.edge_perception",
+            "channel": "licensed",
+            "id": "product.edge_perception",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "minimum_memory_mib": 0,
+            "monthly_migration_bp": 1300,
+            "monthly_support_cost_cents": 650000,
+            "price_cents_per_task": 147,
+            "required_bp": [
+              0,
+              5550
+            ],
+            "required_recipe": "recipe.image_features",
+            "required_research": [
+              "research.efficient_image_features"
+            ],
+            "review_credit_bp": [
+              0,
+              0
+            ],
+            "review_monthly_cost_cents": 0,
+            "review_staff": 0,
+            "review_tasks_per_day": 0,
+            "staff": 1,
+            "tasks_per_day": 2450
+          },
+          {
+            "available": true,
+            "capacity_project_id": "serving.education_model",
+            "channel": "open_weights",
+            "id": "product.education_model",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "minimum_memory_mib": 0,
+            "monthly_migration_bp": 3600,
+            "monthly_support_cost_cents": 400000,
+            "price_cents_per_task": 0,
+            "required_bp": [
+              5400,
+              0
+            ],
+            "required_research": [
+              "research.held_out_evaluation"
+            ],
+            "review_credit_bp": [
+              0,
+              0
+            ],
+            "review_monthly_cost_cents": 0,
+            "review_staff": 0,
+            "review_tasks_per_day": 0,
+            "staff": 1,
+            "tasks_per_day": 2400
+          },
+          {
+            "available": true,
+            "capacity_project_id": "serving.general_assistant",
+            "channel": "consumer",
+            "id": "product.general_assistant",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "minimum_memory_mib": 0,
+            "monthly_migration_bp": 7200,
+            "monthly_support_cost_cents": 650000,
+            "price_cents_per_task": 47,
+            "required_bp": [
+              5300,
+              0
+            ],
+            "review_credit_bp": [
+              0,
+              0
+            ],
+            "review_monthly_cost_cents": 0,
+            "review_staff": 0,
+            "review_tasks_per_day": 0,
+            "staff": 2,
+            "tasks_per_day": 3200
+          },
+          {
+            "available": true,
+            "capacity_project_id": "serving.private_organization",
+            "channel": "licensed",
+            "id": "product.private_organization",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "minimum_memory_mib": 0,
+            "monthly_migration_bp": 1300,
+            "monthly_support_cost_cents": 800000,
+            "price_cents_per_task": 117,
+            "required_bp": [
+              5800,
+              0
+            ],
+            "required_research": [
+              "research.reproducible_tooling"
+            ],
+            "review_credit_bp": [
+              0,
+              0
+            ],
+            "review_monthly_cost_cents": 0,
+            "review_staff": 0,
+            "review_tasks_per_day": 0,
+            "staff": 1,
+            "tasks_per_day": 2900
+          },
+          {
+            "available": true,
+            "capacity_project_id": "serving.research_toolkit",
+            "channel": "open_weights",
+            "id": "product.research_toolkit",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "minimum_memory_mib": 0,
+            "monthly_migration_bp": 3600,
+            "monthly_support_cost_cents": 450000,
+            "price_cents_per_task": 0,
+            "required_bp": [
+              5300,
+              0
+            ],
+            "required_research": [
+              "research.reproducible_tooling"
+            ],
+            "review_credit_bp": [
+              0,
+              0
+            ],
+            "review_monthly_cost_cents": 0,
+            "review_staff": 0,
+            "review_tasks_per_day": 0,
+            "staff": 1,
+            "tasks_per_day": 2350
+          },
+          {
+            "available": true,
+            "capacity_project_id": "serving.retrieval_api",
+            "channel": "api",
+            "id": "product.retrieval_api",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "minimum_memory_mib": 0,
+            "monthly_migration_bp": 4500,
+            "monthly_support_cost_cents": 420000,
+            "price_cents_per_task": 91,
+            "required_bp": [
+              5700,
+              0
+            ],
+            "required_research": [
+              "research.held_out_evaluation"
+            ],
+            "review_credit_bp": [
+              0,
+              0
+            ],
+            "review_monthly_cost_cents": 0,
+            "review_staff": 0,
+            "review_tasks_per_day": 0,
+            "staff": 1,
+            "tasks_per_day": 2700
+          },
+          {
+            "available": true,
+            "capacity_project_id": "serving.robotics_agent",
+            "channel": "agent",
+            "id": "product.robotics_agent",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "minimum_memory_mib": 0,
+            "monthly_migration_bp": 2100,
+            "monthly_support_cost_cents": 1200000,
+            "price_cents_per_task": 210,
+            "required_bp": [
+              0,
+              6900
+            ],
+            "required_recipe": "recipe.image_features",
+            "required_research": [
+              "research.held_out_evaluation",
+              "research.efficient_image_features"
+            ],
+            "review_credit_bp": [
+              650,
+              1300
+            ],
+            "review_monthly_cost_cents": 1200000,
+            "review_staff": 1,
+            "review_tasks_per_day": 500,
+            "staff": 2,
+            "tasks_per_day": 1400
+          },
+          {
+            "available": true,
+            "capacity_project_id": "serving.social_companion",
+            "channel": "consumer",
+            "id": "product.social_companion",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "minimum_memory_mib": 0,
+            "monthly_migration_bp": 7200,
+            "monthly_support_cost_cents": 750000,
+            "price_cents_per_task": 43,
+            "required_bp": [
+              5300,
+              0
+            ],
+            "required_recipe": "recipe.sequence",
+            "required_research": [
+              "research.sequence_modeling"
+            ],
+            "review_credit_bp": [
+              0,
+              0
+            ],
+            "review_monthly_cost_cents": 0,
+            "review_staff": 0,
+            "review_tasks_per_day": 0,
+            "staff": 2,
+            "tasks_per_day": 3100
+          },
+          {
+            "available": true,
+            "capacity_project_id": "serving.visual_inspection",
+            "channel": "business",
+            "id": "product.visual_inspection",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "minimum_memory_mib": 0,
+            "monthly_migration_bp": 1800,
+            "monthly_support_cost_cents": 650000,
+            "price_cents_per_task": 162,
+            "required_bp": [
+              0,
+              5700
+            ],
+            "required_recipe": "recipe.image_features",
+            "required_research": [
+              "research.efficient_image_features"
+            ],
+            "review_credit_bp": [
+              0,
+              0
+            ],
+            "review_monthly_cost_cents": 0,
+            "review_staff": 0,
+            "review_tasks_per_day": 0,
+            "staff": 2,
+            "tasks_per_day": 1750
+          },
+          {
+            "available": true,
+            "capacity_project_id": "serving.workflow_agent",
+            "channel": "agent",
+            "id": "product.workflow_agent",
+            "inference_milli_CU_per_task": 20,
+            "interconnect": "general",
+            "minimum_memory_mib": 0,
+            "monthly_migration_bp": 2100,
+            "monthly_support_cost_cents": 950000,
+            "price_cents_per_task": 164,
+            "required_bp": [
+              6000,
+              0
+            ],
+            "required_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "review_credit_bp": [
+              650,
+              1300
+            ],
+            "review_monthly_cost_cents": 1200000,
+            "review_staff": 1,
+            "review_tasks_per_day": 700,
+            "staff": 1,
+            "tasks_per_day": 1800
+          }
+        ],
+        "segments": [
+          {
+            "customer_compute_milli_CU_per_day": 3080,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 8192,
+            "daily_budget_cents": 84589,
+            "daily_tasks": 3266,
+            "id": "segment.africa_middle_east.consumers",
+            "maximum_monthly_migration_basis_points": 6100,
+            "outside_utility": 460,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 110,
+                "utility": 1050,
+                "willingness_to_pay_cents": 37
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 110,
+                "utility": 1450,
+                "willingness_to_pay_cents": 37
+              },
+              {
+                "eligible": true,
+                "product_id": "product.social_companion",
+                "switching_cost": 110,
+                "utility": 1580,
+                "willingness_to_pay_cents": 37
+              }
+            ],
+            "region": "region.africa_middle_east",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 9240,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 77859,
+            "daily_tasks": 1794,
+            "id": "segment.africa_middle_east.developers",
+            "maximum_monthly_migration_basis_points": 4200,
+            "outside_utility": 400,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 130,
+                "utility": 1540,
+                "willingness_to_pay_cents": 62
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 130,
+                "utility": 740,
+                "willingness_to_pay_cents": 62
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 130,
+                "utility": 1210,
+                "willingness_to_pay_cents": 62
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 130,
+                "utility": 1400,
+                "willingness_to_pay_cents": 62
+              }
+            ],
+            "region": "region.africa_middle_east",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 11440,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 141680,
+            "daily_tasks": 2300,
+            "id": "segment.africa_middle_east.enterprise",
+            "maximum_monthly_migration_basis_points": 2500,
+            "outside_utility": 480,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.document_classification",
+                "switching_cost": 220,
+                "utility": 1500,
+                "willingness_to_pay_cents": 124
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 220,
+                "utility": 1520,
+                "willingness_to_pay_cents": 117
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 220,
+                "utility": 960,
+                "willingness_to_pay_cents": 91
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 220,
+                "utility": 1670,
+                "willingness_to_pay_cents": 164
+              }
+            ],
+            "region": "region.africa_middle_east",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 16280,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 109158,
+            "daily_tasks": 1380,
+            "id": "segment.africa_middle_east.industrial",
+            "maximum_monthly_migration_basis_points": 1500,
+            "outside_utility": 545,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 300,
+                "utility": 1700,
+                "willingness_to_pay_cents": 147
+              },
+              {
+                "eligible": true,
+                "product_id": "product.robotics_agent",
+                "switching_cost": 300,
+                "utility": 1950,
+                "willingness_to_pay_cents": 210
+              },
+              {
+                "eligible": true,
+                "product_id": "product.visual_inspection",
+                "switching_cost": 300,
+                "utility": 1670,
+                "willingness_to_pay_cents": 162
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 300,
+                "utility": 1150,
+                "willingness_to_pay_cents": 164
+              }
+            ],
+            "region": "region.africa_middle_east",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 14520,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 66654,
+            "daily_tasks": 1058,
+            "id": "segment.africa_middle_east.public_services",
+            "maximum_monthly_migration_basis_points": 1200,
+            "outside_utility": 560,
+            "preferences": [
+              {
+                "eligible": false,
+                "product_id": "product.document_classification",
+                "switching_cost": 310,
+                "utility": 1330,
+                "willingness_to_pay_cents": 124
+              },
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 310,
+                "utility": 750,
+                "willingness_to_pay_cents": 147
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 310,
+                "utility": 1380,
+                "willingness_to_pay_cents": 90
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 310,
+                "utility": 1760,
+                "willingness_to_pay_cents": 117
+              }
+            ],
+            "region": "region.africa_middle_east",
+            "requires_local": true,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 12100,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 46496,
+            "daily_tasks": 874,
+            "id": "segment.africa_middle_east.science",
+            "maximum_monthly_migration_basis_points": 2100,
+            "outside_utility": 440,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 250,
+                "utility": 870,
+                "willingness_to_pay_cents": 83
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 250,
+                "utility": 1400,
+                "willingness_to_pay_cents": 76
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 250,
+                "utility": 820,
+                "willingness_to_pay_cents": 117
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 250,
+                "utility": 1560,
+                "willingness_to_pay_cents": 76
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 250,
+                "utility": 1200,
+                "willingness_to_pay_cents": 91
+              }
+            ],
+            "region": "region.africa_middle_east",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 7630,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 8192,
+            "daily_budget_cents": 230806,
+            "daily_tasks": 6106,
+            "id": "segment.asia_pacific.consumers",
+            "maximum_monthly_migration_basis_points": 6100,
+            "outside_utility": 402,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 110,
+                "utility": 1050,
+                "willingness_to_pay_cents": 54
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 110,
+                "utility": 1450,
+                "willingness_to_pay_cents": 54
+              },
+              {
+                "eligible": true,
+                "product_id": "product.social_companion",
+                "switching_cost": 110,
+                "utility": 1580,
+                "willingness_to_pay_cents": 54
+              }
+            ],
+            "region": "region.asia_pacific",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 22890,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 211302,
+            "daily_tasks": 3354,
+            "id": "segment.asia_pacific.developers",
+            "maximum_monthly_migration_basis_points": 4200,
+            "outside_utility": 342,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 130,
+                "utility": 1540,
+                "willingness_to_pay_cents": 90
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 130,
+                "utility": 740,
+                "willingness_to_pay_cents": 90
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 130,
+                "utility": 1210,
+                "willingness_to_pay_cents": 90
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 130,
+                "utility": 1400,
+                "willingness_to_pay_cents": 91
+              }
+            ],
+            "region": "region.asia_pacific",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 28340,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 382270,
+            "daily_tasks": 4300,
+            "id": "segment.asia_pacific.enterprise",
+            "maximum_monthly_migration_basis_points": 2500,
+            "outside_utility": 422,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.document_classification",
+                "switching_cost": 220,
+                "utility": 1500,
+                "willingness_to_pay_cents": 127
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 220,
+                "utility": 1520,
+                "willingness_to_pay_cents": 127
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 220,
+                "utility": 960,
+                "willingness_to_pay_cents": 127
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 220,
+                "utility": 1670,
+                "willingness_to_pay_cents": 164
+              }
+            ],
+            "region": "region.asia_pacific",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 40330,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 296184,
+            "daily_tasks": 2580,
+            "id": "segment.asia_pacific.industrial",
+            "maximum_monthly_migration_basis_points": 1500,
+            "outside_utility": 487,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 300,
+                "utility": 1700,
+                "willingness_to_pay_cents": 164
+              },
+              {
+                "eligible": true,
+                "product_id": "product.robotics_agent",
+                "switching_cost": 300,
+                "utility": 1950,
+                "willingness_to_pay_cents": 210
+              },
+              {
+                "eligible": true,
+                "product_id": "product.visual_inspection",
+                "switching_cost": 300,
+                "utility": 1670,
+                "willingness_to_pay_cents": 164
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 300,
+                "utility": 1150,
+                "willingness_to_pay_cents": 164
+              }
+            ],
+            "region": "region.asia_pacific",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 35970,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 179998,
+            "daily_tasks": 1978,
+            "id": "segment.asia_pacific.public_services",
+            "maximum_monthly_migration_basis_points": 1200,
+            "outside_utility": 502,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.document_classification",
+                "switching_cost": 310,
+                "utility": 1330,
+                "willingness_to_pay_cents": 130
+              },
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 310,
+                "utility": 750,
+                "willingness_to_pay_cents": 147
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 310,
+                "utility": 1380,
+                "willingness_to_pay_cents": 130
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 310,
+                "utility": 1760,
+                "willingness_to_pay_cents": 130
+              }
+            ],
+            "region": "region.asia_pacific",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 29975,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 125818,
+            "daily_tasks": 1634,
+            "id": "segment.asia_pacific.science",
+            "maximum_monthly_migration_basis_points": 2100,
+            "outside_utility": 382,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 250,
+                "utility": 870,
+                "willingness_to_pay_cents": 110
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 250,
+                "utility": 1400,
+                "willingness_to_pay_cents": 110
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 250,
+                "utility": 820,
+                "willingness_to_pay_cents": 117
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 250,
+                "utility": 1560,
+                "willingness_to_pay_cents": 110
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 250,
+                "utility": 1200,
+                "willingness_to_pay_cents": 110
+              }
+            ],
+            "region": "region.asia_pacific",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 5040,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 8192,
+            "daily_budget_cents": 112421,
+            "daily_tasks": 2769,
+            "id": "segment.canada.consumers",
+            "maximum_monthly_migration_basis_points": 6100,
+            "outside_utility": 388,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 110,
+                "utility": 1050,
+                "willingness_to_pay_cents": 58
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 110,
+                "utility": 1450,
+                "willingness_to_pay_cents": 58
+              },
+              {
+                "eligible": true,
+                "product_id": "product.social_companion",
+                "switching_cost": 110,
+                "utility": 1580,
+                "willingness_to_pay_cents": 58
+              }
+            ],
+            "region": "region.canada",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 15120,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 102211,
+            "daily_tasks": 1521,
+            "id": "segment.canada.developers",
+            "maximum_monthly_migration_basis_points": 4200,
+            "outside_utility": 328,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 130,
+                "utility": 1540,
+                "willingness_to_pay_cents": 96
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 130,
+                "utility": 740,
+                "willingness_to_pay_cents": 96
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 130,
+                "utility": 1210,
+                "willingness_to_pay_cents": 96
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 130,
+                "utility": 1400,
+                "willingness_to_pay_cents": 96
+              }
+            ],
+            "region": "region.canada",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 18720,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 187005,
+            "daily_tasks": 1950,
+            "id": "segment.canada.enterprise",
+            "maximum_monthly_migration_basis_points": 2500,
+            "outside_utility": 408,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.document_classification",
+                "switching_cost": 220,
+                "utility": 1500,
+                "willingness_to_pay_cents": 137
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 220,
+                "utility": 1520,
+                "willingness_to_pay_cents": 137
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 220,
+                "utility": 960,
+                "willingness_to_pay_cents": 137
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 220,
+                "utility": 1670,
+                "willingness_to_pay_cents": 164
+              }
+            ],
+            "region": "region.canada",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 26640,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 144144,
+            "daily_tasks": 1170,
+            "id": "segment.canada.industrial",
+            "maximum_monthly_migration_basis_points": 1500,
+            "outside_utility": 473,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 300,
+                "utility": 1700,
+                "willingness_to_pay_cents": 176
+              },
+              {
+                "eligible": true,
+                "product_id": "product.robotics_agent",
+                "switching_cost": 300,
+                "utility": 1950,
+                "willingness_to_pay_cents": 210
+              },
+              {
+                "eligible": true,
+                "product_id": "product.visual_inspection",
+                "switching_cost": 300,
+                "utility": 1670,
+                "willingness_to_pay_cents": 176
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 300,
+                "utility": 1150,
+                "willingness_to_pay_cents": 176
+              }
+            ],
+            "region": "region.canada",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 23760,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 87906,
+            "daily_tasks": 897,
+            "id": "segment.canada.public_services",
+            "maximum_monthly_migration_basis_points": 1200,
+            "outside_utility": 488,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.document_classification",
+                "switching_cost": 310,
+                "utility": 1330,
+                "willingness_to_pay_cents": 140
+              },
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 310,
+                "utility": 750,
+                "willingness_to_pay_cents": 147
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 310,
+                "utility": 1380,
+                "willingness_to_pay_cents": 140
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 310,
+                "utility": 1760,
+                "willingness_to_pay_cents": 140
+              }
+            ],
+            "region": "region.canada",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 19800,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 61725,
+            "daily_tasks": 741,
+            "id": "segment.canada.science",
+            "maximum_monthly_migration_basis_points": 2100,
+            "outside_utility": 368,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 250,
+                "utility": 870,
+                "willingness_to_pay_cents": 119
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 250,
+                "utility": 1400,
+                "willingness_to_pay_cents": 119
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 250,
+                "utility": 820,
+                "willingness_to_pay_cents": 119
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 250,
+                "utility": 1560,
+                "willingness_to_pay_cents": 119
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 250,
+                "utility": 1200,
+                "willingness_to_pay_cents": 119
+              }
+            ],
+            "region": "region.canada",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 7140,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 8192,
+            "daily_budget_cents": 280772,
+            "daily_tasks": 9116,
+            "id": "segment.china.consumers",
+            "maximum_monthly_migration_basis_points": 6100,
+            "outside_utility": 436,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 110,
+                "utility": 1050,
+                "willingness_to_pay_cents": 44
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 110,
+                "utility": 1450,
+                "willingness_to_pay_cents": 47
+              },
+              {
+                "eligible": true,
+                "product_id": "product.social_companion",
+                "switching_cost": 110,
+                "utility": 1580,
+                "willingness_to_pay_cents": 44
+              }
+            ],
+            "region": "region.china",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 21420,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 255857,
+            "daily_tasks": 5007,
+            "id": "segment.china.developers",
+            "maximum_monthly_migration_basis_points": 4200,
+            "outside_utility": 376,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 130,
+                "utility": 1540,
+                "willingness_to_pay_cents": 83
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 130,
+                "utility": 740,
+                "willingness_to_pay_cents": 73
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 130,
+                "utility": 1210,
+                "willingness_to_pay_cents": 73
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 130,
+                "utility": 1400,
+                "willingness_to_pay_cents": 91
+              }
+            ],
+            "region": "region.china",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 26520,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 389480,
+            "daily_tasks": 5350,
+            "id": "segment.china.enterprise",
+            "maximum_monthly_migration_basis_points": 2500,
+            "outside_utility": 456,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.document_classification",
+                "switching_cost": 220,
+                "utility": 1500,
+                "willingness_to_pay_cents": 124
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 220,
+                "utility": 1520,
+                "willingness_to_pay_cents": 117
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 220,
+                "utility": 960,
+                "willingness_to_pay_cents": 104
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 220,
+                "utility": 1670,
+                "willingness_to_pay_cents": 164
+              }
+            ],
+            "region": "region.china",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 37740,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 301098,
+            "daily_tasks": 3210,
+            "id": "segment.china.industrial",
+            "maximum_monthly_migration_basis_points": 1500,
+            "outside_utility": 521,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 300,
+                "utility": 1700,
+                "willingness_to_pay_cents": 147
+              },
+              {
+                "eligible": true,
+                "product_id": "product.robotics_agent",
+                "switching_cost": 300,
+                "utility": 1950,
+                "willingness_to_pay_cents": 210
+              },
+              {
+                "eligible": true,
+                "product_id": "product.visual_inspection",
+                "switching_cost": 300,
+                "utility": 1670,
+                "willingness_to_pay_cents": 162
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 300,
+                "utility": 1150,
+                "willingness_to_pay_cents": 164
+              }
+            ],
+            "region": "region.china",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 33660,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 184328,
+            "daily_tasks": 2461,
+            "id": "segment.china.public_services",
+            "maximum_monthly_migration_basis_points": 1200,
+            "outside_utility": 536,
+            "preferences": [
+              {
+                "eligible": false,
+                "product_id": "product.document_classification",
+                "switching_cost": 310,
+                "utility": 1330,
+                "willingness_to_pay_cents": 124
+              },
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 310,
+                "utility": 750,
+                "willingness_to_pay_cents": 147
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 310,
+                "utility": 1380,
+                "willingness_to_pay_cents": 107
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 310,
+                "utility": 1760,
+                "willingness_to_pay_cents": 117
+              }
+            ],
+            "region": "region.china",
+            "requires_local": true,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 28050,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 128079,
+            "daily_tasks": 2033,
+            "id": "segment.china.science",
+            "maximum_monthly_migration_basis_points": 2100,
+            "outside_utility": 416,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 250,
+                "utility": 870,
+                "willingness_to_pay_cents": 90
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 250,
+                "utility": 1400,
+                "willingness_to_pay_cents": 90
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 250,
+                "utility": 820,
+                "willingness_to_pay_cents": 117
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 250,
+                "utility": 1560,
+                "willingness_to_pay_cents": 90
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 250,
+                "utility": 1200,
+                "willingness_to_pay_cents": 91
+              }
+            ],
+            "region": "region.china",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 26000,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 532000,
+            "daily_tasks": 5000,
+            "id": "segment.enterprise",
+            "maximum_monthly_migration_basis_points": 2500,
+            "outside_utility": 386,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.document_classification",
+                "switching_cost": 220,
+                "utility": 1500,
+                "willingness_to_pay_cents": 152
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 220,
+                "utility": 1520,
+                "willingness_to_pay_cents": 152
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 220,
+                "utility": 960,
+                "willingness_to_pay_cents": 152
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 220,
+                "utility": 1670,
+                "willingness_to_pay_cents": 164
+              }
+            ],
+            "region": "region.us",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 8260,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 8192,
+            "daily_budget_cents": 271362,
+            "daily_tasks": 6461,
+            "id": "segment.europe.consumers",
+            "maximum_monthly_migration_basis_points": 6100,
+            "outside_utility": 380,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 110,
+                "utility": 1050,
+                "willingness_to_pay_cents": 60
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 110,
+                "utility": 1450,
+                "willingness_to_pay_cents": 60
+              },
+              {
+                "eligible": true,
+                "product_id": "product.social_companion",
+                "switching_cost": 110,
+                "utility": 1580,
+                "willingness_to_pay_cents": 60
+              }
+            ],
+            "region": "region.europe",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 24780,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 248430,
+            "daily_tasks": 3549,
+            "id": "segment.europe.developers",
+            "maximum_monthly_migration_basis_points": 4200,
+            "outside_utility": 320,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 130,
+                "utility": 1540,
+                "willingness_to_pay_cents": 100
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 130,
+                "utility": 740,
+                "willingness_to_pay_cents": 100
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 130,
+                "utility": 1210,
+                "willingness_to_pay_cents": 100
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 130,
+                "utility": 1400,
+                "willingness_to_pay_cents": 100
+              }
+            ],
+            "region": "region.europe",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 30680,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 452270,
+            "daily_tasks": 4550,
+            "id": "segment.europe.enterprise",
+            "maximum_monthly_migration_basis_points": 2500,
+            "outside_utility": 400,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.document_classification",
+                "switching_cost": 220,
+                "utility": 1500,
+                "willingness_to_pay_cents": 142
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 220,
+                "utility": 1520,
+                "willingness_to_pay_cents": 142
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 220,
+                "utility": 960,
+                "willingness_to_pay_cents": 142
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 220,
+                "utility": 1670,
+                "willingness_to_pay_cents": 164
+              }
+            ],
+            "region": "region.europe",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 43660,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 349713,
+            "daily_tasks": 2730,
+            "id": "segment.europe.industrial",
+            "maximum_monthly_migration_basis_points": 1500,
+            "outside_utility": 465,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 300,
+                "utility": 1700,
+                "willingness_to_pay_cents": 183
+              },
+              {
+                "eligible": true,
+                "product_id": "product.robotics_agent",
+                "switching_cost": 300,
+                "utility": 1950,
+                "willingness_to_pay_cents": 210
+              },
+              {
+                "eligible": true,
+                "product_id": "product.visual_inspection",
+                "switching_cost": 300,
+                "utility": 1670,
+                "willingness_to_pay_cents": 183
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 300,
+                "utility": 1150,
+                "willingness_to_pay_cents": 183
+              }
+            ],
+            "region": "region.europe",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 38940,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 212439,
+            "daily_tasks": 2093,
+            "id": "segment.europe.public_services",
+            "maximum_monthly_migration_basis_points": 1200,
+            "outside_utility": 480,
+            "preferences": [
+              {
+                "eligible": false,
+                "product_id": "product.document_classification",
+                "switching_cost": 310,
+                "utility": 1330,
+                "willingness_to_pay_cents": 145
+              },
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 310,
+                "utility": 750,
+                "willingness_to_pay_cents": 147
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 310,
+                "utility": 1380,
+                "willingness_to_pay_cents": 145
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 310,
+                "utility": 1760,
+                "willingness_to_pay_cents": 145
+              }
+            ],
+            "region": "region.europe",
+            "requires_local": true,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 32450,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 148866,
+            "daily_tasks": 1729,
+            "id": "segment.europe.science",
+            "maximum_monthly_migration_basis_points": 2100,
+            "outside_utility": 360,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 250,
+                "utility": 870,
+                "willingness_to_pay_cents": 123
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 250,
+                "utility": 1400,
+                "willingness_to_pay_cents": 123
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 250,
+                "utility": 820,
+                "willingness_to_pay_cents": 123
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 250,
+                "utility": 1560,
+                "willingness_to_pay_cents": 123
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 250,
+                "utility": 1200,
+                "willingness_to_pay_cents": 123
+              }
+            ],
+            "region": "region.europe",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 4270,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 8192,
+            "daily_budget_cents": 148200,
+            "daily_tasks": 6049,
+            "id": "segment.india.consumers",
+            "maximum_monthly_migration_basis_points": 6100,
+            "outside_utility": 466,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 110,
+                "utility": 1050,
+                "willingness_to_pay_cents": 35
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 110,
+                "utility": 1450,
+                "willingness_to_pay_cents": 35
+              },
+              {
+                "eligible": true,
+                "product_id": "product.social_companion",
+                "switching_cost": 110,
+                "utility": 1580,
+                "willingness_to_pay_cents": 35
+              }
+            ],
+            "region": "region.india",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 12810,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 137198,
+            "daily_tasks": 3322,
+            "id": "segment.india.developers",
+            "maximum_monthly_migration_basis_points": 4200,
+            "outside_utility": 406,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 130,
+                "utility": 1540,
+                "willingness_to_pay_cents": 59
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 130,
+                "utility": 740,
+                "willingness_to_pay_cents": 59
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 130,
+                "utility": 1210,
+                "willingness_to_pay_cents": 59
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 130,
+                "utility": 1400,
+                "willingness_to_pay_cents": 59
+              }
+            ],
+            "region": "region.india",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 15860,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 208740,
+            "daily_tasks": 3550,
+            "id": "segment.india.enterprise",
+            "maximum_monthly_migration_basis_points": 2500,
+            "outside_utility": 486,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.document_classification",
+                "switching_cost": 220,
+                "utility": 1500,
+                "willingness_to_pay_cents": 124
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 220,
+                "utility": 1520,
+                "willingness_to_pay_cents": 117
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 220,
+                "utility": 960,
+                "willingness_to_pay_cents": 91
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 220,
+                "utility": 1670,
+                "willingness_to_pay_cents": 164
+              }
+            ],
+            "region": "region.india",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 22570,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 161028,
+            "daily_tasks": 2130,
+            "id": "segment.india.industrial",
+            "maximum_monthly_migration_basis_points": 1500,
+            "outside_utility": 551,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 300,
+                "utility": 1700,
+                "willingness_to_pay_cents": 147
+              },
+              {
+                "eligible": true,
+                "product_id": "product.robotics_agent",
+                "switching_cost": 300,
+                "utility": 1950,
+                "willingness_to_pay_cents": 210
+              },
+              {
+                "eligible": true,
+                "product_id": "product.visual_inspection",
+                "switching_cost": 300,
+                "utility": 1670,
+                "willingness_to_pay_cents": 162
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 300,
+                "utility": 1150,
+                "willingness_to_pay_cents": 164
+              }
+            ],
+            "region": "region.india",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 20130,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 98306,
+            "daily_tasks": 1633,
+            "id": "segment.india.public_services",
+            "maximum_monthly_migration_basis_points": 1200,
+            "outside_utility": 566,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.document_classification",
+                "switching_cost": 310,
+                "utility": 1330,
+                "willingness_to_pay_cents": 124
+              },
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 310,
+                "utility": 750,
+                "willingness_to_pay_cents": 147
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 310,
+                "utility": 1380,
+                "willingness_to_pay_cents": 86
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 310,
+                "utility": 1760,
+                "willingness_to_pay_cents": 117
+              }
+            ],
+            "region": "region.india",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 16775,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 68933,
+            "daily_tasks": 1349,
+            "id": "segment.india.science",
+            "maximum_monthly_migration_basis_points": 2100,
+            "outside_utility": 446,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 250,
+                "utility": 870,
+                "willingness_to_pay_cents": 83
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 250,
+                "utility": 1400,
+                "willingness_to_pay_cents": 73
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 250,
+                "utility": 820,
+                "willingness_to_pay_cents": 117
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 250,
+                "utility": 1560,
+                "willingness_to_pay_cents": 73
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 250,
+                "utility": 1200,
+                "willingness_to_pay_cents": 91
+              }
+            ],
+            "region": "region.india",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 3710,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 8192,
+            "daily_budget_cents": 112421,
+            "daily_tasks": 4118,
+            "id": "segment.latin_america.consumers",
+            "maximum_monthly_migration_basis_points": 6100,
+            "outside_utility": 454,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 110,
+                "utility": 1050,
+                "willingness_to_pay_cents": 39
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 110,
+                "utility": 1450,
+                "willingness_to_pay_cents": 39
+              },
+              {
+                "eligible": true,
+                "product_id": "product.social_companion",
+                "switching_cost": 110,
+                "utility": 1580,
+                "willingness_to_pay_cents": 39
+              }
+            ],
+            "region": "region.latin_america",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 11130,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 102921,
+            "daily_tasks": 2262,
+            "id": "segment.latin_america.developers",
+            "maximum_monthly_migration_basis_points": 4200,
+            "outside_utility": 394,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 130,
+                "utility": 1540,
+                "willingness_to_pay_cents": 65
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 130,
+                "utility": 740,
+                "willingness_to_pay_cents": 65
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 130,
+                "utility": 1210,
+                "willingness_to_pay_cents": 65
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 130,
+                "utility": 1400,
+                "willingness_to_pay_cents": 65
+              }
+            ],
+            "region": "region.latin_america",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 13780,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 186760,
+            "daily_tasks": 2900,
+            "id": "segment.latin_america.enterprise",
+            "maximum_monthly_migration_basis_points": 2500,
+            "outside_utility": 474,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.document_classification",
+                "switching_cost": 220,
+                "utility": 1500,
+                "willingness_to_pay_cents": 124
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 220,
+                "utility": 1520,
+                "willingness_to_pay_cents": 117
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 220,
+                "utility": 960,
+                "willingness_to_pay_cents": 92
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 220,
+                "utility": 1670,
+                "willingness_to_pay_cents": 164
+              }
+            ],
+            "region": "region.latin_america",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 19610,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 144942,
+            "daily_tasks": 1740,
+            "id": "segment.latin_america.industrial",
+            "maximum_monthly_migration_basis_points": 1500,
+            "outside_utility": 539,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 300,
+                "utility": 1700,
+                "willingness_to_pay_cents": 147
+              },
+              {
+                "eligible": true,
+                "product_id": "product.robotics_agent",
+                "switching_cost": 300,
+                "utility": 1950,
+                "willingness_to_pay_cents": 210
+              },
+              {
+                "eligible": true,
+                "product_id": "product.visual_inspection",
+                "switching_cost": 300,
+                "utility": 1670,
+                "willingness_to_pay_cents": 162
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 300,
+                "utility": 1150,
+                "willingness_to_pay_cents": 164
+              }
+            ],
+            "region": "region.latin_america",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 17490,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 87777,
+            "daily_tasks": 1334,
+            "id": "segment.latin_america.public_services",
+            "maximum_monthly_migration_basis_points": 1200,
+            "outside_utility": 554,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.document_classification",
+                "switching_cost": 310,
+                "utility": 1330,
+                "willingness_to_pay_cents": 124
+              },
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 310,
+                "utility": 750,
+                "willingness_to_pay_cents": 147
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 310,
+                "utility": 1380,
+                "willingness_to_pay_cents": 94
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 310,
+                "utility": 1760,
+                "willingness_to_pay_cents": 117
+              }
+            ],
+            "region": "region.latin_america",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 14575,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 61712,
+            "daily_tasks": 1102,
+            "id": "segment.latin_america.science",
+            "maximum_monthly_migration_basis_points": 2100,
+            "outside_utility": 434,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 250,
+                "utility": 870,
+                "willingness_to_pay_cents": 83
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 250,
+                "utility": 1400,
+                "willingness_to_pay_cents": 80
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 250,
+                "utility": 820,
+                "willingness_to_pay_cents": 117
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 250,
+                "utility": 1560,
+                "willingness_to_pay_cents": 80
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 250,
+                "utility": 1200,
+                "willingness_to_pay_cents": 91
+              }
+            ],
+            "region": "region.latin_america",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 7000,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 8192,
+            "daily_budget_cents": 318080,
+            "daily_tasks": 7100,
+            "id": "segment.us.consumers",
+            "maximum_monthly_migration_basis_points": 6100,
+            "outside_utility": 366,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 110,
+                "utility": 1050,
+                "willingness_to_pay_cents": 64
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 110,
+                "utility": 1450,
+                "willingness_to_pay_cents": 64
+              },
+              {
+                "eligible": true,
+                "product_id": "product.social_companion",
+                "switching_cost": 110,
+                "utility": 1580,
+                "willingness_to_pay_cents": 64
+              }
+            ],
+            "region": "region.us",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 21000,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 32768,
+            "daily_budget_cents": 292110,
+            "daily_tasks": 3900,
+            "id": "segment.us.developers",
+            "maximum_monthly_migration_basis_points": 4200,
+            "outside_utility": 306,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 130,
+                "utility": 1540,
+                "willingness_to_pay_cents": 107
+              },
+              {
+                "eligible": true,
+                "product_id": "product.general_assistant",
+                "switching_cost": 130,
+                "utility": 740,
+                "willingness_to_pay_cents": 107
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 130,
+                "utility": 1210,
+                "willingness_to_pay_cents": 107
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 130,
+                "utility": 1400,
+                "willingness_to_pay_cents": 107
+              }
+            ],
+            "region": "region.us",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 37000,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 411600,
+            "daily_tasks": 3000,
+            "id": "segment.us.industrial",
+            "maximum_monthly_migration_basis_points": 1500,
+            "outside_utility": 451,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 300,
+                "utility": 1700,
+                "willingness_to_pay_cents": 196
+              },
+              {
+                "eligible": true,
+                "product_id": "product.robotics_agent",
+                "switching_cost": 300,
+                "utility": 1950,
+                "willingness_to_pay_cents": 210
+              },
+              {
+                "eligible": true,
+                "product_id": "product.visual_inspection",
+                "switching_cost": 300,
+                "utility": 1670,
+                "willingness_to_pay_cents": 196
+              },
+              {
+                "eligible": true,
+                "product_id": "product.workflow_agent",
+                "switching_cost": 300,
+                "utility": 1150,
+                "willingness_to_pay_cents": 196
+              }
+            ],
+            "region": "region.us",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 33000,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 249550,
+            "daily_tasks": 2300,
+            "id": "segment.us.public_services",
+            "maximum_monthly_migration_basis_points": 1200,
+            "outside_utility": 466,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.document_classification",
+                "switching_cost": 310,
+                "utility": 1330,
+                "willingness_to_pay_cents": 155
+              },
+              {
+                "eligible": true,
+                "product_id": "product.edge_perception",
+                "switching_cost": 310,
+                "utility": 750,
+                "willingness_to_pay_cents": 155
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 310,
+                "utility": 1380,
+                "willingness_to_pay_cents": 155
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 310,
+                "utility": 1760,
+                "willingness_to_pay_cents": 155
+              }
+            ],
+            "region": "region.us",
+            "requires_local": false,
+            "reservation_threshold": 100
+          },
+          {
+            "customer_compute_milli_CU_per_day": 27500,
+            "customer_interconnect": "general",
+            "customer_memory_mib": 65536,
+            "daily_budget_cents": 175560,
+            "daily_tasks": 1900,
+            "id": "segment.us.science",
+            "maximum_monthly_migration_basis_points": 2100,
+            "outside_utility": 346,
+            "preferences": [
+              {
+                "eligible": true,
+                "product_id": "product.coding_api",
+                "switching_cost": 250,
+                "utility": 870,
+                "willingness_to_pay_cents": 132
+              },
+              {
+                "eligible": true,
+                "product_id": "product.education_model",
+                "switching_cost": 250,
+                "utility": 1400,
+                "willingness_to_pay_cents": 132
+              },
+              {
+                "eligible": true,
+                "product_id": "product.private_organization",
+                "switching_cost": 250,
+                "utility": 820,
+                "willingness_to_pay_cents": 132
+              },
+              {
+                "eligible": true,
+                "product_id": "product.research_toolkit",
+                "switching_cost": 250,
+                "utility": 1560,
+                "willingness_to_pay_cents": 132
+              },
+              {
+                "eligible": true,
+                "product_id": "product.retrieval_api",
+                "switching_cost": 250,
+                "utility": 1200,
+                "willingness_to_pay_cents": 132
+              }
+            ],
+            "region": "region.us",
+            "requires_local": false,
+            "reservation_threshold": 100
+          }
+        ]
+      },
+      "regions": [
+        {
+          "description": "Established enterprise buyers and broad developer demand.",
+          "id": "region.us",
+          "name": "United States"
+        },
+        {
+          "description": "Smaller buying pools with an emphasis on dependable integration.",
+          "id": "region.canada",
+          "name": "Canada"
+        },
+        {
+          "description": "Public buyers in this scenario require local processing.",
+          "id": "region.europe",
+          "name": "Europe"
+        },
+        {
+          "description": "Large consumer and industrial pools with local public deployments.",
+          "id": "region.china",
+          "name": "China"
+        },
+        {
+          "description": "Growing developer and education pools with tight per-task budgets.",
+          "id": "region.india",
+          "name": "India"
+        },
+        {
+          "description": "Industrial automation and integration demand across several markets.",
+          "id": "region.asia_pacific",
+          "name": "East Asia and Oceania"
+        },
+        {
+          "description": "Consumer and developer demand with smaller local hardware pools.",
+          "id": "region.latin_america",
+          "name": "Latin America"
+        },
+        {
+          "description": "Early public-service and education demand with limited local hardware.",
+          "id": "region.africa_middle_east",
+          "name": "Africa and Middle East"
+        }
+      ],
+      "revision": 1,
+      "wholesale": [
+        {
+          "availability_bp": 9500,
+          "capacity_milli_CU_per_day": 50000,
+          "daily_fee_cents": 98000,
+          "energy_included": true,
+          "id": "wholesale.power_included",
+          "interconnect": "general",
+          "minimum_memory_mib": 32768,
+          "name": "50 CU block with electricity included",
+          "term_days": 180
+        },
+        {
+          "availability_bp": 9800,
+          "capacity_milli_CU_per_day": 50000,
+          "daily_fee_cents": 96000,
+          "energy_included": false,
+          "id": "wholesale.metered",
+          "interconnect": "general",
+          "minimum_memory_mib": 32768,
+          "name": "50 CU block with metered electricity",
+          "term_days": 120
+        }
+      ]
+    },
     {
       "cash_cents": 50000,
       "id": "research.data_deduplication",
@@ -85,6 +2564,21 @@
           "available_before": "2017-01-01",
           "available_from": "2014-01-01",
           "capacity_milli_CU_per_day": 0,
+          "id": "offer.document_classification",
+          "kind": "enterprise_contract",
+          "monthly_amount_cents": 940000,
+          "name": "Document classification pilot",
+          "product_id": "product.document_classification",
+          "renewable": false,
+          "segment_id": "segment.enterprise",
+          "setup_cost_cents": 0,
+          "tasks_per_day": 500,
+          "term_days": 120
+        },
+        {
+          "available_before": "2017-01-01",
+          "available_from": "2014-01-01",
+          "capacity_milli_CU_per_day": 0,
           "id": "offer.enterprise_service",
           "kind": "enterprise_contract",
           "monthly_amount_cents": 2500000,
@@ -125,6 +2619,21 @@
           "setup_cost_cents": 100000,
           "tasks_per_day": 0,
           "term_days": 180
+        },
+        {
+          "available_before": "2017-01-01",
+          "available_from": "2014-01-01",
+          "capacity_milli_CU_per_day": 0,
+          "id": "offer.visual_inspection",
+          "kind": "enterprise_contract",
+          "monthly_amount_cents": 1300000,
+          "name": "Industrial inspection pilot",
+          "product_id": "product.visual_inspection",
+          "renewable": false,
+          "segment_id": "segment.asia_pacific.industrial",
+          "setup_cost_cents": 0,
+          "tasks_per_day": 420,
+          "term_days": 120
         }
       ],
       "capacity_milli_CU_per_day": 100000,
@@ -1933,6 +4442,7 @@
             },
             "id": "data.open_documents",
             "name": "Open document corpus",
+            "open_weight_release": true,
             "price_cents": 0,
             "provenance": "Fictional in-game offer; no real training corpus is bundled.",
             "quality_bp": 8500,
@@ -1940,7 +4450,7 @@
               "documents": 10000,
               "scanned_tables": 4000
             },
-            "rights": "Open commercial use with attribution",
+            "rights": "Open commercial use and weight redistribution with attribution",
             "unique_units": 800000
           },
           {
@@ -2312,6 +4822,7 @@
         "option_pool": 500,
         "seed_investor": 2000
       },
+      "regional_markets": "market.global_launch",
       "research": [
         "research.efficient_image_features",
         "research.sequence_modeling",
@@ -2320,7 +4831,7 @@
         "research.efficient_serving",
         "research.reproducible_tooling"
       ],
-      "revision": 3,
+      "revision": 4,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -2492,6 +5003,21 @@
           "available_before": "2017-01-01",
           "available_from": "2014-01-01",
           "capacity_milli_CU_per_day": 0,
+          "id": "offer.document_classification",
+          "kind": "enterprise_contract",
+          "monthly_amount_cents": 940000,
+          "name": "Document classification pilot",
+          "product_id": "product.document_classification",
+          "renewable": false,
+          "segment_id": "segment.enterprise",
+          "setup_cost_cents": 0,
+          "tasks_per_day": 500,
+          "term_days": 120
+        },
+        {
+          "available_before": "2017-01-01",
+          "available_from": "2014-01-01",
+          "capacity_milli_CU_per_day": 0,
           "id": "offer.enterprise_service",
           "kind": "enterprise_contract",
           "monthly_amount_cents": 2500000,
@@ -2532,6 +5058,21 @@
           "setup_cost_cents": 100000,
           "tasks_per_day": 0,
           "term_days": 180
+        },
+        {
+          "available_before": "2017-01-01",
+          "available_from": "2014-01-01",
+          "capacity_milli_CU_per_day": 0,
+          "id": "offer.visual_inspection",
+          "kind": "enterprise_contract",
+          "monthly_amount_cents": 1300000,
+          "name": "Industrial inspection pilot",
+          "product_id": "product.visual_inspection",
+          "renewable": false,
+          "segment_id": "segment.asia_pacific.industrial",
+          "setup_cost_cents": 0,
+          "tasks_per_day": 420,
+          "term_days": 120
         }
       ],
       "capacity_milli_CU_per_day": 100000,
@@ -4350,6 +6891,7 @@
             },
             "id": "data.open_documents",
             "name": "Open document corpus",
+            "open_weight_release": true,
             "price_cents": 0,
             "provenance": "Fictional in-game offer; no real training corpus is bundled.",
             "quality_bp": 8500,
@@ -4357,7 +6899,7 @@
               "documents": 10000,
               "scanned_tables": 4000
             },
-            "rights": "Open commercial use with attribution",
+            "rights": "Open commercial use and weight redistribution with attribution",
             "unique_units": 800000
           },
           {
@@ -4878,6 +7420,7 @@
         "option_pool": 500,
         "seed_investor": 2000
       },
+      "regional_markets": "market.global_launch",
       "research": [
         "research.efficient_image_features",
         "research.sequence_modeling",
@@ -4886,7 +7429,7 @@
         "research.efficient_serving",
         "research.reproducible_tooling"
       ],
-      "revision": 4,
+      "revision": 5,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -6213,6 +8756,21 @@
           "available_before": "2017-01-01",
           "available_from": "2014-01-01",
           "capacity_milli_CU_per_day": 0,
+          "id": "offer.document_classification",
+          "kind": "enterprise_contract",
+          "monthly_amount_cents": 940000,
+          "name": "Document classification pilot",
+          "product_id": "product.document_classification",
+          "renewable": false,
+          "segment_id": "segment.enterprise",
+          "setup_cost_cents": 0,
+          "tasks_per_day": 500,
+          "term_days": 120
+        },
+        {
+          "available_before": "2017-01-01",
+          "available_from": "2014-01-01",
+          "capacity_milli_CU_per_day": 0,
           "id": "offer.enterprise_service",
           "kind": "enterprise_contract",
           "monthly_amount_cents": 2500000,
@@ -6253,6 +8811,21 @@
           "setup_cost_cents": 100000,
           "tasks_per_day": 0,
           "term_days": 180
+        },
+        {
+          "available_before": "2017-01-01",
+          "available_from": "2014-01-01",
+          "capacity_milli_CU_per_day": 0,
+          "id": "offer.visual_inspection",
+          "kind": "enterprise_contract",
+          "monthly_amount_cents": 1300000,
+          "name": "Industrial inspection pilot",
+          "product_id": "product.visual_inspection",
+          "renewable": false,
+          "segment_id": "segment.asia_pacific.industrial",
+          "setup_cost_cents": 0,
+          "tasks_per_day": 420,
+          "term_days": 120
         }
       ],
       "capacity_milli_CU_per_day": 100000,
@@ -8071,6 +10644,7 @@
             },
             "id": "data.open_documents",
             "name": "Open document corpus",
+            "open_weight_release": true,
             "price_cents": 0,
             "provenance": "Fictional in-game offer; no real training corpus is bundled.",
             "quality_bp": 8500,
@@ -8078,7 +10652,7 @@
               "documents": 10000,
               "scanned_tables": 4000
             },
-            "rights": "Open commercial use with attribution",
+            "rights": "Open commercial use and weight redistribution with attribution",
             "unique_units": 800000
           },
           {
@@ -8599,6 +11173,7 @@
         "option_pool": 500,
         "seed_investor": 2000
       },
+      "regional_markets": "market.global_launch",
       "research": [
         "research.efficient_image_features",
         "research.sequence_modeling",
@@ -8607,7 +11182,7 @@
         "research.efficient_serving",
         "research.reproducible_tooling"
       ],
-      "revision": 4,
+      "revision": 5,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -9934,6 +12509,21 @@
           "available_before": "2017-01-01",
           "available_from": "2014-01-01",
           "capacity_milli_CU_per_day": 0,
+          "id": "offer.document_classification",
+          "kind": "enterprise_contract",
+          "monthly_amount_cents": 940000,
+          "name": "Document classification pilot",
+          "product_id": "product.document_classification",
+          "renewable": false,
+          "segment_id": "segment.enterprise",
+          "setup_cost_cents": 0,
+          "tasks_per_day": 500,
+          "term_days": 120
+        },
+        {
+          "available_before": "2017-01-01",
+          "available_from": "2014-01-01",
+          "capacity_milli_CU_per_day": 0,
           "id": "offer.enterprise_service",
           "kind": "enterprise_contract",
           "monthly_amount_cents": 2500000,
@@ -9974,6 +12564,21 @@
           "setup_cost_cents": 100000,
           "tasks_per_day": 0,
           "term_days": 180
+        },
+        {
+          "available_before": "2017-01-01",
+          "available_from": "2014-01-01",
+          "capacity_milli_CU_per_day": 0,
+          "id": "offer.visual_inspection",
+          "kind": "enterprise_contract",
+          "monthly_amount_cents": 1300000,
+          "name": "Industrial inspection pilot",
+          "product_id": "product.visual_inspection",
+          "renewable": false,
+          "segment_id": "segment.asia_pacific.industrial",
+          "setup_cost_cents": 0,
+          "tasks_per_day": 420,
+          "term_days": 120
         }
       ],
       "capacity_milli_CU_per_day": 100000,
@@ -11792,6 +14397,7 @@
             },
             "id": "data.open_documents",
             "name": "Open document corpus",
+            "open_weight_release": true,
             "price_cents": 0,
             "provenance": "Fictional in-game offer; no real training corpus is bundled.",
             "quality_bp": 8500,
@@ -11799,7 +14405,7 @@
               "documents": 10000,
               "scanned_tables": 4000
             },
-            "rights": "Open commercial use with attribution",
+            "rights": "Open commercial use and weight redistribution with attribution",
             "unique_units": 800000
           },
           {
@@ -12320,6 +14926,7 @@
         "option_pool": 500,
         "seed_investor": 2000
       },
+      "regional_markets": "market.global_launch",
       "research": [
         "research.efficient_image_features",
         "research.sequence_modeling",
@@ -12328,7 +14935,7 @@
         "research.efficient_serving",
         "research.reproducible_tooling"
       ],
-      "revision": 4,
+      "revision": 5,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -13655,6 +16262,21 @@
           "available_before": "2017-01-01",
           "available_from": "2014-01-01",
           "capacity_milli_CU_per_day": 0,
+          "id": "offer.document_classification",
+          "kind": "enterprise_contract",
+          "monthly_amount_cents": 940000,
+          "name": "Document classification pilot",
+          "product_id": "product.document_classification",
+          "renewable": false,
+          "segment_id": "segment.enterprise",
+          "setup_cost_cents": 0,
+          "tasks_per_day": 500,
+          "term_days": 120
+        },
+        {
+          "available_before": "2017-01-01",
+          "available_from": "2014-01-01",
+          "capacity_milli_CU_per_day": 0,
           "id": "offer.enterprise_service",
           "kind": "enterprise_contract",
           "monthly_amount_cents": 2500000,
@@ -13695,6 +16317,21 @@
           "setup_cost_cents": 100000,
           "tasks_per_day": 0,
           "term_days": 180
+        },
+        {
+          "available_before": "2017-01-01",
+          "available_from": "2014-01-01",
+          "capacity_milli_CU_per_day": 0,
+          "id": "offer.visual_inspection",
+          "kind": "enterprise_contract",
+          "monthly_amount_cents": 1300000,
+          "name": "Industrial inspection pilot",
+          "product_id": "product.visual_inspection",
+          "renewable": false,
+          "segment_id": "segment.asia_pacific.industrial",
+          "setup_cost_cents": 0,
+          "tasks_per_day": 420,
+          "term_days": 120
         }
       ],
       "capacity_milli_CU_per_day": 100000,
@@ -15513,6 +18150,7 @@
             },
             "id": "data.open_documents",
             "name": "Open document corpus",
+            "open_weight_release": true,
             "price_cents": 0,
             "provenance": "Fictional in-game offer; no real training corpus is bundled.",
             "quality_bp": 8500,
@@ -15520,7 +18158,7 @@
               "documents": 10000,
               "scanned_tables": 4000
             },
-            "rights": "Open commercial use with attribution",
+            "rights": "Open commercial use and weight redistribution with attribution",
             "unique_units": 800000
           },
           {
@@ -16041,6 +18679,7 @@
         "option_pool": 500,
         "seed_investor": 2000
       },
+      "regional_markets": "market.global_launch",
       "research": [
         "research.efficient_image_features",
         "research.sequence_modeling",
@@ -16049,7 +18688,7 @@
         "research.efficient_serving",
         "research.reproducible_tooling"
       ],
-      "revision": 4,
+      "revision": 5,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,

@@ -144,6 +144,8 @@ void validate_lab_catalog(const LabCatalog& catalog) {
         label(offer.name); label(offer.provenance); label(offer.rights);
         if (offer.price.value() < 0 || offer.unique_units == 0 || offer.unique_units > 1'000'000'000'000ULL)
             invalid("Data price or unique unit count is outside its bound");
+        if (offer.open_weight_release && !offer.commercial_use)
+            invalid("Research-only data cannot authorize open weight release");
     }
     auto references = [&](const auto& ids) {
         if (ids.size() > lab_catalog_limit) invalid("Research reference bound exceeded");

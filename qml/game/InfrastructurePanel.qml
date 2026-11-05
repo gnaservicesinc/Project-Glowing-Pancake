@@ -60,6 +60,7 @@ ColumnLayout {
         property string inputName
         property var options: []
         property string value: options.length ? options[0].id : ""
+        onOptionsChanged: if (!options.some(o => o.id === value)) value = options.length ? options[0].id : ""
         objectName: inputName + "Picker"
         Layout.fillWidth: true
         Copy { text: picker.label }
@@ -149,6 +150,7 @@ ColumnLayout {
         Action { objectName: "operationsMap"; text: qsTr("Map & states"); checked: panel.section === "map"; onClicked: panel.section = "map" }
         Action { objectName: "operationsSites"; text: qsTr("Owned sites"); checked: panel.section === "sites"; onClicked: panel.section = "sites" }
         Action { objectName: "operationsCalendar"; text: qsTr("Calendar"); checked: panel.section === "calendar"; onClicked: panel.section = "calendar" }
+        Action { objectName: "operationsWholesale"; text: qsTr("Wholesale"); visible: infra.wholesalePlans.length > 0; checked: panel.section === "wholesale"; onClicked: panel.section = "wholesale" }
         Action { text: qsTr("Activity"); checked: panel.section === "activity"; onClicked: panel.section = "activity" }
         Action { objectName: "nextSiteMilestone"; text: qsTr("Next site milestone"); enabled: panel.editable; onClicked: campaign.advanceTo("site") }
     }
@@ -277,6 +279,23 @@ ColumnLayout {
         }
         Selection { rows: infra.calendar; emptyText: qsTr("No appointments booked"); listName: "siteCalendarList" }
         Action { objectName: "reviewCancelInspection"; text: qsTr("Review cancellation"); enabled: panel.editable && !!(panel.calendarRow.fields || {}).cancelable; onClicked: { infra.reviewCancel(infra.calendar.selectedId); review.open() } }
+    }
+    ColumnLayout {
+        visible: panel.section === "wholesale" && infra.wholesalePlans.length > 0
+        Layout.fillWidth: true
+        Copy { text: qsTr("Sell powered rack capacity to an operating company for a fixed term. The buyer funds the reservation up front and earns fee credits during curtailment. Actual buyer work draws electricity at your site.") }
+        Copy { visible: infra.wholesaleSources.length === 0; text: qsTr("Commission an owned rack to offer a reservation.") }
+        Picker { id: wholesalePlan; inputName: "wholesalePlan"; label: qsTr("Reservation terms"); options: infra.wholesalePlans }
+        Picker { id: wholesaleRack; inputName: "wholesaleRack"; label: qsTr("Commissioned rack"); options: infra.wholesaleSources }
+        Picker { id: wholesaleBuyer; inputName: "wholesaleBuyer"; label: qsTr("Operating buyer"); options: infra.wholesaleBuyers }
+        Action {
+            objectName: "reviewWholesale"
+            text: qsTr("Review wholesale agreement")
+            enabled: panel.editable && wholesalePlan.value.length > 0 && wholesaleRack.value.length > 0 && wholesaleBuyer.value.length > 0
+            onClicked: { infra.reviewWholesale(wholesalePlan.value, wholesaleRack.value, wholesaleBuyer.value); review.open() }
+        }
+        Heading { text: qsTr("Wholesale agreements") }
+        Selection { rows: infra.wholesaleContracts; listName: "wholesaleContracts"; emptyText: qsTr("No wholesale agreements yet.") }
     }
     ColumnLayout {
         visible: panel.section === "activity"

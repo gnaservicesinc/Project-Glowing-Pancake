@@ -82,5 +82,5 @@ conflict, licenses data while traveling, runs owned Lab work, meters curtailed
 energy, ends the opening lease and reloads the exact campaign. The tests also
 cover a water-limited case, stale commands, real fabric compatibility, pending
 and metered saves, tamper rejection and resale. These are engineering checks.
-International channels and wholesale contracts follow in M5-02; hazards and
-resilience follow in M5-03.
+The [regional market and wholesale controls](REGIONAL_MARKETS.md) build on
+these owned sites. Hazards and resilience follow in M5-03.

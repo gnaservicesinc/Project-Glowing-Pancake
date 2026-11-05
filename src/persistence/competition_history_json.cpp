@@ -30,26 +30,36 @@ struct Dictionary {
     }
 };
 void rows(Json& values,std::size_t maximum,std::initializer_list<std::string_view> columns,bool expand,Dictionary& dictionary,
-    std::initializer_list<std::string_view> strings={}) {
+    std::initializer_list<std::string_view> strings={}, std::initializer_list<std::string_view> tail={}) {
     array(values,"competition/history",maximum);
     for (auto& row:values) {
-        if (dictionary.budget.cells>4'000'000-columns.size()) invalid("competition/history","Expanded history cell budget exceeded");
-        dictionary.budget.cells+=columns.size();
+        if (dictionary.budget.cells>4'000'000-columns.size()-tail.size()) invalid("competition/history","Expanded history cell budget exceeded");
+        dictionary.budget.cells+=columns.size()+tail.size();
         Json result=expand?Json::object():Json::array();
         if (expand) {
-            array(row,"competition/history/row",columns.size());
-            if (row.size()!=columns.size()) invalid("competition/history/row","Missing or unsupported history columns");
+            array(row,"competition/history/row",columns.size()+tail.size());
+            if (row.size()<columns.size()) invalid("competition/history/row","Missing required history columns");
             std::size_t index=0;for (const auto column:columns) {
                 auto value=std::move(row.at(index++));
                 if (std::find(strings.begin(),strings.end(),column)!=strings.end()) dictionary.convert(value,true);
                 result[column]=std::move(value);
             }
+            for (const auto column:tail) {
+                if (index==row.size()) break;
+                result[column]=std::move(row.at(index++));
+            }
         } else {
-            fields(row,"competition/history/row",columns);
+            fields(row,"competition/history/row",columns,tail);
             for (const auto column:columns) {
                 auto value=std::move(row.at(column));
                 if (std::find(strings.begin(),strings.end(),column)!=strings.end()) dictionary.convert(value,false);
                 result.push_back(std::move(value));
+            }
+            bool ended=false;
+            for (const auto column:tail) {
+                if (!row.contains(column)) { ended=true;continue; }
+                if (ended) invalid("competition/history/row","Optional history columns must be a suffix");
+                result.push_back(std::move(row.at(column)));
             }
         }
         row=std::move(result);
@@ -73,20 +83,22 @@ Json convert(Json simulation,bool expand,CompetitionHistoryBudget& budget,bool d
         auto& days=capacity.at("days");array(days,"competition/capacity/days",core::capacity_day_limit);
         if (expand) rows(days,core::capacity_day_limit,{"day","sources","projects"},true,dictionary);
         for (auto& day:days) {
-            rows(day.at("sources"),core::capacity_source_limit,{"source_id","effective_milli_CU_per_day","used_milli_CU"},expand,dictionary,{"source_id"});
+            rows(day.at("sources"),core::capacity_source_limit,{"source_id","effective_milli_CU_per_day","used_milli_CU"},expand,dictionary,{"source_id"},
+                {"wholesale_available_milli_CU_per_day","wholesale_used_milli_CU"});
             rows(day.at("projects"),core::capacity_project_limit,{"project_id","work_milli_CU","useful_tasks","assigned_staff","protected_tasks"},expand,dictionary,{"project_id"});
         }
         if (!expand) rows(days,core::capacity_day_limit,{"day","sources","projects"},false,dictionary);
     }
     if (auto& market=simulation.at("market");!market.is_null()) {
         auto& days=market.at("days");array(days,"competition/market/days",core::market_day_limit);
-        if (expand) rows(days,core::market_day_limit,{"day","contracts","discretionary","segments","allocation_rounds"},true,dictionary);
+        if (expand) rows(days,core::market_day_limit,{"day","contracts","discretionary","segments","allocation_rounds"},true,dictionary,{},{"total_demand"});
         for (auto& day:days) {
             rows(day.at("contracts"),core::market_contract_limit,{"contract_id","promised_tasks","delivered_tasks","gross_fee_cents","service_credit_cents","usage_charge_cents","penalty_cents"},expand,dictionary,{"contract_id"});
-            rows(day.at("discretionary"),core::market_segment_limit*core::market_product_limit,{"segment_id","product_id","tasks","charged_cents"},expand,dictionary,{"segment_id","product_id"});
+            rows(day.at("discretionary"),core::market_segment_limit*core::market_product_limit,{"segment_id","product_id","tasks","charged_cents"},expand,dictionary,{"segment_id","product_id"},
+                {"customer_compute_milli_CU"});
             rows(day.at("segments"),core::market_segment_limit,{"segment_id","demand","budget_cents","contract_tasks","discretionary_tasks","outside_tasks","charged_cents","unspent_cents","outside_reason"},expand,dictionary,{"segment_id","outside_reason"});
         }
-        if (!expand) rows(days,core::market_day_limit,{"day","contracts","discretionary","segments","allocation_rounds"},false,dictionary);
+        if (!expand) rows(days,core::market_day_limit,{"day","contracts","discretionary","segments","allocation_rounds"},false,dictionary,{},{"total_demand"});
     }
     if (!expand && dictionary_format) simulation["history_strings"]=std::move(dictionary.strings);
     return simulation;

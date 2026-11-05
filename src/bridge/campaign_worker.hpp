@@ -24,6 +24,7 @@ public:
     void submitCommand(std::uint64_t token, core::Command command);
     void respondCompetitiveOffer(std::uint64_t token,std::uint64_t revision,std::string id,bool accept);
     void proposeAcquisition(std::uint64_t token,std::uint64_t revision,std::string id,bool equity);
+    void signWholesale(std::uint64_t token,std::uint64_t revision,std::string plan,std::string source,std::string buyer);
     void transferSubsidiaryFunds(std::uint64_t token,std::uint64_t revision,std::string id,pgp::core::Cents amount,bool funding);
     void choose(std::uint64_t token, std::uint64_t expected_revision,
                 std::uint64_t presentation_id, std::string choice_id);

@@ -155,3 +155,10 @@ target_compile_definitions(pgp-infrastructure-integration-test PRIVATE PGP_INFRA
 pgp_project_target(pgp-infrastructure-integration-test)
 add_test(NAME runtime.infrastructure COMMAND pgp-infrastructure-integration-test)
 set_tests_properties(runtime.infrastructure PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-regional-market-test regional_market_test.cpp)
+target_link_libraries(pgp-regional-market-test PRIVATE pgp::session)
+target_include_directories(pgp-regional-market-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-regional-market-test PRIVATE PGP_MARKET_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-regional-market-test)
+add_test(NAME runtime.regional-markets COMMAND pgp-regional-market-test)

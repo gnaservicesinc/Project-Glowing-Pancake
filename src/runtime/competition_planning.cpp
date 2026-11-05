@@ -90,17 +90,30 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
         result.push_back({kind,std::move(action),std::move(subject),score+profile.priorities[kind]+noise[kind],std::move(command)});
     };
     Cents monthly{0};for (const auto& row:s.accounts->recurring) if (row.starts_on<=s.date && (!row.ends_before || s.date<*row.ends_before)) monthly=checked_unit_add(monthly,row.monthly_amount);
+    auto usable=s.cash;
+    for (const auto& funds:s.reservations) usable=checked_unit_subtract(usable,funds.reserved);
     const auto protected_runway=checked_unit_add(profile.reserve_floor,Cents{mul_div_floor(static_cast<std::uint64_t>(monthly.value()),profile.runway_months,1).quotient});
     const auto affordable=[&](Cents immediate,Cents extra_monthly=Cents{0}) {
-        return s.cash>=checked_unit_add(protected_runway,checked_unit_add(immediate,Cents{checked_add(extra_monthly.value(),extra_monthly.value())}));
+        return usable>=checked_unit_add(protected_runway,checked_unit_add(immediate,Cents{checked_add(extra_monthly.value(),extra_monthly.value())}));
     };
     const auto report=capacity_report(*s.capacity);
     const auto staff=s.capacity->available_staff>report.assigned_staff?s.capacity->available_staff-report.assigned_staff:0;
-    std::string source;MilliCUPerDay compute{0};
+    std::string source, hosting_source;
+    MilliCUPerDay compute{0}, hosting_compute{0};
+    bool imported=false;
     for (const auto& row:s.capacity->sources) {
         std::int64_t reserved=0;for (const auto& work:s.capacity->projects) if (work.status==ProjectStatus::active && work.source_id==row.id) reserved=checked_add(reserved,work.requested.value());
-        const auto available=std::max<std::int64_t>(0,checked_subtract(row.effective.value(),reserved));
-        if (available>compute.value() || (available==compute.value() && (source.empty() || row.id<source))) {source=row.id;compute=MilliCUPerDay{available};}
+        const auto available=std::max<std::int64_t>(0,checked_subtract(company_capacity(row).value(),reserved));
+        if (available==0) continue;
+        const bool bought=row.kind==CapacitySourceKind::imported;
+        // Use the funded term for finite lab work. Long-lived hosted services
+        // still plan against the buyer's ordinary supply.
+        if ((bought && !imported) || (bought==imported && available>compute.value())) {
+            source=row.id;compute=MilliCUPerDay{available};imported=bought;
+        }
+        if (!bought && available>hosting_compute.value()) {
+            hosting_source=row.id;hosting_compute=MilliCUPerDay{available};
+        }
     }
     const LabAllocation allocation{source,MilliCUPerDay{std::min(compute.value(),definition.training_rate.value())},std::min(staff,2U)};
     const bool can_work=staff>0 && compute.value()>0 && affordable(Cents{0});
@@ -135,8 +148,10 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
             const auto& service=*service_it;bool qualified=true;
             if (!service.required_recipe.empty() && service.required_recipe!=model.recipe_id) continue;
             for (std::size_t axis=0;axis<lab_domain_count;++axis) if (evidence.lower[axis]<service.required[axis]) qualified=false;
-            if (qualified && staff>=service.serving.staff && !source.empty() && std::none_of(s.deployments->records.begin(),s.deployments->records.end(),[&](const auto& row){return row.service_id==id;}) && affordable(Cents{0},service.serving.monthly_support_cost))
-                offer(4,"deploy",id,650,DeployModel{id,model.id,evidence.id,source,false});
+            const bool local=customer_hosted(service.product.channel);
+            if (qualified && requires_met(lab,service.required_research) && staff>=service.serving.staff &&
+                (local || !hosting_source.empty()) && std::none_of(s.deployments->records.begin(),s.deployments->records.end(),[&](const auto& row){return row.service_id==id;}) && affordable(Cents{0},service.serving.monthly_support_cost))
+                offer(4,"deploy",id,650,DeployModel{id,model.id,evidence.id,local?"":hosting_source,service.product.channel==ProductChannel::agent});
         }
     }
     std::uint64_t recent_tasks=0,recent_days=0;
@@ -151,6 +166,7 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
         viable_price=Cents{std::clamp(checked_add(static_cast<std::int64_t>(cost.quotient),cost.remainder>0?1:0),profile.price_floor.value(),profile.price_ceiling.value())};
     }
     for (const auto& product:s.market->products) {
+        if (product.channel==ProductChannel::open_weights) continue;
         const auto desired=observation.public_price.value()>0?Cents{std::clamp(checked_add(observation.public_price.value(),static_cast<std::int64_t>(profile.priorities[5]%21)-10),viable_price.value(),profile.price_ceiling.value())}:product.price_per_task;
         if (desired!=product.price_per_task) offer(5,"price",product.id,60,SetMarketPrice{product.id,desired});
     }
@@ -159,7 +175,7 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
             offer(6,"hire",specialist.id,120,HireSpecialist{specialist.id});
     for (const auto& debt:s.accounts->debts) if (debt.principal.value()>0 && advance_days(s.date,Days{7})>=debt.due && affordable(debt.principal))
         offer(7,"repay",debt.id,900,RepayDebt{debt.id,debt.principal,"rival.repay/"+debt.id});
-    if (rival.parent_company.empty() && s.cash<protected_runway) for (const auto& financing:s.management->catalog.financing)
+    if (rival.parent_company.empty() && usable<protected_runway) for (const auto& financing:s.management->catalog.financing)
         if (std::none_of(s.management->financing.begin(),s.management->financing.end(),[&](const auto& row){return row.offer_id==financing.id;}))
             offer(7,"finance",financing.id,800,TakeFinancing{financing.id});
     if (compute.value()<definition.training_rate.value()/2 && s.business_offers) for (const auto& growth:s.business_offers->catalog)
@@ -198,9 +214,10 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
     state.liquidity=opening_liquidity(day,definition.id);
     LabState lab;lab.owner=definition.id;lab.starts_on=day;lab.catalog=world.simulation.lab->catalog;
     lab.research_stream_origin=state.random[static_cast<std::size_t>(RandomStream::research)];state.lab=std::move(lab);
-    state.market=opening_market(day,definition.id);state.market->segments=authored.market->segments;
+    state.market=opening_market(day,definition.id);
+    state.market->segments=content::scenario_market_setup(program.collection,authored).segments;
     for (auto& segment:state.market->segments) segment.preferences.clear();
-    state.deployments=DeploymentState{content::service_definitions(*authored.service_catalog),{}};
+    state.deployments=DeploymentState{content::scenario_services(program.collection,authored),{}};
     state.management=ManagementState{*authored.management,{},{},{},{},{},{}};state.management->catalog.setbacks.clear();
     state.management->catalog.governance.reset();
     state.management->catalog.scoring.founder="founder";
@@ -274,11 +291,12 @@ void advance_planning(WorldState& world,const CompiledProgram& program,OrdinalDa
     for (auto& rival:world.competition->companies) if (rival.planning->entered_on && active(rival.simulation)) {
         if (rival.simulation.date!=prior) invalid("Rival daily cursor differs from the common market day");
         AdvanceDay next;if (const auto it=assignments.find(rival.definition_id);it!=assignments.end()) {
-            next.market_allocation=it->second;next.industry_adoptions=industry_adoption_snapshot(world);
+            next.market_allocation=it->second;next.industry_adoptions=industry_adoption_snapshot(world,prior);
         }
         advance(rival,std::move(next));
         if (rival.simulation.phase==DayPhase::closed) world.competition->notices.push_back({rival.definition_id,"closure",rival.simulation.date,std::nullopt});
     }
+    refresh_wholesale(world,program);
     collect_public_results(world,prior);append_industry_adoption(world,prior);enter_due(world,program);
     update_competitive_offers(world,program);update_heavyweight_responses(world,program);
     for (auto& rival:world.competition->companies) review_rival(world,program,rival);

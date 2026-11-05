@@ -127,6 +127,7 @@ struct CancelReservation { std::uint64_t id; };
 struct AdvanceDay {
     std::optional<AllocationResult> market_allocation{};
     std::vector<MarketAdoption> industry_adoptions{};
+    std::vector<WholesaleUse> wholesale_work{};
 };
 struct SetPaused { bool paused; };
 struct ResolveOpeningChoice { std::uint64_t id; bool accept; };

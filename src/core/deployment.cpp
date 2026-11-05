@@ -20,6 +20,14 @@ CapacityProject qualified_project(const ServiceDefinition& definition,const LabS
                                  const DeployModel& request,OrdinalDay day,std::string id) {
     const auto& model=find(lab.models,request.model_id);
     if (!definition.required_recipe.empty() && model.recipe_id!=definition.required_recipe) invalid("This specialist service requires its efficient recipe and research");
+    for (const auto& required : definition.required_research) {
+        const auto research = std::find_if(lab.research.begin(), lab.research.end(), [&](const auto& row) {
+            if (row.research_id != required || !row.completed) return false;
+            const auto& work = find(capacity.projects, row.project_id);
+            return work.stopped_on && *work.stopped_on < day;
+        });
+        if (research == lab.research.end()) invalid("Complete the distribution channel's required research before launch");
+    }
     const auto& evidence=find(lab.evaluations,request.evidence_id);
     const auto& plan=find(lab.catalog.evaluations,evidence.plan_id);
     const auto& test=find(capacity.projects,evidence.project_id);
@@ -36,14 +44,19 @@ CapacityProject qualified_project(const ServiceDefinition& definition,const LabS
     for (std::size_t visited=0;;++visited) {
         if (visited>=lab_record_limit) invalid("Model lineage exceeds its bound");
         for (const auto& data_id:ancestor->data_ids) {
-            if (!find(lab.catalog.data,data_id).commercial_use)
+            const auto& rights = find(lab.catalog.data,data_id);
+            if (!rights.commercial_use)
                 invalid("This model includes research-only data; train a new commercially cleared model");
+            if (definition.product.channel == ProductChannel::open_weights && !rights.open_weight_release)
+                invalid("Open weight release requires that right across the model's data lineage");
         }
         if (ancestor->parent_id.empty()) break;
         ancestor=&find(lab.models,ancestor->parent_id);
     }
     if (request.human_review && (definition.review_staff==0 || definition.review_tasks_per_day==0))
         invalid("Human review is not offered for this service scope");
+    if (definition.product.channel == ProductChannel::agent && !request.human_review)
+        invalid("Agent work requires the reviewed service scope");
     for (std::size_t i=0;i<lab_domain_count;++i) {
         if (definition.required[i].value()==0) continue;
         const auto credit=request.human_review?definition.review_credit[i].value():0;
@@ -59,7 +72,13 @@ CapacityProject qualified_project(const ServiceDefinition& definition,const LabS
         project.monthly_support_cost=checked_unit_add(project.monthly_support_cost,definition.review_monthly_cost);
     }
     project.inference_milli_CU_per_task=recipe.inference_per_task;
-    project.requested=MilliCUPerDay{required_inference(project.tasks_per_day,recipe.inference_per_task).value()};
+    project.customer_inference=customer_hosted(definition.product.channel);
+    if (project.customer_inference) {
+        if (!request.source_id.empty()) invalid("Choose customer hardware for this distribution channel");
+        project.requested = MilliCUPerDay{0};
+    } else {
+        project.requested = MilliCUPerDay{required_inference(project.tasks_per_day, recipe.inference_per_task).value()};
+    }
     project.minimum_memory_mib=std::max(project.minimum_memory_mib,recipe.minimum_memory_mib);
     project.interconnect=recipe.interconnect;
     return project;
@@ -74,8 +93,17 @@ void validate_service_catalog(const std::vector<ServiceDefinition>& catalog) {
             row.serving.completed_work.value()!=0 || row.serving.useful_tasks!=0 || row.serving.tasks_per_day==0 || row.serving.staff==0 ||
             row.review_staff>1'000'000 || row.review_monthly_cost.value()<0 || row.review_tasks_per_day>row.serving.tasks_per_day ||
             (row.review_staff==0)!=(row.review_tasks_per_day==0) || row.preferences.empty() || row.preferences.size()>market_segment_limit ||
+            row.serving.customer_inference || !row.product.region_id.empty() || row.required_research.size()>16 ||
+            (row.product.channel == ProductChannel::open_weights && row.product.price_per_task.value()!=0) ||
+            (row.product.channel == ProductChannel::agent && row.review_staff==0) ||
             std::none_of(row.required.begin(),row.required.end(),[](auto value){return value.value()>0;}))
             invalid("Service catalog contains invalid scope, review or serving terms");
+        (void)channel_key(row.product.channel);
+        std::set<std::string> prerequisites;
+        for (const auto& research : row.required_research) {
+            if (research.empty() || !prerequisites.insert(research).second)
+                invalid("Service research prerequisites must be distinct");
+        }
         std::set<std::string> segments;
         for (const auto& pref:row.preferences)
             if (pref.preference.product_id!=row.product.id || !segments.insert(pref.segment_id).second)
@@ -87,9 +115,24 @@ void deploy_model(DeploymentState& state,const LabState& lab,AccountsState& acco
     if (state.records.size()>=lab_record_limit) invalid("Deployment history is full");
     const auto& definition=service(state,request.service_id);
     const auto existing=std::find_if(market.products.begin(),market.products.end(),[&](const auto& row){return row.id==request.service_id;});
+    const auto region = existing == market.products.end() ? request.region_id : existing->region_id;
+    if (existing != market.products.end() && !request.region_id.empty() && request.region_id != region)
+        invalid("A live service keeps its launch territory when replacing a model");
     const auto id=state.records.empty() || std::none_of(capacity.projects.begin(),capacity.projects.end(),[&](const auto& row){return row.id==definition.serving.id;})?
         definition.serving.id:definition.serving.id+"."+std::to_string(state.records.size()+1);
     auto work=qualified_project(definition,lab,capacity,request,day,id);
+    auto product = definition.product;
+    product.region_id = region;
+    const auto can_serve = [&](const ServicePreference& preference) {
+        const auto& segment = find(market.segments, preference.segment_id);
+        return preference.preference.eligible && market_access(product, segment) &&
+            (!work.customer_inference || (work.minimum_memory_mib <= segment.customer_memory_mib &&
+                work.interconnect == segment.customer_interconnect &&
+                work.inference_milli_CU_per_task.value() <= segment.customer_compute.value()));
+    };
+    if ((definition.product.channel != ProductChannel::legacy || !region.empty()) &&
+        std::none_of(definition.preferences.begin(), definition.preferences.end(), can_serve))
+        invalid("The service has no eligible customer territory or compatible local hardware");
     std::uint64_t promised=0;
     for (const auto& contract:market.contracts)
         if (contract.product_id==request.service_id && (contract.status==ContractStatus::active || contract.status==ContractStatus::pending))
@@ -106,14 +149,14 @@ void deploy_model(DeploymentState& state,const LabState& lab,AccountsState& acco
     if (work.monthly_support_cost.value()>0)
         add_recurring(accounts,{"support/"+work.id,work.monthly_support_cost,day,std::nullopt,"Serving support: "+work.id});
     if (existing==market.products.end()) {
-        auto product=definition.product; product.capacity_project_id=work.id;
+        product.capacity_project_id=work.id;
         add_market_product(market,capacity,std::move(product));
         for (const auto& preference:definition.preferences) add_market_preference(market,preference.segment_id,preference.preference);
     } else {
         replace_product_capacity(market,capacity,day,request.service_id,work.id);
         set_product_available(market,request.service_id,true);
     }
-    state.records.push_back({request.service_id,request.model_id,request.evidence_id,work.id,request.human_review,day});
+    state.records.push_back({request.service_id,request.model_id,request.evidence_id,work.id,request.human_review,day,region});
 }
 void validate_deployments(const DeploymentState& state,const LabState& lab,const CapacityState& capacity,const MarketState& market) {
     validate_service_catalog(state.catalog);
@@ -121,8 +164,13 @@ void validate_deployments(const DeploymentState& state,const LabState& lab,const
         invalid("Deployed services differ from their actual market bindings");
     for (std::size_t i=0;i<state.records.size();++i) {
         const auto& row=state.records[i]; const auto& work=find(capacity.projects,row.project_id);
-        const auto expected=qualified_project(service(state,row.service_id),lab,capacity,
-            {row.service_id,row.model_id,row.evidence_id,work.source_id,row.human_review},row.deployed_on,row.project_id);
+        const auto& definition=service(state,row.service_id);
+        const auto& product=find(market.products,row.service_id);
+        if (product.channel!=definition.product.channel || product.monthly_migration!=definition.product.monthly_migration ||
+            product.region_id!=row.region_id)
+            invalid("The saved service changed its authored channel or launch territory");
+        const auto expected=qualified_project(definition,lab,capacity,
+            {row.service_id,row.model_id,row.evidence_id,work.source_id,row.human_review,row.region_id},row.deployed_on,row.project_id);
         auto comparable=work; comparable.status=ProjectStatus::active; comparable.stopped_on.reset(); comparable.useful_tasks=0; comparable.completed_work=MilliCU{0};
         if (comparable!=expected || market.capacity_bindings[i]!=ProductCapacityBinding{row.service_id,row.project_id,row.deployed_on})
             invalid("Deployment differs from its qualified evidence, review costs or actual serving work");

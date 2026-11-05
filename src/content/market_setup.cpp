@@ -1,4 +1,5 @@
 #include <pgp/content/market_setup.hpp>
+#include <pgp/content/collection.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -76,6 +77,11 @@ std::string canonical_market_setup_bytes(const MarketSetup& setup, core::Ordinal
             {"staff",row.staff},{"minimum_memory_mib",row.minimum_memory_mib},{"interconnect",row.interconnect},
             {"monthly_support_cost_cents",row.monthly_support_cost.value()}});
         if (!offer->required_recipe.empty()) offers.back()["required_recipe"]=offer->required_recipe;
+        if (offer->product.channel != core::ProductChannel::legacy) {
+            offers.back()["channel"] = core::channel_key(offer->product.channel);
+            offers.back()["monthly_migration_bp"] = offer->product.monthly_migration.value();
+        }
+        if (!offer->required_research.empty()) offers.back()["required_research"] = offer->required_research;
         if (std::any_of(offer->required.begin(),offer->required.end(),[](auto value){return value.value()>0;})) {
             auto& encoded=offers.back();
             encoded["required_bp"]={offer->required[0].value(),offer->required[1].value()};
@@ -99,6 +105,14 @@ std::string canonical_market_setup_bytes(const MarketSetup& setup, core::Ordinal
             {"outside_utility",row->outside_utility},{"reservation_threshold",row->reservation_threshold},
             {"maximum_monthly_migration_basis_points",row->maximum_monthly_migration.value()},
             {"preferences",std::move(prefs)}});
+        if (!row->region_id.empty()) {
+            auto& encoded = segments.back();
+            encoded["region"] = row->region_id;
+            encoded["customer_compute_milli_CU_per_day"] = row->customer_compute.value();
+            encoded["customer_memory_mib"] = row->customer_memory_mib;
+            encoded["customer_interconnect"] = row->customer_interconnect;
+            encoded["requires_local"] = row->requires_local;
+        }
     }
     std::vector<const StartingContractDefinition*> ordered_contracts;
     for (const auto& contract : setup.contracts) ordered_contracts.push_back(&contract);
@@ -114,5 +128,67 @@ std::string canonical_market_setup_bytes(const MarketSetup& setup, core::Ordinal
             {"cause",row.cause},{"start_immediately",contract->start_immediately}});
     }
     return Json{{"offers",std::move(offers)},{"segments",std::move(segments)},{"contracts",std::move(contracts)}}.dump();
+}
+
+std::string canonical_regional_market_bytes(const RegionalMarkets& catalog) {
+    using Json = nlohmann::json;
+    Json regions = Json::array(), plans = Json::array();
+    for (const auto& region : catalog.regions)
+        regions.push_back({{"id",region.id},{"name",region.name},{"description",region.description}});
+    for (const auto& plan : catalog.wholesale) {
+        plans.push_back({{"id",plan.id},{"name",plan.name},{"capacity_milli_CU_per_day",plan.capacity.value()},
+            {"minimum_memory_mib",plan.minimum_memory_mib},{"interconnect",plan.interconnect},
+            {"term_days",plan.term.value()},{"daily_fee_cents",plan.daily_fee.value()},
+            {"energy_included",plan.energy_included},{"availability_bp",plan.availability.value()}});
+    }
+    return Json{{"regions",std::move(regions)},{"wholesale",std::move(plans)},
+        {"products",Json::parse(canonical_market_setup_bytes(catalog.products, core::OrdinalDay{0}))}}.dump();
+}
+
+const RegionalMarkets* regional_markets(const Collection& collection, const ScenarioDefinition& scenario) {
+    if (scenario.regional_markets.empty()) return nullptr;
+    const auto* definition = collection.find(scenario.regional_markets);
+    const auto* catalog = definition ? std::get_if<RegionalMarkets>(&definition->data) : nullptr;
+    if (!catalog) throw std::invalid_argument("Scenario refers to an unknown regional market catalog");
+    return catalog;
+}
+
+MarketSetup scenario_market_setup(const Collection& collection, const ScenarioDefinition& scenario) {
+    if (!scenario.market) throw std::invalid_argument("A regional scenario needs an opening market");
+    auto setup = *scenario.market;
+    const auto* catalog = regional_markets(collection, scenario);
+    if (!catalog) return setup;
+    for (auto& base : setup.segments) {
+        const auto regional = std::find_if(catalog->products.segments.begin(), catalog->products.segments.end(),
+            [&](const auto& row) { return row.id == base.id; });
+        if (regional == catalog->products.segments.end())
+            throw std::invalid_argument("An opening market segment has no regional profile");
+        base.region_id = regional->region_id;
+        base.customer_compute = regional->customer_compute;
+        base.customer_memory_mib = regional->customer_memory_mib;
+        base.customer_interconnect = regional->customer_interconnect;
+        base.requires_local = regional->requires_local;
+    }
+    for (auto segment : catalog->products.segments) {
+        if (std::any_of(setup.segments.begin(), setup.segments.end(), [&](const auto& base) { return base.id == segment.id; })) continue;
+        segment.preferences.clear();
+        setup.segments.push_back(std::move(segment));
+    }
+    std::sort(setup.segments.begin(), setup.segments.end(), [](const auto& left, const auto& right) { return left.id < right.id; });
+    return setup;
+}
+
+std::vector<core::ServiceDefinition> scenario_services(const Collection& collection, const ScenarioDefinition& scenario) {
+    if (!scenario.service_catalog) return {};
+    auto services = service_definitions(*scenario.service_catalog);
+    if (const auto* catalog = regional_markets(collection, scenario)) {
+        auto additions = service_definitions(catalog->products);
+        for (auto& service : additions) {
+            service.serving.starts_on = scenario.starts_on;
+            services.push_back(std::move(service));
+        }
+        core::validate_service_catalog(services);
+    }
+    return services;
 }
 }

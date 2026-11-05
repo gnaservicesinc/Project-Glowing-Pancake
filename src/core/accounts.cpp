@@ -21,7 +21,7 @@ void text_valid(std::string_view text, std::size_t maximum = 256) {
 }
 void user_key_valid(std::string_view key) {
     text_valid(key, 512);
-    for (const auto prefix : {"opening", "debt/", "invoice/", "accrue/", "settle/"})
+    for (const auto prefix : {"opening", "debt/", "invoice/", "accrue/", "settle/", "wholesale/"})
         if (key.starts_with(prefix)) invalid("This transaction key namespace belongs to an owning accounts system");
 }
 std::size_t index(Account account) {
@@ -594,6 +594,16 @@ void record_owned_depreciation(AccountsState& state,OrdinalDay day,std::string r
         if (amount.value()>0) append_trusted(candidate,day,Account::expenses,Account::accumulated_depreciation,amount,"Owned asset depreciation","owned.depreciation/"+reference+"/"+iso_date(day));
     };
     if (validate_io) mutate(state,apply);else apply(state);
+}
+std::uint64_t record_wholesale_cash(AccountsState& state,OrdinalDay day,std::string_view contract,Cents amount,bool seller) {
+    require_day(state,day);
+    text_valid(contract,64);
+    if (amount.value()<0) invalid("A wholesale settlement cannot reverse the direction of payment");
+    if (amount.value()==0) return 0;
+    const auto id=state.next_posting_id;
+    append_trusted(state,day,seller?Account::cash:Account::expenses,seller?Account::revenue:Account::cash,
+        amount,"Owned compute reservation","wholesale/"+std::string(contract)+"/"+iso_date(day));
+    return id;
 }
 void dispose_owned_asset(AccountsState& state,OrdinalDay day,std::string reference,Cents cost,Cents depreciation,Cents proceeds) {
     mutate(state,[&](auto& candidate) {

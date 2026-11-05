@@ -22,6 +22,7 @@ QString money(Cents v) {
 QString kw(std::uint64_t watts) {return watts%1000==0?number(watts/1000)+QStringLiteral(" kW"):decimal(watts,1000,3)+QStringLiteral(" kW");}
 QString kwh(std::uint64_t wh) {return decimal(wh,1000,3)+QStringLiteral(" kWh");}
 QString liters(std::uint64_t ml) {return decimal(ml,1000,3)+QStringLiteral(" L");}
+QVariantMap option(std::string_view id,QString label) {return {{QStringLiteral("id"),text(id)},{QStringLiteral("label"),std::move(label)}};}
 QString mode_name(AppointmentMode mode) {return mode==AppointmentMode::onsite?QStringLiteral("On site"):mode==AppointmentMode::remote?QStringLiteral("Remote"):QStringLiteral("Delegated");}
 QString cooling_name(CoolingMode cooling) {return cooling==CoolingMode::air?QStringLiteral("Air cooling"):QStringLiteral("Evaporative cooling");}
 AppointmentMode appointment_mode(const QString& mode) {
@@ -109,7 +110,7 @@ QString terms(const SimulationState& before,const SimulationState& after,const C
     return QStringLiteral("Give notice on the opening compute lease\nCapacity and future charges end %1. Accrued bills remain due. Move any research, training or customer service that still depends on the opening lease before this date.").arg(date(*i.initial_lease_ends_before));
 }
 }
-InfrastructureController::InfrastructureController(QObject* parent):QObject(parent),states_(new StableListModel(this)),sites_(new StableListModel(this)),hardware_(new StableListModel(this)),calendar_(new StableListModel(this)),notices_(new StableListModel(this)) {states_->setSortByTitle(true);}
+InfrastructureController::InfrastructureController(QObject* parent):QObject(parent),states_(new StableListModel(this)),sites_(new StableListModel(this)),hardware_(new StableListModel(this)),calendar_(new StableListModel(this)),notices_(new StableListModel(this)),wholesale_contracts_(new StableListModel(this)) {states_->setSortByTitle(true);}
 void InfrastructureController::loadMap() {
     map_.clear();map_terms_.clear();rack_options_.clear();if (!available()) return;
     const auto& catalog=state().infrastructure->catalog;
@@ -146,15 +147,46 @@ QString InfrastructureController::leaseStatus() const {
     for (const auto& row:state().accounts->recurring) if (row.id=="compute_lease" && !row.ends_before) return QStringLiteral("Opening compute lease: %1/month · %2 days' notice. Owned power is metered separately.").arg(money(row.monthly_amount),number(static_cast<std::uint64_t>(i.catalog.initial_lease_notice.value())));
     return QStringLiteral("No continuing opening compute lease.");
 }
-void InfrastructureController::update(CampaignSnapshotPtr snapshot,bool replace) {
+void InfrastructureController::update(CampaignSnapshotPtr snapshot,const runtime::CompiledProgram& program,bool replace) {
     const auto* old=available()?&*state().infrastructure:nullptr;
     const auto* incoming=snapshot->checkpoint.world.simulation.infrastructure?&*snapshot->checkpoint.world.simulation.infrastructure:nullptr;
     const bool refresh_states=replace || !old || !incoming || old->sites.size()!=incoming->sites.size() ||
         !std::equal(old->sites.begin(),old->sites.end(),incoming->sites.begin(),[](const auto& a,const auto& b){return a.id==b.id && a.closed_on==b.closed_on;});
     const auto old_revision=snapshot_?state().revision:0;snapshot_=std::move(snapshot);
+    program_=&program;
     if (replace) {loadMap();dismissReview();emit catalogChanged();}
     else if (review_ && old_revision!=state().revision) {review_.reset();review_text_=QStringLiteral("The campaign changed. Review the updated terms before confirming.");emit reviewChanged();}
-    std::vector<CampaignRow> states,sites,hardware,appointments,notices;
+    std::vector<CampaignRow> states,sites,hardware,appointments,notices,contracts;
+    wholesale_plans_.clear();wholesale_sources_.clear();wholesale_buyers_.clear();
+    const auto& world=snapshot_->checkpoint.world;
+    const auto plans=runtime::wholesale_plans(world,program);
+    if (!plans.empty()) {
+        for (const auto& plan:plans) wholesale_plans_.push_back(option(plan.id,text(plan.name)));
+        for (const auto& rival:world.competition->companies) {
+            if (!rival.planning->entered_on || rival.response || !rival.parent_company.empty() ||
+                rival.simulation.phase==DayPhase::closed || rival.simulation.phase==DayPhase::finished) continue;
+            wholesale_buyers_.push_back(option(rival.definition_id,text(runtime::rival_definition(program,rival.definition_id).name)));
+        }
+        for (const auto& contract:world.competition->wholesale) {
+            const auto& plan=find(plans,contract.plan_id);
+            Cents paid{0},credits{0};
+            for (const auto& row:contract.days) {
+                credits=checked_unit_add(credits,row.service_credit);
+                paid=checked_unit_add(paid,checked_unit_add(checked_unit_subtract(plan.daily_fee,row.service_credit),row.electricity));
+            }
+            const auto active=!contract.terminated_on && state().date<contract.ends_before;
+            auto detail=QStringLiteral("%1 CU/day from %2 · %3/day before credits and electricity\n%4 through %5 (exclusive)\nPaid %6 · credits %7")
+                .arg(cu(plan.capacity.value()),text(contract.source_id),money(plan.daily_fee),date(contract.starts_on),date(contract.ends_before),money(paid),money(credits));
+            if (!contract.days.empty()) {
+                const auto& last=contract.days.back();
+                detail+=QStringLiteral("\nLast settled day · %1 CU available · %2 CU used · %3 credit · %4 metered electricity.")
+                    .arg(cu(last.available.value()),cu(last.used.value()),money(last.service_credit),money(last.electricity));
+            }
+            if (contract.terminated_on) detail+=QStringLiteral("\nOperations ceased on %1. The buyer's unused funds were released.").arg(date(*contract.terminated_on));
+            contracts.push_back({text(contract.id),text(runtime::rival_definition(program,contract.buyer_id).name),text(plan.name),std::move(detail),
+                active?QStringLiteral("Active"):contract.terminated_on?QStringLiteral("Ended early"):QStringLiteral("Term complete")});
+        }
+    }
     if (available()) {
         const auto& s=state();const auto& i=*s.infrastructure;
         if (refresh_states) for (const auto& p:i.catalog.states) {
@@ -185,7 +217,13 @@ void InfrastructureController::update(CampaignSnapshotPtr snapshot,bool replace)
             const auto source=std::find_if(s.capacity->sources.begin(),s.capacity->sources.end(),[&](const auto& p){return p.id==h.source_id;});
             auto status=h.retired_on?QStringLiteral("Retired"):s.date<h.delivered_on?QStringLiteral("Delivery pending"):!h.commissioned_on?QStringLiteral("Awaiting site, staff or power"):
                 source->effective.value()==0?QStringLiteral("No usable power") : QStringLiteral("%1 CU/day usable").arg(cu(source->effective.value()));
-            hardware.push_back({text(h.id),text(f.name),text(owned.name)+QStringLiteral(" · delivery ")+date(h.delivered_on),rack_terms(f)+QStringLiteral("\nPaid %1 · depreciation %2 · resale %3.").arg(money(h.paid),money(h.depreciated),money(h.resale)),std::move(status),false,{{QStringLiteral("retired"),h.retired_on.has_value()}}});
+            auto detail=rack_terms(f)+QStringLiteral("\nPaid %1 · depreciation %2 · resale %3.").arg(money(h.paid),money(h.depreciated),money(h.resale));
+            if (source!=s.capacity->sources.end() && source->wholesale_reserved.value()>0)
+                detail+=QStringLiteral("\n%1 CU/day committed to wholesale. %2 CU/day usable by your company.")
+                    .arg(cu(source->wholesale_reserved.value()),cu(company_capacity(*source).value()));
+            if (!plans.empty() && !h.retired_on && source!=s.capacity->sources.end())
+                wholesale_sources_.push_back(option(h.source_id,text(owned.name)+QStringLiteral(" · ")+text(h.id)));
+            hardware.push_back({text(h.id),text(f.name),text(owned.name)+QStringLiteral(" · delivery ")+date(h.delivered_on),std::move(detail),std::move(status),false,{{QStringLiteral("retired"),h.retired_on.has_value()}}});
         }
         for (const auto& a:i.appointments) {
             const auto& owned=find(i.sites,a.site_id);
@@ -204,7 +242,8 @@ void InfrastructureController::update(CampaignSnapshotPtr snapshot,bool replace)
     }
     const auto sync=[&](StableListModel* model,std::vector<CampaignRow> rows) {if (replace) model->beginCampaign(std::move(rows));else model->setRows(std::move(rows));};
     if (refresh_states) {sync(states_,std::move(states));if (replace && available()) states_->setSelectedId(text(state().infrastructure->executive_base));}
-    sync(sites_,std::move(sites));sync(hardware_,std::move(hardware));sync(calendar_,std::move(appointments));sync(notices_,std::move(notices));emit changed();
+    sync(sites_,std::move(sites));sync(hardware_,std::move(hardware));sync(calendar_,std::move(appointments));sync(notices_,std::move(notices));
+    sync(wholesale_contracts_,std::move(contracts));emit changed();
 }
 QString InfrastructureController::suggestedVisit(QString id,QString mode) const {
     if (!available()) return {};
@@ -244,11 +283,37 @@ void InfrastructureController::reviewRetire(QString id) {review([&](const auto&)
 void InfrastructureController::reviewClose(QString id) {review([&](const auto&)->CommandAction {return CloseOwnedSite{id.toStdString()};});}
 void InfrastructureController::reviewCancel(QString id) {review([&](const auto&)->CommandAction {return CancelSiteAppointment{id.toStdString()};});}
 void InfrastructureController::reviewLease() {review([](const auto&)->CommandAction {return NoticeInitialLeaseTermination{};});}
+void InfrastructureController::reviewWholesale(QString plan_id,QString source_id,QString buyer_id) {
+    review_.reset();review_text_.clear();
+    try {
+        if (!available() || (!state().paused && !snapshot_->driver_halted))
+            throw std::invalid_argument("Pause the campaign to review wholesale terms.");
+        const auto& world=snapshot_->checkpoint.world;
+        const auto quote=runtime::wholesale_quote(world,*program_,plan_id.toStdString(),source_id.toStdString(),buyer_id.toStdString());
+        const auto& plan=find(runtime::wholesale_plans(world,*program_),plan_id.toStdString());
+        const auto& buyer=runtime::rival_definition(*program_,buyer_id.toStdString());
+        review_text_=QStringLiteral("%1 will reserve %2 CU/day on %3 through %4 (exclusive).\n"
+            "%5/day · %6 MiB minimum · %7 interconnect. %8\n"
+            "The buyer protects up to %9 in cash. Availability below %10% earns a proportional fee credit. "
+            "A full outage credits the entire daily fee. The reserved capacity is committed for the term.")
+            .arg(text(buyer.name),cu(plan.capacity.value()),source_id,date(quote.ends_before),money(plan.daily_fee),number(plan.minimum_memory_mib),
+                text(plan.interconnect),plan.energy_included?QStringLiteral("Electricity included."):QStringLiteral("Marginal electricity billed for actual buyer work."),
+                money(quote.funded_ceiling),decimal(static_cast<std::uint64_t>(plan.availability.value()),100,2));
+        review_=WholesaleReview{state().revision,std::move(plan_id),std::move(source_id),std::move(buyer_id)};
+    } catch (const std::exception& e) {review_text_=text(e.what());}
+    emit reviewChanged();
+}
 void InfrastructureController::confirm() {
-    if (!review_ || !available() || (!state().paused && !snapshot_->driver_halted) || state().revision!=review_->expected_revision) {
+    if (!review_ || !available() || (!state().paused && !snapshot_->driver_halted) ||
+        state().revision!=std::visit([](const auto& row){return row.expected_revision;},*review_)) {
         dismissReview();emit noticeRaised(QStringLiteral("The campaign changed. Review the new terms before confirming."));return;
     }
-    auto action=std::move(review_->action);dismissReview();emit actionRequested(std::move(action));
+    auto action=std::move(*review_);dismissReview();
+    if (auto* local=std::get_if<Command>(&action)) emit actionRequested(std::move(local->action));
+    else {
+        auto& offer=std::get<WholesaleReview>(action);
+        emit wholesaleRequested(std::move(offer.plan),std::move(offer.source),std::move(offer.buyer));
+    }
 }
 void InfrastructureController::dismissReview() {review_.reset();review_text_.clear();emit reviewChanged();}
 }

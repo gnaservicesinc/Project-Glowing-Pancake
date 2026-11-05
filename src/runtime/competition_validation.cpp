@@ -16,7 +16,7 @@ void resources(const WorldState& world,const CompiledProgram& program,const Riva
     if (state.accounts->starts_on!=*rival.planning->entered_on || state.accounts->postings.empty() || state.accounts->postings.front()!=initial.accounts->postings.front() ||
         opening_staff_count(*state.capacity)!=definition.staff || state.management->catalog!=initial.management->catalog ||
         state.deployments->catalog!=initial.deployments->catalog || state.business_offers.has_value()!=initial.business_offers.has_value() ||
-        (state.business_offers && state.business_offers->catalog!=initial.business_offers->catalog) || (!rival.response && !state.reservations.empty()) || !state.opening_actions.empty())
+        (state.business_offers && state.business_offers->catalog!=initial.business_offers->catalog) || !state.opening_actions.empty())
         invalid("Rival opening capital, staff, catalogs or private commitments differ from authored terms");
     std::set<std::string> allowed_sources{"lease.initial"};
     if (state.business_offers) for (const auto& row:state.business_offers->accepted) {
@@ -26,8 +26,9 @@ void resources(const WorldState& world,const CompiledProgram& program,const Riva
         const auto expected=!suspended && state.date<lease_expiry(*state.business_offers,offer.id)?offer.capacity:MilliCUPerDay{0};
         if (source.effective!=expected || source.nominal!=offer.capacity) invalid("Rival leased capacity bypassed paid availability or expiry");
     }
-    if (state.capacity->sources.size()!=allowed_sources.size()) invalid("Rival invented unbudgeted capacity");
-    for (const auto& source:state.capacity->sources) if (!allowed_sources.contains(source.id)) invalid("Rival uses an unowned capacity source");
+    const auto ordinary=std::count_if(state.capacity->sources.begin(),state.capacity->sources.end(),[](const auto& row){return row.kind!=CapacitySourceKind::imported;});
+    if (static_cast<std::size_t>(ordinary)!=allowed_sources.size()) invalid("Rival invented unbudgeted capacity");
+    for (const auto& source:state.capacity->sources) if (source.kind!=CapacitySourceKind::imported && !allowed_sources.contains(source.id)) invalid("Rival uses an unowned capacity source");
     auto initial_source=initial.capacity->sources.front();
     if (rival.response && !rival.response->retired_on && std::any_of(rival.response->transitions.begin(),rival.response->transitions.end(),[](const auto& row){return row.cause=="compete";})) initial_source.effective=initial_source.nominal;
     if (find(state.capacity->sources,"lease.initial")!=initial_source) invalid("Rival initial compute capacity differs from its finite opening/delivery terms");
@@ -65,7 +66,7 @@ void resources(const WorldState& world,const CompiledProgram& program,const Riva
 }
 void validate_planning(const WorldState& world,const CompiledProgram& program,bool deep) {
     const auto& state=*world.competition;
-    if (state.companies.size()>20 || state.notices.size()>4096 || state.releases.size()>64 || !world.simulation.lab || !world.simulation.market || world.scenario_id.empty())
+    if (state.companies.size()>20 || state.notices.size()>4096 || state.releases.size()>core::allocation_product_limit || !world.simulation.lab || !world.simulation.market || world.scenario_id.empty())
         invalid("Planned competition is missing its source/resources or exceeds a bound");
     const auto* definition=program.collection.find(world.scenario_id);
     const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;

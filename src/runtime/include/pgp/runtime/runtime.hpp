@@ -270,6 +270,7 @@ public:
     [[nodiscard]] RuntimeResult submit(const core::Command& command);
     [[nodiscard]] RuntimeResult respondToCompetitiveOffer(std::uint64_t expected_revision,std::string_view offer_id,bool accept);
     [[nodiscard]] RuntimeResult proposeAcquisition(std::uint64_t expected_revision,std::string_view target,bool equity);
+    [[nodiscard]] RuntimeResult signWholesale(std::uint64_t expected_revision,std::string_view plan,std::string_view source,std::string_view buyer);
     [[nodiscard]] RuntimeResult transferSubsidiaryFunds(std::uint64_t expected_revision,std::string_view target,core::Cents amount,bool funding);
     // Explicit author-fixture operation on this copied Runtime. It does not
     // claim that a natural continuous exit condition became true.

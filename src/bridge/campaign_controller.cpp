@@ -132,6 +132,14 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
         const auto revision=snapshot_->checkpoint.world.simulation.revision;
         QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,revision,id=id.toStdString(),equity]{worker->proposeAcquisition(token,revision,id,equity);},Qt::QueuedConnection);
     });
+    connect(infrastructure_,&InfrastructureController::wholesaleRequested,this,[this](QString plan,QString source,QString buyer) {
+        if (!paused() || !beginOperation()) return;
+        const auto revision=snapshot_->checkpoint.world.simulation.revision;
+        QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,revision,
+            plan=plan.toStdString(),source=source.toStdString(),buyer=buyer.toStdString()] {
+            worker->signWholesale(token,revision,plan,source,buyer);
+        },Qt::QueuedConnection);
+    });
     (void)persistence::encode_settings(settings_);
     worker_ = new CampaignWorker(std::move(program),std::move(checkpoint),std::move(paths),settings_);
     worker_->moveToThread(&thread_);
@@ -165,7 +173,7 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     const bool replace = first || snapshot_->generation != snapshot->generation;
     auto projects = project_rows(snapshot->checkpoint);
     management_->update(snapshot,program_,replace);
-    infrastructure_->update(snapshot,replace);
+    infrastructure_->update(snapshot,program_,replace);
     auto inbox = inbox_rows(snapshot->checkpoint,program_.collection,*management_);
     if (!first && replace) welcome_=false;
     if (replace) { projects_->beginCampaign(std::move(projects)); inbox_->beginCampaign(std::move(inbox)); }

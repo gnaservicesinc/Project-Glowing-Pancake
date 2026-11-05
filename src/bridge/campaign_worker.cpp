@@ -146,6 +146,11 @@ void CampaignWorker::proposeAcquisition(std::uint64_t token,std::uint64_t revisi
     try {complete(token,campaign_.propose_acquisition(revision,id,equity));}
     catch (const std::exception& error) {pauseDriver();emit noticeRaised(error_text(error));publish();emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));}
 }
+void CampaignWorker::signWholesale(std::uint64_t token,std::uint64_t revision,std::string plan,std::string source,std::string buyer) {
+    requireOwningThread();
+    try {complete(token,campaign_.sign_wholesale(revision,plan,source,buyer));}
+    catch (const std::exception& error) {pauseDriver();emit noticeRaised(error_text(error));publish();emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));}
+}
 void CampaignWorker::transferSubsidiaryFunds(std::uint64_t token,std::uint64_t revision,std::string id,core::Cents amount,bool funding) {
     requireOwningThread();
     try {complete(token,campaign_.transfer_subsidiary_funds(revision,id,amount,funding));}

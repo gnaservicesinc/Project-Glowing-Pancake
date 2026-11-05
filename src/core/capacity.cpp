@@ -105,12 +105,15 @@ std::uint64_t maximum_tasks(MilliCU available, MilliCU cost_per_task) {
     if (cost_per_task.value() <= 0) invalid("Inference cost per useful task must be positive");
     return static_cast<std::uint64_t>(available.value() / cost_per_task.value());
 }
+MilliCUPerDay company_capacity(const CapacitySource& source) {
+    return checked_unit_subtract(source.effective, std::min(source.effective, source.wholesale_reserved));
+}
 CapacityReport capacity_report(const CapacityState& state) {
     CapacityReport report;
     report.available_staff = state.available_staff;
     for (const auto& row : state.sources) {
         report.nominal = checked_unit_add(report.nominal, row.nominal);
-        report.effective = checked_unit_add(report.effective, row.effective);
+        report.effective = checked_unit_add(report.effective, company_capacity(row));
     }
     for (const auto& row : state.projects) {
         report.completed_work = checked_unit_add(report.completed_work, row.completed_work);
@@ -161,9 +164,11 @@ void validate_capacity(const CapacityState& state) {
         text_valid(row.id, 100); text_valid(row.physical_id); text_valid(row.owner); text_valid(row.provider); text_valid(row.interconnect);
         if (!source_ids.insert(row.id).second || !physical_ids.insert(row.physical_id).second || row.owner != state.owner ||
             row.nominal.value() <= 0 || row.effective > row.nominal ||
-            (row.kind != CapacitySourceKind::leased && row.kind != CapacitySourceKind::owned) ||
+            (row.kind != CapacitySourceKind::leased && row.kind != CapacitySourceKind::owned && row.kind != CapacitySourceKind::imported) ||
             (row.kind == CapacitySourceKind::owned && row.provider != row.owner) ||
-            (row.kind == CapacitySourceKind::leased && row.provider == row.owner) ||
+            (row.kind != CapacitySourceKind::owned && row.provider == row.owner) ||
+            row.wholesale_reserved > row.nominal ||
+            (row.kind != CapacitySourceKind::owned && row.wholesale_reserved.value() != 0) ||
             (row.available_from && (*row.available_from < state.starts_on || *row.available_from > latest)))
             invalid("Capacity source has duplicate ownership, impossible output or an invalid provider");
     }
@@ -172,20 +177,30 @@ void validate_capacity(const CapacityState& state) {
     projects.reserve(state.projects.size());
     source_reservations.reserve(state.sources.size());
     for (const auto& row : state.projects) {
-        text_valid(row.id, 100); text_valid(row.source_id, 100); text_valid(row.interconnect); text_valid(row.cause, 256);
+        text_valid(row.id, 100); text_valid(row.interconnect); text_valid(row.cause, 256);
         (void)from_ordinal(row.starts_on);
-        const auto& supply = source(state, row.source_id);
+        if (row.customer_inference) {
+            if (row.kind != ProjectKind::serving || !row.source_id.empty() || row.requested.value() != 0 ||
+                row.completed_work.value() != 0)
+                invalid("Customer inference uses a serving team and no company compute");
+        } else {
+            text_valid(row.source_id, 100);
+            const auto& supply = source(state, row.source_id);
+            if (row.requested.value() <= 0 || (supply.available_from && row.starts_on < *supply.available_from) ||
+                row.minimum_memory_mib > supply.memory_mib || row.interconnect != supply.interconnect)
+                invalid("Project demand or source compatibility is invalid");
+        }
         if (!projects.emplace(row.id, &row).second || row.starts_on < state.starts_on || row.starts_on > latest ||
-            row.requested.value() <= 0 || row.staff == 0 || row.staff>1'000'000 || (row.staff > available_staff_on(state,row.starts_on) &&
+            row.staff == 0 || row.staff>1'000'000 || (row.staff > available_staff_on(state,row.starts_on) &&
                 !(row.status==ProjectStatus::cancelled && row.stopped_on==row.starts_on && row.completed_work.value()==0)) ||
-            (supply.available_from && row.starts_on < *supply.available_from) ||
-            row.minimum_memory_mib > supply.memory_mib || row.interconnect != supply.interconnect || row.monthly_support_cost.value() < 0)
-            invalid("Project identity, date, staff or source compatibility is invalid");
+            row.monthly_support_cost.value() < 0)
+            invalid("Project identity, date, staff or support cost is invalid");
         switch (row.kind) {
         case ProjectKind::serving:
             if (row.tasks_per_day == 0 || row.inference_milli_CU_per_task.value() <= 0 || row.total_work.value() != 0 ||
-                required_inference(row.tasks_per_day, row.inference_milli_CU_per_task).value() != row.requested.value() ||
-                required_inference(row.useful_tasks, row.inference_milli_CU_per_task) != row.completed_work ||
+                (!row.customer_inference &&
+                    (required_inference(row.tasks_per_day, row.inference_milli_CU_per_task).value() != row.requested.value() ||
+                     required_inference(row.useful_tasks, row.inference_milli_CU_per_task) != row.completed_work)) ||
                 row.status == ProjectStatus::completed)
                 invalid("Serving project has an invalid checked useful-task profile");
             break;
@@ -200,7 +215,8 @@ void validate_capacity(const CapacityState& state) {
         case ProjectStatus::active:
             if (row.stopped_on || (row.kind != ProjectKind::serving && row.completed_work == row.total_work))
                 invalid("Active project has a stop cursor or already completed its goal");
-            source_reservations[row.source_id] = checked_add(source_reservations[row.source_id], demand(row));
+            if (!row.customer_inference)
+                source_reservations[row.source_id] = checked_add(source_reservations[row.source_id], demand(row));
             break;
         case ProjectStatus::completed:
             if (!row.stopped_on || row.kind == ProjectKind::serving || row.completed_work != row.total_work)
@@ -214,8 +230,11 @@ void validate_capacity(const CapacityState& state) {
         if (row.stopped_on && (*row.stopped_on < row.starts_on || *row.stopped_on > latest))
             invalid("Project stop date is outside its valid lifetime");
     }
-    for (const auto& [id, reserved] : source_reservations)
-        if (reserved > source(state, id).nominal.value()) invalid("Project commitments oversubscribe nominal source capacity");
+    for (const auto& [id, reserved] : source_reservations) {
+        const auto& supply = source(state, id);
+        if (reserved > checked_unit_subtract(supply.nominal, supply.wholesale_reserved).value())
+            invalid("Project and wholesale commitments oversubscribe nominal source capacity");
+    }
     const auto report = capacity_report(state);
     if (report.assigned_staff > state.available_staff) invalid("Project commitments oversubscribe staff");
     struct Totals { MilliCU work{0}; std::uint64_t tasks = 0; std::size_t days = 0; std::optional<OrdinalDay> last_day; };
@@ -255,7 +274,7 @@ void validate_capacity(const CapacityState& state) {
             total.tasks += used.useful_tasks;
             if (row.kind == ProjectKind::serving) {
                 if (used.useful_tasks > row.tasks_per_day || used.protected_tasks > used.useful_tasks ||
-                    required_inference(used.useful_tasks, row.inference_milli_CU_per_task) != used.work)
+                    (!row.customer_inference && required_inference(used.useful_tasks, row.inference_milli_CU_per_task) != used.work))
                     invalid("Serving history credits work without its exact inference cost");
             } else {
                 if (used.useful_tasks != 0 || used.protected_tasks != 0 || total.work > row.total_work)
@@ -263,9 +282,11 @@ void validate_capacity(const CapacityState& state) {
                 if (total.work == row.total_work && (row.status != ProjectStatus::completed || !row.stopped_on || *row.stopped_on != day.day))
                     invalid("Finite work must complete on the exact day its goal is reached");
             }
-            auto [supply, fresh] = source_use.try_emplace(row.source_id, MilliCU{0});
-            (void)fresh;
-            supply->second = checked_unit_add(supply->second, used.work);
+            if (!row.customer_inference) {
+                auto [supply, fresh] = source_use.try_emplace(row.source_id, MilliCU{0});
+                (void)fresh;
+                supply->second = checked_unit_add(supply->second, used.work);
+            }
             staff_used += used.assigned_staff;
         }
         if (staff_used > available_staff_on(state,day.day)) invalid("Daily assignments oversubscribe staff available on that day");
@@ -277,7 +298,10 @@ void validate_capacity(const CapacityState& state) {
             const auto recorded = source_use.find(used.source_id);
             const auto actual = recorded == source_use.end() ? MilliCU{0} : recorded->second;
             if ((supply.available_from && *supply.available_from > day.day) ||
-                used.effective > supply.nominal || used.used.value() > used.effective.value() || actual != used.used)
+                used.effective > supply.nominal || used.wholesale_available > used.effective ||
+                used.used.value() > checked_unit_subtract(used.effective, used.wholesale_available).value() ||
+                used.wholesale_used.value() > used.wholesale_available.value() || actual != used.used ||
+                (supply.kind != CapacitySourceKind::owned && used.wholesale_available.value() != 0))
                 invalid("Daily work exceeds effective capacity or differs from source consumption");
         }
     }
@@ -348,7 +372,7 @@ void reserve_project(CapacityState& state, OrdinalDay day, CapacityProject row) 
         for (const auto& project_row : candidate.projects)
             if (project_row.status == ProjectStatus::active && project_row.source_id == source_id)
                 reserved = checked_add(reserved, demand(project_row));
-        if (reserved > source(candidate, source_id).effective.value())
+        if (!source_id.empty() && reserved > company_capacity(source(candidate, source_id)).value())
             invalid("A new project cannot exceed currently effective source capacity");
         std::sort(candidate.projects.begin(), candidate.projects.end(), [](const auto& a, const auto& b) { return a.id < b.id; });
     });
@@ -408,10 +432,11 @@ CapacityDay preview_capacity_day_unchecked(const CapacityState& state, OrdinalDa
             priority.push_back({i, required_inference(found->second.protected_tasks, row.inference_milli_CU_per_task).value(), quantum});
             discretionary.push_back({i, required_inference(found->second.additional_tasks, row.inference_milli_CU_per_task).value(), quantum});
         }
-        const auto priority_used = allocate(priority, supply.effective.value(), state);
-        const auto extra_used = allocate(discretionary, checked_subtract(supply.effective.value(), priority_used), state);
+        const auto company_output = company_capacity(supply);
+        const auto priority_used = allocate(priority, company_output.value(), state);
+        const auto extra_used = allocate(discretionary, checked_subtract(company_output.value(), priority_used), state);
         const auto serving_used = checked_add(priority_used, extra_used);
-        const auto other_used = allocate(other, checked_subtract(supply.effective.value(), serving_used), state);
+        const auto other_used = allocate(other, checked_subtract(company_output.value(), serving_used), state);
         for (const auto& claim : priority) {
             protected_work[claim.project_index] = claim.assigned;
             allocations[claim.project_index] = claim.assigned;
@@ -419,11 +444,19 @@ CapacityDay preview_capacity_day_unchecked(const CapacityState& state, OrdinalDa
         for (const auto& claim : discretionary)
             allocations[claim.project_index] = checked_add(allocations[claim.project_index], claim.assigned);
         for (const auto& claim : other) allocations[claim.project_index] = claim.assigned;
-        record.sources.push_back({supply.id, supply.effective, MilliCU{checked_add(serving_used, other_used)}});
+        record.sources.push_back({supply.id, supply.effective, MilliCU{checked_add(serving_used, other_used)},
+                                  std::min(supply.effective, supply.wholesale_reserved)});
     }
     for (std::size_t i = 0; i < state.projects.size(); ++i) {
         const auto& row = state.projects[i];
         if (row.status != ProjectStatus::active) continue;
+        if (row.customer_inference) {
+            const auto request = requests.find(row.id);
+            const auto protected_tasks = request == requests.end() ? 0 : request->second.protected_tasks;
+            const auto additional_tasks = request == requests.end() ? 0 : request->second.additional_tasks;
+            record.projects.push_back({row.id, MilliCU{0}, protected_tasks + additional_tasks, row.staff, protected_tasks});
+            continue;
+        }
         const bool serves = row.kind == ProjectKind::serving;
         const auto tasks = serves ? maximum_tasks(MilliCU{allocations[i]}, row.inference_milli_CU_per_task) : 0;
         const auto priority = serves ? maximum_tasks(MilliCU{protected_work[i]}, row.inference_milli_CU_per_task) : 0;
@@ -440,9 +473,18 @@ CapacityDay preview_capacity_day(const CapacityState& state, OrdinalDay day,
     if (validate_input) validate_capacity(state);
     return preview_capacity_day_unchecked(state, day, serving);
 }
-void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<ServingRequest>& serving, bool validate_io) {
+void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<ServingRequest>& serving,
+                        bool validate_io, std::span<const WholesaleUse> wholesale) {
     const auto apply_day = [&](CapacityState& candidate) {
         auto record = preview_capacity_day_unchecked(candidate, day, serving);
+        for (const auto& transfer : wholesale) {
+            const auto found = std::find_if(record.sources.begin(), record.sources.end(),
+                [&](const auto& row) { return row.source_id == transfer.source_id; });
+            if (found == record.sources.end() || transfer.work.value() <= 0 || found->wholesale_used.value() != 0 ||
+                transfer.work.value() > found->wholesale_available.value())
+                invalid("Wholesale work exceeds its reserved physical source");
+            found->wholesale_used = transfer.work;
+        }
         for (std::size_t i = 0; i < candidate.projects.size(); ++i) {
             auto& row = candidate.projects[i];
             if (row.status != ProjectStatus::active) continue;
@@ -461,11 +503,11 @@ void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<
     if (validate_io) mutate(state, apply_day);
     else apply_day(state);
 }
-void close_capacity_day(CapacityState& state, OrdinalDay day, bool validate_io) {
+void close_capacity_day(CapacityState& state, OrdinalDay day, bool validate_io, std::span<const WholesaleUse> wholesale) {
     std::vector<ServingRequest> serving;
     for (const auto& row : state.projects)
-        if (row.status == ProjectStatus::active && row.kind == ProjectKind::serving)
+        if (row.status == ProjectStatus::active && row.kind == ProjectKind::serving && !row.customer_inference)
             serving.push_back({row.id, 0, row.tasks_per_day});
-    close_capacity_day(state, day, serving, validate_io);
+    close_capacity_day(state, day, serving, validate_io, wholesale);
 }
 } // namespace pgp::core

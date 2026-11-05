@@ -298,6 +298,7 @@ Json definition_json(const Definition& definition, const std::string& key) {
         if (scenario->competition) result["competition"]=Json::parse(canonical_competition_setup(*scenario->competition));
         if (scenario->management) result["management"]=Json::parse(content::canonical_management_catalog(*scenario->management));
         if (scenario->infrastructure) result["infrastructure"]=Json::parse(content::canonical_infrastructure_catalog(*scenario->infrastructure));
+        if (!scenario->regional_markets.empty()) result["regional_markets"] = scenario->regional_markets;
         if (scenario->service_catalog) result["service_catalog"]=Json::parse(canonical_market_setup_bytes(*scenario->service_catalog,scenario->starts_on));
         if (scenario->market)
             result["market"] = Json::parse(canonical_market_setup_bytes(*scenario->market,scenario->starts_on));
@@ -306,6 +307,9 @@ Json definition_json(const Definition& definition, const std::string& key) {
     } else if (const auto* deal = std::get_if<DealDefinition>(&definition.data)) {
         result["kind"] = "deal"; result["minimum_payment_cents"] = deal->minimum_payment.value();
         result["minimum_duration_days"] = deal->minimum_duration.value();
+    } else if (const auto* catalog = std::get_if<RegionalMarkets>(&definition.data)) {
+        result["kind"] = "regional_markets";
+        result.update(Json::parse(canonical_regional_market_bytes(*catalog)));
     } else fail("unsupported_kind", path, "Unknown typed definition variant");
     return result;
 }

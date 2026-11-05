@@ -108,11 +108,13 @@ ColumnLayout {
         visible: panel.room === "office"
         Repeater {
             model: [{id:"offers",label:qsTr("Compare offers")}, {id:"products",label:qsTr("Services")}, {id:"contracts",label:qsTr("Contracts")},
+                    {id:"markets",label:qsTr("Regional markets")},
                     {id:"rivals",label:qsTr("Rivals")}, {id:"accounts",label:qsTr("Accounts")}, {id:"funding",label:qsTr("Funding and team")}, {id:"governance",label:qsTr("Board and people")}, {id:"policies",label:qsTr("Policies and alerts")}, {id:"score",label:qsTr("Slice score")}]
             Button {
                 required property var modelData
                 objectName: "office_" + modelData.id
                 text: modelData.label
+                visible: modelData.id !== "markets" || manager.regionalMarkets.count > 0
                 font.pixelSize: panel.textSize
                 checked: panel.officeSection === modelData.id
                 Accessible.name: text
@@ -255,34 +257,47 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "lab" && panel.section === "deploy"
-        Copy { text: qsTr("Match the service promise to independent evidence. Document-only scope drops scanned tables. Human review adds staff and monthly cost and limits throughput. Targeted retraining can qualify the full task scope without that control.") }
+        Copy { text: qsTr("Match the service promise to independent evidence. The distribution channel determines who supplies hardware, which customers qualify, and how quickly buyers switch.") }
         Choice { id: deploymentService; objectName: "deploymentServiceChoice"; label: qsTr("Customer task promise"); options: manager.services }
         Choice { id: deploymentModel; objectName: "deploymentModelChoice"; label: qsTr("Stopped model to serve"); rows: manager.models }
         Choice { id: deploymentEvidence; objectName: "deploymentEvidenceChoice"; label: qsTr("Independent evidence for that model"); rows: manager.evidence }
-        Choice { id: deploymentSource; label: qsTr("Serving compute source"); options: manager.sources }
+        Choice { id: deploymentSource; label: qsTr("Serving compute source"); options: manager.sources; visible: deploymentService.selectedOption.customerHardware !== true }
+        Choice {
+            id: deploymentRegion
+            objectName: "deploymentRegionChoice"
+            label: qsTr("Launch territory")
+            options: manager.launchRegions
+            visible: options.length > 0 && deploymentService.selectedOption.existing !== true
+        }
+        Copy { visible: manager.launchRegions.length > 0; text: qsTr("A service keeps its launch territory when you replace its model.") }
+        Copy { visible: deploymentService.selectedOption.reviewRequired === true; text: qsTr("This agent requires paid human review.") }
         CheckBox {
             id: humanReview
             Layout.fillWidth: true
             contentItem: Text { text: humanReview.text; font: humanReview.font; color: humanReview.enabled ? "#f2f4f7" : "#aebbc7"; leftPadding: humanReview.indicator.width + humanReview.spacing; wrapMode: Text.Wrap }
-            text: qsTr("Add paid human review of scanned tables")
+            text: qsTr("Add paid human review")
             font.pixelSize: panel.textSize
             Accessible.name: text
-            enabled: deploymentService.selectedOption.reviewAllowed === true
+            visible: deploymentService.selectedOption.reviewRequired !== true
+            enabled: visible && deploymentService.selectedOption.reviewAllowed === true
             onEnabledChanged: if (!enabled) checked = false
         }
-        Copy { text: manager.servicePreview(deploymentService.value, deploymentModel.value, humanReview.checked) }
+        Copy { text: manager.servicePreview(deploymentService.value, deploymentModel.value, humanReview.checked || deploymentService.selectedOption.reviewRequired === true) }
         Action {
             objectName: "deployButton"
             text: qsTr("Qualify and deploy / replace service")
             enabled: panel.editable && deploymentModel.value.length > 0 && deploymentEvidence.value.length > 0
-            onClicked: manager.deploy(deploymentService.value, deploymentModel.value, deploymentEvidence.value, deploymentSource.value, humanReview.checked)
+            onClicked: manager.deploy(deploymentService.value, deploymentModel.value, deploymentEvidence.value,
+                                      deploymentSource.visible ? deploymentSource.value : "",
+                                      humanReview.checked || deploymentService.selectedOption.reviewRequired === true,
+                                      deploymentRegion.visible ? deploymentRegion.value : "")
         }
         Selection { heading: qsTr("Deployed services"); rows: manager.products }
-        Field { id: productPrice; objectName: "productPriceField"; label: qsTr("Price per task · constant 2014 cents"); value: (manager.products.selectedRow.fields || {}).priceCents || "" }
+        Field { id: productPrice; objectName: "productPriceField"; label: qsTr("Price per task · constant 2014 cents"); value: (manager.products.selectedRow.fields || {}).priceCents || ""; visible: (manager.products.selectedRow.fields || {}).freeWeights !== true }
         Action {
             objectName: "setProductPriceButton"
             text: qsTr("Set service price")
-            enabled: panel.editable && manager.products.selectedId.length > 0
+            enabled: panel.editable && productPrice.visible && manager.products.selectedId.length > 0
             onClicked: manager.setProductPrice(manager.products.selectedId, productPrice.value)
         }
     }
@@ -303,6 +318,12 @@ ColumnLayout {
         visible: panel.room === "office" && panel.officeSection === "products"
         Selection { heading: qsTr("Deployed services"); rows: manager.products }
         Action { text: qsTr("Stop selected service"); enabled: panel.editable && manager.products.selectedId.length > 0; onClicked: campaign.projectCancel(manager.products.selectedRow.fields.projectId) }
+    }
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: panel.room === "office" && panel.officeSection === "markets"
+        Copy { text: qsTr("The latest settled day shows tasks delivered by all vendors, your deliveries, and demand left with the outside option. Licensed and open-weight work uses the region's customer hardware.") }
+        Selection { objectName: "regionalMarketSelection"; heading: qsTr("Market regions"); rows: manager.regionalMarkets }
     }
     ColumnLayout {
         Layout.fillWidth: true
