@@ -42,11 +42,13 @@ content::Scalar parse_scalar(const Json& value) {
     detail::invalid("scalar/type","Unsupported scalar type");
 }
 Json binding(const ScopeBinding& value) {return Json{{"scope",content::scope_name(value.scope)},{"id",value.id}};}
-ScopeBinding parse_binding(const Json& value) {
+ScopeBinding parse_binding(const Json& value, bool member=false) {
     detail::fields(value,"binding",{"scope","id"});
     const auto scope=detail::text(value.at("scope"),"binding/scope",16);
     auto kind=content::Scope::world;
-    if (scope=="company") kind=content::Scope::company;
+    if (member && scope=="project") kind=content::Scope::project;
+    else if (member && scope=="contract") kind=content::Scope::contract;
+    else if (scope=="company") kind=content::Scope::company;
     else if (scope=="state") kind=content::Scope::state;
     else if (scope!="world") detail::invalid("binding/scope","Unsupported scope");
     return {kind,detail::text(value.at("id"),"binding/id",128)};
@@ -67,6 +69,22 @@ constexpr std::array<std::string_view,3> reservation_names{"active","completed",
 constexpr std::array<std::string_view,5> activation_names{"ready","delayed","awaiting_choice","continuous_active","completed"};
 constexpr std::array<std::string_view,2> frame_names{"sequence","subflow"};
 constexpr std::array<std::string_view,3> presentation_names{"news","dialogue","result"};
+Json committed_source_json(const CommittedSource& source) {
+    return {{"fact_id",source.fact_id},{"subject",binding(source.subject)},{"settled_on",source.settled_on.value()},
+        {"unit",content::unit_name(source.unit)},{"result",scalar(source.result)},{"cause",source.cause}};
+}
+CommittedSource parse_committed_source(const Json& value) {
+    detail::fields(value,"committed_source",{"fact_id","subject","settled_on","unit","result","cause"});
+    const auto name=detail::text(value.at("unit"),"unit",64);
+    for (unsigned index=0;index<=static_cast<unsigned>(content::Unit::count);++index) {
+        const auto unit=static_cast<content::Unit>(index);
+        if (content::unit_name(unit)==name)
+            return {detail::text(value.at("fact_id"),"fact_id",128),parse_binding(value.at("subject"),true),
+                OrdinalDay{detail::i64(value.at("settled_on"),"settled_on")},unit,
+                parse_scalar(value.at("result")),detail::text(value.at("cause"),"cause",256)};
+    }
+    detail::invalid("committed_source/unit","Unsupported fact unit");
+}
 Json simulation_json(const core::SimulationState& state) {
     Json reservations=Json::array(),opening=Json::array(),receipts=Json::array(),random=Json::object();
     for (const auto& row:state.reservations) reservations.push_back({{"id",row.id},{"name",row.name},
@@ -268,12 +286,16 @@ Json runtime_json(const RuntimeState& state) {
             {"due",optional_day(activation.due)},{"wait_started",optional_day(activation.wait_started)},
             {"presentation_id",optional_id(activation.presentation_id)},
             {"node_visits",activation.node_visits},{"exiting",activation.exiting}});
+        if (activation.committed_source) activations.back()["committed_source"]=committed_source_json(*activation.committed_source);
     }
-    for (const auto& lifecycle:state.lifecycles) lifecycles.push_back({{"definition_id",lifecycle.definition_id},
-        {"binding",binding(lifecycle.binding)},{"occurrences",lifecycle.occurrences},{"was_eligible",lifecycle.was_eligible},
-        {"last_checked",optional_day(lifecycle.last_checked)},{"last_started",optional_day(lifecycle.last_started)},
-        {"first_due",optional_day(lifecycle.first_due)},{"calendar_day",lifecycle.calendar_day},{"interval_index",lifecycle.interval_index},
-        {"active_activation",optional_id(lifecycle.active_activation)}});
+    for (const auto& lifecycle:state.lifecycles) {
+        lifecycles.push_back({{"definition_id",lifecycle.definition_id},
+            {"binding",binding(lifecycle.binding)},{"occurrences",lifecycle.occurrences},{"was_eligible",lifecycle.was_eligible},
+            {"last_checked",optional_day(lifecycle.last_checked)},{"last_started",optional_day(lifecycle.last_started)},
+            {"first_due",optional_day(lifecycle.first_due)},{"calendar_day",lifecycle.calendar_day},{"interval_index",lifecycle.interval_index},
+            {"active_activation",optional_id(lifecycle.active_activation)}});
+        if (lifecycle.committed_cursor) lifecycles.back()["committed_cursor"]=*lifecycle.committed_cursor;
+    }
     for (const auto& modifier:state.modifiers) modifiers.push_back({{"activation_id",modifier.activation_id},
         {"binding",binding(modifier.binding)},{"key",modifier.key},{"field",modifier.field},{"add_basis_points",modifier.add_basis_points}});
     for (const auto& receipt:state.receipts) receipts.push_back({{"id",receipt.id},{"activation_id",receipt.activation_id},
@@ -351,7 +373,7 @@ RuntimeState parse_runtime(const Json& value,const CompiledProgram& program) {
     const auto& activations=value.at("activations");detail::array(activations,"activations",maximum_activations);
     for (const auto& item:activations) {
         detail::fields(item,"activation",{"id","definition_id","definition_revision","started_on","binding","current_flow","current_node",
-            "frames","status","due","wait_started","presentation_id","node_visits","exiting"});
+            "frames","status","due","wait_started","presentation_id","node_visits","exiting"},{"committed_source"});
         Activation activation;
         activation.id=detail::u64(item.at("id"),"id");activation.definition_id=detail::text(item.at("definition_id"),"definition_id",128);
         activation.definition_revision=static_cast<std::uint32_t>(detail::u64(item.at("definition_revision"),"definition_revision",max_u32));
@@ -363,6 +385,7 @@ RuntimeState parse_runtime(const Json& value,const CompiledProgram& program) {
         activation.presentation_id=parse_id(item.at("presentation_id"));
         activation.node_visits=static_cast<std::uint32_t>(detail::u64(item.at("node_visits"),"node_visits",max_u32));
         activation.exiting=detail::boolean(item.at("exiting"),"exiting");
+        if (item.contains("committed_source")) activation.committed_source=parse_committed_source(item.at("committed_source"));
         const auto& frames=item.at("frames");detail::array(frames,"frames",maximum_continuation_frames);
         for (const auto& frame:frames) activation.frames.push_back(parse_frame(frame));
         result.activations.push_back(std::move(activation));
@@ -370,12 +393,14 @@ RuntimeState parse_runtime(const Json& value,const CompiledProgram& program) {
     const auto& lifecycles=value.at("lifecycles");detail::array(lifecycles,"lifecycles",maximum_activations);
     for (const auto& item:lifecycles) {
         detail::fields(item,"lifecycle",{"definition_id","binding","occurrences","was_eligible","last_checked","last_started",
-            "first_due","calendar_day","interval_index","active_activation"});
+            "first_due","calendar_day","interval_index","active_activation"},{"committed_cursor"});
         result.lifecycles.push_back({detail::text(item.at("definition_id"),"definition_id",128),parse_binding(item.at("binding")),
             static_cast<std::uint32_t>(detail::u64(item.at("occurrences"),"occurrences",max_u32)),detail::boolean(item.at("was_eligible"),"was_eligible"),
             parse_day(item.at("last_checked")),parse_day(item.at("last_started")),parse_day(item.at("first_due")),
             static_cast<unsigned>(detail::u64(item.at("calendar_day"),"calendar_day",31)),
             detail::u64(item.at("interval_index"),"interval_index"),parse_id(item.at("active_activation"))});
+        if (item.contains("committed_cursor"))
+            result.lifecycles.back().committed_cursor=static_cast<std::uint32_t>(detail::u64(item.at("committed_cursor"),"committed_cursor",max_u32));
     }
     const auto& modifiers=value.at("modifiers");detail::array(modifiers,"modifiers",maximum_records);
     for (const auto& item:modifiers) {

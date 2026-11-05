@@ -58,6 +58,13 @@ effect and RNG state. [Mac evidence](evidence/M1-06-selectors.md) records the
 stable ordering, privacy rules and verification. The M1-03 gate keeps M1-06
 open. Next Mac batch is M1-07.
 
+**M1-07 committed-fact slice, 2026-11-04:** project completions and missed
+contract starts now supply owned settlement causes to subscribed roots.
+Choices can suspend dispatch without losing the remaining source records.
+News and required dialogue share the source identity. [Mac evidence](evidence/M1-07-committed-facts.md)
+records exact continuation, suppression and rollback checks. Seeded occurrence
+dispatch and digest remain open.
+
 **Mac-first batch, 2026-11-04:** scoped variables/flags, checked expressions and
 transactional `set_variable` assignments now extend that shared runtime and save
 boundary. The user deferred full native/release qualification; those gates stay

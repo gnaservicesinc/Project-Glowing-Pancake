@@ -47,8 +47,18 @@ QString presentation_title(runtime::PresentationKind kind) {
     if (kind == runtime::PresentationKind::result) return QStringLiteral("Decision result");
     return QStringLiteral("Company briefing");
 }
-QString presentation_detail(const runtime::Presentation& row) {
-    const auto context = readable(row.flow_id);
+QString presentation_detail(const runtime::Checkpoint& checkpoint, const runtime::Presentation& row) {
+    auto context = readable(row.flow_id);
+    const auto& activations = checkpoint.runtime.activations;
+    const auto found = std::lower_bound(activations.begin(), activations.end(), row.activation_id,
+        [](const auto& activation, std::uint64_t id) { return activation.id < id; });
+    if (found != activations.end() && found->id == row.activation_id && found->committed_source) {
+        const auto& source = *found->committed_source;
+        context = QStringLiteral("%1 · %2\nSettled %3\n%4")
+            .arg(readable(source.fact_id), text(source.subject.id), text(core::iso_date(source.settled_on)), text(source.cause));
+        if (source.unit == content::Unit::milli_CU)
+            context += QStringLiteral("\n%1 CU completed").arg(cu(std::get<std::int64_t>(source.result)));
+    }
     if (row.kind == runtime::PresentationKind::dialogue && !row.resolved)
         return QStringLiteral("%1\nA response is required before work continues. Review the available options.").arg(context);
     if (!row.selected_choice.empty()) return QStringLiteral("%1\nSelected response: %2").arg(context,readable(row.selected_choice));
@@ -99,7 +109,7 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint) {
     std::vector<CampaignRow> rows;
     for (const auto& row : checkpoint.runtime.presentations)
         rows.push_back({QStringLiteral("flow:") + integer(row.id),presentation_title(row.kind),text(core::iso_date(row.day)),
-            presentation_detail(row),row.kind == runtime::PresentationKind::dialogue && !row.resolved ? QStringLiteral("Response required") : QStringLiteral("Recorded"),
+            presentation_detail(checkpoint,row),row.kind == runtime::PresentationKind::dialogue && !row.resolved ? QStringLiteral("Response required") : QStringLiteral("Recorded"),
             row.kind == runtime::PresentationKind::dialogue && !row.resolved});
     const auto& state = checkpoint.world.simulation;
     if (state.liquidity) for (const auto& workout : state.liquidity->workouts) {
@@ -208,7 +218,7 @@ QString CampaignController::requiredTitle() const {
 QString CampaignController::requiredText() const {
     const auto kind = requiredKind();
     if (kind == QStringLiteral("core")) return QStringLiteral("A scheduled delivery awaits your decision. Accepting consumes its reserved funds; declining does not refund earlier purchases.");
-    if (kind == QStringLiteral("content")) return presentation_detail(*waitingPresentation());
+    if (kind == QStringLiteral("content")) return presentation_detail(snapshot_->checkpoint,*waitingPresentation());
     if (kind == QStringLiteral("liquidity")) {
         const auto report = core::liquidity_report(*snapshot_->checkpoint.world.simulation.liquidity);
         return QStringLiteral("%1\nOverdue payables %2 · matured principal %3\nRespond by %4. Acknowledging keeps this deadline; financing must be followed by payment.")

@@ -66,6 +66,10 @@ block Mac implementation. Keep build caches between batches.
   [weighted branches](evidence/M1-06-weighted-branches.md),
   [duration predicates](evidence/M1-06-duration.md) and
   [selectors](evidence/M1-06-selectors.md).
+- M1-07 subscribes flows to settled project completions and missed contract
+  starts. The inbox uses their actual cause and a required choice can suspend
+  and resume dispatch without repeating consumed sources. Seeded occurrences
+  and digest remain open. [Committed-fact evidence](evidence/M1-07-committed-facts.md)
 - Weighted-branch commit `2a37284` passes 26/26 CTests in each of all six native
   jobs across five targets, including GCC/Clang/MSVC and native Windows arm64.
   [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41895189273)
@@ -193,9 +197,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac implementation: M1-07 built-in event dispatch.**
-Use the shared flow and save boundaries to dispatch committed business facts
-and bounded seeded occurrences. M1-03 retains
+**Next Mac implementation: M1-07 seeded occurrences and digest.**
+Extend the shared flow and save boundaries from committed business facts to
+bounded seeded occurrences and digest projection. M1-03 retains
 the M0-03 prerequisite gate. Content finalization, save migrations and packaging
 remain later work.
 
@@ -204,7 +208,7 @@ M3-05 (AI-assisted playable base-event pack), with human stories augmenting the
 baseline. The eight-flow matrix covers milestones, evaluation/data recovery,
 contract results, liquidity, rivals, supplier opportunities, random world demand
 and recovery. See [event coverage, AI assignments and modular extension
-rules](EVENT_SYSTEM.md). These two tasks remain planned, with prerequisites.
+rules](EVENT_SYSTEM.md). M3-05 remains planned with prerequisites.
 
 **Finish M0-03 qualification**, using the UI/build-release briefs and the checked
 local evidence. Run native Linux OpenGL and Windows OpenGL/D3D11 recovery,

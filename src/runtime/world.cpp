@@ -1,6 +1,7 @@
 #include <pgp/runtime/runtime.hpp>
 
 #include "duration.hpp"
+#include "committed.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -400,6 +401,7 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
             });
             if (owner->active_activation != activation.id) invalid("Live activation is not its occurrence scope's sole active instance");
         }
+    detail::validate_committed_sources(program, checkpoint);
     std::map<std::uint64_t, std::uint32_t> last_random_visit;
     std::optional<core::OrdinalDay> last_random_day;
     if (state.narrative_origin.has_value() != !state.random_resolutions.empty())

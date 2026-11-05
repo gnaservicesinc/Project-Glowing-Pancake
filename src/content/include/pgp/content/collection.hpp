@@ -115,6 +115,7 @@ struct FlowDefinition {
     // Positive-delay graph cycles need an explicit finite execution budget.
     std::uint32_t max_node_visits = 0;
     std::vector<std::string> tags;
+    std::string on_committed{};
 };
 struct ScenarioDefinition {
     pgp::core::OrdinalDay starts_on;

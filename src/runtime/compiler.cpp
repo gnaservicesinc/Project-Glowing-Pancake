@@ -271,6 +271,7 @@ Json definition_json(const Definition& definition, const std::string& key) {
         if (!flow->exit_node.empty()) result["exit_node"] = flow->exit_node;
         if (flow->max_node_visits) result["max_node_visits"] = flow->max_node_visits;
         if (!flow->tags.empty()) result["tags"] = flow->tags;
+        if (!flow->on_committed.empty()) result["on_committed"] = flow->on_committed;
         result["nodes"] = Json::object();
         for (const auto& [name, node] : flow->nodes) result["nodes"][name] = node_json(node, flow->scope, path_child(path_child(path, "nodes"), name));
     } else if (const auto* research = std::get_if<ResearchDefinition>(&definition.data)) {

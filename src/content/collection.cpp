@@ -561,12 +561,21 @@ std::vector<std::string> edges(const Node& node) {
     return result;
 }
 FlowDefinition flow(const Json& value, const std::string& path, const Registry& registry) {
-    fields(value, path, {"id", "kind", "revision", "scope", "trigger", "lifecycle", "entry_node", "exit_node", "nodes", "max_node_visits", "tags"},
+    fields(value, path, {"id", "kind", "revision", "scope", "trigger", "lifecycle", "entry_node", "exit_node", "nodes", "max_node_visits", "tags", "on_committed"},
            {"id", "kind", "revision", "scope", "trigger", "lifecycle", "entry_node", "nodes"});
     const auto context = scope(value.at("scope"), child(path, "scope"));
     FlowDefinition result{context, condition(value.at("trigger"), child(path, "trigger"), context, registry),
                           lifecycle(value.at("lifecycle"), child(path, "lifecycle"), context, registry),
                           id(value.at("entry_node"), child(path, "entry_node")), "", {}, 0, {}};
+    if (value.contains("on_committed")) {
+        const auto source_path = child(path, "on_committed");
+        result.on_committed = id(value.at("on_committed"), source_path);
+        const auto* source = registry.committed_fact(result.on_committed);
+        if (!source) fail("unknown_committed_fact", source_path, "No registered committed fact provider");
+        if (source->owner_scope != context) fail("scope", source_path, "Committed fact owner differs from flow scope");
+        if (result.lifecycle.mode != LifecycleMode::once && result.lifecycle.mode != LifecycleMode::recurring)
+            fail("lifecycle", source_path, "Committed fact flows require once or bounded recurring lifecycle");
+    }
     std::set<std::string> predicate_ids;
     unique_predicates(result.trigger, child(path, "trigger"), predicate_ids);
     if (result.lifecycle.exit_when) unique_predicates(*result.lifecycle.exit_when, child(path, "lifecycle/exit_when"), predicate_ids);
@@ -818,7 +827,12 @@ void validate_references(const Collection& collection, const Registry& registry)
         const auto path = child("/definitions", name);
         if (const auto* scenario_definition = std::get_if<ScenarioDefinition>(&definition.data)) {
             for (const auto& target : scenario_definition->research) (void)reference(target, "research", path);
-            for (const auto& target : scenario_definition->flows) (void)reference(target, "flow", path);
+            std::set<std::string> subscriptions;
+            for (const auto& target : scenario_definition->flows) {
+                const auto& source = std::get<FlowDefinition>(reference(target, "flow", path).data).on_committed;
+                if (!source.empty() && !subscriptions.insert(source).second)
+                    fail("duplicate_subscription", path, "One baseline flow may subscribe to a committed fact per scenario");
+            }
         } else if (const auto* research_definition = std::get_if<ResearchDefinition>(&definition.data)) {
             auto& links = research_edges[name];
             links = research_definition->all_of;
@@ -829,8 +843,11 @@ void validate_references(const Collection& collection, const Registry& registry)
             for (const auto& [node_id, node_value] : flow_definition->nodes) {
                 if (node_value.kind == NodeKind::subflow) {
                     const auto& target = reference(node_value.subflow_id, "flow", child(path, node_id));
-                    if (std::get<FlowDefinition>(target.data).scope != flow_definition->scope)
+                    const auto& called = std::get<FlowDefinition>(target.data);
+                    if (called.scope != flow_definition->scope)
                         fail("scope", path, "Subflow context scope mismatch");
+                    if (!called.on_committed.empty())
+                        fail("lifecycle", path, "A committed-fact root cannot be called as a subflow");
                     links.push_back(node_value.subflow_id);
                 }
                 for (const auto& effect_value : node_value.effects) {

@@ -75,6 +75,14 @@ struct RelationMetadata {
     std::string provider = "foundation";
 };
 inline constexpr std::size_t maximum_relation_members = 4096;
+struct CommittedFactMetadata {
+    std::string id;
+    Scope owner_scope;
+    Scope subject_scope;
+    std::string result_fact;
+    std::string help;
+    std::string provider = "foundation";
+};
 
 // Modules explicitly register vocabulary. Unknown operations never become an
 // executable expression or a filesystem/network escape hatch.
@@ -86,18 +94,22 @@ public:
     void register_variable(FactMetadata metadata, Scalar default_value);
     void register_effect(EffectMetadata metadata);
     void register_relation(RelationMetadata metadata);
+    void register_committed_fact(CommittedFactMetadata metadata);
     [[nodiscard]] const FactMetadata* fact(std::string_view id) const;
     [[nodiscard]] const EffectMetadata* effect(std::string_view id) const;
     [[nodiscard]] const RelationMetadata* relation(std::string_view id) const;
+    [[nodiscard]] const CommittedFactMetadata* committed_fact(std::string_view id) const;
     [[nodiscard]] const auto& facts() const noexcept { return facts_; }
     [[nodiscard]] const auto& effects() const noexcept { return effects_; }
     [[nodiscard]] const auto& relations() const noexcept { return relations_; }
+    [[nodiscard]] const auto& committed_facts() const noexcept { return committed_facts_; }
 private:
     void validate_provider(std::string_view provider, const std::vector<std::string>& dependencies) const;
     std::map<std::string, std::vector<std::string>, std::less<>> systems_;
     std::map<std::string, FactMetadata, std::less<>> facts_;
     std::map<std::string, EffectMetadata, std::less<>> effects_;
     std::map<std::string, RelationMetadata, std::less<>> relations_;
+    std::map<std::string, CommittedFactMetadata, std::less<>> committed_facts_;
 };
 [[nodiscard]] Registry foundation_registry();
 [[nodiscard]] std::string_view scope_name(Scope scope);

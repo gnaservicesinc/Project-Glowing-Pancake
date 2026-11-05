@@ -88,6 +88,14 @@ the aggregate and keeps the flow owner's daily history. Member predicates
 cannot declare their own timers. Effects and lifecycle ownership stay on their
 existing explicit scopes.
 
+An optional `on_committed` on a company flow selects a registered settlement
+source such as `capacity.project_completed` or `market.contract_missed_start`.
+The authored trigger is an additional prepared-morning guard. Use `once` or
+bounded `recurring` with cooldown. Each scenario can enable one root per
+source. The root can call ordinary reusable story subflows, and cannot itself
+be called as a subflow. The settled entity, date and typed owning result remain
+attached to the activation through choices, delays and save/reload.
+
 Lifecycle modes are `once`, bounded `recurring`, bounded anchored `interval`,
 `scheduled`, and `continuous` with an explicit exit condition/node. Intervals
 accept days/calendar months and campaign_start/scope_created/month_start/fixed_date

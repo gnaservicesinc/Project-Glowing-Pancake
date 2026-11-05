@@ -176,6 +176,20 @@ void Registry::register_relation(RelationMetadata metadata) {
 const RelationMetadata* Registry::relation(std::string_view id) const {
     const auto found = relations_.find(id); return found == relations_.end() ? nullptr : &found->second;
 }
+void Registry::register_committed_fact(CommittedFactMetadata metadata) {
+    validate_common(metadata.id, metadata.help);
+    validate_provider(metadata.provider, {});
+    const auto* result = fact(metadata.result_fact);
+    if (!valid_scope(metadata.owner_scope) || !result || result->scope != metadata.subject_scope ||
+        result->visibility != Visibility::player_known || result->default_value ||
+        (result->boundary != Boundary::settlement && result->boundary != Boundary::committed_result))
+        throw std::invalid_argument("A committed occurrence requires a public owning result fact on its subject");
+    const auto id = metadata.id;
+    if (!committed_facts_.emplace(id, std::move(metadata)).second) throw std::invalid_argument("Duplicate committed fact ID");
+}
+const CommittedFactMetadata* Registry::committed_fact(std::string_view id) const {
+    const auto found = committed_facts_.find(id); return found == committed_facts_.end() ? nullptr : &found->second;
+}
 Registry foundation_registry() {
     Registry result;
     const auto maximum = std::numeric_limits<std::int64_t>::max();
@@ -217,6 +231,10 @@ Registry foundation_registry() {
     boolean("project.is_completed", "Whether the finite project finished its work.", Scope::project);
     boolean("contract.is_active", "Whether this contract currently serves.", Scope::contract);
     boolean("contract.missed_start", "Whether this contract missed its start deadline.", Scope::contract);
+    result.register_committed_fact({"capacity.project_completed", Scope::company, Scope::project, "project.completed_milli_cu",
+        "Finite project work completed at settlement. Dispatch on the next prepared morning."});
+    result.register_committed_fact({"market.contract_missed_start", Scope::company, Scope::contract, "contract.missed_start",
+        "An accepted contract missed its start deadline at settlement. Dispatch on the next prepared morning."});
     auto effect = [&](std::string id, std::vector<ArgumentMetadata> args, std::string help) {
         result.register_effect({std::move(id), {Scope::company}, std::move(args), std::move(help),
             {{"target", PortType::scope, Scope::company, Unit::none, false},

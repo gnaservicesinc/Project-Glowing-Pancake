@@ -1,6 +1,7 @@
 #include <pgp/runtime/runtime.hpp>
 
 #include "duration.hpp"
+#include "committed.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -343,6 +344,7 @@ void ensure_lifecycles(Checkpoint& checkpoint, const CompiledProgram& program) {
         if (found != state.lifecycles.end()) continue;
         LifecycleState entry;
         entry.definition_id = id; entry.binding = binding;
+        if (!current->on_committed.empty()) entry.committed_cursor = 0;
         if (current->lifecycle.mode == content::LifecycleMode::interval) {
             const auto created = current->scope == content::Scope::world ? world.campaign_start : world.scope_created;
             const auto anchor = resolve_anchor(*current->lifecycle.anchor, world.campaign_start, created);
@@ -380,6 +382,52 @@ bool interval_ready(LifecycleState& state, const content::Lifecycle& lifecycle_d
     if (state.interval_index == std::numeric_limits<std::uint64_t>::max()) fail(RuntimeReason::budget_exceeded, "Interval index exhausted.");
     ++state.interval_index;
     return true;
+}
+void start_activation(Checkpoint& checkpoint, LifecycleState& entry, const content::FlowDefinition& definition,
+                      const CompiledProgram& program, RuntimeResult& result, std::size_t& steps,
+                      std::optional<CommittedSource> source = std::nullopt) {
+    auto& state = checkpoint.runtime;
+    if (state.activations.size() >= maximum_activations || entry.occurrences == std::numeric_limits<std::uint32_t>::max())
+        fail(RuntimeReason::budget_exceeded, "Activation/occurrence count budget exceeded.");
+    Activation active;
+    active.id = identifier(state.next_activation_id);
+    active.definition_id = entry.definition_id;
+    active.definition_revision = program.collection.find(entry.definition_id)->revision;
+    active.started_on = checkpoint.world.simulation.date;
+    active.binding = entry.binding;
+    active.current_flow = entry.definition_id;
+    active.current_node = definition.entry_node;
+    active.committed_source = std::move(source);
+    entry.active_activation = active.id;
+    entry.last_started = active.started_on;
+    ++entry.occurrences;
+    if (active.committed_source)
+        append_trace(result, active, "Committed " + active.committed_source->fact_id + " for " + active.committed_source->subject.id);
+    state.activations.push_back(std::move(active));
+    execute(checkpoint, state.activations.back(), program, result, steps);
+}
+void dispatch_committed(Checkpoint& checkpoint, LifecycleState& entry, const content::FlowDefinition& definition,
+                        const CompiledProgram& program, RuntimeResult& result, std::size_t& steps,
+                        std::size_t& condition_work) {
+    const auto today = checkpoint.world.simulation.date;
+    if (entry.last_checked != today) {
+        entry.last_checked = today;
+        entry.committed_cursor = 0;
+        entry.was_eligible = false;
+    }
+    const auto sources = detail::committed_sources(checkpoint.world, program.registry, definition.on_committed, entry.binding, today);
+    while (*entry.committed_cursor < sources.size()) {
+        if (++steps > maximum_steps_per_operation) fail(RuntimeReason::budget_exceeded, "Committed occurrence dispatch budget exceeded.");
+        const auto& source = sources[(*entry.committed_cursor)++];
+        const auto& rule = definition.lifecycle;
+        const bool cooling_down = entry.last_started && today.value() - entry.last_started->value() < rule.cooldown_days;
+        if (entry.active_activation || entry.occurrences >= rule.max_occurrences || cooling_down) continue;
+        const auto path = "flows/" + entry.definition_id + "/committed/" + std::to_string(*entry.committed_cursor - 1);
+        entry.was_eligible = condition_met(definition.trigger, entry.binding, program, checkpoint, result, path, entry.definition_id, condition_work);
+        if (!entry.was_eligible) continue;
+        start_activation(checkpoint, entry, definition, program, result, steps, source);
+        if (has_choice(checkpoint.runtime)) return;
+    }
 }
 void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResult& result, std::size_t& steps) {
     auto& state = checkpoint.runtime;
@@ -430,8 +478,13 @@ void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResu
     }
     for (auto& entry : state.lifecycles) {
         if (++steps > maximum_steps_per_operation) fail(RuntimeReason::budget_exceeded, "Lifecycle evaluation budget exceeded.");
-        if (entry.last_checked == today) continue;
         const auto& definition = flow(program, entry.definition_id);
+        if (entry.committed_cursor) {
+            dispatch_committed(checkpoint, entry, definition, program, result, steps, condition_work);
+            if (has_choice(state)) return;
+            continue;
+        }
+        if (entry.last_checked == today) continue;
         entry.last_checked = today;
         const bool eligible = condition_met(definition.trigger, entry.binding, program, checkpoint, result,
                                              "flows/" + entry.definition_id + "/trigger", entry.definition_id, condition_work);
@@ -447,17 +500,7 @@ void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResu
         const bool permitted = continuous ? (entry.occurrences == 0 || definition.lifecycle.allow_reentry) :
                                             entry.occurrences < definition.lifecycle.max_occurrences;
         if (!eligible || !due_now || !permitted || entry.active_activation) continue;
-        if (state.activations.size() >= maximum_activations || entry.occurrences == std::numeric_limits<std::uint32_t>::max())
-            fail(RuntimeReason::budget_exceeded, "Activation/occurrence count budget exceeded.");
-        Activation active;
-        active.id = identifier(state.next_activation_id); active.definition_id = entry.definition_id;
-        active.definition_revision = program.collection.find(entry.definition_id)->revision;
-        active.started_on = today;
-        active.binding = entry.binding; active.current_flow = entry.definition_id;
-        active.current_node = definition.entry_node;
-        entry.active_activation = active.id; entry.last_started = today; ++entry.occurrences;
-        state.activations.push_back(std::move(active));
-        execute(checkpoint, state.activations.back(), program, result, steps);
+        start_activation(checkpoint, entry, definition, program, result, steps);
         if (has_choice(state)) return;
     }
     state.prepared_day = today;

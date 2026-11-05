@@ -1,6 +1,6 @@
 # Built-in events, news, and story layers
 
-Updated 2026-11-04 · Implementation contract; the event runtime and playable pack are not implemented yet
+Updated 2026-11-04 · The committed-fact path runs in engineering fixtures. The playable pack is planned.
 
 ## Playable baseline
 
@@ -77,4 +77,10 @@ The ordered [backlog](BACKLOG.md) owns task completion and dependencies. [The im
 - **M3-05:** Create and validate the eight-definition playable baseline after the slice mechanics and E1a exist. Supply the minimal bounded rival/visible-warning fact producers through shared commands. Coding agents author the baseline rules/templates/fixtures; use Studio to inspect/manage/finalize the reviewed pack through the same version workflow. Attach richer story treatment selectively. Run a seeded headless demonstration and pending-occurrence reload checks.
 - **M5–M7 / M8-01:** Extend coverage alongside each implemented system, then audit the full base pack, opportunities/recovery, repetition and human story enrichment. Do not claim century coverage from the slice fixtures.
 
-Current state: design and assignments only. No checked task, runtime feature, production event, content release or playtest success follows from this document.
+M1-07 now supports `on_committed` subscriptions for settled project completion
+and missed contract starts. The next prepared opening resolves these sources
+with the existing flow lifecycle. Saved activations carry the actual source
+result and a saved cursor preserves pending work through choices. The inbox
+projects this cause from the activation. [Implementation and limits](evidence/M1-07-committed-facts.md)
+record the evidence. Bounded seeded occurrence rules, digest and the playable
+event pack remain upcoming work.

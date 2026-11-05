@@ -57,6 +57,15 @@ struct ContinuationFrame {
     ScopeBinding binding;
     auto operator<=>(const ContinuationFrame&) const = default;
 };
+struct CommittedSource {
+    std::string fact_id;
+    ScopeBinding subject;
+    core::OrdinalDay settled_on{0};
+    content::Unit unit = content::Unit::none;
+    content::Scalar result{false};
+    std::string cause;
+    auto operator<=>(const CommittedSource&) const = default;
+};
 struct Activation {
     std::uint64_t id = 0;
     std::string definition_id;
@@ -72,6 +81,7 @@ struct Activation {
     std::optional<std::uint64_t> presentation_id;
     std::uint32_t node_visits = 0;
     bool exiting = false;
+    std::optional<CommittedSource> committed_source{};
     auto operator<=>(const Activation&) const = default;
 };
 struct LifecycleState {
@@ -85,6 +95,8 @@ struct LifecycleState {
     unsigned calendar_day = 1;
     std::uint64_t interval_index = 0;
     std::optional<std::uint64_t> active_activation;
+    // For subscribed roots only: prefix consumed on last_checked's morning.
+    std::optional<std::uint32_t> committed_cursor{};
     auto operator<=>(const LifecycleState&) const = default;
 };
 struct OwnedModifier {

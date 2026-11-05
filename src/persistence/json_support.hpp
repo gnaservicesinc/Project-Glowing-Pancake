@@ -13,9 +13,11 @@ using Json=nlohmann::json;
 [[noreturn]] inline void invalid(std::string_view path,std::string detail) {
     throw PersistenceError("invalid_state",std::string(path)+": "+detail);
 }
-inline void fields(const Json& value,std::string_view path,std::initializer_list<std::string_view> names) {
+inline void fields(const Json& value,std::string_view path,std::initializer_list<std::string_view> names,
+                   std::initializer_list<std::string_view> optional={}) {
     if (!value.is_object()) invalid(path,"Expected object");
-    if (value.size()!=names.size()) invalid(path,"Missing or unsupported fields");
+    const auto extras=std::count_if(optional.begin(),optional.end(),[&](auto name){return value.contains(name);});
+    if (value.size()!=names.size()+static_cast<std::size_t>(extras)) invalid(path,"Missing or unsupported fields");
     for (auto name:names) if (!value.contains(name)) invalid(path,"Missing or unsupported fields");
 }
 inline std::string text(const Json& value,std::string_view path,std::size_t maximum=4096,bool empty=false) {
