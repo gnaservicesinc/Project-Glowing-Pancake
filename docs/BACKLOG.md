@@ -152,6 +152,12 @@ refuse changed or missing source bytes. [Mac evidence](evidence/E1A-01-drafts.md
 records safeguards and limits. E1A-01 retains its M2-04 and M1-05 prerequisite
 gates. E1A-02 extends the same working document with typed flow forms.
 
+**E1A-02 trigger slice:** the Studio outline now exposes nested triggers and
+continuous exit predicates. Registry-backed forms edit comparisons, typed
+operands and arithmetic, related members, counts and elapsed-day timers.
+Exact draft round-trip and rejected edits pass on Mac. Lifecycle, execution
+and reference edits remain in this task. [Trigger form evidence](evidence/E1A-02-triggers.md)
+
 ## E1b — Required node canvas and author qualification
 
 - [ ] **E1B-01 — Add the typed node-box canvas.** Role: content-editor/UI. Depends: E1A-05. Link triggers, effects/events, sequence ports and choices on the same document as forms/outline. Add keyboard equivalents, pan/zoom, useful layout and trace highlighting; graph/form edits must round-trip without semantic change. Commit integer node positions only on edits; keep viewport/selection local. Refuse invalid links and show waiting sibling continuations. Elaborate routing/styling is optional.

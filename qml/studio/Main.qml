@@ -199,7 +199,7 @@ ApplicationWindow {
                     }
                     Button {
                         visible: inspector.entry.kind === "flow" && inspector.entry.validation === "Validated"
-                        text: qsTr("Edit flow tags")
+                        text: qsTr("Edit flow")
                         onClicked: studio.beginDraft(inspector.entry.file, inspector.entry.id)
                     }
                     GroupBox {
@@ -214,6 +214,11 @@ ApplicationWindow {
                                 textFormat: Text.PlainText
                                 wrapMode: Text.WrapAnywhere
                             }
+                            FlowForms {
+                                Layout.fillWidth: true
+                                author: studio
+                            }
+                            Label { text: qsTr("Flow tags"); font.bold: true }
                             Flow {
                                 Layout.fillWidth: true
                                 spacing: 6

@@ -2,6 +2,7 @@
 #include <pgp/graphics/graphics_policy.hpp>
 #include <pgp/resources/resource_guards.hpp>
 #include <pgp/studio/draft.hpp>
+#include <pgp/studio/flow_forms.hpp>
 #include <pgp/studio/library.hpp>
 
 #include <QCommandLineParser>
@@ -44,6 +45,16 @@ QString status(studio::Validation value) {
     }
     throw std::invalid_argument("Unknown library validation state");
 }
+QString control(studio::FormControl kind) {
+    switch (kind) {
+    case studio::FormControl::note: return QStringLiteral("note");
+    case studio::FormControl::text: return QStringLiteral("text");
+    case studio::FormControl::integer: return QStringLiteral("integer");
+    case studio::FormControl::choice: return QStringLiteral("choice");
+    case studio::FormControl::button: return QStringLiteral("button");
+    }
+    throw std::invalid_argument("Unknown form control.");
+}
 class Browser final : public QObject {
     Q_OBJECT
     Q_PROPERTY(QVariantList rows READ rows NOTIFY changed)
@@ -58,6 +69,10 @@ class Browser final : public QObject {
     Q_PROPERTY(bool draftDirty READ draftDirty NOTIFY draftChanged)
     Q_PROPERTY(bool existingDraft READ existingDraft NOTIFY draftChanged)
     Q_PROPERTY(QString draftMessage READ draftMessage NOTIFY draftChanged)
+    Q_PROPERTY(QVariantList flowOutline READ flowOutline NOTIFY formChanged)
+    Q_PROPERTY(QVariantList formFields READ formFields NOTIFY formChanged)
+    Q_PROPERTY(qsizetype outlineIndex READ outlineIndex NOTIFY formChanged)
+    Q_PROPERTY(QString formTicket READ formTicket NOTIFY formChanged)
 public:
     [[nodiscard]] const QVariantList& rows() const noexcept { return visible_; }
     [[nodiscard]] QString checkout() const { return checkout_; }
@@ -75,6 +90,10 @@ public:
     [[nodiscard]] bool draftDirty() const noexcept { return draft_ && draft_->dirty(); }
     [[nodiscard]] bool existingDraft() const { return draft_ && draft_->is_draft(); }
     [[nodiscard]] QString draftMessage() const { return draft_message_; }
+    [[nodiscard]] const QVariantList& flowOutline() const noexcept { return outline_; }
+    [[nodiscard]] const QVariantList& formFields() const noexcept { return fields_; }
+    [[nodiscard]] qsizetype outlineIndex() const noexcept { return outline_index_; }
+    [[nodiscard]] QString formTicket() const { return QString::number(static_cast<qulonglong>(form_ticket_)); }
     Q_INVOKABLE bool openCheckout(const QString& folder) {
         if (draftDirty()) {
             message_ = QStringLiteral("Save or close the working draft before opening a checkout.");
@@ -146,9 +165,10 @@ public:
             const auto key = id.toStdString();
             const auto* definition = next->collection().find(key);
             if (!definition || !std::holds_alternative<content::FlowDefinition>(definition->data))
-                throw std::invalid_argument("Select a validated flow to edit its tags.");
+                throw std::invalid_argument("Select a validated flow to edit.");
             flow_ = key;
             draft_ = std::move(next);
+            outline_key_ = "flow";
         });
     }
     Q_INVOKABLE bool changeTag(const QString& tag, bool remove) {
@@ -171,6 +191,17 @@ public:
     }
     Q_INVOKABLE void undo() { if (draft_) edit([&] { (void)draft_->undo(); }); }
     Q_INVOKABLE void redo() { if (draft_) edit([&] { (void)draft_->redo(); }); }
+    Q_INVOKABLE void selectOutline(const QString& key) {
+        if (!draft_) return;
+        outline_key_ = key.toStdString();
+        refreshForm();
+    }
+    Q_INVOKABLE bool changeForm(const QString& ticket, const QString& key, const QString& value) {
+        return edit([&] {
+            if (!draft_ || !form_ || ticket != formTicket()) throw std::invalid_argument("Select the current outline row again.");
+            (void)form_->apply(*draft_, key.toStdString(), value.toStdString());
+        });
+    }
     Q_INVOKABLE bool saveDraft(const QString& filename) {
         if (!draft_ || !edit([&] { draft_->save(std::filesystem::path{filename.toStdU16String()}); })) return false;
         const auto current = checkout_;
@@ -183,16 +214,19 @@ public:
         draft_.reset();
         flow_.clear();
         draft_message_.clear();
+        refreshForm();
         emit draftChanged();
     }
 signals:
     void changed();
     void draftChanged();
+    void formChanged();
 private:
     template<class Action> bool edit(Action action) {
         try {
             action();
             draft_message_.clear();
+            refreshForm();
             emit draftChanged();
             return true;
         } catch (const std::exception& error) {
@@ -200,6 +234,43 @@ private:
             emit draftChanged();
             return false;
         }
+    }
+    void refreshForm() {
+        ++form_ticket_;
+        outline_.clear();
+        fields_.clear();
+        form_.reset();
+        outline_index_ = -1;
+        if (draft_) {
+            const auto rows = studio::flow_outline(*draft_, flow_);
+            const auto find_row = [&] {
+                return std::find_if(rows.begin(), rows.end(), [&](const auto& row) { return row.key == outline_key_; });
+            };
+            auto selected = find_row();
+            while (selected == rows.end()) {
+                const auto separator = outline_key_.rfind('/');
+                outline_key_ = separator == std::string::npos ? "flow" : outline_key_.substr(0, separator);
+                selected = find_row();
+            }
+            outline_index_ = selected - rows.begin();
+            for (const auto& row : rows) {
+                const QString indent(static_cast<qsizetype>(row.depth * 2), QChar{0x00a0});
+                outline_.push_back(QVariantMap{{QStringLiteral("key"), text(row.key)},
+                    {QStringLiteral("label"), indent + text(row.label)}});
+            }
+            form_ = studio::FlowForm::open(*draft_, flow_, selected->key);
+            for (const auto& field : form_->fields()) {
+                QVariantList options;
+                for (const auto& option : field.options)
+                    options.push_back(QVariantMap{{QStringLiteral("value"), text(option.value)},
+                        {QStringLiteral("label"), text(option.label)}, {QStringLiteral("help"), text(option.help)}});
+                fields_.push_back(QVariantMap{{QStringLiteral("key"), text(field.key)}, {QStringLiteral("label"), text(field.label)},
+                    {QStringLiteral("value"), text(field.value)}, {QStringLiteral("help"), text(field.help)},
+                    {QStringLiteral("control"), control(field.control)}, {QStringLiteral("options"), std::move(options)},
+                    {QStringLiteral("ticket"), formTicket()}});
+            }
+        }
+        emit formChanged();
     }
     void refresh() {
         QVariantList visible;
@@ -222,6 +293,11 @@ private:
     std::unique_ptr<studio::DraftDocument> draft_;
     std::string flow_;
     QString draft_message_;
+    QVariantList outline_, fields_;
+    std::optional<studio::FlowForm> form_;
+    std::string outline_key_;
+    qsizetype outline_index_ = -1;
+    std::uint64_t form_ticket_ = 0;
 };
 } // namespace
 
@@ -282,6 +358,22 @@ int main(int argc, char* argv[]) {
                 if (browser.draftDirty() || browser.workingTags() != tags) return 3;
                 browser.redo();
                 if (!browser.draftDirty()) return 3;
+                const auto trigger = std::find_if(browser.flowOutline().begin(), browser.flowOutline().end(), [](const auto& entry) {
+                    const auto key = entry.toMap().value(QStringLiteral("key")).toString();
+                    return key.startsWith(QStringLiteral("trigger/")) && !key.contains(QStringLiteral("/expression"));
+                });
+                if (trigger != browser.flowOutline().end()) {
+                    browser.selectOutline(trigger->toMap().value(QStringLiteral("key")).toString());
+                    const auto comparison = std::find_if(browser.formFields().begin(), browser.formFields().end(), [](const auto& entry) {
+                        return entry.toMap().value(QStringLiteral("key")) == QStringLiteral("comparison");
+                    });
+                    if (comparison != browser.formFields().end()) {
+                        const auto key = comparison->toMap().value(QStringLiteral("value")).toString();
+                        if (!browser.changeForm(browser.formTicket(), QStringLiteral("comparison"),
+                                                key == QStringLiteral("eq") ? QStringLiteral("ne") : QStringLiteral("eq"))) return 3;
+                        browser.undo();
+                    }
+                }
                 browser.closeDraft();
             }
             std::cout << "Studio library view loaded and filtered " << all_rows << " rows\n";

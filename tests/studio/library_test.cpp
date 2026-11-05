@@ -1,5 +1,6 @@
 #include <pgp/studio/library.hpp>
 #include <pgp/studio/draft.hpp>
+#include <pgp/studio/flow_forms.hpp>
 
 #include <pgp/persistence/storage.hpp>
 
@@ -207,12 +208,86 @@ void typed_drafts_and_external_conflicts() {
         require(fs::is_empty(outside), "A redirected parent must not receive a file");
     }
 }
+void typed_trigger_forms() {
+    Scratch scratch;
+    const auto root = scratch.root;
+    marker(root, 1);
+    fs::create_directory(root / ".git");
+    put(root / "CMakeLists.txt", "# development fixture\n");
+    put(root / "src/content/collection.cpp", "// source tree marker\n");
+    const fs::path source{"data/runtime/current.json"};
+    put(root / source, persistence::read_bounded(PGP_STUDIO_FIXTURE_PATH));
+    studio::DraftDocument draft{root, source};
+    constexpr auto id = "flow.supplier.exclusivity_offer";
+    auto open = [&](std::string_view row) { return studio::FlowForm::open(draft, id, row); };
+    auto change = [&](std::string_view row, std::string_view field, std::string_view value = {}) {
+        require(open(row).apply(draft, field, value), "Expected typed form mutation");
+    };
+    auto trigger = [&]() -> const content::Condition& {
+        return std::get<content::FlowDefinition>(draft.collection().definitions.at(id).data).trigger;
+    };
+    const auto field = [](const studio::FlowForm& form, std::string_view key) -> const studio::FormField& {
+        const auto selected = std::find_if(form.fields().begin(), form.fields().end(), [&](const auto& entry) { return entry.key == key; });
+        if (selected == form.fields().end()) throw std::runtime_error("Expected authoring field " + std::string(key));
+        return *selected;
+    };
+
+    const auto first = open("trigger/0");
+    require(field(first, "value").help.find("constant-2014 cents") != std::string::npos &&
+            field(first, "value").value == "2000000", "Comparison should show the exact registry unit and value");
+    rejected([&] { (void)first.apply(draft, "fact", "world.public_breakthrough_count"); }, "Reject a fact from another scope");
+    rejected([&] { (void)first.apply(draft, "value", "2e6"); }, "Reject exponent input instead of coercing it");
+    require(!draft.dirty() && draft.edit_revision() == 0, "Rejected input must leave the draft and history untouched");
+    change("trigger/0", "value", "9007199254740993");
+    require(std::get<std::int64_t>(trigger().children[0].clause->value) == 9'007'199'254'740'993LL,
+            "Authoring must keep integers above the exact JavaScript range");
+    rejected([&] { (void)first.apply(draft, "comparison", "lt"); }, "Reject a stale revision-bound form");
+    rejected([&] { (void)open("trigger/1").apply(draft, "comparison", "lt"); }, "Boolean comparisons cannot order values");
+    change("trigger/0", "operand", "expression");
+    change("trigger/0/expression", "kind", "add");
+    change("trigger/0/expression/1", "kind", "fact");
+    rejected([&] { (void)open("trigger/0/expression/1").apply(draft, "fact", "company.is_operating"); },
+             "Expression fact picker must reject incompatible types");
+    change("trigger/0/expression/1", "fact", "company.monthly_compute_bill_cents");
+    change("trigger/0/expression/1", "kind", "scale");
+    change("trigger/0/expression/1", "numerator", "2");
+    rejected([&] { (void)open("trigger/0/expression/1").apply(draft, "denominator", "0"); }, "Refuse an invalid scale ratio");
+    change("trigger/0/expression/1", "denominator", "3");
+
+    change("trigger", "append");
+    change("trigger/2", "kind", "related");
+    change("trigger/2", "relation", "company.projects");
+    change("trigger/2", "matching", "count");
+    change("trigger/2", "count", "2");
+    const auto member = open("trigger/2/0");
+    require(field(member, "fact").value.starts_with("project."), "Related predicates use the selected member scope");
+    rejected([&] { (void)member.apply(draft, "kind", "duration"); }, "Related members cannot acquire duration history");
+    change("trigger", "kind", "duration");
+    change("trigger", "days", "15");
+    change("trigger/0", "kind", "any");
+    const auto outline = studio::flow_outline(draft, id);
+    require(std::any_of(outline.begin(), outline.end(), [](const auto& row) {
+        return row.key == "trigger/0/0/expression/1/0" && row.depth == 5;
+    }), "Outline should expose the nested condition and arithmetic operand path");
+    require(draft.undo() && trigger().children.front().kind == content::ConditionKind::all_of,
+            "Undo should restore the previous group operation");
+    require(draft.redo() && trigger().children.front().kind == content::ConditionKind::any_of,
+            "Redo should restore the new group operation");
+    draft.save("trigger-forms.json");
+    studio::DraftDocument reopened{root, "data/drafts/trigger-forms.json"};
+    const auto canonical = [&](const auto& document) {
+        return runtime::compile_collection(document.collection(), content::foundation_registry()).canonical_content_bytes;
+    };
+    require(canonical(reopened) == canonical(draft) && !reopened.dirty(),
+            "Save and reopen must retain the exact shared compiler representation");
+}
 } // namespace
 
 int main() {
     try {
         inspect_source_and_drafts();
         typed_drafts_and_external_conflicts();
+        typed_trigger_forms();
         std::cout << checks << " Studio library checks passed\n";
         return 0;
     } catch (const std::exception& error) {

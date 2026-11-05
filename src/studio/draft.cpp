@@ -60,6 +60,7 @@ bool DraftDocument::replace(const content::Collection& candidate) {
     if (undo_.size() > maximum_undo) undo_.pop_front();
     redo_.clear();
     program_ = std::move(next);
+    ++edit_revision_;
     return true;
 }
 
@@ -69,6 +70,7 @@ bool DraftDocument::restore(std::deque<std::string>& from, std::deque<std::strin
     to.push_back(program_.canonical_content_bytes);
     from.pop_back();
     program_ = std::move(restored);
+    ++edit_revision_;
     return true;
 }
 bool DraftDocument::undo() { return restore(undo_, redo_); }

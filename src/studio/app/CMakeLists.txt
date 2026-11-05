@@ -4,7 +4,8 @@ target_link_libraries(pgp-editor PRIVATE pgp::studio_library pgp::graphics pgp::
 pgp_project_target(pgp-editor)
 qt_add_resources(pgp-editor studio_ui
     PREFIX "/pgp/studio" BASE "${PROJECT_SOURCE_DIR}/qml/studio"
-    FILES "${PROJECT_SOURCE_DIR}/qml/studio/Main.qml")
+    FILES "${PROJECT_SOURCE_DIR}/qml/studio/Main.qml"
+          "${PROJECT_SOURCE_DIR}/qml/studio/FlowForms.qml")
 
 # The opt-in editor component contains only the editor executable. Native Qt
 # deployment and source/license bundles are separate qualification work.

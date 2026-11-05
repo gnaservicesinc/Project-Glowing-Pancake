@@ -5,7 +5,7 @@ Updated 2026-11-04 · Implementation started against planning baseline 1.2
 ## Implementation progress
 
 **5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02.** M0-03,
-M1-03 through M1-07, M2-01 through M2-04 and E1A-01 have implemented work awaiting
+M1-03 through M1-07, M2-01 through M2-04 and E1A-01/02 have implemented work awaiting
 their remaining gates. M0-03's local
 interface/resource/audio implementation passes; native/deployment gates remain.
 M0 remains open. See the
@@ -81,6 +81,10 @@ block Mac implementation. Keep build caches between batches.
   document can edit flow tags, undo/redo and save drafts with conflict checks.
   [Studio library evidence](evidence/E1A-01-library.md)
   [Draft workflow evidence](evidence/E1A-01-drafts.md)
+- E1A-02 now edits typed triggers and continuous exit conditions through the
+  same working draft. The outline resolves nested related-member scopes and
+  arithmetic operands. Lifecycle and execution editing remain in progress.
+  [Trigger form evidence](evidence/E1A-02-triggers.md)
 - Weighted-branch commit `2a37284` passes 26/26 CTests in each of all six native
   jobs across five targets, including GCC/Clang/MSVC and native Windows arm64.
   [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41895189273)
@@ -209,10 +213,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac implementation: E1A-02 typed flow forms and outline.**
-Extend the same typed Studio working document and compiler with trigger,
-lifecycle, node and effect authoring. Keep draft writes in the existing
-working-document path.
+**Next Mac implementation: E1A-02 lifecycle and execution forms.**
+Extend the working outline from typed trigger and exit conditions to all
+supported lifecycle settings, nodes, effects and safe reference edits.
 M1-03 retains
 the M0-03 prerequisite gate. Content finalization, save migrations and packaging
 remain later work.

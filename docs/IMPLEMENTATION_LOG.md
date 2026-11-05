@@ -21,6 +21,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M2-03 | Implemented on Mac; prerequisite open | Finite allocation, contracts/resource priority, billing/credits/deadlines and installed shares through typed scenarios/exact saves; [evidence](evidence/M2-03-market.md) |
 | M2-04 | Implemented on Mac; prerequisite open | Three-year scenario, monthly reconciliation, exact continuation, saved 30-day workout/rescue/closure; [evidence](evidence/M2-04-business.md) |
 | E1A-01 | Implemented on Mac; prerequisites open | Separate Content Studio, typed checkout library, flow tag draft editing, undo/redo and conflict-aware writes. [Library](evidence/E1A-01-library.md), [draft workflow](evidence/E1A-01-drafts.md) |
+| E1A-02 | In progress | Typed trigger, exit predicate and expression forms with a working outline. [Trigger forms](evidence/E1A-02-triggers.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
 ## First implementation slice
@@ -631,3 +632,13 @@ and a tag edit, undo and redo without saving to the checkout.
 
 Accepted count remains **5/52**. E1A-01 retains its prerequisite gates.
 Next Mac work is E1A-02 typed flow forms and outline.
+
+## E1A-02 trigger and expression forms
+
+The Studio exposes typed condition and operand rows in the working flow
+outline. Forms take scope, value type, units, range and help from the shared
+registry. Each validated edit enters the same undo stack and draft writer.
+The test authors a nested duration, relation/count and arithmetic trigger,
+checks refused edits and compares the exact canonical collection after reopen.
+The optimized Mac editor build, 69 Studio assertions and hidden Qt view check
+passed. [Evidence](evidence/E1A-02-triggers.md)
