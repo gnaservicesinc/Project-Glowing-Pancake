@@ -165,6 +165,14 @@ journaled recovery. [Commands, artifacts and limits](../src/studio/SNAPSHOTS.md)
 The first internal content snapshot is 0.1.0-dev.1; no application release or
 save migration is claimed. E1B-02 will wrap this same writer graphically.
 
+**E1A-05 engineering walkthrough:** the runnable editor now exercises library
+browsing, QML form authoring of a branching/delayed flow, sign/scope inspection,
+separate draft save/reopen and all five lifecycle forms. The isolated output
+also validates/finalizes through the same snapshot writer. The walkthrough
+caught and fixed the Save as draft button's string-method error.
+[Reproduce the path and inspect its limits](../src/studio/WALKTHROUGH.md).
+This does not close the deferred three-author study.
+
 ## 9. Architecture, packaging, and delivery
 
 Use the existing C++20/Qt Quick toolchain, with a separate `pgp-editor` target and editor QML/resources. Share typed content definitions, registries, graph compilation, validation, deterministic runtime and preview rendering components with the game/headless runner. Compile graphs into a bounded normalized intermediate representation; graphical positions remain authoring metadata. Both applications execute the same validated semantics; do not maintain an approximate editor-only event interpreter.

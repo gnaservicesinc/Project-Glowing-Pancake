@@ -1,4 +1,5 @@
 #include "probe_controller.hpp"
+#include "walkthrough.hpp"
 
 #include <pgp/core/build_identity.hpp>
 #include <pgp/graphics/graphics_policy.hpp>
@@ -10,6 +11,7 @@
 #include <QCommandLineParser>
 #include <QGuiApplication>
 #include <QElapsedTimer>
+#include <QJsonDocument>
 #include <QKeyEvent>
 #include <QLibraryInfo>
 #include <QQmlApplicationEngine>
@@ -18,6 +20,7 @@
 #include <QQuickItem>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <QSGRendererInterface>
 #include <QStyleHints>
 #include <QVariant>
 
@@ -376,10 +379,17 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("project"), QStringLiteral("Open an explicitly selected absolute checkout."), QStringLiteral("folder")});
     parser.addOption({QStringLiteral("software"), QStringLiteral("Use software rendering.")});
     parser.addOption({QStringLiteral("check-view"), QStringLiteral("Load and inspect the library view without showing a window.")});
+    parser.addOption({QStringLiteral("walkthrough"), QStringLiteral("Run the engineering authoring walkthrough in an explicit fresh checkout copy and write a new local report."), QStringLiteral("report.json")});
+    parser.addOption({QStringLiteral("screenshot"), QStringLiteral("Save the walkthrough's rendered editor window to a new PNG."), QStringLiteral("file.png")});
     parser.process(application);
     if (!parser.positionalArguments().isEmpty() ||
-        (parser.isSet(QStringLiteral("check-view")) && !parser.isSet(QStringLiteral("project")))) parser.showHelp(2);
+        ((parser.isSet(QStringLiteral("check-view")) || parser.isSet(QStringLiteral("walkthrough"))) && !parser.isSet(QStringLiteral("project"))) ||
+        (parser.isSet(QStringLiteral("check-view")) && parser.isSet(QStringLiteral("walkthrough"))) ||
+        (parser.isSet(QStringLiteral("screenshot")) && !parser.isSet(QStringLiteral("walkthrough")))) parser.showHelp(2);
     try {
+        for (const auto& option : {QStringLiteral("walkthrough"), QStringLiteral("screenshot")})
+            if (parser.isSet(option) && std::filesystem::exists(std::filesystem::path{parser.value(option).toStdU16String()}))
+                throw std::invalid_argument("Choose new walkthrough report/screenshot filenames; existing output was preserved.");
         Browser browser;
         if (parser.isSet(QStringLiteral("project")) && !browser.openCheckout(parser.value(QStringLiteral("project")))) {
             std::cerr << browser.message().toStdString() << '\n';
@@ -486,7 +496,31 @@ int main(int argc, char* argv[]) {
                 qCritical().noquote() << message;
                 QCoreApplication::exit(4);
             });
+        if (parser.isSet(QStringLiteral("walkthrough"))) window->resize(1280, 720);
         window->show();
+        if (parser.isSet(QStringLiteral("walkthrough"))) {
+            auto report = studio::run_authoring_walkthrough(browser, *window);
+            if (guards->denied_requests.load() != 0) throw std::runtime_error("The walkthrough attempted a blocked resource request.");
+            report.insert(QStringLiteral("renderer"), window->rendererInterface()->graphicsApi() == QSGRendererInterface::Metal ? QStringLiteral("Metal") :
+                window->rendererInterface()->graphicsApi() == QSGRendererInterface::Software ? QStringLiteral("Software") : QStringLiteral("Other native backend"));
+            if (parser.isSet(QStringLiteral("screenshot"))) {
+                studio::walkthrough::reveal_report(*window);
+                QImage image;
+                QElapsedTimer timer; timer.start();
+                while (image.isNull() && timer.elapsed() < 3000) {
+                    QCoreApplication::processEvents();
+                    image = window->grabWindow();
+                }
+                if (image.isNull() || !image.save(parser.value(QStringLiteral("screenshot")), "PNG")) throw std::runtime_error("The editor walkthrough screenshot failed.");
+            }
+            const auto bytes = QJsonDocument{report}.toJson(QJsonDocument::Indented);
+            persistence::atomic_write(std::filesystem::path{parser.value(QStringLiteral("walkthrough")).toStdU16String()},
+                std::string_view{bytes.constData(), static_cast<std::size_t>(bytes.size())},
+                [](std::string_view) { throw std::invalid_argument("Choose a new walkthrough report filename."); }, 4U * 1024U * 1024U, false);
+            std::cout << "Studio engineering walkthrough passed: QML form edits, keyboard outline, sign/scope inspection, branching dialogue, delayed exact reload, five lifecycle reopens and separate draft; "
+                << report.value(QStringLiteral("form_submissions")).toInt() << " form submissions; renderer " << report.value(QStringLiteral("renderer")).toString().toStdString() << '\n';
+            return 0;
+        }
         return application.exec();
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 2; }
 }

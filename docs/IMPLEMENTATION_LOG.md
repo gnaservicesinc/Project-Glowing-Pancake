@@ -886,3 +886,41 @@ now reflect that instruction.
 
 Count: **23/52 Mac feature steps**. Next: E1A-05's reproducible engineering
 walkthrough, then E1B-01/02 canvas/graphical finalization and M4 components.
+
+## E1A-05 — Forms and inspection engineering walkthrough — 2026-11-05
+
+The runnable editor now has an explicit `--walkthrough REPORT.json` path for a
+fresh selected checkout copy, with optional rendered PNG. It drives the actual
+QML controls and keyboard outline, makes 36 typed form submissions, authors an
+ordered branching/delayed flow, checks wrong-scope refusal and compares an
+inverted +250-cent receipt with the corrected −250-cent receipt. A preceding
+actual 1,000-cent debit funds the counterparty, so the sign experiment preserves
+cash conservation. It saves/closes/reopens all five lifecycle examples, reloads
+through the actual save codec, chooses the accepted dialogue branch and resumes
+its hidden consequence exactly once. Form/inspection actions preserve reviewed
+runtime and version bytes. Existing report/screenshot/draft outputs are refused.
+
+This path caught a real UI bug that direct document tests missed: Save as draft
+called JavaScript `trimmed()` instead of `trim()`. The button is fixed and the
+walkthrough now exercises its real click handler. Named control targets and
+the local report make the engineering demonstration repeatable. They add no
+human findings, telemetry, publication or automatic launch to a build.
+
+Verification: explicit optimized **Metal, 1280×720** runs pass; rendered review
+shows the accepted result and live target/cash/continuation report. Focused
+`studio.library` and `studio.snapshots` CTests pass in **1.31s**; the existing
+offscreen library/forms/inspection check loads and filters 30 rows. The saved
+draft is separately reviewed/finalized by `pgp-content-tool` in the isolated
+checkout as content **0.2.0-dev.1**, generation 2, with five new revision-1 flows
+and only the enabled scenario incremented to revision 2. All three headquarters
+opening/save checks pass with no compiler lints; its collection hash is
+`be4e89994465d11bac181f18c81e645b1e9e8ea1bbeae4802cdbed7d06f902ef`.
+The primary game's content remains **0.1.0-dev.1**. Generated resource lists
+contain only game QML and reviewed runtime data in the game, with Studio QML in
+the separate editor target. Native package/device, canvas/finalizer and human
+qualification are not inferred from this demonstration.
+
+Count: **24/52 Mac feature steps**. Next: E1B-01 typed node canvas, then E1B-02
+graphical finalization and M4 components. M3-04 and E1B-03 remain deferred until
+all components are in place and the user is ready for v1 human testing.
+[Reproducible commands and manual path](../src/studio/WALKTHROUGH.md).

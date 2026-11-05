@@ -36,6 +36,7 @@ ColumnLayout {
             columns: width > 520 ? 4 : 2
             TextField {
                 id: seed
+                objectName: "flowTestSeed"
                 Layout.columnSpan: 2
                 Layout.fillWidth: true
                 maximumLength: 20
@@ -64,18 +65,20 @@ ColumnLayout {
         visible: panel.inspector.ready
         TextField {
             id: dateTarget
+                objectName: "flowAdvanceDate"
             Layout.fillWidth: true
             maximumLength: 10
             text: panel.inspector.nextDate
             Accessible.name: qsTr("Advance test through date")
         }
         Button {
+            objectName: "advanceFlowTest"
             text: qsTr("Advance to date")
             enabled: !panel.inspector.busy
             onClicked: panel.inspector.advance(dateTarget.text)
         }
         Button { text: qsTr("Stop"); enabled: panel.inspector.busy; onClicked: panel.inspector.stop() }
-        Button { text: qsTr("Reload checkpoint"); enabled: !panel.inspector.busy; onClicked: panel.inspector.reload() }
+        Button { objectName: "reloadFlowTest"; text: qsTr("Reload checkpoint"); enabled: !panel.inspector.busy; onClicked: panel.inspector.reload() }
     }
     GridLayout {
         Layout.fillWidth: true
@@ -96,6 +99,7 @@ ColumnLayout {
         wrapMode: Text.Wrap
     }
     Button {
+        objectName: "inspectFlowBoundaries"
         text: qsTr("Inspect threshold boundaries on isolated facts")
         visible: panel.inspector.ready
         enabled: !panel.inspector.busy

@@ -70,6 +70,7 @@ ApplicationWindow {
             Layout.fillWidth: true
             TextField {
                 id: query
+                objectName: "librarySearch"
                 Layout.fillWidth: true
                 maximumLength: 256
                 placeholderText: qsTr("Search ID, tag, file or validation")
@@ -134,6 +135,7 @@ ApplicationWindow {
             }
             ScrollView {
                 id: inspector
+                objectName: "studioInspector"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredWidth: window.width * 0.45
@@ -200,6 +202,7 @@ ApplicationWindow {
                         wrapMode: Text.WrapAnywhere
                     }
                     Button {
+                        objectName: "editSelectedDefinition"
                         visible: !!inspector.entry.revision && inspector.entry.validation === "Validated"
                         text: inspector.entry.kind === "flow" ? qsTr("Edit flow") : qsTr("Open working collection")
                         onClicked: studio.beginDraft(inspector.entry.file, inspector.entry.id)
@@ -217,6 +220,7 @@ ApplicationWindow {
                                 wrapMode: Text.WrapAnywhere
                             }
                             ComboBox {
+                                objectName: "workingFlow"
                                 Layout.fillWidth: true
                                 visible: studio.workingFlows.length > 0
                                 Accessible.name: qsTr("Working flow")
@@ -228,6 +232,7 @@ ApplicationWindow {
                                 Layout.fillWidth: true
                                 TextField {
                                     id: newFlowId
+                                    objectName: "newFlowId"
                                     Layout.fillWidth: true
                                     maximumLength: 128
                                     placeholderText: qsTr("New flow ID")
@@ -235,12 +240,14 @@ ApplicationWindow {
                                 }
                                 ComboBox {
                                     id: newFlowScope
+                                    objectName: "newFlowScope"
                                     Accessible.name: qsTr("New flow scope")
                                     model: studio.flowScopes
                                     textRole: "label"
                                     valueRole: "value"
                                 }
                                 Button {
+                                    objectName: "createFlow"
                                     text: qsTr("Create flow")
                                     enabled: newFlowId.text.length > 0 && newFlowScope.currentIndex >= 0
                                     onClicked: { if (studio.createFlow(newFlowId.text, newFlowScope.currentValue)) newFlowId.clear() }
@@ -298,18 +305,21 @@ ApplicationWindow {
                                 Layout.fillWidth: true
                                 TextField {
                                     id: draftName
+                                    objectName: "draftFilename"
                                     Layout.fillWidth: true
                                     maximumLength: 133
                                     placeholderText: qsTr("new-draft.json")
                                     Accessible.name: qsTr("New draft filename")
                                 }
                                 Button {
+                                    objectName: "saveDraftAs"
                                     text: qsTr("Save as draft")
                                     enabled: draftName.text.length > 0
-                                    onClicked: { if (studio.saveDraft(draftName.text.trimmed())) draftName.clear() }
+                                    onClicked: { if (studio.saveDraft(draftName.text.trim())) draftName.clear() }
                                 }
                             }
                             Button {
+                                objectName: "closeWorkingDraft"
                                 text: qsTr("Close draft")
                                 onClicked: {
                                     if (studio.draftDirty) {

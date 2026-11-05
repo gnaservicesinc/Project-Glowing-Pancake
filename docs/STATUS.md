@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**23 of 52 steps complete for Mac feature development. E1A-05 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05 and E1A-01 through E1A-04.
+**24 of 52 steps complete for Mac feature development. E1B-01 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05 and E1A-01 through E1A-05.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -23,6 +23,18 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- E1A-05 supplies the reproducible editor engineering walkthrough: **36 actual
+  QML form submissions**, keyboard outline, a branching/delayed flow, funded
+  positive-versus-negative cash receipts, wrong-scope refusal and all five
+  lifecycle save/reopens. Exact waits, dialogue and hidden consequences resume
+  through the game save codec. The path caught and fixed Save as draft calling
+  an invalid JavaScript string method. Metal runs at **1280×720** render the
+  accepted result and inspection report. The isolated saved batch finalizes as
+  0.2.0-dev.1 with all three headquarters/save checks and no lints; the primary
+  game stays on 0.1.0-dev.1. Game/editor resource lists remain separate. Both
+  focused Studio CTests pass in **1.31s** and the existing offscreen view check
+  passes. [Walkthrough and limits](../src/studio/WALKTHROUGH.md).
 
 - E1A-04 adds the shared internal snapshot writer and explicit maintainer CLI:
   review, finalize, check and recover. It validates with the actual compiler,
@@ -251,11 +263,11 @@ The Mac game runs the complete 2014–2017 slice through ordinary Office/Lab
 controls, with lab qualification, paid contracts, bounded rivals, recovery,
 delegation, exact saves and scoring. Content Studio browses the checkout,
 edits typed flows through forms/outline and inspects copied runtime state.
-The shared maintainer writer now finalizes validated internal snapshots.
-E1A-05's engineering walkthrough and E1B-01/02's canvas/graphical finalizer
-remain before M4 component work. E2 expands authoring as later schemas arrive.
+The shared maintainer writer now finalizes validated internal snapshots and
+E1A-05 demonstrates the narrow authoring path. E1B-01/02's canvas/graphical
+finalizer remain before M4 component work. E2 expands authoring as later schemas arrive.
 Human studies wait for v1 preparation after all components are in place.
-29 steps remain unchecked, including those studies and deferred platform/release
+28 steps remain unchecked, including those studies and deferred platform/release
 work. [Playability checkpoints](PLAYABILITY.md) distinguish implemented paths
 from unperformed human and release qualification.
 
@@ -288,8 +300,8 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation: E1A-05's engineering authoring walkthrough**, then
-E1B-01/02's canvas and graphical finalizer, followed by M4 component work.
+**Next implementation: E1B-01's typed node canvas**, then E1B-02's graphical
+finalizer, followed by M4 component work.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

@@ -89,6 +89,13 @@ release readiness is false. Builds embed the validated record's collection
 hash; pending transactions block configuration until recovery. Finalization
 does not publish, commit or automatically launch either application.
 
+The [forms/inspection engineering walkthrough](../src/studio/WALKTHROUGH.md)
+runs explicit QML form edits, sign/scope inspection, five lifecycle reopens and
+delayed exact saves on an isolated checkout copy. It also captures a local
+report/window using `pgp-editor --walkthrough REPORT.json --screenshot FILE.png`.
+This development check is separate from the human studies deferred to v1
+preparation. Use new report/draft paths; existing output is refused.
+
 `QT_ROOT` is an alternative to `--qt-root`; ordinary CMake prefix discovery via
 `CMAKE_PREFIX_PATH` is also supported. On this Mac only, the wrapper can use the
 existing `/opt/Qt/6.12.0/macos` as a build-time fallback. No such path is embedded

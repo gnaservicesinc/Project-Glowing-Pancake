@@ -132,6 +132,7 @@ ColumnLayout {
             Component {
                 id: action
                 Button {
+                    objectName: "formAction/" + row.field.key
                     text: row.field.label
                     Accessible.description: row.field.help
                     onClicked: forms.commit(row.ticket, row.field.key, "")
@@ -141,6 +142,7 @@ ColumnLayout {
                 id: picker
                 ComboBox {
                     id: choices
+                    objectName: "formChoice/" + row.field.key
                     function focusEditor() { forceActiveFocus(Qt.OtherFocusReason) }
                     model: row.field.options
                     textRole: "label"
@@ -160,6 +162,7 @@ ColumnLayout {
                     function focusEditor() { entered.forceActiveFocus(Qt.OtherFocusReason) }
                     TextField {
                         id: entered
+                        objectName: "formInput/" + row.field.key
                         Layout.fillWidth: true
                         text: row.field.value
                         maximumLength: row.field.control === "integer" ? 21 : 4096
