@@ -16,6 +16,9 @@ class CampaignController final : public QObject {
     Q_PROPERTY(bool welcome READ welcome NOTIFY stateChanged)
     Q_PROPERTY(QVariantList headquarters READ headquarters CONSTANT)
     Q_PROPERTY(QString headquartersText READ headquartersText NOTIFY stateChanged)
+    Q_PROPERTY(bool autoPauseProjects READ autoPauseProjects WRITE setAutoPauseProjects NOTIFY settingsChanged)
+    Q_PROPERTY(bool autoPauseEvaluations READ autoPauseEvaluations WRITE setAutoPauseEvaluations NOTIFY settingsChanged)
+    Q_PROPERTY(bool autoPauseAlerts READ autoPauseAlerts WRITE setAutoPauseAlerts NOTIFY settingsChanged)
     Q_PROPERTY(bool showGuide READ showGuide WRITE setShowGuide NOTIFY settingsChanged)
     Q_PROPERTY(bool ready READ ready NOTIFY stateChanged)
     Q_PROPERTY(QString date READ date NOTIFY stateChanged)
@@ -54,6 +57,14 @@ public:
     bool welcome() const { return welcome_; }
     QVariantList headquarters() const;
     QString headquartersText() const;
+    bool autoPauseProjects() const { return settings_.auto_pause_projects; }
+    bool autoPauseEvaluations() const { return settings_.auto_pause_evaluations; }
+    bool autoPauseAlerts() const { return settings_.auto_pause_alerts; }
+    void setAutoPauseProjects(bool value);
+    void setAutoPauseEvaluations(bool value);
+    void setAutoPauseAlerts(bool value);
+    Q_INVOKABLE void advanceTo(QString milestone);
+    Q_INVOKABLE void acknowledgeManagement();
     bool showGuide() const { return settings_.show_guide; }
     void setShowGuide(bool value);
     Q_INVOKABLE void newCampaign(QString headquarters, bool stories = true);
@@ -118,7 +129,7 @@ private:
     const runtime::CompiledProgram program_;
     ManagementController* management_;
     bool welcome_ = false;
-    int days_per_second_ = 10;
+    int days_per_second_ = 1;
     QThread thread_;
     CampaignWorker* worker_ = nullptr;
     StableListModel* projects_;

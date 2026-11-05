@@ -72,6 +72,12 @@ inline constexpr std::size_t capacity_source_limit = 256;
 inline constexpr std::size_t capacity_project_limit = 4096;
 inline constexpr std::size_t capacity_day_limit = 40960;
 inline constexpr std::size_t capacity_work_record_limit = 262144;
+struct StaffAddition {
+    std::string id;
+    OrdinalDay day{0};
+    std::uint32_t people=0;
+    auto operator<=>(const StaffAddition&) const = default;
+};
 struct CapacityState {
     std::string owner = "company.player";
     OrdinalDay starts_on{0};
@@ -80,6 +86,7 @@ struct CapacityState {
     std::vector<CapacitySource> sources;
     std::vector<CapacityProject> projects;
     std::vector<CapacityDay> days;
+    std::vector<StaffAddition> staff_additions{};
     auto operator<=>(const CapacityState&) const = default;
 };
 struct CapacityReport {
@@ -101,6 +108,8 @@ struct CapacityReport {
 [[nodiscard]] CapacityReport capacity_report(const CapacityState& state);
 void validate_capacity(const CapacityState& state);
 void reserve_project(CapacityState& state, OrdinalDay day, CapacityProject project);
+void add_staff_capacity(CapacityState& state, OrdinalDay day, std::string id, std::uint32_t people);
+[[nodiscard]] std::uint32_t available_staff_on(const CapacityState& state, OrdinalDay day);
 void add_capacity_source(CapacityState& state, OrdinalDay day, CapacitySource source);
 void cancel_project(CapacityState& state, OrdinalDay day, std::string_view project_id);
 void update_effective_capacity(CapacityState& state, OrdinalDay day,

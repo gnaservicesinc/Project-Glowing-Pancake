@@ -108,6 +108,7 @@ void prepare_opening(SimulationState& state) {
     if (state.phase != DayPhase::opening) {
         return;
     }
+    prepare_management(state);
     if (state.business_offers) expire_business_offers(*state.business_offers,*state.capacity,state.date);
     while (state.opening_cursor < state.opening_actions.size()) {
         const auto& due = state.opening_actions[state.opening_cursor];
@@ -167,6 +168,7 @@ void validate(const SimulationState& state,bool deep=true) {
         if (!state.accounts || !state.capacity) invalid("Lab requires business accounts and shared capacity");
         validate_lab(*state.lab, *state.capacity, *state.accounts, state.random, false);
     }
+    if (state.management) validate_management(state,deep);
     if (state.deployments) {
         if (!state.lab || !state.market || !state.capacity) invalid("Deployments require lab, market and capacity");
         if (deep) validate_deployments(*state.deployments,*state.lab,*state.capacity,*state.market);
@@ -423,6 +425,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 row.status = ReservationStatus::cancelled;
                 (void)receipt(next, "cancel_unconsumed_reservation", action.id);
             } else if constexpr (std::is_same_v<Action, AdvanceDay>) {
+                if (required_management_notice(next)) refuse(CommandReason::morning_not_ready,"Acknowledge the capacity setback and its recovery date before advancing.");
                 if (next.liquidity && liquidity_report(*next.liquidity).pending_warning)
                     refuse(CommandReason::morning_not_ready, "Acknowledge the insolvency warning and its 30-day response window before advancing.");
                 if (next.liquidity && next.liquidity->status == LiquidityStatus::workout &&
@@ -444,6 +447,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 }
                 (void)receipt(next, "advance_day", 0, checked_unit_subtract(next.cash, cash_before));
                 next.date = advance_days(next.date, Days{1});
+                prepare_management(next);
                 if (next.liquidity) {
                     observe_liquidity(*next.liquidity, *next.accounts, next.date, false);
                     const auto report = liquidity_report(*next.liquidity);
@@ -459,6 +463,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     prepare_opening(next);
                 }
             } else if constexpr (std::is_same_v<Action, SetPaused>) {
+                if (!action.paused && required_management_notice(next)) refuse(CommandReason::morning_not_ready,"Acknowledge the required management warning before starting time.");
                 if (!action.paused && next.liquidity && liquidity_report(*next.liquidity).pending_warning)
                     refuse(CommandReason::morning_not_ready, "Time remains paused until the insolvency warning is acknowledged.");
                 if (!action.paused && next.phase != DayPhase::work_ready) {
@@ -599,6 +604,22 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if (!next.deployments) refuse(CommandReason::invalid_status,"This scenario has no deployable service catalog.");
                 deploy_model(*next.deployments,lab(next),accounts(next),capacity(next),market(next),next.date,action);
                 (void)receipt(next,"deploy_model");
+            } else if constexpr (std::is_same_v<Action, TakeFinancing>) {
+                const auto before=next.cash;take_financing(next,action.id);(void)receipt(next,"take_financing",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, HireSpecialist>) {
+                const auto before=next.cash;hire_specialist(next,action.id,reserved_cash(next));(void)receipt(next,"hire_specialist",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, AddDelegationPolicy>) {
+                add_delegation_policy(next,action.policy);(void)receipt(next,"authorize_delegation");
+            } else if constexpr (std::is_same_v<Action, SetDelegationEnabled>) {
+                set_delegation_enabled(next,action.id,action.enabled);(void)receipt(next,"set_delegation_enabled");
+            } else if constexpr (std::is_same_v<Action, ReviewDelegation>) {
+                const auto before=next.cash;review_delegation(next,reserved_cash(next));(void)receipt(next,"review_delegation",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, AcknowledgeManagementNotice>) {
+                acknowledge_management_notice(next,action.id);(void)receipt(next,"acknowledge_management_notice");
+            } else if constexpr (std::is_same_v<Action, RenewComputeLease>) {
+                if (!next.business_offers) refuse(CommandReason::invalid_status,"No compute lease is available to renew.");
+                const auto before=next.cash;renew_compute_lease(*next.business_offers,accounts(next),capacity(next),next.date,action.id,reserved_cash(next));
+                next.cash=accounts_report(*next.accounts).cash;(void)receipt(next,"renew_compute_lease",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, AcceptBusinessOffer>) {
                 if (!next.business_offers) refuse(CommandReason::invalid_status,"This scenario has no business offers.");
                 const auto before=next.cash;

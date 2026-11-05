@@ -17,6 +17,7 @@ struct ServiceDefinition {
     Cents review_monthly_cost{0};
     std::uint64_t review_tasks_per_day = 0;
     std::vector<ServicePreference> preferences;
+    std::string required_recipe{};
     auto operator<=>(const ServiceDefinition&) const = default;
 };
 struct DeploymentRecord {

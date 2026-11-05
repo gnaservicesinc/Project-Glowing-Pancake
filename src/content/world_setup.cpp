@@ -47,9 +47,10 @@ void array(const Json& value,std::size_t maximum) {
 }
 std::vector<core::BusinessOffer> load_business_offer_catalog(std::string_view bytes) {
     const auto doc=parse(bytes); array(doc,32); std::vector<core::BusinessOffer> result;
-    for (const auto& row:doc) {
+    for (auto row:doc) {
+        if (!row.contains("renewable")) row["renewable"]=false;
         fields(row,{"id","name","kind","available_from","available_before","term_days","setup_cost_cents","monthly_amount_cents",
-            "capacity_milli_CU_per_day","segment_id","product_id","tasks_per_day"});
+            "capacity_milli_CU_per_day","segment_id","product_id","tasks_per_day","renewable"});
         const auto kind=text(row.at("kind"));
         if (kind!="compute_lease" && kind!="recovery_pilot" && kind!="enterprise_contract") invalid("Unsupported business offer kind");
         const auto type=kind=="compute_lease"?core::BusinessOfferKind::compute_lease:
@@ -58,6 +59,8 @@ std::vector<core::BusinessOffer> load_business_offer_catalog(std::string_view by
             date(row.at("available_from")),date(row.at("available_before")),core::Days{number(row.at("term_days"))},
             core::Cents{number(row.at("setup_cost_cents"))},core::Cents{number(row.at("monthly_amount_cents"))},
             core::MilliCUPerDay{number(row.at("capacity_milli_CU_per_day"))},text(row.at("segment_id"),true),text(row.at("product_id"),true),number(row.at("tasks_per_day"))});
+        if (!row.at("renewable").is_boolean()) invalid("Renewable flag must be boolean");
+        result.back().renewable=row.at("renewable").get<bool>();
         if (!valid_id(result.back().id)) invalid("Business offer needs a stable content ID");
     }
     std::sort(result.begin(),result.end(),[](const auto& a,const auto& b){return a.id<b.id;});
@@ -69,7 +72,7 @@ std::string canonical_business_offer_catalog(const std::vector<core::BusinessOff
         row.kind==core::BusinessOfferKind::recovery_pilot?"recovery_pilot":"enterprise_contract"},
         {"available_from",core::iso_date(row.available_from)},{"available_before",core::iso_date(row.available_before)},
         {"term_days",row.term.value()},{"setup_cost_cents",row.setup_cost.value()},{"monthly_amount_cents",row.monthly_amount.value()},
-        {"capacity_milli_CU_per_day",row.capacity.value()},{"segment_id",row.segment_id},{"product_id",row.product_id},{"tasks_per_day",row.tasks_per_day}});
+        {"capacity_milli_CU_per_day",row.capacity.value()},{"segment_id",row.segment_id},{"product_id",row.product_id},{"tasks_per_day",row.tasks_per_day},{"renewable",row.renewable}});
     return result.dump();
 }
 std::vector<RivalDefinition> load_rival_definitions(std::string_view bytes) {

@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**21 of 52 steps complete for Mac feature development; M3-03 delegation/recovery/scoring is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-05 and E1A-01 through E1A-03.
+**22 of 52 steps complete for Mac feature development. M3-04 requires real playtest sessions; E1A-04 is the next autonomous implementation step.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05 and E1A-01 through E1A-03.
 On 2026-11-05, core/runtime/session daily validation and state-copy bottlenecks were
 eliminated, reducing the three-year business scenario test (`session.business-scenario`)
 from **174.34s to ~5.4s** and `session.business-recovery` from **8.09s to ~0.4s**.
@@ -18,6 +18,24 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- M3-03 adds finite evaluation and paid lease-renewal policies with saved
+  budgets/cursors, conservative term commitments, reserve/resource checks,
+  suspension and decision logs. Fixed equity/debt and a paid specialist support
+  recovery; the efficient document service supplies a profitable specialist
+  route. A dated supplier setback warns before reducing capacity and requires
+  acknowledgment; nominal capacity returns on its actual recovery date.
+  Optional auto-pause preferences and milestone controls preserve required
+  choices and actual deadline stops. Slice scoring is explicit and uses actual
+  delivered work, profit, independent evidence, survival and founder stake.
+  All **58/58 optimized Mac CTests pass in 11.71s**, including **352 management
+  integration assertions** and **20 bridge management checks**. Complete Metal
+  UI runs at 1280×720 with 100%/200% text exercise funding, hiring, policies,
+  milestone, exact reload, setback/restoration and a scored 2017 ending.
+  The efficient specialist finishes with **$1,437,387.12**, **3,081,000 tasks**,
+  **$237,387.12 operating profit** and **84/100**, without new financing.
+  The broad baseline remains solvent at **$2,276,020.41**, **3,985,648 tasks**
+  and **99/100** after the new setback. [Management contract](../src/core/MANAGEMENT.md).
 
 - M3-02 supplies the bundled playable Mac campaign: headquarters and optional
   stories, data/research/training/evaluation, deployment, customer offers,
@@ -254,13 +272,17 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac implementation: M3-03 delegation, configurable auto-pause, recovery and slice scoring.**
-The lab, base-event/rival pack and interactive 2014–2017 campaign now work together.
-Add bounded renewal/evaluation policies and specialist/financing recovery paths;
-fast-forward must continue to stop at every required decision and deadline.
-Then prepare M3-04's five independent human sessions. Remaining Content Studio
-snapshot/canvas tasks (`E1A-04`, `E1A-05`, `E1b`) follow the M3 feature slice.
-Platform packaging remains deferred.
+**Next gate: M3-04's five independent human sessions, including two non-ML players.**
+Three must finish the 30–45-minute scenario unaided and explain cash burn,
+evaluation and contract outcomes. Scripted agents are not substitutes for those
+sessions. Prepare local consent/facilitator/report materials and fix material
+comprehension issues from real feedback. No tester contact is automatic.
+
+**Next autonomous implementation: E1A-04 validated internal content snapshots**,
+then E1A-05's repository walkthrough and the E1b canvas/finalization work.
+Those authoring tasks can progress while human sessions are arranged. M4 retains
+its M3 human-validation and E1b qualification gates. Native packaging remains
+deferred.
 
 The 2026-11-04 event clarification adds M1-07 (built-in detection/dispatch) and
 M3-05 (AI-assisted playable base-event pack), with human stories augmenting the

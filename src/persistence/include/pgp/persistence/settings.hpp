@@ -11,6 +11,8 @@ struct Settings {
     bool autosave_enabled = true;
     bool reduced_motion = false;
     bool auto_pause_alerts = true;
+    bool auto_pause_projects = true;
+    bool auto_pause_evaluations = true;
     bool compact_management = false;
     bool show_guide = true;
     std::uint32_t text_scale_percent = 100;

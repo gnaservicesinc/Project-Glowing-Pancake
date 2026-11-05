@@ -291,6 +291,9 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             matching_lab_scenario = true;
             if (world.simulation.lab && world.simulation.lab->catalog == content::scenario_lab_catalog(program.collection, *scenario)) {
                 matching_catalog = true;
+                if (scenario->management ? (!world.simulation.management || world.simulation.management->catalog!=*scenario->management ||
+                    world.simulation.capacity->available_staff-world.simulation.capacity->staff_additions.size()!=scenario->team_people) : world.simulation.management.has_value())
+                    invalid("Saved management rules or opening staff differ from the scenario");
                 if (scenario->service_catalog ? (!world.simulation.deployments || world.simulation.deployments->catalog!=content::service_definitions(*scenario->service_catalog)) : world.simulation.deployments.has_value())
                     invalid("Saved service catalog differs from its authored qualification rules");
                 if (scenario->business_offers.empty()?world.simulation.business_offers.has_value():

@@ -17,6 +17,7 @@ struct OperationResult {
     // A driver stops its timer on a content/storage failure. It must retain
     // the notice independently of coalesced presentation snapshots.
     bool halt_requested = false;
+    std::optional<std::string> pause_notice{};
 };
 struct LoadResult {
     bool loaded;

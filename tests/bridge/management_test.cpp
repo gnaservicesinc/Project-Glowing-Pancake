@@ -16,6 +16,7 @@ void run() {
     bridge::ManagementController management;
     auto snapshot=std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,initial,{},true});
     management.update(snapshot,program,true);
+    check(management.funding()->rowCount()==2 && management.specialists()->rowCount()==1 && management.policyDefaults().value(QStringLiteral("budget")).toString()==QStringLiteral("100000.00"),"Player funding/team/policy defaults differ from content");
     check(management.available() && management.dataOffers()->rowCount()==4 && management.researchTopics()->rowCount()==6,"Player catalog missing authored options");
     check(management.recipes().front().toMap().value(QStringLiteral("id")).toString()==QStringLiteral("recipe.document_baseline"),"Opening recipe starts on a locked research branch");
     check(management.evaluations().front().toMap().value(QStringLiteral("id")).toString()==QStringLiteral("evaluation.held_out"),"Default evaluation cannot qualify the opening service");
@@ -45,6 +46,11 @@ void run() {
     check(commands==0,"Malformed amount reached an authoritative command");
     management.acceptOffer(QStringLiteral("offer.enterprise_service"));
     check(commands==1 && later->checkpoint==advanced,"Action adapter mutated the snapshot instead of queuing a command");
+    management.authorizeEvaluation(QStringLiteral("baseline"),QStringLiteral("evaluation.held_out"),QStringLiteral("lease.initial"),QStringLiteral("20"),QStringLiteral("1"),QStringLiteral("1e9"),QStringLiteral("100000"),QStringLiteral("30"),QStringLiteral("2"));
+    check(commands==1,"Policy dollar parser accepted exponent notation");
+    management.authorizeEvaluation(QStringLiteral("baseline"),QStringLiteral("evaluation.held_out"),QStringLiteral("lease.initial"),QStringLiteral("20"),QStringLiteral("1"),QStringLiteral("4000.00"),QStringLiteral("100000"),QStringLiteral("30"),QStringLiteral("2"));
+    check(commands==2 && later->checkpoint==advanced,"Policy form mutated authority or failed to emit its bounded command");
+    check(management.scoreText().contains(QStringLiteral("Provisional")) && management.scoreText().contains(QStringLiteral("founder")),"Score presentation hid its provisional status or ownership tradeoff");
 }
 }
 int main(int argc,char** argv) {QCoreApplication application{argc,argv};try {run();std::cout<<checks<<" management checks passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

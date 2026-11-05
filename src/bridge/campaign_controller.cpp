@@ -64,7 +64,7 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
     }
     return rows;
 }
-std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const content::Collection& collection) {
+std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const content::Collection& collection,const ManagementController& management) {
     std::vector<CampaignRow> rows;
     for (const auto& row : checkpoint.runtime.presentations) {
         if (row.kind == runtime::PresentationKind::news) continue;
@@ -93,6 +93,10 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const 
         }
     }
     const auto& state = checkpoint.world.simulation;
+    if (state.management) for (const auto& n:state.management->notices)
+        rows.push_back({QStringLiteral("management:")+text(n.id),readable(n.kind),text(core::iso_date(n.day))+(n.deadline?QStringLiteral(" · deadline ")+text(core::iso_date(*n.deadline)):QString{}),
+            management.alertDetail(n),n.acknowledged?QStringLiteral("Acknowledged"):n.required?QStringLiteral("Required response"):QStringLiteral("Company alert"),n.required && !n.acknowledged,
+            {{QStringLiteral("noticeId"),text(n.id)},{QStringLiteral("acknowledged"),n.acknowledged}}});
     if (state.liquidity) for (const auto& workout : state.liquidity->workouts) {
         const auto ended = workout.resolved_on.has_value() || workout.closed_on.has_value();
         QString status = workout.resolved_on ? QStringLiteral("Resolved") : workout.closed_on ? QStringLiteral("Closed") : QStringLiteral("Workout active");
@@ -143,8 +147,8 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     const bool first = !snapshot_;
     const bool replace = first || snapshot_->generation != snapshot->generation;
     auto projects = project_rows(snapshot->checkpoint);
-    auto inbox = inbox_rows(snapshot->checkpoint,program_.collection);
     management_->update(snapshot,program_,replace);
+    auto inbox = inbox_rows(snapshot->checkpoint,program_.collection,*management_);
     if (!first && replace) welcome_=false;
     if (replace) { projects_->beginCampaign(std::move(projects)); inbox_->beginCampaign(std::move(inbox)); }
     else { projects_->setRows(std::move(projects)); inbox_->setRows(std::move(inbox)); }
@@ -223,6 +227,7 @@ QString CampaignController::requiredKind() const {
     if (snapshot_->checkpoint.world.simulation.pending_choice) return QStringLiteral("core");
     if (waitingPresentation()) return QStringLiteral("content");
     if (needsWarning()) return QStringLiteral("liquidity");
+    if (core::required_management_notice(snapshot_->checkpoint.world.simulation)) return QStringLiteral("management");
     return QStringLiteral("none");
 }
 QString CampaignController::requiredTitle() const {
@@ -230,10 +235,14 @@ QString CampaignController::requiredTitle() const {
     if (kind == QStringLiteral("core")) return QStringLiteral("Delivery decision");
     if (kind == QStringLiteral("content")) return presentation_heading(*waitingPresentation(),program_.collection);
     if (kind == QStringLiteral("liquidity")) return QStringLiteral("Unpaid obligations need a response");
+    if (kind == QStringLiteral("management")) return QStringLiteral("Temporary compute setback");
     return {};
 }
 QString CampaignController::requiredText() const {
     const auto kind = requiredKind();
+    if (kind == QStringLiteral("management")) {
+        for (const auto& n:snapshot_->checkpoint.world.simulation.management->notices) if (n.required && !n.acknowledged) return management_->alertDetail(n);
+    }
     if (kind == QStringLiteral("core")) return QStringLiteral("A scheduled delivery awaits your decision. Accepting consumes its reserved funds; declining does not refund earlier purchases.");
     if (kind == QStringLiteral("content")) {
         const auto* row=waitingPresentation();
@@ -303,6 +312,18 @@ void CampaignController::choose(QString choice_id) {
         worker->choose(token,observed,id,choice);
     },Qt::QueuedConnection);
 }
+void CampaignController::advanceTo(QString kind) {
+    if (!paused() || !canPlay() || !beginOperation()) return;
+    const auto revision=snapshot_->checkpoint.world.simulation.revision;
+    QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,revision,kind=kind.toStdString()]{worker->advanceTo(token,revision,kind);},Qt::QueuedConnection);
+}
+void CampaignController::acknowledgeManagement() {
+    if (!snapshot_ || !snapshot_->checkpoint.world.simulation.management) return;
+    for (const auto& n:snapshot_->checkpoint.world.simulation.management->notices) if (n.required && !n.acknowledged) {submit(core::AcknowledgeManagementNotice{n.id});return;}
+}
+void CampaignController::setAutoPauseProjects(bool value) {auto settings=settings_;settings.auto_pause_projects=value;changeSettings(settings);}
+void CampaignController::setAutoPauseEvaluations(bool value) {auto settings=settings_;settings.auto_pause_evaluations=value;changeSettings(settings);}
+void CampaignController::setAutoPauseAlerts(bool value) {auto settings=settings_;settings.auto_pause_alerts=value;changeSettings(settings);}
 void CampaignController::acknowledgeWarning() {
     if (!needsWarning()) return;
     submit(core::AcknowledgeLiquidityWarning{*core::liquidity_report(*snapshot_->checkpoint.world.simulation.liquidity).pending_warning});

@@ -161,6 +161,19 @@ ApplicationWindow {
                         enabled: campaign.paused && campaign.canAdvance
                         onClicked: campaign.step()
                     }
+                    ComboBox {
+                        id: milestoneChoice
+                        implicitWidth: window.textSize * 11
+                        model: [{id:"project",label:qsTr("Next project")},{id:"evaluation",label:qsTr("Next evaluation")},{id:"deadline",label:qsTr("Next deadline")}]
+                        textRole: "label"
+                        font.pixelSize: window.textSize
+                        Accessible.name: qsTr("Advance target")
+                    }
+                    Action {
+                        objectName: "advanceToButton"; text: qsTr("Advance to target")
+                        enabled: campaign.paused && campaign.canPlay
+                        onClicked: campaign.advanceTo(milestoneChoice.model[milestoneChoice.currentIndex].id)
+                    }
                     Action {
                         objectName: "saveButton"; text: qsTr("Save")
                         enabled: campaign.ready && !campaign.busy
@@ -247,6 +260,12 @@ ApplicationWindow {
                                 onClicked: campaign.resolveCoreChoice(false)
                             }
                             Action {
+                                objectName: "acknowledgeManagement"; text: qsTr("Acknowledge capacity setback")
+                                visible: campaign.requiredKind === "management"
+                                enabled: !campaign.busy
+                                onClicked: campaign.acknowledgeManagement()
+                            }
+                            Action {
                                 objectName: "acknowledgeWarning"; text: qsTr("Acknowledge warning")
                                 visible: campaign.requiredKind === "liquidity"
                                 enabled: !campaign.busy
@@ -268,6 +287,7 @@ ApplicationWindow {
                     visible: window.settingsOpen
                     contentItem: ColumnLayout {
                         Heading { text: qsTr("Local preferences") }
+                        Copy { text: qsTr("Required choices, the capacity setback and actual due-date stops remain active at every speed. These preferences control optional completion and advance-warning pauses.") }
                         Flow {
                             Layout.fillWidth: true
                             spacing: 8
@@ -295,6 +315,9 @@ ApplicationWindow {
                                 enabled: !campaign.busy
                                 onClicked: campaign.reducedMotion = !campaign.reducedMotion
                             }
+                            CheckBox { objectName: "pauseProjectsControl"; text: qsTr("Pause on project completion"); font.pixelSize: window.textSize; Accessible.name: text; checked: campaign.autoPauseProjects; enabled: !campaign.busy; onClicked: campaign.autoPauseProjects = checked }
+                            CheckBox { objectName: "pauseEvaluationsControl"; text: qsTr("Pause on evaluation results"); font.pixelSize: window.textSize; Accessible.name: text; checked: campaign.autoPauseEvaluations; enabled: !campaign.busy; onClicked: campaign.autoPauseEvaluations = checked }
+                            CheckBox { objectName: "pauseAlertsControl"; text: qsTr("Pause on company alerts"); font.pixelSize: window.textSize; Accessible.name: text; checked: campaign.autoPauseAlerts; enabled: !campaign.busy; onClicked: campaign.autoPauseAlerts = checked }
                             Action {
                                 text: qsTr("Show guide")
                                 checked: campaign.showGuide
@@ -468,6 +491,12 @@ ApplicationWindow {
                                 font.bold: true
                             }
                             Copy { visible: text.length > 0; text: inspector.entry.detail || "" }
+                            Action {
+                                text: qsTr("Acknowledge company alert")
+                                visible: window.room === "inbox" && !!inspector.entry.fields && !!inspector.entry.fields.noticeId && !inspector.entry.fields.acknowledged
+                                enabled: campaign.paused && !campaign.busy
+                                onClicked: campaign.management.acknowledgeAlert(inspector.entry.fields.noticeId)
+                            }
                             Action {
                                 objectName: "cancelProject"
                                 visible: window.room === "lab" && !!inspector.entry.actionable

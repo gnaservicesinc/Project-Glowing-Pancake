@@ -542,6 +542,8 @@ void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResu
         if (has_choice(state)) return;
     }
     state.prepared_day = today;
+    core::Cents protected_cash{0};for (const auto& reservation:checkpoint.world.simulation.reservations) protected_cash=core::checked_unit_add(protected_cash,reservation.reserved);
+    core::review_delegation(checkpoint.world.simulation,protected_cash);
 }
 template<class Function>
 RuntimeResult transaction(const CompiledProgram& program, Checkpoint& original, std::uint64_t expected, Function action) {
@@ -690,6 +692,10 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             next.runtime.prepared_day.reset();
         if (next.world.simulation.phase == core::DayPhase::work_ready &&
             next.runtime.prepared_day != next.world.simulation.date) prepare(next, program_, result, steps, trace_mode_);
+        if (!has_choice(next.runtime) && next.runtime.prepared_day==next.world.simulation.date) {
+            core::Cents protected_cash{0};for (const auto& reservation:next.world.simulation.reservations) protected_cash=core::checked_unit_add(protected_cash,reservation.reserved);
+            core::review_delegation(next.world.simulation,protected_cash);
+        }
         core_already_validated = (next.world.simulation.cash == cash_after_submit &&
                                   next.world.simulation.phase == phase_after_submit &&
                                   next.world.simulation.phase != core::DayPhase::opening);

@@ -1,9 +1,11 @@
 #pragma once
 
 #include "campaign_snapshot.hpp"
+#include <pgp/session/milestone.hpp>
 
 #include <QObject>
 #include <QTimer>
+#include <QElapsedTimer>
 
 namespace pgp::bridge {
 // Move to one QThread before start. Every operation, including local IO and
@@ -15,6 +17,7 @@ public:
                    persistence::LocalPaths paths, persistence::Settings settings,
                    QObject* parent = nullptr);
     void newCampaign(std::uint64_t token,std::string headquarters,bool stories);
+    void advanceTo(std::uint64_t token,std::uint64_t revision,std::string kind);
     void setSpeed(int days_per_second);
     void start();
     void stop();
@@ -38,7 +41,9 @@ private:
     session::Campaign campaign_;
     persistence::LocalPaths paths_;
     QTimer* timer_;
+    QElapsedTimer last_publish_;
     std::uint64_t generation_ = 1;
     bool halted_ = false;
+    std::optional<session::Milestone> milestone_;
 };
 }

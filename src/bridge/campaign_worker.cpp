@@ -11,7 +11,7 @@ namespace pgp::bridge {
 namespace {
 bool pending_decision(const runtime::Checkpoint& checkpoint) {
     const auto& state = checkpoint.world.simulation;
-    return state.phase == core::DayPhase::awaiting_choice ||
+    return core::required_management_notice(state) || state.phase == core::DayPhase::awaiting_choice ||
         (state.liquidity && core::liquidity_report(*state.liquidity).pending_warning.has_value()) ||
         std::any_of(checkpoint.runtime.presentations.begin(),checkpoint.runtime.presentations.end(),[](const auto& row) {
             return row.kind == runtime::PresentationKind::dialogue && !row.resolved;
@@ -23,8 +23,9 @@ CampaignWorker::CampaignWorker(runtime::CompiledProgram program, runtime::Checkp
     persistence::LocalPaths paths, persistence::Settings settings, QObject* parent)
     : QObject(parent),campaign_(std::move(program),std::move(checkpoint),paths.saves_directory / "autosaves",settings),
       paths_(std::move(paths)),timer_(new QTimer(this)) {
+    last_publish_.start();
     qRegisterMetaType<CampaignSnapshotPtr>();
-    timer_->setInterval(100);
+    timer_->setInterval(1000);
     timer_->setTimerType(Qt::PreciseTimer);
     connect(timer_,&QTimer::timeout,this,&CampaignWorker::tick);
 }
@@ -32,6 +33,7 @@ void CampaignWorker::requireOwningThread() const {
     if (QThread::currentThread() != thread()) throw std::logic_error("Campaign operation requires its worker thread");
 }
 void CampaignWorker::publish() {
+    last_publish_.restart();
     auto checkpoint = campaign_.checkpoint();
     const auto& state = checkpoint.world.simulation;
     const bool running = !halted_ && !state.paused && state.phase == core::DayPhase::work_ready &&
@@ -48,8 +50,15 @@ void CampaignWorker::complete(std::uint64_t token, const session::OperationResul
     if (result.halt_requested || result.storage_notice) pauseDriver();
     QString message = QString::fromStdString(result.command.explanation);
     if (result.storage_notice) message += QStringLiteral(" ") + QString::fromStdString(result.storage_notice->explanation);
+    if (result.pause_notice) {message=QString::fromStdString(*result.pause_notice);emit noticeRaised(message);}
+    if (milestone_ && session::milestone_reached(campaign_.checkpoint(),*milestone_)) {
+        pauseDriver();milestone_.reset();emit noticeRaised(QStringLiteral("Reached the chosen milestone. Time is paused at the prepared morning."));
+    }
     if (!result.command.accepted() || result.storage_notice) emit noticeRaised(message);
-    publish();
+    const auto& current=campaign_.checkpoint();
+    if (token!=0 || halted_ || current.world.simulation.paused || pending_decision(current) ||
+        current.world.simulation.phase==core::DayPhase::finished || current.world.simulation.phase==core::DayPhase::closed ||
+        !result.command.accepted() || last_publish_.elapsed()>=100) publish();
     if (token != 0) emit operationCompleted(static_cast<qulonglong>(token),result.command.accepted(),
         result.command.accepted() && !result.storage_notice ? QString{} : message);
 }
@@ -73,7 +82,7 @@ void CampaignWorker::newCampaign(std::uint64_t token,std::string headquarters,bo
         session::Campaign next{campaign_.program(),std::move(initial),paths_.saves_directory/"autosaves",campaign_.settings()};
         const auto prepared=next.prepare_opening(next.checkpoint().world.simulation.revision);
         if (!prepared.command.accepted()) throw std::runtime_error(prepared.command.explanation);
-        campaign_=std::move(next);++generation_;halted_=true;publish();
+        campaign_=std::move(next);++generation_;halted_=true;milestone_.reset();publish();
         emit operationCompleted(static_cast<qulonglong>(token),true,QStringLiteral("New campaign started. Time is paused."));
     } catch (const std::exception& error) {
         emit noticeRaised(error_text(error));emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));
@@ -97,6 +106,16 @@ void CampaignWorker::start() {
         pauseDriver(); emit noticeRaised(error_text(error)); publish();
     }
 }
+void CampaignWorker::advanceTo(std::uint64_t token,std::uint64_t revision,std::string kind) {
+    requireOwningThread();
+    try {
+        if (campaign_.checkpoint().world.simulation.revision!=revision) throw std::invalid_argument("State changed before the milestone was selected.");
+        milestone_=session::plan_milestone(campaign_.checkpoint(),kind);
+        const auto result=campaign_.submit({revision,core::SetPaused{false}});
+        if (result.command.accepted()) halted_=false;else milestone_.reset();
+        complete(token,result);
+    } catch (const std::exception& error) {milestone_.reset();emit noticeRaised(error_text(error));emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));}
+}
 void CampaignWorker::setSpeed(int rate) { requireOwningThread();if (rate==1 || rate==10 || rate==30 || rate==60) timer_->setInterval(1000/rate); }
 void CampaignWorker::stop() { requireOwningThread(); timer_->stop(); }
 void CampaignWorker::submitCommand(std::uint64_t token, core::Command command) {
@@ -106,6 +125,7 @@ void CampaignWorker::submitCommand(std::uint64_t token, core::Command command) {
         // Stop time even if a timer tick landed between the displayed revision
         // and the button press. Commands with business consequences stay stale-checked.
         if (pause && pause->paused) command.expected_revision = campaign_.checkpoint().world.simulation.revision;
+        if (pause) milestone_.reset();
         const auto result = campaign_.submit(command);
         if (pause && !pause->paused && result.command.accepted()) halted_ = false;
         complete(token,result);
@@ -125,7 +145,7 @@ void CampaignWorker::choose(std::uint64_t token,std::uint64_t expected_revision,
 }
 void CampaignWorker::tick() {
     requireOwningThread();
-    const auto checkpoint = campaign_.checkpoint();
+    const auto& checkpoint = campaign_.checkpoint();
     const auto& state = checkpoint.world.simulation;
     if (halted_ || state.paused || state.phase != core::DayPhase::work_ready || pending_decision(checkpoint)) return;
     try { complete(0,campaign_.submit({state.revision,core::AdvanceDay{}})); }
@@ -151,7 +171,7 @@ void CampaignWorker::loadFrom(std::uint64_t token,std::filesystem::path path) {
             emit noticeRaised(message);
             emit operationCompleted(static_cast<qulonglong>(token),false,message); return;
         }
-        ++generation_;
+        ++generation_;milestone_.reset();
         // Loading preserves every checkpoint field. Stop only the external clock.
         halted_ = true;
         publish();

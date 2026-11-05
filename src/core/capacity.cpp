@@ -129,6 +129,15 @@ CapacityReport capacity_report(const CapacityState& state) {
 }
 void validate_capacity(const CapacityState& state) {
     text_valid(state.owner); (void)from_ordinal(state.starts_on);
+    if (state.staff_additions.size()>64) invalid("Staff addition history exceeds its bound");
+    std::uint64_t added=0;std::set<std::string> staff_ids;
+    const auto staff_today=state.closed_through?advance_days(*state.closed_through,Days{1}):state.starts_on;
+    for (const auto& row:state.staff_additions) {
+        if (row.people==0 || row.id.empty() || !staff_ids.insert(row.id).second || row.day<state.starts_on || row.day>staff_today)
+            invalid("Staff additions require distinct dated hiring commitments");
+        added+=row.people;
+    }
+    if (added>state.available_staff) invalid("Hired people exceed the actual current team");
     if (state.available_staff > 1000000 || state.sources.size() > capacity_source_limit ||
         state.projects.size() > capacity_project_limit || state.days.size() > capacity_day_limit)
         invalid("Capacity state exceeds its deterministic bounds");
@@ -252,7 +261,7 @@ void validate_capacity(const CapacityState& state) {
             supply->second = checked_unit_add(supply->second, used.work);
             staff_used += used.assigned_staff;
         }
-        if (staff_used > state.available_staff) invalid("Daily assignments oversubscribe staff");
+        if (staff_used > available_staff_on(state,day.day)) invalid("Daily assignments oversubscribe staff available on that day");
         previous = {};
         for (const auto& used : day.sources) {
             if (!previous.empty() && used.source_id <= previous) invalid("Daily source records must have unique sorted identities");
@@ -281,6 +290,19 @@ void validate_capacity(const CapacityState& state) {
             (row.status == ProjectStatus::completed && (!total.last_day || *total.last_day != *row.stopped_on)))
             invalid("Project totals or lifecycle cursor differ from complete committed work history");
     }
+}
+std::uint32_t available_staff_on(const CapacityState& state,OrdinalDay day) {
+    std::uint64_t unavailable=0;
+    for (const auto& row:state.staff_additions) if (row.day>day) unavailable+=row.people;
+    if (unavailable>state.available_staff) invalid("Staff history exceeds the actual team");
+    return state.available_staff-static_cast<std::uint32_t>(unavailable);
+}
+void add_staff_capacity(CapacityState& state,OrdinalDay day,std::string id,std::uint32_t people) {
+    if (day!=(state.closed_through?advance_days(*state.closed_through,Days{1}):state.starts_on) || people==0 || people>1'000'000 ||
+        state.available_staff>1'000'000-people || state.staff_additions.size()>=64 ||
+        std::any_of(state.staff_additions.begin(),state.staff_additions.end(),[&](const auto& row){return row.id==id;}))
+        invalid("Staff addition needs a unique current-day commitment within the team bound");
+    state.available_staff+=people;state.staff_additions.push_back({std::move(id),day,people});
 }
 CapacityState opening_capacity(std::vector<CapacitySource> sources, std::uint32_t staff, OrdinalDay starts_on, std::string owner) {
     CapacityState state;

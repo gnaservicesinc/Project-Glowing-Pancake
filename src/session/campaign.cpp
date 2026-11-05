@@ -1,4 +1,5 @@
 #include <pgp/session/campaign.hpp>
+#include <algorithm>
 
 namespace pgp::session {
 WeeklyNews group_weekly_news(const runtime::Checkpoint& checkpoint) {
@@ -27,6 +28,8 @@ OperationResult Campaign::operate(
     const auto prior_phase = engine_.checkpoint().world.simulation.phase;
     const auto prior_day = engine_.checkpoint().world.simulation.date;
     const auto prior_revision = engine_.checkpoint().world.simulation.revision;
+    const auto prior_notices=engine_.checkpoint().world.simulation.management?engine_.checkpoint().world.simulation.management->notices.size():0;
+    const auto prior_rivals=engine_.checkpoint().world.competition?engine_.checkpoint().world.competition->notices.size():0;
     runtime::RuntimeResult outcome;
     if (before_commit && settings_.autosave_enabled) {
         auto candidate = engine_;
@@ -80,7 +83,42 @@ OperationResult Campaign::operate(
     const bool liquidity_halt = after.world.simulation.liquidity &&
         (core::liquidity_report(*after.world.simulation.liquidity).pending_warning.has_value() ||
          after.world.simulation.liquidity->status == core::LiquidityStatus::closed);
-    return {std::move(outcome), {}, liquidity_halt};
+    std::optional<std::string> pause_notice;
+    if (after.world.simulation.date!=prior_day && after.world.simulation.capacity) {
+        for (const auto& work:after.world.simulation.capacity->projects) {
+            if (work.status!=core::ProjectStatus::completed || work.stopped_on!=prior_day) continue;
+            if ((work.kind==core::ProjectKind::evaluation && settings_.auto_pause_evaluations) ||
+                (work.kind!=core::ProjectKind::evaluation && work.kind!=core::ProjectKind::serving && settings_.auto_pause_projects)) {
+                pause_notice="Auto-paused: "+work.cause+" completed. Its actual work and costs are retained.";break;
+            }
+        }
+    }
+    if (settings_.auto_pause_alerts) {
+        if (after.world.simulation.management && after.world.simulation.management->notices.size()>prior_notices)
+            pause_notice="Auto-paused for a new company alert. Review its cause and any real deadline in Office → Policies and alerts.";
+        if (after.world.competition && after.world.competition->notices.size()>prior_rivals && after.world.competition->notices.back().kind=="warning")
+            pause_notice="Auto-paused: a heavyweight published a dated mobilization warning. Review public rival notices.";
+    }
+    // Optional notification preferences never suppress a real deadline stop.
+    // This external-driver halt happens on the prepared morning before any
+    // due-day work; the player can still finance, pay or cancel explicitly.
+    if (after.world.simulation.date!=prior_day) {
+        const auto& state=after.world.simulation;
+        if (state.accounts) for (const auto& debt:state.accounts->debts)
+            if (debt.principal.value()>0 && debt.due==state.date)
+                pause_notice="Deadline today: debt principal is due. Review Accounts and the actual payment before continuing time.";
+        if (state.business_offers) for (const auto& acceptance:state.business_offers->accepted) {
+            const auto offer=std::find_if(state.business_offers->catalog.begin(),state.business_offers->catalog.end(),[&](const auto& o){return o.id==acceptance.offer_id;});
+            if (offer!=state.business_offers->catalog.end() && offer->kind==core::BusinessOfferKind::compute_lease && core::lease_expiry(*state.business_offers,offer->id)==state.date)
+                pause_notice="Deadline today: a compute lease expires. Its capacity is unavailable until an authorized renewal succeeds.";
+        }
+        if (state.market) for (const auto& contract:state.market->contracts)
+            if (contract.status==core::ContractStatus::pending && contract.start_by==state.date)
+                pause_notice="Deadline today: a customer commitment must start. Inspect its terms before continuing.";
+        if (state.liquidity && core::liquidity_report(*state.liquidity).deadline==state.date)
+            pause_notice="Final response day: unpaid obligations must be resolved before more work. The workout deadline has not changed.";
+    }
+    return {std::move(outcome), {}, liquidity_halt || core::required_management_notice(after.world.simulation) || pause_notice.has_value(),std::move(pause_notice)};
 }
 OperationResult Campaign::prepare_opening(std::uint64_t expected_revision) {
     auto result = operate([&](auto& candidate) { return candidate.prepare_opening(expected_revision); }, false);
@@ -109,7 +147,10 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::StartTraining>(command.action) ||
         std::holds_alternative<core::StartEvaluation>(command.action) ||
         std::holds_alternative<core::DeployModel>(command.action) ||
-        std::holds_alternative<core::AcceptBusinessOffer>(command.action);
+        std::holds_alternative<core::AcceptBusinessOffer>(command.action) ||
+        std::holds_alternative<core::TakeFinancing>(command.action) || std::holds_alternative<core::HireSpecialist>(command.action) ||
+        std::holds_alternative<core::AddDelegationPolicy>(command.action) || std::holds_alternative<core::RenewComputeLease>(command.action) ||
+        std::holds_alternative<core::ReviewDelegation>(command.action);
     auto result = operate([&](auto& candidate) { return candidate.submit(command); }, irreversible);
     if (std::holds_alternative<core::AdvanceDay>(command.action) && !result.command.accepted() &&
         result.command.reason != runtime::RuntimeReason::stale_revision)

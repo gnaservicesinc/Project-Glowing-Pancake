@@ -75,6 +75,7 @@ std::string canonical_market_setup_bytes(const MarketSetup& setup, core::Ordinal
             {"tasks_per_day",row.tasks_per_day},{"inference_milli_CU_per_task",row.inference_milli_CU_per_task.value()},
             {"staff",row.staff},{"minimum_memory_mib",row.minimum_memory_mib},{"interconnect",row.interconnect},
             {"monthly_support_cost_cents",row.monthly_support_cost.value()}});
+        if (!offer->required_recipe.empty()) offers.back()["required_recipe"]=offer->required_recipe;
         if (std::any_of(offer->required.begin(),offer->required.end(),[](auto value){return value.value()>0;})) {
             auto& encoded=offers.back();
             encoded["required_bp"]={offer->required[0].value(),offer->required[1].value()};

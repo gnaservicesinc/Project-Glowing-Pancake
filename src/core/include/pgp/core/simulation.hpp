@@ -7,6 +7,7 @@
 #include <pgp/core/liquidity.hpp>
 #include <pgp/core/lab.hpp>
 #include <pgp/core/deployment.hpp>
+#include <pgp/core/management.hpp>
 #include <pgp/core/business_offers.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
@@ -97,6 +98,7 @@ struct SimulationState {
     std::optional<LabState> lab{};
     std::optional<BusinessOffersState> business_offers{};
     std::optional<DeploymentState> deployments{};
+    std::optional<ManagementState> management{};
     auto operator<=>(const SimulationState&) const = default;
 };
 
@@ -156,7 +158,8 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    EnableMarket, AddMarketProduct, AddMarketSegment, AddMarketPreference,
                                    SetMarketProductAvailable, AcceptContract, StartContract, CancelContract,
                                    AcknowledgeLiquidityWarning, BuyData, StartResearch, StartTraining, CloneModel, StartEvaluation,
-                                   AcceptBusinessOffer, AddMarketDemandChange, DeployModel>;
+                                   AcceptBusinessOffer, AddMarketDemandChange, DeployModel,
+                                   TakeFinancing,HireSpecialist,AddDelegationPolicy,SetDelegationEnabled,ReviewDelegation,AcknowledgeManagementNotice,RenewComputeLease>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

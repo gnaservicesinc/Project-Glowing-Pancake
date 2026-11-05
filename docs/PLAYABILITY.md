@@ -3,7 +3,7 @@
 Updated 2026-11-05. The bundled 2014–2017 Mac development campaign can be
 played from headquarters selection to its ending through the Office, Lab and
 Inbox. The [backlog](BACKLOG.md) records remaining acceptance gates and the
-[implementation log](IMPLEMENTATION_LOG.md) records checks. Delegation/scoring,
+[implementation log](IMPLEMENTATION_LOG.md) records checks. Delegation, recovery, milestone controls and slice scoring are implemented;
 independent human validation and release qualification remain open.
 
 | Checkpoint | What can be evaluated | State |
@@ -18,7 +18,7 @@ independent human validation and release qualification remain open.
 | M3-01: lab development loop | Four data offers, six research nodes, finite training, lineage, held-out findings and targeted recovery | Runnable with `pgp-headless --lab-demo data/runtime/first-playable.json`; [lab contract](../src/core/LAB.md) |
 | M3-05: base events and bounded rivals | Eight flow families, paid opportunities, temporary demand, financed competition and exact three-year continuation | Runnable with `pgp-headless --events-demo data/runtime/first-playable.json`; [contract/seeds](../src/runtime/BASE_EVENTS.md) |
 | M3-02: first player-facing scenario | Office/Lab decisions, data/research/training/evaluation, contracts, news and choices, start to ending | Implemented on Mac; Metal keyboard runs at 100%/200% text complete and reload exactly |
-| M3-03: feature evaluation build | The scenario with delegation, warnings, recovery and scoring | Earliest complete slice for ordinary feature feedback |
+| M3-03: feature evaluation build | The scenario with delegation, warnings, recovery and scoring | Implemented on Mac; finite policies, actual deadline stops, warned setback, financing/specialist routes and transparent score |
 | M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Human testing follows the playable build |
 
 There is no calendar estimate inferred from task counts: tasks vary substantially
@@ -43,6 +43,33 @@ A supported opening route is:
 5. In **Deploy**, choose document-only scope, that checkpoint and its independent evidence. In **Office → Compare offers**, inspect and accept the enterprise document-service terms.
 6. To broaden the promise, license consented scans and train a **fresh** model on both datasets. Evaluate that model, then deploy the documents-and-tables service with its matching evidence. Paid human review is another offered response, with lower throughput, extra staff and a real recurring cost.
 7. Keep the company funded while time advances through January 2017. Required choices stop work. Inspect public rival notices, contracts, unpaid obligations and the tiered inbox. Save/load preserves the exact campaign boundary.
+
+Office → **Funding and team** shows fixed equity/loan terms and a paid specialist.
+Equity reduces retained founder ownership; the loan creates interest and a real
+principal deadline. Repay principal in Accounts. The efficient document service
+requires tooling/serving research and a tested efficient model; it can remain a
+single-domain business rather than pursuing the broader task promise.
+
+Office → **Policies and alerts** authorizes finite independent-evaluation or
+paid compute-lease renewals. Set total budget, cash floor, run count, interval
+and resource/monthly ceilings. Refused attempts spend nothing and suspend the
+policy. Renewals count a conservative full-term commitment against the budget;
+actual bills remain in Accounts. Review/suspend policies and inspect every
+committed/refused decision there. Policies cannot answer stories or deploy models.
+
+Settings separately control optional project, evaluation-result and advance-alert
+pauses. Required choices, the supplier setback and actual debt/lease/start
+boundaries still stop time. **Advance to target** captures an existing finite
+project, evaluation or actual known deadline; it stays interruptible by required
+choices. Normal speed is one day/second, with the same optional faster ceilings.
+
+The supplier announces a temporary opening-source reduction two weeks before it
+starts. Serving keeps priority, optional work can finish later, and recovery is
+on a disclosed date. Acknowledge the start, then choose whether to wait, reduce
+optional work or pay for capacity elsewhere. Past costs are retained. The ending
+and Office score panel explain survival, delivered work, operating profit,
+independent deployed evidence and retained founder stake. Century objectives
+are not awarded by this slice rubric.
 
 The guide derives its stage from actual company progress, can be hidden, and can
 be restored from Settings. Project cancellation keeps consumed work and costs;
@@ -95,4 +122,4 @@ and exact thresholds through choices and reload; see [duration evidence](evidenc
 M1-07 then adds
 built-in occurrence detection/dispatch. M2-01 through M2-04 implement accounts,
 shared capacity, contracts and the three-year scenario with warned recovery.
-The playable campaign connects those modules through ordinary controls. The current count is 21 completed Mac feature steps. M3-01, M3-02 and M3-05 are implemented; M3-03 delegation/recovery/scoring is next. Deferred platform and release work stays recorded in the backlog.
+The playable campaign connects those modules through ordinary controls. The current count is 22 completed Mac feature steps. M3-01 through M3-03 and M3-05 are implemented; M3-04 needs five independent human sessions. Content snapshot/canvas implementation can continue while those sessions are arranged. Deferred platform and release work stays recorded in the backlog.

@@ -24,6 +24,7 @@ void roundtrip(const runtime::CompiledProgram& program,const runtime::Runtime& g
 void run() {
     std::ifstream file{PGP_SLICE_CONTENT_PATH}; auto doc=nlohmann::json::parse(file);
     doc["definitions"][0]["flows"]=nlohmann::json::array();doc["definitions"][0]["rivals"]=nlohmann::json::array();
+    doc["definitions"][0]["management"]["setbacks"]=nlohmann::json::array(); // Isolate qualification; setback boundaries have their own integration test.
     const auto registry=content::foundation_registry();
     const auto program=runtime::compile_collection(content::load_collection(doc.dump(),registry),registry);
     runtime::Runtime game{program,runtime::begin_scenario(program,"scenario.first_playable","US-CA")};

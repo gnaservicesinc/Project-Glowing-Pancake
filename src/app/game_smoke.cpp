@@ -17,6 +17,11 @@ QQuickItem* visual_item(QQuickItem* root,const QString& name) {
     for (auto* child:root->childItems()) if (auto* found=visual_item(child,name)) return found;
     return nullptr;
 }
+QQuickItem* visual_button(QQuickItem* root,const QString& label) {
+    if (root->isVisible() && root->property("text").toString()==label && root->metaObject()->indexOfSignal("clicked()")>=0) return root;
+    for (auto* child:root->childItems()) if (auto* found=visual_button(child,label)) return found;
+    return nullptr;
+}
 bool key(QQuickWindow& window,QQuickItem* item,Qt::Key code) {
     if (!item || !item->isEnabled() || !item->isVisible()) return false;
     item->forceActiveFocus(Qt::TabFocusReason);
@@ -28,7 +33,7 @@ bool key(QQuickWindow& window,QQuickItem* item,Qt::Key code) {
 }
 
 struct SmokeState {
-    enum class Phase { opening, stepping, playing, pausing, saving, advancing, loading, rejecting, settings };
+    enum class Phase { opening, stepping, editing, playing, pausing, saving, advancing, loading, rejecting, settings };
     Phase phase = Phase::opening;
     int attempts = 0;
     pgp::bridge::CampaignSnapshotPtr saved;
@@ -90,6 +95,10 @@ void schedule_game_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
             if (!key(window,item("pauseButton"),Qt::Key_Space) || !item("projectSearch")) {
                 fail("play control or project search unavailable"); return;
             }
+            smoke->phase = Phase::editing;
+            break;
+        }
+        case Phase::editing: {
             item("projectSearch")->forceActiveFocus(Qt::TabFocusReason);
             QKeyEvent edit{QEvent::KeyPress,Qt::Key_D,Qt::NoModifier,QStringLiteral("D")};
             QCoreApplication::sendEvent(&window,&edit);
@@ -99,9 +108,14 @@ void schedule_game_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
         case Phase::playing:
             if (campaign.paused()) { fail("play did not resume the clock"); return; }
             if (campaign.snapshot()->checkpoint.world.simulation.date < pgp::core::advance_days(smoke->date,pgp::core::Days{3})) return;
-            if (window.activeFocusItem() != item("projectSearch") || campaign.selectedProjectId() != smoke->project ||
+            // Terminal-launched windows can lose native activation to the
+            // desktop while retaining their Qt focus scope. Snapshot delivery
+            // must preserve logical edit focus in either case; active focus is
+            // additionally required whenever this window owns native focus.
+            if (!item("projectSearch")->hasFocus() || (window.isActive() && window.activeFocusItem() != item("projectSearch")) || campaign.selectedProjectId() != smoke->project ||
                 item("projectSearch")->property("text").toString() != QStringLiteral("D") ||
                 campaign.projects()->filterText() != QStringLiteral("D")) {
+                qCritical()<<"Window active"<<window.isActive()<<"logical focus"<<item("projectSearch")->hasFocus()<<"Focus"<<window.activeFocusItem()<<"expected"<<item("projectSearch")<<"selection"<<campaign.selectedProjectId()<<"expected"<<smoke->project<<"edit"<<item("projectSearch")->property("text")<<"filter"<<campaign.projects()->filterText();
                 fail("running snapshot changed edit focus or project selection"); return;
             }
             if (!key(window,item("pauseButton"),Qt::Key_Space)) { fail("pause control unavailable"); return; }
@@ -202,7 +216,8 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
                 if (id.isEmpty() && !choices.isEmpty()) id=choices.front().toMap().value(QStringLiteral("choiceId")).toString();
                 const auto name=QStringLiteral("flowChoice_")+id;
                 if (!key(window,visual_item(window.contentItem(),name),Qt::Key_Space)) fail("required choice was not keyboard reachable");
-            } else if (campaign.requiredKind()==QStringLiteral("liquidity")) fail("baseline UI path unexpectedly exhausted cash");
+            } else if (campaign.requiredKind()==QStringLiteral("management")) {press("acknowledgeManagement");}
+            else if (campaign.requiredKind()==QStringLiteral("liquidity")) fail("baseline UI path unexpectedly exhausted cash");
             else fail("unexpected core decision");
             return;
         }
@@ -220,8 +235,8 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
         case 1:
             if (campaign.welcome() || checkpoint->checkpoint.world.state_id!="state.us_tx" || !campaign.paused()) {fail("headquarters choice was not committed");return;}
             if (!capture(QStringLiteral("-office"))) {fail("office capture");return;}
-            press("labTab");press("lab_data");manager->dataOffers()->setSelectedId(QStringLiteral("data.licensed_documents"));
-            if (press("buyDataButton")) smoke->phase=2;return;
+            press("office_funding");manager->funding()->setSelectedId(QStringLiteral("finance.bridge_equity"));
+            if (press("takeFinancingButton")) smoke->phase=30;return;
         case 2:
             if (state.lab->licenses.size()!=1) {fail("license purchase");return;}
             press("lab_research");manager->researchTopics()->setSelectedId(QStringLiteral("research.held_out_evaluation"));
@@ -236,12 +251,16 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             if (press("startTrainingButton")) smoke->phase=5;return;
         case 5:
             if (state.lab->models.empty()) {fail("training start");return;}
-            smoke->baseline=QString::fromStdString(state.lab->models.front().id);play();smoke->phase=6;return;
+            smoke->baseline=QString::fromStdString(state.lab->models.front().id);
+            press("officeTab");press("office_policies");
+            if (!set("policyRunsField",QStringLiteral("1"))) {fail("finite evaluation policy runs");return;}
+            if (press("authorizePolicyButton")) smoke->phase=33;return;
         case 6:
             if (core::lab_report(*state.lab,*state.capacity).models.front().training) {play();return;}
             if (!pause()) return;
-            press("lab_evaluate");
-            if (press("evaluateButton")) smoke->phase=7;return;
+            press("labTab");press("lab_evaluate");
+            if (state.lab->evaluations.empty() || state.management->policies.front().runs!=1) {fail("delegation did not start the independent paid evaluation");return;}
+            smoke->phase=7;return;
         case 7:
             if (state.lab->evaluations.empty()) {fail("held-out evaluation start");return;}
             play();smoke->phase=8;return;
@@ -253,12 +272,12 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             press("lab_deploy");if (press("deployButton")) smoke->phase=9;return;
         case 9:
             if (state.deployments->records.size()!=1) {fail("qualified document-only deployment");return;}
-            press("officeTab");manager->offers()->setSelectedId(QStringLiteral("offer.enterprise_service"));
+            press("officeTab");press("office_offers");manager->offers()->setSelectedId(QStringLiteral("offer.enterprise_service"));
             if (press("acceptOfferButton")) smoke->phase=10;return;
         case 10:
             if (state.market->contracts.empty()) {fail("customer offer did not create contract");return;}
-            press("labTab");press("lab_data");manager->dataOffers()->setSelectedId(QStringLiteral("data.consented_scans"));
-            if (press("buyDataButton")) smoke->phase=11;return;
+            manager->offers()->setSelectedId(QStringLiteral("offer.supplier_small"));
+            if (press("acceptOfferButton")) smoke->phase=34;return;
         case 11:
             press("lab_train");if (press("trainingData_data.consented_scans")) smoke->phase=12;return;
         case 12:
@@ -277,6 +296,7 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
         case 16:
             if (!state.lab->evaluations.back().completed) {play();return;}
             if (!pause()) return;
+            if (state.capacity->sources.front().effective.value()<80000) {play();return;} // Wait through the disclosed temporary source reduction.
             smoke->evidence=QString::fromStdString(state.lab->evaluations.back().id);
             press("lab_deploy");
             if (!set("deploymentModelChoice",smoke->targeted) || !set("deploymentEvidenceChoice",smoke->evidence) || !set("deploymentServiceChoice",QStringLiteral("product.documents_tables"))) {fail("broader service selectors");return;}
@@ -298,9 +318,36 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
                 play();return;
             }
             if (state.cash.value()<=0 || state.date!=core::to_ordinal({2017,1,1}) || manager->ending().isEmpty() || manager->rivals()->rowCount()<3) {fail("ending or public rival presentation");return;}
+            if (state.business_offers->renewals.size()!=1 || state.management->policies.front().runs!=1 || state.management->policies.back().runs!=1 ||
+                core::required_management_notice(state) || !core::slice_score(state).final || !manager->ending().contains(QStringLiteral("slice score"))) {fail("policy/recovery/scoring ending");return;}
             if (!capture({})) {fail("ending capture");return;}
-            qInfo()<<"Playable UI smoke passed: Texas start, paid data/research, deterministic training preview, held-out subgroup finding, narrowed and targeted deployments, contract, exact reload, rivals and solvent 2017 ending; cash cents"<<state.cash.value()<<"text scale"<<campaign.textScalePercent()<<"renderer"<<graphics::name(expected);
+            qInfo()<<"Playable UI smoke passed: Texas start, fixed equity financing, hired specialist, bounded evaluation/renewal policies, milestone, paid data/research, subgroup finding, deployments, contract, exact reload, mandatory setback/restoration, rivals and scored solvent 2017 ending; cash cents"<<state.cash.value()<<"text scale"<<campaign.textScalePercent()<<"renderer"<<graphics::name(expected);
             timer->stop();QCoreApplication::exit(0);return;
+        case 30:
+            if (!key(window,visual_button(window.contentItem(),QStringLiteral("OK")),Qt::Key_Space)) {fail("financing confirmation keyboard");return;}
+            smoke->phase=31;return;
+        case 31:
+            if (state.management->financing.size()!=1 || core::slice_score(state).founder_share.value()!=4510) {fail("fixed equity proceeds/dilution");return;}
+            if (!capture(QStringLiteral("-funding"))) {fail("funding capture");return;}
+            if (press("hireSpecialistButton")) smoke->phase=32;return;
+        case 32:
+            if (state.capacity->available_staff!=7 || state.management->specialists.size()!=1) {fail("paid specialist hire");return;}
+            press("labTab");press("lab_data");manager->dataOffers()->setSelectedId(QStringLiteral("data.licensed_documents"));
+            if (press("buyDataButton")) smoke->phase=2;return;
+        case 33:
+            if (state.management->policies.size()!=1 || state.management->policies.front().maximum_runs!=1) {fail("bounded evaluation authorization");return;}
+            if (!capture(QStringLiteral("-policies"))) {fail("policy capture");return;}
+            press("labTab");press("lab_projects");
+            if (press("advanceToButton")) smoke->phase=6;return;
+        case 34:
+            if (state.business_offers->accepted.size()!=2) {fail("paid renewable compute lease");return;}
+            press("office_policies");
+            if (!set("policyKindChoice",QStringLiteral("lease_renewal")) || !set("policyRunsField",QStringLiteral("1"))) {fail("renewal policy form");return;}
+            if (press("authorizePolicyButton")) smoke->phase=35;return;
+        case 35:
+            if (state.management->policies.size()!=2 || state.management->policies.back().kind!=core::DelegationKind::lease_renewal) {fail("bounded renewal authorization");return;}
+            press("labTab");press("lab_data");manager->dataOffers()->setSelectedId(QStringLiteral("data.consented_scans"));
+            if (press("buyDataButton")) smoke->phase=11;return;
         default:fail("unknown smoke phase");return;
         }
     });

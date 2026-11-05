@@ -117,6 +117,7 @@ struct LabAllocation {
     std::string source_id;
     MilliCUPerDay daily_compute{0};
     std::uint32_t staff = 0;
+    auto operator<=>(const LabAllocation&) const = default;
 };
 struct TrainingPreview {
     Days minimum_days{0};

@@ -629,14 +629,14 @@ FlowDefinition flow(const Json& value, const std::string& path, const Registry& 
     if (reached.size() != result.nodes.size()) fail("unreachable_node", path, "Every node must be reachable from entry or continuous exit");
     return result;
 }
-MarketSetup market_setup(const Json& value, const std::string& path, const ScenarioDefinition& scenario) {
+MarketSetup market_setup(const Json& value, const std::string& path, const ScenarioDefinition& scenario,bool templates=false) {
     fields(value, path, {"offers","segments","contracts"}, {"offers","segments","contracts"});
     MarketSetup result;
     array(value.at("offers"), child(path,"offers"), core::market_product_limit);
     for (const auto& offer : value.at("offers")) {
         fields(offer,path,{"id","capacity_project_id","price_cents_per_task","available","tasks_per_day",
             "inference_milli_CU_per_task","staff","minimum_memory_mib","interconnect","monthly_support_cost_cents",
-             "required_bp","review_credit_bp","review_staff","review_monthly_cost_cents","review_tasks_per_day"},
+             "required_bp","review_credit_bp","review_staff","review_monthly_cost_cents","review_tasks_per_day","required_recipe"},
             {"id","capacity_project_id","price_cents_per_task","available","tasks_per_day",
             "inference_milli_CU_per_task","staff","minimum_memory_mib","interconnect","monthly_support_cost_cents"});
         MarketOfferDefinition row;
@@ -669,6 +669,7 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
             if (offer.contains("review_tasks_per_day")) row.review_tasks_per_day=static_cast<std::uint64_t>(integer(offer.at("review_tasks_per_day"),path,0,core::market_task_limit));
         } else if (offer.contains("review_credit_bp") || offer.contains("review_staff") || offer.contains("review_monthly_cost_cents") || offer.contains("review_tasks_per_day"))
             fail("service_catalog",path,"Review control needs explicit task requirements");
+        if (offer.contains("required_recipe")) row.required_recipe=id(offer.at("required_recipe"),path);
         result.offers.push_back(std::move(row));
     }
     array(value.at("segments"),child(path,"segments"),core::market_segment_limit);
@@ -727,12 +728,15 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
             core::CapacitySourceKind::leased,scenario.leased_capacity,scenario.leased_capacity,0,"general",scenario.lease_energy_included});
     auto capacity = core::opening_capacity(std::move(sources),scenario.team_people,scenario.starts_on);
     auto market = core::opening_market(scenario.starts_on);
-    apply_market_setup(result,market,ledger,capacity,scenario.starts_on);
+    if (templates) {
+        for (const auto& offer:result.offers) { auto single=capacity;core::reserve_project(single,scenario.starts_on,offer.serving);market.products.push_back(offer.product); }
+        market.segments=result.segments;core::validate_market(market);
+    } else apply_market_setup(result,market,ledger,capacity,scenario.starts_on);
     return result;
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -788,11 +792,25 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         catch (const ValidationError&) { throw; }
         catch (const std::exception& error) { fail("market",child(path,"market"),error.what()); }
     }
+    if (value.contains("management")) {
+        result.management=load_management_catalog(value.at("management").dump());
+        const auto& catalog=*result.management;
+        if (!result.lab || !result.market || !result.ownership.contains(catalog.scoring.founder) ||
+            result.ownership.at(catalog.scoring.founder)!=catalog.scoring.opening_founder_share)
+            fail("management",path,"Management requires the lab/market and the actual opening founder stake");
+        for (const auto& setback:catalog.setbacks)
+            if (setback.source_id!="lease.initial" || setback.reduced_capacity>=result.leased_capacity ||
+                setback.announced_on<result.starts_on || setback.ends_before>=result.ends_before)
+                fail("management",path,"Setback must reduce an actual opening source inside the scenario");
+    }
     if (value.contains("service_catalog")) {
         try {
-            result.service_catalog=market_setup(value.at("service_catalog"),child(path,"service_catalog"),result);
+            result.service_catalog=market_setup(value.at("service_catalog"),child(path,"service_catalog"),result,true);
             if (!result.lab) fail("service_catalog",path,"Service templates require a lab");
             (void)service_definitions(*result.service_catalog);
+            for (const auto& service:result.service_catalog->offers)
+                if (!service.required_recipe.empty() && std::none_of(result.lab->recipes.begin(),result.lab->recipes.end(),[&](const auto& recipe){return recipe.id==service.required_recipe;}))
+                    fail("service_catalog",path,"Specialist service refers to an unknown training recipe");
             if (!result.service_catalog->contracts.empty()) fail("service_catalog",path,"Service templates cannot create accepted contracts");
             for (const auto& segment:result.service_catalog->segments) {
                 if (!result.market) fail("service_catalog",path,"Service preferences require an existing scenario market");
@@ -804,6 +822,7 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         } catch (const ValidationError&) { throw; }
         catch (const std::exception& error) { fail("service_catalog",path,error.what()); }
     }
+    if (result.management && !result.service_catalog) fail("management",path,"Management/scoring requires the qualified service catalog");
     if (value.contains("business_plan")) {
         const auto plan_path = child(path,"business_plan");
         const auto& plan = value.at("business_plan");

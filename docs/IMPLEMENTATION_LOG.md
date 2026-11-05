@@ -25,6 +25,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | E1A-03 | Complete for Mac features | Isolated scenario/state/RNG tests, exact clause and scope traces, effect/ledger previews, boundary probes, shared presentations, natural lifecycle and exact reload. [Inspection](evidence/E1A-03-inspection.md) |
 | M3-01 | Complete for Mac features | Paid data/research, finite training/lineage and held-out subgroup evidence; 88 lab checks |
 | M3-05 | Complete for Mac features | Eight base-event families, paid offers, bounded rivals and exact three-year baseline; 188 event checks |
+| M3-03 | Complete for Mac features | Saved bounded policies, optional pause/deadline/milestone routing, warned setback, paid specialist/financing routes and explicit slice scores; 352 integration checks and complete Metal UI runs |
 | M3-02 | Complete for Mac features | Bundled interactive campaign, guide, measured qualification/controls and dated serving replacement; 29 deployment and 16 management checks plus complete Metal keyboard runs at 100%/200% |
 
 ## Mac feature scope update — 2026-11-04
@@ -791,3 +792,49 @@ Windows/Linux/package/device or release acceptance is inferred from these checks
 Count: **21/52 Mac feature steps**. Next: M3-03's bounded delegation, configurable
 auto-pause, specialist/financing recovery paths and scoring. M3-04's five real
 human sessions and the remaining Content Studio/native/release gates remain open.
+
+
+## M3-03 — Delegation, recovery and slice scoring — 2026-11-05
+
+The playable scenario now owns saved finite evaluation/lease-renewal policies,
+fixed financing offers, one hireable specialist, a warned source setback and a
+content-defined slice score. Every accepted action records actual cash/resources;
+policy counters, reserve/commitment ceilings, intervals, suspensions/refusals and
+next-review dates persist exactly. Lease renewal charges setup plus actual bills;
+its policy debits a conservative full-term ceiling. A live checkpoint cannot be
+tested and a policy cannot choose story responses or deploy a model.
+
+The supplier warns 2014-04-17, reduces the opening source to 60 CU/day on May 1,
+and restores 100 CU/day on May 15. Starting the setback requires acknowledgment
+before work. The broad baseline now waits for feasible expansion and finishes
+2017-01-01 with **227,602,041 cents**, **3,985,648 tasks** and **99/100**. The
+single-domain efficient specialist, paid hire and two delegated tests finish with
+**143,738,712 cents**, **3,081,000 tasks**, **23,738,712 cents operating profit**
+and **84/100**, with no new financing. Its saved continuation also completes.
+Scores derive from actual history and never award later century objectives.
+
+Local settings separately control completion/evaluation/advance-alert pauses.
+Required choices, the setback, actual debt/lease/start deadlines and the final
+liquidity response day always stop the driver. Milestones capture real project
+IDs/deadlines, normal speed is one day/second and running snapshots are capped at
+10 Hz. Dated staff additions retain historical limits; the loan path also exposed
+and fixed debt-interest validation incorrectly splitting IDs containing `/`.
+
+Verification: **58/58 optimized Mac CTests in 11.71s**, including **352 management
+integration assertions** and **20 bridge checks**, plus content validation and
+`git diff --check`. Complete explicit Metal keyboard/form runs at **1280×720**,
+**100% and 200% text**, exercise fixed equity dilution, paid hiring, finite
+independent-evaluation and renewal policies, milestone control, exact reload,
+required setback/restoration, rivals and a scored solvent ending. Rendered review
+fixed truncation of the high-scale milestone selector. The legacy engineering
+shell's keyboard/clock/live-focus/save/load/error/preferences smoke passes at
+200%. The smaller smoke separates resume completion from editing, then verifies retained
+Qt edit focus even when a terminal-launched window lacks native activation; it
+also requires active edit focus when the native window is active.
+No human, screen-reader, non-Mac device or release qualification is claimed.
+
+Count: **22/52 Mac feature steps**. M3-04's five independent human sessions remain
+required (including two non-ML players, three unaided completions). Local session
+materials can be prepared while E1A-04 snapshot finalization and the remaining
+editor work proceed. The goal remains active; no human study is fabricated.
+[Owning mechanics and limits](../src/core/MANAGEMENT.md).

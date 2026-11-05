@@ -14,7 +14,7 @@
 namespace {
 constexpr std::string_view usage =
     "Usage: pgp-headless [--help | --build-info | --foundation-demo | --validate-content FILE | --accounts-demo FILE | --capacity-demo FILE | --market-demo FILE | --business-run FILE STRATEGY | --flow-demo FILE [--save FILE]]\n"
-    "Also: --lab-demo FILE | --events-demo FILE\nBusiness strategies: expansion, baseline, rescue. Builds never launch the application.\n";
+    "Also: --lab-demo FILE | --events-demo FILE | --specialist-demo FILE\nBusiness strategies: expansion, baseline, rescue. Builds never launch the application.\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -41,6 +41,10 @@ int main(int argc, char* argv[]) {
     if (argc == 3 && std::string_view{argv[1]} == "--lab-demo") {
         try { run_lab_demo(argv[2],std::cout); return 0; }
         catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
+    }
+    if (argc == 3 && std::string_view{argv[1]} == "--specialist-demo") {
+        try { run_events_demo(argv[2],std::cout,true); return 0; }
+        catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 2; }
     }
     if (argc == 3 && std::string_view{argv[1]} == "--events-demo") {
         try { run_events_demo(argv[2],std::cout); return 0; }

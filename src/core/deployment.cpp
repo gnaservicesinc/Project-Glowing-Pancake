@@ -19,6 +19,7 @@ const ServiceDefinition& service(const DeploymentState& state,std::string_view i
 CapacityProject qualified_project(const ServiceDefinition& definition,const LabState& lab,const CapacityState& capacity,
                                  const DeployModel& request,OrdinalDay day,std::string id) {
     const auto& model=find(lab.models,request.model_id);
+    if (!definition.required_recipe.empty() && model.recipe_id!=definition.required_recipe) invalid("This specialist service requires its efficient recipe and research");
     const auto& evidence=find(lab.evaluations,request.evidence_id);
     const auto& plan=find(lab.catalog.evaluations,evidence.plan_id);
     const auto& test=find(capacity.projects,evidence.project_id);

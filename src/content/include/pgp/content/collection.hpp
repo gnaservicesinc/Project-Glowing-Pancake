@@ -5,6 +5,7 @@
 #include <pgp/content/business_plan.hpp>
 #include <pgp/content/lab_catalog.hpp>
 #include <pgp/content/world_setup.hpp>
+#include <pgp/content/management_catalog.hpp>
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
@@ -142,6 +143,7 @@ struct ScenarioDefinition {
     std::vector<RivalDefinition> rivals{};
     // Deployable templates, not active products or prepaid serving workloads.
     std::optional<MarketSetup> service_catalog{};
+    std::optional<core::ManagementCatalog> management{};
 };
 struct ResearchDefinition {
     std::vector<std::string> all_of;

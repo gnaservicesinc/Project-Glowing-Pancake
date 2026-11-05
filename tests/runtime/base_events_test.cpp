@@ -26,7 +26,15 @@ runtime::CompiledProgram compile(const Json& document) {
 std::uint64_t revision(const runtime::Runtime& engine) { return engine.current_state().world.simulation.revision; }
 void accepted(const runtime::RuntimeResult& result) { if (!result.accepted()) throw std::runtime_error(result.explanation); }
 void apply(runtime::Runtime& engine,core::CommandAction action) { accepted(engine.submit({revision(engine),std::move(action)})); }
-void step(runtime::Runtime& engine,unsigned count=1) { while (count--!=0) apply(engine,core::AdvanceDay{}); }
+void step(runtime::Runtime& engine,unsigned count=1) {
+    while (count--!=0) {
+        if (engine.current_state().world.simulation.management) {
+            const auto notices=engine.current_state().world.simulation.management->notices;
+            for (const auto& n:notices) if (n.required && !n.acknowledged) apply(engine,core::AcknowledgeManagementNotice{n.id});
+        }
+        apply(engine,core::AdvanceDay{});
+    }
+}
 void refused(runtime::Runtime& engine,core::CommandAction action) {
     const auto before=engine.checkpoint(); check(!engine.submit({revision(engine),std::move(action)}).accepted(),"Invalid event command was accepted");
     check(before==engine.checkpoint(),"Rejected event command changed cash, resources, source history or RNG");

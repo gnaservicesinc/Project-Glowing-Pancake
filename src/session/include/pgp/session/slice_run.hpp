@@ -12,4 +12,6 @@ struct SliceRun {
 // independent evidence. Optional story roots are disabled; all base roots stay.
 [[nodiscard]] SliceRun run_slice_baseline(const runtime::CompiledProgram& program,
     std::optional<core::OrdinalDay> stop_before={},std::optional<runtime::Checkpoint> resume={});
+[[nodiscard]] SliceRun run_slice_specialist(const runtime::CompiledProgram& program,
+    std::optional<core::OrdinalDay> stop_before={},std::optional<runtime::Checkpoint> resume={});
 }

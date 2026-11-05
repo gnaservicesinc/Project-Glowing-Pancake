@@ -29,7 +29,8 @@ const core::LabState& lab(const runtime::Runtime& engine) { return *engine.check
 core::TrainingRequest training(std::string id, std::vector<std::string> data = {"data.licensed_documents"}) {
     return {std::move(id), "recipe.document_baseline", "", std::move(data), "lease.initial", core::MilliCUPerDay{60000}, 4, core::MilliCU{3600000}};
 }
-runtime::CompiledProgram compile(const Json& doc) {
+runtime::CompiledProgram compile(Json doc) {
+    doc["definitions"][0]["management"]["setbacks"]=Json::array(); // Isolate lab arithmetic; management integration owns dated outages.
     const auto registry = content::foundation_registry();
     return runtime::compile_collection(content::load_collection(doc.dump(),registry),registry,runtime::supported_effects());
 }

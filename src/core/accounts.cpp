@@ -440,8 +440,7 @@ void validate_accounts(const AccountsState& state) {
         const auto expected = expected_accruals.find(invoice.id);
         if (expected == expected_accruals.end() || invoice.kind != InvoiceKind::payable || invoice.due != expected->second.due ||
             invoice.amount != expected->second.amount ||
-            (invoice.id.starts_with("interest/") ? invoice.cause != "Debt interest: " + invoice.id.substr(9, invoice.id.find('/', 9) - 9)
-                                                 : invoice.cause != expected->second.cause))
+            invoice.cause != expected->second.cause)
             invalid("Accrued invoice differs from its owning terms and closed-day history");
         expected_accruals.erase(expected);
     }

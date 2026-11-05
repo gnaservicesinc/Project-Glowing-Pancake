@@ -66,14 +66,15 @@ QString offer_terms(const core::BusinessOffer& offer) {
             text(core::iso_date(offer.available_from)),text(core::iso_date(offer.available_before)));
 }
 }
-ManagementController::ManagementController(QObject* parent):QObject(parent),data_(new StableListModel(this)),research_(new StableListModel(this)),
+ManagementController::ManagementController(QObject* parent):QObject(parent),funding_(new StableListModel(this)),specialists_(new StableListModel(this)),
+    policies_(new StableListModel(this)),decisions_(new StableListModel(this)),alerts_(new StableListModel(this)),data_(new StableListModel(this)),research_(new StableListModel(this)),
     models_(new StableListModel(this)),evidence_(new StableListModel(this)),offers_(new StableListModel(this)),products_(new StableListModel(this)),
     contracts_(new StableListModel(this)),rivals_(new StableListModel(this)),payables_(new StableListModel(this)) {}
 bool ManagementController::available() const { return snapshot_ && state().lab && state().deployments; }
 const core::SimulationState& ManagementController::state() const { return snapshot_->checkpoint.world.simulation; }
 void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::CompiledProgram& program,bool replace) {
     snapshot_=std::move(snapshot);
-    std::vector<CampaignRow> data,research,models,evidence,offers,products,contracts,rivals,payables;
+    std::vector<CampaignRow> data,research,models,evidence,offers,products,contracts,rivals,payables,funding,specialists,policies,decisions,alerts;
     const auto& s=state();
     if (s.lab) {
         const auto report=core::lab_report(*s.lab,*s.capacity);
@@ -157,8 +158,30 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
         }
         for (const auto& row:s.accounts->debts) if (row.principal.value()>0) payables.push_back({text(row.id),QStringLiteral("Debt: ")+text(row.id),money(row.principal),QStringLiteral("Matures ")+text(core::iso_date(row.due)),QStringLiteral("Principal outstanding"),true,{{QStringLiteral("debt"),true}}});
     }
+    if (s.management) {
+        const auto& m=*s.management;
+        for (const auto& offer:m.catalog.financing) {
+            const bool taken=std::any_of(m.financing.begin(),m.financing.end(),[&](const auto& t){return t.offer_id==offer.id;});
+            funding.push_back({text(offer.id),text(offer.name),money(offer.proceeds)+QStringLiteral(" cash now"),
+                offer.term.value()==0?QStringLiteral("%1 proceeds in return for %2 ownership. Every existing holding is diluted proportionally. Offered once; no refund or reroll.").arg(money(offer.proceeds),percent(offer.acquired)):
+                QStringLiteral("%1 proceeds · %2 monthly interest · principal due %3 days after drawing. Interest accrues through actual accounts; repay principal explicitly in Accounts. Offered once.").arg(money(offer.proceeds),percent(offer.monthly_interest),QString::number(offer.term.value())),taken?QStringLiteral("Used"):QStringLiteral("Available"),!taken});
+        }
+        for (const auto& offer:m.catalog.specialists) {
+            const bool hired=std::any_of(m.specialists.begin(),m.specialists.end(),[&](const auto& h){return h.offer_id==offer.id;});
+            specialists.push_back({text(offer.id),text(offer.name),money(offer.signing_cost)+QStringLiteral(" signing · ")+money(offer.monthly_salary)+QStringLiteral("/month"),
+                QStringLiteral("Adds one available staff member today and a recurring salary. Past work keeps its actual staffing. Extra staff does not create compute or improve model capability for free."),hired?QStringLiteral("Hired"):QStringLiteral("Available"),!hired});
+        }
+        for (const auto& p:m.policies) policies.push_back({text(p.id),p.kind==core::DelegationKind::evaluation?QStringLiteral("Held-out evaluation policy"):QStringLiteral("Compute lease renewal policy"),
+            QStringLiteral("%1 / %2 runs · %3 / %4 committed").arg(p.runs).arg(p.maximum_runs).arg(money(p.committed),money(p.budget)),
+            QStringLiteral("Target %1 · next review %2\nReserve floor %3 · monthly ceiling %4\n%5 CU/day · %6 staff · %7-day evaluation interval\n%8\nSuspending preserves all spent/committed budget and prior decisions.")
+                .arg(text(p.target_id),text(core::iso_date(p.next_review)),money(p.reserve_floor),money(p.monthly_ceiling),cu(p.allocation.daily_compute.value()),QString::number(p.allocation.staff),QString::number(p.interval.value()),p.blocked.empty()?QStringLiteral("No blocked action"):text(p.blocked)),p.enabled?QStringLiteral("Enabled"):p.runs>=p.maximum_runs?QStringLiteral("Run limit reached"):QStringLiteral("Suspended / blocked"),false,{{QStringLiteral("enabled"),p.enabled}}});
+        for (std::size_t i=0;i<m.decisions.size();++i) {const auto& d=m.decisions[i];decisions.push_back({QStringLiteral("decision:%1").arg(static_cast<qulonglong>(i)),text(d.policy_id),text(core::iso_date(d.day))+QStringLiteral(" · ")+money(d.commitment),text(d.explanation)+(d.result_id.empty()?QString{}:QStringLiteral("\nResult: ")+text(d.result_id)),d.accepted?QStringLiteral("Committed"):QStringLiteral("Refused; policy suspended"),false});}
+        for (const auto& n:m.notices) alerts.push_back({text(n.id),readable(n.kind),text(core::iso_date(n.day))+(n.deadline?QStringLiteral(" · deadline ")+text(core::iso_date(*n.deadline)):QString{}),
+            alertDetail(n),n.acknowledged?QStringLiteral("Acknowledged"):n.required?QStringLiteral("Required before work"):QStringLiteral("Actionable / informational"),!n.acknowledged});
+    }
     auto set=[&](StableListModel* model,std::vector<CampaignRow> rows){if (replace) model->beginCampaign(std::move(rows)); else model->setRows(std::move(rows));};
     set(data_,std::move(data));set(research_,std::move(research));set(models_,std::move(models));set(evidence_,std::move(evidence));set(offers_,std::move(offers));set(products_,std::move(products));set(contracts_,std::move(contracts));set(rivals_,std::move(rivals));set(payables_,std::move(payables));
+    set(funding_,std::move(funding));set(specialists_,std::move(specialists));set(policies_,std::move(policies));set(decisions_,std::move(decisions));set(alerts_,std::move(alerts));
     emit changed();
 }
 QVariantList ManagementController::recipes() const {
@@ -196,7 +219,9 @@ QVariantList ManagementController::sources() const {
 }
 QVariantList ManagementController::services() const {
     QVariantList result; if (!available()) return result;
-    for (const auto& row:state().deployments->catalog) { auto item=option(row.product.id,readable(row.product.id));item.insert(QStringLiteral("reviewAllowed"),row.review_staff>0);result.push_back(item); }
+    auto ordered=state().deployments->catalog;
+    std::stable_sort(ordered.begin(),ordered.end(),[](const auto& a,const auto& b){return a.required_recipe.size()<b.required_recipe.size();});
+    for (const auto& row:ordered) { auto item=option(row.product.id,readable(row.product.id));item.insert(QStringLiteral("reviewAllowed"),row.review_staff>0);result.push_back(item); }
     return result;
 }
 QVariantMap ManagementController::recommended() const {
@@ -226,10 +251,46 @@ QString ManagementController::guide() const {
     if (state().market->contracts.empty()) return QStringLiteral("5 · Compare the customer offers in the Office. The enterprise offer needs a running document service. A recovery pilot offers a smaller, shorter commitment. Accepting starts real delivery and obligations.");
     return QStringLiteral("6 · Keep the service funded while time advances to January 2017. Read public rival notices and deadlines in the inbox. Try a fresh model with consented scans, compare held-out evidence, and deploy the broader service if it qualifies. Save and load at any paused boundary.");
 }
+QString ManagementController::scoreText() const {
+    if (!snapshot_ || !state().management) return {};
+    const auto score=core::slice_score(state());const auto& rubric=state().management->catalog.scoring;
+    return QStringLiteral("%1 slice score %2 / 100\nSurvive to the ending: %3 / %4\nDelivered useful work: %5 / %6 (%7 / %8 tasks)\nPositive operating profit: %9 / %10 (%11)\nDeployed independent domain evidence: %12 / %13\nRetained founder stake: %14 / %15 (%16)\nThis development-slice rubric does not award century objectives.")
+        .arg(score.final?QStringLiteral("Final"):QStringLiteral("Provisional")).arg(score.total).arg(score.points[0]).arg(rubric.weights[0]).arg(score.points[1]).arg(rubric.weights[1])
+        .arg(number(score.delivered_tasks),number(rubric.task_target)).arg(score.points[2]).arg(rubric.weights[2]).arg(money(score.profit)).arg(score.points[3]).arg(rubric.weights[3]).arg(score.points[4]).arg(rubric.weights[4]).arg(percent(score.founder_share));
+}
+QVariantMap ManagementController::policyDefaults() const {
+    if (!snapshot_ || !state().management) return {};
+    const auto& c=state().management->catalog;
+    const auto input=[](core::Cents value){return QStringLiteral("%1.%2").arg(value.value()/100).arg(value.value()%100,2,10,QLatin1Char('0'));};
+    return {{QStringLiteral("budget"),input(c.default_policy_budget)},{QStringLiteral("reserve"),input(c.default_reserve_floor)},
+        {QStringLiteral("monthly"),input(c.default_monthly_ceiling)},{QStringLiteral("runs"),QString::number(c.default_policy_runs)},
+        {QStringLiteral("interval"),QString::number(c.minimum_evaluation_interval.value())}};
+}
+QVariantList ManagementController::renewableLeases() const {
+    QVariantList result;if (!snapshot_ || !state().business_offers) return result;
+    for (const auto& offer:state().business_offers->catalog) if (offer.renewable && std::any_of(state().business_offers->accepted.begin(),state().business_offers->accepted.end(),[&](const auto& a){return a.offer_id==offer.id;}))
+        result.push_back(option(offer.id,text(offer.name)+QStringLiteral(" · expires ")+text(core::iso_date(core::lease_expiry(*state().business_offers,offer.id)))+QStringLiteral(" · ceiling ")+money(core::lease_commitment_ceiling(offer))));
+    return result;
+}
+QString ManagementController::alertDetail(const core::ManagementNotice& n) const {
+    if (!snapshot_ || !state().management) return {};
+    for (const auto& setback:state().management->catalog.setbacks) if (setback.id==n.subject) {
+        return QStringLiteral("%1\nSource %2: reduced to %3 CU/day from %4 through %5 (exclusive), then nominal capacity returns.\nServing promises get priority; finite work may finish later. Pause/stop optional projects, choose narrower service scope, move a compatible service to another paid source, or wait for restoration. Acknowledging does not repair capacity or refund costs.")
+            .arg(text(setback.name),readable(setback.source_id),cu(setback.reduced_capacity.value()),text(core::iso_date(setback.starts_on)),text(core::iso_date(setback.ends_before)));
+    }
+    if (n.kind=="policy_blocked") {for (const auto& p:state().management->policies) if (p.id==n.subject) return text(p.blocked)+QStringLiteral("\nThe action spent nothing. Inspect the decision log, free resources or change the plan before resuming.");}
+    if (n.kind=="financing_due" && state().accounts) {
+        const auto* debt=find(state().accounts->debts,"financing/"+n.subject);
+        if (debt && debt->principal.value()==0) return QStringLiteral("This loan's principal has been repaid. Its original due date was %1; historical interest and invoices remain recorded.").arg(text(core::iso_date(*n.deadline)));
+    }
+    if (n.kind=="financing_due") return QStringLiteral("Debt principal is due on %1. Repay the outstanding amount in Accounts; interest and unpaid obligations remain real. Acknowledgment keeps the due date.").arg(text(core::iso_date(*n.deadline)));
+    if (n.kind=="lease_due") return QStringLiteral("A paid compute lease expires on %1. Its source stops providing capacity unless renewed on that morning. Authorize a bounded policy beforehand or renew explicitly on the expiry date. Future monthly bills and setup fees apply.").arg(text(core::iso_date(*n.deadline)));
+    return readable(n.kind);
+}
 QString ManagementController::ending() const {
     if (!snapshot_) return {};
     if (state().phase!=core::DayPhase::finished && state().phase!=core::DayPhase::closed) return {};
-    return (state().phase==core::DayPhase::finished?QStringLiteral("The 2014–2017 campaign is complete.\n"):QStringLiteral("The company has closed.\n"))+briefing()+QStringLiteral("\nFinal cash ")+money(state().cash);
+    return (state().phase==core::DayPhase::finished?QStringLiteral("The 2014–2017 campaign is complete.\n"):QStringLiteral("The company has closed.\n"))+briefing()+QStringLiteral("\nFinal cash ")+money(state().cash)+QStringLiteral("\n\n")+scoreText();
 }
 QVariantMap ManagementController::trainingPreview(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent) const {
     if (!available()) return {};
@@ -294,4 +355,35 @@ void ManagementController::repayDebt(QString id) {
     if (!editable()) return; const auto* row=find(state().accounts->debts,id.toStdString());
     if (row) emit actionRequested(core::RepayDebt{row->id,row->principal,nextId(QStringLiteral("repayment.")).toStdString()});
 }
+}
+
+namespace pgp::bridge {
+namespace {
+core::Cents policy_money(const QString& input) {
+    static const QRegularExpression pattern{QStringLiteral("^([0-9]{1,10})(?:\\.([0-9]{1,2}))?$")};
+    const auto match=pattern.match(input);if (!match.hasMatch()) throw std::invalid_argument("Enter dollars with at most two decimal places");
+    return core::Cents{match.captured(1).toLongLong()*100+match.captured(2).leftJustified(2,QLatin1Char('0')).toLongLong()};
+}
+}
+void ManagementController::takeFinancing(QString id) {if (editable()) emit actionRequested(core::TakeFinancing{id.toStdString()});}
+void ManagementController::hireSpecialist(QString id) {if (editable()) emit actionRequested(core::HireSpecialist{id.toStdString()});}
+void ManagementController::authorizeEvaluation(QString model,QString plan,QString source,QString rate,QString staff,QString budget,QString reserve,QString interval,QString runs) {
+    if (!editable()) return;
+    try {
+        core::DelegationPolicy policy;policy.id=nextId(QStringLiteral("policy.")).toStdString();policy.target_id=model.toStdString();policy.plan_id=plan.toStdString();policy.kind=core::DelegationKind::evaluation;
+        policy.allocation=allocation(source,rate,staff);policy.budget=policy_money(budget);policy.reserve_floor=policy_money(reserve);
+        policy.interval=core::Days{integer(interval,365)};policy.maximum_runs=static_cast<std::uint32_t>(integer(runs,12));emit actionRequested(core::AddDelegationPolicy{std::move(policy)});
+    } catch (const std::exception& error) {emit noticeRaised(QString::fromUtf8(error.what()));}
+}
+void ManagementController::authorizeRenewal(QString offer,QString budget,QString reserve,QString monthly,QString runs) {
+    if (!editable() || !state().management) return;
+    try {
+        core::DelegationPolicy policy;policy.id=nextId(QStringLiteral("policy.")).toStdString();policy.target_id=offer.toStdString();policy.kind=core::DelegationKind::lease_renewal;
+        policy.budget=policy_money(budget);policy.reserve_floor=policy_money(reserve);policy.monthly_ceiling=policy_money(monthly);policy.interval=state().management->catalog.minimum_evaluation_interval;
+        policy.maximum_runs=static_cast<std::uint32_t>(integer(runs,12));emit actionRequested(core::AddDelegationPolicy{std::move(policy)});
+    } catch (const std::exception& error) {emit noticeRaised(QString::fromUtf8(error.what()));}
+}
+void ManagementController::setPolicyEnabled(QString id,bool enabled) {if (editable()) emit actionRequested(core::SetDelegationEnabled{id.toStdString(),enabled});}
+void ManagementController::renewLease(QString id) {if (editable()) emit actionRequested(core::RenewComputeLease{id.toStdString()});}
+void ManagementController::acknowledgeAlert(QString id) {if (editable()) emit actionRequested(core::AcknowledgeManagementNotice{id.toStdString()});}
 }

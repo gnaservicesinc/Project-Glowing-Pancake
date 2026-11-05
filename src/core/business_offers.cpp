@@ -1,6 +1,7 @@
 #include <pgp/core/business_offers.hpp>
 #include <algorithm>
 #include <set>
+#include <map>
 #include <stdexcept>
 
 namespace pgp::core {
@@ -58,6 +59,7 @@ void validate_business_offer_catalog(const std::vector<BusinessOffer>& catalog) 
             if (offer.capacity.value()==0 || offer.capacity.value()>1'000'000 || !offer.segment_id.empty() ||
                 !offer.product_id.empty() || offer.tasks_per_day!=0) invalid("Compute offer has invalid capacity or pilot-only terms");
         } else if (offer.kind==BusinessOfferKind::recovery_pilot || offer.kind==BusinessOfferKind::enterprise_contract) {
+            if (offer.renewable) invalid("Only compute leases offer this renewal policy");
             if (offer.capacity.value()!=0 || offer.segment_id.empty() || offer.product_id.empty() ||
                 offer.tasks_per_day==0 || offer.tasks_per_day>market_task_limit) invalid("Pilot offer has invalid customer or workload terms");
         } else invalid("Unsupported business offer kind");
@@ -84,10 +86,33 @@ void accept_business_offer(BusinessOffersState& state,AccountsState& accounts,Ca
     // The enclosing Simulation/flow transaction owns rollback across modules.
     apply(state,accounts,capacity,market,day,offer,protected_cash);
 }
+OrdinalDay lease_expiry(const BusinessOffersState& state,std::string_view id) {
+    const auto accepted=std::find_if(state.accepted.begin(),state.accepted.end(),[&](const auto& row){return row.offer_id==id;});
+    if (accepted==state.accepted.end()) invalid("Accept the compute lease before requesting renewal");
+    auto expiry=accepted->expires_before;
+    for (const auto& row:state.renewals) if (row.offer_id==id) expiry=row.expires_before;
+    return expiry;
+}
+Cents lease_commitment_ceiling(const BusinessOffer& offer) {
+    const auto months=static_cast<std::uint64_t>((offer.term.value()+27)/28);
+    return checked_unit_add(offer.setup_cost,Cents{mul_div_floor(static_cast<std::uint64_t>(offer.monthly_amount.value()),months,1).quotient});
+}
+void renew_compute_lease(BusinessOffersState& state,AccountsState& accounts,CapacityState& capacity,OrdinalDay day,std::string_view id,Cents protected_cash) {
+    const auto& offer=find(state.catalog,id);
+    if (!offer.renewable || offer.kind!=BusinessOfferKind::compute_lease || lease_expiry(state,id)!=day || state.renewals.size()>=64)
+        invalid("A renewable lease can extend only on its actual expiry morning, within the renewal history bound");
+    if (offer.setup_cost>checked_unit_subtract(accounts_report(accounts).cash,protected_cash)) invalid("Available cash cannot cover lease renewal setup");
+    const auto serial=std::to_string(state.renewals.size()+1);const auto expires=advance_days(day,offer.term);
+    if (offer.setup_cost.value()>0) record_cash(accounts,day,Cents{-offer.setup_cost.value()},Account::expenses,
+        "Lease renewal setup: "+offer.name,"offer.renew.setup/"+offer.id+"/"+serial);
+    add_recurring(accounts,{"offer.renew/"+offer.id+"/"+serial,offer.monthly_amount,day,expires,"Compute lease renewal: "+offer.name});
+    update_effective_capacity(capacity,day,source_id(offer),offer.capacity);
+    state.renewals.push_back({offer.id,day,expires});
+}
 void expire_business_offers(const BusinessOffersState& state,CapacityState& capacity,OrdinalDay day) {
     for (const auto& accepted:state.accepted) {
         const auto& offer=find(state.catalog,accepted.offer_id);
-        if (offer.kind!=BusinessOfferKind::compute_lease || day<accepted.expires_before) continue;
+        if (offer.kind!=BusinessOfferKind::compute_lease || day<lease_expiry(state,offer.id)) continue;
         const auto& source=find(capacity.sources,source_id(offer));
         if (source.effective.value()!=0) update_effective_capacity(capacity,day,source.id,MilliCUPerDay{0});
     }
@@ -97,6 +122,22 @@ void validate_business_offers(const BusinessOffersState& state,const AccountsSta
     if (deep) validate_business_offer_catalog(state.catalog);
     if (state.accepted.size()>state.catalog.size()) invalid("Offer acceptances exceed their catalog");
     const auto today=accounts.closed_through?advance_days(*accounts.closed_through,Days{1}):accounts.starts_on;
+    if (state.renewals.size()>64) invalid("Lease renewal history exceeds its bound");
+    std::map<std::string,OrdinalDay> latest;
+    for (const auto& row:state.accepted) latest.emplace(row.offer_id,row.expires_before);
+    for (std::size_t i=0;i<state.renewals.size();++i) {
+        const auto& row=state.renewals[i];const auto& offer=find(state.catalog,row.offer_id);
+        const auto prior=latest.find(row.offer_id);const auto serial=std::to_string(i+1);
+        if (!offer.renewable || offer.kind!=BusinessOfferKind::compute_lease || prior==latest.end() || row.renewed_on!=prior->second ||
+            row.renewed_on>today || row.expires_before!=advance_days(row.renewed_on,offer.term)) invalid("Lease renewal differs from its actual expiry/terms");
+        const auto& term=find(accounts.recurring,"offer.renew/"+offer.id+"/"+serial);
+        if (term.starts_on!=row.renewed_on || term.ends_before!=row.expires_before || term.monthly_amount!=offer.monthly_amount)
+            invalid("Lease renewal lacks its actual recurring obligation");
+        if (deep && offer.setup_cost.value()>0 && std::none_of(accounts.postings.begin(),accounts.postings.end(),[&](const auto& p) {
+            return p.key=="offer.renew.setup/"+offer.id+"/"+serial && p.day==row.renewed_on && p.amount==offer.setup_cost && p.credit==Account::cash && p.debit==Account::expenses;
+        })) invalid("Lease renewal lacks its actual setup payment");
+        prior->second=row.expires_before;
+    }
     std::set<std::string_view> seen;
     for (const auto& accepted:state.accepted) {
         const auto& offer=find(state.catalog,accepted.offer_id);

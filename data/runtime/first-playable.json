@@ -371,7 +371,8 @@
           "capacity_milli_CU_per_day": 30000,
           "segment_id": "",
           "product_id": "",
-          "tasks_per_day": 0
+          "tasks_per_day": 0,
+          "renewable": true
         },
         {
           "id": "offer.recovery_pilot",
@@ -517,6 +518,30 @@
             "review_staff": 1,
             "review_monthly_cost_cents": 1500000,
             "review_tasks_per_day": 500
+          },
+          {
+            "id": "product.document_specialist",
+            "capacity_project_id": "serving.document_specialist",
+            "price_cents_per_task": 150,
+            "available": true,
+            "tasks_per_day": 3000,
+            "inference_milli_CU_per_task": 20,
+            "staff": 1,
+            "minimum_memory_mib": 0,
+            "interconnect": "general",
+            "monthly_support_cost_cents": 700000,
+            "required_bp": [
+              6000,
+              0
+            ],
+            "review_credit_bp": [
+              0,
+              0
+            ],
+            "review_staff": 0,
+            "review_monthly_cost_cents": 0,
+            "review_tasks_per_day": 0,
+            "required_recipe": "recipe.efficient"
           }
         ],
         "segments": [
@@ -541,11 +566,75 @@
                 "willingness_to_pay_cents": 150,
                 "switching_cost": 100,
                 "eligible": true
+              },
+              {
+                "product_id": "product.document_specialist",
+                "utility": 1800,
+                "willingness_to_pay_cents": 150,
+                "switching_cost": 100,
+                "eligible": true
               }
             ]
           }
         ],
         "contracts": []
+      },
+      "management": {
+        "financing": [
+          {
+            "id": "finance.bridge_equity",
+            "name": "Bridge equity: 18% ownership",
+            "proceeds_cents": 30000000,
+            "acquired_bp": 1800,
+            "monthly_interest_bp": 0,
+            "term_days": 0
+          },
+          {
+            "id": "finance.working_capital",
+            "name": "Working-capital loan: 1% monthly interest",
+            "proceeds_cents": 25000000,
+            "acquired_bp": 0,
+            "monthly_interest_bp": 100,
+            "term_days": 365
+          }
+        ],
+        "specialists": [
+          {
+            "id": "specialist.evaluation",
+            "name": "Evaluation and service specialist",
+            "signing_cost_cents": 200000,
+            "monthly_salary_cents": 600000
+          }
+        ],
+        "setbacks": [
+          {
+            "id": "setback.supplier_maintenance",
+            "name": "Scheduled supplier cooling maintenance",
+            "source_id": "lease.initial",
+            "announced_on": "2014-04-17",
+            "starts_on": "2014-05-01",
+            "ends_before": "2014-05-15",
+            "reduced_milli_CU_per_day": 60000
+          }
+        ],
+        "scoring": {
+          "task_target": 4000000,
+          "weights": [
+            25,
+            25,
+            20,
+            20,
+            10
+          ],
+          "founder": "founder_trust",
+          "opening_founder_share_bp": 5500
+        },
+        "minimum_evaluation_interval_days": 30,
+        "maximum_policy_runs": 12,
+        "default_policy_budget_cents": 10000000,
+        "default_reserve_floor_cents": 10000000,
+        "default_monthly_ceiling_cents": 400000,
+        "default_policy_runs": 3
       }
     },
     {

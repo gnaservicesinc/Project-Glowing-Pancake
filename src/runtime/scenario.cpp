@@ -54,6 +54,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         content::apply_market_setup(*scenario->market,*world.simulation.market,*world.simulation.accounts,
             *world.simulation.capacity,scenario->starts_on);
     }
+    if (scenario->management) world.simulation.management=core::ManagementState{*scenario->management,{},{},{},{},{},{}};
     if (scenario->service_catalog) world.simulation.deployments=core::DeploymentState{content::service_definitions(*scenario->service_catalog),{}};
     if (!scenario->business_offers.empty()) world.simulation.business_offers=core::BusinessOffersState{scenario->business_offers,{}};
     world.facts.at("company.has_compute_lease") = scenario->leased_capacity.value() > 0;

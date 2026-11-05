@@ -108,9 +108,10 @@ ColumnLayout {
         visible: panel.room === "office"
         Repeater {
             model: [{id:"offers",label:qsTr("Compare offers")}, {id:"products",label:qsTr("Services")}, {id:"contracts",label:qsTr("Contracts")},
-                    {id:"rivals",label:qsTr("Rivals")}, {id:"accounts",label:qsTr("Accounts")}]
+                    {id:"rivals",label:qsTr("Rivals")}, {id:"accounts",label:qsTr("Accounts")}, {id:"funding",label:qsTr("Funding and team")}, {id:"policies",label:qsTr("Policies and alerts")}, {id:"score",label:qsTr("Slice score")}]
             Button {
                 required property var modelData
+                objectName: "office_" + modelData.id
                 text: modelData.label
                 font.pixelSize: panel.textSize
                 checked: panel.officeSection === modelData.id
@@ -309,6 +310,64 @@ ColumnLayout {
                 else manager.payInvoice(manager.payables.selectedId)
             }
         }
+    }
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: panel.room === "office" && panel.officeSection === "funding"
+        Copy { text: qsTr("Financing is offered once at fixed terms. Equity dilutes ownership; a loan creates interest and a principal deadline. A specialist adds paid staff capacity. The document-specialist service requires efficient-serving research and an independently tested efficient recipe.") }
+        Selection { heading: qsTr("Financing offers"); rows: manager.funding }
+        Action { objectName: "takeFinancingButton"; text: qsTr("Accept selected financing terms…"); enabled: panel.editable && manager.funding.selectedRow.actionable === true; onClicked: fundingDialog.open() }
+        Selection { heading: qsTr("Specialists"); rows: manager.specialists }
+        Action { objectName: "hireSpecialistButton"; text: qsTr("Hire selected specialist and start payroll"); enabled: panel.editable && manager.specialists.selectedRow.actionable === true; onClicked: manager.hireSpecialist(manager.specialists.selectedId) }
+    }
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: panel.room === "office" && panel.officeSection === "policies"
+        Copy { text: qsTr("Authorize a finite policy. Each attempt rechecks its remaining budget, cash floor, methodology and available resources. Refused actions spend nothing and suspend the policy. Disabling or re-enabling preserves counters. A policy never chooses a story response or deploys a model.") }
+        Choice { id: policyKind; objectName: "policyKindChoice"; label: qsTr("Policy type"); options: [{id:"evaluation",label:qsTr("Schedule independent evaluations")},{id:"lease_renewal",label:qsTr("Renew a paid compute lease")}] }
+        Choice { id: policyModel; label: qsTr("Model checkpoint (may still be training)"); rows: manager.models; visible: policyKind.value === "evaluation" }
+        Choice { id: policyPlan; label: qsTr("Independent evaluation plan"); options: manager.evaluations; visible: policyKind.value === "evaluation" }
+        Choice { id: policySource; label: qsTr("Evaluation source"); options: manager.sources; visible: policyKind.value === "evaluation" }
+        Field { id: policyRate; label: qsTr("Evaluation CU/day ceiling"); value: manager.recommended.testingRate || ""; visible: policyKind.value === "evaluation" }
+        Field { id: policyStaff; label: qsTr("Evaluation staff ceiling"); value: manager.recommended.testingStaff || ""; visible: policyKind.value === "evaluation" }
+        Field { id: policyInterval; label: qsTr("Days between evaluations"); value: manager.policyDefaults.interval || ""; visible: policyKind.value === "evaluation" }
+        Choice { id: policyLease; label: qsTr("Accepted renewable lease and conservative term cost"); options: manager.renewableLeases; visible: policyKind.value === "lease_renewal" }
+        Field { id: policyMonthly; label: qsTr("Maximum lease bill per month, dollars"); value: manager.policyDefaults.monthly || ""; visible: policyKind.value === "lease_renewal" }
+        Field { id: policyBudget; label: qsTr("Total policy commitment budget, dollars"); value: manager.policyDefaults.budget || "" }
+        Field { id: policyReserve; label: qsTr("Minimum cash after commitment, dollars"); value: manager.policyDefaults.reserve || "" }
+        Field { id: policyRuns; objectName: "policyRunsField"; label: qsTr("Maximum authorized runs"); value: manager.policyDefaults.runs || "" }
+        Copy { visible: policyKind.value === "lease_renewal"; text: qsTr("Renewal occurs on the expiry morning. The policy debits a conservative full-term commitment ceiling (setup plus enough monthly bills for the entire term); the ledger pays actual setup and daily accrued bills. It cannot renew a missed deadline retroactively.") }
+        Action {
+            objectName: "authorizePolicyButton"
+            text: qsTr("Authorize bounded policy")
+            onClicked: {
+                if (policyKind.value === "evaluation") manager.authorizeEvaluation(policyModel.value, policyPlan.value, policySource.value, policyRate.value, policyStaff.value, policyBudget.value, policyReserve.value, policyInterval.value, policyRuns.value)
+                else manager.authorizeRenewal(policyLease.value, policyBudget.value, policyReserve.value, policyMonthly.value, policyRuns.value)
+            }
+        }
+        Selection { heading: qsTr("Authorized policies"); rows: manager.policies }
+        Action { text: qsTr("Suspend / resume selected policy"); enabled: panel.editable && manager.policies.selectedId.length > 0; onClicked: manager.setPolicyEnabled(manager.policies.selectedId, !manager.policies.selectedRow.fields.enabled) }
+        Action { text: qsTr("Renew selected lease explicitly on expiry morning"); enabled: panel.editable && policyLease.value.length > 0; onClicked: manager.renewLease(policyLease.value) }
+        Selection { heading: qsTr("Policy decision log"); rows: manager.decisions }
+        Selection { heading: qsTr("Company alerts and deadlines"); rows: manager.alerts }
+        Action { objectName: "acknowledgeAlertButton"; text: qsTr("Acknowledge selected alert"); enabled: panel.editable && manager.alerts.selectedRow.actionable === true; onClicked: manager.acknowledgeAlert(manager.alerts.selectedId) }
+    }
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: panel.room === "office" && panel.officeSection === "score"
+        Copy { text: manager.scoreText }
+        Copy { text: qsTr("Survival is awarded at the ending; work counts actual delivered tasks. Profit excludes financing proceeds. Evidence counts independently measured domains used by deployed checkpoints. Ownership points reflect retained founder stake. Scores remain provisional while time can advance.") }
+    }
+    Dialog {
+        id: fundingDialog
+        objectName: "fundingConfirmation"
+        title: qsTr("Accept fixed financing terms?")
+        modal: true
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(620, Overlay.overlay.width - 36)
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        contentItem: Label { text: manager.funding.selectedRow.detail || ""; textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: panel.textSize }
+        onAccepted: manager.takeFinancing(manager.funding.selectedId)
     }
     Dialog {
         id: cancelDialog

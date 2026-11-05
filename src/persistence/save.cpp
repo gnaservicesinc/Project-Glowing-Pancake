@@ -8,6 +8,7 @@
 #include "liquidity_json.hpp"
 #include "lab_json.hpp"
 #include "deployment_json.hpp"
+#include "management_json.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -88,18 +89,25 @@ CommittedSource parse_committed_source(const Json& value) {
     detail::invalid("committed_source/unit","Unsupported fact unit");
 }
 Json business_offers_json(const core::BusinessOffersState& state) {
-    Json accepted=Json::array();
+    Json accepted=Json::array(),renewals=Json::array();
     for (const auto& row:state.accepted) accepted.push_back({{"offer_id",row.offer_id},{"accepted_on",row.accepted_on.value()},{"expires_before",row.expires_before.value()}});
-    return {{"catalog",Json::parse(content::canonical_business_offer_catalog(state.catalog))},{"accepted",std::move(accepted)}};
+    for (const auto& row:state.renewals) renewals.push_back({{"offer_id",row.offer_id},{"renewed_on",row.renewed_on.value()},{"expires_before",row.expires_before.value()}});
+    return {{"catalog",Json::parse(content::canonical_business_offer_catalog(state.catalog))},{"accepted",std::move(accepted)},{"renewals",std::move(renewals)}};
 }
 core::BusinessOffersState parse_business_offers(const Json& value) {
-    detail::fields(value,"business_offers",{"catalog","accepted"}); core::BusinessOffersState result;
-    result.catalog=content::load_business_offer_catalog(value.at("catalog").dump());
+    detail::fields(value,"business_offers",{"catalog","accepted"},{"renewals"});
+    core::BusinessOffersState result;result.catalog=content::load_business_offer_catalog(value.at("catalog").dump());
     detail::array(value.at("accepted"),"business_offers/accepted",32);
     for (const auto& row:value.at("accepted")) {
-        detail::fields(row,"business_offer_acceptance",{"offer_id","accepted_on","expires_before"});
-        result.accepted.push_back({detail::text(row.at("offer_id"),"business_offer/id",64),OrdinalDay{detail::i64(row.at("accepted_on"),"business_offer/accepted_on")},
-            OrdinalDay{detail::i64(row.at("expires_before"),"business_offer/expires_before")}});
+        detail::fields(row,"offer_acceptance",{"offer_id","accepted_on","expires_before"});
+        result.accepted.push_back({detail::text(row.at("offer_id"),"business_offer/id",64),OrdinalDay{detail::i64(row.at("accepted_on"),"business_offer/accepted_on")},OrdinalDay{detail::i64(row.at("expires_before"),"business_offer/expires_before")}});
+    }
+    if (value.contains("renewals")) {
+        detail::array(value.at("renewals"),"business_offers/renewals",64);
+        for (const auto& row:value.at("renewals")) {
+            detail::fields(row,"lease_renewal",{"offer_id","renewed_on","expires_before"});
+            result.renewals.push_back({detail::text(row.at("offer_id"),"business_offer/id",64),OrdinalDay{detail::i64(row.at("renewed_on"),"lease_renewal/day")},OrdinalDay{detail::i64(row.at("expires_before"),"lease_renewal/expiry")}});
+        }
     }
     return result;
 }
@@ -131,6 +139,8 @@ Json simulation_json(const core::SimulationState& state) {
         {"liquidity",state.liquidity?detail::liquidity_json(*state.liquidity):Json(nullptr)},
         {"lab_mode",state.lab?"training":"foundation"},
         {"lab",state.lab?detail::lab_json(*state.lab):Json(nullptr)},
+        {"management_mode",state.management?"bounded":"foundation"},
+        {"management",state.management?detail::management_json(*state.management):Json(nullptr)},
         {"deployment_mode",state.deployments?"qualified":"foundation"},
         {"deployments",state.deployments?detail::deployment_json(*state.deployments):Json(nullptr)},
         {"business_offers_mode",state.business_offers?"catalog":"foundation"},
@@ -143,7 +153,7 @@ core::SimulationState parse_simulation(const Json& value) {
         (void)ignored;
         if (name!="accounts" && name!="accounting_mode" && name!="capacity" && name!="capacity_mode" &&
             name!="market" && name!="market_mode" && name!="liquidity" && name!="liquidity_mode" && name!="lab" && name!="lab_mode" &&
-            name!="business_offers" && name!="business_offers_mode" && name!="deployment_mode" && name!="deployments")
+            name!="business_offers" && name!="business_offers_mode" && name!="deployment_mode" && name!="deployments" && name!="management_mode" && name!="management")
             prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"simulation",{"revision","date","end_date","phase","paused","cash_cents",
@@ -156,6 +166,12 @@ core::SimulationState parse_simulation(const Json& value) {
     result.phase=parse_enum<core::DayPhase>(value.at("phase"),phase_names);
     result.paused=detail::boolean(value.at("paused"),"paused");
     result.cash=Cents{detail::i64(value.at("cash_cents"),"cash_cents")};
+    if (value.contains("management_mode")!=value.contains("management")) detail::invalid("management","Management mode/state must appear together");
+    if (value.contains("management_mode")) {
+        const auto mode=detail::text(value.at("management_mode"),"management_mode",16);
+        if (mode=="bounded") result.management=detail::parse_management(value.at("management"));
+        else if (mode!="foundation" || !value.at("management").is_null()) detail::invalid("management","Management mode differs from its state");
+    }
     if (value.contains("deployment_mode")!=value.contains("deployments")) detail::invalid("deployment","Deployment mode and state must be present together");
     if (value.contains("deployment_mode")) {
         const auto mode=detail::text(value.at("deployment_mode"),"deployment_mode",16);

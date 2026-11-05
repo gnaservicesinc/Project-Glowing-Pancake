@@ -2,9 +2,9 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** 21 of 52 steps complete for Mac feature development as of 2026-11-05. The bundled 2014–2017 campaign is playable through the Office, Lab and Inbox: choose headquarters, license data, research, train, evaluate, qualify a service, compare contracts and respond to events/rivals. The guide can be hidden and reopened. Full keyboard runs at 100% and 200% text reach the ending solvent and reload exactly.
+**Current state:** 22 of 52 steps complete for Mac feature development as of 2026-11-05. The bundled 2014–2017 campaign is playable through the Office, Lab and Inbox: choose headquarters, license data, research, train, evaluate, qualify a service, compare contracts and respond to events/rivals. The guide can be hidden and reopened. Full keyboard runs at 100% and 200% text reach the ending solvent and reload exactly.
 
-**M3-03 is next:** delegation, configurable warnings, recovery and scoring. Human validation, the century campaign and release qualification remain later steps. The separate Content Studio has authoring forms and inspection; its final snapshot/canvas work is still open.
+M3-03 adds bounded evaluation/lease-renewal policies, configurable pauses, real deadline/milestone stops, a recoverable supplier setback, paid hiring, fixed financing and transparent slice scores. The efficient document-specialist route is profitable through the ending without new financing. **M3-04 now needs real playtest sessions.** The century campaign and release qualification remain later steps. The separate Content Studio has authoring forms and inspection; its final snapshot/canvas work is still open.
 
 Platform and release checks remain separately deferred. Remaining Studio snapshot/canvas work (`E1A-04`, `E1A-05`, `E1b`) follows the M3 feature slice. Follow [playability checkpoints](docs/PLAYABILITY.md), [status](docs/STATUS.md), [implementation checks](docs/IMPLEMENTATION_LOG.md) and the ordered [backlog](docs/BACKLOG.md).
 
@@ -19,6 +19,7 @@ ctest --test-dir build/core-release -R '^(core.liquidity|runtime.liquidity-integ
 build/core-release/bin/pgp-headless --business-run tests/content/fixtures/business.json expansion
 build/core-release/bin/pgp-headless --lab-demo data/runtime/first-playable.json
 build/core-release/bin/pgp-headless --events-demo data/runtime/first-playable.json
+build/core-release/bin/pgp-headless --specialist-demo data/runtime/first-playable.json
 ./make.sh --help
 ```
 

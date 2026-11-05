@@ -142,6 +142,16 @@ drivers stop at an unacknowledged warning. These commands use in-memory reloads,
 write no player saves and launch no window. Focused checks are `core.liquidity`,
 `runtime.liquidity-integration` and `session.business-scenario`.
 
+The alternative efficient specialist strategy is also reproducible without a GUI:
+
+```sh
+build/release/bin/pgp-headless --specialist-demo data/runtime/first-playable.json
+```
+
+It uses paid tooling/serving research, one hire, a single-domain efficient service
+and finite independent-evaluation policies, reaches 2017 profitable without new
+capital, and prints the same content-defined slice scoring rubric.
+
 <a id="open-the-campaign-shell"></a>
 
 ## Open the playable campaign
@@ -157,7 +167,9 @@ build/release/bin/pgp-game --portable-root "$PWD/build/release/local-campaign" -
 
 The welcome screen offers three headquarters and optional story layers. The
 in-game guide covers data, research, training, held-out evaluation, qualification
-and customer contracts. See the [player path](PLAYABILITY.md).
+and customer contracts. Office also supplies bounded policies, fixed financing,
+hiring, alerts and the provisional/final slice score. Clock milestone targets
+use existing projects and actual known deadlines. See the [player path](PLAYABILITY.md).
 Without `--portable-root`, saves/settings use the application's standard local
 directories. Builds never launch a window.
 
@@ -167,7 +179,9 @@ defaults to `US-CA` for this explicit fixture path. The bundled game chooses
 headquarters through its welcome screen.
 
 `--smoke-test` requires a fresh, explicitly selected portable directory. With
-bundled content it drives the complete keyboard/form path to a solvent ending,
+bundled content it drives the complete keyboard/form path, including financing, paid hiring,
+bounded evaluation/renewal policies and the recoverable capacity setback, to a
+scored solvent ending,
 including exact save/load and required decisions. With an engineering business
 fixture it retains the smaller room/clock/save/error/preferences check:
 

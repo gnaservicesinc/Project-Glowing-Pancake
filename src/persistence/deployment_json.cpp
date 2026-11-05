@@ -22,7 +22,7 @@ Json deployment_json(const core::DeploymentState& state) {
             {"source",w.source_id},{"starts",w.starts_on.value()},{"tasks",w.tasks_per_day},{"inference",w.inference_milli_CU_per_task.value()},
             {"staff",w.staff},{"memory",w.minimum_memory_mib},{"interconnect",w.interconnect},{"support",w.monthly_support_cost.value()},
             {"cause",w.cause},{"required",profile(row.required)},{"review_credit",profile(row.review_credit)},{"review_staff",row.review_staff},
-            {"review_cost",row.review_monthly_cost.value()},{"review_tasks",row.review_tasks_per_day},{"preferences",std::move(preferences)}});
+            {"review_cost",row.review_monthly_cost.value()},{"review_tasks",row.review_tasks_per_day},{"preferences",std::move(preferences)},{"required_recipe",row.required_recipe}});
     }
     for (const auto& row:state.records) records.push_back({{"service",row.service_id},{"model",row.model_id},{"evidence",row.evidence_id},
         {"project",row.project_id},{"review",row.human_review},{"day",row.deployed_on.value()}});
@@ -35,9 +35,10 @@ core::DeploymentState parse_deployment(const Json& j) {
     core::DeploymentState state;
     for (const auto& row:j.at("catalog")) {
         fields(row,"deployment/service",{"id","project","price","available","source","starts","tasks","inference","staff","memory",
-            "interconnect","support","cause","required","review_credit","review_staff","review_cost","review_tasks","preferences"});
+            "interconnect","support","cause","required","review_credit","review_staff","review_cost","review_tasks","preferences"},{"required_recipe"});
         core::ServiceDefinition value;
         value.product={label(row.at("id")),label(row.at("project")),cents(row.at("price")),boolean(row.at("available"),"deployment/available")};
+        if (row.contains("required_recipe")) value.required_recipe=text(row.at("required_recipe"),"deployment/required_recipe",64,true);
         auto& w=value.serving; w.id=value.product.capacity_project_id; w.source_id=label(row.at("source"));
         w.kind=core::ProjectKind::serving; w.starts_on=core::OrdinalDay{i64(row.at("starts"),"deployment/starts")};
         w.tasks_per_day=u64(row.at("tasks"),"deployment/tasks",core::market_task_limit);
