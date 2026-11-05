@@ -10,6 +10,7 @@
 #include "deployment_json.hpp"
 #include "management_json.hpp"
 #include "infrastructure_json.hpp"
+#include "resilience_json.hpp"
 #include "mergers_json.hpp"
 #include "competition_history_json.hpp"
 #include "heavyweight_json.hpp"
@@ -55,6 +56,7 @@ ScopeBinding parse_binding(const Json& value, bool member=false) {
     auto kind=content::Scope::world;
     if (member && scope=="project") kind=content::Scope::project;
     else if (member && scope=="contract") kind=content::Scope::contract;
+    else if (member && scope=="capacity_source") kind=content::Scope::capacity_source;
     else if (scope=="company") kind=content::Scope::company;
     else if (scope=="state") kind=content::Scope::state;
     else if (scope!="world") detail::invalid("binding/scope","Unsupported scope");
@@ -88,7 +90,7 @@ CommittedSource parse_committed_source(const Json& value) {
         if (content::unit_name(unit)==name)
             return {detail::text(value.at("fact_id"),"fact_id",128),parse_binding(value.at("subject"),true),
                 OrdinalDay{detail::i64(value.at("settled_on"),"settled_on")},unit,
-                parse_scalar(value.at("result")),detail::text(value.at("cause"),"cause",256)};
+                parse_scalar(value.at("result")),detail::text(value.at("cause"),"cause",1024)};
     }
     detail::invalid("committed_source/unit","Unsupported fact unit");
 }
@@ -147,6 +149,7 @@ Json simulation_json(const core::SimulationState& state) {
         {"management",state.management?detail::management_json(*state.management):Json(nullptr)},
         {"infrastructure_mode",state.infrastructure?"domestic":"foundation"},
         {"infrastructure",state.infrastructure?detail::infrastructure_json(*state.infrastructure):Json(nullptr)},
+        {"resilience",state.resilience?detail::resilience_json(*state.resilience):Json(nullptr)},
         {"deployment_mode",state.deployments?"qualified":"foundation"},
         {"deployments",state.deployments?detail::deployment_json(*state.deployments):Json(nullptr)},
         {"business_offers_mode",state.business_offers?"catalog":"foundation"},
@@ -159,7 +162,7 @@ core::SimulationState parse_simulation(const Json& value) {
         (void)ignored;
         if (name!="accounts" && name!="accounting_mode" && name!="capacity" && name!="capacity_mode" &&
             name!="market" && name!="market_mode" && name!="liquidity" && name!="liquidity_mode" && name!="lab" && name!="lab_mode" &&
-            name!="business_offers" && name!="business_offers_mode" && name!="deployment_mode" && name!="deployments" && name!="management_mode" && name!="management" && name!="infrastructure_mode" && name!="infrastructure")
+            name!="business_offers" && name!="business_offers_mode" && name!="deployment_mode" && name!="deployments" && name!="management_mode" && name!="management" && name!="infrastructure_mode" && name!="infrastructure" && name!="resilience")
             prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"simulation",{"revision","date","end_date","phase","paused","cash_cents",
@@ -178,6 +181,7 @@ core::SimulationState parse_simulation(const Json& value) {
         if (mode=="domestic") result.infrastructure=detail::parse_infrastructure(value.at("infrastructure"));
         else if (mode!="foundation" || !value.at("infrastructure").is_null()) detail::invalid("infrastructure","Infrastructure mode differs from its state");
     }
+    if (value.contains("resilience") && !value.at("resilience").is_null()) result.resilience=detail::parse_resilience(value.at("resilience"));
     if (value.contains("management_mode")!=value.contains("management")) detail::invalid("management","Management mode/state must appear together");
     if (value.contains("management_mode")) {
         const auto mode=detail::text(value.at("management_mode"),"management_mode",16);

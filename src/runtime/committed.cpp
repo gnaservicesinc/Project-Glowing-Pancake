@@ -83,12 +83,23 @@ struct Provider {
     std::string_view result;
     Subjects (*subjects)(const WorldState&, core::OrdinalDay);
 };
+Subjects site_outcomes(const WorldState& world,core::OrdinalDay day) {
+    Subjects result;
+    if (world.simulation.resilience) {
+        const auto& alerts=world.simulation.resilience->alerts;
+        auto row=std::lower_bound(alerts.begin(),alerts.end(),day,[](const auto& alert,core::OrdinalDay date){return alert.day<date;});
+        for (;row!=alerts.end() && row->day==day;++row)
+            result.push_back({row->source_id,row->id+" · "+row->cause,content::Scalar{true}});
+    }
+    return result;
+}
 constexpr Provider providers[]{
     {"capacity.project_completed", Scope::project, "project.completed_milli_cu", completed_projects},
     {"market.contract_missed_start", Scope::contract, "contract.missed_start", missed_contracts},
     {"lab.research_completed",Scope::project,"project.lab_research_completed",completed_research},
     {"lab.evaluation_finding",Scope::project,"project.has_evaluation_finding",evaluation_findings},
     {"market.pilot_outcome",Scope::contract,"contract.outcome_tasks",pilot_outcomes},
+    {"infrastructure.site_outcome",Scope::capacity_source,"capacity_source.has_site_outcome",site_outcomes},
 };
 [[noreturn]] void invalid(const char* explanation) { throw std::invalid_argument(explanation); }
 const Provider& provider_for(const content::Registry& registry, std::string_view id) {
@@ -109,7 +120,7 @@ Sources committed_sources(const WorldState& world, const content::Registry& regi
     if (opening_day <= world.campaign_start) return {};
     const auto settled = core::OrdinalDay{core::checked_subtract(opening_day.value(), 1)};
     auto subjects = provider.subjects(world, settled);
-    std::sort(subjects.begin(), subjects.end(), [](const auto& a, const auto& b) { return a.id < b.id; });
+    std::sort(subjects.begin(), subjects.end(), [](const auto& a, const auto& b) { return std::tie(a.id,a.cause)<std::tie(b.id,b.cause); });
     const auto& fact = *registry.fact(provider.result);
     Sources result;
     result.reserve(subjects.size());

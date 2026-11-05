@@ -25,9 +25,10 @@ struct CapacitySource {
     // Absent only for legacy sources present since the campaign started.
     std::optional<OrdinalDay> available_from{};
     MilliCUPerDay wholesale_reserved{0};
+    MilliCUPerDay replica_reserved{0};
     auto operator<=>(const CapacitySource&) const = default;
 };
-enum class ProjectKind { training, research, evaluation, serving };
+enum class ProjectKind { training, research, evaluation, serving, replication };
 enum class ProjectStatus { active, completed, cancelled };
 struct CapacityProject {
     std::string id;
@@ -57,6 +58,7 @@ struct SourceDayUsage {
     MilliCU used{0};
     MilliCUPerDay wholesale_available{0};
     MilliCU wholesale_used{0};
+    MilliCUPerDay replica_available{0};
     auto operator<=>(const SourceDayUsage&) const = default;
 };
 struct ProjectDayWork {

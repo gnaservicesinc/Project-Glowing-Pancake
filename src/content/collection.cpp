@@ -831,7 +831,7 @@ RegionalMarkets parse_regional_markets(const Json& value, const std::string& pat
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -931,6 +931,10 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
             fail("regional_markets",path,"Regional scenarios need an opening market, qualified services and owned infrastructure");
         result.regional_markets = id(value.at("regional_markets"),path);
     }
+    if (value.contains("resilience")) {
+        if (!result.infrastructure || !result.service_catalog) fail("resilience",path,"Site resilience needs owned infrastructure and qualified services");
+        result.resilience=id(value.at("resilience"),path);
+    }
     if (value.contains("business_plan")) {
         const auto plan_path = child(path,"business_plan");
         const auto& plan = value.at("business_plan");
@@ -1008,6 +1012,14 @@ void validate_references(const Collection& collection, const Registry& registry)
             if (!scenario_definition->regional_markets.empty()) {
                 (void)reference(scenario_definition->regional_markets,"regional_markets",path);
                 (void)scenario_market_setup(collection, *scenario_definition);
+            }
+            if (!scenario_definition->resilience.empty()) {
+                (void)reference(scenario_definition->resilience,"site_resilience",path);
+                const auto& risks=*resilience_catalog(collection,*scenario_definition);
+                std::set<std::string> exposed,states;
+                for (const auto& row:risks.exposures) exposed.insert(row.state_id);
+                for (const auto& row:scenario_definition->infrastructure->states) states.insert(row.id);
+                if (exposed!=states) fail("resilience",path,"Every domestic state needs an explicit seasonal hazard profile");
             }
             if (scenario_definition->lab) {
                 try {
@@ -1177,6 +1189,7 @@ std::string_view definition_kind(const Definition& definition) {
     if (std::holds_alternative<ResearchDefinition>(definition.data)) return "research";
     if (std::holds_alternative<FlowDefinition>(definition.data)) return "flow";
     if (std::holds_alternative<RegionalMarkets>(definition.data)) return "regional_markets";
+    if (std::holds_alternative<core::ResilienceCatalog>(definition.data)) return "site_resilience";
     return "deal";
 }
 bool is_incident_stream(core::RandomStream stream) noexcept {
@@ -1281,6 +1294,11 @@ Collection load_collection(std::string_view document, const Registry& registry) 
             if (kind == "research") return research(value, path);
             if (kind == "flow") return flow(value, path, installed_registry);
             if (kind == "regional_markets") return parse_regional_markets(value,path);
+            if (kind == "site_resilience") {
+                fields(value,path,{"id","kind","revision","catalog"},{"id","kind","revision","catalog"});
+                try {return load_resilience_catalog(value.at("catalog").dump());}
+                catch (const std::exception& error) {fail("resilience",path,error.what());}
+            }
             if (kind == "deal") {
                 fields(value, path, {"id", "kind", "revision", "minimum_payment_cents", "minimum_duration_days"},
                        {"id", "kind", "revision", "minimum_payment_cents", "minimum_duration_days"});

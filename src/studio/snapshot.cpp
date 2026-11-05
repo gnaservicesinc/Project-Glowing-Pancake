@@ -195,9 +195,21 @@ PreparedSnapshot prepare_snapshot(const fs::path& root,const SnapshotRequest& re
             {"collection_hash",plan.result.collection_hash},{"source_hash",persistence::sha256(snapshot_bytes)},{"compatibility",versions.at("compatibility")},
             {"definitions",std::move(definition_manifest)},{"scenario_flow_roots",std::move(scenario_roots)},
             {"messages_hash",hash(candidate.value("messages",Json::object()))},{"assets",Json::array()},{"save_policy",request.save_policy}};
+        // Immutable collections retain the full bodies. Keep their hashes and
+        // revision links here so successive scenario edits cannot multiply
+        // entire catalogues inside the bounded history metadata.
+        Json recorded_changes=Json::array();
+        for (const auto& change:changes) {
+            auto recorded=change;
+            recorded["before_hash"]=change.at("before").is_null()?Json(nullptr):Json(hash(change.at("before")));
+            recorded["after_hash"]=change.at("after").is_null()?Json(nullptr):Json(hash(change.at("after")));
+            recorded.erase("before");recorded.erase("after");
+            recorded_changes.push_back(std::move(recorded));
+        }
         history["batches"].push_back({{"generation",generation},{"content_version",proposed_version},{"previous_content_version",state_bytes?Json(current_version):Json(nullptr)},
             {"collection_hash",plan.result.collection_hash},{"target",request.target.generic_string()},{"snapshot",snapshot_path.generic_string()},
-            {"summary",request.summary},{"changed_definitions",changes},{"changed_text_keys",texts},{"compatibility",versions.at("compatibility")},
+            {"previous_snapshot",state_bytes?prior_state.at("snapshot"):Json(nullptr)},
+            {"summary",request.summary},{"changed_definitions",std::move(recorded_changes)},{"changed_text_keys",texts},{"compatibility",versions.at("compatibility")},
             {"minimum_game_change",feature?"minor":"patch"},{"required_game_version",required},{"game_version_at_finalization",versions.at("components").at("game")},
             {"save_policy",request.save_policy},{"validation",validation},{"purpose","internal-playtest"}});
         const auto history_bytes=pretty(history),manifest_bytes=pretty(manifest);

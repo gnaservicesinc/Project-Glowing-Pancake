@@ -35,6 +35,8 @@ SitePowerPreview power_plan(const SimulationState& s,const OwnedSite& owned,Ordi
     if (day<owned.built_on || day<owned.grid_on || !owned.commissioned_on || *owned.commissioned_on>day || !before_end(day,owned.closed_on)) return result;
     std::uint64_t budget=owned.grid_watts;for (const auto& change:owned.power) if (change.day<=day) budget=change.watts;
     result.facility_watts=facility_limit(state,owned,budget);
+    const auto disruption=site_disruption(s,owned.id,day);
+    if (disruption.emergency_watts) result.facility_watts=std::min(result.facility_watts,*disruption.emergency_watts);
     result.it_watts=mul_div_floor(result.facility_watts,1000,pue(state,owned.cooling)).quotient;
     result.operators=operators_on(s,owned,day);
     std::array<const HardwareOrder*,4> candidates{};std::size_t count=0;
@@ -53,7 +55,8 @@ SitePowerPreview power_plan(const SimulationState& s,const OwnedSite& owned,Ordi
     const auto fraction=delta==0?10000ULL:std::min<std::uint64_t>(10000,mul_div_floor(result.it_watts-idle,10000,delta).quotient);
     for (auto& output:result.hardware) if (output.powered) {
         const auto& order=find(infrastructure(s).hardware,output.order_id);const auto& f=family(s,order);
-        output.effective=MilliCUPerDay{mul_div_floor(static_cast<std::uint64_t>(f.capacity.value()),fraction,10000).quotient};
+        output.effective=MilliCUPerDay{mul_div_floor(std::array<std::uint64_t,3>{
+            static_cast<std::uint64_t>(f.capacity.value()),fraction,static_cast<std::uint64_t>(disruption.remaining.value())},100'000'000).quotient};
     }
     return result;
 }
@@ -93,7 +96,12 @@ std::vector<MeteredProjection> forecast_terms(const SimulationState& s) {
         if (owned.closed_on && *owned.closed_on<=std::max(ready,s.date)) continue;
         std::uint64_t maximum=facility_limit(state,owned,owned.grid_watts);
         const auto wh=maximum*24;const auto water=owned.cooling==CoolingMode::air?0:mul_div_floor(wh,state.water_ml_per_kwh,1000).quotient;
-        const auto raw=mul_div_floor(wh,state.electricity_millicents_per_kwh,1).quotient+mul_div_floor(water,state.water_cents_per_1000_liters,1).quotient;
+        auto tariff=state.electricity_millicents_per_kwh;
+        if (s.resilience) for (const auto& protection:s.resilience->protections) if (protection.site_id==owned.id) {
+            const auto& offer=find(s.resilience->catalog.protections,protection.offer_id);
+            if (offer.kind==SiteProtectionKind::generator) tariff=std::max(tariff,offer.power_millicents_per_kwh);
+        }
+        const auto raw=mul_div_floor(wh,tariff,1).quotient+mul_div_floor(water,state.water_cents_per_1000_liters,1).quotient;
         terms.push_back({ready,owned.closed_on,Cents{raw/1000000+(raw%1000000?1:0)}});
     }
     return terms;
@@ -116,9 +124,12 @@ MeterSample meter_site(const SimulationState& s,const OwnedSite& owned,OrdinalDa
     }
     const auto water_raw=sample.wh*(owned.cooling==CoolingMode::air?0:state.water_ml_per_kwh)+meter.water_remainder;
     sample.water=water_raw/1000;meter.water_remainder=water_raw%1000;
-    const auto emissions_raw=sample.wh*state.grid_grams_per_kwh+meter.emissions_remainder;
+    const auto disruption=site_disruption(s,owned.id,day);
+    const auto tariff=disruption.emergency_watts?disruption.power_millicents_per_kwh:state.electricity_millicents_per_kwh;
+    const auto carbon=disruption.emergency_watts?disruption.power_grams_per_kwh:state.grid_grams_per_kwh;
+    const auto emissions_raw=sample.wh*carbon+meter.emissions_remainder;
     sample.emissions=emissions_raw/1000;meter.emissions_remainder=emissions_raw%1000;
-    const auto electric=sample.wh*state.electricity_millicents_per_kwh+meter.electricity_remainder;
+    const auto electric=sample.wh*tariff+meter.electricity_remainder;
     const auto water_cost=sample.water*state.water_cents_per_1000_liters+meter.water_charge_remainder;
     sample.electricity=Cents{electric/1000000};meter.electricity_remainder=electric%1000000;
     sample.water_charge=Cents{water_cost/1000000};meter.water_charge_remainder=water_cost%1000000;
@@ -134,8 +145,10 @@ Cents wholesale_electricity(const SimulationState& s,std::string_view source_id,
     const auto& terms=profile(s,owned);
     const auto& hardware=family(s,*order);
     if (work.value()>hardware.capacity.value()) invalid("Wholesale electricity exceeds the rack's rated work");
+    const auto disruption=site_disruption(s,owned.id,s.date);
+    const auto tariff=disruption.emergency_watts?disruption.power_millicents_per_kwh:terms.electricity_millicents_per_kwh;
     const auto factors=std::array<std::uint64_t,5>{hardware.active_it_watts-hardware.idle_it_watts,
-        static_cast<std::uint64_t>(work.value()),24,pue(terms,owned.cooling),terms.electricity_millicents_per_kwh};
+        static_cast<std::uint64_t>(work.value()),24,pue(terms,owned.cooling),tariff};
     // Watt-hours with milli-PUE at milli-cents per kWh. Charge only
     // incremental electricity and round down once to whole cents.
     return Cents{mul_div_floor(factors,static_cast<std::uint64_t>(hardware.capacity.value())*1'000'000'000U).quotient};

@@ -118,6 +118,38 @@ template<class Row> const Row& by_id(const std::vector<Row>& rows, std::uint64_t
     if (found == rows.end()) invalid("Missing runtime record identity");
     return *found;
 }
+void validate_site_random_history(const CompiledProgram& program,const Checkpoint& checkpoint) {
+    const auto& world=checkpoint.world;
+    if (!world.simulation.resilience) return;
+    struct Draw {
+        core::OrdinalDay day{0};
+        unsigned phase=0;
+        std::size_t sequence=0;
+        std::uint64_t before=0,after=0;
+    };
+    std::vector<Draw> history;
+    const auto& samples=world.simulation.resilience->samples;
+    for (std::size_t index=0;index<samples.size();++index) {
+        const auto& sample=samples[index];
+        history.push_back({sample.sampled_on,0,index,sample.stream_before,sample.stream_after});
+    }
+    const auto& branches=checkpoint.runtime.random_resolutions;
+    for (std::size_t index=0;index<branches.size();++index) {
+        const auto& branch=branches[index];
+        if (node(program,branch.flow_id,branch.node_id).random_stream=="hazards")
+            history.push_back({branch.day,1,index,branch.stream_before,branch.stream_after});
+    }
+    std::sort(history.begin(),history.end(),[](const auto& a,const auto& b){
+        return std::tie(a.day,a.phase,a.sequence)<std::tie(b.day,b.phase,b.sequence);
+    });
+    const auto domain=static_cast<std::size_t>(core::RandomStream::hazards);
+    auto expected=core::RandomStreams{world.root_seed}.snapshot()[domain];
+    for (const auto& draw:history) {
+        if (draw.before!=expected) invalid("Site and content hazards lost their shared saved random progression");
+        expected=draw.after;
+    }
+    if (expected!=world.simulation.random[domain]) invalid("A site hazard consumed an unrecorded or rerolled random draw");
+}
 template<class Row> void identities(const std::vector<Row>& rows, std::uint64_t next) {
     if (next == 0 || rows.size() > maximum_records) invalid("Runtime identifier/count limit");
     std::uint64_t previous = 0;
@@ -154,6 +186,10 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
     if (binding.scope == Scope::capacity_source && pool && pool->owner == world.company_id) {
         const auto& source = related_row(pool->sources, binding.id);
         if (metadata.id == "capacity_source.effective_milli_cu_per_day") return source.effective.value();
+        if (metadata.id=="capacity_source.has_site_outcome") return world.simulation.resilience &&
+            std::any_of(world.simulation.resilience->alerts.begin(),world.simulation.resilience->alerts.end(),[&](const auto& row){
+                return row.source_id==source.id && row.day<=world.simulation.date;
+            });
     }
     if (binding.scope == Scope::project && pool && pool->owner == world.company_id) {
         const auto& project = related_row(pool->projects, binding.id);
@@ -290,6 +326,10 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             invalid("Saved source scenario is absent or has different campaign dates");
         if (validate_core_simulation && (scenario->infrastructure ? (!world.simulation.infrastructure || world.simulation.infrastructure->catalog!=*scenario->infrastructure) : world.simulation.infrastructure.has_value()))
             invalid("Saved owned infrastructure rules differ from the source scenario");
+        if (const auto* risks=content::resilience_catalog(program.collection,*scenario)) {
+            if (!world.simulation.resilience || (validate_core_simulation && world.simulation.resilience->catalog!=*risks))
+                invalid("Saved site risks differ from the authored scenario");
+        } else if (world.simulation.resilience) invalid("This scenario did not authorize site resilience rules");
         if (world.simulation.infrastructure) {
             const auto& base=world.simulation.infrastructure->executive_base;
             if ((base=="US-CA"?"state.us_ca":base=="US-TX"?"state.us_tx":base=="US-WA"?"state.us_wa":"")!=world.state_id ||
@@ -587,7 +627,8 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             invalid("Random resolution has an invalid node, scope, date or visit");
         const auto index = static_cast<std::size_t>(*domain);
         auto& last_random_state = last_random_states[index];
-        if (last_random_state != resolution.stream_before)
+        const bool shared_hazards=world.simulation.resilience && *domain==core::RandomStream::hazards;
+        if ((!shared_hazards || !seen_streams[index]) && last_random_state != resolution.stream_before)
             invalid("Random resolution is missing its stream origin or breaks its stream history");
         seen_streams[index] = true;
         if (content::is_incident_stream(*domain)) {
@@ -624,8 +665,10 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     }
     for (std::size_t index = 0; index < core::stream_count; ++index)
         if (last_random_states[index].has_value() != seen_streams[index] ||
-            (seen_streams[index] && last_random_states[index] != world.simulation.random[index]))
+            (seen_streams[index] && !(world.simulation.resilience && index==static_cast<std::size_t>(core::RandomStream::hazards)) &&
+                last_random_states[index] != world.simulation.random[index]))
             invalid("Saved random stream does not continue its resolved branch history");
+    if (validate_core_simulation) validate_site_random_history(program,checkpoint);
     for (const auto& activation : state.activations) {
         const auto& root = flow(program, activation.definition_id);
         const auto domain = content::random_branch_stream(root.nodes.at(root.entry_node).random_stream);

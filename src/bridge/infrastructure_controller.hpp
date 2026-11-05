@@ -16,6 +16,17 @@ class InfrastructureController final : public QObject {
     Q_PROPERTY(QVariantList wholesalePlans READ wholesalePlans NOTIFY changed)
     Q_PROPERTY(QVariantList wholesaleSources READ wholesaleSources NOTIFY changed)
     Q_PROPERTY(QVariantList wholesaleBuyers READ wholesaleBuyers NOTIFY changed)
+    Q_PROPERTY(bool resilienceAvailable READ resilienceAvailable NOTIFY changed)
+    Q_PROPERTY(QVariantList resilienceSites READ resilienceSites NOTIFY changed)
+    Q_PROPERTY(QVariantList protectionOffers READ protectionOffers NOTIFY changed)
+    Q_PROPERTY(QVariantList insuranceOffers READ insuranceOffers NOTIFY changed)
+    Q_PROPERTY(QVariantList replicatedServices READ replicatedServices NOTIFY changed)
+    Q_PROPERTY(QVariantList replicaSources READ replicaSources NOTIFY changed)
+    Q_PROPERTY(StableListModel* protections READ protections CONSTANT)
+    Q_PROPERTY(StableListModel* insurancePolicies READ insurancePolicies CONSTANT)
+    Q_PROPERTY(StableListModel* incidents READ incidents CONSTANT)
+    Q_PROPERTY(StableListModel* replicas READ replicas CONSTANT)
+    Q_PROPERTY(QString riskSummary READ riskSummary NOTIFY changed)
     Q_PROPERTY(QVariantList rackOptions READ rackOptions NOTIFY catalogChanged)
     Q_PROPERTY(QVariantMap mapGeometry READ mapGeometry NOTIFY catalogChanged)
     Q_PROPERTY(QString mapCredit READ mapCredit NOTIFY catalogChanged)
@@ -40,6 +51,17 @@ public:
     QVariantList wholesalePlans() const {return wholesale_plans_;}
     QVariantList wholesaleSources() const {return wholesale_sources_;}
     QVariantList wholesaleBuyers() const {return wholesale_buyers_;}
+    bool resilienceAvailable() const {return snapshot_ && state().resilience.has_value();}
+    QVariantList resilienceSites() const {return resilience_sites_;}
+    QVariantList protectionOffers() const {return protection_offers_;}
+    QVariantList insuranceOffers() const {return insurance_offers_;}
+    QVariantList replicatedServices() const {return replicated_services_;}
+    QVariantList replicaSources() const {return replica_sources_;}
+    StableListModel* protections() const {return protections_;}
+    StableListModel* insurancePolicies() const {return policies_;}
+    StableListModel* incidents() const {return incidents_;}
+    StableListModel* replicas() const {return replicas_;}
+    QString riskSummary() const;
     QVariantList rackOptions() const {return rack_options_;}
     QVariantMap mapGeometry() const {return map_;}
     QString mapCredit() const;
@@ -62,6 +84,10 @@ public:
     Q_INVOKABLE void reviewCancel(QString appointment);
     Q_INVOKABLE void reviewLease();
     Q_INVOKABLE void reviewWholesale(QString plan,QString source,QString buyer);
+    Q_INVOKABLE void reviewProtection(QString site,QString offer);
+    Q_INVOKABLE void reviewInsurance(QString site,QString offer);
+    Q_INVOKABLE void reviewReplica(QString service,QString source);
+    Q_INVOKABLE void reviewStopReplica(QString id);
     Q_INVOKABLE void confirm();
     Q_INVOKABLE void dismissReview();
 signals:
@@ -77,10 +103,12 @@ private:
     void loadMap();
     struct WholesaleReview {std::uint64_t expected_revision;QString plan,source,buyer;};
     StableListModel *states_,*sites_,*hardware_,*calendar_,*notices_,*wholesale_contracts_;
+    StableListModel *protections_,*policies_,*incidents_,*replicas_;
     CampaignSnapshotPtr snapshot_;
     const runtime::CompiledProgram* program_ = nullptr;
     QVariantList rack_options_;
     QVariantList wholesale_plans_,wholesale_sources_,wholesale_buyers_;
+    QVariantList resilience_sites_,protection_offers_,insurance_offers_,replicated_services_,replica_sources_;
     QVariantMap map_;
     QString map_terms_,review_text_;
     std::optional<std::variant<core::Command,WholesaleReview>> review_;

@@ -1,5 +1,6 @@
 #include "infrastructure_controller.hpp"
 #include "flow_presentation.hpp"
+#include "resilience_presentation.hpp"
 #include <QCryptographicHash>
 #include <QFile>
 #include <QJsonDocument>
@@ -68,6 +69,8 @@ QString notice_heading(std::string_view kind) {
     return QStringLiteral("Infrastructure update");
 }
 QString terms(const SimulationState& before,const SimulationState& after,const CommandAction& action) {
+    const auto resilience=resilience_review(after,action);
+    if (!resilience.isEmpty()) return resilience;
     const auto& i=*after.infrastructure;const auto cash=checked_unit_subtract(before.cash,after.cash);
     if (const auto* a=std::get_if<BuildOwnedSite>(&action)) {
         const auto& s=find(i.sites,a->id);const auto price=preview_site_build(before,*a);const auto& p=find(i.catalog.states,s.state_id);
@@ -110,7 +113,11 @@ QString terms(const SimulationState& before,const SimulationState& after,const C
     return QStringLiteral("Give notice on the opening compute lease\nCapacity and future charges end %1. Accrued bills remain due. Move any research, training or customer service that still depends on the opening lease before this date.").arg(date(*i.initial_lease_ends_before));
 }
 }
-InfrastructureController::InfrastructureController(QObject* parent):QObject(parent),states_(new StableListModel(this)),sites_(new StableListModel(this)),hardware_(new StableListModel(this)),calendar_(new StableListModel(this)),notices_(new StableListModel(this)),wholesale_contracts_(new StableListModel(this)) {states_->setSortByTitle(true);}
+InfrastructureController::InfrastructureController(QObject* parent):QObject(parent),states_(new StableListModel(this)),sites_(new StableListModel(this)),hardware_(new StableListModel(this)),calendar_(new StableListModel(this)),notices_(new StableListModel(this)),wholesale_contracts_(new StableListModel(this)),
+    protections_(new StableListModel(this)),policies_(new StableListModel(this)),incidents_(new StableListModel(this)),replicas_(new StableListModel(this)) {
+    states_->setSortByTitle(true);
+    connect(states_,&StableListModel::selectedIdChanged,this,&InfrastructureController::changed);
+}
 void InfrastructureController::loadMap() {
     map_.clear();map_terms_.clear();rack_options_.clear();if (!available()) return;
     const auto& catalog=state().infrastructure->catalog;
@@ -243,8 +250,14 @@ void InfrastructureController::update(CampaignSnapshotPtr snapshot,const runtime
     const auto sync=[&](StableListModel* model,std::vector<CampaignRow> rows) {if (replace) model->beginCampaign(std::move(rows));else model->setRows(std::move(rows));};
     if (refresh_states) {sync(states_,std::move(states));if (replace && available()) states_->setSelectedId(text(state().infrastructure->executive_base));}
     sync(sites_,std::move(sites));sync(hardware_,std::move(hardware));sync(calendar_,std::move(appointments));sync(notices_,std::move(notices));
-    sync(wholesale_contracts_,std::move(contracts));emit changed();
+    sync(wholesale_contracts_,std::move(contracts));
+    auto risk=resilience_models(state());
+    resilience_sites_=std::move(risk.sites);protection_offers_=std::move(risk.protections);insurance_offers_=std::move(risk.insurance);
+    replicated_services_=std::move(risk.services);replica_sources_=std::move(risk.sources);
+    sync(protections_,std::move(risk.installed));sync(policies_,std::move(risk.policies));
+    sync(incidents_,std::move(risk.incidents));sync(replicas_,std::move(risk.replicas));emit changed();
 }
+QString InfrastructureController::riskSummary() const {return available()?site_exposure(state(),states_->selectedId().toStdString()):QString{};}
 QString InfrastructureController::suggestedVisit(QString id,QString mode) const {
     if (!available()) return {};
     try {
@@ -283,6 +296,18 @@ void InfrastructureController::reviewRetire(QString id) {review([&](const auto&)
 void InfrastructureController::reviewClose(QString id) {review([&](const auto&)->CommandAction {return CloseOwnedSite{id.toStdString()};});}
 void InfrastructureController::reviewCancel(QString id) {review([&](const auto&)->CommandAction {return CancelSiteAppointment{id.toStdString()};});}
 void InfrastructureController::reviewLease() {review([](const auto&)->CommandAction {return NoticeInitialLeaseTermination{};});}
+void InfrastructureController::reviewProtection(QString site,QString offer) {
+    review([&](const auto&)->CommandAction {return BuySiteProtection{site.toStdString(),offer.toStdString()};});
+}
+void InfrastructureController::reviewInsurance(QString site,QString offer) {
+    review([&](const auto&)->CommandAction {return InsureSite{site.toStdString(),offer.toStdString()};});
+}
+void InfrastructureController::reviewReplica(QString service,QString source) {
+    review([&](const auto&)->CommandAction {return ReplicateService{service.toStdString(),source.toStdString()};});
+}
+void InfrastructureController::reviewStopReplica(QString id) {
+    review([&](const auto&)->CommandAction {return StopServiceReplica{id.toStdString()};});
+}
 void InfrastructureController::reviewWholesale(QString plan_id,QString source_id,QString buyer_id) {
     review_.reset();review_text_.clear();
     try {

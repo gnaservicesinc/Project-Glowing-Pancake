@@ -172,6 +172,7 @@ void validate(const SimulationState& state,bool deep=true) {
     }
     if (state.management) {validate_management(state,deep);validate_governance(state,deep);}
     validate_infrastructure(state,deep);
+    validate_resilience(state,deep);
     if (state.deployments) {
         if (!state.lab || !state.market || !state.capacity) invalid("Deployments require lab, market and capacity");
         if (deep) validate_deployments(*state.deployments,*state.lab,*state.capacity,*state.market);
@@ -434,6 +435,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     (!next.market && (action.market_allocation || !action.industry_adoptions.empty())))
                     refuse(CommandReason::invalid_argument,"Shared industry context requires an actual market and allocation.");
                 if (required_management_notice(next)) refuse(CommandReason::morning_not_ready,"Acknowledge the capacity setback and its recovery date before advancing.");
+                if (required_site_alert(next)) refuse(CommandReason::morning_not_ready,"Review the site disruption before advancing work.");
                 if (required_governance_notice(next)) refuse(CommandReason::morning_not_ready,"Review the corporate concern, deadline or outcome before advancing.");
                 if (next.liquidity && liquidity_report(*next.liquidity).pending_warning)
                     refuse(CommandReason::morning_not_ready, "Acknowledge the insolvency warning and its 30-day response window before advancing.");
@@ -459,6 +461,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 }
                 (void)receipt(next, "advance_day", 0, checked_unit_subtract(next.cash, cash_before));
                 next.date = advance_days(next.date, Days{1});
+                sample_site_hazards(next);
                 prepare_governance(next);
                 prepare_management(next);
                 prepare_infrastructure(next);
@@ -477,6 +480,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     prepare_opening(next);
                 }
             } else if constexpr (std::is_same_v<Action, SetPaused>) {
+                if (!action.paused && required_site_alert(next)) refuse(CommandReason::morning_not_ready,"Review the site disruption before resuming time.");
                 if (!action.paused && required_management_notice(next)) refuse(CommandReason::morning_not_ready,"Acknowledge the required management warning before starting time.");
                 if (!action.paused && next.liquidity && liquidity_report(*next.liquidity).pending_warning)
                     refuse(CommandReason::morning_not_ready, "Time remains paused until the insolvency warning is acknowledged.");
@@ -546,6 +550,10 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                         next.date, std::nullopt, "Serving support: " + action.project.id});
                 (void)receipt(next, "reserve_project");
             } else if constexpr (std::is_same_v<Action, CancelProject>) {
+                if (next.resilience) for (const auto& replica:next.resilience->replicas) if (!replica.stopped_on &&
+                    (replica.sync_project==action.id || (next.market && std::any_of(next.market->products.begin(),next.market->products.end(),[&](const auto& product){
+                        return product.id==replica.service_id && product.capacity_project_id==action.id;
+                    })))) refuse(CommandReason::dependent_commitment,"Stop the service replica before changing either of its workloads.");
                 if (next.market) for (const auto& product:next.market->products) {
                     if (product.capacity_project_id!=action.id) continue;
                     for (const auto& contract:next.market->contracts)
@@ -602,6 +610,22 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 cancel_site_appointment(next,action.id);(void)receipt(next,"cancel_site_appointment");
             } else if constexpr (std::is_same_v<Action, NoticeInitialLeaseTermination>) {
                 notice_initial_lease_termination(next);(void)receipt(next,"notice_initial_lease_termination");
+            } else if constexpr (std::is_same_v<Action, BuySiteProtection>) {
+                const auto before=next.cash;buy_site_protection(next,action,reserved_cash(next));
+                (void)receipt(next,"buy_site_protection",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, InsureSite>) {
+                const auto before=next.cash;insure_site(next,action,reserved_cash(next));
+                (void)receipt(next,"insure_site",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, ReplicateService>) {
+                const auto before=next.cash;replicate_service(next,action,reserved_cash(next));
+                (void)receipt(next,"replicate_service",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, StopServiceReplica>) {
+                stop_service_replica(next,action.id);(void)receipt(next,"stop_service_replica");
+            } else if constexpr (std::is_same_v<Action, AcknowledgeSiteAlert>) {
+                if (!next.resilience) refuse(CommandReason::invalid_argument,"This scenario has no site alerts.");
+                const auto row=std::find_if(next.resilience->alerts.begin(),next.resilience->alerts.end(),[&](const auto& alert){return alert.id==action.id;});
+                if (row==next.resilience->alerts.end() || row->acknowledged) refuse(CommandReason::invalid_status,"This site alert is absent or already acknowledged.");
+                row->acknowledged=true;(void)receipt(next,"acknowledge_site_alert");
             } else if constexpr (std::is_same_v<Action, EnableMarket>) {
                 if (next.market) refuse(CommandReason::invalid_status, "The customer market is already active.");
                 (void)capacity(next);
@@ -667,6 +691,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 next.cash = accounts_report(*next.accounts).cash;
                 (void)receipt(next, "start_evaluation", 0, checked_unit_subtract(next.cash, before));
             } else if constexpr (std::is_same_v<Action, DeployModel>) {
+                if (next.resilience && std::any_of(next.resilience->replicas.begin(),next.resilience->replicas.end(),[&](const auto& row){
+                    return row.service_id==action.service_id && !row.stopped_on;
+                })) refuse(CommandReason::dependent_commitment,"Stop the service replica before replacing its qualified checkpoint.");
                 if (!next.deployments) refuse(CommandReason::invalid_status,"This scenario has no deployable service catalog.");
                 deploy_model(*next.deployments,lab(next),accounts(next),capacity(next),market(next),next.date,action);
                 (void)receipt(next,"deploy_model");

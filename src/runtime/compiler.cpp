@@ -299,6 +299,7 @@ Json definition_json(const Definition& definition, const std::string& key) {
         if (scenario->management) result["management"]=Json::parse(content::canonical_management_catalog(*scenario->management));
         if (scenario->infrastructure) result["infrastructure"]=Json::parse(content::canonical_infrastructure_catalog(*scenario->infrastructure));
         if (!scenario->regional_markets.empty()) result["regional_markets"] = scenario->regional_markets;
+        if (!scenario->resilience.empty()) result["resilience"]=scenario->resilience;
         if (scenario->service_catalog) result["service_catalog"]=Json::parse(canonical_market_setup_bytes(*scenario->service_catalog,scenario->starts_on));
         if (scenario->market)
             result["market"] = Json::parse(canonical_market_setup_bytes(*scenario->market,scenario->starts_on));
@@ -310,6 +311,8 @@ Json definition_json(const Definition& definition, const std::string& key) {
     } else if (const auto* catalog = std::get_if<RegionalMarkets>(&definition.data)) {
         result["kind"] = "regional_markets";
         result.update(Json::parse(canonical_regional_market_bytes(*catalog)));
+    } else if (const auto* catalog=std::get_if<core::ResilienceCatalog>(&definition.data)) {
+        result["kind"]="site_resilience";result["catalog"]=Json::parse(canonical_resilience_catalog(*catalog));
     } else fail("unsupported_kind", path, "Unknown typed definition variant");
     return result;
 }

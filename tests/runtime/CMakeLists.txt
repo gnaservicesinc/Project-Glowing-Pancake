@@ -162,3 +162,10 @@ target_include_directories(pgp-regional-market-test SYSTEM PRIVATE "${PROJECT_SO
 target_compile_definitions(pgp-regional-market-test PRIVATE PGP_MARKET_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-regional-market-test)
 add_test(NAME runtime.regional-markets COMMAND pgp-regional-market-test)
+
+add_executable(pgp-resilience-test resilience_test.cpp)
+target_link_libraries(pgp-resilience-test PRIVATE pgp::session)
+target_include_directories(pgp-resilience-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-resilience-test PRIVATE PGP_RESILIENCE_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-resilience-test)
+add_test(NAME runtime.resilience COMMAND pgp-resilience-test)

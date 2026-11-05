@@ -1,19 +1,25 @@
 {
   "assets": [],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "8f80813ed479a7b0c4471d847c64a8db80837d0cd6e92227a4a9220d76c1b8f7",
+  "collection_hash": "4b669644fdeb3af74f1f5676e272e4cf3d183b1b5787d8bc64ccace82561cc34",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.6.0-dev.1",
+  "content_version": "0.7.0-dev.1",
   "definitions": [
     {
       "id": "market.global_launch",
       "kind": "regional_markets",
       "revision": 1,
       "semantic_hash": "a2269951256d392cb94f262342f6263bde84bac5d7b4925624444a9879e4739f"
+    },
+    {
+      "id": "operations.site_outcome",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "dfe7fbb1820c429ba0d4134830c85cb4d886da085598fc372f3cd8ae2caaff60"
     },
     {
       "id": "research.data_deduplication",
@@ -52,34 +58,40 @@
       "semantic_hash": "9ec1bd64b23d08685c096aaa61e069e1015e47873bd31555a675699507927164"
     },
     {
+      "id": "resilience.domestic",
+      "kind": "site_resilience",
+      "revision": 1,
+      "semantic_hash": "0a4f2c095153c7797d43120c7df216013c2749352fbf135e4590fbbf10b942d4"
+    },
+    {
       "id": "scenario.first_playable",
       "kind": "scenario",
-      "revision": 4,
-      "semantic_hash": "6ce00b7b0155746ef1bfd04ab967e11b2a549e0304933fa042e3686f4e556bcd"
+      "revision": 5,
+      "semantic_hash": "07476ef599b1af2d85e6c6c5a236ab434a0e7b118ad2788b4c19eb437bf636cb"
     },
     {
       "id": "scenario.world_competition",
       "kind": "scenario",
-      "revision": 5,
-      "semantic_hash": "af34fdf1e7c3aa4b3730a19014963728ac4fb368c61ad1bf1ad01fc68691fe84"
+      "revision": 6,
+      "semantic_hash": "09a20d46b07aa2611918f7bd846c279d023c6aa7e050c9e5c13d0a5f3a5cdda5"
     },
     {
       "id": "scenario.world_expanded",
       "kind": "scenario",
-      "revision": 5,
-      "semantic_hash": "5d1db5025376703d1618c8413bd634c25be516e764e0ab91f2c66bfcc526a683"
+      "revision": 6,
+      "semantic_hash": "d156bcf0ea719346d0be40b489d90b05fe08e7d7831b9da9c41f9b356c9f0340"
     },
     {
       "id": "scenario.world_forgiving",
       "kind": "scenario",
-      "revision": 5,
-      "semantic_hash": "b8cf78e50dba52a60c8d7a1c63a10387c2802d6948e1901de68994cd81e8865a"
+      "revision": 6,
+      "semantic_hash": "dbcda2db292f09c13ff4d708318cfa09b4b62bca8b6ca5c256b88bc85e1cf0e1"
     },
     {
       "id": "scenario.world_reduced",
       "kind": "scenario",
-      "revision": 5,
-      "semantic_hash": "3a31ff6849b33054a8e5b8afbbee535f98854e2c19b8f2487d3fd9818a1b69e0"
+      "revision": 6,
+      "semantic_hash": "9123c6e2e7f7030e1a8182809db1ccefdd1f7ee644f18757001345b59bc90ff7"
     },
     {
       "id": "slice.evaluation_finding",
@@ -131,8 +143,8 @@
     }
   ],
   "format": 1,
-  "generation": 6,
-  "messages_hash": "229e14da301917150b15a80e264cb4033d1159bd18f1b6491171eca3476b6b68",
+  "generation": 7,
+  "messages_hash": "d3db5155f083f8a5294c96378cdea86cbc6f84040008ff8fe91523780d1115ee",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
     "scenario.first_playable": [
@@ -143,7 +155,8 @@
       "slice.rival_notice",
       "slice.supplier_offer",
       "slice.market_shift",
-      "slice.recovery_opportunity"
+      "slice.recovery_opportunity",
+      "operations.site_outcome"
     ],
     "scenario.world_competition": [
       "slice.research_milestone",
@@ -153,7 +166,8 @@
       "slice.rival_notice",
       "slice.supplier_offer",
       "slice.market_shift",
-      "slice.recovery_opportunity"
+      "slice.recovery_opportunity",
+      "operations.site_outcome"
     ],
     "scenario.world_expanded": [
       "slice.research_milestone",
@@ -163,7 +177,8 @@
       "slice.rival_notice",
       "slice.supplier_offer",
       "slice.market_shift",
-      "slice.recovery_opportunity"
+      "slice.recovery_opportunity",
+      "operations.site_outcome"
     ],
     "scenario.world_forgiving": [
       "slice.research_milestone",
@@ -173,7 +188,8 @@
       "slice.rival_notice",
       "slice.supplier_offer",
       "slice.market_shift",
-      "slice.recovery_opportunity"
+      "slice.recovery_opportunity",
+      "operations.site_outcome"
     ],
     "scenario.world_reduced": [
       "slice.research_milestone",
@@ -183,8 +199,9 @@
       "slice.rival_notice",
       "slice.supplier_offer",
       "slice.market_shift",
-      "slice.recovery_opportunity"
+      "slice.recovery_opportunity",
+      "operations.site_outcome"
     ]
   },
-  "source_hash": "eba20e505da61b97829dbf8c497fb9eab5ae8cb322342f8fe883666864c11c55"
+  "source_hash": "6b279272df0228864aa13f646fd78273a622a3023064623748ef17538108d4e3"
 }

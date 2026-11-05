@@ -70,6 +70,7 @@ public:
     void setAutoPauseAlerts(bool value);
     Q_INVOKABLE void advanceTo(QString milestone);
     Q_INVOKABLE void acknowledgeManagement();
+    Q_INVOKABLE void acknowledgeSiteAlert();
     bool showGuide() const { return settings_.show_guide; }
     void setShowGuide(bool value);
     Q_INVOKABLE void newCampaign(QString headquarters, bool stories = true);

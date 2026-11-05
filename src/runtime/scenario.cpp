@@ -57,6 +57,10 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     }
     if (scenario->management) world.simulation.management=core::ManagementState{*scenario->management,{},{},{},{},{},{}};
     if (scenario->infrastructure) {core::InfrastructureState owned;owned.catalog=*scenario->infrastructure;owned.executive_base=std::string(headquarters);world.simulation.infrastructure=std::move(owned);}
+    if (const auto* catalog=content::resilience_catalog(program.collection,*scenario)) {
+        core::ResilienceState risks;risks.catalog=*catalog;risks.insurer_cash=catalog->insurer_capital;
+        world.simulation.resilience=std::move(risks);
+    }
     if (scenario->management && scenario->management->governance) {
         core::GovernanceState corporate;corporate.opening_holdings=world.simulation.accounts->holdings;
         world.simulation.management->governance=std::move(corporate);

@@ -151,6 +151,7 @@ ColumnLayout {
         Action { objectName: "operationsSites"; text: qsTr("Owned sites"); checked: panel.section === "sites"; onClicked: panel.section = "sites" }
         Action { objectName: "operationsCalendar"; text: qsTr("Calendar"); checked: panel.section === "calendar"; onClicked: panel.section = "calendar" }
         Action { objectName: "operationsWholesale"; text: qsTr("Wholesale"); visible: infra.wholesalePlans.length > 0; checked: panel.section === "wholesale"; onClicked: panel.section = "wholesale" }
+        Action { objectName: "operationsResilience"; text: qsTr("Resilience"); visible: infra.resilienceAvailable; checked: panel.section === "resilience"; onClicked: panel.section = "resilience" }
         Action { text: qsTr("Activity"); checked: panel.section === "activity"; onClicked: panel.section = "activity" }
         Action { objectName: "nextSiteMilestone"; text: qsTr("Next site milestone"); enabled: panel.editable; onClicked: campaign.advanceTo("site") }
     }
@@ -279,6 +280,47 @@ ColumnLayout {
         }
         Selection { rows: infra.calendar; emptyText: qsTr("No appointments booked"); listName: "siteCalendarList" }
         Action { objectName: "reviewCancelInspection"; text: qsTr("Review cancellation"); enabled: panel.editable && !!(panel.calendarRow.fields || {}).cancelable; onClicked: { infra.reviewCancel(infra.calendar.selectedId); review.open() } }
+    }
+    ColumnLayout {
+        visible: panel.section === "resilience" && infra.resilienceAvailable
+        Layout.fillWidth: true
+        Copy { text: infra.riskSummary }
+        Copy { text: qsTr("Backups shorten site data recovery. Generators cover a limited grid outage. Replication reserves a second rack for the same service. Insurance reimburses covered repair costs.") }
+        Picker { id: protectedSite; inputName: "resilienceSite"; label: qsTr("Owned site"); options: infra.resilienceSites }
+        Heading { text: qsTr("Site protections") }
+        Picker { id: protectionOffer; inputName: "protectionOffer"; label: qsTr("Protection"); options: infra.protectionOffers }
+        Copy { text: (protectionOffer.options.find(o => o.id === protectionOffer.value) || {}).detail || "" }
+        Action {
+            objectName: "reviewSiteProtection"; text: qsTr("Review protection purchase")
+            enabled: panel.editable && protectedSite.value.length > 0
+            onClicked: { infra.reviewProtection(protectedSite.value, protectionOffer.value); review.open() }
+        }
+        Selection { rows: infra.protections; listName: "siteProtectionList"; emptyText: qsTr("No site protections installed.") }
+        Heading { text: qsTr("Insurance") }
+        Picker { id: insuranceOffer; inputName: "insuranceOffer"; label: qsTr("Policy terms"); options: infra.insuranceOffers }
+        Copy { text: (insuranceOffer.options.find(o => o.id === insuranceOffer.value) || {}).detail || "" }
+        Action {
+            objectName: "reviewSiteInsurance"; text: qsTr("Review insurance premium")
+            enabled: panel.editable && protectedSite.value.length > 0
+            onClicked: { infra.reviewInsurance(protectedSite.value, insuranceOffer.value); review.open() }
+        }
+        Selection { rows: infra.insurancePolicies; listName: "siteInsuranceList"; emptyText: qsTr("No site insurance policies.") }
+        Heading { text: qsTr("Geographic service replication") }
+        Picker { id: replicaService; inputName: "replicaService"; label: qsTr("Qualified hosted service"); options: infra.replicatedServices }
+        Picker { id: replicaSource; inputName: "replicaSource"; label: qsTr("Spare owned rack in another state"); options: infra.replicaSources }
+        Action {
+            objectName: "reviewServiceReplica"; text: qsTr("Review replica reservation")
+            enabled: panel.editable && replicaService.value.length > 0 && replicaSource.value.length > 0
+            onClicked: { infra.reviewReplica(replicaService.value, replicaSource.value); review.open() }
+        }
+        Selection { rows: infra.replicas; listName: "serviceReplicaList"; emptyText: qsTr("No reserved replicas.") }
+        Action {
+            objectName: "stopServiceReplica"; text: qsTr("Review stopping replica")
+            enabled: panel.editable && infra.replicas.selectedRow.actionable === true
+            onClicked: { infra.reviewStopReplica(infra.replicas.selectedId); review.open() }
+        }
+        Heading { text: qsTr("Recorded incidents") }
+        Selection { rows: infra.incidents; listName: "siteIncidentList"; emptyText: qsTr("No site incidents recorded.") }
     }
     ColumnLayout {
         visible: panel.section === "wholesale" && infra.wholesalePlans.length > 0

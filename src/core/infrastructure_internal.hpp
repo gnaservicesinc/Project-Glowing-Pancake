@@ -10,7 +10,7 @@ inline constexpr std::size_t maximum_hardware_orders=200,maximum_hires=400,maxim
 [[noreturn]] inline void invalid(const char* message) {throw std::invalid_argument(message);}
 template<class Rows> const auto& find(const Rows& rows,std::string_view id) {
     const auto it=std::find_if(rows.begin(),rows.end(),[&](const auto& row){return row.id==id;});
-    if (it==rows.end()) invalid("The infrastructure record is unavailable");return *it;
+    if (it==rows.end()) throw std::invalid_argument("The infrastructure record is unavailable: "+std::string(id));return *it;
 }
 inline const InfrastructureState& infrastructure(const SimulationState& s) {
     if (!s.infrastructure || !s.accounts || !s.capacity) invalid("This scenario has no owned infrastructure rules");return *s.infrastructure;

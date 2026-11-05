@@ -31,6 +31,11 @@ void depart(SimulationState& s,std::string_view id) {
     // Optional work can be stopped; protected customer service keeps its actual
     // history and receives the normal bounded daily allocation after departure.
     std::vector<std::string> optional;
+    if (s.resilience) {
+        std::vector<std::string> replicas;
+        for (const auto& replica:s.resilience->replicas) if (!replica.stopped_on) replicas.push_back(replica.id);
+        for (const auto& replica:replicas) stop_service_replica(s,replica);
+    }
     for (const auto& p:s.capacity->projects) if (p.status==ProjectStatus::active && p.kind!=ProjectKind::serving) optional.push_back(p.id);
     for (const auto& project:optional) cancel_project(*s.capacity,s.date,project);
     remove_staff_capacity(*s.capacity,s.date,"executive.departure/"+std::string(id),1);

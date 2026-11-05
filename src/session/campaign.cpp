@@ -125,7 +125,8 @@ OperationResult Campaign::operate(
                 pause_notice="A funded agreement reached its deadline. Review the recorded outcome in Office → Rivals.";
     }
     if (core::required_governance_notice(after.world.simulation)) pause_notice="A corporate concern or outcome needs review in Office → Board and people. Its response deadline is saved.";
-    return {std::move(outcome), {}, liquidity_halt || core::required_management_notice(after.world.simulation) || core::required_governance_notice(after.world.simulation) || pause_notice.has_value(),std::move(pause_notice)};
+    return {std::move(outcome), {}, liquidity_halt || core::required_management_notice(after.world.simulation) ||
+        core::required_site_alert(after.world.simulation) || core::required_governance_notice(after.world.simulation) || pause_notice.has_value(),std::move(pause_notice)};
 }
 OperationResult Campaign::prepare_opening(std::uint64_t expected_revision) {
     auto result = operate([&](auto& candidate) { return candidate.prepare_opening(expected_revision); }, false);
@@ -154,6 +155,9 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::StartTraining>(command.action) ||
         std::holds_alternative<core::StartEvaluation>(command.action) ||
         std::holds_alternative<core::DeployModel>(command.action) ||
+        std::holds_alternative<core::BuySiteProtection>(command.action) ||
+        std::holds_alternative<core::InsureSite>(command.action) ||
+        std::holds_alternative<core::ReplicateService>(command.action) ||
         std::holds_alternative<core::AcceptBusinessOffer>(command.action) ||
         std::holds_alternative<core::TakeFinancing>(command.action) || std::holds_alternative<core::HireSpecialist>(command.action) ||
         std::holds_alternative<core::AddDelegationPolicy>(command.action) || std::holds_alternative<core::RenewComputeLease>(command.action) ||

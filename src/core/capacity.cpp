@@ -36,7 +36,7 @@ CapacityProject& project(CapacityState& state, std::string_view id) {
     return *found;
 }
 std::int64_t demand(const CapacityProject& row) {
-    return row.kind == ProjectKind::serving ? row.requested.value() :
+    return row.kind == ProjectKind::serving || row.kind==ProjectKind::replication ? row.requested.value() :
         std::min(row.requested.value(), checked_subtract(row.total_work.value(), row.completed_work.value()));
 }
 template<class Operation> void mutate(CapacityState& state, Operation operation) {
@@ -106,7 +106,8 @@ std::uint64_t maximum_tasks(MilliCU available, MilliCU cost_per_task) {
     return static_cast<std::uint64_t>(available.value() / cost_per_task.value());
 }
 MilliCUPerDay company_capacity(const CapacitySource& source) {
-    return checked_unit_subtract(source.effective, std::min(source.effective, source.wholesale_reserved));
+    return checked_unit_subtract(source.effective, std::min(source.effective,
+        checked_unit_add(source.wholesale_reserved,source.replica_reserved)));
 }
 CapacityReport capacity_report(const CapacityState& state) {
     CapacityReport report;
@@ -167,7 +168,8 @@ void validate_capacity(const CapacityState& state) {
             (row.kind != CapacitySourceKind::leased && row.kind != CapacitySourceKind::owned && row.kind != CapacitySourceKind::imported) ||
             (row.kind == CapacitySourceKind::owned && row.provider != row.owner) ||
             (row.kind != CapacitySourceKind::owned && row.provider == row.owner) ||
-            row.wholesale_reserved > row.nominal ||
+            checked_unit_add(row.wholesale_reserved,row.replica_reserved) > row.nominal ||
+            (row.kind!=CapacitySourceKind::owned && row.replica_reserved.value()!=0) ||
             (row.kind != CapacitySourceKind::owned && row.wholesale_reserved.value() != 0) ||
             (row.available_from && (*row.available_from < state.starts_on || *row.available_from > latest)))
             invalid("Capacity source has duplicate ownership, impossible output or an invalid provider");
@@ -209,17 +211,22 @@ void validate_capacity(const CapacityState& state) {
                 row.inference_milli_CU_per_task.value() != 0 || row.useful_tasks != 0 || row.monthly_support_cost.value() != 0)
                 invalid("Finite project has invalid work or serving-only fields");
             break;
+        case ProjectKind::replication:
+            if (row.total_work.value()!=0 || row.tasks_per_day!=0 || row.inference_milli_CU_per_task.value()!=0 ||
+                row.useful_tasks!=0 || row.status==ProjectStatus::completed || row.customer_inference)
+                invalid("Replication reserves compute and staff without useful-task credit");
+            break;
         default: invalid("Unknown project kind");
         }
         switch (row.status) {
         case ProjectStatus::active:
-            if (row.stopped_on || (row.kind != ProjectKind::serving && row.completed_work == row.total_work))
+            if (row.stopped_on || (row.kind != ProjectKind::serving && row.kind!=ProjectKind::replication && row.completed_work == row.total_work))
                 invalid("Active project has a stop cursor or already completed its goal");
             if (!row.customer_inference)
                 source_reservations[row.source_id] = checked_add(source_reservations[row.source_id], demand(row));
             break;
         case ProjectStatus::completed:
-            if (!row.stopped_on || row.kind == ProjectKind::serving || row.completed_work != row.total_work)
+            if (!row.stopped_on || row.kind == ProjectKind::serving || row.kind==ProjectKind::replication || row.completed_work != row.total_work)
                 invalid("Completed project has no exact finite completion");
             break;
         case ProjectStatus::cancelled:
@@ -232,7 +239,7 @@ void validate_capacity(const CapacityState& state) {
     }
     for (const auto& [id, reserved] : source_reservations) {
         const auto& supply = source(state, id);
-        if (reserved > checked_unit_subtract(supply.nominal, supply.wholesale_reserved).value())
+        if (reserved > checked_unit_subtract(checked_unit_subtract(supply.nominal,supply.wholesale_reserved),supply.replica_reserved).value())
             invalid("Project and wholesale commitments oversubscribe nominal source capacity");
     }
     const auto report = capacity_report(state);
@@ -277,9 +284,9 @@ void validate_capacity(const CapacityState& state) {
                     (!row.customer_inference && required_inference(used.useful_tasks, row.inference_milli_CU_per_task) != used.work))
                     invalid("Serving history credits work without its exact inference cost");
             } else {
-                if (used.useful_tasks != 0 || used.protected_tasks != 0 || total.work > row.total_work)
+                if (used.useful_tasks != 0 || used.protected_tasks != 0 || (row.kind!=ProjectKind::replication && total.work > row.total_work))
                     invalid("Finite work history exceeds its goal or invents useful serving tasks");
-                if (total.work == row.total_work && (row.status != ProjectStatus::completed || !row.stopped_on || *row.stopped_on != day.day))
+                if (row.kind!=ProjectKind::replication && total.work == row.total_work && (row.status != ProjectStatus::completed || !row.stopped_on || *row.stopped_on != day.day))
                     invalid("Finite work must complete on the exact day its goal is reached");
             }
             if (!row.customer_inference) {
@@ -298,10 +305,10 @@ void validate_capacity(const CapacityState& state) {
             const auto recorded = source_use.find(used.source_id);
             const auto actual = recorded == source_use.end() ? MilliCU{0} : recorded->second;
             if ((supply.available_from && *supply.available_from > day.day) ||
-                used.effective > supply.nominal || used.wholesale_available > used.effective ||
-                used.used.value() > checked_unit_subtract(used.effective, used.wholesale_available).value() ||
+                used.effective > supply.nominal || checked_unit_add(used.wholesale_available,used.replica_available) > used.effective ||
+                used.used.value() > checked_unit_subtract(checked_unit_subtract(used.effective,used.wholesale_available),used.replica_available).value() ||
                 used.wholesale_used.value() > used.wholesale_available.value() || actual != used.used ||
-                (supply.kind != CapacitySourceKind::owned && used.wholesale_available.value() != 0))
+                (supply.kind != CapacitySourceKind::owned && (used.wholesale_available.value()!=0 || used.replica_available.value()!=0)))
                 invalid("Daily work exceeds effective capacity or differs from source consumption");
         }
     }
@@ -445,7 +452,8 @@ CapacityDay preview_capacity_day_unchecked(const CapacityState& state, OrdinalDa
             allocations[claim.project_index] = checked_add(allocations[claim.project_index], claim.assigned);
         for (const auto& claim : other) allocations[claim.project_index] = claim.assigned;
         record.sources.push_back({supply.id, supply.effective, MilliCU{checked_add(serving_used, other_used)},
-                                  std::min(supply.effective, supply.wholesale_reserved)});
+            std::min(supply.effective,supply.wholesale_reserved),MilliCU{0},
+            std::min(checked_unit_subtract(supply.effective,std::min(supply.effective,supply.wholesale_reserved)),supply.replica_reserved)});
     }
     for (std::size_t i = 0; i < state.projects.size(); ++i) {
         const auto& row = state.projects[i];
@@ -494,7 +502,7 @@ void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<
             if (tasks > std::numeric_limits<std::uint64_t>::max() - row.useful_tasks)
                 throw std::overflow_error("Project useful task total overflow");
             row.completed_work = checked_unit_add(row.completed_work, work); row.useful_tasks += tasks;
-            if (row.kind != ProjectKind::serving && row.completed_work == row.total_work) {
+            if (row.kind != ProjectKind::serving && row.kind!=ProjectKind::replication && row.completed_work == row.total_work) {
                 row.status = ProjectStatus::completed; row.stopped_on = day;
             }
         }

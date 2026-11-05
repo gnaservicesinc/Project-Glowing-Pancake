@@ -81,6 +81,13 @@ void changes_and_versions() {
     for (const auto& row:runtime["definitions"]) check(row["revision"]==(row["id"]=="slice.evaluation_finding"?2:1),"Unchanged definition revision was bumped");
     const auto history=Json::parse(read(scratch.root/"authoring/content-history.json"));
     check(history["batches"].back()["minimum_game_change"]=="patch" && history["batches"].back()["changed_text_keys"].size()==1,"Text patch lost its release requirement or text identity");
+    const auto reviewed_changes=Json::parse(preview.report_json).at("changes");
+    const auto& recorded=history["batches"].back().at("changed_definitions");
+    check(recorded.size()==reviewed_changes.size() && !recorded.front().contains("before") &&
+        recorded.front().at("before_hash")==persistence::sha256(reviewed_changes.front().at("before").dump()) &&
+        recorded.front().at("after_hash")==persistence::sha256(reviewed_changes.front().at("after").dump()) &&
+        history["batches"].back().at("previous_snapshot")==history["batches"].front().at("snapshot"),
+        "Snapshot history duplicated definition bodies or lost its exact immutable revision links");
     // One reviewed batch touches three definitions but increments each only once.
     studio::DraftDocument multiple{scratch.root,request.target};auto batch=multiple.collection();std::vector<std::string> touched;
     for (auto& [id,definition]:batch.definitions) if (auto* f=std::get_if<content::FlowDefinition>(&definition.data);f && touched.size()<3) {

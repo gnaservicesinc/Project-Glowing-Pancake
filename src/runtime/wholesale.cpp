@@ -177,7 +177,7 @@ void refresh_wholesale(WorldState& world,const CompiledProgram& program,bool set
         }
         const auto& plan=terms(plans,contract.plan_id);
         auto& owned=source(seller.capacity->sources,contract.source_id);
-        imported.effective=std::min(company_capacity(owned),plan.capacity);
+        imported.effective=std::min(checked_unit_subtract(owned.effective,std::min(owned.effective,owned.wholesale_reserved)),plan.capacity);
         owned.wholesale_reserved=checked_unit_add(owned.wholesale_reserved,plan.capacity);
         if (owned.wholesale_reserved>owned.nominal) invalid("Wholesale reservations oversold the physical rack");
     }

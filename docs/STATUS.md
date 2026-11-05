@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**31 of 52 steps complete for Mac feature development. M5-03 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03 and M5-01/02.
+**32 of 52 steps complete for Mac feature development. E2-01 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03 and M5-01 through M5-03.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -23,6 +23,20 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- M5-03 adds authored seasonal exposure for all 51 domestic jurisdictions,
+  six physical hazards, five paid protection mechanisms, finite geographic
+  replication and insurance. Repairs require time and payment; replication
+  reserves real compute/staff and preserves one product's delivery history.
+  Insurance spends a finite insurer fund and reimburses actual covered damage.
+  Site outcomes use shared committed news and saved random history. All
+  **69 optimized Mac CTests pass in 31.61s**, including **45 resilience checks**.
+  The bundled **1280×720 / 200% text Metal** path purchases a generator and
+  policy, completes owned work/wholesale and reloads the exact **868,111-byte**
+  save. Content **0.7.0-dev.1**, generation 7, passes all 15 headquarters save
+  checks. Exposure values are fictional authored balance. Snapshot history
+  now links full immutable revisions by hash, preserving detailed review
+  within its metadata bound. [Resilience controls and contract](../src/core/RESILIENCE.md).
 
 - M5-02 adds 48 customer groups across eight regions, twelve templates in
   six product channels, territory selection and regional delivery reports.
@@ -375,7 +389,7 @@ review and the maintainer CLI. E1A-05 demonstrates the authoring path, E1B-01
 supplies the typed canvas and E1B-02 completes graphical review/finalization.
 E2 expands authoring as later schemas arrive.
 Human studies wait for v1 preparation after all components are in place.
-26 steps remain unchecked, including those studies and deferred platform/release
+20 steps remain unchecked, including those studies and deferred platform/release
 work. [Playability checkpoints](PLAYABILITY.md) distinguish implemented paths
 from unperformed human and release qualification.
 
@@ -408,9 +422,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation is M5-03, hazards, resilience and insurance.**
-Add authored seasonal exposure, distinct backup and replication effects,
-physical outages and financial insurance settlements.
+**Next implementation is E2-01, scenario/world/policy authoring.**
+Expand Content Studio's ordinary forms and map/list views for the implemented
+scenario, company/resource, region/site and policy schemas.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

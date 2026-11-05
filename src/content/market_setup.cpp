@@ -152,6 +152,13 @@ const RegionalMarkets* regional_markets(const Collection& collection, const Scen
     if (!catalog) throw std::invalid_argument("Scenario refers to an unknown regional market catalog");
     return catalog;
 }
+const core::ResilienceCatalog* resilience_catalog(const Collection& collection,const ScenarioDefinition& scenario) {
+    if (scenario.resilience.empty()) return nullptr;
+    const auto* definition=collection.find(scenario.resilience);
+    const auto* catalog=definition?std::get_if<core::ResilienceCatalog>(&definition->data):nullptr;
+    if (!catalog) throw std::invalid_argument("Scenario refers to an unknown site resilience catalogue");
+    return catalog;
+}
 
 MarketSetup scenario_market_setup(const Collection& collection, const ScenarioDefinition& scenario) {
     if (!scenario.market) throw std::invalid_argument("A regional scenario needs an opening market");

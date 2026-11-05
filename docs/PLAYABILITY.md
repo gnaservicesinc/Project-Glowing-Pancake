@@ -24,6 +24,7 @@ independent human validation and release qualification remain open.
 | M4-03: corporate governance and acquisitions | Negotiated capital, executive cash/equity terms, cumulative vesting, board votes, covenants, retained subsidiaries and conserving group transfers | Implemented on Mac; 77 corporate checks and the bundled 200% Metal path through a solvent ending/exact reload |
 | M5-01: owned compute and domestic map | Compare 50 states and DC, buy and staff sites, schedule inspections, run and meter actual owned work, end the opening lease | Implemented on Mac; pointer/keyboard at 200% text and exact saved continuation. [Operations guide](../src/runtime/INFRASTRUCTURE.md) |
 | M5-02: regional markets and wholesale | Launch across eight regions and six channels, inspect local useful work, and sell paid rack capacity in the planned rosters | Implemented on Mac; regional allocation, curtailment credits, provider profit and keyboard confirmation with exact reload. [Player controls](../src/runtime/REGIONAL_MARKETS.md) |
+| M5-03: site hazards and resilience | Inspect seasonal exposure, install protections, reserve a funded service replica, insure damage and manage repair/recovery | Implemented on Mac; 45 physical/financial/replay checks, bundled 200% Metal purchases and exact reload. [Resilience controls](../src/core/RESILIENCE.md) |
 | M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Deferred until all components are in place and the user is ready for v1 work; no sessions conducted |
 
 There is no calendar estimate inferred from task counts: tasks vary substantially
@@ -64,6 +65,14 @@ hire operators under **Owned sites**. Book an inspection in **Calendar**; use
 rack can run compatible Lab and serving work. Compare metered site costs with
 the opening cloud lease before giving notice, and move dependent service first.
 You can continue normal management during an on-site trip.
+
+**Operations → Resilience** shows the selected state's published monthly
+exposure and paid site protections. Generators cover limited emergency power;
+offsite copies shorten data restoration; inspections, hardening and cooling
+affect their named hazards. A service replica needs another state's owned
+rack, real spare capacity and synchronization work. Insurance terms disclose
+the premium, waiting period, deductible, limit and claim delay. Site incidents
+pause for review, with repairs and settlements recorded in Accounts and Inbox.
 
 Office → **Policies and alerts** authorizes finite independent-evaluation or
 paid compute-lease renewals. Set total budget, cash floor, run count, interval

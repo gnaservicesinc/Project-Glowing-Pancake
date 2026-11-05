@@ -46,6 +46,7 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
         case core::ProjectKind::research: kind = QStringLiteral("Research"); break;
         case core::ProjectKind::evaluation: kind = QStringLiteral("Evaluation"); break;
         case core::ProjectKind::serving: kind = QStringLiteral("Serving"); break;
+        case core::ProjectKind::replication: kind = QStringLiteral("Replica synchronization"); break;
         }
         QString status;
         switch (project.status) {
@@ -53,7 +54,8 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
         case core::ProjectStatus::completed: status = QStringLiteral("Completed"); break;
         case core::ProjectStatus::cancelled: status = QStringLiteral("Cancelled"); break;
         }
-        const auto progress = project.kind == core::ProjectKind::serving ?
+        const auto progress = project.kind==core::ProjectKind::replication ?
+            QStringLiteral("%1 CU synchronized").arg(cu(project.completed_work.value())):project.kind == core::ProjectKind::serving ?
             QStringLiteral("%1 useful tasks delivered").arg(integer(project.useful_tasks)) :
             QStringLiteral("%1 / %2 CU completed").arg(cu(project.completed_work.value()),cu(project.total_work.value()));
         const auto detail = QStringLiteral("%1\n%2\n%3 CU/day reserved · %4 staff\n%5\nSupport: %6/month\nStarted %7")
@@ -275,6 +277,7 @@ QString CampaignController::requiredKind() const {
     if (waitingPresentation()) return QStringLiteral("content");
     if (needsWarning()) return QStringLiteral("liquidity");
     if (core::required_management_notice(snapshot_->checkpoint.world.simulation)) return QStringLiteral("management");
+    if (core::required_site_alert(snapshot_->checkpoint.world.simulation)) return QStringLiteral("site");
     return QStringLiteral("none");
 }
 QString CampaignController::requiredTitle() const {
@@ -283,10 +286,12 @@ QString CampaignController::requiredTitle() const {
     if (kind == QStringLiteral("content")) return presentation_heading(*waitingPresentation(),program_.collection);
     if (kind == QStringLiteral("liquidity")) return QStringLiteral("Unpaid obligations need a response");
     if (kind == QStringLiteral("management")) return QStringLiteral("Temporary compute setback");
+    if (kind==QStringLiteral("site")) return QStringLiteral("Owned site disruption");
     return {};
 }
 QString CampaignController::requiredText() const {
     const auto kind = requiredKind();
+    if (kind==QStringLiteral("site")) return text(core::required_site_alert(snapshot_->checkpoint.world.simulation)->cause);
     if (kind == QStringLiteral("management")) {
         for (const auto& n:snapshot_->checkpoint.world.simulation.management->notices) if (n.required && !n.acknowledged) return management_->alertDetail(n);
     }
@@ -367,6 +372,10 @@ void CampaignController::advanceTo(QString kind) {
 void CampaignController::acknowledgeManagement() {
     if (!snapshot_ || !snapshot_->checkpoint.world.simulation.management) return;
     for (const auto& n:snapshot_->checkpoint.world.simulation.management->notices) if (n.required && !n.acknowledged) {submit(core::AcknowledgeManagementNotice{n.id});return;}
+}
+void CampaignController::acknowledgeSiteAlert() {
+    if (snapshot_) if (const auto* alert=core::required_site_alert(snapshot_->checkpoint.world.simulation))
+        submit(core::AcknowledgeSiteAlert{alert->id});
 }
 void CampaignController::setAutoPauseProjects(bool value) {auto settings=settings_;settings.auto_pause_projects=value;changeSettings(settings);}
 void CampaignController::setAutoPauseEvaluations(bool value) {auto settings=settings_;settings.auto_pause_evaluations=value;changeSettings(settings);}

@@ -6,7 +6,8 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
     const auto& s=checkpoint.world.simulation;Milestone result;result.kind=kind;
     if (kind=="project" || kind=="evaluation") {
         if (s.capacity) for (const auto& work:s.capacity->projects)
-            if (work.status==core::ProjectStatus::active && work.kind!=core::ProjectKind::serving && (kind=="project" || work.kind==core::ProjectKind::evaluation)) result.projects.push_back(work.id);
+            if (work.status==core::ProjectStatus::active && work.kind!=core::ProjectKind::serving && work.kind!=core::ProjectKind::replication &&
+                (kind=="project" || work.kind==core::ProjectKind::evaluation)) result.projects.push_back(work.id);
         if (result.projects.empty()) throw std::invalid_argument("Start a matching finite project before advancing to its completion.");
     } else if (kind=="site") {
         const auto consider=[&](core::OrdinalDay day){if (day>s.date && day<=s.end_date && (!result.deadline || day<*result.deadline)) result.deadline=day;};
@@ -17,6 +18,14 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
             for (const auto& hire:owned.hires) if (std::any_of(owned.sites.begin(),owned.sites.end(),[&](const auto& site){return site.id==hire.site_id && !site.closed_on;})) consider(hire.starts_on);
             for (const auto& appointment:owned.appointments) if (!appointment.cancelled_on) {consider(appointment.starts_on);consider(appointment.visit_on);consider(appointment.ends_before);}
             if (owned.initial_lease_ends_before) consider(*owned.initial_lease_ends_before);
+            if (s.resilience) {
+                for (const auto& protection:s.resilience->protections) consider(protection.active_from);
+                for (const auto& incident:s.resilience->incidents) {
+                    consider(incident.repair_due);
+                    if (incident.repaired_on) consider(core::advance_days(*incident.repaired_on,incident.restoration_days));
+                    if (incident.claim.value()>0 && !incident.paid_on) consider(incident.claim_due);
+                }
+            }
         }
         if (!result.deadline) throw std::invalid_argument("There is no future construction, delivery, staffing, inspection or lease milestone.");
     } else if (kind=="deadline") {

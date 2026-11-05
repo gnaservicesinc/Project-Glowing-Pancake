@@ -10,6 +10,7 @@
 #include <pgp/core/management.hpp>
 #include <pgp/core/business_offers.hpp>
 #include <pgp/core/infrastructure.hpp>
+#include <pgp/core/resilience.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
@@ -101,6 +102,7 @@ struct SimulationState {
     std::optional<DeploymentState> deployments{};
     std::optional<ManagementState> management{};
     std::optional<InfrastructureState> infrastructure{};
+    std::optional<ResilienceState> resilience{};
     auto operator<=>(const SimulationState&) const = default;
 };
 
@@ -171,7 +173,8 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    AcceptBusinessOffer, AddMarketDemandChange, DeployModel,
                                    TakeFinancing,HireSpecialist,AddDelegationPolicy,SetDelegationEnabled,ReviewDelegation,AcknowledgeManagementNotice,RenewComputeLease,
                                    NegotiateCorporateFinance,AppointExecutive,ProposePoolExpansion,VoteBoardMotion,RespondCorporateDispute,TransferCompanyOwnership,TransferGroupFunds,
-                                   BuildOwnedSite,OrderOwnedHardware,HireSiteOperators,SetSitePowerLimit,RetireOwnedHardware,CloseOwnedSite,ScheduleSiteAppointment,CancelSiteAppointment,NoticeInitialLeaseTermination>;
+                                   BuildOwnedSite,OrderOwnedHardware,HireSiteOperators,SetSitePowerLimit,RetireOwnedHardware,CloseOwnedSite,ScheduleSiteAppointment,CancelSiteAppointment,NoticeInitialLeaseTermination,
+                                   BuySiteProtection,InsureSite,ReplicateService,StopServiceReplica,AcknowledgeSiteAlert>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

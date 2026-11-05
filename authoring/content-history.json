@@ -102921,6 +102921,101 @@
         "prepared_headquarters": 15,
         "scenarios": 5
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "3f5f752799c0fc709f2e025fac9d145e64adaae164a3d691b8b075a74d2bff93",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "operations.site_outcome",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "20d179c93c225f308973de6ef228335f081d83e11bbd74eafa4ea366bf4a5915",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "resilience.domestic",
+          "kind": "site_resilience",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "dfbcd807e688187d18d8924a92a653adf064b3515561437fc1d426aef8be0e73",
+          "before_hash": "e61ed363dab2dfe2cc6d54c913f68291fb290dcb8360d32862250c0662c811d0",
+          "change": "changed",
+          "id": "scenario.first_playable",
+          "kind": "scenario",
+          "old_revision": 4,
+          "revision": 5
+        },
+        {
+          "after_hash": "573e7fe840802d95468eb91c1236152f8ff01de106f9fe41c86d2a7ade89b716",
+          "before_hash": "ade940b1dc1ccd055971b46729fe98695077ceefbda728c5ca969524f908cfd3",
+          "change": "changed",
+          "id": "scenario.world_competition",
+          "kind": "scenario",
+          "old_revision": 5,
+          "revision": 6
+        },
+        {
+          "after_hash": "8053173663a61700ae5c6a80233afdfd81e10b3590d192b3b0fd3c0091550085",
+          "before_hash": "a6f284dfe80fad1f789ad80d1fb02b6ac5e4829a20769191cdf602adfffed008",
+          "change": "changed",
+          "id": "scenario.world_expanded",
+          "kind": "scenario",
+          "old_revision": 5,
+          "revision": 6
+        },
+        {
+          "after_hash": "391682d4e78685cb12abff0a649945b3116853cc0322bd7b910f087c45d0dc84",
+          "before_hash": "310d792d4e3ef1587cca4e4e83289f813fcf6d08d0849d0fc507a6a6c4b9fae7",
+          "change": "changed",
+          "id": "scenario.world_forgiving",
+          "kind": "scenario",
+          "old_revision": 5,
+          "revision": 6
+        },
+        {
+          "after_hash": "a2b46d6524b2162659b8a79197d2ede71aadc2b00351ef638ff7d89c8ba950ca",
+          "before_hash": "d5ce10930cdfd2a200e20f2794d8aeeac1c56b60e89f14b0721206c655412a41",
+          "change": "changed",
+          "id": "scenario.world_reduced",
+          "kind": "scenario",
+          "old_revision": 5,
+          "revision": 6
+        }
+      ],
+      "changed_text_keys": [
+        "operations.site.outcome"
+      ],
+      "collection_hash": "4b669644fdeb3af74f1f5676e272e4cf3d183b1b5787d8bc64ccace82561cc34",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.7.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 7,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.6.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000006.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000007.collection.json",
+      "summary": "Add seasonal site hazards, paid resilience, geographic replication and funded insurance.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 15,
+        "lints": [],
+        "prepared_headquarters": 15,
+        "scenarios": 5
+      }
     }
   ],
   "format": 1

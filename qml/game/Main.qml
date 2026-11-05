@@ -272,6 +272,12 @@ ApplicationWindow {
                                 onClicked: campaign.acknowledgeManagement()
                             }
                             Action {
+                                objectName: "acknowledgeSiteAlert"; text: qsTr("Review site disruption")
+                                visible: campaign.requiredKind === "site"
+                                enabled: !campaign.busy
+                                onClicked: campaign.acknowledgeSiteAlert()
+                            }
+                            Action {
                                 objectName: "acknowledgeWarning"; text: qsTr("Acknowledge warning")
                                 visible: campaign.requiredKind === "liquidity"
                                 enabled: !campaign.busy

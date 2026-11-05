@@ -562,6 +562,7 @@ void schedule_infrastructure_smoke(QQuickWindow& window,pgp::bridge::CampaignCon
         if (!campaign.welcome() && campaign.requiredKind()!=QStringLiteral("none")) {
             const auto kind=campaign.requiredKind();
             if (kind==QStringLiteral("management")) {press("acknowledgeManagement");return;}
+            if (kind==QStringLiteral("site")) {press("acknowledgeSiteAlert");return;}
             if (kind!=QStringLiteral("content")) {fail("unexpected blocking decision");return;}
             QString choice;
             for (const auto& entry:campaign.requiredChoices()) {const auto id=entry.toMap().value(QStringLiteral("choiceId")).toString();if (choice.isEmpty() || id==QStringLiteral("decline")) choice=id;}
@@ -607,7 +608,12 @@ void schedule_infrastructure_smoke(QQuickWindow& window,pgp::bridge::CampaignCon
         case 4:
             if (!capture(QStringLiteral("-construction"))) {fail("construction review capture");return;}confirm(5);return;
         case 5:
-            if (s.infrastructure->sites.size()!=1 || s.infrastructure->sites.front().state_id!="US-WA" || !press("operationsSites")) {fail("reviewed site was not committed");return;}
+            if (s.infrastructure->sites.size()!=1 || s.infrastructure->sites.front().state_id!="US-WA") {fail("reviewed site was not committed");return;}
+            if (infra->resilienceAvailable()) {
+                if (!press("operationsResilience") || !set("protectionOfferPicker","value",QStringLiteral("protection.generator"))) {fail("resilience selection");return;}
+                if (press("reviewSiteProtection")) next(31);return;
+            }
+            if (!press("operationsSites")) return;
             if (press("reviewOrderOwnedRack")) next(6);return;
         case 6:confirm(7);return;
         case 7:
@@ -691,6 +697,18 @@ void schedule_infrastructure_smoke(QQuickWindow& window,pgp::bridge::CampaignCon
             reveal_top(item("regionalMarketSelectionDetail"));if (!capture(QStringLiteral("-regions"))) {fail("regional report capture");return;}
             smoke->saved=snap;campaign.saveTo(save_url);next(23);return;
         }
+        case 31:
+            if (!infra->reviewText().contains(QStringLiteral("fuel")) || !capture(QStringLiteral("-generator"))) {fail("generator terms and readable fuel limit");return;}
+            confirm(32);return;
+        case 32:
+            if (!s.resilience || s.resilience->protections.size()!=1 || !set("insuranceOfferPicker","value",QStringLiteral("insurance.repair"))) {fail("paid resilience installation");return;}
+            if (press("reviewSiteInsurance")) next(33);return;
+        case 33:
+            if (!infra->reviewText().contains(QStringLiteral("deductible")) || !capture(QStringLiteral("-insurance"))) {fail("insurance terms and waiting period");return;}
+            confirm(34);return;
+        case 34:
+            if (s.resilience->policies.size()!=1 || s.resilience->policies.front().covers_from<=s.date) {fail("insurance paid waiting period");return;}
+            if (press("operationsSites") && press("reviewOrderOwnedRack")) next(6);return;
         default:fail("unexpected smoke phase");return;
         }
     });

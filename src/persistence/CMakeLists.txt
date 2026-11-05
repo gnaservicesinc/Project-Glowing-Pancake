@@ -1,4 +1,4 @@
-add_library(pgp_persistence STATIC sha256.cpp storage.cpp settings.cpp save.cpp accounts_json.cpp capacity_json.cpp market_json.cpp liquidity_json.cpp lab_json.cpp deployment_json.cpp management_json.cpp governance_json.cpp competition_history_json.cpp heavyweight_json.cpp mergers_json.cpp infrastructure_json.cpp)
+add_library(pgp_persistence STATIC sha256.cpp storage.cpp settings.cpp save.cpp accounts_json.cpp capacity_json.cpp market_json.cpp liquidity_json.cpp lab_json.cpp deployment_json.cpp management_json.cpp governance_json.cpp competition_history_json.cpp heavyweight_json.cpp mergers_json.cpp infrastructure_json.cpp resilience_json.cpp)
 add_library(pgp::persistence ALIAS pgp_persistence)
 target_include_directories(pgp_persistence PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(pgp_persistence SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")

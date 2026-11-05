@@ -193,6 +193,7 @@ const CommittedFactMetadata* Registry::committed_fact(std::string_view id) const
 Registry foundation_registry() {
     Registry result;
     result.register_system("slice",{"foundation"});
+    result.register_system("resilience",{"slice"});
     const auto maximum = std::numeric_limits<std::int64_t>::max();
     const auto minimum = std::numeric_limits<std::int64_t>::min();
     auto number = [&](std::string id, Scope scope, Unit unit, std::int64_t low, std::int64_t high, std::string help,std::string provider="foundation") {
@@ -234,6 +235,7 @@ Registry foundation_registry() {
     boolean("contract.missed_start", "Whether this contract missed its start deadline.", Scope::contract);
     boolean("project.lab_research_completed","Whether actual lab research work completed for this project.",Scope::project,"slice");
     boolean("project.has_evaluation_finding","Whether this completed evaluation recorded a concrete covered-subgroup finding.",Scope::project,"slice");
+    boolean("capacity_source.has_site_outcome","Whether this owned source has an actual site disruption, recovery or insurance outcome.",Scope::capacity_source,"resilience");
     number("contract.outcome_tasks",Scope::contract,Unit::count,0,static_cast<std::int64_t>(core::market_task_limit),
         "Actual useful tasks in the committed contract settlement; failure can deliver zero.","slice");
     boolean("company.in_liquidity_workout","Whether an actual warned liquidity workout is active.",Scope::company,"slice");
@@ -254,6 +256,8 @@ Registry foundation_registry() {
         "Actual independently recorded evaluation limitation, with its named subgroup evidence.","slice"});
     result.register_committed_fact({"market.pilot_outcome",Scope::company,Scope::contract,"contract.outcome_tasks",
         "Actual first service, final service or missed-start settlement and its useful work.","slice"});
+    result.register_committed_fact({"infrastructure.site_outcome",Scope::company,Scope::capacity_source,"capacity_source.has_site_outcome",
+        "An owned site's recorded disruption, recovery, insurance payment or funded replica transfer.","resilience"});
     auto effect = [&](std::string id, std::vector<ArgumentMetadata> args, std::string help,std::string provider="foundation") {
         result.register_effect({std::move(id), {Scope::company}, std::move(args), std::move(help),
             {{"target", PortType::scope, Scope::company, Unit::none, false},

@@ -11,7 +11,7 @@ namespace pgp::bridge {
 namespace {
 bool pending_decision(const runtime::Checkpoint& checkpoint) {
     const auto& state = checkpoint.world.simulation;
-    return core::required_management_notice(state) || state.phase == core::DayPhase::awaiting_choice ||
+    return core::required_management_notice(state) || core::required_site_alert(state) || state.phase == core::DayPhase::awaiting_choice ||
         (state.liquidity && core::liquidity_report(*state.liquidity).pending_warning.has_value()) ||
         std::any_of(checkpoint.runtime.presentations.begin(),checkpoint.runtime.presentations.end(),[](const auto& row) {
             return row.kind == runtime::PresentationKind::dialogue && !row.resolved;

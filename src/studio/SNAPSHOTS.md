@@ -128,6 +128,9 @@ build/release/bin/pgp-content-tool check --checkout "$PWD"
 Read the report before running finalize. It includes definition before/after
 values, revision increments, text keys, observed hashes, proposed writes,
 version requirements, compiler lints and scenario validation results.
+New history entries retain definition hashes and links to the immutable
+before/after collections. This bounds history growth when a scenario shares
+large catalogues. Earlier detailed history entries remain available.
 Review writes only the explicitly selected new `.work/*.json` plan; omitting
 `--plan` prints the report without writing. Finalize rebuilds the full plan and
 refuses any mismatch. Editing plan text cannot add arbitrary destinations or

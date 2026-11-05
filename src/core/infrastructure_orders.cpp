@@ -81,8 +81,11 @@ void retire_owned_hardware(SimulationState& s,std::string_view id) {
     auto& i=infrastructure(s);auto at=std::find_if(i.hardware.begin(),i.hardware.end(),[&](const auto& h){return h.id==id;});
     if (at==i.hardware.end() || at->retired_on) invalid("This hardware is unavailable or already retired");
     if (std::any_of(s.capacity->sources.begin(), s.capacity->sources.end(), [&](const auto& source) {
-        return source.id == at->source_id && source.wholesale_reserved.value() != 0;
+        return source.id == at->source_id && (source.wholesale_reserved.value()!=0 || source.replica_reserved.value()!=0);
     })) invalid("Finish the wholesale commitment before retiring its hardware");
+    if (s.resilience && std::any_of(s.resilience->replicas.begin(),s.resilience->replicas.end(),[&](const auto& row){
+        return !row.stopped_on && (row.primary_source==at->source_id || row.backup_source==at->source_id);
+    })) invalid("Stop the replica before retiring either of its physical racks");
     const auto& f=family(s,*at);
     if (s.market) for (const auto& product:s.market->products) {
         const auto p=std::find_if(s.capacity->projects.begin(),s.capacity->projects.end(),[&](const auto& row){return row.id==product.capacity_project_id;});

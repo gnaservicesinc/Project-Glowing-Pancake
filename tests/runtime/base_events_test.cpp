@@ -11,6 +11,7 @@
 #endif
 #include <nlohmann/json.hpp>
 #include <algorithm>
+#include <array>
 #include <fstream>
 #include <iostream>
 #include <set>
@@ -19,6 +20,9 @@ namespace {
 using namespace pgp;
 using Json=nlohmann::json;
 unsigned checks=0;
+constexpr std::array<std::string_view,8> baseline_families{
+    "slice.research_milestone","slice.evaluation_finding","slice.pilot_result","slice.liquidity_warning",
+    "slice.rival_notice","slice.supplier_offer","slice.market_shift","slice.recovery_opportunity"};
 void check(bool value,const char* message) { ++checks; if (!value) throw std::runtime_error(message); }
 runtime::CompiledProgram compile(const Json& document) {
     const auto registry=content::foundation_registry();
@@ -72,7 +76,9 @@ std::uint64_t seed_for(std::uint64_t total,std::uint64_t begin_value,std::uint64
 }
 void pack_and_studio(const Json& source,const runtime::CompiledProgram& program) {
     const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find("scenario.first_playable")->data);
-    check(scenario.flows.size()==8 && scenario.rivals.size()==3,"Playable pack lacks eight families, two startup routines or the heavyweight");
+    check(scenario.flows.size()>=8 && scenario.rivals.size()==3,"Playable pack lacks eight families, two startup routines or the heavyweight");
+    for (const auto id:baseline_families)
+        check(std::find(scenario.flows.begin(),scenario.flows.end(),id)!=scenario.flows.end(),"Playable pack lost a required baseline family");
     std::size_t opportunities=0;
     for (const auto& id:scenario.flows) {
         const auto& flow=std::get<content::FlowDefinition>(program.collection.find(id)->data);
@@ -303,8 +309,9 @@ void full_baseline_and_rivals(const Json& source,const runtime::CompiledProgram&
         core::accounts_report(*final.world.simulation.accounts).equity.value()==120000000,"Specialist baseline failed to finish solvent without financing");
     check(core::market_report(*final.world.simulation.market).delivered_tasks>1'000'000 && final.world.competition->notices.size()==4,
           "Complete baseline lacks useful customer work or actual bounded competitive outcomes");
-    const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find("scenario.first_playable")->data);
-    for (const auto& id:scenario.flows) if (id!="slice.liquidity_warning") check(occurrences(final,id)>0,"A required baseline family never fired in the seeded full run");
+    for (const auto id:baseline_families) if (id!="slice.liquidity_warning")
+        check(occurrences(final,id)>0,"A required baseline family never fired in the seeded full run");
+    check(occurrences(final,"operations.site_outcome")==0,"A campaign without owned sites published a site incident");
     const auto final_bytes=persistence::encode_save(program,final);
     check(persistence::decode_save(program,final_bytes).checkpoint==final,"Final baseline history, expiry and competitive evidence did not persist exactly");
     // An additional optional story root must not carry missing baseline mechanics.

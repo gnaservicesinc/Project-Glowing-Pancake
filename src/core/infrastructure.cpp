@@ -4,6 +4,7 @@ using namespace infrastructure_detail;
 void prepare_infrastructure(SimulationState& s) {
     if (!s.infrastructure) return;
     auto& i=infrastructure(s);
+    prepare_site_resilience(s);
     if (i.initial_lease_ends_before && s.date>=*i.initial_lease_ends_before) {
         for (auto& source:s.capacity->sources) if (source.id=="lease.initial") source.effective=MilliCUPerDay{0};
         const auto term=std::find_if(s.accounts->recurring.begin(),s.accounts->recurring.end(),[](const auto& t){return t.id=="compute_lease";});
@@ -37,6 +38,7 @@ void prepare_infrastructure(SimulationState& s) {
         add_notice(s,"ready/operators/"+hire.id,"operators_started",hire.site_id,s.date);
     std::sort(s.capacity->sources.begin(),s.capacity->sources.end(),[](const auto& a,const auto& b){return a.id<b.id;});
     finish_site_inspections(s);
+    prepare_service_replicas(s);
 }
 void close_infrastructure_day(SimulationState& s) {
     if (!s.infrastructure) return;
