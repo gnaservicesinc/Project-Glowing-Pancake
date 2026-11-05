@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**32 of 52 steps complete for Mac feature development. E2-01 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03 and M5-01 through M5-03.
+**33 of 52 steps complete for Mac feature development. E2-02 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03 and E2-01.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -23,6 +23,21 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- E2-01 adds the separate scenario/world workspace on the shared typed
+  document. Forms cover current opening resources, ownership, rivals, slice
+  objectives, management defaults, regions, site profiles and resilience.
+  Atomic sections and staged cross-section batches preserve totals and
+  dependent dates. Pending/stale values remain reviewable, with shared undo,
+  draft conflict checks and graphical finalization. Actual opening previews
+  use the game runtime/save codec and show fact/trigger/effect target bindings.
+  All **70 optimized Mac CTests pass**, including **68 authoring checks** across
+  the five presets. The actual **1280×720 Metal** path passes at **100%/200%
+  text**, including 11 QML inputs, coupled ownership/scoring, pointer/keyboard
+  selection of 51 state profiles, **900-pixel pane switching** and exact
+  reopen of the **786,054-byte** draft. Runtime content remains finalized at
+  **0.7.0-dev.1**. Century objectives arrive with M7; initial Lab deployments
+  require real model/evidence records. [Author workflow](../src/studio/WORLD.md).
 
 - M5-03 adds authored seasonal exposure for all 51 domestic jurisdictions,
   six physical hazards, five paid protection mechanisms, finite geographic
@@ -387,9 +402,9 @@ edits typed flows through forms/outline and inspects copied runtime state.
 The shared writer finalizes validated internal snapshots through both graphical
 review and the maintainer CLI. E1A-05 demonstrates the authoring path, E1B-01
 supplies the typed canvas and E1B-02 completes graphical review/finalization.
-E2 expands authoring as later schemas arrive.
+E2-01 supplies scenario/world/policy forms; E2-02 expands catalog and reusable-flow tools.
 Human studies wait for v1 preparation after all components are in place.
-20 steps remain unchecked, including those studies and deferred platform/release
+19 steps remain unchecked, including those studies and deferred platform/release
 work. [Playability checkpoints](PLAYABILITY.md) distinguish implemented paths
 from unperformed human and release qualification.
 
@@ -422,9 +437,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation is E2-01, scenario/world/policy authoring.**
-Expand Content Studio's ordinary forms and map/list views for the implemented
-scenario, company/resource, region/site and policy schemas.
+**Next implementation is E2-02, research/catalog/asset and reusable-flow tools.**
+Expand catalog editing, localization/provenance, reusable typed groups and
+safe reference refactoring/impact search on the same working document.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

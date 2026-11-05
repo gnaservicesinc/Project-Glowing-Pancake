@@ -20,6 +20,21 @@ target_compile_definitions(pgp-canvas-test PRIVATE PGP_CANVAS_FIXTURE="${PROJECT
     PGP_CANVAS_VERSIONS="${PROJECT_SOURCE_DIR}/project-versions.json" PGP_CANVAS_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
 pgp_project_target(pgp-canvas-test)
 add_test(NAME studio.canvas COMMAND pgp-canvas-test)
+add_executable(pgp-world-forms-test world_forms_test.cpp)
+target_link_libraries(pgp-world-forms-test PRIVATE pgp::studio_library)
+target_compile_definitions(pgp-world-forms-test PRIVATE PGP_WORLD_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json"
+    PGP_WORLD_VERSIONS="${PROJECT_SOURCE_DIR}/project-versions.json" PGP_WORLD_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
+if(NOT PGP_CORE_ONLY)
+    target_sources(pgp-world-forms-test PRIVATE "${PROJECT_SOURCE_DIR}/src/studio/app/world_controller.cpp"
+        "${PROJECT_SOURCE_DIR}/src/studio/app/world_controller.hpp")
+    target_link_libraries(pgp-world-forms-test PRIVATE Qt6::Core)
+    target_include_directories(pgp-world-forms-test PRIVATE "${PROJECT_SOURCE_DIR}/src/studio/app")
+    target_compile_definitions(pgp-world-forms-test PRIVATE PGP_WORLD_QT=1)
+else()
+    target_compile_definitions(pgp-world-forms-test PRIVATE PGP_WORLD_QT=0)
+endif()
+pgp_project_target(pgp-world-forms-test)
+add_test(NAME studio.world-forms COMMAND pgp-world-forms-test)
 if(NOT PGP_CORE_ONLY)
     add_executable(pgp-snapshot-controller-test snapshot_controller_test.cpp
         "${PROJECT_SOURCE_DIR}/src/studio/app/snapshot_controller.cpp"

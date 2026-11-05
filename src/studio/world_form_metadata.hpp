@@ -1,0 +1,135 @@
+#pragma once
+#include <pgp/studio/world_forms.hpp>
+#include <nlohmann/json.hpp>
+#include <algorithm>
+#include <cctype>
+#include <set>
+
+namespace pgp::studio::world_detail {
+using Json=nlohmann::json;
+inline std::string escape(std::string_view v) {
+    std::string out;for (char c:v) {if(c=='~') out+="~0";else if(c=='/') out+="~1";else out+=c;}return out;
+}
+inline std::string last(std::string_view path) {return std::string(path.substr(path.rfind('/')+1));}
+inline std::string label(std::string v) {
+    for(char& c:v) if(c=='_') c=' ';
+    if(!v.empty()) v[0]=static_cast<char>(std::toupper(static_cast<unsigned char>(v[0])));
+    return v;
+}
+inline std::string scalar(const Json& j) {return j.is_string()?j.get<std::string>():j.dump();}
+inline std::string row_label(const Json& j,std::string key) {
+    if(j.is_object()) {
+        if(j.contains("name")) return scalar(j.at("name"))+(j.contains("id")?" · "+scalar(j.at("id")):"");
+        if(j.contains("id")) return scalar(j.at("id"));
+        if(j.contains("state_id")) return scalar(j.at("state_id"));
+        if(j.contains("state")) return scalar(j.at("state"));
+        if(j.contains("kind")) return label(scalar(j.at("kind")));
+    }
+    return label(std::move(key));
+}
+inline bool dynamic_map(std::string_view path) {
+    return path.ends_with("/ownership_basis_points") || path.ends_with("/monthly_commitments_cents");
+}
+inline std::string units(std::string_view path) {
+    if(path.ends_with("/scoring/weights") || path.find("/scoring/weights/")!=path.npos) return "score points; the five weights total 100";
+    if(path.find("millicents")!=path.npos) return "thousandths of a constant-2014 cent per kWh";
+    if(path.find("cents_per_1000_liters")!=path.npos) return "constant-2014 cents per 1,000 liters";
+    if(path.find("per_kw_cents")!=path.npos) return "constant-2014 cents per kW";
+    if(path.find("cents")!=path.npos) return "constant-2014 cents";
+    if(path.find("_bp")!=path.npos || path.find("basis_points")!=path.npos) return "basis points (100 bp = 1%)";
+    if(path.find("milli_CU_per_day")!=path.npos) return "milli-CU per day (1,000 = 1 CU/day)";
+    if(path.find("milli_CU")!=path.npos) return "milli-CU (1,000 = 1 CU)";
+    if(path.find("days")!=path.npos) return "simulated days";
+    if(path.find("watts")!=path.npos) return "watts";
+    if(path.find("ml_per_kwh")!=path.npos) return "milliliters per kWh";
+    if(path.find("ml_per_day")!=path.npos) return "milliliters per simulated day";
+    if(path.find("grams_per_kwh")!=path.npos) return "grams per kWh";
+    if(path.find("_mib")!=path.npos) return "MiB";
+    if(path.find("pue_milli")!=path.npos) return "PUE × 1,000";
+    return "whole units";
+}
+inline std::string help(std::string_view path) {
+    const auto key=last(path);
+    if(key=="cash_cents") return "Cash available at the scenario opening. Initial financing, obligations and committed bills remain separate.";
+    if(key=="seed") return "Exact unsigned 64-bit root seed for the saved independent random streams. An inspection uses copied state.";
+    if(key=="starts_on") return "Opening calendar date, YYYY-MM-DD. Stage dependent offer, incident and campaign dates together when moving the opening.";
+    if(key=="ends_before") return "Exclusive end date, YYYY-MM-DD. Terms must fit the owning scenario window.";
+    if(key=="team_people") return "Opening staff available to the shared project allocator. Dedicated site operators are separately hired.";
+    if(key=="capacity_milli_CU_per_day") return "Capacity supplied by the opening compute lease; serving and project work share this supply.";
+    if(key=="lease_energy_included") return "Whether the opening lease includes power in its quoted costs.";
+    if(key.starts_with("default_policy_") || key=="default_reserve_floor_cents" || key=="default_monthly_ceiling_cents")
+        return "Initial value offered by the management policy form. Player authorization, actual funds, staff and compute still limit every run.";
+    if(key=="task_target") return "Actual delivered useful work needed for the work portion of the slice score. The other score components retain their own weights.";
+    if(key=="opening_founder_share_bp") return "Must equal this founder’s actual opening ownership. Stage the ownership table and this baseline together.";
+    if(key=="grid_lead_days") return "Delay from ordering a site until the grid connection is available. Construction, hardware, operators and inspection have separate readiness dates.";
+    if(key=="map_sha256" || key=="map_asset_id") return "Identity of the prepared offline map asset. Retain its matching hash and provenance.";
+    if(key=="assumptions") return "Visible authored-balance assumptions. Label fictional exposure and future parameters honestly.";
+    if(path.find("/monthly_probability_bp/")!=path.npos) return "Monthly chance for this named hazard; all hazards together must leave a quiet outcome. Profiles are authored game balance.";
+    return "This value belongs to the selected scenario section. Its owning content schema validates bounds, vocabulary and dependent references.";
+}
+inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& doc,std::string_view scenario,std::string_view path,const Json& value) {
+    std::vector<FormOption> out;
+    auto add=[&](std::string id,std::string name={}) {
+        if(std::none_of(out.begin(),out.end(),[&](const auto& o){return o.value==id;})) out.push_back({id,name.empty()?id:std::move(name),{}});
+    };
+    if(value.is_boolean()) {add("false","False");add("true","True");return out;}
+    if(!value.is_string()) return out;
+    const auto key=last(path);
+    const auto parent=path.substr(0,path.rfind('/'));
+    const auto array_key=last(parent);
+    std::string definition_kind;
+    if(key=="regional_markets") definition_kind="regional_markets";
+    if(key=="resilience") definition_kind="site_resilience";
+    if(array_key=="flows") definition_kind="flow";
+    if(array_key=="headquarters_choices") {add("US-CA","California");add("US-TX","Texas");add("US-WA","Washington");}
+    if(!definition_kind.empty()) {
+        if(key=="regional_markets" || key=="resilience") add("","Disabled");
+        for(const auto& [id,d]:draft.collection().definitions) if(content::definition_kind(d)==definition_kind) add(id);
+    }
+    const auto* def=draft.collection().find(scenario);
+    const auto& s=std::get<content::ScenarioDefinition>(def->data);
+    if(key=="recipe_id" || key=="required_recipe" || array_key=="recipes") {
+        if(s.lab) for(const auto& row:s.lab->recipes) add(row.id,row.name);
+    }
+    if(key=="data_id" || array_key=="data_ids") {
+        if(s.lab) for(const auto& row:s.lab->data) add(row.id,row.name);
+    }
+    if(key=="state_id" || key=="state" || key=="from" || key=="to") {
+        if(s.infrastructure) for(const auto& row:s.infrastructure->states) add(row.id,row.name);
+    }
+    if(key=="source_id") add("lease.initial","Opening compute lease");
+    if(key=="founder") for(const auto& [id,amount]:s.ownership) {(void)amount;add(id);}
+    if(array_key=="research" || array_key=="requires_research") {
+        for(const auto& [id,d]:draft.collection().definitions) if(std::holds_alternative<content::ResearchDefinition>(d.data)) add(id);
+        if(s.lab && (path.find("/planning/")!=path.npos || array_key=="requires_research"))
+            for(const auto& row:s.lab->research) add(row.id);
+    }
+    if(key=="kind" && path.find("/business_offers/")!=path.npos) for(const auto* id:{"compute_lease","recovery_pilot","enterprise_contract"}) add(id,label(id));
+    if(key=="group") for(const auto* id:{"domestic","international","heavyweight"}) add(id,label(id));
+    if(key=="region" && path.find("/planning/")!=path.npos)
+        for(const auto* id:{"US","Canada","Europe","China","India","EastAsiaOceania","LatinAmerica","AfricaMiddleEast"}) add(id,label(id));
+    if(key=="region_id" || array_key=="regions") {
+        if(const auto* regions=content::regional_markets(draft.collection(),s))
+            for(const auto& r:regions->regions) add(r.id,r.name);
+    }
+    if(key=="channel") for(const auto channel:{core::ProductChannel::legacy,core::ProductChannel::business,core::ProductChannel::api,
+        core::ProductChannel::consumer,core::ProductChannel::licensed,core::ProductChannel::open_weights,core::ProductChannel::agent}) {
+        const auto id=std::string(core::channel_key(channel));add(id,label(id));
+    }
+    if(key=="segment_id") for(const auto& row:content::scenario_market_setup(draft.collection(),s).segments) add(row.id);
+    if(key=="product_id" && path.find("/market/contracts/")!=path.npos) {
+        if(s.market) for(const auto& row:s.market->offers) add(row.product.id);
+    } else if(key=="pilot_product" || key=="product_id" || array_key=="services")
+        for(const auto& row:content::scenario_services(draft.collection(),s)) add(row.product.id);
+    if(key=="product_id" && s.market) for(const auto& row:s.market->offers) add(row.product.id);
+    if(key=="publication_node" && s.lab) for(const auto& row:s.lab->research) add(row.id);
+    if(key=="specialist_id" && s.management) for(const auto& row:s.management->specialists) add(row.id,row.name);
+    if(key=="lease_offer_id") for(const auto& row:s.business_offers) if(row.kind==core::BusinessOfferKind::compute_lease) add(row.id,row.name);
+    if(path.find("/covered/")!=path.npos) for(const auto kind:{core::SiteHazard::grid,core::SiteHazard::heat,core::SiteHazard::storm,core::SiteHazard::flood,core::SiteHazard::fire,core::SiteHazard::earthquake}) {
+        const auto id=std::string(core::hazard_key(kind));add(id,label(id));
+    }
+    if(!out.empty()) add(scalar(value)); // Preserve a validated optional empty/reference value.
+    (void)doc;
+    return out;
+}
+} // namespace pgp::studio::world_detail

@@ -1,6 +1,8 @@
 #include "probe_controller.hpp"
 #include "canvas_controller.hpp"
 #include "snapshot_controller.hpp"
+#include "world_controller.hpp"
+#include "world_walkthrough.hpp"
 #include "walkthrough.hpp"
 #include "canvas_walkthrough.hpp"
 #include "snapshot_walkthrough.hpp"
@@ -14,6 +16,7 @@
 
 #include <QCommandLineParser>
 #include <QGuiApplication>
+#include <QFont>
 #include <QElapsedTimer>
 #include <QJsonDocument>
 #include <QKeyEvent>
@@ -78,6 +81,8 @@ class Browser final : public QObject {
     Q_PROPERTY(QObject* probeController READ probeController CONSTANT)
     Q_PROPERTY(QObject* canvasController READ canvasController CONSTANT)
     Q_PROPERTY(QObject* snapshotController READ snapshotController CONSTANT)
+    Q_PROPERTY(QObject* worldController READ worldController CONSTANT)
+    Q_PROPERTY(bool worldMode READ worldMode NOTIFY draftChanged)
     Q_PROPERTY(QVariantList rows READ rows NOTIFY changed)
     Q_PROPERTY(QString checkout READ checkout NOTIFY changed)
     Q_PROPERTY(QString message READ message NOTIFY changed)
@@ -99,6 +104,11 @@ class Browser final : public QObject {
     Q_PROPERTY(QString formTicket READ formTicket NOTIFY formChanged)
 public:
     Browser() {
+        connect(&world_, &studio::WorldController::documentEdited, this, [this] {
+            draft_message_.clear(); refreshForm(); emit draftChanged();
+        });
+        connect(&world_, &studio::WorldController::changed, this, [this] { refreshSnapshotContext(); emit draftChanged(); });
+        connect(&world_, &studio::WorldController::pendingChanged, this, [this] { refreshSnapshotContext(); emit draftChanged(); });
         connect(&canvas_, &studio::CanvasController::documentEdited, this, [this] {
             draft_message_.clear(); refreshForm(); emit draftChanged();
         });
@@ -115,6 +125,9 @@ public:
     [[nodiscard]] QObject* probeController() noexcept { return &probe_; }
     [[nodiscard]] QObject* canvasController() noexcept { return &canvas_; }
     [[nodiscard]] QObject* snapshotController() noexcept { return &snapshot_; }
+    [[nodiscard]] QObject* worldController() noexcept { return &world_; }
+    [[nodiscard]] bool worldMode() const noexcept { return world_mode_; }
+    Q_INVOKABLE void selectWorkspace(bool world) { world_mode_=world; emit draftChanged(); }
     [[nodiscard]] const QVariantList& rows() const noexcept { return visible_; }
     [[nodiscard]] QString checkout() const { return checkout_; }
     [[nodiscard]] QString message() const { return message_; }
@@ -129,9 +142,9 @@ public:
     [[nodiscard]] QStringList workingTags() const {
         return draft_ && !flow_.empty() ? strings(std::get<content::FlowDefinition>(draft_->collection().definitions.at(flow_).data).tags) : QStringList{};
     }
-    [[nodiscard]] bool canUndo() const noexcept { return draft_ && draft_->can_undo(); }
-    [[nodiscard]] bool canRedo() const noexcept { return draft_ && draft_->can_redo(); }
-    [[nodiscard]] bool draftDirty() const noexcept { return draft_ && draft_->dirty(); }
+    [[nodiscard]] bool canUndo() const noexcept { return draft_ && !world_.hasStaged() && !world_.hasUnapplied() && draft_->can_undo(); }
+    [[nodiscard]] bool canRedo() const noexcept { return draft_ && !world_.hasStaged() && !world_.hasUnapplied() && draft_->can_redo(); }
+    [[nodiscard]] bool draftDirty() const noexcept { return draft_ && (draft_->dirty() || world_.hasStaged() || world_.hasUnapplied()); }
     [[nodiscard]] bool existingDraft() const { return draft_ && draft_->is_draft(); }
     [[nodiscard]] QString draftMessage() const { return draft_message_; }
     [[nodiscard]] const QVariantList& flowOutline() const noexcept { return outline_; }
@@ -210,9 +223,12 @@ public:
             const auto key = id.toStdString();
             const auto* definition = next->collection().find(key);
             if (!definition) throw std::invalid_argument("Select a validated definition to open its collection.");
-            flow_ = std::holds_alternative<content::FlowDefinition>(definition->data) ? key : std::string{};
+            world_mode_=!std::holds_alternative<content::FlowDefinition>(definition->data);
+            flow_ = world_mode_ ? std::string{} : key;
             canvas_.set_document(nullptr, {}, {});
+            world_.set_document(nullptr);
             draft_ = std::move(next);
+            world_.set_document(draft_.get(),std::holds_alternative<content::ScenarioDefinition>(definition->data)?key:std::string{});
             outline_key_.clear();
         });
     }
@@ -273,6 +289,7 @@ public:
         });
     }
     Q_INVOKABLE bool saveDraft(const QString& filename) {
+        if(world_.hasStaged() || world_.hasUnapplied()) {draft_message_=QStringLiteral("Apply or reset the pending world fields and staged sections before saving.");emit draftChanged();return false;}
         if (!draft_ || !edit([&] { draft_->save(std::filesystem::path{filename.toStdU16String()}); })) return false;
         const auto current = checkout_;
         (void)openCheckout(current);
@@ -283,6 +300,7 @@ public:
     Q_INVOKABLE void closeDraft() {
         canvas_.set_document(nullptr, {}, {});
         canvas_.discard_layouts();
+        world_.set_document(nullptr);
         draft_.reset();
         flow_.clear();
         draft_message_.clear();
@@ -299,6 +317,8 @@ private:
     }
     void reopenFinalized(const QString& target) {
         const auto selected = workingFlow();
+        const auto selected_scenario=world_.scenario();
+        const bool selected_world=world_mode_;
         const bool had_draft = editing();
         closeDraft();
         const auto current = checkout_;
@@ -308,11 +328,13 @@ private:
             if (row.value(QStringLiteral("file")).toString() != target || row.value(QStringLiteral("kind")) != QStringLiteral("flow")) continue;
             beginDraft(target, row.value(QStringLiteral("id")).toString());
             if (working_flows_.contains(selected)) selectWorkingFlow(selected);
+            world_.selectScenario(selected_scenario);world_mode_=selected_world;emit draftChanged();
             return;
         }
     }
     template<class Action> bool edit(Action action) {
         try {
+            if(world_.hasStaged() || world_.hasUnapplied()) throw std::invalid_argument("Apply or reset the pending world fields and staged sections before editing another surface.");
             action();
             draft_message_.clear();
             refreshForm();
@@ -366,6 +388,7 @@ private:
         }
         else canvas_.set_document(nullptr, {}, {});
         probe_.set_document(draft_ ? &draft_->program() : nullptr, flow_);
+        world_.set_document(draft_.get());
         refreshSnapshotContext();
         emit formChanged();
     }
@@ -405,6 +428,8 @@ private:
     }
     studio::ProbeController probe_;
     studio::SnapshotController snapshot_;
+    studio::WorldController world_;
+    bool world_mode_=false;
     QVariantList source_, visible_;
     QString checkout_, message_, search_, kind_, origin_;
     std::unique_ptr<studio::DraftDocument> draft_;
@@ -437,18 +462,24 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("walkthrough"), QStringLiteral("Run the engineering authoring walkthrough in an explicit fresh checkout copy and write a new local report."), QStringLiteral("report.json")});
     parser.addOption({QStringLiteral("canvas-walkthrough"), QStringLiteral("Run the forms and typed canvas engineering walkthrough on a fresh checkout copy."), QStringLiteral("report.json")});
     parser.addOption({QStringLiteral("finalizer-walkthrough"), QStringLiteral("Run graphical review/finalization, conflicts and recovery after the forms/canvas walkthrough on a fresh checkout copy."), QStringLiteral("report.json")});
+    parser.addOption({QStringLiteral("world-walkthrough"), QStringLiteral("Run scenario/world forms, atomic batches, map/list and actual opening checks on a fresh checkout copy."), QStringLiteral("report.json")});
+    parser.addOption({QStringLiteral("text-scale"), QStringLiteral("Editor text scale: 100 or 200 percent."), QStringLiteral("percent"), QStringLiteral("100")});
     parser.addOption({QStringLiteral("screenshot"), QStringLiteral("Save the walkthrough's rendered editor window to a new PNG."), QStringLiteral("file.png")});
     parser.process(application);
     const bool canvas_walkthrough = parser.isSet(QStringLiteral("canvas-walkthrough"));
     const bool finalizer_walkthrough = parser.isSet(QStringLiteral("finalizer-walkthrough"));
-    const bool run_walkthrough = parser.isSet(QStringLiteral("walkthrough")) || canvas_walkthrough || finalizer_walkthrough;
+    const bool world_walkthrough = parser.isSet(QStringLiteral("world-walkthrough"));
+    const bool run_walkthrough = parser.isSet(QStringLiteral("walkthrough")) || canvas_walkthrough || finalizer_walkthrough || world_walkthrough;
     if (!parser.positionalArguments().isEmpty() ||
         ((parser.isSet(QStringLiteral("check-view")) || run_walkthrough) && !parser.isSet(QStringLiteral("project"))) ||
         (parser.isSet(QStringLiteral("check-view")) && run_walkthrough) ||
-        (static_cast<int>(parser.isSet(QStringLiteral("walkthrough"))) + static_cast<int>(canvas_walkthrough) + static_cast<int>(finalizer_walkthrough) > 1) ||
+        (static_cast<int>(parser.isSet(QStringLiteral("walkthrough"))) + static_cast<int>(canvas_walkthrough) + static_cast<int>(finalizer_walkthrough) + static_cast<int>(world_walkthrough) > 1) ||
         (parser.isSet(QStringLiteral("screenshot")) && !run_walkthrough)) parser.showHelp(2);
     try {
-        for (const auto& option : {QStringLiteral("walkthrough"), QStringLiteral("canvas-walkthrough"), QStringLiteral("finalizer-walkthrough"), QStringLiteral("screenshot")})
+        const auto scale=parser.value(QStringLiteral("text-scale"));
+        if(scale!=QStringLiteral("100") && scale!=QStringLiteral("200")) throw std::invalid_argument("Choose editor text scale 100 or 200.");
+        auto font=QGuiApplication::font();font.setPointSizeF(font.pointSizeF()*(scale==QStringLiteral("200")?2.0:1.0));QGuiApplication::setFont(font);
+        for (const auto& option : {QStringLiteral("walkthrough"), QStringLiteral("canvas-walkthrough"), QStringLiteral("finalizer-walkthrough"), QStringLiteral("world-walkthrough"), QStringLiteral("screenshot")})
             if (parser.isSet(option) && std::filesystem::exists(std::filesystem::path{parser.value(option).toStdU16String()}))
                 throw std::invalid_argument("Choose new walkthrough report/screenshot filenames; existing output was preserved.");
         Browser browser;
@@ -561,6 +592,20 @@ int main(int argc, char* argv[]) {
             });
         if (run_walkthrough) window->resize(1280, 720);
         window->show();
+        if(world_walkthrough) {
+            auto report=studio::run_world_walkthrough(browser,*window,parser.value(QStringLiteral("screenshot")));
+            if(guards->denied_requests.load()!=0) throw std::runtime_error("The world walkthrough attempted a blocked resource request.");
+            const auto renderer=window->rendererInterface()->graphicsApi()==QSGRendererInterface::Metal?QStringLiteral("Metal"):
+                window->rendererInterface()->graphicsApi()==QSGRendererInterface::Software?QStringLiteral("Software"):QStringLiteral("Other native backend");
+            report.insert(QStringLiteral("renderer"),renderer);report.insert(QStringLiteral("text_scale"),scale.toInt());
+            const auto bytes=QJsonDocument{report}.toJson(QJsonDocument::Indented);
+            persistence::atomic_write(std::filesystem::path{parser.value(QStringLiteral("world-walkthrough")).toStdU16String()},
+                std::string_view{bytes.constData(),static_cast<std::size_t>(bytes.size())},
+                [](std::string_view){throw std::invalid_argument("Choose a new report filename.");},4U*1024U*1024U,false);
+            std::cout<<"Studio world walkthrough passed: "<<report.value(QStringLiteral("form_submissions")).toInt()
+                <<" QML inputs, coupled batches, 51-state keyboard/pointer map, actual opening/save, draft reopen and 900px workspace; "
+                <<renderer.toStdString()<<" text "<<scale.toStdString()<<'\n';return 0;
+        }
         if (run_walkthrough) {
             window->setProperty("outlineMode", true);
             auto report = studio::run_authoring_walkthrough(browser, *window);

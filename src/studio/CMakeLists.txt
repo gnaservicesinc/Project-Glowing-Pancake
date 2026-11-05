@@ -1,6 +1,6 @@
 add_library(pgp_studio_library STATIC library.cpp draft.cpp flow_forms.cpp trigger_forms.cpp lifecycle_forms.cpp
     execution_forms.cpp effect_forms.cpp variable_forms.cpp flow_probe.cpp snapshot.cpp snapshot_batch.cpp
-    layout.cpp flow_graph.cpp graph_edits.cpp graph_trace.cpp)
+    layout.cpp flow_graph.cpp graph_edits.cpp graph_trace.cpp world_forms.cpp)
 add_library(pgp::studio_library ALIAS pgp_studio_library)
 target_include_directories(pgp_studio_library PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(pgp_studio_library SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")

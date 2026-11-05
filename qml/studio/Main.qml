@@ -122,13 +122,27 @@ ApplicationWindow {
             visible: studio.editing
             Layout.fillWidth: true
             Button { text: qsTr("Browse library"); checkable: true; checked: window.showLibrary; onClicked: window.showLibrary = true }
-            Button { text: qsTr("Build flow"); checkable: true; checked: !window.showLibrary; onClicked: window.showLibrary = false }
-            Button { objectName: "showStudioCanvas"; text: qsTr("Canvas"); visible: !window.showLibrary; checkable: true; checked: !window.outlineMode && !window.inspectorOnly; onClicked: { window.outlineMode = false; window.inspectorOnly = false } }
-            Button { text: qsTr("Outline"); visible: !window.showLibrary; checkable: true; checked: window.outlineMode && !window.inspectorOnly; onClicked: { window.outlineMode = true; window.inspectorOnly = false } }
-            Button { objectName: "showStudioSettings"; text: qsTr("Settings and test"); visible: !window.showLibrary && window.width < 1100; onClicked: window.inspectorOnly = true }
-            Label { Layout.fillWidth: true; text: studio.workingFlow + qsTr(" · content %1").arg(studio.workingVersion) + (studio.canvasController.hasLayoutEdits ? qsTr(" · unsaved layout moves") : ""); wrapMode: Text.Wrap }
+            Button { text: qsTr("Build flow"); enabled: !studio.worldController.hasStaged && !studio.worldController.hasUnapplied; checkable: true; checked: !window.showLibrary && !studio.worldMode; onClicked: { studio.selectWorkspace(false); window.showLibrary = false } }
+            Button { objectName: "showStudioWorld"; text: qsTr("Scenario and world"); checkable: true; checked: !window.showLibrary && studio.worldMode; onClicked: { studio.selectWorkspace(true); window.showLibrary = false } }
+            Button { objectName: "showStudioCanvas"; text: qsTr("Canvas"); visible: !window.showLibrary && !studio.worldMode; checkable: true; checked: !window.outlineMode && !window.inspectorOnly; onClicked: { window.outlineMode = false; window.inspectorOnly = false } }
+            Button { text: qsTr("Outline"); visible: !window.showLibrary && !studio.worldMode; checkable: true; checked: window.outlineMode && !window.inspectorOnly; onClicked: { window.outlineMode = true; window.inspectorOnly = false } }
+            Button { objectName: "showStudioSettings"; text: qsTr("Settings and test"); visible: !window.showLibrary && !studio.worldMode && window.width < 1100; onClicked: window.inspectorOnly = true }
+            Label { Layout.fillWidth: true; text: (studio.worldMode ? studio.worldController.scenario : studio.workingFlow) + qsTr(" · content %1").arg(studio.workingVersion) + (studio.canvasController.hasLayoutEdits ? qsTr(" · unsaved layout moves") : ""); wrapMode: Text.Wrap }
+        }
+        WorldForms {
+            visible: studio.editing && studio.worldMode && !window.showLibrary
+            Layout.fillWidth: true; Layout.fillHeight: true
+            author: studio.worldController
+            session: studio
+            onCloseRequested: {
+                if (studio.draftDirty || studio.canvasController.hasLayoutEdits) {
+                    window.closeWindowAfterDiscard = false
+                    discardDraft.open()
+                } else studio.closeDraft()
+            }
         }
         GridLayout {
+            visible: !studio.editing || !studio.worldMode || window.showLibrary
             Layout.fillWidth: true
             Layout.fillHeight: true
             columns: window.width < 1100 ? 1 : 2
@@ -259,7 +273,7 @@ ApplicationWindow {
                     Button {
                         objectName: "editSelectedDefinition"
                         visible: !!inspector.entry.revision && inspector.entry.validation === "Validated"
-                        text: inspector.entry.kind === "flow" ? qsTr("Edit flow") : qsTr("Open working collection")
+                        text: inspector.entry.kind === "flow" ? qsTr("Edit flow") : inspector.entry.kind === "scenario" ? qsTr("Edit scenario and world") : qsTr("Open working collection")
                         onClicked: studio.beginDraft(inspector.entry.file, inspector.entry.id)
                     }
                     }
