@@ -42,6 +42,13 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
             0, "general", scenario->lease_energy_included});
     world.simulation.capacity = core::opening_capacity(std::move(sources), scenario->team_people,
         scenario->starts_on, world.company_id);
+    if (scenario->lab) {
+        core::LabState lab;
+        lab.owner = world.company_id; lab.starts_on = scenario->starts_on;
+        lab.catalog = content::scenario_lab_catalog(program.collection, *scenario);
+        lab.research_stream_origin = world.simulation.random[static_cast<std::size_t>(core::RandomStream::research)];
+        world.simulation.lab = std::move(lab);
+    }
     if (scenario->market) {
         world.simulation.market = core::opening_market(scenario->starts_on,world.company_id);
         content::apply_market_setup(*scenario->market,*world.simulation.market,*world.simulation.accounts,

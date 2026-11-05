@@ -718,7 +718,7 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -755,6 +755,10 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         if (cents > maximum_integer - total_commitments) fail("range", path, "Commitment sum overflows cents storage");
         total_commitments += cents;
         result.monthly_commitments.emplace(name, pgp::core::Cents{cents});
+    }
+    if (value.contains("lab")) {
+        try { result.lab = load_lab_catalog(value.at("lab").dump()); }
+        catch (const std::exception& error) { fail("lab", child(path,"lab"), error.what()); }
     }
     if (value.contains("market")) {
         try { result.market = market_setup(value.at("market"),child(path,"market"),result); }
@@ -835,6 +839,10 @@ void validate_references(const Collection& collection, const Registry& registry)
         const auto path = child("/definitions", name);
         if (const auto* scenario_definition = std::get_if<ScenarioDefinition>(&definition.data)) {
             for (const auto& target : scenario_definition->research) (void)reference(target, "research", path);
+            if (scenario_definition->lab) {
+                try { (void)scenario_lab_catalog(collection, *scenario_definition); }
+                catch (const std::exception& error) { fail("lab", child(path,"lab"), error.what()); }
+            }
             std::set<std::string> subscriptions;
             for (const auto& target : scenario_definition->flows) {
                 const auto& source = std::get<FlowDefinition>(reference(target, "flow", path).data).on_committed;

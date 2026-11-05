@@ -692,4 +692,30 @@ hidden Qt test exercises seeded tests, invalid-seed preservation, date steps,
 shared dialogue/result cards and exact reload. The game’s Metal smoke passed at
 200% text after the shared-presentation change. [Evidence](evidence/E1A-03-inspection.md)
 
-The current count is **18/52 Mac feature steps complete**. Next is E1A-04.
+The count at this batch was **18/52 Mac feature steps complete**. The subsequent
+Mac-first sequencing prioritizes M3 before E1A-04.
+
+## M3-01 data/research/train/evaluate loop — 2026-11-05
+
+The first-playable catalog defines four data offers, six research nodes, recipe
+unlocks and headline/held-out/audit plans. Shared transactions pay licenses and
+research/evaluation costs, reserve finite staff/compute and preserve cancelled
+work. Training implements the specified checked saturation formula. Immutable
+reports separate player evidence from true capability and research-stream state.
+Clones retain cumulative work and rights without score bonuses; changed mixtures
+require fresh training. Research retries are explicit paid attempts.
+
+The baseline model's independent scanned-table interval is 2468–2768 bp. A
+targeted licensed mixture and another 60-day run produce 5641–5941 bp, with no
+evaluation capability bonus. Mid-training and pending-evaluation reloads match
+exactly. Strict saves check catalog identity, payments, prerequisite timing,
+lineage, actual work and draw history. `--lab-demo assets/content/first-playable.json`
+exercises the recovery path without launching a GUI.
+
+Verification: optimized incremental Mac build; all **54/54 CTests pass in 13.40s**,
+including **88 lab assertions in 0.10s**; headless demo and `git diff --check` pass.
+The pre-existing business test accounts for 10.28s of the suite. Broader native
+qualification remains deferred. Deployment qualification, human-review/narrow-scope
+responses and Office/Lab controls remain M3-02; no complete playable slice is
+claimed. [Owning module contract](../src/core/LAB.md). Current count: **19/52**.
+Next: M3-05's eight event families and bounded rival routines.

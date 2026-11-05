@@ -1,6 +1,6 @@
 # Playability and evaluation checkpoints
 
-Updated 2026-11-04. The game is in foundation implementation. The development
+Updated 2026-11-05. The game is in foundation implementation. The development
 probe covers interface, resources and audio. A separate desktop shell opens
 engineering campaigns through the session layer.
 The [backlog](BACKLOG.md) records acceptance gates and the
@@ -15,6 +15,7 @@ The [backlog](BACKLOG.md) records acceptance gates and the
 | Enterprise market demonstration | Data-defined contract demand, fees, actual serving and exact pre-settlement save/reload through two months | Runnable with `pgp-headless --market-demo FILE`; [evidence](evidence/M2-03-market.md) |
 | M2-04: first business simulation | A three-year command-line scenario, reconciled accounts, finite capacity, contract economics, solvency and recovery | Runnable with `pgp-headless --business-run FILE expansion/baseline/rescue`; [engineering evidence](evidence/M2-04-business.md) |
 | M1-05: campaign room shell | Office/Lab/Inbox, time, required decisions, project inspector and local saves/preferences | Runnable with `pgp-game --content FILE`; [Mac evidence](evidence/M1-05-room-shell.md) |
+| M3-01: lab development loop | Four data offers, six research nodes, finite training, lineage, held-out findings and targeted recovery | Runnable with `pgp-headless --lab-demo assets/content/first-playable.json`; [lab contract](../src/core/LAB.md) |
 | M3-02: first player-facing scenario | Office/Lab decisions, data/research/training/evaluation, contracts, news and choices, start to ending | Active next milestone (`M3-01` -> `M3-05` -> `M3-02`); decoupled from remaining E1a Studio steps |
 | M3-03: feature evaluation build | The scenario with delegation, warnings, recovery and scoring | Earliest complete slice for ordinary feature feedback |
 | M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Human testing follows the playable build |
@@ -44,7 +45,7 @@ These commands run engineering examples. Only the explicit `--save` invocation
 writes the selected local save; the graphical application is not launched.
 Content fixtures are developer evidence and excluded from any future game
 payload. The three-year business fixture starts with an engineering product;
-qualified research/models and the full player-facing scenario remain upcoming work.
+research/models now run through the separate lab demonstration. Deployment qualification and the full player-facing scenario remain upcoming work.
 See [desktop launch instructions](BUILDING.md#open-the-campaign-shell) for the room shell.
 
 ## Batch tracking
@@ -65,4 +66,4 @@ and exact thresholds through choices and reload; see [duration evidence](evidenc
 M1-07 then adds
 built-in occurrence detection/dispatch. M2-01 through M2-04 implement accounts,
 shared capacity, contracts and the three-year scenario with warned recovery.
-The room shell connects those modules to an explicit desktop launch. The current count is 18 completed Mac feature steps, with `M3-01` (data/research/train/evaluate loop) and the `M3` first-playable slice next. Deferred platform and release work stays recorded in the backlog.
+The room shell connects those modules to an explicit desktop launch. The current count is 19 completed Mac feature steps. M3-01 is implemented; M3-05 base events and rivals precede M3-02 presentation and M3-03 delegation/scoring. Deferred platform and release work stays recorded in the backlog.

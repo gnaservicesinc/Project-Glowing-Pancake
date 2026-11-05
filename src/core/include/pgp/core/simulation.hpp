@@ -5,6 +5,7 @@
 #include <pgp/core/capacity.hpp>
 #include <pgp/core/market.hpp>
 #include <pgp/core/liquidity.hpp>
+#include <pgp/core/lab.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
@@ -91,6 +92,7 @@ struct SimulationState {
     std::optional<CapacityState> capacity{};
     std::optional<MarketState> market{};
     std::optional<LiquidityState> liquidity{};
+    std::optional<LabState> lab{};
     auto operator<=>(const SimulationState&) const = default;
 };
 
@@ -107,6 +109,7 @@ struct SimulationSnapshot {
     std::optional<CapacityReport> capacity{};
     std::optional<MarketReport> market{};
     std::optional<LiquidityReport> liquidity{};
+    std::optional<LabReport> lab{};
 };
 
 struct ReserveFunds { std::string name; Cents amount; bool reversible = true; };
@@ -132,6 +135,11 @@ struct AcceptContract { MarketContract contract; };
 struct StartContract { std::string id; };
 struct CancelContract { std::string id; };
 struct AcknowledgeLiquidityWarning { std::uint64_t id; };
+struct BuyData { std::string offer_id; };
+struct StartResearch { std::string research_id; LabAllocation allocation; };
+struct StartTraining { TrainingRequest request; };
+struct CloneModel { std::string source_id, id; };
+struct StartEvaluation { std::string id, model_id, plan_id; LabAllocation allocation; };
 using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReservation,
                                    AdvanceDay, SetPaused, ResolveOpeningChoice,
                                    AddRecurringObligation, IssueInvoice, SettleInvoice,
@@ -139,7 +147,7 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    ReserveProject, CancelProject, SetEffectiveCapacity,
                                    EnableMarket, AddMarketProduct, AddMarketSegment,
                                    SetMarketProductAvailable, AcceptContract, StartContract, CancelContract,
-                                   AcknowledgeLiquidityWarning>;
+                                   AcknowledgeLiquidityWarning, BuyData, StartResearch, StartTraining, CloneModel, StartEvaluation>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

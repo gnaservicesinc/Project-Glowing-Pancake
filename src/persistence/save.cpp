@@ -6,6 +6,7 @@
 #include "capacity_json.hpp"
 #include "market_json.hpp"
 #include "liquidity_json.hpp"
+#include "lab_json.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -110,7 +111,9 @@ Json simulation_json(const core::SimulationState& state) {
         {"market_mode",state.market?"business":"foundation"},
         {"market",state.market?detail::market_json(*state.market):Json(nullptr)},
         {"liquidity_mode",state.liquidity?"business":"foundation"},
-        {"liquidity",state.liquidity?detail::liquidity_json(*state.liquidity):Json(nullptr)}};
+        {"liquidity",state.liquidity?detail::liquidity_json(*state.liquidity):Json(nullptr)},
+        {"lab_mode",state.lab?"training":"foundation"},
+        {"lab",state.lab?detail::lab_json(*state.lab):Json(nullptr)}};
 }
 core::SimulationState parse_simulation(const Json& value) {
     if (!value.is_object()) detail::invalid("simulation","Expected object");
@@ -118,7 +121,7 @@ core::SimulationState parse_simulation(const Json& value) {
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
         if (name!="accounts" && name!="accounting_mode" && name!="capacity" && name!="capacity_mode" &&
-            name!="market" && name!="market_mode" && name!="liquidity" && name!="liquidity_mode")
+            name!="market" && name!="market_mode" && name!="liquidity" && name!="liquidity_mode" && name!="lab" && name!="lab_mode")
             prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"simulation",{"revision","date","end_date","phase","paused","cash_cents",
@@ -131,6 +134,12 @@ core::SimulationState parse_simulation(const Json& value) {
     result.phase=parse_enum<core::DayPhase>(value.at("phase"),phase_names);
     result.paused=detail::boolean(value.at("paused"),"paused");
     result.cash=Cents{detail::i64(value.at("cash_cents"),"cash_cents")};
+    if (value.contains("lab") != value.contains("lab_mode")) detail::invalid("lab_mode","Lab mode and state must be present together");
+    if (value.contains("lab_mode")) {
+        const auto mode=detail::text(value.at("lab_mode"),"lab_mode",16);
+        if (mode=="training") result.lab=detail::parse_lab(value.at("lab"));
+        else if (mode!="foundation" || !value.at("lab").is_null()) detail::invalid("lab_mode","Lab mode differs from its state");
+    }
     // Only the original shape predating both fields is a legacy foundation
     // checkpoint. New business saves cannot silently lose their ledger.
     if (value.contains("accounts") != value.contains("accounting_mode"))

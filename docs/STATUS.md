@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**18 of 52 steps complete for Mac feature development; `M3` First Playable is now the active priority.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04 and E1A-01 through E1A-03.
+**19 of 52 steps complete for Mac feature development; `M3` First Playable is the active priority.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01 and E1A-01 through E1A-03.
 On 2026-11-05, core/runtime/session daily validation and state-copy bottlenecks were
 eliminated, reducing the three-year business scenario test (`session.business-scenario`)
 from **174.34s to ~5.4s** and `session.business-recovery` from **8.09s to ~0.4s**.
@@ -18,6 +18,14 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- M3-01 supplies four data offers, six research nodes, resource-bounded training,
+  checkpoint lineage and held-out subgroup evaluation through shared commands,
+  accounts and exact saves. The headless lab demonstration reports a scanned-table
+  weakness, then verifies targeted-data/retraining recovery. Previews do not draw
+  RNG, clones add no capability and evaluation changes evidence only. All 54
+  optimized Mac CTests pass (13.40s); the new lab test passes 88 assertions in
+  0.10s. [Lab contract and runnable example](../src/core/LAB.md).
 
 - M2-01 now implements balanced accounts, daily actual-month accrual, protected
   month-end/overdue settlements, receivables/payables, debt/interest/repayment,
@@ -221,9 +229,8 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac implementation: M3-01 data/research/train/evaluate loop, followed directly by M3-05, M3-02, and M3-03.**
-Implement the first playable's four data offers, six research nodes, model lineage,
-finite training and held-out subgroup evaluation (`M3-01`), then wire the eight-flow
+**Next Mac implementation: M3-05 playable base events and bounded rivals, followed directly by M3-02 and M3-03.**
+The data/research/train/evaluate loop (`M3-01`) is implemented and tested. Wire the eight-flow
 base-event pack and two bounded rivals (`M3-05`), playable Office/Lab panels and
 tutorial (`M3-02`), and delegation/recovery/scoring (`M3-03`). Remaining Content
 Studio tasks (`E1A-04`, `E1A-05`, `E1b`) follow after the `M3` playable slice works

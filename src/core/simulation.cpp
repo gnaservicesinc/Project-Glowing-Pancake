@@ -44,6 +44,10 @@ MarketState& market(SimulationState& state) {
     if (!state.market) refuse(CommandReason::invalid_status, "This checkpoint has no customer market.");
     return *state.market;
 }
+LabState& lab(SimulationState& state) {
+    if (!state.lab) refuse(CommandReason::invalid_status, "This scenario has no lab catalog.");
+    return *state.lab;
+}
 bool valid_text(std::string_view text) {
     return !text.empty() && text.size() <= 256 &&
         std::all_of(text.begin(), text.end(), [](unsigned char character) {
@@ -155,6 +159,10 @@ void validate(const SimulationState& state) {
     if (state.market) {
         if (!state.accounts || !state.capacity) invalid("A market requires accounts and shared capacity");
         validate_market_links(*state.market, *state.accounts, *state.capacity);
+    }
+    if (state.lab) {
+        if (!state.accounts || !state.capacity) invalid("Lab requires business accounts and shared capacity");
+        validate_lab(*state.lab, *state.capacity, *state.accounts, state.random, false);
     }
     if (state.liquidity) {
         if (!state.accounts) invalid("Liquidity requires owned business accounts");
@@ -307,6 +315,7 @@ std::string_view to_string(CommandReason value) noexcept {
 
 void validate_simulation(const SimulationState& state) {
     validate(state);
+    if (state.lab) validate_lab(*state.lab, *state.capacity, *state.accounts, state.random);
 }
 
 Simulation::Simulation(Cents cash) : Simulation{[cash] {
@@ -315,7 +324,7 @@ Simulation::Simulation(Cents cash) : Simulation{[cash] {
     return state;
 }()} {}
 Simulation::Simulation(SimulationState initial) : state_{std::move(initial)} {
-    validate(state_);
+    validate_simulation(state_);
     if (state_.phase == DayPhase::opening) {
         try {
             prepare_opening(state_);
@@ -410,6 +419,7 @@ CommandResult Simulation::submit(const Command& command) {
                 if (next.market)
                     close_market_day(*next.market, accounts(next), capacity(next), next.date, false);
                 else if (next.capacity) close_capacity_day(*next.capacity, next.date, false);
+                if (next.lab) close_lab_day(*next.lab, *next.capacity, next.date, next.random);
                 if (next.accounts) {
                     close_accounts_day(*next.accounts, next.date, reserved_cash(next), false);
                     next.cash = accounts_report(*next.accounts).cash;
@@ -487,6 +497,8 @@ CommandResult Simulation::submit(const Command& command) {
                 next.cash = accounts_report(*next.accounts).cash;
                 (void)receipt(next, "invest_equity", 0, checked_unit_subtract(next.cash, before));
             } else if constexpr (std::is_same_v<Action, ReserveProject>) {
+                if (next.lab && action.project.id.starts_with("lab/"))
+                    refuse(CommandReason::invalid_argument, "Lab projects must be created through their data, training, research or evaluation command.");
                 reserve_project(capacity(next), next.date, action.project);
                 if (action.project.monthly_support_cost.value() > 0)
                     add_recurring(accounts(next), {"support/" + action.project.id, action.project.monthly_support_cost,
@@ -529,6 +541,28 @@ CommandResult Simulation::submit(const Command& command) {
                 if (!next.liquidity) refuse(CommandReason::invalid_status,"There is no liquidity warning to acknowledge.");
                 acknowledge_liquidity_warning(*next.liquidity,action.id);
                 (void)receipt(next,"acknowledge_liquidity_warning");
+            } else if constexpr (std::is_same_v<Action, BuyData>) {
+                const auto before = next.cash;
+                buy_data(lab(next), accounts(next), next.date, action.offer_id, reserved_cash(next));
+                next.cash = accounts_report(*next.accounts).cash;
+                (void)receipt(next, "buy_data", 0, checked_unit_subtract(next.cash, before));
+            } else if constexpr (std::is_same_v<Action, StartResearch>) {
+                const auto before = next.cash;
+                start_research(lab(next), accounts(next), capacity(next), next.date, action.research_id, action.allocation, reserved_cash(next));
+                next.cash = accounts_report(*next.accounts).cash;
+                (void)receipt(next, "start_research", 0, checked_unit_subtract(next.cash, before));
+            } else if constexpr (std::is_same_v<Action, StartTraining>) {
+                start_training(lab(next), capacity(next), next.date, action.request);
+                (void)receipt(next, "start_training");
+            } else if constexpr (std::is_same_v<Action, CloneModel>) {
+                clone_model(lab(next), capacity(next), next.date, action.source_id, action.id);
+                (void)receipt(next, "clone_checkpoint");
+            } else if constexpr (std::is_same_v<Action, StartEvaluation>) {
+                const auto before = next.cash;
+                start_evaluation(lab(next), accounts(next), capacity(next), next.date,
+                    action.id, action.model_id, action.plan_id, action.allocation, reserved_cash(next));
+                next.cash = accounts_report(*next.accounts).cash;
+                (void)receipt(next, "start_evaluation", 0, checked_unit_subtract(next.cash, before));
             }
         }, command.action);
         if (next.liquidity && !std::holds_alternative<AdvanceDay>(command.action))
@@ -558,6 +592,7 @@ std::shared_ptr<const SimulationSnapshot> Simulation::snapshot() const {
         state_.accounts ? std::optional{accounts_report(*state_.accounts)} : std::nullopt,
         state_.capacity ? std::optional{capacity_report(*state_.capacity)} : std::nullopt,
         state_.market ? std::optional{market_report(*state_.market)} : std::nullopt,
-        state_.liquidity ? std::optional{liquidity_report(*state_.liquidity)} : std::nullopt});
+        state_.liquidity ? std::optional{liquidity_report(*state_.liquidity)} : std::nullopt,
+        state_.lab ? std::optional{lab_report(*state_.lab, *state_.capacity)} : std::nullopt});
 }
 } // namespace pgp::core

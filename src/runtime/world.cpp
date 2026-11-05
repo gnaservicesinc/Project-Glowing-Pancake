@@ -237,6 +237,24 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     }
     if (world.simulation.accounts && world.simulation.accounts->owner != world.company_id)
         invalid("Business accounts belong to a different company scope");
+    if (validate_core_simulation) {
+        bool matching_lab_scenario = false;
+        bool matching_catalog = false;
+        for (const auto& [id, definition] : program.collection.definitions) {
+            (void)id;
+            const auto* scenario = std::get_if<content::ScenarioDefinition>(&definition.data);
+            if (!scenario || !scenario->lab || scenario->starts_on != world.campaign_start ||
+                scenario->ends_before != world.simulation.end_date || scenario->seed != world.root_seed) continue;
+            matching_lab_scenario = true;
+            if (world.simulation.lab && world.simulation.lab->catalog == content::scenario_lab_catalog(program.collection, *scenario))
+                matching_catalog = true;
+        }
+        if ((matching_lab_scenario || world.simulation.lab) && !matching_catalog)
+            invalid("Saved lab catalog or presence differs from the authored scenario");
+        if (world.simulation.lab && world.simulation.lab->research_stream_origin !=
+            core::RandomStreams{world.root_seed}.snapshot()[static_cast<std::size_t>(core::RandomStream::research)])
+            invalid("Lab research stream origin differs from its campaign seed");
+    }
     if (world.simulation.phase == core::DayPhase::closed &&
         (!world.facts.contains("company.is_operating") || world.facts.at("company.is_operating") != content::Scalar{false}))
         invalid("Closed company still claims an operating business fact");
