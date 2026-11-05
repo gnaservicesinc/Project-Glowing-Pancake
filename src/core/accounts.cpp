@@ -579,6 +579,33 @@ void issue_asset_equity(AccountsState& state,OrdinalDay day,std::string investor
         append(candidate,day,Account::assets,Account::equity,value,"Equity consideration: "+investor,std::move(key));
     });
 }
+void accrue_metered_expense(AccountsState& state,OrdinalDay day,std::string meter,Cents amount,std::string cause,bool validate_io) {
+    const auto apply=[&](AccountsState& candidate) {
+        require_day(candidate,day);text_valid(meter,128);text_valid(cause,256);
+        if (amount.value()<0) invalid("Metered expense cannot create negative usage or cash");
+        accrue(candidate,day,"metered/"+meter+"/"+iso_date(month_start(day)),amount,cause);
+    };
+    if (validate_io) mutate(state,apply);else apply(state);
+}
+void record_owned_depreciation(AccountsState& state,OrdinalDay day,std::string reference,Cents amount,bool validate_io) {
+    const auto apply=[&](AccountsState& candidate) {
+        require_day(candidate,day);text_valid(reference,128);
+        if (amount.value()<0) invalid("Owned depreciation cannot reverse an earned expense");
+        if (amount.value()>0) append_trusted(candidate,day,Account::expenses,Account::accumulated_depreciation,amount,"Owned asset depreciation","owned.depreciation/"+reference+"/"+iso_date(day));
+    };
+    if (validate_io) mutate(state,apply);else apply(state);
+}
+void dispose_owned_asset(AccountsState& state,OrdinalDay day,std::string reference,Cents cost,Cents depreciation,Cents proceeds) {
+    mutate(state,[&](auto& candidate) {
+        require_day(candidate,day);text_valid(reference,128);
+        if (cost.value()<=0 || depreciation.value()<0 || depreciation>cost || proceeds.value()<0 || proceeds>checked_unit_subtract(cost,depreciation)) invalid("Disposal must conserve original cost, actual depreciation and bounded resale");
+        const auto key="owned.disposal/"+reference;
+        if (depreciation.value()>0) append(candidate,day,Account::accumulated_depreciation,Account::assets,depreciation,"Disposed owned asset depreciation",key+"/depreciation");
+        if (proceeds.value()>0) append(candidate,day,Account::cash,Account::assets,proceeds,"Owned asset resale",key+"/cash");
+        const auto loss=checked_unit_subtract(checked_unit_subtract(cost,depreciation),proceeds);
+        if (loss.value()>0) append(candidate,day,Account::expenses,Account::assets,loss,"Owned asset disposal loss",key+"/loss");
+    });
+}
 void close_accounts_day(AccountsState& state, OrdinalDay day, Cents protected_cash, bool validate_io) {
     if (validate_io) {
         mutate(state, [&](auto& candidate) { close_day(candidate, day, protected_cash); });
@@ -586,13 +613,19 @@ void close_accounts_day(AccountsState& state, OrdinalDay day, Cents protected_ca
         close_day(state, day, protected_cash);
     }
 }
-CashProjection project_cash(const AccountsState& state, OrdinalDay through, Cents protected_cash) {
+CashProjection project_cash(const AccountsState& state,OrdinalDay through,Cents protected_cash,const std::vector<MeteredProjection>& metered) {
     validate_accounts(state); (void)from_ordinal(through);
     const auto first = current_day(state);
     if (through < state.starts_on || (state.closed_through && through < *state.closed_through) ||
         through.value() - first.value() > 36524) invalid("Cash projection horizon is outside the supported campaign bound");
     auto candidate = state;
-    for (auto day = first; day <= through; day = advance_days(day, Days{1})) close_day(candidate, day, protected_cash);
+    if (metered.size()>1024) invalid("Too many explicit metered forecast commitments");
+    for (const auto& term:metered) if (term.daily_ceiling.value()<0 || (term.ends_before && *term.ends_before<term.starts_on)) invalid("Metered forecast needs nonnegative finite dated commitments");
+    for (auto day=first;day<=through;day=advance_days(day,Days{1})) {
+        Cents ceiling{0};for (const auto& term:metered) if (day>=term.starts_on && (!term.ends_before || day<*term.ends_before)) ceiling=checked_unit_add(ceiling,term.daily_ceiling);
+        if (ceiling.value()>0) accrue(candidate,day,"projection/metered/"+iso_date(month_start(day)),ceiling,"Projected owned infrastructure ceiling");
+        close_day(candidate,day,protected_cash);
+    }
     validate_accounts(candidate);
     CashProjection result{through, balance(candidate, Account::cash), available_cash(candidate, protected_cash), Cents{0}, Cents{0}};
     for (const auto& invoice : candidate.invoices)

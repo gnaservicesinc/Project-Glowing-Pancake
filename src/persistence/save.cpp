@@ -9,6 +9,7 @@
 #include "lab_json.hpp"
 #include "deployment_json.hpp"
 #include "management_json.hpp"
+#include "infrastructure_json.hpp"
 #include "mergers_json.hpp"
 #include "competition_history_json.hpp"
 #include "heavyweight_json.hpp"
@@ -144,6 +145,8 @@ Json simulation_json(const core::SimulationState& state) {
         {"lab",state.lab?detail::lab_json(*state.lab):Json(nullptr)},
         {"management_mode",state.management?"bounded":"foundation"},
         {"management",state.management?detail::management_json(*state.management):Json(nullptr)},
+        {"infrastructure_mode",state.infrastructure?"domestic":"foundation"},
+        {"infrastructure",state.infrastructure?detail::infrastructure_json(*state.infrastructure):Json(nullptr)},
         {"deployment_mode",state.deployments?"qualified":"foundation"},
         {"deployments",state.deployments?detail::deployment_json(*state.deployments):Json(nullptr)},
         {"business_offers_mode",state.business_offers?"catalog":"foundation"},
@@ -156,7 +159,7 @@ core::SimulationState parse_simulation(const Json& value) {
         (void)ignored;
         if (name!="accounts" && name!="accounting_mode" && name!="capacity" && name!="capacity_mode" &&
             name!="market" && name!="market_mode" && name!="liquidity" && name!="liquidity_mode" && name!="lab" && name!="lab_mode" &&
-            name!="business_offers" && name!="business_offers_mode" && name!="deployment_mode" && name!="deployments" && name!="management_mode" && name!="management")
+            name!="business_offers" && name!="business_offers_mode" && name!="deployment_mode" && name!="deployments" && name!="management_mode" && name!="management" && name!="infrastructure_mode" && name!="infrastructure")
             prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"simulation",{"revision","date","end_date","phase","paused","cash_cents",
@@ -169,6 +172,12 @@ core::SimulationState parse_simulation(const Json& value) {
     result.phase=parse_enum<core::DayPhase>(value.at("phase"),phase_names);
     result.paused=detail::boolean(value.at("paused"),"paused");
     result.cash=Cents{detail::i64(value.at("cash_cents"),"cash_cents")};
+    if (value.contains("infrastructure_mode")!=value.contains("infrastructure")) detail::invalid("infrastructure","Infrastructure mode/state must appear together");
+    if (value.contains("infrastructure_mode")) {
+        const auto mode=detail::text(value.at("infrastructure_mode"),"infrastructure_mode",16);
+        if (mode=="domestic") result.infrastructure=detail::parse_infrastructure(value.at("infrastructure"));
+        else if (mode!="foundation" || !value.at("infrastructure").is_null()) detail::invalid("infrastructure","Infrastructure mode differs from its state");
+    }
     if (value.contains("management_mode")!=value.contains("management")) detail::invalid("management","Management mode/state must appear together");
     if (value.contains("management_mode")) {
         const auto mode=detail::text(value.at("management_mode"),"management_mode",16);
@@ -705,12 +714,13 @@ SaveIdentity save_identity(const runtime::CompiledProgram& program) {
     return {build.save_format,build.simulation_rules,build.content_schema,std::string(build.game_version),
         program.collection.content_version,sha256(canonical)};
 }
-std::string encode_save(const runtime::CompiledProgram& program,const runtime::Checkpoint& checkpoint,
-                        std::uint64_t autosave_sequence,SaveLimits limits) {
+namespace {
+std::string encode_save_impl(const runtime::CompiledProgram& program,const runtime::Checkpoint& checkpoint,
+                             std::uint64_t autosave_sequence,SaveLimits limits,const SaveIdentity* checked_identity) {
     limits_valid(limits);
     try {
         runtime::validate_checkpoint(program,checkpoint);
-        const auto identity=save_identity(program);
+        const auto identity=checked_identity?*checked_identity:save_identity(program);
         Json body{{"format","project-glowing-pancake.save"},{"identity",identity_json(identity)},
             {"autosave_sequence",autosave_sequence},
             {"checkpoint",Json{{"world",world_json(checkpoint.world)},{"runtime",runtime_json(checkpoint.runtime)}}}};
@@ -724,14 +734,14 @@ std::string encode_save(const runtime::CompiledProgram& program,const runtime::C
     } catch (const PersistenceError&) {throw;}
     catch (const std::exception& error) {throw PersistenceError("invalid_state",error.what());}
 }
-LoadedSave decode_save(const runtime::CompiledProgram& program,std::string_view bytes,SaveLimits limits) {
+LoadedSave decode_save_impl(const runtime::CompiledProgram& program,std::string_view bytes,SaveLimits limits,const SaveIdentity* checked_identity) {
     limits_valid(limits);
     try {
         auto body=detail::parse(bytes,limits.maximum_bytes,limits.maximum_json_events);
         detail::fields(body,"save",{"format","identity","autosave_sequence","checkpoint","sha256"});
         if (detail::text(body.at("format"),"format",64)!="project-glowing-pancake.save")
             throw PersistenceError("format","This is not a Project Glowing Pancake save");
-        auto identity=parse_identity(body.at("identity"));check_identity(identity,save_identity(program));
+        auto identity=parse_identity(body.at("identity"));check_identity(identity,checked_identity?*checked_identity:save_identity(program));
         const auto digest=detail::text(body.at("sha256"),"sha256",64);
         body.erase("sha256");
         if (digest!=sha256(body.dump())) throw PersistenceError("integrity","Save checksum does not match; use its recovery copy or another autosave");
@@ -742,6 +752,23 @@ LoadedSave decode_save(const runtime::CompiledProgram& program,std::string_view 
         return {std::move(identity),std::move(checkpoint),sequence};
     } catch (const PersistenceError&) {throw;}
     catch (const std::exception& error) {throw PersistenceError("invalid_state",error.what());}
+}
+}
+std::string encode_save(const runtime::CompiledProgram& program,const runtime::Checkpoint& checkpoint,
+                        std::uint64_t autosave_sequence,SaveLimits limits) {
+    return encode_save_impl(program,checkpoint,autosave_sequence,limits,nullptr);
+}
+LoadedSave decode_save(const runtime::CompiledProgram& program,std::string_view bytes,SaveLimits limits) {
+    return decode_save_impl(program,bytes,limits,nullptr);
+}
+void validate_save_roundtrips(const runtime::CompiledProgram& program,std::span<const runtime::Checkpoint> checkpoints,SaveLimits limits) {
+    limits_valid(limits);
+    const auto identity=save_identity(program);
+    for (const auto& checkpoint:checkpoints) {
+        const auto bytes=encode_save_impl(program,checkpoint,0,limits,&identity);
+        if (decode_save_impl(program,bytes,limits,&identity).checkpoint!=checkpoint)
+            throw PersistenceError("roundtrip","A prepared scenario did not roundtrip through the actual save validator.");
+    }
 }
 void save_file(const runtime::CompiledProgram& program,const runtime::Checkpoint& checkpoint,
                const std::filesystem::path& path,std::uint64_t autosave_sequence,SaveLimits limits) {

@@ -139,6 +139,7 @@ void codec(const runtime::CompiledProgram& compiled,const runtime::Checkpoint& c
     check(checkpoint==loaded.checkpoint,"All decode failures leave live input checkpoint unchanged");
     auto stale_program=compiled;stale_program.canonical_content_bytes+=" ";
     rejects([&]{(void)decode_save(stale_program,bytes);},"program_identity");
+    rejects([&]{validate_save_roundtrips(stale_program,std::span{&checkpoint,std::size_t{1}});},"program_identity");
 }
 void runtime_codec(const runtime::CompiledProgram& compiled) {
     auto world=runtime::foundation_world(core::Cents{100000});

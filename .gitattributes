@@ -2,3 +2,6 @@
 # Project-owned sources retain normal whitespace checks.
 third_party/audio/miniaudio/miniaudio.h -whitespace
 third_party/audio/stb/stb_vorbis.c -whitespace
+assets/maps/sources/* -text -whitespace
+# The bundled asset is checked by SHA-256 on every platform.
+assets/maps/us-states-2024.json text eol=lf

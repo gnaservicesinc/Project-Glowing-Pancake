@@ -736,7 +736,7 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -793,6 +793,12 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         try { result.market = market_setup(value.at("market"),child(path,"market"),result); }
         catch (const ValidationError&) { throw; }
         catch (const std::exception& error) { fail("market",child(path,"market"),error.what()); }
+    }
+    if (value.contains("infrastructure")) {
+        result.infrastructure=load_infrastructure_catalog(value.at("infrastructure").dump());
+        if (!value.contains("lab") || !value.contains("service_catalog")) fail("infrastructure",path,"Owned infrastructure requires the shared lab and service catalogs");
+        for (const auto& headquarters:result.headquarters_choices) if (std::none_of(result.infrastructure->states.begin(),result.infrastructure->states.end(),[&](const auto& state){return state.id==headquarters;}))
+            fail("infrastructure",path,"Headquarters has no domestic state profile");
     }
     if (value.contains("management")) {
         result.management=load_management_catalog(value.at("management").dump());
@@ -902,6 +908,9 @@ void validate_references(const Collection& collection, const Registry& registry)
             if (scenario_definition->lab) {
                 try {
                     const auto catalog=scenario_lab_catalog(collection, *scenario_definition);
+                    if (scenario_definition->infrastructure) for (const auto& hardware:scenario_definition->infrastructure->hardware)
+                        for (const auto& required:hardware.requires_research) if (std::none_of(catalog.research.begin(),catalog.research.end(),[&](const auto& research){return research.id==required;}))
+                            fail("infrastructure",path,"Hardware integration requires a known scenario research node");
                     if (scenario_definition->management && scenario_definition->management->governance)
                         for (const auto& executive:scenario_definition->management->governance->executives)
                             if (!executive.publication_research.empty() && std::none_of(catalog.research.begin(),catalog.research.end(),[&](const auto& r){return r.id==executive.publication_research;}))

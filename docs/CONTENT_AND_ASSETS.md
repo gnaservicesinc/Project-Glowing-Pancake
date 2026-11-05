@@ -74,7 +74,7 @@ Audio uses an optional playback adapter and silent fallback, without requiring t
 
 GPLv3 covers project code and original work designated that way. Public-domain/CC0, CC BY, OFL fonts, and third-party code licenses remain identified separately. Never set an asset's license to GPL merely because the repository is GPL. Avoid NC/ND, editorial-only, unknown-source, or otherwise incompatible material. Imported assets need a reviewed redistribution/use basis; if uncertain, use an original placeholder and record the unresolved request.
 
-For every shipped asset, the future `assets/manifest.json` records:
+The [asset register](../assets/manifest.json) begins with the [prepared domestic map](../assets/maps/README.md). For every shipped asset it records:
 
 | Field | Meaning |
 | --- | --- |

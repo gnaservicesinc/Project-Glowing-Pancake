@@ -1200,3 +1200,29 @@ infrastructure**. Century objectives, succession and broad catalog authoring
 remain later components. Human player/author studies remain deferred until all
 components exist and the user is ready for v1; no testers were contacted.
 [Owning contract and bounds](../src/runtime/CORPORATE.md).
+
+## M5-01 — Domestic map, paid sites and owned compute · 2026-11-05
+
+Operations combines a local 51-jurisdiction Census display map with a searchable
+keyboard state list. Authored terms change costs, grid slots, water/power limits,
+operator availability and compatible hardware. Prepared inspections commission
+paid equipment, actual capacity use meters electricity/water/carbon, and the
+ledger preserves monthly obligations, depreciation and bounded resale. Optional
+trips and paid remote/delegated inspections share a saved calendar; managing the
+company remains available. [Control path and mechanical contract](../src/runtime/INFRASTRUCTURE.md)
+· [Asset source and terms](../assets/maps/README.md).
+
+All **67 optimized Mac CTests pass in 20.72s**: 42 hand-audited physical/accounting
+assertions, 22 actual-campaign integration assertions, and reproducible map
+geometry. The bundled Metal run at **1280×720 / 200% text** exercises pointer and
+keyboard selection, real Lab work, calendar conflict and management during
+travel, curtailment, lease notice and an exact **401,500-byte** reload. The shared
+snapshot writer finalizes **0.5.0-dev.1**, generation 5, hash
+`3250ed0c99d7359563b2342dbb7ddec8bf3fd4102b5919f22f0d98e7967b3e9a`;
+five presets and 15 prepared openings roundtrip with no lints. One program
+identity verification per snapshot test batch keeps all save checks and makes an
+unchanged review **0.68s versus 1.20s**, with identical report bytes.
+
+Count: **30/52 Mac feature steps**. Next: **M5-02 international profiles, product
+channels and wholesale compute**. Human and native release qualification remain
+deferred.

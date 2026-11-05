@@ -136,9 +136,9 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "lab" && panel.section === "research"
         Selection { heading: qsTr("Research topics"); rows: manager.researchTopics }
-        Choice { id: researchSource; label: qsTr("Research compute source"); options: manager.sources }
-        Field { id: researchRate; label: qsTr("Research CU per day"); value: manager.recommended.testingRate || "" }
-        Field { id: researchStaff; label: qsTr("Research staff"); value: manager.recommended.researchStaff || "" }
+        Choice { id: researchSource; objectName: "researchSourceChoice"; label: qsTr("Research compute source"); options: manager.sources }
+        Field { id: researchRate; objectName: "researchRateField"; label: qsTr("Research CU per day"); value: manager.recommended.testingRate || "" }
+        Field { id: researchStaff; objectName: "researchStaffField"; label: qsTr("Research staff"); value: manager.recommended.researchStaff || "" }
         Action {
             objectName: "startResearchButton"
             text: qsTr("Pay and start research")

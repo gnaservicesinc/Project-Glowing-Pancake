@@ -284,7 +284,7 @@ QString ManagementController::briefing() const {
     if (!snapshot_ || !state().accounts) return {};
     const auto report=core::accounts_report(*state().accounts);
     const auto market=state().market?core::market_report(*state().market):core::MarketReport{};
-    core::Cents monthly{0};
+    auto monthly=core::infrastructure_monthly_fixed_cost(state(),state().date);
     for (const auto& term:state().accounts->recurring) if (term.starts_on<=state().date && (!term.ends_before || state().date<*term.ends_before)) monthly=core::checked_unit_add(monthly,term.monthly_amount);
     return QStringLiteral("Committed recurring costs %5/month\nCustomer charges %1 · %2 useful tasks delivered\nUnpaid invoices %3 · debt %4\nCosts accrue as time advances; revenue follows actual delivery.")
         .arg(money(market.customer_charges),number(market.delivered_tasks),money(report.payables),money(report.debt),money(monthly));
@@ -347,13 +347,15 @@ QVariantMap ManagementController::trainingPreview(QString recipe,QString source,
         std::int64_t reserved=0; const auto* supply=find(state().capacity->sources,req.source_id);
         for (const auto& row:state().capacity->projects) if (row.status==core::ProjectStatus::active && row.source_id==req.source_id) reserved=core::checked_add(reserved,row.requested.value());
         const auto capacity=core::capacity_report(*state().capacity);
-        const bool free=supply && supply->effective.value()-reserved>=req.daily_compute.value() && capacity.available_staff-capacity.assigned_staff>=req.staff;
+        const auto* recipe_rules=find(state().lab->catalog.recipes,req.recipe_id);
+        const bool compatible=supply && recipe_rules && supply->memory_mib>=recipe_rules->minimum_memory_mib && supply->interconnect==recipe_rules->interconnect;
+        const bool free=compatible && supply->effective.value()-reserved>=req.daily_compute.value() && capacity.available_staff-capacity.assigned_staff>=req.staff;
         core::Cents protected_cash{0};for (const auto& reservation:state().reservations) protected_cash=core::checked_unit_add(protected_cash,reservation.reserved);
         const auto horizon=core::Days{std::min<std::int64_t>(90,p.minimum_days.value())};
-        const auto forecast=core::project_cash(*state().accounts,core::advance_days(state().date,horizon),protected_cash);
+        const auto forecast=core::project_company_cash(state(),core::advance_days(state().date,horizon),protected_cash);
         const auto explanation=QStringLiteral("Earliest %1 days · unlicensed data %2\nEstimated %3\n%4\nBottlenecks: documents %5; scanned tables %6\n%7\n%8\n%9")
             .arg(QString::number(p.minimum_days.value()),money(p.unowned_data_cost),interval(p.lower,p.upper),text(p.explanation),text(p.bottlenecks[0]),text(p.bottlenecks[1]),
-                p.licensed?QStringLiteral("All selected data licensed"):QStringLiteral("Buy each selected data license before training"),free?QStringLiteral("Requested compute and staff fit current free resources"):QStringLiteral("Reduce allocation or stop another project to free compute/staff"),
+                p.licensed?QStringLiteral("All selected data licensed"):QStringLiteral("Buy each selected data license before training"),!compatible?QStringLiteral("Select a source with the recipe’s memory and interconnect class"):free?QStringLiteral("Requested compute and staff fit current free resources"):QStringLiteral("Reduce allocation or stop another project to free compute/staff"),
                 QStringLiteral("Available cash after %2 forecast days: %1. Includes existing bills; excludes future customer sales and unpurchased licenses. Forecast capped at 90 days.").arg(money(forecast.available),QString::number(horizon.value())));
         return {{QStringLiteral("text"),explanation+(p.prerequisites_met?QString{}:QStringLiteral("\nComplete the selected recipe’s research prerequisites before training."))},{QStringLiteral("ready"),p.licensed && p.prerequisites_met && free}};
     } catch (const std::exception& e) { return {{QStringLiteral("text"),QString::fromUtf8(e.what())},{QStringLiteral("ready"),false}}; }

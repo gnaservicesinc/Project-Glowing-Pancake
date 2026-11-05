@@ -6,6 +6,7 @@
 #include <pgp/content/lab_catalog.hpp>
 #include <pgp/content/world_setup.hpp>
 #include <pgp/content/management_catalog.hpp>
+#include <pgp/content/infrastructure_catalog.hpp>
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
@@ -145,6 +146,7 @@ struct ScenarioDefinition {
     std::optional<MarketSetup> service_catalog{};
     std::optional<core::ManagementCatalog> management{};
     std::optional<CompetitionSetup> competition{};
+    std::optional<core::InfrastructureCatalog> infrastructure{};
 };
 struct ResearchDefinition {
     std::vector<std::string> all_of;

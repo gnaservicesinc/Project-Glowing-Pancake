@@ -1,8 +1,8 @@
 # Playability and evaluation checkpoints
 
 Updated 2026-11-05. The bundled 2014–2017 Mac development campaign can be
-played from headquarters selection to its ending through the Office, Lab and
-Inbox. The [backlog](BACKLOG.md) records remaining acceptance gates and the
+played from headquarters selection to its ending through the Office, Lab,
+Operations and Inbox. The [backlog](BACKLOG.md) records remaining acceptance gates and the
 [implementation log](IMPLEMENTATION_LOG.md) records checks. Delegation, recovery, milestone controls and slice scoring are implemented;
 independent human validation and release qualification remain open.
 
@@ -22,6 +22,7 @@ independent human validation and release qualification remain open.
 | M4-01: full rival planning | Default 15-company roster; 7/20-company alternatives; budgeted weekly strategies, shared customers, pricing and public research | Implemented on Mac; exact three-year standard/expanded saves and bundled 200% Metal ending |
 | M4-02: heavyweight response and agreements | Public pressure, 90-day warning, finite paid mobilization/withdrawal and escrowed publication/pilot fees | Implemented on Mac; hysteresis/failure/save checks and actual keyboard accept/decline/paid milestone at 200% text |
 | M4-03: corporate governance and acquisitions | Negotiated capital, executive cash/equity terms, cumulative vesting, board votes, covenants, retained subsidiaries and conserving group transfers | Implemented on Mac; 77 corporate checks and the bundled 200% Metal path through a solvent ending/exact reload |
+| M5-01: owned compute and domestic map | Compare 50 states and DC, buy and staff sites, schedule inspections, run and meter actual owned work, end the opening lease | Implemented on Mac; pointer/keyboard at 200% text and exact saved continuation. [Operations guide](../src/runtime/INFRASTRUCTURE.md) |
 | M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Deferred until all components are in place and the user is ready for v1 work; no sessions conducted |
 
 There is no calendar estimate inferred from task counts: tasks vary substantially
@@ -54,6 +55,14 @@ Equity reduces retained founder ownership; the loan creates interest and a real
 principal deadline. Repay principal in Accounts. The efficient document service
 requires tooling/serving research and a tested efficient model; it can remain a
 single-domain business rather than pursuing the broader task promise.
+
+Use **Operations → Map & states** to compare grid lead times, site costs, cooling
+and hiring terms. Reserve power and order construction, then buy hardware and
+hire operators under **Owned sites**. Book an inspection in **Calendar**; use
+**Next site milestone** for actual arrival and readiness dates. A commissioned
+rack can run compatible Lab and serving work. Compare metered site costs with
+the opening cloud lease before giving notice, and move dependent service first.
+You can continue normal management during an on-site trip.
 
 Office → **Policies and alerts** authorizes finite independent-evaluation or
 paid compute-lease renewals. Set total budget, cash floor, run count, interval
@@ -166,4 +175,4 @@ and exact thresholds through choices and reload; see [duration evidence](evidenc
 M1-07 then adds
 built-in occurrence detection/dispatch. M2-01 through M2-04 implement accounts,
 shared capacity, contracts and the three-year scenario with warned recovery.
-The playable campaign connects those modules through ordinary controls. The current count is 29 completed Mac feature steps. M3-01 through M3-03, M3-05, E1A-04's internal snapshots, E1A-05's authoring walkthrough, E1B-01/02's typed canvas and graphical finalizer, and M4-01/02/03's competition, heavyweight responses and corporate governance are implemented. Per the 2026-11-05 user instruction, human player/author studies wait until all components are in place and the user is ready for v1 work. The [session kit](playtests/M3-session-guide.md) is prepared for later; no sessions are being arranged. Later components proceed with engineering checks. Deferred platform and release work stays recorded in the backlog.
+The playable campaign connects those modules through ordinary controls. The current count is 30 completed Mac feature steps. M3-01 through M3-03, M3-05, E1A-04's internal snapshots, E1A-05's authoring walkthrough, E1B-01/02's typed canvas and graphical finalizer, and M4-01/02/03's competition, heavyweight responses and corporate governance are implemented, along with M5-01's domestic map and owned compute. Per the 2026-11-05 user instruction, human player/author studies wait until all components are in place and the user is ready for v1 work. The [session kit](playtests/M3-session-guide.md) is prepared for later; no sessions are being arranged. Later components proceed with engineering checks. Deferred platform and release work stays recorded in the backlog.

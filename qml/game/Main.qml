@@ -141,6 +141,12 @@ ApplicationWindow {
                         onClicked: window.room = "inbox"
                     }
                     Action {
+                        objectName: "operationsTab"; text: qsTr("Operations")
+                        visible: !campaign.welcome && campaign.infrastructure.available
+                        checked: window.room === "operations"
+                        onClicked: window.room = "operations"
+                    }
+                    Action {
                         objectName: "pauseButton"
                         text: campaign.paused ? qsTr("Play") : qsTr("Pause")
                         enabled: !campaign.busy && (!campaign.paused || campaign.canPlay)
@@ -391,7 +397,7 @@ ApplicationWindow {
                     }
                 }
                 Panel {
-                    visible: !campaign.welcome && campaign.management.available && campaign.showGuide && campaign.management.ending.length === 0
+                    visible: !campaign.welcome && campaign.management.available && window.room !== "operations" && campaign.showGuide && campaign.management.ending.length === 0
                     contentItem: ColumnLayout {
                         Heading { text: qsTr("Getting started") }
                         Copy { text: campaign.management.guide }
@@ -399,15 +405,19 @@ ApplicationWindow {
                     }
                 }
                 Panel {
-                    visible: !campaign.welcome && campaign.management.available && window.room !== "inbox"
+                    visible: !campaign.welcome && campaign.management.available && (window.room === "office" || window.room === "lab")
                     contentItem: ColumnLayout {
                         Heading { text: window.room === "lab" ? qsTr("Lab · data, experiments and evidence") : qsTr("Office · %1").arg(campaign.headquartersText) }
                         Copy { visible: window.room === "office"; text: campaign.capacityText + "\n" + campaign.management.briefing }
                         ManagementPanel { id: managementPanel; Layout.fillWidth: true; room: window.room; textSize: window.textSize }
                     }
                 }
+                Panel {
+                    visible: !campaign.welcome && campaign.infrastructure.available && window.room === "operations"
+                    contentItem: InfrastructurePanel { textSize: window.textSize }
+                }
                 GridLayout {
-                    visible: !campaign.welcome && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
+                    visible: !campaign.welcome && window.room !== "operations" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
                     Layout.fillWidth: true
                     columns: window.narrow || campaign.compactManagement ? 1 : 2
                     columnSpacing: 10

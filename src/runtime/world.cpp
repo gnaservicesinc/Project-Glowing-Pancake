@@ -192,6 +192,15 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
         return value;
     }
     if (metadata.id == "company.cash_cents") return world.simulation.cash.value();
+    if (world.simulation.infrastructure && world.simulation.accounts &&
+        (metadata.id=="company.has_compute_lease" || metadata.id=="company.monthly_compute_bill_cents")) {
+        core::Cents total{0};
+        for (const auto& term:world.simulation.accounts->recurring)
+            if ((term.id=="compute_lease" || term.id.starts_with("offer.lease/") || term.id.starts_with("offer.renew/")) &&
+                term.starts_on<=world.simulation.date && (!term.ends_before || *term.ends_before>world.simulation.date)) total=core::checked_unit_add(total,term.monthly_amount);
+        if (metadata.id=="company.has_compute_lease") return total.value()>0;
+        return total.value();
+    }
     if (metadata.id == "company.monthly_compute_bill_cents" && world.simulation.business_offers) {
         auto bill=std::get<std::int64_t>(world.facts.at(metadata.id));
         const auto& offers=*world.simulation.business_offers;
@@ -279,6 +288,13 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
         const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
         if (!scenario || scenario->starts_on!=world.campaign_start || scenario->ends_before!=world.simulation.end_date)
             invalid("Saved source scenario is absent or has different campaign dates");
+        if (validate_core_simulation && (scenario->infrastructure ? (!world.simulation.infrastructure || world.simulation.infrastructure->catalog!=*scenario->infrastructure) : world.simulation.infrastructure.has_value()))
+            invalid("Saved owned infrastructure rules differ from the source scenario");
+        if (world.simulation.infrastructure) {
+            const auto& base=world.simulation.infrastructure->executive_base;
+            if ((base=="US-CA"?"state.us_ca":base=="US-TX"?"state.us_tx":base=="US-WA"?"state.us_wa":"")!=world.state_id ||
+                std::find(scenario->headquarters_choices.begin(),scenario->headquarters_choices.end(),base)==scenario->headquarters_choices.end()) invalid("Executive home base differs from the company's chosen headquarters");
+        }
     }
     if (world.simulation.lab && !world.simulation.lab->insights.empty() && (!world.competition || !world.competition->setup))
         invalid("Foreign research insights require an authored public diffusion contract");

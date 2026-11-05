@@ -8,6 +8,17 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
         if (s.capacity) for (const auto& work:s.capacity->projects)
             if (work.status==core::ProjectStatus::active && work.kind!=core::ProjectKind::serving && (kind=="project" || work.kind==core::ProjectKind::evaluation)) result.projects.push_back(work.id);
         if (result.projects.empty()) throw std::invalid_argument("Start a matching finite project before advancing to its completion.");
+    } else if (kind=="site") {
+        const auto consider=[&](core::OrdinalDay day){if (day>s.date && day<=s.end_date && (!result.deadline || day<*result.deadline)) result.deadline=day;};
+        if (s.infrastructure) {
+            const auto& owned=*s.infrastructure;
+            for (const auto& site:owned.sites) if (!site.closed_on) {consider(site.built_on);consider(site.grid_on);}
+            for (const auto& rack:owned.hardware) if (!rack.retired_on) consider(rack.delivered_on);
+            for (const auto& hire:owned.hires) if (std::any_of(owned.sites.begin(),owned.sites.end(),[&](const auto& site){return site.id==hire.site_id && !site.closed_on;})) consider(hire.starts_on);
+            for (const auto& appointment:owned.appointments) if (!appointment.cancelled_on) {consider(appointment.starts_on);consider(appointment.visit_on);consider(appointment.ends_before);}
+            if (owned.initial_lease_ends_before) consider(*owned.initial_lease_ends_before);
+        }
+        if (!result.deadline) throw std::invalid_argument("There is no future construction, delivery, staffing, inspection or lease milestone.");
     } else if (kind=="deadline") {
         const auto consider=[&](core::OrdinalDay day){if (day>=s.date && day<=s.end_date && (!result.deadline || day<*result.deadline)) result.deadline=day;};
         if (s.accounts) {
@@ -49,7 +60,7 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
         }
         if (!result.deadline) throw std::invalid_argument("There is no known future deadline inside this scenario.");
         if (*result.deadline==s.date) throw std::invalid_argument("A real deadline is today. Review the obligation before advancing.");
-    } else throw std::invalid_argument("Choose project, evaluation or actual deadline.");
+    } else throw std::invalid_argument("Choose project, evaluation, site milestone or actual deadline.");
     return result;
 }
 bool milestone_reached(const runtime::Checkpoint& checkpoint,const Milestone& milestone) {

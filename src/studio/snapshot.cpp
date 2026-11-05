@@ -47,23 +47,23 @@ Json changed_text(const Json& old,const Json& next) {
     Json changes=Json::array();for (const auto& key:keys) if (!a.contains(key) || !b.contains(key) || a.at(key)!=b.at(key)) changes.push_back(key);return changes;
 }
 Json validate_runtime(const runtime::CompiledProgram& program) {
-    std::size_t scenarios=0,openings=0,saves=0;
+    std::size_t scenarios=0;
+    std::vector<runtime::Checkpoint> openings;
     for (const auto& [id,definition]:program.collection.definitions) {
         const auto* scenario=std::get_if<content::ScenarioDefinition>(&definition.data);if (!scenario) continue;
         if (++scenarios>16) snapshot_refuse("budget","Internal snapshot validation supports at most sixteen scenarios.");
         for (const auto& hq:scenario->headquarters_choices) {
-            if (++openings>64) snapshot_refuse("budget","Snapshot opening fixtures exceed their bound.");
+            if (openings.size()>=64) snapshot_refuse("budget","Snapshot opening fixtures exceed their bound.");
             runtime::Runtime engine{program,runtime::begin_scenario(program,id,hq)};
             const auto result=engine.prepare_opening(engine.current_state().world.simulation.revision);
             if (!result.accepted()) snapshot_refuse("validation","A real scenario opening failed: "+id+": "+result.explanation);
-            const auto bytes=persistence::encode_save(program,engine.checkpoint());
-            if (persistence::decode_save(program,bytes).checkpoint!=engine.checkpoint()) snapshot_refuse("validation","A prepared scenario did not roundtrip through the actual save validator.");
-            ++saves;
+            openings.push_back(engine.checkpoint());
         }
     }
     if (scenarios==0) snapshot_refuse("validation","Reviewed slice content must include an executable scenario.");
+    persistence::validate_save_roundtrips(program,openings);
     Json lints=Json::array();for (const auto& lint:program.lints) lints.push_back({{"code",lint.code},{"path",lint.path},{"explanation",lint.explanation}});
-    return {{"compiler","shared-game-runtime"},{"scenarios",scenarios},{"prepared_headquarters",openings},{"exact_prepared_save_roundtrips",saves},{"lints",std::move(lints)}};
+    return {{"compiler","shared-game-runtime"},{"scenarios",scenarios},{"prepared_headquarters",openings.size()},{"exact_prepared_save_roundtrips",openings.size()},{"lints",std::move(lints)}};
 }
 Json result_json(const SnapshotResult& r) {
     return {{"generation",r.generation},{"content_version",r.content_version},{"collection_hash",r.collection_hash},

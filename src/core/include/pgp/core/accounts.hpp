@@ -113,6 +113,11 @@ void invest_equity(AccountsState& state, OrdinalDay day, std::string investor,
 // noncash acquisition consideration. Neither helper creates cash.
 void dilute_holdings(std::vector<EquityHolding>& holdings,std::string investor,BasisPoints acquired);
 void issue_asset_equity(AccountsState&,OrdinalDay,std::string investor,Cents value,BasisPoints acquired,std::string key);
+// Owning daily systems append their checked accruals without revalidating or
+// copying the full ledger inside each site's work loop. Restore remains deep.
+void accrue_metered_expense(AccountsState&,OrdinalDay,std::string meter,Cents amount,std::string cause,bool validate_io=true);
+void record_owned_depreciation(AccountsState&,OrdinalDay,std::string reference,Cents amount,bool validate_io=true);
+void dispose_owned_asset(AccountsState&,OrdinalDay,std::string reference,Cents cost,Cents depreciation,Cents proceeds);
 // Accrue exactly the next day, then collect due receivables and pay due
 // obligations in (due,id) order from unreserved cash. Unpaid amounts persist.
 // Principal repayment requires repay_debt; maturity is visible in projections.
@@ -125,6 +130,12 @@ struct CashProjection {
     Cents due_principal{0};
     auto operator<=>(const CashProjection&) const = default;
 };
+struct MeteredProjection {
+    OrdinalDay starts_on{0};
+    std::optional<OrdinalDay> ends_before;
+    Cents daily_ceiling{0};
+};
 [[nodiscard]] CashProjection project_cash(const AccountsState& state, OrdinalDay through,
-                                         Cents protected_cash = Cents{0});
+                                         Cents protected_cash = Cents{0},
+                                         const std::vector<MeteredProjection>& metered = {});
 } // namespace pgp::core

@@ -3,6 +3,7 @@
 #include "campaign_model.hpp"
 #include "campaign_worker.hpp"
 #include "management_controller.hpp"
+#include "infrastructure_controller.hpp"
 
 #include <QThread>
 #include <QUrl>
@@ -12,6 +13,7 @@ namespace pgp::bridge {
 class CampaignController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(ManagementController* management READ management CONSTANT)
+    Q_PROPERTY(InfrastructureController* infrastructure READ infrastructure CONSTANT)
     Q_PROPERTY(int daysPerSecond READ daysPerSecond WRITE setDaysPerSecond NOTIFY stateChanged)
     Q_PROPERTY(bool welcome READ welcome NOTIFY stateChanged)
     Q_PROPERTY(QVariantList headquarters READ headquarters CONSTANT)
@@ -53,6 +55,7 @@ public:
                        QObject* parent = nullptr, bool welcome = false);
     ~CampaignController() override;
     ManagementController* management() const { return management_; }
+    InfrastructureController* infrastructure() const { return infrastructure_; }
     int daysPerSecond() const { return days_per_second_; }
     void setDaysPerSecond(int value);
     bool welcome() const { return welcome_; }
@@ -131,6 +134,7 @@ private:
     [[nodiscard]] const runtime::Presentation* waitingPresentation() const;
     const runtime::CompiledProgram program_;
     ManagementController* management_;
+    InfrastructureController* infrastructure_;
     bool welcome_ = false;
     int days_per_second_ = 1;
     QThread thread_;

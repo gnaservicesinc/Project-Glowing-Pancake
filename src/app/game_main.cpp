@@ -41,12 +41,14 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("build-info"),QStringLiteral("Print configure-time identity, then exit.")});
     parser.addOption({QStringLiteral("smoke-test"),QStringLiteral("Explicit keyboard/campaign/save check, then exit; requires --portable-root.")});
     parser.addOption({QStringLiteral("competition-smoke"),QStringLiteral("Use the standard rival roster, publication/adoption and pricing path in the explicit playable smoke.")});
+    parser.addOption({QStringLiteral("infrastructure-smoke"),QStringLiteral("Exercise the map, paid owned infrastructure and calendar in the explicit playable smoke.")});
     parser.addOption({QStringLiteral("screenshot"),QStringLiteral("Capture the smoke-test window."),QStringLiteral("file")});
     parser.process(application);
     if (parser.isSet(QStringLiteral("build-info"))) { core::write_build_identity(std::cout); return 0; }
     if (!parser.positionalArguments().isEmpty() ||
         (parser.isSet(QStringLiteral("screenshot")) && !parser.isSet(QStringLiteral("smoke-test"))) ||
-        (parser.isSet(QStringLiteral("competition-smoke")) && !parser.isSet(QStringLiteral("smoke-test"))) ||
+        ((parser.isSet(QStringLiteral("competition-smoke")) || parser.isSet(QStringLiteral("infrastructure-smoke"))) && !parser.isSet(QStringLiteral("smoke-test"))) ||
+        (parser.isSet(QStringLiteral("competition-smoke")) && parser.isSet(QStringLiteral("infrastructure-smoke"))) ||
         (parser.isSet(QStringLiteral("smoke-test")) && !parser.isSet(QStringLiteral("portable-root")))) parser.showHelp(2);
     try {
         const bool bundled=!parser.isSet(QStringLiteral("content"));
@@ -77,7 +79,7 @@ int main(int argc, char* argv[]) {
         }
         const auto selection = graphics::configure(parser.isSet(QStringLiteral("software")));
         QQuickStyle::setStyle(QStringLiteral("Basic"));
-        bridge::CampaignController campaign{std::move(program),std::move(initial),paths,settings,nullptr,bundled || parser.isSet(QStringLiteral("competition-smoke"))};
+        bridge::CampaignController campaign{std::move(program),std::move(initial),paths,settings,nullptr,bundled || parser.isSet(QStringLiteral("competition-smoke")) || parser.isSet(QStringLiteral("infrastructure-smoke"))};
         QQmlApplicationEngine engine;
         const auto qt_imports = QLibraryInfo::path(QLibraryInfo::QmlImportsPath);
         engine.setImportPathList({qt_imports,QStringLiteral("qrc:/qt/qml")});
@@ -98,7 +100,8 @@ int main(int argc, char* argv[]) {
         });
         if (parser.isSet(QStringLiteral("smoke-test"))) {
             window->resize(1280,720);
-            if (bundled || parser.isSet(QStringLiteral("competition-smoke"))) schedule_playable_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")),parser.isSet(QStringLiteral("competition-smoke")));
+            if (parser.isSet(QStringLiteral("infrastructure-smoke"))) schedule_infrastructure_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
+            else if (bundled || parser.isSet(QStringLiteral("competition-smoke"))) schedule_playable_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")),parser.isSet(QStringLiteral("competition-smoke")));
             else schedule_game_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
         }
         window->show();

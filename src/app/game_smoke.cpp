@@ -7,6 +7,7 @@
 #include <QCoreApplication>
 #include <QImage>
 #include <QKeyEvent>
+#include <QMouseEvent>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QTimer>
@@ -535,6 +536,140 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             reveal_top(item("heavyweightBriefingDetail"));if (!capture(QStringLiteral("-response"))) {fail("public pressure briefing capture");return;}
             smoke->paper_declined=true;play();smoke->phase=21;return;
         default:fail("unknown smoke phase");return;
+        }
+    });
+    timer->start();
+}
+
+void schedule_infrastructure_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,
+    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot) {
+    using namespace pgp;
+    struct State {int phase=0,attempts=0;std::uint64_t full_wh=0;bridge::CampaignSnapshotPtr saved;};
+    auto smoke=std::make_shared<State>();auto* timer=new QTimer(&window);timer->setInterval(24);
+    const auto save_path=paths.saves_directory/"infrastructure-smoke.pgpsave";
+    const auto save_url=QUrl::fromLocalFile(QString::fromStdU16String(save_path.u16string()));
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,smoke,expected,save_path,save_url,screenshot] {
+        const auto item=[&](const char* name){return visual_item(window.contentItem(),QString::fromLatin1(name));};
+        const auto fail=[&](const char* why){qCritical()<<"Infrastructure smoke failed:"<<why<<"phase"<<smoke->phase<<campaign.notice();timer->stop();QCoreApplication::exit(3);};
+        const auto press=[&](const char* name){auto* c=item(name);reveal_top(c);if (key(window,c,Qt::Key_Space)) return true;fail(name);return false;};
+        const auto set=[&](const char* name,const char* property,const QString& value){auto* c=item(name);return c && c->setProperty(property,value);};
+        const auto capture=[&](QString suffix){if (screenshot.isEmpty()) return true;auto file=screenshot;if (!suffix.isEmpty()) file.insert(file.lastIndexOf(QLatin1Char('.')),suffix);return window.grabWindow().save(file);};
+        const auto next=[&](int phase){smoke->phase=phase;smoke->attempts=0;};
+        if (++smoke->attempts>1200) {fail("timed out");return;}
+        if (!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
+        const auto snap=campaign.snapshot();const auto& s=snap->checkpoint.world.simulation;
+        auto* infra=campaign.infrastructure();
+        if (!campaign.welcome() && campaign.requiredKind()!=QStringLiteral("none")) {
+            const auto kind=campaign.requiredKind();
+            if (kind==QStringLiteral("management")) {press("acknowledgeManagement");return;}
+            if (kind!=QStringLiteral("content")) {fail("unexpected blocking decision");return;}
+            QString choice;
+            for (const auto& entry:campaign.requiredChoices()) {const auto id=entry.toMap().value(QStringLiteral("choiceId")).toString();if (choice.isEmpty() || id==QStringLiteral("decline")) choice=id;}
+            if (choice.isEmpty() || !key(window,visual_item(window.contentItem(),QStringLiteral("flowChoice_")+choice),Qt::Key_Space)) fail("required choice unavailable");return;
+        }
+        const auto confirm=[&](int phase){if (!infra->canConfirm()) {qCritical().noquote()<<infra->reviewText();fail("infrastructure review did not approve valid terms");return;}if (press("confirmInfrastructure")) next(phase);};
+        switch (smoke->phase) {
+        case 0: {
+            if (!campaign.welcome() || std::filesystem::exists(save_path) || window.rendererInterface()->graphicsApi()!=expected) {fail("fresh headquarters chooser and requested renderer required");return;}
+            auto* hq=item("headquartersChoice");auto* setup=item("competitionChoice");int intro=-1;const auto choices=campaign.scenarios();
+            for (qsizetype i=0;i<choices.size();++i) if (choices.at(i).toMap().value(QStringLiteral("id"))==QStringLiteral("scenario.first_playable")) intro=static_cast<int>(i);
+            if (!hq || !setup || intro<0 || !hq->setProperty("currentIndex",1) || !setup->setProperty("currentIndex",intro)) {fail("headquarters/scenario selection");return;}
+            campaign.setDaysPerSecond(60);if (press("newCampaignButton")) next(1);return;
+        }
+        case 1:
+            if (campaign.welcome() || !infra->available() || infra->states()->rowCount()!=51 || infra->mapCredit().isEmpty() || snap->checkpoint.world.state_id!="state.us_tx") {fail("51 state profiles, offline geometry or chosen HQ missing");return;}
+            if (press("operationsTab")) next(2);return;
+        case 2: {
+            auto* map=item("domesticMap");if (!map || !map->isVisible()) {fail("offline map did not render");return;}reveal_top(map);
+            if (!capture(QStringLiteral("-map"))) {fail("map capture");return;}
+            QVariantList point;
+            for (const auto& feature:infra->mapGeometry().value(QStringLiteral("features")).toList()) {
+                const auto row=feature.toMap();if (row.value(QStringLiteral("id"))==QStringLiteral("US-DC")) point=row.value(QStringLiteral("label")).toList();
+            }
+            if (point.size()!=2) {fail("DC callout has no prepared display coordinate");return;}
+            const auto ratio=map->property("ratio").toDouble();
+            const auto scene=map->mapToScene(QPointF{map->property("insetX").toDouble()+point[0].toDouble()*ratio,map->property("insetY").toDouble()+point[1].toDouble()*ratio});
+            const auto global=window.mapToGlobal(scene.toPoint());
+            QMouseEvent down{QEvent::MouseButtonPress,scene,scene,QPointF{global},Qt::LeftButton,Qt::LeftButton,Qt::NoModifier};
+            QMouseEvent up{QEvent::MouseButtonRelease,scene,scene,QPointF{global},Qt::LeftButton,Qt::NoButton,Qt::NoModifier};
+            QCoreApplication::sendEvent(&window,&down);QCoreApplication::sendEvent(&window,&up);
+            if (infra->states()->selectedId()!=QStringLiteral("US-DC")) {fail("DC callout pointer selection");return;}
+            if (press("toggleStateMap")) next(3);return;
+        }
+        case 3: {
+            auto* list=item("domesticStateList");auto* search=item("stateSearch");auto* accessible=search?QAccessible::queryAccessibleInterface(search):nullptr;
+            if (!search || !list || !accessible || accessible->text(QAccessible::Name).isEmpty() || !key(window,list,Qt::Key_Down) || infra->states()->selectedId()==QStringLiteral("US-DC")) {fail("keyboard state list, focus or label missing");return;}
+            search->forceActiveFocus(Qt::TabFocusReason);QKeyEvent filter{QEvent::KeyPress,Qt::Key_W,Qt::NoModifier,QStringLiteral("Washington")};QCoreApplication::sendEvent(&window,&filter);
+            if (infra->states()->rowCount()!=1 || infra->states()->selectedId()!=QStringLiteral("US-WA") || item("domesticMap")->isVisible()) {fail("keyboard list filter did not select Washington independently of geometry");return;}
+            if (press("reviewBuildOwnedSite")) next(4);return;
+        }
+        case 4:
+            if (!capture(QStringLiteral("-construction"))) {fail("construction review capture");return;}confirm(5);return;
+        case 5:
+            if (s.infrastructure->sites.size()!=1 || s.infrastructure->sites.front().state_id!="US-WA" || !press("operationsSites")) {fail("reviewed site was not committed");return;}
+            if (press("reviewOrderOwnedRack")) next(6);return;
+        case 6:confirm(7);return;
+        case 7:
+            if (s.infrastructure->hardware.size()!=1 || s.capacity->sources.size()!=1) {fail("paid order gained capacity before delivery");return;}
+            if (press("reviewHireOwnedOperators")) next(8);return;
+        case 8:confirm(9);return;
+        case 9:
+            if (s.infrastructure->hires.size()!=1 || !press("operationsCalendar") || !set("inspectionMethodPicker","value",QStringLiteral("onsite"))) {fail("staffing or inspection method control");return;}
+            if (press("reviewSiteInspection")) next(10);return;
+        case 10:confirm(11);return;
+        case 11:
+            if (s.infrastructure->appointments.size()!=1 || s.infrastructure->appointments.front().mode!=core::AppointmentMode::onsite || !set("inspectionMethodPicker","value",QStringLiteral("remote"))) {fail("on-site appointment did not book paid travel");return;}
+            if (press("reviewSiteInspection")) next(12);return;
+        case 12:
+            if (infra->canConfirm() || !infra->reviewText().contains(QStringLiteral("conflicting"))) {fail("overlapping remote appointment did not refuse");return;}
+            if (press("dismissInfrastructure")) next(13);return;
+        case 13:
+            if (s.date<s.infrastructure->appointments.front().starts_on || !campaign.paused()) {if (campaign.paused()) press("nextSiteMilestone");return;}
+            if (!core::executive_location(s).traveling || !infra->executiveLocation().contains(QStringLiteral("traveling"))) {fail("milestone did not stop at outbound trip");return;}
+            reveal_top(item("executiveLocation"));if (!capture(QStringLiteral("-travel")) || !press("labTab") || !press("lab_data")) {fail("Lab inaccessible during trip");return;}
+            campaign.management()->dataOffers()->setSelectedId(QStringLiteral("data.open_documents"));
+            if (press("buyDataButton")) next(14);return;
+        case 14:
+            if (s.lab->licenses.size()!=1 || !core::executive_location(s).traveling) {fail("ordinary management did not commit while traveling");return;}
+            if (press("operationsTab") && press("nextSiteMilestone")) next(15);return;
+        case 15:
+            if (!campaign.paused() || s.date<s.infrastructure->appointments.front().visit_on) {if (campaign.paused()) press("nextSiteMilestone");return;}
+            if (!s.infrastructure->hardware.front().commissioned_on || !s.infrastructure->appointments.front().inspection || !press("labTab") || !press("lab_research")) {fail("inspection did not commission owned hardware");return;}
+            campaign.management()->researchTopics()->setSelectedId(QStringLiteral("research.held_out_evaluation"));
+            if (!set("researchSourceChoice","value",QStringLiteral("owned/rack.1")) || !set("researchRateField","value",QStringLiteral("50")) || !set("researchStaffField","value",QStringLiteral("1"))) {fail("owned source missing from Lab allocation");return;}
+            if (press("startResearchButton")) next(16);return;
+        case 16:
+            if (s.lab->research.empty() || s.capacity->projects.back().source_id!="owned/rack.1") {fail("research did not reserve the physical owned source");return;}
+            if (press("stepButton")) next(17);return;
+        case 17:
+            smoke->full_wh=s.infrastructure->sites.front().last_energy_wh;
+            if (smoke->full_wh==0 || !press("operationsTab") || !press("operationsSites") || !set("ownedPowerBudget","text",QStringLiteral("5"))) {fail("actual site meter or power control missing");return;}
+            if (press("reviewOwnedPower")) next(18);return;
+        case 18:confirm(19);return;
+        case 19:
+            if (s.infrastructure->sites.front().power.back().watts!=5000) {fail("reviewed power budget did not apply");return;}
+            if (press("stepButton")) next(20);return;
+        case 20:
+            if (s.infrastructure->sites.front().last_energy_wh>=smoke->full_wh) {fail("curtailment did not reduce billed energy");return;}
+            if (press("reviewEndOpeningLease")) next(21);return;
+        case 21:confirm(22);return;
+        case 22:
+            if (!s.infrastructure->initial_lease_ends_before) {fail("lease notice did not commit");return;}
+            if (s.date<*s.infrastructure->initial_lease_ends_before || !campaign.paused()) {if (campaign.paused()) press("nextSiteMilestone");return;}
+            if (s.capacity->sources.front().effective.value()!=0 || s.infrastructure->sites.front().meters.empty() || !infra->leaseStatus().contains(QStringLiteral("ended"))) {fail("initial lease continued or metered site vanished");return;}
+            reveal_top(item("ownedSiteList"));if (!capture(QStringLiteral("-meter"))) {fail("meter capture");return;}
+            smoke->saved=snap;campaign.saveTo(save_url);next(23);return;
+        case 23:
+            if (!std::filesystem::is_regular_file(save_path)) {fail("owned site save missing");return;}
+            if (press("stepButton")) next(24);return;
+        case 24:
+            if (s.date==smoke->saved->checkpoint.world.simulation.date) {fail("clock did not advance before reload");return;}
+            campaign.loadFrom(save_url);next(25);return;
+        case 25:
+            if (snap->generation!=smoke->saved->generation+1 || snap->checkpoint!=smoke->saved->checkpoint || !campaign.paused() || !capture({})) {fail("exact owned site, travel, lease or ledger reload failed");return;}
+            qInfo().noquote()<<"Infrastructure smoke passed"<<graphics::name(expected)<<"text="<<campaign.textScalePercent()<<"51 states, map pointer and keyboard list, paid construction, calendar conflict, management during travel, owned Lab work, curtailment, lease notice, exact save"<<std::filesystem::file_size(save_path)<<"bytes";
+            timer->stop();QCoreApplication::exit(0);return;
+        default:fail("unexpected smoke phase");return;
         }
     });
     timer->start();

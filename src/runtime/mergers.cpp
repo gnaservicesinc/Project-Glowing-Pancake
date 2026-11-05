@@ -119,7 +119,7 @@ void transfer_subsidiary_funds(WorldState& w,std::string_view id,Cents amount,bo
         if (amount>checked_unit_subtract(profit,distributed)) invalid("A dividend cannot exceed actual undistributed operating profit");
         Cents protected_cash{0};for (const auto& reservation:r.simulation.reservations) protected_cash=checked_unit_add(protected_cash,reservation.reserved);
         const auto through=std::min(r.simulation.end_date,advance_days(r.simulation.date,c.subsidiary_reserve_days));
-        const auto projection=project_cash(*r.simulation.accounts,through,protected_cash);
+        const auto projection=project_company_cash(r.simulation,through,protected_cash);
         if (projection.overdue_payables.value()>0 || projection.due_principal.value()>0 ||
             amount>checked_unit_subtract(projection.available,c.subsidiary_cash_floor)) invalid("The subsidiary must retain its disclosed cash floor and projected bills before distributing profit");
     }

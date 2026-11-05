@@ -56,6 +56,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
             *world.simulation.capacity,scenario->starts_on);
     }
     if (scenario->management) world.simulation.management=core::ManagementState{*scenario->management,{},{},{},{},{},{}};
+    if (scenario->infrastructure) {core::InfrastructureState owned;owned.catalog=*scenario->infrastructure;owned.executive_base=std::string(headquarters);world.simulation.infrastructure=std::move(owned);}
     if (scenario->management && scenario->management->governance) {
         core::GovernanceState corporate;corporate.opening_holdings=world.simulation.accounts->holdings;
         world.simulation.management->governance=std::move(corporate);

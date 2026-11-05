@@ -297,6 +297,7 @@ Json definition_json(const Definition& definition, const std::string& key) {
         if (!scenario->rivals.empty()) result["rivals"]=Json::parse(canonical_rival_definitions(scenario->rivals));
         if (scenario->competition) result["competition"]=Json::parse(canonical_competition_setup(*scenario->competition));
         if (scenario->management) result["management"]=Json::parse(content::canonical_management_catalog(*scenario->management));
+        if (scenario->infrastructure) result["infrastructure"]=Json::parse(content::canonical_infrastructure_catalog(*scenario->infrastructure));
         if (scenario->service_catalog) result["service_catalog"]=Json::parse(canonical_market_setup_bytes(*scenario->service_catalog,scenario->starts_on));
         if (scenario->market)
             result["market"] = Json::parse(canonical_market_setup_bytes(*scenario->market,scenario->starts_on));

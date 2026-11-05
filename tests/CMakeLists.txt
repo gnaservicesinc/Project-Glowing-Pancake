@@ -2,7 +2,7 @@ add_executable(pgp-build-configuration-test build_configuration_test.cpp)
 target_link_libraries(pgp-build-configuration-test PRIVATE pgp::core)
 pgp_project_target(pgp-build-configuration-test)
 add_test(NAME core.build-configuration COMMAND pgp-build-configuration-test)
-foreach(pgp_primitive_test checked_arithmetic state_primitives integer_codec constrained_residue simulation accounts capacity allocation liquidity)
+foreach(pgp_primitive_test checked_arithmetic state_primitives integer_codec constrained_residue simulation accounts capacity allocation liquidity infrastructure)
     string(REPLACE "_" "-" pgp_primitive_target "${pgp_primitive_test}")
     add_executable(pgp-${pgp_primitive_target}-test ${pgp_primitive_test}_test.cpp)
     target_link_libraries(pgp-${pgp_primitive_target}-test PRIVATE pgp::core)
@@ -89,3 +89,4 @@ if(NOT PGP_CORE_ONLY)
     # GUI rendering runs only through an explicitly invoked probe, not CTest.
     # That preserves the build wrapper's no-auto-launch contract.
 endif()
+add_test(NAME tools.domestic-map COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/prepare_us_map.py" --check)

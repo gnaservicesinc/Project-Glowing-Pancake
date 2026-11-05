@@ -1,13 +1,13 @@
 {
   "assets": [],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "479c32eb0b657602357f087450b0d1ead27cb6cf50837ec7651c11fba921915e",
+  "collection_hash": "3250ed0c99d7359563b2342dbb7ddec8bf3fd4102b5919f22f0d98e7967b3e9a",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.4.0-dev.1",
+  "content_version": "0.5.0-dev.1",
   "definitions": [
     {
       "id": "research.data_deduplication",
@@ -48,32 +48,32 @@
     {
       "id": "scenario.first_playable",
       "kind": "scenario",
-      "revision": 2,
-      "semantic_hash": "23e1911568204e64b91013ae42b6444cbbbe4be1dcc3c12a8adda6a05cbf4318"
+      "revision": 3,
+      "semantic_hash": "1a44c0494ff20471cc5dde9146b56988529d4de590537572c50afddcf4aeeaff"
     },
     {
       "id": "scenario.world_competition",
       "kind": "scenario",
-      "revision": 3,
-      "semantic_hash": "cbcdef9e6b34e89fc5a3f5d303307bc4c5068da1982489ae1176f6ecca3d784a"
+      "revision": 4,
+      "semantic_hash": "3cab1cf1079ea85b2c8d1fb850702b15615a62a617da76442247ab63cabb2e9b"
     },
     {
       "id": "scenario.world_expanded",
       "kind": "scenario",
-      "revision": 3,
-      "semantic_hash": "deeb7bf210bae8a40a8320f7bcd1bf9181c05d1c7909277de6e66c200773ab18"
+      "revision": 4,
+      "semantic_hash": "16f093bef7f47c9768bd397fa41681363a1edd61be8159bbfa5ee179e99503fb"
     },
     {
       "id": "scenario.world_forgiving",
       "kind": "scenario",
-      "revision": 3,
-      "semantic_hash": "991afa407c48dfefb43d8ce9ac4761061d9fa89055925fe2f57921da08207062"
+      "revision": 4,
+      "semantic_hash": "8ef8711d13dd2789206ab7c9c447d7c753f3e4f84d0cf4ac7ac41a1441143fdf"
     },
     {
       "id": "scenario.world_reduced",
       "kind": "scenario",
-      "revision": 3,
-      "semantic_hash": "3ff7dede3b1b857081f4c0325c0908a911d77c5eb9b548b4dae9eb1726a7920e"
+      "revision": 4,
+      "semantic_hash": "739459596deb6fa68e76b25816b64676cd377da06513d1f59f271cdb64af5ea9"
     },
     {
       "id": "slice.evaluation_finding",
@@ -125,7 +125,7 @@
     }
   ],
   "format": 1,
-  "generation": 4,
+  "generation": 5,
   "messages_hash": "229e14da301917150b15a80e264cb4033d1159bd18f1b6491171eca3476b6b68",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
@@ -180,5 +180,5 @@
       "slice.recovery_opportunity"
     ]
   },
-  "source_hash": "60382480c87b0d7edaab3c851c413db38dcb9f46a0e2ee615227690f90ea8a07"
+  "source_hash": "2e160c1e34b01a31bfa38c66ce1d060c544816477ed448c792f2e562c1ac4af8"
 }

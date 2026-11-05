@@ -23,7 +23,13 @@ qt_add_resources(pgp-game game_ui
     FILES "${PROJECT_SOURCE_DIR}/qml/game/Main.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/StableEntityList.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FlowPresentation.qml"
-          "${PROJECT_SOURCE_DIR}/qml/game/ManagementPanel.qml")
+          "${PROJECT_SOURCE_DIR}/qml/game/ManagementPanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/InfrastructurePanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/DomesticMap.qml")
+qt_add_resources(pgp-game domestic_map
+    PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+    FILES "${PROJECT_SOURCE_DIR}/assets/maps/us-states-2024.json"
+          "${PROJECT_SOURCE_DIR}/assets/maps/CENSUS_TERMS.txt")
 set(pgp_game_runtime_content "${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 if(EXISTS "${PROJECT_SOURCE_DIR}/data/runtime/content-manifest.json")
     list(APPEND pgp_game_runtime_content "${PROJECT_SOURCE_DIR}/data/runtime/content-manifest.json")

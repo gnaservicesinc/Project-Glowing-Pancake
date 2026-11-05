@@ -1,0 +1,11 @@
+U.S. Census Bureau — 2024 Cartographic Boundary Files, 1:5,000,000
+
+Access constraints: None
+
+Use Constraints: The intended display scale for this file is 1:5,000,000. This file should not be displayed at scales larger than 1:5,000,000. These products are free to use in a product or publication, however acknowledgement must be given to the U.S. Census Bureau as the source. The boundary information is for visual display at appropriate small scales only. Cartographic boundary files should not be used for geographic analysis including area or perimeter calculation. Files should not be used for geocoding addresses. Files should not be used for determining precise geographic area relationships.
+
+Source: https://www.census.gov/geographies/mapping-files/2024/geo/carto-boundary-file.html
+KML: https://www2.census.gov/geo/tiger/GENZ2024/kml/cb_2024_us_state_5m.zip
+Retrieved: 2026-11-05
+
+Project use: small-scale visual game map only. Alaska/Hawaii are scaled display insets; DC has an enlarged selection marker. No site economics, travel times, areas or precise geographic relationships are computed from this boundary data.

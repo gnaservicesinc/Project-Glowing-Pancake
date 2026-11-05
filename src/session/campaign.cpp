@@ -158,7 +158,11 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::TakeFinancing>(command.action) || std::holds_alternative<core::HireSpecialist>(command.action) ||
         std::holds_alternative<core::AddDelegationPolicy>(command.action) || std::holds_alternative<core::RenewComputeLease>(command.action) ||
         std::holds_alternative<core::ReviewDelegation>(command.action) ||
-        std::holds_alternative<core::AppointExecutive>(command.action) || std::holds_alternative<core::VoteBoardMotion>(command.action) || std::holds_alternative<core::RespondCorporateDispute>(command.action);
+        std::holds_alternative<core::AppointExecutive>(command.action) || std::holds_alternative<core::VoteBoardMotion>(command.action) || std::holds_alternative<core::RespondCorporateDispute>(command.action) ||
+        std::holds_alternative<core::BuildOwnedSite>(command.action) || std::holds_alternative<core::OrderOwnedHardware>(command.action) ||
+        std::holds_alternative<core::HireSiteOperators>(command.action) || std::holds_alternative<core::ScheduleSiteAppointment>(command.action) ||
+        std::holds_alternative<core::RetireOwnedHardware>(command.action) || std::holds_alternative<core::CloseOwnedSite>(command.action) ||
+        std::holds_alternative<core::CancelSiteAppointment>(command.action) || std::holds_alternative<core::NoticeInitialLeaseTermination>(command.action);
     auto result = operate([&](auto& candidate) { return candidate.submit(command); }, irreversible);
     if (std::holds_alternative<core::AdvanceDay>(command.action) && !result.command.accepted() &&
         result.command.reason != runtime::RuntimeReason::stale_revision)

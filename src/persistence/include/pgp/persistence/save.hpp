@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <span>
 #include <string>
 #include <string_view>
 
@@ -36,6 +37,10 @@ struct LoadedSave {
                                       SaveLimits limits = {});
 [[nodiscard]] LoadedSave decode_save(const runtime::CompiledProgram& program,
                                      std::string_view bytes, SaveLimits limits = {});
+// Validate the immutable program identity once for this synchronous batch.
+// Every checkpoint still goes through the ordinary encoder and decoder.
+void validate_save_roundtrips(const runtime::CompiledProgram& program,
+                              std::span<const runtime::Checkpoint> checkpoints, SaveLimits limits = {});
 void save_file(const runtime::CompiledProgram& program, const runtime::Checkpoint& checkpoint,
                const std::filesystem::path& path, std::uint64_t autosave_sequence = 0,
                SaveLimits limits = {});

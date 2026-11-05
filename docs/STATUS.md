@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**29 of 52 steps complete for Mac feature development. M5-01 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02 and M4-01 through M4-03.
+**30 of 52 steps complete for Mac feature development. M5-02 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03 and M5-01.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -23,6 +23,20 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- M5-01 adds the offline map and searchable list for all 50 states and DC.
+  State profiles change construction cost, grid waits, water, cooling, hiring
+  and equipment fit. Paid sites, operators and compatible delivered racks join
+  the shared capacity pool after inspection. Actual work drives energy and
+  monthly bills; capex, depreciation, resale and lease termination reconcile.
+  Remote/delegated appointments keep travel optional and ordinary management
+  remains usable during trips. All **67 optimized Mac CTests** pass, including
+  **42 physical/financial checks, 22 integration checks** and map reproduction.
+  The bundled **1280×720 / 200% text Metal** path tests pointer and keyboard
+  selection, a conflicting appointment, management while traveling, real
+  curtailed Lab work, lease notice and an exact **401,500-byte** reload. The
+  shared writer finalizes content **0.5.0-dev.1**, generation 5, across five
+  presets and all 15 headquarters save checks. [Player path and contract](../src/runtime/INFRASTRUCTURE.md).
 
 - M4-03 adds alternative financing counteroffers, explicit seat-based board
   votes, real debt/covenants and paid waivers; named executives agree cash-only
@@ -380,12 +394,11 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation: M5-01 offline domestic map and owned infrastructure.**
-Add licensed 50-state/DC geometry with a list alternative, owned sites, power /
-cooling and grid queues, compatible hardware delivery and paid staff/maintenance.
-Site choices must change a feasible plan; optional executive appointments/travel
-must preserve ordinary remote management. Human validation remains deferred as
-specified below.
+**Next implementation: M5-02 international profiles and product channels.**
+Add eight regions, six model channels, twelve product templates and shared
+regional useful-work accounting. Implement paid wholesale reservations from
+owned capacity with compatibility, curtailment terms and balanced ledgers.
+An infrastructure provider needs a viable revenue path without model training.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

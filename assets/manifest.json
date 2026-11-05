@@ -1,0 +1,32 @@
+{
+  "format": 1,
+  "assets": [
+    {
+      "id": "map.us_states_2024",
+      "path": "assets/maps/us-states-2024.json",
+      "sha256": "5474e9cfe468b8104ccea24d2a7ae263e1e5e1eab6daeb69752acc987dc98fc2",
+      "kind": "data",
+      "title": "Fifty US states and District of Columbia \u2014 prepared display geometry",
+      "creator": "U.S. Department of Commerce, U.S. Census Bureau, Geography Division",
+      "source_url": "https://www2.census.gov/geo/tiger/GENZ2024/kml/cb_2024_us_state_5m.zip",
+      "retrieved_on": "2026-11-05",
+      "source_year": 2024,
+      "source_archive_sha256": "610f4a7a57be81ed4fb71b8f8365628b3f0d9041fb82c98ec238a186770dd6a6",
+      "license_id": "LicenseRef-US-Census-Cartographic-2024",
+      "license_url": "https://www.census.gov/geographies/mapping-files/2024/geo/carto-boundary-file.html",
+      "license_evidence_path": "assets/maps/CENSUS_TERMS.txt",
+      "original_license_metadata_path": "assets/maps/sources/cb_2024_us_state_5m.kml.iso.xml",
+      "modifications": "Selected 50 states and DC; mapped longitude/latitude to a fixed display canvas; separately scaled/offset Alaska and Hawaii insets; quantized integer coordinates and simplified subpixel canvas segments; added an enlarged DC selection marker. Geometry is display-only, without geographic/business analysis.",
+      "derived_from": [
+        "assets/maps/sources/cb_2024_us_state_5m.kml"
+      ],
+      "preparation_tool": "tools/prepare_us_map.py",
+      "purpose": "Offline domestic map with a complete list alternative",
+      "ai_generated": false,
+      "generation_record": null,
+      "credit_text": "U.S. Census Bureau, 2024 Cartographic Boundary Files, 1:5,000,000. Prepared and modified for game display; Alaska/Hawaii insets and an enlarged DC marker.",
+      "credit_group": "Maps",
+      "review_status": "source-and-terms-verified-for-visual-display"
+    }
+  ]
+}

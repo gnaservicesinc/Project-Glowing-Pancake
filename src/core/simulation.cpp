@@ -110,6 +110,7 @@ void prepare_opening(SimulationState& state) {
     }
     prepare_governance(state);
     prepare_management(state);
+    prepare_infrastructure(state);
     if (state.business_offers) expire_business_offers(*state.business_offers,*state.capacity,state.date);
     while (state.opening_cursor < state.opening_actions.size()) {
         const auto& due = state.opening_actions[state.opening_cursor];
@@ -170,6 +171,7 @@ void validate(const SimulationState& state,bool deep=true) {
         validate_lab(*state.lab, *state.capacity, *state.accounts, state.random, false);
     }
     if (state.management) {validate_management(state,deep);validate_governance(state,deep);}
+    validate_infrastructure(state,deep);
     if (state.deployments) {
         if (!state.lab || !state.market || !state.capacity) invalid("Deployments require lab, market and capacity");
         if (deep) validate_deployments(*state.deployments,*state.lab,*state.capacity,*state.market);
@@ -448,6 +450,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                         action.industry_adoptions.empty()?nullptr:&action.industry_adoptions);
                 else if (next.capacity) close_capacity_day(*next.capacity, next.date, false);
                 if (next.lab) close_lab_day(*next.lab, *next.capacity, next.date, next.random);
+                close_infrastructure_day(next);
                 if (next.accounts) {
                     close_accounts_day(*next.accounts, next.date, reserved_cash(next), false);
                     next.cash = accounts_report(*next.accounts).cash;
@@ -456,6 +459,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 next.date = advance_days(next.date, Days{1});
                 prepare_governance(next);
                 prepare_management(next);
+                prepare_infrastructure(next);
                 if (next.liquidity) {
                     observe_liquidity(*next.liquidity, *next.accounts, next.date, false);
                     const auto report = liquidity_report(*next.liquidity);
@@ -551,6 +555,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     end_recurring(accounts(next), "support/" + found->id, next.date);
                 (void)receipt(next, "cancel_project");
             } else if constexpr (std::is_same_v<Action, WithdrawOperations>) {
+                if (next.infrastructure && std::any_of(next.infrastructure->sites.begin(),next.infrastructure->sites.end(),[](const auto& site){return !site.closed_on;}))
+                    refuse(CommandReason::dependent_commitment,"Close owned sites and their obligations before withdrawing operations.");
                 if (!next.accounts || !next.capacity || reserved_cash(next).value()!=0)
                     refuse(CommandReason::dependent_commitment,"Release funded commitments before withdrawing operations.");
                 if (next.market) for (const auto& contract:next.market->contracts)
@@ -568,8 +574,28 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if (next.management) for (auto& policy:next.management->policies) policy.enabled=false;
                 (void)receipt(next,"withdraw_operations");
             } else if constexpr (std::is_same_v<Action, SetEffectiveCapacity>) {
+                if (next.infrastructure && std::any_of(next.capacity->sources.begin(),next.capacity->sources.end(),[&](const auto& source){return source.id==action.source_id && source.kind==CapacitySourceKind::owned;}))
+                    refuse(CommandReason::invalid_argument,"Owned capacity follows actual site power, operators and hardware; change the site power budget.");
                 update_effective_capacity(capacity(next), next.date, action.source_id, action.available);
                 (void)receipt(next, "capacity_availability");
+            } else if constexpr (std::is_same_v<Action, BuildOwnedSite>) {
+                const auto before=next.cash;build_owned_site(next,action,reserved_cash(next));(void)receipt(next,"build_owned_site",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, OrderOwnedHardware>) {
+                const auto before=next.cash;order_owned_hardware(next,action,reserved_cash(next));(void)receipt(next,"order_owned_hardware",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, HireSiteOperators>) {
+                const auto before=next.cash;hire_site_operators(next,action,reserved_cash(next));(void)receipt(next,"hire_site_operators",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, SetSitePowerLimit>) {
+                set_site_power_limit(next,action);(void)receipt(next,"site_power_budget");
+            } else if constexpr (std::is_same_v<Action, RetireOwnedHardware>) {
+                const auto before=next.cash;retire_owned_hardware(next,action.id);(void)receipt(next,"retire_owned_hardware",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, CloseOwnedSite>) {
+                const auto before=next.cash;close_owned_site(next,action.id);(void)receipt(next,"close_owned_site",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, ScheduleSiteAppointment>) {
+                const auto before=next.cash;schedule_site_appointment(next,action,reserved_cash(next));(void)receipt(next,"schedule_site_appointment",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, CancelSiteAppointment>) {
+                cancel_site_appointment(next,action.id);(void)receipt(next,"cancel_site_appointment");
+            } else if constexpr (std::is_same_v<Action, NoticeInitialLeaseTermination>) {
+                notice_initial_lease_termination(next);(void)receipt(next,"notice_initial_lease_termination");
             } else if constexpr (std::is_same_v<Action, EnableMarket>) {
                 if (next.market) refuse(CommandReason::invalid_status, "The customer market is already active.");
                 (void)capacity(next);
@@ -694,7 +720,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 (void)receipt(next,"external_demand_change");
             }
         }, command.action);
-        if (!std::holds_alternative<AdvanceDay>(command.action)) prepare_governance(next);
+        if (!std::holds_alternative<AdvanceDay>(command.action)) {prepare_governance(next);prepare_infrastructure(next);}
         if (next.liquidity && !std::holds_alternative<AdvanceDay>(command.action))
             refresh_liquidity(*next.liquidity,*next.accounts);
         // The input was validated at construction; every daily subsystem owns
