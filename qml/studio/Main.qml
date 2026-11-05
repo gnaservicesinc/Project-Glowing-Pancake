@@ -42,11 +42,20 @@ ApplicationWindow {
         anchors.fill: parent
         anchors.margins: 20
         spacing: 12
-        Label {
-            visible: window.showLibrary || !studio.editing
-            text: qsTr("Content library")
-            font.pixelSize: 25
-            font.bold: true
+        RowLayout {
+            Layout.fillWidth: true
+            Label {
+                Layout.fillWidth: true
+                text: window.showLibrary || !studio.editing ? qsTr("Content library") : qsTr("Content Studio")
+                font.pixelSize: 25
+                font.bold: true
+            }
+            Button {
+                objectName: "openContentRevision"
+                text: qsTr("Review content revision")
+                enabled: studio.checkout.length > 0
+                onClicked: revisionReview.open()
+            }
         }
         RowLayout {
             visible: window.showLibrary || !studio.editing
@@ -399,6 +408,10 @@ ApplicationWindow {
             if (window.closeWindowAfterDiscard) window.close()
             close()
         }
+    }
+    SnapshotReview {
+        id: revisionReview
+        finalizer: studio.snapshotController
     }
     Connections {
         target: studio

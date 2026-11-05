@@ -973,3 +973,46 @@ Count: **25/52 Mac feature steps**. Next: E1B-02 graphical review/finalization
 using the existing journaled writer, then M4 components. Human studies remain
 deferred until all components are in place and the user is ready for v1 work.
 [Canvas controls, storage and reproducible check](../src/studio/CANVAS.md).
+
+## 2026-11-05 — E1B-02 graphical batch review and finalization
+
+Completed the graphical saved-source/version/summary workflow around the
+existing Qt-free snapshot writer. The dialog shows current/proposed component
+versions, grouped definition revisions, actual field/text before/after values,
+proposed file hashes, compiler notices and shared scenario/opening/exact-save
+evidence. Integer values stay exact beyond JavaScript's safe integer range.
+Authors review and explicitly finalize without a command or text editor; a
+clean working document reopens from the new runtime while the source draft is
+preserved. No Git/store publication or release approval is added.
+
+Changing inputs or working content invalidates the cached plan. The writer
+rebuilds it immediately before writing, refuses external edits, increments each
+changed definition once per batch, and records unresolved game requirements.
+The graphical recovery action uses the existing journal; incomplete generations
+roll back and concurrent third versions are preserved. Saved layouts and local
+views stay outside the semantic plan; no-op verification creates no revision,
+content generation or document reload. Dirty layouts are retained until saved
+or undone before a writing batch.
+
+Verification: incremental optimized Mac build; **61/61 CTests**, including
+**51 graphical-controller assertions** for grouping, invalidation, conflicts,
+layout/no-op exclusion, recovery, exact 64-bit display and explicit game-version
+resolution. The offscreen library/outline/inspection view check passes after
+making its keyboard navigation independent of restored canvas selection.
+The native **Metal 1280×720** forms/canvas/finalizer walkthrough drives actual
+QML controls, reviews **six definitions**, finalizes one generation-2 batch,
+preserves an external byte edit and the source draft, verifies a no-op, recovers
+a deliberate interrupted multi-file write and explicitly resolves the pending
+game version in the selected isolated copy. The rendered before/after review
+was inspected. Every report records **zero human sessions**.
+
+Primary content remains **0.1.0-dev.1**, game/editor **0.0.0-dev**, with the
+game-version requirement unresolved and release readiness false. The successful
+isolated copy reaches content **0.2.0-dev.1**, hash
+`989b84b641487ab37fb3176813fa9663f7fa4cd22926f47b1d835710b643fcb9`;
+its explicit game proposal does not change project phase or claim a migration.
+Broader catalog/revision tools remain E2 and human author qualification remains
+deferred to v1 preparation after all components exist.
+
+Count: **26/52 Mac feature steps**. Next: **M4-01 rival planning and staged entry**.
+[Graphical workflow and reproducible checks](../src/studio/SNAPSHOTS.md).

@@ -23,9 +23,9 @@ independent human validation and release qualification remain open.
 
 There is no calendar estimate inferred from task counts: tasks vary substantially
 in size, and native packaging, authors and players have separate evidence gates.
-Full century simulation, politics, the complete graphical editor canvas and final
-art are later milestones. The full editor canvas remains required before M4;
-E1a forms/inspection already support the slice presentation.
+Full century simulation, politics, broader editor catalogs and final art are
+later milestones. The required typed editor canvas and graphical finalizer are
+implemented on Mac; human author qualification remains deferred.
 
 ## Play the current campaign
 
@@ -122,4 +122,4 @@ and exact thresholds through choices and reload; see [duration evidence](evidenc
 M1-07 then adds
 built-in occurrence detection/dispatch. M2-01 through M2-04 implement accounts,
 shared capacity, contracts and the three-year scenario with warned recovery.
-The playable campaign connects those modules through ordinary controls. The current count is 25 completed Mac feature steps. M3-01 through M3-03, M3-05, E1A-04's internal snapshots, E1A-05's authoring walkthrough and E1B-01's typed canvas are implemented. Per the 2026-11-05 user instruction, human player/author studies wait until all components are in place and the user is ready for v1 work. The [session kit](playtests/M3-session-guide.md) is prepared for later; no sessions are being arranged. The graphical finalizer and later components proceed with engineering checks. Deferred platform and release work stays recorded in the backlog.
+The playable campaign connects those modules through ordinary controls. The current count is 26 completed Mac feature steps. M3-01 through M3-03, M3-05, E1A-04's internal snapshots, E1A-05's authoring walkthrough and E1B-01/02's typed canvas and graphical finalizer are implemented. Per the 2026-11-05 user instruction, human player/author studies wait until all components are in place and the user is ready for v1 work. The [session kit](playtests/M3-session-guide.md) is prepared for later; no sessions are being arranged. M4 and later components proceed with engineering checks. Deferred platform and release work stays recorded in the backlog.

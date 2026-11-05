@@ -1,6 +1,6 @@
 # Content Studio — graphical repository authoring
 
-Planning baseline 1.2 · Updated 2026-11-05 · E1a and the E1B-01 canvas implemented on Mac; graphical finalization, broader tools and human qualification remain open
+Planning baseline 1.2 · Updated 2026-11-05 · E1a, typed canvas and graphical finalization implemented on Mac; broader tools and human qualification remain open
 
 ## 1. Purpose and product boundary
 
@@ -120,7 +120,7 @@ checks/backups, and selection/viewport restore locally. Actual runtime overlays
 show receipts, truth, selected outcomes and pending sibling/call returns.
 [Controls, bounded scope and engineering evidence](../src/studio/CANVAS.md).
 The broader interaction inventory above remains the completed-product design;
-graphical finalization is E1B-02 and expanded catalog/group tools remain E2.
+E1B-02 supplies graphical finalization and expanded catalog/group tools remain E2.
 
 ## 6. Preventing reversed effects and mistaken triggers
 
@@ -176,7 +176,12 @@ They record immutable baselines, per-batch revisions/history, compiler/opening/s
 evidence and outstanding game-version requirements, with stale-plan refusal and
 journaled recovery. [Commands, artifacts and limits](../src/studio/SNAPSHOTS.md).
 The first internal content snapshot is 0.1.0-dev.1; no application release or
-save migration is claimed. E1B-02 will wrap this same writer graphically.
+save migration is claimed. **E1B-02** wraps this same writer in the graphical
+review/finalize/recovery dialog: saved-source selection, component versions,
+exact before/after fields and visible text, file hashes, validation and an
+explicit batch action. It reopens the clean finalized runtime while preserving
+the source draft. Conflicts consume the stale review; recovery preserves a
+concurrent third version. No command or text editor is needed for these actions.
 
 **E1A-05 engineering walkthrough:** the runnable editor now exercises library
 browsing, QML form authoring of a branching/delayed flow, sign/scope inspection,

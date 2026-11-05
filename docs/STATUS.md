@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**25 of 52 steps complete for Mac feature development. E1B-02 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05 and E1B-01.
+**26 of 52 steps complete for Mac feature development. M4-01 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05 and E1B-01/02.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -23,6 +23,20 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- E1B-02 adds graphical saved-source selection, version/summary controls and
+  before/after definition/text review around the existing snapshot writer.
+  Authors inspect actual validation, file hashes, revision increments and save/
+  game-version requirements, then finalize and reopen the reviewed runtime.
+  The recovery action preserves concurrent edits and restores interrupted
+  multi-file batches. All **61/61 optimized Mac CTests pass in 13.12s**, including
+  **51 graphical-controller checks**. The native Metal forms/canvas/finalizer
+  walkthrough reviews six definitions, preserves a stale external edit, writes
+  one internal batch, verifies a no-op, recovers an interrupted write and
+  explicitly resolves a game-version requirement in an isolated copy. The
+  primary content stays **0.1.0-dev.1**, with game/editor **0.0.0-dev** and its
+  game requirement unresolved. No human sessions or release qualification are
+  implied. [Graphical workflow and checks](../src/studio/SNAPSHOTS.md).
 
 - E1B-01 adds the typed node canvas on the same document/compiler as the
   forms/outline: execution, predicate, value and entity ports; searchable
@@ -277,12 +291,12 @@ The Mac game runs the complete 2014–2017 slice through ordinary Office/Lab
 controls, with lab qualification, paid contracts, bounded rivals, recovery,
 delegation, exact saves and scoring. Content Studio browses the checkout,
 edits typed flows through forms/outline and inspects copied runtime state.
-The shared maintainer writer now finalizes validated internal snapshots and
-E1A-05 demonstrates the narrow authoring path and E1B-01 supplies the typed
-canvas. E1B-02's graphical finalizer remains before M4 component work.
+The shared writer finalizes validated internal snapshots through both graphical
+review and the maintainer CLI. E1A-05 demonstrates the authoring path, E1B-01
+supplies the typed canvas and E1B-02 completes graphical review/finalization.
 E2 expands authoring as later schemas arrive.
 Human studies wait for v1 preparation after all components are in place.
-27 steps remain unchecked, including those studies and deferred platform/release
+26 steps remain unchecked, including those studies and deferred platform/release
 work. [Playability checkpoints](PLAYABILITY.md) distinguish implemented paths
 from unperformed human and release qualification.
 
@@ -315,9 +329,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation: E1B-02's graphical batch finalizer**, followed by M4
-component work. It wraps the existing journaled snapshot writer and version
-requirements in a reviewable author workflow.
+**Next implementation: M4-01's full rival planning and staged entry.** The
+canvas and graphical finalizer prerequisites are complete for Mac component
+work. Human validation remains deferred as specified below.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

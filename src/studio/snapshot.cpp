@@ -100,6 +100,7 @@ PreparedSnapshot prepare_snapshot(const fs::path& root,const SnapshotRequest& re
     if (request.save_policy!="reject-prior-content") snapshot_refuse("compatibility","This internal writer cannot claim a migration. Use the actual exact-content save refusal policy.");
     PreparedSnapshot plan;
     auto versions=snapshot_parse(required_read(plan,root,"project-versions.json",65536));snapshot_manifest(versions);
+    const auto versions_before=versions.at("components");
     const auto& identity=core::build_identity();
     if (versions.at("compatibility")!=Json{{"content_schema",identity.content_schema},{"simulation_rules",identity.simulation_rules},{"save_format",identity.save_format}})
         snapshot_refuse("compatibility","The checkout compatibility contract differs from the installed compiler/runtime.");
@@ -216,7 +217,17 @@ PreparedSnapshot prepare_snapshot(const fs::path& root,const SnapshotRequest& re
     for (const auto& file:plan.writes) { (void)snapshot_parse(file.after);actual_files.push_back({{"path",file.path.generic_string()},
         {"before_hash",file.before?Json(persistence::sha256(*file.before)):Json(nullptr)},{"after_hash",persistence::sha256(file.after)}}); }
     Json observed=Json::object();for (const auto& [path,bytes]:plan.observed) observed[path.generic_string()]=bytes?Json(persistence::sha256(*bytes)):Json(nullptr);
+    Json text_changes=Json::array();const auto old_messages=old.value("messages",Json::object()),new_messages=candidate.value("messages",Json::object());
+    for (const auto& key:texts) {
+        const auto name=key.get<std::string>();
+        text_changes.push_back({{"key",name},{"before",old_messages.contains(name)?old_messages.at(name):Json(nullptr)},{"after",new_messages.contains(name)?new_messages.at(name):Json(nullptr)}});
+    }
+    Json collection_changes=Json::array();
+    if (old.value("variables",Json::array())!=candidate.value("variables",Json::array()))
+        collection_changes.push_back({{"path","variables"},{"before",old.value("variables",Json::array())},{"after",candidate.value("variables",Json::array())}});
     Json report{{"format",1},{"runtime_changed",runtime_changed},{"result",result_json(plan.result)},{"changes",changes},{"changed_text_keys",texts},
+        {"text_changes",std::move(text_changes)},{"collection_changes",std::move(collection_changes)},
+        {"versions_before",versions_before},{"versions_after",versions.at("components")},
         {"validation",validation},{"writes",std::move(actual_files)},{"observed",std::move(observed)},
         {"request",{{"source",request.source.generic_string()},{"target",request.target.generic_string()},{"content_version",request.content_version},{"summary",request.summary},{"save_policy",request.save_policy},{"game_version",request.game_version?Json(*request.game_version):Json(nullptr)}}}};
     plan.review.plan_id=hash(report);report["plan_id"]=plan.review.plan_id;plan.review.report_json=pretty(report);plan.review.runtime_changed=runtime_changed;

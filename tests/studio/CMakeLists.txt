@@ -20,3 +20,15 @@ target_compile_definitions(pgp-canvas-test PRIVATE PGP_CANVAS_FIXTURE="${PROJECT
     PGP_CANVAS_VERSIONS="${PROJECT_SOURCE_DIR}/project-versions.json" PGP_CANVAS_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
 pgp_project_target(pgp-canvas-test)
 add_test(NAME studio.canvas COMMAND pgp-canvas-test)
+if(NOT PGP_CORE_ONLY)
+    add_executable(pgp-snapshot-controller-test snapshot_controller_test.cpp
+        "${PROJECT_SOURCE_DIR}/src/studio/app/snapshot_controller.cpp"
+        "${PROJECT_SOURCE_DIR}/src/studio/app/snapshot_controller.hpp")
+    target_link_libraries(pgp-snapshot-controller-test PRIVATE pgp::studio_library Qt6::Core)
+    target_include_directories(pgp-snapshot-controller-test PRIVATE "${PROJECT_SOURCE_DIR}/src/studio/app")
+    target_include_directories(pgp-snapshot-controller-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+    target_compile_definitions(pgp-snapshot-controller-test PRIVATE PGP_SNAPSHOT_UI_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json"
+        PGP_SNAPSHOT_UI_VERSIONS="${PROJECT_SOURCE_DIR}/project-versions.json" PGP_SNAPSHOT_UI_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
+    pgp_project_target(pgp-snapshot-controller-test)
+    add_test(NAME studio.graphical-snapshots COMMAND pgp-snapshot-controller-test)
+endif()

@@ -1,6 +1,6 @@
 # Version tracking and release identity
 
-Planning baseline 1.2 · Updated 2026-11-05 · M0-05 identity and E1A-04 internal snapshot writer implemented; graphical finalization and release gates remain open
+Planning baseline 1.2 · Updated 2026-11-05 · Shared identity, internal snapshot writer and E1B-02 graphical finalization implemented; release gates remain open
 
 ## 1. One source, several different identities
 
@@ -23,7 +23,7 @@ A human-readable release version identifies one immutable published payload. Nev
 
 ## 2. Authoring workflow and version controls
 
-Ordinary saves preserve drafts/work in progress and mark pending content changes. They do not create a public version, tag, commit, push, or store upload. E1A-04 implements the following workflow through the shared writer and maintainer CLI. E1B-02 will expose a visible **Finalize content revision** action using that same writer:
+Ordinary saves preserve drafts/work in progress and mark pending content changes. They do not create a public version, tag, commit, push, or store upload. E1A-04 implements the following workflow through the shared writer and maintainer CLI. E1B-02 exposes **Review content revision** and **Finalize reviewed batch** using that same writer:
 
 1. Gather the selected content change set and compare with the last finalized content snapshot. Include referenced text/assets and show the actual file/semantic diff.
 2. Validate the collection, references, trigger/effect graphs, lifecycle rules, units, and required local test fixtures. Invalid drafts may be saved but cannot enter the reviewed runtime collection.
@@ -128,9 +128,10 @@ qualified refresh behavior; it does not block the primary release's readiness.
 
 These checks cannot be supplied as a handful of command-line approval booleans.
 The metadata reader does not finalize content or rewrite manifests. The separate
-`pgp-content-tool` implements internal finalization through the journaled shared
-writer, records required game bumps and preserves draft bytes. Neither tool
-creates tags, publishes artifacts or implies cross-content save compatibility.
+`pgp-content-tool` and the Studio graphical finalizer implement internal
+finalization through the journaled shared writer, record required game bumps
+and preserve draft bytes. None creates tags, publishes artifacts or implies
+cross-content save compatibility.
 Future gate implementations must use actual owning artifacts and maintain this
 fail-closed behavior. A pending snapshot transaction blocks configuration and
 must be recovered before building.
@@ -138,7 +139,7 @@ must be recovered before building.
 ## 7. Implementation sequence and acceptance
 
 - M0-05 implements the metadata reader/checks and shared build identity described above. The project remains in planning phase; later release gates remain open.
-- M1-02/M1-06 implement schema/revision/hash/event-state contracts. E1A-04 supplies the safe validation/version tool and first reviewed internal snapshot. E1B-02 wraps that same writer in graphical batch finalization/version controls before M4 component work. Neither stage bypasses revisions, conflict checks, recovery or package identity. Human author qualification waits for v1 preparation after all components are in place, per the 2026-11-05 user instruction.
+- M1-02/M1-06 implement schema/revision/hash/event-state contracts. E1A-04 supplies the safe validation/version tool and first reviewed internal snapshot. E1B-02 implements graphical batch finalization/version controls through that same writer, completing the Mac component prerequisites for M4. Neither stage bypasses revisions, conflict checks, recovery or package identity. Human author qualification waits for v1 preparation after all components are in place, per the 2026-11-05 user instruction.
 - E2 adds impact/compatibility tools for broader content and tests save continuation across content revisions.
 - M9 connects tag/version/artifact/source/itch identity; M10 connects the existing reader to Snapcraft rather than inventing new version numbers.
 

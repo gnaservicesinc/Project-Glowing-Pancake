@@ -92,7 +92,13 @@ build/release/bin/pgp-content-tool check --checkout "$PWD"
 ```
 
 See [snapshot commands and recovery](../src/studio/SNAPSHOTS.md) for a reviewed
-draft promotion. The current content snapshot is 0.1.0-dev.1. Game/editor
+draft promotion. The editor's **Review content revision** dialog selects a saved
+collection, shows before/after differences and validation, finalizes through
+that same writer and exposes interrupted-batch recovery. Authors do not need a
+command or text editor. The explicit `--finalizer-walkthrough REPORT.json`
+mode exercises those controls on a new isolated checkout copy; its optional
+`--screenshot FILE.png` captures the batch differences before finalization.
+The current content snapshot is 0.1.0-dev.1. Game/editor
 remain 0.0.0-dev; its game-version requirement is deliberately unresolved and
 release readiness is false. Builds embed the validated record's collection
 hash; pending transactions block configuration until recovery. Finalization

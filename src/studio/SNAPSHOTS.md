@@ -1,6 +1,6 @@
 # Reviewed internal content snapshots
 
-E1A-04 implements a Qt-free writer shared by the maintainer CLI and the future
+E1A-04 implements a Qt-free writer shared by the maintainer CLI and the
 E1B-02 graphical finalizer. It uses the same collection compiler, runtime,
 scenario creation and exact save validator as the game. Draft editing remains
 in Content Studio's forms; this tool reviews and promotes a complete collection.
@@ -11,6 +11,72 @@ collection SHA-256
 Game/editor remain **0.0.0-dev** and the project remains in planning phase.
 The required game version **0.1.0-dev.1** is unresolved. No product release,
 human test session or publication is implied by this internal content record.
+
+## Graphical author workflow
+
+Open the separate Content Studio on the chosen checkout. Edit a collection
+through its canvas/forms and **Save as draft** (or **Save draft**). Select
+**Review content revision** in the top toolbar:
+
+1. Choose a saved collection from the dropdown; the working collection is
+   selected initially. Engineering fixtures are excluded. The current bounded
+   writer promotes into `data/runtime/first-playable.json`.
+2. Enter a newer content version and a short change summary. A minor development
+   version is suggested; an author can choose a patch for a wording fix. An
+   optional explicit game-version proposal must meet all pending requirements.
+3. Select **Review saved batch**. Read the component versions, scenario/opening
+   and exact-save checks, compiler notices, changed definitions/revisions,
+   before/after field values and visible text, and proposed file hashes.
+   Choose each changed definition in the dropdown to inspect its fields.
+   Values use exact integer text, including values beyond JavaScript's safe
+   integer range. All differences are read-only.
+4. Acknowledge the displayed differences and select **Finalize reviewed batch**.
+   The same shared writer rebuilds and verifies the reviewed plan before any
+   replacement. The completion summary records the internal content identity
+   and unresolved game/release requirements. A clean working collection reopens
+   from the finalized runtime with its new revisions; the original draft stays
+   separate and is preserved.
+
+No command or text editor is needed for these author actions. An obsolete draft
+cannot overwrite the new baseline; continue from the reopened runtime and save
+a new draft. Changing source/version/summary or the working content clears the
+review. Unsaved content must be saved before review. Layout moves remain outside
+the plan; save or undo them before a batch that writes files so the working
+layout can reopen safely. A semantic no-op with no file writes can be verified
+without discarding unsaved layout moves. Viewport gestures do not invalidate a
+review or change runtime identity.
+
+An external edit causes refusal and consumes the stale review. Review again
+only after inspecting the current saved source. If interrupted, reopen the
+dialog and select **Recover interrupted content batch**. Recovery uses the
+same journal checks and preserves a concurrent third version; a refusal leaves
+the journal and the conflicting bytes intact. Unsaved working content is not
+discarded by recovery. Corrupt/unknown evidence still requires explicit
+repository reconciliation; no overwrite or compatibility guess is offered.
+
+The dialog uses ordinary keyboard-accessible controls, scrolling differences
+and fixed review/finalize buttons. Its engineering path is explicit:
+
+```sh
+git worktree add --detach .work/e1b02-demo HEAD
+build/release/bin/pgp-editor --project "$PWD/.work/e1b02-demo" \
+  --finalizer-walkthrough "$PWD/.work/e1b02-demo-report.json" \
+  --screenshot "$PWD/.work/e1b02-demo.png"
+```
+
+Use new copy/report/image names. This runs the forms and canvas walkthroughs,
+then the actual QML review/finalize/reopen controls, a preserved external edit,
+no-op verification, deliberate partial-write recovery and explicit game-version
+resolution **only in the selected copy**. The PNG captures the displayed batch
+differences before finalization. The current Mac Metal run reviews six changed
+definitions as one generation-2 batch, preserves the source drafts and retains
+release readiness as false. It records **zero human sessions**. Human author
+qualification remains deferred until v1 preparation after all components exist.
+
+The optimized Mac suite passes **61/61 tests in 13.12s**, including 51 graphical
+controller checks for revision grouping, invalidation, conflicts, recovery,
+exact integer display, layout/no-op exclusion and explicit version resolution.
+The existing offscreen library/outline/inspection view check also passes.
 
 ## Explicit maintainer workflow
 
