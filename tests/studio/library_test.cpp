@@ -2,6 +2,7 @@
 #include <pgp/studio/draft.hpp>
 #include <pgp/studio/flow_forms.hpp>
 
+#include <pgp/persistence/save.hpp>
 #include <pgp/persistence/storage.hpp>
 
 #include <algorithm>
@@ -363,6 +364,171 @@ void lifecycle_forms_and_references() {
     require(draft.undo() && scenario_has(id), "Undo restores both a definition ID and its uses");
     require(draft.redo() && scenario_has("flow.form.renamed"), "Redo reapplies the refactor atomically");
 }
+void ordered_execution_forms() {
+    using namespace content;
+    Scratch scratch;
+    prepare_authoring_checkout(scratch.root);
+    studio::DraftDocument draft{scratch.root, authoring_source};
+    constexpr auto helper = "flow.form.helper";
+    constexpr auto main = "flow.form.execution";
+    require(studio::create_flow(draft, helper, "company") && studio::create_flow(draft, main, "company"),
+            "Author independent company flows without source edits");
+    auto change = [&](std::string_view row, std::string_view field, std::string_view value = {}, std::string_view flow_id = main) {
+        require(studio::FlowForm::open(draft, flow_id, row).apply(draft, field, value), "Expected execution edit");
+    };
+    const auto graph = [&]() -> const FlowDefinition& {
+        return std::get<FlowDefinition>(draft.collection().definitions.at(main).data);
+    };
+    change("flow", "entry/insert", "effect", helper);
+    change("node/effect/effect/0", "argument/value", "helper_called", helper);
+    change("trigger", "fact", "company.is_operating");
+    change("flow", "entry/insert", "sequence");
+    change("node/sequence/child/0", "next/insert", "effect");
+    change("node/effect/effect/0", "argument/value", "opened");
+    change("node/effect", "append");
+    change("node/effect/effect/1", "operation", "adjust_cash");
+    const auto amount = studio::FlowForm::open(draft, main, "node/effect/effect/1");
+    rejected([&] { (void)amount.apply(draft, "target", "world"); }, "Refuse the wrong target scope");
+    rejected([&] { (void)amount.apply(draft, "argument/amount_cents", "2.5"); }, "Reject fractional monetary input");
+    change("node/effect/effect/1", "argument/amount_cents", "-250");
+    change("node/effect/effect/1", "earlier");
+    require(graph().nodes.at("effect").effects[0].operation == "adjust_cash" &&
+            graph().nodes.at("effect").effects[0].target == "self", "The authored order and explicit scope must be retained");
+    change("node/effect", "next/insert", "delay");
+    change("node/delay", "days", "2");
+    change("node/delay", "id", "review_wait");
+    require(graph().nodes.at("effect").next == "review_wait" && !graph().nodes.contains("delay"),
+            "Rename updates incoming node links");
+    try {
+        (void)studio::FlowForm::open(draft, main, "node/effect").apply(draft, "next", "effect");
+        throw std::runtime_error("An immediate graph cycle was accepted");
+    } catch (const runtime::CompileError& error) {
+        require(error.code() == "immediate_cycle" && graph().nodes.at("effect").next == "review_wait",
+                "Shared validation must refuse a cycle and preserve the prior graph");
+    }
+    change("node/sequence", "append");
+    change("node/sequence/child/1", "next/insert", "subflow/flow.form.helper");
+    change("node/sequence", "next/insert", "dialogue");
+    change("node/dialogue", "title", "form.choice.title");
+    change("node/dialogue", "text", "form.choice.body");
+    change("node/dialogue", "append");
+    change("node/dialogue/choice/0", "id", "decline");
+    require(graph().nodes.at("dialogue").default_choice == "decline", "Choice refactor keeps the dismissal default");
+    change("node/dialogue/choice/1", "id", "accept");
+    change("node/dialogue/choice/1", "label", "form.choice.accept");
+    change("node/dialogue/choice/1", "next/insert", "result");
+    change("node/result", "text", "form.result.accept");
+    change("node/result", "next/insert", "news");
+    change("node/news", "text", "form.news.review");
+    change("node/dialogue/choice/0", "next/insert", "result");
+    change("node/result.2", "text", "form.result.decline");
+    const auto outline = studio::flow_outline(draft, main);
+    require(std::any_of(outline.begin(), outline.end(), [](const auto& row) {
+        return row.key == "node/sequence/child/1" && row.label.find("Step 2") != std::string::npos;
+    }), "Outline identifies the numbered steps and their continuations");
+    change("node/dialogue/choice/1", "remove");
+    require(!graph().nodes.contains("result") && !graph().nodes.contains("news") && graph().nodes.contains("result.2"),
+            "Removing a choice drops only its unused path");
+    require(draft.undo() && graph().nodes.contains("result") && graph().nodes.contains("news"),
+            "Undo restores the complete removed choice path");
+
+    constexpr auto incident = "flow.form.incident";
+    require(studio::create_flow(draft, incident, "world"), "Create an incident root");
+    change("lifecycle", "mode", "scheduled", incident);
+    change("lifecycle", "due", "2014-01-03", incident);
+    change("flow", "entry/insert", "random", incident);
+    change("node/random/branch/1", "next/insert", "news", incident);
+    change("node/random/branch/1", "weight", "3", incident);
+    change("node/random", "stream", "markets", incident);
+
+    draft.save("execution-forms.json");
+    studio::DraftDocument reopened{scratch.root, "data/drafts/execution-forms.json"};
+    const auto registry = foundation_registry();
+    const auto program = runtime::compile_collection(reopened.collection(), registry, runtime::supported_effects());
+    require(program.canonical_content_bytes == runtime::compile_collection(draft.collection(), registry).canonical_content_bytes,
+            "Save and reopen preserve the exact authored graph");
+    runtime::Checkpoint start;
+    start.world = runtime::foundation_world(core::Cents{10'000});
+    start.world.enabled_flows = std::vector<std::string>{main};
+    runtime::Runtime instance(program, start);
+    const auto accepted = [&](const runtime::RuntimeResult& result) {
+        if (!result.accepted()) throw std::runtime_error(result.explanation);
+        require(true, "Accepted authored runtime operation");
+    };
+    accepted(instance.prepare_opening(0));
+    const auto waiting = instance.checkpoint();
+    require(waiting.world.simulation.cash == core::Cents{9'750} && waiting.world.decisions == std::vector<std::string>{"opened"} &&
+            waiting.runtime.activations.front().current_node == "review_wait" &&
+            waiting.runtime.receipts[0].operation == "adjust_cash",
+            "The runtime executes the authored effects in order and waits before the next sibling");
+    runtime::Runtime resumed(program, persistence::decode_save(program, persistence::encode_save(program, waiting)).checkpoint);
+    for (int day = 0; day < 2; ++day) {
+        accepted(instance.submit({instance.checkpoint().world.simulation.revision, core::AdvanceDay{}}));
+        accepted(resumed.submit({resumed.checkpoint().world.simulation.revision, core::AdvanceDay{}}));
+    }
+    const auto decision = resumed.checkpoint();
+    require(decision == instance.checkpoint() && decision.world.decisions == std::vector<std::string>{"opened", "helper_called"} &&
+            decision.runtime.presentations.front().kind == runtime::PresentationKind::dialogue,
+            "Reload resumes the same ordered subflow and dialogue once");
+    const auto presentation = decision.runtime.presentations.front().id;
+    accepted(resumed.choose(decision.world.simulation.revision, presentation, "accept"));
+    const auto after = resumed.checkpoint();
+    require(after.runtime.presentations.size() == 3 && after.runtime.presentations[1].text_key == "form.result.accept" &&
+            after.runtime.presentations[2].text_key == "form.news.review" && after.world.simulation.cash == core::Cents{9'750},
+            "The selected branch produces the authored result and news without replaying effects");
+}
+void scoped_variable_forms() {
+    using namespace content;
+    Scratch scratch;
+    prepare_authoring_checkout(scratch.root);
+    studio::DraftDocument draft{scratch.root, authoring_source};
+    constexpr auto id = "flow.form.variable";
+    require(studio::create_flow(draft, id, "company"), "Create a flow for scoped variables");
+    auto change = [&](std::string_view row, std::string_view field, std::string_view value = {}) {
+        require(studio::FlowForm::open(draft, id, row).apply(draft, field, value), "Expected scoped variable edit");
+    };
+    change("variables", "append");
+    change("variables/story.flag", "id", "story.counter");
+    change("variables/story.counter", "type", "count");
+    change("variables/story.counter", "maximum", "10");
+    change("variables/story.counter", "default", "2");
+    change("variables/story.counter", "help", "Counts authored review completions.");
+    change("variables/story.counter", "visibility", "hidden");
+    change("trigger", "fact", "story.counter");
+    change("trigger", "operand", "expression");
+    change("trigger/expression", "kind", "fact");
+    change("flow", "entry/insert", "effect");
+    change("node/effect/effect/0", "operation", "set_variable");
+    change("node/effect/effect/0/expression", "kind", "add");
+    change("node/effect/effect/0/expression/0", "kind", "fact");
+    change("node/effect/effect/0/expression/1", "value", "1");
+    change("variables/story.counter", "id", "story.tally");
+    const auto& flow = std::get<FlowDefinition>(draft.collection().definitions.at(id).data);
+    const auto& effect = flow.nodes.at("effect").effects.front();
+    require(flow.trigger.clause->fact == "story.tally" && flow.trigger.clause->expression->fact == "story.tally" &&
+            std::get<std::string>(effect.arguments.at("variable")) == "story.tally" &&
+            effect.value_expression->children.front().fact == "story.tally" && !draft.registry().fact("story.counter"),
+            "Rename updates comparisons, expression operands and assignment targets atomically");
+    try {
+        (void)studio::FlowForm::open(draft, id, "variables/story.tally").apply(draft, "remove", "");
+        throw std::runtime_error("A referenced variable was removed");
+    } catch (const runtime::CompileError& error) {
+        require(error.code() == "unknown_fact" && draft.registry().fact("story.tally"),
+                "Shared validation refuses to remove a referenced variable");
+    }
+    const auto program = runtime::compile_collection(draft.collection(), foundation_registry());
+    runtime::Checkpoint start;
+    start.world = runtime::foundation_world();
+    start.world.enabled_flows = std::vector<std::string>{id};
+    runtime::Runtime run(program, start);
+    const auto result = run.prepare_opening(0);
+    if (!result.accepted()) throw std::runtime_error(result.explanation);
+    const auto after = run.checkpoint();
+    require(after.world.variables.size() == 1 && after.world.variables.front().variable_id == "story.tally" &&
+            std::get<std::int64_t>(after.world.variables.front().value) == 3 &&
+            program.registry.fact("story.tally")->visibility == Visibility::hidden_truth,
+            "Authored typed assignments use the renamed variable and preserve its visibility");
+}
 } // namespace
 
 int main() {
@@ -371,6 +537,8 @@ int main() {
         typed_drafts_and_external_conflicts();
         typed_trigger_forms();
         lifecycle_forms_and_references();
+        ordered_execution_forms();
+        scoped_variable_forms();
         std::cout << checks << " Studio library checks passed\n";
         return 0;
     } catch (const std::exception& error) {

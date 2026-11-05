@@ -25,7 +25,7 @@ downloads dependencies or launches a program during builds.
 | `./make.sh --debugging` or `--debug` | Debug in `build/debug`, local developer diagnostics enabled |
 | `./make.sh --core-only` | Release in `build/core-release`, no Qt discovery/linkage |
 | `./make.sh --editor` | Separate Content Studio in `build/release/bin/pgp-editor` |
-| `./make.sh --editor --test` | Build the editor and test its library and draft workflow |
+| `./make.sh --editor --test` | Build the editor and test its library, draft workflow and typed flow forms |
 | `./make.sh --core-only --debug --test` | Debug core and tests in `build/core-debug` |
 | `./make.sh --qt-root /path/to/Qt/prefix` | Select an installed desktop Qt prefix |
 | `./make.sh --jobs 2` | Bound compilation parallelism |
@@ -52,10 +52,12 @@ and filter validated definitions, follow their uses and used-by links, and
 report invalid and unsupported documents. It reads `data/runtime/`,
 `data/drafts/` and the existing engineering collection fixtures as separate
 sources. Select a validated flow and use **Edit flow** to make a typed working
-draft. The working collection can create flows, edit predicates and lifecycle
-timing, and rename referenced flow IDs. Use **Save as draft** with a new lowercase `.json` filename to
-copy a reviewed or engineering collection into `data/drafts/`. Drafts can be
-saved in place with undo/redo and source conflict checks. The regular game
+draft. Use the outline to edit predicates, lifecycles, scoped variables,
+and links through ordered effects, events, dialogue, delays and subflows.
+Renames update typed references in the working collection. Use **Save as draft**
+with a new lowercase `.json` filename to copy a reviewed or engineering
+collection into `data/drafts/`. Drafts can be saved in place with undo/redo
+and source conflict checks. The regular game
 build disables the editor. An opt-in `ContentStudio` install component defines
 the editor payload for future deployment qualification.
 

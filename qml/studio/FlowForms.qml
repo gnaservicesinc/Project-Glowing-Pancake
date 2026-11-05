@@ -5,10 +5,21 @@ import QtQuick.Layouts
 ColumnLayout {
     id: forms
     required property QtObject author
+    property string errorKey
+    property string errorText
+
+    function selectAt(index) {
+        const row = author.flowOutline[index]
+        if (row)
+            author.selectOutline(row.key)
+    }
 
     function commit(ticket, key, value) {
-        if (!author.changeForm(ticket, key, value))
-            return
+        if (!author.changeForm(ticket, key, value)) {
+            errorKey = key
+            errorText = author.draftMessage
+            return false
+        }
         Qt.callLater(() => {
             for (let index = 0; index < fieldRepeater.count; ++index) {
                 const row = fieldRepeater.itemAt(index)
@@ -19,19 +30,52 @@ ColumnLayout {
             }
             outline.forceActiveFocus(Qt.OtherFocusReason)
         })
+        return true
+    }
+    Connections {
+        target: forms.author
+        function onFormChanged() { forms.errorKey = ""; forms.errorText = "" }
     }
 
     Label { text: qsTr("Flow outline"); font.bold: true }
-    ComboBox {
-        id: outline
-        objectName: "flowOutline"
+    ScrollView {
         Layout.fillWidth: true
-        textRole: "label"
-        valueRole: "key"
-        model: forms.author.flowOutline
-        currentIndex: forms.author.outlineIndex
-        onActivated: forms.author.selectOutline(currentValue)
-        Accessible.name: qsTr("Flow outline")
+        Layout.preferredHeight: 190
+        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+        ListView {
+            id: outline
+            objectName: "flowOutline"
+            clip: true
+            activeFocusOnTab: true
+            keyNavigationEnabled: false
+            model: forms.author.flowOutline
+            currentIndex: forms.author.outlineIndex
+            Accessible.name: qsTr("Flow outline")
+            Keys.onPressed: event => {
+                switch (event.key) {
+                case Qt.Key_Up: forms.selectAt(currentIndex - 1); break
+                case Qt.Key_Down: forms.selectAt(currentIndex + 1); break
+                case Qt.Key_Home: forms.selectAt(0); break
+                case Qt.Key_End: forms.selectAt(count - 1); break
+                default: return
+                }
+                event.accepted = true
+            }
+            onCurrentIndexChanged: {
+                if (currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain)
+            }
+            delegate: ItemDelegate {
+                required property var modelData
+                width: ListView.view.width
+                text: modelData.label
+                highlighted: ListView.isCurrentItem
+                focusPolicy: Qt.ClickFocus
+                onClicked: {
+                    outline.forceActiveFocus(Qt.MouseFocusReason)
+                    forms.author.selectOutline(modelData.key)
+                }
+            }
+        }
     }
     Repeater {
         id: fieldRepeater
@@ -69,6 +113,14 @@ ColumnLayout {
                 textFormat: Text.PlainText
                 wrapMode: Text.Wrap
             }
+            Label {
+                Layout.fillWidth: true
+                visible: forms.errorText.length > 0 && forms.errorKey === row.field.key
+                text: forms.errorText
+                textFormat: Text.PlainText
+                wrapMode: Text.Wrap
+                font.bold: true
+            }
             Component {
                 id: note
                 Label {
@@ -96,7 +148,10 @@ ColumnLayout {
                     currentIndex: indexOfValue(row.field.value)
                     Accessible.name: row.field.label
                     Accessible.description: row.field.help
-                    onActivated: forms.commit(row.ticket, row.field.key, currentValue)
+                    onActivated: {
+                        if (!forms.commit(row.ticket, row.field.key, currentValue))
+                            currentIndex = indexOfValue(row.field.value)
+                    }
                 }
             }
             Component {

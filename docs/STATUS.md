@@ -83,9 +83,11 @@ block Mac implementation. Keep build caches between batches.
   [Draft workflow evidence](evidence/E1A-01-drafts.md)
 - E1A-02 now edits typed triggers, continuous exit conditions and all five
   lifecycles through the same working draft. Create scoped flows, enable them
-  in scenarios and rename their typed references. Execution graph editing
-  remains in progress. [Trigger forms](evidence/E1A-02-triggers.md)
+  in scenarios, author ordered execution and scoped variables, and rename
+  typed references. The task retains its prerequisite gates.
+  [Trigger forms](evidence/E1A-02-triggers.md)
   [Lifecycle and reference forms](evidence/E1A-02-lifecycles.md)
+  [Execution and variable forms](evidence/E1A-02-execution.md)
 - Weighted-branch commit `2a37284` passes 26/26 CTests in each of all six native
   jobs across five targets, including GCC/Clang/MSVC and native Windows arm64.
   [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41895189273)
@@ -173,8 +175,8 @@ The build scaffold, shared version identity, deterministic primitives, typed
 content/compiler/runtime, transactional state, local persistence/campaign policy,
 worker/model bridge, business accounts, shared project capacity, contracts,
 liquidity recovery, a three-year CLI scenario and development QML probe exist.
-Content Studio can browse the local library and save typed draft tag changes.
-Full authoring forms, the player scenario, finalized runtime content and
+Content Studio can browse the local library, edit typed flows and save drafts.
+Impact inspection, the player scenario, finalized runtime content and
 packages remain open. Existing native CI proves primitive parity on all
 five targets; the expanded foundation suite is checked separately. The headless
 command validates local content, demonstrates commands/flows and can explicitly
@@ -214,9 +216,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac implementation: E1A-02 execution forms.**
-Extend the working outline with ordered nodes, effects, links and their
-reference edits.
+**Next Mac implementation: E1A-03 trigger-impact and lifecycle inspection.**
+Run working flows on copied scenario state and expose condition truth, ordered
+effects, presentations and continuations.
 M1-03 retains
 the M0-03 prerequisite gate. Content finalization, save migrations and packaging
 remain later work.

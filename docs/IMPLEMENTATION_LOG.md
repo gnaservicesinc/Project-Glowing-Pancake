@@ -21,7 +21,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M2-03 | Implemented on Mac; prerequisite open | Finite allocation, contracts/resource priority, billing/credits/deadlines and installed shares through typed scenarios/exact saves; [evidence](evidence/M2-03-market.md) |
 | M2-04 | Implemented on Mac; prerequisite open | Three-year scenario, monthly reconciliation, exact continuation, saved 30-day workout/rescue/closure; [evidence](evidence/M2-04-business.md) |
 | E1A-01 | Implemented on Mac; prerequisites open | Separate Content Studio, typed checkout library, flow tag draft editing, undo/redo and conflict-aware writes. [Library](evidence/E1A-01-library.md), [draft workflow](evidence/E1A-01-drafts.md) |
-| E1A-02 | In progress | Typed predicates, all five lifecycles, scoped flow creation and reference edits. [Trigger forms](evidence/E1A-02-triggers.md), [lifecycle forms](evidence/E1A-02-lifecycles.md) |
+| E1A-02 | Implemented on Mac; prerequisites open | Typed predicates, all five lifecycles, ordered execution, scoped variables and reference edits. [Trigger forms](evidence/E1A-02-triggers.md), [lifecycle forms](evidence/E1A-02-lifecycles.md), [execution forms](evidence/E1A-02-execution.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
 ## First implementation slice
@@ -649,4 +649,16 @@ The Studio creates scoped flows, changes all five lifecycles and resolves
 interval anchors through the shared scheduler. It renames a flow with its
 typed references in one working draft change. The optimized Mac build,
 103 Studio assertions, four focused CTests and the hidden Qt check passed.
-Ordered execution forms remain E1A-02 work. [Evidence](evidence/E1A-02-lifecycles.md)
+[Evidence](evidence/E1A-02-lifecycles.md)
+
+## E1A-02 execution and scoped variables
+
+The typed outline edits ordered effects, continuations, dialogue, results,
+news, weighted outcomes and scoped variables. Authored graphs execute through
+the same compiler and runtime as the game. Link and ID edits are undoable
+with the rest of the draft. The optimized Mac build, 179 Studio assertions,
+five focused CTests and a hidden Qt keyboard check passed.
+[Execution evidence](evidence/E1A-02-execution.md)
+
+Accepted count remains **5/52**. E1A-02 retains its E1A-01 and M1-06 gates.
+Next Mac work is E1A-03 inspection on copied scenario state.

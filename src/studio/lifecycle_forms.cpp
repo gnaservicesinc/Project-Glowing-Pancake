@@ -1,4 +1,4 @@
-#include "form_builder.hpp"
+#include "graph_forms.hpp"
 #include "references.hpp"
 
 #include <algorithm>
@@ -193,8 +193,8 @@ void build_flow_settings(FormBuilder& builder) {
         rename_definition(collection, registry, id, value);
     });
     builder.note("Flow scope", std::string(scope_name(builder.flow.scope)), "Choose the scope when creating a flow.");
-    builder.add("entry", "Entry node", builder.flow.entry_node, "Start of the ordered execution graph.", FormControl::choice,
-                [](FlowDefinition& flow, std::string_view value) { flow.entry_node = value; }, node_choices(builder.flow));
+    add_link_fields(builder, "entry", "Entry node", builder.flow.entry_node,
+                    [](FlowDefinition& flow) -> std::string& { return flow.entry_node; });
     builder.add("visit_limit", "Node visit limit", std::to_string(builder.flow.max_node_visits),
                 "A positive limit is required for a cycle that includes a delay. Zero uses the default for acyclic paths.", FormControl::integer,
                 [](FlowDefinition& flow, std::string_view value) { flow.max_node_visits = parse_count(value, 0, 100'000); });
@@ -252,10 +252,8 @@ void build_lifecycle_form(FormBuilder& builder) {
         builder.note("Maximum occurrences", "One");
     }
     if (lifecycle.mode == LifecycleMode::continuous) {
-        builder.add("exit_node", "Exit node", builder.flow.exit_node, "Exit executes when the outline's Exit condition becomes true.",
-                    FormControl::choice, [](FlowDefinition& flow, std::string_view value) {
-            flow.exit_node = value;
-        }, node_choices(builder.flow));
+        add_link_fields(builder, "exit_node", "Exit node", builder.flow.exit_node,
+                        [](FlowDefinition& flow) -> std::string& { return flow.exit_node; });
         builder.add("reentry", "Allow reentry", lifecycle.allow_reentry ? "true" : "false",
                     "Allow a new activation after the current owner has exited.", FormControl::choice,
                     [](FlowDefinition& flow, std::string_view value) { flow.lifecycle.allow_reentry = value == "true"; }, boolean_choices());

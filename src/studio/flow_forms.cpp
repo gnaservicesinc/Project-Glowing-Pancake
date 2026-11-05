@@ -1,4 +1,5 @@
 #include "form_builder.hpp"
+#include "graph_forms.hpp"
 
 #include <pgp/core/integer_codec.hpp>
 
@@ -146,19 +147,17 @@ std::vector<OutlineRow> flow_outline(const DraftDocument& draft, std::string_vie
     const auto& flow = detail::find_flow(draft, id);
     std::vector<OutlineRow> rows{{"flow", "Flow settings"}, {"lifecycle", "Lifecycle"}};
     detail::append_trigger_outline(rows, draft, flow);
-    for (const auto& [node_id, node] : flow.nodes)
-        rows.push_back({"node/" + node_id, std::string(detail::node_label(node.kind)) + " · " + node_id, 1});
+    detail::append_variable_outline(rows, draft, flow.scope);
+    detail::append_execution_outline(rows, draft, flow);
     return rows;
 }
 FlowForm FlowForm::open(const DraftDocument& draft, std::string_view flow, std::string_view row) {
     detail::FormBuilder builder{draft, flow};
     if (row == "flow") detail::build_flow_settings(builder);
     else if (row == "lifecycle") detail::build_lifecycle_form(builder);
-    else if (row.starts_with("node/")) {
-        const auto& node = builder.flow.nodes.at(std::string(row.substr(5)));
-        builder.note("Node type", std::string(detail::node_label(node.kind)));
-        if (!node.next.empty()) builder.note("Continue at", node.next);
-    } else if (!detail::build_trigger_form(builder, row)) {
+    else if (row == "variables" || row.starts_with("variables/")) detail::build_variable_form(builder, row);
+    else if (row == "execution" || row.starts_with("node/")) detail::build_execution_form(builder, row);
+    else if (!detail::build_trigger_form(builder, row)) {
         throw std::invalid_argument("Choose a current outline row.");
     }
     return std::move(builder).finish();

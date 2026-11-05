@@ -7,6 +7,7 @@
 
 #include <QCommandLineParser>
 #include <QGuiApplication>
+#include <QKeyEvent>
 #include <QLibraryInfo>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -219,7 +220,13 @@ public:
     Q_INVOKABLE bool changeForm(const QString& ticket, const QString& key, const QString& value) {
         return edit([&] {
             if (!draft_ || !form_ || ticket != formTicket()) throw std::invalid_argument("Select the current outline row again.");
-            (void)form_->apply(*draft_, key.toStdString(), value.toStdString());
+            const auto changed = form_->apply(*draft_, key.toStdString(), value.toStdString());
+            if (changed && key == QStringLiteral("id")) {
+                if (outline_key_.starts_with("node/") && outline_key_.find('/', 5) == std::string::npos)
+                    outline_key_ = "node/" + value.toStdString();
+                else if (outline_key_.starts_with("variables/"))
+                    outline_key_ = "variables/" + value.toStdString();
+            }
         });
     }
     Q_INVOKABLE bool saveDraft(const QString& filename) {
@@ -270,7 +277,8 @@ private:
             auto selected = find_row();
             while (selected == rows.end()) {
                 const auto separator = outline_key_.rfind('/');
-                outline_key_ = separator == std::string::npos ? "flow" : outline_key_.substr(0, separator);
+                if (outline_key_ == "node") outline_key_ = "execution";
+                else outline_key_ = separator == std::string::npos ? "flow" : outline_key_.substr(0, separator);
                 selected = find_row();
             }
             outline_index_ = selected - rows.begin();
@@ -392,6 +400,11 @@ int main(int argc, char* argv[]) {
                 const auto row = flow->toMap();
                 browser.beginDraft(row.value(QStringLiteral("file")).toString(), row.value(QStringLiteral("id")).toString());
                 if (!browser.editing()) return 3;
+                auto* outline = window->findChild<QObject*>(QStringLiteral("flowOutline"));
+                if (!outline || outline->property("count").toLongLong() != browser.flowOutline().size()) return 3;
+                QKeyEvent down(QEvent::KeyPress, Qt::Key_Down, Qt::NoModifier);
+                QCoreApplication::sendEvent(outline, &down);
+                if (browser.outlineIndex() != 1) return 3;
                 const auto tags = browser.workingTags();
                 const auto tag = tags.isEmpty() ? QStringLiteral("studio_view_probe") : tags.front();
                 if (!browser.changeTag(tag, !tags.isEmpty()) || !browser.draftDirty()) return 3;

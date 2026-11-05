@@ -160,8 +160,13 @@ and reference edits were staged separately. [Trigger form evidence](evidence/E1A
 
 **E1A-02 lifecycle slice:** create scoped flows, select scenario activation
 roots and configure all five lifecycles. Draft flow renames update typed
-references in the collection in one undoable change. Ordered execution
-editing remains in this task. [Lifecycle form evidence](evidence/E1A-02-lifecycles.md)
+references in the collection in one undoable change. [Lifecycle form evidence](evidence/E1A-02-lifecycles.md)
+
+**E1A-02 execution slice:** author ordered nodes, numbered effects, explicit
+targets, scoped variables and reference edits through the same outline.
+The optimized Mac checks run an authored flow through the game runtime and
+resume from an exact checkpoint. E1A-02 retains its E1A-01 and M1-06 gates.
+[Execution form evidence](evidence/E1A-02-execution.md)
 
 ## E1b — Required node canvas and author qualification
 
