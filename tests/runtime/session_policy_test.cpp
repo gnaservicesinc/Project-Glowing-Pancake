@@ -181,9 +181,37 @@ void liquidity_warning_and_closure() {
         "Closure automatically saves exact causal postmortem and unpaid balances");
     require(final.world.simulation.date == core::OrdinalDay{31},"Closure must stop at the exact 30-day response boundary");
 }
+void weekly_news_preserves_sources() {
+    runtime::Checkpoint fixture;
+    fixture.world.campaign_start = core::OrdinalDay{30};
+    auto add = [&](std::uint64_t id, int date, runtime::PresentationKind kind, bool resolved) {
+        runtime::Presentation presentation{};
+        presentation.id = id;
+        presentation.day = core::OrdinalDay{date};
+        presentation.kind = kind;
+        presentation.resolved = resolved;
+        fixture.runtime.presentations.push_back(std::move(presentation));
+    };
+    using Kind = runtime::PresentationKind;
+    add(1, 30, Kind::news, true);
+    add(2, 36, Kind::dialogue, false);
+    add(3, 36, Kind::news, true);
+    add(4, 37, Kind::news, true);
+    add(5, 37, Kind::result, true);
+    const auto before = fixture;
+    const auto grouped = session::group_weekly_news(fixture);
+    require(grouped.size() == 2 && grouped.at(core::OrdinalDay{30}).size() == 2 &&
+            grouped.at(core::OrdinalDay{37}).size() == 1, "News groups at exact seven-day campaign boundaries");
+    require(grouped.at(core::OrdinalDay{30})[0]->id == 1 && grouped.at(core::OrdinalDay{30})[1]->id == 3 &&
+            grouped.at(core::OrdinalDay{37})[0]->id == 4 && fixture == before,
+            "Digest retains the exact ordered source records without grouping or mutating required choices and results");
+}
 } // namespace
 int main() {
-    try { policy_hooks(); consumption_and_suspended_month(); rejected_automatic_step_halts(); liquidity_warning_and_closure(); }
+    try {
+        policy_hooks(); consumption_and_suspended_month(); rejected_automatic_step_halts();
+        liquidity_warning_and_closure(); weekly_news_preserves_sources();
+    }
     catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
-    std::cout << "Campaign autosave hooks, IO failure recovery and final-month persistence pass\n";
+    std::cout << "Campaign persistence policy and weekly news projection pass\n";
 }

@@ -15,7 +15,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M1-04 | Implemented on Mac; prerequisites open | Exact current-state file saves, recovery, autosaves/settings/export and application persistence policy; [evidence](evidence/M1-04-persistence.md) |
 | M1-05 | Implemented on Mac; prerequisite open | Office, Lab, Inbox, shared clock, decisions, inspector and local saves/preferences; [room shell evidence](evidence/M1-05-room-shell.md) |
 | M1-06 | Implemented on Mac; prerequisite open | Shared compiler/executor, five lifecycles, nested waits/choices, modifiers, random branches, durations, scoped variables, expressions and related-entity quantifiers; [runtime](evidence/M1-06-runtime.md), [branches](evidence/M1-06-weighted-branches.md), [durations](evidence/M1-06-duration.md), [selectors](evidence/M1-06-selectors.md) |
-| M1-07 | In progress | Committed project/contract events and exact pending dispatch implemented. Seeded occurrences and digest remain open. [Evidence](evidence/M1-07-committed-facts.md) |
+| M1-07 | Implemented on Mac; prerequisites open | Committed project/contract dispatch, bounded seeded world reviews, exact pending continuation and weekly digest. [Committed facts](evidence/M1-07-committed-facts.md), [seeded incidents and digest](evidence/M1-07-seeded-digest.md) |
 | M2-01 | Implemented on Mac; prerequisite open | Balanced accounts, actual-month costs, invoices, debt/equity, protected settlements and pure projections through commands/exact saves; [evidence](evidence/M2-01-accounts.md) |
 | M2-02 | Implemented on Mac; prerequisite open | Shared source/staff reservations, compatibility, serving-first outage allocation, actual finite work, cancellation, support costs and exact reload; [evidence](evidence/M2-02-capacity.md) |
 | M2-03 | Implemented on Mac; prerequisite open | Finite allocation, contracts/resource priority, billing/credits/deadlines and installed shares through typed scenarios/exact saves; [evidence](evidence/M2-03-market.md) |
@@ -583,3 +583,17 @@ The optimized Mac build, 22 committed-fact assertions and 14 focused CTests
 passed. [Evidence](evidence/M1-07-committed-facts.md) records the actual checks
 and limits. Accepted count remains **5/52**. Next M1-07 work is seeded
 occurrences and digest.
+
+## M1-07 seeded occurrences and weekly digest — 2026-11-04
+
+Scheduled and interval roots now reuse the weighted flow entry with separate
+markets and hazards streams. Explicit quiet outcomes consume a saved review
+without creating news or effects. A selected incident continues through a
+delay and required decision from the original draw. Routine news is grouped
+by campaign week. Choices and active liquidity deadlines keep action priority.
+
+The optimized Mac build and 14 focused CTests passed. The weighted-branch
+executable passed 316 assertions and the campaign model passed 420.
+[Evidence](evidence/M1-07-seeded-digest.md) records the frozen seed, continuation
+boundaries and release limits. Formal accepted count remains **5/52** pending
+the platform prerequisite chain. Next Mac batch is E1A-01 Content Studio.

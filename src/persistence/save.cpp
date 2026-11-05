@@ -317,12 +317,19 @@ Json runtime_json(const RuntimeState& state) {
         {"definition_id",duration.definition_id},{"definition_revision",duration.definition_revision},
         {"predicate_id",duration.predicate_id},{"binding",binding(duration.binding)},
         {"observed_on",duration.observed_on.value()},{"true_since",optional_day(duration.true_since)}});
-    return Json{{"next_activation_id",state.next_activation_id},{"next_receipt_id",state.next_receipt_id},
+    Json body{{"next_activation_id",state.next_activation_id},{"next_receipt_id",state.next_receipt_id},
         {"next_presentation_id",state.next_presentation_id},{"prepared_day",optional_day(state.prepared_day)},
         {"activations",std::move(activations)},{"lifecycles",std::move(lifecycles)},{"modifiers",std::move(modifiers)},
         {"receipts",std::move(receipts)},{"presentations",std::move(presentations)},
         {"random_resolutions",std::move(random_resolutions)},{"narrative_origin",optional_id(state.narrative_origin)},
         {"duration_states",std::move(duration_states)},{"duration_sampled_day",optional_day(state.duration_sampled_day)}};
+    if (!state.incident_origins.empty()) {
+        auto origins=Json::object();
+        for (const auto& [stream,origin]:state.incident_origins)
+            origins[core::stream_names.at(static_cast<std::size_t>(stream))]=origin;
+        body["incident_origins"]=std::move(origins);
+    }
+    return body;
 }
 bool uses_duration(const content::Condition& condition) {
     return condition.kind==content::ConditionKind::holds_for_days ||
@@ -353,7 +360,7 @@ RuntimeState parse_runtime(const Json& value,const CompiledProgram& program) {
     // content, while all other shape checks stay strict.
     if (value.contains("random_resolutions"))
         detail::fields(prior_shape,"runtime",{"next_activation_id","next_receipt_id","next_presentation_id","prepared_day",
-            "activations","lifecycles","modifiers","receipts","presentations","random_resolutions","narrative_origin"});
+            "activations","lifecycles","modifiers","receipts","presentations","random_resolutions","narrative_origin"},{"incident_origins"});
     else {
         for (const auto& [definition_id,definition]:program.collection.definitions) {
             (void)definition_id;
@@ -438,6 +445,17 @@ RuntimeState parse_runtime(const Json& value,const CompiledProgram& program) {
     }
     if (value.contains("random_resolutions")) {
         result.narrative_origin=parse_id(value.at("narrative_origin"));
+        if (value.contains("incident_origins")) {
+            const auto& origins=value.at("incident_origins");
+            if (!origins.is_object() || origins.empty() || origins.size()>2)
+                detail::invalid("incident_origins","Expected nonempty bounded stream origins");
+            for (const auto& [name,origin]:origins.items()) {
+                const auto stream=content::random_branch_stream(name);
+                if (!stream || !content::is_incident_stream(*stream))
+                    detail::invalid("incident_origins","Unknown incident stream");
+                result.incident_origins.emplace(*stream,detail::u64(origin,"incident_origin"));
+            }
+        }
         const auto& resolutions=value.at("random_resolutions");
         detail::array(resolutions,"random_resolutions",maximum_records);
         for (const auto& item:resolutions) {

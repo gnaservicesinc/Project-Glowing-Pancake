@@ -4,6 +4,7 @@
 #include "committed.hpp"
 
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <set>
 #include <stdexcept>
@@ -64,6 +65,24 @@ const content::Node& node(const CompiledProgram& program, std::string_view id, s
     return found->second;
 }
 void date_valid(core::OrdinalDay date) { (void)core::from_ordinal(date); }
+bool incident_date(const WorldState& world, const content::FlowDefinition& definition, core::OrdinalDay date) {
+    if (date >= world.simulation.end_date) return false;
+    const auto& lifecycle = definition.lifecycle;
+    if (lifecycle.mode == content::LifecycleMode::scheduled) return lifecycle.due_date == date;
+    if (lifecycle.mode != content::LifecycleMode::interval) return false;
+    const auto created = definition.scope == content::Scope::world ? world.campaign_start : world.scope_created;
+    const auto anchor = resolve_anchor(*lifecycle.anchor, world.campaign_start, created);
+    if (date < anchor.first_due) return false;
+    auto elapsed = core::checked_subtract(date.value(), anchor.first_due.value());
+    if (lifecycle.interval->unit == content::IntervalUnit::calendar_months) {
+        const auto first = core::from_ordinal(anchor.first_due);
+        const auto actual = core::from_ordinal(date);
+        elapsed = (actual.year - first.year) * 12 + static_cast<int>(actual.month) - static_cast<int>(first.month);
+    }
+    const auto period = lifecycle.interval->value;
+    return elapsed % period == 0 &&
+        interval_due(anchor, *lifecycle.interval, static_cast<std::uint64_t>(elapsed / period)) == date;
+}
 // A saved stack explicitly identifies each currently open numbered child or
 // subflow. Do not traverse child ports here: entering one would need another
 // frame, while its normal return may legitimately have completed already.
@@ -404,9 +423,16 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
     detail::validate_committed_sources(program, checkpoint);
     std::map<std::uint64_t, std::uint32_t> last_random_visit;
     std::optional<core::OrdinalDay> last_random_day;
-    if (state.narrative_origin.has_value() != !state.random_resolutions.empty())
-        invalid("Random resolution history and its starting stream must be retained together");
-    auto last_random_state = state.narrative_origin;
+    std::array<std::optional<std::uint64_t>, core::stream_count> last_random_states{};
+    std::array<bool, core::stream_count> seen_streams{};
+    last_random_states[static_cast<std::size_t>(core::RandomStream::narrative)] = state.narrative_origin;
+    for (const auto& [stream, origin] : state.incident_origins) {
+        if (!content::is_incident_stream(stream)) invalid("Unsupported incident stream history");
+        last_random_states[static_cast<std::size_t>(stream)] = origin;
+    }
+    std::set<std::tuple<std::string_view, ScopeBinding, core::OrdinalDay>> incident_boundaries;
+    std::set<std::uint64_t> incident_samples;
+    std::set<std::uint64_t> quiet_incidents;
     std::map<std::string, std::set<std::string>, std::less<>> called_flows;
     for (const auto& resolution : state.random_resolutions) {
         const auto& activation = by_id(state.activations, resolution.activation_id);
@@ -424,15 +450,29 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
             }
         }
         date_valid(resolution.day);
-        if (owner.kind != content::NodeKind::random || owner.random_stream != "narrative" ||
+        const auto domain = content::random_branch_stream(owner.random_stream);
+        if (owner.kind != content::NodeKind::random || !domain ||
             !allowed->second.contains(resolution.flow_id) ||
             flow(program, resolution.flow_id).scope != activation.binding.scope ||
             resolution.day < activation.started_on || resolution.day > world.simulation.date ||
             (last_random_day && resolution.day < *last_random_day) ||
             resolution.node_visit == 0 || resolution.node_visit > activation.node_visits ||
-            resolution.node_visit <= last_random_visit[activation.id] ||
-            (last_random_state && resolution.stream_before != *last_random_state))
-            invalid("Random resolution has an invalid node, scope, date, visit or stream transition");
+            resolution.node_visit <= last_random_visit[activation.id])
+            invalid("Random resolution has an invalid node, scope, date or visit");
+        const auto index = static_cast<std::size_t>(*domain);
+        auto& last_random_state = last_random_states[index];
+        if (last_random_state != resolution.stream_before)
+            invalid("Random resolution is missing its stream origin or breaks its stream history");
+        seen_streams[index] = true;
+        if (content::is_incident_stream(*domain)) {
+            const auto& root = flow(program, activation.definition_id);
+            if (resolution.flow_id != activation.definition_id || resolution.node_id != root.entry_node ||
+                resolution.day != activation.started_on || resolution.node_visit != 1 ||
+                !incident_date(world, root, resolution.day) ||
+                !incident_boundaries.emplace(activation.definition_id, activation.binding, resolution.day).second ||
+                !incident_samples.insert(activation.id).second)
+                invalid("A seeded incident sample must belong to a single eligible opening boundary");
+        }
         std::uint64_t total = 0;
         for (const auto& branch : owner.branches) total += branch.weight;
         core::SplitMix64 copied{resolution.stream_before};
@@ -447,13 +487,25 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
         }
         if (!selected || selected->id != resolution.branch_id)
             invalid("Random resolution differs from its authored weighted outcome");
+        if (content::is_incident_stream(*domain) && selected->id == "no_event") {
+            if (activation.status != ActivationStatus::completed || activation.current_node != selected->next || activation.node_visits != 2)
+                invalid("Quiet incident outcome must end without running a consequence");
+            quiet_incidents.insert(activation.id);
+        }
         last_random_visit[activation.id] = resolution.node_visit;
         last_random_day = resolution.day;
         last_random_state = resolution.stream_after;
     }
-    if (last_random_state && *last_random_state !=
-        world.simulation.random[static_cast<std::size_t>(core::RandomStream::narrative)])
-        invalid("Saved narrative stream does not continue its resolved branch history");
+    for (std::size_t index = 0; index < core::stream_count; ++index)
+        if (last_random_states[index].has_value() != seen_streams[index] ||
+            (seen_streams[index] && last_random_states[index] != world.simulation.random[index]))
+            invalid("Saved random stream does not continue its resolved branch history");
+    for (const auto& activation : state.activations) {
+        const auto& root = flow(program, activation.definition_id);
+        const auto domain = content::random_branch_stream(root.nodes.at(root.entry_node).random_stream);
+        if (domain && content::is_incident_stream(*domain) && !incident_samples.contains(activation.id))
+            invalid("Seeded incident activation is missing its saved sample");
+    }
     std::set<std::tuple<std::uint64_t, ScopeBinding, std::string>> modifier_keys;
     for (const auto& modifier : state.modifiers) {
         const auto& activation = by_id(state.activations, modifier.activation_id);
@@ -467,6 +519,7 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
     using ModifierKey = std::tuple<std::uint64_t, ScopeBinding, std::string>;
     std::map<ModifierKey, OwnedModifier> recorded_modifiers;
     for (const auto& receipt : state.receipts) {
+        if (quiet_incidents.contains(receipt.activation_id)) invalid("Quiet incident has an effect receipt");
         const auto& activation = by_id(state.activations, receipt.activation_id);
         const auto& owner = node(program, receipt.flow_id, receipt.node_id);
         if (receipt.revision == 0 || receipt.revision > world.simulation.revision || receipt.day < activation.started_on || receipt.day > world.simulation.date ||
@@ -544,6 +597,7 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
             invalid("Saved modifier contribution differs from its committed effects");
     }
     for (const auto& presentation : state.presentations) {
+        if (quiet_incidents.contains(presentation.activation_id)) invalid("Quiet incident has a presentation");
         const auto& activation = by_id(state.activations, presentation.activation_id);
         const auto& owner = node(program, presentation.flow_id, presentation.node_id);
         if (presentation.day < activation.started_on || presentation.day > world.simulation.date || presentation.title_key != owner.title_key ||

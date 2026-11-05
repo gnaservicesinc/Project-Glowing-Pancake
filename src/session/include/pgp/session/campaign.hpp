@@ -4,6 +4,7 @@
 #include <pgp/persistence/settings.hpp>
 
 #include <functional>
+#include <map>
 
 namespace pgp::session {
 struct StorageNotice {
@@ -21,6 +22,11 @@ struct LoadResult {
     bool loaded;
     std::optional<StorageNotice> notice;
 };
+// Borrows presentation records from the given immutable snapshot. Required
+// dialogue and decision results remain individual rows.
+using WeeklyNews = std::map<core::OrdinalDay, std::vector<const runtime::Presentation*>>;
+[[nodiscard]] WeeklyNews group_weekly_news(const runtime::Checkpoint& checkpoint);
+WeeklyNews group_weekly_news(runtime::Checkpoint&& checkpoint) = delete;
 
 // The application-facing owner combines the pure runtime with local persistence
 // policy. Its explicitly selected directory may be portable or OS-standard;

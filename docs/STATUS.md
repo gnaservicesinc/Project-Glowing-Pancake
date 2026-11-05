@@ -4,7 +4,9 @@ Updated 2026-11-04 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03, M1-03 through M1-06 and M2-01 through M2-04 have implemented work awaiting their remaining gates.** M0-03's local
+**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02.** M0-03,
+M1-03 through M1-07 and M2-01 through M2-04 have implemented work awaiting
+their remaining gates. M0-03's local
 interface/resource/audio implementation passes; native/deployment gates remain.
 M0 remains open. See the
 [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
@@ -68,8 +70,11 @@ block Mac implementation. Keep build caches between batches.
   [selectors](evidence/M1-06-selectors.md).
 - M1-07 subscribes flows to settled project completions and missed contract
   starts. The inbox uses their actual cause and a required choice can suspend
-  and resume dispatch without repeating consumed sources. Seeded occurrences
-  and digest remain open. [Committed-fact evidence](evidence/M1-07-committed-facts.md)
+  and resume dispatch without repeating consumed sources. Bounded seeded
+  occurrences use independent saved markets and hazards streams. The weekly
+  digest retains news sources and keeps required choices and active deadlines
+  in their own action tier. [Committed-fact evidence](evidence/M1-07-committed-facts.md)
+  [Seeded incident and digest evidence](evidence/M1-07-seeded-digest.md)
 - Weighted-branch commit `2a37284` passes 26/26 CTests in each of all six native
   jobs across five targets, including GCC/Clang/MSVC and native Windows arm64.
   [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41895189273)
@@ -197,9 +202,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac implementation: M1-07 seeded occurrences and digest.**
-Extend the shared flow and save boundaries from committed business facts to
-bounded seeded occurrences and digest projection. M1-03 retains
+**Next Mac implementation: E1A-01 separate Content Studio and content library.**
+Begin with the explicitly selected checkout and the shared schema/compiler.
+M1-03 retains
 the M0-03 prerequisite gate. Content finalization, save migrations and packaging
 remain later work.
 

@@ -142,7 +142,7 @@ struct Presentation {
     std::string selected_choice;
     auto operator<=>(const Presentation&) const = default;
 };
-// One committed narrative selection per executed node visit. The activation
+// One committed selection per executed random node visit. The activation
 // retains the bound scope; content identity retains the ordered branch weights.
 // Keeping the sample and stream transition lets reload validate the selection
 // without drawing from the authoritative stream again.
@@ -185,6 +185,9 @@ struct RuntimeState {
     std::vector<RandomResolution> random_resolutions;
     std::vector<DurationState> duration_states;
     std::optional<core::OrdinalDay> duration_sampled_day;
+    // World-incident histories have independent owning streams. The original
+    // narrative origin stays in its existing format-1 field.
+    std::map<core::RandomStream, std::uint64_t> incident_origins{};
     auto operator<=>(const RuntimeState&) const = default;
 };
 struct Checkpoint {

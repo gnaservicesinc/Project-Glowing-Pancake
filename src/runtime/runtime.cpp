@@ -252,9 +252,13 @@ void execute(Checkpoint& checkpoint, Activation& activation, const CompiledProgr
                 if (!weights.empty()) weights += ",";
                 weights += branch.id + "=" + std::to_string(branch.weight);
             }
-            auto& saved = checkpoint.world.simulation.random[static_cast<std::size_t>(core::RandomStream::narrative)];
+            const auto domain = content::random_branch_stream(entry.random_stream);
+            if (!domain) fail(RuntimeReason::invalid_state, "The random node has no owning stream.");
+            auto& saved = checkpoint.world.simulation.random[static_cast<std::size_t>(*domain)];
             const auto before = saved;
-            if (!checkpoint.runtime.narrative_origin) checkpoint.runtime.narrative_origin = before;
+            if (*domain == core::RandomStream::narrative) {
+                if (!checkpoint.runtime.narrative_origin) checkpoint.runtime.narrative_origin = before;
+            } else checkpoint.runtime.incident_origins.try_emplace(*domain, before);
             core::SplitMix64 stream{before};
             const auto sample = stream.bounded(total);
             auto remaining = sample;
@@ -268,8 +272,8 @@ void execute(Checkpoint& checkpoint, Activation& activation, const CompiledProgr
             checkpoint.runtime.random_resolutions.push_back({activation.id, activation.node_visits,
                 checkpoint.world.simulation.date, activation.current_flow, activation.current_node,
                 selected->id, sample, before, saved});
-            append_trace(result, activation, "Resolved narrative branch " + selected->id +
-                "; weights [" + weights + "]; sample " + std::to_string(sample) + "/" + std::to_string(total));
+            append_trace(result, activation, "Resolved " + entry.random_stream + " branch " + selected->id +
+                " with sample " + std::to_string(sample) + "/" + std::to_string(total) + " and weights [" + weights + "]");
             activation.current_node = selected->next;
             break;
         }

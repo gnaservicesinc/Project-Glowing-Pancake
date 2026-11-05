@@ -363,6 +363,150 @@ void deterministic_legacy_save() {
     check(persistence::decode_save(program, body.dump()).checkpoint == state,
           "Existing deterministic format-one saves remain readable without the added outcome list");
 }
+content::FlowDefinition incident(std::string stream, std::string outcome) {
+    auto definition = flow("sample");
+    content::Node draw{};
+    draw.kind = content::NodeKind::random;
+    draw.random_stream = std::move(stream);
+    draw.branches = {{"no_event", 1, "end"}, {"incident", 1, outcome}};
+    definition.nodes.emplace("sample", std::move(draw));
+    definition.nodes.emplace("end", terminal());
+    return definition;
+}
+void seeded_openings_and_reload() {
+    auto market = incident("markets", "wait");
+    market.lifecycle.mode = content::LifecycleMode::interval;
+    market.lifecycle.anchor = content::Anchor{content::AnchorKind::campaign_start, std::nullopt, {content::IntervalUnit::days, 2}};
+    market.lifecycle.interval = content::Interval{content::IntervalUnit::days, 3};
+    market.lifecycle.max_occurrences = 2;
+    content::Node delay{};
+    delay.kind = content::NodeKind::delay;
+    delay.delay_days = 1;
+    delay.next = "news";
+    market.nodes.emplace("wait", std::move(delay));
+    content::Node news{};
+    news.kind = content::NodeKind::news;
+    news.text_key = "incident.market.news";
+    news.next = "choose";
+    market.nodes.emplace("news", std::move(news));
+    content::Node dialogue{};
+    dialogue.kind = content::NodeKind::dialogue;
+    dialogue.title_key = "incident.market.title";
+    dialogue.text_key = "incident.market.prompt";
+    dialogue.default_choice = "continue";
+    dialogue.choices.push_back({"continue", "incident.continue", "record"});
+    market.nodes.emplace("choose", std::move(dialogue));
+    market.nodes.emplace("record", marker("market.reviewed", "end"));
+
+    auto hazard = incident("hazards", "record");
+    hazard.lifecycle.mode = content::LifecycleMode::scheduled;
+    hazard.lifecycle.due_date = core::OrdinalDay{5};
+    hazard.nodes.emplace("record", marker("hazard.observed", "end"));
+    const auto narrative_program = simple_program();
+    auto story = std::get<content::FlowDefinition>(narrative_program.collection.definitions.at("flow.random").data);
+    const auto program = compile({{"flow.market", std::move(market)}, {"flow.hazard", std::move(hazard)}, {"flow.random", std::move(story)}});
+    auto start = initial("flow.market", 6);
+    start.world.enabled_flows = std::vector<std::string>{"flow.market", "flow.random", "flow.hazard"};
+    constexpr auto markets = static_cast<std::size_t>(core::RandomStream::markets);
+    constexpr auto hazards = static_cast<std::size_t>(core::RandomStream::hazards);
+    // Frozen independently from the SplitMix64 algorithm and stream ordinals.
+    constexpr std::uint64_t first_market = 12440057887101070171ULL;
+    constexpr std::uint64_t next_market = 5394028632714717040ULL;
+    constexpr std::uint64_t next_hazard = 8148332893662455429ULL;
+
+    runtime::Runtime live{program, start};
+    prepare(live);
+    const auto story_only = live.checkpoint();
+    check(story_only.runtime.random_resolutions.size() == 1 && story_only.runtime.incident_origins.empty() &&
+          story_only.world.simulation.random[markets] == start.world.simulation.random[markets],
+          "A narrative draw must leave both system streams untouched before any incident date");
+    step(live);
+    check(live.checkpoint().runtime.random_resolutions.size() == 1, "No system sample before its anchor");
+    step(live);
+    const auto quiet = live.checkpoint();
+    const auto& no_event = quiet.runtime.random_resolutions.back();
+    check(no_event.day == core::OrdinalDay{2} && no_event.sample == 0 && no_event.branch_id == "no_event" &&
+          quiet.world.simulation.random[markets] == first_market && quiet.runtime.presentations.empty() &&
+          quiet.world.decisions == story_only.world.decisions, "A quiet review consumes one real draw without creating an effect or news");
+    check(quiet.runtime.incident_origins.at(core::RandomStream::markets) == start.world.simulation.random[markets],
+          "The first incident draw retains the stream's starting cursor");
+    runtime::Runtime resumed{program, reload(program, quiet)};
+    for (int day = 3; day <= 5; ++day) {
+        step(live);
+        step(resumed);
+        check(live.checkpoint() == resumed.checkpoint(), "Matched seeds and reload must agree through both sampling boundaries");
+        if (day < 5) check(live.checkpoint().runtime.random_resolutions.size() == 2, "Quiet interval days consume no draw");
+    }
+    const auto pending = live.checkpoint();
+    check(pending.runtime.random_resolutions.size() == 4 && pending.runtime.incident_origins.size() == 2 &&
+          pending.world.simulation.random[markets] == next_market && pending.world.simulation.random[hazards] == next_hazard &&
+          pending.world.simulation.random[narrative] == story_only.world.simulation.random[narrative],
+          "Interleaved market, hazard and story histories must keep separate exact stream cursors");
+    check(pending.runtime.activations.back().status == runtime::ActivationStatus::delayed &&
+          pending.runtime.random_resolutions.back().branch_id == "incident" && pending.runtime.presentations.empty(),
+          "A selected incident retains its delayed continuation before presentation");
+    corrupt_save(program, pending, [](auto& state) { state["incident_origins"].erase("markets"); }, "Missing market stream origin must fail");
+    corrupt_save(program, pending, [](auto& state) {
+        state["random_resolutions"].erase(state["random_resolutions"].begin() + 1);
+    }, "Dropping the quiet sample cannot detach the later market draw");
+    corrupt_save(program, pending, [](auto& state) {
+        state["random_resolutions"].back()["branch_id"] = "no_event";
+    }, "Save cannot switch a selected incident to a quiet outcome");
+    resumed = runtime::Runtime{program, reload(program, pending)};
+    step(live);
+    step(resumed);
+    const auto choice = resumed.checkpoint();
+    check(choice == live.checkpoint() && choice.runtime.presentations.size() == 2 &&
+          choice.runtime.presentations.back().kind == runtime::PresentationKind::dialogue &&
+          choice.world.simulation.random == pending.world.simulation.random,
+          "Delayed news and required choice reuse the saved outcome without a draw");
+    resumed = runtime::Runtime{program, reload(program, choice)};
+    const auto presentation = choice.runtime.presentations.back().id;
+    accepted(live.choose(revision(live), presentation, "continue"));
+    accepted(resumed.choose(revision(resumed), presentation, "continue"));
+    for (int day = 7; day <= 9; ++day) {
+        step(live);
+        step(resumed);
+    }
+    const auto final = resumed.checkpoint();
+    check(final == live.checkpoint() && final.world.simulation.random == pending.world.simulation.random &&
+          final.world.decisions.back() == "market.reviewed",
+          "Review cap includes quiet draws and prevents a third sample at the next due date");
+
+    auto ineligible = start;
+    ineligible.world.enabled_flows = std::vector<std::string>{"flow.market"};
+    ineligible.world.facts.at("company.is_operating") = false;
+    runtime::Runtime guard{program, ineligible};
+    prepare(guard);
+    step(guard);
+    step(guard);
+    check(guard.checkpoint().runtime.random_resolutions.empty() && guard.checkpoint().world.simulation.random == start.world.simulation.random,
+          "An ineligible due root consumes no randomness");
+}
+void invalid_incident_content() {
+    auto definition = incident("hazards", "record");
+    definition.nodes.emplace("record", marker("incident", "end"));
+    const auto invalid = [&](const content::FlowDefinition& value, std::string_view code) {
+        try { (void)compile({{"flow.incident", value}}); }
+        catch (const runtime::CompileError& error) {
+            check(error.code() == code, error.what());
+            return;
+        }
+        throw std::runtime_error("Invalid incident content was accepted");
+    };
+    invalid(definition, "incident_boundary");
+    definition.lifecycle.mode = content::LifecycleMode::scheduled;
+    definition.lifecycle.due_date = core::OrdinalDay{0};
+    auto missing = definition;
+    missing.nodes.at("sample").branches.front().id = "silence";
+    invalid(missing, "incident_outcome");
+    auto loop = definition;
+    loop.nodes.at("record").next = "sample";
+    invalid(loop, "incident_boundary");
+    auto quiet_has_effect = definition;
+    quiet_has_effect.nodes.at("sample").branches.front().next = "record";
+    invalid(quiet_has_effect, "incident_outcome");
+}
 } // namespace
 int main() {
     try {
@@ -372,6 +516,8 @@ int main() {
         rejected_operations_rollback_random();
         repeated_node_visits_and_record_validation();
         deterministic_legacy_save();
+        seeded_openings_and_reload();
+        invalid_incident_content();
         std::cout << checks << " weighted branch, exact reload and rollback checks passed\n";
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';

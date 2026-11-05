@@ -1,6 +1,6 @@
 # Built-in events, news, and story layers
 
-Updated 2026-11-04 · The committed-fact path runs in engineering fixtures. The playable pack is planned.
+Updated 2026-11-04 · Committed facts, scheduled/seeded incidents and the news digest run in engineering fixtures. The playable pack is planned.
 
 ## Playable baseline
 
@@ -81,6 +81,11 @@ M1-07 now supports `on_committed` subscriptions for settled project completion
 and missed contract starts. The next prepared opening resolves these sources
 with the existing flow lifecycle. Saved activations carry the actual source
 result and a saved cursor preserves pending work through choices. The inbox
-projects this cause from the activation. [Implementation and limits](evidence/M1-07-committed-facts.md)
-record the evidence. Bounded seeded occurrence rules, digest and the playable
-event pack remain upcoming work.
+projects this cause from the activation. [Committed-fact evidence](evidence/M1-07-committed-facts.md)
+
+Scheduled and bounded interval roots can use the markets or hazards stream at
+entry, with an explicit quiet outcome. Those samples share the existing graph,
+rollback and save rules. The weekly digest groups ordinary headlines and keeps
+decisions and active liquidity deadlines in the action tier. The eight-flow
+playable pack and its concrete technology, research and recovery providers
+remain M3-05 work. [Seeded incident and digest evidence](evidence/M1-07-seeded-digest.md)

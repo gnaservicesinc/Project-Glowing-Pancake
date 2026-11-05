@@ -8,7 +8,8 @@
 #include <stdexcept>
 
 namespace pgp::bridge {
-StableListModel::StableListModel(QObject* parent) : QAbstractListModel(parent) {}
+StableListModel::StableListModel(QObject* parent, bool required_first)
+    : QAbstractListModel(parent), required_first_(required_first) {}
 int StableListModel::rowCount(const QModelIndex& parent) const {
     return parent.isValid() ? 0 : static_cast<int>(rows_.size());
 }
@@ -68,6 +69,7 @@ std::vector<CampaignRow> StableListModel::visibleRows(const std::vector<Campaign
         visible.push_back(value);
     }
     std::sort(visible.begin(),visible.end(),[&](const auto& left,const auto& right) {
+        if (required_first_ && left.required != right.required) return left.required;
         if (sort_by_title_ && left.title != right.title) return left.title < right.title;
         return left.entity_id < right.entity_id;
     });

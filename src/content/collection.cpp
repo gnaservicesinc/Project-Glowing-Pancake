@@ -535,7 +535,7 @@ Node node(const Json& value, const std::string& path, Scope context, const Regis
         fields(value, path, {"kind", "stream", "branches"}, {"kind", "stream", "branches"});
         result.kind = NodeKind::random;
         result.random_stream = text(value.at("stream"), child(path, "stream"), 32);
-        if (result.random_stream != "narrative") fail("operation", child(path, "stream"), "Story branches require the saved narrative stream");
+        if (!random_branch_stream(result.random_stream)) fail("operation", child(path, "stream"), "Unknown or unavailable content random stream");
         const auto branches_path = child(path, "branches");
         array(value.at("branches"), branches_path, 32, true);
         if (value.at("branches").size() < 2) fail("budget", branches_path, "Random nodes require 2..32 explicit outcomes");
@@ -594,6 +594,27 @@ FlowDefinition flow(const Json& value, const std::string& path, const Registry& 
         fail("dangling_reference", path, "Entry/exit node does not exist");
     for (const auto& [name, item] : result.nodes) for (const auto& target : edges(item))
         if (!result.nodes.contains(target)) fail("dangling_reference", child(path, name), "Node link does not exist");
+    const auto& entry = result.nodes.at(result.entry_node);
+    const bool incident_root = entry.kind == NodeKind::random && entry.random_stream != "narrative";
+    for (const auto& [name, item] : result.nodes) {
+        if (item.kind == NodeKind::random && item.random_stream != "narrative" && name != result.entry_node)
+            fail("incident_boundary", child(path, name), "Only a root entry can sample a system incident");
+        if (incident_root) {
+            const auto outgoing = edges(item);
+            if (std::find(outgoing.begin(), outgoing.end(), result.entry_node) != outgoing.end())
+                fail("incident_boundary", child(path, name), "A branch cannot return to an incident sampling entry");
+        }
+    }
+    if (incident_root) {
+        if (!result.on_committed.empty() || (result.lifecycle.mode != LifecycleMode::scheduled && result.lifecycle.mode != LifecycleMode::interval))
+            fail("incident_boundary", path, "System incidents require a scheduled date or bounded interval");
+        const auto quiet = std::find_if(entry.branches.begin(), entry.branches.end(), [](const auto& branch) { return branch.id == "no_event"; });
+        if (quiet == entry.branches.end() || result.nodes.at(quiet->next).kind != NodeKind::end ||
+            std::any_of(entry.branches.begin(), entry.branches.end(), [&](const auto& branch) {
+                return branch.id != "no_event" && result.nodes.at(branch.next).kind == NodeKind::end;
+            }))
+            fail("incident_outcome", path, "Only the explicit no_event branch may go directly to an end node");
+    }
     // Every immediate path must be acyclic. A positive simulated delay plus an
     // explicit finite visit bound is the only permitted graph recurrence.
     auto has_cycle = [&](bool remove_delay_edges) {
@@ -848,6 +869,9 @@ void validate_references(const Collection& collection, const Registry& registry)
                         fail("scope", path, "Subflow context scope mismatch");
                     if (!called.on_committed.empty())
                         fail("lifecycle", path, "A committed-fact root cannot be called as a subflow");
+                    const auto& called_entry = called.nodes.at(called.entry_node);
+                    if (called_entry.kind == NodeKind::random && called_entry.random_stream != "narrative")
+                        fail("incident_boundary", path, "A system incident root cannot be called as a subflow");
                     links.push_back(node_value.subflow_id);
                 }
                 for (const auto& effect_value : node_value.effects) {
@@ -925,6 +949,16 @@ std::string_view definition_kind(const Definition& definition) {
     if (std::holds_alternative<ResearchDefinition>(definition.data)) return "research";
     if (std::holds_alternative<FlowDefinition>(definition.data)) return "flow";
     return "deal";
+}
+bool is_incident_stream(core::RandomStream stream) noexcept {
+    return stream == core::RandomStream::markets || stream == core::RandomStream::hazards;
+}
+std::optional<core::RandomStream> random_branch_stream(std::string_view name) {
+    const auto found = std::find(core::stream_names.begin(), core::stream_names.end(), name);
+    if (found == core::stream_names.end()) return std::nullopt;
+    const auto stream = static_cast<core::RandomStream>(found - core::stream_names.begin());
+    if (stream == core::RandomStream::narrative || is_incident_stream(stream)) return stream;
+    return std::nullopt;
 }
 std::pair<ValueType, Unit> expression_type(const Expression& value, Scope context, const Registry& registry) {
     if (static_cast<unsigned>(context) > static_cast<unsigned>(Scope::contract))

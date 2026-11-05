@@ -62,8 +62,14 @@ open. Next Mac batch is M1-07.
 contract starts now supply owned settlement causes to subscribed roots.
 Choices can suspend dispatch without losing the remaining source records.
 News and required dialogue share the source identity. [Mac evidence](evidence/M1-07-committed-facts.md)
-records exact continuation, suppression and rollback checks. Seeded occurrence
-dispatch and digest remain open.
+records exact continuation, suppression and rollback checks.
+
+**M1-07 seeded occurrence and digest slice, 2026-11-04:** scheduled and interval
+roots sample the saved markets or hazards stream with explicit quiet outcomes.
+The Inbox groups routine headlines by campaign week while choices and live
+liquidity deadlines stay separate. [Mac evidence](evidence/M1-07-seeded-digest.md)
+records exact continuation, quiet windows, history validation and model
+priority. Formal acceptance retains M1-06/M1-04's open prerequisite chain.
 
 **Mac-first batch, 2026-11-04:** scoped variables/flags, checked expressions and
 transactional `set_variable` assignments now extend that shared runtime and save

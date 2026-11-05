@@ -1,7 +1,9 @@
 #include "campaign_controller.hpp"
 
 #include <pgp/core/integer_codec.hpp>
+#include <pgp/session/campaign.hpp>
 
+#include <QCoreApplication>
 #include <QFileInfo>
 
 #include <algorithm>
@@ -47,18 +49,26 @@ QString presentation_title(runtime::PresentationKind kind) {
     if (kind == runtime::PresentationKind::result) return QStringLiteral("Decision result");
     return QStringLiteral("Company briefing");
 }
-QString presentation_detail(const runtime::Checkpoint& checkpoint, const runtime::Presentation& row) {
+QString presentation_context(const runtime::Checkpoint& checkpoint, const runtime::Presentation& row) {
     auto context = readable(row.flow_id);
+    if (row.kind == runtime::PresentationKind::news) {
+        const auto localized = QCoreApplication::translate("CampaignNews", row.text_key.c_str());
+        if (localized != text(row.text_key)) context = localized;
+    }
     const auto& activations = checkpoint.runtime.activations;
     const auto found = std::lower_bound(activations.begin(), activations.end(), row.activation_id,
         [](const auto& activation, std::uint64_t id) { return activation.id < id; });
     if (found != activations.end() && found->id == row.activation_id && found->committed_source) {
         const auto& source = *found->committed_source;
-        context = QStringLiteral("%1 · %2\nSettled %3\n%4")
+        context += QStringLiteral("\n%1 · %2\nSettled %3\n%4")
             .arg(readable(source.fact_id), text(source.subject.id), text(core::iso_date(source.settled_on)), text(source.cause));
         if (source.unit == content::Unit::milli_CU)
             context += QStringLiteral("\n%1 CU completed").arg(cu(std::get<std::int64_t>(source.result)));
     }
+    return context;
+}
+QString presentation_detail(const runtime::Checkpoint& checkpoint, const runtime::Presentation& row) {
+    const auto context = presentation_context(checkpoint, row);
     if (row.kind == runtime::PresentationKind::dialogue && !row.resolved)
         return QStringLiteral("%1\nA response is required before work continues. Review the available options.").arg(context);
     if (!row.selected_choice.empty()) return QStringLiteral("%1\nSelected response: %2").arg(context,readable(row.selected_choice));
@@ -107,10 +117,32 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
 }
 std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint) {
     std::vector<CampaignRow> rows;
-    for (const auto& row : checkpoint.runtime.presentations)
+    for (const auto& row : checkpoint.runtime.presentations) {
+        if (row.kind == runtime::PresentationKind::news) continue;
         rows.push_back({QStringLiteral("flow:") + integer(row.id),presentation_title(row.kind),text(core::iso_date(row.day)),
             presentation_detail(checkpoint,row),row.kind == runtime::PresentationKind::dialogue && !row.resolved ? QStringLiteral("Response required") : QStringLiteral("Recorded"),
             row.kind == runtime::PresentationKind::dialogue && !row.resolved});
+    }
+    constexpr std::size_t headlines_per_part = 8;
+    for (const auto& [week, entries] : session::group_weekly_news(checkpoint)) {
+        const auto date = text(core::iso_date(week));
+        const auto parts = (entries.size() + headlines_per_part - 1) / headlines_per_part;
+        for (std::size_t part = 0; part < parts; ++part) {
+            const auto first = part * headlines_per_part;
+            const auto limit = std::min(first + headlines_per_part, entries.size());
+            QString detail;
+            for (std::size_t index = first; index < limit; ++index) {
+                const auto& news = *entries[index];
+                if (!detail.isEmpty()) detail += QStringLiteral("\n\n");
+                detail += QStringLiteral("%1\n%2").arg(text(core::iso_date(news.day)), presentation_context(checkpoint, news));
+            }
+            const auto status = parts == 1 ? (entries.size() == 1 ? QStringLiteral("1 update") : QStringLiteral("%1 updates").arg(integer(entries.size()))) :
+                QStringLiteral("Part %1 of %2 · %3 updates").arg(integer(part + 1), integer(parts), integer(entries.size()));
+            const auto id = QStringLiteral("digest:%1:%2").arg(date).arg(static_cast<qulonglong>(part), 5, 10, QLatin1Char('0'));
+            rows.push_back({id, QStringLiteral("Weekly news digest"), QStringLiteral("Week of %1").arg(date),
+                            std::move(detail), status, false});
+        }
+    }
     const auto& state = checkpoint.world.simulation;
     if (state.liquidity) for (const auto& workout : state.liquidity->workouts) {
         const auto ended = workout.resolved_on.has_value() || workout.closed_on.has_value();
@@ -119,14 +151,14 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint) {
             text(core::iso_date(workout.warned_on)),
             QStringLiteral("%1\nInitial unpaid obligations: %2\nRespond by %3. Financing must be followed by payment; partial payments preserve this deadline.")
                 .arg(text(workout.trigger.cause),money(workout.initial_shortfall),text(core::iso_date(workout.deadline))),
-            status,!ended && !workout.acknowledged});
+            status,!ended});
     }
     return rows;
 }
 }
 CampaignController::CampaignController(runtime::CompiledProgram program,runtime::Checkpoint checkpoint,
     persistence::LocalPaths paths,persistence::Settings initial_settings,QObject* parent)
-    : QObject(parent),projects_(new StableListModel(this)),inbox_(new StableListModel(this)),settings_(initial_settings),
+    : QObject(parent),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
       save_folder_(QUrl::fromLocalFile(QString::fromStdU16String(paths.saves_directory.u16string()))) {
     (void)persistence::encode_settings(settings_);
     worker_ = new CampaignWorker(std::move(program),std::move(checkpoint),std::move(paths),settings_);

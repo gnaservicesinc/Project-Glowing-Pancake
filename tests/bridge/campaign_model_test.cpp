@@ -97,12 +97,17 @@ void persistent_rows_and_context() {
           "Explicit campaign replacement must reset once without integer precision loss");
 }
 void filtered_inbox() {
-    StableListModel inbox;
+    StableListModel inbox{nullptr,true};
     int resets = 0;
     QObject::connect(&inbox,&QAbstractItemModel::modelReset,[&] { ++resets; });
     inbox.setRows({row(QStringLiteral("choice.1"),QStringLiteral("Supplier decision"),QStringLiteral("waiting"),true),
-                   row(QStringLiteral("news.2"),QStringLiteral("Monthly accounts"),QStringLiteral("read"),false),
+                   row(QStringLiteral("digest:2014-01-01:00000"),QStringLiteral("Weekly news digest"),QStringLiteral("read"),false),
                    row(QStringLiteral("warning.3"),QStringLiteral("Liquidity warning"),QStringLiteral("waiting"),true)});
+    check(inbox.idAt(0) == QStringLiteral("choice.1") && inbox.idAt(1) == QStringLiteral("warning.3"),
+          "Digest rows must sort after required choices and active deadlines");
+    inbox.setSortByTitle(true);
+    check(inbox.idAt(0) == QStringLiteral("warning.3") && inbox.idAt(1) == QStringLiteral("choice.1"),
+          "Alphabetical sorting must retain the inbox action tier");
     inbox.setSelectedId(QStringLiteral("choice.1"));
     inbox.setAnchorId(QStringLiteral("choice.1")); inbox.setAnchorOffset(8);
     QPersistentModelIndex choice(inbox.index(inbox.indexOf(QStringLiteral("choice.1"))));
@@ -113,7 +118,7 @@ void filtered_inbox() {
     check(inbox.rowCount() == 1 && choice.isValid() && inbox.row(QStringLiteral("choice.1")).value(QStringLiteral("required")).toBool(),
           "Case-insensitive inbox filter must retain required actions");
     inbox.setRows({row(QStringLiteral("choice.1"),QStringLiteral("Supplier decision"),QStringLiteral("resolved"),false),
-                   row(QStringLiteral("news.2"),QStringLiteral("Monthly accounts"),QStringLiteral("read"),false),
+                   row(QStringLiteral("digest:2014-01-01:00000"),QStringLiteral("Weekly news digest"),QStringLiteral("read"),false),
                    row(QStringLiteral("warning.3"),QStringLiteral("Liquidity warning"),QStringLiteral("waiting"),true)});
     check(inbox.rowCount() == 0 && inbox.selectedId().isEmpty() && !choice.isValid(),
           "Resolved choice must leave required-only view without a model reset");

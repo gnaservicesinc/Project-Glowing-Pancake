@@ -1,6 +1,17 @@
 #include <pgp/session/campaign.hpp>
 
 namespace pgp::session {
+WeeklyNews group_weekly_news(const runtime::Checkpoint& checkpoint) {
+    WeeklyNews weeks;
+    const auto start = checkpoint.world.campaign_start;
+    for (const auto& row : checkpoint.runtime.presentations) {
+        if (row.kind != runtime::PresentationKind::news) continue;
+        const auto elapsed = core::checked_subtract(row.day.value(), start.value());
+        const auto first = core::advance_days(start, core::Days{elapsed / 7 * 7});
+        weeks[first].push_back(&row);
+    }
+    return weeks;
+}
 Campaign::Campaign(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
                    std::filesystem::path autosave_directory, persistence::Settings settings)
     : engine_{std::move(program), std::move(checkpoint)}, autosaves_{std::move(autosave_directory)},

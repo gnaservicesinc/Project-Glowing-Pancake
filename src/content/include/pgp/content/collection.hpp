@@ -4,6 +4,7 @@
 #include <pgp/content/market_setup.hpp>
 #include <pgp/content/business_plan.hpp>
 #include <pgp/core/calendar.hpp>
+#include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
 #include <memory>
@@ -117,6 +118,8 @@ struct FlowDefinition {
     std::vector<std::string> tags;
     std::string on_committed{};
 };
+[[nodiscard]] std::optional<core::RandomStream> random_branch_stream(std::string_view name);
+[[nodiscard]] bool is_incident_stream(core::RandomStream stream) noexcept;
 struct ScenarioDefinition {
     pgp::core::OrdinalDay starts_on;
     pgp::core::OrdinalDay ends_before;

@@ -104,11 +104,15 @@ contracts; date scheduling and lifecycle execution belong to M1-06.
 
 Nodes are `end`, `effect`, `news`, `dialogue`, `result`, positive-day `delay`,
 ordered `sequence`, `subflow`, or weighted `random`. A random node requires
-`stream: "narrative"` and 2–32 ordered `branches`, each with a unique `id`,
-positive integer `weight` (at most 1,000,000) and explicit `next`. An outcome
-linked to `end` represents no event. Every outcome participates in graph, cycle,
-sequence-region and continuation-depth checks. Other source streams are refused
-until their owning systems provide the appropriate occurrence semantics.
+a registered `stream` and 2–32 ordered `branches`, each with a unique `id`,
+positive integer `weight` (at most 1,000,000) and explicit `next`. Narrative
+branches use `narrative`. The `markets` and `hazards` streams are available only
+at the entry of a scheduled or bounded interval root. That entry cannot be
+called as a subflow or revisited by a graph edge. Its explicit `no_event` branch
+goes directly to an `end` node. All other branches begin a consequence path.
+The occurrence limit counts sampling reviews, including quiet outcomes.
+Every outcome participates in graph, cycle, sequence-region and
+continuation-depth checks. Other source streams remain unavailable.
 Presentations store localization keys;
 illustrative draft prose and saved-instance annotations are not runtime fields.
 Each dialogue has unique choices and an existing dismissal default. Every node
