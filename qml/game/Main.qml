@@ -184,8 +184,17 @@ ApplicationWindow {
                     objectName: "requiredPanel"
                     visible: campaign.requiredKind !== "none"
                     contentItem: ColumnLayout {
-                        Heading { text: campaign.requiredTitle }
-                        Copy { text: campaign.requiredText }
+                        FlowPresentation {
+                            Layout.fillWidth: true
+                            visible: campaign.requiredKind === "content"
+                            heading: campaign.requiredTitle
+                            detail: campaign.requiredText
+                            choices: campaign.requiredChoices
+                            enabled: !campaign.busy
+                            onChosen: choiceId => campaign.choose(choiceId)
+                        }
+                        Heading { visible: campaign.requiredKind !== "content"; text: campaign.requiredTitle }
+                        Copy { visible: campaign.requiredKind !== "content"; text: campaign.requiredText }
                         Flow {
                             Layout.fillWidth: true
                             spacing: 6
@@ -206,15 +215,6 @@ ApplicationWindow {
                                 visible: campaign.requiredKind === "liquidity"
                                 enabled: !campaign.busy
                                 onClicked: campaign.acknowledgeWarning()
-                            }
-                            Repeater {
-                                model: campaign.requiredKind === "content" ? campaign.requiredChoices : []
-                                Action {
-                                    required property var modelData
-                                    text: modelData.label
-                                    enabled: !campaign.busy
-                                    onClicked: campaign.choose(modelData.choiceId)
-                                }
                             }
                         }
                     }

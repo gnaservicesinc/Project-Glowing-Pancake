@@ -11,6 +11,7 @@ public:
     DraftDocument(const std::filesystem::path& checkout, const std::filesystem::path& source);
     [[nodiscard]] const content::Collection& collection() const noexcept { return program_.collection; }
     [[nodiscard]] const content::Registry& registry() const noexcept { return program_.registry; }
+    [[nodiscard]] const runtime::CompiledProgram& program() const noexcept { return program_; }
     [[nodiscard]] std::uint64_t edit_revision() const noexcept { return edit_revision_; }
     [[nodiscard]] const std::filesystem::path& relative_file() const noexcept { return base_; }
     [[nodiscard]] bool is_draft() const;

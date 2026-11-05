@@ -309,30 +309,37 @@ void execute(Checkpoint& checkpoint, Activation& activation, const CompiledProgr
         }
     }
 }
-bool condition_met(const content::Condition& condition, const ScopeBinding& binding,
-                   const CompiledProgram& program, const Checkpoint& checkpoint,
-                   RuntimeResult& result, const std::string& path, std::string_view definition_id,
-                   std::size_t& condition_work) {
+ConditionTrace inspect(const content::Condition& condition, const ScopeBinding& binding,
+                       const CompiledProgram& program, const Checkpoint& checkpoint,
+                       const std::string& path, std::string_view definition_id, InspectionMode mode) {
     const auto& world = checkpoint.world;
     const auto reader = [&](const auto& metadata, const auto& scope) { return read_fact(world, metadata, scope); };
     const auto relations = [&](const auto& metadata, const auto& owner) { return read_relation(world, metadata, owner); };
     const auto durations = detail::saved_duration_reader(checkpoint.runtime, definition_id);
-    const auto authoritative = evaluate_condition(condition, binding, program.registry, reader,
-        InspectionMode::author_fixture, path, durations, world.simulation.date, relations);
+    return evaluate_condition(condition, binding, program.registry, reader,
+        mode, path, durations, world.simulation.date, relations);
+}
+bool condition_met(const content::Condition& condition, const ScopeBinding& binding,
+                   const CompiledProgram& program, const Checkpoint& checkpoint,
+                   RuntimeResult& result, const std::string& path, std::string_view definition_id,
+                   std::size_t& condition_work, InspectionMode trace_mode) {
+    auto authoritative = inspect(condition, binding, program, checkpoint, path,
+                                 definition_id, InspectionMode::author_fixture);
     condition_work += authoritative.inspected_nodes;
     if (condition_work > 2 * maximum_records)
         fail(RuntimeReason::budget_exceeded, "The prepared-morning condition inspection budget was exceeded.");
-    // Runtime result traces are safe to show to players. Full fixture traces
-    // remain available by explicitly invoking the pure author inspector.
-    auto visible = evaluate_condition(condition, binding, program.registry, reader,
-        InspectionMode::player_known, path, durations, world.simulation.date, relations);
+    const auto eligible = authoritative.result.value();
+    auto visible = trace_mode == InspectionMode::author_fixture ? std::move(authoritative)
+        : inspect(condition, binding, program, checkpoint, path, definition_id, trace_mode);
+    if (trace_mode == InspectionMode::author_fixture)
+        result.condition_checks.push_back({path, binding, visible.result});
     result.clauses.insert(result.clauses.end(), std::make_move_iterator(visible.clauses.begin()),
                           std::make_move_iterator(visible.clauses.end()));
     result.durations.insert(result.durations.end(), std::make_move_iterator(visible.durations.begin()),
                             std::make_move_iterator(visible.durations.end()));
     result.selections.insert(result.selections.end(), std::make_move_iterator(visible.selections.begin()),
                              std::make_move_iterator(visible.selections.end()));
-    return authoritative.result.value();
+    return eligible;
 }
 void ensure_lifecycles(Checkpoint& checkpoint, const CompiledProgram& program) {
     auto& state = checkpoint.runtime;
@@ -412,7 +419,7 @@ void start_activation(Checkpoint& checkpoint, LifecycleState& entry, const conte
 }
 void dispatch_committed(Checkpoint& checkpoint, LifecycleState& entry, const content::FlowDefinition& definition,
                         const CompiledProgram& program, RuntimeResult& result, std::size_t& steps,
-                        std::size_t& condition_work) {
+                        std::size_t& condition_work, InspectionMode trace_mode) {
     const auto today = checkpoint.world.simulation.date;
     if (entry.last_checked != today) {
         entry.last_checked = today;
@@ -427,13 +434,15 @@ void dispatch_committed(Checkpoint& checkpoint, LifecycleState& entry, const con
         const bool cooling_down = entry.last_started && today.value() - entry.last_started->value() < rule.cooldown_days;
         if (entry.active_activation || entry.occurrences >= rule.max_occurrences || cooling_down) continue;
         const auto path = "flows/" + entry.definition_id + "/committed/" + std::to_string(*entry.committed_cursor - 1);
-        entry.was_eligible = condition_met(definition.trigger, entry.binding, program, checkpoint, result, path, entry.definition_id, condition_work);
+        entry.was_eligible = condition_met(definition.trigger, entry.binding, program, checkpoint,
+                                           result, path, entry.definition_id, condition_work, trace_mode);
         if (!entry.was_eligible) continue;
         start_activation(checkpoint, entry, definition, program, result, steps, source);
         if (has_choice(checkpoint.runtime)) return;
     }
 }
-void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResult& result, std::size_t& steps) {
+void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResult& result,
+             std::size_t& steps, InspectionMode trace_mode) {
     auto& state = checkpoint.runtime;
     auto& world = checkpoint.world;
     const auto today = world.simulation.date;
@@ -454,7 +463,7 @@ void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResu
         auto& active = activation_by_id(state, *entry.active_activation);
         entry.last_checked = today;
         if (!active.exiting && condition_met(*definition.lifecycle.exit_when, entry.binding, program, checkpoint,
-                result, "flows/" + entry.definition_id + "/exit_when", entry.definition_id, condition_work)) {
+                result, "flows/" + entry.definition_id + "/exit_when", entry.definition_id, condition_work, trace_mode)) {
             active.current_flow = active.definition_id;
             active.current_node = definition.exit_node;
             active.frames.clear(); active.due.reset(); active.wait_started.reset(); active.presentation_id.reset();
@@ -484,14 +493,14 @@ void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResu
         if (++steps > maximum_steps_per_operation) fail(RuntimeReason::budget_exceeded, "Lifecycle evaluation budget exceeded.");
         const auto& definition = flow(program, entry.definition_id);
         if (entry.committed_cursor) {
-            dispatch_committed(checkpoint, entry, definition, program, result, steps, condition_work);
+            dispatch_committed(checkpoint, entry, definition, program, result, steps, condition_work, trace_mode);
             if (has_choice(state)) return;
             continue;
         }
         if (entry.last_checked == today) continue;
         entry.last_checked = today;
         const bool eligible = condition_met(definition.trigger, entry.binding, program, checkpoint, result,
-                                             "flows/" + entry.definition_id + "/trigger", entry.definition_id, condition_work);
+                                             "flows/" + entry.definition_id + "/trigger", entry.definition_id, condition_work, trace_mode);
         entry.was_eligible = eligible;
         bool due_now = true;
         if (definition.lifecycle.mode == content::LifecycleMode::interval)
@@ -549,10 +558,25 @@ RuntimeResult transaction(const CompiledProgram& program, Checkpoint& original, 
         for (auto& clause : result.clauses) clause.path = "rolled_back_candidate/" + clause.path;
         for (auto& duration : result.durations) duration.path = "rolled_back_candidate/" + duration.path;
         for (auto& selection : result.selections) selection.path = "rolled_back_candidate/" + selection.path;
+        for (auto& check : result.condition_checks) check.path = "rolled_back_candidate/" + check.path;
     }
     return result;
 }
 } // namespace
+
+FlowInspection inspect_flow_predicate(const CompiledProgram& program, const Checkpoint& checkpoint,
+                                      std::string_view flow_id, FlowPredicate predicate) {
+    const auto* definition = program.collection.find(flow_id);
+    const auto* data = definition ? std::get_if<content::FlowDefinition>(&definition->data) : nullptr;
+    if (!data) throw std::invalid_argument("Select an existing flow to inspect.");
+    const bool exit = predicate == FlowPredicate::exit_when;
+    if (exit && !data->lifecycle.exit_when)
+        throw std::invalid_argument("This flow has no continuous exit condition.");
+    const auto binding = binding_for(checkpoint.world, data->scope);
+    const auto path = "flows/" + std::string(flow_id) + (exit ? "/exit_when" : "/trigger");
+    return {binding, inspect(exit ? *data->lifecycle.exit_when : data->trigger, binding,
+                             program, checkpoint, path, flow_id, InspectionMode::author_fixture)};
+}
 
 std::string_view to_string(RuntimeReason reason) noexcept {
     switch (reason) {
@@ -569,8 +593,9 @@ std::string_view to_string(RuntimeReason reason) noexcept {
     }
     return "invalid";
 }
-Runtime::Runtime(CompiledProgram program, Checkpoint checkpoint)
-    : program_{compile_collection(program.collection, program.registry, supported_effects())}, checkpoint_{std::move(checkpoint)} {
+Runtime::Runtime(CompiledProgram program, Checkpoint checkpoint, InspectionMode trace_mode)
+    : program_{compile_collection(program.collection, program.registry, supported_effects())},
+      checkpoint_{std::move(checkpoint)}, trace_mode_{trace_mode} {
     validate_checkpoint(program_, checkpoint_);
 }
 RuntimeResult Runtime::prepare_opening(std::uint64_t expected_revision) {
@@ -581,7 +606,7 @@ RuntimeResult Runtime::prepare_opening(std::uint64_t expected_revision) {
     return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto& steps) {
         if (next.world.simulation.phase == core::DayPhase::finished || next.world.simulation.phase == core::DayPhase::closed)
             fail(RuntimeReason::campaign_finished, "The campaign is finished.");
-        prepare(next, program_, result, steps);
+        prepare(next, program_, result, steps, trace_mode_);
     });
 }
 RuntimeResult Runtime::choose(std::uint64_t expected_revision, std::uint64_t presentation_id, std::string_view choice_id) {
@@ -603,7 +628,7 @@ RuntimeResult Runtime::choose(std::uint64_t expected_revision, std::uint64_t pre
         active.presentation_id.reset(); active.status = ActivationStatus::ready;
         active.current_node = selected->next;
         execute(next, active, program_, result, steps);
-        prepare(next, program_, result, steps);
+        prepare(next, program_, result, steps, trace_mode_);
     });
 }
 RuntimeResult Runtime::submit(const core::Command& command) {
@@ -635,7 +660,7 @@ RuntimeResult Runtime::submit(const core::Command& command) {
         if (next.world.simulation.date != prior_day || next.world.simulation.phase == core::DayPhase::closed)
             next.runtime.prepared_day.reset();
         if (next.world.simulation.phase == core::DayPhase::work_ready &&
-            next.runtime.prepared_day != next.world.simulation.date) prepare(next, program_, result, steps);
+            next.runtime.prepared_day != next.world.simulation.date) prepare(next, program_, result, steps, trace_mode_);
     });
 }
 RuntimeResult Runtime::synthetic_cleanup(std::uint64_t expected_revision, std::uint64_t activation_id) {

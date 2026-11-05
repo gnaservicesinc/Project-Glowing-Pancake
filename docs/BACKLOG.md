@@ -1,6 +1,6 @@
 # Implementation backlog
 
-Baseline 1.2 with 2026-11-04 event clarification · **17 of 52 steps complete for Mac feature development**.
+Baseline 1.2 with 2026-11-04 event clarification · **18 of 52 steps complete for Mac feature development**.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Feature dependencies are satisfied by implemented Mac behavior and focused checks. Native platform, packaging and device qualification stay deferred to release work under the user’s current instruction. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
 The dated batch notes below retain the earlier acceptance count and prerequisite
@@ -137,7 +137,7 @@ M1-05's accessible campaign room shell.
 
 - [x] **E1A-01 — Separate editor and current-content library.** Role: content-editor. Depends: M2-04, M1-05, M0-05. Add a separate target/resources/package profile opening an explicitly selected checkout. Browse/search/filter current and draft slice content; support undo/redo, IDs/uses/used-by and conflict-aware writes. Unknown schemas are read-only; installed game folders and paths outside the selected project are not edited.
 - [x] **E1A-02 — Complete typed outline/forms authoring.** Role: content-editor with simulation brief. Depends: E1A-01, M1-06. Author triggers, nested conditions, numbered effects/events, explicit targets, sequences/continuations, delays, dialogue/results and all five lifecycles through one document model. Shared registry supplies units/choices/tooltips and refuses invalid bindings/coercions. Save/reopen and refactor referenced IDs without raw scripting. Keep the model canvas-ready; no second logic representation.
-- [ ] **E1A-03 — Trigger-impact and lifecycle inspection.** Role: content-editor/QA. Depends: E1A-02. Show clause values/truth, matched scopes, ordered outline paths, resolved targets, before/after deltas/ledger entries and delayed queues on copied real state/RNG. Test boundaries and natural entry/active/exit plus a separately labeled synthetic cleanup probe. Catch inverted effects, wrong scope and mistaken references. Reuse game dialogue/results; reload nested waits/choices without duplicate effects/rerolls or live-campaign mutation.
+- [x] **E1A-03 — Trigger-impact and lifecycle inspection.** Role: content-editor/QA. Depends: E1A-02. Show clause values/truth, matched scopes, ordered outline paths, resolved targets, before/after deltas/ledger entries and delayed queues on copied real state/RNG. Test boundaries and natural entry/active/exit plus a separately labeled synthetic cleanup probe. Catch inverted effects, wrong scope and mistaken references. Reuse game dialogue/results; reload nested waits/choices without duplicate effects/rerolls or live-campaign mutation.
 - [ ] **E1A-04 — Safe internal content snapshots.** Role: content-editor/build-release. Depends: E1A-03, M0-05. Save drafts separately; provide a small explicit repository validation/version tool for reviewed internal slice batches before the full graphical finalizer. Record definition revisions, content version/hash/change summary and required game-version changes under the existing contract. Preserve staged writes, conflict detection, recovery and game/editor package separation. A maintainer runs this tool for early playtest content; ordinary authors still edit through forms. No raw-data editing, fake release, Git/store publication or version-check bypass.
 - [ ] **E1A-05 — Demonstrate the narrow authoring path.** Role: QA/content-editor. Depends: E1A-04. Demonstrate browsing, building a branching flow, catching planted sign/scope errors and reopening all lifecycle examples through forms/inspection. Produce a runnable internal editor and validated slice snapshot; verify no editor payload enters the game. This reproducible engineering walkthrough is not the three-author human study. M3 may now finalize its AI-assisted baseline and human-authored additions through the same validated pipeline.
 
@@ -171,6 +171,12 @@ targets, scoped variables and reference edits through the same outline.
 The optimized Mac checks run an authored flow through the game runtime and
 resume from an exact checkpoint. E1A-02 retains its E1A-01 and M1-06 gates.
 [Execution form evidence](evidence/E1A-02-execution.md)
+
+**E1A-03 Mac implementation:** choose a scenario, headquarters and exact seed,
+run selected or authored roots, inspect facts/scopes/paths and real committed
+effects, then advance or choose through the shared game presentation. Reload
+uses the game codec. Numeric literal boundary probes and synthetic cleanup
+are separately labeled. [Inspection evidence](evidence/E1A-03-inspection.md)
 
 ## E1b — Required node canvas and author qualification
 

@@ -1,3 +1,5 @@
+#include "probe_controller.hpp"
+
 #include <pgp/core/build_identity.hpp>
 #include <pgp/graphics/graphics_policy.hpp>
 #include <pgp/resources/resource_guards.hpp>
@@ -7,11 +9,13 @@
 
 #include <QCommandLineParser>
 #include <QGuiApplication>
+#include <QElapsedTimer>
 #include <QKeyEvent>
 #include <QLibraryInfo>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickGraphicsConfiguration>
+#include <QQuickItem>
 #include <QQuickStyle>
 #include <QQuickWindow>
 #include <QStyleHints>
@@ -24,6 +28,12 @@
 namespace {
 using namespace pgp;
 QString text(std::string_view value) { return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size())); }
+QQuickItem* view_item(QQuickItem* root, const QString& name) {
+    if (root->objectName() == name) return root;
+    for (auto* child : root->childItems())
+        if (auto* found = view_item(child, name)) return found;
+    return nullptr;
+}
 QStringList strings(const std::vector<std::string>& values) {
     QStringList result;
     for (const auto& value : values) result.push_back(text(value));
@@ -58,6 +68,7 @@ QString control(studio::FormControl kind) {
 }
 class Browser final : public QObject {
     Q_OBJECT
+    Q_PROPERTY(QObject* probeController READ probeController CONSTANT)
     Q_PROPERTY(QVariantList rows READ rows NOTIFY changed)
     Q_PROPERTY(QString checkout READ checkout NOTIFY changed)
     Q_PROPERTY(QString message READ message NOTIFY changed)
@@ -77,6 +88,7 @@ class Browser final : public QObject {
     Q_PROPERTY(qsizetype outlineIndex READ outlineIndex NOTIFY formChanged)
     Q_PROPERTY(QString formTicket READ formTicket NOTIFY formChanged)
 public:
+    [[nodiscard]] QObject* probeController() noexcept { return &probe_; }
     [[nodiscard]] const QVariantList& rows() const noexcept { return visible_; }
     [[nodiscard]] QString checkout() const { return checkout_; }
     [[nodiscard]] QString message() const { return message_; }
@@ -299,6 +311,7 @@ private:
                     {QStringLiteral("ticket"), formTicket()}});
             }
         }
+        probe_.set_document(draft_ ? &draft_->program() : nullptr, flow_);
         emit formChanged();
     }
     void refreshWorkingFlows() {
@@ -335,6 +348,7 @@ private:
         visible_ = std::move(visible);
         emit changed();
     }
+    studio::ProbeController probe_;
     QVariantList source_, visible_;
     QString checkout_, message_, search_, kind_, origin_;
     std::unique_ptr<studio::DraftDocument> draft_;
@@ -427,6 +441,37 @@ int main(int argc, char* argv[]) {
                                                 key == QStringLiteral("eq") ? QStringLiteral("ne") : QStringLiteral("eq"))) return 3;
                         browser.undo();
                     }
+                }
+                const auto verify = [](bool valid, const char* detail) {
+                    if (!valid) throw std::runtime_error(detail);
+                };
+                auto* inspector = qobject_cast<studio::ProbeController*>(browser.probeController());
+                verify(inspector && !inspector->scenarios().isEmpty(), "Inspection view needs a scenario fixture.");
+                const auto scenario = inspector->scenarios().front();
+                const auto headquarters = inspector->headquarters(scenario);
+                verify(!headquarters.isEmpty() && inspector->start(scenario, headquarters.front(), QStringLiteral("18446744073709551615"), true), "The inspection fixture did not start.");
+                verify(inspector->ready() && !inspector->report().isEmpty() && inspector->reload(), "The inspection report or checkpoint reload failed.");
+                const auto original_date = inspector->date();
+                verify(!inspector->start(scenario, headquarters.front(), QStringLiteral("1.5"), true) && inspector->date() == original_date, "An invalid seed changed the fixture.");
+                verify(inspector->inspectBoundaries(), "Boundary inspection failed.");
+                inspector->advance(inspector->nextDate());
+                QElapsedTimer timeout;
+                timeout.start();
+                while (inspector->busy() && timeout.elapsed() < 3000) QCoreApplication::processEvents();
+                verify(!inspector->busy() && inspector->date() != original_date, "The isolated date did not advance.");
+                if (browser.workingFlows().contains(QStringLiteral("flow.supplier.exclusivity_offer"))) {
+                    browser.selectWorkingFlow(QStringLiteral("flow.supplier.exclusivity_offer"));
+                    browser.selectOutline(QStringLiteral("trigger/0"));
+                    verify(browser.changeForm(browser.formTicket(), QStringLiteral("comparison"), QStringLiteral("lte")), "The fixture comparison edit failed.");
+                    verify(inspector->start(scenario, headquarters.front(), QStringLiteral("42"), true), "The dialogue fixture did not start.");
+                    const auto presentations = inspector->presentations();
+                    verify(presentations.size() == 1, "The dialogue fixture has an unexpected presentation count.");
+                    QCoreApplication::processEvents();
+                    verify(view_item(window->contentItem(), QStringLiteral("flowPresentation")), "The shared dialogue card did not load.");
+                    const auto presentation = presentations.front().toMap().value(QStringLiteral("id")).toString();
+                    verify(inspector->choose(presentation, QStringLiteral("decline")) && inspector->presentations().size() == 2, "The dialogue result failed.");
+                    browser.undo();
+                    verify(!inspector->ready(), "A document edit retained a stale fixture.");
                 }
                 browser.closeDraft();
             }

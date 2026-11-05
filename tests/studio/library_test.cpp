@@ -1,6 +1,7 @@
 #include <pgp/studio/library.hpp>
 #include <pgp/studio/draft.hpp>
 #include <pgp/studio/flow_forms.hpp>
+#include <pgp/studio/flow_probe.hpp>
 
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/storage.hpp>
@@ -11,6 +12,8 @@
 #include <iostream>
 #include <stdexcept>
 #include <string_view>
+
+void check_flow_probe();
 
 namespace {
 namespace fs = std::filesystem;
@@ -528,6 +531,12 @@ void scoped_variable_forms() {
             std::get<std::int64_t>(after.world.variables.front().value) == 3 &&
             program.registry.fact("story.tally")->visibility == Visibility::hidden_truth,
             "Authored typed assignments use the renamed variable and preserve its visibility");
+    studio::FlowProbe preview{draft.program(), start};
+    const auto inspected = preview.prepare();
+    require(inspected.trace.clauses.front().actual == content::Scalar{std::int64_t{2}} &&
+            inspected.trace.clauses.front().result == true && !inspected.trace.clauses.front().redacted &&
+            !result.clauses.front().actual && result.clauses.front().redacted,
+            "Author fixtures expose exact hidden values while the player runtime keeps its redaction");
 }
 } // namespace
 
@@ -539,6 +548,7 @@ int main() {
         lifecycle_forms_and_references();
         ordered_execution_forms();
         scoped_variable_forms();
+        check_flow_probe();
         std::cout << checks << " Studio library checks passed\n";
         return 0;
     } catch (const std::exception& error) {

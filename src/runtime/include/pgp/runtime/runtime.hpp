@@ -210,6 +210,11 @@ struct TraceEntry {
     bool synthetic_cleanup = false;
     bool committed = false;
 };
+struct ConditionCheck {
+    std::string path;
+    ScopeBinding binding;
+    std::optional<bool> result;
+};
 struct RuntimeResult {
     RuntimeReason reason = RuntimeReason::accepted;
     std::uint64_t revision = 0;
@@ -219,6 +224,7 @@ struct RuntimeResult {
     bool committed = false;
     std::vector<DurationTrace> durations{};
     std::vector<SelectionTrace> selections{};
+    std::vector<ConditionCheck> condition_checks{};
     [[nodiscard]] bool accepted() const noexcept { return reason == RuntimeReason::accepted; }
 };
 
@@ -232,14 +238,28 @@ struct RuntimeResult {
                                                     const ScopeBinding& owner);
 [[nodiscard]] std::int64_t modifier_total(const RuntimeState& state,
                                          const ScopeBinding& binding, std::string_view field);
+enum class FlowPredicate { trigger, exit_when };
+struct FlowInspection {
+    ScopeBinding binding;
+    ConditionTrace trace;
+};
+// Inspect a bound flow against current facts and the saved duration samples.
+// Missing history is unsatisfied and stale observations remain unknown.
+// This does not schedule or execute a flow.
+[[nodiscard]] FlowInspection inspect_flow_predicate(const CompiledProgram& program,
+    const Checkpoint& checkpoint, std::string_view flow_id, FlowPredicate predicate);
 // Strict reload validation, with no due work, RNG draws or state mutation.
 void validate_checkpoint(const CompiledProgram& program, const Checkpoint& checkpoint);
 [[nodiscard]] std::string_view to_string(RuntimeReason reason) noexcept;
 
 class Runtime {
 public:
-    Runtime(CompiledProgram program, Checkpoint checkpoint);
+    // The default trace redacts hidden facts for player-facing callers.
+    Runtime(CompiledProgram program, Checkpoint checkpoint,
+            InspectionMode trace_mode = InspectionMode::player_known);
     [[nodiscard]] Checkpoint checkpoint() const { return checkpoint_; }
+    // Borrow for read-only projection before the next operation.
+    [[nodiscard]] const Checkpoint& current_state() const noexcept { return checkpoint_; }
     [[nodiscard]] const CompiledProgram& program() const noexcept { return program_; }
     [[nodiscard]] RuntimeResult prepare_opening(std::uint64_t expected_revision);
     [[nodiscard]] RuntimeResult choose(std::uint64_t expected_revision,
@@ -252,5 +272,6 @@ public:
 private:
     CompiledProgram program_;
     Checkpoint checkpoint_;
+    InspectionMode trace_mode_;
 };
 } // namespace pgp::runtime

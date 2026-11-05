@@ -65,5 +65,5 @@ and exact thresholds through choices and reload; see [duration evidence](evidenc
 M1-07 then adds
 built-in occurrence detection/dispatch. M2-01 through M2-04 implement accounts,
 shared capacity, contracts and the three-year scenario with warned recovery.
-The room shell connects those modules to an explicit desktop launch. The current count is 17 completed Mac feature steps, with E1A-03 inspection
-next. Deferred platform and release work stays recorded in the backlog.
+The room shell connects those modules to an explicit desktop launch. The current count is 18 completed Mac feature steps, with E1A-04 internal
+content snapshots next. Deferred platform and release work stays recorded in the backlog.

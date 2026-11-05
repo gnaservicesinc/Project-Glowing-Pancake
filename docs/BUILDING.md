@@ -57,7 +57,13 @@ and links through ordered effects, events, dialogue, delays and subflows.
 Renames update typed references in the working collection. Use **Save as draft**
 with a new lowercase `.json` filename to copy a reviewed or engineering
 collection into `data/drafts/`. Drafts can be saved in place with undo/redo
-and source conflict checks. The regular game
+and source conflict checks. The **Test on isolated scenario state** section
+selects a fixture/headquarters/seed and runs the selected flow or scenario
+roots. Advance through a chosen date, respond to dialogue, reload the exact
+checkpoint, inspect threshold boundaries, or run synthetic cleanup on a
+separate copy. The report shows predicate truth, matched members, effects,
+ledger entries and the continuation queue. Editing the draft resets its
+previous test state. The regular game
 build disables the editor. An opt-in `ContentStudio` install component defines
 the editor payload for future deployment qualification.
 

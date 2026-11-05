@@ -4,8 +4,8 @@ Updated 2026-11-04 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**17 of 52 steps complete for Mac feature development.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04 and E1A-01/02.
+**18 of 52 steps complete for Mac feature development.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04 and E1A-01 through E1A-03.
 The user’s current instruction prioritizes game features on Mac. Implemented
 Mac behavior and focused checks close feature steps, while native platform,
 packaging and device qualification remain deferred. Earlier evidence retains
@@ -88,6 +88,11 @@ block Mac implementation. Keep build caches between batches.
   [Trigger forms](evidence/E1A-02-triggers.md)
   [Lifecycle and reference forms](evidence/E1A-02-lifecycles.md)
   [Execution and variable forms](evidence/E1A-02-execution.md)
+- E1A-03 runs scenario tests on copied real state and RNG, including exact
+  checkpoint reload, live clause/scope inspection, effects/ledger entries,
+  nested queues, numerical boundaries and separate synthetic cleanup.
+  It shares dialogue/results presentation with the game.
+  [Inspection evidence](evidence/E1A-03-inspection.md)
 - Weighted-branch commit `2a37284` passes 26/26 CTests in each of all six native
   jobs across five targets, including GCC/Clang/MSVC and native Windows arm64.
   [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41895189273)
@@ -176,7 +181,7 @@ content/compiler/runtime, transactional state, local persistence/campaign policy
 worker/model bridge, business accounts, shared project capacity, contracts,
 liquidity recovery, a three-year CLI scenario and development QML probe exist.
 Content Studio can browse the local library, edit typed flows and save drafts.
-Impact inspection, the player scenario, finalized runtime content and
+The Studio tests flow impacts on isolated scenario state. The player scenario, finalized runtime content and
 packages remain open. Existing native CI proves primitive parity on all
 five targets; the expanded foundation suite is checked separately. The headless
 command validates local content, demonstrates commands/flows and can explicitly
@@ -184,7 +189,7 @@ save/reload suspended continuations. [Playability checkpoints](PLAYABILITY.md) s
 demonstration from the M2 business scenario and M3 player-facing slice.
 E1a enables early gameplay tests;
 M4 requires both M3 and E1b. E2 closes before bulk content.
-35 steps remain unchecked, including the deferred platform/release work.
+34 steps remain unchecked, including the deferred platform/release work.
 
 M0-01 supersedes review-time spot checks: the Xcode roots resolve to one
 installation, three installed SPDX files were parsed, and exact Qt archive
@@ -215,9 +220,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac implementation: E1A-03 trigger-impact and lifecycle inspection.**
-Run working flows on copied scenario state and expose condition truth, ordered
-effects, presentations and continuations.
+**Next Mac implementation: E1A-04 safe internal content snapshots.**
+Finalize reviewed content through the shared validation and version contract,
+with staged writes, conflict checks and recoverable batches.
 Content finalization and save migrations remain later feature work.
 Platform packaging remains deferred.
 

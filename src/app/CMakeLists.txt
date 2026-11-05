@@ -21,4 +21,5 @@ pgp_project_target(pgp-game)
 qt_add_resources(pgp-game game_ui
     PREFIX "/pgp" BASE "${PROJECT_SOURCE_DIR}/qml"
     FILES "${PROJECT_SOURCE_DIR}/qml/game/Main.qml"
-          "${PROJECT_SOURCE_DIR}/qml/game/StableEntityList.qml")
+          "${PROJECT_SOURCE_DIR}/qml/game/StableEntityList.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/FlowPresentation.qml")

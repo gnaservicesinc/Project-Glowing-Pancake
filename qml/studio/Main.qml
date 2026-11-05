@@ -100,10 +100,12 @@ ApplicationWindow {
                 onActivated: window.updateFilter()
             }
         }
-        RowLayout {
+        GridLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 16
+            columns: window.width < 1000 ? 1 : 2
+            columnSpacing: 16
+            rowSpacing: 16
             ScrollView {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -248,6 +250,10 @@ ApplicationWindow {
                                 Layout.fillWidth: true
                                 visible: studio.workingFlow.length > 0
                                 author: studio
+                            }
+                            FlowInspection {
+                                Layout.fillWidth: true
+                                inspector: studio.probeController
                             }
                             Label { visible: studio.workingFlow.length > 0; text: qsTr("Flow tags"); font.bold: true }
                             Flow {

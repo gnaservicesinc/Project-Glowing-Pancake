@@ -22,6 +22,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M2-04 | Complete for Mac features | Three-year scenario, monthly reconciliation, exact continuation, saved 30-day workout/rescue/closure; [evidence](evidence/M2-04-business.md) |
 | E1A-01 | Complete for Mac features | Separate Content Studio, typed checkout library, flow tag draft editing, undo/redo and conflict-aware writes. [Library](evidence/E1A-01-library.md), [draft workflow](evidence/E1A-01-drafts.md) |
 | E1A-02 | Complete for Mac features | Typed predicates, all five lifecycles, ordered execution, scoped variables and reference edits. [Trigger forms](evidence/E1A-02-triggers.md), [lifecycle forms](evidence/E1A-02-lifecycles.md), [execution forms](evidence/E1A-02-execution.md) |
+| E1A-03 | Complete for Mac features | Isolated scenario/state/RNG tests, exact clause and scope traces, effect/ledger previews, boundary probes, shared presentations, natural lifecycle and exact reload. [Inspection](evidence/E1A-03-inspection.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
 ## Mac feature scope update — 2026-11-04
@@ -674,3 +675,21 @@ five focused CTests and a hidden Qt keyboard check passed.
 
 Accepted count remains **5/52**. E1A-02 retains its E1A-01 and M1-06 gates.
 Next Mac work is E1A-03 inspection on copied scenario state.
+
+## E1A-03 trigger-impact and lifecycle inspection
+
+A Qt-free probe owns its fixture and validated program. The Studio selects a
+scenario, headquarters, root mode and exact integer seed, then advances through
+the real runtime. A timer yields between simulated days and stops on choices.
+Inspection shows current predicates separately from executed condition truth,
+ordered paths, committed effects, ledger postings, owned modifiers and nested
+wait queues. Shared presentation helpers and one QML card serve both the game
+and Studio. A document edit invalidates its prior test state.
+
+The optimized Mac build passed. Studio has 180 library/form assertions and 43
+copied-fixture assertions. Five focused runtime/Studio CTests passed. The
+hidden Qt test exercises seeded tests, invalid-seed preservation, date steps,
+shared dialogue/result cards and exact reload. The game’s Metal smoke passed at
+200% text after the shared-presentation change. [Evidence](evidence/E1A-03-inspection.md)
+
+The current count is **18/52 Mac feature steps complete**. Next is E1A-04.
