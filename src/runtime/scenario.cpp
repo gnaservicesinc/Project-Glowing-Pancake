@@ -34,6 +34,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     }
     core::validate_accounts(accounts);
     world.simulation.accounts = std::move(accounts);
+    world.simulation.liquidity = core::opening_liquidity(scenario->starts_on,world.company_id);
     std::vector<core::CapacitySource> sources;
     if (scenario->leased_capacity.value() > 0)
         sources.push_back({"lease.initial", "cloud.pool.initial", world.company_id, "supplier.compute.initial",

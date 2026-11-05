@@ -2,6 +2,7 @@
 
 #include <pgp/content/registry.hpp>
 #include <pgp/content/market_setup.hpp>
+#include <pgp/content/business_plan.hpp>
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/units.hpp>
 
@@ -118,6 +119,7 @@ struct ScenarioDefinition {
     std::vector<std::string> research;
     std::vector<std::string> flows;
     std::optional<MarketSetup> market{};
+    std::optional<BusinessPlan> business_plan{};
 };
 struct ResearchDefinition {
     std::vector<std::string> all_of;

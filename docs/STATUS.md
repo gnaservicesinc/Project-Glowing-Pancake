@@ -4,7 +4,7 @@ Updated 2026-11-04 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03, M1-03/04/06 and M2-01/02/03 have implemented work awaiting their remaining gates.** M0-03's local
+**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03, M1-03/04/06 and M2-01 through M2-04 have implemented work awaiting their remaining gates.** M0-03's local
 interface/resource/audio implementation passes; native/deployment gates remain.
 M0 remains open. See the
 [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
@@ -39,6 +39,13 @@ block Mac implementation. Keep build caches between batches.
   focused CTests pass; the authored two-month example bills $50,000 for 59,000
   useful tasks and leaves $1,012,000 after costs/license. [Market evidence](evidence/M2-03-market.md)
   distinguishes engineering starting products from M3 model qualification.
+- M2-04 adds saved liquidity warnings, immutable 30-day response windows,
+  acknowledgment, debt/equity rescue through actual payments and terminal
+  closure with a retained postmortem/autosave. The data-driven three-year
+  expansion policy finishes 2017-01-01 with **$1,246,935.49**, 5,240,000 delivered
+  tasks and no financing or overdue liabilities; midpoint continuation matches
+  uninterrupted execution. [Business evidence](evidence/M2-04-business.md)
+  records the focused checks and remaining engineering-product limits.
 
 - M1-06 now compiles/executes the current typed schema: five lifecycles,
   nested sequence/subflow delays and choices, selected root sources, owned
@@ -136,8 +143,9 @@ block Mac implementation. Keep build caches between batches.
 
 The build scaffold, shared version identity, deterministic primitives, typed
 content/compiler/runtime, transactional state, local persistence/campaign policy,
-worker/model bridge, opening business accounts, shared project capacity, CLI and development QML interface probe exist.
-The complete business scenario, player-facing gameplay, Content Studio, finalized runtime
+worker/model bridge, business accounts, shared project capacity, contracts,
+liquidity recovery, a three-year CLI scenario and development QML probe exist.
+Player-facing gameplay, Content Studio, finalized runtime
 content and packages do not. Existing native CI proves primitive parity on all
 five targets; the expanded foundation suite is checked separately. The headless
 command validates local content, demonstrates commands/flows and can explicitly
@@ -177,12 +185,12 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac gameplay implementation: M2-04 three-year scenario and liquidity recovery**,
-using accounts, contracts, shared capacity and exact saves. Add the 30-day
-workout/rescue/closure state and a scenario runner with a demonstrably solvent
-strategy. The [allocation design](evidence/M2-03-allocation-design.md) now has
-[implemented market evidence](evidence/M2-03-market.md), including its contract
-resource priority boundary.
+**Next Mac implementation: M1-05 accessible Office/Lab room shell**. Connect a
+campaign worker to the implemented runtime/session boundary, expose persistent
+project/inbox rows, shared status/time controls, required choices/liquidity
+warnings and safe local save/settings actions. Preserve stable-ID selection,
+focus and scroll anchors; verify compact management at 1280×720 and 200% text.
+The current probe is still an interface/resource/audio engineering tool.
 Add related selectors/
 quantifiers as their real owning entities arrive; retain that unfinished
 M1-06 work rather than inventing entities to close a checkbox. M1-07 adds built-in

@@ -380,7 +380,7 @@ void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResu
     const auto today = world.simulation.date;
     if (world.simulation.phase == core::DayPhase::opening)
         world.simulation = core::Simulation{world.simulation}.checkpoint();
-    if (world.simulation.phase == core::DayPhase::finished) return;
+    if (world.simulation.phase == core::DayPhase::finished || world.simulation.phase == core::DayPhase::closed) return;
     if (world.simulation.phase == core::DayPhase::awaiting_choice) return;
     if (world.simulation.phase != core::DayPhase::work_ready)
         fail(RuntimeReason::morning_not_ready, "Resolve the core opening work before running content.");
@@ -520,12 +520,15 @@ RuntimeResult Runtime::prepare_opening(std::uint64_t expected_revision) {
          checkpoint_.world.simulation.phase == core::DayPhase::awaiting_choice))
         return {RuntimeReason::accepted, expected_revision, "This morning is already prepared or suspended at its existing choice.", {}, {}};
     return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto& steps) {
-        if (next.world.simulation.phase == core::DayPhase::finished) fail(RuntimeReason::campaign_finished, "The campaign is finished.");
+        if (next.world.simulation.phase == core::DayPhase::finished || next.world.simulation.phase == core::DayPhase::closed)
+            fail(RuntimeReason::campaign_finished, "The campaign is finished.");
         prepare(next, program_, result, steps);
     });
 }
 RuntimeResult Runtime::choose(std::uint64_t expected_revision, std::uint64_t presentation_id, std::string_view choice_id) {
     return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto& steps) {
+        if (next.world.simulation.phase == core::DayPhase::closed)
+            fail(RuntimeReason::campaign_finished,"The company is closed; its final state is preserved.");
         const auto found = std::find_if(next.runtime.presentations.begin(), next.runtime.presentations.end(),
             [presentation_id](const auto& presentation) { return presentation.id == presentation_id; });
         if (found == next.runtime.presentations.end() || found->kind != PresentationKind::dialogue || found->resolved)
@@ -547,6 +550,9 @@ RuntimeResult Runtime::choose(std::uint64_t expected_revision, std::uint64_t pre
 RuntimeResult Runtime::submit(const core::Command& command) {
     if (command.expected_revision != checkpoint_.world.simulation.revision)
         return {RuntimeReason::stale_revision, checkpoint_.world.simulation.revision, "The command's observed revision is stale.", {}, {}};
+    if (checkpoint_.world.simulation.phase == core::DayPhase::closed)
+        return {RuntimeReason::campaign_finished,checkpoint_.world.simulation.revision,
+            "The company is closed; its final accounts remain inspectable.",{}, {}};
     // Core submit increments once itself; transaction's reservation is removed
     // inside the copied state so the whole command/opening shares one revision.
     return transaction(program_, checkpoint_, command.expected_revision, [&](auto& next, auto& result, auto& steps) {
@@ -566,13 +572,17 @@ RuntimeResult Runtime::submit(const core::Command& command) {
         }
         const auto prior_day = next.world.simulation.date;
         next.world.simulation = core_state.checkpoint();
-        if (next.world.simulation.date != prior_day) next.runtime.prepared_day.reset();
+        if (next.world.simulation.phase == core::DayPhase::closed) next.world.facts.at("company.is_operating") = false;
+        if (next.world.simulation.date != prior_day || next.world.simulation.phase == core::DayPhase::closed)
+            next.runtime.prepared_day.reset();
         if (next.world.simulation.phase == core::DayPhase::work_ready &&
             next.runtime.prepared_day != next.world.simulation.date) prepare(next, program_, result, steps);
     });
 }
 RuntimeResult Runtime::synthetic_cleanup(std::uint64_t expected_revision, std::uint64_t activation_id) {
     return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto&) {
+        if (next.world.simulation.phase == core::DayPhase::closed)
+            fail(RuntimeReason::campaign_finished,"A closed company retains its final flow state.");
         auto& active = activation_by_id(next.runtime, activation_id);
         if (active.status != ActivationStatus::continuous_active)
             fail(RuntimeReason::invalid_state, "Synthetic cleanup requires an active completed continuous entry.");

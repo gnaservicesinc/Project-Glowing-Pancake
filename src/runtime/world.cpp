@@ -148,6 +148,9 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
     (void)core::Simulation{world.simulation};
     if (world.simulation.accounts && world.simulation.accounts->owner != world.company_id)
         invalid("Business accounts belong to a different company scope");
+    if (world.simulation.phase == core::DayPhase::closed &&
+        (!world.facts.contains("company.is_operating") || world.facts.at("company.is_operating") != content::Scalar{false}))
+        invalid("Closed company still claims an operating business fact");
     date_valid(world.campaign_start); date_valid(world.scope_created);
     if (!content::valid_id(world.company_id) || !content::valid_id(world.world_id) ||
         !content::valid_id(world.state_id) || world.campaign_start > world.simulation.date ||

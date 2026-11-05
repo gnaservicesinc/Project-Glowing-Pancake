@@ -156,6 +156,13 @@ void validate(const SimulationState& state) {
         if (!state.accounts || !state.capacity) invalid("A market requires accounts and shared capacity");
         validate_market_links(*state.market, *state.accounts, *state.capacity);
     }
+    if (state.liquidity) {
+        if (!state.accounts) invalid("Liquidity requires owned business accounts");
+        validate_liquidity_links(*state.liquidity,*state.accounts);
+        if ((state.liquidity->status == LiquidityStatus::closed) != (state.phase == DayPhase::closed) ||
+            (liquidity_report(*state.liquidity).pending_warning && !state.paused))
+            invalid("Liquidity closure or required warning differs from the daily phase");
+    } else if (state.phase == DayPhase::closed) invalid("Closed company has no recorded liquidity cause");
     if (state.reservations.size() > simulation_reservation_limit ||
         state.opening_actions.size() > simulation_opening_limit ||
         state.receipts.size() > simulation_receipt_limit ||
@@ -239,6 +246,9 @@ void validate(const SimulationState& state) {
             invalid("Invalid final campaign cursor");
         }
         break;
+    case DayPhase::closed:
+        if (state.pending_choice || !state.paused) invalid("A closed company must retain its paused final state");
+        break;
     default: invalid("Unknown daily phase");
     }
     std::uint64_t prior_receipt = 0;
@@ -263,6 +273,7 @@ std::string_view to_string(DayPhase value) noexcept {
     case DayPhase::awaiting_choice: return "awaiting_choice";
     case DayPhase::work_ready: return "work_ready";
     case DayPhase::finished: return "finished";
+    case DayPhase::closed: return "closed";
     }
     return "invalid";
 }
@@ -318,8 +329,8 @@ CommandResult Simulation::submit(const Command& command) {
         if (state_.revision == std::numeric_limits<std::uint64_t>::max()) {
             refuse(CommandReason::arithmetic_overflow, "The state revision range is exhausted.");
         }
-        if (state_.phase == DayPhase::finished) {
-            refuse(CommandReason::campaign_finished, "The campaign has reached its final date.");
+        if (state_.phase == DayPhase::finished || state_.phase == DayPhase::closed) {
+            refuse(CommandReason::campaign_finished, "The campaign ended; its final accounts remain available for inspection.");
         }
         auto next = state_;
         ++next.revision;
@@ -379,6 +390,16 @@ CommandResult Simulation::submit(const Command& command) {
                 row.status = ReservationStatus::cancelled;
                 (void)receipt(next, "cancel_unconsumed_reservation", action.id);
             } else if constexpr (std::is_same_v<Action, AdvanceDay>) {
+                if (next.liquidity && liquidity_report(*next.liquidity).pending_warning)
+                    refuse(CommandReason::morning_not_ready, "Acknowledge the insolvency warning and its 30-day response window before advancing.");
+                if (next.liquidity && next.liquidity->status == LiquidityStatus::workout &&
+                    next.date >= *liquidity_report(*next.liquidity).deadline) {
+                    close_liquidity_workout(*next.liquidity,*next.accounts);
+                    next.phase = DayPhase::closed;
+                    next.paused = true;
+                    (void)receipt(next,"insolvency_closure");
+                    return; // The response window ended before today's work.
+                }
                 const auto cash_before = next.cash;
                 if (next.market)
                     close_market_day(*next.market, accounts(next), capacity(next), next.date);
@@ -389,7 +410,14 @@ CommandResult Simulation::submit(const Command& command) {
                 }
                 (void)receipt(next, "advance_day", 0, checked_unit_subtract(next.cash, cash_before));
                 next.date = advance_days(next.date, Days{1});
-                if (next.date == next.end_date) {
+                if (next.liquidity) {
+                    observe_liquidity(*next.liquidity,*next.accounts,next.date);
+                    const auto report = liquidity_report(*next.liquidity);
+                    if (report.pending_warning || report.status == LiquidityStatus::closed) next.paused = true;
+                }
+                if (next.liquidity && next.liquidity->status == LiquidityStatus::closed) {
+                    next.phase = DayPhase::closed;
+                } else if (next.date == next.end_date) {
                     next.phase = DayPhase::finished;
                     next.paused = true;
                 } else {
@@ -397,6 +425,8 @@ CommandResult Simulation::submit(const Command& command) {
                     prepare_opening(next);
                 }
             } else if constexpr (std::is_same_v<Action, SetPaused>) {
+                if (!action.paused && next.liquidity && liquidity_report(*next.liquidity).pending_warning)
+                    refuse(CommandReason::morning_not_ready, "Time remains paused until the insolvency warning is acknowledged.");
                 if (!action.paused && next.phase != DayPhase::work_ready) {
                     refuse(CommandReason::morning_not_ready,
                            "Time remains paused until the required opening choice is resolved.");
@@ -489,8 +519,14 @@ CommandResult Simulation::submit(const Command& command) {
             } else if constexpr (std::is_same_v<Action, CancelContract>) {
                 cancel_contract(market(next), accounts(next), next.date, action.id);
                 (void)receipt(next, "cancel_contract");
+            } else if constexpr (std::is_same_v<Action, AcknowledgeLiquidityWarning>) {
+                if (!next.liquidity) refuse(CommandReason::invalid_status,"There is no liquidity warning to acknowledge.");
+                acknowledge_liquidity_warning(*next.liquidity,action.id);
+                (void)receipt(next,"acknowledge_liquidity_warning");
             }
         }, command.action);
+        if (next.liquidity && !std::holds_alternative<AdvanceDay>(command.action))
+            refresh_liquidity(*next.liquidity,*next.accounts);
         validate(next);
         state_ = std::move(next);
         return {CommandReason::accepted, state_.revision, command_receipt, new_reservation,
@@ -515,6 +551,7 @@ std::shared_ptr<const SimulationSnapshot> Simulation::snapshot() const {
         available(state_), state_.pending_choice, state_.reservations,
         state_.accounts ? std::optional{accounts_report(*state_.accounts)} : std::nullopt,
         state_.capacity ? std::optional{capacity_report(*state_.capacity)} : std::nullopt,
-        state_.market ? std::optional{market_report(*state_.market)} : std::nullopt});
+        state_.market ? std::optional{market_report(*state_.market)} : std::nullopt,
+        state_.liquidity ? std::optional{liquidity_report(*state_.liquidity)} : std::nullopt});
 }
 } // namespace pgp::core

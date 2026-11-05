@@ -5,6 +5,7 @@
 #include "accounts_json.hpp"
 #include "capacity_json.hpp"
 #include "market_json.hpp"
+#include "liquidity_json.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -61,7 +62,7 @@ template <class Enum,std::size_t N> Enum parse_enum(const Json& value,const std:
     if (found==names.end()) detail::invalid("enum","Unsupported enum value");
     return static_cast<Enum>(found-names.begin());
 }
-constexpr std::array<std::string_view,4> phase_names{"opening","awaiting_choice","work_ready","finished"};
+constexpr std::array<std::string_view,5> phase_names{"opening","awaiting_choice","work_ready","finished","closed"};
 constexpr std::array<std::string_view,3> reservation_names{"active","completed","cancelled"};
 constexpr std::array<std::string_view,5> activation_names{"ready","delayed","awaiting_choice","continuous_active","completed"};
 constexpr std::array<std::string_view,2> frame_names{"sequence","subflow"};
@@ -89,7 +90,9 @@ Json simulation_json(const core::SimulationState& state) {
         {"capacity_mode",state.capacity?"business":"foundation"},
         {"capacity",state.capacity?detail::capacity_json(*state.capacity):Json(nullptr)},
         {"market_mode",state.market?"business":"foundation"},
-        {"market",state.market?detail::market_json(*state.market):Json(nullptr)}};
+        {"market",state.market?detail::market_json(*state.market):Json(nullptr)},
+        {"liquidity_mode",state.liquidity?"business":"foundation"},
+        {"liquidity",state.liquidity?detail::liquidity_json(*state.liquidity):Json(nullptr)}};
 }
 core::SimulationState parse_simulation(const Json& value) {
     if (!value.is_object()) detail::invalid("simulation","Expected object");
@@ -97,7 +100,7 @@ core::SimulationState parse_simulation(const Json& value) {
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
         if (name!="accounts" && name!="accounting_mode" && name!="capacity" && name!="capacity_mode" &&
-            name!="market" && name!="market_mode")
+            name!="market" && name!="market_mode" && name!="liquidity" && name!="liquidity_mode")
             prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"simulation",{"revision","date","end_date","phase","paused","cash_cents",
@@ -140,6 +143,16 @@ core::SimulationState parse_simulation(const Json& value) {
         if (mode=="business") result.market=detail::parse_market(value.at("market"));
         else if (mode!="foundation" || !value.at("market").is_null())
             detail::invalid("simulation/market_mode","Market mode does not match its state");
+    }
+    // Legacy checkpoints retain the explicit absence of liquidity policy. Do
+    // not manufacture a warned workout or reset an existing business deadline.
+    if (value.contains("liquidity") != value.contains("liquidity_mode"))
+        detail::invalid("simulation/liquidity_mode","Liquidity mode and state must be present together");
+    if (value.contains("liquidity_mode")) {
+        const auto mode=detail::text(value.at("liquidity_mode"),"simulation/liquidity_mode",16);
+        if (mode=="business") result.liquidity=detail::parse_liquidity(value.at("liquidity"));
+        else if (mode!="foundation" || !value.at("liquidity").is_null())
+            detail::invalid("simulation/liquidity_mode","Liquidity mode does not match its state");
     }
     result.next_reservation_id=detail::u64(value.at("next_reservation_id"),"next_reservation_id");
     result.next_receipt_id=detail::u64(value.at("next_receipt_id"),"next_receipt_id");
@@ -527,7 +540,8 @@ std::optional<std::filesystem::path> AutosaveRing::write(const runtime::Compiled
          (checkpoint.world.simulation.phase!=core::DayPhase::work_ready &&
           checkpoint.world.simulation.phase!=core::DayPhase::awaiting_choice && checkpoint.world.simulation.phase!=core::DayPhase::finished)))
         throw PersistenceError("autosave_boundary","Monthly autosaves require the first morning, including a suspended opening choice, or completed final month");
-    if (reason==AutosaveReason::campaign_end && checkpoint.world.simulation.phase!=core::DayPhase::finished)
+    if (reason==AutosaveReason::campaign_end && checkpoint.world.simulation.phase!=core::DayPhase::finished &&
+        checkpoint.world.simulation.phase!=core::DayPhase::closed)
         throw PersistenceError("autosave_boundary","Campaign-end autosaves require a completed campaign");
     if (reason!=AutosaveReason::monthly_boundary && reason!=AutosaveReason::before_irreversible_commitment && reason!=AutosaveReason::campaign_end)
         throw PersistenceError("autosave_reason","Unsupported autosave reason");

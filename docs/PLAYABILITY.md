@@ -12,7 +12,7 @@ The [backlog](BACKLOG.md) records acceptance gates and the
 | Opening accounts demonstration | Two actual calendar months of costs, one data license, balanced reports and exact pre-settlement save/resume | Runnable with `pgp-headless --accounts-demo FILE`; [evidence](evidence/M2-01-accounts.md) |
 | Shared capacity demonstration | 60-day concurrent serving/training, protected shared compute/staff, separate support costs and exact reload | Runnable with `pgp-headless --capacity-demo FILE`; [evidence](evidence/M2-02-capacity.md) |
 | Enterprise market demonstration | Data-defined contract demand, fees, actual serving and exact pre-settlement save/reload through two months | Runnable with `pgp-headless --market-demo FILE`; [evidence](evidence/M2-03-market.md) |
-| M2-04: first business simulation | A three-year command-line scenario, reconciled accounts, finite capacity, contract economics, solvency and recovery | Requires foundation flows/persistence and M2-01 through M2-04 |
+| M2-04: first business simulation | A three-year command-line scenario, reconciled accounts, finite capacity, contract economics, solvency and recovery | Runnable with `pgp-headless --business-run FILE expansion/baseline/rescue`; [engineering evidence](evidence/M2-04-business.md) |
 | M3-02: first player-facing scenario | Office/Lab decisions, data/research/training/evaluation, contracts, news and choices, start to ending | Requires M2, the UI shell, E1a authoring/inspection and the baseline event pack |
 | M3-03: feature evaluation build | The scenario with delegation, warnings, recovery and scoring | Earliest complete slice for ordinary feature feedback |
 | M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Human testing follows the playable build |
@@ -33,6 +33,7 @@ build/core-release/bin/pgp-headless --flow-demo tests/content/fixtures/foundatio
 build/core-release/bin/pgp-headless --accounts-demo tests/content/fixtures/foundation.json
 build/core-release/bin/pgp-headless --capacity-demo tests/content/fixtures/foundation.json
 build/core-release/bin/pgp-headless --market-demo tests/content/fixtures/market.json
+build/core-release/bin/pgp-headless --business-run tests/content/fixtures/business.json expansion
 # Explicit optional save path; use a chosen local .pgpsave filename:
 build/core-release/bin/pgp-headless --flow-demo tests/content/fixtures/foundation.json --save /chosen/local/demo.pgpsave
 ```
@@ -40,7 +41,8 @@ build/core-release/bin/pgp-headless --flow-demo tests/content/fixtures/foundatio
 These commands run engineering examples. Only the explicit `--save` invocation
 writes the selected local save; the graphical application is not launched.
 Content fixtures are developer evidence and excluded from any future game
-payload. The business scenario and playable UI remain upcoming work.
+payload. The three-year business fixture starts with an engineering product;
+qualified research/models and the playable UI remain upcoming work.
 
 ## Batch tracking
 
@@ -59,7 +61,7 @@ their selected outcomes across delays, choices and saves; the
 Daily duration predicates also preserve their opening-sample start/reset state
 and exact thresholds through choices and reload; see [duration evidence](evidence/M1-06-duration.md).
 M1-07 then adds
-built-in occurrence detection/dispatch. M2-01/02/03 implement accounts, shared
-capacity and contracts; M2-04 completes the three-year scenario and recovery.
+built-in occurrence detection/dispatch. M2-01 through M2-04 implement accounts,
+shared capacity, contracts and the three-year scenario with warned recovery.
 The UI shell can proceed alongside those core modules. Accepted-task counts
 remain conservative while the full contracts and prerequisites are open.

@@ -37,11 +37,12 @@ OperationResult Campaign::operate(
     }
     const auto after = candidate.checkpoint();
     engine_ = std::move(candidate);
-    if (settings_.autosave_enabled && after.world.simulation.date != before.world.simulation.date) {
+    const bool ended = (after.world.simulation.phase == core::DayPhase::finished ||
+                       after.world.simulation.phase == core::DayPhase::closed) &&
+                      before.world.simulation.phase != after.world.simulation.phase;
+    if (settings_.autosave_enabled && (after.world.simulation.date != before.world.simulation.date || ended)) {
         const auto prior_date = core::from_ordinal(before.world.simulation.date);
         const auto current_date = core::from_ordinal(after.world.simulation.date);
-        const bool ended = after.world.simulation.phase == core::DayPhase::finished &&
-                           before.world.simulation.phase != core::DayPhase::finished;
         if (ended || prior_date.month != current_date.month || prior_date.year != current_date.year) {
             try {
                 (void)autosaves_.write(engine_.program(), after, ended ?
@@ -53,7 +54,10 @@ OperationResult Campaign::operate(
             }
         }
     }
-    return {std::move(outcome), {}, false};
+    const bool liquidity_halt = after.world.simulation.liquidity &&
+        (core::liquidity_report(*after.world.simulation.liquidity).pending_warning.has_value() ||
+         after.world.simulation.liquidity->status == core::LiquidityStatus::closed);
+    return {std::move(outcome), {}, liquidity_halt};
 }
 OperationResult Campaign::prepare_opening(std::uint64_t expected_revision) {
     auto result = operate([&](auto& candidate) { return candidate.prepare_opening(expected_revision); }, false);

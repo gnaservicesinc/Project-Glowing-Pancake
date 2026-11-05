@@ -1,0 +1,169 @@
+{
+  "content_schema": 1,
+  "content_version": "0.0.0-dev",
+  "currency_basis": "constant_2014_cents",
+  "definitions": [
+    {
+      "id": "scenario.business",
+      "kind": "scenario",
+      "revision": 1,
+      "starts_on": "2014-01-01",
+      "ends_before": "2017-01-01",
+      "seed": 20140101,
+      "cash_cents": 120000000,
+      "team_people": 6,
+      "capacity_milli_CU_per_day": 100000,
+      "lease_energy_included": true,
+      "ownership_basis_points": {
+        "founder_trust": 5500,
+        "cofounder": 2000,
+        "seed_investor": 2000,
+        "option_pool": 500
+      },
+      "monthly_commitments_cents": {
+        "payroll_with_benefits": 7200000,
+        "office_and_admin": 1800000,
+        "compute_lease": 1800000
+      },
+      "headquarters_choices": [
+        "US-CA",
+        "US-TX",
+        "US-WA"
+      ],
+      "research": [
+        "research.foundation"
+      ],
+      "flows": [],
+      "market": {
+        "offers": [
+          {
+            "id": "product.documents",
+            "capacity_project_id": "serve.documents",
+            "price_cents_per_task": 100,
+            "available": true,
+            "tasks_per_day": 1000,
+            "inference_milli_CU_per_task": 20,
+            "staff": 1,
+            "minimum_memory_mib": 0,
+            "interconnect": "general",
+            "monthly_support_cost_cents": 500000
+          }
+        ],
+        "segments": [
+          {
+            "id": "segment.enterprise",
+            "daily_tasks": 1000,
+            "daily_budget_cents": 100000,
+            "outside_utility": 0,
+            "reservation_threshold": 0,
+            "maximum_monthly_migration_basis_points": 10000,
+            "preferences": [
+              {
+                "product_id": "product.documents",
+                "utility": 1000,
+                "willingness_to_pay_cents": 100,
+                "switching_cost": 200,
+                "eligible": true
+              }
+            ]
+          }
+        ],
+        "contracts": [
+          {
+            "id": "contract.documents",
+            "segment_id": "segment.enterprise",
+            "product_id": "product.documents",
+            "tasks_per_day": 1000,
+            "monthly_fee_cents": 2500000,
+            "usage_price_cents": 0,
+            "service_credit_basis_points": 10000,
+            "missing_task_penalty_cents": 1,
+            "missed_start_penalty_cents": 100000,
+            "cancellation_penalty_cents": 100000,
+            "start_by": "2014-01-31",
+            "ends_before": "2017-01-01",
+            "cause": "Enterprise document service",
+            "start_immediately": true
+          }
+        ]
+      },
+      "business_plan": {
+        "training": {
+          "id": "train.foundation",
+          "requested_milli_CU_per_day": 60000,
+          "staff": 4,
+          "total_work_milli_CU": 3600000,
+          "data_license_cents": 1200000
+        },
+        "expansion_on": "2014-03-02",
+        "expansion": {
+          "offers": [
+            {
+              "id": "product.documents.expanded",
+              "capacity_project_id": "serve.documents.expanded",
+              "price_cents_per_task": 100,
+              "available": true,
+              "tasks_per_day": 4000,
+              "inference_milli_CU_per_task": 20,
+              "staff": 1,
+              "minimum_memory_mib": 0,
+              "interconnect": "general",
+              "monthly_support_cost_cents": 500000
+            }
+          ],
+          "segments": [
+            {
+              "id": "segment.enterprise.expanded",
+              "daily_tasks": 4000,
+              "daily_budget_cents": 400000,
+              "outside_utility": 0,
+              "reservation_threshold": 0,
+              "maximum_monthly_migration_basis_points": 10000,
+              "preferences": [
+                {
+                  "product_id": "product.documents.expanded",
+                  "utility": 1000,
+                  "willingness_to_pay_cents": 100,
+                  "switching_cost": 200,
+                  "eligible": true
+                }
+              ]
+            }
+          ],
+          "contracts": [
+            {
+              "id": "contract.documents.expanded",
+              "segment_id": "segment.enterprise.expanded",
+              "product_id": "product.documents.expanded",
+              "tasks_per_day": 4000,
+              "monthly_fee_cents": 10000000,
+              "usage_price_cents": 0,
+              "service_credit_basis_points": 10000,
+              "missing_task_penalty_cents": 1,
+              "missed_start_penalty_cents": 100000,
+              "cancellation_penalty_cents": 100000,
+              "start_by": "2014-03-02",
+              "ends_before": "2017-01-01",
+              "cause": "Expanded enterprise document service",
+              "start_immediately": true
+            }
+          ]
+        },
+        "rescue_proceeds_cents": 50000000,
+        "rescue_shares_basis_points": 1000
+      }
+    },
+    {
+      "id": "research.foundation",
+      "kind": "research",
+      "revision": 1,
+      "prerequisites": {
+        "all_of": [],
+        "any_of": []
+      },
+      "cash_cents": 1200000,
+      "staff_days": 60,
+      "work_milli_CU": 3600000
+    }
+  ]
+}

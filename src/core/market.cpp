@@ -96,8 +96,10 @@ void review_adoption(MarketState& state, OrdinalDay day) {
         std::map<std::string, std::uint64_t> observed;
         observed["outside"] = 0;
         std::uint64_t total = 0;
-        for (const auto& record : state.days) {
-            if (record.day < begin || record.day > day) continue;
+        const auto first = std::lower_bound(state.days.begin(),state.days.end(),begin,
+            [](const auto& record, auto date) { return record.day < date; });
+        for (auto entry = first; entry != state.days.end() && entry->day <= day; ++entry) {
+            const auto& record = *entry;
             const auto found = std::find_if(record.segments.begin(), record.segments.end(),
                 [&](const auto& row) { return row.segment_id == segment.id; });
             if (found == record.segments.end()) continue;
@@ -375,9 +377,14 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
             expect(invoice_id("sale", result.segment_id + "/" + result.product_id, day.day),
                    InvoiceKind::receivable, result.charged, day.day);
         }
-        const auto record = std::find_if(capacity.days.begin(), capacity.days.end(),
-            [&](const auto& row) { return row.day == day.day; });
-        if (record == capacity.days.end()) invalid("Market delivery has no matching capacity day");
+        // validate_capacity proved complete, contiguous dates. Indexing the
+        // matching day preserves the date check without rescanning all earlier
+        // days for every historical receipt during each new daily transaction.
+        const auto offset = day.day.value() - capacity.starts_on.value();
+        if (offset < 0 || static_cast<std::uint64_t>(offset) >= capacity.days.size())
+            invalid("Market delivery has no matching capacity day");
+        const auto* record = &capacity.days[static_cast<std::size_t>(offset)];
+        if (record->day != day.day) invalid("Market delivery has no matching capacity date");
         for (const auto& product_row : state.products) {
             const auto work = std::find_if(record->projects.begin(), record->projects.end(),
                 [&](const auto& row) { return row.project_id == product_row.capacity_project_id; });

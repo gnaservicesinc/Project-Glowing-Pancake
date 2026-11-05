@@ -1,6 +1,6 @@
 # Implementation backlog
 
-Baseline 1.2 with 2026-11-04 event clarification · **5 of 52 tasks accepted; additional implementation under M0-03, M1-03/04/06 and M2-01/02/03**.
+Baseline 1.2 with 2026-11-04 event clarification · **5 of 52 tasks accepted; additional implementation under M0-03, M1-03/04/06 and M2-01 through M2-04**.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Dependencies refer to completed acceptance criteria, not merely the presence of a commit. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
 ## M0 — Toolchain and platform proof
@@ -102,6 +102,15 @@ scenario data defines the business setup, and exact saves reconcile budgets,
 invoices and actual serving. An optimized Mac build and eight focused CTests pass;
 [evidence](evidence/M2-03-market.md) records tests and limits. Formal acceptance
 retains M2-02's prerequisite gate. Next: M2-04's three-year solvent/recovery paths.
+
+**M2-04 Mac implementation, 2026-11-04:** saved causal liquidity warnings,
+30-day workouts, actual-payment rescues, closure/postmortem autosaves and a typed
+three-year command-line policy runner are implemented. A funded expansion uses
+one shared lease and no external financing, reconciles 36 monthly reports and
+matches exact midpoint continuation. [Evidence](evidence/M2-04-business.md)
+distinguishes this engineering-product scenario from M3's qualified model loop.
+Formal acceptance retains M2-03/M1-04's open prerequisites; next Mac work is
+M1-05's accessible campaign room shell.
 
 ## E1a — Slice authoring through forms and inspection
 

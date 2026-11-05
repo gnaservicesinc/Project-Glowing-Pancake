@@ -3,8 +3,8 @@
 M0-02 implements build entry points and the headless scaffold. M0-03 adds the
 development interface probe, resource guards and optional playback adapter.
 M0-05 validates the shared component versions and embeds configure-time identity.
-The engineering simulation foundation exists; the business scenario, Content
-Studio and distributable package remain later work.
+The engineering simulation and headless three-year business scenario exist;
+player-facing rooms, Content Studio and distributable packages remain later work.
 The [implementation log](IMPLEMENTATION_LOG.md) records acceptance evidence.
 
 ## Requirements and commands
@@ -89,8 +89,24 @@ from data. Through March 1 it delivers 59,000 tasks, bills exactly $50,000 and
 leaves $1,012,000 after baseline/support/license costs, with exact reload parity.
 Focused checks are `core.allocation`, `content.market-setup`,
 `runtime.market-integration` and `headless.market-demo`. The fixture starts with
-an engineering product; research/model qualification and a three-year strategy
-remain later tasks.
+an engineering product; research/model qualification remains M3 work.
+
+The three-year runner uses a data-defined initial workload, customer expansion
+and rescue terms. It prints monthly income/cost/work and balance reports:
+
+```sh
+build/core-release/bin/pgp-headless --business-run tests/content/fixtures/business.json expansion
+build/core-release/bin/pgp-headless --business-run tests/content/fixtures/business.json baseline
+build/core-release/bin/pgp-headless --business-run tests/content/fixtures/business.json rescue
+```
+
+`expansion` completes the 2014–2017 slice without additional financing. `baseline`
+explicitly acknowledges its warning and exercises closure after the response
+window. `rescue` records one authored equity investment and pays overdue bills;
+it stops at a later warning instead of inventing more funding. Normal application
+drivers stop at an unacknowledged warning. These commands use in-memory reloads,
+write no player saves and launch no window. Focused checks are `core.liquidity`,
+`runtime.liquidity-integration` and `session.business-scenario`.
 
 ## Compiler and configuration isolation
 

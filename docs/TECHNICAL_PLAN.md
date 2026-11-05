@@ -81,6 +81,13 @@ The separate `pgp-editor` target depends on the same content compiler/registry/c
 
 Commands such as `StartTraining`, `OfferContract`, `HireTeam`, `SetBudgetPolicy`, `PublishArtifact`, and `BuildSite` carry explicit arguments and an expected state revision. Validation returns a stable reason code and player-readable explanation. Revalidate on commit: a forecast or screen becoming stale must not spend unavailable cash. An accepted command is recorded with its authoritative order; rejected commands have no partial effect.
 
+The liquidity owner samples accounts after daily settlement and exposes required
+warning acknowledgment separately from recovery commands. Persist its observation
+cursor, original cause/shortfall, deadline, acknowledgment and resolution/closure
+history. An insolvency closure has its own terminal daily phase before the
+scenario's normal end date; it rejects further mutations, keeps inspection/save
+available, and uses the campaign-end autosave boundary.
+
 The simulation runs on one worker thread. Presentation receives immutable snapshots/diffs at a capped rate (initial target 10 Hz while running, immediate on pause/command result). QML never reads mutable core state or advances time. The main thread remains available for keyboard, menus, dialogs, and rendering. Keep the commit order single-threaded until profiling demonstrates a need for parallel pure calculations.
 
 Bridge collections are persistent `QAbstractItemModel` instances keyed by stable entity IDs. On the GUI thread, diff snapshots, emit `dataChanged` only for changed roles and use insert/remove/move or appropriate layout notifications for structural changes. Routine 10 Hz updates must not replace whole models or reset them. Preserve selection, scroll anchor, expanded rows and keyboard/edit context by ID; use a reset only for a genuinely new collection/campaign and restore valid context deliberately. Coalesce obsolete snapshots without dropping command receipts/required alerts. Verify focus/scroll under live changes and sorting at 200% text scaling. [Qt model contract and thread rules](https://doc.qt.io/qt-6/qabstractitemmodel.html).

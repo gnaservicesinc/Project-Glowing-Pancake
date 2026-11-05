@@ -18,6 +18,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M2-01 | Implemented on Mac; prerequisite open | Balanced accounts, actual-month costs, invoices, debt/equity, protected settlements and pure projections through commands/exact saves; [evidence](evidence/M2-01-accounts.md) |
 | M2-02 | Implemented on Mac; prerequisite open | Shared source/staff reservations, compatibility, serving-first outage allocation, actual finite work, cancellation, support costs and exact reload; [evidence](evidence/M2-02-capacity.md) |
 | M2-03 | Implemented on Mac; prerequisite open | Finite allocation, contracts/resource priority, billing/credits/deadlines and installed shares through typed scenarios/exact saves; [evidence](evidence/M2-03-market.md) |
+| M2-04 | Implemented on Mac; prerequisite open | Three-year scenario, monthly reconciliation, exact continuation, saved 30-day workout/rescue/closure; [evidence](evidence/M2-04-business.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
 ## First implementation slice
@@ -497,3 +498,39 @@ Formal accepted count stays **5/52** while the prerequisite gates remain open.
 Next work is M2-04's three-year scenario and liquidity workout/rescue/closure.
 The current fixture starts with an engineering product; M3 still owns actual
 research/model qualification. Work pauses at this M2-03 handoff per user request.
+
+## M2-04 three-year business scenario and recovery — 2026-11-04
+
+Implemented a causal liquidity owner, required warning acknowledgment, immutable
+30-day workouts, actual-payment rescues and terminal closure with retained
+accounts/resource/flow state and an automatic postmortem save. Deadline-morning
+rescue is permitted; unresolved advancement closes at W+30 before further work,
+billing or date movement. Negative profit, zero cash and not-yet-due accruals do
+not independently trigger insolvency. [Evidence](evidence/M2-04-business.md) and
+the [liquidity contract](../src/core/LIQUIDITY.md) record the boundaries.
+
+A typed, hashed business plan drives startup work, customer expansion and a
+single equity rescue through ordinary commands. The [runner](../src/session/SCENARIO_RUN.md)
+reports 36 calendar months. Its no-financing expansion completes 2017-01-01 with
+124,693,549 cents cash, 429,677,419 revenue, 424,983,870 expenses, no unpaid bills
+or debt, and 5,240,000 delivered tasks. A July 1, 2015 save/resume matches the
+uninterrupted checkpoint, monthly reports and final canonical bytes exactly.
+
+The optimized Mac build and seven distinct focused CTests pass across the batch.
+The full healthy comparison takes 174.34 seconds; the final recovery check takes
+8.21 seconds. The initial 180-second comparison timeout prompted removal of
+duplicate internal ledger validation and repeated historical searches, retaining
+all public input checks. Review corrected assertions that equated not-yet-due
+accruals with overdue liabilities. Exact-deadline changes were checked with the
+small core/runtime/recovery/application-policy cases rather than repeating the
+unchanged healthy scenario. The actual baseline CLI warns 2015-03-01 and closes
+2015-03-31, preserves all liabilities, and prints total/overdue amounts separately.
+Full/native/Debug/package qualification was not run.
+
+Formal accepted count remains **5/52** while M2-03/M1-04 prerequisites stay open.
+This is an engineering-product business scenario; M3 still owns qualified
+research/models, and century objectives/performance remain later work. Next Mac
+implementation: M1-05's accessible Office/Lab campaign shell, using a session
+worker, persistent project/inbox rows, shared status/time controls and safe
+local save/settings actions. Related-entity flows and built-in event dispatch
+remain foundation work alongside presentation.

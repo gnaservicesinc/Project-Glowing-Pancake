@@ -270,6 +270,8 @@ Json definition_json(const Definition& definition, const std::string& key) {
         result["research"] = scenario->research; result["flows"] = scenario->flows;
         if (scenario->market)
             result["market"] = Json::parse(canonical_market_setup_bytes(*scenario->market,scenario->starts_on));
+        if (scenario->business_plan)
+            result["business_plan"] = Json::parse(canonical_business_plan_bytes(*scenario->business_plan,scenario->starts_on));
     } else if (const auto* deal = std::get_if<DealDefinition>(&definition.data)) {
         result["kind"] = "deal"; result["minimum_payment_cents"] = deal->minimum_payment.value();
         result["minimum_duration_days"] = deal->minimum_duration.value();

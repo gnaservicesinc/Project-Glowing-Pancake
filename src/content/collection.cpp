@@ -669,7 +669,7 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -711,6 +711,53 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         try { result.market = market_setup(value.at("market"),child(path,"market"),result); }
         catch (const ValidationError&) { throw; }
         catch (const std::exception& error) { fail("market",child(path,"market"),error.what()); }
+    }
+    if (value.contains("business_plan")) {
+        const auto plan_path = child(path,"business_plan");
+        const auto& plan = value.at("business_plan");
+        fields(plan,plan_path,{"training","expansion_on","expansion","rescue_proceeds_cents","rescue_shares_basis_points"},
+            {"training","expansion_on","expansion","rescue_proceeds_cents","rescue_shares_basis_points"});
+        const auto& training = plan.at("training");
+        fields(training,plan_path,{"id","requested_milli_CU_per_day","staff","total_work_milli_CU","data_license_cents"},
+            {"id","requested_milli_CU_per_day","staff","total_work_milli_CU","data_license_cents"});
+        try {
+            if (!result.market) fail("market",plan_path,"A business run plan needs a starting market");
+            BusinessPlan parsed;
+            parsed.training.id = id(training.at("id"),plan_path);
+            parsed.training.source_id = "lease.initial";
+            parsed.training.starts_on = result.starts_on;
+            parsed.training.requested = core::MilliCUPerDay{integer(training.at("requested_milli_CU_per_day"),plan_path,1)};
+            parsed.training.staff = positive(training.at("staff"),plan_path,1'000'000);
+            parsed.training.total_work = core::MilliCU{integer(training.at("total_work_milli_CU"),plan_path,1)};
+            parsed.training.cause = "Scenario training: " + parsed.training.id;
+            parsed.data_license = core::Cents{integer(training.at("data_license_cents"),plan_path,1)};
+            if (parsed.data_license > result.cash) fail("range",plan_path,"Initial license exceeds opening cash");
+            parsed.expansion_on = date(plan.at("expansion_on"),plan_path);
+            if (parsed.expansion_on <= result.starts_on || parsed.expansion_on >= result.ends_before)
+                fail("range",plan_path,"Expansion must occur within the scenario after its start");
+            auto expanded_scenario = result;
+            expanded_scenario.starts_on = parsed.expansion_on;
+            parsed.expansion = market_setup(plan.at("expansion"),child(plan_path,"expansion"),expanded_scenario);
+            parsed.rescue_proceeds = core::Cents{integer(plan.at("rescue_proceeds_cents"),plan_path,1)};
+            parsed.rescue_shares = core::BasisPoints{integer(plan.at("rescue_shares_basis_points"),plan_path,1,10000)};
+            auto accounts = core::opening_accounts(result.cash,result.starts_on);
+            auto capacity = core::opening_capacity({{"lease.initial","cloud.pool.initial","company.player","supplier.compute.initial",
+                core::CapacitySourceKind::leased,result.leased_capacity,result.leased_capacity,0,"general",result.lease_energy_included}},
+                result.team_people,result.starts_on);
+            auto market = core::opening_market(result.starts_on);
+            apply_market_setup(*result.market,market,accounts,capacity,result.starts_on);
+            core::reserve_project(capacity,result.starts_on,parsed.training);
+            // Validate expansion together with initial serving capacity and
+            // customer identities, after releasing the finite training claim.
+            core::cancel_project(capacity,result.starts_on,parsed.training.id);
+            auto opening_expansion = parsed.expansion;
+            for (auto& offer : opening_expansion.offers) offer.serving.starts_on = result.starts_on;
+            for (auto& contract : opening_expansion.contracts) contract.terms.accepted_on = result.starts_on;
+            apply_market_setup(opening_expansion,market,accounts,capacity,result.starts_on);
+            (void)canonical_business_plan_bytes(parsed,result.starts_on);
+            result.business_plan = std::move(parsed);
+        } catch (const ValidationError&) { throw; }
+        catch (const std::exception& error) { fail("business_plan",plan_path,error.what()); }
     }
     return result;
 }

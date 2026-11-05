@@ -2,21 +2,22 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** 5 of 52 tasks accepted as of 2026-11-04, with additional implemented work under M1-03/04/06 and M2-01/02/03. Business accounts and shared compute/staff now support contracts, actual-demand serving, finite budget/capacity allocation, credits/penalties, deadlines and installed customer shares. Typed scenario data defines market terms and serving profiles; commands and exact saves preserve accounting and work together. The foundation executes typed flows, weighted branches, durations, scoped variables, expressions, delays, choices and modifiers. Local settings, recovery copies, autosave policy and immutable worker/models exist. Related-entity flows and deferred platform prerequisites remain open. The three-year recovery scenario, playable rooms and Content Studio are still ahead. Follow [playability checkpoints](docs/PLAYABILITY.md), [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
+**Current state:** 5 of 52 tasks accepted as of 2026-11-04, with additional implemented work under M1-03/04/06 and M2-01 through M2-04. A headless three-year business runner now combines accounts, shared compute/staff, contracts, installed shares and warned liquidity recovery. Authored policies exercise expansion, equity rescue and closure through ordinary commands and exact saves. The foundation executes typed flows, weighted branches, durations, scoped variables, expressions, delays, choices and modifiers. Local settings, recovery copies, autosave policy and immutable worker/models exist. Related-entity flows and deferred platform prerequisites remain open. Playable rooms, qualified research/models and Content Studio are still ahead. Follow [playability checkpoints](docs/PLAYABILITY.md), [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
 
 ## Build the development skeleton
 
 ```sh
 ./make.sh                     # Release; builds the probe, never launches
 ./make.sh --core-only        # Release core/headless; no Qt required
-ctest --test-dir build/core-release -R '^(core.allocation|content.market-setup|runtime.market-integration|headless.market-demo)$' --output-on-failure
-build/core-release/bin/pgp-headless --market-demo tests/content/fixtures/market.json
+ctest --test-dir build/core-release -R '^(core.liquidity|runtime.liquidity-integration|session.business-scenario)$' --output-on-failure
+build/core-release/bin/pgp-headless --business-run tests/content/fixtures/business.json expansion
 ./make.sh --help
 ```
 
 Builds never launch the application. The headless executable reports build
-configuration, validates local content and runs command/event/save engineering demonstrations;
-the business scenario remains a later task. See
+configuration, validates local content and runs command/event/save engineering demonstrations
+and the three-year business scenario. The fixture starts with an engineering
+product; research/model qualification and player presentation remain later tasks. See
 [build instructions](docs/BUILDING.md) for dependencies, Qt/Xcode selection,
 safe cleanup, explicit probe launch and available checks. No dependencies are
 downloaded by the build. [Local M0-03 evidence](docs/evidence/M0-03-local-probe.md)

@@ -120,6 +120,17 @@ The slice must be survivable by a careful specialist strategy without a new fund
 
 Every posting has day, debit account, credit account, amount, cause, and owning entity. The accounts model includes cash, receivables, assets, accumulated depreciation, payables, debt, equity, revenue, and expenses. Financial reports derive from postings; UI values cannot edit balances. Cash reservations are commitments, not recognized expenses until the relevant transaction occurs. Credits, deposits, and equity proceeds are not product revenue.
 
+Liquidity warnings inspect committed settlements. If a payable due through the
+completed day remains unpaid, or matured debt retains principal, the next morning
+W presents a causal warning and pauses for acknowledgment. Negative profit or
+zero cash alone does not start insolvency. The saved response deadline is W+30
+calendar days; commands may rescue the company on that morning. Advancing with
+unresolved exposure closes the company at W+30 before another service interval,
+without new work, income or costs. Partial payments and acknowledgment
+preserve the original deadline. A full cure resolves the workout immediately;
+funding without servicing the liability does not. Closure stops further work
+and preserves ledgers, obligations and history for a postmortem.
+
 All balances, prices, budgets, wages, debt, interest-rate assumptions and authored money thresholds use constant-2014 purchasing power. There is no compounding nominal price index or nominal-dollar ledger in 1.0. Real scarcity, productivity and financing shocks change explicit authored real prices/rates. Do not add a nominal display index or cash-decay mechanic implicitly. Interest and monthly recurring payments accrue using specified day-count rules; the first implementation uses actual days in the contract's calendar month. Taxes are fictional policy parameters on explicit taxable bases, not reproductions of any jurisdiction's current tax code. Carries, relief, and incentives have caps, eligibility, and expiration.
 
 All equity allocations sum to 10,000 basis points. Dilution changes ownership and does not automatically change seat allocation. A merger conserves assets, debt, obligations, licenses, and control rights; acquired closed products do not instantly become compatible. The first version supports cash/equity purchases and straightforward mergers, not arbitrary corporate derivatives.

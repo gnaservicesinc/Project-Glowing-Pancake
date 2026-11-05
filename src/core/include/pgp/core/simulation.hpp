@@ -4,6 +4,7 @@
 #include <pgp/core/accounts.hpp>
 #include <pgp/core/capacity.hpp>
 #include <pgp/core/market.hpp>
+#include <pgp/core/liquidity.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
@@ -19,7 +20,7 @@ namespace pgp::core {
 
 // Reservations are commitments; consumption recognizes an expense in scenarios
 // with accounts. Forecasts never receive hidden random state.
-enum class DayPhase { opening, awaiting_choice, work_ready, finished };
+enum class DayPhase { opening, awaiting_choice, work_ready, finished, closed };
 enum class ReservationStatus { active, completed, cancelled };
 enum class CommandReason {
     accepted, stale_revision, invalid_argument, insufficient_funds,
@@ -89,6 +90,7 @@ struct SimulationState {
     std::optional<AccountsState> accounts{};
     std::optional<CapacityState> capacity{};
     std::optional<MarketState> market{};
+    std::optional<LiquidityState> liquidity{};
     auto operator<=>(const SimulationState&) const = default;
 };
 
@@ -104,6 +106,7 @@ struct SimulationSnapshot {
     std::optional<AccountsReport> accounts{};
     std::optional<CapacityReport> capacity{};
     std::optional<MarketReport> market{};
+    std::optional<LiquidityReport> liquidity{};
 };
 
 struct ReserveFunds { std::string name; Cents amount; bool reversible = true; };
@@ -128,13 +131,15 @@ struct SetMarketProductAvailable { std::string id; bool available; };
 struct AcceptContract { MarketContract contract; };
 struct StartContract { std::string id; };
 struct CancelContract { std::string id; };
+struct AcknowledgeLiquidityWarning { std::uint64_t id; };
 using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReservation,
                                    AdvanceDay, SetPaused, ResolveOpeningChoice,
                                    AddRecurringObligation, IssueInvoice, SettleInvoice,
                                    DrawDebt, RepayDebt, InvestEquity,
                                    ReserveProject, CancelProject, SetEffectiveCapacity,
                                    EnableMarket, AddMarketProduct, AddMarketSegment,
-                                   SetMarketProductAvailable, AcceptContract, StartContract, CancelContract>;
+                                   SetMarketProductAvailable, AcceptContract, StartContract, CancelContract,
+                                   AcknowledgeLiquidityWarning>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

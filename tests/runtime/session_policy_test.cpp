@@ -155,9 +155,35 @@ void rejected_automatic_step_halts() {
     require(!refused.command.accepted() && refused.halt_requested && campaign.checkpoint() == before,
             "Failed automatic consequence requests halt instead of retrying the same day forever");
 }
+void liquidity_warning_and_closure() {
+    Scratch scratch;
+    const auto program = integration_fixture::program(PGP_RUNTIME_FIXTURE_PATH,false);
+    runtime::Checkpoint initial{runtime::foundation_world(core::Cents{0}),{}};
+    initial.world.enabled_flows = std::vector<std::string>{};
+    initial.world.simulation.accounts = core::opening_accounts(core::Cents{0});
+    initial.world.simulation.liquidity = core::opening_liquidity();
+    session::Campaign campaign{program,initial,scratch.path / "autosaves"};
+    require(campaign.prepare_opening(initial.world.simulation.revision).command.accepted(),"Prepare zero-cash fixture");
+    require(campaign.submit({campaign.checkpoint().world.simulation.revision,
+        core::IssueInvoice{{"unfunded",core::InvoiceKind::payable,core::OrdinalDay{0},core::Cents{100},core::Cents{0},"Delivered service"}}}).command.accepted(),
+        "Issue actual service obligation");
+    const auto warning = campaign.submit({campaign.checkpoint().world.simulation.revision,core::AdvanceDay{}});
+    require(warning.command.accepted() && warning.halt_requested && campaign.checkpoint().world.simulation.paused,
+        "A newly warned workout stops automatic time immediately");
+    require(campaign.submit({campaign.checkpoint().world.simulation.revision,core::AcknowledgeLiquidityWarning{1}}).command.accepted(),
+        "Acknowledge response window explicitly");
+    while (campaign.checkpoint().world.simulation.phase != core::DayPhase::closed) {
+        const auto step = campaign.submit({campaign.checkpoint().world.simulation.revision,core::AdvanceDay{}});
+        require(step.command.accepted() && !step.storage_notice,"Advance within warned response window without storage error");
+    }
+    const auto final = campaign.checkpoint();
+    require(persistence::AutosaveRing{scratch.path / "autosaves"}.latest(program).checkpoint == final,
+        "Closure automatically saves exact causal postmortem and unpaid balances");
+    require(final.world.simulation.date == core::OrdinalDay{31},"Closure must stop at the exact 30-day response boundary");
+}
 } // namespace
 int main() {
-    try { policy_hooks(); consumption_and_suspended_month(); rejected_automatic_step_halts(); }
+    try { policy_hooks(); consumption_and_suspended_month(); rejected_automatic_step_halts(); liquidity_warning_and_closure(); }
     catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
     std::cout << "Campaign autosave hooks, IO failure recovery and final-month persistence pass\n";
 }

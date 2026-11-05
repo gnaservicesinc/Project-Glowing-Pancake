@@ -1,4 +1,4 @@
-add_library(pgp_session STATIC campaign.cpp)
+add_library(pgp_session STATIC campaign.cpp scenario_run.cpp)
 add_library(pgp::session ALIAS pgp_session)
 target_include_directories(pgp_session PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(pgp_session PUBLIC pgp::persistence)
