@@ -15,7 +15,7 @@ The [backlog](BACKLOG.md) records acceptance gates and the
 | Enterprise market demonstration | Data-defined contract demand, fees, actual serving and exact pre-settlement save/reload through two months | Runnable with `pgp-headless --market-demo FILE`; [evidence](evidence/M2-03-market.md) |
 | M2-04: first business simulation | A three-year command-line scenario, reconciled accounts, finite capacity, contract economics, solvency and recovery | Runnable with `pgp-headless --business-run FILE expansion/baseline/rescue`; [engineering evidence](evidence/M2-04-business.md) |
 | M1-05: campaign room shell | Office/Lab/Inbox, time, required decisions, project inspector and local saves/preferences | Runnable with `pgp-game --content FILE`; [Mac evidence](evidence/M1-05-room-shell.md) |
-| M3-02: first player-facing scenario | Office/Lab decisions, data/research/training/evaluation, contracts, news and choices, start to ending | Requires M2, the UI shell, E1a authoring/inspection and the baseline event pack |
+| M3-02: first player-facing scenario | Office/Lab decisions, data/research/training/evaluation, contracts, news and choices, start to ending | Active next milestone (`M3-01` -> `M3-05` -> `M3-02`); decoupled from remaining E1a Studio steps |
 | M3-03: feature evaluation build | The scenario with delegation, warnings, recovery and scoring | Earliest complete slice for ordinary feature feedback |
 | M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Human testing follows the playable build |
 
@@ -65,5 +65,4 @@ and exact thresholds through choices and reload; see [duration evidence](evidenc
 M1-07 then adds
 built-in occurrence detection/dispatch. M2-01 through M2-04 implement accounts,
 shared capacity, contracts and the three-year scenario with warned recovery.
-The room shell connects those modules to an explicit desktop launch. The current count is 18 completed Mac feature steps, with E1A-04 internal
-content snapshots next. Deferred platform and release work stays recorded in the backlog.
+The room shell connects those modules to an explicit desktop launch. The current count is 18 completed Mac feature steps, with `M3-01` (data/research/train/evaluate loop) and the `M3` first-playable slice next. Deferred platform and release work stays recorded in the backlog.

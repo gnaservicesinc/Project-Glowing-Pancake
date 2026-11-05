@@ -194,44 +194,43 @@ BusinessRunResult run_business_scenario(const runtime::CompiledProgram& program,
     if (options.reload_on) require(*options.reload_on >= scenario.starts_on && *options.reload_on < scenario.ends_before,
             "Requested scenario reload boundary is outside the scenario");
     runtime::Runtime engine{program,resume ? std::move(*resume) : runtime::begin_scenario(program,scenario_id,headquarters)};
-    auto checkpoint = engine.checkpoint();
-    require(checkpoint.world.campaign_start == scenario.starts_on && checkpoint.world.simulation.end_date == scenario.ends_before,
-            "Resume checkpoint does not belong to the requested scenario dates");
-    require(checkpoint.world.simulation.accounts && checkpoint.world.simulation.capacity &&
-            checkpoint.world.simulation.market && checkpoint.world.simulation.liquidity,
-            "Business runner requires all business owning modules");
+    {
+        const auto& checkpoint = engine.checkpoint();
+        require(checkpoint.world.campaign_start == scenario.starts_on && checkpoint.world.simulation.end_date == scenario.ends_before,
+                "Resume checkpoint does not belong to the requested scenario dates");
+        require(checkpoint.world.simulation.accounts && checkpoint.world.simulation.capacity &&
+                checkpoint.world.simulation.market && checkpoint.world.simulation.liquidity,
+                "Business runner requires all business owning modules");
+    }
     BusinessStop stop = BusinessStop::requested_boundary;
     std::optional<OrdinalDay> reloaded_on;
     bool startup_checked = false, expansion_checked = false;
     for (unsigned steps = 0; steps <= 1096; ++steps) {
-        checkpoint = engine.checkpoint();
-        const auto& state = checkpoint.world.simulation;
+        const auto& state = engine.checkpoint().world.simulation;
         const auto liquidity = liquidity_report(*state.liquidity);
         if (liquidity.status == LiquidityStatus::closed) { stop = BusinessStop::closed; break; }
         if (state.phase == DayPhase::finished) { stop = BusinessStop::finished; break; }
         accepted(engine.prepare_opening(state.revision));
-        checkpoint = engine.checkpoint();
-        if (has_decision(checkpoint)) { stop = BusinessStop::decision_required; break; }
-        const auto day = checkpoint.world.simulation.date;
+        const auto& prepared_checkpoint = engine.checkpoint();
+        if (has_decision(prepared_checkpoint)) { stop = BusinessStop::decision_required; break; }
+        const auto day = prepared_checkpoint.world.simulation.date;
         if (options.stop_on && day >= *options.stop_on) { stop = BusinessStop::requested_boundary; break; }
         if (options.reload_on && day == *options.reload_on && !reloaded_on) {
-            const auto bytes = persistence::encode_save(program,checkpoint);
+            const auto bytes = persistence::encode_save(program,prepared_checkpoint);
             const auto loaded = persistence::decode_save(program,bytes).checkpoint;
-            require(loaded == checkpoint,"Scenario checkpoint did not reload exactly at its named boundary");
+            require(loaded == prepared_checkpoint,"Scenario checkpoint did not reload exactly at its named boundary");
             engine = runtime::Runtime{program,loaded}; reloaded_on = day;
         }
         if (!startup_checked) { startup(engine,plan,scenario.starts_on); startup_checked = true; }
         if (strategy == BusinessStrategy::expansion && !expansion_checked && day >= plan.expansion_on) {
             expand(engine,plan); expansion_checked = true;
         }
-        checkpoint = engine.checkpoint();
-        auto warning = liquidity_report(*checkpoint.world.simulation.liquidity);
+        auto warning = liquidity_report(*engine.checkpoint().world.simulation.liquidity);
         if (warning.status == LiquidityStatus::workout) {
-            const bool already_rescued = rescued_before(*checkpoint.world.simulation.accounts);
+            const bool already_rescued = rescued_before(*engine.checkpoint().world.simulation.accounts);
             if (strategy == BusinessStrategy::rescue && !already_rescued) {
                 rescue(engine,plan);
-                checkpoint = engine.checkpoint();
-                warning = liquidity_report(*checkpoint.world.simulation.liquidity);
+                warning = liquidity_report(*engine.checkpoint().world.simulation.liquidity);
             } else if (strategy == BusinessStrategy::rescue && already_rescued) {
                 stop = BusinessStop::warning; break;
             }
@@ -243,8 +242,8 @@ BusinessRunResult run_business_scenario(const runtime::CompiledProgram& program,
         apply(engine,AdvanceDay{});
         if (steps == 1096) throw std::runtime_error("Scenario driver exceeded its finite three-year day bound");
     }
-    checkpoint = engine.checkpoint();
-    return {checkpoint,monthly_reports(checkpoint),stop,reloaded_on};
+    const auto& final_checkpoint = engine.checkpoint();
+    return {final_checkpoint,monthly_reports(final_checkpoint),stop,reloaded_on};
 }
 std::string_view to_string(BusinessStrategy strategy) noexcept {
     switch (strategy) {

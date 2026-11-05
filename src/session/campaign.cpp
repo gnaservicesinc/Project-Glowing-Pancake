@@ -24,35 +24,47 @@ void Campaign::set_settings(persistence::Settings settings) {
 }
 OperationResult Campaign::operate(
     const std::function<runtime::RuntimeResult(runtime::Runtime&)>& operation, bool before_commit) {
-    const auto before = engine_.checkpoint();
-    auto candidate = engine_;
-    auto outcome = operation(candidate);
-    if (!outcome.accepted()) {
-        const bool halt = outcome.reason == runtime::RuntimeReason::invalid_state ||
-            outcome.reason == runtime::RuntimeReason::budget_exceeded ||
-            outcome.reason == runtime::RuntimeReason::arithmetic_overflow ||
-            outcome.reason == runtime::RuntimeReason::missing_definition;
-        return {std::move(outcome), {}, halt};
-    }
+    const auto prior_phase = engine_.checkpoint().world.simulation.phase;
+    const auto prior_day = engine_.checkpoint().world.simulation.date;
+    const auto prior_revision = engine_.checkpoint().world.simulation.revision;
+    runtime::RuntimeResult outcome;
     if (before_commit && settings_.autosave_enabled) {
+        auto candidate = engine_;
+        outcome = operation(candidate);
+        if (!outcome.accepted()) {
+            const bool halt = outcome.reason == runtime::RuntimeReason::invalid_state ||
+                outcome.reason == runtime::RuntimeReason::budget_exceeded ||
+                outcome.reason == runtime::RuntimeReason::arithmetic_overflow ||
+                outcome.reason == runtime::RuntimeReason::missing_definition;
+            return {std::move(outcome), {}, halt};
+        }
         try {
-            (void)autosaves_.write(engine_.program(), before,
+            (void)autosaves_.write(engine_.program(), engine_.checkpoint(),
                 persistence::AutosaveReason::before_irreversible_commitment);
         } catch (const persistence::PersistenceError& error) {
             runtime::RuntimeResult rejected;
             rejected.reason = runtime::RuntimeReason::effect_rejected;
-            rejected.revision = before.world.simulation.revision;
+            rejected.revision = prior_revision;
             rejected.explanation = "The action was not committed because its recovery autosave failed.";
             return {std::move(rejected), StorageNotice{error.code(), error.what()}, true};
         }
+        engine_ = std::move(candidate);
+    } else {
+        outcome = operation(engine_);
+        if (!outcome.accepted()) {
+            const bool halt = outcome.reason == runtime::RuntimeReason::invalid_state ||
+                outcome.reason == runtime::RuntimeReason::budget_exceeded ||
+                outcome.reason == runtime::RuntimeReason::arithmetic_overflow ||
+                outcome.reason == runtime::RuntimeReason::missing_definition;
+            return {std::move(outcome), {}, halt};
+        }
     }
-    const auto after = candidate.checkpoint();
-    engine_ = std::move(candidate);
+    const auto& after = engine_.checkpoint();
     const bool ended = (after.world.simulation.phase == core::DayPhase::finished ||
                        after.world.simulation.phase == core::DayPhase::closed) &&
-                      before.world.simulation.phase != after.world.simulation.phase;
-    if (settings_.autosave_enabled && (after.world.simulation.date != before.world.simulation.date || ended)) {
-        const auto prior_date = core::from_ordinal(before.world.simulation.date);
+                      prior_phase != after.world.simulation.phase;
+    if (settings_.autosave_enabled && (after.world.simulation.date != prior_day || ended)) {
+        const auto prior_date = core::from_ordinal(prior_day);
         const auto current_date = core::from_ordinal(after.world.simulation.date);
         if (ended || prior_date.month != current_date.month || prior_date.year != current_date.year) {
             try {

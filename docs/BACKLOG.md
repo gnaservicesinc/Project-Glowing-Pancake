@@ -124,73 +124,38 @@ invoices and actual serving. An optimized Mac build and eight focused CTests pas
 [evidence](evidence/M2-03-market.md) records tests and limits. Formal acceptance
 retains M2-02's prerequisite gate. Next: M2-04's three-year solvent/recovery paths.
 
-**M2-04 Mac implementation, 2026-11-04:** saved causal liquidity warnings,
+**M2-04 Mac implementation & performance fix, 2026-11-05:** saved causal liquidity warnings,
 30-day workouts, actual-payment rescues, closure/postmortem autosaves and a typed
-three-year command-line policy runner are implemented. A funded expansion uses
-one shared lease and no external financing, reconciles 36 monthly reports and
-matches exact midpoint continuation. [Evidence](evidence/M2-04-business.md)
-distinguishes this engineering-product scenario from M3's qualified model loop.
-Formal acceptance retains M2-03/M1-04's open prerequisites; next Mac work is
-M1-05's accessible campaign room shell.
+three-year command-line policy runner are implemented. Eliminated redundant per-day
+full-history validation and heap allocations in `pgp_core`/`pgp_runtime`/`pgp_session`,
+reducing `session.business-scenario` from 174.34s to 5.38s (~32x speedup) and
+`session.business-recovery` from 8.09s to 0.36s. Next priority is completing the
+playable `M3` vertical slice (`M3-01` -> `M3-05` -> `M3-02` -> `M3-03`) directly
+before returning to `E1A-04`/`E1A-05`/`E1b`.
+
+## M3 — First playable (Active Priority)
+
+- [ ] **M3-01 — Data/research/train/evaluate loop.** Role: simulation. Depends: M2-04. Four data offers, six research nodes, model lineage, finite training and held-out evaluation. Expose uncertainty and bottlenecks; checkpoint cloning cannot add free capability; estimates do not alter RNG.
+- [ ] **M3-05 — Create the AI-assisted playable base-event pack.** Role: content/simulation; AI implementation task. Depends: M3-01, M1-07. Build and validate the [eight-family coverage matrix](EVENT_SYSTEM.md) for 2014–2017: milestone/contract news, technology/research developments, data opportunities, supplier/world disruptions, rival activity and recovery. Supply the slice's two bounded rival routines and heavyweight warning fact producers through shared commands, before pack validation; full budgeted rival planning remains M4. Include firing/non-firing boundaries, trigger-to-effect causal evidence, matched-seed reload tests, digest/required-choice behavior and a baseline-only scenario run. Human stories augment this playable baseline. These eight definitions are the slice budget, not eight additional manually written stories; no live news service or runtime AI.
+- [ ] **M3-02 — Playable scenario presentation and tutorial.** Role: UI/content. Depends: M3-01, M3-05, M1-05. Office/Lab panels, three headquarters choices, training preview, contract comparison, eight validated base-event flows with optional authored story layers, and presentation of M3-05's two bounded rivals/heavyweight warning. Make a concrete task/subgroup evaluation finding understandable, with data/retraining, control and scope responses. News/choices/results use the shared runtime and tiered inbox. Start to ending is playable without developer intervention; full node-canvas qualification is E1b before M4.
+- [ ] **M3-03 — Delegation, warnings, recovery, and slice scoring.** Role: UI/simulation. Depends: M3-02. Add budget-bounded renewal/evaluation policies, configurable auto-pause, a recoverable setback, and specialist/financing paths. Fast-forward cannot skip a required decision or deadline.
+- [ ] **M3-04 — Validate the slice with people.** Role: QA. Depends: M3-03. At least five independent 30–45-minute sessions; three complete without facilitator help; record consented, manually summarized feedback without game analytics. Players can explain cash burn, model evaluation, and why their contract succeeded/failed. Fix material comprehension blockers before M4.
 
 ## E1a — Slice authoring through forms and inspection
 
 - [x] **E1A-01 — Separate editor and current-content library.** Role: content-editor. Depends: M2-04, M1-05, M0-05. Add a separate target/resources/package profile opening an explicitly selected checkout. Browse/search/filter current and draft slice content; support undo/redo, IDs/uses/used-by and conflict-aware writes. Unknown schemas are read-only; installed game folders and paths outside the selected project are not edited.
 - [x] **E1A-02 — Complete typed outline/forms authoring.** Role: content-editor with simulation brief. Depends: E1A-01, M1-06. Author triggers, nested conditions, numbered effects/events, explicit targets, sequences/continuations, delays, dialogue/results and all five lifecycles through one document model. Shared registry supplies units/choices/tooltips and refuses invalid bindings/coercions. Save/reopen and refactor referenced IDs without raw scripting. Keep the model canvas-ready; no second logic representation.
 - [x] **E1A-03 — Trigger-impact and lifecycle inspection.** Role: content-editor/QA. Depends: E1A-02. Show clause values/truth, matched scopes, ordered outline paths, resolved targets, before/after deltas/ledger entries and delayed queues on copied real state/RNG. Test boundaries and natural entry/active/exit plus a separately labeled synthetic cleanup probe. Catch inverted effects, wrong scope and mistaken references. Reuse game dialogue/results; reload nested waits/choices without duplicate effects/rerolls or live-campaign mutation.
-- [ ] **E1A-04 — Safe internal content snapshots.** Role: content-editor/build-release. Depends: E1A-03, M0-05. Save drafts separately; provide a small explicit repository validation/version tool for reviewed internal slice batches before the full graphical finalizer. Record definition revisions, content version/hash/change summary and required game-version changes under the existing contract. Preserve staged writes, conflict detection, recovery and game/editor package separation. A maintainer runs this tool for early playtest content; ordinary authors still edit through forms. No raw-data editing, fake release, Git/store publication or version-check bypass.
-- [ ] **E1A-05 — Demonstrate the narrow authoring path.** Role: QA/content-editor. Depends: E1A-04. Demonstrate browsing, building a branching flow, catching planted sign/scope errors and reopening all lifecycle examples through forms/inspection. Produce a runnable internal editor and validated slice snapshot; verify no editor payload enters the game. This reproducible engineering walkthrough is not the three-author human study. M3 may now finalize its AI-assisted baseline and human-authored additions through the same validated pipeline.
+- [ ] **E1A-04 — Safe internal content snapshots.** Role: content-editor/build-release. Depends: E1A-03, M0-05 (scheduled after M3-03). Save drafts separately; provide a small explicit repository validation/version tool for reviewed internal slice batches before the full graphical finalizer. Record definition revisions, content version/hash/change summary and required game-version changes under the existing contract. Preserve staged writes, conflict detection, recovery and game/editor package separation. A maintainer runs this tool for early playtest content; ordinary authors still edit through forms. No raw-data editing, fake release, Git/store publication or version-check bypass.
+- [ ] **E1A-05 — Demonstrate the narrow authoring path.** Role: QA/content-editor. Depends: E1A-04 (scheduled after M3-03). Demonstrate browsing, building a branching flow, catching planted sign/scope errors and reopening all lifecycle examples through forms/inspection. Produce a runnable internal editor and validated slice snapshot; verify no editor payload enters the game. This reproducible engineering walkthrough is not the three-author human study.
 
-**E1A-01 library slice, 2026-11-04:** the opt-in Content Studio executable
-opens an explicitly selected development checkout and browses current, draft
-and engineering collections through the shared compiler. The library indexes
-reference edges, reports validation and source identity, and refuses symbolic
-paths. [Mac evidence](evidence/E1A-01-library.md) records the read-only and
-build separation checks. Next work is editing drafts with undo/redo and
-external-change conflict handling.
-
-**E1A-01 draft slice, 2026-11-04:** Content Studio can edit flow tags in a
-typed working collection with undo and redo. Explicit Save As creates a new
-draft under `data/drafts/`. In-place draft saves retain the prior copy and
-refuse changed or missing source bytes. [Mac evidence](evidence/E1A-01-drafts.md)
-records safeguards and limits. E1A-01 retains its M2-04 and M1-05 prerequisite
-gates. E1A-02 extends the same working document with typed flow forms.
-
-**E1A-02 trigger slice:** the Studio outline now exposes nested triggers and
-continuous exit predicates. Registry-backed forms edit comparisons, typed
-operands and arithmetic, related members, counts and elapsed-day timers.
-Exact draft round-trip and rejected edits pass on Mac. Lifecycle, execution
-and reference edits were staged separately. [Trigger form evidence](evidence/E1A-02-triggers.md)
-
-**E1A-02 lifecycle slice:** create scoped flows, select scenario activation
-roots and configure all five lifecycles. Draft flow renames update typed
-references in the collection in one undoable change. [Lifecycle form evidence](evidence/E1A-02-lifecycles.md)
-
-**E1A-02 execution slice:** author ordered nodes, numbered effects, explicit
-targets, scoped variables and reference edits through the same outline.
-The optimized Mac checks run an authored flow through the game runtime and
-resume from an exact checkpoint. E1A-02 retains its E1A-01 and M1-06 gates.
-[Execution form evidence](evidence/E1A-02-execution.md)
-
-**E1A-03 Mac implementation:** choose a scenario, headquarters and exact seed,
-run selected or authored roots, inspect facts/scopes/paths and real committed
-effects, then advance or choose through the shared game presentation. Reload
-uses the game codec. Numeric literal boundary probes and synthetic cleanup
-are separately labeled. [Inspection evidence](evidence/E1A-03-inspection.md)
+**E1A-01 through E1A-03 Mac implementation, 2026-11-04:** Content Studio opens an explicitly selected checkout, browses current/draft collections, edits triggers/lifecycles/nodes/effects with undo/redo, and inspects trigger truth/scopes/paths and committed effects on copied game state. Remaining E1a snapshot/walkthrough steps (`E1A-04`, `E1A-05`) are queued after the `M3` playable slice (`M3-01`–`M3-03`, `M3-05`) is complete.
 
 ## E1b — Required node canvas and author qualification
 
 - [ ] **E1B-01 — Add the typed node-box canvas.** Role: content-editor/UI. Depends: E1A-05. Link triggers, effects/events, sequence ports and choices on the same document as forms/outline. Add keyboard equivalents, pan/zoom, useful layout and trace highlighting; graph/form edits must round-trip without semantic change. Commit integer node positions only on edits; keep viewport/selection local. Refuse invalid links and show waiting sibling continuations. Elaborate routing/styling is optional.
 - [ ] **E1B-02 — Graphical batch finalization.** Role: content-editor/build-release. Depends: E1B-01, E1A-04. Wrap the existing validation/version writer in the graphical review/finalize workflow. Test external-edit conflicts, journaled multi-file recovery, definition increments once per batch, pending release requirements, no-op/layout exclusion and no automatic Git/store publication. Human authors finalize without a command or text editor.
 - [ ] **E1B-03 — Prove author usability and packaging.** Role: QA/content-editor. Depends: E1B-02. Three authors browse existing content, build trigger→multiple effects/events and a branching dialogue, catch planted sign/scope mistakes, test/finalize/reopen without scripting. Exercise lifecycle, keyboard/tooltips, graph/forms parity and package exclusion. Arrange humans only through explicit authorized contact. This gate and M3-04 must both pass before M4; E1b need not block initial M3 playtests.
-
-## M3 — First playable
-
-- [ ] **M3-01 — Data/research/train/evaluate loop.** Role: simulation. Depends: M2-04. Four data offers, six research nodes, model lineage, finite training and held-out evaluation. Expose uncertainty and bottlenecks; checkpoint cloning cannot add free capability; estimates do not alter RNG.
-- [ ] **M3-05 — Create the AI-assisted playable base-event pack.** Role: content/simulation; AI implementation task. Depends: M3-01, M1-07, E1A-05. Build and finalize the [eight-family coverage matrix](EVENT_SYSTEM.md) for 2014–2017: milestone/contract news, technology/research developments, data opportunities, supplier/world disruptions, rival activity and recovery. Supply the slice's two bounded rival routines and heavyweight warning fact producers through shared commands, before pack validation; full budgeted rival planning remains M4. Engineering may prepare validated definitions before Studio exists; final acceptance requires Studio browsing/inspection and a versioned internal snapshot. Include firing/non-firing boundaries, trigger-to-effect causal evidence, matched-seed reload tests, digest/required-choice behavior and a baseline-only scenario run. Human stories augment this playable baseline. These eight definitions are the slice budget, not eight additional manually written stories; no live news service or runtime AI.
-- [ ] **M3-02 — Playable scenario presentation and tutorial.** Role: UI/content. Depends: M3-01, M3-05, M1-05, E1A-05. Office/Lab panels, three headquarters choices, training preview, contract comparison, eight Studio-managed/validated base-event flows with optional authored story layers, and presentation of M3-05's two bounded rivals/heavyweight warning. Make a concrete task/subgroup evaluation finding understandable, with data/retraining, control and scope responses. News/choices/results use the shared runtime and tiered inbox. Start to ending is playable without developer intervention; full node-canvas qualification is E1b before M4.
-- [ ] **M3-03 — Delegation, warnings, recovery, and slice scoring.** Role: UI/simulation. Depends: M3-02. Add budget-bounded renewal/evaluation policies, configurable auto-pause, a recoverable setback, and specialist/financing paths. Fast-forward cannot skip a required decision or deadline.
-- [ ] **M3-04 — Validate the slice with people.** Role: QA. Depends: M3-03. At least five independent 30–45-minute sessions; three complete without facilitator help; record consented, manually summarized feedback without game analytics. Players can explain cash burn, model evaluation, and why their contract succeeded/failed. Fix material comprehension blockers before M4.
 
 ## M4 — Competitors and governance
 

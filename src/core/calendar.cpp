@@ -54,15 +54,14 @@ CivilDate from_ordinal(OrdinalDay date) {
         throw std::out_of_range("Ordinal is outside Gregorian years 1..9999");
     }
     const auto absolute = date.value() + epoch_days;
-    int lower = 1;
-    int upper = 10'000;
-    while (lower + 1 < upper) {
-        const auto middle = lower + (upper - lower) / 2;
-        if (days_before_year(middle) <= absolute) {
-            lower = middle;
-        } else {
-            upper = middle;
-        }
+    int lower = static_cast<int>((absolute * 400) / 146097) + 1;
+    if (lower < 1) lower = 1;
+    if (lower > 9999) lower = 9999;
+    while (lower > 1 && days_before_year(lower) > absolute) {
+        --lower;
+    }
+    while (lower < 9999 && days_before_year(lower + 1) <= absolute) {
+        ++lower;
     }
     auto remaining = absolute - days_before_year(lower);
     unsigned month = 1;

@@ -7,6 +7,8 @@
 #include <set>
 #include <stdexcept>
 #include <tuple>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 namespace pgp::core {
@@ -72,7 +74,18 @@ std::string invoice_id(std::string_view kind, std::string_view id, OrdinalDay da
 void invoice(AccountsState& accounts, OrdinalDay day, std::string id, InvoiceKind kind,
              Cents amount, std::string cause) {
     if (amount.value() == 0) return;
-    issue_invoice(accounts, day, {std::move(id), kind, day, amount, Cents{0}, std::move(cause)});
+    const auto account_day = accounts.closed_through ? advance_days(*accounts.closed_through, Days{1}) : accounts.starts_on;
+    if (account_day != day) invalid("Accounts mutation must name the current unclosed day");
+    if (accounts.postings.size() >= accounts_posting_limit || accounts.invoices.size() >= accounts_document_limit ||
+        accounts.next_posting_id == 0 || accounts.next_posting_id == std::numeric_limits<std::uint64_t>::max())
+        invalid("Accounts ledger exceeds its deterministic record or identifier bound");
+    text_valid(id, 100); text_valid(cause, 256);
+    if (amount.value() < 0) invalid("New invoice must have a positive amount, zero settlement and due date on or after today");
+    const Account debit = kind == InvoiceKind::receivable ? Account::receivables : Account::expenses;
+    const Account credit = kind == InvoiceKind::receivable ? Account::revenue : Account::payables;
+    accounts.postings.push_back({accounts.next_posting_id++, day, debit, credit, amount, cause, accounts.owner, "invoice.issue:" + id, id});
+    accounts.invoices.push_back({std::move(id), kind, day, amount, Cents{0}, std::move(cause)});
+    std::sort(accounts.invoices.begin(), accounts.invoices.end(), [](const auto& a, const auto& b) { return a.id < b.id; });
 }
 Cents net_charge(const ContractDayResult& result) {
     return checked_unit_add(checked_unit_subtract(result.gross_fee, result.service_credit), result.usage_charge);
@@ -90,7 +103,7 @@ std::uint64_t installed(const MarketState& state, std::string_view segment_id, s
     }
     return product_id == "outside" ? 10000 : 0;
 }
-void review_adoption(MarketState& state, OrdinalDay day) {
+void append_monthly_adoption(const MarketState& state, std::vector<MarketAdoption>& adoptions, OrdinalDay day) {
     const auto begin = month_start(day);
     for (const auto& segment : state.segments) {
         std::map<std::string, std::uint64_t> observed;
@@ -118,8 +131,11 @@ void review_adoption(MarketState& state, OrdinalDay day) {
         MarketAdoption adoption{day, segment.id, total, {}};
         for (const auto& share : apportion_units(10000, quotas))
             adoption.shares.push_back({share.id, BasisPoints{share.units}});
-        state.adoptions.push_back(std::move(adoption));
+        adoptions.push_back(std::move(adoption));
     }
+}
+void review_adoption(MarketState& state, OrdinalDay day) {
+    append_monthly_adoption(state, state.adoptions, day);
 }
 template<class Operation> void mutate(MarketState& state, Operation operation) {
     validate_market(state);
@@ -178,7 +194,9 @@ void validate_market(const MarketState& state) {
             invalid("Market daily close cursor differs from complete history");
     } else if (!state.days.empty()) invalid("Market daily history has no close cursor");
     const auto latest = current_day(state);
-    std::set<std::string> ids, projects;
+    std::unordered_set<std::string_view> ids, projects;
+    ids.reserve(state.products.size());
+    projects.reserve(state.products.size());
     for (const auto& product : state.products) {
         text_valid(product.id); text_valid(product.capacity_project_id);
         if (product.id == "outside" || !ids.insert(product.id).second || !projects.insert(product.capacity_project_id).second ||
@@ -186,13 +204,16 @@ void validate_market(const MarketState& state) {
             invalid("Product has duplicate identity/source or an invalid task price");
     }
     ids.clear();
+    ids.reserve(state.segments.size());
+    std::unordered_set<std::string_view> products_seen;
+    products_seen.reserve(state.products.size());
     for (const auto& segment : state.segments) {
         text_valid(segment.id);
         if (!ids.insert(segment.id).second || segment.daily_tasks > market_task_limit || segment.daily_budget.value() < 0 ||
             segment.daily_budget.value() > 100'000'000'000'000'000LL || segment.outside_utility > market_utility_limit ||
             segment.reservation_threshold > market_utility_limit || segment.preferences.size() > market_product_limit)
             invalid("Segment demand, budget, utility or catalog bounds are invalid");
-        std::set<std::string> products_seen;
+        products_seen.clear();
         for (const auto& pref : segment.preferences) {
             (void)find_id(state.products, pref.product_id);
             if (!products_seen.insert(pref.product_id).second || pref.utility > market_utility_limit ||
@@ -202,6 +223,7 @@ void validate_market(const MarketState& state) {
         }
     }
     ids.clear();
+    ids.reserve(state.contracts.size());
     for (const auto& contract : state.contracts) {
         text_valid(contract.id); text_valid(contract.cause, 256);
         (void)find_id(state.segments, contract.segment_id); (void)find_id(state.products, contract.product_id);
@@ -248,8 +270,20 @@ void validate_market(const MarketState& state) {
         }
     }
     std::size_t records = 0;
-    std::map<std::string, std::size_t> contract_days;
-    std::set<std::string> seen_segments;
+    std::unordered_map<std::string_view, std::size_t> contract_days;
+    contract_days.reserve(state.contracts.size());
+    std::unordered_set<std::string_view> seen_segments;
+    seen_segments.reserve(state.segments.size());
+    std::unordered_map<std::string_view, std::uint64_t> delivered_contract, delivered_discretionary, promised;
+    std::unordered_map<std::string_view, Cents> charges;
+    std::unordered_set<std::string_view> daily_contracts, daily_segments;
+    delivered_contract.reserve(state.segments.size());
+    delivered_discretionary.reserve(state.segments.size());
+    promised.reserve(state.segments.size());
+    charges.reserve(state.segments.size());
+    daily_contracts.reserve(state.contracts.size());
+    daily_segments.reserve(state.segments.size());
+    std::vector<std::pair<std::string_view, std::string_view>> delivery_ids;
     for (std::size_t index = 0; index < state.days.size(); ++index) {
         const auto& day = state.days[index];
         if (day.day.value() != checked_add(state.starts_on.value(), static_cast<std::int64_t>(index)) ||
@@ -258,9 +292,11 @@ void validate_market(const MarketState& state) {
             invalid("Market day is out of order or exceeds finite allocation bounds");
         records += day.contracts.size() + day.discretionary.size() + day.segments.size();
         if (records > market_record_limit) invalid("Market required records exceed their deterministic bound");
-        std::map<std::string, std::uint64_t> delivered_contract, delivered_discretionary, promised;
-        std::map<std::string, Cents> charges;
-        std::set<std::string> daily_contracts;
+        delivered_contract.clear();
+        delivered_discretionary.clear();
+        promised.clear();
+        charges.clear();
+        daily_contracts.clear();
         for (const auto& result : day.contracts) {
             const auto& contract = find_id(state.contracts, result.contract_id);
             if (!daily_contracts.insert(result.contract_id).second) invalid("Duplicate daily contract result");
@@ -285,12 +321,15 @@ void validate_market(const MarketState& state) {
             }
             ++contract_days[contract.id];
         }
-        std::set<std::pair<std::string, std::string>> delivery_ids;
+        delivery_ids.clear();
         for (const auto& delivery : day.discretionary) {
             const auto& product_row = find_id(state.products, delivery.product_id);
             const auto& segment = find_id(state.segments, delivery.segment_id);
             const auto* pref = preference(segment, product_row.id);
-            if (!delivery_ids.emplace(delivery.segment_id, delivery.product_id).second || delivery.tasks == 0 ||
+            const std::pair<std::string_view, std::string_view> key{delivery.segment_id, delivery.product_id};
+            const bool duplicate = std::find(delivery_ids.begin(), delivery_ids.end(), key) != delivery_ids.end();
+            delivery_ids.push_back(key);
+            if (duplicate || delivery.tasks == 0 ||
                 delivery.tasks > market_task_limit || delivery.charged != multiplied(product_row.price_per_task, delivery.tasks) ||
                 !pref || !pref->eligible || product_row.price_per_task > pref->willingness_to_pay)
                 invalid("Discretionary delivery has invalid eligibility, identity, tasks or price");
@@ -298,14 +337,22 @@ void validate_market(const MarketState& state) {
             auto [found, fresh] = charges.try_emplace(segment.id, Cents{0}); (void)fresh;
             found->second = checked_unit_add(found->second, delivery.charged);
         }
-        std::set<std::string> daily_segments;
+        daily_segments.clear();
         for (const auto& row : day.segments) {
             const auto& segment = find_id(state.segments, row.segment_id);
+            const auto dc_it = delivered_contract.find(segment.id);
+            const auto dd_it = delivered_discretionary.find(segment.id);
+            const auto pr_it = promised.find(segment.id);
+            const auto ch_it = charges.find(segment.id);
+            const auto dc = dc_it == delivered_contract.end() ? 0 : dc_it->second;
+            const auto dd = dd_it == delivered_discretionary.end() ? 0 : dd_it->second;
+            const auto pr = pr_it == promised.end() ? 0 : pr_it->second;
+            const auto ch = ch_it == charges.end() ? Cents{0} : ch_it->second;
             if (!daily_segments.insert(segment.id).second || row.demand != segment.daily_tasks || row.budget != segment.daily_budget ||
-                row.contract_tasks != delivered_contract[segment.id] || row.discretionary_tasks != delivered_discretionary[segment.id] ||
+                row.contract_tasks != dc || row.discretionary_tasks != dd ||
                 row.contract_tasks > row.demand || row.discretionary_tasks > row.demand || row.outside_tasks > row.demand ||
-                row.contract_tasks + row.discretionary_tasks + row.outside_tasks != row.demand || promised[segment.id] > row.demand ||
-                row.charged != (charges.contains(segment.id) ? charges.at(segment.id) : Cents{0}) || row.charged > row.budget ||
+                row.contract_tasks + row.discretionary_tasks + row.outside_tasks != row.demand || pr > row.demand ||
+                row.charged != ch || row.charged > row.budget ||
                 row.charged.value() < 0 || row.unspent != checked_unit_subtract(row.budget, row.charged))
                 invalid("Segment report loses demand, double spends budget or differs from actual work");
             text_valid(row.outside_reason, 256);
@@ -323,9 +370,12 @@ void validate_market(const MarketState& state) {
             if (contract.status == ContractStatus::cancelled) end = std::min(end, *contract.stopped_on);
             if (end > *contract.started_on) expected = static_cast<std::uint64_t>(end.value() - contract.started_on->value());
         }
-        if (contract_days[contract.id] != expected) invalid("Contract committed day coverage is incomplete");
+        const auto cd_it = contract_days.find(contract.id);
+        const auto actual_days = cd_it == contract_days.end() ? 0 : cd_it->second;
+        if (actual_days != expected) invalid("Contract committed day coverage is incomplete");
     }
-    std::set<std::pair<OrdinalDay, std::string>> adoption_ids;
+    std::set<std::pair<OrdinalDay, std::string_view>> adoption_ids;
+    std::unordered_set<std::string_view> share_ids;
     for (const auto& adoption : state.adoptions) {
         (void)find_id(state.segments, adoption.segment_id);
         if (!state.closed_through || adoption.reviewed_on > *state.closed_through || adoption.reviewed_on < state.starts_on ||
@@ -333,7 +383,7 @@ void validate_market(const MarketState& state) {
             adoption.observed_tasks == 0 || adoption.shares.empty() || adoption.shares.size() > market_product_limit + 1)
             invalid("Installed share review has an invalid identity, month or count");
         std::int64_t total = 0;
-        std::set<std::string> share_ids;
+        share_ids.clear();
         for (const auto& row : adoption.shares) {
             if (row.product_id != "outside") (void)find_id(state.products, row.product_id);
             if (!share_ids.insert(row.product_id).second) invalid("Duplicate installed product share");
@@ -343,9 +393,10 @@ void validate_market(const MarketState& state) {
     }
     // Recompute monthly adoption from actual useful work, without replaying
     // eligibility or reading current product availability as historical truth.
-    MarketState reviewed = state; reviewed.adoptions.clear();
-    for (const auto& day : state.days) if (month_end(day.day)) review_adoption(reviewed, day.day);
-    if (reviewed.adoptions != state.adoptions) invalid("Installed monthly shares differ from committed useful-work history");
+    std::vector<MarketAdoption> reviewed_adoptions;
+    reviewed_adoptions.reserve(state.adoptions.size());
+    for (const auto& day : state.days) if (month_end(day.day)) append_monthly_adoption(state, reviewed_adoptions, day.day);
+    if (reviewed_adoptions != state.adoptions) invalid("Installed monthly shares differ from committed useful-work history");
     (void)market_report(state);
 }
 
@@ -358,24 +409,34 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
         invalid("Market, accounts and capacity must share owner and current unclosed day");
     for (const auto& product_row : state.products) (void)project(capacity, product_row);
     struct ExpectedInvoice { InvoiceKind kind; Cents amount; OrdinalDay due; };
-    std::map<std::string, ExpectedInvoice> expected;
+    std::unordered_map<std::string, ExpectedInvoice> expected;
+    expected.reserve(state.days.size() * 4 + state.contracts.size());
     const auto expect = [&](std::string id, InvoiceKind kind, Cents amount, OrdinalDay day) {
         if (amount.value() > 0 && !expected.emplace(std::move(id), ExpectedInvoice{kind, amount, day}).second)
             invalid("Market consequences repeat an invoice identity");
     };
+    std::unordered_map<std::string_view, std::uint64_t> delivered, protected_delivered;
+    delivered.reserve(state.products.size());
+    protected_delivered.reserve(state.products.size());
     for (const auto& day : state.days) {
-        std::map<std::string, std::uint64_t> delivered, protected_delivered;
+        delivered.clear();
+        protected_delivered.clear();
+        const auto date_text = iso_date(day.day);
         for (const auto& result : day.contracts) {
             const auto& contract = find_id(state.contracts, result.contract_id);
             delivered[contract.product_id] += result.delivered_tasks;
             protected_delivered[contract.product_id] += result.delivered_tasks;
-            expect(invoice_id("contract", contract.id, day.day), InvoiceKind::receivable, net_charge(result), day.day);
-            expect(invoice_id("penalty", contract.id, day.day), InvoiceKind::payable, result.penalty, day.day);
+            const auto charge = net_charge(result);
+            if (charge.value() > 0)
+                expect("market.contract/" + contract.id + "/" + date_text, InvoiceKind::receivable, charge, day.day);
+            if (result.penalty.value() > 0)
+                expect("market.penalty/" + contract.id + "/" + date_text, InvoiceKind::payable, result.penalty, day.day);
         }
         for (const auto& result : day.discretionary) {
             delivered[result.product_id] += result.tasks;
-            expect(invoice_id("sale", result.segment_id + "/" + result.product_id, day.day),
-                   InvoiceKind::receivable, result.charged, day.day);
+            if (result.charged.value() > 0)
+                expect("market.sale/" + result.segment_id + "/" + result.product_id + "/" + date_text,
+                       InvoiceKind::receivable, result.charged, day.day);
         }
         // validate_capacity proved complete, contiguous dates. Indexing the
         // matching day preserves the date check without rescanning all earlier
@@ -390,7 +451,11 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
                 [&](const auto& row) { return row.project_id == product_row.capacity_project_id; });
             const auto actual_tasks = work == record->projects.end() ? 0 : work->useful_tasks;
             const auto actual_protected = work == record->projects.end() ? 0 : work->protected_tasks;
-            if (actual_tasks != delivered[product_row.id] || actual_protected != protected_delivered[product_row.id])
+            const auto del_it = delivered.find(product_row.id);
+            const auto pdel_it = protected_delivered.find(product_row.id);
+            const auto expected_tasks = del_it == delivered.end() ? 0 : del_it->second;
+            const auto expected_protected = pdel_it == protected_delivered.end() ? 0 : pdel_it->second;
+            if (actual_tasks != expected_tasks || actual_protected != expected_protected)
                 invalid("Market useful work differs from actual serving or contract priority");
         }
     }
@@ -482,8 +547,9 @@ void cancel_contract(MarketState& state, AccountsState& accounts, OrdinalDay day
     validate_market(next); validate_accounts(ledger);
     state = std::move(next); accounts = std::move(ledger);
 }
-void close_market_day(MarketState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day) {
-    validate_market_links(state, accounts, capacity); require_day(state, day);
+void close_market_day(MarketState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day, bool validate_io) {
+    if (validate_io) validate_market_links(state, accounts, capacity);
+    require_day(state, day);
     auto next = state; auto ledger = accounts; auto pool = capacity;
     std::set<std::string> linked;
     for (const auto& product_row : next.products) linked.insert(product_row.capacity_project_id);
@@ -611,14 +677,16 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
         if (profile.status == ProjectStatus::active)
             actual_requests.push_back({profile.id, product_contract_delivered[row.id], discretionary_totals[row.id]});
     }
-    close_capacity_day(pool, day, actual_requests);
+    close_capacity_day(pool, day, actual_requests, false);
     std::sort(record.contracts.begin(), record.contracts.end(), [](const auto& a, const auto& b) { return a.contract_id < b.contract_id; });
     std::sort(record.discretionary.begin(), record.discretionary.end(), [](const auto& a, const auto& b) {
         return std::tie(a.segment_id, a.product_id) < std::tie(b.segment_id, b.product_id);
     });
     next.days.push_back(std::move(record)); next.closed_through = day;
     if (month_end(day)) review_adoption(next, day);
-    validate_market(next); validate_accounts(ledger); validate_capacity(pool);
+    if (validate_io) {
+        validate_market(next); validate_accounts(ledger); validate_capacity(pool);
+    }
     // Accounts intentionally remains on this day's close boundary; the parent
     // transaction settles it after all market consequences are recognized.
     state = std::move(next); accounts = std::move(ledger); capacity = std::move(pool);

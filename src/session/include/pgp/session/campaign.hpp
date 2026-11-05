@@ -35,7 +35,7 @@ class Campaign {
 public:
     Campaign(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
              std::filesystem::path autosave_directory, persistence::Settings settings = {});
-    [[nodiscard]] runtime::Checkpoint checkpoint() const { return engine_.checkpoint(); }
+    [[nodiscard]] const runtime::Checkpoint& checkpoint() const noexcept { return engine_.checkpoint(); }
     [[nodiscard]] const runtime::CompiledProgram& program() const noexcept { return engine_.program(); }
     [[nodiscard]] const persistence::Settings& settings() const noexcept { return settings_; }
     void set_settings(persistence::Settings settings);

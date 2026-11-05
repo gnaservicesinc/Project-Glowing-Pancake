@@ -150,13 +150,17 @@ struct CommandResult {
     [[nodiscard]] bool accepted() const noexcept { return reason == CommandReason::accepted; }
 };
 
+struct TrustedSimulationState {};
+void validate_simulation(const SimulationState& state);
+
 class Simulation {
 public:
     explicit Simulation(SimulationState initial);
+    Simulation(SimulationState initial, TrustedSimulationState) noexcept : state_{std::move(initial)} {}
     explicit Simulation(Cents cash);
     [[nodiscard]] CommandResult submit(const Command& command);
     [[nodiscard]] std::shared_ptr<const SimulationSnapshot> snapshot() const;
-    [[nodiscard]] SimulationState checkpoint() const { return state_; }
+    [[nodiscard]] const SimulationState& checkpoint() const noexcept { return state_; }
 private:
     SimulationState state_;
 };

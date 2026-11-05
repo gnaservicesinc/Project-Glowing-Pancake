@@ -12,6 +12,8 @@
 #include <utility>
 
 namespace pgp::runtime {
+void validate_checkpoint_with_simulation(const CompiledProgram& program, const Checkpoint& checkpoint,
+                                         bool validate_core_simulation);
 namespace {
 struct Failure { RuntimeReason reason; std::string detail; };
 [[noreturn]] void fail(RuntimeReason reason, std::string detail) { throw Failure{reason, std::move(detail)}; }
@@ -533,8 +535,9 @@ RuntimeResult transaction(const CompiledProgram& program, Checkpoint& original, 
             fail(RuntimeReason::arithmetic_overflow, "The authoritative revision range is exhausted.");
         ++next.world.simulation.revision;
         std::size_t steps = 0;
-        action(next, result, steps);
-        validate_checkpoint(program, next);
+        bool core_already_validated = false;
+        action(next, result, steps, core_already_validated);
+        validate_checkpoint_with_simulation(program, next, !core_already_validated);
         original = std::move(next);
         result.revision = original.world.simulation.revision;
         result.committed = true;
@@ -603,14 +606,14 @@ RuntimeResult Runtime::prepare_opening(std::uint64_t expected_revision) {
         (checkpoint_.runtime.prepared_day == checkpoint_.world.simulation.date || has_choice(checkpoint_.runtime) ||
          checkpoint_.world.simulation.phase == core::DayPhase::awaiting_choice))
         return {RuntimeReason::accepted, expected_revision, "This morning is already prepared or suspended at its existing choice.", {}, {}};
-    return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto& steps) {
+    return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto& steps, bool&) {
         if (next.world.simulation.phase == core::DayPhase::finished || next.world.simulation.phase == core::DayPhase::closed)
             fail(RuntimeReason::campaign_finished, "The campaign is finished.");
         prepare(next, program_, result, steps, trace_mode_);
     });
 }
 RuntimeResult Runtime::choose(std::uint64_t expected_revision, std::uint64_t presentation_id, std::string_view choice_id) {
-    return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto& steps) {
+    return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto& steps, bool&) {
         if (next.world.simulation.phase == core::DayPhase::closed)
             fail(RuntimeReason::campaign_finished,"The company is closed; its final state is preserved.");
         const auto found = std::find_if(next.runtime.presentations.begin(), next.runtime.presentations.end(),
@@ -639,14 +642,15 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             "The company is closed; its final accounts remain inspectable.",{}, {}};
     // Core submit increments once itself; transaction's reservation is removed
     // inside the copied state so the whole command/opening shares one revision.
-    return transaction(program_, checkpoint_, command.expected_revision, [&](auto& next, auto& result, auto& steps) {
+    return transaction(program_, checkpoint_, command.expected_revision, [&](auto& next, auto& result, auto& steps, bool& core_already_validated) {
         --next.world.simulation.revision;
         const bool pause_only = std::holds_alternative<core::SetPaused>(command.action) && std::get<core::SetPaused>(command.action).paused;
         const bool core_choice = std::holds_alternative<core::ResolveOpeningChoice>(command.action);
         if (!pause_only && !core_choice &&
             (has_choice(next.runtime) || next.runtime.prepared_day != next.world.simulation.date))
             fail(RuntimeReason::morning_not_ready, "Resolve required content choices and prepare the morning before work.");
-        core::Simulation core_state{next.world.simulation};
+        const auto prior_day = next.world.simulation.date;
+        core::Simulation core_state{std::move(next.world.simulation), core::TrustedSimulationState{}};
         const auto outcome = core_state.submit(command);
         if (!outcome.accepted()) {
             if (outcome.reason == core::CommandReason::campaign_finished) fail(RuntimeReason::campaign_finished, outcome.explanation);
@@ -654,17 +658,21 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             if (outcome.reason == core::CommandReason::limit_exceeded) fail(RuntimeReason::budget_exceeded, outcome.explanation);
             fail(RuntimeReason::effect_rejected, outcome.explanation);
         }
-        const auto prior_day = next.world.simulation.date;
         next.world.simulation = core_state.checkpoint();
+        const auto cash_after_submit = next.world.simulation.cash;
+        const auto phase_after_submit = next.world.simulation.phase;
         if (next.world.simulation.phase == core::DayPhase::closed) next.world.facts.at("company.is_operating") = false;
         if (next.world.simulation.date != prior_day || next.world.simulation.phase == core::DayPhase::closed)
             next.runtime.prepared_day.reset();
         if (next.world.simulation.phase == core::DayPhase::work_ready &&
             next.runtime.prepared_day != next.world.simulation.date) prepare(next, program_, result, steps, trace_mode_);
+        core_already_validated = (next.world.simulation.cash == cash_after_submit &&
+                                  next.world.simulation.phase == phase_after_submit &&
+                                  next.world.simulation.phase != core::DayPhase::opening);
     });
 }
 RuntimeResult Runtime::synthetic_cleanup(std::uint64_t expected_revision, std::uint64_t activation_id) {
-    return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto&) {
+    return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto&, bool&) {
         if (next.world.simulation.phase == core::DayPhase::closed)
             fail(RuntimeReason::campaign_finished,"A closed company retains its final flow state.");
         auto& active = activation_by_id(next.runtime, activation_id);

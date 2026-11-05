@@ -130,7 +130,7 @@ void validate(const SimulationState& state) {
         invalid("Invalid campaign dates or negative unfinanced cash");
     }
     if (state.accounts) {
-        validate_accounts(*state.accounts);
+        if (!state.market && !state.liquidity) validate_accounts(*state.accounts);
         const auto& ledger = *state.accounts;
         if (accounts_report(ledger).cash != state.cash || ledger.starts_on > state.date ||
             (ledger.closed_through ? advance_days(*ledger.closed_through, Days{1}) != state.date : ledger.starts_on != state.date) ||
@@ -138,7 +138,7 @@ void validate(const SimulationState& state) {
             invalid("Business accounts do not reconcile with the saved cash or daily cursor");
     }
     if (state.capacity) {
-        validate_capacity(*state.capacity);
+        if (!state.market) validate_capacity(*state.capacity);
         const auto& pool = *state.capacity;
         if (!state.accounts || pool.owner != state.accounts->owner || pool.starts_on != state.accounts->starts_on ||
             pool.closed_through != state.accounts->closed_through)
@@ -158,7 +158,7 @@ void validate(const SimulationState& state) {
     }
     if (state.liquidity) {
         if (!state.accounts) invalid("Liquidity requires owned business accounts");
-        validate_liquidity_links(*state.liquidity,*state.accounts);
+        validate_liquidity_links(*state.liquidity, *state.accounts, !state.market);
         if ((state.liquidity->status == LiquidityStatus::closed) != (state.phase == DayPhase::closed) ||
             (liquidity_report(*state.liquidity).pending_warning && !state.paused))
             invalid("Liquidity closure or required warning differs from the daily phase");
@@ -305,6 +305,10 @@ std::string_view to_string(CommandReason value) noexcept {
     return "invalid";
 }
 
+void validate_simulation(const SimulationState& state) {
+    validate(state);
+}
+
 Simulation::Simulation(Cents cash) : Simulation{[cash] {
     SimulationState state;
     state.cash = cash;
@@ -312,12 +316,14 @@ Simulation::Simulation(Cents cash) : Simulation{[cash] {
 }()} {}
 Simulation::Simulation(SimulationState initial) : state_{std::move(initial)} {
     validate(state_);
-    try {
-        prepare_opening(state_);
-    } catch (const Refusal& failure) {
-        throw std::invalid_argument{failure.explanation};
+    if (state_.phase == DayPhase::opening) {
+        try {
+            prepare_opening(state_);
+        } catch (const Refusal& failure) {
+            throw std::invalid_argument{failure.explanation};
+        }
+        validate(state_);
     }
-    validate(state_);
 }
 
 CommandResult Simulation::submit(const Command& command) {
@@ -402,16 +408,16 @@ CommandResult Simulation::submit(const Command& command) {
                 }
                 const auto cash_before = next.cash;
                 if (next.market)
-                    close_market_day(*next.market, accounts(next), capacity(next), next.date);
-                else if (next.capacity) close_capacity_day(*next.capacity, next.date);
+                    close_market_day(*next.market, accounts(next), capacity(next), next.date, false);
+                else if (next.capacity) close_capacity_day(*next.capacity, next.date, false);
                 if (next.accounts) {
-                    close_accounts_day(*next.accounts, next.date, reserved_cash(next));
+                    close_accounts_day(*next.accounts, next.date, reserved_cash(next), false);
                     next.cash = accounts_report(*next.accounts).cash;
                 }
                 (void)receipt(next, "advance_day", 0, checked_unit_subtract(next.cash, cash_before));
                 next.date = advance_days(next.date, Days{1});
                 if (next.liquidity) {
-                    observe_liquidity(*next.liquidity,*next.accounts,next.date);
+                    observe_liquidity(*next.liquidity, *next.accounts, next.date, false);
                     const auto report = liquidity_report(*next.liquidity);
                     if (report.pending_warning || report.status == LiquidityStatus::closed) next.paused = true;
                 }

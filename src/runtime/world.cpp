@@ -222,12 +222,19 @@ std::int64_t modifier_total(const RuntimeState& state, const ScopeBinding& bindi
     return total;
 }
 
-void validate_checkpoint(const CompiledProgram& program, const Checkpoint& checkpoint) {
+void validate_checkpoint_with_simulation(const CompiledProgram& program, const Checkpoint& checkpoint,
+                                          bool validate_core_simulation) {
     const auto& world = checkpoint.world;
     const auto& state = checkpoint.runtime;
-    // Core validation runs on a copy only; a saved unfinished opening can be
-    // resumed later without this inspection modifying its cursor or cash.
-    (void)core::Simulation{world.simulation};
+    // Core validation runs on a copy only when an unfinished opening needs
+    // preparation; otherwise validate the core state directly in place.
+    if (validate_core_simulation) {
+        if (world.simulation.phase == core::DayPhase::opening) {
+            (void)core::Simulation{world.simulation};
+        } else {
+            core::validate_simulation(world.simulation);
+        }
+    }
     if (world.simulation.accounts && world.simulation.accounts->owner != world.company_id)
         invalid("Business accounts belong to a different company scope");
     if (world.simulation.phase == core::DayPhase::closed &&
@@ -622,5 +629,8 @@ void validate_checkpoint(const CompiledProgram& program, const Checkpoint& check
     if (state.prepared_day && std::any_of(state.activations.begin(), state.activations.end(), [](const auto& activation) {
         return activation.status == ActivationStatus::awaiting_choice || activation.status == ActivationStatus::ready;
     })) invalid("Prepared runtime morning still contains required work");
+}
+void validate_checkpoint(const CompiledProgram& program, const Checkpoint& checkpoint) {
+    validate_checkpoint_with_simulation(program, checkpoint, true);
 }
 } // namespace pgp::runtime

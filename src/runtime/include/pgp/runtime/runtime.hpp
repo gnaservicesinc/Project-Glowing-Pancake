@@ -257,7 +257,7 @@ public:
     // The default trace redacts hidden facts for player-facing callers.
     Runtime(CompiledProgram program, Checkpoint checkpoint,
             InspectionMode trace_mode = InspectionMode::player_known);
-    [[nodiscard]] Checkpoint checkpoint() const { return checkpoint_; }
+    [[nodiscard]] const Checkpoint& checkpoint() const noexcept { return checkpoint_; }
     // Borrow for read-only projection before the next operation.
     [[nodiscard]] const Checkpoint& current_state() const noexcept { return checkpoint_; }
     [[nodiscard]] const CompiledProgram& program() const noexcept { return program_; }

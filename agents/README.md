@@ -18,15 +18,9 @@ One agent can use multiple briefs where a task crosses boundaries. Parallel agen
 
 ## Ready-to-use starting assignment
 
-> Finish M0-03 qualification in docs/BACKLOG.md. Follow AGENTS.md and the UI/build-release briefs. Read docs/BUILDING.md and docs/evidence/M0-03-local-probe.md. The local UI/Metal/resource/audio implementation exists and passes; native Windows/Linux renderers, recovery and deployed closure still require evidence. Run those probes on hosted/native environments without large local SDK installs or publication. Preserve the core boundary and record device gaps. Commit and push the task changes.
+> Complete the M3 First Playable slice (`M3-01`, `M3-05`, `M3-02`, `M3-03`) in `docs/BACKLOG.md` following `AGENTS.md`. Prioritize shipping a complete, playable 2012–2020 base game loop on macOS (`M3-01` data/research/training/evaluation loop -> `M3-05` eight base events and bounded rivals -> `M3-02` playable Office/Lab UI panels, HQ choice, training preview, contract comparison, and tutorial -> `M3-03` delegation, warnings, recovery, and end-of-slice scoring). Do not block `M3` gameplay implementation on Content Studio tooling (`E1A-04`, `E1A-05`, `E1b`) or cross-platform native qualification (`M0-03`, `M0-04`). Implement full backlog items per commit without micro-slicing or writing redundant `docs/evidence/*.md` files.
 
-M0-01, M0-02 and M0-05 are complete; the toolchain inventory, build/core/headless
-scaffold and shared version identity are implemented. M1-01 primitives are the
-next independently unblocked implementation task, while native M0-03 qualification
-remains open and M0-04 requires it. Do not jump to the century-wide simulation
-before the remaining foundation gates pass.
-
-M0-05 establishes the version-reader foundation; M1-06 establishes the shared flow runtime. E1a builds complete forms/outline and inspection before M3 finalizes its eight events. E1b completes the required node canvas, graphical finalizer and three-author study before M4; it need not block the first gameplay tests. E2 expands authoring as schemas mature and closes before M8's content pass. Follow those gates; do not hand authors a graph that bypasses validation or differs from gameplay.
+`M1` (`M1-01` through `M1-07`) and `M2` (`M2-01` through `M2-04`) are complete on Mac, along with `E1A-01` through `E1A-03`. The shared content compiler (`pgp_content` / `pgp_runtime`) already validates and compiles all authored definitions directly from JSON; `M3` gameplay and content do not require `E1A-04` or `E1A-05` to be completed first. Keep `E1A-04`, `E1A-05`, and `E1b` queued after the `M3` playable slice works end-to-end.
 
 ## AI event assignments
 

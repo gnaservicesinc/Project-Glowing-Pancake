@@ -6,6 +6,8 @@
 #include <set>
 #include <stdexcept>
 #include <tuple>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 namespace pgp::core {
@@ -137,7 +139,9 @@ void validate_capacity(const CapacityState& state) {
             invalid("Capacity close cursor does not match complete daily history");
     } else if (!state.days.empty()) invalid("Capacity history has no close cursor");
     const auto latest = current_day(state);
-    std::set<std::string> source_ids, physical_ids;
+    std::unordered_set<std::string_view> source_ids, physical_ids;
+    source_ids.reserve(state.sources.size());
+    physical_ids.reserve(state.sources.size());
     for (const auto& row : state.sources) {
         text_valid(row.id, 100); text_valid(row.physical_id); text_valid(row.owner); text_valid(row.provider); text_valid(row.interconnect);
         if (!source_ids.insert(row.id).second || !physical_ids.insert(row.physical_id).second || row.owner != state.owner ||
@@ -147,8 +151,10 @@ void validate_capacity(const CapacityState& state) {
             (row.kind == CapacitySourceKind::leased && row.provider == row.owner))
             invalid("Capacity source has duplicate ownership, impossible output or an invalid provider");
     }
-    std::map<std::string, const CapacityProject*> projects;
-    std::map<std::string, std::int64_t> source_reservations;
+    std::unordered_map<std::string_view, const CapacityProject*> projects;
+    std::unordered_map<std::string_view, std::int64_t> source_reservations;
+    projects.reserve(state.projects.size());
+    source_reservations.reserve(state.sources.size());
     for (const auto& row : state.projects) {
         text_valid(row.id, 100); text_valid(row.source_id, 100); text_valid(row.interconnect); text_valid(row.cause, 256);
         (void)from_ordinal(row.starts_on);
@@ -195,7 +201,10 @@ void validate_capacity(const CapacityState& state) {
     const auto report = capacity_report(state);
     if (report.assigned_staff > state.available_staff) invalid("Project commitments oversubscribe staff");
     struct Totals { MilliCU work{0}; std::uint64_t tasks = 0; std::size_t days = 0; std::optional<OrdinalDay> last_day; };
-    std::map<std::string, Totals> totals;
+    std::unordered_map<std::string_view, Totals> totals;
+    totals.reserve(state.projects.size());
+    std::unordered_map<std::string_view, MilliCU> source_use;
+    source_use.reserve(state.sources.size());
     std::size_t work_records = 0;
     for (std::size_t day_index = 0; day_index < state.days.size(); ++day_index) {
         const auto& day = state.days[day_index];
@@ -204,11 +213,11 @@ void validate_capacity(const CapacityState& state) {
             invalid("Daily capacity history is incomplete or out of order");
         work_records += day.projects.size();
         if (work_records > capacity_work_record_limit) invalid("Capacity work history exceeds its deterministic bound");
-        std::map<std::string, MilliCU> source_use;
-        std::string previous;
+        source_use.clear();
+        std::string_view previous;
         std::uint64_t staff_used = 0;
         for (const auto& used : day.projects) {
-            if (used.project_id <= previous) invalid("Daily project records must have unique sorted identities");
+            if (!previous.empty() && used.project_id <= previous) invalid("Daily project records must have unique sorted identities");
             previous = used.project_id;
             const auto found = projects.find(used.project_id);
             if (found == projects.end()) invalid("Daily work refers to an unknown project");
@@ -240,9 +249,9 @@ void validate_capacity(const CapacityState& state) {
             staff_used += used.assigned_staff;
         }
         if (staff_used > state.available_staff) invalid("Daily assignments oversubscribe staff");
-        previous.clear();
+        previous = {};
         for (const auto& used : day.sources) {
-            if (used.source_id <= previous) invalid("Daily source records must have unique sorted identities");
+            if (!previous.empty() && used.source_id <= previous) invalid("Daily source records must have unique sorted identities");
             previous = used.source_id;
             const auto& supply = source(state, used.source_id);
             const auto recorded = source_use.find(used.source_id);
@@ -310,12 +319,13 @@ void update_effective_capacity(CapacityState& state, OrdinalDay day, std::string
         found->effective = effective;
     });
 }
-CapacityDay preview_capacity_day(const CapacityState& state, OrdinalDay day,
-                                 const std::vector<ServingRequest>& serving) {
-    validate_capacity(state);
+namespace {
+CapacityDay preview_capacity_day_unchecked(const CapacityState& state, OrdinalDay day,
+                                           const std::vector<ServingRequest>& serving) {
     require_day(state, day);
     if (serving.size() > capacity_project_limit) invalid("Daily serving plan exceeds its record bound");
-    std::map<std::string, ServingRequest> requests;
+    std::unordered_map<std::string_view, ServingRequest> requests;
+    requests.reserve(serving.size());
     for (const auto& request : serving) {
         const auto found = std::find_if(state.projects.begin(), state.projects.end(),
             [&](const auto& row) { return row.id == request.project_id; });
@@ -364,9 +374,16 @@ CapacityDay preview_capacity_day(const CapacityState& state, OrdinalDay day,
     std::sort(record.projects.begin(), record.projects.end(), [](const auto& a, const auto& b) { return a.project_id < b.project_id; });
     return record;
 }
-void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<ServingRequest>& serving) {
-    mutate(state, [&](auto& candidate) {
-        auto record = preview_capacity_day(candidate, day, serving);
+} // namespace
+
+CapacityDay preview_capacity_day(const CapacityState& state, OrdinalDay day,
+                                 const std::vector<ServingRequest>& serving) {
+    validate_capacity(state);
+    return preview_capacity_day_unchecked(state, day, serving);
+}
+void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<ServingRequest>& serving, bool validate_io) {
+    const auto apply_day = [&](CapacityState& candidate) {
+        auto record = preview_capacity_day_unchecked(candidate, day, serving);
         for (std::size_t i = 0; i < candidate.projects.size(); ++i) {
             auto& row = candidate.projects[i];
             if (row.status != ProjectStatus::active) continue;
@@ -381,13 +398,15 @@ void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<
             }
         }
         candidate.days.push_back(std::move(record)); candidate.closed_through = day;
-    });
+    };
+    if (validate_io) mutate(state, apply_day);
+    else apply_day(state);
 }
-void close_capacity_day(CapacityState& state, OrdinalDay day) {
+void close_capacity_day(CapacityState& state, OrdinalDay day, bool validate_io) {
     std::vector<ServingRequest> serving;
     for (const auto& row : state.projects)
         if (row.status == ProjectStatus::active && row.kind == ProjectKind::serving)
             serving.push_back({row.id, 0, row.tasks_per_day});
-    close_capacity_day(state, day, serving);
+    close_capacity_day(state, day, serving, validate_io);
 }
 } // namespace pgp::core

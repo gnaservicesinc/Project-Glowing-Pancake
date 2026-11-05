@@ -194,12 +194,12 @@ void validate_liquidity(const LiquidityState& state) {
     default: invalid("Unknown liquidity status");
     }
 }
-void validate_liquidity_links(const LiquidityState& state, const AccountsState& accounts) {
-    validate_accounts(accounts);
+void validate_liquidity_links(const LiquidityState& state, const AccountsState& accounts, bool validate_accounts_state) {
+    if (validate_accounts_state) validate_accounts(accounts);
     links_unchecked(state, accounts);
 }
-void observe_liquidity(LiquidityState& state, const AccountsState& accounts, OrdinalDay observation_day) {
-    validate_liquidity(state); validate_accounts(accounts);
+void observe_liquidity(LiquidityState& state, const AccountsState& accounts, OrdinalDay observation_day, bool validate_io) {
+    if (validate_io) { validate_liquidity(state); validate_accounts(accounts); }
     if (state.status == LiquidityStatus::closed || state.owner != accounts.owner || state.starts_on != accounts.starts_on ||
         observation_day != accounts_day(accounts) || !accounts.closed_through ||
         (state.status == LiquidityStatus::workout && observation_day > state.workouts.back().deadline) ||
@@ -211,7 +211,7 @@ void observe_liquidity(LiquidityState& state, const AccountsState& accounts, Ord
     next.observed_on = observation_day;
     next.checked_through = accounts.closed_through;
     apply_exposure(next, exposure_unchecked(accounts, next.checked_through));
-    links_unchecked(next, accounts);
+    if (validate_io) links_unchecked(next, accounts);
     state = std::move(next);
 }
 void refresh_liquidity(LiquidityState& state, const AccountsState& accounts) {

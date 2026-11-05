@@ -96,6 +96,6 @@ target_compile_definitions(pgp-business-scenario-test PRIVATE
     PGP_BUSINESS_FIXTURE_PATH="${PROJECT_SOURCE_DIR}/tests/content/fixtures/business.json")
 pgp_project_target(pgp-business-scenario-test)
 add_test(NAME session.business-scenario COMMAND pgp-business-scenario-test --solvent-only)
-set_tests_properties(session.business-scenario PROPERTIES TIMEOUT 300)
+set_tests_properties(session.business-scenario PROPERTIES TIMEOUT 60)
 add_test(NAME session.business-recovery COMMAND pgp-business-scenario-test --recovery-only)
-set_tests_properties(session.business-recovery PROPERTIES TIMEOUT 60)
+set_tests_properties(session.business-recovery PROPERTIES TIMEOUT 30)

@@ -102,7 +102,7 @@ void reserve_project(CapacityState& state, OrdinalDay day, CapacityProject proje
 void cancel_project(CapacityState& state, OrdinalDay day, std::string_view project_id);
 void update_effective_capacity(CapacityState& state, OrdinalDay day,
                                std::string_view source_id, MilliCUPerDay effective);
-void close_capacity_day(CapacityState& state, OrdinalDay day);
+void close_capacity_day(CapacityState& state, OrdinalDay day, bool validate_io = true);
 // A common daily plan: contract tasks precede discretionary serving, then
 // finite projects. Omitted serving rows do no work; unused compute can train.
 struct ServingRequest {
@@ -113,5 +113,5 @@ struct ServingRequest {
 [[nodiscard]] CapacityDay preview_capacity_day(const CapacityState& state, OrdinalDay day,
                                                const std::vector<ServingRequest>& serving);
 void close_capacity_day(CapacityState& state, OrdinalDay day,
-                        const std::vector<ServingRequest>& serving);
+                        const std::vector<ServingRequest>& serving, bool validate_io = true);
 } // namespace pgp::core

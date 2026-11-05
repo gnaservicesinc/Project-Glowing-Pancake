@@ -112,7 +112,7 @@ void invest_equity(AccountsState& state, OrdinalDay day, std::string investor,
 // Accrue exactly the next day, then collect due receivables and pay due
 // obligations in (due,id) order from unreserved cash. Unpaid amounts persist.
 // Principal repayment requires repay_debt; maturity is visible in projections.
-void close_accounts_day(AccountsState& state, OrdinalDay day, Cents protected_cash);
+void close_accounts_day(AccountsState& state, OrdinalDay day, Cents protected_cash, bool validate_io = true);
 struct CashProjection {
     OrdinalDay through{0};
     Cents cash{0};

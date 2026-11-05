@@ -1,16 +1,17 @@
 # Project status and next handoff
 
-Updated 2026-11-04 · Implementation started against planning baseline 1.2
+Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**18 of 52 steps complete for Mac feature development.** Completed work includes
+**18 of 52 steps complete for Mac feature development; `M3` First Playable is now the active priority.** Completed work includes
 M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04 and E1A-01 through E1A-03.
-The user’s current instruction prioritizes game features on Mac. Implemented
-Mac behavior and focused checks close feature steps, while native platform,
-packaging and device qualification remain deferred. Earlier evidence retains
-its historical prerequisite and acceptance language. See the
-[implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
+On 2026-11-05, core/runtime/session daily validation and state-copy bottlenecks were
+eliminated, reducing the three-year business scenario test (`session.business-scenario`)
+from **174.34s to ~5.4s** and `session.business-recovery` from **8.09s to ~0.4s**.
+The roadmap and backlog have been updated so `M3` (`M3-01` -> `M3-05` -> `M3-02` -> `M3-03`)
+is no longer blocked behind Content Studio authoring steps (`E1A-04`, `E1A-05`, `E1b`).
+See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
 [build instructions](BUILDING.md) for runnable commands.
 
 **Mac-first development, per the 2026-11-04 user instruction:** use incremental
@@ -220,11 +221,13 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac implementation: E1A-04 safe internal content snapshots.**
-Finalize reviewed content through the shared validation and version contract,
-with staged writes, conflict checks and recoverable batches.
-Content finalization and save migrations remain later feature work.
-Platform packaging remains deferred.
+**Next Mac implementation: M3-01 data/research/train/evaluate loop, followed directly by M3-05, M3-02, and M3-03.**
+Implement the first playable's four data offers, six research nodes, model lineage,
+finite training and held-out subgroup evaluation (`M3-01`), then wire the eight-flow
+base-event pack and two bounded rivals (`M3-05`), playable Office/Lab panels and
+tutorial (`M3-02`), and delegation/recovery/scoring (`M3-03`). Remaining Content
+Studio tasks (`E1A-04`, `E1A-05`, `E1b`) follow after the `M3` playable slice works
+end-to-end. Platform packaging remains deferred.
 
 The 2026-11-04 event clarification adds M1-07 (built-in detection/dispatch) and
 M3-05 (AI-assisted playable base-event pack), with human stories augmenting the

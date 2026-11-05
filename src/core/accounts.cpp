@@ -7,6 +7,8 @@
 #include <set>
 #include <stdexcept>
 #include <tuple>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 namespace pgp::core {
@@ -103,6 +105,14 @@ OrdinalDay month_end(OrdinalDay day) {
     const auto date = from_ordinal(day);
     return to_ordinal({date.year, date.month, days_in_month(date.year, date.month)});
 }
+void append_trusted(AccountsState& state, OrdinalDay day, Account debit, Account credit,
+                    Cents amount, std::string cause, std::string key, std::string document_id = {}) {
+    if (amount.value() <= 0 || debit == credit) invalid("Posting needs a positive amount and distinct accounts");
+    if (state.postings.size() >= accounts_posting_limit || state.next_posting_id == std::numeric_limits<std::uint64_t>::max())
+        invalid("The bounded ledger is full; no required posting was discarded");
+    state.postings.push_back({state.next_posting_id++, day, debit, credit, amount,
+                              std::move(cause), state.owner, std::move(key), std::move(document_id)});
+}
 void accrue(AccountsState& state, OrdinalDay day, std::string id, Cents amount, std::string cause) {
     if (amount == Cents{0}) return;
     auto found = std::find_if(state.invoices.begin(), state.invoices.end(),
@@ -114,12 +124,12 @@ void accrue(AccountsState& state, OrdinalDay day, std::string id, Cents amount, 
     } else if (found->kind != InvoiceKind::payable || found->due != month_end(day) || found->cause != cause)
         invalid("An accrued obligation conflicts with an existing invoice");
     found->amount = checked_unit_add(found->amount, amount);
-    append(state, day, Account::expenses, Account::payables, amount, std::move(cause),
-           "accrue/" + id + "/" + iso_date(day), id);
+    append_trusted(state, day, Account::expenses, Account::payables, amount, std::move(cause),
+                   "accrue/" + id + "/" + iso_date(day), id);
 }
 void close_day(AccountsState& state, OrdinalDay day, Cents protected_cash) {
     require_day(state, day);
-    (void)available_cash(state, protected_cash);
+    auto current_available = available_cash(state, protected_cash);
     const auto civil = from_ordinal(day);
     const auto denominator = days_in_month(civil.year, civil.month);
     const auto first = month_start(day);
@@ -160,9 +170,19 @@ void close_day(AccountsState& state, OrdinalDay day, Cents protected_cash) {
     for (const auto i : due) {
         auto& invoice = state.invoices[i];
         auto amount = outstanding(invoice);
-        if (invoice.kind == InvoiceKind::payable) amount = std::min(amount, available_cash(state, protected_cash));
-        if (amount.value() > 0)
-            settle(state, day, invoice, amount, protected_cash, "settle/" + invoice.id + "/" + iso_date(day));
+        if (invoice.kind == InvoiceKind::payable) amount = std::min(amount, current_available);
+        if (amount.value() > 0) {
+            if (invoice.kind == InvoiceKind::payable) {
+                append_trusted(state, day, Account::payables, Account::cash, amount, invoice.cause,
+                               "settle/" + invoice.id + "/" + iso_date(day), invoice.id);
+                current_available = checked_unit_subtract(current_available, amount);
+            } else {
+                append_trusted(state, day, Account::cash, Account::receivables, amount, invoice.cause,
+                               "settle/" + invoice.id + "/" + iso_date(day), invoice.id);
+                current_available = checked_unit_add(current_available, amount);
+            }
+            invoice.settled = checked_unit_add(invoice.settled, amount);
+        }
     }
     state.closed_through = day;
 }
@@ -205,22 +225,74 @@ void validate_accounts(const AccountsState& state) {
         state.holdings.empty() || state.holdings.size() > accounts_terms_limit ||
         state.next_posting_id != state.postings.size() + 1)
         invalid("Accounts state exceeds its deterministic bounds or posting identity");
-    std::set<std::string> keys;
+    struct FlatStringSet {
+        std::vector<std::string_view> table;
+        std::size_t mask = 0;
+        void reset(std::size_t count) {
+            std::size_t cap = 16;
+            while (cap < count * 2 + 1) cap <<= 1;
+            table.assign(cap, std::string_view{});
+            mask = cap - 1;
+        }
+        bool insert(std::string_view key) {
+            std::size_t idx = std::hash<std::string_view>{}(key) & mask;
+            while (!table[idx].empty()) {
+                if (table[idx] == key) return false;
+                idx = (idx + 1) & mask;
+            }
+            table[idx] = key;
+            return true;
+        }
+    };
+    struct DocumentTotals { std::string_view id{}; Cents recognized{0}; Cents settled{0}; };
+    struct FlatDocMap {
+        std::vector<DocumentTotals> table;
+        std::size_t mask = 0;
+        std::size_t count = 0;
+        void init(std::size_t expected) {
+            std::size_t cap = 16;
+            while (cap < expected * 2 + 1) cap <<= 1;
+            table.assign(cap, DocumentTotals{});
+            mask = cap - 1;
+            count = 0;
+        }
+        DocumentTotals& operator[](std::string_view key) {
+            std::size_t idx = std::hash<std::string_view>{}(key) & mask;
+            while (!table[idx].id.empty()) {
+                if (table[idx].id == key) return table[idx];
+                idx = (idx + 1) & mask;
+            }
+            table[idx].id = key;
+            ++count;
+            return table[idx];
+        }
+        const DocumentTotals* find(std::string_view key) const {
+            std::size_t idx = std::hash<std::string_view>{}(key) & mask;
+            while (!table[idx].id.empty()) {
+                if (table[idx].id == key) return &table[idx];
+                idx = (idx + 1) & mask;
+            }
+            return nullptr;
+        }
+    };
+    FlatStringSet keys;
+    keys.reset(state.postings.size());
     std::uint64_t expected_id = 1;
     OrdinalDay previous_day = state.starts_on;
-    struct DocumentTotals { Cents recognized{0}; Cents settled{0}; };
-    std::map<std::string, DocumentTotals> receivable_documents, payable_documents, debt_documents;
+    FlatDocMap receivable_documents, payable_documents, debt_documents;
+    receivable_documents.init(state.invoices.size());
+    payable_documents.init(state.invoices.size());
+    debt_documents.init(state.debts.size());
     const auto latest = current_day(state);
     for (const auto& posting : state.postings) {
         (void)index(posting.debit); (void)index(posting.credit);
-        text_valid(posting.cause); text_valid(posting.owner); text_valid(posting.key, 512);
+        text_valid(posting.cause); text_valid(posting.key, 512);
         if (posting.id != expected_id++ || posting.owner != state.owner || posting.amount.value() <= 0 ||
             posting.debit == posting.credit || posting.day < previous_day || posting.day > latest ||
-            !keys.insert(posting.key).second)
+            !keys.insert(posting.key))
             invalid("Invalid or duplicate balanced posting identity, owner, date or amount");
-        (void)from_ordinal(posting.day);
         previous_day = posting.day;
-        const auto subledger = [&](Account account, auto& documents, Account recognized_offset) {
+        const auto subledger = [&](Account account, FlatDocMap& documents, Account recognized_offset) {
             if (posting.debit != account && posting.credit != account) return false;
             text_valid(posting.document_id);
             auto& totals = documents[posting.document_id];
@@ -247,40 +319,40 @@ void validate_accounts(const AccountsState& state) {
         report.accumulated_depreciation.value() < 0 || report.payables.value() < 0 || report.debt.value() < 0 ||
         report.revenue.value() < 0 || report.expenses.value() < 0)
         invalid("Ledger contains a negative asset, liability, income or cost balance");
-    keys.clear();
+    keys.reset(state.invoices.size());
     Cents receivables{0}, payables{0};
     for (const auto& invoice : state.invoices) {
         text_valid(invoice.id); text_valid(invoice.cause);
         (void)from_ordinal(invoice.due);
-        if (!keys.insert(invoice.id).second || invoice.amount.value() <= 0 || invoice.settled.value() < 0 || invoice.settled > invoice.amount ||
+        if (!keys.insert(invoice.id) || invoice.amount.value() <= 0 || invoice.settled.value() < 0 || invoice.settled > invoice.amount ||
             invoice.due < state.starts_on || (invoice.kind != InvoiceKind::receivable && invoice.kind != InvoiceKind::payable))
             invalid("Invoice identity, units, due date or kind is invalid");
         const auto& documents = invoice.kind == InvoiceKind::receivable ? receivable_documents : payable_documents;
-        const auto source = documents.find(invoice.id);
-        if (source == documents.end() || source->second.recognized != invoice.amount || source->second.settled != invoice.settled)
+        const auto* source = documents.find(invoice.id);
+        if (!source || source->recognized != invoice.amount || source->settled != invoice.settled)
             invalid("Invoice amount and settlement differ from their own committed postings");
         auto& total = invoice.kind == InvoiceKind::receivable ? receivables : payables;
         total = checked_unit_add(total, outstanding(invoice));
     }
-    if (receivable_documents.size() + payable_documents.size() != state.invoices.size())
+    if (receivable_documents.count + payable_documents.count != state.invoices.size())
         invalid("Ledger links an unknown invoice identity");
     if (receivables != report.receivables || payables != report.payables)
         invalid("Invoice subledgers do not reconcile with receivables and payables");
-    keys.clear();
+    keys.reset(state.recurring.size());
     for (const auto& obligation : state.recurring) {
         text_valid(obligation.id, 128); text_valid(obligation.cause);
         (void)from_ordinal(obligation.starts_on);
-        if (!keys.insert(obligation.id).second || obligation.monthly_amount.value() <= 0 || obligation.starts_on < state.starts_on ||
+        if (!keys.insert(obligation.id) || obligation.monthly_amount.value() <= 0 || obligation.starts_on < state.starts_on ||
             (obligation.ends_before && *obligation.ends_before < obligation.starts_on))
             invalid("Recurring obligation identity, amount or term is invalid");
         if (obligation.ends_before) (void)from_ordinal(*obligation.ends_before);
     }
-    keys.clear();
+    keys.reset(state.debts.size());
     Cents principal{0};
     for (const auto& debt : state.debts) {
         text_valid(debt.id, 128);
         (void)from_ordinal(debt.drawn_on); (void)from_ordinal(debt.due);
-        if (!keys.insert(debt.id).second || debt.principal.value() < 0 || debt.drawn_on < state.starts_on ||
+        if (!keys.insert(debt.id) || debt.principal.value() < 0 || debt.drawn_on < state.starts_on ||
             debt.drawn_on > latest || debt.due < debt.drawn_on || debt.interest_remainder >= 310000)
             invalid("Debt identity, units, interest residue or term is invalid");
         if (debt.interest_month) {
@@ -290,19 +362,20 @@ void validate_accounts(const AccountsState& state) {
                 debt.interest_remainder >= 10000ULL * days_in_month(date.year, date.month))
                 invalid("Debt interest month or fractional residue is invalid");
         } else if (debt.interest_remainder != 0) invalid("Debt interest residue has no month");
-        const auto source = debt_documents.find(debt.id);
-        if (source == debt_documents.end() || checked_unit_subtract(source->second.recognized, source->second.settled) != debt.principal)
+        const auto* source = debt_documents.find(debt.id);
+        if (!source || checked_unit_subtract(source->recognized, source->settled) != debt.principal)
             invalid("Debt principal differs from its own committed draw and repayment postings");
         principal = checked_unit_add(principal, debt.principal);
     }
-    if (debt_documents.size() != state.debts.size()) invalid("Ledger links an unknown debt identity");
+    if (debt_documents.count != state.debts.size()) invalid("Ledger links an unknown debt identity");
     if (principal != report.debt) invalid("Debt subledger does not reconcile with principal postings");
     // Reconstruct only the finite accrual history. Terms cannot be moved or a
     // fractional-interest cursor reset on reload to skip a future charge.
-    std::map<std::string, Invoice> expected_accruals;
-    const auto expected_accrual = [&](const std::string& id, OrdinalDay day, Cents amount, const std::string& cause) {
+    struct ExpectedAccrual { OrdinalDay due; Cents amount; std::string cause; };
+    std::unordered_map<std::string, ExpectedAccrual> expected_accruals;
+    const auto expected_accrual = [&](std::string id, OrdinalDay day, Cents amount, std::string_view cause) {
         if (amount == Cents{0}) return;
-        auto [found, fresh] = expected_accruals.try_emplace(id, Invoice{id, InvoiceKind::payable, month_end(day), Cents{0}, Cents{0}, cause});
+        auto [found, fresh] = expected_accruals.try_emplace(std::move(id), ExpectedAccrual{month_end(day), Cents{0}, std::string(cause)});
         (void)fresh;
         found->second.amount = checked_unit_add(found->second.amount, amount);
     };
@@ -327,53 +400,58 @@ void validate_accounts(const AccountsState& state) {
             }
         }
     }
-    std::map<std::string, std::map<OrdinalDay, Cents>> principal_changes;
-    for (const auto& posting : state.postings) {
-        if (posting.debit != Account::debt && posting.credit != Account::debt) continue;
-        auto& changes = principal_changes[posting.document_id];
-        auto [found, fresh] = changes.try_emplace(posting.day, Cents{0});
-        (void)fresh;
-        found->second = checked_unit_add(found->second, posting.credit == Account::debt ? posting.amount : Cents{-posting.amount.value()});
-    }
-    for (const auto& debt : state.debts) {
-        std::optional<OrdinalDay> interest_month;
-        std::uint64_t remainder = 0;
-        Cents daily_principal{0};
-        if (state.closed_through && debt.drawn_on <= *state.closed_through) {
-            const auto& changes = principal_changes.at(debt.id);
-            for (auto day = debt.drawn_on; day <= *state.closed_through; day = advance_days(day, Days{1})) {
-                if (const auto change = changes.find(day); change != changes.end())
-                    daily_principal = checked_unit_add(daily_principal, change->second);
-                const auto first = month_start(day);
-                if (!interest_month || *interest_month != first) { interest_month = first; remainder = 0; }
-                const auto date = from_ordinal(day);
-                const auto denominator = 10000ULL * days_in_month(date.year, date.month);
-                const auto portion = mul_div_floor(static_cast<std::uint64_t>(daily_principal.value()),
-                    static_cast<std::uint64_t>(debt.monthly_interest.value()), denominator);
-                const auto residues = portion.remainder + remainder;
-                const auto interest = Cents{portion.quotient + residues / denominator};
-                remainder = residues % denominator;
-                expected_accrual("interest/" + debt.id + "/" + iso_date(first), day, interest, "Debt interest: " + debt.id);
-            }
+    if (!state.debts.empty()) {
+        std::unordered_map<std::string_view, std::map<OrdinalDay, Cents>> principal_changes;
+        for (const auto& posting : state.postings) {
+            if (posting.debit != Account::debt && posting.credit != Account::debt) continue;
+            auto& changes = principal_changes[posting.document_id];
+            auto [found, fresh] = changes.try_emplace(posting.day, Cents{0});
+            (void)fresh;
+            found->second = checked_unit_add(found->second, posting.credit == Account::debt ? posting.amount : Cents{-posting.amount.value()});
         }
-        if (debt.interest_month != interest_month || debt.interest_remainder != remainder)
-            invalid("Debt interest cursor differs from its closed-day principal history");
+        for (const auto& debt : state.debts) {
+            std::optional<OrdinalDay> interest_month;
+            std::uint64_t remainder = 0;
+            Cents daily_principal{0};
+            const std::string debt_cause = "Debt interest: " + debt.id;
+            if (state.closed_through && debt.drawn_on <= *state.closed_through) {
+                const auto& changes = principal_changes.at(debt.id);
+                for (auto day = debt.drawn_on; day <= *state.closed_through; day = advance_days(day, Days{1})) {
+                    if (const auto change = changes.find(day); change != changes.end())
+                        daily_principal = checked_unit_add(daily_principal, change->second);
+                    const auto first = month_start(day);
+                    if (!interest_month || *interest_month != first) { interest_month = first; remainder = 0; }
+                    const auto date = from_ordinal(day);
+                    const auto denominator = 10000ULL * days_in_month(date.year, date.month);
+                    const auto portion = mul_div_floor(static_cast<std::uint64_t>(daily_principal.value()),
+                        static_cast<std::uint64_t>(debt.monthly_interest.value()), denominator);
+                    const auto residues = portion.remainder + remainder;
+                    const auto interest = Cents{portion.quotient + residues / denominator};
+                    remainder = residues % denominator;
+                    expected_accrual("interest/" + debt.id + "/" + iso_date(first), day, interest, debt_cause);
+                }
+            }
+            if (debt.interest_month != interest_month || debt.interest_remainder != remainder)
+                invalid("Debt interest cursor differs from its closed-day principal history");
+        }
     }
     for (const auto& invoice : state.invoices) {
         if (!invoice.id.starts_with("recurring/") && !invoice.id.starts_with("interest/")) continue;
         const auto expected = expected_accruals.find(invoice.id);
         if (expected == expected_accruals.end() || invoice.kind != InvoiceKind::payable || invoice.due != expected->second.due ||
-            invoice.amount != expected->second.amount || invoice.cause != expected->second.cause)
+            invoice.amount != expected->second.amount ||
+            (invoice.id.starts_with("interest/") ? invoice.cause != "Debt interest: " + invoice.id.substr(9, invoice.id.find('/', 9) - 9)
+                                                 : invoice.cause != expected->second.cause))
             invalid("Accrued invoice differs from its owning terms and closed-day history");
         expected_accruals.erase(expected);
     }
     if (!expected_accruals.empty()) invalid("Closed-day obligations are missing accrued invoices");
-    keys.clear();
+    keys.reset(state.holdings.size());
     std::int64_t shares = 0;
     unsigned pools = 0;
     for (const auto& holding : state.holdings) {
         text_valid(holding.holder);
-        if (!keys.insert(holding.holder).second) invalid("Duplicate cap-table holder");
+        if (!keys.insert(holding.holder)) invalid("Duplicate cap-table holder");
         shares = checked_add(shares, holding.shares.value());
         if (holding.reserved_pool) ++pools;
     }
@@ -484,8 +562,12 @@ void invest_equity(AccountsState& state, OrdinalDay day, std::string investor, C
         append(candidate, day, Account::cash, Account::equity, proceeds, "Equity investment: " + investor, std::move(key));
     });
 }
-void close_accounts_day(AccountsState& state, OrdinalDay day, Cents protected_cash) {
-    mutate(state, [&](auto& candidate) { close_day(candidate, day, protected_cash); });
+void close_accounts_day(AccountsState& state, OrdinalDay day, Cents protected_cash, bool validate_io) {
+    if (validate_io) {
+        mutate(state, [&](auto& candidate) { close_day(candidate, day, protected_cash); });
+    } else {
+        close_day(state, day, protected_cash);
+    }
 }
 CashProjection project_cash(const AccountsState& state, OrdinalDay through, Cents protected_cash) {
     validate_accounts(state); (void)from_ordinal(through);

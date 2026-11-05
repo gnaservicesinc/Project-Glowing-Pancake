@@ -144,5 +144,5 @@ void cancel_contract(MarketState& state, AccountsState& accounts, OrdinalDay day
 // Atomically plan contracts first, allocate residual demand/budgets, close actual
 // serving/training work and recognize invoices. Caller closes accounts next.
 void close_market_day(MarketState& state, AccountsState& accounts,
-                      CapacityState& capacity, OrdinalDay day);
+                      CapacityState& capacity, OrdinalDay day, bool validate_io = true);
 } // namespace pgp::core

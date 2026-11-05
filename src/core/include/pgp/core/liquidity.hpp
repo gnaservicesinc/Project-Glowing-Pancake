@@ -58,10 +58,12 @@ struct LiquidityReport {
                                                    std::optional<OrdinalDay> due_through);
 [[nodiscard]] LiquidityReport liquidity_report(const LiquidityState& state);
 void validate_liquidity(const LiquidityState& state);
-void validate_liquidity_links(const LiquidityState& state, const AccountsState& accounts);
+void validate_liquidity_links(const LiquidityState& state, const AccountsState& accounts,
+                              bool validate_accounts_state = true);
 // After closing one accounts day, observe the next morning. The deadline
 // morning remains available for rescue commands, but cannot execute more work.
-void observe_liquidity(LiquidityState& state, const AccountsState& accounts, OrdinalDay observation_day);
+void observe_liquidity(LiquidityState& state, const AccountsState& accounts, OrdinalDay observation_day,
+                       bool validate_io = true);
 // Recheck already-due obligations after a command, without moving the daily
 // cursor or treating today's unsettled invoices as a missed payment.
 void refresh_liquidity(LiquidityState& state, const AccountsState& accounts);
