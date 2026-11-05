@@ -13,6 +13,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M1-02 | Complete | Typed content schema/registry, bounded offline loader, 11-definition engineering fixture and 140 validation assertions; [evidence](evidence/M1-02-content.md) |
 | M1-03 | In progress | Local commands, morning continuation, immutable worker and stable model diffs pass; M0-03 prerequisite qualification remains open; [evidence](evidence/M1-03-commands.md) |
 | M1-04 | In progress | Exact current-state file saves, recovery, autosaves/settings/export and application persistence policy implemented; full flow contract/prerequisites remain open; [evidence](evidence/M1-04-persistence.md) |
+| M1-05 | Implemented on Mac; prerequisite open | Office, Lab, Inbox, shared clock, decisions, inspector and local saves/preferences; [room shell evidence](evidence/M1-05-room-shell.md) |
 | M1-06 | In progress | Schema-1 compiler/executor, five lifecycles, nested waits/choices, owned modifiers, weighted branches, durations, scoped variables and checked expressions implemented; related selectors/quantifiers remain required; [runtime](evidence/M1-06-runtime.md), [branches](evidence/M1-06-weighted-branches.md), [durations](evidence/M1-06-duration.md) |
 | M1-07 | Planned | Built-in major-event detection, scheduled/seeded world occurrences and news through the shared runtime; [event contract](EVENT_SYSTEM.md) |
 | M2-01 | Implemented on Mac; prerequisite open | Balanced accounts, actual-month costs, invoices, debt/equity, protected settlements and pure projections through commands/exact saves; [evidence](evidence/M2-01-accounts.md) |
@@ -534,3 +535,24 @@ implementation: M1-05's accessible Office/Lab campaign shell, using a session
 worker, persistent project/inbox rows, shared status/time controls and safe
 local save/settings actions. Related-entity flows and built-in event dispatch
 remain foundation work alongside presentation.
+
+
+## M1-05 accessible room shell — 2026-11-04
+
+The separate `pgp-game` desktop executable opens explicitly selected content
+through the existing compiler and session. A single worker serializes commands
+and storage. Stable project and inbox rows update by ID. The shell surfaces
+required opening decisions and liquidity warnings in every room. Settings
+persist text size, compact layout, reduced motion and autosaves. Loading holds
+the external clock until the player advances or resumes.
+
+Local optimized Mac build, five focused CTests and the 1280×720 Metal smoke at
+200% text passed. The live smoke covered keyboard room and clock controls,
+running edit focus and selection, exact save/load, missing-file rejection, and
+compact preference persistence. Model checks exercised repeated sorted row
+insertion, removal and movement with stable selection and scroll context.
+[Evidence and reproduction](evidence/M1-05-room-shell.md) record the scope.
+
+The accepted count remains **5/52**. M1-05 retains the M1-03 prerequisite and
+broader interactive qualification. Continue with M1-06 related-entity selectors
+and quantifiers, followed by M1-07 built-in event dispatch.

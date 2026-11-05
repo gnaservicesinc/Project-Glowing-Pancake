@@ -1,0 +1,112 @@
+#pragma once
+
+#include "campaign_model.hpp"
+#include "campaign_worker.hpp"
+
+#include <QThread>
+#include <QUrl>
+#include <QVariantList>
+
+namespace pgp::bridge {
+class CampaignController final : public QObject {
+    Q_OBJECT
+    Q_PROPERTY(bool ready READ ready NOTIFY stateChanged)
+    Q_PROPERTY(QString date READ date NOTIFY stateChanged)
+    Q_PROPERTY(QString revision READ revision NOTIFY stateChanged)
+    Q_PROPERTY(QString cashText READ cashText NOTIFY stateChanged)
+    Q_PROPERTY(QString availableText READ availableText NOTIFY stateChanged)
+    Q_PROPERTY(QString phaseText READ phaseText NOTIFY stateChanged)
+    Q_PROPERTY(QString capacityText READ capacityText NOTIFY stateChanged)
+    Q_PROPERTY(bool paused READ paused NOTIFY stateChanged)
+    Q_PROPERTY(bool canAdvance READ canAdvance NOTIFY stateChanged)
+    Q_PROPERTY(bool canPlay READ canPlay NOTIFY stateChanged)
+    Q_PROPERTY(QUrl saveFolder READ saveFolder CONSTANT)
+    Q_PROPERTY(bool busy READ busy NOTIFY stateChanged)
+    Q_PROPERTY(QString notice READ notice NOTIFY noticeChanged)
+    Q_PROPERTY(QString requiredKind READ requiredKind NOTIFY stateChanged)
+    Q_PROPERTY(QString requiredTitle READ requiredTitle NOTIFY stateChanged)
+    Q_PROPERTY(QString requiredText READ requiredText NOTIFY stateChanged)
+    Q_PROPERTY(QVariantList requiredChoices READ requiredChoices NOTIFY stateChanged)
+    Q_PROPERTY(bool needsWarning READ needsWarning NOTIFY stateChanged)
+    Q_PROPERTY(StableListModel* projects READ projects CONSTANT)
+    Q_PROPERTY(StableListModel* inbox READ inbox CONSTANT)
+    Q_PROPERTY(QString selectedProjectId READ selectedProjectId WRITE setSelectedProjectId NOTIFY selectionChanged)
+    Q_PROPERTY(QString selectedInboxId READ selectedInboxId WRITE setSelectedInboxId NOTIFY selectionChanged)
+    Q_PROPERTY(int textScalePercent READ textScalePercent WRITE setTextScalePercent NOTIFY settingsChanged)
+    Q_PROPERTY(bool compactManagement READ compactManagement WRITE setCompactManagement NOTIFY settingsChanged)
+    Q_PROPERTY(bool reducedMotion READ reducedMotion WRITE setReducedMotion NOTIFY settingsChanged)
+    Q_PROPERTY(bool autosaveEnabled READ autosaveEnabled WRITE setAutosaveEnabled NOTIFY settingsChanged)
+public:
+    CampaignController(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
+                       persistence::LocalPaths paths, persistence::Settings initial_settings = {},
+                       QObject* parent = nullptr);
+    ~CampaignController() override;
+    [[nodiscard]] QString date() const;
+    [[nodiscard]] bool ready() const noexcept { return static_cast<bool>(snapshot_); }
+    [[nodiscard]] QString revision() const;
+    [[nodiscard]] QString cashText() const;
+    [[nodiscard]] QString availableText() const;
+    [[nodiscard]] QString phaseText() const;
+    [[nodiscard]] QString capacityText() const;
+    [[nodiscard]] bool paused() const;
+    [[nodiscard]] bool canAdvance() const;
+    [[nodiscard]] bool canPlay() const;
+    [[nodiscard]] QUrl saveFolder() const { return save_folder_; }
+    [[nodiscard]] bool busy() const noexcept { return busy_; }
+    [[nodiscard]] QString notice() const { return notice_; }
+    [[nodiscard]] QString requiredKind() const;
+    [[nodiscard]] QString requiredTitle() const;
+    [[nodiscard]] QString requiredText() const;
+    [[nodiscard]] QVariantList requiredChoices() const;
+    [[nodiscard]] bool needsWarning() const;
+    [[nodiscard]] StableListModel* projects() const { return projects_; }
+    [[nodiscard]] StableListModel* inbox() const { return inbox_; }
+    [[nodiscard]] QString selectedProjectId() const { return projects_->selectedId(); }
+    [[nodiscard]] QString selectedInboxId() const { return inbox_->selectedId(); }
+    void setSelectedProjectId(QString id);
+    void setSelectedInboxId(QString id);
+    [[nodiscard]] int textScalePercent() const noexcept { return static_cast<int>(settings_.text_scale_percent); }
+    [[nodiscard]] bool compactManagement() const noexcept { return settings_.compact_management; }
+    [[nodiscard]] bool reducedMotion() const noexcept { return settings_.reduced_motion; }
+    [[nodiscard]] bool autosaveEnabled() const noexcept { return settings_.autosave_enabled; }
+    void setTextScalePercent(int value);
+    void setCompactManagement(bool value);
+    void setReducedMotion(bool value);
+    void setAutosaveEnabled(bool value);
+    Q_INVOKABLE void step();
+    Q_INVOKABLE void togglePaused();
+    Q_INVOKABLE void choose(QString choice_id);
+    Q_INVOKABLE void acknowledgeWarning();
+    Q_INVOKABLE void resolveCoreChoice(bool accept);
+    Q_INVOKABLE void projectCancel(QString id);
+    Q_INVOKABLE void saveTo(QUrl url);
+    Q_INVOKABLE void loadFrom(QUrl url);
+    Q_INVOKABLE void clearNotice();
+    // C++ smoke/tests can inspect authority without exposing mutation to QML.
+    [[nodiscard]] CampaignSnapshotPtr snapshot() const { return snapshot_; }
+signals:
+    void stateChanged();
+    void settingsChanged();
+    void selectionChanged();
+    void noticeChanged();
+    void commandFinished(bool accepted, QString explanation);
+    void snapshotChanged();
+private:
+    bool beginOperation();
+    void submit(core::CommandAction action);
+    void changeSettings(persistence::Settings settings);
+    void acceptSnapshot(CampaignSnapshotPtr snapshot);
+    void setNotice(QString explanation);
+    [[nodiscard]] const runtime::Presentation* waitingPresentation() const;
+    QThread thread_;
+    CampaignWorker* worker_ = nullptr;
+    StableListModel* projects_;
+    StableListModel* inbox_;
+    CampaignSnapshotPtr snapshot_;
+    persistence::Settings settings_;
+    const QUrl save_folder_;
+    QString notice_;
+    std::uint64_t token_ = 0;
+    bool busy_ = true;
+};
+}

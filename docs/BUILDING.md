@@ -3,8 +3,8 @@
 M0-02 implements build entry points and the headless scaffold. M0-03 adds the
 development interface probe, resource guards and optional playback adapter.
 M0-05 validates the shared component versions and embeds configure-time identity.
-The engineering simulation and headless three-year business scenario exist;
-player-facing rooms, Content Studio and distributable packages remain later work.
+The engineering simulation runs headless or in the desktop room shell. The full
+player-facing scenario, Content Studio and distributable packages remain later work.
 The [implementation log](IMPLEMENTATION_LOG.md) records acceptance evidence.
 
 ## Requirements and commands
@@ -13,13 +13,13 @@ Use CMake 3.24+, Ninja, a C++20 compiler, Python 3.10+ (standard library only),
 and Bash for `make.sh`. Python validates metadata at build time; the built core,
 headless executable and probe have no Python runtime dependency. CTest is bundled
 with CMake. The desktop configuration additionally requires Qt **6.12.0** Core,
-Gui, Network, Qml, Quick and QuickControls2. It builds the probe without
+Gui, Network, Qml, Quick and QuickControls2. It builds the campaign shell and probe without
 linking Qt into core/headless targets. Qt Multimedia is not required. Nothing
 downloads dependencies or launches a program during builds.
 
 | Command | Implemented behavior |
 | --- | --- |
-| `./make.sh` | Optimized Release interface probe in `build/release`; no launch |
+| `./make.sh` | Optimized Release campaign shell and interface probe in `build/release`; no launch |
 | `./make.sh --test` | Build then run CTest; propagate failures |
 | `./make.sh --debugging` or `--debug` | Debug in `build/debug`, local developer diagnostics enabled |
 | `./make.sh --core-only` | Release in `build/core-release`, no Qt discovery/linkage |
@@ -107,6 +107,25 @@ it stops at a later warning instead of inventing more funding. Normal applicatio
 drivers stop at an unacknowledged warning. These commands use in-memory reloads,
 write no player saves and launch no window. Focused checks are `core.liquidity`,
 `runtime.liquidity-integration` and `session.business-scenario`.
+
+## Open the campaign shell
+
+Build and explicitly launch the local business fixture with a separate save and
+preferences directory:
+
+```sh
+./make.sh --jobs 4
+build/release/bin/pgp-game --content tests/content/fixtures/business.json \
+  --portable-root "$PWD/build/release/local-campaign"
+```
+
+The default scenario ID is `scenario.business` and its default headquarters
+is `US-CA`. Select another authored scenario with `--scenario` and
+`--headquarters`. Without `--portable-root`, the shell uses the application’s
+standard local data and settings directories. Set `--text-scale 200` to open at
+200% text. `--smoke-test` requires a fresh explicit portable root and drives the
+keyboard, clock and save checks against the business engineering fixture.
+[Room shell evidence](evidence/M1-05-room-shell.md) gives the focused commands.
 
 ## Compiler and configuration isolation
 

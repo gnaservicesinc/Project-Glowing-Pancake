@@ -13,3 +13,12 @@ qt_add_resources(pgp-probe probe_images
     FILES "${PROJECT_SOURCE_DIR}/assets/probe/images/office.png"
           "${PROJECT_SOURCE_DIR}/assets/probe/images/paper.jpg"
           "${PROJECT_SOURCE_DIR}/assets/probe/audio/tone.wav")
+
+qt_add_executable(pgp-game game_main.cpp game_smoke.cpp game_smoke.hpp)
+target_link_libraries(pgp-game PRIVATE pgp::bridge pgp::resources pgp::graphics
+    Qt6::Quick Qt6::QuickControls2)
+pgp_project_target(pgp-game)
+qt_add_resources(pgp-game game_ui
+    PREFIX "/pgp" BASE "${PROJECT_SOURCE_DIR}/qml"
+    FILES "${PROJECT_SOURCE_DIR}/qml/game/Main.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/StableEntityList.qml")

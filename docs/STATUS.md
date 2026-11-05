@@ -4,7 +4,7 @@ Updated 2026-11-04 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03, M1-03/04/06 and M2-01 through M2-04 have implemented work awaiting their remaining gates.** M0-03's local
+**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02; M0-03, M1-03 through M1-06 and M2-01 through M2-04 have implemented work awaiting their remaining gates.** M0-03's local
 interface/resource/audio implementation passes; native/deployment gates remain.
 M0 remains open. See the
 [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
@@ -46,6 +46,12 @@ block Mac implementation. Keep build caches between batches.
   tasks and no financing or overdue liabilities; midpoint continuation matches
   uninterrupted execution. [Business evidence](evidence/M2-04-business.md)
   records the focused checks and remaining engineering-product limits.
+
+- M1-05 connects the Office, Lab and Inbox to a serialized campaign session.
+  The desktop shell includes Play/Pause, Step day, required decisions, liquidity
+  warnings, stable project and inbox rows, an inspector, and local saves and
+  preferences. The 1280×720 Metal smoke passed with 200% text. The M1-03 gate
+  and broader UI qualification remain open. [Room shell evidence](evidence/M1-05-room-shell.md)
 
 - M1-06 now compiles/executes the current typed schema: five lifecycles,
   nested sequence/subflow delays and choices, selected root sources, owned
@@ -185,20 +191,11 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac implementation: M1-05 accessible Office/Lab room shell**. Connect a
-campaign worker to the implemented runtime/session boundary, expose persistent
-project/inbox rows, shared status/time controls, required choices/liquidity
-warnings and safe local save/settings actions. Preserve stable-ID selection,
-focus and scroll anchors; verify compact management at 1280×720 and 200% text.
-The current probe is still an interface/resource/audio engineering tool.
-Add related selectors/
-quantifiers as their real owning entities arrive; retain that unfinished
-M1-06 work rather than inventing entities to close a checkbox. M1-07 adds built-in
-committed-fact/seeded occurrence dispatch. M1-03 has a
-locally tested worker/model implementation; its formal acceptance remains gated
-by M0-03. M1-05's room shell can proceed alongside core work. These
-local implementations do not close the outstanding platform gate. Content
-finalization, save migrations and packaging remain later work.
+**Next Mac implementation: M1-06 related-entity selectors and quantifiers.**
+Use implemented business entities and their typed ownership and relations. M1-07
+then adds built-in committed-fact and seeded occurrence dispatch. M1-03 retains
+the M0-03 prerequisite gate. Content finalization, save migrations and packaging
+remain later work.
 
 The 2026-11-04 event clarification adds M1-07 (built-in detection/dispatch) and
 M3-05 (AI-assisted playable base-event pack), with human stories augmenting the
