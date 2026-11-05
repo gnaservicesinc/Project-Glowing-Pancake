@@ -14,25 +14,27 @@ template<class Rows> const auto& find(const Rows& rows,std::string_view id) {
 void resources(const WorldState& world,const CompiledProgram& program,const RivalCompany& rival,const content::RivalDefinition& definition) {
     const auto& state=rival.simulation;const auto initial=opening_rival(world,program,definition,*rival.planning->entered_on);
     if (state.accounts->starts_on!=*rival.planning->entered_on || state.accounts->postings.empty() || state.accounts->postings.front()!=initial.accounts->postings.front() ||
-        state.capacity->available_staff!=definition.staff+state.capacity->staff_additions.size() || state.management->catalog!=initial.management->catalog ||
+        opening_staff_count(*state.capacity)!=definition.staff || state.management->catalog!=initial.management->catalog ||
         state.deployments->catalog!=initial.deployments->catalog || state.business_offers.has_value()!=initial.business_offers.has_value() ||
-        (state.business_offers && state.business_offers->catalog!=initial.business_offers->catalog) || !state.reservations.empty() || !state.opening_actions.empty())
+        (state.business_offers && state.business_offers->catalog!=initial.business_offers->catalog) || (!rival.response && !state.reservations.empty()) || !state.opening_actions.empty())
         invalid("Rival opening capital, staff, catalogs or private commitments differ from authored terms");
     std::set<std::string> allowed_sources{"lease.initial"};
     if (state.business_offers) for (const auto& row:state.business_offers->accepted) {
         const auto& offer=find(state.business_offers->catalog,row.offer_id);allowed_sources.insert("lease/"+offer.id);
         const auto& source=find(state.capacity->sources,"lease/"+offer.id);
-        const auto expected=state.date<lease_expiry(*state.business_offers,offer.id)?offer.capacity:MilliCUPerDay{0};
+        const bool suspended=rival.response && (rival.response->retired_on || std::none_of(rival.response->transitions.begin(),rival.response->transitions.end(),[](const auto& row){return row.cause=="compete";}));
+        const auto expected=!suspended && state.date<lease_expiry(*state.business_offers,offer.id)?offer.capacity:MilliCUPerDay{0};
         if (source.effective!=expected || source.nominal!=offer.capacity) invalid("Rival leased capacity bypassed paid availability or expiry");
     }
     if (state.capacity->sources.size()!=allowed_sources.size()) invalid("Rival invented unbudgeted capacity");
     for (const auto& source:state.capacity->sources) if (!allowed_sources.contains(source.id)) invalid("Rival uses an unowned capacity source");
-    if (state.capacity->sources.front()!=initial.capacity->sources.front()) {
-        const auto& source=find(state.capacity->sources,"lease.initial");
-        if (source!=initial.capacity->sources.front()) invalid("Rival initial compute capacity differs from its finite opening terms");
+    auto initial_source=initial.capacity->sources.front();
+    if (rival.response && !rival.response->retired_on && std::any_of(rival.response->transitions.begin(),rival.response->transitions.end(),[](const auto& row){return row.cause=="compete";})) initial_source.effective=initial_source.nominal;
+    if (find(state.capacity->sources,"lease.initial")!=initial_source) invalid("Rival initial compute capacity differs from its finite opening/delivery terms");
+    for (auto obligation:initial.accounts->recurring) {
+        if (rival.response && rival.response->retired_on) obligation.ends_before=rival.response->retired_on;
+        if (find(state.accounts->recurring,obligation.id)!=obligation) invalid("Rival changed its authored recurring costs without a real withdrawal");
     }
-    for (const auto& obligation:initial.accounts->recurring)
-        if (find(state.accounts->recurring,obligation.id)!=obligation) invalid("Rival removed or discounted its authored recurring costs");
     for (const auto& posting:state.accounts->postings) if (posting.debit==Account::cash && posting.key!="opening") {
         const bool equity=posting.key.starts_with("financing/");
         const bool debt=posting.key.starts_with("debt/financing/");
@@ -75,25 +77,26 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
         if (!rival.planning || !authored.planning) invalid("A planned company lost its author profile or continuation");
         const auto& plan=*rival.planning;const auto earliest=advance_days(world.campaign_start,authored.start_after);
         if (plan.decisions.size()>8192) invalid("Rival weekly decisions exceed their century bound");
-        if (rival.warned_on) {
+        if (rival.response.has_value()!=authored.response.has_value()) invalid("Rival response state differs from its authored policy");
+        if (rival.warned_on && !rival.response) {
             std::uint32_t released=0;for (const auto& row:state.releases) if (row.company_id==world.company_id && row.day<*rival.warned_on) ++released;
             if (authored.player_deployment_threshold==0 || *rival.warned_on<earliest || *rival.warned_on>world.simulation.date || released<authored.player_deployment_threshold)
                 invalid("Heavyweight warning lacks actual prior public customer traction");
         }
         if (!plan.entered_on) {
             if (rival.simulation!=dormant_company(world,authored) || rival.attempted || rival.published_on || !plan.decisions.empty() || plan.next_review!=earliest ||
-                (world.simulation.date>=earliest && world.simulation.date<world.simulation.end_date && (authored.player_deployment_threshold==0 ||
+                (!rival.response && world.simulation.date>=earliest && world.simulation.date<world.simulation.end_date && (authored.player_deployment_threshold==0 ||
                     (rival.warned_on && world.simulation.date>=advance_days(*rival.warned_on,authored.warning_lead)))))
                 invalid("A scheduled rival spent before entry or skipped its actual entry date");
             continue;
         }
-        const auto entry=authored.player_deployment_threshold>0?(rival.warned_on?advance_days(*rival.warned_on,authored.warning_lead):world.simulation.end_date):earliest;
+        const auto entry=rival.response?rival.response->mobilized_on.value_or(world.simulation.end_date):authored.player_deployment_threshold>0?(rival.warned_on?advance_days(*rival.warned_on,authored.warning_lead):world.simulation.end_date):earliest;
         const auto& simulation=rival.simulation;
         if (*plan.entered_on!=entry || *plan.entered_on>world.simulation.date || !simulation.accounts || !simulation.lab || !simulation.capacity || !simulation.market || !simulation.deployments || !simulation.management || !simulation.liquidity ||
             simulation.accounts->owner!=authored.id || simulation.lab->catalog!=world.simulation.lab->catalog || simulation.lab->starts_on!=entry ||
             simulation.end_date!=world.simulation.end_date || simulation.date>world.simulation.date ||
             (simulation.date!=world.simulation.date && simulation.phase!=DayPhase::closed) ||
-            plan.next_review!=advance_days(entry,Days{static_cast<std::int64_t>(plan.decisions.size())*7})) invalid("Rival entry, resource ownership or weekly/daily cursor is invalid");
+            plan.next_review!=advance_days(rival.response?rival.response->ready_on.value_or(entry):entry,Days{static_cast<std::int64_t>(plan.decisions.size())*7})) invalid("Rival entry, resource ownership or weekly/daily cursor is invalid");
         if (simulation.lab->research_stream_origin!=RandomStreams{rival_seed(world,authored)}.snapshot()[static_cast<std::size_t>(RandomStream::research)]) invalid("Rival research stream origin differs from its private seed");
         if (simulation.lab->models.size()>authored.planning->recipes.size()) invalid("Rival trained outside its bounded strategy portfolio");
         for (const auto& insight:simulation.lab->insights) validate_public_insight(world,insight);
@@ -103,7 +106,7 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
         for (std::size_t i=0;i<plan.decisions.size();++i) {
             const auto& decision=plan.decisions[i];SplitMix64 next{stream};const auto draw=next.next();
             const std::set<std::string> actions{"wait","data","research","train","evaluate","deploy","price","hire","repay","finance","expand","publish"};
-            if (decision.day!=advance_days(entry,Days{static_cast<std::int64_t>(i)*7}) || decision.day>simulation.date || decision.stream_before!=stream || decision.stream_after!=next.state() ||
+            if (decision.day!=advance_days(rival.response?rival.response->ready_on.value_or(entry):entry,Days{static_cast<std::int64_t>(i)*7}) || decision.day>simulation.date || decision.stream_before!=stream || decision.stream_after!=next.state() ||
                 !actions.contains(decision.action) || decision.explanation.empty() || decision.explanation.size()>1024 || decision.subject.size()>256 ||
                 decision.observation!=public_observation(world,decision.day,draw))
                 invalid("Rival decision lost its weekly date, bounded observation or independent RNG progression");
@@ -116,13 +119,15 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
         if (found==state.companies.end() || !notice_ids.emplace(notice.company_id,notice.kind,notice.subject).second || notice.day<world.campaign_start || notice.day>world.simulation.date)
             invalid("Competitive notice has a missing source, duplicate identity or invalid date");
         if (notice.kind=="entry") {if (found->planning->entered_on!=notice.day || notice.response_due || !notice.subject.empty()) invalid("Rival entry notice is not an actual company opening");}
+        else if (notice.kind=="warning" && found->response) { /* Checked against the response transition below. */ }
+        else if (notice.kind=="response" || notice.kind=="offer") {if (!found->response) invalid("Competitive response/offer has no heavyweight policy");}
         else if (notice.kind=="warning") {if (found->warned_on!=notice.day || notice.response_due!=advance_days(notice.day,rival_definition(program,notice.company_id).warning_lead) || !notice.subject.empty()) invalid("Heavyweight notice lost its real response window");}
         else if (notice.kind=="closure") {if (found->simulation.phase!=DayPhase::closed || found->simulation.date!=notice.day || notice.response_due || !notice.subject.empty()) invalid("Rival closure has no actual insolvency closure");}
         else if (notice.kind=="publication") {if (!found->planning->entered_on || notice.response_due || std::none_of(found->simulation.lab->publications.begin(),found->simulation.lab->publications.end(),[&](const auto& row){return row.research_id==notice.subject && row.day==notice.day;})) invalid("Competitive publication lacks an actual completed research result");}
         else invalid("Unknown planned competitive notice");
     }
     for (const auto& rival:state.companies) {
-        if ((rival.planning->entered_on && !notice_ids.contains({rival.definition_id,"entry",""})) || (rival.warned_on && !notice_ids.contains({rival.definition_id,"warning",""})) ||
+        if ((rival.planning->entered_on && !notice_ids.contains({rival.definition_id,"entry",""})) || (rival.warned_on && !rival.response && !notice_ids.contains({rival.definition_id,"warning",""})) ||
             (rival.simulation.phase==DayPhase::closed && !notice_ids.contains({rival.definition_id,"closure",""}))) invalid("Planned competition lost a required public transition");
         std::optional<OrdinalDay> first;
         if (rival.planning->entered_on) for (const auto& publication:rival.simulation.lab->publications) {
@@ -132,6 +137,7 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
         if (first!=rival.published_on) invalid("Rival public record disagrees with its actual publication history");
     }
     for (const auto& insight:world.simulation.lab->insights) validate_public_insight(world,insight);
+    validate_heavyweight_responses(world,program,deep);
     validate_industry(world,deep);
 }
 }

@@ -79,6 +79,8 @@ std::vector<RivalDefinition> load_rival_definitions(std::string_view bytes) {
     const auto doc=parse(bytes); array(doc,32); std::vector<RivalDefinition> result; std::set<std::string> ids;
     for (auto row:doc) {
         std::optional<RivalPlanning> planning;
+        std::optional<HeavyweightPolicy> response;
+        if (row.contains("response")) {response=load_heavyweight_policy(row.at("response").dump());row.erase("response");}
         if (row.contains("planning")) {
             const auto& source=row.at("planning");
             fields(source,{"group","region","leader","slot","reserve_floor_cents","price_floor_cents","price_ceiling_cents","runway_months","publish_results","priorities","research","recipes","services"});
@@ -114,6 +116,10 @@ std::vector<RivalDefinition> load_rival_definitions(std::string_view bytes) {
             static_cast<std::uint32_t>(threshold),text(row.at("recipe_id")),text(row.at("data_id")),core::MilliCU{number(row.at("training_work_milli_CU"))}});
         const auto& rival=result.back();
         result.back().planning=std::move(planning);
+        result.back().response=std::move(response);
+        if (result.back().response && (rival.player_deployment_threshold!=0 || rival.warning_lead.value()!=0)) invalid("Heavyweight response policy replaces the legacy deployment trigger and warning fields");
+        if (result.back().response && (!result.back().planning || result.back().planning->group!="heavyweight" ||
+            core::checked_unit_add(result.back().response->publication_fee,result.back().response->pilot_fee)>core::Cents{rival.cash.value()/4})) invalid("Heavyweight response requires an authored heavyweight and affordable finite offers");
         if (!valid_id(rival.id) || rival.id.size()>64 || !ids.insert(rival.id).second || rival.cash.value()==0 ||
             rival.monthly_payroll.value()==0 || rival.monthly_lease.value()==0 || rival.capacity.value()==0 || rival.training_rate.value()==0 ||
             rival.cash.value()>1'000'000'000'000LL || rival.monthly_payroll.value()>1'000'000'000'000LL ||
@@ -137,6 +143,7 @@ std::string canonical_rival_definitions(const std::vector<RivalDefinition>& riva
             {"reserve_floor_cents",plan.reserve_floor.value()},{"price_floor_cents",plan.price_floor.value()},{"price_ceiling_cents",plan.price_ceiling.value()},
             {"runway_months",plan.runway_months},{"publish_results",plan.publish_results},
             {"priorities",plan.priorities},{"research",plan.research},{"recipes",plan.recipes},{"services",plan.services}};}
+        if (row.response) value["response"]=Json::parse(canonical_heavyweight_policy(*row.response));
         result.push_back(std::move(value));
     }
     return result.dump();

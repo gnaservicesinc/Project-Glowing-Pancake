@@ -17,6 +17,8 @@ class ManagementController final : public QObject {
     Q_PROPERTY(StableListModel* products READ products CONSTANT)
     Q_PROPERTY(StableListModel* contracts READ contracts CONSTANT)
     Q_PROPERTY(StableListModel* rivals READ rivals CONSTANT)
+    Q_PROPERTY(StableListModel* heavyweights READ heavyweights CONSTANT)
+    Q_PROPERTY(StableListModel* competitiveOffers READ competitiveOffers CONSTANT)
     Q_PROPERTY(StableListModel* payables READ payables CONSTANT)
     Q_PROPERTY(StableListModel* funding READ funding CONSTANT)
     Q_PROPERTY(StableListModel* specialists READ specialists CONSTANT)
@@ -50,6 +52,8 @@ public:
     StableListModel* products() const { return products_; }
     StableListModel* contracts() const { return contracts_; }
     StableListModel* rivals() const { return rivals_; }
+    StableListModel* heavyweights() const {return heavyweights_;}
+    StableListModel* competitiveOffers() const {return competitive_offers_;}
     StableListModel* payables() const { return payables_; }
     StableListModel* funding() const { return funding_; }
     StableListModel* specialists() const { return specialists_; }
@@ -87,12 +91,14 @@ public:
     Q_INVOKABLE void evaluate(QString model,QString plan,QString source,QString rate,QString staff);
     Q_INVOKABLE void deploy(QString service,QString model,QString evidence,QString source,bool review);
     Q_INVOKABLE void acceptOffer(QString id);
+    Q_INVOKABLE void respondCompetitiveOffer(QString id,bool accept);
     Q_INVOKABLE void cancelContract(QString id);
     Q_INVOKABLE void payInvoice(QString id);
     Q_INVOKABLE void repayDebt(QString id);
 signals:
     void changed();
     void actionRequested(pgp::core::CommandAction action);
+    void competitiveResponseRequested(QString id,bool accept);
     void noticeRaised(QString text);
 private:
     bool editable();
@@ -101,5 +107,6 @@ private:
     CampaignSnapshotPtr snapshot_;
     StableListModel *funding_,*specialists_,*policies_,*decisions_,*alerts_;
     StableListModel *data_,*research_,*models_,*evidence_,*offers_,*products_,*contracts_,*rivals_,*payables_;
+    StableListModel *heavyweights_,*competitive_offers_;
 };
 }

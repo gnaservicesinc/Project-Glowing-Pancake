@@ -3,6 +3,20 @@
 #include <array>
 
 namespace pgp::content {
+struct HeavyweightPolicy {
+    core::Days review_interval{30},warning_lead{90},delivery_lead{30},cooldown{180};
+    core::BasisPoints entry_pressure{6000},exit_pressure{2500};
+    std::array<std::uint32_t,4> weights{4000,2000,3000,1000};
+    core::Cents revenue_at_risk{50000000};
+    std::uint32_t capability_target=4,financed_target=2;
+    std::string specialist_id,lease_offer_id,publication_node,pilot_product;
+    core::Cents publication_fee{5000000},pilot_fee{3000000};
+    core::Days offer_response{30},offer_term{90};
+    std::uint64_t pilot_tasks=20000;
+    auto operator<=>(const HeavyweightPolicy&) const = default;
+};
+[[nodiscard]] HeavyweightPolicy load_heavyweight_policy(std::string_view bytes);
+[[nodiscard]] std::string canonical_heavyweight_policy(const HeavyweightPolicy& policy);
 struct RivalPlanning {
     std::string group,region,leader;
     std::uint32_t slot=1;
@@ -35,6 +49,7 @@ struct RivalDefinition {
     std::string recipe_id, data_id;
     core::MilliCU training_work{0};
     std::optional<RivalPlanning> planning{};
+    std::optional<HeavyweightPolicy> response{};
     auto operator<=>(const RivalDefinition&) const = default;
 };
 [[nodiscard]] std::vector<core::BusinessOffer> load_business_offer_catalog(std::string_view bytes);

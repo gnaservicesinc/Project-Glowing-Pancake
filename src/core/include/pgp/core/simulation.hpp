@@ -136,6 +136,7 @@ struct RepayDebt { std::string id; Cents amount; std::string key; };
 struct InvestEquity { std::string investor; Cents proceeds; BasisPoints acquired; std::string key; };
 struct ReserveProject { CapacityProject project; };
 struct CancelProject { std::string id; };
+struct WithdrawOperations {};
 struct SetEffectiveCapacity { std::string source_id; MilliCUPerDay available; };
 struct EnableMarket {};
 struct AddMarketProduct { MarketProduct product; };
@@ -160,7 +161,7 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    AdvanceDay, SetPaused, ResolveOpeningChoice,
                                    AddRecurringObligation, IssueInvoice, SettleInvoice,
                                    DrawDebt, RepayDebt, InvestEquity,
-                                   ReserveProject, CancelProject, SetEffectiveCapacity,
+                                   ReserveProject, CancelProject, WithdrawOperations, SetEffectiveCapacity,
                                    EnableMarket, AddMarketProduct, AddMarketSegment, AddMarketPreference,
                                    SetMarketProductAvailable, SetMarketPrice, AcceptContract, StartContract, CancelContract,
                                    AcknowledgeLiquidityWarning, BuyData, StartResearch, PublishResearch, AcquireResearchInsight, StartTraining, CloneModel, StartEvaluation,

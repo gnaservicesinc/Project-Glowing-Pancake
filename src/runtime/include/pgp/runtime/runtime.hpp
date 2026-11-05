@@ -268,6 +268,7 @@ public:
     [[nodiscard]] RuntimeResult choose(std::uint64_t expected_revision,
                                        std::uint64_t presentation_id, std::string_view choice_id);
     [[nodiscard]] RuntimeResult submit(const core::Command& command);
+    [[nodiscard]] RuntimeResult respondToCompetitiveOffer(std::uint64_t expected_revision,std::string_view offer_id,bool accept);
     // Explicit author-fixture operation on this copied Runtime. It does not
     // claim that a natural continuous exit condition became true.
     [[nodiscard]] RuntimeResult synthetic_cleanup(std::uint64_t expected_revision,

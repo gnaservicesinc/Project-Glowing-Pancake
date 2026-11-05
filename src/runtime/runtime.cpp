@@ -694,6 +694,8 @@ RuntimeResult Runtime::submit(const core::Command& command) {
         }
         next.world.simulation = std::move(core_state).release_checkpoint();
         if (next.world.simulation.date!=prior_day) advance_competition(next.world,program_,prior_day,assignments);
+        update_competitive_offers(next.world,program_);
+        update_heavyweight_responses(next.world,program_);
         const auto cash_after_submit = next.world.simulation.cash;
         const auto phase_after_submit = next.world.simulation.phase;
         if (next.world.simulation.phase == core::DayPhase::closed) next.world.facts.at("company.is_operating") = false;
@@ -708,6 +710,14 @@ RuntimeResult Runtime::submit(const core::Command& command) {
         core_already_validated = (next.world.simulation.cash == cash_after_submit &&
                                   next.world.simulation.phase == phase_after_submit &&
                                   next.world.simulation.phase != core::DayPhase::opening);
+    });
+}
+RuntimeResult Runtime::respondToCompetitiveOffer(std::uint64_t expected_revision,std::string_view offer_id,bool accept) {
+    return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto&,auto&,auto&) {
+        if (has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date)
+            fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required choices before answering an offer.");
+        respond_to_competitive_offer(next.world,program_,offer_id,accept);
+        update_heavyweight_responses(next.world,program_);
     });
 }
 RuntimeResult Runtime::synthetic_cleanup(std::uint64_t expected_revision, std::uint64_t activation_id) {

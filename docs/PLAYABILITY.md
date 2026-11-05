@@ -20,6 +20,7 @@ independent human validation and release qualification remain open.
 | M3-02: first player-facing scenario | Office/Lab decisions, data/research/training/evaluation, contracts, news and choices, start to ending | Implemented on Mac; Metal keyboard runs at 100%/200% text complete and reload exactly |
 | M3-03: feature evaluation build | The scenario with delegation, warnings, recovery and scoring | Implemented on Mac; finite policies, actual deadline stops, warned setback, financing/specialist routes and transparent score |
 | M4-01: full rival planning | Default 15-company roster; 7/20-company alternatives; budgeted weekly strategies, shared customers, pricing and public research | Implemented on Mac; exact three-year standard/expanded saves and bundled 200% Metal ending |
+| M4-02: heavyweight response and agreements | Public pressure, 90-day warning, finite paid mobilization/withdrawal and escrowed publication/pilot fees | Implemented on Mac; hysteresis/failure/save checks and actual keyboard accept/decline/paid milestone at 200% text |
 | M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Deferred until all components are in place and the user is ready for v1 work; no sessions conducted |
 
 There is no calendar estimate inferred from task counts: tasks vary substantially
@@ -81,7 +82,26 @@ Service replacement keeps prior delivery/invoices and current promises.
 
 In the full-roster presets, competitors pay real staff, data, compute and service costs, compete for one customer pool and can close. They see public releases/prices and bounded estimates. **Lab → Research** can publish completed work or adopt a genuine paper after 30 days for one 25% experiment-work credit; prerequisites and cash costs still apply. **Lab → Deploy** exposes the selected service price in constant-2014 cents. A new price preserves past invoices and signed contract prices. **Office → Rivals** shows actual public activity and released quotes.
 
-The funded efficient headless route finishes the standard and expanded presets with $1,893,817.76 and $1,584,124.76 respectively; the bundled standard-roster UI route finishes with $1,503,361.57 and a 94/100 slice score. These are deterministic engineering routes, not a human balance assessment. [Shared-market and planning contract](../src/runtime/COMPETITION.md).
+Office → **Rivals** also explains heavyweight response pressure from public
+deliveries/prices, demonstrated services, public demand and announced financing.
+Two high reviews announce at least 90 days' warning; lower exit thresholds
+require two reviews. Mobilization pays real staffing and compute bills before
+delivery. Each program has one finite allocation and can withdraw. Private
+contract terms, cash and models do not drive these reviews.
+
+The funded agreements list offers optional publication partnerships and customer
+pilot evaluations. Inspect the exact fee, milestone and deadline before accepting
+or declining. Acceptance pays nothing: publication must occur after acceptance,
+and the pilot requires actual additional qualified customer work. The issuer
+reserves its own fee and pays once on fulfillment. Ignoring or missing terms
+releases unspent funds; no extra demand or customer work is created.
+[Response and agreement contract](../src/runtime/HEAVYWEIGHTS.md).
+
+The funded efficient headless route finishes the standard and expanded presets
+with $2,086,666.76 and $1,993,686.26 respectively. The bundled standard-roster UI
+route declines a publication offer, completes a paid pilot and finishes with
+$1,547,040.93. These are deterministic engineering routes, not a human balance
+assessment. [Shared-market and planning contract](../src/runtime/COMPETITION.md).
 
 The original introductory rendered Mac smoke exercises this path at 1280×720 with 100% and 200% text,
 including exact save/reload and a solvent ending above $2.25m. These are scripted
@@ -129,4 +149,4 @@ and exact thresholds through choices and reload; see [duration evidence](evidenc
 M1-07 then adds
 built-in occurrence detection/dispatch. M2-01 through M2-04 implement accounts,
 shared capacity, contracts and the three-year scenario with warned recovery.
-The playable campaign connects those modules through ordinary controls. The current count is 26 completed Mac feature steps. M3-01 through M3-03, M3-05, E1A-04's internal snapshots, E1A-05's authoring walkthrough and E1B-01/02's typed canvas and graphical finalizer are implemented. Per the 2026-11-05 user instruction, human player/author studies wait until all components are in place and the user is ready for v1 work. The [session kit](playtests/M3-session-guide.md) is prepared for later; no sessions are being arranged. M4 and later components proceed with engineering checks. Deferred platform and release work stays recorded in the backlog.
+The playable campaign connects those modules through ordinary controls. The current count is 28 completed Mac feature steps. M3-01 through M3-03, M3-05, E1A-04's internal snapshots, E1A-05's authoring walkthrough, E1B-01/02's typed canvas and graphical finalizer, and M4-01/02's full competition and heavyweight responses are implemented. Per the 2026-11-05 user instruction, human player/author studies wait until all components are in place and the user is ready for v1 work. The [session kit](playtests/M3-session-guide.md) is prepared for later; no sessions are being arranged. Later components proceed with engineering checks. Deferred platform and release work stays recorded in the backlog.

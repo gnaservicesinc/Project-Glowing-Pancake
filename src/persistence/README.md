@@ -108,6 +108,16 @@ JSON-event budget. Checksums are not a substitute for these bounds or actual
 financial/resource/public-provenance validation. Current three-year preset
 checks do not qualify century-scale save sizes; that remains M8 work.
 
+Response-bearing heavyweights also retain named pressure reviews, phase
+transitions, warning/delivery/withdrawal dates and funded agreement records.
+Restore recomputes observations from public history, replays bounded response
+decisions, checks actual paid resource orders, and reconciles escrow, milestone
+progress and both sides of each fee. Limits are 8,192 reviews and 512 transitions
+per response, 40 agreements and 4,096 public notices. Legacy competition cannot
+carry undeclared response/offer state. Capacity saves retain at most 64 dated
+staff additions and 64 departures, preserving historical assignments and costs
+after withdrawal. [Response contract](../runtime/HEAVYWEIGHTS.md).
+
 ## Local writes and recovery
 
 An existing destination must be a regular file and decode successfully before

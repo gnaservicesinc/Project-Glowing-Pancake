@@ -1,131 +1,131 @@
 {
   "assets": [],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "04e2761cd39c7adb788e754562f3ecb4fa072ee564a89ac006febcbdb7f72668",
+  "collection_hash": "a55565fbf1a22b59b8166a4729f99823b0df918e581ee0d52dc0a238a9bf7563",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.2.0-dev.1",
+  "content_version": "0.3.0-dev.1",
   "definitions": [
     {
       "id": "research.data_deduplication",
       "kind": "research",
-      "revision": 1,
-      "semantic_hash": "f8b5f693f7858e68c5bffe52eb8fb9976449756598474b1c5382f08c7932eae1"
+      "revision": 2,
+      "semantic_hash": "c316a029ef3785fb2bf716daac2d854de49f333b778d8c53c8d7e5675c0cd7a9"
     },
     {
       "id": "research.efficient_image_features",
       "kind": "research",
-      "revision": 1,
-      "semantic_hash": "9d27b54c26137dfe270f4e4c75e553d8cbf0a93783e4fff6b0a78e958c00ffb6"
+      "revision": 2,
+      "semantic_hash": "39d607ad67b1e99950c47ffe139a36ca82e9fd88364794b6c7b192dd7f5521c5"
     },
     {
       "id": "research.efficient_serving",
       "kind": "research",
-      "revision": 1,
-      "semantic_hash": "6e12c7b624dd381a8adf59783930c1d406f23c4d0da8170053e18b1f25a95022"
+      "revision": 2,
+      "semantic_hash": "7c6c08a2caa26776af5ae381591641339c109bdb97b7ebf7d518fb939e665a00"
     },
     {
       "id": "research.held_out_evaluation",
       "kind": "research",
-      "revision": 1,
-      "semantic_hash": "8ef5c714be9492faf857b9371df1febedf6d438d124077cc3b44646b2a162285"
+      "revision": 2,
+      "semantic_hash": "571e0b355a305e463a0a6e6822151a92515fdd1f8da670a280302a397da9bee0"
     },
     {
       "id": "research.reproducible_tooling",
       "kind": "research",
-      "revision": 1,
-      "semantic_hash": "3e93c63c02f5dd73b6fd251ec87416a1e13d1b578d749a878e7f7db804d4d22b"
+      "revision": 2,
+      "semantic_hash": "9e0047d299bb39f33feeb70aec2ffeea21d783af23e15879396c164aa301dda0"
     },
     {
       "id": "research.sequence_modeling",
       "kind": "research",
-      "revision": 1,
-      "semantic_hash": "46a1b30492d7b857a332c803e3fe41dad5ff95b28175cac868dd1914bdc4ecaa"
+      "revision": 2,
+      "semantic_hash": "9ec1bd64b23d08685c096aaa61e069e1015e47873bd31555a675699507927164"
     },
     {
       "id": "scenario.first_playable",
       "kind": "scenario",
-      "revision": 1,
-      "semantic_hash": "38401db133b15d84b0f2a3c457de4938f261c358f754064158aa38a664107010"
+      "revision": 2,
+      "semantic_hash": "23e1911568204e64b91013ae42b6444cbbbe4be1dcc3c12a8adda6a05cbf4318"
     },
     {
       "id": "scenario.world_competition",
       "kind": "scenario",
-      "revision": 1,
-      "semantic_hash": "7afbd40f6558e1bce62e4f16edba0754ef0e21fefbfaeaa74b78fb6c2ca15cb0"
+      "revision": 2,
+      "semantic_hash": "2e6d4e91b86acd637c67a9dd0b6da5eecac3f0d72dd2c8ccbd59013628583fc1"
     },
     {
       "id": "scenario.world_expanded",
       "kind": "scenario",
-      "revision": 1,
-      "semantic_hash": "bf7cfe60f81da61cf768b87b033368da6e96443718f6d4c7519db2cb18cfd3f7"
+      "revision": 2,
+      "semantic_hash": "10b9a877fb469415c9bd42473ec9a22e4ebfd1c8bbad21151b3a43a9e345d8b9"
     },
     {
       "id": "scenario.world_forgiving",
       "kind": "scenario",
-      "revision": 1,
-      "semantic_hash": "035528a12558afcfcd9e3df58a3c8143169294fa5fcb68675d9c6c0fbb22dd12"
+      "revision": 2,
+      "semantic_hash": "230b2ca2277145a7ca3939f76d2f0840eb51188bd617b81d7a917df1afd15e51"
     },
     {
       "id": "scenario.world_reduced",
       "kind": "scenario",
-      "revision": 1,
-      "semantic_hash": "3e268619d3ac444c9fe16b821ab4d2fb8cf0a2a9c6a6dca392421b6051e1c47e"
+      "revision": 2,
+      "semantic_hash": "febf5e6e5428bce3d41cf0d063d17971cd913813117e4e65a322ed496d86b398"
     },
     {
       "id": "slice.evaluation_finding",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "b20eff3b1885e2f4ceddb12af061e3e033f03148bb41a090e36259084661c253"
+      "revision": 2,
+      "semantic_hash": "ce14e5439b12d379b3844b6ee7a31ee7770ee1d87b7e448195dbf8185a91330d"
     },
     {
       "id": "slice.liquidity_warning",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "18604c960e597489a35fd9958ca2e18e737e57a990d6744587a932133da6991f"
+      "revision": 2,
+      "semantic_hash": "71e546eae0071614c3330b18760ad9d105e8aef2cd68605c576382942701e682"
     },
     {
       "id": "slice.market_shift",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "87a3649076b4d5a61db9913475bc4bfb9839c255684110c71887abb9965b0be6"
+      "revision": 2,
+      "semantic_hash": "b877097cb7b411a69a161d7197f7e59ed16e20a00394058c103955497b52899f"
     },
     {
       "id": "slice.pilot_result",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "e964d1247bfcd8476a807a269845ba426396da5e4dc043bd3221a7bdd03de9b7"
+      "revision": 2,
+      "semantic_hash": "e96868f307017c43996d00ce25caf547e88c41cd6a445d7c91acdce8f6d26256"
     },
     {
       "id": "slice.recovery_opportunity",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "7c8b5aadc615d76df0c4afdb43938e029a6ef482476a61347148f9aae37e74e3"
+      "revision": 2,
+      "semantic_hash": "caaf8fcc3399d056aad052ba02c8e84321dc049a47a0fd0cee30b1b9129a9ffe"
     },
     {
       "id": "slice.research_milestone",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "e56eb229eb5d278356b6ad00677320dda1ef5254ce256e936ff4f09f9ca4befd"
+      "revision": 2,
+      "semantic_hash": "49f2315c2a996e2ed0c182a9db873eb1b9fb502ec7b1f93c5a049883b8e3fd6b"
     },
     {
       "id": "slice.rival_notice",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "3324805d3c02e7ac65fbf42a2bc1de70f073d467e7c4e8fe77d3426f2b47352e"
+      "revision": 2,
+      "semantic_hash": "3ca9126b9133b2a820cc2ab285e043f95c56a3eee1e57391601cc9badeb372c8"
     },
     {
       "id": "slice.supplier_offer",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "d2929006bec9878465a072c1ad7ec67c1efaa5b86b55a4c17015eab996be966f"
+      "revision": 2,
+      "semantic_hash": "f94f1b075a833bc98812b425f59466d2f011f8c056bd6bc1041322ff6612a70d"
     }
   ],
   "format": 1,
-  "generation": 2,
+  "generation": 3,
   "messages_hash": "229e14da301917150b15a80e264cb4033d1159bd18f1b6491171eca3476b6b68",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
@@ -180,5 +180,5 @@
       "slice.recovery_opportunity"
     ]
   },
-  "source_hash": "bb7bdc0b92fda4ba210438e1c2210a7326222731a85eee9f0d2ca623715c8ec9"
+  "source_hash": "89acabcf8537b1b786faef7336cf23f5e7851bde5f9ea42d84db38052d51eba5"
 }

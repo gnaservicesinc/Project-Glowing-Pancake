@@ -25,7 +25,13 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
                 if (setback.starts_on<=s.date && s.date<setback.ends_before) consider(setback.ends_before);
             }
         }
-        if (checkpoint.world.competition) for (const auto& notice:checkpoint.world.competition->notices) if (notice.response_due) consider(*notice.response_due);
+        if (checkpoint.world.competition) {
+            for (const auto& notice:checkpoint.world.competition->notices) if (notice.response_due && notice.kind!="offer") consider(*notice.response_due);
+            for (const auto& offer:checkpoint.world.competition->offers) {
+                if (offer.status==runtime::CompetitiveOfferStatus::pending) consider(offer.respond_by);
+                else if (offer.status==runtime::CompetitiveOfferStatus::active && offer.due_on) consider(*offer.due_on);
+            }
+        }
         if (s.business_offers) for (const auto& accepted:s.business_offers->accepted) {
             const auto offer=std::find_if(s.business_offers->catalog.begin(),s.business_offers->catalog.end(),[&](const auto& o){return o.id==accepted.offer_id;});
             if (offer!=s.business_offers->catalog.end() && offer->kind==core::BusinessOfferKind::compute_lease) consider(core::lease_expiry(*s.business_offers,offer->id));

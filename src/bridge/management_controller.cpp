@@ -1,5 +1,6 @@
 #include "management_controller.hpp"
 #include "flow_presentation.hpp"
+#include "heavyweight_presentation.hpp"
 #include <pgp/core/integer_codec.hpp>
 #include <QRegularExpression>
 #include <algorithm>
@@ -77,7 +78,7 @@ std::optional<core::ResearchInsight> public_insight(const runtime::WorldState& w
 ManagementController::ManagementController(QObject* parent):QObject(parent),funding_(new StableListModel(this)),specialists_(new StableListModel(this)),
     policies_(new StableListModel(this)),decisions_(new StableListModel(this)),alerts_(new StableListModel(this)),data_(new StableListModel(this)),research_(new StableListModel(this)),
     models_(new StableListModel(this)),evidence_(new StableListModel(this)),offers_(new StableListModel(this)),products_(new StableListModel(this)),
-    contracts_(new StableListModel(this)),rivals_(new StableListModel(this)),payables_(new StableListModel(this)) {}
+    contracts_(new StableListModel(this)),rivals_(new StableListModel(this)),payables_(new StableListModel(this)),heavyweights_(new StableListModel(this)),competitive_offers_(new StableListModel(this)) {}
 bool ManagementController::available() const { return snapshot_ && state().lab && state().deployments; }
 bool ManagementController::plannedCompetition() const {return snapshot_ && snapshot_->checkpoint.world.competition && snapshot_->checkpoint.world.competition->setup.has_value();}
 QString ManagementController::competitionSummary() const {
@@ -174,8 +175,9 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             if (!scenario) continue;
             for (const auto& rival:scenario->rivals) if (rival.id==notice.company_id) name=text(rival.name);
         }
+        const auto response_detail=heavyweight_notice_detail(snapshot_->checkpoint.world,program,notice);
         rivals.push_back({text(notice.company_id)+QLatin1Char(':')+text(notice.kind)+QLatin1Char(':')+text(notice.subject),name,text(core::iso_date(notice.day)),
-            notice.response_due ? QStringLiteral("Heavyweight mobilization warning: public customer traction was observed. Earliest response %1. Build a useful, funded service before then; rival capability is not public.").arg(text(core::iso_date(*notice.response_due))) :
+            !response_detail.isEmpty()?response_detail:notice.response_due ? QStringLiteral("Heavyweight mobilization warning: public customer traction was observed. Earliest response %1. Build a useful, funded service before then; rival capability is not public.").arg(text(core::iso_date(*notice.response_due))) :
             notice.kind=="publication" ? (notice.subject.empty()?QStringLiteral("The company published after consuming its own finite training budget. Publication does not reveal private capability or customer fit."):QStringLiteral("Published completed research: %1. Adoption needs the disclosed delay and your own research work; private checkpoints remain hidden.").arg(readable(notice.subject))) :
             notice.kind=="entry" ? QStringLiteral("The company entered with its authored finite capital, staff and lease commitments. Future results and private budgets remain hidden.") :
             notice.kind=="closure" ? QStringLiteral("The company closed after it could not service actual obligations.") : QStringLiteral("The company declined work that exceeded its available budget."),readable(notice.kind),false});
@@ -188,7 +190,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
         const auto* product=find(rival.market->products,release.product_id);if (!product) continue;
         rivals.push_back({QStringLiteral("release:")+text(release.company_id)+QLatin1Char(':')+text(release.product_id),text(definition.name)+QStringLiteral(" · ")+readable(release.product_id),
             money(product->price_per_task)+QStringLiteral(" per task"),QStringLiteral("Public customer deliveries began %1. %2 · %3. This quote reveals the price of a released service; private model capability, cash and future decisions stay hidden.")
-                .arg(text(core::iso_date(release.day)),text(definition.planning->leader),text(definition.planning->region)),rival.phase==core::DayPhase::closed?QStringLiteral("Closed provider"):QStringLiteral("Public service"),false});
+                .arg(text(core::iso_date(release.day)),text(definition.planning->leader),text(definition.planning->region)),rival.phase==core::DayPhase::closed?QStringLiteral("Closed provider"):(company->response && company->response->retired_on)?QStringLiteral("Withdrawn program"):QStringLiteral("Public service"),false});
     }
     if (s.accounts) {
         for (const auto& row:s.accounts->invoices) if (row.kind==core::InvoiceKind::payable && row.settled<row.amount) {
@@ -203,6 +205,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             funding.push_back({text(offer.id),text(offer.name),money(offer.proceeds)+QStringLiteral(" cash now"),
                 offer.term.value()==0?QStringLiteral("%1 proceeds in return for %2 ownership. Every existing holding is diluted proportionally. Offered once; no refund or reroll.").arg(money(offer.proceeds),percent(offer.acquired)):
                 QStringLiteral("%1 proceeds · %2 monthly interest · principal due %3 days after drawing. Interest accrues through actual accounts; repay principal explicitly in Accounts. Offered once.").arg(money(offer.proceeds),percent(offer.monthly_interest),QString::number(offer.term.value())),taken?QStringLiteral("Used"):QStringLiteral("Available"),!taken});
+            if (offer.public_announcement) funding.back().detail+=tr(" Acceptance publicly announces this financing round; its private spending and balances remain undisclosed.");
         }
         for (const auto& offer:m.catalog.specialists) {
             const bool hired=std::any_of(m.specialists.begin(),m.specialists.end(),[&](const auto& h){return h.offer_id==offer.id;});
@@ -220,6 +223,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
     auto set=[&](StableListModel* model,std::vector<CampaignRow> rows){if (replace) model->beginCampaign(std::move(rows)); else model->setRows(std::move(rows));};
     set(data_,std::move(data));set(research_,std::move(research));set(models_,std::move(models));set(evidence_,std::move(evidence));set(offers_,std::move(offers));set(products_,std::move(products));set(contracts_,std::move(contracts));set(rivals_,std::move(rivals));set(payables_,std::move(payables));
     set(funding_,std::move(funding));set(specialists_,std::move(specialists));set(policies_,std::move(policies));set(decisions_,std::move(decisions));set(alerts_,std::move(alerts));
+    auto response=heavyweight_models(snapshot_->checkpoint,program);set(heavyweights_,std::move(response.responses));set(competitive_offers_,std::move(response.offers));
     emit changed();
 }
 QVariantList ManagementController::recipes() const {
@@ -394,6 +398,7 @@ void ManagementController::deploy(QString service,QString model,QString evidence
     if (editable()) emit actionRequested(core::DeployModel{service.toStdString(),model.toStdString(),evidence.toStdString(),source.toStdString(),review});
 }
 void ManagementController::acceptOffer(QString id) { if (editable()) emit actionRequested(core::AcceptBusinessOffer{id.toStdString()}); }
+void ManagementController::respondCompetitiveOffer(QString id,bool accept) {if (editable()) emit competitiveResponseRequested(std::move(id),accept);}
 void ManagementController::cancelContract(QString id) { if (editable()) emit actionRequested(core::CancelContract{id.toStdString()}); }
 void ManagementController::payInvoice(QString id) {
     if (!editable()) return; const auto* row=find(state().accounts->invoices,id.toStdString());

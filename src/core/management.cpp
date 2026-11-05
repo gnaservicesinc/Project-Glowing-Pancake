@@ -250,7 +250,8 @@ void validate_management(const SimulationState& s,bool deep) {
         const auto& offer=find(m.catalog.specialists,row.offer_id);
         if (!ids.insert(row.offer_id).second || row.day<s.accounts->starts_on || row.day>s.date) invalid("Specialist acceptance repeats or has an invalid date");
         const auto& added=find(s.capacity->staff_additions,"specialist/"+offer.id);const auto& salary=find(s.accounts->recurring,"specialist/"+offer.id);
-        if (added.day!=row.day || added.people!=1 || salary.starts_on!=row.day || salary.ends_before || salary.monthly_amount!=offer.monthly_salary ||
+        const bool departed=salary.ends_before && std::any_of(s.capacity->staff_departures.begin(),s.capacity->staff_departures.end(),[&](const auto& departure){return departure.day==*salary.ends_before && departure.day>=row.day;});
+        if (added.day!=row.day || added.people!=1 || salary.starts_on!=row.day || (salary.ends_before && !departed) || salary.monthly_amount!=offer.monthly_salary ||
             (offer.signing_cost.value()>0 && !paid("specialist/"+offer.id,row.day,offer.signing_cost,Account::expenses,Account::cash)))
             invalid("Specialist lacks its paid signing, dated staff addition or recurring payroll");
     }

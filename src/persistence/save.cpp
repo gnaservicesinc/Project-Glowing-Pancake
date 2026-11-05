@@ -10,6 +10,7 @@
 #include "deployment_json.hpp"
 #include "management_json.hpp"
 #include "competition_history_json.hpp"
+#include "heavyweight_json.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -291,6 +292,7 @@ Json competition_json(const CompetitionState& state) {
             }
             company["planning"]={{"entered_on",optional_day(row.planning->entered_on)},{"next_review",row.planning->next_review.value()},{"decisions",std::move(decisions)}};
         }
+        if (row.response) company["response"]=detail::heavyweight_json(*row.response);
         companies.push_back(std::move(company));
     }
     for (const auto& row:state.notices) {
@@ -300,6 +302,7 @@ Json competition_json(const CompetitionState& state) {
     Json result{{"companies",std::move(companies)},{"notices",std::move(notices)}};
     if (state.setup) {
         result["setup"]=Json::parse(content::canonical_competition_setup(*state.setup));
+        result["offers"]=detail::competitive_offers_json(state.offers);
         result["releases"]=Json::array();for (const auto& row:state.releases) result["releases"].push_back({{"company",row.company_id},{"product",row.product_id},{"day",row.day.value()}});
         result["adoptions"]=Json::array();for (const auto& row:state.adoptions) {
             Json shares=Json::array();for (const auto& share:row.shares) shares.push_back({{"product",share.product_id},{"share",share.share.value()}});
@@ -309,7 +312,8 @@ Json competition_json(const CompetitionState& state) {
     return result;
 }
 CompetitionState parse_competition(const Json& value) {
-    detail::fields(value,"competition",{"companies","notices"},{"setup","releases","adoptions"}); CompetitionState result;
+    detail::fields(value,"competition",{"companies","notices"},{"setup","releases","adoptions","offers"}); CompetitionState result;
+    if (value.contains("offers")) result.offers=detail::parse_competitive_offers(value.at("offers"));
     if (value.contains("setup")) {
         if (!value.contains("releases") || !value.contains("adoptions")) detail::invalid("competition","Planned competition lost public market state");
         result.setup=content::load_competition_setup(value.at("setup").dump());
@@ -329,11 +333,11 @@ CompetitionState parse_competition(const Json& value) {
             }
             result.adoptions.push_back(std::move(adoption));
         }
-    } else if (value.contains("releases") || value.contains("adoptions")) detail::invalid("competition","Public industry state has no authored setup");
+    } else if (value.contains("releases") || value.contains("adoptions") || value.contains("offers")) detail::invalid("competition","Public industry state has no authored setup");
     detail::array(value.at("companies"),"competition/companies",32); detail::array(value.at("notices"),"competition/notices",result.setup?4096:128);
     detail::CompetitionHistoryBudget history_budget;
     for (const auto& row:value.at("companies")) {
-        detail::fields(row,"competition/company",{"definition_id","simulation","attempted","warned_on","published_on"},{"planning","simulation_storage"});
+        detail::fields(row,"competition/company",{"definition_id","simulation","attempted","warned_on","published_on"},{"planning","simulation_storage","response"});
         auto simulation=row.at("simulation");
         if (row.contains("simulation_storage")) {
             const auto format=detail::text(row.at("simulation_storage"),"simulation_storage",32);
@@ -357,6 +361,10 @@ CompetitionState parse_competition(const Json& value) {
                     detail::u64(decision.at("stream_after"),"stream_after"),observed});
             }
             company.planning=std::move(next);
+        }
+        if (row.contains("response")) {
+            if (!result.setup || !company.planning || !value.contains("offers")) detail::invalid("heavyweight","Response-bearing saves require an authored planner and explicit funded offers, including an empty list");
+            company.response=detail::parse_heavyweight(row.at("response"));
         }
         result.companies.push_back(std::move(company));
     }

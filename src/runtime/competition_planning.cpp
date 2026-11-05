@@ -44,6 +44,7 @@ void enter_due(WorldState& world,const CompiledProgram& program) {
     for (auto& rival:world.competition->companies) {
         auto& plan=*rival.planning;if (plan.entered_on) continue;
         const auto& definition=rival_definition(program,rival.definition_id);
+        if (definition.response) continue;
         const auto earliest=advance_days(world.campaign_start,definition.start_after);
         if (day<earliest || day>=world.simulation.end_date) continue;
         if (definition.player_deployment_threshold>0) {
@@ -64,6 +65,8 @@ RivalObservation observe(const WorldState& world,OrdinalDay day,std::uint64_t dr
     for (const auto& release:world.competition->releases) if (release.day<day) {
         const auto* owner=company(world,release.company_id);
         if (!owner || !owner->market || ((owner->phase==DayPhase::closed || owner->phase==DayPhase::finished) && owner->date<=quote_day)) continue;
+        const auto source=std::find_if(world.competition->companies.begin(),world.competition->companies.end(),[&](const auto& row){return row.definition_id==release.company_id;});
+        if (source!=world.competition->companies.end() && source->response && source->response->retired_on && *source->response->retired_on<=quote_day) continue;
         providers.insert(release.company_id);prices.push_back(market_price_on(*owner->market,release.product_id,quote_day).value());
     }
     result.public_providers=static_cast<std::uint32_t>(providers.size());
@@ -200,15 +203,18 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
     state.deployments=DeploymentState{content::service_definitions(*authored.service_catalog),{}};
     state.management=ManagementState{*authored.management,{},{},{},{},{},{}};state.management->catalog.setbacks.clear();
     state.management->catalog.scoring.founder="founder";
-    if (world.competition->setup->catchup_cash.value()>0) state.management->catalog.financing.push_back({"finance.disclosed_catchup","Disclosed finite catch-up equity",world.competition->setup->catchup_cash,world.competition->setup->catchup_acquired,BasisPoints{0},Days{0}});
+    if (definition.response) {state.management->catalog.financing.clear();state.capacity->sources.front().effective=MilliCUPerDay{0};}
+    if (!definition.response && world.competition->setup->catchup_cash.value()>0) state.management->catalog.financing.push_back({"finance.disclosed_catchup","Disclosed finite catch-up equity",world.competition->setup->catchup_cash,world.competition->setup->catchup_acquired,BasisPoints{0},Days{0}});
     BusinessOffersState growth;
     for (auto offer:authored.business_offers) if (offer.kind==BusinessOfferKind::compute_lease) {offer.id+="."+definition.id;growth.catalog.push_back(std::move(offer));}
     if (!growth.catalog.empty()) state.business_offers=std::move(growth);
     return Simulation{std::move(state)}.checkpoint();
 }
 RivalObservation public_observation(const WorldState& world,OrdinalDay day,std::uint64_t draw) {return observe(world,day,draw);}
+bool submit_rival(RivalCompany& rival,CommandAction action) {return submit(rival,std::move(action));}
 void review_rival(WorldState& world,const CompiledProgram& program,RivalCompany& rival) {
     auto& plan=*rival.planning;if (!plan.entered_on || !active(rival.simulation) || rival.simulation.date<plan.next_review) return;
+    if (rival.response && rival.response->phase!=HeavyweightPhase::compete) return;
     if (plan.decisions.size()>=8192) invalid("Rival weekly decision history exceeds its century bound");
     const auto& definition=rival_definition(program,rival.definition_id);diffuse(world,rival);
     const auto stream_index=static_cast<std::size_t>(RandomStream::rivals);const auto before=rival.simulation.random[stream_index];
@@ -242,14 +248,16 @@ void initialize_planning(WorldState& world,const CompiledProgram& program,const 
     CompetitionState state;state.setup=setup;
     for (const auto& definition:definitions) if (content::selected_rival(definition,setup)) {
         RivalCompany rival;rival.definition_id=definition.id;rival.simulation=dormant_company(world,definition);
-        rival.planning=RivalPlanState{{},advance_days(world.campaign_start,definition.start_after),{}};state.companies.push_back(std::move(rival));
+        rival.planning=RivalPlanState{{},advance_days(world.campaign_start,definition.start_after),{}};
+        if (definition.response) {rival.response=HeavyweightState{};rival.response->next_review=world.campaign_start;}
+        state.companies.push_back(std::move(rival));
     }
-    world.competition=std::move(state);enter_due(world,program);
+    world.competition=std::move(state);enter_due(world,program);update_heavyweight_responses(world,program);
     for (auto& rival:world.competition->companies) review_rival(world,program,rival);
     collect_public_results(world,world.campaign_start);
 }
 void prepare_rival_morning(WorldState& world,const CompiledProgram& program,RivalCompany& rival) {
-    if (!rival.planning->entered_on || !active(rival.simulation)) return;
+    if (!rival.planning->entered_on || !active(rival.simulation) || (rival.response && rival.response->retired_on)) return;
     const auto day=world.simulation.date;
     if (const auto warning=liquidity_report(*rival.simulation.liquidity).pending_warning) if (!submit(rival,AcknowledgeLiquidityWarning{*warning})) invalid("Rival liquidity warning was not acknowledged");
     std::vector<std::string> accepted_ids;
@@ -271,6 +279,7 @@ void advance_planning(WorldState& world,const CompiledProgram& program,OrdinalDa
         if (rival.simulation.phase==DayPhase::closed) world.competition->notices.push_back({rival.definition_id,"closure",rival.simulation.date,std::nullopt});
     }
     collect_public_results(world,prior);append_industry_adoption(world,prior);enter_due(world,program);
+    update_competitive_offers(world,program);update_heavyweight_responses(world,program);
     for (auto& rival:world.competition->companies) review_rival(world,program,rival);
     collect_public_results(world,prior);
 }

@@ -547,6 +547,23 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if (found->monthly_support_cost.value() > 0)
                     end_recurring(accounts(next), "support/" + found->id, next.date);
                 (void)receipt(next, "cancel_project");
+            } else if constexpr (std::is_same_v<Action, WithdrawOperations>) {
+                if (!next.accounts || !next.capacity || reserved_cash(next).value()!=0)
+                    refuse(CommandReason::dependent_commitment,"Release funded commitments before withdrawing operations.");
+                if (next.market) for (const auto& contract:next.market->contracts)
+                    if (contract.status==ContractStatus::active || contract.status==ContractStatus::pending)
+                        refuse(CommandReason::dependent_commitment,"Resolve customer contracts before withdrawing operations.");
+                std::vector<std::string> projects,recurring,sources;
+                for (const auto& row:next.capacity->projects) if (row.status==ProjectStatus::active) projects.push_back(row.id);
+                for (const auto& row:next.accounts->recurring)
+                    if ((!row.ends_before || *row.ends_before>next.date) && !row.id.starts_with("offer.lease/") && !row.id.starts_with("offer.renew/")) recurring.push_back(row.id);
+                for (const auto& row:next.capacity->sources) sources.push_back(row.id);
+                for (const auto& id:projects) cancel_project(*next.capacity,next.date,id);
+                for (const auto& id:recurring) end_recurring(*next.accounts,id,next.date);
+                if (next.capacity->available_staff>0) remove_staff_capacity(*next.capacity,next.date,"withdrawal/"+std::to_string(next.revision),next.capacity->available_staff);
+                for (const auto& id:sources) update_effective_capacity(*next.capacity,next.date,id,MilliCUPerDay{0});
+                if (next.management) for (auto& policy:next.management->policies) policy.enabled=false;
+                (void)receipt(next,"withdraw_operations");
             } else if constexpr (std::is_same_v<Action, SetEffectiveCapacity>) {
                 update_effective_capacity(capacity(next), next.date, action.source_id, action.available);
                 (void)receipt(next, "capacity_availability");

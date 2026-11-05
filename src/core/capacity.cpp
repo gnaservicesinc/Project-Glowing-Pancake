@@ -129,15 +129,21 @@ CapacityReport capacity_report(const CapacityState& state) {
 }
 void validate_capacity(const CapacityState& state) {
     text_valid(state.owner); (void)from_ordinal(state.starts_on);
-    if (state.staff_additions.size()>64) invalid("Staff addition history exceeds its bound");
+    if (state.staff_additions.size()>64 || state.staff_departures.size()>64) invalid("Staff change history exceeds its bound");
     std::uint64_t added=0;std::set<std::string> staff_ids;
     const auto staff_today=state.closed_through?advance_days(*state.closed_through,Days{1}):state.starts_on;
     for (const auto& row:state.staff_additions) {
-        if (row.people==0 || row.id.empty() || !staff_ids.insert(row.id).second || row.day<state.starts_on || row.day>staff_today)
+        if (row.people==0 || row.people>1'000'000 || row.id.empty() || !staff_ids.insert(row.id).second || row.day<state.starts_on || row.day>staff_today)
             invalid("Staff additions require distinct dated hiring commitments");
         added+=row.people;
     }
-    if (added>state.available_staff) invalid("Hired people exceed the actual current team");
+    std::uint64_t removed=0;
+    for (const auto& row:state.staff_departures) {
+        if (row.people==0 || row.people>1'000'000 || row.id.empty() || !staff_ids.insert(row.id).second || row.day<state.starts_on || row.day>staff_today)
+            invalid("Staff departures require distinct dated commitments");
+        removed+=row.people;(void)available_staff_on(state,row.day);
+    }
+    if (added>state.available_staff+removed || state.available_staff+removed-added>1'000'000) invalid("Staff changes do not reconcile to a bounded opening team");
     if (state.available_staff > 1000000 || state.sources.size() > capacity_source_limit ||
         state.projects.size() > capacity_project_limit || state.days.size() > capacity_day_limit)
         invalid("Capacity state exceeds its deterministic bounds");
@@ -170,7 +176,8 @@ void validate_capacity(const CapacityState& state) {
         (void)from_ordinal(row.starts_on);
         const auto& supply = source(state, row.source_id);
         if (!projects.emplace(row.id, &row).second || row.starts_on < state.starts_on || row.starts_on > latest ||
-            row.requested.value() <= 0 || row.staff == 0 || row.staff > state.available_staff ||
+            row.requested.value() <= 0 || row.staff == 0 || row.staff>1'000'000 || (row.staff > available_staff_on(state,row.starts_on) &&
+                !(row.status==ProjectStatus::cancelled && row.stopped_on==row.starts_on && row.completed_work.value()==0)) ||
             (supply.available_from && row.starts_on < *supply.available_from) ||
             row.minimum_memory_mib > supply.memory_mib || row.interconnect != supply.interconnect || row.monthly_support_cost.value() < 0)
             invalid("Project identity, date, staff or source compatibility is invalid");
@@ -292,15 +299,32 @@ void validate_capacity(const CapacityState& state) {
     }
 }
 std::uint32_t available_staff_on(const CapacityState& state,OrdinalDay day) {
-    std::uint64_t unavailable=0;
+    std::uint64_t unavailable=0,available=state.available_staff;
     for (const auto& row:state.staff_additions) if (row.day>day) unavailable+=row.people;
-    if (unavailable>state.available_staff) invalid("Staff history exceeds the actual team");
-    return state.available_staff-static_cast<std::uint32_t>(unavailable);
+    for (const auto& row:state.staff_departures) if (row.day>day) available+=row.people;
+    if (unavailable>available || available-unavailable>1'000'000) invalid("Staff history exceeds the actual team");
+    return static_cast<std::uint32_t>(available-unavailable);
+}
+std::uint32_t opening_staff_count(const CapacityState& state) {
+    std::uint64_t result=state.available_staff,added=0;
+    for (const auto& row:state.staff_departures) result+=row.people;
+    for (const auto& row:state.staff_additions) added+=row.people;
+    if (added>result || result-added>1'000'000) invalid("Staff changes do not reconcile to the opening team");
+    return static_cast<std::uint32_t>(result-added);
+}
+void remove_staff_capacity(CapacityState& state,OrdinalDay day,std::string id,std::uint32_t people) {
+    if (day!=(state.closed_through?advance_days(*state.closed_through,Days{1}):state.starts_on) || people==0 || people>state.available_staff || state.staff_departures.size()>=64 ||
+        capacity_report(state).assigned_staff>state.available_staff-people ||
+        std::any_of(state.staff_departures.begin(),state.staff_departures.end(),[&](const auto& row){return row.id==id;}) ||
+        std::any_of(state.staff_additions.begin(),state.staff_additions.end(),[&](const auto& row){return row.id==id;}))
+        invalid("Staff departure requires unassigned current staff and a unique dated commitment");
+    state.available_staff-=people;state.staff_departures.push_back({std::move(id),day,people});
 }
 void add_staff_capacity(CapacityState& state,OrdinalDay day,std::string id,std::uint32_t people) {
     if (day!=(state.closed_through?advance_days(*state.closed_through,Days{1}):state.starts_on) || people==0 || people>1'000'000 ||
         state.available_staff>1'000'000-people || state.staff_additions.size()>=64 ||
-        std::any_of(state.staff_additions.begin(),state.staff_additions.end(),[&](const auto& row){return row.id==id;}))
+        std::any_of(state.staff_additions.begin(),state.staff_additions.end(),[&](const auto& row){return row.id==id;}) ||
+        std::any_of(state.staff_departures.begin(),state.staff_departures.end(),[&](const auto& row){return row.id==id;}))
         invalid("Staff addition needs a unique current-day commitment within the team bound");
     state.available_staff+=people;state.staff_additions.push_back({std::move(id),day,people});
 }

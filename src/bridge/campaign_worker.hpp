@@ -22,6 +22,7 @@ public:
     void start();
     void stop();
     void submitCommand(std::uint64_t token, core::Command command);
+    void respondCompetitiveOffer(std::uint64_t token,std::uint64_t revision,std::string id,bool accept);
     void choose(std::uint64_t token, std::uint64_t expected_revision,
                 std::uint64_t presentation_id, std::string choice_id);
     void saveTo(std::uint64_t token, std::filesystem::path path);

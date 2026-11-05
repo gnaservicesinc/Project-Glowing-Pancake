@@ -1082,3 +1082,59 @@ Count: **27/52 Mac feature steps**. Next: **M4-02 heavyweight mobilization and
 deals**. Century rivalry/entry/consolidation and save scaling remain M8; platform,
 packaging and human studies remain deferred. No testers were contacted or human
 sessions conducted. [Owning contract](../src/runtime/COMPETITION.md).
+
+## M4-02 — Heavyweight response and funded agreements · 2026-11-05
+
+Public-evidence reviews now drive watch/mobilize/compete/consolidate, with
+separate entry/exit thresholds, two-review hysteresis and at least 90 days'
+warning. Pressure values settled customer deliveries at public posted prices,
+uses public demand rather than private contract floors, and counts only
+explicitly announced financing. The briefing exposes the weights, targets,
+observations and dates without private cash, contracts, models or future RNG.
+One finite program ledger pays actual specialist/compute orders before a
+separate delivery lead. Ordinary paid research/training/evaluation starts only
+then. Consolidation stops new work, honors accepted commitments and withdraws
+with dated staff departures; fixed-term bills remain due. No replacement budget
+or hidden financing is created.
+
+Optional publication/pilot agreements reserve the issuer's fee before offering
+terms. Acceptance pays nothing; publication after acceptance or actual additional
+qualified customer work earns exactly one conserving bilateral payment. Ignore,
+decline, expiration, closure and stale/repeated replies have explicit outcomes.
+Office briefings and a bounded keyboard-accessible terms dialog use the common
+runtime transaction, serialized worker and pre-commit recovery save. Restore
+recomputes public observations and response decisions and reconciles resources,
+escrow, progress, notices and receipts. Ownership/mergers remain M4-03.
+
+The optimized Mac build and **63/63 CTests pass in 18.32s** with four workers,
+including **50 heavyweight assertions** and the existing 51 competition checks.
+Tests include private-information isolation, both funded milestones, warning/
+delivery/active-pilot reloads, hysteresis, retained bills, unaffordable entry,
+actual insolvency, no replacement subsidy and rehashed forged continuation
+refusals. A final translation-only bridge change also passes its focused check.
+Standard/expanded headless routes reach 2017 with **$2,086,666.76 /
+$1,993,686.26** and exact **22,036,080 / 23,606,264-byte** saves, below the
+unchanged 25 MiB cap. The expanded route exposed the old 128-notice fact/cursor
+limit; both now match the 4,096-record continuation bound and the route records
+130 notices. Unanswered agreements expire without hidden fees.
+
+The actual bundled **Metal 1280×720 / 200% text** route reviews public pressure,
+declines a publication offer, accepts a pilot through the QML terms dialog and
+receives its actual milestone fee. It continues the ordinary funded Office/Lab,
+contract, policy and supplier-setback path to 2017 with **$1,547,040.93** and an
+exact **21,825,962-byte** final save. Briefing/terms/payment captures are readable
+at that scale. Game resources still exclude editor/draft/fixture content.
+
+The shared writer finalizes **0.3.0-dev.1**, generation 3, hash
+`a55565fbf1a22b59b8166a4729f99823b0df918e581ee0d52dc0a238a9bf7563`,
+with all five scenarios / 15 headquarters/save checks and no lints. Root variable
+signatures include the notice-cursor bound, so all 19 definitions advance to
+revision 2. Earlier immutable snapshots remain intact. Game/editor stay
+**0.0.0-dev**, phase planning, required game **0.1.0-dev.1** unresolved and
+release readiness false. No cross-content save migration, human study or
+platform/release qualification is claimed.
+
+Count: **28/52 Mac feature steps**. Next: **M4-03 funding, executives,
+negotiation and board**. Human playtests/author studies remain deferred until all
+components exist and the user is ready for v1. No testers were contacted.
+[Owning contract](../src/runtime/HEAVYWEIGHTS.md).

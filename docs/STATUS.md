@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**27 of 52 steps complete for Mac feature development. M4-02 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02 and M4-01.
+**28 of 52 steps complete for Mac feature development. M4-03 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02 and M4-01/02.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -23,6 +23,22 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- M4-02 adds public-evidence heavyweight reviews, watch/mobilize/compete/
+  consolidate states, two-review hysteresis and at least 90 days' warning.
+  One finite ledger pays for real specialist/compute orders before delivery;
+  withdrawal preserves consumed costs and fixed-term bills. Optional publication
+  and pilot agreements reserve the issuer's cash and pay only on actual work.
+  Office briefings explain pressure, budgets, dates and keyboard-reviewed terms.
+  All **63/63 optimized Mac CTests pass in 18.32s**, including **50 heavyweight
+  assertions**. Standard/expanded ending saves are **22,036,080 / 23,606,264
+  bytes**, under the unchanged 25 MiB limit; expanded reaches 130 public notices.
+  The bundled **1280×720 / 200% text Metal** run declines publication, accepts
+  and completes a pilot, then finishes with **$1,547,040.93** and an exact
+  **21,825,962-byte** reload. The shared writer finalizes content **0.3.0-dev.1**,
+  generation 3, with all 15 headquarters/save checks. Game/editor stay planning
+  placeholders; ownership/mergers and century balance remain later steps.
+  [Response and agreement contract](../src/runtime/HEAVYWEIGHTS.md).
 
 - M4-01 adds the standard 15-company schedule, 7/20-company alternatives,
   six initial startups and a disclosed finite catch-up equity preset. Weekly
@@ -348,11 +364,11 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation: M4-02 heavyweight mobilization and deals.** Add the
-watch/mobilize/compete/consolidate states, visible pressure/90-day warning,
-finite resource commitments, hysteresis and answerable offers. The full-roster
-planning/shared-market foundation is complete. Human validation remains
-deferred as specified below.
+**Next implementation: M4-03 funding, executives, negotiation and board.** Add
+conserved negotiated ownership/grants, vesting/departure treatment, covenants,
+board/role obligations and straightforward mergers through shared transactions.
+The full-roster planning, shared market and finite heavyweight response are
+implemented. Human validation remains deferred as specified below.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

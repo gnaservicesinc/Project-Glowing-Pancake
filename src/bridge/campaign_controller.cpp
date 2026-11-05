@@ -114,6 +114,11 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
     : QObject(parent),program_(program),management_(new ManagementController(this)),welcome_(welcome),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
       save_folder_(QUrl::fromLocalFile(QString::fromStdU16String(paths.saves_directory.u16string()))) {
     connect(management_,&ManagementController::actionRequested,this,&CampaignController::submit);
+    connect(management_,&ManagementController::competitiveResponseRequested,this,[this](QString id,bool accept) {
+        if (!paused() || !beginOperation()) return;
+        const auto revision=snapshot_->checkpoint.world.simulation.revision;
+        QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,revision,id=id.toStdString(),accept]{worker->respondCompetitiveOffer(token,revision,id,accept);},Qt::QueuedConnection);
+    });
     connect(management_,&ManagementController::noticeRaised,this,&CampaignController::setNotice);
     (void)persistence::encode_settings(settings_);
     worker_ = new CampaignWorker(std::move(program),std::move(checkpoint),std::move(paths),settings_);

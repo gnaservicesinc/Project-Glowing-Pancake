@@ -63,16 +63,21 @@ Json capacity_json(const core::CapacityState& state) {
             {"protected_tasks",project.protected_tasks}});
         days.push_back({{"day",closed.day.value()},{"sources",std::move(source_usage)},{"projects",std::move(project_work)}});
     }
-    Json staff_additions=Json::array();
+    Json staff_additions=Json::array(),staff_departures=Json::array();
     for (const auto& row:state.staff_additions) staff_additions.push_back({{"id",row.id},{"day",row.day.value()},{"people",row.people}});
-    return {{"staff_additions",std::move(staff_additions)},{"owner",state.owner},{"starts_on",state.starts_on.value()},
+    for (const auto& row:state.staff_departures) staff_departures.push_back({{"id",row.id},{"day",row.day.value()},{"people",row.people}});
+    return {{"staff_additions",std::move(staff_additions)},{"staff_departures",std::move(staff_departures)},{"owner",state.owner},{"starts_on",state.starts_on.value()},
         {"closed_through",optional_day(state.closed_through)},{"available_staff",state.available_staff},
         {"sources",std::move(sources)},{"projects",std::move(projects)},{"days",std::move(days)}};
 }
 
 core::CapacityState parse_capacity(const Json& value) {
-    fields(value,"capacity",{"owner","starts_on","closed_through","available_staff","sources","projects","days"},{"staff_additions"});
+    fields(value,"capacity",{"owner","starts_on","closed_through","available_staff","sources","projects","days"},{"staff_additions","staff_departures"});
     core::CapacityState result;
+    if (value.contains("staff_departures")) {
+        array(value.at("staff_departures"),"capacity/staff_departures",64);
+        for (const auto& row:value.at("staff_departures")) {fields(row,"capacity/staff_departure",{"id","day","people"});result.staff_departures.push_back({label(row.at("id")),day(row.at("day")),staff(row.at("people"))});}
+    }
     if (value.contains("staff_additions")) {
         array(value.at("staff_additions"),"capacity/staff_additions",64);
         for (const auto& row:value.at("staff_additions")) {fields(row,"capacity/staff_addition",{"id","day","people"});result.staff_additions.push_back({label(row.at("id")),day(row.at("day")),staff(row.at("people"))});}

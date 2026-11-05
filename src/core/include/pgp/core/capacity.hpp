@@ -87,6 +87,7 @@ struct CapacityState {
     std::vector<CapacityProject> projects;
     std::vector<CapacityDay> days;
     std::vector<StaffAddition> staff_additions{};
+    std::vector<StaffAddition> staff_departures{};
     auto operator<=>(const CapacityState&) const = default;
 };
 struct CapacityReport {
@@ -109,6 +110,8 @@ struct CapacityReport {
 void validate_capacity(const CapacityState& state);
 void reserve_project(CapacityState& state, OrdinalDay day, CapacityProject project);
 void add_staff_capacity(CapacityState& state, OrdinalDay day, std::string id, std::uint32_t people);
+void remove_staff_capacity(CapacityState& state,OrdinalDay day,std::string id,std::uint32_t people);
+[[nodiscard]] std::uint32_t opening_staff_count(const CapacityState& state);
 [[nodiscard]] std::uint32_t available_staff_on(const CapacityState& state, OrdinalDay day);
 void add_capacity_source(CapacityState& state, OrdinalDay day, CapacitySource source);
 void cancel_project(CapacityState& state, OrdinalDay day, std::string_view project_id);

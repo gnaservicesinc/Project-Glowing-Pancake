@@ -136,6 +136,11 @@ void CampaignWorker::submitCommand(std::uint64_t token, core::Command command) {
         emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));
     }
 }
+void CampaignWorker::respondCompetitiveOffer(std::uint64_t token,std::uint64_t revision,std::string id,bool accept) {
+    requireOwningThread();
+    try {complete(token,campaign_.respond_competitive_offer(revision,id,accept));}
+    catch (const std::exception& error) {pauseDriver();emit noticeRaised(error_text(error));publish();emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));}
+}
 void CampaignWorker::choose(std::uint64_t token,std::uint64_t expected_revision,
                             std::uint64_t presentation_id,std::string choice_id) {
     requireOwningThread();

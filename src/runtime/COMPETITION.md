@@ -11,12 +11,15 @@ three-rival introduction retains its smaller campaign rules.
 Scheduled companies own no cash, staff, compute or bills until their actual
 entry. Opening capital, payroll, leases, research portfolios, priorities,
 reserve/runway, price limits and publication choices come from validated data.
-Heavyweights currently wait for actual player customer delivery, then give a
-90-day warning before opening. Their pressure/deal/hysteresis state machine is
-M4-02; this step does not implement it.
+Heavyweight profiles with a `response` policy use the public-evidence pressure,
+90-day warning, paid mobilization, delivery and withdrawal rules in
+[HEAVYWEIGHTS.md](HEAVYWEIGHTS.md). Profiles without that policy retain the
+original player-delivery warning routine; the two triggers cannot overlap.
 
-Each entered company consumes one private saved rivals-stream draw per weekly
-review. It scores a bounded feasible list of data, research, training,
+Each operating company consumes one private saved rivals-stream draw per weekly
+review. A response program starts those reviews only after its paid delivery
+boundary, while competing; consolidation suspends new strategic work. It scores
+a bounded feasible list of data, research, training,
 evaluation, qualified deployment, price, hire, financing/repayment, paid compute
 expansion and publication actions. Stable score/action/subject ordering breaks
 ties. Refusals remain atomic. Decisions retain their cause, observed information

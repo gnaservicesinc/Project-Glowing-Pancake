@@ -242,7 +242,7 @@ Registry foundation_registry() {
     boolean("company.market_shift_active","Whether an unexpired external demand change is already active.",Scope::company,"slice");
     boolean("company.supplier_offer_eligible","Whether an unaccepted supplier offer is currently affordable and feasible.",Scope::company,"slice");
     boolean("company.recovery_offer_eligible","Whether a real available product can honor an unaccepted recovery pilot.",Scope::company,"slice");
-    number("company.competitive_notice_count",Scope::company,Unit::count,0,128,
+    number("company.competitive_notice_count",Scope::company,Unit::count,0,4096,
         "Number of visible rival publications, budget decisions, closures and disclosed heavyweight warnings; never private scores.","slice");
     result.register_committed_fact({"capacity.project_completed", Scope::company, Scope::project, "project.completed_milli_cu",
         "Finite project work completed at settlement. Dispatch on the next prepared morning."});

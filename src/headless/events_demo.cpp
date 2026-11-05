@@ -41,8 +41,19 @@ void run_competition_demo(const char* path,const char* preset,unsigned days,std:
         for (const auto& decision:rival.planning->decisions) {++decisions;if (decision.accepted) ++accepted;}
     }
     output<<"Competition "<<preset<<" · "<<core::iso_date(run.checkpoint.world.simulation.date)<<" · "<<competition.companies.size()<<" scheduled companies · "<<entered<<" entered · "<<closed<<" closed\n"
-        <<decisions<<" weekly decisions · "<<accepted<<" accepted shared commands · "<<competition.releases.size()<<" actual public service releases\n"
+        <<decisions<<" weekly decisions · "<<accepted<<" accepted shared commands · "<<competition.releases.size()<<" actual public service releases · "<<competition.notices.size()<<" public notices\n"
         <<"One customer pool; conserved delivery/budgets; exact save roundtrip "<<saved.size()<<" bytes\n"
         <<"Player cash "<<run.checkpoint.world.simulation.cash.value()<<" constant-2014 cents; "
         <<(run.stop==session::SliceStop::finished?"finished":run.stop==session::SliceStop::requested_boundary?"requested boundary":"stopped at an actual warning/closure")<<"\n";
+    for (const auto& company:competition.companies) if (company.response) {
+        const auto& response=*company.response;
+        output<<company.definition_id<<" · "<<runtime::to_string(response.phase)<<" · "<<response.reviews.size()<<" public reviews · "<<response.transitions.size()<<" response transitions";
+        if (response.warned_on) output<<" · warning "<<core::iso_date(*response.warned_on);
+        if (response.mobilized_on) output<<" · funded "<<core::iso_date(*response.mobilized_on)<<" · delivery "<<core::iso_date(*response.ready_on);
+        output<<'\n';
+    }
+    if (!competition.offers.empty()) {
+        std::size_t paid=0,expired=0;for (const auto& offer:competition.offers) {if (offer.status==runtime::CompetitiveOfferStatus::paid) ++paid;if (offer.status==runtime::CompetitiveOfferStatus::expired) ++expired;}
+        output<<competition.offers.size()<<" finite funded offers · "<<paid<<" paid · "<<expired<<" expired (this route leaves offers unanswered)\n";
+    }
 }

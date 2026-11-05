@@ -98,7 +98,7 @@ that same writer and exposes interrupted-batch recovery. Authors do not need a
 command or text editor. The explicit `--finalizer-walkthrough REPORT.json`
 mode exercises those controls on a new isolated checkout copy; its optional
 `--screenshot FILE.png` captures the batch differences before finalization.
-The current content snapshot is 0.2.0-dev.1. Game/editor
+The current content snapshot is 0.3.0-dev.1. Game/editor
 remain 0.0.0-dev; its game-version requirement is deliberately unresolved and
 release readiness is false. Builds embed the validated record's collection
 hash; pending transactions block configuration until recovery. Finalization
@@ -395,16 +395,18 @@ and [Apple SDK selection before language initialization](https://cmake.org/cmake
 
 ```sh
 build/release/bin/pgp-headless --competition-demo data/runtime/first-playable.json standard 1096
-ctest --test-dir build/release -R '^runtime.competition$' --output-on-failure
+ctest --test-dir build/release -R '^runtime.(competition|heavyweights)$' --output-on-failure
 build/release/bin/pgp-game --competition-smoke --smoke-test \
   --portable-root "$PWD/.work/competition-smoke-new" --text-scale 200 \
   --screenshot "$PWD/.work/competition-smoke-new.png"
 ```
 
 Use a fresh owned portable directory. `--competition-smoke` exercises the bundled
-standard roster, explicit publication/adoption and prices, the normal funded
-Office/Lab path and exact final save/reload through real QML controls. It does
+standard roster, explicit publication/adoption and prices, public heavyweight
+briefings, declining a publication offer, keyboard review/acceptance of a pilot
+and its actual paid milestone, the normal funded Office/Lab path and exact final
+save/reload through real QML controls. It does
 not conduct a human session. The headless presets are `standard`, `reduced`,
 `expanded` and `forgiving`; requested days are bounded to 1–1096 and the output
 reports the actual stop date, including real warnings/closures. Century
-qualification and heavyweight response/deals remain later work.
+qualification, negotiated ownership and mergers remain later work.

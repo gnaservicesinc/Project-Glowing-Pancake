@@ -80,7 +80,7 @@ ColumnLayout {
             emptyText: qsTr("No %1 yet").arg(selection.heading.toLowerCase())
             onSelected: entityId => selection.rows.selectedId = entityId
         }
-        Copy { text: selection.rows.selectedRow.detail || ""; visible: text.length > 0 }
+        Copy { objectName: selection.objectName.length > 0 ? selection.objectName + "Detail" : ""; text: selection.rows.selectedRow.detail || ""; visible: text.length > 0 }
     }
 
     Copy { visible: !campaign.paused; text: qsTr("Time is running. Pause to change projects, purchases and customer promises."); color: "#ffd897" }
@@ -313,8 +313,21 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "rivals"
-        Copy { text: qsTr("Public notices show competitor activity and the heavyweight mobilization window. Their budgets, private checkpoints and future results are not visible.") }
+        Copy { text: qsTr("Public response briefings show pressure, announced budgets and warning/delivery boundaries. Private balances, checkpoints and future results remain hidden.") }
         Copy { text: manager.competitionSummary }
+        Selection { objectName: "heavyweightBriefing"; heading: qsTr("Public heavyweight response briefings"); rows: manager.heavyweights }
+        Selection { objectName: "competitiveOfferReview"; heading: qsTr("Funded competitive agreements"); rows: manager.competitiveOffers }
+        Action {
+            objectName: "acceptCompetitiveOfferButton"
+            text: qsTr("Review and accept funded agreement…")
+            enabled: panel.editable && manager.competitiveOffers.selectedRow.actionable === true
+            onClicked: {
+                competitiveDialog.offerId = manager.competitiveOffers.selectedId
+                competitiveDialog.terms = manager.competitiveOffers.selectedRow.detail || ""
+                competitiveDialog.open()
+            }
+        }
+        Action { objectName: "declineCompetitiveOfferButton"; text: qsTr("Decline selected agreement"); enabled: panel.editable && manager.competitiveOffers.selectedRow.actionable === true; onClicked: manager.respondCompetitiveOffer(manager.competitiveOffers.selectedId, false) }
         Selection { heading: qsTr("Public rival notices"); rows: manager.rivals }
     }
     ColumnLayout {
@@ -386,8 +399,33 @@ ColumnLayout {
         anchors.centerIn: Overlay.overlay
         width: Math.min(620, Overlay.overlay.width - 36)
         standardButtons: Dialog.Ok | Dialog.Cancel
-        contentItem: Label { text: manager.funding.selectedRow.detail || ""; textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: panel.textSize }
+        height: Math.min(620, Overlay.overlay.height - 60)
+        contentItem: ScrollView {
+            id: fundingTerms
+            clip: true
+            contentWidth: availableWidth
+            Label { width: fundingTerms.availableWidth; text: manager.funding.selectedRow.detail || ""; textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: panel.textSize }
+        }
         onAccepted: manager.takeFinancing(manager.funding.selectedId)
+    }
+    Dialog {
+        id: competitiveDialog
+        objectName: "competitiveOfferConfirmation"
+        property string offerId: ""
+        property string terms: ""
+        title: qsTr("Accept this funded agreement?")
+        modal: true
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(720, Overlay.overlay.width - 36)
+        height: Math.min(620, Overlay.overlay.height - 60)
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        contentItem: ScrollView {
+            id: competitiveTerms
+            clip: true
+            contentWidth: availableWidth
+            Label { width: competitiveTerms.availableWidth; text: competitiveDialog.terms; textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: panel.textSize }
+        }
+        onAccepted: manager.respondCompetitiveOffer(offerId, true)
     }
     Dialog {
         id: cancelDialog

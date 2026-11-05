@@ -9,6 +9,7 @@ struct FinancingOffer {
     Cents proceeds{0};
     BasisPoints acquired{0},monthly_interest{0};
     Days term{0}; // zero = equity, otherwise debt
+    bool public_announcement=false;
     auto operator<=>(const FinancingOffer&) const = default;
 };
 struct SpecialistOffer {

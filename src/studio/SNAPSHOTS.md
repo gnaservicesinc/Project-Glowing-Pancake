@@ -12,12 +12,22 @@ Game/editor remain **0.0.0-dev** and the project remains in planning phase.
 The required game version **0.1.0-dev.1** is unresolved. No product release,
 human test session or publication is implied by this internal content record.
 
-The current snapshot is **0.2.0-dev.1**, generation 2, hash
+The M4-01 snapshot is **0.2.0-dev.1**, generation 2, hash
 `04e2761cd39c7adb788e754562f3ecb4fa072ee564a89ac006febcbdb7f72668`.
 M4-01 introduces four competition presets at revision 1, leaving the original
 15 definitions unchanged. All five scenarios / 15 headquarters openings pass
 the real prepared-save roundtrip. Game/editor and the unresolved required game
 version remain as above; older content saves are refused without a migration.
+
+The current M4-02 snapshot is **0.3.0-dev.1**, generation 3, hash
+`a55565fbf1a22b59b8166a4729f99823b0df918e581ee0d52dc0a238a9bf7563`.
+Four full-roster presets add heavyweight response policies and public financing
+disclosures. The shared competitive-notice cursor now allows 4,096 notices,
+matching its saved history bound; that root variable participates in every
+definition signature, so the writer correctly advances all 19 definitions to
+revision 2. All five scenarios / 15 prepared headquarters saves round-trip with
+no lints. Generations 1 and 2 remain immutable. Game/editor stay 0.0.0-dev with
+the unresolved game requirement above; this is internal development content.
 
 ## Graphical author workflow
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <pgp/core/simulation.hpp>
 #include <pgp/content/world_setup.hpp>
+#include <pgp/runtime/heavyweight.hpp>
 #include <map>
 
 namespace pgp::runtime {
@@ -33,6 +34,7 @@ struct RivalCompany {
     bool attempted = false;
     std::optional<core::OrdinalDay> warned_on, published_on;
     std::optional<RivalPlanState> planning{};
+    std::optional<HeavyweightState> response{};
     auto operator<=>(const RivalCompany&) const = default;
 };
 struct RivalNotice {
@@ -53,6 +55,7 @@ struct CompetitionState {
     std::optional<content::CompetitionSetup> setup{};
     std::vector<PublicProductRelease> releases{};
     std::vector<core::MarketAdoption> adoptions{};
+    std::vector<CompetitiveOffer> offers{};
     auto operator<=>(const CompetitionState&) const = default;
 };
 [[nodiscard]] const content::RivalDefinition& rival_definition(const CompiledProgram& program,std::string_view id);

@@ -10,6 +10,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QTimer>
+#include <algorithm>
 
 namespace {
 QQuickItem* visual_item(QQuickItem* root,const QString& name) {
@@ -30,6 +31,14 @@ bool key(QQuickWindow& window,QQuickItem* item,Qt::Key code) {
     QCoreApplication::sendEvent(&window,&press);
     QCoreApplication::sendEvent(&window,&release);
     return true;
+}
+void reveal_top(QQuickItem* item) {
+    if (!item) return;
+    for (auto* parent=item->parentItem();parent;parent=parent->parentItem()) {
+        if (!parent->property("contentY").isValid()) continue;
+        auto* content=qobject_cast<QQuickItem*>(parent->property("contentItem").value<QObject*>());
+        if (content) parent->setProperty("contentY",std::clamp(item->mapToItem(content,QPointF{}).y(),0.0,std::max(0.0,parent->property("contentHeight").toDouble()-parent->height())));
+    }
 }
 
 struct SmokeState {
@@ -191,6 +200,9 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
         bridge::CampaignSnapshotPtr saved;
         bool requested=false;
         bool published=false,adopted=false,priced=false,final_saved=false;
+        bool responses=false,paper_declined=false,pilot_accepted=false,pilot_paid=false;
+        QString competitive_pilot,competitive_paper;
+        std::int64_t before_agreement_cash=0;
     };
     auto smoke=std::make_shared<PlayableSmoke>();
     auto* timer=new QTimer(&window);timer->setInterval(20);
@@ -252,6 +264,7 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             if (campaign.welcome() || checkpoint->checkpoint.world.state_id!="state.us_tx" || !campaign.paused()) {fail("headquarters choice was not committed");return;}
             if (competition) {
                 if (!manager->plannedCompetition() || checkpoint->checkpoint.world.scenario_id!="scenario.world_competition" || checkpoint->checkpoint.world.competition->companies.size()!=15) {fail("standard fifteen-company setup was not committed");return;}
+                smoke->responses=std::any_of(checkpoint->checkpoint.world.competition->companies.begin(),checkpoint->checkpoint.world.competition->companies.end(),[](const auto& row){return row.response.has_value();});
                 press("office_rivals");if (!capture(QStringLiteral("-competition"))) {fail("public rival capture");return;}
             }
             if (!capture(QStringLiteral("-office"))) {fail("office capture");return;}
@@ -342,6 +355,25 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             if (checkpoint->checkpoint!=smoke->saved->checkpoint || !campaign.paused()) {fail("exact playable campaign reload");return;}
             press("officeTab");play();smoke->phase=21;return;
         case 21:
+            if (smoke->responses && state.phase!=core::DayPhase::finished) {
+                const auto& agreements=checkpoint->checkpoint.world.competition->offers;
+                if (!smoke->paper_declined) for (const auto& offer:agreements)
+                    if (offer.kind==runtime::CompetitiveOfferKind::publication && offer.status==runtime::CompetitiveOfferStatus::pending) {
+                        if (!pause()) return;press("officeTab");press("office_rivals");smoke->competitive_paper=QString::fromStdString(offer.id);manager->competitiveOffers()->setSelectedId(smoke->competitive_paper);
+                        if (press("declineCompetitiveOfferButton")) smoke->phase=43;return;
+                    }
+                if (!smoke->pilot_accepted) for (const auto& offer:agreements)
+                    if (offer.kind==runtime::CompetitiveOfferKind::pilot && offer.status==runtime::CompetitiveOfferStatus::pending) {
+                        if (!pause()) return;press("officeTab");press("office_rivals");smoke->competitive_pilot=QString::fromStdString(offer.id);manager->competitiveOffers()->setSelectedId(smoke->competitive_pilot);smoke->before_agreement_cash=state.cash.value();
+                        if (press("acceptCompetitiveOfferButton")) smoke->phase=41;return;
+                    }
+                if (smoke->pilot_accepted && !smoke->pilot_paid) for (const auto& offer:agreements)
+                    if (offer.id==smoke->competitive_pilot.toStdString() && offer.status==runtime::CompetitiveOfferStatus::paid) {
+                        if (!pause()) return;press("officeTab");press("office_rivals");manager->competitiveOffers()->setSelectedId(smoke->competitive_pilot);reveal_top(item("competitiveOfferReviewDetail"));
+                        if (!capture(QStringLiteral("-pilot-paid"))) {fail("funded pilot completion capture");return;}
+                        smoke->pilot_paid=true;play();return;
+                    }
+            }
             if (competition && !smoke->adopted && state.phase!=core::DayPhase::finished) {
                 QString adopt;
                 for (int i=0;i<manager->researchTopics()->rowCount();++i) {
@@ -365,10 +397,12 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
                 const auto& rivals=*checkpoint->checkpoint.world.competition;
                 if (!smoke->published || !smoke->adopted || !smoke->priced || rivals.releases.size()<2 || rivals.adoptions.empty() ||
                     std::any_of(rivals.companies.begin(),rivals.companies.end(),[](const auto& row){return !row.planning->entered_on;})) {fail("staged entry, public research, pricing or shared adoption was not exercised");return;}
+                if (smoke->responses && (!smoke->paper_declined || !smoke->pilot_accepted || !smoke->pilot_paid || manager->heavyweights()->rowCount()!=3)) {fail("public response briefing or real funded agreement path was not exercised");return;}
                 if (!smoke->final_saved) {smoke->saved=checkpoint;campaign.saveTo(save_url);smoke->phase=39;return;}
             }
             if (!capture({})) {fail("ending capture");return;}
             if (competition) qInfo()<<"Competition UI additions passed: standard fifteen-company default, staged entry, explicit research publication/adoption, current prices and exact complete-roster save; bytes"<<std::filesystem::file_size(save_path);
+            if (smoke->responses) qInfo()<<"Heavyweight UI additions passed: public pressure/finite-budget briefings, declined publication terms, reviewed funded pilot, real milestone payment and exact response/deal reload";
             qInfo()<<"Playable UI smoke passed: Texas start, fixed equity financing, hired specialist, bounded evaluation/renewal policies, milestone, paid data/research, subgroup finding, deployments, contract, exact reload, mandatory setback/restoration, rivals and scored solvent 2017 ending; cash cents"<<state.cash.value()<<"text scale"<<campaign.textScalePercent()<<"renderer"<<graphics::name(expected);
             timer->stop();QCoreApplication::exit(0);return;
         case 30:
@@ -413,6 +447,17 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
         case 40:
             if (checkpoint->checkpoint!=smoke->saved->checkpoint || !campaign.paused()) {fail("complete roster final save did not reload exactly");return;}
             smoke->final_saved=true;smoke->phase=21;return;
+        case 41:
+            if (!capture(QStringLiteral("-agreement"))) {fail("funded agreement terms capture");return;}
+            if (!key(window,visual_button(window.contentItem(),QStringLiteral("OK")),Qt::Key_Space)) {fail("funded agreement keyboard confirmation");return;}
+            smoke->phase=42;return;
+        case 42:
+            if (manager->competitiveOffers()->row(smoke->competitive_pilot).value(QStringLiteral("fields")).toMap().value(QStringLiteral("status"))!=QStringLiteral("active") || state.cash.value()!=smoke->before_agreement_cash) {fail("acceptance failed or paid an unearned pilot fee");return;}
+            smoke->pilot_accepted=true;play();smoke->phase=21;return;
+        case 43:
+            if (manager->competitiveOffers()->row(smoke->competitive_paper).value(QStringLiteral("fields")).toMap().value(QStringLiteral("status"))!=QStringLiteral("declined")) {fail("explicit publication offer decline");return;}
+            reveal_top(item("heavyweightBriefingDetail"));if (!capture(QStringLiteral("-response"))) {fail("public pressure briefing capture");return;}
+            smoke->paper_declined=true;play();smoke->phase=21;return;
         default:fail("unknown smoke phase");return;
         }
     });

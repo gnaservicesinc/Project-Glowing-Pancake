@@ -96,7 +96,7 @@ OperationResult Campaign::operate(
     if (settings_.auto_pause_alerts) {
         if (after.world.simulation.management && after.world.simulation.management->notices.size()>prior_notices)
             pause_notice="Auto-paused for a new company alert. Review its cause and any real deadline in Office → Policies and alerts.";
-        if (after.world.competition && after.world.competition->notices.size()>prior_rivals && after.world.competition->notices.back().kind=="warning")
+        if (after.world.competition && after.world.competition->notices.size()>prior_rivals && std::any_of(after.world.competition->notices.begin()+static_cast<std::ptrdiff_t>(prior_rivals),after.world.competition->notices.end(),[](const auto& row){return row.kind=="warning";}))
             pause_notice="Auto-paused: a heavyweight published a dated mobilization warning. Review public rival notices.";
     }
     // Optional notification preferences never suppress a real deadline stop.
@@ -117,6 +117,9 @@ OperationResult Campaign::operate(
                 pause_notice="Deadline today: a customer commitment must start. Inspect its terms before continuing.";
         if (state.liquidity && core::liquidity_report(*state.liquidity).deadline==state.date)
             pause_notice="Final response day: unpaid obligations must be resolved before more work. The workout deadline has not changed.";
+        if (after.world.competition) for (const auto& offer:after.world.competition->offers)
+            if (offer.status==runtime::CompetitiveOfferStatus::expired && offer.resolved_on==state.date)
+                pause_notice="A funded agreement reached its deadline. Review the recorded outcome in Office → Rivals.";
     }
     return {std::move(outcome), {}, liquidity_halt || core::required_management_notice(after.world.simulation) || pause_notice.has_value(),std::move(pause_notice)};
 }
@@ -138,7 +141,7 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::RepayDebt>(command.action) ||
         std::holds_alternative<core::InvestEquity>(command.action) ||
         std::holds_alternative<core::ReserveProject>(command.action) ||
-        std::holds_alternative<core::CancelProject>(command.action) ||
+        std::holds_alternative<core::CancelProject>(command.action) || std::holds_alternative<core::WithdrawOperations>(command.action) ||
         std::holds_alternative<core::AcceptContract>(command.action) ||
         std::holds_alternative<core::StartContract>(command.action) ||
         std::holds_alternative<core::CancelContract>(command.action) ||
@@ -156,6 +159,9 @@ OperationResult Campaign::submit(const core::Command& command) {
         result.command.reason != runtime::RuntimeReason::stale_revision)
         result.halt_requested = true;
     return result;
+}
+OperationResult Campaign::respond_competitive_offer(std::uint64_t revision,std::string_view id,bool accept) {
+    return operate([&](auto& candidate){return candidate.respondToCompetitiveOffer(revision,id,accept);},true);
 }
 OperationResult Campaign::choose(std::uint64_t expected_revision, std::uint64_t presentation_id,
                                  std::string_view choice_id) {

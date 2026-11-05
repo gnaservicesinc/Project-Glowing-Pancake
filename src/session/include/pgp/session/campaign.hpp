@@ -42,6 +42,7 @@ public:
     void set_settings(persistence::Settings settings);
     [[nodiscard]] OperationResult prepare_opening(std::uint64_t expected_revision);
     [[nodiscard]] OperationResult submit(const core::Command& command);
+    [[nodiscard]] OperationResult respond_competitive_offer(std::uint64_t expected_revision,std::string_view offer_id,bool accept);
     [[nodiscard]] OperationResult choose(std::uint64_t expected_revision, std::uint64_t presentation_id,
                                         std::string_view choice_id);
     void save(const std::filesystem::path& path) const;

@@ -31,10 +31,14 @@ core::ManagementCatalog load_management_catalog(std::string_view bytes) {
     fields(j,{"financing","specialists","setbacks","scoring","minimum_evaluation_interval_days","maximum_policy_runs","default_policy_budget_cents","default_reserve_floor_cents","default_monthly_ceiling_cents","default_policy_runs"});
     core::ManagementCatalog c;
     array(j.at("financing"),8);array(j.at("specialists"),8);array(j.at("setbacks"),8);
-    for (const auto& row:j.at("financing")) {
+    for (auto row:j.at("financing")) {
+        bool announced=false;
+        if (row.contains("public_announcement")) {
+            if (!row.at("public_announcement").is_boolean()) invalid();announced=row.at("public_announcement").get<bool>();row.erase("public_announcement");
+        }
         fields(row,{"id","name","proceeds_cents","acquired_bp","monthly_interest_bp","term_days"});
         c.financing.push_back({text(row.at("id")),text(row.at("name")),core::Cents{integer(row.at("proceeds_cents"))},core::BasisPoints{integer(row.at("acquired_bp"))},
-            core::BasisPoints{integer(row.at("monthly_interest_bp"))},core::Days{integer(row.at("term_days"))}});
+            core::BasisPoints{integer(row.at("monthly_interest_bp"))},core::Days{integer(row.at("term_days"))},announced});
     }
     for (const auto& row:j.at("specialists")) {
         fields(row,{"id","name","signing_cost_cents","monthly_salary_cents"});
@@ -59,6 +63,7 @@ std::string canonical_management_catalog(const core::ManagementCatalog& c) {
     Json financing=Json::array(),specialists=Json::array(),setbacks=Json::array();
     for (const auto& row:c.financing) financing.push_back({{"id",row.id},{"name",row.name},{"proceeds_cents",row.proceeds.value()},
         {"acquired_bp",row.acquired.value()},{"monthly_interest_bp",row.monthly_interest.value()},{"term_days",row.term.value()}});
+    for (std::size_t i=0;i<c.financing.size();++i) if (c.financing[i].public_announcement) financing[i]["public_announcement"]=true;
     for (const auto& row:c.specialists) specialists.push_back({{"id",row.id},{"name",row.name},{"signing_cost_cents",row.signing_cost.value()},{"monthly_salary_cents",row.monthly_salary.value()}});
     for (const auto& row:c.setbacks) setbacks.push_back({{"id",row.id},{"name",row.name},{"source_id",row.source_id},{"announced_on",core::iso_date(row.announced_on)},
         {"starts_on",core::iso_date(row.starts_on)},{"ends_before",core::iso_date(row.ends_before)},{"reduced_milli_CU_per_day",row.reduced_capacity.value()}});

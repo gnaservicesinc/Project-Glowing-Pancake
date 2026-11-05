@@ -24,7 +24,9 @@ struct Scratch {
         // Tests always begin from an unfinalized fixture, even once the owning
         // checkout's content component has its first reviewed development version.
         auto versions=Json::parse(read(root/"project-versions.json"));versions["components"]["content"]="0.0.0-dev";put(root/"project-versions.json",versions.dump(2));
-        auto doc=Json::parse(read(root/"data/runtime/first-playable.json"));doc["content_version"]="0.0.0-dev";put(root/"data/runtime/first-playable.json",doc.dump(2));
+        auto doc=Json::parse(read(root/"data/runtime/first-playable.json"));doc["content_version"]="0.0.0-dev";
+        for (auto& definition:doc.at("definitions")) definition["revision"]=1;
+        put(root/"data/runtime/first-playable.json",doc.dump(2));
     }
     ~Scratch(){std::error_code error;fs::remove_all(root,error);}
 };
