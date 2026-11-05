@@ -3,8 +3,9 @@
 M0-02 implements build entry points and the headless scaffold. M0-03 adds the
 development interface probe, resource guards and optional playback adapter.
 M0-05 validates the shared component versions and embeds configure-time identity.
-The engineering simulation runs headless or in the desktop room shell. The full
-player-facing scenario, Content Studio and distributable packages remain later work.
+The engineering simulation runs headless or in the desktop room shell.
+An opt-in Content Studio target browses local checkout data. Full authoring,
+the player-facing scenario and distributable packages remain later work.
 The [implementation log](IMPLEMENTATION_LOG.md) records acceptance evidence.
 
 ## Requirements and commands
@@ -23,18 +24,39 @@ downloads dependencies or launches a program during builds.
 | `./make.sh --test` | Build then run CTest; propagate failures |
 | `./make.sh --debugging` or `--debug` | Debug in `build/debug`, local developer diagnostics enabled |
 | `./make.sh --core-only` | Release in `build/core-release`, no Qt discovery/linkage |
+| `./make.sh --editor` | Separate read-only Content Studio in `build/release/bin/pgp-editor` |
+| `./make.sh --editor --test` | Build the editor and run its focused library test |
 | `./make.sh --core-only --debug --test` | Debug core and tests in `build/core-debug` |
 | `./make.sh --qt-root /path/to/Qt/prefix` | Select an installed desktop Qt prefix |
 | `./make.sh --jobs 2` | Bound compilation parallelism |
 | `./make.sh --core-only --clean` | Remove only the selected wrapper-owned tree; no rebuild |
 | `./make.sh --help` | Show flags, paths and requirements |
 
-`--editor`, `--all` and `--package` fail explicitly until their milestones exist.
+`--all` and `--package` fail explicitly until their milestones exist.
 Cleaning uses the same configuration flags as building; for example
 `./make.sh --debug --core-only --clean` removes only `build/core-debug`.
 Unknown existing directories, symlinked build paths and owner-marker mismatches
 are refused. Changed toolchain selections require an explicit clean of that
 configuration. User saves and unrelated outputs are outside cleanup.
+
+## Browse a checkout in Content Studio
+
+```sh
+./make.sh --editor --test
+build/release/bin/pgp-editor --project "$PWD"
+```
+
+Run the second command explicitly from the checkout to open its library. The
+editor also accepts an absolute checkout folder in the window. It can search
+and filter validated definitions, follow their uses and used-by links, and
+report invalid and unsupported documents. It reads `data/runtime/`,
+`data/drafts/` and the existing engineering collection fixtures as separate
+sources. The window is read-only. The regular game build configures with the
+editor disabled. An opt-in `ContentStudio` install component defines the
+editor payload for future deployment qualification.
+
+To check loading and filtering without showing a window, run
+`QT_QPA_PLATFORM=offscreen build/release/bin/pgp-editor --software --check-view --project "$PWD"`.
 
 `QT_ROOT` is an alternative to `--qt-root`; ordinary CMake prefix discovery via
 `CMAKE_PREFIX_PATH` is also supported. On this Mac only, the wrapper can use the

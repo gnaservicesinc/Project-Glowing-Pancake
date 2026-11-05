@@ -45,10 +45,10 @@ For authoring work, use `docs/CONTENT_EDITOR.md` and `docs/VERSIONING.md`. The c
 - Prioritize rapid Mac implementation. Keep code portable, but defer cross-platform matrices, packaging/device qualification and full release regression to explicit release preparation. Outstanding platform qualification remains recorded and does not block bounded Mac development. The native matrix workflow is manual-only.
 - Preserve keyboard access, text scaling, pause, causal explanations and readable units. The first playable is small; do not add counties, browser export or multiplayer to solve an unrelated problem.
 
-M0-02 implements the Release/Debug/core/test/clean/help build scaffold; see
-`docs/BUILDING.md` for the current executable subset. Editor/all/package flags
-remain reserved and fail explicitly. Do not claim gameplay, UI or package
-qualification from a passing headless build.
+M0-02 implements the Release/Debug/core/test/clean/help build scaffold. See
+`docs/BUILDING.md` for the current executable subset and opt-in editor build.
+The combined-product and packaging flags remain reserved. Do not claim
+gameplay, UI or package qualification from a passing headless build.
 M0-03's local interface/resource/audio probe is implemented; its native and
 deployment qualification remains open. Read `docs/evidence/M0-03-local-probe.md`
 before repeating or extending those checks.

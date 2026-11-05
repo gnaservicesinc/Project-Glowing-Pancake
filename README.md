@@ -2,13 +2,14 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** 5 of 52 tasks accepted as of 2026-11-04, with additional implemented work under M1-03 through M1-06 and M2-01 through M2-04. A headless three-year business runner now combines accounts, shared compute/staff, contracts, installed shares and warned liquidity recovery. Authored policies exercise expansion, equity rescue and closure through ordinary commands and exact saves. The foundation executes typed flows, weighted branches, durations, scoped variables, expressions, related-entity quantifiers, delays, choices and modifiers. Local settings, recovery copies, autosave policy and immutable worker/models exist. Platform prerequisites remain deferred. The local campaign shell connects Office, Lab and Inbox to the business simulation. The full player scenario, qualified research/models and Content Studio are still ahead. Follow [playability checkpoints](docs/PLAYABILITY.md), [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
+**Current state:** 5 of 52 tasks accepted as of 2026-11-04, with additional implemented work under M1-03 through M1-07, M2-01 through M2-04 and E1A-01. A headless three-year business runner now combines accounts, shared compute/staff, contracts, installed shares and warned liquidity recovery. Authored policies exercise expansion, equity rescue and closure through ordinary commands and exact saves. The foundation executes typed flows, weighted branches, durations, scoped variables, expressions, related-entity quantifiers, delays, choices and modifiers. Local settings, recovery copies, autosave policy and immutable worker/models exist. Platform prerequisites remain deferred. The local campaign shell connects Office, Lab and Inbox to the business simulation. Content Studio can browse validated local collections. The full player scenario, qualified research/models and draft authoring are still ahead. Follow [playability checkpoints](docs/PLAYABILITY.md), [implementation progress](docs/IMPLEMENTATION_LOG.md), [status](docs/STATUS.md) and the ordered [backlog](docs/BACKLOG.md).
 
 ## Build the development skeleton
 
 ```sh
 ./make.sh                     # Release; builds the campaign shell and probe
 ./make.sh --core-only        # Release core/headless; no Qt required
+./make.sh --editor           # Separate Content Studio library browser
 ctest --test-dir build/core-release -R '^(core.liquidity|runtime.liquidity-integration|session.business-scenario)$' --output-on-failure
 build/core-release/bin/pgp-headless --business-run tests/content/fixtures/business.json expansion
 ./make.sh --help
@@ -53,14 +54,13 @@ The selected stack is C++20 + Qt 6.12.x/QML with CMake/Ninja. Desktop targets ar
 
 The game needs **no backend, hosted model, player account, analytics, or in-game updater**. Local saves, autosaves, preferences, and campaign history are normal features. Installation and updates are handled outside the game by the chosen distribution platform.
 
-Content Studio will be a separate download/source target for authors editing a development checkout, with a searchable current-content library and linked trigger → effects/events canvas, equivalent forms/outline, tooltips and before/after tests. It is excluded from the base game. [The version manifest](project-versions.json) reserves `0.0.0-dev` planning identities; M0-05 adds the validated reader and shared build identity. Automated content version controls and packaging remain later implementation tasks.
+Content Studio builds as a separate target with a read-only checkout library. Forms/outline, the trigger → effects/events canvas and before/after tests are planned. The game build excludes the Studio target and its resources. [The version manifest](project-versions.json) reserves `0.0.0-dev` planning identities; M0-05 adds the validated reader and shared build identity. Automated content version controls and packaging remain later implementation tasks.
 
-Built-in rules will detect major simulated events and supply news, random world
-incidents and technology developments. AI-assisted development creates the
-playable baseline; human-authored stories enrich it. [The event contract and AI
-assignments](docs/EVENT_SYSTEM.md) describe the shared runtime and extension
-boundaries. This content/runtime work is planned; the game will run it locally
-and offline.
+Built-in rules already dispatch committed project and contract facts, bounded
+seeded world incidents and weekly news in engineering content. AI-assisted
+development creates the playable baseline, with human-authored stories as
+extensions. The eight-flow playable pack remains ahead. [Event contract and AI
+assignments](docs/EVENT_SYSTEM.md)
 
 E1a delivers forms/outline and inspection before the first playable's content. E1b completes the required node canvas, graphical batch finalizer and three-author study before M4. Baseline 1.2 also clarifies checked math/constant-2014 money, morning decisions and saved continuations, finite inference/wholesale capacity, persistent UI models and objective-loss feedback. These are planning changes; no runtime behavior has been tested.
 

@@ -20,6 +20,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M2-02 | Implemented on Mac; prerequisite open | Shared source/staff reservations, compatibility, serving-first outage allocation, actual finite work, cancellation, support costs and exact reload; [evidence](evidence/M2-02-capacity.md) |
 | M2-03 | Implemented on Mac; prerequisite open | Finite allocation, contracts/resource priority, billing/credits/deadlines and installed shares through typed scenarios/exact saves; [evidence](evidence/M2-03-market.md) |
 | M2-04 | Implemented on Mac; prerequisite open | Three-year scenario, monthly reconciliation, exact continuation, saved 30-day workout/rescue/closure; [evidence](evidence/M2-04-business.md) |
+| E1A-01 | In progress | Separate Content Studio target and read-only, typed checkout library. Draft editing, undo and conflict-aware writes remain open. [Evidence](evidence/E1A-01-library.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
 ## First implementation slice
@@ -597,3 +598,20 @@ executable passed 316 assertions and the campaign model passed 420.
 [Evidence](evidence/M1-07-seeded-digest.md) records the frozen seed, continuation
 boundaries and release limits. Formal accepted count remains **5/52** pending
 the platform prerequisite chain. Next Mac batch is E1A-01 Content Studio.
+
+## E1A-01 checkout library — 2026-11-04
+
+The opt-in Studio executable opens a selected source checkout. It indexes
+reviewed and draft collections and separately labels engineering fixtures.
+Both search/filter and reference navigation use definitions validated by the
+shared runtime compiler. Unsupported and invalid documents remain visible
+with diagnostic status. The opt-in install component and embedded resources
+are separate from the game's target.
+
+The optimized Mac editor build, 12 library assertions, 12 wrapper tests and
+the hidden Qt checkout view check passed. The latter loaded and filtered 15
+rows from the repository's three engineering collections. The game configure
+has no editor target. [Evidence](evidence/E1A-01-library.md)
+
+Accepted count remains **5/52**. E1A-01 next needs a working document,
+undo/redo and conflict-aware draft saves.

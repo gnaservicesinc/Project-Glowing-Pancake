@@ -5,7 +5,7 @@ Updated 2026-11-04 · Implementation started against planning baseline 1.2
 ## Implementation progress
 
 **5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02.** M0-03,
-M1-03 through M1-07 and M2-01 through M2-04 have implemented work awaiting
+M1-03 through M1-07, M2-01 through M2-04 and E1A-01 have implemented work awaiting
 their remaining gates. M0-03's local
 interface/resource/audio implementation passes; native/deployment gates remain.
 M0 remains open. See the
@@ -75,6 +75,11 @@ block Mac implementation. Keep build caches between batches.
   digest retains news sources and keeps required choices and active deadlines
   in their own action tier. [Committed-fact evidence](evidence/M1-07-committed-facts.md)
   [Seeded incident and digest evidence](evidence/M1-07-seeded-digest.md)
+- E1A-01 adds the separate opt-in Content Studio and a read-only browser.
+  It opens an explicit checkout, indexes validated definition uses and used-by
+  edges, and reports invalid, unknown and blocked documents. The next work is
+  a draft document model, undo/redo and conflict-safe saves.
+  [Studio library evidence](evidence/E1A-01-library.md)
 - Weighted-branch commit `2a37284` passes 26/26 CTests in each of all six native
   jobs across five targets, including GCC/Clang/MSVC and native Windows arm64.
   [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41895189273)
@@ -162,8 +167,8 @@ The build scaffold, shared version identity, deterministic primitives, typed
 content/compiler/runtime, transactional state, local persistence/campaign policy,
 worker/model bridge, business accounts, shared project capacity, contracts,
 liquidity recovery, a three-year CLI scenario and development QML probe exist.
-Player-facing gameplay, Content Studio, finalized runtime
-content and packages do not. Existing native CI proves primitive parity on all
+Content Studio can browse the local library. Draft authoring, the full player
+scenario, finalized runtime content and packages remain open. Existing native CI proves primitive parity on all
 five targets; the expanded foundation suite is checked separately. The headless
 command validates local content, demonstrates commands/flows and can explicitly
 save/reload suspended continuations. [Playability checkpoints](PLAYABILITY.md) separate this engineering
@@ -202,8 +207,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac implementation: E1A-01 separate Content Studio and content library.**
-Begin with the explicitly selected checkout and the shared schema/compiler.
+**Next Mac implementation: E1A-01 typed drafts and conflict-aware saves.**
+Extend the read-only Studio library with a working document, undo/redo and
+explicit writes confined to the selected checkout's draft folder.
 M1-03 retains
 the M0-03 prerequisite gate. Content finalization, save migrations and packaging
 remain later work.

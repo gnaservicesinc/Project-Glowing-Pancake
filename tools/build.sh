@@ -8,6 +8,7 @@ Usage: ./make.sh [options]
 
   (no options)      Build the Release desktop skeleton; never launch it
   --core-only      Build core/headless without finding or downloading Qt
+  --editor         Build the separate Content Studio library browser
   --debugging      Build Debug with local developer diagnostics (--debug alias)
   --test           Build, then run CTest; failures return a nonzero exit code
   --clean          Remove only the selected, verified wrapper-owned build tree
@@ -20,14 +21,15 @@ Outputs: build/{release,debug,core-release,core-debug} beneath this checkout.
 On macOS, DEVELOPER_DIR (or xcode-select -p) selects one existing Xcode compiler
 and SDK. Global settings are never changed. The known local Qt installation
 is a build-time fallback only. No SDKs or dependencies are downloaded.
-Editor, combined-product and packaging flags are reserved for later milestones
-and currently fail explicitly. This skeleton is not a playable game.
+Combined-product and packaging flags remain reserved. This is a development
+build.
 USAGE
 }
 
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 configuration=Release
 core_only=OFF
+editor=OFF
 run_tests=0
 clean=0
 qt_root="${QT_ROOT:-}"
@@ -38,6 +40,7 @@ while (($#)); do
         --help|-h) usage; exit 0 ;;
         --debugging|--debug) configuration=Debug ;;
         --core-only) core_only=ON ;;
+        --editor) editor=ON ;;
         --test) run_tests=1 ;;
         --clean) clean=1 ;;
         --qt-root)
@@ -46,12 +49,14 @@ while (($#)); do
         --jobs)
             (($# >= 2)) && [[ "$2" =~ ^[1-9][0-9]*$ ]] || fail '--jobs needs a positive integer'
             jobs="$2"; shift ;;
-        --editor|--all|--package) fail "$1 is not implemented yet; see docs/BACKLOG.md" ;;
+        --all|--package) fail "$1 is not implemented yet; see docs/BACKLOG.md" ;;
         *) fail "unknown option: $1 (use --help)" ;;
     esac
     shift
 done
 [[ "$clean" == 0 || "$run_tests" == 0 ]] || fail '--clean cannot be combined with --test'
+[[ "$editor" == OFF || "$core_only" == OFF ]] || fail '--editor needs desktop Qt'
+[[ "$editor" == OFF || "$clean" == 0 ]] || fail '--clean selects a whole build tree; omit --editor'
 
 preset=release
 [[ "$configuration" != Debug ]] || preset=debug
@@ -91,7 +96,7 @@ if [[ "$run_tests" == 1 ]]; then
     command -v ctest >/dev/null 2>&1 || fail 'missing required tool: ctest'
 fi
 
-cmake_args=(--preset "$preset")
+cmake_args=(--preset "$preset" "-DPGP_BUILD_EDITOR=$editor")
 developer_dir=""
 compiler=""
 sdk=""
@@ -147,9 +152,15 @@ printf '%s\n' "$signature" > "$signature_file"
 cd -- "$project_root"
 cmake "${cmake_args[@]}"
 build_args=(--build --preset "$preset")
+if [[ "$editor" == ON ]]; then
+    build_args+=(--target pgp-editor)
+    [[ "$run_tests" == 0 ]] || build_args+=(pgp-studio-library-test)
+fi
 [[ -z "$jobs" ]] || build_args+=(--parallel "$jobs")
 cmake "${build_args[@]}"
 if [[ "$run_tests" == 1 ]]; then
-    ctest --preset "$preset"
+    test_args=(--preset "$preset")
+    [[ "$editor" == OFF ]] || test_args+=(-R '^studio[.]')
+    ctest "${test_args[@]}"
 fi
 printf 'Built %s (%s); no application was launched.\n' "$preset" "$build_dir"

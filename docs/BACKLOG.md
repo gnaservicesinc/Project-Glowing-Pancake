@@ -137,6 +137,14 @@ M1-05's accessible campaign room shell.
 - [ ] **E1A-04 — Safe internal content snapshots.** Role: content-editor/build-release. Depends: E1A-03, M0-05. Save drafts separately; provide a small explicit repository validation/version tool for reviewed internal slice batches before the full graphical finalizer. Record definition revisions, content version/hash/change summary and required game-version changes under the existing contract. Preserve staged writes, conflict detection, recovery and game/editor package separation. A maintainer runs this tool for early playtest content; ordinary authors still edit through forms. No raw-data editing, fake release, Git/store publication or version-check bypass.
 - [ ] **E1A-05 — Demonstrate the narrow authoring path.** Role: QA/content-editor. Depends: E1A-04. Demonstrate browsing, building a branching flow, catching planted sign/scope errors and reopening all lifecycle examples through forms/inspection. Produce a runnable internal editor and validated slice snapshot; verify no editor payload enters the game. This reproducible engineering walkthrough is not the three-author human study. M3 may now finalize its AI-assisted baseline and human-authored additions through the same validated pipeline.
 
+**E1A-01 library slice, 2026-11-04:** the opt-in Content Studio executable
+opens an explicitly selected development checkout and browses current, draft
+and engineering collections through the shared compiler. The library indexes
+reference edges, reports validation and source identity, and refuses symbolic
+paths. [Mac evidence](evidence/E1A-01-library.md) records the read-only and
+build separation checks. Next work is editing drafts with undo/redo and
+external-change conflict handling.
+
 ## E1b — Required node canvas and author qualification
 
 - [ ] **E1B-01 — Add the typed node-box canvas.** Role: content-editor/UI. Depends: E1A-05. Link triggers, effects/events, sequence ports and choices on the same document as forms/outline. Add keyboard equivalents, pan/zoom, useful layout and trace highlighting; graph/form edits must round-trip without semantic change. Commit integer node positions only on edits; keep viewport/selection local. Refuse invalid links and show waiting sibling continuations. Elaborate routing/styling is optional.

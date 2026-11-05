@@ -144,12 +144,20 @@ exit "${PGP_TEST_CTEST_STATUS:-0}"
         self.assertEqual(before, self.commands())
 
     def test_reserved_unknown_and_invalid_flags_have_no_side_effects(self):
-        for flags in (("--editor",), ("--all",), ("--package",), ("--unknown",),
-                      ("--jobs", "0"), ("--qt-root",), ("--clean", "--test")):
+        for flags in (("--all",), ("--package",), ("--unknown",), ("--editor", "--core-only"),
+                      ("--editor", "--clean"), ("--jobs", "0"), ("--qt-root",), ("--clean", "--test")):
             with self.subTest(flags=flags):
                 self.assertNotEqual(self.run_build(*flags).returncode, 0)
                 self.assertFalse((self.root / "build").exists())
                 self.assertEqual(self.commands(), "")
+
+    def test_editor_enables_only_the_opt_in_targets_and_tests(self):
+        self.assertEqual(self.run_build("--editor", "--test").returncode, 0)
+        self.assertIn("cmake --preset release -DPGP_BUILD_EDITOR=ON", self.commands())
+        self.assertIn("cmake --build --preset release --target pgp-editor pgp-studio-library-test", self.commands())
+        self.assertIn("ctest --preset release -R ^studio[.]", self.commands())
+        self.assertEqual(self.run_build().returncode, 0)
+        self.assertIn("cmake --preset release -DPGP_BUILD_EDITOR=OFF", self.commands())
 
 
 if __name__ == "__main__":

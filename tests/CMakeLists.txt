@@ -36,6 +36,9 @@ set_tests_properties(headless.foundation-demo PROPERTIES
 add_subdirectory(content)
 add_subdirectory(runtime)
 add_subdirectory(persistence)
+if(PGP_BUILD_EDITOR)
+    add_subdirectory(studio)
+endif()
 add_test(NAME headless.flow-demo COMMAND pgp-headless --flow-demo
     "${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json")
 set_tests_properties(headless.flow-demo PROPERTIES

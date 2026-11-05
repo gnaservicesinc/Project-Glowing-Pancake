@@ -1,0 +1,6 @@
+add_library(pgp_studio_library STATIC library.cpp)
+add_library(pgp::studio_library ALIAS pgp_studio_library)
+target_include_directories(pgp_studio_library PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(pgp_studio_library SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_link_libraries(pgp_studio_library PUBLIC pgp::persistence)
+pgp_project_target(pgp_studio_library)
