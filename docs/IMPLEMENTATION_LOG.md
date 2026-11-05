@@ -7,22 +7,34 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | --- | --- | --- |
 | M0-01 | Complete | [Toolchain evidence](evidence/M0-01-toolchain.md), two reproducible inventory tools and [five-target metadata observations](evidence/M0-01-qt-archives.json); no SDK installation |
 | M0-02 | Complete | [CMake/build entry points](BUILDING.md), separate core/headless targets, four configurations and safety checks below |
-| M0-03 | In progress | Local QML/Metal probe, reusable resource guards and optional native/silent audio implemented; native Windows/Linux/deployment qualification remains open |
+| M0-03 | Complete for Mac features | Local QML/Metal probe, reusable resource guards and optional native/silent audio implemented; native Windows/Linux/deployment qualification remains open |
 | M0-05 | Complete | Shared version manifest validation, generated core/headless/probe metadata, product tags/artifact stems and fail-closed readiness; verification below |
 | M1-01 | Complete | Strong units, checked arithmetic, dates, saved RNG streams and exact 1,000-day primitive parity across six native compiler jobs/five targets |
 | M1-02 | Complete | Typed content schema/registry, bounded offline loader, 11-definition engineering fixture and 140 validation assertions; [evidence](evidence/M1-02-content.md) |
-| M1-03 | In progress | Local commands, morning continuation, immutable worker and stable model diffs pass; M0-03 prerequisite qualification remains open; [evidence](evidence/M1-03-commands.md) |
-| M1-04 | Implemented on Mac; prerequisites open | Exact current-state file saves, recovery, autosaves/settings/export and application persistence policy; [evidence](evidence/M1-04-persistence.md) |
-| M1-05 | Implemented on Mac; prerequisite open | Office, Lab, Inbox, shared clock, decisions, inspector and local saves/preferences; [room shell evidence](evidence/M1-05-room-shell.md) |
-| M1-06 | Implemented on Mac; prerequisite open | Shared compiler/executor, five lifecycles, nested waits/choices, modifiers, random branches, durations, scoped variables, expressions and related-entity quantifiers; [runtime](evidence/M1-06-runtime.md), [branches](evidence/M1-06-weighted-branches.md), [durations](evidence/M1-06-duration.md), [selectors](evidence/M1-06-selectors.md) |
-| M1-07 | Implemented on Mac; prerequisites open | Committed project/contract dispatch, bounded seeded world reviews, exact pending continuation and weekly digest. [Committed facts](evidence/M1-07-committed-facts.md), [seeded incidents and digest](evidence/M1-07-seeded-digest.md) |
-| M2-01 | Implemented on Mac; prerequisite open | Balanced accounts, actual-month costs, invoices, debt/equity, protected settlements and pure projections through commands/exact saves; [evidence](evidence/M2-01-accounts.md) |
-| M2-02 | Implemented on Mac; prerequisite open | Shared source/staff reservations, compatibility, serving-first outage allocation, actual finite work, cancellation, support costs and exact reload; [evidence](evidence/M2-02-capacity.md) |
-| M2-03 | Implemented on Mac; prerequisite open | Finite allocation, contracts/resource priority, billing/credits/deadlines and installed shares through typed scenarios/exact saves; [evidence](evidence/M2-03-market.md) |
-| M2-04 | Implemented on Mac; prerequisite open | Three-year scenario, monthly reconciliation, exact continuation, saved 30-day workout/rescue/closure; [evidence](evidence/M2-04-business.md) |
-| E1A-01 | Implemented on Mac; prerequisites open | Separate Content Studio, typed checkout library, flow tag draft editing, undo/redo and conflict-aware writes. [Library](evidence/E1A-01-library.md), [draft workflow](evidence/E1A-01-drafts.md) |
-| E1A-02 | Implemented on Mac; prerequisites open | Typed predicates, all five lifecycles, ordered execution, scoped variables and reference edits. [Trigger forms](evidence/E1A-02-triggers.md), [lifecycle forms](evidence/E1A-02-lifecycles.md), [execution forms](evidence/E1A-02-execution.md) |
+| M1-03 | Complete for Mac features | Local commands, morning continuation, immutable worker and stable model diffs pass; M0-03 prerequisite qualification remains open; [evidence](evidence/M1-03-commands.md) |
+| M1-04 | Complete for Mac features | Exact current-state file saves, recovery, autosaves/settings/export and application persistence policy; [evidence](evidence/M1-04-persistence.md) |
+| M1-05 | Complete for Mac features | Office, Lab, Inbox, shared clock, decisions, inspector and local saves/preferences; [room shell evidence](evidence/M1-05-room-shell.md) |
+| M1-06 | Complete for Mac features | Shared compiler/executor, five lifecycles, nested waits/choices, modifiers, random branches, durations, scoped variables, expressions and related-entity quantifiers; [runtime](evidence/M1-06-runtime.md), [branches](evidence/M1-06-weighted-branches.md), [durations](evidence/M1-06-duration.md), [selectors](evidence/M1-06-selectors.md) |
+| M1-07 | Complete for Mac features | Committed project/contract dispatch, bounded seeded world reviews, exact pending continuation and weekly digest. [Committed facts](evidence/M1-07-committed-facts.md), [seeded incidents and digest](evidence/M1-07-seeded-digest.md) |
+| M2-01 | Complete for Mac features | Balanced accounts, actual-month costs, invoices, debt/equity, protected settlements and pure projections through commands/exact saves; [evidence](evidence/M2-01-accounts.md) |
+| M2-02 | Complete for Mac features | Shared source/staff reservations, compatibility, serving-first outage allocation, actual finite work, cancellation, support costs and exact reload; [evidence](evidence/M2-02-capacity.md) |
+| M2-03 | Complete for Mac features | Finite allocation, contracts/resource priority, billing/credits/deadlines and installed shares through typed scenarios/exact saves; [evidence](evidence/M2-03-market.md) |
+| M2-04 | Complete for Mac features | Three-year scenario, monthly reconciliation, exact continuation, saved 30-day workout/rescue/closure; [evidence](evidence/M2-04-business.md) |
+| E1A-01 | Complete for Mac features | Separate Content Studio, typed checkout library, flow tag draft editing, undo/redo and conflict-aware writes. [Library](evidence/E1A-01-library.md), [draft workflow](evidence/E1A-01-drafts.md) |
+| E1A-02 | Complete for Mac features | Typed predicates, all five lifecycles, ordered execution, scoped variables and reference edits. [Trigger forms](evidence/E1A-02-triggers.md), [lifecycle forms](evidence/E1A-02-lifecycles.md), [execution forms](evidence/E1A-02-execution.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
+
+## Mac feature scope update — 2026-11-04
+
+The user clarified that the goal is the game’s features on Mac and that Linux,
+Windows and release qualification should remain deferred. The tracker now
+counts implemented Mac behavior with focused evidence as completed feature
+work. M0-03, M1-03 through M1-07, M2-01 through M2-04 and E1A-01/02 join the
+previous five completed steps, bringing the current count to **17/52**.
+These twelve implementations already have linked evidence in the table.
+The dated entries below retain the earlier count as history. Platform/device,
+release and human qualification work remains recorded in its owning tasks.
+E1A-03 is the next feature batch.
 
 ## First implementation slice
 

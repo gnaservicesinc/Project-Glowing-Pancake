@@ -49,11 +49,10 @@ See [desktop launch instructions](BUILDING.md#open-the-campaign-shell) for the r
 
 ## Batch tracking
 
-Track both accepted tasks and implemented work whose prerequisite qualification
-is still open. M1-02 builds the typed content boundary; the M1-03 batch adds core
+The current tracker counts Mac feature implementations with focused checks.
+The user deferred native platform and release qualification. M1-03 supplies
 transactions, immutable snapshots, a serialized worker and persistent entity
-rows. M1-03 remains open while M0-03 native/deployment acceptance is outstanding.
-This distinguishes useful engineering progress from a passed platform gate.
+rows. Completed Mac feature prerequisites allow the next feature batch.
 M1-06 now executes the current typed schema and M1-04 persists its whole state.
 Application policy performs recovery saves before irreversible actions and
 monthly/final autosaves, preserving live play on IO errors. Scoped variables,
@@ -66,5 +65,5 @@ and exact thresholds through choices and reload; see [duration evidence](evidenc
 M1-07 then adds
 built-in occurrence detection/dispatch. M2-01 through M2-04 implement accounts,
 shared capacity, contracts and the three-year scenario with warned recovery.
-The room shell connects those modules to an explicit desktop launch. Accepted
-tasks remain at five while the full contracts and prerequisites are open.
+The room shell connects those modules to an explicit desktop launch. The current count is 17 completed Mac feature steps, with E1A-03 inspection
+next. Deferred platform and release work stays recorded in the backlog.

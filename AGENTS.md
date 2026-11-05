@@ -43,6 +43,7 @@ For authoring work, use `docs/CONTENT_EDITOR.md` and `docs/VERSIONING.md`. The c
 - Default `./make.sh` is an optimized Release build; developer diagnostics require `--debugging`/`--debug`. Never auto-launch. Use `#if PGP_DEVELOPER_DIAGNOSTICS` with a 0/1 macro; `#ifdef` is insufficient for a macro defined as zero. Telemetry has no implementation in any configuration.
 - Metal on Mac, OpenGL on Linux, OpenGL preference with tested D3D11 recovery on Windows. Five native artifacts are goals until qualified; cross-compile/CI success is not device acceptance.
 - Prioritize rapid Mac implementation. Keep code portable, but defer cross-platform matrices, packaging/device qualification and full release regression to explicit release preparation. Outstanding platform qualification remains recorded and does not block bounded Mac development. The native matrix workflow is manual-only.
+- The user’s current goal prioritizes game features on this Mac. Close a feature step when its Mac implementation and focused checks pass. Deferred platform/deployment prerequisites do not keep completed feature boxes open. Leave Linux/Windows, native matrices, packaging and device/release qualification to an explicit later task. Preserve those unperformed requirements in the backlog.
 - Preserve keyboard access, text scaling, pause, causal explanations and readable units. The first playable is small; do not add counties, browser export or multiplayer to solve an unrelated problem.
 
 M0-02 implements the Release/Debug/core/test/clean/help build scaffold. See

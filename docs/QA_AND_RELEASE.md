@@ -10,6 +10,11 @@ During Mac implementation, use one incremental optimized local build per batch a
 
 The full verification inventory below remains for owning milestone and release preparation. Cross-platform matrices, full regression, packaging and device qualification are deferred until explicit release preparation and do not block bounded Mac implementation. The six-job native workflow is manual-only. Keep portable code, offline operation, safe saves and explicit app launch during development; record unperformed gates without claiming platform qualification. Existing foundation evidence is tracked in the implementation log.
 
+Under the current user instruction, the feature tracker counts implemented Mac
+behavior with focused checks as complete. Deferred platform/deployment
+prerequisites do not block closing game-feature steps. Their qualification
+requirements remain in the release inventory below and the owning backlog tasks.
+
 ## 2. Core invariants and meaningful tests
 
 | Area | Required evidence |

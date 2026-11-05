@@ -4,11 +4,12 @@ Updated 2026-11-04 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**5 of 52 tasks accepted: M0-01, M0-02, M0-05, M1-01 and M1-02.** M0-03,
-M1-03 through M1-07, M2-01 through M2-04 and E1A-01/02 have implemented work awaiting
-their remaining gates. M0-03's local
-interface/resource/audio implementation passes; native/deployment gates remain.
-M0 remains open. See the
+**17 of 52 steps complete for Mac feature development.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04 and E1A-01/02.
+The user’s current instruction prioritizes game features on Mac. Implemented
+Mac behavior and focused checks close feature steps, while native platform,
+packaging and device qualification remain deferred. Earlier evidence retains
+its historical prerequisite and acceptance language. See the
 [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations and
 [build instructions](BUILDING.md) for runnable commands.
 
@@ -24,8 +25,7 @@ block Mac implementation. Keep build caches between batches.
   The opening example leaves **$972,000** after two months and one $12,000 license,
   including a reload before settlement. An optimized Mac build and eight focused
   CTests pass; [accounts evidence](evidence/M2-01-accounts.md) records the
-  implemented contract and limits. Formal acceptance retains M1-03's open
-  prerequisite; liquidity workouts remain ahead.
+  implemented contract and limits. The subsequent M2-04 batch supplies liquidity recovery.
 - M2-02 now reserves shared source capacity and staff, checks memory/interconnect
   compatibility, protects serving during outages and records actual finite work.
   Cancellation preserves completed work and past costs; non-compute support has
@@ -84,7 +84,7 @@ block Mac implementation. Keep build caches between batches.
 - E1A-02 now edits typed triggers, continuous exit conditions and all five
   lifecycles through the same working draft. Create scoped flows, enable them
   in scenarios, author ordered execution and scoped variables, and rename
-  typed references. The task retains its prerequisite gates.
+  typed references. These forms are complete for Mac feature development.
   [Trigger forms](evidence/E1A-02-triggers.md)
   [Lifecycle and reference forms](evidence/E1A-02-lifecycles.md)
   [Execution and variable forms](evidence/E1A-02-execution.md)
@@ -95,7 +95,7 @@ block Mac implementation. Keep build caches between batches.
 - Duration commit `543c451` also passes 27/27 CTests in each of all six native
   jobs across five targets, with matching resumed-state hashes.
   [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41903737919)
-  verifies that core revision. M1-06 retains the M1-03 prerequisite gate.
+  verifies that core revision.
 - M1-04 now writes/loads the entire implemented checkpoint with exact resumed
   state, recovery copies, strict identity/integrity checks, three autosave slots,
   preferences, Unicode filenames, portable/standard paths and export. Campaign
@@ -103,7 +103,7 @@ block Mac implementation. Keep build caches between batches.
   boundaries, preserving live state on errors. Core Release passes 25 CTests;
   desktop Debug passes 32. [Save evidence](evidence/M1-04-persistence.md)
   and [application policy](../src/session/README.md) describe the implemented
-  subset. These tasks remain open for their full contracts/prerequisites.
+  subset. Release qualification remains deferred.
 
 - M1-02 implements typed content collections and extensible system/fact/effect
   metadata, with strict units, scopes, references, ownership, graph and input
@@ -184,8 +184,7 @@ save/reload suspended continuations. [Playability checkpoints](PLAYABILITY.md) s
 demonstration from the M2 business scenario and M3 player-facing slice.
 E1a enables early gameplay tests;
 M4 requires both M3 and E1b. E2 closes before bulk content.
-47 implementation tasks remain unchecked, including the locally implemented
-M1-03 task awaiting its prerequisite gate.
+35 steps remain unchecked, including the deferred platform/release work.
 
 M0-01 supersedes review-time spot checks: the Xcode roots resolve to one
 installation, three installed SPDX files were parsed, and exact Qt archive
@@ -219,9 +218,8 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 **Next Mac implementation: E1A-03 trigger-impact and lifecycle inspection.**
 Run working flows on copied scenario state and expose condition truth, ordered
 effects, presentations and continuations.
-M1-03 retains
-the M0-03 prerequisite gate. Content finalization, save migrations and packaging
-remain later work.
+Content finalization and save migrations remain later feature work.
+Platform packaging remains deferred.
 
 The 2026-11-04 event clarification adds M1-07 (built-in detection/dispatch) and
 M3-05 (AI-assisted playable base-event pack), with human stories augmenting the
@@ -230,13 +228,9 @@ contract results, liquidity, rivals, supplier opportunities, random world demand
 and recovery. See [event coverage, AI assignments and modular extension
 rules](EVENT_SYSTEM.md). M3-05 remains planned with prerequisites.
 
-**Finish M0-03 qualification**, using the UI/build-release briefs and the checked
-local evidence. Run native Linux OpenGL and Windows OpenGL/D3D11 recovery,
-resource/audio checks and deployed import/dependency/license/relocation probes on
-hosted/native environments. Preserve the small local disk budget. Physical loss/
-driver/reader gaps must remain explicit. No store publication. M0-04 follows
-M0-03; M0 remains open despite M0-05 completion.
-
-No user answer blocks initial M0 inspection. Later needs include native ARM devices, manually arranged player/author sessions, final art/music/branding and publishing access; see [needs and access](NEEDS_AND_ACCESS.md).
+Native platform, package/device, human study and public-release tasks remain
+recorded for their owning milestones. Continue the Mac feature sequence without
+waiting for those deferred checks. See [needs and access](NEEDS_AND_ACCESS.md)
+for later human and release requirements.
 
 Provisional estimate: 13–21 person-weeks through initial M3 with E1a; 15–25 including E1b before M4; 44–72 through M9 before reserve (55–90 with 25%). Re-estimate after M0, first gameplay and author testing. [Planning history](PLAN_CHANGELOG.md) records the changes.
