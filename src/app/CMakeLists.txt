@@ -22,4 +22,8 @@ qt_add_resources(pgp-game game_ui
     PREFIX "/pgp" BASE "${PROJECT_SOURCE_DIR}/qml"
     FILES "${PROJECT_SOURCE_DIR}/qml/game/Main.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/StableEntityList.qml"
-          "${PROJECT_SOURCE_DIR}/qml/game/FlowPresentation.qml")
+          "${PROJECT_SOURCE_DIR}/qml/game/FlowPresentation.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/ManagementPanel.qml")
+qt_add_resources(pgp-game campaign_content
+    PREFIX "/pgp/content" BASE "${PROJECT_SOURCE_DIR}/data/runtime"
+    FILES "${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")

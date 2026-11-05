@@ -14,15 +14,16 @@ std::string encode_settings(const Settings& settings) {
     return detail::Json{{"settings_format",1},{"autosave_enabled",settings.autosave_enabled},
         {"reduced_motion",settings.reduced_motion},{"auto_pause_alerts",settings.auto_pause_alerts},
         {"compact_management",settings.compact_management},{"text_scale_percent",settings.text_scale_percent},
-        {"volume_percent",settings.volume_percent}}.dump()+"\n";
+        {"volume_percent",settings.volume_percent},{"show_guide",settings.show_guide}}.dump()+"\n";
 }
 Settings decode_settings(std::string_view bytes) {
     const auto value=detail::parse(bytes,maximum_settings_bytes);
     detail::fields(value,"settings",{"settings_format","autosave_enabled","reduced_motion","auto_pause_alerts",
-                                    "compact_management","text_scale_percent","volume_percent"});
+                                    "compact_management","text_scale_percent","volume_percent"},{"show_guide"});
     if (detail::u64(value.at("settings_format"),"settings_format")!=1)
         throw PersistenceError("future_settings","Unsupported settings format; original file was preserved");
     Settings result;
+    if (value.contains("show_guide")) result.show_guide=detail::boolean(value.at("show_guide"),"show_guide");
     result.autosave_enabled=detail::boolean(value.at("autosave_enabled"),"autosave_enabled");
     result.reduced_motion=detail::boolean(value.at("reduced_motion"),"reduced_motion");
     result.auto_pause_alerts=detail::boolean(value.at("auto_pause_alerts"),"auto_pause_alerts");

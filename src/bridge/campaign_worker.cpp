@@ -1,6 +1,7 @@
 #include "campaign_worker.hpp"
 
 #include <QThread>
+#include <pgp/runtime/scenario.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -52,6 +53,32 @@ void CampaignWorker::complete(std::uint64_t token, const session::OperationResul
     if (token != 0) emit operationCompleted(static_cast<qulonglong>(token),result.command.accepted(),
         result.command.accepted() && !result.storage_notice ? QString{} : message);
 }
+void CampaignWorker::newCampaign(std::uint64_t token,std::string headquarters,bool stories) {
+    requireOwningThread();
+    try {
+        if (generation_==std::numeric_limits<std::uint64_t>::max()) throw std::overflow_error("Campaign generation is exhausted");
+        std::string id;
+        for (const auto& [candidate,definition]:campaign_.program().collection.definitions) {
+            const auto* scenario=std::get_if<content::ScenarioDefinition>(&definition.data);
+            if (scenario && scenario->service_catalog) { id=candidate;break; }
+        }
+        auto initial=runtime::begin_scenario(campaign_.program(),id,headquarters);
+        if (!stories && initial.world.enabled_flows) {
+            auto& roots=*initial.world.enabled_flows;
+            roots.erase(std::remove_if(roots.begin(),roots.end(),[&](const auto& flow_id) {
+                const auto& flow=std::get<content::FlowDefinition>(campaign_.program().collection.find(flow_id)->data);
+                return std::find(flow.tags.begin(),flow.tags.end(),"story")!=flow.tags.end();
+            }),roots.end());
+        }
+        session::Campaign next{campaign_.program(),std::move(initial),paths_.saves_directory/"autosaves",campaign_.settings()};
+        const auto prepared=next.prepare_opening(next.checkpoint().world.simulation.revision);
+        if (!prepared.command.accepted()) throw std::runtime_error(prepared.command.explanation);
+        campaign_=std::move(next);++generation_;halted_=true;publish();
+        emit operationCompleted(static_cast<qulonglong>(token),true,QStringLiteral("New campaign started. Time is paused."));
+    } catch (const std::exception& error) {
+        emit noticeRaised(error_text(error));emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));
+    }
+}
 void CampaignWorker::start() {
     requireOwningThread();
     try {
@@ -70,6 +97,7 @@ void CampaignWorker::start() {
         pauseDriver(); emit noticeRaised(error_text(error)); publish();
     }
 }
+void CampaignWorker::setSpeed(int rate) { requireOwningThread();if (rate==1 || rate==10 || rate==30 || rate==60) timer_->setInterval(1000/rate); }
 void CampaignWorker::stop() { requireOwningThread(); timer_->stop(); }
 void CampaignWorker::submitCommand(std::uint64_t token, core::Command command) {
     requireOwningThread();

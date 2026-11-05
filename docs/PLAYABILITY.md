@@ -1,10 +1,10 @@
 # Playability and evaluation checkpoints
 
-Updated 2026-11-05. The game has a three-year headless lab/business/event loop. The development
-probe covers interface, resources and audio. A separate desktop shell opens
-engineering campaigns through the session layer.
-The [backlog](BACKLOG.md) records acceptance gates and the
-[implementation log](IMPLEMENTATION_LOG.md) records measured progress.
+Updated 2026-11-05. The bundled 2014–2017 Mac development campaign can be
+played from headquarters selection to its ending through the Office, Lab and
+Inbox. The [backlog](BACKLOG.md) records remaining acceptance gates and the
+[implementation log](IMPLEMENTATION_LOG.md) records checks. Delegation/scoring,
+independent human validation and release qualification remain open.
 
 | Checkpoint | What can be evaluated | State |
 | --- | --- | --- |
@@ -17,7 +17,7 @@ The [backlog](BACKLOG.md) records acceptance gates and the
 | M1-05: campaign room shell | Office/Lab/Inbox, time, required decisions, project inspector and local saves/preferences | Runnable with `pgp-game --content FILE`; [Mac evidence](evidence/M1-05-room-shell.md) |
 | M3-01: lab development loop | Four data offers, six research nodes, finite training, lineage, held-out findings and targeted recovery | Runnable with `pgp-headless --lab-demo data/runtime/first-playable.json`; [lab contract](../src/core/LAB.md) |
 | M3-05: base events and bounded rivals | Eight flow families, paid opportunities, temporary demand, financed competition and exact three-year continuation | Runnable with `pgp-headless --events-demo data/runtime/first-playable.json`; [contract/seeds](../src/runtime/BASE_EVENTS.md) |
-| M3-02: first player-facing scenario | Office/Lab decisions, data/research/training/evaluation, contracts, news and choices, start to ending | Next Mac feature task; the headless lab/event baseline is implemented |
+| M3-02: first player-facing scenario | Office/Lab decisions, data/research/training/evaluation, contracts, news and choices, start to ending | Implemented on Mac; Metal keyboard runs at 100%/200% text complete and reload exactly |
 | M3-03: feature evaluation build | The scenario with delegation, warnings, recovery and scoring | Earliest complete slice for ordinary feature feedback |
 | M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Human testing follows the playable build |
 
@@ -25,7 +25,33 @@ There is no calendar estimate inferred from task counts: tasks vary substantiall
 in size, and native packaging, authors and players have separate evidence gates.
 Full century simulation, politics, the complete graphical editor canvas and final
 art are later milestones. The full editor canvas remains required before M4;
-E1a forms/inspection are required before the slice presentation.
+E1a forms/inspection already support the slice presentation.
+
+## Play the current campaign
+
+After an optimized build, explicitly run `build/release/bin/pgp-game`. Choose
+California, Texas or Washington and whether to include optional story layers.
+The base events remain enabled. Time begins paused; saves and preferences stay
+local. Play/Pause, Step day and 1/10/30/60 days per second stay in the header.
+
+A supported opening route is:
+
+1. In **Lab → Data**, inspect and license the commercially cleared business documents.
+2. In **Research**, select held-out evaluation and start its finite experiment.
+3. In **Train**, choose the compact document classifier and licensed document mixture. The suggested allocation fits alongside research. Inspect time, uncertain intervals, data cost and the forecast of existing bills, then start training and advance time.
+4. Pause when the checkpoint is stopped. In **Evaluate**, select that checkpoint and the independent document/scanned-table holdout. Pay for the test and let it finish. Documents qualify, while the scanned-table lower bound is well below the broader promise.
+5. In **Deploy**, choose document-only scope, that checkpoint and its independent evidence. In **Office → Compare offers**, inspect and accept the enterprise document-service terms.
+6. To broaden the promise, license consented scans and train a **fresh** model on both datasets. Evaluate that model, then deploy the documents-and-tables service with its matching evidence. Paid human review is another offered response, with lower throughput, extra staff and a real recurring cost.
+7. Keep the company funded while time advances through January 2017. Required choices stop work. Inspect public rival notices, contracts, unpaid obligations and the tiered inbox. Save/load preserves the exact campaign boundary.
+
+The guide derives its stage from actual company progress, can be hidden, and can
+be restored from Settings. Project cancellation keeps consumed work and costs;
+a dependent customer contract must be cancelled before stopping its service.
+Service replacement keeps prior delivery/invoices and current promises.
+
+The rendered Mac smoke exercises this path at 1280×720 with 100% and 200% text,
+including exact save/reload and a solvent ending above $2.25m. These are scripted
+checks, not independent human playtests or screen-reader/device qualification.
 
 ## Inspect the foundation now
 
@@ -47,8 +73,9 @@ These commands run engineering examples. Only the explicit `--save` invocation
 writes the selected local save; the graphical application is not launched.
 Content fixtures are developer evidence and excluded from any future game
 payload. The three-year business fixture starts with an engineering product;
-research/models run through the lab and three-year baseline demonstrations. Player deployment controls/qualification and the full interactive scenario remain M3-02.
-See [desktop launch instructions](BUILDING.md#open-the-campaign-shell) for the room shell.
+research/models also run through the lab and three-year baseline demonstrations.
+The bundled player campaign adds authoritative qualification and interactive controls.
+See [desktop launch instructions](BUILDING.md#open-the-playable-campaign).
 
 ## Batch tracking
 
@@ -68,4 +95,4 @@ and exact thresholds through choices and reload; see [duration evidence](evidenc
 M1-07 then adds
 built-in occurrence detection/dispatch. M2-01 through M2-04 implement accounts,
 shared capacity, contracts and the three-year scenario with warned recovery.
-The room shell connects those modules to an explicit desktop launch. The current count is 20 completed Mac feature steps. M3-01 and M3-05 are implemented; M3-02 presentation/tutorial and M3-03 delegation/scoring are next. Deferred platform and release work stays recorded in the backlog.
+The playable campaign connects those modules through ordinary controls. The current count is 21 completed Mac feature steps. M3-01, M3-02 and M3-05 are implemented; M3-03 delegation/recovery/scoring is next. Deferred platform and release work stays recorded in the backlog.

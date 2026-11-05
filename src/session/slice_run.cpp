@@ -38,33 +38,13 @@ bool frozen_model(const runtime::Runtime& engine,std::string_view id) {
     const auto* work=model?find(state.capacity->projects,model->project_id):nullptr;
     return work && work->status==ProjectStatus::completed;
 }
-void deploy(runtime::Runtime& engine,const content::ScenarioDefinition& scenario,std::string_view product_id,
-            std::string_view model_id,std::string_view evidence_id,bool tables) {
+void deploy(runtime::Runtime& engine,const content::ScenarioDefinition&,std::string_view product_id,
+            std::string_view model_id,std::string_view evidence_id,bool) {
     const auto& state=engine.current_state().world.simulation;
     if (find(state.market->products,product_id)) return;
     const auto* evidence=find(state.lab->evaluations,evidence_id);
     if (!evidence || !evidence->completed) return;
-    const auto* plan=find(state.lab->catalog.evaluations,evidence->plan_id);
-    const auto* model=find(state.lab->models,model_id);
-    if (!model || evidence->model_id!=model_id || !plan || !plan->independent ||
-        plan->coverage[0].value()==0 || evidence->lower[0]<plan->required[0] ||
-        (tables && (plan->coverage[1].value()==0 || evidence->lower[1]<plan->required[1])))
-        throw std::runtime_error("Baseline deployment lacks the promised independent subgroup evidence");
-    const auto template_row=std::find_if(scenario.service_catalog->offers.begin(),scenario.service_catalog->offers.end(),[&](const auto& row){return row.product.id==product_id;});
-    if (template_row==scenario.service_catalog->offers.end()) throw std::runtime_error("Baseline service template is missing");
-    auto serving=template_row->serving;
-    serving.starts_on=state.date;
-    const auto* recipe=find(state.lab->catalog.recipes,model->recipe_id);
-    if (!recipe) throw std::runtime_error("Deployed model has no recipe");
-    serving.inference_milli_CU_per_task=recipe->inference_per_task;
-    serving.requested=MilliCUPerDay{required_inference(serving.tasks_per_day,recipe->inference_per_task).value()};
-    if (!find(state.capacity->projects,serving.id)) apply(engine,ReserveProject{serving});
-    apply(engine,AddMarketProduct{template_row->product});
-    const auto* customer=find(scenario.service_catalog->segments,"segment.enterprise");
-    const auto preference=customer?std::find_if(customer->preferences.begin(),customer->preferences.end(),[&](const auto& row){return row.product_id==product_id;}):
-        std::vector<MarketPreference>::const_iterator{};
-    if (!customer || preference==customer->preferences.end()) throw std::runtime_error("Baseline service has no authored customer preference");
-    apply(engine,AddMarketPreference{customer->id,*preference});
+    apply(engine,DeployModel{std::string{product_id},std::string{model_id},std::string{evidence_id},"lease.initial",false});
 }
 void policy(runtime::Runtime& engine,const content::ScenarioDefinition& scenario) {
     const auto& start=engine.current_state().world.simulation;

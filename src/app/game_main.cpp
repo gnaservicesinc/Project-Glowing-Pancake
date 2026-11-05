@@ -8,6 +8,7 @@
 
 #include <QCommandLineParser>
 #include <QFileInfo>
+#include <QFile>
 #include <QGuiApplication>
 #include <QLibraryInfo>
 #include <QQmlApplicationEngine>
@@ -29,10 +30,10 @@ int main(int argc, char* argv[]) {
     QCoreApplication::setApplicationName(QStringLiteral("Project Glowing Pancake"));
     QCoreApplication::setApplicationVersion(QString::fromUtf8(core::build_identity().game_version));
     QCommandLineParser parser;
-    parser.setApplicationDescription(QStringLiteral("Offline campaign development shell. Select an authored scenario; builds never launch it."));
+    parser.setApplicationDescription(QStringLiteral("Offline business and model-development campaign."));
     parser.addHelpOption(); parser.addVersionOption();
     parser.addOption({QStringLiteral("content"),QStringLiteral("Explicit local content collection."),QStringLiteral("file")});
-    parser.addOption({QStringLiteral("scenario"),QStringLiteral("Scenario definition ID."),QStringLiteral("id"),QStringLiteral("scenario.business")});
+    parser.addOption({QStringLiteral("scenario"),QStringLiteral("Scenario definition ID."),QStringLiteral("id")});
     parser.addOption({QStringLiteral("headquarters"),QStringLiteral("Headquarters choice offered by the scenario."),QStringLiteral("id"),QStringLiteral("US-CA")});
     parser.addOption({QStringLiteral("portable-root"),QStringLiteral("Explicit directory for local saves/settings."),QStringLiteral("directory")});
     parser.addOption({QStringLiteral("text-scale"),QStringLiteral("Initial text percent, 100 through 200; does not change saved preferences."),QStringLiteral("percent")});
@@ -42,17 +43,24 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("screenshot"),QStringLiteral("Capture the smoke-test window."),QStringLiteral("file")});
     parser.process(application);
     if (parser.isSet(QStringLiteral("build-info"))) { core::write_build_identity(std::cout); return 0; }
-    if (!parser.isSet(QStringLiteral("content"))) parser.showHelp(parser.positionalArguments().isEmpty() ? 0 : 2);
     if (!parser.positionalArguments().isEmpty() ||
         (parser.isSet(QStringLiteral("screenshot")) && !parser.isSet(QStringLiteral("smoke-test"))) ||
         (parser.isSet(QStringLiteral("smoke-test")) && !parser.isSet(QStringLiteral("portable-root")))) parser.showHelp(2);
     try {
-        const auto content_path = path(parser.value(QStringLiteral("content")));
+        const bool bundled=!parser.isSet(QStringLiteral("content"));
+        std::string bytes;
+        if (bundled) {
+            QFile file{QStringLiteral(":/pgp/content/first-playable.json")};
+            if (!file.open(QIODevice::ReadOnly) || file.size()>static_cast<qint64>(content::maximum_document_bytes))
+                throw std::runtime_error("Bundled campaign content is unavailable or oversized");
+            bytes=file.readAll().toStdString();
+        } else bytes=persistence::read_bounded(path(parser.value(QStringLiteral("content"))),content::maximum_document_bytes);
         const auto registry = content::foundation_registry();
-        auto program = runtime::compile_collection(content::load_collection(
-            persistence::read_bounded(content_path,content::maximum_document_bytes),registry),registry);
-        auto initial = runtime::begin_scenario(program,parser.value(QStringLiteral("scenario")).toStdString(),
-            parser.value(QStringLiteral("headquarters")).toStdString());
+        auto program = runtime::compile_collection(content::load_collection(bytes,registry),registry);
+        std::string scenario_id=parser.value(QStringLiteral("scenario")).toStdString();
+        if (scenario_id.empty()) for (const auto& [id,definition]:program.collection.definitions)
+            if (std::holds_alternative<content::ScenarioDefinition>(definition.data)) { scenario_id=id;break; }
+        auto initial = runtime::begin_scenario(program,scenario_id,parser.value(QStringLiteral("headquarters")).toStdString());
         const auto paths = persistence::local_paths(parser.isSet(QStringLiteral("portable-root")) ?
             std::optional{path(parser.value(QStringLiteral("portable-root")))} : std::nullopt);
         auto settings = persistence::load_settings(paths.settings_file);
@@ -64,7 +72,7 @@ int main(int argc, char* argv[]) {
         }
         const auto selection = graphics::configure(parser.isSet(QStringLiteral("software")));
         QQuickStyle::setStyle(QStringLiteral("Basic"));
-        bridge::CampaignController campaign{std::move(program),std::move(initial),paths,settings};
+        bridge::CampaignController campaign{std::move(program),std::move(initial),paths,settings,nullptr,bundled};
         QQmlApplicationEngine engine;
         const auto qt_imports = QLibraryInfo::path(QLibraryInfo::QmlImportsPath);
         engine.setImportPathList({qt_imports,QStringLiteral("qrc:/qt/qml")});
@@ -85,7 +93,8 @@ int main(int argc, char* argv[]) {
         });
         if (parser.isSet(QStringLiteral("smoke-test"))) {
             window->resize(1280,720);
-            schedule_game_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
+            if (bundled) schedule_playable_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
+            else schedule_game_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
         }
         window->show();
         return application.exec();

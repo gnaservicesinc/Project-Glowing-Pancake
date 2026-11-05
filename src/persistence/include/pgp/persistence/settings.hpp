@@ -12,6 +12,7 @@ struct Settings {
     bool reduced_motion = false;
     bool auto_pause_alerts = true;
     bool compact_management = false;
+    bool show_guide = true;
     std::uint32_t text_scale_percent = 100;
     std::uint32_t volume_percent = 100;
     auto operator<=>(const Settings&) const = default;

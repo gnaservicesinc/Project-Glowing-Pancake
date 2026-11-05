@@ -89,18 +89,27 @@ Json market_json(const core::MarketState& state) {
         adoptions.push_back({{"reviewed_on",adoption.reviewed_on.value()},{"segment_id",adoption.segment_id},
             {"observed_tasks",adoption.observed_tasks},{"shares",std::move(shares)}});
     }
+    Json bindings=Json::array();
+    for (const auto& row:state.capacity_bindings) bindings.push_back({{"product",row.product_id},{"project",row.project_id},{"starts",row.starts_on.value()}});
     Json changes=Json::array();
     for (const auto& row:state.demand_changes) changes.push_back({{"id",row.id},{"segment_id",row.segment_id},
         {"starts_on",row.starts_on.value()},{"expires_before",row.expires_before.value()},{"delta_bp",row.delta.value()}});
     return {{"owner",state.owner},{"starts_on",state.starts_on.value()},
         {"closed_through",optional_day(state.closed_through)},{"products",std::move(products)},
         {"segments",std::move(segments)},{"contracts",std::move(contracts)},
-        {"days",std::move(days)},{"adoptions",std::move(adoptions)},{"demand_changes",std::move(changes)}};
+        {"days",std::move(days)},{"adoptions",std::move(adoptions)},{"demand_changes",std::move(changes)},{"capacity_bindings",std::move(bindings)}};
 }
 
 core::MarketState parse_market(const Json& value) {
-    fields(value,"market",{"owner","starts_on","closed_through","products","segments","contracts","days","adoptions"},{"demand_changes"});
+    fields(value,"market",{"owner","starts_on","closed_through","products","segments","contracts","days","adoptions"},{"demand_changes","capacity_bindings"});
     core::MarketState result;
+    if (value.contains("capacity_bindings")) {
+        array(value.at("capacity_bindings"),"market/bindings",4096);
+        for (const auto& row:value.at("capacity_bindings")) {
+            fields(row,"market/binding",{"product","project","starts"});
+            result.capacity_bindings.push_back({label(row.at("product")),label(row.at("project")),day(row.at("starts"))});
+        }
+    }
     result.owner=label(value.at("owner"));
     result.starts_on=day(value.at("starts_on"));
     result.closed_through=parse_optional_day(value.at("closed_through"));

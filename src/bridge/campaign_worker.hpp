@@ -14,6 +14,8 @@ public:
     CampaignWorker(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
                    persistence::LocalPaths paths, persistence::Settings settings,
                    QObject* parent = nullptr);
+    void newCampaign(std::uint64_t token,std::string headquarters,bool stories);
+    void setSpeed(int days_per_second);
     void start();
     void stop();
     void submitCommand(std::uint64_t token, core::Command command);

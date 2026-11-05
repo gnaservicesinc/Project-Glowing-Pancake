@@ -17,6 +17,7 @@ QVariant StableListModel::data(const QModelIndex& item, int role) const {
     if (!item.isValid() || item.model() != this || item.column() != 0 || item.row() < 0 || item.row() >= rowCount()) return {};
     const auto& value = rows_[static_cast<std::size_t>(item.row())];
     switch (role) {
+    case FieldsRole: return value.fields;
     case IdRole: return value.entity_id;
     case TitleRole: return value.title;
     case SubtitleRole: return value.subtitle;
@@ -28,7 +29,7 @@ QVariant StableListModel::data(const QModelIndex& item, int role) const {
 }
 QHash<int,QByteArray> StableListModel::roleNames() const {
     return {{IdRole,"entityId"},{TitleRole,"title"},{SubtitleRole,"subtitle"},
-        {DetailRole,"detail"},{StatusRole,"status"},{RequiredRole,"required"},{ActionableRole,"actionable"}};
+        {DetailRole,"detail"},{StatusRole,"status"},{RequiredRole,"required"},{ActionableRole,"actionable"},{FieldsRole,"fields"}};
 }
 int StableListModel::indexOf(const QString& id) const {
     const auto found = std::find_if(rows_.begin(),rows_.end(),[&](const auto& value) { return value.entity_id == id; });
@@ -44,7 +45,7 @@ QVariantMap StableListModel::row(const QString& id) const {
     return {{QStringLiteral("entityId"),value.entity_id},{QStringLiteral("title"),value.title},
         {QStringLiteral("subtitle"),value.subtitle},{QStringLiteral("detail"),value.detail},
         {QStringLiteral("status"),value.status},{QStringLiteral("required"),value.required},
-        {QStringLiteral("actionable"),value.required}};
+        {QStringLiteral("actionable"),value.required},{QStringLiteral("fields"),value.fields}};
 }
 void StableListModel::requireOwningThread() const {
     if (QThread::currentThread() != thread()) throw std::logic_error("Campaign models require their owning GUI thread");
@@ -125,6 +126,7 @@ void StableListModel::reconcile(std::vector<CampaignRow> desired) {
             if (current.subtitle != desired[i].subtitle) changed.push_back(SubtitleRole);
             if (current.detail != desired[i].detail) changed.push_back(DetailRole);
             if (current.status != desired[i].status) changed.push_back(StatusRole);
+            if (current.fields != desired[i].fields) changed.push_back(FieldsRole);
             if (current.required != desired[i].required) { changed.push_back(RequiredRole); changed.push_back(ActionableRole); }
             if (!changed.empty()) {
                 current = std::move(desired[i]);

@@ -23,7 +23,9 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | E1A-01 | Complete for Mac features | Separate Content Studio, typed checkout library, flow tag draft editing, undo/redo and conflict-aware writes. [Library](evidence/E1A-01-library.md), [draft workflow](evidence/E1A-01-drafts.md) |
 | E1A-02 | Complete for Mac features | Typed predicates, all five lifecycles, ordered execution, scoped variables and reference edits. [Trigger forms](evidence/E1A-02-triggers.md), [lifecycle forms](evidence/E1A-02-lifecycles.md), [execution forms](evidence/E1A-02-execution.md) |
 | E1A-03 | Complete for Mac features | Isolated scenario/state/RNG tests, exact clause and scope traces, effect/ledger previews, boundary probes, shared presentations, natural lifecycle and exact reload. [Inspection](evidence/E1A-03-inspection.md) |
-| M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
+| M3-01 | Complete for Mac features | Paid data/research, finite training/lineage and held-out subgroup evidence; 88 lab checks |
+| M3-05 | Complete for Mac features | Eight base-event families, paid offers, bounded rivals and exact three-year baseline; 188 event checks |
+| M3-02 | Complete for Mac features | Bundled interactive campaign, guide, measured qualification/controls and dated serving replacement; 29 deployment and 16 management checks plus complete Metal keyboard runs at 100%/200% |
 
 ## Mac feature scope update — 2026-11-04
 
@@ -752,3 +754,40 @@ qualification, headquarters choice, event/rival presentation and tutorial, then
 M3-03 delegation/scoring. Graphical snapshot finalization, human studies and
 native/release qualification retain their separate gates. No player-ready UI,
 finalized content version or release is claimed by this headless batch.
+
+
+## M3-02 — Interactive scenario and measured deployment — 2026-11-05
+
+`pgp-game` now bundles canonical playable content and opens headquarters/story
+selection without a content path. Office/Lab forms cover paid data/research,
+finite training/continuation/cloning, independent evaluation, customer offers,
+qualified deployment, contracts, actual obligations and public rival notices.
+A local skippable guide, 1/10/30/60-day clock, shared localized presentations and
+outcome panel complete the start-to-ending path. Persistent models retain IDs,
+selection, focus and scroll; exact checkpoints stay on the serialized worker.
+
+The new core deployment transaction requires a stopped, commercially cleared
+checkpoint and matching independent evidence. Document-only scope, paid human
+review and targeted-data retraining provide distinct subgroup responses. Review
+reserves extra staff/cost and caps throughput; it cannot improve hidden model
+capability. Recipe-specific serving cost, dated product/capacity bindings and
+atomic support replacement preserve actual delivery and active contracts.
+Save loading checks those records against authored requirements. The headless
+baseline now uses the same deployment command and retains its $2,298,658.09
+ending and 4,001,600 useful tasks.
+
+Verification: **57/57 optimized Mac CTests in 10.10s**, including **29 deployment**
+and **16 management** assertions. Content validation and `git diff --check` pass.
+Explicit Metal keyboard/form runs at **1280×720**, **100% and 200% text**, cover a
+Texas start, licensed training, independent subgroup finding, narrower deployment,
+customer contract, targeted retraining/broader deployment, public rivals, exact
+manual reload and a solvent **2017-01-01** ending above **$2.25m**. The existing
+engineering shell smoke still passes its failed-load and preference checks.
+Rendered review corrected status/action wrapping at high text scale. Hidden
+training panels no longer recompute cash forecasts while time runs; visible
+forecasts are pure and capped at 90 days. No screen-reader, independent human,
+Windows/Linux/package/device or release acceptance is inferred from these checks.
+
+Count: **21/52 Mac feature steps**. Next: M3-03's bounded delegation, configurable
+auto-pause, specialist/financing recovery paths and scoring. M3-04's five real
+human sessions and the remaining Content Studio/native/release gates remain open.

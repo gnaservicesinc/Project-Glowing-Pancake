@@ -167,6 +167,10 @@ void validate(const SimulationState& state,bool deep=true) {
         if (!state.accounts || !state.capacity) invalid("Lab requires business accounts and shared capacity");
         validate_lab(*state.lab, *state.capacity, *state.accounts, state.random, false);
     }
+    if (state.deployments) {
+        if (!state.lab || !state.market || !state.capacity) invalid("Deployments require lab, market and capacity");
+        if (deep) validate_deployments(*state.deployments,*state.lab,*state.capacity,*state.market);
+    }
     if (state.business_offers) {
         if (!state.accounts || !state.capacity) invalid("Business offers require accounts and capacity");
         validate_business_offers(*state.business_offers,*state.accounts,*state.capacity,state.market,false);
@@ -513,12 +517,20 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             } else if constexpr (std::is_same_v<Action, ReserveProject>) {
                 if (next.lab && action.project.id.starts_with("lab/"))
                     refuse(CommandReason::invalid_argument, "Lab projects must be created through their data, training, research or evaluation command.");
+                if (next.deployments && action.project.kind==ProjectKind::serving)
+                    refuse(CommandReason::invalid_argument,"Create services through a qualified model deployment.");
                 reserve_project(capacity(next), next.date, action.project);
                 if (action.project.monthly_support_cost.value() > 0)
                     add_recurring(accounts(next), {"support/" + action.project.id, action.project.monthly_support_cost,
                         next.date, std::nullopt, "Serving support: " + action.project.id});
                 (void)receipt(next, "reserve_project");
             } else if constexpr (std::is_same_v<Action, CancelProject>) {
+                if (next.market) for (const auto& product:next.market->products) {
+                    if (product.capacity_project_id!=action.id) continue;
+                    for (const auto& contract:next.market->contracts)
+                        if (contract.product_id==product.id && (contract.status==ContractStatus::active || contract.status==ContractStatus::pending))
+                            refuse(CommandReason::dependent_commitment,"Cancel the dependent customer contract before stopping its service.");
+                }
                 cancel_project(capacity(next), next.date, action.id);
                 const auto found = std::find_if(next.capacity->projects.begin(), next.capacity->projects.end(),
                     [&](const auto& project) { return project.id == action.id; });
@@ -534,15 +546,18 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 next.market = opening_market(next.date, accounts(next).owner);
                 (void)receipt(next, "enable_market");
             } else if constexpr (std::is_same_v<Action, AddMarketProduct>) {
+                if (next.deployments) refuse(CommandReason::invalid_argument,"Use qualified deployment or stop the serving project.");
                 add_market_product(market(next), capacity(next), action.product);
                 (void)receipt(next, "add_market_product");
             } else if constexpr (std::is_same_v<Action, AddMarketSegment>) {
                 add_market_segment(market(next), action.segment);
                 (void)receipt(next, "add_market_segment");
             } else if constexpr (std::is_same_v<Action, AddMarketPreference>) {
+                if (next.deployments) refuse(CommandReason::invalid_argument,"Use qualified deployment or stop the serving project.");
                 add_market_preference(market(next),action.segment_id,action.preference);
                 (void)receipt(next,"introduce_customer_product");
             } else if constexpr (std::is_same_v<Action, SetMarketProductAvailable>) {
+                if (next.deployments) refuse(CommandReason::invalid_argument,"Use qualified deployment or stop the serving project.");
                 set_product_available(market(next), action.id, action.available);
                 (void)receipt(next, "market_product_availability");
             } else if constexpr (std::is_same_v<Action, AcceptContract>) {
@@ -580,6 +595,10 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     action.id, action.model_id, action.plan_id, action.allocation, reserved_cash(next));
                 next.cash = accounts_report(*next.accounts).cash;
                 (void)receipt(next, "start_evaluation", 0, checked_unit_subtract(next.cash, before));
+            } else if constexpr (std::is_same_v<Action, DeployModel>) {
+                if (!next.deployments) refuse(CommandReason::invalid_status,"This scenario has no deployable service catalog.");
+                deploy_model(*next.deployments,lab(next),accounts(next),capacity(next),market(next),next.date,action);
+                (void)receipt(next,"deploy_model");
             } else if constexpr (std::is_same_v<Action, AcceptBusinessOffer>) {
                 if (!next.business_offers) refuse(CommandReason::invalid_status,"This scenario has no business offers.");
                 const auto before=next.cash;
@@ -606,9 +625,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
     } catch (const std::overflow_error&) {
         return {CommandReason::arithmetic_overflow, state_.revision, {}, {},
                 "The action exceeds a checked arithmetic bound; nothing was changed."};
-    } catch (const std::invalid_argument&) {
-        return {CommandReason::invalid_argument, state_.revision, {}, {},
-                "The action would violate a state invariant; nothing was changed."};
+    } catch (const std::invalid_argument& error) {
+        return {CommandReason::invalid_argument, state_.revision, {}, {}, std::string{error.what()}+"; nothing was changed."};
     } catch (const std::out_of_range&) {
         return {CommandReason::invalid_argument, state_.revision, {}, {},
                 "The action exceeds a unit or calendar bound; nothing was changed."};

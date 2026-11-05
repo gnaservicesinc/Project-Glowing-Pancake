@@ -635,7 +635,8 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
     array(value.at("offers"), child(path,"offers"), core::market_product_limit);
     for (const auto& offer : value.at("offers")) {
         fields(offer,path,{"id","capacity_project_id","price_cents_per_task","available","tasks_per_day",
-            "inference_milli_CU_per_task","staff","minimum_memory_mib","interconnect","monthly_support_cost_cents"},
+            "inference_milli_CU_per_task","staff","minimum_memory_mib","interconnect","monthly_support_cost_cents",
+             "required_bp","review_credit_bp","review_staff","review_monthly_cost_cents","review_tasks_per_day"},
             {"id","capacity_project_id","price_cents_per_task","available","tasks_per_day",
             "inference_milli_CU_per_task","staff","minimum_memory_mib","interconnect","monthly_support_cost_cents"});
         MarketOfferDefinition row;
@@ -655,6 +656,19 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
         row.serving.interconnect = id(offer.at("interconnect"),path);
         row.serving.monthly_support_cost = core::Cents{integer(offer.at("monthly_support_cost_cents"),path)};
         row.serving.cause = "Market service: " + row.product.id;
+        if (offer.contains("required_bp")) {
+            const auto parse_profile=[&](const Json& input) {
+                array(input,path,core::lab_domain_count);
+                if (input.size()!=core::lab_domain_count) fail("service_catalog",path,"Expected one requirement per task domain");
+                return core::LabProfile{core::BasisPoints{integer(input[0],path,0,10000)},core::BasisPoints{integer(input[1],path,0,10000)}};
+            };
+            row.required=parse_profile(offer.at("required_bp"));
+            if (offer.contains("review_credit_bp")) row.review_credit=parse_profile(offer.at("review_credit_bp"));
+            if (offer.contains("review_staff")) row.review_staff=static_cast<std::uint32_t>(integer(offer.at("review_staff"),path,0,1'000'000));
+            if (offer.contains("review_monthly_cost_cents")) row.review_monthly_cost=core::Cents{integer(offer.at("review_monthly_cost_cents"),path,0)};
+            if (offer.contains("review_tasks_per_day")) row.review_tasks_per_day=static_cast<std::uint64_t>(integer(offer.at("review_tasks_per_day"),path,0,core::market_task_limit));
+        } else if (offer.contains("review_credit_bp") || offer.contains("review_staff") || offer.contains("review_monthly_cost_cents") || offer.contains("review_tasks_per_day"))
+            fail("service_catalog",path,"Review control needs explicit task requirements");
         result.offers.push_back(std::move(row));
     }
     array(value.at("segments"),child(path,"segments"),core::market_segment_limit);
@@ -777,6 +791,8 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
     if (value.contains("service_catalog")) {
         try {
             result.service_catalog=market_setup(value.at("service_catalog"),child(path,"service_catalog"),result);
+            if (!result.lab) fail("service_catalog",path,"Service templates require a lab");
+            (void)service_definitions(*result.service_catalog);
             if (!result.service_catalog->contracts.empty()) fail("service_catalog",path,"Service templates cannot create accepted contracts");
             for (const auto& segment:result.service_catalog->segments) {
                 if (!result.market) fail("service_catalog",path,"Service preferences require an existing scenario market");

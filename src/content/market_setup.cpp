@@ -29,6 +29,16 @@ void shape(const MarketSetup& setup, core::OrdinalDay starts_on) {
             throw std::invalid_argument("Market preference count exceeds its catalog bound");
 }
 }
+std::vector<core::ServiceDefinition> service_definitions(const MarketSetup& setup) {
+    auto result=setup.offers;
+    for (auto& offer:result) {
+        offer.preferences.clear();
+        for (const auto& segment:setup.segments) for (const auto& pref:segment.preferences)
+            if (pref.product_id==offer.product.id) offer.preferences.push_back({segment.id,pref});
+    }
+    core::validate_service_catalog(result);
+    return result;
+}
 void apply_market_setup(const MarketSetup& setup, core::MarketState& market,
                         core::AccountsState& accounts, core::CapacityState& capacity,
                         core::OrdinalDay starts_on) {
@@ -65,6 +75,14 @@ std::string canonical_market_setup_bytes(const MarketSetup& setup, core::Ordinal
             {"tasks_per_day",row.tasks_per_day},{"inference_milli_CU_per_task",row.inference_milli_CU_per_task.value()},
             {"staff",row.staff},{"minimum_memory_mib",row.minimum_memory_mib},{"interconnect",row.interconnect},
             {"monthly_support_cost_cents",row.monthly_support_cost.value()}});
+        if (std::any_of(offer->required.begin(),offer->required.end(),[](auto value){return value.value()>0;})) {
+            auto& encoded=offers.back();
+            encoded["required_bp"]={offer->required[0].value(),offer->required[1].value()};
+            encoded["review_credit_bp"]={offer->review_credit[0].value(),offer->review_credit[1].value()};
+            encoded["review_staff"]=offer->review_staff;
+            encoded["review_monthly_cost_cents"]=offer->review_monthly_cost.value();
+            encoded["review_tasks_per_day"]=offer->review_tasks_per_day;
+        }
     }
     std::vector<const core::MarketSegment*> ordered_segments;
     for (const auto& segment : setup.segments) ordered_segments.push_back(&segment);

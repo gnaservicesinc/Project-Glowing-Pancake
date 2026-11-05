@@ -115,6 +115,11 @@ struct MarketDemandChange {
     BasisPointDelta delta{0};
     auto operator<=>(const MarketDemandChange&) const = default;
 };
+struct ProductCapacityBinding {
+    std::string product_id, project_id;
+    OrdinalDay starts_on{0};
+    auto operator<=>(const ProductCapacityBinding&) const = default;
+};
 struct MarketState {
     std::string owner = "company.player";
     OrdinalDay starts_on{0};
@@ -125,6 +130,7 @@ struct MarketState {
     std::vector<MarketDay> days;
     std::vector<MarketAdoption> adoptions;
     std::vector<MarketDemandChange> demand_changes{};
+    std::vector<ProductCapacityBinding> capacity_bindings{};
     auto operator<=>(const MarketState&) const = default;
 };
 struct MarketReport {
@@ -143,6 +149,8 @@ void validate_market(const MarketState& state);
 void validate_market_links(const MarketState& state, const AccountsState& accounts,
                            const CapacityState& capacity);
 void add_market_product(MarketState& state, const CapacityState& capacity, MarketProduct product);
+void replace_product_capacity(MarketState& state, const CapacityState& capacity, OrdinalDay day,
+                              std::string_view product_id, std::string project_id);
 void add_market_segment(MarketState& state, MarketSegment segment);
 void add_market_preference(MarketState& state,std::string_view segment_id,MarketPreference preference);
 void set_product_available(MarketState& state, std::string_view product_id, bool available);

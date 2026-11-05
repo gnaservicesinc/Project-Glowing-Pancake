@@ -2,6 +2,7 @@
 
 #include "campaign_model.hpp"
 #include "campaign_worker.hpp"
+#include "management_controller.hpp"
 
 #include <QThread>
 #include <QUrl>
@@ -10,6 +11,12 @@
 namespace pgp::bridge {
 class CampaignController final : public QObject {
     Q_OBJECT
+    Q_PROPERTY(ManagementController* management READ management CONSTANT)
+    Q_PROPERTY(int daysPerSecond READ daysPerSecond WRITE setDaysPerSecond NOTIFY stateChanged)
+    Q_PROPERTY(bool welcome READ welcome NOTIFY stateChanged)
+    Q_PROPERTY(QVariantList headquarters READ headquarters CONSTANT)
+    Q_PROPERTY(QString headquartersText READ headquartersText NOTIFY stateChanged)
+    Q_PROPERTY(bool showGuide READ showGuide WRITE setShowGuide NOTIFY settingsChanged)
     Q_PROPERTY(bool ready READ ready NOTIFY stateChanged)
     Q_PROPERTY(QString date READ date NOTIFY stateChanged)
     Q_PROPERTY(QString revision READ revision NOTIFY stateChanged)
@@ -39,8 +46,18 @@ class CampaignController final : public QObject {
 public:
     CampaignController(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
                        persistence::LocalPaths paths, persistence::Settings initial_settings = {},
-                       QObject* parent = nullptr);
+                       QObject* parent = nullptr, bool welcome = false);
     ~CampaignController() override;
+    ManagementController* management() const { return management_; }
+    int daysPerSecond() const { return days_per_second_; }
+    void setDaysPerSecond(int value);
+    bool welcome() const { return welcome_; }
+    QVariantList headquarters() const;
+    QString headquartersText() const;
+    bool showGuide() const { return settings_.show_guide; }
+    void setShowGuide(bool value);
+    Q_INVOKABLE void newCampaign(QString headquarters, bool stories = true);
+    Q_INVOKABLE void openWelcome();
     [[nodiscard]] QString date() const;
     [[nodiscard]] bool ready() const noexcept { return static_cast<bool>(snapshot_); }
     [[nodiscard]] QString revision() const;
@@ -98,6 +115,10 @@ private:
     void acceptSnapshot(CampaignSnapshotPtr snapshot);
     void setNotice(QString explanation);
     [[nodiscard]] const runtime::Presentation* waitingPresentation() const;
+    const runtime::CompiledProgram program_;
+    ManagementController* management_;
+    bool welcome_ = false;
+    int days_per_second_ = 10;
     QThread thread_;
     CampaignWorker* worker_ = nullptr;
     StableListModel* projects_;

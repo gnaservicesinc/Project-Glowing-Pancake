@@ -64,12 +64,12 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
     }
     return rows;
 }
-std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint) {
+std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const content::Collection& collection) {
     std::vector<CampaignRow> rows;
     for (const auto& row : checkpoint.runtime.presentations) {
         if (row.kind == runtime::PresentationKind::news) continue;
-        rows.push_back({QStringLiteral("flow:") + integer(row.id),presentation_title(row.kind),text(core::iso_date(row.day)),
-            presentation_detail(checkpoint,row),row.kind == runtime::PresentationKind::dialogue && !row.resolved ? QStringLiteral("Response required") : QStringLiteral("Recorded"),
+        rows.push_back({QStringLiteral("flow:") + integer(row.id),presentation_heading(row,collection),text(core::iso_date(row.day)),
+            presentation_detail(checkpoint,row,&collection),row.kind == runtime::PresentationKind::dialogue && !row.resolved ? QStringLiteral("Response required") : QStringLiteral("Recorded"),
             row.kind == runtime::PresentationKind::dialogue && !row.resolved});
     }
     constexpr std::size_t headlines_per_part = 8;
@@ -83,7 +83,7 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint) {
             for (std::size_t index = first; index < limit; ++index) {
                 const auto& news = *entries[index];
                 if (!detail.isEmpty()) detail += QStringLiteral("\n\n");
-                detail += QStringLiteral("%1\n%2").arg(text(core::iso_date(news.day)), presentation_context(checkpoint, news));
+                detail += QStringLiteral("%1\n%2").arg(text(core::iso_date(news.day)), presentation_context(checkpoint, news,&collection));
             }
             const auto status = parts == 1 ? (entries.size() == 1 ? QStringLiteral("1 update") : QStringLiteral("%1 updates").arg(integer(entries.size()))) :
                 QStringLiteral("Part %1 of %2 · %3 updates").arg(integer(part + 1), integer(parts), integer(entries.size()));
@@ -106,9 +106,11 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint) {
 }
 }
 CampaignController::CampaignController(runtime::CompiledProgram program,runtime::Checkpoint checkpoint,
-    persistence::LocalPaths paths,persistence::Settings initial_settings,QObject* parent)
-    : QObject(parent),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
+    persistence::LocalPaths paths,persistence::Settings initial_settings,QObject* parent,bool welcome)
+    : QObject(parent),program_(program),management_(new ManagementController(this)),welcome_(welcome),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
       save_folder_(QUrl::fromLocalFile(QString::fromStdU16String(paths.saves_directory.u16string()))) {
+    connect(management_,&ManagementController::actionRequested,this,&CampaignController::submit);
+    connect(management_,&ManagementController::noticeRaised,this,&CampaignController::setNotice);
     (void)persistence::encode_settings(settings_);
     worker_ = new CampaignWorker(std::move(program),std::move(checkpoint),std::move(paths),settings_);
     worker_->moveToThread(&thread_);
@@ -141,7 +143,9 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     const bool first = !snapshot_;
     const bool replace = first || snapshot_->generation != snapshot->generation;
     auto projects = project_rows(snapshot->checkpoint);
-    auto inbox = inbox_rows(snapshot->checkpoint);
+    auto inbox = inbox_rows(snapshot->checkpoint,program_.collection);
+    management_->update(snapshot,program_,replace);
+    if (!first && replace) welcome_=false;
     if (replace) { projects_->beginCampaign(std::move(projects)); inbox_->beginCampaign(std::move(inbox)); }
     else { projects_->setRows(std::move(projects)); inbox_->setRows(std::move(inbox)); }
     const bool changed_settings = settings_ != snapshot->settings;
@@ -150,6 +154,38 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     if (changed_settings) emit settingsChanged();
     emit stateChanged(); emit snapshotChanged(); emit selectionChanged();
 }
+QVariantList CampaignController::headquarters() const {
+    QVariantList result;
+    for (const auto& [id,definition]:program_.collection.definitions) {
+        (void)id; const auto* scenario=std::get_if<content::ScenarioDefinition>(&definition.data);
+        if (!scenario || !scenario->service_catalog) continue;
+        for (const auto& hq:scenario->headquarters_choices)
+            result.push_back(QVariantMap{{QStringLiteral("id"),text(hq)},{QStringLiteral("label"),hq=="US-CA"?QStringLiteral("California"):hq=="US-TX"?QStringLiteral("Texas"):QStringLiteral("Washington")}});
+        break;
+    }
+    return result;
+}
+QString CampaignController::headquartersText() const {
+    if (!snapshot_) return {};
+    const auto& id=snapshot_->checkpoint.world.state_id;
+    return id=="state.us_ca"?QStringLiteral("California"):id=="state.us_tx"?QStringLiteral("Texas"):QStringLiteral("Washington");
+}
+void CampaignController::setDaysPerSecond(int value) {
+    if (value!=1 && value!=10 && value!=30 && value!=60) return;
+    days_per_second_=value;
+    QMetaObject::invokeMethod(worker_,[worker=worker_,value]{worker->setSpeed(value);},Qt::QueuedConnection);
+    emit stateChanged();
+}
+void CampaignController::newCampaign(QString hq,bool stories) {
+    if (!beginOperation()) return;
+    QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,hq=hq.toStdString(),stories]{worker->newCampaign(token,hq,stories);},Qt::QueuedConnection);
+}
+void CampaignController::openWelcome() {
+    if (!management_->available() || busy_) return;
+    if (!paused()) submit(core::SetPaused{true});
+    welcome_=true;emit stateChanged();
+}
+void CampaignController::setShowGuide(bool value) { auto settings=settings_;settings.show_guide=value;changeSettings(settings); }
 QString CampaignController::date() const { return snapshot_ ? text(core::iso_date(snapshot_->checkpoint.world.simulation.date)) : QStringLiteral("Preparing campaign…"); }
 QString CampaignController::revision() const { return snapshot_ ? integer(snapshot_->checkpoint.world.simulation.revision) : QString{}; }
 QString CampaignController::cashText() const { return snapshot_ ? money(snapshot_->checkpoint.world.simulation.cash) : QStringLiteral("—"); }
@@ -192,14 +228,24 @@ QString CampaignController::requiredKind() const {
 QString CampaignController::requiredTitle() const {
     const auto kind = requiredKind();
     if (kind == QStringLiteral("core")) return QStringLiteral("Delivery decision");
-    if (kind == QStringLiteral("content")) return QStringLiteral("Campaign decision");
+    if (kind == QStringLiteral("content")) return presentation_heading(*waitingPresentation(),program_.collection);
     if (kind == QStringLiteral("liquidity")) return QStringLiteral("Unpaid obligations need a response");
     return {};
 }
 QString CampaignController::requiredText() const {
     const auto kind = requiredKind();
     if (kind == QStringLiteral("core")) return QStringLiteral("A scheduled delivery awaits your decision. Accepting consumes its reserved funds; declining does not refund earlier purchases.");
-    if (kind == QStringLiteral("content")) return presentation_detail(snapshot_->checkpoint,*waitingPresentation());
+    if (kind == QStringLiteral("content")) {
+        const auto* row=waitingPresentation();
+        auto result=presentation_detail(snapshot_->checkpoint,*row,&program_.collection);
+        const auto& s=snapshot_->checkpoint.world.simulation;
+        if (s.business_offers && (row->flow_id=="slice.supplier_offer" || row->flow_id=="slice.recovery_opportunity"))
+            for (const auto& offer:s.business_offers->catalog)
+                if ((row->flow_id=="slice.supplier_offer" && offer.kind==core::BusinessOfferKind::compute_lease) ||
+                    (row->flow_id=="slice.recovery_opportunity" && offer.kind==core::BusinessOfferKind::recovery_pilot && offer.id=="offer.recovery_pilot"))
+                    result+=QStringLiteral("\n\n")+management_->offers()->row(text(offer.id)).value(QStringLiteral("detail")).toString();
+        return result;
+    }
     if (kind == QStringLiteral("liquidity")) {
         const auto report = core::liquidity_report(*snapshot_->checkpoint.world.simulation.liquidity);
         return QStringLiteral("%1\nOverdue payables %2 · matured principal %3\nRespond by %4. Acknowledging keeps this deadline; financing must be followed by payment.")
@@ -212,14 +258,14 @@ QVariantList CampaignController::requiredChoices() const {
     QVariantList result;
     if (const auto* presentation = waitingPresentation())
         for (const auto& choice : presentation->choices)
-            result.push_back(QVariantMap{{QStringLiteral("choiceId"),text(choice.id)},{QStringLiteral("label"),choice_label(choice)}});
+            result.push_back(QVariantMap{{QStringLiteral("choiceId"),text(choice.id)},{QStringLiteral("label"),choice_label(choice,&program_.collection)}});
     return result;
 }
 bool CampaignController::canAdvance() const {
     return paused() && canPlay();
 }
 bool CampaignController::canPlay() const {
-    if (!snapshot_ || busy_ || requiredKind() != QStringLiteral("none")) return false;
+    if (welcome_ || !snapshot_ || busy_ || requiredKind() != QStringLiteral("none")) return false;
     const auto& state = snapshot_->checkpoint.world.simulation;
     return state.phase == core::DayPhase::work_ready && snapshot_->checkpoint.runtime.prepared_day == state.date;
 }
@@ -238,6 +284,7 @@ bool CampaignController::beginOperation() {
 }
 void CampaignController::submit(core::CommandAction action) {
     if (!beginOperation()) return;
+    if (welcome_) { busy_=false;emit stateChanged();return; }
     const auto command = core::Command{snapshot_->checkpoint.world.simulation.revision,std::move(action)};
     QMetaObject::invokeMethod(worker_,[worker = worker_,token = token_,command] { worker->submitCommand(token,command); },Qt::QueuedConnection);
 }

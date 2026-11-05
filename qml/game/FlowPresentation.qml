@@ -30,6 +30,7 @@ ColumnLayout {
             model: card.choices
             Button {
                 required property var modelData
+                objectName: "flowChoice_" + modelData.choiceId
                 text: modelData.label
                 Accessible.name: text
                 onClicked: card.chosen(modelData.choiceId)

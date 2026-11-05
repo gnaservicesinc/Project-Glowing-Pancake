@@ -13,6 +13,7 @@ struct CampaignRow {
     QString detail;
     QString status;
     bool required = false;
+    QVariantMap fields{};
     bool operator==(const CampaignRow&) const = default;
 };
 
@@ -31,7 +32,7 @@ class StableListModel final : public QAbstractListModel {
 public:
     enum Role {
         IdRole = Qt::UserRole + 1, TitleRole, SubtitleRole, DetailRole,
-        StatusRole, RequiredRole, ActionableRole
+        StatusRole, RequiredRole, ActionableRole, FieldsRole
     };
     Q_ENUM(Role)
     explicit StableListModel(QObject* parent = nullptr, bool required_first = false);

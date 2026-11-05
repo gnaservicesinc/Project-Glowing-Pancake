@@ -142,24 +142,45 @@ drivers stop at an unacknowledged warning. These commands use in-memory reloads,
 write no player saves and launch no window. Focused checks are `core.liquidity`,
 `runtime.liquidity-integration` and `session.business-scenario`.
 
-## Open the campaign shell
+<a id="open-the-campaign-shell"></a>
 
-Build and explicitly launch the local business fixture with a separate save and
-preferences directory:
+## Open the playable campaign
+
+Build, then explicitly launch the bundled offline 2014–2017 campaign:
 
 ```sh
 ./make.sh --jobs 4
-build/release/bin/pgp-game --content tests/content/fixtures/business.json \
-  --portable-root "$PWD/build/release/local-campaign"
+build/release/bin/pgp-game
+# Optional separate development saves/preferences, with larger text:
+build/release/bin/pgp-game --portable-root "$PWD/build/release/local-campaign" --text-scale 200
 ```
 
-The default scenario ID is `scenario.business` and its default headquarters
-is `US-CA`. Select another authored scenario with `--scenario` and
-`--headquarters`. Without `--portable-root`, the shell uses the application’s
-standard local data and settings directories. Set `--text-scale 200` to open at
-200% text. `--smoke-test` requires a fresh explicit portable root and drives the
-keyboard, clock and save checks against the business engineering fixture.
-[Room shell evidence](evidence/M1-05-room-shell.md) gives the focused commands.
+The welcome screen offers three headquarters and optional story layers. The
+in-game guide covers data, research, training, held-out evaluation, qualification
+and customer contracts. See the [player path](PLAYABILITY.md).
+Without `--portable-root`, saves/settings use the application's standard local
+directories. Builds never launch a window.
+
+An explicit `--content FILE` still opens an engineering collection. `--scenario`
+selects an authored scenario (otherwise the first one is used); `--headquarters`
+defaults to `US-CA` for this explicit fixture path. The bundled game chooses
+headquarters through its welcome screen.
+
+`--smoke-test` requires a fresh, explicitly selected portable directory. With
+bundled content it drives the complete keyboard/form path to a solvent ending,
+including exact save/load and required decisions. With an engineering business
+fixture it retains the smaller room/clock/save/error/preferences check:
+
+```sh
+build/release/bin/pgp-game --smoke-test --portable-root .work/playable-check
+build/release/bin/pgp-game --smoke-test --text-scale 200 --portable-root .work/playable-check-200
+build/release/bin/pgp-game --content tests/content/fixtures/business.json \
+  --smoke-test --portable-root .work/engineering-check
+```
+
+Optional `--screenshot PATH.png` is limited to smoke mode. It captures local
+rendered output; the complete campaign smoke also captures Office, training and
+evidence views beside that file. These commands launch only when invoked.
 
 ## Compiler and configuration isolation
 

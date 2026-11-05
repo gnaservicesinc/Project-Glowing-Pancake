@@ -448,6 +448,26 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
         state.starts_on < capacity.starts_on || current_day(state) != account_day || current_day(state) != capacity_day)
         invalid("Market, accounts and capacity must share owner and current unclosed day");
     for (const auto& product_row : state.products) (void)project(capacity, product_row);
+    if (state.capacity_bindings.size()>4096) invalid("Product capacity history exceeds its bound");
+    std::map<std::string,std::pair<OrdinalDay,std::string>> last_binding;
+    std::set<std::string> bound_projects;
+    for (const auto& binding:state.capacity_bindings) {
+        (void)find_id(state.products,binding.product_id);
+        const auto& work=find_id(capacity.projects,binding.project_id);
+        const auto previous=last_binding.find(binding.product_id);
+        if (work.kind!=ProjectKind::serving || work.starts_on!=binding.starts_on || binding.starts_on>current_day(state) ||
+            !bound_projects.insert(binding.project_id).second ||
+            (previous!=last_binding.end() && binding.starts_on<previous->second.first))
+            invalid("Product capacity history has an invalid serving boundary");
+        if (previous!=last_binding.end()) {
+            const auto& prior=find_id(capacity.projects,previous->second.second);
+            if (prior.status!=ProjectStatus::cancelled || (!prior.stopped_on || *prior.stopped_on>binding.starts_on))
+                invalid("A replaced serving profile must stop at its replacement boundary");
+        }
+        last_binding.insert_or_assign(binding.product_id,std::pair{binding.starts_on,binding.project_id});
+    }
+    for (const auto& [id,binding]:last_binding)
+        if (find_id(state.products,id).capacity_project_id!=binding.second) invalid("Current product differs from its last serving profile");
     struct ExpectedInvoice { InvoiceKind kind; Cents amount; OrdinalDay due; };
     std::unordered_map<std::string, ExpectedInvoice> expected;
     expected.reserve(state.days.size() * 4 + state.contracts.size());
@@ -487,8 +507,11 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
         const auto* record = &capacity.days[static_cast<std::size_t>(offset)];
         if (record->day != day.day) invalid("Market delivery has no matching capacity date");
         for (const auto& product_row : state.products) {
+            std::string_view binding = product_row.capacity_project_id;
+            for (const auto& row : state.capacity_bindings)
+                if (row.product_id == product_row.id && row.starts_on <= day.day) binding = row.project_id;
             const auto work = std::find_if(record->projects.begin(), record->projects.end(),
-                [&](const auto& row) { return row.project_id == product_row.capacity_project_id; });
+                [&](const auto& row) { return row.project_id == binding; });
             const auto actual_tasks = work == record->projects.end() ? 0 : work->useful_tasks;
             const auto actual_protected = work == record->projects.end() ? 0 : work->protected_tasks;
             const auto del_it = delivered.find(product_row.id);
@@ -515,9 +538,23 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
 void add_market_product(MarketState& state, const CapacityState& capacity, MarketProduct row) {
     mutate(state, [&](auto& next) {
         (void)project(capacity, row);
+        next.capacity_bindings.push_back({row.id,row.capacity_project_id,project(capacity,row).starts_on});
         next.products.push_back(std::move(row));
         std::sort(next.products.begin(), next.products.end(), [](const auto& a, const auto& b) { return a.id < b.id; });
     });
+}
+void replace_product_capacity(MarketState& state, const CapacityState& capacity, OrdinalDay day,
+                              std::string_view product_id, std::string project_id) {
+    require_day(state, day);
+    const auto found=std::find_if(state.products.begin(),state.products.end(),[&](const auto& row){return row.id==product_id;});
+    if (found==state.products.end()) invalid("Replacement service product does not exist");
+    auto& product_row=*found;
+    if (state.capacity_bindings.size() >= 4096) invalid("Product capacity history is full");
+    if (std::none_of(state.capacity_bindings.begin(),state.capacity_bindings.end(),[&](const auto& row){return row.product_id==product_id;}))
+        state.capacity_bindings.push_back({product_row.id,product_row.capacity_project_id,project(capacity,product_row).starts_on});
+    product_row.capacity_project_id=std::move(project_id);
+    (void)project(capacity,product_row);
+    state.capacity_bindings.push_back({product_row.id,product_row.capacity_project_id,day});
 }
 void add_market_segment(MarketState& state, MarketSegment row) {
     mutate(state, [&](auto& next) {

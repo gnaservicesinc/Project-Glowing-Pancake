@@ -7,6 +7,7 @@
 #include "market_json.hpp"
 #include "liquidity_json.hpp"
 #include "lab_json.hpp"
+#include "deployment_json.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -130,6 +131,8 @@ Json simulation_json(const core::SimulationState& state) {
         {"liquidity",state.liquidity?detail::liquidity_json(*state.liquidity):Json(nullptr)},
         {"lab_mode",state.lab?"training":"foundation"},
         {"lab",state.lab?detail::lab_json(*state.lab):Json(nullptr)},
+        {"deployment_mode",state.deployments?"qualified":"foundation"},
+        {"deployments",state.deployments?detail::deployment_json(*state.deployments):Json(nullptr)},
         {"business_offers_mode",state.business_offers?"catalog":"foundation"},
         {"business_offers",state.business_offers?business_offers_json(*state.business_offers):Json(nullptr)}};
 }
@@ -140,7 +143,7 @@ core::SimulationState parse_simulation(const Json& value) {
         (void)ignored;
         if (name!="accounts" && name!="accounting_mode" && name!="capacity" && name!="capacity_mode" &&
             name!="market" && name!="market_mode" && name!="liquidity" && name!="liquidity_mode" && name!="lab" && name!="lab_mode" &&
-            name!="business_offers" && name!="business_offers_mode")
+            name!="business_offers" && name!="business_offers_mode" && name!="deployment_mode" && name!="deployments")
             prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"simulation",{"revision","date","end_date","phase","paused","cash_cents",
@@ -153,6 +156,12 @@ core::SimulationState parse_simulation(const Json& value) {
     result.phase=parse_enum<core::DayPhase>(value.at("phase"),phase_names);
     result.paused=detail::boolean(value.at("paused"),"paused");
     result.cash=Cents{detail::i64(value.at("cash_cents"),"cash_cents")};
+    if (value.contains("deployment_mode")!=value.contains("deployments")) detail::invalid("deployment","Deployment mode and state must be present together");
+    if (value.contains("deployment_mode")) {
+        const auto mode=detail::text(value.at("deployment_mode"),"deployment_mode",16);
+        if (mode=="qualified") result.deployments=detail::parse_deployment(value.at("deployments"));
+        else if (mode!="foundation" || !value.at("deployments").is_null()) detail::invalid("deployment","Deployment mode differs from its state");
+    }
     if (value.contains("business_offers")!=value.contains("business_offers_mode")) detail::invalid("business_offers","Offer mode and state must be present together");
     if (value.contains("business_offers_mode")) {
         const auto mode=detail::text(value.at("business_offers_mode"),"business_offers_mode",16);

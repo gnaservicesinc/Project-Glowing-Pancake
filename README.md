@@ -2,16 +2,17 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** 20 of 52 steps complete for Mac feature development as of 2026-11-05. The data/research/train/evaluate loop (`M3-01`) and eight-event baseline with bounded rivals (`M3-05`) are implemented. A headless 2014–2017 strategy starts without a product, discovers a subgroup weakness, retrains on targeted data and finishes solvent through actual customer work. Saved continuation matches uninterrupted execution.
+**Current state:** 21 of 52 steps complete for Mac feature development as of 2026-11-05. The bundled 2014–2017 campaign is playable through the Office, Lab and Inbox: choose headquarters, license data, research, train, evaluate, qualify a service, compare contracts and respond to events/rivals. The guide can be hidden and reopened. Full keyboard runs at 100% and 200% text reach the ending solvent and reload exactly.
 
-The Office/Lab/Inbox shell and separate Content Studio forms/inspection exist. **M3-02 is next:** connect the new mechanics, headquarters choices, offers, rivals and tutorial to a complete player-facing scenario. M3-03 adds delegation and scoring. The current headless demonstration does not establish a complete playable interface or release qualification.
+**M3-03 is next:** delegation, configurable warnings, recovery and scoring. Human validation, the century campaign and release qualification remain later steps. The separate Content Studio has authoring forms and inspection; its final snapshot/canvas work is still open.
 
 Platform and release checks remain separately deferred. Remaining Studio snapshot/canvas work (`E1A-04`, `E1A-05`, `E1b`) follows the M3 feature slice. Follow [playability checkpoints](docs/PLAYABILITY.md), [status](docs/STATUS.md), [implementation checks](docs/IMPLEMENTATION_LOG.md) and the ordered [backlog](docs/BACKLOG.md).
 
-## Build the development skeleton
+## Build and play
 
 ```sh
-./make.sh                     # Release; builds the campaign shell and probe
+./make.sh                     # Release; builds without launching
+build/release/bin/pgp-game     # Explicitly open the bundled campaign
 ./make.sh --core-only        # Release core/headless; no Qt required
 ./make.sh --editor           # Separate Content Studio
 ctest --test-dir build/core-release -R '^(core.liquidity|runtime.liquidity-integration|session.business-scenario)$' --output-on-failure
@@ -21,14 +22,13 @@ build/core-release/bin/pgp-headless --events-demo data/runtime/first-playable.js
 ./make.sh --help
 ```
 
-Builds never launch the application. The headless executable reports build
-configuration, validates local content and runs command/event/save engineering demonstrations
-and the three-year business scenario. The fixture starts with an engineering
-product. The campaign shell can open it explicitly from disk. See
+Builds never launch the application. `pgp-game` opens a headquarters choice
+without requiring content files or developer commands. Use the in-game guide
+or [player path](docs/PLAYABILITY.md) for the first loop. The headless executable
+also runs isolated engineering and complete baseline demonstrations. See
 [build instructions](docs/BUILDING.md) for dependencies, Qt/Xcode selection,
-safe cleanup, explicit desktop launch and available checks. No dependencies are
-downloaded by the build. [Local M0-03 evidence](docs/evidence/M0-03-local-probe.md)
-includes the rendered view and remaining qualification gates.
+local save directories, explicit launch options and focused checks. No
+dependencies are downloaded by the build.
 
 ## Read the plan
 

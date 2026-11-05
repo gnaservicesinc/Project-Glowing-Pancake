@@ -21,7 +21,8 @@ QString readable(std::string_view source) {
     if (!result.isEmpty()) result[0] = result[0].toUpper();
     return result;
 }
-QString choice_label(const runtime::PresentedChoice& choice) {
+QString choice_label(const runtime::PresentedChoice& choice, const content::Collection* collection) {
+    if (collection) if (const auto found=collection->messages.find(choice.label_key);found!=collection->messages.end()) return text(found->second);
     const auto id = text(choice.id).toLower();
     if (id.contains(QStringLiteral("accept"))) return QStringLiteral("Accept");
     if (id.contains(QStringLiteral("decline")) || id.contains(QStringLiteral("reject"))) return QStringLiteral("Decline");
@@ -29,17 +30,22 @@ QString choice_label(const runtime::PresentedChoice& choice) {
     if (id.contains(QStringLiteral("continue"))) return QStringLiteral("Continue");
     return readable(choice.id);
 }
+QString presentation_heading(const runtime::Presentation& row, const content::Collection& collection) {
+    const auto found=collection.messages.find(row.title_key);
+    return found==collection.messages.end()?presentation_title(row.kind):text(found->second);
+}
 QString presentation_title(runtime::PresentationKind kind) {
     if (kind == runtime::PresentationKind::dialogue) return QStringLiteral("Campaign decision");
     if (kind == runtime::PresentationKind::result) return QStringLiteral("Decision result");
     return QStringLiteral("Company briefing");
 }
-QString presentation_context(const runtime::Checkpoint& checkpoint, const runtime::Presentation& row) {
+QString presentation_context(const runtime::Checkpoint& checkpoint, const runtime::Presentation& row, const content::Collection* collection) {
     auto context = readable(row.flow_id);
     if (row.kind == runtime::PresentationKind::news) {
         const auto localized = QCoreApplication::translate("CampaignNews", row.text_key.c_str());
         if (localized != text(row.text_key)) context = localized;
     }
+    if (collection) if (const auto found=collection->messages.find(row.text_key);found!=collection->messages.end()) context=text(found->second);
     const auto& activations = checkpoint.runtime.activations;
     const auto found = std::lower_bound(activations.begin(), activations.end(), row.activation_id,
         [](const auto& activation, std::uint64_t id) { return activation.id < id; });
@@ -52,8 +58,8 @@ QString presentation_context(const runtime::Checkpoint& checkpoint, const runtim
     }
     return context;
 }
-QString presentation_detail(const runtime::Checkpoint& checkpoint, const runtime::Presentation& row) {
-    const auto context = presentation_context(checkpoint, row);
+QString presentation_detail(const runtime::Checkpoint& checkpoint, const runtime::Presentation& row, const content::Collection* collection) {
+    const auto context = presentation_context(checkpoint, row, collection);
     if (row.kind == runtime::PresentationKind::dialogue && !row.resolved)
         return QStringLiteral("%1\nA response is required before work continues. Review the available options.").arg(context);
     if (!row.selected_choice.empty()) return QStringLiteral("%1\nSelected response: %2").arg(context,readable(row.selected_choice));

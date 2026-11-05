@@ -31,18 +31,25 @@ ApplicationWindow {
 
     component Heading: Label {
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: 0
         color: "#ffd897"
         font.pixelSize: Math.round(window.textSize * 1.22)
         font.bold: true
         wrapMode: Text.Wrap
+        textFormat: Text.PlainText
     }
     component Copy: Label {
         Layout.fillWidth: true
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: 0
         font.pixelSize: window.textSize
         wrapMode: Text.Wrap
+        textFormat: Text.PlainText
     }
     component Action: Button {
         id: action
+        Layout.maximumWidth: window.width - 60
         Accessible.name: text
         font.pixelSize: window.textSize
         topPadding: 5
@@ -51,6 +58,8 @@ ApplicationWindow {
         rightPadding: 12
         contentItem: Text {
             text: action.text
+            wrapMode: Text.Wrap
+            textFormat: Text.PlainText
             font: action.font
             color: action.enabled ? "#f2f4f7" : "#aebbc7"
             horizontalAlignment: Text.AlignHCenter
@@ -88,6 +97,16 @@ ApplicationWindow {
         onAccepted: campaign.loadFrom(selectedFile)
     }
 
+    Dialog {
+        id: restartDialog
+        title: qsTr("Start another campaign?")
+        modal: true
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(580, window.width - 32)
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        contentItem: Label { text: qsTr("Save first if you want to return to this campaign. Starting a new one replaces the current unsaved session. Existing local save files remain available."); textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: window.textSize }
+        onAccepted: campaign.openWelcome()
+    }
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 12
@@ -99,6 +118,7 @@ ApplicationWindow {
                 spacing: 5
                 Copy {
                     objectName: "statusLine"
+                    Layout.maximumWidth: window.width - 44
                     text: qsTr("%1  ·  %2  ·  Cash %3  ·  Available %4")
                         .arg(campaign.date).arg(campaign.phaseText).arg(campaign.cashText).arg(campaign.availableText)
                 }
@@ -126,6 +146,16 @@ ApplicationWindow {
                         enabled: !campaign.busy && (!campaign.paused || campaign.canPlay)
                         onClicked: campaign.togglePaused()
                     }
+                    ComboBox {
+                        objectName: "speedControl"
+                        model: [1, 10, 30, 60]
+                        currentIndex: model.indexOf(campaign.daysPerSecond)
+                        displayText: qsTr("%1 days/s").arg(campaign.daysPerSecond)
+                        Accessible.name: qsTr("Days per second")
+                        font.pixelSize: window.textSize
+                        implicitWidth: window.textSize * 8
+                        onActivated: campaign.daysPerSecond = model[currentIndex]
+                    }
                     Action {
                         objectName: "stepButton"; text: qsTr("Step day")
                         enabled: campaign.paused && campaign.canAdvance
@@ -140,6 +170,12 @@ ApplicationWindow {
                         objectName: "loadButton"; text: qsTr("Load")
                         enabled: campaign.ready && !campaign.busy
                         onClicked: loadDialog.open()
+                    }
+                    Action {
+                        text: qsTr("New campaign…")
+                        visible: campaign.management.available && !campaign.welcome
+                        enabled: !campaign.busy
+                        onClicked: restartDialog.open()
                     }
                     Action {
                         objectName: "settingsButton"; text: qsTr("Settings")
@@ -182,7 +218,7 @@ ApplicationWindow {
 
                 Panel {
                     objectName: "requiredPanel"
-                    visible: campaign.requiredKind !== "none"
+                    visible: !campaign.welcome && campaign.requiredKind !== "none"
                     contentItem: ColumnLayout {
                         FlowPresentation {
                             Layout.fillWidth: true
@@ -260,6 +296,12 @@ ApplicationWindow {
                                 onClicked: campaign.reducedMotion = !campaign.reducedMotion
                             }
                             Action {
+                                text: qsTr("Show guide")
+                                checked: campaign.showGuide
+                                enabled: !campaign.busy
+                                onClicked: campaign.showGuide = !campaign.showGuide
+                            }
+                            Action {
                                 text: qsTr("Autosave")
                                 checked: campaign.autosaveEnabled
                                 enabled: !campaign.busy
@@ -269,7 +311,65 @@ ApplicationWindow {
                     }
                 }
 
+                Panel {
+                    visible: campaign.welcome
+                    contentItem: ColumnLayout {
+                        Heading { text: qsTr("Build a useful AI company · 2014–2017") }
+                        Copy { text: qsTr("Start with six staff, a finite compute lease and a cash runway. License data, train and test a model, then match a customer promise to measured evidence. Manage bills, contracts and rivals through January 2017.") }
+                        Copy { text: qsTr("Choose headquarters. This sets the state scope for campaign events; the opening team and budget are shown after starting.") }
+                        ComboBox {
+                            id: headquartersChoice
+                            objectName: "headquartersChoice"
+                            Layout.fillWidth: true
+                            model: campaign.headquarters
+                            textRole: "label"
+                            valueRole: "id"
+                            font.pixelSize: window.textSize
+                            Accessible.name: qsTr("Headquarters")
+                        }
+                        CheckBox {
+                            id: includeStories
+                            Layout.fillWidth: true
+                            text: qsTr("Include optional story layers (base events always enabled)")
+                            checked: true
+                            font.pixelSize: window.textSize
+                            Accessible.name: text
+                            contentItem: Text {
+                                text: includeStories.text; font: includeStories.font; color: "#f2f4f7"
+                                leftPadding: includeStories.indicator.width + includeStories.spacing
+                                wrapMode: Text.Wrap
+                            }
+                        }
+                        Action { objectName: "newCampaignButton"; text: qsTr("Start new campaign"); enabled: campaign.ready && !campaign.busy; onClicked: campaign.newCampaign(headquartersChoice.currentValue, includeStories.checked) }
+                        Action { text: qsTr("Load an existing local campaign…"); enabled: campaign.ready && !campaign.busy; onClicked: loadDialog.open() }
+                    }
+                }
+                Panel {
+                    visible: !campaign.welcome && campaign.management.ending.length > 0
+                    contentItem: ColumnLayout {
+                        Heading { text: qsTr("Campaign outcome") }
+                        Copy { text: campaign.management.ending }
+                        Action { text: qsTr("Choose a new campaign"); onClicked: campaign.openWelcome() }
+                    }
+                }
+                Panel {
+                    visible: !campaign.welcome && campaign.management.available && campaign.showGuide && campaign.management.ending.length === 0
+                    contentItem: ColumnLayout {
+                        Heading { text: qsTr("Getting started") }
+                        Copy { text: campaign.management.guide }
+                        Action { text: qsTr("Hide guide"); enabled: !campaign.busy; onClicked: campaign.showGuide = false }
+                    }
+                }
+                Panel {
+                    visible: !campaign.welcome && campaign.management.available && window.room !== "inbox"
+                    contentItem: ColumnLayout {
+                        Heading { text: window.room === "lab" ? qsTr("Lab · data, experiments and evidence") : qsTr("Office · %1").arg(campaign.headquartersText) }
+                        Copy { visible: window.room === "office"; text: campaign.capacityText + "\n" + campaign.management.briefing }
+                        ManagementPanel { id: managementPanel; Layout.fillWidth: true; room: window.room; textSize: window.textSize }
+                    }
+                }
                 GridLayout {
+                    visible: !campaign.welcome && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
                     Layout.fillWidth: true
                     columns: window.narrow || campaign.compactManagement ? 1 : 2
                     columnSpacing: 10

@@ -291,6 +291,8 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             matching_lab_scenario = true;
             if (world.simulation.lab && world.simulation.lab->catalog == content::scenario_lab_catalog(program.collection, *scenario)) {
                 matching_catalog = true;
+                if (scenario->service_catalog ? (!world.simulation.deployments || world.simulation.deployments->catalog!=content::service_definitions(*scenario->service_catalog)) : world.simulation.deployments.has_value())
+                    invalid("Saved service catalog differs from its authored qualification rules");
                 if (scenario->business_offers.empty()?world.simulation.business_offers.has_value():
                     (!world.simulation.business_offers || world.simulation.business_offers->catalog!=scenario->business_offers))
                     invalid("Saved business offer catalog differs from its scenario");

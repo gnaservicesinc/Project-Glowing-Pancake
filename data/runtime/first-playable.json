@@ -482,7 +482,18 @@
             "staff": 1,
             "minimum_memory_mib": 0,
             "interconnect": "general",
-            "monthly_support_cost_cents": 500000
+            "monthly_support_cost_cents": 500000,
+            "required_bp": [
+              6000,
+              0
+            ],
+            "review_credit_bp": [
+              0,
+              0
+            ],
+            "review_staff": 0,
+            "review_monthly_cost_cents": 0,
+            "review_tasks_per_day": 0
           },
           {
             "id": "product.documents_tables",
@@ -494,7 +505,18 @@
             "staff": 1,
             "minimum_memory_mib": 0,
             "interconnect": "general",
-            "monthly_support_cost_cents": 500000
+            "monthly_support_cost_cents": 500000,
+            "required_bp": [
+              6000,
+              5500
+            ],
+            "review_credit_bp": [
+              0,
+              3500
+            ],
+            "review_staff": 1,
+            "review_monthly_cost_cents": 1500000,
+            "review_tasks_per_day": 500
           }
         ],
         "segments": [
