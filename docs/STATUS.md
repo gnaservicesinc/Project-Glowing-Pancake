@@ -75,11 +75,12 @@ block Mac implementation. Keep build caches between batches.
   digest retains news sources and keeps required choices and active deadlines
   in their own action tier. [Committed-fact evidence](evidence/M1-07-committed-facts.md)
   [Seeded incident and digest evidence](evidence/M1-07-seeded-digest.md)
-- E1A-01 adds the separate opt-in Content Studio and a read-only browser.
+- E1A-01 adds the separate opt-in Content Studio.
   It opens an explicit checkout, indexes validated definition uses and used-by
-  edges, and reports invalid, unknown and blocked documents. The next work is
-  a draft document model, undo/redo and conflict-safe saves.
+  edges, and reports invalid, unknown and blocked documents. Its working
+  document can edit flow tags, undo/redo and save drafts with conflict checks.
   [Studio library evidence](evidence/E1A-01-library.md)
+  [Draft workflow evidence](evidence/E1A-01-drafts.md)
 - Weighted-branch commit `2a37284` passes 26/26 CTests in each of all six native
   jobs across five targets, including GCC/Clang/MSVC and native Windows arm64.
   [CI result](https://github.com/gnaservicesinc/Project-Glowing-Pancake/actions/runs/41895189273)
@@ -167,8 +168,9 @@ The build scaffold, shared version identity, deterministic primitives, typed
 content/compiler/runtime, transactional state, local persistence/campaign policy,
 worker/model bridge, business accounts, shared project capacity, contracts,
 liquidity recovery, a three-year CLI scenario and development QML probe exist.
-Content Studio can browse the local library. Draft authoring, the full player
-scenario, finalized runtime content and packages remain open. Existing native CI proves primitive parity on all
+Content Studio can browse the local library and save typed draft tag changes.
+Full authoring forms, the player scenario, finalized runtime content and
+packages remain open. Existing native CI proves primitive parity on all
 five targets; the expanded foundation suite is checked separately. The headless
 command validates local content, demonstrates commands/flows and can explicitly
 save/reload suspended continuations. [Playability checkpoints](PLAYABILITY.md) separate this engineering
@@ -207,9 +209,10 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next Mac implementation: E1A-01 typed drafts and conflict-aware saves.**
-Extend the read-only Studio library with a working document, undo/redo and
-explicit writes confined to the selected checkout's draft folder.
+**Next Mac implementation: E1A-02 typed flow forms and outline.**
+Extend the same typed Studio working document and compiler with trigger,
+lifecycle, node and effect authoring. Keep draft writes in the existing
+working-document path.
 M1-03 retains
 the M0-03 prerequisite gate. Content finalization, save migrations and packaging
 remain later work.

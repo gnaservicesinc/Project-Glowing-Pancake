@@ -22,9 +22,11 @@ private:
 // Existing files must validate before replacement. Writes a flushed temporary
 // sibling, preserves the prior valid bytes as .bak, then atomically replaces.
 // An existing .tmp is preserved and causes a refusal, never blind cleanup.
+// An explicit existence expectation can reject newly created or removed input.
 void atomic_write(const std::filesystem::path& path, std::string_view bytes,
                   const std::function<void(std::string_view)>& validate_existing,
-                  std::size_t maximum_bytes = default_maximum_save_bytes);
+                  std::size_t maximum_bytes = default_maximum_save_bytes,
+                  std::optional<bool> expected_exists = std::nullopt);
 
 // No directory is created by this query. Portable callers may choose another
 // local directory explicitly. No account name/device identity is recorded.

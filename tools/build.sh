@@ -8,7 +8,7 @@ Usage: ./make.sh [options]
 
   (no options)      Build the Release desktop skeleton; never launch it
   --core-only      Build core/headless without finding or downloading Qt
-  --editor         Build the separate Content Studio library browser
+  --editor         Build the separate Content Studio
   --debugging      Build Debug with local developer diagnostics (--debug alias)
   --test           Build, then run CTest; failures return a nonzero exit code
   --clean          Remove only the selected, verified wrapper-owned build tree

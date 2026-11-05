@@ -10,6 +10,14 @@ ApplicationWindow {
     minimumHeight: 480
     title: qsTr("Glowing Pancake Content Studio")
     visible: false
+    property bool closeWindowAfterDiscard: false
+    onClosing: event => {
+        if (studio.draftDirty) {
+            event.accepted = false
+            closeWindowAfterDiscard = true
+            discardDraft.open()
+        }
+    }
 
     function updateFilter() {
         studio.filter(query.text, kinds.currentValue, origins.currentValue)
@@ -189,8 +197,108 @@ ApplicationWindow {
                         textFormat: Text.PlainText
                         wrapMode: Text.WrapAnywhere
                     }
+                    Button {
+                        visible: inspector.entry.kind === "flow" && inspector.entry.validation === "Validated"
+                        text: qsTr("Edit flow tags")
+                        onClicked: studio.beginDraft(inspector.entry.file, inspector.entry.id)
+                    }
+                    GroupBox {
+                        Layout.fillWidth: true
+                        visible: studio.editing
+                        title: qsTr("Working draft")
+                        ColumnLayout {
+                            width: parent.width
+                            Label {
+                                Layout.fillWidth: true
+                                text: studio.workingFlow + "\n" + studio.workingFile
+                                textFormat: Text.PlainText
+                                wrapMode: Text.WrapAnywhere
+                            }
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 6
+                                Repeater {
+                                    model: studio.workingTags
+                                    delegate: Button {
+                                        required property string modelData
+                                        text: qsTr("Remove %1").arg(modelData)
+                                        onClicked: studio.changeTag(modelData, true)
+                                    }
+                                }
+                            }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                TextField {
+                                    id: tag
+                                    Layout.fillWidth: true
+                                    maximumLength: 128
+                                    placeholderText: qsTr("New lowercase tag")
+                                    Accessible.name: qsTr("New tag")
+                                    onAccepted: { if (studio.changeTag(text, false)) clear() }
+                                }
+                                Button {
+                                    text: qsTr("Add")
+                                    enabled: tag.text.length > 0
+                                    onClicked: { if (studio.changeTag(tag.text, false)) tag.clear() }
+                                }
+                            }
+                            RowLayout {
+                                Button { text: qsTr("Undo"); enabled: studio.canUndo; onClicked: studio.undo() }
+                                Button { text: qsTr("Redo"); enabled: studio.canRedo; onClicked: studio.redo() }
+                                Button {
+                                    text: qsTr("Save draft")
+                                    enabled: studio.existingDraft && studio.draftDirty
+                                    onClicked: studio.saveDraft("")
+                                }
+                            }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                TextField {
+                                    id: draftName
+                                    Layout.fillWidth: true
+                                    maximumLength: 133
+                                    placeholderText: qsTr("new-draft.json")
+                                    Accessible.name: qsTr("New draft filename")
+                                }
+                                Button {
+                                    text: qsTr("Save as draft")
+                                    enabled: draftName.text.length > 0
+                                    onClicked: { if (studio.saveDraft(draftName.text.trimmed())) draftName.clear() }
+                                }
+                            }
+                            Button {
+                                text: qsTr("Close draft")
+                                onClicked: {
+                                    if (studio.draftDirty) {
+                                        window.closeWindowAfterDiscard = false
+                                        discardDraft.open()
+                                    } else studio.closeDraft()
+                                }
+                            }
+                        }
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        visible: studio.draftMessage.length > 0
+                        text: studio.draftMessage
+                        textFormat: Text.PlainText
+                        wrapMode: Text.WrapAnywhere
+                    }
                 }
             }
+        }
+    }
+
+    Dialog {
+        id: discardDraft
+        anchors.centerIn: parent
+        modal: true
+        title: qsTr("Discard unsaved draft changes?")
+        standardButtons: Dialog.Discard | Dialog.Cancel
+        onDiscarded: {
+            studio.closeDraft()
+            if (window.closeWindowAfterDiscard) window.close()
+            close()
         }
     }
 }

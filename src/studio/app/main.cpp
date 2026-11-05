@@ -1,6 +1,7 @@
 #include <pgp/core/build_identity.hpp>
 #include <pgp/graphics/graphics_policy.hpp>
 #include <pgp/resources/resource_guards.hpp>
+#include <pgp/studio/draft.hpp>
 #include <pgp/studio/library.hpp>
 
 #include <QCommandLineParser>
@@ -14,7 +15,9 @@
 #include <QStyleHints>
 #include <QVariant>
 
+#include <algorithm>
 #include <iostream>
+#include <memory>
 
 namespace {
 using namespace pgp;
@@ -46,11 +49,38 @@ class Browser final : public QObject {
     Q_PROPERTY(QVariantList rows READ rows NOTIFY changed)
     Q_PROPERTY(QString checkout READ checkout NOTIFY changed)
     Q_PROPERTY(QString message READ message NOTIFY changed)
+    Q_PROPERTY(bool editing READ editing NOTIFY draftChanged)
+    Q_PROPERTY(QString workingFlow READ workingFlow NOTIFY draftChanged)
+    Q_PROPERTY(QString workingFile READ workingFile NOTIFY draftChanged)
+    Q_PROPERTY(QStringList workingTags READ workingTags NOTIFY draftChanged)
+    Q_PROPERTY(bool canUndo READ canUndo NOTIFY draftChanged)
+    Q_PROPERTY(bool canRedo READ canRedo NOTIFY draftChanged)
+    Q_PROPERTY(bool draftDirty READ draftDirty NOTIFY draftChanged)
+    Q_PROPERTY(bool existingDraft READ existingDraft NOTIFY draftChanged)
+    Q_PROPERTY(QString draftMessage READ draftMessage NOTIFY draftChanged)
 public:
     [[nodiscard]] const QVariantList& rows() const noexcept { return visible_; }
     [[nodiscard]] QString checkout() const { return checkout_; }
     [[nodiscard]] QString message() const { return message_; }
+    [[nodiscard]] bool editing() const noexcept { return draft_ != nullptr; }
+    [[nodiscard]] QString workingFlow() const { return text(flow_); }
+    [[nodiscard]] QString workingFile() const {
+        return draft_ ? QString::fromStdU16String(draft_->relative_file().generic_u16string()) : QString{};
+    }
+    [[nodiscard]] QStringList workingTags() const {
+        return draft_ ? strings(std::get<content::FlowDefinition>(draft_->collection().definitions.at(flow_).data).tags) : QStringList{};
+    }
+    [[nodiscard]] bool canUndo() const noexcept { return draft_ && draft_->can_undo(); }
+    [[nodiscard]] bool canRedo() const noexcept { return draft_ && draft_->can_redo(); }
+    [[nodiscard]] bool draftDirty() const noexcept { return draft_ && draft_->dirty(); }
+    [[nodiscard]] bool existingDraft() const { return draft_ && draft_->is_draft(); }
+    [[nodiscard]] QString draftMessage() const { return draft_message_; }
     Q_INVOKABLE bool openCheckout(const QString& folder) {
+        if (draftDirty()) {
+            message_ = QStringLiteral("Save or close the working draft before opening a checkout.");
+            emit changed();
+            return false;
+        }
         try {
             const auto library = studio::inspect_checkout(std::filesystem::path{folder.toStdU16String()});
             QVariantList next;
@@ -76,8 +106,10 @@ public:
                     next.push_back(std::move(row));
                 }
             }
-            checkout_ = QString::fromStdU16String(library.checkout.u16string());
-            message_ = QStringLiteral("%1 collections · checkout schema %2 · read-only library")
+            const auto opened = QString::fromStdU16String(library.checkout.u16string());
+            if (opened != checkout_) closeDraft();
+            checkout_ = opened;
+            message_ = QStringLiteral("%1 collections · checkout schema %2")
                 .arg(static_cast<qulonglong>(library.documents.size()))
                 .arg(library.checkout_schema == 0 ? QStringLiteral("unknown") : QString::number(library.checkout_schema));
             source_ = std::move(next);
@@ -102,9 +134,73 @@ public:
         }
         return -1;
     }
+    Q_INVOKABLE void beginDraft(const QString& file, const QString& id) {
+        if (draftDirty()) {
+            draft_message_ = QStringLiteral("Save or close the working draft first.");
+            emit draftChanged();
+            return;
+        }
+        edit([&] {
+            auto next = std::make_unique<studio::DraftDocument>(std::filesystem::path{checkout_.toStdU16String()},
+                std::filesystem::path{file.toStdU16String()});
+            const auto key = id.toStdString();
+            const auto* definition = next->collection().find(key);
+            if (!definition || !std::holds_alternative<content::FlowDefinition>(definition->data))
+                throw std::invalid_argument("Select a validated flow to edit its tags.");
+            flow_ = key;
+            draft_ = std::move(next);
+        });
+    }
+    Q_INVOKABLE bool changeTag(const QString& tag, bool remove) {
+        if (!draft_) return false;
+        return edit([&] {
+            auto candidate = draft_->collection();
+            auto& tags = std::get<content::FlowDefinition>(candidate.definitions.at(flow_).data).tags;
+            const auto value = tag.trimmed().toStdString();
+            if (remove) {
+                const auto found = std::find(tags.begin(), tags.end(), value);
+                if (found != tags.end()) tags.erase(found);
+            } else {
+                if (!content::valid_id(value)) throw std::invalid_argument("Use a stable lowercase tag ID.");
+                if (std::find(tags.begin(), tags.end(), value) != tags.end())
+                    throw std::invalid_argument("This flow already has that tag.");
+                tags.push_back(value);
+            }
+            (void)draft_->replace(candidate);
+        });
+    }
+    Q_INVOKABLE void undo() { if (draft_) edit([&] { (void)draft_->undo(); }); }
+    Q_INVOKABLE void redo() { if (draft_) edit([&] { (void)draft_->redo(); }); }
+    Q_INVOKABLE bool saveDraft(const QString& filename) {
+        if (!draft_ || !edit([&] { draft_->save(std::filesystem::path{filename.toStdU16String()}); })) return false;
+        const auto current = checkout_;
+        (void)openCheckout(current);
+        draft_message_ = QStringLiteral("Saved %1").arg(workingFile());
+        emit draftChanged();
+        return true;
+    }
+    Q_INVOKABLE void closeDraft() {
+        draft_.reset();
+        flow_.clear();
+        draft_message_.clear();
+        emit draftChanged();
+    }
 signals:
     void changed();
+    void draftChanged();
 private:
+    template<class Action> bool edit(Action action) {
+        try {
+            action();
+            draft_message_.clear();
+            emit draftChanged();
+            return true;
+        } catch (const std::exception& error) {
+            draft_message_ = text(error.what());
+            emit draftChanged();
+            return false;
+        }
+    }
     void refresh() {
         QVariantList visible;
         for (const auto& entry : source_) {
@@ -123,6 +219,9 @@ private:
     }
     QVariantList source_, visible_;
     QString checkout_, message_, search_, kind_, origin_;
+    std::unique_ptr<studio::DraftDocument> draft_;
+    std::string flow_;
+    QString draft_message_;
 };
 } // namespace
 
@@ -169,6 +268,22 @@ int main(int argc, char* argv[]) {
             if (list->property("count").toLongLong() != 0) return 3;
             browser.filter({}, {}, {});
             if (list->property("count").toLongLong() != all_rows) return 3;
+            const auto flow = std::find_if(browser.rows().begin(), browser.rows().end(), [](const auto& entry) {
+                return entry.toMap().value(QStringLiteral("kind")) == QStringLiteral("flow");
+            });
+            if (flow != browser.rows().end()) {
+                const auto row = flow->toMap();
+                browser.beginDraft(row.value(QStringLiteral("file")).toString(), row.value(QStringLiteral("id")).toString());
+                if (!browser.editing()) return 3;
+                const auto tags = browser.workingTags();
+                const auto tag = tags.isEmpty() ? QStringLiteral("studio_view_probe") : tags.front();
+                if (!browser.changeTag(tag, !tags.isEmpty()) || !browser.draftDirty()) return 3;
+                browser.undo();
+                if (browser.draftDirty() || browser.workingTags() != tags) return 3;
+                browser.redo();
+                if (!browser.draftDirty()) return 3;
+                browser.closeDraft();
+            }
             std::cout << "Studio library view loaded and filtered " << all_rows << " rows\n";
             return 0;
         }

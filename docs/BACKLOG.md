@@ -145,6 +145,13 @@ paths. [Mac evidence](evidence/E1A-01-library.md) records the read-only and
 build separation checks. Next work is editing drafts with undo/redo and
 external-change conflict handling.
 
+**E1A-01 draft slice, 2026-11-04:** Content Studio can edit flow tags in a
+typed working collection with undo and redo. Explicit Save As creates a new
+draft under `data/drafts/`. In-place draft saves retain the prior copy and
+refuse changed or missing source bytes. [Mac evidence](evidence/E1A-01-drafts.md)
+records safeguards and limits. E1A-01 retains its M2-04 and M1-05 prerequisite
+gates. E1A-02 extends the same working document with typed flow forms.
+
 ## E1b — Required node canvas and author qualification
 
 - [ ] **E1B-01 — Add the typed node-box canvas.** Role: content-editor/UI. Depends: E1A-05. Link triggers, effects/events, sequence ports and choices on the same document as forms/outline. Add keyboard equivalents, pan/zoom, useful layout and trace highlighting; graph/form edits must round-trip without semantic change. Commit integer node positions only on edits; keep viewport/selection local. Refuse invalid links and show waiting sibling continuations. Elaborate routing/styling is optional.

@@ -141,7 +141,8 @@ std::string read_bounded(const std::filesystem::path& path,std::size_t maximum_b
 }
 
 void atomic_write(const std::filesystem::path& path,std::string_view bytes,
-                  const std::function<void(std::string_view)>& validate_existing,std::size_t maximum_bytes) {
+                  const std::function<void(std::string_view)>& validate_existing,std::size_t maximum_bytes,
+                  std::optional<bool> expected_exists) {
     if (bytes.size()>maximum_bytes || maximum_bytes==0 || maximum_bytes>64U*1024U*1024U)
         throw PersistenceError("oversized","New data exceeds the configured local file bound");
     if (path.empty() || path.filename().empty()) throw PersistenceError("path","A local filename is required");
@@ -150,7 +151,10 @@ void atomic_write(const std::filesystem::path& path,std::string_view bytes,
     const auto backup=sibling(path,".bak");
     const auto backup_temporary=sibling(path,".bak.tmp");
     std::optional<std::string> prior;
-    if (existing_regular(path)) {prior=read_bounded(path,maximum_bytes);validate_existing(*prior);}
+    const bool exists=existing_regular(path);
+    if (expected_exists && *expected_exists!=exists)
+        throw PersistenceError("conflict","The selected local file appeared or was removed since it was opened");
+    if (exists) {prior=read_bounded(path,maximum_bytes);validate_existing(*prior);}
     if (std::filesystem::exists(local_status(temporary)) || std::filesystem::exists(local_status(backup_temporary)))
         throw PersistenceError("pending_write","A temporary sibling already exists; it was preserved for inspection");
     (void)existing_regular(backup);
@@ -171,6 +175,8 @@ void atomic_write(const std::filesystem::path& path,std::string_view bytes,
             owns_backup_temporary=true;
             replace(backup_temporary,backup);owns_backup_temporary=false;
             sync_directory(parent);
+            if (expected_exists && (!existing_regular(path) || read_bounded(path,maximum_bytes)!=*prior))
+                throw PersistenceError("conflict","The local file changed while its recovery copy was prepared");
         } else if (existing_regular(path)) {
             throw PersistenceError("conflict","A local file appeared while its replacement was prepared");
         }

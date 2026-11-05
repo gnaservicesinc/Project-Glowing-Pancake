@@ -24,8 +24,8 @@ downloads dependencies or launches a program during builds.
 | `./make.sh --test` | Build then run CTest; propagate failures |
 | `./make.sh --debugging` or `--debug` | Debug in `build/debug`, local developer diagnostics enabled |
 | `./make.sh --core-only` | Release in `build/core-release`, no Qt discovery/linkage |
-| `./make.sh --editor` | Separate read-only Content Studio in `build/release/bin/pgp-editor` |
-| `./make.sh --editor --test` | Build the editor and run its focused library test |
+| `./make.sh --editor` | Separate Content Studio in `build/release/bin/pgp-editor` |
+| `./make.sh --editor --test` | Build the editor and test its library and draft workflow |
 | `./make.sh --core-only --debug --test` | Debug core and tests in `build/core-debug` |
 | `./make.sh --qt-root /path/to/Qt/prefix` | Select an installed desktop Qt prefix |
 | `./make.sh --jobs 2` | Bound compilation parallelism |
@@ -51,11 +51,14 @@ editor also accepts an absolute checkout folder in the window. It can search
 and filter validated definitions, follow their uses and used-by links, and
 report invalid and unsupported documents. It reads `data/runtime/`,
 `data/drafts/` and the existing engineering collection fixtures as separate
-sources. The window is read-only. The regular game build configures with the
-editor disabled. An opt-in `ContentStudio` install component defines the
-editor payload for future deployment qualification.
+sources. Select a validated flow and use **Edit flow tags** to make a typed
+working draft. Use **Save as draft** with a new lowercase `.json` filename to
+copy a reviewed or engineering collection into `data/drafts/`. Drafts can be
+saved in place with undo/redo and source conflict checks. The regular game
+build disables the editor. An opt-in `ContentStudio` install component defines
+the editor payload for future deployment qualification.
 
-To check loading and filtering without showing a window, run
+To check loading, filtering and in-memory draft edits without showing a window, run
 `QT_QPA_PLATFORM=offscreen build/release/bin/pgp-editor --software --check-view --project "$PWD"`.
 
 `QT_ROOT` is an alternative to `--qt-root`; ordinary CMake prefix discovery via

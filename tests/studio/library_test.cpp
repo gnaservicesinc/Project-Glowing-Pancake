@@ -1,4 +1,5 @@
 #include <pgp/studio/library.hpp>
+#include <pgp/studio/draft.hpp>
 
 #include <pgp/persistence/storage.hpp>
 
@@ -56,6 +57,11 @@ template<class Action> void rejected(Action action, const char* detail) {
     try { action(); }
     catch (const std::invalid_argument&) { require(true, detail); return; }
     throw std::runtime_error(detail);
+}
+template<class Action> void refused_write(Action action, std::string_view code) {
+    try { action(); }
+    catch (const persistence::PersistenceError& error) { require(error.code() == code, error.what()); return; }
+    throw std::runtime_error("Expected draft refusal " + std::string(code));
 }
 void inspect_source_and_drafts() {
     Scratch scratch;
@@ -116,11 +122,97 @@ void inspect_source_and_drafts() {
             "Unknown checkout schema must list documents without opening them");
     rejected([&] { (void)studio::inspect_checkout("relative checkout"); }, "A checkout must be selected explicitly by absolute path");
 }
+void typed_drafts_and_external_conflicts() {
+    Scratch scratch;
+    const auto root = scratch.root / "author";
+    marker(root, 1);
+    fs::create_directory(root / ".git");
+    put(root / "CMakeLists.txt", "# development fixture\n");
+    put(root / "src/content/collection.cpp", "// source tree marker\n");
+    const auto bytes = persistence::read_bounded(PGP_STUDIO_FIXTURE_PATH);
+    const fs::path source{"data/runtime/current.json"};
+    put(root / source, bytes);
+    studio::DraftDocument draft{root, source};
+    require(!draft.is_draft() && !draft.dirty() && !fs::exists(root / "data/drafts"),
+            "Opening a draft working copy must preserve the reviewed source and create no folders");
+    refused_write([&] { draft.save(); }, "path");
+    constexpr auto id = "flow.supplier.exclusivity_offer";
+    auto edit = draft.collection();
+    auto& target = edit.definitions.at(id);
+    auto& flow = std::get<content::FlowDefinition>(target.data);
+    flow.tags.push_back("reviewed_terms");
+    require(draft.replace(edit) && draft.dirty() && draft.can_undo() && !draft.can_redo(),
+            "A valid typed change must add one undo entry");
+    require(!draft.replace(edit), "A no-op edit must not enter history");
+    auto invalid = edit;
+    invalid.definitions.at(id).revision += 1;
+    refused_write([&] { (void)draft.replace(invalid); }, "version");
+    require(draft.undo() && !draft.dirty() && draft.can_redo() && !draft.can_undo(),
+            "Undo must restore the saved semantics and retain redo");
+    require(draft.redo() && draft.dirty() && draft.can_undo() && !draft.can_redo(),
+            "Redo must restore the exact typed change");
+    refused_write([&] { draft.save("../escape.json"); }, "path");
+    put(root / source, bytes + "\n");
+    refused_write([&] { draft.save("working.json"); }, "conflict");
+    require(draft.dirty() && !fs::exists(root / "data/drafts"), "A stale source must leave edits staged without creating a draft");
+    put(root / source, bytes);
+    draft.save("working.json");
+    const auto path = root / "data/drafts/working.json";
+    auto temporary = path;
+    temporary += ".tmp";
+    auto backup = path;
+    backup += ".bak";
+    const auto saved = persistence::read_bounded(path);
+    require(draft.is_draft() && !draft.dirty() && draft.can_undo() && persistence::read_bounded(root / source) == bytes,
+            "Explicit Save As must keep the reviewed collection untouched and preserve undo");
+    studio::DraftDocument reopened{root, "data/drafts/working.json"};
+    require(includes(std::get<content::FlowDefinition>(reopened.collection().definitions.at(id).data).tags, "reviewed_terms") &&
+            reopened.collection().definitions.at(id).revision == target.revision &&
+            reopened.collection().content_version == edit.content_version,
+            "Reopening a typed draft must retain tags and the original version identities");
+    refused_write([&] { reopened.save("working.json"); }, "conflict");
+    require(draft.undo() && draft.dirty(), "Undo after saving must produce a new unsaved draft change");
+    put(path, saved + " ");
+    refused_write([&] { draft.save(); }, "conflict");
+    require(draft.dirty() && persistence::read_bounded(path) == saved + " ",
+            "An external nonsemantic edit must be detected and preserved");
+    fs::remove(path);
+    refused_write([&] { draft.save(); }, "conflict");
+    require(!fs::exists(path), "Deleting a draft externally must not cause the editor to recreate it");
+    put(path, saved);
+    put(temporary, "unrelated pending data");
+    refused_write([&] { draft.save(); }, "pending_write");
+    require(persistence::read_bounded(temporary) == "unrelated pending data", "Pending work must remain intact");
+    fs::remove(temporary);
+    draft.save();
+    require(!draft.dirty() && persistence::read_bounded(backup) == saved,
+            "Replacing a draft must preserve the previous valid version");
+    const auto rewritten = persistence::read_bounded(path);
+    draft.save();
+    require(persistence::read_bounded(path) == rewritten && persistence::read_bounded(backup) == saved,
+            "A no-op save must preserve both exact current bytes and the recovery copy");
+    marker(root, 2);
+    refused_write([&] { draft.save(); }, "conflict");
+    refused_write([&] { (void)studio::DraftDocument{root, source}; }, "unsupported_schema");
+
+    marker(root, 1);
+    studio::DraftDocument escaped{root, source};
+    fs::rename(root / "data/drafts", root / "data/draft-hold");
+    const auto outside = scratch.root / "outside";
+    fs::create_directory(outside);
+    std::error_code error;
+    fs::create_directory_symlink(outside, root / "data/drafts", error);
+    if (!error) {
+        rejected([&] { escaped.save("unsafe.json"); }, "The draft writer must refuse a redirected parent directory");
+        require(fs::is_empty(outside), "A redirected parent must not receive a file");
+    }
+}
 } // namespace
 
 int main() {
     try {
         inspect_source_and_drafts();
+        typed_drafts_and_external_conflicts();
         std::cout << checks << " Studio library checks passed\n";
         return 0;
     } catch (const std::exception& error) {

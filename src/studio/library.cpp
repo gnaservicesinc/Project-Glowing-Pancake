@@ -1,5 +1,6 @@
 #include <pgp/studio/library.hpp>
 
+#include "checkout.hpp"
 #include <pgp/core/build_identity.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/persistence/storage.hpp>
@@ -29,12 +30,18 @@ fs::file_status status_at(const fs::path& path) {
         throw fs::filesystem_error("Cannot inspect the selected checkout", path, error);
     return status;
 }
+} // namespace
+
+namespace detail {
 fs::file_status checked_path(const fs::path& root, const fs::path& relative) {
+    if (relative.empty() || relative.has_root_path() ||
+        std::any_of(relative.begin(), relative.end(), [](const auto& part) { return part.empty() || part == "." || part == ".."; }))
+        refuse("Library paths must be relative to the selected checkout.");
     auto current = root;
     auto status = status_at(root);
     for (const auto& component : relative) {
         if (!fs::exists(status)) return status;
-        if (!fs::is_directory(status) || component == "." || component == ".." || component.empty())
+        if (!fs::is_directory(status))
             refuse("Library paths must stay inside ordinary checkout directories.");
         current /= component;
         status = status_at(current);
@@ -64,7 +71,13 @@ std::uint32_t checkout_schema(const fs::path& root) {
         refuse("The checkout project marker has an invalid content schema.");
     return schema.get<std::uint32_t>();
 }
+runtime::CompiledProgram compile_source(std::string_view bytes, const content::Registry& registry) {
+    return runtime::compile_collection(content::load_collection(bytes, registry), registry, runtime::supported_effects());
+}
+} // namespace detail
 
+namespace {
+using detail::checked_path;
 struct Candidate {
     fs::path relative;
     Origin origin;
@@ -127,7 +140,7 @@ LibraryDocument inspect(const Library& library, const Candidate& candidate, cons
     try {
         const auto bytes = persistence::read_bounded(library.checkout / candidate.relative, content::maximum_document_bytes);
         document.source_hash = persistence::sha256(bytes);
-        program = runtime::compile_collection(content::load_collection(bytes, registry), registry, runtime::supported_effects());
+        program = detail::compile_source(bytes, registry);
     } catch (const content::ValidationError& error) {
         document.validation = error.code() == "unsupported_schema" ? Validation::unsupported : Validation::invalid;
         document.diagnostic = error.what();
@@ -162,11 +175,17 @@ LibraryDocument inspect(const Library& library, const Candidate& candidate, cons
 }
 } // namespace
 
-Library inspect_checkout(const fs::path& selected) {
+namespace detail {
+fs::path checkout_root(const fs::path& selected) {
     if (!selected.is_absolute() || !fs::is_directory(status_at(selected)))
         refuse("Select an absolute development checkout directory.");
-    const auto root = fs::canonical(selected);
-    Library library{root, checkout_schema(root), {}};
+    return fs::canonical(selected);
+}
+} // namespace detail
+
+Library inspect_checkout(const fs::path& selected) {
+    const auto root = detail::checkout_root(selected);
+    Library library{root, detail::checkout_schema(root), {}};
     std::vector<Candidate> candidates;
     std::size_t visited = 0;
     collect(root, "data/runtime", Origin::reviewed, candidates, visited);

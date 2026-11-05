@@ -20,7 +20,7 @@ behavior and evidence; the [backlog](BACKLOG.md) remains the task dependency lis
 | M2-02 | Implemented on Mac; prerequisite open | Shared source/staff reservations, compatibility, serving-first outage allocation, actual finite work, cancellation, support costs and exact reload; [evidence](evidence/M2-02-capacity.md) |
 | M2-03 | Implemented on Mac; prerequisite open | Finite allocation, contracts/resource priority, billing/credits/deadlines and installed shares through typed scenarios/exact saves; [evidence](evidence/M2-03-market.md) |
 | M2-04 | Implemented on Mac; prerequisite open | Three-year scenario, monthly reconciliation, exact continuation, saved 30-day workout/rescue/closure; [evidence](evidence/M2-04-business.md) |
-| E1A-01 | In progress | Separate Content Studio target and read-only, typed checkout library. Draft editing, undo and conflict-aware writes remain open. [Evidence](evidence/E1A-01-library.md) |
+| E1A-01 | Implemented on Mac; prerequisites open | Separate Content Studio, typed checkout library, flow tag draft editing, undo/redo and conflict-aware writes. [Library](evidence/E1A-01-library.md), [draft workflow](evidence/E1A-01-drafts.md) |
 | M3-05 | Planned | AI-assisted eight-definition playable base-event pack, with optional human story enrichment; prerequisite simulation/Studio work remains open |
 
 ## First implementation slice
@@ -615,3 +615,19 @@ has no editor target. [Evidence](evidence/E1A-01-library.md)
 
 Accepted count remains **5/52**. E1A-01 next needs a working document,
 undo/redo and conflict-aware draft saves.
+
+## E1A-01 typed drafts — 2026-11-04
+
+The Studio's working document validates each typed edit with the shared
+compiler and retains bounded undo and redo history. Explicit Save As writes
+only a new draft. In-place saves require matching source bytes and a supported
+checkout, and retain the previous valid file. The first editing form adds and
+removes flow tags. It preserves the collection and definition versions.
+
+The optimized Mac build and 38 Studio assertions passed. The existing save
+and session-policy tests also passed. The hidden Qt check exercises filtering
+and a tag edit, undo and redo without saving to the checkout.
+[Draft evidence](evidence/E1A-01-drafts.md)
+
+Accepted count remains **5/52**. E1A-01 retains its prerequisite gates.
+Next Mac work is E1A-02 typed flow forms and outline.
