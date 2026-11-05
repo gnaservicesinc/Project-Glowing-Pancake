@@ -169,6 +169,24 @@ QVariantList CampaignController::headquarters() const {
     }
     return result;
 }
+QVariantList CampaignController::scenarios() const {
+    QVariantList result;
+    for (const auto& [id,definition]:program_.collection.definitions) {
+        const auto* scenario=std::get_if<content::ScenarioDefinition>(&definition.data);if (!scenario || !scenario->service_catalog) continue;
+        QString label=QStringLiteral("Introductory roster · 2 startups and 1 heavyweight");
+        QString detail=QStringLiteral("Small 2014–2017 introduction with bounded rival routines.");
+        if (scenario->competition) {
+            const auto& setup=*scenario->competition;
+            label=QStringLiteral("%1 US + %2 international startups · %3 heavyweights%4").arg(setup.domestic).arg(setup.international).arg(setup.heavyweights)
+                .arg(setup.catchup_cash.value()>0?QStringLiteral(" · forgiving financing"):QString{});
+            std::uint64_t demand=0;for (const auto& segment:scenario->market->segments) demand+=segment.daily_tasks;
+            detail=QStringLiteral("Up to three US and three international startups enter initially; later startups enter on the authored schedule. Rivals pay for work and use public information. Shared demand is %1 tasks/day. %2")
+                .arg(demand).arg(setup.catchup_cash.value()>0?QStringLiteral("Each rival may take one disclosed %1 equity round for %2.%3% ownership; no recurring catch-up subsidy.").arg(money(setup.catchup_cash)).arg(setup.catchup_acquired.value()/100).arg(setup.catchup_acquired.value()%100,2,10,QLatin1Char('0')):QStringLiteral("No catch-up funding is available."));
+        }
+        result.push_back(QVariantMap{{QStringLiteral("id"),text(id)},{QStringLiteral("label"),label},{QStringLiteral("detail"),detail}});
+    }
+    return result;
+}
 QString CampaignController::headquartersText() const {
     if (!snapshot_) return {};
     const auto& id=snapshot_->checkpoint.world.state_id;
@@ -181,8 +199,11 @@ void CampaignController::setDaysPerSecond(int value) {
     emit stateChanged();
 }
 void CampaignController::newCampaign(QString hq,bool stories) {
+    newCampaignOptions(std::move(hq),stories,{});
+}
+void CampaignController::newCampaignOptions(QString hq,bool stories,QString scenario) {
     if (!beginOperation()) return;
-    QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,hq=hq.toStdString(),stories]{worker->newCampaign(token,hq,stories);},Qt::QueuedConnection);
+    QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,hq=hq.toStdString(),stories,scenario=scenario.toStdString()]{worker->newCampaign(token,hq,stories,scenario);},Qt::QueuedConnection);
 }
 void CampaignController::openWelcome() {
     if (!management_->available() || busy_) return;

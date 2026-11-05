@@ -19,7 +19,7 @@ std::vector<std::string> strings(const Json& value, std::size_t bound, std::size
 Json lab_json(const core::LabState& state) {
     Json licenses=Json::array(), research=Json::array(), models=Json::array(), evaluations=Json::array();
     for (const auto& row : state.licenses) licenses.push_back({{"offer_id",row.offer_id},{"acquired_on",row.acquired_on.value()}});
-    for (const auto& row : state.research) research.push_back({{"research_id",row.research_id},{"project_id",row.project_id},{"completed",row.completed}});
+    for (const auto& row : state.research) research.push_back({{"research_id",row.research_id},{"project_id",row.project_id},{"completed",row.completed},{"insight_credit",row.insight_credit.value()}});
     for (const auto& row : state.models) models.push_back({{"id",row.id},{"recipe_id",row.recipe_id},{"parent_id",row.parent_id},{"project_id",row.project_id},
         {"data_ids",row.data_ids},{"created_on",row.created_on.value()},{"inherited_work_milli_CU",row.inherited_work.value()},
         {"consumed_work_milli_CU",row.consumed_work.value()},{"capability_bp",profile(row.capability)}});
@@ -27,19 +27,38 @@ Json lab_json(const core::LabState& state) {
         {"model_work_milli_CU",row.model_work.value()},{"completed",row.completed},{"measured_bp",profile(row.measured)},
         {"lower_bp",profile(row.lower)},{"upper_bp",profile(row.upper)},{"findings",row.findings},
         {"stream_before",row.stream_before},{"stream_after",row.stream_after}});
+    Json publications=Json::array(),insights=Json::array();
+    for (const auto& row:state.publications) publications.push_back({{"research",row.research_id},{"day",row.day.value()}});
+    for (const auto& row:state.insights) insights.push_back({{"research",row.research_id},{"publisher",row.publisher},{"published",row.published_on.value()},{"observed",row.observed_on.value()},{"credit",row.credit.value()}});
     return {{"owner",state.owner},{"starts_on",state.starts_on.value()},
         {"closed_through",state.closed_through?Json(state.closed_through->value()):Json(nullptr)},
         {"research_stream_origin",state.research_stream_origin},{"catalog",Json::parse(content::canonical_lab_catalog(state.catalog))},
-        {"licenses",std::move(licenses)},{"research",std::move(research)},{"models",std::move(models)},{"evaluations",std::move(evaluations)}};
+        {"licenses",std::move(licenses)},{"research",std::move(research)},{"models",std::move(models)},{"evaluations",std::move(evaluations)},
+        {"publications",std::move(publications)},{"insights",std::move(insights)}};
 }
 core::LabState parse_lab(const Json& value) {
-    fields(value,"lab",{"owner","starts_on","closed_through","research_stream_origin","catalog","licenses","research","models","evaluations"});
+    fields(value,"lab",{"owner","starts_on","closed_through","research_stream_origin","catalog","licenses","research","models","evaluations"},{"publications","insights"});
     core::LabState state;
     state.owner=label(value.at("owner")); state.starts_on=core::OrdinalDay{i64(value.at("starts_on"),"lab/starts_on")};
     if (!value.at("closed_through").is_null()) state.closed_through=core::OrdinalDay{i64(value.at("closed_through"),"lab/closed_through")};
     state.research_stream_origin=u64(value.at("research_stream_origin"),"lab/research_stream_origin");
     try { state.catalog=content::load_lab_catalog(value.at("catalog").dump()); }
     catch (const std::exception& error) { invalid("lab/catalog",error.what()); }
+    if (value.contains("publications")) {
+        array(value.at("publications"),"lab/publications",core::lab_catalog_limit);
+        for (const auto& row:value.at("publications")) {
+            fields(row,"lab/publication",{"research","day"});
+            state.publications.push_back({label(row.at("research")),core::OrdinalDay{i64(row.at("day"),"lab/publication/day")}});
+        }
+    }
+    if (value.contains("insights")) {
+        array(value.at("insights"),"lab/insights",core::lab_catalog_limit);
+        for (const auto& row:value.at("insights")) {
+            fields(row,"lab/insight",{"research","publisher","published","observed","credit"});
+            state.insights.push_back({label(row.at("research")),label(row.at("publisher")),core::OrdinalDay{i64(row.at("published"),"lab/insight/published")},
+                core::OrdinalDay{i64(row.at("observed"),"lab/insight/observed")},core::BasisPoints{i64(row.at("credit"),"lab/insight/credit")}});
+        }
+    }
     array(value.at("licenses"),"lab/licenses",core::lab_catalog_limit);
     array(value.at("research"),"lab/research",core::lab_record_limit);
     array(value.at("models"),"lab/models",core::lab_record_limit);
@@ -49,8 +68,9 @@ core::LabState parse_lab(const Json& value) {
         state.licenses.push_back({label(row.at("offer_id")),core::OrdinalDay{i64(row.at("acquired_on"),"lab/license/acquired_on")}});
     }
     for (const auto& row : value.at("research")) {
-        fields(row,"lab/research_run",{"research_id","project_id","completed"});
-        state.research.push_back({label(row.at("research_id")),label(row.at("project_id")),boolean(row.at("completed"),"lab/research_run/completed")});
+        fields(row,"lab/research_run",{"research_id","project_id","completed"},{"insight_credit"});
+        state.research.push_back({label(row.at("research_id")),label(row.at("project_id")),boolean(row.at("completed"),"lab/research_run/completed"),
+            core::BasisPoints{row.contains("insight_credit")?i64(row.at("insight_credit"),"lab/research_run/insight_credit"):0}});
     }
     for (const auto& row : value.at("models")) {
         fields(row,"lab/model",{"id","recipe_id","parent_id","project_id","data_ids","created_on","inherited_work_milli_CU","consumed_work_milli_CU","capability_bp"});

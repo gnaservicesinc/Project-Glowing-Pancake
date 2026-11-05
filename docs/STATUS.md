@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**26 of 52 steps complete for Mac feature development. M4-01 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05 and E1B-01/02.
+**27 of 52 steps complete for Mac feature development. M4-02 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02 and M4-01.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -23,6 +23,25 @@ See the [implementation log](IMPLEMENTATION_LOG.md) for checks and limitations a
 local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
+
+- M4-01 adds the standard 15-company schedule, 7/20-company alternatives,
+  six initial startups and a disclosed finite catch-up equity preset. Weekly
+  strategies use private saved RNG, own budgets/work and bounded public-market
+  observations; all actual actions use core accounting/research/management
+  commands. One industry allocator conserves customer work and money across
+  companies, preserves contract priority and derives monthly adoption from real
+  delivery. Public research has a 30-day adoption lag and one finite 25% work
+  credit with prerequisites/cash costs intact. Setup, publish/adopt and prices
+  are exposed in the game. All **62/62 optimized Mac CTests pass in 16.47s**
+  (four workers), including **51 competition assertions**. Standard and expanded
+  presets reach 2017 with exact saves of **22,501,764 / 24,610,924 bytes**, below
+  the unchanged 25 MiB cap, using bounded lossless history storage. The bundled
+  **200% text Metal** run reaches 2017 with **$1,503,361.57**, 3,481,282 tasks and
+  **94/100**, then reloads its full-roster save exactly. The shared writer
+  finalizes content **0.2.0-dev.1**, generation 2, with all 15 headquarters/save
+  checks; game/editor remain **0.0.0-dev** and the game requirement is unresolved.
+  Heavyweight response/deals, century balance/save scaling and human/release
+  qualification remain separate later work. [Competition contract](../src/runtime/COMPETITION.md).
 
 - E1B-02 adds graphical saved-source selection, version/summary controls and
   before/after definition/text review around the existing snapshot writer.
@@ -329,9 +348,11 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation: M4-01's full rival planning and staged entry.** The
-canvas and graphical finalizer prerequisites are complete for Mac component
-work. Human validation remains deferred as specified below.
+**Next implementation: M4-02 heavyweight mobilization and deals.** Add the
+watch/mobilize/compete/consolidate states, visible pressure/90-day warning,
+finite resource commitments, hysteresis and answerable offers. The full-roster
+planning/shared-market foundation is complete. Human validation remains
+deferred as specified below.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

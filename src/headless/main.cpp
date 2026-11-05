@@ -10,11 +10,12 @@
 
 #include <iostream>
 #include <string_view>
+#include <charconv>
 
 namespace {
 constexpr std::string_view usage =
     "Usage: pgp-headless [--help | --build-info | --foundation-demo | --validate-content FILE | --accounts-demo FILE | --capacity-demo FILE | --market-demo FILE | --business-run FILE STRATEGY | --flow-demo FILE [--save FILE]]\n"
-    "Also: --lab-demo FILE | --events-demo FILE | --specialist-demo FILE\nBusiness strategies: expansion, baseline, rescue. Builds never launch the application.\n";
+    "Also: --lab-demo FILE | --events-demo FILE | --specialist-demo FILE | --competition-demo FILE [standard|reduced|expanded|forgiving] [DAYS]\nBusiness strategies: expansion, baseline, rescue. Builds never launch the application.\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -49,6 +50,14 @@ int main(int argc, char* argv[]) {
     if (argc == 3 && std::string_view{argv[1]} == "--events-demo") {
         try { run_events_demo(argv[2],std::cout); return 0; }
         catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
+    }
+    if (argc>=3 && argc<=5 && std::string_view{argv[1]}=="--competition-demo") {
+        try {
+            unsigned days=180;
+            if (argc==5) {const std::string_view input{argv[4]};const auto result=std::from_chars(input.data(),input.data()+input.size(),days);
+                if (result.ec!=std::errc{} || result.ptr!=input.data()+input.size()) throw std::invalid_argument("Days must be a bounded whole number");}
+            run_competition_demo(argv[2],argc>=4?argv[3]:"standard",days,std::cout);return 0;
+        } catch (const std::exception& error) {std::cerr<<error.what()<<'\n';return 1;}
     }
     if (argc == 3 && std::string_view{argv[1]} == "--capacity-demo") {
         try { run_capacity_demo(argv[2], std::cout); return 0; }

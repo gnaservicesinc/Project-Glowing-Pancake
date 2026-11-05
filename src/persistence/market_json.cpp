@@ -94,15 +94,24 @@ Json market_json(const core::MarketState& state) {
     Json changes=Json::array();
     for (const auto& row:state.demand_changes) changes.push_back({{"id",row.id},{"segment_id",row.segment_id},
         {"starts_on",row.starts_on.value()},{"expires_before",row.expires_before.value()},{"delta_bp",row.delta.value()}});
+    Json prices=Json::array();
+    for (const auto& row:state.prices) prices.push_back({{"product",row.product_id},{"starts",row.starts_on.value()},{"price",row.price.value()}});
     return {{"owner",state.owner},{"starts_on",state.starts_on.value()},
         {"closed_through",optional_day(state.closed_through)},{"products",std::move(products)},
         {"segments",std::move(segments)},{"contracts",std::move(contracts)},
-        {"days",std::move(days)},{"adoptions",std::move(adoptions)},{"demand_changes",std::move(changes)},{"capacity_bindings",std::move(bindings)}};
+        {"days",std::move(days)},{"adoptions",std::move(adoptions)},{"demand_changes",std::move(changes)},{"capacity_bindings",std::move(bindings)},{"prices",std::move(prices)}};
 }
 
 core::MarketState parse_market(const Json& value) {
-    fields(value,"market",{"owner","starts_on","closed_through","products","segments","contracts","days","adoptions"},{"demand_changes","capacity_bindings"});
+    fields(value,"market",{"owner","starts_on","closed_through","products","segments","contracts","days","adoptions"},{"demand_changes","capacity_bindings","prices"});
     core::MarketState result;
+    if (value.contains("prices")) {
+        array(value.at("prices"),"market/prices",8192);
+        for (const auto& row:value.at("prices")) {
+            fields(row,"market/price",{"product","starts","price"});
+            result.prices.push_back({label(row.at("product")),day(row.at("starts")),cents(row.at("price"))});
+        }
+    }
     if (value.contains("capacity_bindings")) {
         array(value.at("capacity_bindings"),"market/bindings",4096);
         for (const auto& row:value.at("capacity_bindings")) {

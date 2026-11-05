@@ -14,4 +14,6 @@ struct SliceRun {
     std::optional<core::OrdinalDay> stop_before={},std::optional<runtime::Checkpoint> resume={});
 [[nodiscard]] SliceRun run_slice_specialist(const runtime::CompiledProgram& program,
     std::optional<core::OrdinalDay> stop_before={},std::optional<runtime::Checkpoint> resume={});
+[[nodiscard]] SliceRun run_competition_specialist(const runtime::CompiledProgram& program,std::string_view scenario_id,
+    std::optional<core::OrdinalDay> stop_before={},std::optional<runtime::Checkpoint> resume={});
 }

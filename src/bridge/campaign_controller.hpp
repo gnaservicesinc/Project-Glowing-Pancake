@@ -15,6 +15,7 @@ class CampaignController final : public QObject {
     Q_PROPERTY(int daysPerSecond READ daysPerSecond WRITE setDaysPerSecond NOTIFY stateChanged)
     Q_PROPERTY(bool welcome READ welcome NOTIFY stateChanged)
     Q_PROPERTY(QVariantList headquarters READ headquarters CONSTANT)
+    Q_PROPERTY(QVariantList scenarios READ scenarios CONSTANT)
     Q_PROPERTY(QString headquartersText READ headquartersText NOTIFY stateChanged)
     Q_PROPERTY(bool autoPauseProjects READ autoPauseProjects WRITE setAutoPauseProjects NOTIFY settingsChanged)
     Q_PROPERTY(bool autoPauseEvaluations READ autoPauseEvaluations WRITE setAutoPauseEvaluations NOTIFY settingsChanged)
@@ -56,6 +57,7 @@ public:
     void setDaysPerSecond(int value);
     bool welcome() const { return welcome_; }
     QVariantList headquarters() const;
+    QVariantList scenarios() const;
     QString headquartersText() const;
     bool autoPauseProjects() const { return settings_.auto_pause_projects; }
     bool autoPauseEvaluations() const { return settings_.auto_pause_evaluations; }
@@ -68,6 +70,7 @@ public:
     bool showGuide() const { return settings_.show_guide; }
     void setShowGuide(bool value);
     Q_INVOKABLE void newCampaign(QString headquarters, bool stories = true);
+    Q_INVOKABLE void newCampaignOptions(QString headquarters, bool stories, QString scenario);
     Q_INVOKABLE void openWelcome();
     [[nodiscard]] QString date() const;
     [[nodiscard]] bool ready() const noexcept { return static_cast<bool>(snapshot_); }

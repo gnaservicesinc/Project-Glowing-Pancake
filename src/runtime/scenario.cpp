@@ -17,6 +17,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     Checkpoint checkpoint;
     auto& world = checkpoint.world;
     world = foundation_world(scenario->cash);
+    world.scenario_id=std::string(scenario_id);
     world.root_seed = scenario->seed;
     world.enabled_flows = scenario->flows;
     world.campaign_start = scenario->starts_on;
@@ -66,7 +67,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     else if (headquarters == "US-TX") world.state_id = "state.us_tx";
     else if (headquarters == "US-WA") world.state_id = "state.us_wa";
     else throw std::invalid_argument("Headquarters has no implemented scope binding");
-    initialize_competition(world,program,scenario->rivals);
+    initialize_competition(world,program,scenario->rivals,scenario->competition);
     validate_checkpoint(program, checkpoint);
     return checkpoint;
 }

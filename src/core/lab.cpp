@@ -238,6 +238,16 @@ void buy_data(LabState& state, AccountsState& accounts, OrdinalDay day, std::str
     charge(accounts, day, offer.price, protected_cash, "lab/data/" + offer.id);
     state.licenses.push_back({offer.id, day});
 }
+namespace {
+BasisPoints insight_on(const LabState& state,std::string_view id,OrdinalDay day) {
+    for (const auto& row:state.insights) if (row.research_id==id && row.observed_on<=day) return row.credit;
+    return BasisPoints{0};
+}
+MilliCU insight_work(MilliCU work,BasisPoints credit) {
+    const auto result=mul_div_floor(static_cast<std::uint64_t>(work.value()),static_cast<std::uint64_t>(10000-credit.value()),10000);
+    return MilliCU{checked_add(static_cast<std::int64_t>(result.quotient),result.remainder>0?1:0)};
+}
+}
 void start_research(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day,
                     std::string_view research_id, const LabAllocation& allocation, Cents protected_cash) {
     require_day(state, day);
@@ -256,11 +266,25 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
     const auto days = node.staff_days.value() / allocation.staff + (node.staff_days.value() % allocation.staff != 0 ? 1 : 0);
     // The experiment budget covers both knowledge work and the authored minimum
     // experiment. Outages delay the same experiment, never grant free research.
-    const auto work = std::max(node.experiment_work, integrate(allocation.daily_compute, Days{days}));
+    const auto credit=insight_on(state,research_id,day);
+    const auto work = insight_work(std::max(node.experiment_work, integrate(allocation.daily_compute, Days{days})),credit);
     auto row = project("lab/research/" + node.id + "/" + std::to_string(attempt), ProjectKind::research, day, allocation, work);
     reserve_project(capacity, day, row);
     charge(accounts, day, node.cash, protected_cash, row.id);
-    state.research.push_back({node.id, row.id, false});
+    state.research.push_back({node.id, row.id, false,credit});
+}
+void publish_research(LabState& state,const CapacityState& capacity,OrdinalDay day,std::string_view id) {
+    require_day(state,day);
+    if (!knowledge_on(state,capacity,id,day) || std::any_of(state.publications.begin(),state.publications.end(),[&](const auto& row){return row.research_id==id;}) ||
+        state.publications.size()>=lab_catalog_limit) invalid("Publish a completed, previously private research result");
+    state.publications.push_back({std::string(id),day});
+}
+void acquire_research_insight(LabState& state,OrdinalDay day,ResearchInsight insight) {
+    require_day(state,day);(void)find(state.catalog.research,insight.research_id);label(insight.publisher);
+    if (insight.publisher==state.owner || insight.published_on>=day || insight.observed_on!=day || insight.credit.value()<=0 || insight.credit.value()>2500 ||
+        state.insights.size()>=lab_catalog_limit || std::any_of(state.insights.begin(),state.insights.end(),[&](const auto& row){return row.research_id==insight.research_id;}))
+        invalid("A public research insight must have a distinct publisher, prior publication and one bounded adoption credit");
+    state.insights.push_back(std::move(insight));
 }
 void start_training(LabState& state, CapacityState& capacity, OrdinalDay day, const TrainingRequest& request) {
     require_day(state, day); label(request.model_id);
@@ -334,6 +358,15 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         state.closed_through != capacity.closed_through || state.licenses.size() > lab_catalog_limit || state.research.size() > lab_record_limit)
         invalid("Lab ownership, daily cursor or record bound differs from its resources");
     const auto today = state.closed_through ? advance_days(*state.closed_through, Days{1}) : state.starts_on;
+    if (state.publications.size()>lab_catalog_limit || state.insights.size()>lab_catalog_limit) invalid("Research publication/insight history exceeds its bound");
+    std::set<std::string_view> insight_ids,publication_ids;
+    for (const auto& row:state.insights) {
+        (void)find(state.catalog.research,row.research_id);label(row.publisher);
+        if (!insight_ids.insert(row.research_id).second || row.publisher==state.owner || row.observed_on<state.starts_on || row.observed_on>today ||
+            row.published_on>=row.observed_on || row.credit.value()<=0 || row.credit.value()>2500) invalid("Research insight has invalid provenance, adoption date or stacked credit");
+    }
+    for (const auto& row:state.publications)
+        if (!publication_ids.insert(row.research_id).second || row.day>today || !knowledge_on(state,capacity,row.research_id,row.day)) invalid("Publication lacks a unique actual completed result");
     identities(state.models, lab_record_limit); identities(state.evaluations, lab_record_limit);
     std::set<std::string_view> licenses, projects, prior_models;
     std::map<std::string_view, std::size_t> attempts;
@@ -354,10 +387,12 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         const auto& node = find(state.catalog.research, run.research_id);
         const auto& work = find(capacity.projects, run.project_id);
         const auto attempt = ++attempts[node.id];
+        const auto credit=insight_on(state,node.id,work.starts_on);
+        const auto minimum=insight_work(std::max(node.experiment_work,integrate(work.requested,
+            Days{node.staff_days.value()/std::max(work.staff,1U)+(node.staff_days.value()%std::max(work.staff,1U)!=0?1:0)})),credit);
         if (!projects.insert(work.id).second || work.id != "lab/research/" + node.id + "/" + std::to_string(attempt) ||
             work.kind != ProjectKind::research || work.staff == 0 || run.completed != (work.status == ProjectStatus::completed) ||
-            work.total_work < node.experiment_work || work.total_work < integrate(work.requested,
-                Days{node.staff_days.value() / work.staff + (node.staff_days.value() % work.staff != 0 ? 1 : 0)}))
+            run.insight_credit!=credit || work.total_work<minimum || (credit.value()>0 && work.total_work!=minimum))
             invalid("Research progress differs from its finite staff/experiment commitment");
         payment(work.id, node.cash, work.starts_on);
         if (attempt > 1) {

@@ -144,6 +144,7 @@ struct ScenarioDefinition {
     // Deployable templates, not active products or prepaid serving workloads.
     std::optional<MarketSetup> service_catalog{};
     std::optional<core::ManagementCatalog> management{};
+    std::optional<CompetitionSetup> competition{};
 };
 struct ResearchDefinition {
     std::vector<std::string> all_of;

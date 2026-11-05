@@ -350,6 +350,21 @@ ApplicationWindow {
                             font.pixelSize: window.textSize
                             Accessible.name: qsTr("Headquarters")
                         }
+                        ComboBox {
+                            id: competitionChoice
+                            objectName: "competitionChoice"
+                            Layout.fillWidth: true
+                            model: campaign.scenarios
+                            textRole: "label"
+                            valueRole: "id"
+                            font.pixelSize: window.textSize
+                            Accessible.name: qsTr("Competition and financing setup")
+                            Component.onCompleted: {
+                                for (let index = 0; index < campaign.scenarios.length; ++index)
+                                    if (campaign.scenarios[index].id === "scenario.world_competition") currentIndex = index
+                            }
+                        }
+                        Copy { text: (campaign.scenarios[competitionChoice.currentIndex] || {}).detail || "" }
                         CheckBox {
                             id: includeStories
                             Layout.fillWidth: true
@@ -363,7 +378,7 @@ ApplicationWindow {
                                 wrapMode: Text.Wrap
                             }
                         }
-                        Action { objectName: "newCampaignButton"; text: qsTr("Start new campaign"); enabled: campaign.ready && !campaign.busy; onClicked: campaign.newCampaign(headquartersChoice.currentValue, includeStories.checked) }
+                        Action { objectName: "newCampaignButton"; text: qsTr("Start new campaign"); enabled: campaign.ready && !campaign.busy; onClicked: campaign.newCampaignOptions(headquartersChoice.currentValue, includeStories.checked, competitionChoice.currentValue) }
                         Action { text: qsTr("Load an existing local campaign…"); enabled: campaign.ready && !campaign.busy; onClicked: loadDialog.open() }
                     }
                 }

@@ -425,6 +425,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 row.status = ReservationStatus::cancelled;
                 (void)receipt(next, "cancel_unconsumed_reservation", action.id);
             } else if constexpr (std::is_same_v<Action, AdvanceDay>) {
+                if ((!action.industry_adoptions.empty() && !action.market_allocation) ||
+                    (!next.market && (action.market_allocation || !action.industry_adoptions.empty())))
+                    refuse(CommandReason::invalid_argument,"Shared industry context requires an actual market and allocation.");
                 if (required_management_notice(next)) refuse(CommandReason::morning_not_ready,"Acknowledge the capacity setback and its recovery date before advancing.");
                 if (next.liquidity && liquidity_report(*next.liquidity).pending_warning)
                     refuse(CommandReason::morning_not_ready, "Acknowledge the insolvency warning and its 30-day response window before advancing.");
@@ -438,7 +441,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 }
                 const auto cash_before = next.cash;
                 if (next.market)
-                    close_market_day(*next.market, accounts(next), capacity(next), next.date, false);
+                    close_market_day(*next.market, accounts(next), capacity(next), next.date, false,
+                        action.market_allocation ? &*action.market_allocation : nullptr,
+                        action.industry_adoptions.empty()?nullptr:&action.industry_adoptions);
                 else if (next.capacity) close_capacity_day(*next.capacity, next.date, false);
                 if (next.lab) close_lab_day(*next.lab, *next.capacity, next.date, next.random);
                 if (next.accounts) {
@@ -565,6 +570,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if (next.deployments) refuse(CommandReason::invalid_argument,"Use qualified deployment or stop the serving project.");
                 set_product_available(market(next), action.id, action.available);
                 (void)receipt(next, "market_product_availability");
+            } else if constexpr (std::is_same_v<Action, SetMarketPrice>) {
+                set_market_price(market(next), next.date, action.id, action.price);
+                (void)receipt(next, "market_price_change");
             } else if constexpr (std::is_same_v<Action, AcceptContract>) {
                 accept_contract(market(next), capacity(next), next.date, action.contract);
                 (void)receipt(next, "accept_contract");
@@ -588,6 +596,12 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 start_research(lab(next), accounts(next), capacity(next), next.date, action.research_id, action.allocation, reserved_cash(next));
                 next.cash = accounts_report(*next.accounts).cash;
                 (void)receipt(next, "start_research", 0, checked_unit_subtract(next.cash, before));
+            } else if constexpr (std::is_same_v<Action, PublishResearch>) {
+                publish_research(lab(next),capacity(next),next.date,action.research_id);
+                (void)receipt(next,"publish_research");
+            } else if constexpr (std::is_same_v<Action, AcquireResearchInsight>) {
+                acquire_research_insight(lab(next),next.date,action.insight);
+                (void)receipt(next,"acquire_public_research");
             } else if constexpr (std::is_same_v<Action, StartTraining>) {
                 start_training(lab(next), capacity(next), next.date, action.request);
                 (void)receipt(next, "start_training");

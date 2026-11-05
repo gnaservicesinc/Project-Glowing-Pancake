@@ -22,7 +22,7 @@ struct SaveIdentity {
 };
 struct SaveLimits {
     std::size_t maximum_bytes = default_maximum_save_bytes;
-    std::size_t maximum_json_events = 2'000'000;
+    std::size_t maximum_json_events = 4'000'000;
 };
 struct LoadedSave {
     SaveIdentity identity;

@@ -145,6 +145,18 @@ ColumnLayout {
             enabled: panel.editable && manager.researchTopics.selectedRow.actionable === true
             onClicked: manager.research(manager.researchTopics.selectedId, researchSource.value, researchRate.value, researchStaff.value)
         }
+        Action {
+            objectName: "publishResearchButton"
+            text: qsTr("Publish completed research")
+            enabled: panel.editable && manager.plannedCompetition && (manager.researchTopics.selectedRow.fields || {}).completed === true && (manager.researchTopics.selectedRow.fields || {}).published !== true
+            onClicked: manager.publishResearch(manager.researchTopics.selectedId)
+        }
+        Action {
+            objectName: "adoptPublicationButton"
+            text: qsTr("Adopt available public research")
+            enabled: panel.editable && (manager.researchTopics.selectedRow.fields || {}).canAdopt === true
+            onClicked: manager.acquirePublication(manager.researchTopics.selectedId)
+        }
     }
     ColumnLayout {
         id: training
@@ -266,6 +278,13 @@ ColumnLayout {
             onClicked: manager.deploy(deploymentService.value, deploymentModel.value, deploymentEvidence.value, deploymentSource.value, humanReview.checked)
         }
         Selection { heading: qsTr("Deployed services"); rows: manager.products }
+        Field { id: productPrice; objectName: "productPriceField"; label: qsTr("Price per task · constant 2014 cents"); value: (manager.products.selectedRow.fields || {}).priceCents || "" }
+        Action {
+            objectName: "setProductPriceButton"
+            text: qsTr("Set service price")
+            enabled: panel.editable && manager.products.selectedId.length > 0
+            onClicked: manager.setProductPrice(manager.products.selectedId, productPrice.value)
+        }
     }
     ColumnLayout {
         Layout.fillWidth: true
@@ -295,6 +314,7 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "rivals"
         Copy { text: qsTr("Public notices show competitor activity and the heavyweight mobilization window. Their budgets, private checkpoints and future results are not visible.") }
+        Copy { text: manager.competitionSummary }
         Selection { heading: qsTr("Public rival notices"); rows: manager.rivals }
     }
     ColumnLayout {

@@ -736,7 +736,7 @@ MarketSetup market_setup(const Json& value, const std::string& path, const Scena
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -781,6 +781,8 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
     try {
         if (value.contains("business_offers")) result.business_offers=load_business_offer_catalog(value.at("business_offers").dump());
         if (value.contains("rivals")) result.rivals=load_rival_definitions(value.at("rivals").dump());
+        if (value.contains("competition")) result.competition=load_competition_setup(value.at("competition").dump());
+        if (result.competition && !result.lab) fail("rivals",path,"Planned competition requires a shared lab catalog");
         if (!result.rivals.empty() && !result.lab) fail("rivals",path,"Slice rivals require the shared lab catalog");
         for (const auto& offer:result.business_offers)
             if (offer.available_from<result.starts_on || offer.available_before>result.ends_before)
@@ -903,10 +905,27 @@ void validate_references(const Collection& collection, const Registry& registry)
                     for (const auto& rival:scenario_definition->rivals) {
                         const auto recipe=std::find_if(catalog.recipes.begin(),catalog.recipes.end(),[&](const auto& row){return row.id==rival.recipe_id;});
                         const auto data=std::find_if(catalog.data.begin(),catalog.data.end(),[&](const auto& row){return row.id==rival.data_id;});
-                        if (recipe==catalog.recipes.end() || data==catalog.data.end() || !recipe->requires_research.empty() ||
+                        if (recipe==catalog.recipes.end() || data==catalog.data.end() || (!rival.planning && !recipe->requires_research.empty()) ||
                             recipe->minimum_memory_mib!=0 || recipe->interconnect!="general" ||
                             rival.training_work<recipe->minimum_work || rival.training_work>recipe->maximum_work || rival.cash<data->price)
                             fail("rivals",path,"Rival routine must have affordable data, a known starting recipe and finite work");
+                        if (rival.planning) {
+                            if (!scenario_definition->competition || !scenario_definition->market || !scenario_definition->service_catalog || !scenario_definition->management)
+                                fail("rivals",path,"Weekly rival planning requires explicit roster settings, market, services and management terms");
+                            for (const auto& id:rival.planning->research) if (std::none_of(catalog.research.begin(),catalog.research.end(),[&](const auto& row){return row.id==id;})) fail("rivals",path,"Rival research priority is not in this scenario");
+                            for (const auto& id:rival.planning->recipes) if (std::none_of(catalog.recipes.begin(),catalog.recipes.end(),[&](const auto& row){return row.id==id;})) fail("rivals",path,"Rival recipe priority is not in this scenario");
+                            for (const auto& id:rival.planning->services) if (std::none_of(scenario_definition->service_catalog->offers.begin(),scenario_definition->service_catalog->offers.end(),[&](const auto& row){return row.product.id==id;})) fail("rivals",path,"Rival service priority is not in this scenario");
+                        }
+                    }
+                    if (scenario_definition->competition) {
+                        if (!scenario_definition->market || !scenario_definition->service_catalog || !scenario_definition->management)
+                            fail("rivals",path,"Planned competition requires shared market, service and management catalogs");
+                        std::set<std::pair<std::string,std::uint32_t>> slots;
+                        for (const auto& rival:scenario_definition->rivals)
+                            if (!rival.planning || !slots.emplace(rival.planning->group,rival.planning->slot).second) fail("rivals",path,"A planned roster needs unique explicit group slots");
+                        const auto& setup=*scenario_definition->competition;
+                        for (const auto& [group,count]:std::vector<std::pair<std::string,std::uint32_t>>{{"domestic",setup.domestic},{"international",setup.international},{"heavyweight",setup.heavyweights}})
+                            for (std::uint32_t slot=1;slot<=count;++slot) if (!slots.contains({group,slot})) fail("rivals",path,"The selected roster has an absent company slot");
                     }
                 }
                 catch (const std::exception& error) { fail("lab", child(path,"lab"), error.what()); }

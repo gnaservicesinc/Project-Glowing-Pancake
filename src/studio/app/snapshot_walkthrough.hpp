@@ -2,6 +2,7 @@
 #include "snapshot_controller.hpp"
 #include "walkthrough.hpp"
 #include <pgp/studio/snapshot.hpp>
+#include <QJsonDocument>
 #include <fstream>
 #include <map>
 
@@ -55,13 +56,19 @@ QJsonObject run_snapshot_walkthrough(Browser& browser, QQuickWindow& window, con
     };
     const auto baseline = owned(); const auto draft_file = fs::path{browser.workingFile().toStdU16String()};
     const auto draft_bytes = read(draft_file); const auto prior = check_snapshot(root);
-    require(prior.generation == 1 && prior.content_version == "0.1.0-dev.1", QStringLiteral("Choose a fresh generation-1 checkout copy for this walkthrough."));
+    require(prior.generation > 0 && !prior.game_version_requirement_resolved, QStringLiteral("Choose a fresh finalized checkout copy with its pending game requirement for this walkthrough."));
+    finalizer->refresh();const auto next_version=finalizer->suggestedVersion();
+    require(!next_version.isEmpty(),QStringLiteral("The next development content version is unavailable."));
+    int saves=0;
+    for (const auto& value:QJsonDocument::fromJson(QByteArray::fromStdString(read("data/runtime/first-playable.json"))).object().value(QStringLiteral("definitions")).toArray()) {
+        const auto definition=value.toObject();if (definition.value(QStringLiteral("kind"))==QStringLiteral("scenario")) saves+=definition.value(QStringLiteral("headquarters_choices")).toArray().size();
+    }
     open();
     require(item(QStringLiteral("revisionSource"))->property("currentText").toString() == browser.workingFile(), QStringLiteral("Review did not select the saved working collection."));
-    field(QStringLiteral("revisionContentVersion"), QStringLiteral("0.2.0-dev.1"));
+    field(QStringLiteral("revisionContentVersion"), next_version);
     field(QStringLiteral("revisionSummary"), QStringLiteral("Review the branching flow, delayed effects and all lifecycle examples authored through Studio."));
     click(QStringLiteral("reviewSavedContent"));
-    require(finalizer->ready() && finalizer->runtimeChanged() && finalizer->changes().size() >= 5 && finalizer->validationSummary().contains(QStringLiteral("3 exact save")) && owned() == baseline,
+    require(finalizer->ready() && finalizer->runtimeChanged() && finalizer->changes().size() >= 5 && finalizer->validationSummary().contains(QStringLiteral("%1 exact save").arg(saves)) && owned() == baseline,
         QStringLiteral("Graphical review lacks all authored definitions/validation or changed tracked content."));
     const auto change_count = finalizer->changes().size();
     require(item(QStringLiteral("revisionDefinitionDiffList"))->property("count").toLongLong() == finalizer->changes().front().toMap().value(QStringLiteral("fields")).toList().size() &&
@@ -85,8 +92,8 @@ QJsonObject run_snapshot_walkthrough(Browser& browser, QQuickWindow& window, con
     const auto pending = finalizer->releaseSummary();
     approve();
     const auto committed = check_snapshot(root);
-    require(committed.generation == 2 && committed.content_version == "0.2.0-dev.1" && !committed.game_version_requirement_resolved && finalizer->outcome().contains(QStringLiteral("Finalized internal batch")), QStringLiteral("The graphical batch did not finalize with an explicit pending game requirement."));
-    require(browser.workingFile() == QStringLiteral("data/runtime/first-playable.json") && browser.workingVersion() == QStringLiteral("0.2.0-dev.1") && !browser.draftDirty() && read(draft_file) == draft_bytes + "\n", QStringLiteral("The committed runtime did not reopen cleanly or the source draft was overwritten."));
+    require(committed.generation == prior.generation+1 && QString::fromStdString(committed.content_version) == next_version && !committed.game_version_requirement_resolved && finalizer->outcome().contains(QStringLiteral("Finalized internal batch")), QStringLiteral("The graphical batch did not finalize with an explicit pending game requirement."));
+    require(browser.workingFile() == QStringLiteral("data/runtime/first-playable.json") && browser.workingVersion() == next_version && !browser.draftDirty() && read(draft_file) == draft_bytes + "\n", QStringLiteral("The committed runtime did not reopen cleanly or the source draft was overwritten."));
     const auto finalized = owned();
     click(QStringLiteral("closeContentRevision")); open();
     click(QStringLiteral("reviewSavedContent"));
@@ -96,7 +103,8 @@ QJsonObject run_snapshot_walkthrough(Browser& browser, QQuickWindow& window, con
 
     // Fault injection is limited to this explicit engineering mode and copy.
     require(browser.changeTag(QStringLiteral("recovery_fixture"), false) && browser.saveDraft(QStringLiteral("e1b02-recovery.json")), QStringLiteral("Could not prepare the isolated recovery draft."));
-    SnapshotRequest recovery{"data/drafts/e1b02-recovery.json", "data/runtime/first-playable.json", "0.3.0-dev.1", "Recover the deliberately interrupted engineering fixture.", "reject-prior-content", {}};
+    finalizer->refresh();
+    SnapshotRequest recovery{"data/drafts/e1b02-recovery.json", "data/runtime/first-playable.json", finalizer->suggestedVersion().toStdString(), "Recover the deliberately interrupted engineering fixture.", "reject-prior-content", {}};
     const auto plan = review_snapshot(root, recovery);
     bool interrupted = false;
     try { (void)finalize_snapshot(root, recovery, plan.plan_id, [](auto phase, std::size_t index) { if (phase == SnapshotWritePhase::replaced && index == 2) throw std::runtime_error("Injected engineering interruption"); }); }
@@ -105,9 +113,9 @@ QJsonObject run_snapshot_walkthrough(Browser& browser, QQuickWindow& window, con
     open(); require(finalizer->pendingRecovery(), QStringLiteral("The review dialog hid the interrupted batch."));
     click(QStringLiteral("recoverContentRevision"));
     require(!finalizer->pendingRecovery() && finalizer->outcome().contains(QStringLiteral("Restored the prior complete generation")) && owned() == finalized, QStringLiteral("Graphical recovery did not restore every prior artifact."));
-    require(browser.workingVersion() == QStringLiteral("0.2.0-dev.1") && read(draft_file) == draft_bytes + "\n", QStringLiteral("Recovery changed draft evidence or left the wrong working generation."));
+    require(browser.workingVersion() == next_version && read(draft_file) == draft_bytes + "\n", QStringLiteral("Recovery changed draft evidence or left the wrong working generation."));
     click(QStringLiteral("closeContentRevision")); open();
-    click(QStringLiteral("revisionProposeGame")); field(QStringLiteral("revisionGameVersion"), QStringLiteral("0.1.0-dev.1"));
+    click(QStringLiteral("revisionProposeGame")); field(QStringLiteral("revisionGameVersion"), QString::fromStdString(committed.required_game_version));
     click(QStringLiteral("reviewSavedContent"));
     require(finalizer->ready() && !finalizer->runtimeChanged() && finalizer->releaseSummary().contains(QStringLiteral("version requirement satisfied")), QStringLiteral("An explicit game-version proposal did not satisfy the pending requirement."));
     approve(); const auto resolved = check_snapshot(root);

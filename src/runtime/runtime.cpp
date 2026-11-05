@@ -675,8 +675,17 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             (has_choice(next.runtime) || next.runtime.prepared_day != next.world.simulation.date))
             fail(RuntimeReason::morning_not_ready, "Resolve required content choices and prepare the morning before work.");
         const auto prior_day = next.world.simulation.date;
+        auto actual=command;IndustryAllocations assignments;
+        if (auto* day=std::get_if<core::AdvanceDay>(&actual.action)) {
+            if (day->market_allocation || !day->industry_adoptions.empty()) fail(RuntimeReason::effect_rejected,"Industry allocation is supplied only by the shared world market.");
+            assignments=prepare_competition_day(next.world,program_);
+            if (const auto it=assignments.find(next.world.company_id);it!=assignments.end()) {
+                day->market_allocation=it->second;day->industry_adoptions=industry_adoption_snapshot(next.world);
+            }
+        }
+        if (const auto* insight=std::get_if<core::AcquireResearchInsight>(&actual.action)) validate_public_insight(next.world,insight->insight);
         core::Simulation core_state{std::move(next.world.simulation), core::TrustedSimulationState{}};
-        const auto outcome = core_state.submit_in_transaction(command);
+        const auto outcome = core_state.submit_in_transaction(actual);
         if (!outcome.accepted()) {
             if (outcome.reason == core::CommandReason::campaign_finished) fail(RuntimeReason::campaign_finished, outcome.explanation);
             if (outcome.reason == core::CommandReason::arithmetic_overflow) fail(RuntimeReason::arithmetic_overflow, outcome.explanation);
@@ -684,7 +693,7 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             fail(RuntimeReason::effect_rejected, outcome.explanation);
         }
         next.world.simulation = std::move(core_state).release_checkpoint();
-        if (next.world.simulation.date!=prior_day) advance_competition(next.world,program_,prior_day);
+        if (next.world.simulation.date!=prior_day) advance_competition(next.world,program_,prior_day,assignments);
         const auto cash_after_submit = next.world.simulation.cash;
         const auto phase_after_submit = next.world.simulation.phase;
         if (next.world.simulation.phase == core::DayPhase::closed) next.world.facts.at("company.is_operating") = false;

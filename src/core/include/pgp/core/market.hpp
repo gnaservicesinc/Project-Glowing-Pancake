@@ -2,6 +2,7 @@
 
 #include <pgp/core/accounts.hpp>
 #include <pgp/core/capacity.hpp>
+#include <pgp/core/allocation.hpp>
 
 namespace pgp::core {
 
@@ -120,6 +121,12 @@ struct ProductCapacityBinding {
     OrdinalDay starts_on{0};
     auto operator<=>(const ProductCapacityBinding&) const = default;
 };
+struct MarketPriceChange {
+    std::string product_id;
+    OrdinalDay starts_on{0};
+    Cents price{0};
+    auto operator<=>(const MarketPriceChange&) const = default;
+};
 struct MarketState {
     std::string owner = "company.player";
     OrdinalDay starts_on{0};
@@ -131,6 +138,7 @@ struct MarketState {
     std::vector<MarketAdoption> adoptions;
     std::vector<MarketDemandChange> demand_changes{};
     std::vector<ProductCapacityBinding> capacity_bindings{};
+    std::vector<MarketPriceChange> prices{};
     auto operator<=>(const MarketState&) const = default;
 };
 struct MarketReport {
@@ -154,7 +162,10 @@ void replace_product_capacity(MarketState& state, const CapacityState& capacity,
 void add_market_segment(MarketState& state, MarketSegment segment);
 void add_market_preference(MarketState& state,std::string_view segment_id,MarketPreference preference);
 void set_product_available(MarketState& state, std::string_view product_id, bool available);
+[[nodiscard]] Cents market_price_on(const MarketState& state, std::string_view product_id, OrdinalDay day);
+void set_market_price(MarketState& state, OrdinalDay day, std::string_view product_id, Cents price);
 [[nodiscard]] std::uint64_t effective_market_demand(const MarketState& state, const MarketSegment& segment, OrdinalDay day);
+[[nodiscard]] std::uint64_t public_market_demand(const MarketState& state, const MarketSegment& segment, OrdinalDay day);
 void add_market_demand_change(MarketState& state, OrdinalDay day, MarketDemandChange change);
 void accept_contract(MarketState& state, const CapacityState& capacity, OrdinalDay day, MarketContract contract);
 void validate_contract_acceptance(const MarketState& state, const CapacityState& capacity,
@@ -165,6 +176,25 @@ void cancel_contract(MarketState& state, AccountsState& accounts, OrdinalDay day
 // serving/training work and recognize invoices. Caller closes accounts next.
 // validate_io=false is reserved for an already copied enclosing transaction;
 // it appends in place and relies on that caller to discard any failed candidate.
+struct MarketContractClaim {
+    std::string segment_id;
+    std::uint64_t promised = 0;
+    Cents charged{0};
+};
+struct MarketOpportunity {
+    std::vector<AllocationProduct> products;
+    std::vector<AllocationSegment> segments;
+    std::vector<MarketContractClaim> contracts;
+};
+// The same contract-priority/capacity/eligibility calculation is used for a
+// single company and for shared multi-company demand. It never closes work.
+[[nodiscard]] MarketOpportunity market_opportunity(const MarketState& state, const CapacityState& capacity, OrdinalDay day,
+    const std::vector<MarketAdoption>* industry_adoptions = nullptr);
+// An industry allocation is checked against this company's actual opportunity;
+// other providers count as outside in its own report. The world coordinator
+// additionally conserves the single customer demand/budget across all sellers.
 void close_market_day(MarketState& state, AccountsState& accounts,
-                      CapacityState& capacity, OrdinalDay day, bool validate_io = true);
+                      CapacityState& capacity, OrdinalDay day, bool validate_io = true,
+                      const AllocationResult* assigned = nullptr,
+                      const std::vector<MarketAdoption>* industry_adoptions = nullptr);
 } // namespace pgp::core

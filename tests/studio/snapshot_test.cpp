@@ -44,7 +44,9 @@ void first_snapshot(Scratch& scratch) {
     const auto request=initial();const auto before=tracked(scratch.root);const auto review=studio::review_snapshot(scratch.root,request);
     check(tracked(scratch.root)==before,"Read-only review changed tracked content or versions");
     const auto report=Json::parse(review.report_json);
-    check(review.runtime_changed && report["validation"]["exact_prepared_save_roundtrips"]==3 && report["changes"].size()==15,"First review omitted shared-runtime/save evidence or baseline definitions");
+    const auto source=Json::parse(read(scratch.root/"data/runtime/first-playable.json"));std::size_t saves=0;
+    for (const auto& definition:source.at("definitions")) if (definition.at("kind")=="scenario") saves+=definition.at("headquarters_choices").size();
+    check(review.runtime_changed && report["validation"]["exact_prepared_save_roundtrips"]==saves && report["changes"].size()==source.at("definitions").size(),"First review omitted shared-runtime/save evidence or baseline definitions");
     const auto result=studio::finalize_snapshot(scratch.root,request,review.plan_id);
     check(result.generation==1 && result.content_version=="0.1.0-dev.1" && !result.game_version_requirement_resolved,"Internal snapshot claimed game-version/release readiness");
     const auto root=Json::parse(read(scratch.root/"project-versions.json"));

@@ -73,7 +73,7 @@ owning roots and the prepared/choice boundary without advancing time or sampling
 randomness. The content schema/save format remain development format 1; this
 additive reader compatibility does not claim a migration between definitions.
 
-Decoder depth is capped at 64. Its JSON event budget defaults to two million and
+Decoder depth is capped at 64. Its JSON event budget defaults to four million and
 can be configured up to eight million. Encoding checks the identical byte/depth/
 event bounds before returning bytes, so a newly committed save cannot fail its
 own decoder solely because combined record counts exceeded the parse budget.
@@ -84,6 +84,29 @@ catalogs and finalization arrive in later authoring/packaging tasks. The SHA-256
 implementation uses the standard 64-round SHA-256 algorithm with fixed-width
 integer arithmetic and is tested against published empty, `abc`, multi-block
 padding and million-`a` vectors. Integrity is not authentication or encryption.
+
+## Multi-company history storage
+
+Planned competition saves retain the explicit source scenario, roster settings,
+pending entries, weekly decisions/public observations, independent RNG streams,
+public first deliveries, research publications/insights, dated prices and shared
+monthly adoption. Each company still owns its complete core ledger, capacity,
+work, customer and liquidity histories.
+
+Planned-company `simulation_storage: "history-rows-v2"` stores repeated history
+records as fixed-column rows with a per-company `history_strings` table. Only
+specified string columns use indices; normal named core records are restored
+before the existing typed decoder and deep validation. The reader also accepts
+explicit v1 rows and the earlier named representation. Unknown formats/columns,
+missing cells, invalid string indices and duplicate table entries fail. This is
+lossless storage, with no ledger or work history discarded.
+
+Across all companies, expansion is bounded to four million cells and 64 MiB of
+referenced string data; each table has at most 100,000 distinct strings of at
+most 512 bytes. Input retains the 25 MiB default byte limit and four-million
+JSON-event budget. Checksums are not a substitute for these bounds or actual
+financial/resource/public-provenance validation. Current three-year preset
+checks do not qualify century-scale save sizes; that remains M8 work.
 
 ## Local writes and recovery
 

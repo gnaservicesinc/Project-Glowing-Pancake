@@ -79,22 +79,28 @@ void policy_hooks() {
 
     auto final_checkpoint = campaign.checkpoint();
     final_checkpoint.world.simulation.end_date = core::OrdinalDay{90}; // 2014-04-01, exclusive.
+    auto final_content=program.collection;
+    std::get<content::ScenarioDefinition>(final_content.definitions.at("scenario.foundation").data).ends_before=core::OrdinalDay{90};
+    const auto final_program=runtime::compile_collection(final_content,program.registry);
     const auto final_directory = scratch.path / "final-autosaves";
-    session::Campaign final_campaign{program, final_checkpoint, final_directory};
+    session::Campaign final_campaign{final_program, final_checkpoint, final_directory};
     for (int day = 0; day != 31; ++day) {
         const auto result = final_campaign.submit({final_campaign.checkpoint().world.simulation.revision, core::AdvanceDay{}});
         require(result.command.accepted() && !result.storage_notice, "Advance through final month boundary");
     }
     require(final_campaign.checkpoint().world.simulation.phase == core::DayPhase::finished &&
-                persistence::AutosaveRing{final_directory}.latest(program).checkpoint == final_campaign.checkpoint(),
+                persistence::AutosaveRing{final_directory}.latest(final_program).checkpoint == final_campaign.checkpoint(),
             "Exclusive campaign ending saves the completed final month");
 
     auto midmonth = campaign.checkpoint();
     midmonth.world.simulation.end_date = core::OrdinalDay{60}; // March 2, independent of month boundary.
+    auto ending_content=program.collection;
+    std::get<content::ScenarioDefinition>(ending_content.definitions.at("scenario.foundation").data).ends_before=core::OrdinalDay{60};
+    const auto ending_program=runtime::compile_collection(ending_content,program.registry);
     const auto ending_directory = scratch.path / "midmonth-autosaves";
-    session::Campaign ending{program, midmonth, ending_directory};
+    session::Campaign ending{ending_program, midmonth, ending_directory};
     require(ending.submit({ending.checkpoint().world.simulation.revision, core::AdvanceDay{}}).command.accepted() &&
-                persistence::AutosaveRing{ending_directory}.latest(program).checkpoint == ending.checkpoint(),
+                persistence::AutosaveRing{ending_directory}.latest(ending_program).checkpoint == ending.checkpoint(),
             "A scenario ending between month boundaries still saves its final state");
 }
 void consumption_and_suspended_month() {

@@ -57,7 +57,9 @@ void batches() {
     check(review(ui) && ui.ready() && ui.canFinalize() && tracked(scratch.root) == before, "Graphical review wrote files or lacked a valid plan");
     check(ui.changes().size() == 1 && ui.changes().front().toMap().value(QStringLiteral("revision")).toString() == QStringLiteral("2"), "Multiple edits incremented a definition more than once in review");
     check(ui.textChanges().size() == 1 && ui.textChanges().front().toMap().value(QStringLiteral("after")).toString().endsWith(QStringLiteral("Reviewed wording.")), "The actual before/after visible text was omitted");
-    check(ui.writes().size() == 6 && ui.validationSummary().contains(QStringLiteral("3 exact save")) && ui.releaseSummary().contains(QStringLiteral("unresolved")), "Graphical review hid files, exact-save validation or pending requirements");
+    const auto fixture=Json::parse(read(scratch.root/runtime_path));std::size_t saves=0;
+    for (const auto& definition:fixture.at("definitions")) if (definition.at("kind")=="scenario") saves+=definition.at("headquarters_choices").size();
+    check(ui.writes().size() == 6 && ui.validationSummary().contains(QStringLiteral("%1 exact save").arg(saves)) && ui.releaseSummary().contains(QStringLiteral("unresolved")), "Graphical review hid files, exact-save validation or pending requirements");
     ui.set_context(scratch.name(), QStringLiteral("data/drafts/batch.json"), 1, true, false);
     check(!ui.ready() && !review(ui) && !ui.finalizeReview() && tracked(scratch.root) == before, "An unsaved content edit could use an old reviewed plan");
     ui.set_context(scratch.name(), QStringLiteral("data/drafts/batch.json"), 2, false, false); check(review(ui), "A clean saved context could not review");

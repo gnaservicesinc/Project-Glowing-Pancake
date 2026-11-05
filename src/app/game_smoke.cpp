@@ -181,19 +181,22 @@ void schedule_game_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
 // smoke inspects checkpoints only for assertions; it never installs a prepared
 // save, alters hidden capability, skips a day, or injects a business command.
 void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,
-    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot) {
+    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot,bool competition) {
     using namespace pgp;
     struct PlayableSmoke {
         int phase=0,attempts=0;
+        int progress_phase=-1;
+        std::int64_t progress_day=-1;
         QString baseline,targeted,evidence;
         bridge::CampaignSnapshotPtr saved;
         bool requested=false;
+        bool published=false,adopted=false,priced=false,final_saved=false;
     };
     auto smoke=std::make_shared<PlayableSmoke>();
     auto* timer=new QTimer(&window);timer->setInterval(20);
     const auto save_path=paths.saves_directory/"playable-smoke.pgpsave";
     const auto save_url=QUrl::fromLocalFile(QString::fromStdU16String(save_path.u16string()));
-    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,smoke,expected,save_path,save_url,paths,screenshot] {
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,smoke,expected,save_path,save_url,paths,screenshot,competition] {
         const auto item=[&](const char* name){return visual_item(window.contentItem(),QString::fromLatin1(name));};
         const auto fail=[&](const char* why) { qCritical()<<"Playable smoke failed:"<<why<<"phase"<<smoke->phase<<campaign.notice();timer->stop();QCoreApplication::exit(3); };
         const auto press=[&](const char* name){if (!key(window,item(name),Qt::Key_Space)) {auto* c=item(name);qCritical()<<"Control"<<name<<c<<(c?c->isVisible():false)<<(c?c->isEnabled():false);fail(name);return false;}return true;};
@@ -207,6 +210,11 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
         if (++smoke->attempts>5000) {fail("timed out");return;}
         if (!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
         auto* manager=campaign.management();const auto checkpoint=campaign.snapshot();const auto& state=checkpoint->checkpoint.world.simulation;
+        // Bound stalls, not the entire advancing campaign. Larger rosters keep
+        // making real daily progress while monthly saves validate more history.
+        if (smoke->phase!=smoke->progress_phase || state.date.value()!=smoke->progress_day) {
+            smoke->progress_phase=smoke->phase;smoke->progress_day=state.date.value();smoke->attempts=0;
+        }
         // Every fast tick still stops at an actual required presentation.
         if (!campaign.welcome() && campaign.requiredKind()!=QStringLiteral("none")) {
             if (campaign.requiredKind()==QStringLiteral("content")) {
@@ -228,12 +236,24 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             if (!campaign.welcome() || campaign.headquarters().size()!=3 || window.rendererInterface()->graphicsApi()!=expected ||
                 std::filesystem::exists(save_path) || std::filesystem::exists(paths.settings_file)) {fail("fresh bundled welcome, headquarters or renderer");return;}
             auto* hq=item("headquartersChoice");if (!hq || !hq->setProperty("currentIndex",1)) {fail("headquarters selector");return;}
+            auto* setup=item("competitionChoice");if (!setup) {fail("competition selector");return;}
+            if (competition) {
+                if (setup->property("currentValue").toString()!=QStringLiteral("scenario.world_competition")) {fail("standard roster is not the default setup");return;}
+            } else {
+                const auto choices=campaign.scenarios();int intro=-1;
+                for (qsizetype i=0;i<choices.size();++i) if (choices.at(i).toMap().value(QStringLiteral("id"))==QStringLiteral("scenario.first_playable")) intro=static_cast<int>(i);
+                if (intro<0 || !setup->setProperty("currentIndex",intro)) {fail("introductory roster selection");return;}
+            }
             campaign.setDaysPerSecond(60);
             if (press("newCampaignButton")) smoke->phase=1;
             return;
         }
         case 1:
             if (campaign.welcome() || checkpoint->checkpoint.world.state_id!="state.us_tx" || !campaign.paused()) {fail("headquarters choice was not committed");return;}
+            if (competition) {
+                if (!manager->plannedCompetition() || checkpoint->checkpoint.world.scenario_id!="scenario.world_competition" || checkpoint->checkpoint.world.competition->companies.size()!=15) {fail("standard fifteen-company setup was not committed");return;}
+                press("office_rivals");if (!capture(QStringLiteral("-competition"))) {fail("public rival capture");return;}
+            }
             if (!capture(QStringLiteral("-office"))) {fail("office capture");return;}
             press("office_funding");manager->funding()->setSelectedId(QStringLiteral("finance.bridge_equity"));
             if (press("takeFinancingButton")) smoke->phase=30;return;
@@ -267,11 +287,20 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
         case 8:
             if (!state.lab->evaluations.front().completed) {play();return;}
             if (!pause()) return;
+            if (competition && !smoke->published) {
+                press("lab_research");manager->researchTopics()->setSelectedId(QStringLiteral("research.held_out_evaluation"));
+                if (press("publishResearchButton")) smoke->phase=36;return;
+            }
             if (!manager->evidence()->selectedRow().value(QStringLiteral("detail")).toString().contains(QStringLiteral("scanned tables"))) {fail("concrete subgroup finding missing");return;}
             if (!capture(QStringLiteral("-evidence"))) {fail("evidence capture");return;}
             press("lab_deploy");if (press("deployButton")) smoke->phase=9;return;
         case 9:
             if (state.deployments->records.size()!=1) {fail("qualified document-only deployment");return;}
+            if (competition && !smoke->priced) {
+                press("lab_deploy");manager->products()->setSelectedId(QStringLiteral("product.documents"));
+                if (!set("productPriceField",QStringLiteral("149"))) {fail("service price input");return;}
+                if (press("setProductPriceButton")) smoke->phase=38;return;
+            }
             press("officeTab");press("office_offers");manager->offers()->setSelectedId(QStringLiteral("offer.enterprise_service"));
             if (press("acceptOfferButton")) smoke->phase=10;return;
         case 10:
@@ -313,6 +342,18 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             if (checkpoint->checkpoint!=smoke->saved->checkpoint || !campaign.paused()) {fail("exact playable campaign reload");return;}
             press("officeTab");play();smoke->phase=21;return;
         case 21:
+            if (competition && !smoke->adopted && state.phase!=core::DayPhase::finished) {
+                QString adopt;
+                for (int i=0;i<manager->researchTopics()->rowCount();++i) {
+                    const auto id=manager->researchTopics()->data(manager->researchTopics()->index(i),bridge::StableListModel::IdRole).toString();
+                    const auto row=manager->researchTopics()->row(id);
+                    if (row.value(QStringLiteral("fields")).toMap().value(QStringLiteral("canAdopt")).toBool()) {adopt=id;break;}
+                }
+                if (!adopt.isEmpty()) {
+                    if (!pause()) return;press("labTab");press("lab_research");manager->researchTopics()->setSelectedId(adopt);
+                    if (press("adoptPublicationButton")) smoke->phase=37;return;
+                }
+            }
             if (state.phase!=core::DayPhase::finished) {
                 if (state.phase==core::DayPhase::closed) {fail("company closed before ending");return;}
                 play();return;
@@ -320,7 +361,14 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             if (state.cash.value()<=0 || state.date!=core::to_ordinal({2017,1,1}) || manager->ending().isEmpty() || manager->rivals()->rowCount()<3) {fail("ending or public rival presentation");return;}
             if (state.business_offers->renewals.size()!=1 || state.management->policies.front().runs!=1 || state.management->policies.back().runs!=1 ||
                 core::required_management_notice(state) || !core::slice_score(state).final || !manager->ending().contains(QStringLiteral("slice score"))) {fail("policy/recovery/scoring ending");return;}
+            if (competition) {
+                const auto& rivals=*checkpoint->checkpoint.world.competition;
+                if (!smoke->published || !smoke->adopted || !smoke->priced || rivals.releases.size()<2 || rivals.adoptions.empty() ||
+                    std::any_of(rivals.companies.begin(),rivals.companies.end(),[](const auto& row){return !row.planning->entered_on;})) {fail("staged entry, public research, pricing or shared adoption was not exercised");return;}
+                if (!smoke->final_saved) {smoke->saved=checkpoint;campaign.saveTo(save_url);smoke->phase=39;return;}
+            }
             if (!capture({})) {fail("ending capture");return;}
+            if (competition) qInfo()<<"Competition UI additions passed: standard fifteen-company default, staged entry, explicit research publication/adoption, current prices and exact complete-roster save; bytes"<<std::filesystem::file_size(save_path);
             qInfo()<<"Playable UI smoke passed: Texas start, fixed equity financing, hired specialist, bounded evaluation/renewal policies, milestone, paid data/research, subgroup finding, deployments, contract, exact reload, mandatory setback/restoration, rivals and scored solvent 2017 ending; cash cents"<<state.cash.value()<<"text scale"<<campaign.textScalePercent()<<"renderer"<<graphics::name(expected);
             timer->stop();QCoreApplication::exit(0);return;
         case 30:
@@ -348,6 +396,23 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             if (state.management->policies.size()!=2 || state.management->policies.back().kind!=core::DelegationKind::lease_renewal) {fail("bounded renewal authorization");return;}
             press("labTab");press("lab_data");manager->dataOffers()->setSelectedId(QStringLiteral("data.consented_scans"));
             if (press("buyDataButton")) smoke->phase=11;return;
+        case 36:
+            if (state.lab->publications.empty()) {fail("explicit research publication did not commit");return;}
+            smoke->published=true;if (!capture(QStringLiteral("-publication"))) {fail("publication capture");return;}
+            press("lab_evaluate");smoke->phase=8;return;
+        case 37:
+            if (state.lab->insights.empty()) {fail("public research adoption did not commit");return;}
+            smoke->adopted=true;press("officeTab");play();smoke->phase=21;return;
+        case 38:
+            if (state.market->products.front().price_per_task!=core::Cents{149} || state.market->prices.empty()) {fail("explicit price change did not preserve history");return;}
+            smoke->priced=true;if (!capture(QStringLiteral("-price"))) {fail("price capture");return;}
+            smoke->phase=9;return;
+        case 39:
+            if (!std::filesystem::exists(save_path)) {fail("complete roster manual save");return;}
+            campaign.loadFrom(save_url);smoke->phase=40;return;
+        case 40:
+            if (checkpoint->checkpoint!=smoke->saved->checkpoint || !campaign.paused()) {fail("complete roster final save did not reload exactly");return;}
+            smoke->final_saved=true;smoke->phase=21;return;
         default:fail("unknown smoke phase");return;
         }
     });

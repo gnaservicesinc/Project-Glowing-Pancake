@@ -117,13 +117,27 @@ void specialist_policy(runtime::Runtime& engine,const content::ScenarioDefinitio
     }
     if (frozen_model(engine,"specialist")) deploy(engine,scenario,"product.document_specialist","specialist","delegated.specialist_checks.1",false);
 }
+void competition_policy(runtime::Runtime& engine,const content::ScenarioDefinition& scenario) {
+    // This engineering route buys the same disclosed financing and protected
+    // customer contract exposed in the Office; the intro specialist is unchanged.
+    const auto& funding=engine.current_state().world.simulation.management->financing;
+    if (std::none_of(funding.begin(),funding.end(),[](const auto& row){return row.offer_id=="finance.bridge_equity";}))
+        apply(engine,TakeFinancing{"finance.bridge_equity"});
+    specialist_policy(engine,scenario);
+    if (frozen_model(engine,"specialist")) deploy(engine,scenario,"product.documents","specialist","delegated.specialist_checks.1",false);
+    const auto& state=engine.current_state().world.simulation;
+    if (find(state.market->products,"product.documents") &&
+        std::none_of(state.business_offers->accepted.begin(),state.business_offers->accepted.end(),[](const auto& row){return row.offer_id=="offer.enterprise_service";}))
+        apply(engine,AcceptBusinessOffer{"offer.enterprise_service"});
+}
 }
 SliceRun run_slice(const runtime::CompiledProgram& program,std::optional<core::OrdinalDay> stop_before,
-                  std::optional<runtime::Checkpoint> resume,bool specialist) {
-    const auto* definition=program.collection.find("scenario.first_playable");
+                  std::optional<runtime::Checkpoint> resume,bool specialist,std::string_view scenario_id="scenario.first_playable") {
+    const auto* definition=program.collection.find(scenario_id);
     const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
     if (!scenario) throw std::invalid_argument("First-playable scenario is missing");
     auto initial=resume?std::move(*resume):runtime::begin_scenario(program,definition->id,"US-CA");
+    if (!initial.world.scenario_id.empty() && initial.world.scenario_id!=scenario_id) throw std::invalid_argument("Resume the same authored scenario as the saved company");
     if (!resume && initial.world.enabled_flows) {
         auto& roots=*initial.world.enabled_flows;
         roots.erase(std::remove_if(roots.begin(),roots.end(),[&](const auto& id) {
@@ -141,7 +155,8 @@ SliceRun run_slice(const runtime::CompiledProgram& program,std::optional<core::O
         const auto ready=engine.prepare_opening(simulation.revision);
         if (!ready.accepted()) throw std::runtime_error(ready.explanation);
         choices(engine);
-        if (specialist) specialist_policy(engine,*scenario);else policy(engine,*scenario);
+        if (scenario->competition) competition_policy(engine,*scenario);
+        else if (specialist) specialist_policy(engine,*scenario);else policy(engine,*scenario);
         apply(engine,AdvanceDay{});
     }
     throw std::runtime_error("Baseline scenario exceeded its authored three-year day bound");
@@ -151,6 +166,11 @@ SliceRun run_slice_baseline(const runtime::CompiledProgram& program,std::optiona
 }
 SliceRun run_slice_specialist(const runtime::CompiledProgram& program,std::optional<core::OrdinalDay> stop_before,std::optional<runtime::Checkpoint> resume) {
     return run_slice(program,stop_before,std::move(resume),true);
+}
+SliceRun run_competition_specialist(const runtime::CompiledProgram& program,std::string_view id,std::optional<core::OrdinalDay> stop_before,std::optional<runtime::Checkpoint> resume) {
+    const auto* definition=program.collection.find(id);const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
+    if (!scenario || !scenario->competition) throw std::invalid_argument("Choose an authored weekly-planning competition scenario");
+    return run_slice(program,stop_before,std::move(resume),true,id);
 }
 
 }

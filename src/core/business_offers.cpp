@@ -151,7 +151,7 @@ void validate_business_offers(const BusinessOffersState& state,const AccountsSta
         if (offer.kind==BusinessOfferKind::compute_lease) {
             const auto& source=find(capacity.sources,source_id(offer));
             const auto& obligation=find(accounts.recurring,"offer.lease/"+offer.id);
-            if (source.nominal!=offer.capacity || source.available_from!=accepted.accepted_on || source.kind!=CapacitySourceKind::leased ||
+            if (source.nominal!=offer.capacity || source.available_from!=accepted.accepted_on || source.physical_id!="cloud.offer/"+offer.id || source.kind!=CapacitySourceKind::leased ||
                 source.provider!="supplier.slice" || !source.energy_included || source.owner!=accounts.owner ||
                 obligation.starts_on!=accepted.accepted_on || obligation.ends_before!=accepted.expires_before || obligation.monthly_amount!=offer.monthly_amount)
                 invalid("Accepted lease differs from its actual source or obligation");

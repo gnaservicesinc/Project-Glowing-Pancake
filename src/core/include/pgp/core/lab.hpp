@@ -73,7 +73,19 @@ struct DataLicense {
 struct ResearchRun {
     std::string research_id, project_id;
     bool completed = false;
+    BasisPoints insight_credit{0};
     auto operator<=>(const ResearchRun&) const = default;
+};
+struct ResearchPublication {
+    std::string research_id;
+    OrdinalDay day{0};
+    auto operator<=>(const ResearchPublication&) const = default;
+};
+struct ResearchInsight {
+    std::string research_id,publisher;
+    OrdinalDay published_on{0},observed_on{0};
+    BasisPoints credit{0};
+    auto operator<=>(const ResearchInsight&) const = default;
 };
 struct LabModel {
     std::string id, recipe_id, parent_id, project_id;
@@ -103,6 +115,8 @@ struct LabState {
     std::vector<ResearchRun> research;
     std::vector<LabModel> models;
     std::vector<EvaluationEvidence> evaluations;
+    std::vector<ResearchPublication> publications{};
+    std::vector<ResearchInsight> insights{};
     auto operator<=>(const LabState&) const = default;
 };
 struct TrainingRequest {
@@ -158,6 +172,8 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
 void buy_data(LabState& state, AccountsState& accounts, OrdinalDay day, std::string_view offer_id, Cents protected_cash);
 void start_research(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day,
                     std::string_view research_id, const LabAllocation& allocation, Cents protected_cash);
+void publish_research(LabState& state, const CapacityState& capacity, OrdinalDay day, std::string_view research_id);
+void acquire_research_insight(LabState& state, OrdinalDay day, ResearchInsight insight);
 void start_training(LabState& state, CapacityState& capacity, OrdinalDay day, const TrainingRequest& request);
 void clone_model(LabState& state, const CapacityState& capacity, OrdinalDay day,
                  std::string_view source_id, std::string id);

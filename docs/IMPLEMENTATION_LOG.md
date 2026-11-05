@@ -1016,3 +1016,69 @@ deferred to v1 preparation after all components exist.
 
 Count: **26/52 Mac feature steps**. Next: **M4-01 rival planning and staged entry**.
 [Graphical workflow and reproducible checks](../src/studio/SNAPSHOTS.md).
+
+
+## 2026-11-05 — M4-01 planned rivals and one shared customer market
+
+Completed the full default rival schedule, with six domestic/six international
+startups and three heavyweights; six startups enter initially. Reduced (7),
+expanded (20) and forgiving presets retain explicit saved settings. Dormant
+companies own no resources or bills. Weekly strategies use one independent
+saved draw, own actual budgets/evidence, authored portfolios/runway/publication
+preferences and bounded observations of last-settled public facts. They buy
+licenses, research prerequisites, train/evaluate/qualify services, price from
+own real costs, hire, finance/repay, expand through paid offers and optionally
+publish through the same core commands. Insolvent companies close; the optional
+catch-up offer is one actual $300,000 equity round for 15% ownership.
+
+The industry coordinator protects signed work and uses the existing integer
+allocator once for the common task/customer-budget pool. Per-owner settlement
+retains actual invoices, capacity/eligibility limits and historical prices;
+monthly industry adoption comes from delivered work and the true outside
+option. A completed public paper can grant one 25% finite experiment-work
+credit after 30 days, preserving prerequisites and cash costs. The game exposes
+setup presets, public releases/quotes and research publication/adoption/pricing.
+
+Verification: **62/62 optimized Mac CTests**, four workers, **16.47s**, including
+**51 focused competition assertions** covering shared contract priority/budget,
+entry/reload, private-information isolation, industry/local share rounding, real research/work, delayed
+publication, finite dilution/closure and forged/oversized-history references.
+The strengthened scenario-identity check caught old autosave fixtures that
+changed only saved ending dates; those fixtures now compile matching authored
+scenario dates. Snapshot tests derive actual scenario/definition counts.
+Standard and expanded full three-year funded efficient routes finish 2017 with
+$1,893,817.76 / $1,584,124.76 and exact saves of 22,501,764 / 24,610,924 bytes.
+Lossless fixed-column rows and bounded string tables preserve every rival ledger
+and work record under the existing 25 MiB byte cap. The decoder also bounds
+expanded cells/referenced strings; its default JSON-event budget is four million.
+A three-company 9,999-task hand case proves a one-task migration quota granted
+by the industry Hamilton share is accepted using that same snapshot, while the
+local-only quota refuses it atomically. Caller-supplied industry context is
+refused by the authoritative runtime, and historical industry caps are checked.
+
+The actual bundled **Metal 1280×720 / 200% text** UI path selects the default
+15-company setup, buys fixed financing/staff/data, publishes and adopts real
+research, changes price, deploys two qualified services, accepts a protected
+contract, handles the supplier setback, uses bounded evaluation/renewal policies
+and reaches 2017 with $1,503,361.57, 3,481,282 delivered tasks and a 94/100 slice
+score. Its 22,365,395-byte final manual save reloads exactly. The smoke harness
+now detects stalls by phase/day progress instead of exhausting a fixed tick
+budget during an advancing larger-roster campaign.
+
+The shared snapshot writer reviews/finalizes four new revision-1 scenarios as
+content **0.2.0-dev.1**, generation 2, hash
+`04e2761cd39c7adb788e754562f3ecb4fa072ee564a89ac006febcbdb7f72668`.
+The original 15 definitions remain unchanged; all five scenarios / 15 prepared
+headquarters saves round-trip with no lints. Game/editor remain 0.0.0-dev, phase
+planning, required game 0.1.0-dev.1 unresolved. Development saves require exact
+content identity; no migration or release is claimed. The graphical finalizer
+walkthrough now derives its next version/generation and all opening checks from
+the selected checkout, so a later finalized batch remains usable. Its Metal
+forms/canvas/finalizer walkthrough also passes on an isolated copy of generation
+2: six definitions finalize as generation 3 / content 0.3.0-dev.1, with conflict,
+no-op, recovery and explicit game-version checks; primary artifacts stay unchanged.
+
+Count: **27/52 Mac feature steps**. Next: **M4-02 heavyweight mobilization and
+deals**. Century rivalry/entry/consolidation and save scaling remain M8; platform,
+packaging and human studies remain deferred. No testers were contacted or human
+sessions conducted. [Owning contract](../src/runtime/COMPETITION.md).

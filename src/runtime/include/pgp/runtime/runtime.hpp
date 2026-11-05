@@ -45,6 +45,7 @@ struct WorldState {
     // Sparse overrides; an absent value reads its registered scoped default.
     std::vector<VariableValue> variables{};
     std::optional<CompetitionState> competition{};
+    std::string scenario_id{};
     auto operator<=>(const WorldState&) const = default;
 };
 

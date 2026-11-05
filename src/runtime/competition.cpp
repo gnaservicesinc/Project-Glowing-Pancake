@@ -1,5 +1,6 @@
 #include <pgp/runtime/competition.hpp>
 #include <pgp/runtime/runtime.hpp>
+#include "competition_internal.hpp"
 #include <algorithm>
 #include <set>
 #include <stdexcept>
@@ -82,7 +83,8 @@ const content::RivalDefinition& rival_definition(const CompiledProgram& program,
     if (!result) invalid("Rival definition is missing");
     return *result;
 }
-void initialize_competition(WorldState& world,const CompiledProgram& program,const std::vector<content::RivalDefinition>& definitions) {
+void initialize_competition(WorldState& world,const CompiledProgram& program,const std::vector<content::RivalDefinition>& definitions,const std::optional<content::CompetitionSetup>& setup) {
+    if (setup) {competition_detail::initialize_planning(world,program,definitions,*setup);return;}
     if (definitions.empty()) return;
     if (!world.simulation.lab) invalid("Competition requires the shared lab catalog");
     CompetitionState competition;
@@ -105,8 +107,9 @@ void initialize_competition(WorldState& world,const CompiledProgram& program,con
     world.competition=std::move(competition);
     for (auto& rival:world.competition->companies) plan(world,program,rival);
 }
-void advance_competition(WorldState& world,const CompiledProgram& program,OrdinalDay prior_day) {
+void advance_competition(WorldState& world,const CompiledProgram& program,OrdinalDay prior_day,const IndustryAllocations& assignments) {
     if (!world.competition) return;
+    if (world.competition->setup) {competition_detail::advance_planning(world,program,prior_day,assignments);return;}
     for (auto& rival:world.competition->companies) {
         if (rival.simulation.phase==DayPhase::closed || rival.simulation.phase==DayPhase::finished) continue;
         if (rival.simulation.date!=prior_day) invalid("Rival daily cursor differs from the player settlement");
@@ -129,7 +132,10 @@ void advance_competition(WorldState& world,const CompiledProgram& program,Ordina
 }
 void validate_competition(const WorldState& world,const CompiledProgram& program,bool deep) {
     if (!world.competition) return;
+    if (world.competition->setup) {competition_detail::validate_planning(world,program,deep);return;}
     const auto& competition=*world.competition;
+    if (!competition.releases.empty() || !competition.adoptions.empty() || std::any_of(competition.companies.begin(),competition.companies.end(),[](const auto& row){return row.planning.has_value();}))
+        invalid("Legacy bounded competition cannot adopt an undeclared planner or industry state");
     if (competition.companies.size()>32 || competition.notices.size()>128 || !world.simulation.lab)
         invalid("Competition state exceeds its bounds or has no lab catalog");
     std::set<std::string_view> ids;

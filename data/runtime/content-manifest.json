@@ -1,13 +1,13 @@
 {
   "assets": [],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "a09060be69908bea63cd9b6fa04e06f275f1226cfaf6977a7e0d7ec647b0c26f",
+  "collection_hash": "04e2761cd39c7adb788e754562f3ecb4fa072ee564a89ac006febcbdb7f72668",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.1.0-dev.1",
+  "content_version": "0.2.0-dev.1",
   "definitions": [
     {
       "id": "research.data_deduplication",
@@ -50,6 +50,30 @@
       "kind": "scenario",
       "revision": 1,
       "semantic_hash": "38401db133b15d84b0f2a3c457de4938f261c358f754064158aa38a664107010"
+    },
+    {
+      "id": "scenario.world_competition",
+      "kind": "scenario",
+      "revision": 1,
+      "semantic_hash": "7afbd40f6558e1bce62e4f16edba0754ef0e21fefbfaeaa74b78fb6c2ca15cb0"
+    },
+    {
+      "id": "scenario.world_expanded",
+      "kind": "scenario",
+      "revision": 1,
+      "semantic_hash": "bf7cfe60f81da61cf768b87b033368da6e96443718f6d4c7519db2cb18cfd3f7"
+    },
+    {
+      "id": "scenario.world_forgiving",
+      "kind": "scenario",
+      "revision": 1,
+      "semantic_hash": "035528a12558afcfcd9e3df58a3c8143169294fa5fcb68675d9c6c0fbb22dd12"
+    },
+    {
+      "id": "scenario.world_reduced",
+      "kind": "scenario",
+      "revision": 1,
+      "semantic_hash": "3e268619d3ac444c9fe16b821ab4d2fb8cf0a2a9c6a6dca392421b6051e1c47e"
     },
     {
       "id": "slice.evaluation_finding",
@@ -101,7 +125,7 @@
     }
   ],
   "format": 1,
-  "generation": 1,
+  "generation": 2,
   "messages_hash": "229e14da301917150b15a80e264cb4033d1159bd18f1b6491171eca3476b6b68",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
@@ -114,7 +138,47 @@
       "slice.supplier_offer",
       "slice.market_shift",
       "slice.recovery_opportunity"
+    ],
+    "scenario.world_competition": [
+      "slice.research_milestone",
+      "slice.evaluation_finding",
+      "slice.pilot_result",
+      "slice.liquidity_warning",
+      "slice.rival_notice",
+      "slice.supplier_offer",
+      "slice.market_shift",
+      "slice.recovery_opportunity"
+    ],
+    "scenario.world_expanded": [
+      "slice.research_milestone",
+      "slice.evaluation_finding",
+      "slice.pilot_result",
+      "slice.liquidity_warning",
+      "slice.rival_notice",
+      "slice.supplier_offer",
+      "slice.market_shift",
+      "slice.recovery_opportunity"
+    ],
+    "scenario.world_forgiving": [
+      "slice.research_milestone",
+      "slice.evaluation_finding",
+      "slice.pilot_result",
+      "slice.liquidity_warning",
+      "slice.rival_notice",
+      "slice.supplier_offer",
+      "slice.market_shift",
+      "slice.recovery_opportunity"
+    ],
+    "scenario.world_reduced": [
+      "slice.research_milestone",
+      "slice.evaluation_finding",
+      "slice.pilot_result",
+      "slice.liquidity_warning",
+      "slice.rival_notice",
+      "slice.supplier_offer",
+      "slice.market_shift",
+      "slice.recovery_opportunity"
     ]
   },
-  "source_hash": "6ddcfa062e5747ccd1735a103c24ee1f14dd765aa3311d8d879c172c43553b8f"
+  "source_hash": "bb7bdc0b92fda4ba210438e1c2210a7326222731a85eee9f0d2ca623715c8ec9"
 }

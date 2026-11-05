@@ -62,15 +62,17 @@ void CampaignWorker::complete(std::uint64_t token, const session::OperationResul
     if (token != 0) emit operationCompleted(static_cast<qulonglong>(token),result.command.accepted(),
         result.command.accepted() && !result.storage_notice ? QString{} : message);
 }
-void CampaignWorker::newCampaign(std::uint64_t token,std::string headquarters,bool stories) {
+void CampaignWorker::newCampaign(std::uint64_t token,std::string headquarters,bool stories,std::string id) {
     requireOwningThread();
     try {
         if (generation_==std::numeric_limits<std::uint64_t>::max()) throw std::overflow_error("Campaign generation is exhausted");
-        std::string id;
-        for (const auto& [candidate,definition]:campaign_.program().collection.definitions) {
+        if (id.empty()) for (const auto& [candidate,definition]:campaign_.program().collection.definitions) {
             const auto* scenario=std::get_if<content::ScenarioDefinition>(&definition.data);
             if (scenario && scenario->service_catalog) { id=candidate;break; }
         }
+        const auto* selected=campaign_.program().collection.find(id);
+        const auto* selected_scenario=selected?std::get_if<content::ScenarioDefinition>(&selected->data):nullptr;
+        if (!selected_scenario || !selected_scenario->service_catalog) throw std::invalid_argument("Choose a playable scenario from this content collection");
         auto initial=runtime::begin_scenario(campaign_.program(),id,headquarters);
         if (!stories && initial.world.enabled_flows) {
             auto& roots=*initial.world.enabled_flows;

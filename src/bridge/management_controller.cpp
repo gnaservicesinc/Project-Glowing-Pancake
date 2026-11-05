@@ -65,12 +65,29 @@ QString offer_terms(const core::BusinessOffer& offer) {
             number(offer.tasks_per_day)+QStringLiteral(" promised tasks/day · ")+readable(offer.product_id)+QStringLiteral(". Revenue follows actual delivery; no setup revenue."),
             text(core::iso_date(offer.available_from)),text(core::iso_date(offer.available_before)));
 }
+std::optional<core::ResearchInsight> public_insight(const runtime::WorldState& world,std::string_view id) {
+    if (!world.competition || !world.competition->setup || world.competition->setup->publication_credit.value()==0) return {};
+    std::optional<core::ResearchInsight> result;
+    for (const auto& rival:world.competition->companies) if (rival.planning && rival.planning->entered_on) for (const auto& publication:rival.simulation.lab->publications)
+        if (publication.research_id==id && (!result || std::tie(publication.day,rival.definition_id)<std::tie(result->published_on,result->publisher)))
+            result=core::ResearchInsight{std::string(id),rival.definition_id,publication.day,world.simulation.date,world.competition->setup->publication_credit};
+    return result;
+}
 }
 ManagementController::ManagementController(QObject* parent):QObject(parent),funding_(new StableListModel(this)),specialists_(new StableListModel(this)),
     policies_(new StableListModel(this)),decisions_(new StableListModel(this)),alerts_(new StableListModel(this)),data_(new StableListModel(this)),research_(new StableListModel(this)),
     models_(new StableListModel(this)),evidence_(new StableListModel(this)),offers_(new StableListModel(this)),products_(new StableListModel(this)),
     contracts_(new StableListModel(this)),rivals_(new StableListModel(this)),payables_(new StableListModel(this)) {}
 bool ManagementController::available() const { return snapshot_ && state().lab && state().deployments; }
+bool ManagementController::plannedCompetition() const {return snapshot_ && snapshot_->checkpoint.world.competition && snapshot_->checkpoint.world.competition->setup.has_value();}
+QString ManagementController::competitionSummary() const {
+    if (!plannedCompetition()) return QStringLiteral("Introductory roster. Public notices describe finite rival training and heavyweight warnings.");
+    const auto& competition=*snapshot_->checkpoint.world.competition;const auto& setup=*competition.setup;
+    const auto entered=std::count_if(competition.companies.begin(),competition.companies.end(),[](const auto& row){return row.planning->entered_on.has_value();});
+    return QStringLiteral("%1 US startups · %2 international startups · %3 heavyweights. %4 companies have entered; others are scheduled or watching. One shared customer task/budget pool; contracts keep priority. Public research takes %5 days to adopt and reduces later research work by %6; cash costs and prerequisites remain. %7")
+        .arg(setup.domestic).arg(setup.international).arg(setup.heavyweights).arg(entered).arg(setup.publication_delay.value()).arg(percent(setup.publication_credit),
+            setup.catchup_cash.value()>0?QStringLiteral("One optional catch-up round per rival: %1 for %2 ownership.").arg(money(setup.catchup_cash),percent(setup.catchup_acquired)):QStringLiteral("Catch-up funding is disabled."));
+}
 const core::SimulationState& ManagementController::state() const { return snapshot_->checkpoint.world.simulation; }
 void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::CompiledProgram& program,bool replace) {
     snapshot_=std::move(snapshot);
@@ -91,10 +108,19 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             QStringList alternatives; for (const auto& id:row.any_of) alternatives.push_back(readable(id));
             if (!alternatives.empty()) prerequisites.push_back(QStringLiteral("one of: ")+alternatives.join(QStringLiteral(", ")));
             const auto status=research_status(*s.lab,*s.capacity,row.id);
+            const bool published=std::any_of(s.lab->publications.begin(),s.lab->publications.end(),[&](const auto& publication){return publication.research_id==row.id;});
+            const auto insight=public_insight(snapshot_->checkpoint.world,row.id);
+            const bool has_insight=std::any_of(s.lab->insights.begin(),s.lab->insights.end(),[&](const auto& value){return value.research_id==row.id;});
+            const bool can_adopt=insight && !has_insight && status!=QStringLiteral("Completed") && status!=QStringLiteral("In progress") &&
+                s.date>=core::advance_days(insight->published_on,snapshot_->checkpoint.world.competition->setup->publication_delay);
             research.push_back({text(row.id),readable(row.id),money(row.cash)+QStringLiteral(" · ")+QString::number(row.staff_days.value())+QStringLiteral(" staff-days"),
                 QStringLiteral("%1 CU of finite experiments plus %2 staff-days. Both must complete.\nPrerequisites: %3\nPaid work and staff time are not refunded when stopped.")
                     .arg(cu(row.experiment_work.value()),QString::number(row.staff_days.value()),prerequisites.isEmpty()?QStringLiteral("none"):prerequisites.join(QStringLiteral(", "))),status,
-                status!=QStringLiteral("Completed") && status!=QStringLiteral("In progress")});
+                status!=QStringLiteral("Completed") && status!=QStringLiteral("In progress"),{{QStringLiteral("completed"),status==QStringLiteral("Completed")},{QStringLiteral("published"),published},{QStringLiteral("canAdopt"),can_adopt}}});
+            research.back().detail+=published?QStringLiteral("\nPublished: other companies can adopt this result after the disclosed delay."):QStringLiteral("\nThis result remains private until explicitly published.");
+            if (insight) research.back().detail+=QStringLiteral("\nPublic result from %1 · published %2 · adoption available %3 · %4 work credit. Cash and prerequisites are unchanged.")
+                .arg(readable(insight->publisher),text(core::iso_date(insight->published_on)),text(core::iso_date(core::advance_days(insight->published_on,snapshot_->checkpoint.world.competition->setup->publication_delay))),percent(insight->credit));
+            if (has_insight) research.back().detail+=QStringLiteral("\nPublic work credit has been adopted for this company's later research.");
         }
         for (const auto& row:report.models) {
             const auto* actual=find(s.lab->models,row.id); QStringList mixture;
@@ -130,7 +156,8 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             products.push_back({text(row.id),readable(row.id),work?number(work->tasks_per_day)+QStringLiteral(" tasks/day · ")+money(work->monthly_support_cost)+QStringLiteral(" support/month"):QString{},
                 deployment?QStringLiteral("Model %1 · evidence %2\nControl: %3\n%4 useful tasks delivered\nSource %5 · %6 CU/day · %7 staff\nRetargeting a service preserves contracts and delivery history.")
                     .arg(text(deployment->model_id),text(deployment->evidence_id),deployment->human_review?QStringLiteral("Paid human review; lower throughput"):QStringLiteral("Measured model only"),number(work->useful_tasks),text(work->source_id),cu(work->requested.value()),QString::number(work->staff)):QStringLiteral("Engineering service"),
-                work && work->status==core::ProjectStatus::active?QStringLiteral("Serving"):QStringLiteral("Stopped"),false,{{QStringLiteral("projectId"),text(row.capacity_project_id)}}});
+                work && work->status==core::ProjectStatus::active?QStringLiteral("Serving"):QStringLiteral("Stopped"),false,{{QStringLiteral("projectId"),text(row.capacity_project_id)},{QStringLiteral("priceCents"),QString::number(row.price_per_task.value())}}});
+            products.back().detail+=QStringLiteral("\nCurrent price: %1 per task. Price changes preserve past invoices and signed contract prices.").arg(money(row.price_per_task));
         }
         for (const auto& row:s.market->contracts) {
             const bool active=row.status==core::ContractStatus::pending || row.status==core::ContractStatus::active;
@@ -147,10 +174,21 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             if (!scenario) continue;
             for (const auto& rival:scenario->rivals) if (rival.id==notice.company_id) name=text(rival.name);
         }
-        rivals.push_back({text(notice.company_id)+QLatin1Char(':')+text(notice.kind),name,text(core::iso_date(notice.day)),
+        rivals.push_back({text(notice.company_id)+QLatin1Char(':')+text(notice.kind)+QLatin1Char(':')+text(notice.subject),name,text(core::iso_date(notice.day)),
             notice.response_due ? QStringLiteral("Heavyweight mobilization warning: public customer traction was observed. Earliest response %1. Build a useful, funded service before then; rival capability is not public.").arg(text(core::iso_date(*notice.response_due))) :
-            notice.kind=="publication" ? QStringLiteral("The company published after consuming its own finite training budget. Publication does not reveal private capability or customer fit.") :
+            notice.kind=="publication" ? (notice.subject.empty()?QStringLiteral("The company published after consuming its own finite training budget. Publication does not reveal private capability or customer fit."):QStringLiteral("Published completed research: %1. Adoption needs the disclosed delay and your own research work; private checkpoints remain hidden.").arg(readable(notice.subject))) :
+            notice.kind=="entry" ? QStringLiteral("The company entered with its authored finite capital, staff and lease commitments. Future results and private budgets remain hidden.") :
             notice.kind=="closure" ? QStringLiteral("The company closed after it could not service actual obligations.") : QStringLiteral("The company declined work that exceeded its available budget."),readable(notice.kind),false});
+    }
+    if (plannedCompetition()) for (const auto& release:snapshot_->checkpoint.world.competition->releases) {
+        if (release.company_id==snapshot_->checkpoint.world.company_id) continue;
+        const auto company=std::find_if(snapshot_->checkpoint.world.competition->companies.begin(),snapshot_->checkpoint.world.competition->companies.end(),[&](const auto& row){return row.definition_id==release.company_id;});
+        if (company==snapshot_->checkpoint.world.competition->companies.end()) continue;
+        const auto& definition=runtime::rival_definition(program,release.company_id);const auto& rival=company->simulation;
+        const auto* product=find(rival.market->products,release.product_id);if (!product) continue;
+        rivals.push_back({QStringLiteral("release:")+text(release.company_id)+QLatin1Char(':')+text(release.product_id),text(definition.name)+QStringLiteral(" · ")+readable(release.product_id),
+            money(product->price_per_task)+QStringLiteral(" per task"),QStringLiteral("Public customer deliveries began %1. %2 · %3. This quote reveals the price of a released service; private model capability, cash and future decisions stay hidden.")
+                .arg(text(core::iso_date(release.day)),text(definition.planning->leader),text(definition.planning->region)),rival.phase==core::DayPhase::closed?QStringLiteral("Closed provider"):QStringLiteral("Public service"),false});
     }
     if (s.accounts) {
         for (const auto& row:s.accounts->invoices) if (row.kind==core::InvoiceKind::payable && row.settled<row.amount) {
@@ -334,6 +372,16 @@ QString ManagementController::nextId(QString prefix) const { return prefix+QStri
 void ManagementController::buyData(QString id) { if (editable()) emit actionRequested(core::BuyData{id.toStdString()}); }
 void ManagementController::research(QString id,QString source,QString rate,QString staff) {
     if (!editable()) return; try { emit actionRequested(core::StartResearch{id.toStdString(),allocation(source,rate,staff)}); } catch (const std::exception& e) { emit noticeRaised(QString::fromUtf8(e.what())); }
+}
+void ManagementController::publishResearch(QString id) {if (editable()) emit actionRequested(core::PublishResearch{id.toStdString()});}
+void ManagementController::acquirePublication(QString id) {
+    if (!editable()) return;
+    if (const auto insight=public_insight(snapshot_->checkpoint.world,id.toStdString())) emit actionRequested(core::AcquireResearchInsight{*insight});
+}
+void ManagementController::setProductPrice(QString id,QString cents) {
+    if (!editable()) return;
+    try {emit actionRequested(core::SetMarketPrice{id.toStdString(),core::Cents{cents==QStringLiteral("0")?0:integer(cents,core::market_price_limit)}});}
+    catch (const std::exception& error) {emit noticeRaised(QString::fromUtf8(error.what()));}
 }
 void ManagementController::train(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent) {
     if (!editable()) return; try { emit actionRequested(core::StartTraining{request(nextId(QStringLiteral("model.")),recipe,source,data,rate,staff,work,parent)}); } catch (const std::exception& e) { emit noticeRaised(QString::fromUtf8(e.what())); }

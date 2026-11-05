@@ -122,7 +122,10 @@ struct SimulationSnapshot {
 struct ReserveFunds { std::string name; Cents amount; bool reversible = true; };
 struct ConsumeReservation { std::uint64_t id; Cents amount; };
 struct CancelReservation { std::uint64_t id; };
-struct AdvanceDay {};
+struct AdvanceDay {
+    std::optional<AllocationResult> market_allocation{};
+    std::vector<MarketAdoption> industry_adoptions{};
+};
 struct SetPaused { bool paused; };
 struct ResolveOpeningChoice { std::uint64_t id; bool accept; };
 struct AddRecurringObligation { RecurringObligation obligation; };
@@ -139,12 +142,15 @@ struct AddMarketProduct { MarketProduct product; };
 struct AddMarketSegment { MarketSegment segment; };
 struct AddMarketPreference { std::string segment_id; MarketPreference preference; };
 struct SetMarketProductAvailable { std::string id; bool available; };
+struct SetMarketPrice { std::string id; Cents price; };
 struct AcceptContract { MarketContract contract; };
 struct StartContract { std::string id; };
 struct CancelContract { std::string id; };
 struct AcknowledgeLiquidityWarning { std::uint64_t id; };
 struct BuyData { std::string offer_id; };
 struct StartResearch { std::string research_id; LabAllocation allocation; };
+struct PublishResearch { std::string research_id; };
+struct AcquireResearchInsight { ResearchInsight insight; };
 struct StartTraining { TrainingRequest request; };
 struct CloneModel { std::string source_id, id; };
 struct StartEvaluation { std::string id, model_id, plan_id; LabAllocation allocation; };
@@ -156,8 +162,8 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    DrawDebt, RepayDebt, InvestEquity,
                                    ReserveProject, CancelProject, SetEffectiveCapacity,
                                    EnableMarket, AddMarketProduct, AddMarketSegment, AddMarketPreference,
-                                   SetMarketProductAvailable, AcceptContract, StartContract, CancelContract,
-                                   AcknowledgeLiquidityWarning, BuyData, StartResearch, StartTraining, CloneModel, StartEvaluation,
+                                   SetMarketProductAvailable, SetMarketPrice, AcceptContract, StartContract, CancelContract,
+                                   AcknowledgeLiquidityWarning, BuyData, StartResearch, PublishResearch, AcquireResearchInsight, StartTraining, CloneModel, StartEvaluation,
                                    AcceptBusinessOffer, AddMarketDemandChange, DeployModel,
                                    TakeFinancing,HireSpecialist,AddDelegationPolicy,SetDelegationEnabled,ReviewDelegation,AcknowledgeManagementNotice,RenewComputeLease>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };

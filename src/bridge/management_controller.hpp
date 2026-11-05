@@ -34,10 +34,14 @@ class ManagementController final : public QObject {
     Q_PROPERTY(QString briefing READ briefing NOTIFY changed)
     Q_PROPERTY(QString guide READ guide NOTIFY changed)
     Q_PROPERTY(QString ending READ ending NOTIFY changed)
+    Q_PROPERTY(bool plannedCompetition READ plannedCompetition NOTIFY changed)
+    Q_PROPERTY(QString competitionSummary READ competitionSummary NOTIFY changed)
 public:
     explicit ManagementController(QObject* parent=nullptr);
     void update(CampaignSnapshotPtr snapshot,const runtime::CompiledProgram& program,bool replace);
     bool available() const;
+    bool plannedCompetition() const;
+    QString competitionSummary() const;
     StableListModel* dataOffers() const { return data_; }
     StableListModel* researchTopics() const { return research_; }
     StableListModel* models() const { return models_; }
@@ -75,6 +79,9 @@ public:
     Q_INVOKABLE QString servicePreview(QString service,QString model,bool review) const;
     Q_INVOKABLE void buyData(QString id);
     Q_INVOKABLE void research(QString id,QString source,QString rate,QString staff);
+    Q_INVOKABLE void publishResearch(QString id);
+    Q_INVOKABLE void acquirePublication(QString id);
+    Q_INVOKABLE void setProductPrice(QString id,QString cents);
     Q_INVOKABLE void train(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent={});
     Q_INVOKABLE void clone(QString id);
     Q_INVOKABLE void evaluate(QString model,QString plan,QString source,QString rate,QString staff);

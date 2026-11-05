@@ -12,6 +12,13 @@ Game/editor remain **0.0.0-dev** and the project remains in planning phase.
 The required game version **0.1.0-dev.1** is unresolved. No product release,
 human test session or publication is implied by this internal content record.
 
+The current snapshot is **0.2.0-dev.1**, generation 2, hash
+`04e2761cd39c7adb788e754562f3ecb4fa072ee564a89ac006febcbdb7f72668`.
+M4-01 introduces four competition presets at revision 1, leaving the original
+15 definitions unchanged. All five scenarios / 15 headquarters openings pass
+the real prepared-save roundtrip. Game/editor and the unresolved required game
+version remain as above; older content saves are refused without a migration.
+
 ## Graphical author workflow
 
 Open the separate Content Studio on the chosen checkout. Edit a collection
@@ -93,7 +100,7 @@ Edit a current-version collection through Studio and save it to a separate
 ```sh
 build/release/bin/pgp-content-tool review --checkout "$PWD" \
   --source data/drafts/reviewed-slice.json \
-  --version 0.1.1-dev.1 --summary 'Correct the reviewed supplier message.' \
+  --version 0.2.1-dev.1 --summary 'Correct the reviewed supplier message.' \
   --plan .work/reviewed-slice-plan.json
 build/release/bin/pgp-content-tool finalize --checkout "$PWD" \
   --plan .work/reviewed-slice-plan.json

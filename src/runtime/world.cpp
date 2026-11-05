@@ -206,6 +206,11 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
     if (metadata.id == "company.has_evaluation_finding") return world.simulation.lab && std::any_of(
         world.simulation.lab->evaluations.begin(),world.simulation.lab->evaluations.end(),[](const auto& row){return row.completed && !row.findings.empty();});
     if (metadata.id == "company.competitive_notice_count") return static_cast<std::int64_t>(world.competition?world.competition->notices.size():0);
+    if (metadata.id == "world.public_breakthrough_count" && world.competition && world.competition->setup) {
+        std::int64_t count=world.simulation.lab?static_cast<std::int64_t>(world.simulation.lab->publications.size()):0;
+        for (const auto& rival:world.competition->companies) if (rival.planning->entered_on) count=core::checked_add(count,static_cast<std::int64_t>(rival.simulation.lab->publications.size()));
+        return count;
+    }
     if (metadata.id == "company.has_enterprise_segment") return market && std::any_of(market->segments.begin(),market->segments.end(),[](const auto& row){return row.id=="segment.enterprise";});
     if (metadata.id == "company.market_shift_active") return market && std::any_of(market->demand_changes.begin(),market->demand_changes.end(),[&](const auto& row) {
         return row.starts_on<=world.simulation.date && world.simulation.date<row.expires_before;
@@ -269,6 +274,14 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                                           bool validate_core_simulation) {
     const auto& world = checkpoint.world;
     const auto& state = checkpoint.runtime;
+    if (!world.scenario_id.empty()) {
+        const auto* definition=program.collection.find(world.scenario_id);
+        const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
+        if (!scenario || scenario->starts_on!=world.campaign_start || scenario->ends_before!=world.simulation.end_date)
+            invalid("Saved source scenario is absent or has different campaign dates");
+    }
+    if (world.simulation.lab && !world.simulation.lab->insights.empty() && (!world.competition || !world.competition->setup))
+        invalid("Foreign research insights require an authored public diffusion contract");
     // Core validation runs on a copy only when an unfinished opening needs
     // preparation; otherwise validate the core state directly in place.
     if (validate_core_simulation) {
@@ -284,7 +297,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
         bool matching_lab_scenario = false;
         bool matching_catalog = false;
         for (const auto& [id, definition] : program.collection.definitions) {
-            (void)id;
+            if (!world.scenario_id.empty() && id!=world.scenario_id) continue;
             const auto* scenario = std::get_if<content::ScenarioDefinition>(&definition.data);
             if (!scenario || !scenario->lab || scenario->starts_on != world.campaign_start ||
                 scenario->ends_before != world.simulation.end_date) continue;
@@ -300,9 +313,10 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                     (!world.simulation.business_offers || world.simulation.business_offers->catalog!=scenario->business_offers))
                     invalid("Saved business offer catalog differs from its scenario");
                 std::vector<std::string> expected,actual;
-                for (const auto& rival:scenario->rivals) expected.push_back(rival.id);
+                for (const auto& rival:scenario->rivals) if (!scenario->competition || content::selected_rival(rival,*scenario->competition)) expected.push_back(rival.id);
                 if (world.competition) for (const auto& rival:world.competition->companies) actual.push_back(rival.definition_id);
-                if (expected!=actual || (scenario->rivals.empty() && world.competition)) invalid("Saved rival roster differs from its scenario");
+                if (expected!=actual || (!scenario->competition && scenario->rivals.empty() && world.competition) ||
+                    (scenario->competition && (!world.competition || world.competition->setup!=scenario->competition))) invalid("Saved rival roster/settings differ from their scenario");
             }
         }
         if ((matching_lab_scenario || world.simulation.lab) && !matching_catalog)

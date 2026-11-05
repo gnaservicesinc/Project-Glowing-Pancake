@@ -9,6 +9,7 @@
 #include "lab_json.hpp"
 #include "deployment_json.hpp"
 #include "management_json.hpp"
+#include "competition_history_json.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -273,23 +274,96 @@ std::vector<std::string> parse_strings(const Json& value,std::size_t maximum=max
 }
 Json competition_json(const CompetitionState& state) {
     Json companies=Json::array(),notices=Json::array();
-    for (const auto& row:state.companies) companies.push_back({{"definition_id",row.definition_id},{"simulation",simulation_json(row.simulation)},
-        {"attempted",row.attempted},{"warned_on",optional_day(row.warned_on)},{"published_on",optional_day(row.published_on)}});
-    for (const auto& row:state.notices) notices.push_back({{"company_id",row.company_id},{"kind",row.kind},{"day",row.day.value()},{"response_due",optional_day(row.response_due)}});
-    return {{"companies",std::move(companies)},{"notices",std::move(notices)}};
+    detail::CompetitionHistoryBudget history_budget;
+    for (const auto& row:state.companies) {
+        Json company{{"definition_id",row.definition_id},{"simulation",simulation_json(row.simulation)},
+            {"attempted",row.attempted},{"warned_on",optional_day(row.warned_on)},{"published_on",optional_day(row.published_on)}};
+        if (row.planning) {
+            company["simulation"]=detail::compact_competition_history(std::move(company.at("simulation")),history_budget);
+            company["simulation_storage"]="history-rows-v2";
+            Json decisions=Json::array();
+            for (const auto& decision:row.planning->decisions) {
+                const auto& observation=decision.observation;
+                decisions.push_back({{"day",decision.day.value()},{"action",decision.action},{"subject",decision.subject},{"explanation",decision.explanation},
+                    {"accepted",decision.accepted},{"stream_before",decision.stream_before},{"stream_after",decision.stream_after},
+                    {"observation",{{"day",observation.day.value()},{"providers",observation.public_providers},{"price",observation.public_price.value()},
+                        {"demand_lower",observation.demand_lower},{"demand_upper",observation.demand_upper}}}});
+            }
+            company["planning"]={{"entered_on",optional_day(row.planning->entered_on)},{"next_review",row.planning->next_review.value()},{"decisions",std::move(decisions)}};
+        }
+        companies.push_back(std::move(company));
+    }
+    for (const auto& row:state.notices) {
+        Json value{{"company_id",row.company_id},{"kind",row.kind},{"day",row.day.value()},{"response_due",optional_day(row.response_due)}};
+        if (!row.subject.empty()) value["subject"]=row.subject;notices.push_back(std::move(value));
+    }
+    Json result{{"companies",std::move(companies)},{"notices",std::move(notices)}};
+    if (state.setup) {
+        result["setup"]=Json::parse(content::canonical_competition_setup(*state.setup));
+        result["releases"]=Json::array();for (const auto& row:state.releases) result["releases"].push_back({{"company",row.company_id},{"product",row.product_id},{"day",row.day.value()}});
+        result["adoptions"]=Json::array();for (const auto& row:state.adoptions) {
+            Json shares=Json::array();for (const auto& share:row.shares) shares.push_back({{"product",share.product_id},{"share",share.share.value()}});
+            result["adoptions"].push_back({{"day",row.reviewed_on.value()},{"segment",row.segment_id},{"observed",row.observed_tasks},{"shares",std::move(shares)}});
+        }
+    }
+    return result;
 }
 CompetitionState parse_competition(const Json& value) {
-    detail::fields(value,"competition",{"companies","notices"}); CompetitionState result;
-    detail::array(value.at("companies"),"competition/companies",32); detail::array(value.at("notices"),"competition/notices",128);
+    detail::fields(value,"competition",{"companies","notices"},{"setup","releases","adoptions"}); CompetitionState result;
+    if (value.contains("setup")) {
+        if (!value.contains("releases") || !value.contains("adoptions")) detail::invalid("competition","Planned competition lost public market state");
+        result.setup=content::load_competition_setup(value.at("setup").dump());
+        detail::array(value.at("releases"),"competition/releases",64);
+        for (const auto& row:value.at("releases")) {
+            detail::fields(row,"competition/release",{"company","product","day"});
+            result.releases.push_back({detail::text(row.at("company"),"company",128),detail::text(row.at("product"),"product",128),OrdinalDay{detail::i64(row.at("day"),"day")}});
+        }
+        detail::array(value.at("adoptions"),"competition/adoptions",core::market_record_limit);
+        for (const auto& row:value.at("adoptions")) {
+            detail::fields(row,"competition/adoption",{"day","segment","observed","shares"});
+            core::MarketAdoption adoption{OrdinalDay{detail::i64(row.at("day"),"day")},detail::text(row.at("segment"),"segment",128),detail::u64(row.at("observed"),"observed"),{}};
+            detail::array(row.at("shares"),"competition/shares",core::market_product_limit+1);
+            for (const auto& share:row.at("shares")) {
+                detail::fields(share,"competition/share",{"product","share"});
+                adoption.shares.push_back({detail::text(share.at("product"),"product",256),core::BasisPoints{detail::i64(share.at("share"),"share")}});
+            }
+            result.adoptions.push_back(std::move(adoption));
+        }
+    } else if (value.contains("releases") || value.contains("adoptions")) detail::invalid("competition","Public industry state has no authored setup");
+    detail::array(value.at("companies"),"competition/companies",32); detail::array(value.at("notices"),"competition/notices",result.setup?4096:128);
+    detail::CompetitionHistoryBudget history_budget;
     for (const auto& row:value.at("companies")) {
-        detail::fields(row,"competition/company",{"definition_id","simulation","attempted","warned_on","published_on"});
-        result.companies.push_back({detail::text(row.at("definition_id"),"competition/definition_id",64),parse_simulation(row.at("simulation")),
-            detail::boolean(row.at("attempted"),"competition/attempted"),parse_day(row.at("warned_on")),parse_day(row.at("published_on"))});
+        detail::fields(row,"competition/company",{"definition_id","simulation","attempted","warned_on","published_on"},{"planning","simulation_storage"});
+        auto simulation=row.at("simulation");
+        if (row.contains("simulation_storage")) {
+            const auto format=detail::text(row.at("simulation_storage"),"simulation_storage",32);
+            if (format!="history-rows-v1" && format!="history-rows-v2") detail::invalid("competition/history","Unsupported history storage format; original save was preserved");
+            simulation=detail::expand_competition_history(std::move(simulation),history_budget,format=="history-rows-v2");
+        }
+        RivalCompany company{detail::text(row.at("definition_id"),"competition/definition_id",64),parse_simulation(simulation),
+            detail::boolean(row.at("attempted"),"competition/attempted"),parse_day(row.at("warned_on")),parse_day(row.at("published_on"))};
+        if (row.contains("planning")) {
+            const auto& plan=row.at("planning");detail::fields(plan,"competition/plan",{"entered_on","next_review","decisions"});
+            RivalPlanState next{parse_day(plan.at("entered_on")),OrdinalDay{detail::i64(plan.at("next_review"),"next_review")},{}};
+            detail::array(plan.at("decisions"),"competition/decisions",8192);
+            for (const auto& decision:plan.at("decisions")) {
+                detail::fields(decision,"competition/decision",{"day","action","subject","explanation","accepted","stream_before","stream_after","observation"});
+                const auto& observation=decision.at("observation");detail::fields(observation,"competition/observation",{"day","providers","price","demand_lower","demand_upper"});
+                const auto providers=detail::u64(observation.at("providers"),"providers");if (providers>21) detail::invalid("providers","Public provider count exceeds its bound");
+                RivalObservation observed{OrdinalDay{detail::i64(observation.at("day"),"day")},static_cast<std::uint32_t>(providers),Cents{detail::i64(observation.at("price"),"price")},
+                    detail::u64(observation.at("demand_lower"),"demand_lower"),detail::u64(observation.at("demand_upper"),"demand_upper")};
+                next.decisions.push_back({OrdinalDay{detail::i64(decision.at("day"),"day")},detail::text(decision.at("action"),"action",32),detail::text(decision.at("subject"),"subject",256,true),
+                    detail::text(decision.at("explanation"),"explanation",1024),detail::boolean(decision.at("accepted"),"accepted"),detail::u64(decision.at("stream_before"),"stream_before"),
+                    detail::u64(decision.at("stream_after"),"stream_after"),observed});
+            }
+            company.planning=std::move(next);
+        }
+        result.companies.push_back(std::move(company));
     }
     for (const auto& row:value.at("notices")) {
-        detail::fields(row,"competition/notice",{"company_id","kind","day","response_due"});
+        detail::fields(row,"competition/notice",{"company_id","kind","day","response_due"},{"subject"});
         result.notices.push_back({detail::text(row.at("company_id"),"competition/company_id",64),detail::text(row.at("kind"),"competition/kind",32),
-            OrdinalDay{detail::i64(row.at("day"),"competition/day")},parse_day(row.at("response_due"))});
+            OrdinalDay{detail::i64(row.at("day"),"competition/day")},parse_day(row.at("response_due")),row.contains("subject")?detail::text(row.at("subject"),"subject",128):std::string{}});
     }
     return result;
 }
@@ -299,19 +373,20 @@ Json world_json(const WorldState& world) {
     for (const auto& variable:world.variables) variables.push_back({
         {"binding",binding(variable.binding)},{"variable_id",variable.variable_id},{"value",scalar(variable.value)}});
     Json enabled=nullptr;if (world.enabled_flows) enabled=strings(*world.enabled_flows);
-    return Json{{"simulation",simulation_json(world.simulation)},{"company_id",world.company_id},
+    Json result{{"simulation",simulation_json(world.simulation)},{"company_id",world.company_id},
         {"world_id",world.world_id},{"state_id",world.state_id},{"campaign_start",world.campaign_start.value()},
         {"scope_created",world.scope_created.value()},{"root_seed",world.root_seed},{"enabled_flows",std::move(enabled)},
         {"facts",std::move(facts)},{"counterparty_cash_cents",world.counterparty_cash.value()},
         {"decisions",strings(world.decisions)},{"negotiations",strings(world.negotiations)},{"variables",std::move(variables)},
-        {"competition_mode",world.competition?"bounded":"foundation"},{"competition",world.competition?competition_json(*world.competition):Json(nullptr)}};
+        {"competition_mode",world.competition?(world.competition->setup?"planned":"bounded"):"foundation"},{"competition",world.competition?competition_json(*world.competition):Json(nullptr)}};
+    if (!world.scenario_id.empty()) result["scenario_id"]=world.scenario_id;return result;
 }
 WorldState parse_world(const Json& value,const CompiledProgram& program) {
     if (!value.is_object()) detail::invalid("world","Expected object");
     Json prior_shape=Json::object();
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
-        if (name!="variables" && name!="competition" && name!="competition_mode") prior_shape[name]=nullptr;
+        if (name!="variables" && name!="competition" && name!="competition_mode" && name!="scenario_id") prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"world",{"simulation","company_id","world_id","state_id","campaign_start","scope_created",
                                    "root_seed","enabled_flows","facts","counterparty_cash_cents","decisions","negotiations"});
@@ -319,10 +394,14 @@ WorldState parse_world(const Json& value,const CompiledProgram& program) {
         return entry.second.default_value.has_value();
     })) detail::invalid("variables","Registered variables require an explicit value collection");
     WorldState result;
+    if (value.contains("scenario_id")) result.scenario_id=detail::text(value.at("scenario_id"),"scenario_id",128);
     if (value.contains("competition")!=value.contains("competition_mode")) detail::invalid("competition","Competition mode and state must be present together");
     if (value.contains("competition_mode")) {
         const auto mode=detail::text(value.at("competition_mode"),"competition_mode",16);
-        if (mode=="bounded") result.competition=parse_competition(value.at("competition"));
+        if (mode=="bounded" || mode=="planned") {
+            result.competition=parse_competition(value.at("competition"));
+            if ((mode=="planned")!=result.competition->setup.has_value()) detail::invalid("competition","Competition mode differs from its authored planner setup");
+        }
         else if (mode!="foundation" || !value.at("competition").is_null()) detail::invalid("competition","Competition mode differs from its state");
     }
     result.simulation=parse_simulation(value.at("simulation"));

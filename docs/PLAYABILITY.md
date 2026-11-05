@@ -19,6 +19,7 @@ independent human validation and release qualification remain open.
 | M3-05: base events and bounded rivals | Eight flow families, paid opportunities, temporary demand, financed competition and exact three-year continuation | Runnable with `pgp-headless --events-demo data/runtime/first-playable.json`; [contract/seeds](../src/runtime/BASE_EVENTS.md) |
 | M3-02: first player-facing scenario | Office/Lab decisions, data/research/training/evaluation, contracts, news and choices, start to ending | Implemented on Mac; Metal keyboard runs at 100%/200% text complete and reload exactly |
 | M3-03: feature evaluation build | The scenario with delegation, warnings, recovery and scoring | Implemented on Mac; finite policies, actual deadline stops, warned setback, financing/specialist routes and transparent score |
+| M4-01: full rival planning | Default 15-company roster; 7/20-company alternatives; budgeted weekly strategies, shared customers, pricing and public research | Implemented on Mac; exact three-year standard/expanded saves and bundled 200% Metal ending |
 | M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Deferred until all components are in place and the user is ready for v1 work; no sessions conducted |
 
 There is no calendar estimate inferred from task counts: tasks vary substantially
@@ -31,10 +32,12 @@ implemented on Mac; human author qualification remains deferred.
 
 After an optimized build, explicitly run `build/release/bin/pgp-game`. Choose
 California, Texas or Washington and whether to include optional story layers.
+Choose the competition preset: the default schedules six domestic startups, six international startups and three heavyweights, with three startups in each group active initially. Reduced schedules seven competitors; expanded schedules twenty. Forgiving discloses one optional $300,000 equity round for 15% ownership per rival. The introductory roster keeps the earlier two-startup/one-heavyweight campaign.
+
 The base events remain enabled. Time begins paused; saves and preferences stay
 local. Play/Pause, Step day and 1/10/30/60 days per second stay in the header.
 
-A supported opening route is:
+For the original small-campaign opening route, select **Introductory roster**:
 
 1. In **Lab → Data**, inspect and license the commercially cleared business documents.
 2. In **Research**, select held-out evaluation and start its finite experiment.
@@ -76,7 +79,11 @@ be restored from Settings. Project cancellation keeps consumed work and costs;
 a dependent customer contract must be cancelled before stopping its service.
 Service replacement keeps prior delivery/invoices and current promises.
 
-The rendered Mac smoke exercises this path at 1280×720 with 100% and 200% text,
+In the full-roster presets, competitors pay real staff, data, compute and service costs, compete for one customer pool and can close. They see public releases/prices and bounded estimates. **Lab → Research** can publish completed work or adopt a genuine paper after 30 days for one 25% experiment-work credit; prerequisites and cash costs still apply. **Lab → Deploy** exposes the selected service price in constant-2014 cents. A new price preserves past invoices and signed contract prices. **Office → Rivals** shows actual public activity and released quotes.
+
+The funded efficient headless route finishes the standard and expanded presets with $1,893,817.76 and $1,584,124.76 respectively; the bundled standard-roster UI route finishes with $1,503,361.57 and a 94/100 slice score. These are deterministic engineering routes, not a human balance assessment. [Shared-market and planning contract](../src/runtime/COMPETITION.md).
+
+The original introductory rendered Mac smoke exercises this path at 1280×720 with 100% and 200% text,
 including exact save/reload and a solvent ending above $2.25m. These are scripted
 checks, not independent human playtests or screen-reader/device qualification.
 
