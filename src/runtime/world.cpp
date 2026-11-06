@@ -382,7 +382,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                                           bool validate_core_simulation) {
     const auto& world = checkpoint.world;
     const auto& state = checkpoint.runtime;
-    if(!world.background.empty() && world.scenario_id.empty()) invalid("Founder background needs its authored source scenario");
+    if((!world.background.empty() || !world.difficulty.empty()) && world.scenario_id.empty()) invalid("Campaign setup needs its authored source scenario");
     if (world.identity) {
         validate_campaign_identity(*world.identity);
         if (world.scenario_id.empty()) invalid("Campaign identity needs its authored source scenario");
@@ -398,6 +398,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
         if (!scenario || scenario->starts_on!=world.campaign_start ||
             (!world.objectives && scenario->ends_before!=world.simulation.end_date))
             invalid("Saved source scenario is absent or has different campaign dates");
+        (void)content::scenario_difficulty(*scenario,world.difficulty);
         if (validate_core_simulation && (scenario->infrastructure ? (!world.simulation.infrastructure || world.simulation.infrastructure->catalog!=*scenario->infrastructure) : world.simulation.infrastructure.has_value()))
             invalid("Saved owned infrastructure rules differ from the source scenario");
         if (const auto* risks=content::resilience_catalog(program.collection,*scenario)) {
@@ -454,8 +455,10 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             matching_lab_scenario = true;
             if (world.simulation.lab && world.simulation.lab->catalog == content::scenario_lab_catalog(program.collection, *scenario)) {
                 matching_catalog = true;
-                const auto opening=content::scenario_opening(*scenario,world.background,world.company_id);
-                if(!world.background.empty()) {
+                const auto opening=content::scenario_opening(*scenario,world.background,world.company_id,world.difficulty);
+                const auto management=content::scenario_management(*scenario,world.difficulty);
+                const auto competition=content::scenario_competition(*scenario,world.difficulty);
+                if(!world.background.empty() || !world.difficulty.empty()) {
                     const auto& accounts=*world.simulation.accounts;
                     if(opening.cash.value()>0 && (accounts.postings.empty() || accounts.postings.front().key!="opening" || accounts.postings.front().amount!=opening.cash))
                         invalid("Founder opening capital differs from its actual contribution");
@@ -478,7 +481,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                     if(it==bills.end() || it->ends_before!=end) invalid("Founder compute bill differs from opening lease termination");
                 }
 
-                if (scenario->management ? (!world.simulation.management || world.simulation.management->catalog!=*scenario->management ||
+                if (management ? (!world.simulation.management || world.simulation.management->catalog!=*management ||
                     core::opening_staff_count(*world.simulation.capacity)!=opening.team_people) : world.simulation.management.has_value())
                     invalid("Saved management rules or opening staff differ from the scenario");
                 if (world.simulation.management && world.simulation.management->governance) {
@@ -500,10 +503,10 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                     (!world.simulation.business_offers || world.simulation.business_offers->catalog!=opening.business_offers))
                     invalid("Saved business offer catalog differs from its scenario");
                 std::vector<std::string> expected,actual;
-                for (const auto& rival:scenario->rivals) if (!scenario->competition || content::selected_rival(rival,*scenario->competition)) expected.push_back(rival.id);
+                for (const auto& rival:scenario->rivals) if (!competition || content::selected_rival(rival,*competition)) expected.push_back(rival.id);
                 if (world.competition) for (const auto& rival:world.competition->companies) actual.push_back(rival.definition_id);
-                if (expected!=actual || (!scenario->competition && scenario->rivals.empty() && world.competition) ||
-                    (scenario->competition && (!world.competition || world.competition->setup!=scenario->competition))) invalid("Saved rival roster/settings differ from their scenario");
+                if (expected!=actual || (!competition && scenario->rivals.empty() && world.competition) ||
+                    (competition && (!world.competition || world.competition->setup!=competition))) invalid("Saved rival roster/settings differ from their scenario");
             }
         }
         if ((matching_lab_scenario || world.simulation.lab) && !matching_catalog)

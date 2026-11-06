@@ -4,6 +4,7 @@
 #include "heavyweight_presentation.hpp"
 #include "governance_presentation.hpp"
 #include <pgp/core/integer_codec.hpp>
+#include <pgp/runtime/scenario.hpp>
 #include <QRegularExpression>
 #include <algorithm>
 #include <limits>
@@ -130,9 +131,9 @@ QString ManagementController::competitionSummary() const {
     if (!plannedCompetition()) return QStringLiteral("Introductory roster. Public notices describe finite rival training and heavyweight warnings.");
     const auto& competition=*snapshot_->checkpoint.world.competition;const auto& setup=*competition.setup;
     const auto entered=std::count_if(competition.companies.begin(),competition.companies.end(),[](const auto& row){return row.planning->entered_on.has_value();});
-    return QStringLiteral("%1 US startups · %2 international startups · %3 heavyweights. %4 companies have entered; others are scheduled or watching. One shared customer task/budget pool; contracts keep priority. Public research takes %5 days to adopt and reduces later research work by %6; cash costs and prerequisites remain. %7")
+    return QStringLiteral("%1 US startups · %2 international startups · %3 heavyweights. %4 companies have entered; others are scheduled or watching. One shared customer task/budget pool; contracts keep priority. Operating companies review one feasible strategy action every %8 days. Public research takes %5 days to adopt and reduces later research work by %6; cash costs and prerequisites remain. %7")
         .arg(setup.domestic).arg(setup.international).arg(setup.heavyweights).arg(entered).arg(setup.publication_delay.value()).arg(percent(setup.publication_credit),
-            setup.catchup_cash.value()>0?QStringLiteral("One optional catch-up round per rival: %1 for %2 ownership.").arg(money(setup.catchup_cash),percent(setup.catchup_acquired)):QStringLiteral("Catch-up funding is disabled."));
+            setup.catchup_cash.value()>0?QStringLiteral("One optional catch-up round per rival: %1 for %2 ownership.").arg(money(setup.catchup_cash),percent(setup.catchup_acquired)):QStringLiteral("Catch-up funding is disabled.")).arg(setup.review_interval.value());
 }
 const core::SimulationState& ManagementController::state() const { return snapshot_->checkpoint.world.simulation; }
 void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::CompiledProgram& program,bool replace) {
@@ -429,7 +430,7 @@ QVariantMap ManagementController::trainingPreview(QString recipe,QString source,
     if (!available()) return {};
     try {
         const auto req=request(QStringLiteral("preview"),recipe,source,data,rate,staff,work,parent);
-        const auto p=core::preview_training(*state().lab,req);
+        const auto p=runtime::preview_campaign_training(*program_,snapshot_->checkpoint.world,req);
         std::int64_t reserved=0; const auto* supply=find(state().capacity->sources,req.source_id);
         for (const auto& row:state().capacity->projects) if (row.status==core::ProjectStatus::active && row.source_id==req.source_id) reserved=core::checked_add(reserved,row.requested.value());
         const auto capacity=core::capacity_report(*state().capacity);

@@ -93,7 +93,7 @@ RivalObservation observe(const WorldState& world,OrdinalDay day,std::uint64_t dr
 }
 struct Candidate {std::uint32_t kind;std::string action,subject;std::int64_t score;CommandAction command;};
 std::vector<Candidate> candidates(const RivalCompany& rival,const content::RivalDefinition& definition,
-    const RivalObservation& observation,std::uint64_t draw,const CivicState* civic,const SocietyState* society) {
+    const RivalObservation& observation,std::uint64_t draw,const CivicState* civic,const SocietyState* society,Days review_interval) {
     const auto& s=rival.simulation;const auto& profile=*definition.planning;const auto& lab=*s.lab;
     std::vector<Candidate> result;SplitMix64 variation{draw};
     std::array<std::uint32_t,10> noise{};for (auto& value:noise) value=static_cast<std::uint32_t>(variation.bounded(31));
@@ -190,7 +190,7 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
     if (staff==0) for (const auto& specialist:s.management->catalog.specialists)
         if (affordable(specialist.signing_cost,specialist.monthly_salary) && std::none_of(s.management->specialists.begin(),s.management->specialists.end(),[&](const auto& row){return row.offer_id==specialist.id;}))
             offer(6,"hire",specialist.id,120,HireSpecialist{specialist.id});
-    for (const auto& debt:s.accounts->debts) if (debt.principal.value()>0 && advance_days(s.date,Days{7})>=debt.due && affordable(debt.principal))
+    for (const auto& debt:s.accounts->debts) if (debt.principal.value()>0 && advance_days(s.date,review_interval)>=debt.due && affordable(debt.principal))
         offer(7,"repay",debt.id,900,RepayDebt{debt.id,debt.principal,"rival.repay/"+debt.id});
     if (rival.parent_company.empty() && usable<protected_runway) for (const auto& financing:s.management->catalog.financing)
         if (std::none_of(s.management->financing.begin(),s.management->financing.end(),[&](const auto& row){return row.offer_id==financing.id;}))
@@ -306,20 +306,20 @@ void review_rival(WorldState& world,const CompiledProgram& program,RivalCompany&
     acknowledge_leadership(rival);
     if (rival.simulation.date<plan.next_review) return;
     if (rival.response && rival.response->phase!=HeavyweightPhase::compete) return;
-    if (plan.decisions.size()>=rival_decision_limit) invalid("Rival weekly decision history exceeds its retention bound");
+    if (plan.decisions.size()>=rival_decision_limit) invalid("Rival strategy decision history exceeds its retention bound");
     const auto& definition=rival_definition(program,rival.definition_id);diffuse(world,rival);
     const auto stream_index=static_cast<std::size_t>(RandomStream::rivals);const auto before=rival.simulation.random[stream_index];
     SplitMix64 stream{before};const auto draw=stream.next();rival.simulation.random[stream_index]=stream.state();
     const auto observation=observe(world,rival.simulation.date,draw);
     auto actions=candidates(rival,definition,observation,draw,world.simulation.civic ? &*world.simulation.civic : nullptr,
-        world.society?&*world.society:nullptr);
+        world.society?&*world.society:nullptr,world.competition->setup->review_interval);
     RivalDecision decision{rival.simulation.date,"wait","","Conserve runway; no feasible action met the company's resource and reserve limits.",false,before,stream.state(),observation};
     if (!actions.empty()) {
         auto selected=std::move(actions.front());decision.action=std::move(selected.action);decision.subject=std::move(selected.subject);
         decision.accepted=submit(rival,std::move(selected.command),&decision.explanation);
         rival.attempted=true;
     }
-    plan.decisions.push_back(std::move(decision));plan.next_review=advance_days(plan.next_review,Days{7});
+    plan.decisions.push_back(std::move(decision));plan.next_review=advance_days(plan.next_review,world.competition->setup->review_interval);
 }
 void collect_public_results(WorldState& world,OrdinalDay prior) {
     std::vector<const SimulationState*> sources{&world.simulation};

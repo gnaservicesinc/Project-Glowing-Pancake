@@ -551,9 +551,30 @@ ApplicationWindow {
                             Accessible.name: qsTr("Organizational charter")
                         }
                         Copy { visible: charterChoice.count > 0; text: (charterChoice.model[charterChoice.currentIndex] || {}).detail || "" }
+                        Copy { visible: difficultyChoice.count > 0; text: qsTr("Difficulty") }
+                        ComboBox {
+                            id: difficultyChoice
+                            objectName: "difficultyChoice"
+                            Layout.fillWidth: true
+                            visible: count > 0
+                            model: (campaign.scenarios[competitionChoice.currentIndex] || {}).difficulties || []
+                            textRole: "label"; valueRole: "id"
+                            font.pixelSize: window.textSize
+                            Accessible.name: qsTr("Difficulty")
+                            property string chosenId: "difficulty.standard"
+                            function restoreChoice() {
+                                for(let i=0;i<count;++i) if(model[i].id === chosenId) {currentIndex=i;return}
+                                currentIndex=count > 0 ? 0 : -1
+                            }
+                            onActivated: chosenId = currentValue
+                            onModelChanged: Qt.callLater(restoreChoice)
+                            Component.onCompleted: Qt.callLater(restoreChoice)
+                        }
+                        Copy { visible: difficultyChoice.count > 0; text: (difficultyChoice.model[difficultyChoice.currentIndex] || {}).detail || "" }
+
                         Copy {
                             objectName: "campaignOpeningPreview"
-                            text: campaign.setupPreview(competitionChoice.currentValue || "", backgroundChoice.currentValue || "", charterChoice.currentValue || "")
+                            text: campaign.setupPreview(competitionChoice.currentValue || "", backgroundChoice.currentValue || "", charterChoice.currentValue || "", difficultyChoice.currentValue || "")
                         }
                         Copy { text: qsTr("World seed") }
                         TextField {
@@ -618,9 +639,10 @@ ApplicationWindow {
                             enabled: campaign.ready && !campaign.busy && companyNameInput.text.trim().length > 0
                                 && founderNameInput.text.trim().length > 0 && worldSeedInput.acceptableInput
                                 && (backgroundChoice.count === 0 || backgroundChoice.currentIndex >= 0) && (charterChoice.count === 0 || charterChoice.currentIndex >= 0)
+                                && (difficultyChoice.count === 0 || difficultyChoice.currentIndex >= 0)
                             onClicked: campaign.newCampaignSetup(headquartersChoice.currentValue, includeStories.checked,
                                 competitionChoice.currentValue, openingObjectives.visible ? openingObjectives.primary : "", openingObjectives.visible ? openingObjectives.secondary() : [],
-                                companyNameInput.text, founderNameInput.text, founderPronounsInput.text, worldSeedInput.text, backgroundChoice.currentValue || "", charterChoice.currentValue || "")
+                                companyNameInput.text, founderNameInput.text, founderPronounsInput.text, worldSeedInput.text, backgroundChoice.currentValue || "", charterChoice.currentValue || "", difficultyChoice.currentValue || "")
                         }
                         Action { text: qsTr("Load an existing local campaign…"); enabled: campaign.ready && !campaign.busy; onClicked: loadDialog.open() }
                     }

@@ -148,6 +148,13 @@ struct FounderBackground {
     std::vector<core::BusinessOffer> contacts;
     auto operator<=>(const FounderBackground&) const = default;
 };
+struct CampaignDifficulty {
+    std::string id,name,description;
+    std::uint32_t starting_cash_percent=100,financing_percent=100,scripted_delay_percent=100;
+    core::Days rival_review_interval{7};
+    core::BasisPoints forecast_padding{0};
+    auto operator<=>(const CampaignDifficulty&) const = default;
+};
 struct ScenarioDefinition {
     pgp::core::OrdinalDay starts_on;
     pgp::core::OrdinalDay ends_before;
@@ -179,6 +186,7 @@ struct ScenarioDefinition {
     std::string frontier{};
     std::optional<core::ObjectiveCharter> objectives{};
     std::vector<FounderBackground> backgrounds{};
+    std::vector<CampaignDifficulty> difficulties{};
 };
 struct ScenarioOpening {
     core::Cents cash{0};
@@ -188,7 +196,10 @@ struct ScenarioOpening {
     std::vector<core::CapacitySource> capacity_sources;
 };
 [[nodiscard]] ScenarioOpening scenario_opening(const ScenarioDefinition&, std::string_view background={},
-                                               std::string_view owner="company.player");
+                                               std::string_view owner="company.player",std::string_view difficulty={});
+[[nodiscard]] const CampaignDifficulty* scenario_difficulty(const ScenarioDefinition&,std::string_view);
+[[nodiscard]] std::optional<core::ManagementCatalog> scenario_management(const ScenarioDefinition&,std::string_view difficulty={});
+[[nodiscard]] std::optional<CompetitionSetup> scenario_competition(const ScenarioDefinition&,std::string_view difficulty={});
 struct ResearchDefinition {
     std::vector<std::string> all_of;
     std::vector<std::string> any_of;

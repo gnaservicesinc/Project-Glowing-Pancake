@@ -23,8 +23,10 @@ the design is required before moving into feedback, event expansion or M8-02.
 The setup coverage pass now implements company/founder identity, editable
 64-bit seeds, four founder opening packages and three board-amendable charters.
 Resource and recurring-cost previews use the same terms as initialization.
-Explicit difficulty selection remains next. The 42 checked batches remain the
-roadmap count while this pass closes design requirements inside those batches.
+Explicit difficulty selection now changes actual starting capital, financing,
+rival review/reaction timing and player training forecast precision. The 42
+checked batches remain the roadmap count while this pass closes design
+requirements inside those batches.
 
 ## M0 — Toolchain and platform proof
 

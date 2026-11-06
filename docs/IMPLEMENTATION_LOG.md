@@ -1674,3 +1674,39 @@ text start a product-builder company, review/propose and approve a charter,
 save/reopen the company and refuse an invalid seed without replacing it.
 These are engineering controls/render checks, not native human acceptance.
 No extended campaign, human study or balancing run was performed.
+
+
+### Explicit campaign difficulty
+
+All seven scenarios now offer Forgiving, Standard and Demanding profiles.
+Starting capital scales after the selected founder package. Player financing
+proceeds scale once to cents while equity, interest rates and terms stay
+explicit. The same typed helpers drive preview, initialization and source
+reconciliation on load. The default API path omits optional difficulty state
+and retains its original opening behavior.
+
+Planned rivals review at 14/7/3-day intervals, submitting at most one feasible
+paid strategic action per review. Scripted introduction delays use 200/100/50%
+of their authored values, rounded up to days. Actual work, warning lead times,
+private budgets and bounded public observations keep their ordinary rules.
+Saved review dates and private RNG progress reconcile against the selected
+cadence. Retention bounds account for the three-day minimum. Training forecasts
+add 0/250/750 basis points on each side of the existing estimate, clamped to
+the supported range. Preview reads consume no RNG, change no work, and never
+change model truth or independent measurements. Known-bill cash forecasts
+retain ordinary accounting. These are provisional authored settings, not a
+balance result.
+
+Internal content generation 16, version 0.16.0-dev.1, passed seven scenarios
+and 21 exact prepared-opening round trips through the standard finalizer.
+The optimized build passed. Focused difficulty, founding and setup checks
+passed in 2.52s. The new check verifies actual financing cash, background
+composition, unchanged outcome catalogs/opening observations, four days of
+one-rival scheduling, a five-day scripted reaction, forged settings refusal,
+and exact next-day continuation after reload. No extended campaign was run.
+Short offscreen checks of the real QML at 100%/200% text verify Standard as
+the default, selection preservation during a settings refresh, the Demanding
+capital/finance/cadence in the actual company, widened training forecasts,
+save/reload and refusal of an unknown difficulty without replacing that company.
+The new controls and modifier preview render with wrapping and scrolling.
+These are engineering checks; human feedback and balance remain deferred.

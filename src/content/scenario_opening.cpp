@@ -3,11 +3,36 @@
 #include <stdexcept>
 
 namespace pgp::content {
-ScenarioOpening scenario_opening(const ScenarioDefinition& s,std::string_view background,std::string_view owner) {
+namespace {
+core::Cents scaled(core::Cents value,std::uint32_t percent) {
+    return core::Cents{core::mul_div_floor(static_cast<std::uint64_t>(value.value()),percent,100).quotient};
+}
+}
+const CampaignDifficulty* scenario_difficulty(const ScenarioDefinition& s,std::string_view id) {
+    if(id.empty()) return nullptr;
+    const auto it=std::find_if(s.difficulties.begin(),s.difficulties.end(),[&](const auto& d){return d.id==id;});
+    if(it==s.difficulties.end()) throw std::invalid_argument("This scenario does not offer that difficulty");
+    return &*it;
+}
+std::optional<core::ManagementCatalog> scenario_management(const ScenarioDefinition& s,std::string_view difficulty) {
+    auto result=s.management;const auto* d=scenario_difficulty(s,difficulty);
+    if(!result || !d) return result;
+    for(auto& offer:result->financing) offer.proceeds=scaled(offer.proceeds,d->financing_percent);
+    if(result->governance) for(auto& offer:result->governance->financing) offer.proceeds=scaled(offer.proceeds,d->financing_percent);
+    core::validate_management_catalog(*result);
+    return result;
+}
+std::optional<CompetitionSetup> scenario_competition(const ScenarioDefinition& s,std::string_view difficulty) {
+    auto result=s.competition;const auto* d=scenario_difficulty(s,difficulty);
+    if(result && d) result->review_interval=d->rival_review_interval;
+    return result;
+}
+ScenarioOpening scenario_opening(const ScenarioDefinition& s,std::string_view background,std::string_view owner,std::string_view difficulty) {
+    const auto* d=scenario_difficulty(s,difficulty);
     ScenarioOpening result{s.cash,s.team_people,s.monthly_commitments,s.business_offers,{}};
     if(s.leased_capacity.value()>0) result.capacity_sources.push_back({"lease.initial","cloud.pool.initial",std::string(owner),
         "supplier.compute.initial",core::CapacitySourceKind::leased,s.leased_capacity,s.leased_capacity,0,"general",s.lease_energy_included});
-    if(background.empty()) return result;
+    if(background.empty()) {if(d) result.cash=scaled(result.cash,d->starting_cash_percent);return result;}
     const auto it=std::find_if(s.backgrounds.begin(),s.backgrounds.end(),[&](const auto& b){return b.id==background;});
     if(it==s.backgrounds.end()) throw std::invalid_argument("This scenario does not offer that founder background");
     const auto& b=*it;
@@ -37,6 +62,7 @@ ScenarioOpening scenario_opening(const ScenarioDefinition& s,std::string_view ba
     std::sort(result.business_offers.begin(),result.business_offers.end(),[](const auto& a,const auto& b){return a.id<b.id;});
     core::validate_business_offer_catalog(result.business_offers);
     (void)core::opening_capacity(result.capacity_sources,result.team_people,s.starts_on,std::string(owner));
+    if(d) result.cash=scaled(result.cash,d->starting_cash_percent);
     return result;
 }
 }

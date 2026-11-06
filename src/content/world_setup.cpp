@@ -149,9 +149,13 @@ std::string canonical_rival_definitions(const std::vector<RivalDefinition>& riva
     return result.dump();
 }
 CompetitionSetup load_competition_setup(std::string_view bytes) {
-    const auto row=parse(bytes);fields(row,{"domestic","international","heavyweights","catchup_cash_cents","catchup_acquired_bp","publication_delay_days","publication_credit_bp","estimate_error"});
+    auto row=parse(bytes);
+    core::Days review{7};
+    if(row.contains("review_interval_days")) {review=core::Days{number(row.at("review_interval_days"))};row.erase("review_interval_days");}
+    if(review.value()<3 || review.value()>28) invalid("Rival strategy reviews must be between three and twenty-eight days");
+    fields(row,{"domestic","international","heavyweights","catchup_cash_cents","catchup_acquired_bp","publication_delay_days","publication_credit_bp","estimate_error"});
     const auto domestic=number(row.at("domestic")),international=number(row.at("international")),heavy=number(row.at("heavyweights")),error=number(row.at("estimate_error"));
-    CompetitionSetup setup;
+    CompetitionSetup setup;setup.review_interval=review;
     if (domestic>8 || international>8 || heavy>4 || error>100) invalid("Rival roster/estimate settings exceed tested bounds");
     setup.domestic=static_cast<std::uint32_t>(domestic);setup.international=static_cast<std::uint32_t>(international);setup.heavyweights=static_cast<std::uint32_t>(heavy);
     setup.estimate_error=static_cast<std::uint32_t>(error);setup.catchup_cash=core::Cents{number(row.at("catchup_cash_cents"))};
@@ -162,8 +166,10 @@ CompetitionSetup load_competition_setup(std::string_view bytes) {
     return setup;
 }
 std::string canonical_competition_setup(const CompetitionSetup& setup) {
-    return Json{{"domestic",setup.domestic},{"international",setup.international},{"heavyweights",setup.heavyweights},{"catchup_cash_cents",setup.catchup_cash.value()},{"catchup_acquired_bp",setup.catchup_acquired.value()},
-        {"publication_delay_days",setup.publication_delay.value()},{"publication_credit_bp",setup.publication_credit.value()},{"estimate_error",setup.estimate_error}}.dump();
+    Json result{{"domestic",setup.domestic},{"international",setup.international},{"heavyweights",setup.heavyweights},{"catchup_cash_cents",setup.catchup_cash.value()},{"catchup_acquired_bp",setup.catchup_acquired.value()},
+        {"publication_delay_days",setup.publication_delay.value()},{"publication_credit_bp",setup.publication_credit.value()},{"estimate_error",setup.estimate_error}};
+    if(setup.review_interval!=core::Days{7}) result["review_interval_days"]=setup.review_interval.value();
+    return result.dump();
 }
 bool selected_rival(const RivalDefinition& definition,const CompetitionSetup& setup) {
     if (!definition.planning) return false;

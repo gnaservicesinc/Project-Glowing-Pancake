@@ -75,7 +75,7 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
         invalid("Planned competition is missing its source/resources or exceeds a bound");
     const auto* definition=program.collection.find(world.scenario_id);
     const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
-    if (!scenario || scenario->competition!=state.setup) invalid("Saved rival settings differ from their authored setup");
+    if (!scenario || content::scenario_competition(*scenario,world.difficulty)!=state.setup) invalid("Saved rival settings differ from their authored setup");
     std::vector<std::string> expected,actual;
     for (const auto& row:scenario->rivals) if (content::selected_rival(row,*state.setup)) expected.push_back(row.id);
     for (const auto& row:state.companies) actual.push_back(row.definition_id);
@@ -85,7 +85,7 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
         const auto& authored=rival_definition(program,rival.definition_id);
         if (!rival.planning || !authored.planning) invalid("A planned company lost its author profile or continuation");
         const auto& plan=*rival.planning;const auto earliest=advance_days(world.campaign_start,authored.start_after);
-        if (plan.decisions.size()>rival_decision_limit) invalid("Rival weekly decisions exceed their retention bound");
+        if (plan.decisions.size()>rival_decision_limit) invalid("Rival strategy decisions exceed their retention bound");
         if (rival.response.has_value()!=authored.response.has_value()) invalid("Rival response state differs from its authored policy");
         if (rival.warned_on && !rival.response) {
             std::uint32_t released=0;for (const auto& row:state.releases) if (row.company_id==world.company_id && row.day<*rival.warned_on) ++released;
@@ -105,7 +105,7 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
             simulation.accounts->owner!=authored.id || simulation.lab->catalog!=world.simulation.lab->catalog || simulation.lab->starts_on!=entry ||
             simulation.end_date!=campaign_calendar_limit(world) || simulation.date>campaign_day(world) ||
             (simulation.date!=campaign_day(world) && simulation.phase!=DayPhase::closed) ||
-            plan.next_review!=advance_days(rival.response?rival.response->ready_on.value_or(entry):entry,Days{static_cast<std::int64_t>(plan.decisions.size())*7})) invalid("Rival entry, resource ownership or weekly/daily cursor is invalid");
+            plan.next_review!=advance_days(rival.response?rival.response->ready_on.value_or(entry):entry,Days{static_cast<std::int64_t>(plan.decisions.size())*state.setup->review_interval.value()})) invalid("Rival entry, resource ownership or strategy/daily cursor is invalid");
         if (simulation.lab->research_stream_origin!=RandomStreams{rival_seed(world,authored)}.snapshot()[static_cast<std::size_t>(RandomStream::research)]) invalid("Rival research stream origin differs from its private seed");
         if (simulation.frontier.has_value()!=world.simulation.frontier.has_value() ||
             (simulation.frontier && (simulation.frontier->seed!=world.simulation.frontier->seed ||
@@ -119,10 +119,10 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
         for (std::size_t i=0;i<plan.decisions.size();++i) {
             const auto& decision=plan.decisions[i];SplitMix64 next{stream};const auto draw=next.next();
             const std::set<std::string> actions{"wait","data","research","train","evaluate","deploy","price","hire","repay","finance","expand","publish","frontier_system","frontier_trial"};
-            if (decision.day!=advance_days(rival.response?rival.response->ready_on.value_or(entry):entry,Days{static_cast<std::int64_t>(i)*7}) || decision.day>simulation.date || decision.stream_before!=stream || decision.stream_after!=next.state() ||
+            if (decision.day!=advance_days(rival.response?rival.response->ready_on.value_or(entry):entry,Days{static_cast<std::int64_t>(i)*state.setup->review_interval.value()}) || decision.day>simulation.date || decision.stream_before!=stream || decision.stream_after!=next.state() ||
                 !actions.contains(decision.action) || decision.explanation.empty() || decision.explanation.size()>1024 || decision.subject.size()>256 ||
                 decision.observation!=public_observation(world,decision.day,draw))
-                invalid("Rival decision lost its weekly date, bounded observation or independent RNG progression");
+                invalid("Rival decision lost its scheduled date, bounded observation or independent RNG progression");
             stream=next.state();
         }
         if (simulation.random[static_cast<std::size_t>(RandomStream::rivals)]!=stream) invalid("Rival strategy consumed an unrecorded or rerolled random draw");

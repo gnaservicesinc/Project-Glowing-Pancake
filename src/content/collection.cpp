@@ -863,7 +863,7 @@ RegionalMarkets parse_regional_markets(const Json& value, const std::string& pat
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society", "authority", "frontier", "objectives", "backgrounds"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society", "authority", "frontier", "objectives", "backgrounds", "difficulties"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -1063,6 +1063,25 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         } catch (const ValidationError&) { throw; }
         catch (const std::exception& error) { fail("business_plan",plan_path,error.what()); }
     }
+    if(value.contains("difficulties")) {
+        array(value.at("difficulties"),child(path,"difficulties"),8,true);
+        std::set<std::string> ids;
+        for(const auto& row:value.at("difficulties")) {
+            const auto p=child(path,"difficulties");
+            fields(row,p,{"id","name","description","starting_cash_percent","financing_percent","scripted_delay_percent","rival_review_interval_days","forecast_padding_bp"},
+                {"id","name","description","starting_cash_percent","financing_percent","scripted_delay_percent","rival_review_interval_days","forecast_padding_bp"});
+            CampaignDifficulty d;d.id=id(row.at("id"),p);d.name=text(row.at("name"),p,128);d.description=text(row.at("description"),p,1024);
+            if(!ids.insert(d.id).second) fail("duplicate_id",p,"Repeated campaign difficulty");
+            d.starting_cash_percent=static_cast<std::uint32_t>(integer(row.at("starting_cash_percent"),p,50,200));
+            d.financing_percent=static_cast<std::uint32_t>(integer(row.at("financing_percent"),p,50,150));
+            d.scripted_delay_percent=static_cast<std::uint32_t>(integer(row.at("scripted_delay_percent"),p,25,300));
+            d.rival_review_interval=core::Days{integer(row.at("rival_review_interval_days"),p,3,28)};
+            d.forecast_padding=core::BasisPoints{integer(row.at("forecast_padding_bp"),p,0,1500)};
+            result.difficulties.push_back(std::move(d));
+            try {(void)scenario_opening(result,{},"company.player",result.difficulties.back().id);(void)scenario_management(result,result.difficulties.back().id);}
+            catch(const std::exception& error) {fail("difficulty",p,error.what());}
+        }
+    }
     if(value.contains("backgrounds")) {
         array(value.at("backgrounds"),child(path,"backgrounds"),8,true);
         std::set<std::string> ids;
@@ -1081,7 +1100,10 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
             b.contacts=load_business_offer_catalog(row.at("contacts").dump());
             if(b.contacts.size()>4 || (b.independent_capacity.value()==0)!=(b.monthly_compute_cost.value()==0)) fail("background",p,"Opening compute must have a disclosed monthly bill");
             result.backgrounds.push_back(std::move(b));
-            try {(void)scenario_opening(result,result.backgrounds.back().id);}
+            try {
+                (void)scenario_opening(result,result.backgrounds.back().id);
+                for(const auto& d:result.difficulties) (void)scenario_opening(result,result.backgrounds.back().id,"company.player",d.id);
+            }
             catch(const std::exception& error) {fail("background",p,error.what());}
         }
     }

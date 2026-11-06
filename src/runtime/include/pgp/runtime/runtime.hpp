@@ -55,6 +55,7 @@ struct WorldState {
     std::optional<ObjectivesState> objectives{};
     std::optional<CampaignIdentity> identity{};
     std::string background{};
+    std::string difficulty{};
     auto operator<=>(const WorldState&) const = default;
 };
 

@@ -11,6 +11,7 @@ struct ScenarioOptions {
     std::optional<std::uint64_t> seed;
     std::string background;
     std::string charter;
+    std::string difficulty;
 };
 
 // Initialize implemented foundation fields from validated authored data. No
@@ -20,4 +21,6 @@ struct ScenarioOptions {
                                        std::string_view headquarters,
                                        std::optional<core::ObjectiveSelection> objectives = {},
                                        ScenarioOptions options = {});
+[[nodiscard]] core::TrainingPreview preview_campaign_training(const CompiledProgram&,const WorldState&,const core::TrainingRequest&);
+[[nodiscard]] core::OrdinalDay scripted_rival_start(const CompiledProgram&,const WorldState&,const content::RivalDefinition&);
 } // namespace pgp::runtime

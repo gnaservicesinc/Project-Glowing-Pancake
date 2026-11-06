@@ -302,6 +302,12 @@ Json definition_json(const Definition& definition, const std::string& key) {
         for (const auto& [name, value] : scenario->monthly_commitments) result["monthly_commitments_cents"][name] = value.value();
         for (const auto& [name, value] : scenario->ownership) result["ownership_basis_points"][name] = value.value();
         result["research"] = scenario->research; result["flows"] = scenario->flows;
+        if(!scenario->difficulties.empty()) {
+            result["difficulties"]=Json::array();
+            for(const auto& d:scenario->difficulties) result["difficulties"].push_back({{"id",d.id},{"name",d.name},{"description",d.description},
+                {"starting_cash_percent",d.starting_cash_percent},{"financing_percent",d.financing_percent},{"scripted_delay_percent",d.scripted_delay_percent},
+                {"rival_review_interval_days",d.rival_review_interval.value()},{"forecast_padding_bp",d.forecast_padding.value()}});
+        }
         if(!scenario->backgrounds.empty()) {
             result["backgrounds"]=Json::array();
             for(const auto& b:scenario->backgrounds) result["backgrounds"].push_back({{"id",b.id},{"name",b.name},{"description",b.description},

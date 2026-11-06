@@ -36,6 +36,7 @@ struct CompetitionSetup {
     core::Days publication_delay{30};
     core::BasisPoints publication_credit{2500};
     std::uint32_t estimate_error=20;
+    core::Days review_interval{7};
     auto operator<=>(const CompetitionSetup&) const = default;
 };
 struct RivalDefinition {

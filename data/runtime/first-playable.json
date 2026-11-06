@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.15.0-dev.1",
+  "content_version": "0.16.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -19091,6 +19091,38 @@
         "publication_credit_bp": 2500,
         "publication_delay_days": 30
       },
+      "difficulties": [
+        {
+          "description": "More opening runway, more cash from player financing and slower rival reactions. Training forecasts keep the recipe's original uncertainty.",
+          "financing_percent": 115,
+          "forecast_padding_bp": 0,
+          "id": "difficulty.forgiving",
+          "name": "Forgiving",
+          "rival_review_interval_days": 14,
+          "scripted_delay_percent": 200,
+          "starting_cash_percent": 150
+        },
+        {
+          "description": "The authored opening capital and financing terms, weekly rival strategy reviews and a small added forecasting margin.",
+          "financing_percent": 100,
+          "forecast_padding_bp": 250,
+          "id": "difficulty.standard",
+          "name": "Standard",
+          "rival_review_interval_days": 7,
+          "scripted_delay_percent": 100,
+          "starting_cash_percent": 100
+        },
+        {
+          "description": "Less opening runway, less cash from player financing, more frequent rival decisions and wider training forecast intervals. Actual work and evaluation rules stay the same.",
+          "financing_percent": 85,
+          "forecast_padding_bp": 750,
+          "id": "difficulty.demanding",
+          "name": "Demanding",
+          "rival_review_interval_days": 3,
+          "scripted_delay_percent": 50,
+          "starting_cash_percent": 80
+        }
+      ],
       "ends_before": "2114-01-01",
       "flows": [
         "slice.research_milestone",
@@ -22828,7 +22860,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 5,
+      "revision": 6,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -24104,6 +24136,38 @@
         "publication_credit_bp": 2500,
         "publication_delay_days": 30
       },
+      "difficulties": [
+        {
+          "description": "More opening runway, more cash from player financing and slower rival reactions. Training forecasts keep the recipe's original uncertainty.",
+          "financing_percent": 115,
+          "forecast_padding_bp": 0,
+          "id": "difficulty.forgiving",
+          "name": "Forgiving",
+          "rival_review_interval_days": 14,
+          "scripted_delay_percent": 200,
+          "starting_cash_percent": 150
+        },
+        {
+          "description": "The authored opening capital and financing terms, weekly rival strategy reviews and a small added forecasting margin.",
+          "financing_percent": 100,
+          "forecast_padding_bp": 250,
+          "id": "difficulty.standard",
+          "name": "Standard",
+          "rival_review_interval_days": 7,
+          "scripted_delay_percent": 100,
+          "starting_cash_percent": 100
+        },
+        {
+          "description": "Less opening runway, less cash from player financing, more frequent rival decisions and wider training forecast intervals. Actual work and evaluation rules stay the same.",
+          "financing_percent": 85,
+          "forecast_padding_bp": 750,
+          "id": "difficulty.demanding",
+          "name": "Demanding",
+          "rival_review_interval_days": 3,
+          "scripted_delay_percent": 50,
+          "starting_cash_percent": 80
+        }
+      ],
       "ends_before": "2114-01-01",
       "flows": [
         "slice.research_milestone",
@@ -27841,7 +27905,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 5,
+      "revision": 6,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -29062,6 +29126,38 @@
       "capacity_milli_CU_per_day": 100000,
       "cash_cents": 120000000,
       "civic": "civic.domestic",
+      "difficulties": [
+        {
+          "description": "More opening runway, more cash from player financing and slower rival reactions. Training forecasts keep the recipe's original uncertainty.",
+          "financing_percent": 115,
+          "forecast_padding_bp": 0,
+          "id": "difficulty.forgiving",
+          "name": "Forgiving",
+          "rival_review_interval_days": 14,
+          "scripted_delay_percent": 200,
+          "starting_cash_percent": 150
+        },
+        {
+          "description": "The authored opening capital and financing terms, weekly rival strategy reviews and a small added forecasting margin.",
+          "financing_percent": 100,
+          "forecast_padding_bp": 250,
+          "id": "difficulty.standard",
+          "name": "Standard",
+          "rival_review_interval_days": 7,
+          "scripted_delay_percent": 100,
+          "starting_cash_percent": 100
+        },
+        {
+          "description": "Less opening runway, less cash from player financing, more frequent rival decisions and wider training forecast intervals. Actual work and evaluation rules stay the same.",
+          "financing_percent": 85,
+          "forecast_padding_bp": 750,
+          "id": "difficulty.demanding",
+          "name": "Demanding",
+          "rival_review_interval_days": 3,
+          "scripted_delay_percent": 50,
+          "starting_cash_percent": 80
+        }
+      ],
       "ends_before": "2017-01-01",
       "flows": [
         "slice.research_milestone",
@@ -31440,7 +31536,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 9,
+      "revision": 10,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -31813,6 +31909,38 @@
         "publication_credit_bp": 2500,
         "publication_delay_days": 30
       },
+      "difficulties": [
+        {
+          "description": "More opening runway, more cash from player financing and slower rival reactions. Training forecasts keep the recipe's original uncertainty.",
+          "financing_percent": 115,
+          "forecast_padding_bp": 0,
+          "id": "difficulty.forgiving",
+          "name": "Forgiving",
+          "rival_review_interval_days": 14,
+          "scripted_delay_percent": 200,
+          "starting_cash_percent": 150
+        },
+        {
+          "description": "The authored opening capital and financing terms, weekly rival strategy reviews and a small added forecasting margin.",
+          "financing_percent": 100,
+          "forecast_padding_bp": 250,
+          "id": "difficulty.standard",
+          "name": "Standard",
+          "rival_review_interval_days": 7,
+          "scripted_delay_percent": 100,
+          "starting_cash_percent": 100
+        },
+        {
+          "description": "Less opening runway, less cash from player financing, more frequent rival decisions and wider training forecast intervals. Actual work and evaluation rules stay the same.",
+          "financing_percent": 85,
+          "forecast_padding_bp": 750,
+          "id": "difficulty.demanding",
+          "name": "Demanding",
+          "rival_review_interval_days": 3,
+          "scripted_delay_percent": 50,
+          "starting_cash_percent": 80
+        }
+      ],
       "ends_before": "2017-01-01",
       "flows": [
         "slice.research_milestone",
@@ -34193,7 +34321,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 10,
+      "revision": 11,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -35721,6 +35849,38 @@
         "publication_credit_bp": 2500,
         "publication_delay_days": 30
       },
+      "difficulties": [
+        {
+          "description": "More opening runway, more cash from player financing and slower rival reactions. Training forecasts keep the recipe's original uncertainty.",
+          "financing_percent": 115,
+          "forecast_padding_bp": 0,
+          "id": "difficulty.forgiving",
+          "name": "Forgiving",
+          "rival_review_interval_days": 14,
+          "scripted_delay_percent": 200,
+          "starting_cash_percent": 150
+        },
+        {
+          "description": "The authored opening capital and financing terms, weekly rival strategy reviews and a small added forecasting margin.",
+          "financing_percent": 100,
+          "forecast_padding_bp": 250,
+          "id": "difficulty.standard",
+          "name": "Standard",
+          "rival_review_interval_days": 7,
+          "scripted_delay_percent": 100,
+          "starting_cash_percent": 100
+        },
+        {
+          "description": "Less opening runway, less cash from player financing, more frequent rival decisions and wider training forecast intervals. Actual work and evaluation rules stay the same.",
+          "financing_percent": 85,
+          "forecast_padding_bp": 750,
+          "id": "difficulty.demanding",
+          "name": "Demanding",
+          "rival_review_interval_days": 3,
+          "scripted_delay_percent": 50,
+          "starting_cash_percent": 80
+        }
+      ],
       "ends_before": "2017-01-01",
       "flows": [
         "slice.research_milestone",
@@ -38101,7 +38261,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 10,
+      "revision": 11,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -39629,6 +39789,38 @@
         "publication_credit_bp": 2500,
         "publication_delay_days": 30
       },
+      "difficulties": [
+        {
+          "description": "More opening runway, more cash from player financing and slower rival reactions. Training forecasts keep the recipe's original uncertainty.",
+          "financing_percent": 115,
+          "forecast_padding_bp": 0,
+          "id": "difficulty.forgiving",
+          "name": "Forgiving",
+          "rival_review_interval_days": 14,
+          "scripted_delay_percent": 200,
+          "starting_cash_percent": 150
+        },
+        {
+          "description": "The authored opening capital and financing terms, weekly rival strategy reviews and a small added forecasting margin.",
+          "financing_percent": 100,
+          "forecast_padding_bp": 250,
+          "id": "difficulty.standard",
+          "name": "Standard",
+          "rival_review_interval_days": 7,
+          "scripted_delay_percent": 100,
+          "starting_cash_percent": 100
+        },
+        {
+          "description": "Less opening runway, less cash from player financing, more frequent rival decisions and wider training forecast intervals. Actual work and evaluation rules stay the same.",
+          "financing_percent": 85,
+          "forecast_padding_bp": 750,
+          "id": "difficulty.demanding",
+          "name": "Demanding",
+          "rival_review_interval_days": 3,
+          "scripted_delay_percent": 50,
+          "starting_cash_percent": 80
+        }
+      ],
       "ends_before": "2017-01-01",
       "flows": [
         "slice.research_milestone",
@@ -42009,7 +42201,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 10,
+      "revision": 11,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -43537,6 +43729,38 @@
         "publication_credit_bp": 2500,
         "publication_delay_days": 30
       },
+      "difficulties": [
+        {
+          "description": "More opening runway, more cash from player financing and slower rival reactions. Training forecasts keep the recipe's original uncertainty.",
+          "financing_percent": 115,
+          "forecast_padding_bp": 0,
+          "id": "difficulty.forgiving",
+          "name": "Forgiving",
+          "rival_review_interval_days": 14,
+          "scripted_delay_percent": 200,
+          "starting_cash_percent": 150
+        },
+        {
+          "description": "The authored opening capital and financing terms, weekly rival strategy reviews and a small added forecasting margin.",
+          "financing_percent": 100,
+          "forecast_padding_bp": 250,
+          "id": "difficulty.standard",
+          "name": "Standard",
+          "rival_review_interval_days": 7,
+          "scripted_delay_percent": 100,
+          "starting_cash_percent": 100
+        },
+        {
+          "description": "Less opening runway, less cash from player financing, more frequent rival decisions and wider training forecast intervals. Actual work and evaluation rules stay the same.",
+          "financing_percent": 85,
+          "forecast_padding_bp": 750,
+          "id": "difficulty.demanding",
+          "name": "Demanding",
+          "rival_review_interval_days": 3,
+          "scripted_delay_percent": 50,
+          "starting_cash_percent": 80
+        }
+      ],
       "ends_before": "2017-01-01",
       "flows": [
         "slice.research_milestone",
@@ -45917,7 +46141,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 10,
+      "revision": 11,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,

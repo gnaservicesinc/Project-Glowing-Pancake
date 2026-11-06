@@ -1,5 +1,6 @@
 #include <pgp/runtime/competition.hpp>
 #include <pgp/runtime/runtime.hpp>
+#include <pgp/runtime/scenario.hpp>
 #include "competition_internal.hpp"
 #include <algorithm>
 #include <set>
@@ -42,7 +43,7 @@ void plan(WorldState& world,const CompiledProgram& program,RivalCompany& rival) 
     auto& simulation=rival.simulation;
     if (simulation.phase==DayPhase::closed || simulation.phase==DayPhase::finished) return;
     const auto day=simulation.date;
-    const auto earliest=advance_days(world.campaign_start,definition.start_after);
+    const auto earliest=scripted_rival_start(program,world,definition);
     if (definition.player_deployment_threshold>0 && !rival.warned_on && day>=earliest &&
         public_deployments_on(world,day)>=definition.player_deployment_threshold) {
         rival.warned_on=day;
@@ -172,14 +173,14 @@ void validate_competition(const WorldState& world,const CompiledProgram& program
             invalid("Rival random stream origin differs from its authored seed");
         if (rival.warned_on) {
             if (definition.player_deployment_threshold==0 || *rival.warned_on>world.simulation.date ||
-                *rival.warned_on<advance_days(world.campaign_start,definition.start_after) ||
+                *rival.warned_on<scripted_rival_start(program,world,definition) ||
                 public_deployments_on(world,*rival.warned_on)<definition.player_deployment_threshold) invalid("Heavyweight warning lacks its actual visible customer-delivery trigger");
         }
         if (!simulation.lab->models.empty()) {
             if (simulation.capacity->projects.size()!=1) invalid("Rival model has no unique actual training project");
             const auto& model=simulation.lab->models.front(); const auto& work=simulation.capacity->projects.front();
             const auto due=definition.player_deployment_threshold>0?
-                (rival.warned_on?advance_days(*rival.warned_on,definition.warning_lead):simulation.end_date):advance_days(world.campaign_start,definition.start_after);
+                (rival.warned_on?advance_days(*rival.warned_on,definition.warning_lead):simulation.end_date):scripted_rival_start(program,world,definition);
             if (!rival.attempted || model.id!="model.rival" || model.recipe_id!=definition.recipe_id || model.data_ids!=std::vector<std::string>{definition.data_id} ||
                 model.created_on<due || work.total_work!=definition.training_work || work.requested!=definition.training_rate || work.staff!=definition.staff)
                 invalid("Rival training bypassed its terms or warning lead time");
@@ -201,7 +202,7 @@ void validate_competition(const WorldState& world,const CompiledProgram& program
             if (rival->simulation.phase!=DayPhase::closed || rival->simulation.date!=notice.day || notice.response_due) invalid("Competitive closure is not a real company closure");
         } else if (notice.kind=="budget_declined") {
             const auto due=definition.player_deployment_threshold>0?
-                (rival->warned_on?advance_days(*rival->warned_on,definition.warning_lead):world.simulation.end_date):advance_days(world.campaign_start,definition.start_after);
+                (rival->warned_on?advance_days(*rival->warned_on,definition.warning_lead):world.simulation.end_date):scripted_rival_start(program,world,definition);
             if (!rival->attempted || !rival->simulation.lab->models.empty() || notice.response_due || notice.day<due)
                 invalid("Competitive budget refusal invented training or skipped its warning");
         } else invalid("Unknown competitive notice kind");

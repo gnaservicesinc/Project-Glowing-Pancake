@@ -13,7 +13,9 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     if (!scenario) throw std::invalid_argument("Selected definition is not a scenario");
     if (options.identity) validate_campaign_identity(*options.identity);
     const auto seed = options.seed.value_or(scenario->seed);
-    const auto opening=content::scenario_opening(*scenario,options.background);
+    const auto opening=content::scenario_opening(*scenario,options.background,"company.player",options.difficulty);
+    const auto management=content::scenario_management(*scenario,options.difficulty);
+    const auto competition=content::scenario_competition(*scenario,options.difficulty);
     if (std::find(scenario->headquarters_choices.begin(), scenario->headquarters_choices.end(), headquarters) ==
         scenario->headquarters_choices.end())
         throw std::invalid_argument("Headquarters is not offered by this scenario");
@@ -25,6 +27,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     world.root_seed = seed;
     world.identity = std::move(options.identity);
     world.background = std::move(options.background);
+    world.difficulty = std::move(options.difficulty);
     world.enabled_flows = scenario->flows;
     world.campaign_start = scenario->starts_on;
     world.scope_created = scenario->starts_on;
@@ -56,7 +59,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         content::apply_market_setup(content::scenario_market_setup(program.collection,*scenario),*world.simulation.market,*world.simulation.accounts,
             *world.simulation.capacity,scenario->starts_on);
     }
-    if (scenario->management) world.simulation.management=core::ManagementState{*scenario->management,{},{},{},{},{},{}};
+    if (management) world.simulation.management=core::ManagementState{*management,{},{},{},{},{},{}};
     if (scenario->infrastructure) {core::InfrastructureState owned;owned.catalog=*scenario->infrastructure;owned.executive_base=std::string(headquarters);world.simulation.infrastructure=std::move(owned);}
     if (const auto* catalog=content::resilience_catalog(program.collection,*scenario)) {
         core::ResilienceState risks;risks.catalog=*catalog;risks.insurer_cash=catalog->insurer_capital;
@@ -75,7 +78,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         core::AuthorityState institutions;institutions.catalog=*catalog;institutions.starts_on=scenario->starts_on;
         institutions.prepared_on=scenario->starts_on;world.authority=std::move(institutions);
     }
-    if (scenario->management && scenario->management->governance) {
+    if (management && management->governance) {
         core::GovernanceState corporate;corporate.opening_holdings=world.simulation.accounts->holdings;
         world.simulation.management->governance=std::move(corporate);
     }
@@ -94,10 +97,39 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     else if (headquarters == "US-TX") world.state_id = "state.us_tx";
     else if (headquarters == "US-WA") world.state_id = "state.us_wa";
     else throw std::invalid_argument("Headquarters has no implemented scope binding");
-    initialize_competition(world,program,scenario->rivals,scenario->competition);
+    initialize_competition(world,program,scenario->rivals,competition);
     if(scenario->objectives) initialize_objectives(world,*scenario->objectives,std::move(objectives));
     else if(objectives) throw std::invalid_argument("This scenario uses its own introductory ending.");
     validate_checkpoint(program, checkpoint);
     return checkpoint;
+}
+namespace {
+const content::CampaignDifficulty* difficulty(const CompiledProgram& program,const WorldState& world) {
+    if(world.difficulty.empty()) return nullptr;
+    const auto* definition=program.collection.find(world.scenario_id);
+    const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
+    if(!scenario) throw std::invalid_argument("Difficulty needs an authored source scenario");
+    return content::scenario_difficulty(*scenario,world.difficulty);
+}
+}
+core::TrainingPreview preview_campaign_training(const CompiledProgram& program,const WorldState& world,const core::TrainingRequest& request) {
+    if(!world.simulation.lab) throw std::invalid_argument("This company has no training laboratory");
+    auto result=core::preview_training(*world.simulation.lab,request);
+    if(const auto* d=difficulty(program,world)) {
+        for(std::size_t i=0;i<core::lab_domain_count;++i) {
+            result.lower[i]=core::BasisPoints{std::max(INT64_C(0),result.lower[i].value()-d->forecast_padding.value())};
+            result.upper[i]=core::BasisPoints{std::min(INT64_C(10000),result.upper[i].value()+d->forecast_padding.value())};
+        }
+        result.explanation+=" Difficulty "+d->name+" adds "+std::to_string(d->forecast_padding.value())+" basis points of uncertainty to each side of training forecasts. Time and known bills use their ordinary rules; held-out measurements are reported separately.";
+    }
+    return result;
+}
+core::OrdinalDay scripted_rival_start(const CompiledProgram& program,const WorldState& world,const content::RivalDefinition& rival) {
+    auto delay=rival.start_after;
+    if(const auto* d=difficulty(program,world)) {
+        const auto scaled=core::mul_div_floor(static_cast<std::uint64_t>(delay.value()),d->scripted_delay_percent,100);
+        delay=core::Days{core::checked_add(static_cast<std::int64_t>(scaled.quotient),scaled.remainder>0?1:0)};
+    }
+    return core::advance_days(world.campaign_start,delay);
 }
 } // namespace pgp::runtime

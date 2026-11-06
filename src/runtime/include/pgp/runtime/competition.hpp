@@ -24,7 +24,8 @@ struct RivalDecision {
     RivalObservation observation;
     auto operator<=>(const RivalDecision&) const = default;
 };
-inline constexpr std::size_t rival_decision_limit = (core::retained_campaign_days + 6) / 7;
+// Difficulty profiles permit one bounded strategy review every three days.
+inline constexpr std::size_t rival_decision_limit = (core::retained_campaign_days + 2) / 3;
 struct RivalPlanState {
     std::optional<core::OrdinalDay> entered_on;
     core::OrdinalDay next_review{0};

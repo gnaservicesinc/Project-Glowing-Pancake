@@ -564,10 +564,21 @@ The optimized build and three focused setup/governance checks pass in 3.11s.
 Short offscreen QML checks at 100%/200% text start a company, propose/vote
 a charter amendment and preserve the saved state.
 
-Next is the missing explicit difficulty choice, followed by continued source
-and control checks against the other initial design requirements. M8-02 stays
-deferred. Human work waits until the user is ready, and E2-04 editor downloads
-stay with deferred release preparation.
+Explicit difficulty is now implemented. Forgiving, Standard and Demanding
+profiles preview and apply opening capital after background adjustments,
+player financing proceeds, rival strategy review/reaction timing and training
+forecast margins. The profiles change conditions and information rather than
+model, evaluation or objective rules. Saves record the selection and reconcile
+its derived catalogs. Content 0.16.0-dev.1 has 21 exact opening round trips.
+The optimized build and three focused setup checks pass in 2.52s. Short
+offscreen QML checks at 100%/200% text verify the real selected terms, forecast
+precision, settings-refresh selection preservation, exact saves and invalid
+choice recovery.
+
+Next, continue comparing ordinary product, model, staff and delegation controls
+against the initial design, and implement the next missing component. M8-02
+stays deferred. Human work waits until the user is ready, and E2-04 editor
+downloads stay with deferred release preparation.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

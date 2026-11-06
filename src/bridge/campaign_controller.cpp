@@ -231,7 +231,7 @@ QVariantList CampaignController::scenarios() const {
         if (scenario->competition) {
             const auto& setup=*scenario->competition;
             label=QStringLiteral("%1 US + %2 international startups · %3 heavyweights%4").arg(setup.domestic).arg(setup.international).arg(setup.heavyweights)
-                .arg(setup.catchup_cash.value()>0?QStringLiteral(" · forgiving financing"):QString{});
+                .arg(setup.catchup_cash.value()>0?QStringLiteral(" · rival catch-up equity"):QString{});
             std::uint64_t demand=0;for (const auto& segment:scenario->market->segments) demand+=segment.daily_tasks;
             detail=QStringLiteral("Up to three US and three international startups enter initially; later startups enter on the authored schedule. Rivals pay for work and use public information. Shared demand is %1 tasks/day. %2")
                 .arg(demand).arg(setup.catchup_cash.value()>0?QStringLiteral("Each rival may take one disclosed %1 equity round for %2.%3% ownership; no recurring catch-up subsidy.").arg(money(setup.catchup_cash)).arg(setup.catchup_acquired.value()/100).arg(setup.catchup_acquired.value()%100,2,10,QLatin1Char('0')):QStringLiteral("No catch-up funding is available."));
@@ -259,6 +259,15 @@ QVariantList CampaignController::scenarios() const {
             charters.push_back(QVariantMap{{"id",text(c.id)},{"label",text(c.name)},{"detail",detail}});
         }
         choice.insert("backgrounds",backgrounds);choice.insert("charters",charters);
+        QVariantList difficulties;
+        for(const auto& d:scenario->difficulties) {
+            auto detail=text(d.description)+QStringLiteral("\nStarting capital %1% after the background adjustment. Player financing proceeds %2% for the same equity, interest rate and term. Amounts round down once to cents. Training forecast intervals add %3 basis points of uncertainty on each side; held-out evidence and model outcomes use the same rules.")
+                .arg(d.starting_cash_percent).arg(d.financing_percent).arg(d.forecast_padding.value());
+            if(scenario->competition) detail+=QStringLiteral("\nOperating rivals review at most one feasible strategic action every %1 days. Entry, heavyweight warnings and pressure reviews keep their authored dates. Rivals retain their ordinary cash, staff, compute and bounded public information.").arg(d.rival_review_interval.value());
+            else detail+=QStringLiteral("\nThis introduction uses scripted rivals: their initial action delays are %1% of the authored delay, rounded up to whole days. Warning lead times and actual funded work keep their ordinary rules.").arg(d.scripted_delay_percent);
+            difficulties.push_back(QVariantMap{{"id",text(d.id)},{"label",text(d.name)},{"detail",detail}});
+        }
+        choice.insert("difficulties",difficulties);
         if(scenario->objectives) {
             const auto& opening=scenario->objectives->opening;
             const bool asi=content::frontier_catalog(program_.collection,*scenario)->asi_route;
@@ -272,12 +281,12 @@ QVariantList CampaignController::scenarios() const {
     }
     return result;
 }
-QString CampaignController::setupPreview(QString scenario,QString background,QString charter) const {
+QString CampaignController::setupPreview(QString scenario,QString background,QString charter,QString difficulty) const {
     try {
         const auto* definition=program_.collection.find(scenario.toStdString());
         const auto* s=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
         if(!s) return {};
-        const auto opening=content::scenario_opening(*s,background.toStdString());
+        const auto opening=content::scenario_opening(*s,background.toStdString(),"company.player",difficulty.toStdString());
         core::Cents monthly{0};core::MilliCUPerDay compute{0};
         for(const auto& [id,amount]:opening.monthly_commitments) { (void)id;monthly=core::checked_unit_add(monthly,amount); }
         for(const auto& source:opening.capacity_sources) compute=core::checked_unit_add(compute,source.effective);
@@ -312,6 +321,10 @@ QString CampaignController::identitySummary() const {
         if(const auto* d=program_.collection.find(world.scenario_id)) if(const auto* s=std::get_if<content::ScenarioDefinition>(&d->data))
             for(const auto& b:s->backgrounds) if(b.id==world.background) summary+=QStringLiteral(" · %1").arg(text(b.name));
     }
+    if(!world.difficulty.empty()) {
+        if(const auto* def=program_.collection.find(world.scenario_id)) if(const auto* s=std::get_if<content::ScenarioDefinition>(&def->data))
+            summary+=QStringLiteral(" · %1").arg(text(content::scenario_difficulty(*s,world.difficulty)->name));
+    }
     if(const auto* charter=core::active_charter(world.simulation)) summary+=QStringLiteral(" · %1").arg(text(charter->name));
     return summary;
 }
@@ -338,9 +351,9 @@ void CampaignController::newCampaignWithObjectives(QString hq,bool stories,QStri
     startCampaign(std::move(hq),stories,std::move(scenario),std::move(primary),std::move(secondary),{});
 }
 void CampaignController::newCampaignSetup(QString hq,bool stories,QString scenario,QString primary,QStringList secondary,
-    QString company,QString founder,QString pronouns,QString seed,QString background,QString charter) {
+    QString company,QString founder,QString pronouns,QString seed,QString background,QString charter,QString difficulty) {
     runtime::ScenarioOptions options;
-    options.background=background.toStdString();options.charter=charter.toStdString();
+    options.background=background.toStdString();options.charter=charter.toStdString();options.difficulty=difficulty.toStdString();
     try {
         options.identity = runtime::CampaignIdentity{company.trimmed().toStdString(),founder.trimmed().toStdString(),pronouns.trimmed().toStdString()};
         runtime::validate_campaign_identity(*options.identity);
