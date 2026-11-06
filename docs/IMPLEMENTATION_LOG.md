@@ -1746,3 +1746,41 @@ Offscreen real-QML fixture checks at 100%/200% text capture a running model,
 pause/release, save/reopen, resume and retain the immutable version after a
 normal stepped day. These are short engineering checks, with no extended
 campaign or human session.
+
+### Bounded product price delegation
+
+Office Policies now authorizes one enabled price policy per operating paid
+product. The player sets a floor, ceiling, step, low/high utilization thresholds,
+7–365-day review interval, reserve floor and finite review limit (up to 10,000).
+It has no cash-spending or resource-allocation authority. Each review uses up
+to seven settled days of discretionary deliveries and provisioned serving slots
+left after protected contracts. Low utilization cuts by one step, high utilization
+raises by one step, and both clamp to the authorized range. The policy holds
+when the recent serving source was reduced, its allocation changed or contracts
+occupied all slots; a fully occupied source also prevents interpreting low sales
+as weak demand. It reads no private rival state and samples no random outcomes.
+
+Every accepted review, including a hold, consumes one authorization and points
+to an immutable before/after price event. Direct price changes suspend an enabled
+policy and log the override without changing its bounds or counters. Re-enabling
+checks the current operating product, range, remaining reviews and conflicting
+policies. Fixed contracts retain their terms. Deep save validation replays each
+price decision against its historical seven-day window and audit event, so a
+same-day override does not rewrite or invalidate the prior decision.
+
+Policy decisions and price events use shared history pages. Holds do not add
+duplicate daily quotes. Finite histories allow 65,536 audit records; the GUI
+builds only 128 decision rows per page and exposes older/newer navigation.
+New optional JSON fields preserve unused legacy save shapes; content remains
+0.16.0-dev.1. The roadmap count stays 42/52 because this closes a design gap
+within existing batches. Other initial components still precede human feedback,
+event expansion, balance and extended qualification.
+
+The optimized Mac build passes. Four focused pricing, market, management and
+bridge checks pass in 5.43s, including bounded adjustments/holds, authorization
+refusals, exhausted review limits, out-of-range override recovery, immutable
+same-day decisions, exact reload and paged access to older records. Short
+offscreen real-QML checks at 100%/200% text authorize the policy through the
+form, run a review, suspend/resume, override through the normal price control
+and save/reopen exactly. These are engineering checks; no human playtest,
+extended campaign, event expansion or balancing was performed.

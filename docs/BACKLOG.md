@@ -30,8 +30,12 @@ requirements inside those batches.
 
 The Lab lifecycle pass adds project pause/resume and immutable checkpoints of
 running models, including retained work, released/rechecked allocations and
-exact saved pause history. Bounded price delegation is the next verified gap;
-management currently delegates evaluations and lease renewal only.
+exact saved pause history. Bounded price delegation now joins evaluation and
+lease-renewal policies, with player-selected ranges, steps, utilization thresholds,
+cadence and finite review counts. Manual overrides suspend it and retain the
+original audit. Continue initial component implementation, including the remaining
+reserve and hardware delegation requirements; their presence in the design does
+not mean they have been implemented.
 
 ## M0 — Toolchain and platform proof
 

@@ -584,8 +584,20 @@ snapshot provenance reload exactly. The optimized build and three focused
 capacity/Lab checks pass in 2.28s; short offscreen controls pass at 100%/200%
 text. Content remains 0.16.0-dev.1; these are additive engine/save controls.
 
-Next is bounded price delegation, a confirmed gap beyond the current evaluation
-and lease-renewal policies. Then continue the initial component coverage pass.
+Office → Policies and alerts now authorizes bounded product pricing alongside
+evaluation and lease renewal. Players choose floor/ceiling, adjustment step,
+low/high utilization thresholds, 7–365-day cadence, reserve floor and at most
+10,000 reviews. Reviews use up to seven settled operating days and hold through
+known capacity reductions or a changed serving allocation. Protected contracts
+keep their agreed terms. Manual price changes suspend the policy; explicit resume
+retains its counters and requires the current quote inside the original range.
+Append-only price events preserve earlier same-day decisions after an override.
+The decision log shows 128 records per page, with all prior pages accessible.
+The optimized build and four focused checks pass (5.43s); short offscreen QML
+checks at 100%/200% text pass through authorization, review, override and reopening.
+
+Next are the remaining initial component gaps, including reserve and hardware
+delegation. The roadmap remains 42/52 checked while design coverage is completed.
 M8-02 stays deferred. Human work waits until the user is ready, and E2-04 editor
 downloads stay with deferred release preparation.
 

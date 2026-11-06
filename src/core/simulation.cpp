@@ -701,6 +701,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 (void)receipt(next, "market_product_availability");
             } else if constexpr (std::is_same_v<Action, SetMarketPrice>) {
                 set_market_price(market(next), next.date, action.id, action.price);
+                suspend_pricing_policies(next,action.id);
                 (void)receipt(next, "market_price_change");
             } else if constexpr (std::is_same_v<Action, AcceptContract>) {
                 accept_contract(market(next), capacity(next), next.date, action.contract);

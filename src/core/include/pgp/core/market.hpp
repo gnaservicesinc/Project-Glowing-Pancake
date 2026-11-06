@@ -156,6 +156,14 @@ struct MarketPriceChange {
     Cents price{0};
     auto operator<=>(const MarketPriceChange&) const = default;
 };
+inline constexpr std::size_t market_price_history_limit=65536;
+struct MarketPriceEvent {
+    std::string product_id;
+    OrdinalDay day{0};
+    Cents before{0},after{0};
+    std::string actor; // Empty for a direct quote; otherwise the authorizing policy.
+    auto operator<=>(const MarketPriceEvent&) const = default;
+};
 struct MarketState {
     std::string owner = "company.player";
     OrdinalDay starts_on{0};
@@ -168,6 +176,7 @@ struct MarketState {
     std::vector<MarketDemandChange> demand_changes{};
     std::vector<ProductCapacityBinding> capacity_bindings{};
     std::vector<MarketPriceChange> prices{};
+    PagedHistory<MarketPriceEvent,64> price_events{};
     auto operator<=>(const MarketState&) const = default;
 };
 struct MarketReport {
@@ -202,7 +211,7 @@ void add_market_segment(MarketState& state, MarketSegment segment);
 void add_market_preference(MarketState& state,std::string_view segment_id,MarketPreference preference);
 void set_product_available(MarketState& state, std::string_view product_id, bool available);
 [[nodiscard]] Cents market_price_on(const MarketState& state, std::string_view product_id, OrdinalDay day);
-void set_market_price(MarketState& state, OrdinalDay day, std::string_view product_id, Cents price);
+void set_market_price(MarketState& state, OrdinalDay day, std::string_view product_id, Cents price,std::string actor={});
 [[nodiscard]] std::uint64_t effective_market_demand(const MarketState& state, const MarketSegment& segment, OrdinalDay day);
 [[nodiscard]] std::uint64_t public_market_demand(const MarketState& state, const MarketSegment& segment, OrdinalDay day);
 [[nodiscard]] std::uint64_t maximum_daily_demand(const MarketSegment& segment);

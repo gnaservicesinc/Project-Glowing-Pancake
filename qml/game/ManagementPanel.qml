@@ -320,6 +320,7 @@ ColumnLayout {
         }
         Selection { heading: qsTr("Deployed services"); rows: manager.products }
         Field { id: productPrice; objectName: "productPriceField"; label: qsTr("Price per task · constant 2014 cents"); value: (manager.products.selectedRow.fields || {}).priceCents || ""; visible: (manager.products.selectedRow.fields || {}).freeWeights !== true }
+        Copy { visible: productPrice.visible; text: qsTr("Setting a price suspends any enabled pricing policy for this product. Review its retained bounds and counters in Office → Policies and alerts before resuming.") }
         Action {
             objectName: "setProductPriceButton"
             text: qsTr("Set service price")
@@ -403,8 +404,8 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "policies"
-        Copy { text: qsTr("Authorize a finite policy. Each attempt rechecks its remaining budget, cash floor, methodology and available resources. Refused actions spend nothing and suspend the policy. Disabling or re-enabling preserves counters. A policy never chooses a story response or deploys a model.") }
-        Choice { id: policyKind; objectName: "policyKindChoice"; label: qsTr("Policy type"); options: [{id:"evaluation",label:qsTr("Schedule independent evaluations")},{id:"lease_renewal",label:qsTr("Renew a paid compute lease")}] }
+        Copy { text: qsTr("Authorize a finite policy. Each attempt rechecks its bounds and cash floor. Refused actions spend nothing and suspend the policy. Disabling or re-enabling preserves counters. A policy never chooses a story response or deploys a model.") }
+        Choice { id: policyKind; objectName: "policyKindChoice"; label: qsTr("Policy type"); options: [{id:"evaluation",label:qsTr("Schedule independent evaluations")},{id:"lease_renewal",label:qsTr("Renew a paid compute lease")},{id:"pricing",label:qsTr("Adjust a product price within bounds")}] }
         Choice { id: policyModel; label: qsTr("Model checkpoint (may still be training)"); rows: manager.models; visible: policyKind.value === "evaluation" }
         Choice { id: policyPlan; label: qsTr("Independent evaluation plan"); options: manager.evaluations; visible: policyKind.value === "evaluation" }
         Choice { id: policySource; label: qsTr("Evaluation source"); options: manager.sources; visible: policyKind.value === "evaluation" }
@@ -413,21 +414,50 @@ ColumnLayout {
         Field { id: policyInterval; label: qsTr("Days between evaluations"); value: manager.policyDefaults.interval || ""; visible: policyKind.value === "evaluation" }
         Choice { id: policyLease; label: qsTr("Accepted renewable lease and conservative term cost"); options: manager.renewableLeases; visible: policyKind.value === "lease_renewal" }
         Field { id: policyMonthly; label: qsTr("Maximum lease bill per month, dollars"); value: manager.policyDefaults.monthly || ""; visible: policyKind.value === "lease_renewal" }
-        Field { id: policyBudget; label: qsTr("Total policy commitment budget, dollars"); value: manager.policyDefaults.budget || "" }
-        Field { id: policyReserve; label: qsTr("Minimum cash after commitment, dollars"); value: manager.policyDefaults.reserve || "" }
-        Field { id: policyRuns; objectName: "policyRunsField"; label: qsTr("Maximum authorized runs"); value: manager.policyDefaults.runs || "" }
+        ColumnLayout {
+            visible: policyKind.value === "pricing"
+            Layout.fillWidth: true
+            Choice { id: priceProduct; objectName: "pricingProductChoice"; label: qsTr("Operating product and current quote"); options: manager.pricedProducts }
+            Field { id: priceFloor; objectName: "pricingFloorField"; label: qsTr("Minimum price per task, dollars"); value: priceProduct.selectedOption.floor || "0.00" }
+            Field { id: priceCeiling; objectName: "pricingCeilingField"; label: qsTr("Maximum price per task, dollars"); value: priceProduct.selectedOption.ceiling || "1.00" }
+            Field { id: priceStep; objectName: "pricingStepField"; label: qsTr("Price adjustment per review, dollars"); value: priceProduct.selectedOption.step || "0.05" }
+            Field { id: priceLow; objectName: "pricingLowField"; label: qsTr("Lower price at or below this utilization, whole percent"); value: "25" }
+            Field { id: priceHigh; objectName: "pricingHighField"; label: qsTr("Raise price at or above this utilization, whole percent"); value: "85" }
+            Field { id: priceInterval; objectName: "pricingIntervalField"; label: qsTr("Days between price reviews, 7–365"); value: "30" }
+            Field { id: priceRuns; objectName: "pricingRunsField"; label: qsTr("Maximum price reviews, 1–10000"); value: "1200" }
+            Copy { text: qsTr("The first review is tomorrow. Later reviews use up to seven settled days of discretionary deliveries and serving slots left after protected contracts. Low utilization lowers the quote by one step; high utilization raises it. The policy holds through a known capacity reduction. Every review, including a hold, uses one authorization. Manual price changes suspend the policy. No spending authority is granted; existing contracts keep their agreed terms.") }
+            Copy {
+                objectName: "pricingPreviewText"
+                text: {
+                    // Re-evaluate settled evidence even when all form values were edited.
+                    const currentRevision = campaign.revision
+                    return manager.pricingPreview(priceProduct.value, priceFloor.value, priceCeiling.value, priceStep.value, priceLow.value, priceHigh.value)
+                }
+            }
+        }
+        Field { id: policyBudget; label: qsTr("Total policy commitment budget, dollars"); value: manager.policyDefaults.budget || ""; visible: policyKind.value !== "pricing" }
+        Field { id: policyReserve; objectName: "policyReserveField"; label: qsTr("Minimum cash after commitment, dollars"); value: manager.policyDefaults.reserve || "" }
+        Field { id: policyRuns; objectName: "policyRunsField"; label: qsTr("Maximum authorized runs"); value: manager.policyDefaults.runs || ""; visible: policyKind.value !== "pricing" }
         Copy { visible: policyKind.value === "lease_renewal"; text: qsTr("Renewal occurs on the expiry morning. The policy debits a conservative full-term commitment ceiling (setup plus enough monthly bills for the entire term); the ledger pays actual setup and daily accrued bills. It cannot renew a missed deadline retroactively.") }
         Action {
             objectName: "authorizePolicyButton"
             text: qsTr("Authorize bounded policy")
             onClicked: {
                 if (policyKind.value === "evaluation") manager.authorizeEvaluation(policyModel.value, policyPlan.value, policySource.value, policyRate.value, policyStaff.value, policyBudget.value, policyReserve.value, policyInterval.value, policyRuns.value)
+                else if (policyKind.value === "pricing") manager.authorizePricing(priceProduct.value, priceFloor.value, priceCeiling.value, priceStep.value, priceLow.value, priceHigh.value, priceInterval.value, priceRuns.value, policyReserve.value)
                 else manager.authorizeRenewal(policyLease.value, policyBudget.value, policyReserve.value, policyMonthly.value, policyRuns.value)
             }
         }
         Selection { heading: qsTr("Authorized policies"); rows: manager.policies }
-        Action { text: qsTr("Suspend / resume selected policy"); enabled: panel.editable && manager.policies.selectedId.length > 0; onClicked: manager.setPolicyEnabled(manager.policies.selectedId, !manager.policies.selectedRow.fields.enabled) }
-        Action { text: qsTr("Renew selected lease explicitly on expiry morning"); enabled: panel.editable && policyLease.value.length > 0; onClicked: manager.renewLease(policyLease.value) }
+        Action { objectName: "togglePolicyButton"; text: qsTr("Suspend / resume selected policy"); enabled: panel.editable && manager.policies.selectedId.length > 0; onClicked: manager.setPolicyEnabled(manager.policies.selectedId, !(manager.policies.selectedRow.fields || {}).enabled) }
+        Action { text: qsTr("Renew selected lease explicitly on expiry morning"); visible: policyKind.value === "lease_renewal"; enabled: panel.editable && policyLease.value.length > 0; onClicked: manager.renewLease(policyLease.value) }
+        Copy { objectName: "decisionPageLabel"; text: manager.decisionPageLabel }
+        Flow {
+            Layout.fillWidth: true
+            spacing: 8
+            Action { objectName: "newerPolicyDecisionsButton"; text: qsTr("Newer decisions"); enabled: manager.decisionPage > 0; onClicked: manager.setDecisionPage(manager.decisionPage - 1) }
+            Action { objectName: "olderPolicyDecisionsButton"; text: qsTr("Older decisions"); enabled: manager.decisionPage + 1 < manager.decisionPageCount; onClicked: manager.setDecisionPage(manager.decisionPage + 1) }
+        }
         Selection { heading: qsTr("Policy decision log"); rows: manager.decisions }
         Selection { heading: qsTr("Company alerts and deadlines"); rows: manager.alerts }
         Action { objectName: "acknowledgeAlertButton"; text: qsTr("Acknowledge selected alert"); enabled: panel.editable && manager.alerts.selectedRow.actionable === true; onClicked: manager.acknowledgeAlert(manager.alerts.selectedId) }

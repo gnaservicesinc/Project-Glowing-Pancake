@@ -124,20 +124,34 @@ Json market_json(const core::MarketState& state, bool packed) {
         {"starts_on",row.starts_on.value()},{"expires_before",row.expires_before.value()},{"delta_bp",row.delta.value()}});
     Json prices=Json::array();
     for (const auto& row:state.prices) prices.push_back({{"product",row.product_id},{"starts",row.starts_on.value()},{"price",row.price.value()}});
-    return {{"owner",state.owner},{"starts_on",state.starts_on.value()},
+    Json result{{"owner",state.owner},{"starts_on",state.starts_on.value()},
         {"closed_through",optional_day(state.closed_through)},{"products",std::move(products)},
         {"segments",std::move(segments)},{"contracts",std::move(contracts)},
         {"days",days.finish()},{"adoptions",adoptions.finish()},{"demand_changes",std::move(changes)},{"capacity_bindings",std::move(bindings)},{"prices",std::move(prices)}};
+    if (!state.price_events.empty()) {
+        Json events=Json::array();
+        for (const auto& e:state.price_events) events.push_back({{"product",e.product_id},{"day",e.day.value()},
+            {"before",e.before.value()},{"after",e.after.value()},{"actor",e.actor}});
+        result["price_events"]=std::move(events);
+    }
+    return result;
 }
 
 core::MarketState parse_market(const Json& value, bool packed) {
-    fields(value,"market",{"owner","starts_on","closed_through","products","segments","contracts","days","adoptions"},{"demand_changes","capacity_bindings","prices"});
+    fields(value,"market",{"owner","starts_on","closed_through","products","segments","contracts","days","adoptions"},{"demand_changes","capacity_bindings","prices","price_events"});
     core::MarketState result;
     if (value.contains("prices")) {
-        array(value.at("prices"),"market/prices",8192);
+        array(value.at("prices"),"market/prices",core::market_price_history_limit);
         for (const auto& row:value.at("prices")) {
             fields(row,"market/price",{"product","starts","price"});
             result.prices.push_back({label(row.at("product")),day(row.at("starts")),cents(row.at("price"))});
+        }
+    }
+    if (value.contains("price_events")) {
+        array(value.at("price_events"),"market/price_events",core::market_price_history_limit);
+        for (const auto& e:value.at("price_events")) {
+            fields(e,"market/price_event",{"product","day","before","after","actor"});
+            result.price_events.push_back({label(e.at("product")),day(e.at("day")),cents(e.at("before")),cents(e.at("after")),text(e.at("actor"),"market/actor",32,true)});
         }
     }
     if (value.contains("capacity_bindings")) {

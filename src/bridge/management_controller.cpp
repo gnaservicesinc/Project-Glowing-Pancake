@@ -91,6 +91,14 @@ core::TrainingRequest request(QString id,QString recipe,QString source,QStringLi
     result.work=core::MilliCU{compute(work)}; return result;
 }
 QVariantMap option(std::string_view id,QString label) { return {{QStringLiteral("id"),text(id)},{QStringLiteral("label"),std::move(label)}}; }
+core::PricingBounds pricing_bounds(const QString& floor,const QString& ceiling,const QString& step,const QString& low,const QString& high) {
+    const core::PricingBounds b{policy_money(floor),policy_money(ceiling),policy_money(step),
+        core::BasisPoints{low==QStringLiteral("0")?0:integer(low,99)*100},core::BasisPoints{integer(high,100)*100}};
+    if (b.floor>=b.ceiling || b.ceiling.value()>core::market_price_limit || b.step.value()<=0 ||
+        b.step.value()>b.ceiling.value()-b.floor.value() || b.low_utilization>=b.high_utilization)
+        throw std::invalid_argument("Choose an ordered price range, a positive step within it and ordered utilization percentages");
+    return b;
+}
 QString research_status(const core::LabState& lab,const core::CapacityState& capacity,const core::LabResearch& topic) {
     std::uint32_t completed=0;
     bool stopped=false;
@@ -138,8 +146,9 @@ QString ManagementController::competitionSummary() const {
 }
 const core::SimulationState& ManagementController::state() const { return snapshot_->checkpoint.world.simulation; }
 void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::CompiledProgram& program,bool replace) {
-    program_=&program;if (replace) acquisition_preview_revision_.reset();
+    program_=&program;if (replace) {acquisition_preview_revision_.reset();decision_page_=0;}
     snapshot_=std::move(snapshot);
+    decision_page_=std::clamp(decision_page_,0,std::max(0,decisionPageCount()-1));
     std::vector<CampaignRow> data,research,models,evidence,offers,products,contracts,rivals,payables,funding,specialists,policies,decisions,alerts;
     const auto& s=state();
     const auto& world=snapshot_->checkpoint.world;
@@ -292,11 +301,20 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             specialists.push_back({text(offer.id),text(offer.name),money(offer.signing_cost)+QStringLiteral(" signing · ")+money(offer.monthly_salary)+QStringLiteral("/month"),
                 QStringLiteral("Adds one available staff member today and a recurring salary. Past work keeps its actual staffing. Extra staff does not create compute or improve model capability for free."),hired?QStringLiteral("Hired"):QStringLiteral("Available"),!hired});
         }
-        for (const auto& p:m.policies) policies.push_back({text(p.id),p.kind==core::DelegationKind::evaluation?QStringLiteral("Held-out evaluation policy"):QStringLiteral("Compute lease renewal policy"),
+        for (const auto& p:m.policies) {
+            if (p.kind==core::DelegationKind::pricing && p.pricing) {
+                policies.push_back({text(p.id),QStringLiteral("Bounded product pricing"),QStringLiteral("%1 / %2 reviews · %3 to %4").arg(p.runs).arg(p.maximum_runs).arg(money(p.pricing->floor),money(p.pricing->ceiling)),
+                    QStringLiteral("Product %1 · next review %2 · every %3 days\nStep %4 · low utilization %5 · high utilization %6\nReserve floor %7 · no spending authority\n%8\nEach review uses up to seven settled days. Manual price changes suspend this policy. Counters and prior decisions are retained.")
+                        .arg(text(p.target_id),text(core::iso_date(p.next_review)),QString::number(p.interval.value()),money(p.pricing->step),percent(p.pricing->low_utilization),percent(p.pricing->high_utilization),money(p.reserve_floor),p.blocked.empty()?QStringLiteral("No blocked action"):text(p.blocked)),
+                    p.enabled?QStringLiteral("Enabled"):p.runs>=p.maximum_runs?QStringLiteral("Review limit reached"):QStringLiteral("Suspended / blocked"),false,{{QStringLiteral("enabled"),p.enabled}}});
+                continue;
+            }
+            policies.push_back({text(p.id),p.kind==core::DelegationKind::evaluation?QStringLiteral("Held-out evaluation policy"):QStringLiteral("Compute lease renewal policy"),
             QStringLiteral("%1 / %2 runs · %3 / %4 committed").arg(p.runs).arg(p.maximum_runs).arg(money(p.committed),money(p.budget)),
             QStringLiteral("Target %1 · next review %2\nReserve floor %3 · monthly ceiling %4\n%5 CU/day · %6 staff · %7-day evaluation interval\n%8\nSuspending preserves all spent/committed budget and prior decisions.")
                 .arg(text(p.target_id),text(core::iso_date(p.next_review)),money(p.reserve_floor),money(p.monthly_ceiling),cu(p.allocation.daily_compute.value()),QString::number(p.allocation.staff),QString::number(p.interval.value()),p.blocked.empty()?QStringLiteral("No blocked action"):text(p.blocked)),p.enabled?QStringLiteral("Enabled"):p.runs>=p.maximum_runs?QStringLiteral("Run limit reached"):QStringLiteral("Suspended / blocked"),false,{{QStringLiteral("enabled"),p.enabled}}});
-        for (std::size_t i=0;i<m.decisions.size();++i) {const auto& d=m.decisions[i];decisions.push_back({QStringLiteral("decision:%1").arg(static_cast<qulonglong>(i)),text(d.policy_id),text(core::iso_date(d.day))+QStringLiteral(" · ")+money(d.commitment),text(d.explanation)+(d.result_id.empty()?QString{}:QStringLiteral("\nResult: ")+text(d.result_id)),d.accepted?QStringLiteral("Committed"):QStringLiteral("Refused; policy suspended"),false});}
+        }
+        decisions=policyDecisionRows();
         for (const auto& n:m.notices) alerts.push_back({text(n.id),readable(n.kind),text(core::iso_date(n.day))+(n.deadline?QStringLiteral(" · deadline ")+text(core::iso_date(*n.deadline)):QString{}),
             alertDetail(n),n.acknowledged?QStringLiteral("Acknowledged"):n.required?QStringLiteral("Required before work"):QStringLiteral("Actionable / informational"),!n.acknowledged});
     }
@@ -406,6 +424,74 @@ QVariantList ManagementController::renewableLeases() const {
     for (const auto& offer:state().business_offers->catalog) if (offer.renewable && std::any_of(state().business_offers->accepted.begin(),state().business_offers->accepted.end(),[&](const auto& a){return a.offer_id==offer.id;}))
         result.push_back(option(offer.id,text(offer.name)+QStringLiteral(" · expires ")+text(core::iso_date(core::lease_expiry(*state().business_offers,offer.id)))+QStringLiteral(" · ceiling ")+money(core::lease_commitment_ceiling(offer))));
     return result;
+}
+QVariantList ManagementController::pricedProducts() const {
+    QVariantList result;if (!snapshot_ || !state().market || !state().capacity) return result;
+    const auto input=[](std::int64_t value){return QStringLiteral("%1.%2").arg(value/100).arg(value%100,2,10,QLatin1Char('0'));};
+    for (const auto& p:state().market->products) {
+        const auto* project=find(state().capacity->projects,p.capacity_project_id);
+        if (!p.available || p.channel==core::ProductChannel::open_weights || !project || project->status!=core::ProjectStatus::active) continue;
+        auto row=option(p.id,readable(p.id)+QStringLiteral(" · current quote ")+money(p.price_per_task));
+        row.insert(QStringLiteral("floor"),input(p.price_per_task.value()/2));
+        row.insert(QStringLiteral("ceiling"),input(std::min(core::market_price_limit,std::max<std::int64_t>(100,p.price_per_task.value()*2))));
+        row.insert(QStringLiteral("step"),QStringLiteral("0.05"));
+        result.push_back(std::move(row));
+    }
+    return result;
+}
+int ManagementController::decisionPageCount() const {
+    if (!snapshot_ || !state().management) return 0;
+    return static_cast<int>((state().management->decisions.size()+127)/128);
+}
+QString ManagementController::decisionPageLabel() const {
+    if (!decisionPageCount()) return QStringLiteral("No policy decisions yet");
+    return QStringLiteral("Page %1 of %2 · newest first · 128 decisions per page").arg(decision_page_+1).arg(decisionPageCount());
+}
+std::vector<CampaignRow> ManagementController::policyDecisionRows() const {
+    std::vector<CampaignRow> rows;if (!snapshot_ || !state().management) return rows;
+    const auto& history=state().management->decisions;
+    const auto end=history.size()-std::min(history.size(),static_cast<std::size_t>(decision_page_)*128);
+    const auto begin=end>128?end-128:0;
+    rows.reserve(end-begin);
+    for (auto i=end;i>begin;) {
+        --i;const auto& d=history[i];auto detail=text(d.explanation);
+        if (!d.result_id.empty()) detail+=QStringLiteral("\nResult: ")+text(d.result_id);
+        if (d.price_event_cursor && *d.price_event_cursor>0 && *d.price_event_cursor<=state().market->price_events.size()) {
+            const auto& e=state().market->price_events[static_cast<std::size_t>(*d.price_event_cursor-1)];
+            detail+=QStringLiteral("\n%1: %2 → %3 per task. No cash spent; existing contracts retain their terms.").arg(readable(e.product_id),money(e.before),money(e.after));
+        }
+        // StableListModel sorts identities; a fixed inverse cursor keeps newest first.
+        const auto identity=QStringLiteral("decision:%1").arg(static_cast<qulonglong>(core::management_decision_limit-i),5,10,QLatin1Char('0'));
+        rows.push_back({identity,text(d.policy_id),text(core::iso_date(d.day))+QStringLiteral(" · ")+money(d.commitment),std::move(detail),
+            d.overridden?QStringLiteral("Player override; suspended"):d.accepted?(d.price_event_cursor?QStringLiteral("Price reviewed"):QStringLiteral("Committed")):QStringLiteral("Refused; policy suspended"),false});
+    }
+    return rows;
+}
+void ManagementController::setDecisionPage(int page) {
+    const auto next=std::clamp(page,0,std::max(0,decisionPageCount()-1));
+    if (next==decision_page_) return;
+    decision_page_=next;decisions_->beginCampaign(policyDecisionRows());emit changed();
+}
+QString ManagementController::pricingPreview(QString product,QString floor,QString ceiling,QString step,QString low,QString high) const {
+    if (!snapshot_ || !state().market) return QStringLiteral("Start a company to authorize pricing");
+    try {
+        core::DelegationPolicy p;p.kind=core::DelegationKind::pricing;p.target_id=product.toStdString();p.pricing=pricing_bounds(floor,ceiling,step,low,high);
+        const auto* target=find(state().market->products,p.target_id);
+        if (!target) return QStringLiteral("Launch a paid product before authorizing pricing");
+        if (target->price_per_task<p.pricing->floor || target->price_per_task>p.pricing->ceiling) return QStringLiteral("The current price must be inside the proposed range");
+        const auto preview=core::pricing_review(state(),p,state().date,target->price_per_task);
+        return QStringLiteral("Current settled evidence: %1\nProposed quote on this evidence: %2 → %3 per task. The scheduled review will use the settled days available then.")
+            .arg(text(preview.explanation),money(target->price_per_task),money(preview.quote));
+    } catch (const std::exception& error) {return QString::fromUtf8(error.what());}
+}
+void ManagementController::authorizePricing(QString product,QString floor,QString ceiling,QString step,QString low,QString high,QString interval,QString runs,QString reserve) {
+    if (!editable()) return;
+    try {
+        core::DelegationPolicy p;p.id=nextId(QStringLiteral("policy.")).toStdString();p.target_id=product.toStdString();p.kind=core::DelegationKind::pricing;
+        p.pricing=pricing_bounds(floor,ceiling,step,low,high);p.reserve_floor=policy_money(reserve);
+        p.interval=core::Days{integer(interval,365)};p.maximum_runs=static_cast<std::uint32_t>(integer(runs,core::pricing_review_limit));
+        emit actionRequested(core::AddDelegationPolicy{std::move(p)});
+    } catch (const std::exception& error) {emit noticeRaised(QString::fromUtf8(error.what()));}
 }
 QString ManagementController::alertDetail(const core::ManagementNotice& n) const {
     if (!snapshot_ || !state().management) return {};

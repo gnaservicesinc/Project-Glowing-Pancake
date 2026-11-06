@@ -51,6 +51,24 @@ void run() {
     check(commands==1,"Policy dollar parser accepted exponent notation");
     management.authorizeEvaluation(QStringLiteral("baseline"),QStringLiteral("evaluation.held_out"),QStringLiteral("lease.initial"),QStringLiteral("20"),QStringLiteral("1"),QStringLiteral("4000.00"),QStringLiteral("100000"),QStringLiteral("30"),QStringLiteral("2"));
     check(commands==2 && later->checkpoint==advanced,"Policy form mutated authority or failed to emit its bounded command");
+    bridge::ManagementController pricing;pricing.update(later,program,true);
+    check(!pricing.pricedProducts().empty(),"Operating paid products are missing from pricing choices");
+    std::optional<core::CommandAction> pricing_command;
+    QObject::connect(&pricing,&bridge::ManagementController::actionRequested,[&](core::CommandAction action){pricing_command=std::move(action);});
+    const auto product=pricing.pricedProducts().front().toMap();const auto product_id=product.value(QStringLiteral("id")).toString();
+    pricing.authorizePricing(product_id,QStringLiteral("1e6"),QStringLiteral("100"),QStringLiteral("0.05"),QStringLiteral("25"),QStringLiteral("85"),QStringLiteral("30"),QStringLiteral("1200"),QStringLiteral("0"));
+    check(!pricing_command,"Pricing form accepted an exponent amount");
+    pricing.authorizePricing(product_id,QStringLiteral("0"),QStringLiteral("100"),QStringLiteral("0.05"),QStringLiteral("25"),QStringLiteral("85"),QStringLiteral("30"),QStringLiteral("1200"),QStringLiteral("0"));
+    check(pricing_command && std::get<core::AddDelegationPolicy>(*pricing_command).policy.kind==core::DelegationKind::pricing &&
+        std::get<core::AddDelegationPolicy>(*pricing_command).policy.maximum_runs==1200 && later->checkpoint==advanced,"Pricing form lost finite authorization or mutated its snapshot");
+    check(pricing.pricingPreview(product_id,QStringLiteral("0"),QStringLiteral("100"),QStringLiteral("0.05"),QStringLiteral("25"),QStringLiteral("85")).contains(QStringLiteral("Proposed quote")),"Price preview omitted its quote and settled evidence");
+    auto paged=advanced;
+    for (int i=0;i<129;++i) paged.world.simulation.management->decisions.push_back({"presentation.fixture","","Dated decision",core::OrdinalDay{80},core::Cents{0},false});
+    pricing.update(std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,paged,{},true}),program,true);
+    check(pricing.decisionPageCount()==2 && pricing.decisions()->rowCount()==128 && pricing.decisions()->idAt(0)==QStringLiteral("decision:65408"),"Decision log did not bound the newest page");
+    pricing.setDecisionPage(1);
+    check(pricing.decisions()->rowCount()==1 && pricing.decisions()->idAt(0)==QStringLiteral("decision:65536"),"Older decisions are inaccessible");
+    pricing.setDecisionPage(0);check(pricing.decisions()->rowCount()==128,"Newest decision page could not be restored");
     check(management.scoreText().contains(QStringLiteral("Provisional")) && management.scoreText().contains(QStringLiteral("founder")),"Score presentation hid its provisional status or ownership tradeoff");
     bridge::SocietyController society;
     society.update(later,true);society.regions()->setSelectedId(QStringLiteral("region.us"));

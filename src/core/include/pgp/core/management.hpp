@@ -50,7 +50,14 @@ struct ManagementAcceptance {
     OrdinalDay day{0};
     auto operator<=>(const ManagementAcceptance&) const = default;
 };
-enum class DelegationKind { evaluation, lease_renewal };
+inline constexpr std::size_t management_decision_limit=65536;
+inline constexpr std::uint32_t pricing_review_limit=10000;
+enum class DelegationKind { evaluation, lease_renewal, pricing };
+struct PricingBounds {
+    Cents floor{0},ceiling{0},step{0};
+    BasisPoints low_utilization{2500},high_utilization{8500};
+    auto operator<=>(const PricingBounds&) const = default;
+};
 struct DelegationPolicy {
     std::string id,target_id,plan_id;
     DelegationKind kind=DelegationKind::evaluation;
@@ -63,6 +70,7 @@ struct DelegationPolicy {
     std::uint32_t runs=0;
     Cents committed{0};
     std::string blocked;
+    std::optional<PricingBounds> pricing{};
     auto operator<=>(const DelegationPolicy&) const = default;
 };
 struct DelegationDecision {
@@ -70,6 +78,8 @@ struct DelegationDecision {
     OrdinalDay day{0};
     Cents commitment{0};
     bool accepted=false;
+    std::optional<std::uint64_t> price_event_cursor{};
+    bool overridden=false;
     auto operator<=>(const DelegationDecision&) const = default;
 };
 struct ManagementNotice {
@@ -83,7 +93,7 @@ struct ManagementState {
     ManagementCatalog catalog;
     std::vector<ManagementAcceptance> financing,specialists;
     std::vector<DelegationPolicy> policies;
-    std::vector<DelegationDecision> decisions;
+    PagedHistory<DelegationDecision,64> decisions;
     std::vector<ManagementNotice> notices;
     std::optional<OrdinalDay> reviewed_on;
     std::optional<GovernanceState> governance{};
@@ -109,6 +119,12 @@ void take_financing(SimulationState& state,std::string_view id);
 void hire_specialist(SimulationState& state,std::string_view id,Cents protected_cash);
 void add_delegation_policy(SimulationState& state,DelegationPolicy policy);
 void set_delegation_enabled(SimulationState& state,std::string_view id,bool enabled);
+void suspend_pricing_policies(SimulationState& state,std::string_view product);
+struct PricingReview {
+    Cents quote{0};
+    std::string explanation;
+};
+[[nodiscard]] PricingReview pricing_review(const SimulationState& state,const DelegationPolicy& policy,OrdinalDay day,Cents before);
 void review_delegation(SimulationState& state,Cents protected_cash);
 void prepare_management(SimulationState& state);
 void acknowledge_management_notice(SimulationState& state,std::string_view id);

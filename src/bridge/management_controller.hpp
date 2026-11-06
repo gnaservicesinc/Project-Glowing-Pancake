@@ -28,6 +28,10 @@ class ManagementController final : public QObject {
     Q_PROPERTY(QString scoreText READ scoreText NOTIFY changed)
     Q_PROPERTY(QVariantMap policyDefaults READ policyDefaults NOTIFY changed)
     Q_PROPERTY(QVariantList renewableLeases READ renewableLeases NOTIFY changed)
+    Q_PROPERTY(QVariantList pricedProducts READ pricedProducts NOTIFY changed)
+    Q_PROPERTY(int decisionPage READ decisionPage NOTIFY changed)
+    Q_PROPERTY(int decisionPageCount READ decisionPageCount NOTIFY changed)
+    Q_PROPERTY(QString decisionPageLabel READ decisionPageLabel NOTIFY changed)
     Q_PROPERTY(QVariantList recipes READ recipes NOTIFY changed)
     Q_PROPERTY(QVariantList evaluations READ evaluations NOTIFY changed)
     Q_PROPERTY(QVariantList sources READ sources NOTIFY changed)
@@ -94,6 +98,13 @@ public:
     QString scoreText() const;
     QVariantMap policyDefaults() const;
     QVariantList renewableLeases() const;
+    QVariantList pricedProducts() const;
+    int decisionPage() const {return decision_page_;}
+    int decisionPageCount() const;
+    QString decisionPageLabel() const;
+    Q_INVOKABLE void setDecisionPage(int page);
+    Q_INVOKABLE void authorizePricing(QString product,QString floor,QString ceiling,QString step,QString low,QString high,QString interval,QString runs,QString reserve);
+    Q_INVOKABLE QString pricingPreview(QString product,QString floor,QString ceiling,QString step,QString low,QString high) const;
     QString alertDetail(const core::ManagementNotice& notice) const;
     Q_INVOKABLE void takeFinancing(QString id);
     Q_INVOKABLE void hireSpecialist(QString id);
@@ -136,6 +147,8 @@ signals:
     void noticeRaised(QString text);
 private:
     bool editable();
+    std::vector<CampaignRow> policyDecisionRows() const;
+    int decision_page_=0;
     const core::SimulationState& state() const;
     QString nextId(QString prefix) const;
     CampaignSnapshotPtr snapshot_;

@@ -308,7 +308,7 @@ void validate_market(const MarketState& state) {
             (product.channel == ProductChannel::open_weights && product.price_per_task.value()!=0))
             invalid("Product has duplicate identity/source or an invalid task price");
     }
-    if (state.prices.size()>8192) invalid("Market price history exceeds its bound");
+    if (state.prices.size()>market_price_history_limit || state.price_events.size()>market_price_history_limit) invalid("Market price history exceeds its bound");
     std::optional<std::pair<std::string,OrdinalDay>> previous_price;
     std::map<std::string,Cents> last_price;
     for (const auto& row:state.prices) {
@@ -321,6 +321,21 @@ void validate_market(const MarketState& state) {
         previous_price=key;last_price.insert_or_assign(row.product_id,row.price);
     }
     for (const auto& [id,price]:last_price) if (find_id(state.products,id).price_per_task!=price) invalid("Current price differs from its actual price history");
+    std::map<std::string,Cents> event_quotes;
+    std::map<std::pair<std::string,OrdinalDay>,Cents> closing_quotes;
+    std::optional<OrdinalDay> event_day;
+    for (const auto& event:state.price_events) {
+        const auto& product=find_id(state.products,event.product_id);
+        const auto prior=event_quotes.find(event.product_id);
+        if (event.day<state.starts_on || event.day>latest || (event_day && event.day<*event_day) ||
+            event.before.value()<0 || event.after.value()<0 || event.before.value()>market_price_limit || event.after.value()>market_price_limit ||
+            event.actor.size()>32 || (product.channel==ProductChannel::open_weights && event.after.value()!=0) ||
+            (prior!=event_quotes.end() && prior->second!=event.before)) invalid("Price audit events have invalid dates, bounds or quote continuity");
+        event_day=event.day;event_quotes.insert_or_assign(event.product_id,event.after);
+        closing_quotes.insert_or_assign(std::pair{event.product_id,event.day},event.after);
+    }
+    for (const auto& [key,price]:closing_quotes)
+        if (market_price_on(state,key.first,key.second)!=price) invalid("Price audit differs from its final daily quote");
     ids.clear();
     ids.reserve(state.segments.size());
     std::unordered_set<std::string_view> products_seen;
@@ -710,15 +725,18 @@ void set_product_available(MarketState& state, std::string_view product_id, bool
         found->available = value;
     });
 }
-void set_market_price(MarketState& state,OrdinalDay day,std::string_view id,Cents price) {
+void set_market_price(MarketState& state,OrdinalDay day,std::string_view id,Cents price,std::string actor) {
     mutate(state,[&](auto& next) {
         require_day(next,day);
         auto found=std::find_if(next.products.begin(),next.products.end(),[&](const auto& row){return row.id==id;});
         if (found==next.products.end() || price.value()<0 || price.value()>market_price_limit) invalid("Choose an existing product and a bounded nonnegative price");
         if (found->channel == ProductChannel::open_weights && price.value() != 0)
             invalid("Published open weights carry no per-task license charge");
-        if (found->price_per_task==price) return;
-        if (next.prices.size()+2>8192) invalid("Market price history is full");
+        if (found->price_per_task==price && actor.empty()) return;
+        if (next.price_events.size()>=market_price_history_limit) invalid("Market price audit is full");
+        next.price_events.push_back({std::string(id),day,found->price_per_task,price,std::move(actor)});
+        if (found->price_per_task==price) return; // A hold needs an audit event, not another identical daily quote.
+        if (next.prices.size()+2>market_price_history_limit) invalid("Market price history is full");
         if (std::none_of(next.prices.begin(),next.prices.end(),[&](const auto& row){return row.product_id==id;}))
             next.prices.push_back({std::string(id),next.starts_on,found->price_per_task});
         const auto today=std::find_if(next.prices.begin(),next.prices.end(),[&](const auto& row){return row.product_id==id && row.starts_on==day;});
