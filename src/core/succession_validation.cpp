@@ -45,6 +45,7 @@ void validate_succession(const SimulationState& s,bool deep) {
     if(configured!=s.succession.has_value()) invalid("The leadership charter and its saved history must be present together.");
     if(!s.succession) return;
     const auto& actor=*s.succession;const auto& c=succession_catalog(s);
+    if (actor.founder_name) label(*actor.founder_name);
     if(!s.accounts || !s.capacity || actor.terms.empty() || actor.controls.empty() || actor.terms.size()>succession_term_limit ||
         actor.controls.size()>succession_notice_limit || actor.plans.size()>succession_plan_limit || actor.notices.size()>succession_notice_limit ||
         actor.founder_holder!=s.management->catalog.scoring.founder || actor.posting_cursor>s.accounts->postings.size())
@@ -71,7 +72,7 @@ void validate_succession(const SimulationState& s,bool deep) {
             invalid("An executive term bypassed its actual handover or finite retirement boundary.");
         Cents salary{0};
         if(term.person=="founder") {
-            if(i!=0 || term.plan || term.caretaker || term.name!=c.founder_name || term.birth_year!=c.founder_birth_year)
+            if(i!=0 || term.plan || term.caretaker || term.name!=actor.founder_name.value_or(c.founder_name) || term.birth_year!=c.founder_birth_year)
                 invalid("A successor inherited the original founder's identity.");
             salary=c.founder_salary;
         } else {

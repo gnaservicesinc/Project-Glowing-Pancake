@@ -36,6 +36,7 @@ template<class T,class F> void fields(T& r,F field) {
     } else if constexpr(std::is_same_v<V,core::SuccessionState>) {
         field("founder_holder",r.founder_holder);field("personal_cash_cents",r.personal_cash);field("posting_cursor",r.posting_cursor);
         field("terms",r.terms);field("controls",r.controls);field("plans",r.plans);field("notices",r.notices);
+        field("founder_name",r.founder_name,true);
     }
 }
 }

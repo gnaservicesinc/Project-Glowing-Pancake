@@ -1621,3 +1621,20 @@ headquarters, stories and objectives, while the design also requires company
 and founder identity, pronouns, background, charter and an editable world seed.
 Those setup controls are the next feature work. The repository instructions
 and current handoff now prioritize feature completion with short checks.
+
+### Campaign identity and world seed
+
+New campaign setup accepts a company name, founder name, optional pronouns
+and a decimal 64-bit world seed. Local generation supplies fictional names
+and a new seed. The form previews the selected scenario's opening resources.
+Company headings and the actual founding leadership term use the chosen
+names. ScenarioOptions passes the seed into the existing independent streams,
+Frontier conditions and rivals. The authored content identity stays valid
+for reload. Optional identity fields preserve old saves and default callers.
+
+The optimized Mac build passed. Three focused setup, leadership and persistence
+checks passed in 3.11s. They cover maximum-width seeds, invalid input, exact
+save/reload and next-day parity. A short offscreen run of the real QML form
+at 100% and 200% text starts a named century campaign, saves/reopens it and
+refuses an overflowing seed without replacing the current company. These
+checks use no extended campaign. Background and charter setup remain next.

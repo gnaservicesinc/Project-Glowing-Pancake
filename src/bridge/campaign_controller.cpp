@@ -7,6 +7,7 @@
 
 #include <QCoreApplication>
 #include <QFileInfo>
+#include <QRandomGenerator>
 
 #include <algorithm>
 #include <limits>
@@ -241,6 +242,9 @@ QVariantList CampaignController::scenarios() const {
                 .arg(text(core::iso_date(scenario->starts_on)),text(core::iso_date(core::OrdinalDay{scenario->ends_before.value()-1})));
         }
         QVariantMap choice{{QStringLiteral("id"),text(id)},{QStringLiteral("label"),label},{QStringLiteral("detail"),detail}};
+        choice.insert(QStringLiteral("seed"),integer(scenario->seed));
+        choice.insert(QStringLiteral("opening"),QStringLiteral("Opening cash %1. Team %2. Leased compute %3 milli-CU/day.")
+            .arg(money(scenario->cash)).arg(scenario->team_people).arg(scenario->leased_capacity.value()));
         if(scenario->objectives) {
             const auto& opening=scenario->objectives->opening;
             const bool asi=content::frontier_catalog(program_.collection,*scenario)->asi_route;
@@ -259,6 +263,26 @@ QString CampaignController::headquartersText() const {
     const auto& id=snapshot_->checkpoint.world.state_id;
     return id=="state.us_ca"?QStringLiteral("California"):id=="state.us_tx"?QStringLiteral("Texas"):QStringLiteral("Washington");
 }
+QString CampaignController::companyName() const {
+    return snapshot_ && snapshot_->checkpoint.world.identity ? text(snapshot_->checkpoint.world.identity->company_name) : QStringLiteral("Your company");
+}
+QString CampaignController::identitySummary() const {
+    if (!snapshot_) return {};
+    const auto& world = snapshot_->checkpoint.world;
+    auto summary = QStringLiteral("World seed %1").arg(integer(world.root_seed));
+    if (world.identity) {
+        summary = QStringLiteral("Founded by %1%2 · %3").arg(text(world.identity->founder_name),
+            world.identity->founder_pronouns.empty() ? QString{} : QStringLiteral(" (%1)").arg(text(world.identity->founder_pronouns)), summary);
+    }
+    return summary;
+}
+QVariantMap CampaignController::generateCampaignNames() const {
+    const auto names = runtime::generate_campaign_identity(QRandomGenerator::global()->generate64());
+    return {{QStringLiteral("company"),text(names.company_name)},{QStringLiteral("founder"),text(names.founder_name)}};
+}
+QString CampaignController::generateWorldSeed() const {
+    return integer(QRandomGenerator::global()->generate64());
+}
 void CampaignController::setDaysPerSecond(int value) {
     if (value!=1 && value!=10 && value!=30 && value!=60) return;
     days_per_second_=value;
@@ -272,13 +296,27 @@ void CampaignController::newCampaignOptions(QString hq,bool stories,QString scen
     newCampaignWithObjectives(std::move(hq),stories,std::move(scenario),{},{});
 }
 void CampaignController::newCampaignWithObjectives(QString hq,bool stories,QString scenario,QString primary,QStringList secondary) {
+    startCampaign(std::move(hq),stories,std::move(scenario),std::move(primary),std::move(secondary),{});
+}
+void CampaignController::newCampaignSetup(QString hq,bool stories,QString scenario,QString primary,QStringList secondary,
+    QString company,QString founder,QString pronouns,QString seed) {
+    runtime::ScenarioOptions options;
+    try {
+        options.identity = runtime::CampaignIdentity{company.trimmed().toStdString(),founder.trimmed().toStdString(),pronouns.trimmed().toStdString()};
+        runtime::validate_campaign_identity(*options.identity);
+        options.seed = runtime::parse_world_seed(seed.trimmed().toStdString());
+    } catch (const std::exception& error) { setNotice(QString::fromUtf8(error.what())); return; }
+    startCampaign(std::move(hq),stories,std::move(scenario),std::move(primary),std::move(secondary),std::move(options));
+}
+void CampaignController::startCampaign(QString hq,bool stories,QString scenario,QString primary,QStringList secondary,
+    runtime::ScenarioOptions options) {
     std::optional<core::ObjectiveSelection> selection;
     try {
         if(!primary.isEmpty()) selection=parseObjectiveSelection(primary,secondary);
     } catch(const std::exception& error) {setNotice(QString::fromUtf8(error.what()));return;}
     if (!beginOperation()) return;
-    QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,hq=hq.toStdString(),stories,scenario=scenario.toStdString(),selection]{
-        worker->newCampaign(token,hq,stories,scenario,selection);
+    QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,hq=hq.toStdString(),stories,scenario=scenario.toStdString(),selection,options=std::move(options)]{
+        worker->newCampaign(token,hq,stories,scenario,selection,options);
     },Qt::QueuedConnection);
 }
 void CampaignController::openWelcome() {

@@ -551,6 +551,8 @@ Json world_json(const WorldState& world) {
     if (world.society) result["society"]=detail::society_json(*world.society);
     if (world.authority) result["authority"]=detail::authority_json(*world.authority);
     if (world.objectives) result["objectives"]=detail::objectives_json(*world.objectives);
+    if (world.identity) result["identity"] = {{"company_name",world.identity->company_name},
+        {"founder_name",world.identity->founder_name},{"founder_pronouns",world.identity->founder_pronouns}};
     return result;
 }
 WorldState parse_world(Json& value,const CompiledProgram& program) {
@@ -559,7 +561,7 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
         if (name!="variables" && name!="competition" && name!="competition_mode" && name!="scenario_id" && name!="society" &&
-            name!="authority" && name!="objectives" && name!="simulation_storage") prior_shape[name]=nullptr;
+            name!="authority" && name!="objectives" && name!="simulation_storage" && name!="identity") prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"world",{"simulation","company_id","world_id","state_id","campaign_start","scope_created",
                                    "root_seed","enabled_flows","facts","counterparty_cash_cents","decisions","negotiations"});
@@ -567,6 +569,13 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
         return entry.second.default_value.has_value();
     })) detail::invalid("variables","Registered variables require an explicit value collection");
     WorldState result;
+    if (value.contains("identity")) {
+        const auto& identity = value.at("identity");
+        detail::fields(identity,"world/identity",{"company_name","founder_name","founder_pronouns"});
+        result.identity = CampaignIdentity{detail::text(identity.at("company_name"),"company_name",128),
+            detail::text(identity.at("founder_name"),"founder_name",128),
+            detail::text(identity.at("founder_pronouns"),"founder_pronouns",64,true)};
+    }
     const auto format = value.contains("simulation_storage") ?
         detail::text(value.at("simulation_storage"), "world/simulation_storage", 32) : std::string{};
     const bool packed = format == packed_history_format;

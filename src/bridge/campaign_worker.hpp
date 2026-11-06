@@ -2,6 +2,7 @@
 
 #include "campaign_snapshot.hpp"
 #include <pgp/session/milestone.hpp>
+#include <pgp/runtime/scenario.hpp>
 
 #include <QObject>
 #include <QTimer>
@@ -17,7 +18,7 @@ public:
                    persistence::LocalPaths paths, persistence::Settings settings,
                    QObject* parent = nullptr);
     void newCampaign(std::uint64_t token,std::string headquarters,bool stories,std::string scenario_id = {},
-        std::optional<core::ObjectiveSelection> objectives = {});
+        std::optional<core::ObjectiveSelection> objectives = {}, runtime::ScenarioOptions options = {});
     void advanceTo(std::uint64_t token,std::uint64_t revision,std::string kind);
     void setSpeed(int days_per_second);
     void start();

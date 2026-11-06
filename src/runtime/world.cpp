@@ -382,6 +382,13 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                                           bool validate_core_simulation) {
     const auto& world = checkpoint.world;
     const auto& state = checkpoint.runtime;
+    if (world.identity) {
+        validate_campaign_identity(*world.identity);
+        if (world.scenario_id.empty()) invalid("Campaign identity needs its authored source scenario");
+    }
+    if (world.simulation.succession && world.simulation.succession->founder_name !=
+        (world.identity ? std::optional{world.identity->founder_name} : std::nullopt))
+        invalid("The founding executive name differs from the saved campaign identity");
     if ((world.simulation.civic || world.society || world.authority || world.simulation.frontier) && world.scenario_id.empty())
         invalid("Institutions, society and frontier research require an authored source scenario");
     if (!world.scenario_id.empty()) {
@@ -410,7 +417,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                 (validate_core_simulation && world.authority->catalog!=*authority)) invalid("Saved institutions differ from the authored scenario or prepared morning.");
         } else if(world.authority) invalid("This scenario did not authorize institutional authority.");
         if (const auto* frontier=content::frontier_catalog(program.collection,*scenario)) {
-            if (!world.simulation.frontier || world.simulation.frontier->seed!=scenario->seed ||
+            if (!world.simulation.frontier || world.simulation.frontier->seed!=world.root_seed ||
                 (validate_core_simulation && world.simulation.frontier->catalog!=*frontier))
                 invalid("Saved frontier research differs from the authored scenario and seed.");
         } else if (world.simulation.frontier) invalid("This scenario did not authorize frontier research.");

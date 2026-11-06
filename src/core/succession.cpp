@@ -141,22 +141,23 @@ std::vector<BoardMember> succession_board(const SimulationState& s,std::vector<B
     if(control.role==FounderRole::executive) return board;
     for(auto& member:board) if(member.id==c.founder_board) {
         member.seats=control.role==FounderRole::chair?c.chair_seats:c.trust_seats;
-        member.name=control.role==FounderRole::chair?c.founder_name+", chair":"Founder trust representative";
+        member.name=control.role==FounderRole::chair?actor.founder_name.value_or(c.founder_name)+", chair":"Founder trust representative";
     }
     std::erase_if(board,[](const auto& member){return member.seats==0;});
     const auto& term=actor.terms.at(control.term-1);
     board.push_back({"leadership.ceo",term.name+", chief executive",1,false,c.cash_floor,BasisPoints{1000}});
     return board;
 }
-void initialize_succession(SimulationState& s) {
+void initialize_succession(SimulationState& s, std::optional<std::string> founder_name) {
     if(!s.management || !s.management->catalog.succession) return;
     if(s.succession || !s.accounts || !s.capacity) succession_detail::invalid("Initialize leadership once on an operating company.");
     const auto& c=succession_catalog(s);validate_succession_catalog(c);
     validate_succession_opening(c,s.date,s.end_date);
     SuccessionState actor;actor.founder_holder=s.management->catalog.scoring.founder;
+    actor.founder_name=std::move(founder_name);
     actor.personal_cash=c.personal_cash;actor.posting_cursor=s.accounts->postings.size();s.succession=std::move(actor);
     if(s.date<succession_detail::year_day(c.founder_birth_year+static_cast<int>(c.executive_retirement_age)))
-        appoint(s,{"founder",c.founder_name,{},c.founder_birth_year,Cents{0},c.founder_salary},false,0,FounderRole::executive);
+        appoint(s,{"founder",s.succession->founder_name.value_or(c.founder_name),{},c.founder_birth_year,Cents{0},c.founder_salary},false,0,FounderRole::executive);
     else {
         const auto candidates=leadership_candidates(c,s.date);
         if(candidates.empty()) succession_detail::invalid("The opening needs an eligible leadership cohort.");

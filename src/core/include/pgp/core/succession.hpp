@@ -77,6 +77,7 @@ struct SuccessionState {
     std::vector<LeadershipControl> controls;
     std::vector<SuccessionPlan> plans;
     std::vector<SuccessionNotice> notices;
+    std::optional<std::string> founder_name{};
     auto operator<=>(const SuccessionState&) const = default;
 };
 struct ProposeSuccession { std::string candidate;OrdinalDay handover_on{0};bool retain_chair=false;LabAllocation allocation; };
@@ -87,7 +88,7 @@ struct AcknowledgeSuccession { std::uint64_t id=0; };
 
 void validate_succession_catalog(const SuccessionCatalog&);
 void validate_succession_opening(const SuccessionCatalog&,OrdinalDay start,OrdinalDay end);
-void initialize_succession(SimulationState&);
+void initialize_succession(SimulationState&, std::optional<std::string> founder_name = {});
 void prepare_succession(SimulationState&);
 void validate_succession(const SimulationState&,bool deep=true);
 [[nodiscard]] const SuccessionCatalog& succession_catalog(const SimulationState&);

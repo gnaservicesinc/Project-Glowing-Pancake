@@ -545,12 +545,17 @@ Extended endurance runs and broad regression are deferred. Use short checks
 for changed behavior. The existing 42 checked batches do not prove complete
 coverage of the full design.
 
-The first confirmed gap is campaign setup. The current creation controls offer
-scenario, headquarters, optional stories and objectives. The design also calls
-for company/founder identity, pronouns, founder background, charter and an
-editable world seed with visible starting effects. Implement that path before
-returning to M8-02. Continue checking the other initial design requirements
-against source and ordinary player controls. Human work waits until the user
+Campaign setup now includes company/founder names, optional pronouns, local
+name generation and an editable full-width world seed. Names appear in the
+company and leadership records, and the same content reloads custom-seed
+campaigns exactly. Old saves and default callers retain their existing setup.
+The new form shows the selected scenario's opening cash, team and compute.
+The optimized build, three short save/leadership checks and offscreen form
+checks at 100%/200% text pass.
+
+Next are founder background and charter choices with visible starting effects.
+Then continue checking the other initial design requirements against source
+and ordinary controls. M8-02 stays deferred. Human work waits until the user
 is ready, and E2-04 editor downloads stay with deferred release preparation.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions

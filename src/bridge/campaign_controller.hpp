@@ -1,4 +1,5 @@
 #pragma once
+#include <pgp/runtime/scenario.hpp>
 
 #include "campaign_model.hpp"
 #include "campaign_worker.hpp"
@@ -31,6 +32,8 @@ class CampaignController final : public QObject {
     Q_PROPERTY(QVariantList headquarters READ headquarters CONSTANT)
     Q_PROPERTY(QVariantList scenarios READ scenarios CONSTANT)
     Q_PROPERTY(QString headquartersText READ headquartersText NOTIFY stateChanged)
+    Q_PROPERTY(QString companyName READ companyName NOTIFY stateChanged)
+    Q_PROPERTY(QString identitySummary READ identitySummary NOTIFY stateChanged)
     Q_PROPERTY(bool autoPauseProjects READ autoPauseProjects WRITE setAutoPauseProjects NOTIFY settingsChanged)
     Q_PROPERTY(bool autoPauseEvaluations READ autoPauseEvaluations WRITE setAutoPauseEvaluations NOTIFY settingsChanged)
     Q_PROPERTY(bool autoPauseAlerts READ autoPauseAlerts WRITE setAutoPauseAlerts NOTIFY settingsChanged)
@@ -83,6 +86,8 @@ public:
     QVariantList headquarters() const;
     QVariantList scenarios() const;
     QString headquartersText() const;
+    QString companyName() const;
+    QString identitySummary() const;
     bool autoPauseProjects() const { return settings_.auto_pause_projects; }
     bool autoPauseEvaluations() const { return settings_.auto_pause_evaluations; }
     bool autoPauseAlerts() const { return settings_.auto_pause_alerts; }
@@ -98,6 +103,10 @@ public:
     Q_INVOKABLE void newCampaign(QString headquarters, bool stories = true);
     Q_INVOKABLE void newCampaignOptions(QString headquarters, bool stories, QString scenario);
     Q_INVOKABLE void newCampaignWithObjectives(QString headquarters,bool stories,QString scenario,QString primary,QStringList secondary);
+    Q_INVOKABLE void newCampaignSetup(QString headquarters,bool stories,QString scenario,QString primary,QStringList secondary,
+        QString company,QString founder,QString pronouns,QString seed);
+    Q_INVOKABLE QVariantMap generateCampaignNames() const;
+    Q_INVOKABLE QString generateWorldSeed() const;
     Q_INVOKABLE void openWelcome();
     [[nodiscard]] QString date() const;
     [[nodiscard]] bool ready() const noexcept { return static_cast<bool>(snapshot_); }
@@ -155,6 +164,8 @@ signals:
     void commandFinished(bool accepted, QString explanation);
     void snapshotChanged();
 private:
+    void startCampaign(QString headquarters,bool stories,QString scenario,QString primary,QStringList secondary,
+        runtime::ScenarioOptions options);
     bool beginOperation();
     void submit(core::CommandAction action);
     void changeSettings(persistence::Settings settings);

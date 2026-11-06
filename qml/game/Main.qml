@@ -6,7 +6,7 @@ import QtQuick.Dialogs
 ApplicationWindow {
     id: window
     objectName: "gameWindow"
-    title: qsTr("Project Glowing Pancake")
+    title: campaign.welcome ? qsTr("Project Glowing Pancake") : qsTr("%1 · Project Glowing Pancake").arg(campaign.companyName)
     visible: false
     width: 1280
     height: 720
@@ -449,9 +449,57 @@ ApplicationWindow {
                 Panel {
                     visible: campaign.welcome
                     contentItem: ColumnLayout {
-                        Heading { text: qsTr("Build a useful AI company · 2014–2017") }
-                        Copy { text: qsTr("Start with six staff, a finite compute lease and a cash runway. License data, train and test a model, then match a customer promise to measured evidence. Manage bills, contracts and rivals through January 2017.") }
-                        Copy { text: qsTr("Choose headquarters. This sets the state scope for campaign events; the opening team and budget are shown after starting.") }
+                        id: campaignSetupForm
+                        property bool customSeed: false
+                        function resetWorldSeed() {
+                            worldSeedInput.text = (campaign.scenarios[competitionChoice.currentIndex] || {}).seed || ""
+                            customSeed = false
+                        }
+                        Heading { text: qsTr("Found your AI company") }
+                        Copy { text: qsTr("Choose an introduction or a century campaign, name your institution and founder, then build it through research, products and partnerships.") }
+                        Copy { text: qsTr("Company name") }
+                        TextField {
+                            id: companyNameInput
+                            objectName: "companyNameInput"
+                            Layout.fillWidth: true
+                            text: qsTr("Daybreak Systems")
+                            maximumLength: 32
+                            font.pixelSize: window.textSize
+                            selectByMouse: true
+                            Accessible.name: qsTr("Company name")
+                        }
+                        Copy { text: qsTr("Founder name") }
+                        TextField {
+                            id: founderNameInput
+                            objectName: "founderNameInput"
+                            Layout.fillWidth: true
+                            text: qsTr("Alex Vale")
+                            maximumLength: 32
+                            font.pixelSize: window.textSize
+                            selectByMouse: true
+                            Accessible.name: qsTr("Founder name")
+                        }
+                        Copy { text: qsTr("Founder pronouns (optional)") }
+                        TextField {
+                            id: founderPronounsInput
+                            objectName: "founderPronounsInput"
+                            Layout.fillWidth: true
+                            text: qsTr("they/them")
+                            maximumLength: 20
+                            font.pixelSize: window.textSize
+                            selectByMouse: true
+                            Accessible.name: qsTr("Founder pronouns")
+                        }
+                        Action {
+                            objectName: "generateCampaignNames"
+                            text: qsTr("Generate fictional names")
+                            onClicked: {
+                                const names = campaign.generateCampaignNames()
+                                companyNameInput.text = names.company
+                                founderNameInput.text = names.founder
+                            }
+                        }
+                        Copy { text: qsTr("Headquarters") }
                         ComboBox {
                             id: headquartersChoice
                             objectName: "headquartersChoice"
@@ -471,12 +519,46 @@ ApplicationWindow {
                             valueRole: "id"
                             font.pixelSize: window.textSize
                             Accessible.name: qsTr("Competition and financing setup")
+                            onCurrentIndexChanged: Qt.callLater(function() {
+                                if (!campaignSetupForm.customSeed) campaignSetupForm.resetWorldSeed()
+                            })
                             Component.onCompleted: {
                                 for (let index = 0; index < campaign.scenarios.length; ++index)
                                     if (campaign.scenarios[index].id === "scenario.world_competition") currentIndex = index
                             }
                         }
                         Copy { text: (campaign.scenarios[competitionChoice.currentIndex] || {}).detail || "" }
+                        Copy { text: (campaign.scenarios[competitionChoice.currentIndex] || {}).opening || "" }
+                        Copy { text: qsTr("World seed") }
+                        TextField {
+                            id: worldSeedInput
+                            objectName: "worldSeedInput"
+                            Layout.fillWidth: true
+                            maximumLength: 20
+                            font.pixelSize: window.textSize
+                            selectByMouse: true
+                            inputMethodHints: Qt.ImhDigitsOnly
+                            validator: RegularExpressionValidator { regularExpression: /[0-9]{1,20}/ }
+                            Accessible.name: qsTr("World seed")
+                            onTextEdited: campaignSetupForm.customSeed = true
+                            Component.onCompleted: Qt.callLater(function() {
+                                if (!campaignSetupForm.customSeed) campaignSetupForm.resetWorldSeed()
+                            })
+                        }
+                        Copy { text: qsTr("The same seed and setup choices start the same world. Names are generated locally.") }
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            Action {
+                                objectName: "generateWorldSeed"
+                                text: qsTr("New random seed")
+                                onClicked: {
+                                    campaignSetupForm.customSeed = true
+                                    worldSeedInput.text = campaign.generateWorldSeed()
+                                }
+                            }
+                            Action { text: qsTr("Use scenario seed"); onClicked: campaignSetupForm.resetWorldSeed() }
+                        }
                         ObjectivePicker {
                             id: openingObjectives
                             readonly property var selectedScenario: campaign.scenarios[competitionChoice.currentIndex] || {}
@@ -506,9 +588,12 @@ ApplicationWindow {
                             }
                         }
                         Action {
-                            objectName: "newCampaignButton"; text: qsTr("Start new campaign"); enabled: campaign.ready && !campaign.busy
-                            onClicked: campaign.newCampaignWithObjectives(headquartersChoice.currentValue, includeStories.checked,
-                                competitionChoice.currentValue, openingObjectives.visible ? openingObjectives.primary : "", openingObjectives.visible ? openingObjectives.secondary() : [])
+                            objectName: "newCampaignButton"; text: qsTr("Start new campaign")
+                            enabled: campaign.ready && !campaign.busy && companyNameInput.text.trim().length > 0
+                                && founderNameInput.text.trim().length > 0 && worldSeedInput.acceptableInput
+                            onClicked: campaign.newCampaignSetup(headquartersChoice.currentValue, includeStories.checked,
+                                competitionChoice.currentValue, openingObjectives.visible ? openingObjectives.primary : "", openingObjectives.visible ? openingObjectives.secondary() : [],
+                                companyNameInput.text, founderNameInput.text, founderPronounsInput.text, worldSeedInput.text)
                         }
                         Action { text: qsTr("Load an existing local campaign…"); enabled: campaign.ready && !campaign.busy; onClicked: loadDialog.open() }
                     }
@@ -540,7 +625,8 @@ ApplicationWindow {
                 Panel {
                     visible: !campaign.welcome && campaign.management.available && (window.room === "office" || window.room === "lab")
                     contentItem: ColumnLayout {
-                        Heading { text: window.room === "lab" ? qsTr("Lab · data, experiments and evidence") : qsTr("Office · %1").arg(campaign.headquartersText) }
+                        Heading { text: window.room === "lab" ? qsTr("Lab · data, experiments and evidence") : qsTr("%1 · %2").arg(campaign.companyName).arg(campaign.headquartersText) }
+                        Copy { text: campaign.identitySummary }
                         Copy { visible: window.room === "office"; text: campaign.capacityText + "\n" + campaign.management.briefing }
                         ManagementPanel { id: managementPanel; Layout.fillWidth: true; room: window.room; textSize: window.textSize }
                     }

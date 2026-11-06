@@ -5,11 +5,14 @@
 
 namespace pgp::runtime {
 Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scenario_id,
-                           std::string_view headquarters,std::optional<core::ObjectiveSelection> objectives) {
+                           std::string_view headquarters,std::optional<core::ObjectiveSelection> objectives,
+                           ScenarioOptions options) {
     const auto* definition = program.collection.find(scenario_id);
     if (!definition) throw std::invalid_argument("Scenario definition does not exist");
     const auto* scenario = std::get_if<content::ScenarioDefinition>(&definition->data);
     if (!scenario) throw std::invalid_argument("Selected definition is not a scenario");
+    if (options.identity) validate_campaign_identity(*options.identity);
+    const auto seed = options.seed.value_or(scenario->seed);
     if (std::find(scenario->headquarters_choices.begin(), scenario->headquarters_choices.end(), headquarters) ==
         scenario->headquarters_choices.end())
         throw std::invalid_argument("Headquarters is not offered by this scenario");
@@ -18,13 +21,14 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     auto& world = checkpoint.world;
     world = foundation_world(scenario->cash);
     world.scenario_id=std::string(scenario_id);
-    world.root_seed = scenario->seed;
+    world.root_seed = seed;
+    world.identity = std::move(options.identity);
     world.enabled_flows = scenario->flows;
     world.campaign_start = scenario->starts_on;
     world.scope_created = scenario->starts_on;
     world.simulation.date = scenario->starts_on;
     world.simulation.end_date = scenario->ends_before;
-    world.simulation.random = core::RandomStreams{scenario->seed}.snapshot();
+    world.simulation.random = core::RandomStreams{seed}.snapshot();
     auto accounts = core::opening_accounts(scenario->cash, scenario->starts_on, world.company_id);
     accounts.holdings.clear();
     for (const auto& [holder, shares] : scenario->ownership)
@@ -80,8 +84,8 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     }
     if (scenario->service_catalog) world.simulation.deployments=core::DeploymentState{content::scenario_services(program.collection,*scenario),{}};
     if (const auto* catalog=content::frontier_catalog(program.collection,*scenario))
-        world.simulation.frontier=core::opening_frontier(*catalog,scenario->seed);
-    core::initialize_succession(world.simulation);
+        world.simulation.frontier=core::opening_frontier(*catalog,seed);
+    core::initialize_succession(world.simulation, world.identity ? std::optional{world.identity->founder_name} : std::nullopt);
     if (!scenario->business_offers.empty()) world.simulation.business_offers=core::BusinessOffersState{scenario->business_offers,{}};
     world.facts.at("company.has_compute_lease") = scenario->leased_capacity.value() > 0;
     if (const auto lease = scenario->monthly_commitments.find("compute_lease");

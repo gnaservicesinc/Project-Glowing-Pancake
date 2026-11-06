@@ -4,6 +4,7 @@
 #include <pgp/core/simulation.hpp>
 #include <pgp/runtime/competition.hpp>
 #include <pgp/runtime/objectives.hpp>
+#include <pgp/runtime/campaign_identity.hpp>
 
 #include <map>
 #include <optional>
@@ -52,6 +53,7 @@ struct WorldState {
     std::optional<core::SocietyState> society{};
     std::optional<core::AuthorityState> authority{};
     std::optional<ObjectivesState> objectives{};
+    std::optional<CampaignIdentity> identity{};
     auto operator<=>(const WorldState&) const = default;
 };
 

@@ -1,4 +1,4 @@
-add_library(pgp_runtime STATIC compiler.cpp runtime.cpp world.cpp scenario.cpp duration.cpp committed.cpp competition.cpp
+add_library(pgp_runtime STATIC compiler.cpp runtime.cpp world.cpp scenario.cpp campaign_identity.cpp duration.cpp committed.cpp competition.cpp
     competition_market.cpp competition_planning.cpp competition_validation.cpp wholesale.cpp heavyweights.cpp heavyweight_deals.cpp mergers.cpp heavyweight_validation.cpp society.cpp
     authority.cpp authority_queries.cpp authority_validation.cpp legacy.cpp
     objectives.cpp objectives_sources.cpp objective_finance.cpp campaign_facts.cpp)
