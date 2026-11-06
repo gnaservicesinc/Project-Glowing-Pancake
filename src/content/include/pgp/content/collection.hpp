@@ -139,6 +139,15 @@ struct FlowDefinition {
 };
 [[nodiscard]] std::optional<core::RandomStream> random_branch_stream(std::string_view name);
 [[nodiscard]] bool is_incident_stream(core::RandomStream stream) noexcept;
+struct FounderBackground {
+    std::string id, name, description;
+    core::Cents cash_adjustment{0}, monthly_payroll_adjustment{0}, monthly_compute_cost{0};
+    std::int32_t staff_adjustment=0;
+    core::MilliCUPerDay independent_capacity{0};
+    core::Days commercial_delay{0};
+    std::vector<core::BusinessOffer> contacts;
+    auto operator<=>(const FounderBackground&) const = default;
+};
 struct ScenarioDefinition {
     pgp::core::OrdinalDay starts_on;
     pgp::core::OrdinalDay ends_before;
@@ -169,7 +178,17 @@ struct ScenarioDefinition {
     std::string authority{};
     std::string frontier{};
     std::optional<core::ObjectiveCharter> objectives{};
+    std::vector<FounderBackground> backgrounds{};
 };
+struct ScenarioOpening {
+    core::Cents cash{0};
+    std::uint32_t team_people=0;
+    std::map<std::string,core::Cents,std::less<>> monthly_commitments;
+    std::vector<core::BusinessOffer> business_offers;
+    std::vector<core::CapacitySource> capacity_sources;
+};
+[[nodiscard]] ScenarioOpening scenario_opening(const ScenarioDefinition&, std::string_view background={},
+                                               std::string_view owner="company.player");
 struct ResearchDefinition {
     std::vector<std::string> all_of;
     std::vector<std::string> any_of;

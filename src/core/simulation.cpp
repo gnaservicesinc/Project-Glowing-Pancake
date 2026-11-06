@@ -820,6 +820,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 const auto before=next.cash;appoint_executive(next,action.candidate,action.hybrid,reserved_cash(next));(void)receipt(next,"appoint_executive",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, ProposePoolExpansion>) {
                 propose_pool_expansion(next,action.shares);(void)receipt(next,"propose_pool_expansion");
+            } else if constexpr (std::is_same_v<Action, ProposeCharter>) {
+                propose_charter(next,action.id);(void)receipt(next,"propose_charter");
             } else if constexpr (std::is_same_v<Action, VoteBoardMotion>) {
                 const auto before=next.cash;vote_board_motion(next,action.id,action.support,reserved_cash(next));(void)receipt(next,"vote_board_motion",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, RespondCorporateDispute>) {

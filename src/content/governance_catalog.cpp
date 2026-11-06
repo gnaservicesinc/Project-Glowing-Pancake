@@ -16,15 +16,23 @@ std::uint32_t count(const Json& j,std::uint32_t max) {const auto n=integer(j);if
 }
 core::GovernanceCatalog load_governance_catalog(std::string_view bytes) {
     if (bytes.size()>16384) invalid();std::vector<std::set<std::string>> keys;std::size_t tokens=0;
-    const auto j=Json::parse(bytes.begin(),bytes.end(),[&](int depth,Json::parse_event_t event,Json& value) {
+    auto j=Json::parse(bytes.begin(),bytes.end(),[&](int depth,Json::parse_event_t event,Json& value) {
         if (depth>12 || ++tokens>4096) invalid();
         if (event==Json::parse_event_t::object_start) keys.emplace_back();
         else if (event==Json::parse_event_t::object_end) keys.pop_back();
         else if (event==Json::parse_event_t::key && !keys.back().insert(value.get<std::string>()).second) invalid();
         else if (event==Json::parse_event_t::value && value.is_number_float()) invalid();return true;
     });
+    Json charters=Json::array();
+    if(j.contains("charters")) {charters=j.at("charters");j.erase("charters");}
     fields(j,{"financing","executives","board","vote_window_days","concern_period_days","response_window_days","maximum_pool_expansion_bp","acquisition_equity_bp","acquisition_premium_cents","subsidiary_cash_floor_cents","subsidiary_reserve_days"});
     core::GovernanceCatalog c;array(j.at("financing"),8);array(j.at("executives"),8);array(j.at("board"),8);
+    array(charters,8);
+    for(const auto& r:charters) {
+        fields(r,{"id","name","priorities","employee_expectations","cash_floor_cents","maximum_dilution_bp","monthly_employee_budget_cents"});
+        c.charters.push_back({text(r.at("id")),text(r.at("name")),text(r.at("priorities")),text(r.at("employee_expectations")),
+            core::Cents{integer(r.at("cash_floor_cents"))},core::Cents{integer(r.at("monthly_employee_budget_cents"))},core::BasisPoints{integer(r.at("maximum_dilution_bp"))}});
+    }
     for (const auto& f:j.at("financing")) {
         fields(f,{"id","name","negotiation","proceeds_cents","covenant_cash_floor_cents","waiver_fee_cents","acquired_bp","monthly_interest_bp","term_days","board_seat"});
         c.financing.push_back({text(f.at("id")),text(f.at("name")),text(f.at("negotiation")),core::Cents{integer(f.at("proceeds_cents"))},core::Cents{integer(f.at("covenant_cash_floor_cents"))},core::Cents{integer(f.at("waiver_fee_cents"))},
@@ -49,6 +57,12 @@ std::string canonical_governance_catalog(const core::GovernanceCatalog& c) {
     for (const auto& r:c.financing) f.push_back({{"id",r.id},{"name",r.name},{"negotiation",r.negotiation},{"proceeds_cents",r.proceeds.value()},{"covenant_cash_floor_cents",r.covenant_cash_floor.value()},{"waiver_fee_cents",r.waiver_fee.value()},{"acquired_bp",r.acquired.value()},{"monthly_interest_bp",r.monthly_interest.value()},{"term_days",r.term.value()},{"board_seat",r.board_seat}});
     for (const auto& r:c.executives) e.push_back({{"id",r.id},{"name",r.name},{"role",r.role},{"priorities",r.priorities},{"publication_research",r.publication_research},{"signing_cost_cents",r.signing_cost.value()},{"cash_salary_cents",r.cash_salary.value()},{"hybrid_salary_cents",r.hybrid_salary.value()},{"hybrid_grant_bp",r.hybrid_grant.value()},{"cliff_days",r.cliff.value()},{"vesting_days",r.vesting.value()},{"promise_term_days",r.promise_term.value()},{"technical",r.technical},{"commercial",r.commercial},{"risk_tolerance",r.risk_tolerance}});
     for (const auto& r:c.board) b.push_back({{"id",r.id},{"name",r.name},{"seats",r.seats},{"player",r.player},{"cash_floor_cents",r.cash_floor.value()},{"maximum_dilution_bp",r.maximum_dilution.value()}});
-    return Json{{"financing",std::move(f)},{"executives",std::move(e)},{"board",std::move(b)},{"vote_window_days",c.vote_window.value()},{"concern_period_days",c.concern_period.value()},{"response_window_days",c.response_window.value()},{"maximum_pool_expansion_bp",c.maximum_pool_expansion.value()},{"acquisition_equity_bp",c.acquisition_equity.value()},{"acquisition_premium_cents",c.acquisition_premium.value()},{"subsidiary_cash_floor_cents",c.subsidiary_cash_floor.value()},{"subsidiary_reserve_days",c.subsidiary_reserve_days.value()}}.dump();
+    Json result{{"financing",std::move(f)},{"executives",std::move(e)},{"board",std::move(b)},{"vote_window_days",c.vote_window.value()},{"concern_period_days",c.concern_period.value()},{"response_window_days",c.response_window.value()},{"maximum_pool_expansion_bp",c.maximum_pool_expansion.value()},{"acquisition_equity_bp",c.acquisition_equity.value()},{"acquisition_premium_cents",c.acquisition_premium.value()},{"subsidiary_cash_floor_cents",c.subsidiary_cash_floor.value()},{"subsidiary_reserve_days",c.subsidiary_reserve_days.value()}};
+    if(!c.charters.empty()) {
+        result["charters"]=Json::array();
+        for(const auto& r:c.charters) result["charters"].push_back({{"id",r.id},{"name",r.name},{"priorities",r.priorities},{"employee_expectations",r.employee_expectations},
+            {"cash_floor_cents",r.cash_floor.value()},{"maximum_dilution_bp",r.maximum_dilution.value()},{"monthly_employee_budget_cents",r.monthly_employee_budget.value()}});
+    }
+    return result.dump();
 }
 }

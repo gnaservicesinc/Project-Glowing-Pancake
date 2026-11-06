@@ -302,6 +302,13 @@ Json definition_json(const Definition& definition, const std::string& key) {
         for (const auto& [name, value] : scenario->monthly_commitments) result["monthly_commitments_cents"][name] = value.value();
         for (const auto& [name, value] : scenario->ownership) result["ownership_basis_points"][name] = value.value();
         result["research"] = scenario->research; result["flows"] = scenario->flows;
+        if(!scenario->backgrounds.empty()) {
+            result["backgrounds"]=Json::array();
+            for(const auto& b:scenario->backgrounds) result["backgrounds"].push_back({{"id",b.id},{"name",b.name},{"description",b.description},
+                {"cash_adjustment_cents",b.cash_adjustment.value()},{"staff_adjustment",b.staff_adjustment},{"monthly_payroll_adjustment_cents",b.monthly_payroll_adjustment.value()},
+                {"independent_capacity_milli_CU_per_day",b.independent_capacity.value()},{"monthly_compute_cost_cents",b.monthly_compute_cost.value()},
+                {"commercial_delay_days",b.commercial_delay.value()},{"contacts",Json::parse(canonical_business_offer_catalog(b.contacts))}});
+        }
         if (scenario->lab) result["lab"] = Json::parse(canonical_lab_catalog(*scenario->lab));
         if (!scenario->business_offers.empty()) result["business_offers"]=Json::parse(canonical_business_offer_catalog(scenario->business_offers));
         if (!scenario->rivals.empty()) result["rivals"]=Json::parse(canonical_rival_definitions(scenario->rivals));

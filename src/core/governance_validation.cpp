@@ -27,7 +27,7 @@ Cents cash_at(const AccountsState& accounts,std::uint64_t cursor,OrdinalDay day)
 }
 }
 void validate_governance_catalog(const GovernanceCatalog& c) {
-    if (c.financing.size()>8 || c.executives.size()>8 || c.board.empty() || c.board.size()>8 ||
+    if (c.charters.size()>8 || c.financing.size()>8 || c.executives.size()>8 || c.board.empty() || c.board.size()>8 ||
         c.vote_window.value()<7 || c.vote_window.value()>60 || c.concern_period.value()<7 || c.concern_period>=c.response_window ||
         c.response_window.value()>90 || c.maximum_pool_expansion.value()==0 || c.maximum_pool_expansion.value()>2000 ||
         c.acquisition_equity.value()==0 || c.acquisition_equity.value()>2000 || c.acquisition_premium.value()<0 || c.acquisition_premium.value()>100000000 ||
@@ -50,6 +50,12 @@ void validate_governance_catalog(const GovernanceCatalog& c) {
             (!e.publication_research.empty() && (e.promise_term.value()<30 || e.promise_term.value()>730)))
             invalid("Executive terms need bounded cash, existing-pool grants, vesting and concrete promises");
     }
+    for(const auto& r:c.charters) {
+        label(r.id,64);label(r.name);label(r.priorities,512);label(r.employee_expectations,512);
+        if(!ids.insert(r.id).second || r.cash_floor.value()<0 || r.cash_floor.value()>1000000000 ||
+            r.maximum_dilution.value()>3000 || r.monthly_employee_budget.value()<=0 || r.monthly_employee_budget.value()>10000000)
+            invalid("Charter needs bounded board priorities and a funded monthly employee program");
+    }
     std::uint32_t seats=0,player_seats=0;
     for (const auto& b:c.board) {
         label(b.id,64);label(b.name);
@@ -64,7 +70,7 @@ void validate_governance(const SimulationState& s,bool deep) {
     if (management.governance.has_value()!=management.catalog.governance.has_value()) invalid("Corporate rules and saved continuation must be present together");
     if (!management.governance) return;
     const auto& g=*management.governance;const auto& c=catalog(s);
-    if (g.appointments.size()>8 || g.grants.size()>8 || g.capital.size()>8192 || g.motions.size()>128 || g.disputes.size()>32 || g.opening_holdings.size()>accounts_terms_limit)
+    if (g.charters.size()>129 || g.appointments.size()>8 || g.grants.size()>8 || g.capital.size()>8192 || g.motions.size()>128 || g.disputes.size()>32 || g.opening_holdings.size()>accounts_terms_limit)
         invalid("Corporate history exceeds its bounded records");
     if (!deep) return;
     validate_governance_catalog(c);
@@ -116,6 +122,36 @@ void validate_governance(const SimulationState& s,bool deep) {
         const auto& grant=find(g.grants,a.candidate);
         if (grant.departed!=a.departed_on.has_value() || (!grant.departed && vesting_due(holdings,grant,a,find(c.executives,a.candidate),s.date).value()>0)) invalid("Grant departure or cumulative vesting is incomplete");
     }
+    std::set<std::string> charter_motions;
+    std::set<std::string> expected_charter_bills;
+    std::map<std::string_view,const RecurringObligation*> charter_bills;
+    for(const auto& bill:s.accounts->recurring) if(bill.id.starts_with("charter/employees/")) charter_bills.emplace(bill.id,&bill);
+    std::map<std::string_view,const BoardMotion*> charter_votes;
+    for(const auto& m:g.motions) if(m.kind==BoardMotionKind::charter) charter_votes.emplace(m.id,&m);
+
+    for(std::size_t i=0;i<g.charters.size();++i) {
+        const auto& change=g.charters[i];const auto& charter=find(c.charters,change.charter);
+        if(change.day<s.accounts->starts_on || change.day>s.date || (i && (change.day<g.charters[i-1].day || change.charter==g.charters[i-1].charter)))
+            invalid("Charter history is unordered or repeats an unchanged charter");
+        if(change.motion.empty()) {
+            if(i!=0 || change.day!=s.accounts->starts_on) invalid("Only formation can select a charter without a board vote");
+        } else {
+            const auto it=charter_votes.find(change.motion);
+            if(it==charter_votes.end()) invalid("Charter amendment has no board motion");
+            const auto& m=*it->second;
+            if(!charter_motions.insert(m.id).second || m.kind!=BoardMotionKind::charter || !m.executed || m.status!=BoardMotionStatus::approved ||
+                m.subject!=change.charter || m.resolved_on!=change.day || m.charter_cursor!=i) invalid("Charter amendment lacks its actual approved board vote");
+        }
+        const auto key="charter/employees/"+std::to_string(i+1);
+        expected_charter_bills.insert(key);
+        const auto bill=charter_bills.find(key);
+        if(bill==charter_bills.end()) invalid("Charter has no funded employee program");
+        const auto& obligation=*bill->second;
+        const auto end=i+1<g.charters.size()?std::optional{g.charters[i+1].day}:std::nullopt;
+        if(obligation.monthly_amount!=charter.monthly_employee_budget || obligation.starts_on!=change.day || obligation.ends_before!=end ||
+            obligation.cause!="Employee program under "+charter.name) invalid("Charter employee program differs from its funded monthly commitment");
+    }
+    if(charter_bills.size()!=expected_charter_bills.size()) invalid("Employee program has no approved charter");
     std::set<std::string> finance;
     for (std::size_t index=0;index<g.motions.size();++index) {
         const auto& m=g.motions[index];
@@ -140,9 +176,12 @@ void validate_governance(const SimulationState& s,bool deep) {
             if (m.subject!="option_pool" || m.cash.value()!=0 || m.asset_value.value()!=0 || m.shares.value()==0 || m.shares>c.maximum_pool_expansion) invalid("Pool motion has invalid explicit dilution");
         } else if (m.kind==BoardMotionKind::acquisition) {
             if (m.subject.empty() || m.cash.value()<=0 || m.asset_value<m.cash || m.shares>c.acquisition_equity) invalid("Acquisition board terms are malformed");
+        } else if(m.kind==BoardMotionKind::charter) {
+            (void)find(c.charters,m.subject);
+            if(m.cash.value()!=0 || m.asset_value.value()!=0 || m.shares.value()!=0 || (m.executed && !charter_motions.contains(m.id))) invalid("Charter motion contains fabricated consideration or an unrecorded amendment");
         } else invalid("Unsupported board motion kind");
         if (m.status==BoardMotionStatus::pending || m.status==BoardMotionStatus::expired) {
-            if (m.player_vote || !m.ballots.empty() || m.posting_cursor!=0 || m.leadership_cursor!=0 || m.reviewed_cash.value()!=0 || m.executed ||
+            if (m.player_vote || !m.ballots.empty() || m.posting_cursor!=0 || m.leadership_cursor!=0 || m.charter_cursor!=0 || m.reviewed_cash.value()!=0 || m.executed ||
                 (m.status==BoardMotionStatus::pending ? m.resolved_on.has_value() || s.date>=m.deadline:m.resolved_on!=m.deadline || s.date<m.deadline)) invalid("Unvoted board motion contains a fabricated result");
         } else {
             if (!m.player_vote || !m.resolved_on || *m.resolved_on>=m.deadline || m.posting_cursor>s.accounts->postings.size()) invalid("Board decision lacks its actual vote boundary");
@@ -150,6 +189,10 @@ void validate_governance(const SimulationState& s,bool deep) {
                 s.succession->controls[m.leadership_cursor-1].day>*m.resolved_on ||
                 (m.leadership_cursor<s.succession->controls.size() && s.succession->controls[m.leadership_cursor].day<*m.resolved_on)))
                 invalid("Board votes used leadership rights from a different date.");
+            if(m.charter_cursor>g.charters.size() ||
+                (m.charter_cursor && g.charters[m.charter_cursor-1].day>*m.resolved_on) ||
+                (m.charter_cursor<g.charters.size() && g.charters[m.charter_cursor].day<*m.resolved_on) ||
+                (m.charter_cursor==0 && !g.charters.empty() && g.charters.front().motion.empty())) invalid("Board decision used charter terms from a different date");
             std::int64_t cash=0;for (std::size_t i=0;i<m.posting_cursor;++i) {const auto& p=s.accounts->postings[i];if (p.day>*m.resolved_on) invalid("Board review includes future postings");if (p.debit==Account::cash) cash=checked_add(cash,p.amount.value());if (p.credit==Account::cash) cash=checked_subtract(cash,p.amount.value());}
             if (m.reviewed_cash!=Cents{cash} || m.ballots!=ballots_for(s,m,*m.player_vote,m.reviewed_cash)) invalid("Board votes differ from actual seats, rights or disclosed positions");
             std::uint32_t yes=0,total=0;for (const auto& b:m.ballots) {total+=b.seats;if (b.support) yes+=b.seats;}

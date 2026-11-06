@@ -459,6 +459,8 @@ ColumnLayout {
             Layout.fillWidth: true
             visible: manager.governanceAvailable && corporatePage.value === "board"
             Copy { objectName: "boardSummary"; text: manager.boardText }
+            Selection { objectName: "charterSelection"; heading: qsTr("Organizational charter and employee expectations"); rows: manager.charters }
+            Action { objectName: "proposeCharterButton"; text: qsTr("Submit selected charter to board"); enabled: panel.editable && manager.charters.selectedRow.actionable === true; onClicked: manager.proposeCharter(manager.charters.selectedId) }
             Selection { objectName: "boardMotionSelection"; heading: qsTr("Board motions and recorded votes"); rows: manager.boardMotions }
             Action { objectName: "voteBoardYesButton"; text: qsTr("Review and vote in support"); enabled: panel.editable && manager.boardMotions.selectedRow.actionable === true; onClicked: corporateDialog.review("voteYes", manager.boardMotions.selectedId, manager.boardMotions.selectedRow.detail || "") }
             Action { objectName: "voteBoardNoButton"; text: qsTr("Vote against selected motion"); enabled: panel.editable && manager.boardMotions.selectedRow.actionable === true; onClicked: manager.voteBoard(manager.boardMotions.selectedId, false) }

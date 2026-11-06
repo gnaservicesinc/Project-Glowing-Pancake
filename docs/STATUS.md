@@ -553,10 +553,21 @@ The new form shows the selected scenario's opening cash, team and compute.
 The optimized build, three short save/leadership checks and offscreen form
 checks at 100%/200% text pass.
 
-Next are founder background and charter choices with visible starting effects.
-Then continue checking the other initial design requirements against source
-and ordinary controls. M8-02 stays deferred. Human work waits until the user
-is ready, and E2-04 editor downloads stay with deferred release preparation.
+Campaign setup now also offers all four founder backgrounds and three
+organizational charters. Backgrounds change actual opening resources and
+ordinary contact offers. Charters change nonplayer board voting priorities
+and fund explicit monthly employee programs. The board can approve an amendment,
+which replaces future program charges and preserves prior votes and costs.
+The setup preview includes the combined opening commitments. Internal content
+0.15.0-dev.1 records these packages; their numbers remain provisional.
+The optimized build and three focused setup/governance checks pass in 3.11s.
+Short offscreen QML checks at 100%/200% text start a company, propose/vote
+a charter amendment and preserve the saved state.
+
+Next is the missing explicit difficulty choice, followed by continued source
+and control checks against the other initial design requirements. M8-02 stays
+deferred. Human work waits until the user is ready, and E2-04 editor downloads
+stay with deferred release preparation.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

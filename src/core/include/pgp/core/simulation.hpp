@@ -181,7 +181,7 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    AcknowledgeLiquidityWarning, BuyData, StartResearch, PublishResearch, AcquireResearchInsight, StartTraining, CloneModel, StartEvaluation,
                                    AcceptBusinessOffer, AddMarketDemandChange, DeployModel,
                                    TakeFinancing,HireSpecialist,AddDelegationPolicy,SetDelegationEnabled,ReviewDelegation,AcknowledgeManagementNotice,RenewComputeLease,
-                                   NegotiateCorporateFinance,AppointExecutive,ProposePoolExpansion,VoteBoardMotion,RespondCorporateDispute,TransferCompanyOwnership,TransferGroupFunds,
+                                   NegotiateCorporateFinance,AppointExecutive,ProposePoolExpansion,ProposeCharter,VoteBoardMotion,RespondCorporateDispute,TransferCompanyOwnership,TransferGroupFunds,
                                    BuildOwnedSite,OrderOwnedHardware,HireSiteOperators,SetSitePowerLimit,RetireOwnedHardware,CloseOwnedSite,ScheduleSiteAppointment,CancelSiteAppointment,NoticeInitialLeaseTermination,
                                    BuySiteProtection,InsureSite,ReplicateService,StopServiceReplica,AcknowledgeSiteAlert,
                                    FundPolicyAdvocacy,SubmitPolicyEvidence,BuyMediaCampaign,EndorseForumStandard,

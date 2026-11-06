@@ -104,7 +104,8 @@ public:
     Q_INVOKABLE void newCampaignOptions(QString headquarters, bool stories, QString scenario);
     Q_INVOKABLE void newCampaignWithObjectives(QString headquarters,bool stories,QString scenario,QString primary,QStringList secondary);
     Q_INVOKABLE void newCampaignSetup(QString headquarters,bool stories,QString scenario,QString primary,QStringList secondary,
-        QString company,QString founder,QString pronouns,QString seed);
+        QString company,QString founder,QString pronouns,QString seed,QString background={},QString charter={});
+    Q_INVOKABLE QString setupPreview(QString scenario,QString background,QString charter) const;
     Q_INVOKABLE QVariantMap generateCampaignNames() const;
     Q_INVOKABLE QString generateWorldSeed() const;
     Q_INVOKABLE void openWelcome();

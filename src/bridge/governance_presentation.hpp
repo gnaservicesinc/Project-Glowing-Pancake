@@ -3,7 +3,7 @@
 #include <pgp/runtime/runtime.hpp>
 namespace pgp::bridge {
 struct GovernanceModels {
-    std::vector<CampaignRow> financing,executives,motions,disputes,targets;
+    std::vector<CampaignRow> financing,executives,motions,disputes,targets,charters;
     QString ownership,board;
 };
 [[nodiscard]] GovernanceModels governance_models(const runtime::Checkpoint&,const runtime::CompiledProgram&);

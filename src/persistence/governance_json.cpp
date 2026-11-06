@@ -20,6 +20,7 @@ Json governance_json(const core::GovernanceState& g) {
         motions.push_back({{"id",m.id},{"subject",m.subject},{"kind",static_cast<unsigned>(m.kind)},{"status",static_cast<unsigned>(m.status)},
             {"opened_on",m.opened_on.value()},{"deadline",m.deadline.value()},{"resolved_on",optional_day(m.resolved_on)},{"cash",m.cash.value()},{"asset_value",m.asset_value.value()},
             {"reviewed_cash",m.reviewed_cash.value()},{"shares",m.shares.value()},{"posting_cursor",m.posting_cursor},{"player_vote",m.player_vote?Json(*m.player_vote):Json(nullptr)},{"ballots",std::move(ballots)},{"executed",m.executed}});
+        if(m.charter_cursor) motions.back()["charter_cursor"]=m.charter_cursor;
         if(m.leadership_cursor) motions.back()["leadership_cursor"]=m.leadership_cursor;
     }
     for (const auto& d:g.disputes) {
@@ -28,24 +29,37 @@ Json governance_json(const core::GovernanceState& g) {
         if(d.negotiated_on) {row["negotiated_on"]=d.negotiated_on->value();row["review_project"]=d.review_project;}
         disputes.push_back(std::move(row));
     }
-    return {{"opening_holdings",std::move(opening)},{"appointments",std::move(appointments)},{"grants",std::move(grants)},{"capital",std::move(capital)},{"motions",std::move(motions)},{"disputes",std::move(disputes)}};
+    Json result{{"opening_holdings",std::move(opening)},{"appointments",std::move(appointments)},{"grants",std::move(grants)},{"capital",std::move(capital)},{"motions",std::move(motions)},{"disputes",std::move(disputes)}};
+    if(!g.charters.empty()) {
+        result["charters"]=Json::array();
+        for(const auto& r:g.charters) result["charters"].push_back({{"charter",r.charter},{"motion",r.motion},{"day",r.day.value()}});
+    }
+    return result;
 }
 core::GovernanceState parse_governance(const Json& j) {
-    fields(j,"governance",{"opening_holdings","appointments","grants","capital","motions","disputes"});
+    fields(j,"governance",{"opening_holdings","appointments","grants","capital","motions","disputes"},{"charters"});
     array(j.at("opening_holdings"),"governance/opening",core::accounts_terms_limit);array(j.at("appointments"),"governance/appointments",8);array(j.at("grants"),"governance/grants",8);
     array(j.at("capital"),"governance/capital",8192);array(j.at("motions"),"governance/motions",128);array(j.at("disputes"),"governance/disputes",32);
     core::GovernanceState g;
+    if(j.contains("charters")) {
+        array(j.at("charters"),"governance/charters",129);
+        for(const auto& r:j.at("charters")) {
+            fields(r,"governance/charter",{"charter","motion","day"});
+            g.charters.push_back({label(r.at("charter")),text(r.at("motion"),"governance/charter-motion",128,true),day(r.at("day"))});
+        }
+    }
     for (const auto& h:j.at("opening_holdings")) {fields(h,"governance/holding",{"holder","shares","pool"});g.opening_holdings.push_back({label(h.at("holder")),bp(h.at("shares")),boolean(h.at("pool"),"governance/pool")});}
     for (const auto& a:j.at("appointments")) {fields(a,"governance/appointment",{"candidate","hybrid","hired_on","departed_on"});g.appointments.push_back({label(a.at("candidate")),boolean(a.at("hybrid"),"governance/hybrid"),day(a.at("hired_on")),optional_day(a.at("departed_on"))});}
     for (const auto& r:j.at("grants")) {fields(r,"governance/grant",{"candidate","unvested","departed"});g.grants.push_back({label(r.at("candidate")),bp(r.at("unvested")),boolean(r.at("departed"),"governance/departed")});}
     for (const auto& e:j.at("capital")) {fields(e,"governance/capital-event",{"kind","subject","key","day","shares","consideration"});g.capital.push_back({label(e.at("kind")),label(e.at("subject")),label(e.at("key")),day(e.at("day")),bp(e.at("shares")),cents(e.at("consideration"))});}
     for (const auto& m:j.at("motions")) {
-        fields(m,"governance/motion",{"id","subject","kind","status","opened_on","deadline","resolved_on","cash","asset_value","reviewed_cash","shares","posting_cursor","player_vote","ballots","executed"},{"leadership_cursor"});
-        core::BoardMotion r;r.id=label(m.at("id"));r.subject=label(m.at("subject"));r.kind=static_cast<core::BoardMotionKind>(u64(m.at("kind"),"governance/motion-kind",2));r.status=static_cast<core::BoardMotionStatus>(u64(m.at("status"),"governance/motion-status",3));
+        fields(m,"governance/motion",{"id","subject","kind","status","opened_on","deadline","resolved_on","cash","asset_value","reviewed_cash","shares","posting_cursor","player_vote","ballots","executed"},{"leadership_cursor","charter_cursor"});
+        core::BoardMotion r;r.id=label(m.at("id"));r.subject=label(m.at("subject"));r.kind=static_cast<core::BoardMotionKind>(u64(m.at("kind"),"governance/motion-kind",3));r.status=static_cast<core::BoardMotionStatus>(u64(m.at("status"),"governance/motion-status",3));
         r.opened_on=day(m.at("opened_on"));r.deadline=day(m.at("deadline"));r.resolved_on=optional_day(m.at("resolved_on"));r.cash=cents(m.at("cash"));r.asset_value=cents(m.at("asset_value"));r.reviewed_cash=cents(m.at("reviewed_cash"));r.shares=bp(m.at("shares"));r.posting_cursor=u64(m.at("posting_cursor"),"governance/posting-cursor",core::accounts_posting_limit);
         if (!m.at("player_vote").is_null()) r.player_vote=boolean(m.at("player_vote"),"governance/vote");
         array(m.at("ballots"),"governance/ballots",17);for (const auto& b:m.at("ballots")) {fields(b,"governance/ballot",{"member","seats","support"});r.ballots.push_back({label(b.at("member")),static_cast<std::uint32_t>(u64(b.at("seats"),"governance/seats",3)),boolean(b.at("support"),"governance/support")});}
         r.executed=boolean(m.at("executed"),"governance/executed");g.motions.push_back(std::move(r));
+        if(m.contains("charter_cursor")) g.motions.back().charter_cursor=u64(m.at("charter_cursor"),"governance/charter-cursor",129);
         if(m.contains("leadership_cursor")) g.motions.back().leadership_cursor=u64(m.at("leadership_cursor"),"governance/leadership-cursor",core::succession_notice_limit);
     }
     for (const auto& d:j.at("disputes")) {

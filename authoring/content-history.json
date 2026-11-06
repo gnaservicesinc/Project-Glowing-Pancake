@@ -105262,6 +105262,99 @@
         "prepared_headquarters": 21,
         "scenarios": 7
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "d9106c9ce51a5aea4adab6ad2c19ff9c728e11b0107304229030d55f0df1cad8",
+          "before_hash": "b2df79b95d1007939fc1756cfe58fa530e1aced116a3b5b2b0fbab4bad9caa31",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 4,
+          "revision": 5
+        },
+        {
+          "after_hash": "80ac3da713d01978c25594e654519cb4a911a6d8184c6a1f9d5bdd0f8625be4d",
+          "before_hash": "bf6b0e72fa08354943f4e8b54e746e43f240c6f2c886b5a083167f3e66274007",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 4,
+          "revision": 5
+        },
+        {
+          "after_hash": "88e5b26560c06884ead57c30c11304cee964a57dd8053585fd2a9682573885c2",
+          "before_hash": "32566c96e71a77d3fc34b4ec4b2c206a153d94a9c0b866bcc1a322b34814b542",
+          "change": "changed",
+          "id": "scenario.first_playable",
+          "kind": "scenario",
+          "old_revision": 8,
+          "revision": 9
+        },
+        {
+          "after_hash": "b9aff17af4cf1394539e329fde2fd43d4a5ce873fe017d52f940914b4618c4e0",
+          "before_hash": "48b3bdbf4f3c25f1f443521b8525750ad8f53d71c6c286de8da04ba7cfea4511",
+          "change": "changed",
+          "id": "scenario.world_competition",
+          "kind": "scenario",
+          "old_revision": 9,
+          "revision": 10
+        },
+        {
+          "after_hash": "52119de127e1d80954c7c53389de8ceed4553043907cb45026884d740c15da6f",
+          "before_hash": "44cb5fe0a646c699faa521921b77c3b8a801b0db61858d2260e47ce5ecf57b7a",
+          "change": "changed",
+          "id": "scenario.world_expanded",
+          "kind": "scenario",
+          "old_revision": 9,
+          "revision": 10
+        },
+        {
+          "after_hash": "45c8e7b4bafc855dd3eaa726591bb7b8d886e7a079ee5d76e13e32f2f023b5ae",
+          "before_hash": "94e90adb31b549aeecdae1624b9506f345793470b0927b22c513da53776fecda",
+          "change": "changed",
+          "id": "scenario.world_forgiving",
+          "kind": "scenario",
+          "old_revision": 9,
+          "revision": 10
+        },
+        {
+          "after_hash": "ba423b2f9b169e96712a6214ab7da4e7685962666ea5d4553a5599ef2d715d59",
+          "before_hash": "d6a3a9adce2f1dc7c802904f17bc70ee0b185e7eda17d89b45cb95a7caedb3cc",
+          "change": "changed",
+          "id": "scenario.world_reduced",
+          "kind": "scenario",
+          "old_revision": 9,
+          "revision": 10
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "d71123e656b541f148e2c93185b899253dc3ff5b27ba8bc5e85d68e2d7beece5",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.15.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 15,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.14.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000014.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000015.collection.json",
+      "summary": "Add founder opening packages and amendable organizational charters with disclosed resource and board terms.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 21,
+        "lints": [],
+        "prepared_headquarters": 21,
+        "scenarios": 7
+      }
     }
   ],
   "format": 1

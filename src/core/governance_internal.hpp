@@ -33,4 +33,6 @@ void record_capital(SimulationState&,CapitalEvent);
 BoardMotion& new_motion(SimulationState&,BoardMotionKind,std::string,Cents,Cents,BasisPoints);
 std::vector<BoardBallot> ballots_for(const SimulationState&,const BoardMotion&,bool,Cents);
 void execute_finance(SimulationState&,BoardMotion&);
+std::vector<BoardMember> charter_board(const SimulationState&,std::vector<BoardMember>,std::uint64_t cursor);
+void apply_charter(SimulationState&,std::string_view,std::string);
 }

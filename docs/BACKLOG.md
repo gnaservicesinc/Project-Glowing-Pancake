@@ -20,6 +20,12 @@ feature implementation. Short checks for changed behavior continue. The current
 42 checked items record implemented batches. A feature-coverage pass against
 the design is required before moving into feedback, event expansion or M8-02.
 
+The setup coverage pass now implements company/founder identity, editable
+64-bit seeds, four founder opening packages and three board-amendable charters.
+Resource and recurring-cost previews use the same terms as initialization.
+Explicit difficulty selection remains next. The 42 checked batches remain the
+roadmap count while this pass closes design requirements inside those batches.
+
 ## M0 — Toolchain and platform proof
 
 M0-03 is complete for the current Mac feature-development scope. Its

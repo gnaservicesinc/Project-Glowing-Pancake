@@ -28,6 +28,7 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
     const auto subject_label=[&](const std::string& id) {
         if (id=="option_pool") return tr("Reserved option pool");
         for (const auto& f:c.financing) if (f.id==id) return text(f.name);
+        for (const auto& charter:c.charters) if(charter.id==id) return text(charter.name);
         for (const auto& e:c.executives) if (e.id==id) return text(e.name);
         if (checkpoint.world.competition) for (const auto& r:checkpoint.world.competition->companies) if (r.definition_id==id) return text(runtime::rival_definition(program,id).name);
         return readable(id);
@@ -48,6 +49,16 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
     }
     result.board=tr("Board motions have a %1-day response window. A majority of seats decides; financing dilution does not itself change seats. Each nonplayer position uses cash after the proposed action and its maximum dilution. Review the recorded votes after deciding.\n").arg(c.vote_window.value());
     for (const auto& member:board) result.board+=tr("%1: %2 seats · %3\n").arg(text(member.name)).arg(member.seats).arg(member.player?tr("your vote"):tr("supports cash ≥ %1 and dilution ≤ %2").arg(money(member.cash_floor),percent(member.maximum_dilution)));
+    if(const auto* charter=core::active_charter(s)) result.board+=tr("Current charter: %1. %2 Employees expect %3 Monthly employee program: %4.\n")
+        .arg(text(charter->name),text(charter->priorities),text(charter->employee_expectations),money(charter->monthly_employee_budget));
+    const bool amendment_pending=std::any_of(g.motions.begin(),g.motions.end(),[](const auto& m){return m.kind==core::BoardMotionKind::charter && m.status==core::BoardMotionStatus::pending;});
+    for(const auto& charter:c.charters) {
+        const bool current=core::active_charter(s) && core::active_charter(s)->id==charter.id;
+        const auto detail=tr("%1\nEmployees expect %2\nNonplayer board votes require at least %3 cash and at most %4 dilution, together with any stricter individual position. Employee program: %5/month.\nA proposal commits nothing. A majority of the current board must approve under the current charter and the proposed cash floor. Approval replaces the program from that day, preserving all prior costs and votes.")
+            .arg(text(charter.priorities),text(charter.employee_expectations),money(charter.cash_floor),percent(charter.maximum_dilution),money(charter.monthly_employee_budget));
+        result.charters.push_back({text(charter.id),text(charter.name),money(charter.monthly_employee_budget),detail,current?tr("In force"):amendment_pending?tr("Resolve pending amendment"):tr("Available amendment"),!current && !amendment_pending,{}});
+    }
+    for(const auto& change:g.charters) result.board+=tr("%1: %2 · %3\n").arg(date(change.day),subject_label(change.charter),change.motion.empty()?tr("selected at formation"):tr("approved by %1").arg(text(change.motion)));
     for (const auto& f:c.financing) {
         const bool used=std::any_of(g.motions.begin(),g.motions.end(),[&](const auto& m){return m.kind==core::BoardMotionKind::financing && (m.status==core::BoardMotionStatus::pending || m.executed) && std::any_of(c.financing.begin(),c.financing.end(),[&](const auto& prior){return prior.id==m.subject && prior.negotiation==f.negotiation;});});
         auto detail=tr("Negotiate this fixed counteroffer, then submit it to the board. Proposing terms pays nothing. Approval rechecks and commits the exact terms once.\nCash proceeds: %1. New fully diluted ownership: %2. Board representative: %3.\n").arg(money(f.proceeds),percent(f.acquired),f.board_seat?tr("one seat"):tr("none"));
@@ -67,7 +78,11 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
         result.executives.push_back({text(e.id),text(e.name),text(e.role),detail,a==g.appointments.end()?tr("Negotiable"):a->departed_on?tr("Departed"):tr("Appointed"),a==g.appointments.end(),{{QStringLiteral("hybrid"),e.hybrid_grant.value()>0 && e.hybrid_grant<=core::unallocated_option_pool(s)}}});
     }
     for (const auto& m:g.motions) {
-        auto detail=tr("Subject: %1. Opened %2; vote before %3.\nCash %4; explicit dilution %5. Approval commits financing/pool changes or the reviewed acquisition atomically. No unvoted offer is accepted automatically.\n").arg(subject_label(m.subject),date(m.opened_on),date(m.deadline),money(m.cash),percent(m.shares));
+        auto detail=tr("Subject: %1. Opened %2; vote before %3.\nCash %4; explicit dilution %5. Approval commits the reviewed action atomically. No unvoted offer is accepted automatically.\n").arg(subject_label(m.subject),date(m.opened_on),date(m.deadline),money(m.cash),percent(m.shares));
+        if(m.kind==core::BoardMotionKind::charter) for(const auto& charter:c.charters) if(charter.id==m.subject) {
+            detail+=tr("Charter amendment: %1\nEmployees expect %2 Monthly program %3. Proposed cash floor %4; dilution ceiling %5. Approval replaces the current charter and future employee program charges from this day. Prior costs remain due.\n")
+                .arg(text(charter.priorities),text(charter.employee_expectations),money(charter.monthly_employee_budget),money(charter.cash_floor),percent(charter.maximum_dilution));
+        }
         if (m.resolved_on) detail+=tr("%1 on %2.\n").arg(motion_status(m.status),date(*m.resolved_on));
         for (const auto& b:m.ballots) {QString member=readable(b.member);for (const auto& seat:board) if (seat.id==b.member) member=text(seat.name);detail+=tr("%1: %2 seats · %3\n").arg(member).arg(b.seats).arg(b.support?tr("support"):tr("oppose"));}
         result.motions.push_back({text(m.id),subject_label(m.subject),percent(m.shares),detail,motion_status(m.status),m.status==core::BoardMotionStatus::pending,{}});

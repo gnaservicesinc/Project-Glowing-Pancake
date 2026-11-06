@@ -98,6 +98,26 @@ BoardMotion& new_motion(SimulationState& s,BoardMotionKind kind,std::string subj
     m.cash=cash;m.asset_value=asset;m.shares=shares;g.motions.push_back(std::move(m));s.paused=true;
     return g.motions.back();
 }
+std::vector<BoardMember> charter_board(const SimulationState& s,std::vector<BoardMember> members,std::uint64_t cursor) {
+    const auto& history=s.management->governance->charters;
+    if(cursor>history.size()) invalid("Board charter cursor exceeds its actual amendment history");
+    if(cursor) {
+        const auto& charter=find(catalog(s).charters,history[cursor-1].charter);
+        for(auto& member:members) if(!member.player) {
+            member.cash_floor=std::max(member.cash_floor,charter.cash_floor);
+            member.maximum_dilution=std::min(member.maximum_dilution,charter.maximum_dilution);
+        }
+    }
+    return members;
+}
+void apply_charter(SimulationState& s,std::string_view id,std::string motion) {
+    auto& g=governance(s);const auto& charter=find(catalog(s).charters,id);
+    if(g.charters.size()>=129) invalid("Charter amendment history is full");
+    if(!g.charters.empty()) end_recurring(*s.accounts,"charter/employees/"+std::to_string(g.charters.size()),s.date);
+    const auto key="charter/employees/"+std::to_string(g.charters.size()+1);
+    add_recurring(*s.accounts,{key,charter.monthly_employee_budget,s.date,{},"Employee program under "+charter.name});
+    g.charters.push_back({std::string(id),std::move(motion),s.date});
+}
 std::vector<BoardBallot> ballots_for(const SimulationState& s,const BoardMotion& motion,bool player,Cents cash) {
     const auto after=motion.kind==BoardMotionKind::financing?checked_unit_add(cash,motion.cash):checked_unit_subtract(cash,motion.cash);
     auto members=catalog(s).board;
@@ -110,6 +130,11 @@ std::vector<BoardBallot> ballots_for(const SimulationState& s,const BoardMotion&
         if (f.board_seat && preceded) members.push_back({"seat/"+f.id,f.name+" representative",1,false,f.covenant_cash_floor,BasisPoints{1500}});
     }
     members=succession_board(s,std::move(members),motion.leadership_cursor);
+    members=charter_board(s,std::move(members),motion.charter_cursor);
+    if(motion.kind==BoardMotionKind::charter) {
+        const auto& proposed=find(catalog(s).charters,motion.subject);
+        for(auto& member:members) if(!member.player) member.cash_floor=std::max(member.cash_floor,proposed.cash_floor);
+    }
     std::vector<BoardBallot> votes;
     for (const auto& member:members) votes.push_back({member.id,member.seats,member.player?player:
         after>=member.cash_floor && motion.shares<=member.maximum_dilution});
@@ -133,7 +158,7 @@ std::vector<BoardMember> current_board(const SimulationState& s) {
         const auto& f=find(catalog(s).financing,m.subject);
         if (f.board_seat) rows.push_back({"seat/"+f.id,f.name+" representative",1,false,f.covenant_cash_floor,BasisPoints{1500}});
     }
-    return succession_board(s,std::move(rows),s.succession?s.succession->controls.size():0);
+    return charter_board(s,succession_board(s,std::move(rows),s.succession?s.succession->controls.size():0),s.management->governance->charters.size());
 }
 void company_equity(SimulationState& s,std::string investor,Cents proceeds,BasisPoints acquired,std::string key,bool assets) {
     if (!s.accounts) invalid("Equity requires company accounts");
@@ -172,6 +197,21 @@ void propose_pool_expansion(SimulationState& s,BasisPoints shares) {
     if (shares.value()==0 || shares>catalog(s).maximum_pool_expansion) invalid("Pool expansion exceeds the disclosed dilution ceiling");
     (void)new_motion(s,BoardMotionKind::pool_expansion,"option_pool",Cents{0},Cents{0},shares);
 }
+const OrganizationalCharter* active_charter(const SimulationState& s) {
+    if(!s.management || !s.management->governance || s.management->governance->charters.empty()) return nullptr;
+    return &find(catalog(s).charters,s.management->governance->charters.back().charter);
+}
+void initialize_charter(SimulationState& s,std::string_view id) {
+    const auto& g=governance(s);
+    if(s.date!=s.accounts->starts_on || !g.charters.empty() || !g.motions.empty()) invalid("Starting charter can only be selected at company formation");
+    apply_charter(s,id,{});
+}
+void propose_charter(SimulationState& s,std::string_view id) {
+    const auto& proposed=find(catalog(s).charters,id);
+    if(const auto* current=active_charter(s);current && current->id==proposed.id) invalid("That charter is already in force");
+    for(const auto& m:governance(s).motions) if(m.kind==BoardMotionKind::charter && m.status==BoardMotionStatus::pending) invalid("Resolve the existing charter motion first");
+    (void)new_motion(s,BoardMotionKind::charter,std::string(id),Cents{0},Cents{0},BasisPoints{0});
+}
 void propose_acquisition_board(SimulationState& s,std::string target,Cents cash,Cents asset,BasisPoints shares) {
     if (target.empty() || cash.value()<=0 || asset<cash || shares>catalog(s).acquisition_equity) invalid("Acquisition consideration differs from negotiated terms");
     (void)new_motion(s,BoardMotionKind::acquisition,std::move(target),cash,asset,shares);
@@ -182,12 +222,14 @@ void vote_board_motion(SimulationState& s,std::string_view id,bool support,Cents
     auto& m=*it;
     if (m.kind==BoardMotionKind::acquisition && m.cash>checked_unit_subtract(s.cash,protected_cash)) invalid("The acquisition exceeds unreserved cash");
     m.reviewed_cash=s.cash;m.posting_cursor=s.accounts->postings.size();m.leadership_cursor=s.succession?s.succession->controls.size():0;
+    m.charter_cursor=g.charters.size();
     m.player_vote=support;m.ballots=ballots_for(s,m,support,s.cash);
     std::uint32_t yes=0,total=0;for (const auto& b:m.ballots) {total+=b.seats;if (b.support) yes+=b.seats;}
     m.resolved_on=s.date;m.status=yes>total/2?BoardMotionStatus::approved:BoardMotionStatus::rejected;
     if (m.status==BoardMotionStatus::approved) {
         if (m.kind==BoardMotionKind::financing) execute_finance(s,m);
         else if (m.kind==BoardMotionKind::pool_expansion) {record_capital(s,{"pool",m.id,m.id,s.date,m.shares,Cents{0}});m.executed=true;}
+        else if(m.kind==BoardMotionKind::charter) {apply_charter(s,m.subject,m.id);m.executed=true;}
         // Acquisition is completed by the owning cross-company runtime, inside
         // the same transaction. It cannot be faked by a core-only transfer.
     }

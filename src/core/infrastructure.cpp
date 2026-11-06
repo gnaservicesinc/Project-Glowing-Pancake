@@ -6,9 +6,11 @@ void prepare_infrastructure(SimulationState& s) {
     auto& i=infrastructure(s);
     prepare_site_resilience(s);
     if (i.initial_lease_ends_before && s.date>=*i.initial_lease_ends_before) {
-        for (auto& source:s.capacity->sources) if (source.id=="lease.initial") source.effective=MilliCUPerDay{0};
+        for (auto& source:s.capacity->sources) if ((source.id=="lease.initial" || source.id=="lease.founder")) source.effective=MilliCUPerDay{0};
         const auto term=std::find_if(s.accounts->recurring.begin(),s.accounts->recurring.end(),[](const auto& t){return t.id=="compute_lease";});
         if (term!=s.accounts->recurring.end() && !term->ends_before) end_recurring(*s.accounts,"compute_lease",s.date);
+        const auto founder=std::find_if(s.accounts->recurring.begin(),s.accounts->recurring.end(),[](const auto& t){return t.id=="founder_compute";});
+        if(founder!=s.accounts->recurring.end() && !founder->ends_before) end_recurring(*s.accounts,"founder_compute",s.date);
         if (s.date==*i.initial_lease_ends_before) add_notice(s,"lease/ended","initial_lease_ended","lease.initial",s.date);
     }
     prepare_site_appointments(s);

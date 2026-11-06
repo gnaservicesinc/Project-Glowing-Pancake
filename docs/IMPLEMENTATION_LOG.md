@@ -1638,3 +1638,39 @@ save/reload and next-day parity. A short offscreen run of the real QML form
 at 100% and 200% text starts a named century campaign, saves/reopens it and
 refuses an overflowing seed without replacing the current company. These
 checks use no extended campaign. Background and charter setup remain next.
+
+
+### Founder backgrounds and organizational charters
+
+All seven authored scenarios offer the four founder backgrounds. Their typed
+opening packages change contributed capital, founding staff and payroll,
+independent paid compute and time-limited ordinary contact offers. Researcher
+commercial introductions arrive later. The independent source survives main
+supplier setbacks and ends with the opening lease, including its future bill.
+No package consumes world RNG, changes rival opening resources, completes
+research for free or changes a permanent capability ceiling. Staff continue
+to use the shared allocator.
+
+Setup previews every package term and the combined monthly commitments.
+Three charters set nonplayer board cash/dilution positions and explicit funded
+monthly employee programs. These programs are accounting commitments, with
+no implicit morale or model-quality bonus. Office → Board and people exposes
+charter review and amendment. A proposal pays nothing; the normal majority
+vote applies the current charter and proposed cash floor. Approval replaces
+the future program from that day. Dated amendments and ballot cursors preserve
+prior votes, costs and save continuation. Only one amendment may be pending.
+Default callers retain the authored opening and old optional state shapes;
+prior saves still require their own content identity.
+
+The standard internal finalizer created generation 15, content 0.15.0-dev.1,
+with seven scenarios and 21 exact prepared-opening save round trips. Earlier
+snapshots remain intact. The optimized Mac build passes. Focused
+runtime.campaign-founding, runtime.campaign-setup and runtime.governance checks
+pass in 3.11s, covering all four real packages, unchanged rival/RNG openings,
+board rejection before amendment and approval afterward, paid program terms,
+pending/executed saves, forged history refusal and next-day reload parity.
+Short offscreen runs of the real setup and governance QML at 100% and 200%
+text start a product-builder company, review/propose and approve a charter,
+save/reopen the company and refuse an invalid seed without replacing it.
+These are engineering controls/render checks, not native human acceptance.
+No extended campaign, human study or balancing run was performed.

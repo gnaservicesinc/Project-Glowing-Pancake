@@ -123,7 +123,7 @@ ManagementController::ManagementController(QObject* parent):QObject(parent),fund
     policies_(new StableListModel(this)),decisions_(new StableListModel(this)),alerts_(new StableListModel(this)),data_(new StableListModel(this)),research_(new StableListModel(this)),
     models_(new StableListModel(this)),evidence_(new StableListModel(this)),offers_(new StableListModel(this)),products_(new StableListModel(this)),
     contracts_(new StableListModel(this)),rivals_(new StableListModel(this)),payables_(new StableListModel(this)),heavyweights_(new StableListModel(this)),competitive_offers_(new StableListModel(this)),corporate_finance_(new StableListModel(this)),executives_(new StableListModel(this)),
-    board_motions_(new StableListModel(this)),corporate_disputes_(new StableListModel(this)),merger_targets_(new StableListModel(this)),regional_markets_(new StableListModel(this)) {}
+    board_motions_(new StableListModel(this)),corporate_disputes_(new StableListModel(this)),merger_targets_(new StableListModel(this)),charters_(new StableListModel(this)),regional_markets_(new StableListModel(this)) {}
 bool ManagementController::available() const { return snapshot_ && state().lab && state().deployments; }
 bool ManagementController::plannedCompetition() const {return snapshot_ && snapshot_->checkpoint.world.competition && snapshot_->checkpoint.world.competition->setup.has_value();}
 QString ManagementController::competitionSummary() const {
@@ -304,7 +304,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
     set(funding_,std::move(funding));set(specialists_,std::move(specialists));set(policies_,std::move(policies));set(decisions_,std::move(decisions));set(alerts_,std::move(alerts));
     auto response=heavyweight_models(snapshot_->checkpoint,program);set(heavyweights_,std::move(response.responses));set(competitive_offers_,std::move(response.offers));
     auto corporate=governance_models(snapshot_->checkpoint,program);ownership_text_=std::move(corporate.ownership);board_text_=std::move(corporate.board);
-    set(corporate_finance_,std::move(corporate.financing));set(executives_,std::move(corporate.executives));set(board_motions_,std::move(corporate.motions));set(corporate_disputes_,std::move(corporate.disputes));set(merger_targets_,std::move(corporate.targets));
+    set(charters_,std::move(corporate.charters));set(corporate_finance_,std::move(corporate.financing));set(executives_,std::move(corporate.executives));set(board_motions_,std::move(corporate.motions));set(corporate_disputes_,std::move(corporate.disputes));set(merger_targets_,std::move(corporate.targets));
     emit changed();
 }
 QVariantList ManagementController::recipes() const {
@@ -536,6 +536,7 @@ namespace pgp::bridge {
 bool ManagementController::governanceAvailable() const {return snapshot_ && state().management && state().management->governance.has_value();}
 void ManagementController::negotiateFinance(QString id) {if (editable()) emit actionRequested(core::NegotiateCorporateFinance{id.toStdString()});}
 void ManagementController::appointExecutive(QString id,bool hybrid) {if (editable()) emit actionRequested(core::AppointExecutive{id.toStdString(),hybrid});}
+void ManagementController::proposeCharter(QString id) {if(editable()) emit actionRequested(core::ProposeCharter{id.toStdString()});}
 void ManagementController::proposePool(QString bp) {
     if (!editable()) return;
     try {emit actionRequested(core::ProposePoolExpansion{core::BasisPoints{integer(bp,2000)}});}

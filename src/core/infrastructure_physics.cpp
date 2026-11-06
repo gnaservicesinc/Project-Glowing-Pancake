@@ -158,7 +158,7 @@ CashProjection project_company_cash(const SimulationState& s,OrdinalDay through,
     const auto terms=forecast_terms(s);
     if (s.infrastructure && s.infrastructure->initial_lease_ends_before && *s.infrastructure->initial_lease_ends_before>s.date) {
         auto ledger=*s.accounts;
-        for (auto& term:ledger.recurring) if (term.id=="compute_lease") term.ends_before=s.infrastructure->initial_lease_ends_before;
+        for (auto& term:ledger.recurring) if (term.id=="compute_lease" || term.id=="founder_compute") term.ends_before=s.infrastructure->initial_lease_ends_before;
         return project_cash(ledger,through,protected_cash,terms);
     }
     return project_cash(*s.accounts,through,protected_cash,terms);

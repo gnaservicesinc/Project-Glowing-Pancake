@@ -9,6 +9,8 @@ namespace pgp::runtime {
 struct ScenarioOptions {
     std::optional<CampaignIdentity> identity;
     std::optional<std::uint64_t> seed;
+    std::string background;
+    std::string charter;
 };
 
 // Initialize implemented foundation fields from validated authored data. No

@@ -45,6 +45,7 @@ class ManagementController final : public QObject {
     Q_PROPERTY(QString boardText READ boardText NOTIFY changed)
     Q_PROPERTY(StableListModel* corporateFinance READ corporateFinance CONSTANT)
     Q_PROPERTY(StableListModel* executives READ executives CONSTANT)
+    Q_PROPERTY(StableListModel* charters READ charters CONSTANT)
     Q_PROPERTY(StableListModel* boardMotions READ boardMotions CONSTANT)
     Q_PROPERTY(StableListModel* corporateDisputes READ corporateDisputes CONSTANT)
     Q_PROPERTY(StableListModel* mergerTargets READ mergerTargets CONSTANT)
@@ -59,11 +60,13 @@ public:
     QString boardText() const {return board_text_;}
     StableListModel* corporateFinance() const {return corporate_finance_;}
     StableListModel* executives() const {return executives_;}
+    StableListModel* charters() const {return charters_;}
     StableListModel* boardMotions() const {return board_motions_;}
     StableListModel* corporateDisputes() const {return corporate_disputes_;}
     StableListModel* mergerTargets() const {return merger_targets_;}
     Q_INVOKABLE void negotiateFinance(QString id);
     Q_INVOKABLE void appointExecutive(QString id,bool hybrid);
+    Q_INVOKABLE void proposeCharter(QString id);
     Q_INVOKABLE void proposePool(QString basisPoints);
     Q_INVOKABLE void voteBoard(QString id,bool support);
     Q_INVOKABLE void respondDispute(QString id,bool waiver);
@@ -138,7 +141,7 @@ private:
     StableListModel *funding_,*specialists_,*policies_,*decisions_,*alerts_;
     StableListModel *data_,*research_,*models_,*evidence_,*offers_,*products_,*contracts_,*rivals_,*payables_;
     StableListModel *heavyweights_,*competitive_offers_;
-    StableListModel *corporate_finance_,*executives_,*board_motions_,*corporate_disputes_,*merger_targets_;
+    StableListModel *corporate_finance_,*executives_,*board_motions_,*corporate_disputes_,*merger_targets_,*charters_;
     StableListModel *regional_markets_;
     QVariantList launch_regions_;
     QString ownership_text_,board_text_;

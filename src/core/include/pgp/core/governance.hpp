@@ -27,6 +27,12 @@ struct BoardMember {
     BasisPoints maximum_dilution{0};
     auto operator<=>(const BoardMember&) const = default;
 };
+struct OrganizationalCharter {
+    std::string id,name,priorities,employee_expectations;
+    Cents cash_floor{0},monthly_employee_budget{0};
+    BasisPoints maximum_dilution{0};
+    auto operator<=>(const OrganizationalCharter&) const = default;
+};
 struct GovernanceCatalog {
     std::vector<CorporateFinanceTerms> financing;
     std::vector<ExecutiveCandidate> executives;
@@ -36,6 +42,7 @@ struct GovernanceCatalog {
     Cents acquisition_premium{10000000};
     Cents subsidiary_cash_floor{10000000};
     Days subsidiary_reserve_days{30};
+    std::vector<OrganizationalCharter> charters{};
     auto operator<=>(const GovernanceCatalog&) const = default;
 };
 struct ExecutiveAppointment {
@@ -60,7 +67,7 @@ struct CapitalEvent {
     Cents consideration{0};
     auto operator<=>(const CapitalEvent&) const = default;
 };
-enum class BoardMotionKind { financing,pool_expansion,acquisition };
+enum class BoardMotionKind { financing,pool_expansion,acquisition,charter };
 enum class BoardMotionStatus { pending,approved,rejected,expired };
 struct BoardBallot {
     std::string member;
@@ -81,6 +88,7 @@ struct BoardMotion {
     std::vector<BoardBallot> ballots;
     bool executed=false;
     std::uint64_t leadership_cursor=0;
+    std::uint64_t charter_cursor=0;
     auto operator<=>(const BoardMotion&) const = default;
 };
 enum class CorporateDisputeStatus { concern,formal,resolved,departed,accelerated,waived };
@@ -96,6 +104,11 @@ struct CorporateDispute {
     std::string review_project;
     auto operator<=>(const CorporateDispute&) const = default;
 };
+struct CharterChange {
+    std::string charter,motion;
+    OrdinalDay day{0};
+    auto operator<=>(const CharterChange&) const = default;
+};
 struct GovernanceState {
     std::vector<EquityHolding> opening_holdings;
     std::vector<ExecutiveAppointment> appointments;
@@ -103,11 +116,13 @@ struct GovernanceState {
     std::vector<CapitalEvent> capital;
     std::vector<BoardMotion> motions;
     std::vector<CorporateDispute> disputes;
+    std::vector<CharterChange> charters{};
     auto operator<=>(const GovernanceState&) const = default;
 };
 struct NegotiateCorporateFinance { std::string terms_id; };
 struct AppointExecutive { std::string candidate;bool hybrid=false; };
 struct ProposePoolExpansion { BasisPoints shares{0}; };
+struct ProposeCharter { std::string id; };
 struct VoteBoardMotion { std::string id;bool support=false; };
 struct RespondCorporateDispute { std::string id;bool buy_waiver=false; };
 struct TransferCompanyOwnership { std::string parent; };
@@ -124,6 +139,9 @@ void company_equity(SimulationState&,std::string investor,Cents proceeds,BasisPo
 void negotiate_corporate_finance(SimulationState&,std::string_view);
 void appoint_executive(SimulationState&,std::string_view,bool hybrid,Cents protected_cash);
 void propose_pool_expansion(SimulationState&,BasisPoints);
+void initialize_charter(SimulationState&,std::string_view);
+void propose_charter(SimulationState&,std::string_view);
+[[nodiscard]] const OrganizationalCharter* active_charter(const SimulationState&);
 void propose_acquisition_board(SimulationState&,std::string target,Cents cash,Cents asset_value,BasisPoints shares);
 void vote_board_motion(SimulationState&,std::string_view,bool,Cents protected_cash);
 void respond_corporate_dispute(SimulationState&,std::string_view,bool,Cents protected_cash);

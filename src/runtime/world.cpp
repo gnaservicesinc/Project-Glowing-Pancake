@@ -295,7 +295,7 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
         (metadata.id=="company.has_compute_lease" || metadata.id=="company.monthly_compute_bill_cents")) {
         core::Cents total{0};
         for (const auto& term:world.simulation.accounts->recurring)
-            if ((term.id=="compute_lease" || term.id.starts_with("offer.lease/") || term.id.starts_with("offer.renew/")) &&
+            if ((term.id=="compute_lease" || term.id=="founder_compute" || term.id.starts_with("offer.lease/") || term.id.starts_with("offer.renew/")) &&
                 term.starts_on<=world.simulation.date && (!term.ends_before || *term.ends_before>world.simulation.date)) total=core::checked_unit_add(total,term.monthly_amount);
         if (metadata.id=="company.has_compute_lease") return total.value()>0;
         return total.value();
@@ -382,6 +382,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                                           bool validate_core_simulation) {
     const auto& world = checkpoint.world;
     const auto& state = checkpoint.runtime;
+    if(!world.background.empty() && world.scenario_id.empty()) invalid("Founder background needs its authored source scenario");
     if (world.identity) {
         validate_campaign_identity(*world.identity);
         if (world.scenario_id.empty()) invalid("Campaign identity needs its authored source scenario");
@@ -453,8 +454,32 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             matching_lab_scenario = true;
             if (world.simulation.lab && world.simulation.lab->catalog == content::scenario_lab_catalog(program.collection, *scenario)) {
                 matching_catalog = true;
+                const auto opening=content::scenario_opening(*scenario,world.background,world.company_id);
+                if(!world.background.empty()) {
+                    const auto& accounts=*world.simulation.accounts;
+                    if(opening.cash.value()>0 && (accounts.postings.empty() || accounts.postings.front().key!="opening" || accounts.postings.front().amount!=opening.cash))
+                        invalid("Founder opening capital differs from its actual contribution");
+                    for(const auto& [id,monthly]:opening.monthly_commitments) if(monthly.value()>0) {
+                        const auto it=std::find_if(accounts.recurring.begin(),accounts.recurring.end(),[&](const auto& r){return r.id==id;});
+                        if(it==accounts.recurring.end() || it->monthly_amount!=monthly || it->starts_on!=scenario->starts_on) invalid("Founder opening commitments differ from their authored package");
+                    }
+                }
+                const auto founder_source=std::find_if(world.simulation.capacity->sources.begin(),world.simulation.capacity->sources.end(),[](const auto& r){return r.id=="lease.founder";});
+                const auto expected_founder=std::find_if(opening.capacity_sources.begin(),opening.capacity_sources.end(),[](const auto& r){return r.id=="lease.founder";});
+                if((founder_source==world.simulation.capacity->sources.end())!=(expected_founder==opening.capacity_sources.end())) invalid("Founder compute presence differs from its opening package");
+                if(expected_founder!=opening.capacity_sources.end()) {
+                    auto expected=*expected_founder;
+                    const auto& owned=world.simulation.infrastructure;
+                    if(owned && owned->initial_lease_ends_before && world.simulation.date>=*owned->initial_lease_ends_before) expected.effective=core::MilliCUPerDay{0};
+                    if(*founder_source!=expected) invalid("Founder compute differs from its paid independent opening lease");
+                    const auto& bills=world.simulation.accounts->recurring;
+                    const auto it=std::find_if(bills.begin(),bills.end(),[](const auto& r){return r.id=="founder_compute";});
+                    const auto end=owned && owned->initial_lease_ends_before && world.simulation.date>=*owned->initial_lease_ends_before?owned->initial_lease_ends_before:std::nullopt;
+                    if(it==bills.end() || it->ends_before!=end) invalid("Founder compute bill differs from opening lease termination");
+                }
+
                 if (scenario->management ? (!world.simulation.management || world.simulation.management->catalog!=*scenario->management ||
-                    core::opening_staff_count(*world.simulation.capacity)!=scenario->team_people) : world.simulation.management.has_value())
+                    core::opening_staff_count(*world.simulation.capacity)!=opening.team_people) : world.simulation.management.has_value())
                     invalid("Saved management rules or opening staff differ from the scenario");
                 if (world.simulation.management && world.simulation.management->governance) {
                     std::vector<core::EquityHolding> initial;
@@ -471,8 +496,8 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                     for (auto& segment : actual) segment.preferences.clear();
                     if (actual != expected) invalid("Saved regional customer terms differ from their authored profiles");
                 }
-                if (scenario->business_offers.empty()?world.simulation.business_offers.has_value():
-                    (!world.simulation.business_offers || world.simulation.business_offers->catalog!=scenario->business_offers))
+                if (opening.business_offers.empty()?world.simulation.business_offers.has_value():
+                    (!world.simulation.business_offers || world.simulation.business_offers->catalog!=opening.business_offers))
                     invalid("Saved business offer catalog differs from its scenario");
                 std::vector<std::string> expected,actual;
                 for (const auto& rival:scenario->rivals) if (!scenario->competition || content::selected_rival(rival,*scenario->competition)) expected.push_back(rival.id);

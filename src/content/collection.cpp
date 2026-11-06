@@ -863,7 +863,7 @@ RegionalMarkets parse_regional_markets(const Json& value, const std::string& pat
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society", "authority", "frontier", "objectives"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society", "authority", "frontier", "objectives", "backgrounds"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -1063,6 +1063,28 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         } catch (const ValidationError&) { throw; }
         catch (const std::exception& error) { fail("business_plan",plan_path,error.what()); }
     }
+    if(value.contains("backgrounds")) {
+        array(value.at("backgrounds"),child(path,"backgrounds"),8,true);
+        std::set<std::string> ids;
+        for(const auto& row:value.at("backgrounds")) {
+            const auto p=child(path,"backgrounds");
+            fields(row,p,{"id","name","description","cash_adjustment_cents","staff_adjustment","monthly_payroll_adjustment_cents","independent_capacity_milli_CU_per_day","monthly_compute_cost_cents","commercial_delay_days","contacts"},
+                {"id","name","description","cash_adjustment_cents","staff_adjustment","monthly_payroll_adjustment_cents","independent_capacity_milli_CU_per_day","monthly_compute_cost_cents","commercial_delay_days","contacts"});
+            FounderBackground b;b.id=id(row.at("id"),p);b.name=text(row.at("name"),p,128);b.description=text(row.at("description"),p,1024);
+            if(!ids.insert(b.id).second) fail("duplicate_id",p,"Repeated founder background");
+            b.cash_adjustment=core::Cents{integer(row.at("cash_adjustment_cents"),p,-1000000000,1000000000)};
+            b.staff_adjustment=static_cast<std::int32_t>(integer(row.at("staff_adjustment"),p,-100,100));
+            b.monthly_payroll_adjustment=core::Cents{integer(row.at("monthly_payroll_adjustment_cents"),p,-100000000,100000000)};
+            b.independent_capacity=core::MilliCUPerDay{integer(row.at("independent_capacity_milli_CU_per_day"),p,0,1000000)};
+            b.monthly_compute_cost=core::Cents{integer(row.at("monthly_compute_cost_cents"),p,0,10000000)};
+            b.commercial_delay=core::Days{integer(row.at("commercial_delay_days"),p,0,90)};
+            b.contacts=load_business_offer_catalog(row.at("contacts").dump());
+            if(b.contacts.size()>4 || (b.independent_capacity.value()==0)!=(b.monthly_compute_cost.value()==0)) fail("background",p,"Opening compute must have a disclosed monthly bill");
+            result.backgrounds.push_back(std::move(b));
+            try {(void)scenario_opening(result,result.backgrounds.back().id);}
+            catch(const std::exception& error) {fail("background",p,error.what());}
+        }
+    }
     return result;
 }
 ResearchDefinition research(const Json& value, const std::string& path) {
@@ -1093,6 +1115,15 @@ void validate_references(const Collection& collection, const Registry& registry)
             if(scenario_definition->management && scenario_definition->management->succession) {
                 if(!scenario_definition->management->governance) fail("succession",path,"A scenario succession charter needs its actual founding board rights.");
                 core::validate_succession_opening(*scenario_definition->management->succession,scenario_definition->starts_on,scenario_definition->ends_before);
+            }
+            if(!scenario_definition->backgrounds.empty()) {
+                const auto services=scenario_services(collection,*scenario_definition);
+                const auto market=scenario_market_setup(collection,*scenario_definition);
+                for(const auto& b:scenario_definition->backgrounds) for(const auto& offer:b.contacts) if(offer.kind!=core::BusinessOfferKind::compute_lease) {
+                    if(std::none_of(services.begin(),services.end(),[&](const auto& service){return service.product.id==offer.product_id;}) ||
+                        std::none_of(market.segments.begin(),market.segments.end(),[&](const auto& segment){return segment.id==offer.segment_id;}))
+                        fail("background",path,"A founder contact needs an available product template and customer segment");
+                }
             }
             for (const auto& target : scenario_definition->research) (void)reference(target, "research", path);
             if (!scenario_definition->regional_markets.empty()) {

@@ -528,7 +528,33 @@ ApplicationWindow {
                             }
                         }
                         Copy { text: (campaign.scenarios[competitionChoice.currentIndex] || {}).detail || "" }
-                        Copy { text: (campaign.scenarios[competitionChoice.currentIndex] || {}).opening || "" }
+                        Copy { text: qsTr("Founder background") }
+                        ComboBox {
+                            id: backgroundChoice
+                            objectName: "backgroundChoice"
+                            Layout.fillWidth: true
+                            model: (campaign.scenarios[competitionChoice.currentIndex] || {}).backgrounds || []
+                            textRole: "label"; valueRole: "id"
+                            font.pixelSize: window.textSize
+                            Accessible.name: qsTr("Founder background")
+                        }
+                        Copy { text: (backgroundChoice.model[backgroundChoice.currentIndex] || {}).detail || "" }
+                        Copy { visible: charterChoice.count > 0; text: qsTr("Organizational charter") }
+                        ComboBox {
+                            id: charterChoice
+                            objectName: "charterChoice"
+                            Layout.fillWidth: true
+                            visible: count > 0
+                            model: (campaign.scenarios[competitionChoice.currentIndex] || {}).charters || []
+                            textRole: "label"; valueRole: "id"
+                            font.pixelSize: window.textSize
+                            Accessible.name: qsTr("Organizational charter")
+                        }
+                        Copy { visible: charterChoice.count > 0; text: (charterChoice.model[charterChoice.currentIndex] || {}).detail || "" }
+                        Copy {
+                            objectName: "campaignOpeningPreview"
+                            text: campaign.setupPreview(competitionChoice.currentValue || "", backgroundChoice.currentValue || "", charterChoice.currentValue || "")
+                        }
                         Copy { text: qsTr("World seed") }
                         TextField {
                             id: worldSeedInput
@@ -591,9 +617,10 @@ ApplicationWindow {
                             objectName: "newCampaignButton"; text: qsTr("Start new campaign")
                             enabled: campaign.ready && !campaign.busy && companyNameInput.text.trim().length > 0
                                 && founderNameInput.text.trim().length > 0 && worldSeedInput.acceptableInput
+                                && (backgroundChoice.count === 0 || backgroundChoice.currentIndex >= 0) && (charterChoice.count === 0 || charterChoice.currentIndex >= 0)
                             onClicked: campaign.newCampaignSetup(headquartersChoice.currentValue, includeStories.checked,
                                 competitionChoice.currentValue, openingObjectives.visible ? openingObjectives.primary : "", openingObjectives.visible ? openingObjectives.secondary() : [],
-                                companyNameInput.text, founderNameInput.text, founderPronounsInput.text, worldSeedInput.text)
+                                companyNameInput.text, founderNameInput.text, founderPronounsInput.text, worldSeedInput.text, backgroundChoice.currentValue || "", charterChoice.currentValue || "")
                         }
                         Action { text: qsTr("Load an existing local campaign…"); enabled: campaign.ready && !campaign.busy; onClicked: loadDialog.open() }
                     }

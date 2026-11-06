@@ -245,6 +245,20 @@ QVariantList CampaignController::scenarios() const {
         choice.insert(QStringLiteral("seed"),integer(scenario->seed));
         choice.insert(QStringLiteral("opening"),QStringLiteral("Opening cash %1. Team %2. Leased compute %3 milli-CU/day.")
             .arg(money(scenario->cash)).arg(scenario->team_people).arg(scenario->leased_capacity.value()));
+        QVariantList backgrounds,charters;
+        for(const auto& b:scenario->backgrounds) {
+            QString detail=text(b.description)+QStringLiteral("\nOpening cash change %1. Staff change %2. Payroll change %3/month. Independent compute %4 milli-CU/day at %5/month. Opening commercial contacts delayed %6 days.")
+                .arg(money(b.cash_adjustment)).arg(b.staff_adjustment).arg(money(b.monthly_payroll_adjustment)).arg(b.independent_capacity.value()).arg(money(b.monthly_compute_cost)).arg(b.commercial_delay.value());
+            for(const auto& offer:b.contacts) detail+=QStringLiteral("\nContact offer: %1. Available %2 through %3 exclusive. Setup %4; %5/month; %6-day term; %7 milli-CU/day; %8 tasks/day. Review eligibility and accept the offer in Office.")
+                .arg(text(offer.name),text(core::iso_date(offer.available_from)),text(core::iso_date(offer.available_before)),money(offer.setup_cost),money(offer.monthly_amount)).arg(offer.term.value()).arg(offer.capacity.value()).arg(offer.tasks_per_day);
+            backgrounds.push_back(QVariantMap{{"id",text(b.id)},{"label",text(b.name)},{"detail",detail}});
+        }
+        if(scenario->management && scenario->management->governance) for(const auto& c:scenario->management->governance->charters) {
+            const auto detail=QStringLiteral("%1\nEmployees expect %2\nBoard floor %3 cash; dilution ceiling %4.%5%. Employee program %6/month. Existing stricter board positions still apply. Amendments require a board majority.")
+                .arg(text(c.priorities),text(c.employee_expectations),money(c.cash_floor)).arg(c.maximum_dilution.value()/100).arg(c.maximum_dilution.value()%100,2,10,QLatin1Char('0')).arg(money(c.monthly_employee_budget));
+            charters.push_back(QVariantMap{{"id",text(c.id)},{"label",text(c.name)},{"detail",detail}});
+        }
+        choice.insert("backgrounds",backgrounds);choice.insert("charters",charters);
         if(scenario->objectives) {
             const auto& opening=scenario->objectives->opening;
             const bool asi=content::frontier_catalog(program_.collection,*scenario)->asi_route;
@@ -257,6 +271,26 @@ QVariantList CampaignController::scenarios() const {
         result.push_back(std::move(choice));
     }
     return result;
+}
+QString CampaignController::setupPreview(QString scenario,QString background,QString charter) const {
+    try {
+        const auto* definition=program_.collection.find(scenario.toStdString());
+        const auto* s=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
+        if(!s) return {};
+        const auto opening=content::scenario_opening(*s,background.toStdString());
+        core::Cents monthly{0};core::MilliCUPerDay compute{0};
+        for(const auto& [id,amount]:opening.monthly_commitments) { (void)id;monthly=core::checked_unit_add(monthly,amount); }
+        for(const auto& source:opening.capacity_sources) compute=core::checked_unit_add(compute,source.effective);
+        if(!charter.isEmpty()) {
+            if(!s->management || !s->management->governance) return {};
+            const auto& rows=s->management->governance->charters;
+            const auto it=std::find_if(rows.begin(),rows.end(),[&](const auto& r){return r.id==charter.toStdString();});
+            if(it==rows.end()) return {};
+            monthly=core::checked_unit_add(monthly,it->monthly_employee_budget);
+        }
+        return QStringLiteral("Opening cash %1. Team %2. Leased compute %3 milli-CU/day. Total starting commitments %4/month, including the selected employee program. Offer setup, future hires and project costs are additional. Backgrounds change this opening package; later research, hiring and product choices remain available.")
+            .arg(money(opening.cash)).arg(opening.team_people).arg(compute.value()).arg(money(monthly));
+    } catch(const std::exception& error) {return QString::fromUtf8(error.what());}
 }
 QString CampaignController::headquartersText() const {
     if (!snapshot_) return {};
@@ -274,6 +308,11 @@ QString CampaignController::identitySummary() const {
         summary = QStringLiteral("Founded by %1%2 · %3").arg(text(world.identity->founder_name),
             world.identity->founder_pronouns.empty() ? QString{} : QStringLiteral(" (%1)").arg(text(world.identity->founder_pronouns)), summary);
     }
+    if(!world.background.empty()) {
+        if(const auto* d=program_.collection.find(world.scenario_id)) if(const auto* s=std::get_if<content::ScenarioDefinition>(&d->data))
+            for(const auto& b:s->backgrounds) if(b.id==world.background) summary+=QStringLiteral(" · %1").arg(text(b.name));
+    }
+    if(const auto* charter=core::active_charter(world.simulation)) summary+=QStringLiteral(" · %1").arg(text(charter->name));
     return summary;
 }
 QVariantMap CampaignController::generateCampaignNames() const {
@@ -299,8 +338,9 @@ void CampaignController::newCampaignWithObjectives(QString hq,bool stories,QStri
     startCampaign(std::move(hq),stories,std::move(scenario),std::move(primary),std::move(secondary),{});
 }
 void CampaignController::newCampaignSetup(QString hq,bool stories,QString scenario,QString primary,QStringList secondary,
-    QString company,QString founder,QString pronouns,QString seed) {
+    QString company,QString founder,QString pronouns,QString seed,QString background,QString charter) {
     runtime::ScenarioOptions options;
+    options.background=background.toStdString();options.charter=charter.toStdString();
     try {
         options.identity = runtime::CampaignIdentity{company.trimmed().toStdString(),founder.trimmed().toStdString(),pronouns.trimmed().toStdString()};
         runtime::validate_campaign_identity(*options.identity);
