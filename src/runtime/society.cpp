@@ -1,4 +1,5 @@
 #include <pgp/runtime/society.hpp>
+#include <pgp/runtime/authority.hpp>
 
 #include <algorithm>
 #include <map>
@@ -110,6 +111,8 @@ std::array<RegionOutcomes,society_regions> observations(const WorldState& world,
             auto& row=result[index];row.delivered+=tasks;row.promised+=promised;row.missed+=missed;supplier[index]+=tasks;
             if(tasks && product->channel==society.catalog.forum.channel && forum_enforced(society,segment->region_id,day) &&
                 !qualified(society,*source,product->id,day)) invalid("A restricted product delivered without the required independent evidence.");
+            if(tasks && !institutional_delivery_allowed(world,*source,product->id,segment->id,day))
+                invalid("An actual delivery bypassed a binding regional procurement rule or sanction.");
             if(in(society.catalog.public_services,segment->id)) {row.public_work+=tasks;if(player) row.player_public+=tasks;}
             if(in(society.catalog.science,segment->id)) {row.science_work+=tasks;if(player) row.player_science+=tasks;}
             if(in(society.catalog.industry,segment->id)) row.industrial_work+=tasks;

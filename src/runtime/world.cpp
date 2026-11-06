@@ -1,5 +1,6 @@
 #include <pgp/runtime/runtime.hpp>
 #include <pgp/runtime/society.hpp>
+#include <pgp/runtime/authority.hpp>
 
 #include "duration.hpp"
 #include "committed.hpp"
@@ -230,6 +231,24 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
         return value;
     }
     if (metadata.id == "company.cash_cents") return world.simulation.cash.value();
+    if(metadata.provider=="authority") {
+        const auto& a=world.authority;const auto day=world.simulation.date;
+        if(metadata.id=="world.authority_population_coverage_bp" || metadata.id=="world.authority_output_coverage_bp") {
+            const auto value=authority_snapshot(world,day);
+            return static_cast<std::int64_t>(metadata.id=="world.authority_population_coverage_bp"?value.population_coverage:value.output_coverage);
+        }
+        if(metadata.id=="world.authority_month_today") return a && !a->months.empty() && a->months.back().month_end.value()+1==day.value();
+        if(metadata.id=="world.executive_disclosure_today") {
+            if(!a || !world.simulation.management || !world.simulation.management->governance) return false;
+            return std::any_of(world.simulation.management->governance->disputes.begin(),world.simulation.management->governance->disputes.end(),[&](const auto& c){return c.kind=="publication" && c.status==core::CorporateDisputeStatus::departed && c.resolved_on==day;});
+        }
+        if(metadata.id=="world.authority_notice_today") {
+            if(!a) return false;
+            for(const auto& m:a->mandates) if((!m.reviews.empty() && m.reviews.front().day==day) || m.revoked_on==day || m.withdrawn_on==day) return true;
+            for(const auto& c:a->cases) if(c.opened_on==day || core::advance_days(c.opened_on,a->catalog.concern_period)==day || c.resolved_on==day || c.disclosed_on==day) return true;
+            return false;
+        }
+    }
     if(metadata.provider=="society") {
         const auto& society=world.society;
         if(metadata.id=="world.society_month_today") return society && !society->months.empty() &&
@@ -346,7 +365,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                                           bool validate_core_simulation) {
     const auto& world = checkpoint.world;
     const auto& state = checkpoint.runtime;
-    if ((world.simulation.civic || world.society) && world.scenario_id.empty()) invalid("Institutions and regional society require an authored source scenario");
+    if ((world.simulation.civic || world.society || world.authority) && world.scenario_id.empty()) invalid("Institutions and regional society require an authored source scenario");
     if (!world.scenario_id.empty()) {
         const auto* definition=program.collection.find(world.scenario_id);
         const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
@@ -367,6 +386,10 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                 (validate_core_simulation && world.society->catalog!=*society))
                 invalid("Saved regional society differs from the authored scenario or prepared morning");
         } else if(world.society) invalid("This scenario did not authorize regional society");
+        if(const auto* authority=content::authority_catalog(program.collection,*scenario)) {
+            if(!world.authority || world.authority->prepared_on!=world.simulation.date ||
+                (validate_core_simulation && world.authority->catalog!=*authority)) invalid("Saved institutions differ from the authored scenario or prepared morning.");
+        } else if(world.authority) invalid("This scenario did not authorize institutional authority.");
         if (world.simulation.infrastructure) {
             const auto& base=world.simulation.infrastructure->executive_base;
             if ((base=="US-CA"?"state.us_ca":base=="US-TX"?"state.us_tx":base=="US-WA"?"state.us_wa":"")!=world.state_id ||
@@ -434,6 +457,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     }
     validate_competition(world,program,validate_core_simulation);
     validate_acquisitions(world,program,validate_core_simulation);
+    if(validate_core_simulation) validate_authority_world(world);
     if (validate_core_simulation) {
         if (world.competition) for (const auto& rival : world.competition->companies)
             if (rival.simulation.civic) invalid("US institutions belong to the shared world, not a rival checkpoint");
@@ -463,7 +487,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     for (const auto& [id, value] : world.facts) {
         const auto* metadata = program.registry.fact(id);
         if (!metadata || metadata->default_value || id == "company.cash_cents" || metadata->provider=="slice" ||
-            metadata->provider=="civic" || metadata->provider=="society" || business_member_scope(metadata->scope))
+            metadata->provider=="civic" || metadata->provider=="society" || metadata->provider=="authority" || business_member_scope(metadata->scope))
             invalid("Unknown or duplicated owning world fact");
         scalar_valid(value, *metadata);
     }

@@ -91,11 +91,11 @@ core::CapacityState parse_capacity(const Json& value) {
     fields(value,"capacity",{"owner","starts_on","closed_through","available_staff","sources","projects","days"},{"staff_additions","staff_departures"});
     core::CapacityState result;
     if (value.contains("staff_departures")) {
-        array(value.at("staff_departures"),"capacity/staff_departures",64);
+        array(value.at("staff_departures"),"capacity/staff_departures",core::capacity_staff_change_limit);
         for (const auto& row:value.at("staff_departures")) {fields(row,"capacity/staff_departure",{"id","day","people"});result.staff_departures.push_back({label(row.at("id")),day(row.at("day")),staff(row.at("people"))});}
     }
     if (value.contains("staff_additions")) {
-        array(value.at("staff_additions"),"capacity/staff_additions",64);
+        array(value.at("staff_additions"),"capacity/staff_additions",core::capacity_staff_change_limit);
         for (const auto& row:value.at("staff_additions")) {fields(row,"capacity/staff_addition",{"id","day","people"});result.staff_additions.push_back({label(row.at("id")),day(row.at("day")),staff(row.at("people"))});}
     }
     result.owner=label(value.at("owner"));

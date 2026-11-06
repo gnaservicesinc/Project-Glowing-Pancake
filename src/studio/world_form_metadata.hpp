@@ -86,11 +86,12 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
     if(key=="resilience") definition_kind="site_resilience";
     if(key=="civic") definition_kind="us_civic";
     if(key=="society") definition_kind="regional_society";
+    if(key=="authority") definition_kind="institutional_authority";
     if(array_key=="flows") definition_kind="flow";
     if(parent.find("/prerequisites/")!=std::string_view::npos) definition_kind="research";
     if(array_key=="headquarters_choices") {add("US-CA","California");add("US-TX","Texas");add("US-WA","Washington");}
     if(!definition_kind.empty()) {
-        if(key=="regional_markets" || key=="resilience" || key=="civic" || key=="society") add("","Disabled");
+        if(key=="regional_markets" || key=="resilience" || key=="civic" || key=="society" || key=="authority") add("","Disabled");
         for(const auto& [id,d]:draft.collection().definitions) if(content::definition_kind(d)==definition_kind) add(id);
     }
     const auto* def=draft.collection().find(scenario);

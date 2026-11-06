@@ -1,5 +1,6 @@
 #include "competition_internal.hpp"
 #include <pgp/runtime/society.hpp>
+#include <pgp/runtime/authority.hpp>
 #include <algorithm>
 #include <set>
 #include <stdexcept>
@@ -198,7 +199,7 @@ std::vector<WholesaleUse> settle_wholesale(WorldState& world,const CompiledProgr
         const auto assignment=allocations.find(contract.buyer_id);
         if (assignment==allocations.end()) invalid("An operating wholesale buyer needs a common work allocation");
         const auto preview=preview_market_work(*customer.market,*customer.capacity,day,assignment->second,installed,
-            society_market_conditions(world,customer,day));
+            regional_market_conditions(world,customer,day));
         const auto& imported=recorded_source(preview,imported_id(contract));
         const auto& plan=terms(plans,contract.plan_id);
         auto row=usage(seller,plan,contract.source_id,imported.effective,imported.used);

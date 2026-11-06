@@ -1,5 +1,6 @@
 #include "competition_internal.hpp"
 #include <pgp/runtime/society.hpp>
+#include <pgp/runtime/authority.hpp>
 #include <algorithm>
 #include <iterator>
 #include <set>
@@ -107,7 +108,7 @@ IndustryAllocations prepare_competition_day(WorldState& world,const CompiledProg
     std::map<std::string,MarketOpportunity,std::less<>> opportunities;
     for (const auto* seller:sellers(world)) if (operating(*seller) && seller->market)
         opportunities.emplace(seller->market->owner,market_opportunity(*seller->market,*seller->capacity,day,&installed,
-            society_market_conditions(world,*seller,day)));
+            regional_market_conditions(world,*seller,day)));
     std::vector<AllocationProduct> products;std::vector<AllocationSegment> segments;
     for (std::size_t index=0; index<world.simulation.market->segments.size(); ++index) {
         const auto& row = world.simulation.market->segments[index];

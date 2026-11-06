@@ -133,7 +133,7 @@ CapacityReport capacity_report(const CapacityState& state) {
 }
 void validate_capacity(const CapacityState& state) {
     text_valid(state.owner); (void)from_ordinal(state.starts_on);
-    if (state.staff_additions.size()>64 || state.staff_departures.size()>64) invalid("Staff change history exceeds its bound");
+    if (state.staff_additions.size()>capacity_staff_change_limit || state.staff_departures.size()>capacity_staff_change_limit) invalid("Staff change history exceeds its bound");
     std::uint64_t added=0;std::set<std::string> staff_ids;
     const auto staff_today=state.closed_through?advance_days(*state.closed_through,Days{1}):state.starts_on;
     for (const auto& row:state.staff_additions) {
@@ -344,7 +344,7 @@ std::uint32_t opening_staff_count(const CapacityState& state) {
     return static_cast<std::uint32_t>(result-added);
 }
 void remove_staff_capacity(CapacityState& state,OrdinalDay day,std::string id,std::uint32_t people) {
-    if (day!=(state.closed_through?advance_days(*state.closed_through,Days{1}):state.starts_on) || people==0 || people>state.available_staff || state.staff_departures.size()>=64 ||
+    if (day!=(state.closed_through?advance_days(*state.closed_through,Days{1}):state.starts_on) || people==0 || people>state.available_staff || state.staff_departures.size()>=capacity_staff_change_limit ||
         capacity_report(state).assigned_staff>state.available_staff-people ||
         std::any_of(state.staff_departures.begin(),state.staff_departures.end(),[&](const auto& row){return row.id==id;}) ||
         std::any_of(state.staff_additions.begin(),state.staff_additions.end(),[&](const auto& row){return row.id==id;}))
@@ -353,7 +353,7 @@ void remove_staff_capacity(CapacityState& state,OrdinalDay day,std::string id,st
 }
 void add_staff_capacity(CapacityState& state,OrdinalDay day,std::string id,std::uint32_t people) {
     if (day!=(state.closed_through?advance_days(*state.closed_through,Days{1}):state.starts_on) || people==0 || people>1'000'000 ||
-        state.available_staff>1'000'000-people || state.staff_additions.size()>=64 ||
+        state.available_staff>1'000'000-people || state.staff_additions.size()>=capacity_staff_change_limit ||
         std::any_of(state.staff_additions.begin(),state.staff_additions.end(),[&](const auto& row){return row.id==id;}) ||
         std::any_of(state.staff_departures.begin(),state.staff_departures.end(),[&](const auto& row){return row.id==id;}))
         invalid("Staff addition needs a unique current-day commitment within the team bound");

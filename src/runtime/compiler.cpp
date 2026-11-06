@@ -311,6 +311,7 @@ Json definition_json(const Definition& definition, const std::string& key) {
         if (!scenario->resilience.empty()) result["resilience"]=scenario->resilience;
         if (!scenario->civic.empty()) result["civic"] = scenario->civic;
         if (!scenario->society.empty()) result["society"] = scenario->society;
+        if (!scenario->authority.empty()) result["authority"] = scenario->authority;
         if (scenario->service_catalog) result["service_catalog"]=Json::parse(canonical_market_setup_bytes(*scenario->service_catalog,scenario->starts_on));
         if (scenario->market)
             result["market"] = Json::parse(canonical_market_setup_bytes(*scenario->market,scenario->starts_on));
@@ -328,6 +329,8 @@ Json definition_json(const Definition& definition, const std::string& key) {
         result["kind"] = "us_civic"; result["catalog"] = Json::parse(canonical_civic_catalog(*civic));
     } else if (const auto* society = std::get_if<core::SocietyCatalog>(&definition.data)) {
         result["kind"] = "regional_society"; result["catalog"] = Json::parse(canonical_society_catalog(*society));
+    } else if (const auto* authority=std::get_if<core::AuthorityCatalog>(&definition.data)) {
+        result["kind"]="institutional_authority";result["catalog"]=Json::parse(canonical_authority_catalog(*authority));
     } else fail("unsupported_kind", path, "Unknown typed definition variant");
     if (definition.deprecated) result["deprecated"] = true;
     return result;

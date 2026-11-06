@@ -1,5 +1,6 @@
 #include <pgp/runtime/runtime.hpp>
 #include <pgp/runtime/society.hpp>
+#include <pgp/runtime/authority.hpp>
 
 #include "duration.hpp"
 #include "committed.hpp"
@@ -692,6 +693,9 @@ RuntimeResult Runtime::submit(const core::Command& command) {
         if (!pause_only && !core_choice &&
             (has_choice(next.runtime) || next.runtime.prepared_day != next.world.simulation.date))
             fail(RuntimeReason::morning_not_ready, "Resolve required content choices and prepare the morning before work.");
+        if(std::holds_alternative<core::AdvanceDay>(command.action) && required_public_case(next.world))
+            fail(RuntimeReason::morning_not_ready,"Review and acknowledge the public dispute notice before advancing.");
+        if(submit_authority_action(next.world,command.action)) return;
         if(const auto* media=std::get_if<core::BuyMediaCampaign>(&command.action)) {
             buy_media_campaign(next.world,*media);return;
         }
@@ -708,11 +712,20 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             competition_detail::refresh_wholesale(next.world,program_,true);
             assignments=prepare_competition_day(next.world,program_);
             day->wholesale_work=competition_detail::settle_wholesale(next.world,program_,assignments);
-            day->market_influences=society_market_conditions(next.world,next.world.simulation,prior_day);
+            day->market_influences=regional_market_conditions(next.world,next.world.simulation,prior_day);
             if (const auto it=assignments.find(next.world.company_id);it!=assignments.end()) {
                 day->market_allocation=it->second;day->industry_adoptions=industry_adoption_snapshot(next.world);
             }
         }
+        if(const auto* cancel=std::get_if<core::CancelProject>(&actual.action);cancel && next.world.authority) {
+            for(const auto& m:next.world.authority->mandates) if(m.project==cancel->id && !m.staff_released_on)
+                fail(RuntimeReason::effect_rejected,"Relinquish the institutional agreement to release its paid operating team.");
+            for(const auto& c:next.world.authority->cases) if(c.remedy_project==cancel->id && !c.resolved_on && !c.disclosed_on)
+                fail(RuntimeReason::effect_rejected,"The negotiated response keeps its review team until resolution or the response deadline.");
+        }
+        if(std::holds_alternative<core::WithdrawOperations>(actual.action) && next.world.authority &&
+            std::any_of(next.world.authority->mandates.begin(),next.world.authority->mandates.end(),[](const auto& m){return !m.staff_released_on;}))
+            fail(RuntimeReason::effect_rejected,"Relinquish institutional teams before withdrawing ordinary operations.");
         if(const auto* launch=std::get_if<core::DeployModel>(&actual.action))
             if(const auto blocked=society_launch_block(next.world.society?&*next.world.society:nullptr,next.world.simulation,*launch,prior_day); !blocked.empty())
                 fail(RuntimeReason::effect_rejected,blocked);
@@ -733,6 +746,7 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             advance_society(next.world,prior_day);
         }
         else competition_detail::refresh_wholesale(next.world,program_);
+        const bool institutional_resources_changed=prepare_authority(next.world,next.world.simulation.date!=prior_day?std::optional{prior_day}:std::nullopt);
         update_competitive_offers(next.world,program_);
         update_heavyweight_responses(next.world,program_);
         const auto cash_after_submit = next.world.simulation.cash;
@@ -746,7 +760,7 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             core::Cents protected_cash{0};for (const auto& reservation:next.world.simulation.reservations) protected_cash=core::checked_unit_add(protected_cash,reservation.reserved);
             core::review_delegation(next.world.simulation,protected_cash);
         }
-        core_already_validated = (next.world.simulation.cash == cash_after_submit &&
+        core_already_validated = (!institutional_resources_changed && next.world.simulation.cash == cash_after_submit &&
                                   next.world.simulation.phase == phase_after_submit &&
                                   next.world.simulation.phase != core::DayPhase::opening &&
                                   !std::holds_alternative<core::VoteBoardMotion>(command.action));

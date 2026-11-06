@@ -70,6 +70,10 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         world.society = core::opening_society(*catalog, scenario->starts_on);
         core::prepare_society(*world.society, scenario->starts_on);
     }
+    if(const auto* catalog=content::authority_catalog(program.collection,*scenario)) {
+        core::AuthorityState institutions;institutions.catalog=*catalog;institutions.starts_on=scenario->starts_on;
+        institutions.prepared_on=scenario->starts_on;world.authority=std::move(institutions);
+    }
     if (scenario->management && scenario->management->governance) {
         core::GovernanceState corporate;corporate.opening_holdings=world.simulation.accounts->holdings;
         world.simulation.management->governance=std::move(corporate);

@@ -20,8 +20,12 @@ Json governance_json(const core::GovernanceState& g) {
             {"opened_on",m.opened_on.value()},{"deadline",m.deadline.value()},{"resolved_on",optional_day(m.resolved_on)},{"cash",m.cash.value()},{"asset_value",m.asset_value.value()},
             {"reviewed_cash",m.reviewed_cash.value()},{"shares",m.shares.value()},{"posting_cursor",m.posting_cursor},{"player_vote",m.player_vote?Json(*m.player_vote):Json(nullptr)},{"ballots",std::move(ballots)},{"executed",m.executed}});
     }
-    for (const auto& d:g.disputes) disputes.push_back({{"id",d.id},{"subject",d.subject},{"kind",d.kind},{"opened_on",d.opened_on.value()},{"deadline",d.deadline.value()},
-        {"status",static_cast<unsigned>(d.status)},{"resolved_on",optional_day(d.resolved_on)},{"acknowledged",d.acknowledged},{"opening_cash",d.opening_cash.value()},{"posting_cursor",d.posting_cursor},{"publication_cursor",d.publication_cursor}});
+    for (const auto& d:g.disputes) {
+        Json row{{"id",d.id},{"subject",d.subject},{"kind",d.kind},{"opened_on",d.opened_on.value()},{"deadline",d.deadline.value()},
+            {"status",static_cast<unsigned>(d.status)},{"resolved_on",optional_day(d.resolved_on)},{"acknowledged",d.acknowledged},{"opening_cash",d.opening_cash.value()},{"posting_cursor",d.posting_cursor},{"publication_cursor",d.publication_cursor}};
+        if(d.negotiated_on) {row["negotiated_on"]=d.negotiated_on->value();row["review_project"]=d.review_project;}
+        disputes.push_back(std::move(row));
+    }
     return {{"opening_holdings",std::move(opening)},{"appointments",std::move(appointments)},{"grants",std::move(grants)},{"capital",std::move(capital)},{"motions",std::move(motions)},{"disputes",std::move(disputes)}};
 }
 core::GovernanceState parse_governance(const Json& j) {
@@ -41,7 +45,13 @@ core::GovernanceState parse_governance(const Json& j) {
         array(m.at("ballots"),"governance/ballots",16);for (const auto& b:m.at("ballots")) {fields(b,"governance/ballot",{"member","seats","support"});r.ballots.push_back({label(b.at("member")),static_cast<std::uint32_t>(u64(b.at("seats"),"governance/seats",3)),boolean(b.at("support"),"governance/support")});}
         r.executed=boolean(m.at("executed"),"governance/executed");g.motions.push_back(std::move(r));
     }
-    for (const auto& d:j.at("disputes")) {fields(d,"governance/dispute",{"id","subject","kind","opened_on","deadline","status","resolved_on","acknowledged","opening_cash","posting_cursor","publication_cursor"});g.disputes.push_back({label(d.at("id")),label(d.at("subject")),label(d.at("kind")),day(d.at("opened_on")),day(d.at("deadline")),static_cast<core::CorporateDisputeStatus>(u64(d.at("status"),"governance/dispute-status",5)),optional_day(d.at("resolved_on")),boolean(d.at("acknowledged"),"governance/acknowledged"),cents(d.at("opening_cash")),u64(d.at("posting_cursor"),"governance/posting-cursor",core::accounts_posting_limit),u64(d.at("publication_cursor"),"governance/publication-cursor",32)});}
+    for (const auto& d:j.at("disputes")) {
+        fields(d,"governance/dispute",{"id","subject","kind","opened_on","deadline","status","resolved_on","acknowledged","opening_cash","posting_cursor","publication_cursor"},{"negotiated_on","review_project"});
+        core::CorporateDispute row{label(d.at("id")),label(d.at("subject")),label(d.at("kind")),day(d.at("opened_on")),day(d.at("deadline")),static_cast<core::CorporateDisputeStatus>(u64(d.at("status"),"governance/dispute-status",5)),optional_day(d.at("resolved_on")),boolean(d.at("acknowledged"),"governance/acknowledged"),cents(d.at("opening_cash")),u64(d.at("posting_cursor"),"governance/posting-cursor",core::accounts_posting_limit),u64(d.at("publication_cursor"),"governance/publication-cursor",32),{}, {}};
+        if(d.contains("negotiated_on")!=d.contains("review_project")) invalid("governance/negotiation","Negotiated dates and review work must be present together.");
+        if(d.contains("negotiated_on")) {row.negotiated_on=day(d.at("negotiated_on"));row.review_project=label(d.at("review_project"));}
+        g.disputes.push_back(std::move(row));
+    }
     return g;
 }
 }

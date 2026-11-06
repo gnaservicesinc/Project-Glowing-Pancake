@@ -1,6 +1,7 @@
 #include <pgp/content/registry.hpp>
 #include <pgp/core/market.hpp>
 #include <pgp/core/society.hpp>
+#include <pgp/core/authority.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -197,6 +198,7 @@ Registry foundation_registry() {
     result.register_system("resilience",{"slice"});
     result.register_system("civic", {"slice"});
     result.register_system("society", {"slice"});
+    result.register_system("authority", {"society","civic"});
     const auto maximum = std::numeric_limits<std::int64_t>::max();
     const auto minimum = std::numeric_limits<std::int64_t>::min();
     auto number = [&](std::string id, Scope scope, Unit unit, std::int64_t low, std::int64_t high, std::string help,std::string provider="foundation") {
@@ -222,6 +224,11 @@ Registry foundation_registry() {
     boolean("world.civic_rule_effective_today", "An implemented US or state rule took effect on this prepared morning.", Scope::world, "civic");
     boolean("world.society_month_today", "Actual regional work closed a monthly observation on the previous day.", Scope::world, "society");
     boolean("world.forum_changed_today", "A standards agenda, ballot, local implementation or expiration occurs today.", Scope::world, "society");
+    boolean("world.authority_notice_today","A documented institutional decision or public response milestone occurs today.",Scope::world,"authority");
+    boolean("world.authority_month_today","Actual institutional work closed a monthly authority check yesterday.",Scope::world,"authority");
+    boolean("world.executive_disclosure_today","An executive departed after a concrete unfulfilled publication promise and response window.",Scope::world,"authority");
+    number("world.authority_population_coverage_bp",Scope::world,Unit::basis_points,0,10000,"Population covered by at least 60/100 actual governing authority.","authority");
+    number("world.authority_output_coverage_bp",Scope::world,Unit::basis_points,0,10000,"Output covered by at least 60/100 actual governing authority.","authority");
     for(std::size_t i=0;i<5;++i) {
         const auto key=std::string(core::welfare_index_key(i));
         number("world.welfare_"+key+"_bp",Scope::world,Unit::basis_points,0,10000,"Population-weighted regional welfare, 100 bp = 1 point.","society");

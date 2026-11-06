@@ -159,13 +159,26 @@ void validate_governance(const SimulationState& s,bool deep) {
         if (!open && !d.resolved_on) invalid("A resolved dispute lacks its actual date");
         const auto episode=++episodes[{d.kind,d.subject}];
         if (d.id!=d.kind+"/"+d.subject+"/"+std::to_string(episode) || !disputes.insert(d.id).second || d.opened_on<s.accounts->starts_on || d.opened_on>s.date ||
-            d.deadline!=advance_days(d.opened_on,c.response_window) || (d.resolved_on && (*d.resolved_on<d.opened_on || *d.resolved_on>s.date))) invalid("Dispute has invalid cause, response window or result");
+            d.deadline!=advance_days(d.opened_on,Days{c.response_window.value()*(d.negotiated_on?2:1)}) ||
+            (d.resolved_on && (*d.resolved_on<d.opened_on || *d.resolved_on>s.date))) invalid("Dispute has invalid cause, response window or result");
+        if(d.negotiated_on) {
+            const auto& review=find(s.capacity->projects,d.review_project);
+            if(d.kind!="publication" || *d.negotiated_on<advance_days(d.opened_on,c.concern_period) ||
+                *d.negotiated_on>=advance_days(d.opened_on,c.response_window) || *d.negotiated_on>s.date ||
+                review.kind!=ProjectKind::research || review.starts_on!=*d.negotiated_on || review.staff==0 ||
+                review.total_work!=integrate(review.requested,Days{d.deadline.value()-d.negotiated_on->value()}) ||
+                (review.status==ProjectStatus::cancelled && (!d.resolved_on || !review.stopped_on || *review.stopped_on<*d.resolved_on)))
+                invalid("Executive negotiation lost its formal window or actual review work.");
+        } else if(!d.review_project.empty()) invalid("An executive review project has no negotiated agreement.");
         if (d.opening_cash!=cash_at(*s.accounts,d.posting_cursor,d.opened_on) || d.publication_cursor>s.lab->publications.size()) invalid("Dispute evidence differs from the actual opening boundary");
         if (d.kind=="publication") {
             const auto& e=find(c.executives,d.subject);const auto& a=find(g.appointments,d.subject);
             if (e.publication_research.empty() || d.opened_on!=advance_days(a.hired_on,e.promise_term) || d.status==CorporateDisputeStatus::waived || d.status==CorporateDisputeStatus::accelerated) invalid("Publication dispute lacks an actual missed commitment");
             for (std::size_t i=0;i<d.publication_cursor;++i) if (s.lab->publications[i].research_id==e.publication_research) invalid("Dispute invents an unmet publication promise");
             if (d.status==CorporateDisputeStatus::resolved && std::none_of(s.lab->publications.begin(),s.lab->publications.end(),[&](const auto& p){return p.research_id==e.publication_research && p.day<=*d.resolved_on;})) invalid("Promise resolution lacks the actual publication");
+            if((d.status==CorporateDisputeStatus::departed || open) && std::any_of(s.lab->publications.begin(),s.lab->publications.end(),[&](const auto& p){
+                return p.research_id==e.publication_research && (open?p.day<=s.date:p.day<*d.resolved_on);
+            })) invalid("The executive dispute invents a breach after the actual publication was already delivered.");
         } else if (d.kind=="covenant") {
             const auto& terms=find(c.financing,d.subject);
             const auto& debt=find(s.accounts->debts,"corporate/"+d.subject);

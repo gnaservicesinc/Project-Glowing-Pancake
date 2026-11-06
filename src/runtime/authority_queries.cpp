@@ -1,0 +1,238 @@
+#include "authority_internal.hpp"
+#include <map>
+#include <set>
+#include <tuple>
+
+namespace pgp::runtime::authority_detail {
+const SocietyMonth* known_month(const WorldState& w,OrdinalDay day) {
+    if(!w.society) return nullptr;
+    const auto it=std::lower_bound(w.society->months.begin(),w.society->months.end(),day,[](const auto& row,OrdinalDay date){return row.month_end<date;});
+    return it==w.society->months.begin()?nullptr:&*std::prev(it);
+}
+const DeploymentRecord* deployed(const SimulationState& s,std::string_view service,OrdinalDay day) {
+    if(s.deployments) for(auto it=s.deployments->records.rbegin();it!=s.deployments->records.rend();++it)
+        if(it->service_id==service && it->deployed_on<=day) return &*it;
+    return nullptr;
+}
+std::uint64_t public_work(const WorldState& w,std::string_view region,std::string_view service,OrdinalDay first,OrdinalDay ends) {
+    if(!w.society || !w.simulation.market) return 0;
+    const auto& market=*w.simulation.market;std::set<std::string_view> groups;
+    for(const auto& segment:market.segments) if(segment.region_id==region &&
+        std::find(w.society->catalog.public_services.begin(),w.society->catalog.public_services.end(),segment.id)!=w.society->catalog.public_services.end()) groups.insert(segment.id);
+    std::uint64_t total=0;
+    auto it=std::lower_bound(market.days.begin(),market.days.end(),first,[](const auto& row,OrdinalDay day){return row.day<day;});
+    for(;it!=market.days.end() && it->day<ends;++it) {
+        for(const auto& row:it->discretionary) if(row.product_id==service && groups.contains(row.segment_id)) total+=row.tasks;
+        for(const auto& row:it->contracts) {
+            const auto* contract=named(market.contracts,row.contract_id);
+            if(contract && contract->product_id==service && groups.contains(contract->segment_id)) total+=row.delivered_tasks;
+        }
+    }
+    return total;
+}
+std::uint64_t admin_work(const WorldState& w,std::string_view project,OrdinalDay first,OrdinalDay ends) {
+    if(!w.simulation.capacity) return 0;
+    const auto& days=w.simulation.capacity->days;std::uint64_t total=0;
+    auto it=std::lower_bound(days.begin(),days.end(),first,[](const auto& row,OrdinalDay day){return row.day<day;});
+    for(;it!=days.end() && it->day<ends;++it) for(const auto& row:it->projects)
+        if(row.project_id==project) total+=static_cast<std::uint64_t>(row.work.value());
+    return total;
+}
+std::optional<OrdinalDay> closing_day(const WorldState& w,const AuthorityMandate& m) {
+    std::optional<OrdinalDay> result=m.ends_before;
+    const auto consider=[&](std::optional<OrdinalDay> day){if(day && (!result || *day<*result)) result=day;};
+    consider(m.withdrawn_on);
+    if(!m.reviews.empty() && !m.reviews.front().approved) consider(m.decision_on);
+    consider(m.revoked_on);
+    if(w.simulation.capacity) if(const auto* project=named(w.simulation.capacity->projects,m.project))
+        if(project->status==ProjectStatus::cancelled) consider(project->stopped_on);
+    return result;
+}
+bool operative(const WorldState& w,const AuthorityMandate& m,OrdinalDay day) {
+    return !m.reviews.empty() && m.reviews.front().approved && m.decision_on<=day &&
+        (!closing_day(w,m) || day<*closing_day(w,m));
+}
+std::uint32_t resistance(const WorldState& w,std::size_t region,OrdinalDay day) {
+    const auto& a=*w.authority;std::uint32_t result=0;OrdinalDay since{w.campaign_start.value()-1};
+    const auto it=std::lower_bound(a.months.begin(),a.months.end(),day,[](const auto& row,OrdinalDay date){return row.month_end<date;});
+    if(it!=a.months.begin()) {const auto& last=*std::prev(it);result=last.resistance[region];since=last.month_end;}
+    for(const auto& m:a.mandates) if(m.applied_on>since && m.applied_on<=day && m.region==a.catalog.regions[region].id &&
+        authority_offer(a.catalog,m.offer).kind==AuthorityKind::coercive)
+        result=std::min<std::uint32_t>(10000,result+static_cast<std::uint32_t>(a.catalog.initial_resistance.value()));
+    return result;
+}
+InstitutionalReview review(const WorldState& w,const AuthorityMandate& m,OrdinalDay day) {
+    const auto& a=*w.authority;const auto& offer=authority_offer(a.catalog,m.offer);
+    OrdinalDay from=m.applied_on;
+    for(const auto& previous:m.reviews) if(previous.day<day) from=previous.day;
+    if(day<=from) invalid("Institutional reviews need a positive observed interval.");
+    InstitutionalReview r;r.day=day;
+    r.work=admin_work(w,m.project,from,day);
+    r.required_work=static_cast<std::uint64_t>(integrate(offer.compute,Days{day.value()-from.value()}).value());
+    r.public_work=public_work(w,m.region,m.service,from,day);
+    r.required_public=mul_div_round_half_up(offer.public_work,static_cast<std::uint64_t>(day.value()-from.value()),30);
+    r.operation=BasisPoints{std::min(ratio(r.work,r.required_work),ratio(r.public_work,r.required_public))};
+    const auto* current=deployed(w.simulation,m.service,OrdinalDay{day.value()-1});
+    const auto* current_report=current?society_evidence(w.simulation,current->evidence_id,0,OrdinalDay{day.value()-1}):nullptr;
+    if(current_report) r.evidence=current_report->lower[0];
+    if(r.evidence<offer.evidence_floor) r.operation=BasisPoints{0};
+    const auto region=society_region_index(w.society->catalog,m.region);
+    const auto& testimony=numbered(a.testimonies,m.testimony);
+    const auto* report=society_evidence(w.simulation,testimony.report,0,m.applied_on);
+    if(!report) invalid("An institutional application lost its disclosed independent report.");
+    const auto reputation=public_identity(w,OrdinalDay{day.value()-1})[4];
+    const auto consent=a.catalog.regions[region].consent.value()+(report->lower[0].value()-6000)/2+
+        (static_cast<std::int64_t>(reputation)-5000)/4;
+    r.consent=BasisPoints{std::clamp<std::int64_t>(consent,0,10000)};
+    const bool initial=m.reviews.empty() || m.reviews.front().day>=day;
+    r.approved=initial?(r.operation>=a.catalog.minimum_operation &&
+        (offer.kind==AuthorityKind::coercive || r.consent>=offer.consent_floor)):m.reviews.front().approved;
+    r.score=r.approved?BasisPoints{mul_div_floor(static_cast<std::uint64_t>(offer.points.value()),static_cast<std::uint64_t>(r.operation.value()),10000).quotient}:BasisPoints{0};
+    return r;
+}
+std::optional<OrdinalDay> publication_day(const WorldState& w,std::string_view id,OrdinalDay day) {
+    if(w.simulation.lab) for(const auto& p:w.simulation.lab->publications) if(p.research_id==id && p.day<=day) return p.day;
+    return {};
+}
+std::optional<OrdinalDay> promise_met(const WorldState& w,const PublicPromise& p,OrdinalDay through) {
+    if(p.kind==PublicPromiseKind::publication) return publication_day(w,p.subject,through);
+    if(!w.simulation.market) return {};
+    std::uint64_t total=0;
+    const auto& days=w.simulation.market->days;
+    auto it=std::lower_bound(days.begin(),days.end(),p.made_on,[](const auto& row,OrdinalDay day){return row.day<day;});
+    for(;it!=days.end() && it->day<through;++it) {
+        total+=public_work(w,p.region,p.subject,it->day,advance_days(it->day,Days{1}));
+        if(total>=p.target) return advance_days(it->day,Days{1});
+    }
+    return {};
+}
+OrdinalDay case_due(const PublicCase& c,const AuthorityCatalog& catalog) {
+    return advance_days(c.deadline,c.negotiated_on?catalog.extension:Days{0});
+}
+std::array<std::uint32_t,society_regions> next_resistance(const WorldState& w,OrdinalDay month_end) {
+    const auto& a=*w.authority;std::array<std::uint32_t,society_regions> result{};
+    const auto civil=from_ordinal(month_end);const auto first=std::max(w.campaign_start,to_ordinal({civil.year,civil.month,1}));
+    for(std::size_t i=0;i<result.size();++i) {
+        auto value=static_cast<std::int64_t>(resistance(w,i,month_end));bool coercive=false,remedied=false;
+        for(const auto& m:a.mandates) if(m.region==a.catalog.regions[i].id && authority_offer(a.catalog,m.offer).kind==AuthorityKind::coercive && operative(w,m,month_end)) coercive=true;
+        for(const auto& p:a.promises) if(p.region==a.catalog.regions[i].id && p.met_on && *p.met_on>=first && *p.met_on<=advance_days(month_end,Days{1})) remedied=true;
+        if(coercive) value+=a.catalog.resistance_growth.value();else value-=a.catalog.resistance_decay.value();
+        if(remedied) value-=a.catalog.remedy_relief.value();
+        result[i]=static_cast<std::uint32_t>(std::clamp<std::int64_t>(value,coercive?1000:0,10000));
+    }
+    return result;
+}
+std::string operation_id(std::uint64_t id) {return "authority.operation/"+std::to_string(id);}
+std::string hire_id(std::uint64_t id) {return "authority.hire/"+std::to_string(id);}
+std::string departure_id(std::uint64_t id) {return "authority.departure/"+std::to_string(id);}
+}
+
+namespace pgp::runtime {
+using namespace authority_detail;
+std::string_view mandate_status(const WorldState& w,const AuthorityMandate& m,OrdinalDay day) {
+    if(m.withdrawn_on && *m.withdrawn_on<=day) return "withdrawn";
+    if(day>=m.ends_before) return "expired";
+    for(const auto& c:w.authority->cases) if(c.kind!=PublicCaseKind::promise && c.subject==m.id && c.disclosed_on && *c.disclosed_on<=day) return "revoked";
+    if(m.reviews.empty() || m.decision_on>day) return "commissioning";
+    if(!m.reviews.front().approved) return "declined";
+    if(!operative(w,m,day)) return "interrupted";
+    return "operating";
+}
+AuthorityMonth authority_snapshot(const WorldState& w,OrdinalDay day) {
+    AuthorityMonth result;result.month_end=day;if(!w.authority) return result;
+    const auto& a=*w.authority;
+    for(std::size_t i=0;i<society_regions;++i) result.resistance[i]=resistance(w,i,day);
+    for(const auto& m:a.mandates) if(operative(w,m,day)) {
+        const auto i=society_region_index(w.society->catalog,m.region);const auto& offer=authority_offer(a.catalog,m.offer);
+        const InstitutionalReview* latest=nullptr;
+        for(const auto& r:m.reviews) if(r.day<=advance_days(day,Days{1})) latest=&r;
+        if(!latest) continue;
+        const auto score=static_cast<std::uint32_t>(latest->score.value());
+        if(offer.kind==AuthorityKind::coercive) result.hard[i]=std::max(result.hard[i],static_cast<std::uint32_t>(std::max<std::int64_t>(0,static_cast<std::int64_t>(score)-result.resistance[i]/2)));
+        else result.soft[i]=std::min<std::uint32_t>(10000,result.soft[i]+score);
+    }
+    std::uint64_t population=0,output=0,p=0,o=0;
+    for(std::size_t i=0;i<society_regions;++i) {
+        const auto& region=w.society->catalog.regions[i];population+=region.population_weight;output+=region.output_weight;
+        if(std::max(result.soft[i],result.hard[i])>=6000) {p+=region.population_weight;o+=region.output_weight;}
+    }
+    result.population_coverage=ratio(p,population);result.output_coverage=ratio(o,output);return result;
+}
+std::vector<PublicIdentityEvent> public_identity_events(const WorldState& w,OrdinalDay day) {
+    std::vector<PublicIdentityEvent> result;if(!w.authority) return result;const auto& a=*w.authority;
+    const auto add=[&](std::size_t effect,OrdinalDay on,std::string subject,std::string cause){if(on<=day) result.push_back({effect,on,std::move(subject),std::move(cause)});};
+    for(const auto& t:a.testimonies) add(0,t.day,t.report,"Disclosed a completed independent evaluation");
+    for(const auto& p:a.promises) if(p.met_on) add(1,*p.met_on,std::to_string(p.id),"Fulfilled a documented public commitment");
+    for(const auto& c:a.cases) if(c.disclosed_on) add(c.kind==PublicCaseKind::promise?2:c.kind==PublicCaseKind::resistance?5:6,*c.disclosed_on,std::to_string(c.id),"A documented issue passed its response deadline without an effective remedy");
+    if(w.simulation.management && w.simulation.management->governance) for(const auto& c:w.simulation.management->governance->disputes)
+        if(c.kind=="publication" && c.status==CorporateDisputeStatus::departed && c.resolved_on) add(3,*c.resolved_on,c.subject,"An executive departed after an unfulfilled publication commitment and failed response path");
+    for(const auto& m:a.mandates) if(authority_offer(a.catalog,m.offer).kind==AuthorityKind::coercive) add(4,m.applied_on,m.region,"Funded an abstract coercive institution");
+    std::sort(result.begin(),result.end(),[](const auto& x,const auto& y){return std::tie(x.day,x.effect,x.subject)<std::tie(y.day,y.effect,y.subject);});return result;
+}
+AudienceScores public_identity(const WorldState& w,OrdinalDay day) {
+    const auto* known=known_month(w,day);AudienceScores result=known?known->audiences:AudienceScores{5000,5000,5000,5000,5000,5000};
+    if(!w.authority) return result;
+    std::array<std::int64_t,society_audiences> delta{};const auto memory=w.authority->catalog.identity_memory.value();
+    for(const auto& e:public_identity_events(w,day)) {
+        const auto age=day.value()-e.day.value();if(age>=memory) continue;
+        for(std::size_t i=0;i<delta.size();++i) delta[i]+=static_cast<std::int64_t>(w.authority->catalog.identity_effects[e.effect][i])*(memory-age)/memory;
+    }
+    for(std::size_t i=0;i<result.size();++i) result[i]=static_cast<std::uint32_t>(std::clamp<std::int64_t>(result[i]+delta[i],0,10000));return result;
+}
+bool institutional_delivery_allowed(const WorldState& w,const SimulationState& seller,std::string_view product,std::string_view group,OrdinalDay day) {
+    if(!w.authority || !seller.market || (w.authority->mandates.empty() && w.authority->cases.empty())) return true;
+    const auto* segment=named(seller.market->segments,group);if(!segment) invalid("Institutional delivery lost its customer group.");
+    const auto& a=*w.authority;
+    if(seller.market->owner==w.company_id) for(const auto& c:a.cases) if(c.kind==PublicCaseKind::resistance && c.region==segment->region_id &&
+        c.disclosed_on && *c.disclosed_on<=day && day<advance_days(*c.disclosed_on,a.catalog.sanctions)) return false;
+    if(std::find(w.society->catalog.public_services.begin(),w.society->catalog.public_services.end(),segment->id)==w.society->catalog.public_services.end()) return true;
+    for(const auto& m:a.mandates) if(m.region==segment->region_id && operative(w,m,day)) {
+        bool enabled=false;for(const auto& directive:m.directives) if(directive.day<=day) enabled=directive.enabled;
+        if(!enabled) continue;
+        const auto* deployment=deployed(seller,product,day);
+        const auto* report=deployment?society_evidence(seller,deployment->evidence_id,0,day):nullptr;
+        if(!report || report->lower[0]<a.catalog.procurement_floor) return false;
+    }
+    return true;
+}
+MarketInfluences regional_market_conditions(const WorldState& w,const SimulationState& seller,OrdinalDay day) {
+    auto result=society_market_conditions(w,seller,day);if(!w.authority || !seller.market) return result;
+    std::map<std::pair<std::string,std::string>,std::size_t> slots;
+    for(std::size_t i=0;i<result.size();++i) slots[{result[i].product_id,result[i].segment_id}]=i;
+    const auto restrict=[&](const std::string& product,const std::string& segment) {
+        const auto it=slots.find({product,segment});if(it!=slots.end()) result[it->second].eligible=false;
+        else {slots[{product,segment}]=result.size();result.push_back({product,segment,BasisPoints{0},false});}
+    };
+    const auto& a=*w.authority;
+    for(const auto& segment:seller.market->segments) {
+        bool procurement=false,sanction=false;
+        for(const auto& m:a.mandates) if(m.region==segment.region_id && operative(w,m,day)) {
+            bool enabled=false;for(const auto& d:m.directives) if(d.day<=day) enabled=d.enabled;
+            procurement=procurement || enabled;
+        }
+        if(seller.market->owner==w.company_id) for(const auto& c:a.cases)
+            if(c.kind==PublicCaseKind::resistance && c.region==segment.region_id && c.disclosed_on &&
+                *c.disclosed_on<=day && day<advance_days(*c.disclosed_on,a.catalog.sanctions)) sanction=true;
+        procurement=procurement && std::find(w.society->catalog.public_services.begin(),w.society->catalog.public_services.end(),segment.id)!=w.society->catalog.public_services.end();
+        if(!procurement && !sanction) continue;
+        for(const auto& preference:segment.preferences) {
+            const auto* deployment=deployed(seller,preference.product_id,day);
+            const auto* report=deployment?society_evidence(seller,deployment->evidence_id,0,day):nullptr;
+            if(sanction || !report || report->lower[0]<a.catalog.procurement_floor) restrict(preference.product_id,segment.id);
+        }
+    }
+    return result;
+}
+bool required_public_case(const WorldState& w) {
+    return w.authority && std::any_of(w.authority->cases.begin(),w.authority->cases.end(),[](const auto& c){return !c.acknowledged;});
+}
+std::optional<OrdinalDay> next_authority_boundary(const WorldState& w) {
+    if(!w.authority) return {};const auto day=w.simulation.date;std::optional<OrdinalDay> result;
+    const auto consider=[&](OrdinalDay date){if(date>day && date<w.simulation.end_date && (!result || date<*result)) result=date;};
+    const auto civil=from_ordinal(day);consider(to_ordinal({civil.month==12?civil.year+1:civil.year,civil.month==12?1U:civil.month+1,1}));
+    for(const auto& p:w.authority->promises) if(!p.met_on) consider(p.due_on);
+    for(const auto& m:w.authority->mandates) {consider(m.decision_on);consider(m.ends_before);}
+    for(const auto& c:w.authority->cases) if(!c.resolved_on && !c.disclosed_on) {consider(advance_days(c.opened_on,w.authority->catalog.concern_period));consider(case_due(c,w.authority->catalog));}
+    return result;
+}
+}
