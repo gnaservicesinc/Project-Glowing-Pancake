@@ -575,9 +575,18 @@ offscreen QML checks at 100%/200% text verify the real selected terms, forecast
 precision, settings-refresh selection preservation, exact saves and invalid
 choice recovery.
 
-Next, continue comparing ordinary product, model, staff and delegation controls
-against the initial design, and implement the next missing component. M8-02
-stays deferred. Human work waits until the user is ready, and E2-04 editor
+The Lab now also supports pause/resume and immutable checkpoints while source
+training continues. Paused finite work releases compute/staff; resume requests
+the original allocation and refuses safely if resources are busy. Existing
+obligations keep accruing. A snapshot pins actual settled work and can be
+evaluated or continued independently of its running source. Pause history and
+snapshot provenance reload exactly. The optimized build and three focused
+capacity/Lab checks pass in 2.28s; short offscreen controls pass at 100%/200%
+text. Content remains 0.16.0-dev.1; these are additive engine/save controls.
+
+Next is bounded price delegation, a confirmed gap beyond the current evaluation
+and lease-renewal policies. Then continue the initial component coverage pass.
+M8-02 stays deferred. Human work waits until the user is ready, and E2-04 editor
 downloads stay with deferred release preparation.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions

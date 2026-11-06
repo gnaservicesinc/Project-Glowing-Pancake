@@ -150,6 +150,8 @@ struct RepayDebt { std::string id; Cents amount; std::string key; };
 struct InvestEquity { std::string investor; Cents proceeds; BasisPoints acquired; std::string key; };
 struct ReserveProject { CapacityProject project; };
 struct CancelProject { std::string id; };
+struct PauseProject { std::string id; };
+struct ResumeProject { std::string id; };
 struct WithdrawOperations {};
 struct SetEffectiveCapacity { std::string source_id; MilliCUPerDay available; };
 struct EnableMarket {};
@@ -168,6 +170,7 @@ struct PublishResearch { std::string research_id; };
 struct AcquireResearchInsight { ResearchInsight insight; };
 struct StartTraining { TrainingRequest request; };
 struct CloneModel { std::string source_id, id; };
+struct CheckpointModel { std::string source_id,id; };
 struct StartEvaluation { std::string id, model_id, plan_id; LabAllocation allocation; };
 struct AcceptBusinessOffer { std::string id; };
 struct AddMarketDemandChange { MarketDemandChange change; };
@@ -175,10 +178,10 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    AdvanceDay, SetPaused, ResolveOpeningChoice,
                                    AddRecurringObligation, IssueInvoice, SettleInvoice,
                                    DrawDebt, RepayDebt, InvestEquity,
-                                   ReserveProject, CancelProject, WithdrawOperations, SetEffectiveCapacity,
+                                   ReserveProject, CancelProject, PauseProject, ResumeProject, WithdrawOperations, SetEffectiveCapacity,
                                    EnableMarket, AddMarketProduct, AddMarketSegment, AddMarketPreference,
                                    SetMarketProductAvailable, SetMarketPrice, AcceptContract, StartContract, CancelContract,
-                                   AcknowledgeLiquidityWarning, BuyData, StartResearch, PublishResearch, AcquireResearchInsight, StartTraining, CloneModel, StartEvaluation,
+                                   AcknowledgeLiquidityWarning, BuyData, StartResearch, PublishResearch, AcquireResearchInsight, StartTraining, CloneModel, CheckpointModel, StartEvaluation,
                                    AcceptBusinessOffer, AddMarketDemandChange, DeployModel,
                                    TakeFinancing,HireSpecialist,AddDelegationPolicy,SetDelegationEnabled,ReviewDelegation,AcknowledgeManagementNotice,RenewComputeLease,
                                    NegotiateCorporateFinance,AppointExecutive,ProposePoolExpansion,ProposeCharter,VoteBoardMotion,RespondCorporateDispute,TransferCompanyOwnership,TransferGroupFunds,

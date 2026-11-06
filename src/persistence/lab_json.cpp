@@ -20,9 +20,11 @@ Json lab_json(const core::LabState& state) {
     Json licenses=Json::array(), research=Json::array(), models=Json::array(), evaluations=Json::array();
     for (const auto& row : state.licenses) licenses.push_back({{"offer_id",row.offer_id},{"acquired_on",row.acquired_on.value()}});
     for (const auto& row : state.research) research.push_back({{"research_id",row.research_id},{"project_id",row.project_id},{"completed",row.completed},{"insight_credit",row.insight_credit.value()}});
-    for (const auto& row : state.models) models.push_back({{"id",row.id},{"recipe_id",row.recipe_id},{"parent_id",row.parent_id},{"project_id",row.project_id},
+    for (const auto& row : state.models) {models.push_back({{"id",row.id},{"recipe_id",row.recipe_id},{"parent_id",row.parent_id},{"project_id",row.project_id},
         {"data_ids",row.data_ids},{"created_on",row.created_on.value()},{"inherited_work_milli_CU",row.inherited_work.value()},
         {"consumed_work_milli_CU",row.consumed_work.value()},{"capability_bp",profile(row.capability)}});
+        if(row.checkpoint_cursor) models.back()["checkpoint_cursor"]=*row.checkpoint_cursor;
+    }
     for (const auto& row : state.evaluations) evaluations.push_back({{"id",row.id},{"model_id",row.model_id},{"plan_id",row.plan_id},{"project_id",row.project_id},
         {"model_work_milli_CU",row.model_work.value()},{"completed",row.completed},{"measured_bp",profile(row.measured)},
         {"lower_bp",profile(row.lower)},{"upper_bp",profile(row.upper)},{"findings",row.findings},
@@ -73,11 +75,12 @@ core::LabState parse_lab(const Json& value) {
             core::BasisPoints{row.contains("insight_credit")?i64(row.at("insight_credit"),"lab/research_run/insight_credit"):0}});
     }
     for (const auto& row : value.at("models")) {
-        fields(row,"lab/model",{"id","recipe_id","parent_id","project_id","data_ids","created_on","inherited_work_milli_CU","consumed_work_milli_CU","capability_bp"});
+        fields(row,"lab/model",{"id","recipe_id","parent_id","project_id","data_ids","created_on","inherited_work_milli_CU","consumed_work_milli_CU","capability_bp"},{"checkpoint_cursor"});
         state.models.push_back({label(row.at("id")),label(row.at("recipe_id")),label(row.at("parent_id"),true),label(row.at("project_id"),true),
             strings(row.at("data_ids"),core::lab_catalog_limit),core::OrdinalDay{i64(row.at("created_on"),"lab/model/created_on")},
             core::MilliCU{i64(row.at("inherited_work_milli_CU"),"lab/model/inherited_work")},
             core::MilliCU{i64(row.at("consumed_work_milli_CU"),"lab/model/consumed_work")},parse_profile(row.at("capability_bp"))});
+        if(row.contains("checkpoint_cursor")) state.models.back().checkpoint_cursor=u64(row.at("checkpoint_cursor"),"lab/model/checkpoint_cursor",core::capacity_day_limit);
     }
     for (const auto& row : value.at("evaluations")) {
         fields(row,"lab/evidence",{"id","model_id","plan_id","project_id","model_work_milli_CU","completed","measured_bp","lower_bp","upper_bp","findings","stream_before","stream_after"});

@@ -10,6 +10,7 @@
 #include <QRandomGenerator>
 
 #include <algorithm>
+#include <set>
 #include <limits>
 #include <stdexcept>
 
@@ -41,6 +42,14 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
     std::vector<CampaignRow> rows;
     const auto& state = checkpoint.world.simulation;
     if (!state.capacity) return rows;
+    std::set<std::string_view> lab_projects,protected_projects;
+    if(state.lab) {
+        for(const auto& r:state.lab->research) lab_projects.insert(r.project_id);
+        for(const auto& r:state.lab->models) if(!r.project_id.empty()) lab_projects.insert(r.project_id);
+        for(const auto& r:state.lab->evaluations) lab_projects.insert(r.project_id);
+    }
+    if(state.management && state.management->governance) for(const auto& d:state.management->governance->disputes)
+        if(!d.resolved_on && !d.review_project.empty()) protected_projects.insert(d.review_project);
     for (const auto& project : state.capacity->projects) {
         QString kind;
         switch (project.kind) {
@@ -55,16 +64,21 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
         case core::ProjectStatus::active: status = QStringLiteral("Active"); break;
         case core::ProjectStatus::completed: status = QStringLiteral("Completed"); break;
         case core::ProjectStatus::cancelled: status = QStringLiteral("Cancelled"); break;
+        case core::ProjectStatus::paused: status = QStringLiteral("Paused"); break;
         }
         const auto progress = project.kind==core::ProjectKind::replication ?
             QStringLiteral("%1 CU synchronized").arg(cu(project.completed_work.value())):project.kind == core::ProjectKind::serving ?
             QStringLiteral("%1 useful tasks delivered").arg(integer(project.useful_tasks)) :
             QStringLiteral("%1 / %2 CU completed").arg(cu(project.completed_work.value()),cu(project.total_work.value()));
-        const auto detail = QStringLiteral("%1\n%2\n%3 CU/day reserved · %4 staff\n%5\nSupport: %6/month\nStarted %7")
+        const auto detail = QStringLiteral("%1\n%2\nAllocation %3 CU/day · %4 staff\n%5\nSupport: %6/month\nStarted %7")
             .arg(text(project.cause),kind,cu(project.requested.value()),QString::number(project.staff),progress,
                  money(project.monthly_support_cost),text(core::iso_date(project.starts_on)));
-        rows.push_back({text(project.id),readable(project.id),kind + QStringLiteral(" · ") + progress,detail,status,
-            project.status == core::ProjectStatus::active});
+        auto lifecycle=detail;
+        if(project.status==core::ProjectStatus::paused) lifecycle+=QStringLiteral("\nPaused: compute and staff are released. Resume requests the same source and allocation. Existing bills and spent costs remain. A model checkpoint can continue on another source.");
+        rows.push_back({text(project.id),readable(project.id),kind + QStringLiteral(" · ") + progress,lifecycle,status,
+            project.status == core::ProjectStatus::active || project.status==core::ProjectStatus::paused,
+            {{"canPause",lab_projects.contains(project.id) && !protected_projects.contains(project.id) && project.pauses.size()<128 && project.status==core::ProjectStatus::active},
+             {"canResume",lab_projects.contains(project.id) && project.status==core::ProjectStatus::paused}}});
     }
     return rows;
 }
@@ -573,6 +587,8 @@ void CampaignController::resolveCoreChoice(bool accept) {
     if (snapshot_ && snapshot_->checkpoint.world.simulation.pending_choice)
         submit(core::ResolveOpeningChoice{*snapshot_->checkpoint.world.simulation.pending_choice,accept});
 }
+void CampaignController::projectPause(QString id) {if(!id.isEmpty()) submit(core::PauseProject{id.toStdString()});}
+void CampaignController::projectResume(QString id) {if(!id.isEmpty()) submit(core::ResumeProject{id.toStdString()});}
 void CampaignController::projectCancel(QString id) { if (!id.isEmpty()) submit(core::CancelProject{id.toStdString()}); }
 void CampaignController::saveTo(QUrl url) {
     try {

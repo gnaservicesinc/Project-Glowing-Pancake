@@ -28,6 +28,11 @@ rival review/reaction timing and player training forecast precision. The 42
 checked batches remain the roadmap count while this pass closes design
 requirements inside those batches.
 
+The Lab lifecycle pass adds project pause/resume and immutable checkpoints of
+running models, including retained work, released/rechecked allocations and
+exact saved pause history. Bounded price delegation is the next verified gap;
+management currently delegates evaluations and lease renewal only.
+
 ## M0 — Toolchain and platform proof
 
 M0-03 is complete for the current Mac feature-development scope. Its

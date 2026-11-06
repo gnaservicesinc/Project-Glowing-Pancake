@@ -85,7 +85,7 @@ SuccessionPlan& plan_at(SimulationState& s,std::uint64_t id) {
     return s.succession->plans[id-1];
 }
 void stop_plan(SimulationState& s,SuccessionPlan& p,SuccessionStatus status) {
-    if(!p.project.empty() && named(s.capacity->projects,p.project).status==ProjectStatus::active)
+    if(!p.project.empty() && (named(s.capacity->projects,p.project).status==ProjectStatus::active || named(s.capacity->projects,p.project).status==ProjectStatus::paused))
         cancel_project(*s.capacity,s.date,p.project);
     p.status=status;p.finished_on=s.date;
 }

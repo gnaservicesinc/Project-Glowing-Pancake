@@ -119,6 +119,7 @@ public:
     Q_INVOKABLE void setProductPrice(QString id,QString cents);
     Q_INVOKABLE void train(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent={});
     Q_INVOKABLE void clone(QString id);
+    Q_INVOKABLE void checkpoint(QString id);
     Q_INVOKABLE void evaluate(QString model,QString plan,QString source,QString rate,QString staff);
     Q_INVOKABLE void deploy(QString service,QString model,QString evidence,QString source,bool review,QString region);
     Q_INVOKABLE void acceptOffer(QString id);

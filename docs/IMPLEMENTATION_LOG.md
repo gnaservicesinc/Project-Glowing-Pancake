@@ -1710,3 +1710,39 @@ capital/finance/cadence in the actual company, widened training forecasts,
 save/reload and refusal of an unknown difficulty without replacing that company.
 The new controls and modifier preview render with wrapping and scrolling.
 These are engineering checks; human feedback and balance remain deferred.
+
+
+### Laboratory pause, resume and live model checkpoints
+
+Finite Lab projects can pause and resume through normal typed commands.
+Pause releases staff/compute and preserves consumed work, licenses, paid costs
+and recurring obligations. Resume rechecks the original source/allocation;
+refusal retains the open pause and all state. A protected executive-response
+review retains its existing commitment guard. Cancelling paused work closes
+its interval. Serving and replication use their existing commitment controls.
+
+Capacity records retain bounded, non-overlapping pause intervals. Deep replay
+requires every active work day and refuses work during a pause. A model
+checkpoint can capture settled progress while its source is running or paused.
+It is a distinct immutable version with the same data/recipe and a saved day
+cursor. Historical work is checked in one ordered capacity scan for all
+snapshots, rather than a scan per model or per simulated day. Source progress
+cannot rewrite the snapshot, its inherited work or its independent evaluation.
+Paused mutable parents require a checkpoint before evaluation/continuation.
+Managed research/evaluation/refresh policies wait for paused work and close it
+when cancelled; a paused run cannot be replaced by a second paid attempt.
+
+Lab Checkpoints and the project inspector expose the new actions. The model
+preview prevents continuing directly from a mutable parent. Optional pause
+and snapshot fields preserve unused legacy save shapes; no content catalog
+or version changes were needed. The optimized build passes. Focused
+core.capacity, runtime.lab-lifecycle and runtime.lab-integration checks pass
+in 2.28s. The tiny fixture shortens methodology/evaluation work while retaining actual
+funding and prerequisite gates. It covers no-refund resource release, accruing
+bills, blocked resume rollback, one unfinished research run, a paused delegated
+evaluation across its seven-day review boundary, actual snapshot evaluation while source work
+continues, forged provenance refusal, cancellation and exact reopened progress.
+Offscreen real-QML fixture checks at 100%/200% text capture a running model,
+pause/release, save/reopen, resume and retain the immutable version after a
+normal stepped day. These are short engineering checks, with no extended
+campaign or human session.

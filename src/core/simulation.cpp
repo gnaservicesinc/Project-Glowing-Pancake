@@ -588,6 +588,16 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     add_recurring(accounts(next), {"support/" + action.project.id, action.project.monthly_support_cost,
                         next.date, std::nullopt, "Serving support: " + action.project.id});
                 (void)receipt(next, "reserve_project");
+            } else if constexpr (std::is_same_v<Action, PauseProject> || std::is_same_v<Action, ResumeProject>) {
+                const bool owned=next.lab && (std::any_of(next.lab->research.begin(),next.lab->research.end(),[&](const auto& r){return r.project_id==action.id;}) ||
+                    std::any_of(next.lab->models.begin(),next.lab->models.end(),[&](const auto& r){return r.project_id==action.id;}) ||
+                    std::any_of(next.lab->evaluations.begin(),next.lab->evaluations.end(),[&](const auto& r){return r.project_id==action.id;}));
+                if(!owned) refuse(CommandReason::invalid_argument,"Pause and resume apply to this company's finite laboratory projects");
+                if constexpr(std::is_same_v<Action,PauseProject>) {
+                    if(next.management && next.management->governance) for(const auto& d:next.management->governance->disputes)
+                        if(d.review_project==action.id && !d.resolved_on) refuse(CommandReason::dependent_commitment,"The negotiated executive response reserves this review team until its promise is resolved or its deadline passes");
+                    pause_project(capacity(next),next.date,action.id);(void)receipt(next,"pause_project");
+                } else {resume_project(capacity(next),next.date,action.id);(void)receipt(next,"resume_project");}
             } else if constexpr (std::is_same_v<Action, CancelProject>) {
                 if(next.management && next.management->governance) for(const auto& dispute:next.management->governance->disputes)
                     if(dispute.review_project==action.id && !dispute.resolved_on)
@@ -729,6 +739,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 require_technology(FrontierTechnology::recipe,action.request.recipe_id);
                 start_training(lab(next), capacity(next), next.date, action.request);
                 (void)receipt(next, "start_training");
+            } else if constexpr (std::is_same_v<Action, CheckpointModel>) {
+                if(action.id.starts_with(frontier_refresh_prefix)) refuse(CommandReason::dependent_commitment,"Automated candidate identities belong to their authorized refresh");
+                checkpoint_model(lab(next),capacity(next),next.date,action.source_id,action.id);(void)receipt(next,"checkpoint_model");
             } else if constexpr (std::is_same_v<Action, CloneModel>) {
                 if (action.id.starts_with(frontier_refresh_prefix))
                     refuse(CommandReason::dependent_commitment,"Automated candidate identities belong to their authorized refresh.");

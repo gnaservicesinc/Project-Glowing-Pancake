@@ -152,6 +152,8 @@ public:
     Q_INVOKABLE void acknowledgeWarning();
     Q_INVOKABLE void resolveCoreChoice(bool accept);
     Q_INVOKABLE void projectCancel(QString id);
+    Q_INVOKABLE void projectPause(QString id);
+    Q_INVOKABLE void projectResume(QString id);
     Q_INVOKABLE void saveTo(QUrl url);
     Q_INVOKABLE void loadFrom(QUrl url);
     Q_INVOKABLE void clearNotice();

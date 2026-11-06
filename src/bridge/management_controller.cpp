@@ -98,6 +98,7 @@ QString research_status(const core::LabState& lab,const core::CapacityState& cap
         if (run.completed) {++completed;continue;}
         const auto* p=find(capacity.projects,run.project_id);
         if (p && p->status==core::ProjectStatus::active) return QStringLiteral("In progress");
+        if (p && p->status==core::ProjectStatus::paused) return QStringLiteral("Paused");
         stopped=true;
     }
     if (completed>=topic.repeat_limit) return QStringLiteral("Completed");
@@ -195,8 +196,8 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             models.push_back({text(row.id),text(row.id),readable(row.recipe_id)+QStringLiteral(" · ")+cu(row.consumed_work.value())+QStringLiteral(" CU consumed"),
                 QStringLiteral("Data: %1\nParent checkpoint: %2\n%3\nServing cost %4 CU/task. True capability remains unknown until measured. A clone copies consumed work; it adds no training.")
                     .arg(mixture.join(QStringLiteral(", ")),row.parent_id.empty()?QStringLiteral("none"):text(row.parent_id),work?text(work->cause):QString{},cu(find(s.lab->catalog.recipes,row.recipe_id)->inference_per_task.value())),
-                row.training?QStringLiteral("Training"):QStringLiteral("Stopped checkpoint"),!row.training,
-                {{QStringLiteral("projectId"),text(actual->project_id)},{QStringLiteral("training"),row.training}}});
+                row.paused?QStringLiteral("Paused training"):row.training?QStringLiteral("Training"):QStringLiteral("Immutable checkpoint"),!row.training && row.consumed_work.value()>0,
+                {{QStringLiteral("projectId"),text(actual->project_id)},{QStringLiteral("training"),row.training},{QStringLiteral("paused"),row.paused},{QStringLiteral("checkpointReady"),row.consumed_work.value()>0}}});
         }
         for (const auto& row:report.evidence) {
             QStringList findings; for (const auto& finding:row.findings) findings.push_back(text(finding));
@@ -440,11 +441,14 @@ QVariantMap ManagementController::trainingPreview(QString recipe,QString source,
         core::Cents protected_cash{0};for (const auto& reservation:state().reservations) protected_cash=core::checked_unit_add(protected_cash,reservation.reserved);
         const auto horizon=core::Days{std::min<std::int64_t>(90,p.minimum_days.value())};
         const auto forecast=core::project_company_cash(state(),core::advance_days(state().date,horizon),protected_cash);
+        const auto* parent_model=parent.isEmpty()?nullptr:find(state().lab->models,req.parent_id);
+        const auto* parent_work=parent_model && !parent_model->project_id.empty()?find(state().capacity->projects,parent_model->project_id):nullptr;
+        const bool frozen_parent=parent.isEmpty() || (parent_model && parent_model->consumed_work.value()>0 && (!parent_work || parent_work->status==core::ProjectStatus::completed || parent_work->status==core::ProjectStatus::cancelled));
         const auto explanation=QStringLiteral("Earliest %1 days · unlicensed data %2\nEstimated %3\n%4\nBottlenecks: documents %5; scanned tables %6\n%7\n%8\n%9")
             .arg(QString::number(p.minimum_days.value()),money(p.unowned_data_cost),interval(p.lower,p.upper),text(p.explanation),text(p.bottlenecks[0]),text(p.bottlenecks[1]),
                 p.licensed?QStringLiteral("All selected data licensed"):QStringLiteral("Buy each selected data license before training"),!compatible?QStringLiteral("Select a source with the recipe’s memory and interconnect class"):free?QStringLiteral("Requested compute and staff fit current free resources"):QStringLiteral("Reduce allocation or stop another project to free compute/staff"),
                 QStringLiteral("Available cash after %2 forecast days: %1. Includes existing bills; excludes future customer sales and unpurchased licenses. Forecast capped at 90 days.").arg(money(forecast.available),QString::number(horizon.value())));
-        return {{QStringLiteral("text"),explanation+(p.prerequisites_met?QString{}:QStringLiteral("\nComplete the selected recipe’s research prerequisites before training."))},{QStringLiteral("ready"),p.licensed && p.prerequisites_met && free}};
+        return {{QStringLiteral("text"),explanation+(frozen_parent?QString{}:QStringLiteral("\nSave an immutable checkpoint of the running or paused parent before continuing."))+(p.prerequisites_met?QString{}:QStringLiteral("\nComplete the selected recipe’s research prerequisites before training."))},{QStringLiteral("ready"),p.licensed && p.prerequisites_met && free && frozen_parent}};
     } catch (const std::exception& e) { return {{QStringLiteral("text"),QString::fromUtf8(e.what())},{QStringLiteral("ready"),false}}; }
 }
 QString ManagementController::servicePreview(QString id,QString model,bool review) const {
@@ -489,6 +493,7 @@ void ManagementController::setProductPrice(QString id,QString cents) {
 void ManagementController::train(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent) {
     if (!editable()) return; try { emit actionRequested(core::StartTraining{request(nextId(QStringLiteral("model.")),recipe,source,data,rate,staff,work,parent)}); } catch (const std::exception& e) { emit noticeRaised(QString::fromUtf8(e.what())); }
 }
+void ManagementController::checkpoint(QString id) {if(editable()) emit actionRequested(core::CheckpointModel{id.toStdString(),nextId(QStringLiteral("checkpoint.")).toStdString()});}
 void ManagementController::clone(QString id) { if (editable()) emit actionRequested(core::CloneModel{id.toStdString(),nextId(QStringLiteral("checkpoint.")).toStdString()}); }
 void ManagementController::evaluate(QString model,QString plan,QString source,QString rate,QString staff) {
     if (!editable()) return; try { emit actionRequested(core::StartEvaluation{nextId(QStringLiteral("evaluation.")).toStdString(),model.toStdString(),plan.toStdString(),allocation(source,rate,staff)}); } catch (const std::exception& e) { emit noticeRaised(QString::fromUtf8(e.what())); }

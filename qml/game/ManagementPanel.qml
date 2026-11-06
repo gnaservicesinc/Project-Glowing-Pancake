@@ -245,13 +245,18 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "lab" && panel.section === "models"
-        Selection { heading: qsTr("Model checkpoints"); rows: manager.models }
+        Selection { objectName: "modelCheckpointSelection"; heading: qsTr("Training runs and immutable checkpoints"); rows: manager.models }
+        Copy { text: qsTr("Pause releases compute and staff. Resume requests the original allocation. Save an immutable checkpoint to evaluate, deploy or continue elsewhere while the source keeps training. Spent work, licenses and existing bills remain.") }
+        Action { objectName: "checkpointTrainingButton"; text: qsTr("Save checkpoint of selected model"); enabled: panel.editable && !!manager.models.selectedRow.fields && manager.models.selectedRow.fields.checkpointReady === true; onClicked: manager.checkpoint(manager.models.selectedId) }
+        Action { objectName: "pauseTrainingButton"; text: qsTr("Pause selected training"); enabled: panel.editable && !!manager.models.selectedRow.fields && manager.models.selectedRow.fields.training === true && manager.models.selectedRow.fields.paused !== true; onClicked: campaign.projectPause(manager.models.selectedRow.fields.projectId) }
+        Action { objectName: "resumeTrainingButton"; text: qsTr("Resume selected training"); enabled: panel.editable && !!manager.models.selectedRow.fields && manager.models.selectedRow.fields.paused === true; onClicked: campaign.projectResume(manager.models.selectedRow.fields.projectId) }
         Action {
             text: qsTr("Clone selected stopped checkpoint")
             enabled: panel.editable && manager.models.selectedRow.actionable === true
             onClicked: manager.clone(manager.models.selectedId)
         }
         Action {
+            objectName: "stopTrainingButton"
             text: qsTr("Stop selected training; keep consumed work")
             enabled: panel.editable && !!manager.models.selectedRow.fields && manager.models.selectedRow.fields.training === true
             onClicked: campaign.projectCancel(manager.models.selectedRow.fields.projectId)

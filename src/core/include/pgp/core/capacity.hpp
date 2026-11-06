@@ -32,7 +32,12 @@ struct CapacitySource {
     auto operator<=>(const CapacitySource&) const = default;
 };
 enum class ProjectKind { training, research, evaluation, serving, replication };
-enum class ProjectStatus { active, completed, cancelled };
+enum class ProjectStatus { active, completed, cancelled, paused };
+struct ProjectPause {
+    OrdinalDay starts_on{0};
+    std::optional<OrdinalDay> ends_before;
+    auto operator<=>(const ProjectPause&) const = default;
+};
 struct CapacityProject {
     std::string id;
     std::string source_id;
@@ -53,6 +58,7 @@ struct CapacityProject {
     Cents monthly_support_cost{0};
     std::string cause;
     bool customer_inference = false;
+    std::vector<ProjectPause> pauses{};
     auto operator<=>(const CapacityProject&) const = default;
 };
 struct SourceDayUsage {
@@ -131,6 +137,8 @@ void remove_staff_capacity(CapacityState& state,OrdinalDay day,std::string id,st
 [[nodiscard]] std::uint32_t available_staff_on(const CapacityState& state, OrdinalDay day);
 void add_capacity_source(CapacityState& state, OrdinalDay day, CapacitySource source);
 void cancel_project(CapacityState& state, OrdinalDay day, std::string_view project_id);
+void pause_project(CapacityState& state,OrdinalDay day,std::string_view project_id);
+void resume_project(CapacityState& state,OrdinalDay day,std::string_view project_id);
 void update_effective_capacity(CapacityState& state, OrdinalDay day,
                                std::string_view source_id, MilliCUPerDay effective);
 struct WholesaleUse {

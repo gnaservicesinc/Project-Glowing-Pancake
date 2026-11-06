@@ -96,6 +96,8 @@ struct LabModel {
     MilliCU inherited_work{0}, consumed_work{0};
     // Authoritative truth stays out of LabReport and all player previews.
     LabProfile capability = empty_lab_profile;
+    // Immutable snapshot of the parent's settled work at this capacity-day cursor.
+    std::optional<std::uint64_t> checkpoint_cursor{};
     auto operator<=>(const LabModel&) const = default;
 };
 struct EvaluationEvidence {
@@ -147,6 +149,7 @@ struct LabModelView {
     std::string id, recipe_id, parent_id;
     MilliCU consumed_work{0};
     bool training = false;
+    bool paused = false;
 };
 struct LabReport {
     std::vector<DataOffer> data_offers;
@@ -164,6 +167,7 @@ struct LabReport {
 };
 
 void validate_lab_catalog(const LabCatalog& catalog);
+void checkpoint_model(LabState&,const CapacityState&,OrdinalDay,std::string_view source_id,std::string id);
 void validate_lab(const LabState& state, const CapacityState& capacity, const AccountsState& accounts,
                   const RandomSnapshot& random, bool deep = true);
 [[nodiscard]] LabProfile model_capability(const LabCatalog& catalog, const LabModel& model);

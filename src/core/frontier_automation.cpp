@@ -4,6 +4,8 @@
 
 namespace pgp::core {
 namespace {
+bool unfinished(ProjectStatus status) {return status==ProjectStatus::active || status==ProjectStatus::paused;}
+
 using namespace frontier_detail;
 
 void check_budget(const SimulationState& state, const FrontierBudget& budget, Days minimum_interval, OrdinalDay day) {
@@ -110,7 +112,7 @@ void stop_refresh(SimulationState& state, FrontierRefreshProgram& program, std::
     const auto id=frontier_refresh_id(program.id,program.runs.size());
     const auto& model=require_named(state.lab->models,id);
     const auto project=run.evaluated_on?require_named(state.lab->evaluations,id).project_id:model.project_id;
-    if (require_named(state.capacity->projects,project).status==ProjectStatus::active)
+    if (unfinished(require_named(state.capacity->projects,project).status))
         cancel_project(*state.capacity,state.date,project);
     run.finished_on=state.date;
     run.outcome=std::move(reason);
@@ -123,7 +125,7 @@ bool run_research(SimulationState& state, std::size_t index, Cents protected_cas
     if (!program.decisions.empty()) {
         const auto& previous=program.decisions.back();
         if (state.date<advance_days(previous.day,plan.budget.interval) ||
-            (!previous.project.empty() && require_named(state.capacity->projects,previous.project).status==ProjectStatus::active))
+            (!previous.project.empty() && unfinished(require_named(state.capacity->projects,previous.project).status)))
             return false;
     }
     const auto& node=require_named(state.lab->catalog.research,topic_for(plan,program.decisions.size()));
@@ -133,7 +135,7 @@ bool run_research(SimulationState& state, std::size_t index, Cents protected_cas
         return false;
     }
     if (std::ranges::any_of(state.lab->research,[&](const auto& run){
-        return run.research_id==node.id && require_named(state.capacity->projects,run.project_id).status==ProjectStatus::active;
+        return run.research_id==node.id && unfinished(require_named(state.capacity->projects,run.project_id).status);
     })) {
         program.waiting="This topic already has work in progress.";
         return false;
@@ -230,7 +232,7 @@ bool run_refresh(SimulationState& state, std::size_t index, Cents protected_cash
     const auto id=frontier_refresh_id(program.id,program.runs.size());
     const auto& model=require_named(state.lab->models,id);
     const auto& training=require_named(state.capacity->projects,model.project_id);
-    if (training.status==ProjectStatus::active) return false;
+    if (unfinished(training.status)) return false;
     if (training.status==ProjectStatus::cancelled) {
         stop_refresh(state,program,"Candidate training was cancelled.");
         return false;
@@ -262,7 +264,7 @@ bool run_refresh(SimulationState& state, std::size_t index, Cents protected_cash
     }
     const auto& evidence=require_named(state.lab->evaluations,id);
     const auto status=require_named(state.capacity->projects,evidence.project_id).status;
-    if (status==ProjectStatus::active) return false;
+    if (unfinished(status)) return false;
     if (!evidence.completed || !improvement(state,incumbent,evidence,plan.improvement)) {
         stop_refresh(state,program,evidence.completed?"Independent evidence did not improve the existing service without a regression.":"Independent evaluation was cancelled.");
         return false;
@@ -451,7 +453,7 @@ void validate_policies(const SimulationState& state) {
                     !in_campaign(*run.evaluated_on) || evaluation.starts_on!=*run.evaluated_on ||
                     evidence.model_id!=id || evidence.plan_id!=plan.evaluation || !allocated(evaluation,plan.budget.allocation) ||
                     !paid(evaluation.id,*run.evaluated_on,test.cash) || (run.finished_on && *run.evaluated_on>*run.finished_on) ||
-                    (run.finished_on && evaluation.status==ProjectStatus::active))
+                    (run.finished_on && unfinished(evaluation.status)))
                     invalid("Refresh lacks its actual paid independent evaluation.");
                 evaluations.insert(id);
                 if (run.rollout_deployment) {
@@ -465,8 +467,8 @@ void validate_policies(const SimulationState& state) {
                         new_work.source_id!=prior_work.source_id || prior_work.stopped_on!=run.finished_on)
                         invalid("Automated rollout bypassed the qualified evidence or changed the service terms.");
                 }
-            } else if (run.rollout_deployment || (run.finished_on && training.status==ProjectStatus::active))
-                invalid("A closed refresh retained active work or an untested rollout.");
+            } else if (run.rollout_deployment || (run.finished_on && unfinished(training.status)))
+                invalid("A closed refresh retained unfinished work or an untested rollout.");
         }
     }
     for (const auto& model : state.lab->models)

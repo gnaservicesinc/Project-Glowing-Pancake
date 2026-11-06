@@ -6,6 +6,7 @@
 #include <set>
 #include <stdexcept>
 #include <tuple>
+#include <unordered_map>
 
 namespace pgp::core {
 namespace {
@@ -57,8 +58,37 @@ void charge(AccountsState& accounts, OrdinalDay day, Cents amount, Cents protect
 }
 void frozen(const LabModel& model, const CapacityState& capacity) {
     if (model.consumed_work.value() == 0 || (!model.project_id.empty() &&
-        find(capacity.projects, model.project_id).status == ProjectStatus::active))
-        invalid("Checkpoint or evaluate a model after stopping or completing its current training");
+        (find(capacity.projects, model.project_id).status == ProjectStatus::active || find(capacity.projects, model.project_id).status == ProjectStatus::paused)))
+        invalid("Clone, evaluate or continue from an immutable checkpoint. Save a checkpoint of running or paused training first");
+}
+std::unordered_map<std::string_view,MilliCU> checkpoint_work(const LabState& state,const CapacityState& capacity) {
+    std::unordered_map<std::string_view,MilliCU> result,prefix;
+    std::unordered_map<std::string_view,const LabModel*> models;
+    for(const auto& model:state.models) models.emplace(model.id,&model);
+    struct Query {const LabModel* model;const LabModel* parent;};
+    std::vector<Query> queries;
+    for(const auto& model:state.models) if(model.checkpoint_cursor) {
+        const auto parent=models.find(model.parent_id);
+        if(parent==models.end() || !model.project_id.empty() || model.consumed_work.value()==0 || model.created_on<capacity.starts_on ||
+            *model.checkpoint_cursor>capacity.days.size() || *model.checkpoint_cursor!=static_cast<std::uint64_t>(model.created_on.value()-capacity.starts_on.value()))
+            invalid("Checkpoint has no immutable parent snapshot or actual settled-day boundary");
+        queries.push_back({&model,parent->second});
+        if(!parent->second->project_id.empty()) prefix.try_emplace(parent->second->project_id,MilliCU{0});
+    }
+    std::sort(queries.begin(),queries.end(),[](const auto& a,const auto& b) {
+        return std::tie(*a.model->checkpoint_cursor,a.model->id)<std::tie(*b.model->checkpoint_cursor,b.model->id);
+    });
+    std::size_t cursor=0;
+    for(const auto& query:queries) {
+        while(cursor<*query.model->checkpoint_cursor) {
+            for(const auto& used:capacity.days[cursor].projects) if(const auto it=prefix.find(used.project_id);it!=prefix.end())
+                it->second=checked_unit_add(it->second,used.work);
+            ++cursor;
+        }
+        result.emplace(query.model->id,query.parent->project_id.empty()?query.parent->consumed_work:
+            checked_unit_add(query.parent->inherited_work,prefix.at(query.parent->project_id)));
+    }
+    return result;
 }
 CapacityProject project(std::string id, ProjectKind kind, OrdinalDay day,
                          const LabAllocation& allocation, MilliCU work) {
@@ -262,7 +292,7 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
     std::uint32_t completed_runs = 0;
     for (const auto& run : state.research) if (run.research_id == research_id) {
         const auto status = find(capacity.projects,run.project_id).status;
-        if (status == ProjectStatus::active) invalid("This research is already active");
+        if (status == ProjectStatus::active || status==ProjectStatus::paused) invalid("This research is already unfinished; resume or cancel its existing run");
         if (status == ProjectStatus::completed) ++completed_runs;
         ++attempt;
     }
@@ -320,7 +350,16 @@ void clone_model(LabState& state, const CapacityState& capacity, OrdinalDay day,
         [&](const auto& row) { return row.id == id; })) invalid("Model identity is already used or the record limit was reached");
     auto model = find(state.models, source_id); frozen(model, capacity);
     model.parent_id = model.id; model.id = std::move(id); model.project_id.clear(); model.created_on = day;
-    model.inherited_work = model.consumed_work;
+    model.inherited_work = model.consumed_work;model.checkpoint_cursor.reset();
+    state.models.push_back(std::move(model));
+}
+void checkpoint_model(LabState& state,const CapacityState& capacity,OrdinalDay day,std::string_view source_id,std::string id) {
+    require_day(state,day);label(id);
+    if(state.models.size()>=lab_record_limit || std::any_of(state.models.begin(),state.models.end(),[&](const auto& row){return row.id==id;})) invalid("Checkpoint identity is already used or the model register is full");
+    auto model=find(state.models,source_id);
+    if(model.consumed_work.value()==0) invalid("Complete some training work before saving a model checkpoint");
+    model.parent_id=model.id;model.id=std::move(id);model.project_id.clear();model.created_on=day;
+    model.inherited_work=model.consumed_work;model.checkpoint_cursor=capacity.days.size();
     state.models.push_back(std::move(model));
 }
 void start_evaluation(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day,
@@ -409,7 +448,7 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
                 if (&prior == &run) break;
                 if (prior.research_id == node.id) {
                     const auto& previous = find(capacity.projects, prior.project_id);
-                    if (previous.status == ProjectStatus::active || !previous.stopped_on || *previous.stopped_on > work.starts_on ||
+                    if (previous.status == ProjectStatus::active || previous.status==ProjectStatus::paused || !previous.stopped_on || *previous.stopped_on > work.starts_on ||
                         (previous.status==ProjectStatus::completed && *previous.stopped_on==work.starts_on))
                         invalid("Research retry precedes the settled end of its previous attempt");
                 }
@@ -424,6 +463,7 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
                 *find(capacity.projects, row.project_id).stopped_on < work.starts_on;
         })) invalid("Research alternative prerequisite was not complete at acceptance");
     }
+    const auto snapshots=deep?checkpoint_work(state,capacity):std::unordered_map<std::string_view,MilliCU>{};
     for (const auto& model : state.models) {
         const auto& recipe = find(state.catalog.recipes, model.recipe_id);
         if (model.created_on < state.starts_on || model.created_on > today || model.data_ids.empty() || model.data_ids.size() > lab_catalog_limit ||
@@ -438,14 +478,21 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         if (!model.parent_id.empty()) {
             if (!prior_models.contains(model.parent_id)) invalid("Model lineage is cyclic or references a later model");
             const auto& parent = find(state.models, model.parent_id);
-            if (model.inherited_work != parent.consumed_work || model.recipe_id != parent.recipe_id ||
-                model.data_ids != parent.data_ids || parent.created_on > model.created_on)
-                invalid("Model lineage added free work or discarded inherited data rights");
-            if (!parent.project_id.empty()) {
-                const auto& work = find(capacity.projects,parent.project_id);
-                if (!work.stopped_on || *work.stopped_on > model.created_on) invalid("Model inherited an unfinished checkpoint");
+            if (model.recipe_id != parent.recipe_id || model.data_ids != parent.data_ids || parent.created_on > model.created_on)
+                invalid("Model lineage changed its recipe, data rights or creation order");
+            if(model.checkpoint_cursor) {
+                if(!model.project_id.empty() || model.consumed_work.value()==0 || *model.checkpoint_cursor>capacity.days.size() ||
+                    *model.checkpoint_cursor!=static_cast<std::uint64_t>(model.created_on.value()-capacity.starts_on.value()) ||
+                    model.inherited_work<parent.inherited_work || model.inherited_work>parent.consumed_work ||
+                    (deep && model.inherited_work!=snapshots.at(model.id))) invalid("Checkpoint inherited work outside its actual settled snapshot");
+            } else {
+                if(model.inherited_work!=parent.consumed_work) invalid("Model lineage added free inherited work");
+                if (!parent.project_id.empty()) {
+                    const auto& work = find(capacity.projects,parent.project_id);
+                    if (!work.stopped_on || *work.stopped_on > model.created_on) invalid("Model inherited an unfinished checkpoint");
+                }
             }
-        } else if (model.inherited_work.value() != 0) invalid("New model invented inherited work");
+        } else if (model.inherited_work.value() != 0 || model.checkpoint_cursor) invalid("New model invented inherited work or a checkpoint origin");
         MilliCU expected = model.inherited_work;
         if (!model.project_id.empty()) {
             const auto& work = find(capacity.projects, model.project_id);
@@ -499,7 +546,8 @@ LabReport lab_report(const LabState& state, const CapacityState& capacity) {
     LabReport result; result.data_offers = state.catalog.data; result.licenses = state.licenses; result.research = state.research;
     for (const auto& model : state.models)
         result.models.push_back({model.id, model.recipe_id, model.parent_id, model.consumed_work,
-            !model.project_id.empty() && find(capacity.projects, model.project_id).status == ProjectStatus::active});
+            !model.project_id.empty() && (find(capacity.projects, model.project_id).status == ProjectStatus::active || find(capacity.projects,model.project_id).status==ProjectStatus::paused),
+            !model.project_id.empty() && find(capacity.projects,model.project_id).status==ProjectStatus::paused});
     for (const auto& evidence : state.evaluations) {
         const auto& plan = find(state.catalog.evaluations, evidence.plan_id);
         result.evidence.push_back({evidence.id, evidence.model_id, evidence.plan_id, evidence.completed,

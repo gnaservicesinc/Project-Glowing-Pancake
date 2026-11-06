@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <iterator>
 #include <map>
 #include <set>
 #include <stdexcept>
@@ -38,6 +39,12 @@ CapacityProject& project(CapacityState& state, std::string_view id) {
 std::int64_t demand(const CapacityProject& row) {
     return row.kind == ProjectKind::serving || row.kind==ProjectKind::replication ? row.requested.value() :
         std::min(row.requested.value(), checked_subtract(row.total_work.value(), row.completed_work.value()));
+}
+bool paused_on(const CapacityProject& row,OrdinalDay day) {
+    const auto it=std::upper_bound(row.pauses.begin(),row.pauses.end(),day,[](OrdinalDay d,const ProjectPause& p){return d<p.starts_on;});
+    if(it==row.pauses.begin()) return false;
+    const auto& pause=*std::prev(it);
+    return !pause.ends_before || day<*pause.ends_before;
 }
 template<class Operation> void mutate(CapacityState& state, Operation operation) {
     validate_capacity(state);
@@ -218,12 +225,26 @@ void validate_capacity(const CapacityState& state) {
             break;
         default: invalid("Unknown project kind");
         }
+        if(row.pauses.size()>128 || (!row.pauses.empty() && row.kind!=ProjectKind::training && row.kind!=ProjectKind::research && row.kind!=ProjectKind::evaluation))
+            invalid("Only finite lab work supports bounded pause history");
+        for(std::size_t i=0;i<row.pauses.size();++i) {
+            const auto& pause=row.pauses[i];
+            if(pause.starts_on<row.starts_on || pause.starts_on>latest || (row.stopped_on && pause.starts_on>*row.stopped_on) ||
+                (pause.ends_before && (*pause.ends_before<pause.starts_on || *pause.ends_before>latest || (row.stopped_on && *pause.ends_before>*row.stopped_on))) ||
+                (i && (!row.pauses[i-1].ends_before || pause.starts_on<*row.pauses[i-1].ends_before)) ||
+                (!pause.ends_before && i+1!=row.pauses.size())) invalid("Project pause history overlaps or has an invalid date");
+        }
+        const bool open_pause=!row.pauses.empty() && !row.pauses.back().ends_before;
+        if(open_pause!=(row.status==ProjectStatus::paused)) invalid("Project status differs from its open pause interval");
         switch (row.status) {
         case ProjectStatus::active:
             if (row.stopped_on || (row.kind != ProjectKind::serving && row.kind!=ProjectKind::replication && row.completed_work == row.total_work))
                 invalid("Active project has a stop cursor or already completed its goal");
             if (!row.customer_inference)
                 source_reservations[row.source_id] = checked_add(source_reservations[row.source_id], demand(row));
+            break;
+        case ProjectStatus::paused:
+            if(row.stopped_on || row.completed_work==row.total_work) invalid("Paused finite work has a terminal cursor or finished goal");
             break;
         case ProjectStatus::completed:
             if (!row.stopped_on || row.kind == ProjectKind::serving || row.kind==ProjectKind::replication || row.completed_work != row.total_work)
@@ -271,7 +292,7 @@ void validate_capacity(const CapacityState& state) {
             auto& total = totals[row.id];
             if (day.day < row.starts_on || (row.stopped_on && (day.day > *row.stopped_on ||
                 (row.status == ProjectStatus::cancelled && day.day == *row.stopped_on))) ||
-                (total.last_day ? advance_days(*total.last_day, Days{1}) != day.day : day.day != row.starts_on) ||
+                paused_on(row,day.day) ||
                 used.assigned_staff != row.staff || used.work.value() > row.requested.value())
                 invalid("Daily work occurs outside its project lifetime, rate or staff assignment");
             total.last_day = day.day; ++total.days;
@@ -322,8 +343,12 @@ void validate_capacity(const CapacityState& state) {
             if (row.status == ProjectStatus::cancelled) stop = OrdinalDay{checked_subtract(stop.value(), 1)};
             if (!through || stop < *through) through = stop;
         }
-        const auto expected_days = through && *through >= row.starts_on ?
+        auto expected_days = through && *through >= row.starts_on ?
             static_cast<std::uint64_t>(through->value() - row.starts_on.value() + 1) : 0;
+        if(through) for(const auto& pause:row.pauses) {
+            const auto end=std::min(pause.ends_before.value_or(advance_days(*through,Days{1})),advance_days(*through,Days{1}));
+            if(end>pause.starts_on) expected_days-=static_cast<std::uint64_t>(end.value()-pause.starts_on.value());
+        }
         if (total.work != row.completed_work || total.tasks != row.useful_tasks || total.days != expected_days ||
             (row.status == ProjectStatus::completed && (!total.last_day || *total.last_day != *row.stopped_on)))
             invalid("Project totals or lifecycle cursor differ from complete committed work history");
@@ -371,7 +396,7 @@ void reserve_project(CapacityState& state, OrdinalDay day, CapacityProject row) 
     mutate(state, [&](auto& candidate) {
         require_day(candidate, day);
         if (row.starts_on != day || row.status != ProjectStatus::active || row.stopped_on ||
-            row.completed_work.value() != 0 || row.useful_tasks != 0)
+            row.completed_work.value() != 0 || row.useful_tasks != 0 || !row.pauses.empty())
             invalid("A new project must start today without invented work or prior lifecycle state");
         const auto source_id = row.source_id;
         candidate.projects.push_back(std::move(row));
@@ -396,8 +421,27 @@ void cancel_project(CapacityState& state, OrdinalDay day, std::string_view proje
     mutate(state, [&](auto& candidate) {
         require_day(candidate, day);
         auto& row = project(candidate, project_id);
-        if (row.status != ProjectStatus::active) invalid("Only an active project can be cancelled");
+        if (row.status != ProjectStatus::active && row.status!=ProjectStatus::paused) invalid("Only unfinished work can be cancelled");
+        if(row.status==ProjectStatus::paused) row.pauses.back().ends_before=day;
         row.status = ProjectStatus::cancelled; row.stopped_on = day;
+    });
+}
+void pause_project(CapacityState& state,OrdinalDay day,std::string_view id) {
+    mutate(state,[&](auto& candidate) {
+        require_day(candidate,day);auto& row=project(candidate,id);
+        if(row.status!=ProjectStatus::active || (row.kind!=ProjectKind::training && row.kind!=ProjectKind::research && row.kind!=ProjectKind::evaluation) || row.pauses.size()>=128)
+            invalid("Pause requires active finite lab work within its pause-history limit");
+        row.pauses.push_back({day,{}});row.status=ProjectStatus::paused;
+    });
+}
+void resume_project(CapacityState& state,OrdinalDay day,std::string_view id) {
+    mutate(state,[&](auto& candidate) {
+        require_day(candidate,day);auto& row=project(candidate,id);
+        if(row.status!=ProjectStatus::paused || row.pauses.empty() || row.pauses.back().ends_before) invalid("Resume requires a currently paused lab project");
+        row.status=ProjectStatus::active;row.pauses.back().ends_before=day;
+        std::int64_t reserved=0;
+        for(const auto& other:candidate.projects) if(other.status==ProjectStatus::active && other.source_id==row.source_id) reserved=checked_add(reserved,demand(other));
+        if(reserved>company_capacity(source(candidate,row.source_id)).value()) invalid("Resume needs the original compute allocation to be available again");
     });
 }
 void update_effective_capacity(CapacityState& state, OrdinalDay day, std::string_view source_id, MilliCUPerDay effective) {

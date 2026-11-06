@@ -815,6 +815,20 @@ ApplicationWindow {
                                 onClicked: campaign.management.acknowledgeAlert(inspector.entry.fields.noticeId)
                             }
                             Action {
+                                objectName: "pauseLabProject"
+                                text: qsTr("Pause lab project")
+                                visible: window.room === "lab" && !!inspector.entry.fields && inspector.entry.fields.canPause === true
+                                enabled: campaign.paused && !campaign.busy
+                                onClicked: campaign.projectPause(inspector.entry.entityId)
+                            }
+                            Action {
+                                objectName: "resumeLabProject"
+                                text: qsTr("Resume original allocation")
+                                visible: window.room === "lab" && !!inspector.entry.fields && inspector.entry.fields.canResume === true
+                                enabled: campaign.paused && !campaign.busy
+                                onClicked: campaign.projectResume(inspector.entry.entityId)
+                            }
+                            Action {
                                 objectName: "cancelProject"
                                 visible: window.room === "lab" && !!inspector.entry.actionable
                                 enabled: campaign.paused && !campaign.busy

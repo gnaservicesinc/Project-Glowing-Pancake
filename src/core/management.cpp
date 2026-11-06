@@ -127,10 +127,14 @@ void review_delegation(SimulationState& s,Cents protected_cash) {
         if (s.management->decisions.size()>=128) {s.management->policies[i].enabled=false;s.management->policies[i].blocked="The finite policy decision history is full.";continue;}
         if (p.kind==DelegationKind::evaluation) {
             const auto& model=find(s.lab->models,p.target_id);
-            if (!model.project_id.empty() && find(s.capacity->projects,model.project_id).status==ProjectStatus::active) continue;
+            if (!model.project_id.empty()) {
+                const auto status=find(s.capacity->projects,model.project_id).status;
+                if(status==ProjectStatus::active || status==ProjectStatus::paused) continue;
+            }
             if (p.runs>0) {
                 const auto& last=find(s.lab->evaluations,evaluation_id(p,p.runs));
-                if (find(s.capacity->projects,last.project_id).status==ProjectStatus::active) continue;
+                const auto status=find(s.capacity->projects,last.project_id).status;
+                if(status==ProjectStatus::active || status==ProjectStatus::paused) continue;
             }
         }
         // Only an actual bounded attempt copies history. Idle daily reviews do
