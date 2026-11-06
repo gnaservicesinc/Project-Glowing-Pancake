@@ -11,6 +11,7 @@
 #include <pgp/core/business_offers.hpp>
 #include <pgp/core/infrastructure.hpp>
 #include <pgp/core/resilience.hpp>
+#include <pgp/core/civic.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
@@ -103,6 +104,7 @@ struct SimulationState {
     std::optional<ManagementState> management{};
     std::optional<InfrastructureState> infrastructure{};
     std::optional<ResilienceState> resilience{};
+    std::optional<CivicState> civic{};
     auto operator<=>(const SimulationState&) const = default;
 };
 
@@ -174,7 +176,8 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    TakeFinancing,HireSpecialist,AddDelegationPolicy,SetDelegationEnabled,ReviewDelegation,AcknowledgeManagementNotice,RenewComputeLease,
                                    NegotiateCorporateFinance,AppointExecutive,ProposePoolExpansion,VoteBoardMotion,RespondCorporateDispute,TransferCompanyOwnership,TransferGroupFunds,
                                    BuildOwnedSite,OrderOwnedHardware,HireSiteOperators,SetSitePowerLimit,RetireOwnedHardware,CloseOwnedSite,ScheduleSiteAppointment,CancelSiteAppointment,NoticeInitialLeaseTermination,
-                                   BuySiteProtection,InsureSite,ReplicateService,StopServiceReplica,AcknowledgeSiteAlert>;
+                                   BuySiteProtection,InsureSite,ReplicateService,StopServiceReplica,AcknowledgeSiteAlert,
+                                   FundPolicyAdvocacy,SubmitPolicyEvidence>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

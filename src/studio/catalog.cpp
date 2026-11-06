@@ -49,6 +49,7 @@ std::string reference_family(std::string_view key,std::string_view path,std::str
     if(kind=="flow" && array=="bindings") return "variable";
     if(key=="regional_markets") return "regional_markets";
     if(key=="resilience") return "site_resilience";
+    if(key=="civic") return "us_civic";
     if(array=="flows") return "flow";
     if(array=="research" || array=="requires_research" || array=="all_of" || array=="any_of" || key=="publication_node" || key=="publication_research") return "research";
     if(array=="recipes" || key=="recipe_id" || key=="required_recipe") return "recipe";
@@ -132,7 +133,8 @@ std::vector<ContentReference> content_uses(const CatalogIndex& index,std::string
     if(transitive) {
         std::map<std::string,std::vector<const ContentReference*>,std::less<>> reverse;
         for(const auto& ref:index.references)
-            if(ref.family=="flow" || ref.family=="scenario" || ref.family=="research" || ref.family=="regional_markets" || ref.family=="site_resilience")
+            if(ref.family=="flow" || ref.family=="scenario" || ref.family=="research" || ref.family=="regional_markets" ||
+                ref.family=="site_resilience" || ref.family=="us_civic")
                 reverse[ref.id].push_back(&ref);
         std::vector<std::string> pending{owners.begin(),owners.end()};
         for(std::size_t i=0;i<pending.size();++i) {

@@ -61,6 +61,11 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         core::ResilienceState risks;risks.catalog=*catalog;risks.insurer_cash=catalog->insurer_capital;
         world.simulation.resilience=std::move(risks);
     }
+    if (const auto* catalog = content::civic_catalog(program.collection, *scenario)) {
+        world.simulation.civic = core::opening_civic(*catalog, scenario->starts_on,
+            world.simulation.random[static_cast<std::size_t>(core::RandomStream::politics)]);
+        core::prepare_civic(world.simulation);
+    }
     if (scenario->management && scenario->management->governance) {
         core::GovernanceState corporate;corporate.opening_holdings=world.simulation.accounts->holdings;
         world.simulation.management->governance=std::move(corporate);

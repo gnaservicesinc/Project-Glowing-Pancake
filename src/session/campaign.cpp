@@ -98,6 +98,12 @@ OperationResult Campaign::operate(
             pause_notice="Auto-paused for a new company alert. Review its cause and any real deadline in Office → Policies and alerts.";
         if (after.world.competition && after.world.competition->notices.size()>prior_rivals && std::any_of(after.world.competition->notices.begin()+static_cast<std::ptrdiff_t>(prior_rivals),after.world.competition->notices.end(),[](const auto& row){return row.kind=="warning";}))
             pause_notice="Auto-paused: a heavyweight published a dated mobilization warning. Review public rival notices.";
+        if (const auto& civic = after.world.simulation.civic; civic && after.world.simulation.date != prior_day) {
+            if (core::civic_rule_effective_today(*civic, after.world.simulation.date))
+                pause_notice="A new rule is effective today. Review its jurisdiction, eligibility and expiration in Civic.";
+            if (!civic->elections.empty() && civic->elections.back().day == after.world.simulation.date)
+                pause_notice="The election count is published. Review seat changes and the swearing-in dates in Civic.";
+        }
     }
     // Optional notification preferences never suppress a real deadline stop.
     // This external-driver halt happens on the prepared morning before any
@@ -155,6 +161,8 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::StartTraining>(command.action) ||
         std::holds_alternative<core::StartEvaluation>(command.action) ||
         std::holds_alternative<core::DeployModel>(command.action) ||
+        std::holds_alternative<core::FundPolicyAdvocacy>(command.action) ||
+        std::holds_alternative<core::SubmitPolicyEvidence>(command.action) ||
         std::holds_alternative<core::BuySiteProtection>(command.action) ||
         std::holds_alternative<core::InsureSite>(command.action) ||
         std::holds_alternative<core::ReplicateService>(command.action) ||

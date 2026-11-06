@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**35 of 52 steps complete for Mac feature development. M6-01 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03 and E2-01 through E2-03.
+**36 of 52 steps complete for Mac feature development. M6-02 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03 and M6-01.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -24,7 +24,17 @@ local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
 
-- E2-03 compares all seven finalized generations by their recorded hashes.
+- M6-01 adds a Civic room with House and staggered Senate seats, the
+  presidential calendar, state institutions and the public docket. Typed
+  laws govern new US service launches and state grid permits after votes,
+  executive decisions, review and agency implementation. All **73 optimized
+  Mac CTests passed**. The **39 focused checks** include reload across the 2016 election with actual
+  settled domestic adoption, pending agency work and political disclosures.
+  The **200% text Metal** walkthrough pays for advocacy, stops at the
+  committee boundary and reloads the exact **227,860-byte** save. Finalized
+  content **0.8.0-dev.1**, generation **8**, passes all 15 headquarters checks.
+  [Civic controls and rules](../src/core/CIVIC.md)
+- E2-03 compares finalized generations by their recorded hashes.
   Matched fixtures show changed reach and actual committed effects. Typed
   save maps preserve nested waits, pending decisions, occurrence counters,
   RNG, history and owned modifiers in a separately validated copy. The
@@ -46,7 +56,7 @@ block Mac implementation. Keep build caches between batches.
   The **1280×720 Metal** catalog and world walkthroughs passed at **200%
   text**. The catalog run exercised rename review, localization, asset credit
   editing and pinning, group binding and exact reopen of a **788,839-byte**
-  draft. The shipped collection is still **0.7.0-dev.1**. [Studio workflow](../src/studio/CATALOGS.md).
+  draft against content **0.7.0-dev.1**. [Studio workflow](../src/studio/CATALOGS.md).
 
 - E2-01 adds the separate scenario/world workspace on the shared typed
   document. Forms cover current opening resources, ownership, rivals, slice
@@ -421,7 +431,8 @@ block Mac implementation. Keep build caches between batches.
 
 The Mac game runs the complete 2014–2017 slice through ordinary Office/Lab
 controls, with lab qualification, paid contracts, bounded rivals, recovery,
-delegation, exact saves and scoring. Content Studio browses the checkout,
+delegation, exact saves and scoring. The Civic room adds domestic policy
+and elections. Content Studio browses the checkout,
 edits typed flows through forms/outline and inspects copied runtime state.
 The shared writer finalizes validated internal snapshots through both graphical
 review and the maintainer CLI. E1A-05 demonstrates the authoring path, E1B-01
@@ -429,7 +440,7 @@ supplies the typed canvas and E1B-02 completes graphical review/finalization.
 E2-01 through E2-03 supply scenario forms, catalogs, localization, asset credits,
 typed reusable flows, finalized revision comparisons and reviewed save copies.
 Human studies wait for v1 preparation after all components are in place.
-17 steps remain unchecked, including those studies and deferred platform/release
+16 steps remain unchecked, including those studies and deferred platform/release
 work. [Playability checkpoints](PLAYABILITY.md) distinguish implemented paths
 from unperformed human and release qualification.
 
@@ -462,9 +473,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation is M6-01, US institutions, policy and the election calendar.**
-Implement seat blocs, proposals, votes, executive and agency implementation,
-state policies and exact continuation across effective dates and elections.
+**Next implementation is M6-02, macro response, global coordination and media.**
+Use settled adoption to drive lagged welfare changes. Add the international
+standards forum, regional access rules and audience-specific media effects.
 E2-04 editor download qualification follows M7-03 and the later native release work.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions

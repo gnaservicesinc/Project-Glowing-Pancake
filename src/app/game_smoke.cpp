@@ -12,6 +12,7 @@
 #include <QQuickWindow>
 #include <QTimer>
 #include <algorithm>
+#include <memory>
 
 namespace {
 QQuickItem* visual_item(QQuickItem* root,const QString& name) {
@@ -710,6 +711,113 @@ void schedule_infrastructure_smoke(QQuickWindow& window,pgp::bridge::CampaignCon
             if (s.resilience->policies.size()!=1 || s.resilience->policies.front().covers_from<=s.date) {fail("insurance paid waiting period");return;}
             if (press("operationsSites") && press("reviewOrderOwnedRack")) next(6);return;
         default:fail("unexpected smoke phase");return;
+        }
+    });
+    timer->start();
+}
+
+void schedule_civic_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
+    QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot) {
+    using namespace pgp;
+    struct State {
+        int phase = 0, attempts = 0;
+        core::OrdinalDay hearing{0};
+        core::Cents cash{0};
+        bridge::CampaignSnapshotPtr saved;
+    };
+    const auto run = std::make_shared<State>();
+    auto* timer = new QTimer(&window);
+    timer->setInterval(24);
+    const auto save = paths.saves_directory / "civic-smoke.pgpsave";
+    const auto url = QUrl::fromLocalFile(QString::fromStdU16String(save.u16string()));
+    QObject::connect(timer, &QTimer::timeout, &window, [&, timer, run, expected, save, url, screenshot] {
+        const auto fail = [&](const char* why) {
+            qCritical() << "Civic smoke failed" << run->phase << why << campaign.notice();
+            timer->stop();
+            QCoreApplication::exit(3);
+        };
+        const auto item = [&](const char* name) { return visual_item(window.contentItem(), QString::fromLatin1(name)); };
+        const auto press = [&](const char* name) {
+            auto* control = item(name);
+            reveal_top(control);
+            if (key(window, control, Qt::Key_Space)) return true;
+            fail(name);
+            return false;
+        };
+        if (++run->attempts > 1200) { fail("timed out"); return; }
+        if (!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
+        const auto snapshot = campaign.snapshot();
+        const auto& state = snapshot->checkpoint.world.simulation;
+        auto* civic = campaign.civic();
+        if (!campaign.welcome() && campaign.requiredKind() == QStringLiteral("content")) {
+            const auto choices = campaign.requiredChoices();
+            if (choices.isEmpty()) { fail("missing required choice"); return; }
+            campaign.choose(choices.back().toMap().value("choiceId").toString());
+            return;
+        }
+        switch (run->phase) {
+        case 0: {
+            if (!campaign.welcome() || !civic->available() || std::filesystem::exists(save) ||
+                window.rendererInterface()->graphicsApi() != expected) { fail("scratch campaign or renderer"); return; }
+            const auto choices = campaign.scenarios();
+            const auto selected = std::find_if(choices.begin(), choices.end(), [](const auto& row) {
+                return row.toMap().value("id") == QStringLiteral("scenario.first_playable");
+            });
+            auto* picker = item("competitionChoice");
+            if (!picker || selected == choices.end() ||
+                !picker->setProperty("currentIndex", static_cast<int>(selected - choices.begin()))) { fail("intro scenario selection"); return; }
+            campaign.setDaysPerSecond(60);
+            if (press("newCampaignButton")) ++run->phase;
+            return;
+        }
+        case 1:
+            if (press("civicTab")) ++run->phase;
+            return;
+        case 2:
+            if (civic->dockets()->rowCount() != 2 || !civic->calendar().contains(QStringLiteral("2016-11-08")) ||
+                !civic->institutions().contains(QStringLiteral("House"))) { fail("opening docket, officeholders or dates"); return; }
+            civic->dockets()->setSelectedId(QStringLiteral("2"));
+            run->cash = state.cash;
+            run->hearing = *state.civic->dockets.at(1).next_on;
+            if (press("reviewCivicAdvocacy")) ++run->phase;
+            return;
+        case 3:
+            if (civic->reviewText().isEmpty() || state.cash != run->cash) { fail("confirmation changed cash"); return; }
+            if (press("confirmCivicAdvocacy")) ++run->phase;
+            return;
+        case 4: {
+            const auto& docket = state.civic->dockets.at(1);
+            if (docket.submissions.size() != 1 || run->cash.value() - state.cash.value() != docket.submissions.front().fee.value()) {
+                fail("disclosure lacks exact paid expense"); return;
+            }
+            if (press("advanceCivic")) ++run->phase;
+            return;
+        }
+        case 5:
+            if (!campaign.paused()) return;
+            if (state.date < run->hearing) { (void)press("advanceCivic"); return; }
+            if (state.date != run->hearing || state.civic->dockets.at(1).decisions.size() != 1) { fail("committee stop"); return; }
+            if (!screenshot.isEmpty()) {
+                reveal_top(item("civicPolicyDetail"));
+                if (!window.grabWindow().save(screenshot)) { fail("civic view screenshot"); return; }
+            }
+            run->saved = snapshot;
+            campaign.saveTo(url);
+            ++run->phase;
+            return;
+        case 6:
+            if (!std::filesystem::is_regular_file(save)) { fail("civic save missing"); return; }
+            campaign.loadFrom(url);
+            ++run->phase;
+            return;
+        default:
+            if (snapshot->generation == run->saved->generation || snapshot->checkpoint != run->saved->checkpoint) {
+                fail("civic save did not reopen exactly"); return;
+            }
+            qInfo().noquote() << "Civic smoke passed" << graphics::name(expected) << "text=" << campaign.textScalePercent()
+                << "docket preview, paid disclosure, committee boundary and exact reload" << std::filesystem::file_size(save) << "bytes";
+            timer->stop();
+            QCoreApplication::exit(0);
         }
     });
     timer->start();

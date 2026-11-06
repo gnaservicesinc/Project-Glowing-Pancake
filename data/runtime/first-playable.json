@@ -1,8 +1,1178 @@
 {
   "content_schema": 1,
-  "content_version": "0.7.0-dev.1",
+  "content_version": "0.8.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
+    {
+      "catalog": {
+        "adoption_reference_bp": 1600,
+        "assumptions": "Fictional coalitions, opinions, apportionment and rules. The November calendar elects the House, one Senate class and staggered governors. Every other ballot also elects a president. Local preferences, settled domestic service uptake, the executive record, issue positions and bounded campaign effort shape results.",
+        "blocs": [
+          {
+            "campaign_effort_bp": 180,
+            "id": "bloc.commons",
+            "name": "Civic Commons",
+            "positions_bp": [
+              5200,
+              1200,
+              5100,
+              3800,
+              4300,
+              1600,
+              4000
+            ]
+          },
+          {
+            "campaign_effort_bp": 230,
+            "id": "bloc.enterprise",
+            "name": "Enterprise Coalition",
+            "positions_bp": [
+              -2100,
+              5300,
+              -1900,
+              1800,
+              1300,
+              3700,
+              900
+            ]
+          },
+          {
+            "campaign_effort_bp": 110,
+            "id": "bloc.local",
+            "name": "Local Compact",
+            "positions_bp": [
+              900,
+              300,
+              1100,
+              4300,
+              900,
+              2600,
+              3700
+            ]
+          }
+        ],
+        "constituencies": [
+          {
+            "governor_cycle": 0,
+            "house_seats": 2,
+            "id": "US-AK",
+            "name": "Alaska",
+            "preferences_bp": [
+              3825,
+              4925,
+              1250
+            ],
+            "priority": "privacy",
+            "sector_exposure_bp": 600,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 7,
+            "id": "US-AL",
+            "name": "Alabama",
+            "preferences_bp": [
+              3635,
+              5010,
+              1355
+            ],
+            "priority": "competition",
+            "sector_exposure_bp": 1137,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 4,
+            "id": "US-AR",
+            "name": "Arkansas",
+            "preferences_bp": [
+              3756,
+              4784,
+              1460
+            ],
+            "priority": "access",
+            "sector_exposure_bp": 1387,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 9,
+            "id": "US-AZ",
+            "name": "Arizona",
+            "preferences_bp": [
+              3956,
+              4479,
+              1565
+            ],
+            "priority": "labor",
+            "sector_exposure_bp": 975,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 47,
+            "id": "US-CA",
+            "name": "California",
+            "preferences_bp": [
+              4727,
+              3603,
+              1670
+            ],
+            "priority": "privacy",
+            "sector_exposure_bp": 1012,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 8,
+            "id": "US-CO",
+            "name": "Colorado",
+            "preferences_bp": [
+              3997,
+              4228,
+              1775
+            ],
+            "priority": "innovation",
+            "sector_exposure_bp": 825,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 5,
+            "id": "US-CT",
+            "name": "Connecticut",
+            "preferences_bp": [
+              4638,
+              3482,
+              1880
+            ],
+            "priority": "investment",
+            "sector_exposure_bp": 862,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 0,
+            "id": "US-DC",
+            "name": "District of Columbia",
+            "preferences_bp": [
+              5026,
+              3724,
+              1250
+            ],
+            "priority": "privacy",
+            "sector_exposure_bp": 612,
+            "senate_classes": [
+              false,
+              false,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 2,
+            "id": "US-DE",
+            "name": "Delaware",
+            "preferences_bp": [
+              4486,
+              4159,
+              1355
+            ],
+            "priority": "competition",
+            "sector_exposure_bp": 862,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 25,
+            "id": "US-FL",
+            "name": "Florida",
+            "preferences_bp": [
+              3607,
+              4933,
+              1460
+            ],
+            "priority": "access",
+            "sector_exposure_bp": 1137,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 13,
+            "id": "US-GA",
+            "name": "Georgia",
+            "preferences_bp": [
+              3627,
+              4808,
+              1565
+            ],
+            "priority": "labor",
+            "sector_exposure_bp": 1137,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 3,
+            "id": "US-HI",
+            "name": "Hawaii",
+            "preferences_bp": [
+              4388,
+              3942,
+              1670
+            ],
+            "priority": "security",
+            "sector_exposure_bp": 575,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 5,
+            "id": "US-IA",
+            "name": "Iowa",
+            "preferences_bp": [
+              3768,
+              4457,
+              1775
+            ],
+            "priority": "innovation",
+            "sector_exposure_bp": 1575,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 3,
+            "id": "US-ID",
+            "name": "Idaho",
+            "preferences_bp": [
+              3969,
+              4151,
+              1880
+            ],
+            "priority": "investment",
+            "sector_exposure_bp": 825,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 16,
+            "id": "US-IL",
+            "name": "Illinois",
+            "preferences_bp": [
+              4557,
+              4193,
+              1250
+            ],
+            "priority": "privacy",
+            "sector_exposure_bp": 1200,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 9,
+            "id": "US-IN",
+            "name": "Indiana",
+            "preferences_bp": [
+              4577,
+              4068,
+              1355
+            ],
+            "priority": "competition",
+            "sector_exposure_bp": 1200,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 4,
+            "id": "US-KS",
+            "name": "Kansas",
+            "preferences_bp": [
+              3658,
+              4882,
+              1460
+            ],
+            "priority": "access",
+            "sector_exposure_bp": 1387,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 7,
+            "id": "US-KY",
+            "name": "Kentucky",
+            "preferences_bp": [
+              3578,
+              4857,
+              1565
+            ],
+            "priority": "labor",
+            "sector_exposure_bp": 1137,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 7,
+            "id": "US-LA",
+            "name": "Louisiana",
+            "preferences_bp": [
+              3699,
+              4631,
+              1670
+            ],
+            "priority": "security",
+            "sector_exposure_bp": 1387,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 10,
+            "id": "US-MA",
+            "name": "Massachusetts",
+            "preferences_bp": [
+              4519,
+              3706,
+              1775
+            ],
+            "priority": "innovation",
+            "sector_exposure_bp": 862,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 9,
+            "id": "US-MD",
+            "name": "Maryland",
+            "preferences_bp": [
+              4540,
+              3580,
+              1880
+            ],
+            "priority": "investment",
+            "sector_exposure_bp": 862,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 3,
+            "id": "US-ME",
+            "name": "Maine",
+            "preferences_bp": [
+              4928,
+              3822,
+              1250
+            ],
+            "priority": "privacy",
+            "sector_exposure_bp": 700,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 13,
+            "id": "US-MI",
+            "name": "Michigan",
+            "preferences_bp": [
+              4528,
+              4117,
+              1355
+            ],
+            "priority": "competition",
+            "sector_exposure_bp": 1200,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 8,
+            "id": "US-MN",
+            "name": "Minnesota",
+            "preferences_bp": [
+              4169,
+              4371,
+              1460
+            ],
+            "priority": "access",
+            "sector_exposure_bp": 1387,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 9,
+            "id": "US-MO",
+            "name": "Missouri",
+            "preferences_bp": [
+              3629,
+              4806,
+              1565
+            ],
+            "priority": "labor",
+            "sector_exposure_bp": 1387,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 4,
+            "id": "US-MS",
+            "name": "Mississippi",
+            "preferences_bp": [
+              3550,
+              4780,
+              1670
+            ],
+            "priority": "security",
+            "sector_exposure_bp": 1137,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 2,
+            "id": "US-MT",
+            "name": "Montana",
+            "preferences_bp": [
+              3850,
+              4375,
+              1775
+            ],
+            "priority": "innovation",
+            "sector_exposure_bp": 825,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 13,
+            "id": "US-NC",
+            "name": "North Carolina",
+            "preferences_bp": [
+              3591,
+              4529,
+              1880
+            ],
+            "priority": "investment",
+            "sector_exposure_bp": 1137,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 2,
+            "id": "US-ND",
+            "name": "North Dakota",
+            "preferences_bp": [
+              4079,
+              4671,
+              1250
+            ],
+            "priority": "privacy",
+            "sector_exposure_bp": 1387,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 3,
+            "id": "US-NE",
+            "name": "Nebraska",
+            "preferences_bp": [
+              4099,
+              4546,
+              1355
+            ],
+            "priority": "competition",
+            "sector_exposure_bp": 1387,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 3,
+            "id": "US-NH",
+            "name": "New Hampshire",
+            "preferences_bp": [
+              4920,
+              3620,
+              1460
+            ],
+            "priority": "access",
+            "sector_exposure_bp": 862,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 12,
+            "id": "US-NJ",
+            "name": "New Jersey",
+            "preferences_bp": [
+              4380,
+              4055,
+              1565
+            ],
+            "priority": "labor",
+            "sector_exposure_bp": 862,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 3,
+            "id": "US-NM",
+            "name": "New Mexico",
+            "preferences_bp": [
+              3781,
+              4549,
+              1670
+            ],
+            "priority": "security",
+            "sector_exposure_bp": 825,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 4,
+            "id": "US-NV",
+            "name": "Nevada",
+            "preferences_bp": [
+              3801,
+              4424,
+              1775
+            ],
+            "priority": "innovation",
+            "sector_exposure_bp": 825,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 24,
+            "id": "US-NY",
+            "name": "New York",
+            "preferences_bp": [
+              4442,
+              3678,
+              1880
+            ],
+            "priority": "investment",
+            "sector_exposure_bp": 975,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 15,
+            "id": "US-OH",
+            "name": "Ohio",
+            "preferences_bp": [
+              4410,
+              4340,
+              1250
+            ],
+            "priority": "privacy",
+            "sector_exposure_bp": 1200,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 5,
+            "id": "US-OK",
+            "name": "Oklahoma",
+            "preferences_bp": [
+              4050,
+              4595,
+              1355
+            ],
+            "priority": "competition",
+            "sector_exposure_bp": 1387,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 7,
+            "id": "US-OR",
+            "name": "Oregon",
+            "preferences_bp": [
+              5001,
+              3539,
+              1460
+            ],
+            "priority": "innovation",
+            "sector_exposure_bp": 1075,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 16,
+            "id": "US-PA",
+            "name": "Pennsylvania",
+            "preferences_bp": [
+              4891,
+              3544,
+              1565
+            ],
+            "priority": "labor",
+            "sector_exposure_bp": 862,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 2,
+            "id": "US-RI",
+            "name": "Rhode Island",
+            "preferences_bp": [
+              4352,
+              3978,
+              1670
+            ],
+            "priority": "security",
+            "sector_exposure_bp": 862,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 6,
+            "id": "US-SC",
+            "name": "South Carolina",
+            "preferences_bp": [
+              3472,
+              4753,
+              1775
+            ],
+            "priority": "innovation",
+            "sector_exposure_bp": 1137,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 2,
+            "id": "US-SD",
+            "name": "South Dakota",
+            "preferences_bp": [
+              3593,
+              4527,
+              1880
+            ],
+            "priority": "investment",
+            "sector_exposure_bp": 1387,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 9,
+            "id": "US-TN",
+            "name": "Tennessee",
+            "preferences_bp": [
+              3881,
+              4869,
+              1250
+            ],
+            "priority": "privacy",
+            "sector_exposure_bp": 1137,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 34,
+            "id": "US-TX",
+            "name": "Texas",
+            "preferences_bp": [
+              4001,
+              4644,
+              1355
+            ],
+            "priority": "competition",
+            "sector_exposure_bp": 1637,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 5,
+            "id": "US-UT",
+            "name": "Utah",
+            "preferences_bp": [
+              4202,
+              4338,
+              1460
+            ],
+            "priority": "access",
+            "sector_exposure_bp": 825,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 11,
+            "id": "US-VA",
+            "name": "Virginia",
+            "preferences_bp": [
+              3942,
+              4493,
+              1565
+            ],
+            "priority": "labor",
+            "sector_exposure_bp": 1800,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 2,
+            "id": "US-VT",
+            "name": "Vermont",
+            "preferences_bp": [
+              4863,
+              3467,
+              1670
+            ],
+            "priority": "security",
+            "sector_exposure_bp": 862,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 10,
+            "id": "US-WA",
+            "name": "Washington",
+            "preferences_bp": [
+              4453,
+              3772,
+              1775
+            ],
+            "priority": "competition",
+            "sector_exposure_bp": 1075,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 8,
+            "id": "US-WI",
+            "name": "Wisconsin",
+            "preferences_bp": [
+              3924,
+              4196,
+              1880
+            ],
+            "priority": "investment",
+            "sector_exposure_bp": 1200,
+            "senate_classes": [
+              true,
+              true,
+              false
+            ]
+          },
+          {
+            "governor_cycle": 1,
+            "house_seats": 3,
+            "id": "US-WV",
+            "name": "West Virginia",
+            "preferences_bp": [
+              3832,
+              4918,
+              1250
+            ],
+            "priority": "privacy",
+            "sector_exposure_bp": 1137,
+            "senate_classes": [
+              false,
+              true,
+              true
+            ]
+          },
+          {
+            "governor_cycle": 0,
+            "house_seats": 2,
+            "id": "US-WY",
+            "name": "Wyoming",
+            "preferences_bp": [
+              4132,
+              4513,
+              1355
+            ],
+            "priority": "competition",
+            "sector_exposure_bp": 825,
+            "senate_classes": [
+              true,
+              false,
+              true
+            ]
+          }
+        ],
+        "election_uncertainty_bp": 700,
+        "opening_president": 1,
+        "policies": [
+          {
+            "advocacy_fee_cents": 220000,
+            "advocacy_shift_bp": 780,
+            "case_strength_bp": 2800,
+            "channel": "agent",
+            "evidence_axis": 0,
+            "evidence_floor_bp": 5800,
+            "evidence_shift_bp": 680,
+            "exempt_reviewed_service": false,
+            "explanation": "Requires independently measured document evidence for new agent launches offered to US customers. Existing service terms continue.",
+            "first_agenda_day": 0,
+            "hearing_days": 18,
+            "id": "policy.agent_assurance",
+            "implementation_days": 28,
+            "issue": "privacy",
+            "jurisdiction": "US",
+            "permit_watts": 0,
+            "repeat_years": 4,
+            "review_days": 10,
+            "review_floor_bp": 5350,
+            "rule": "launch_evidence",
+            "term_days": 1080,
+            "title": "Agent launch assurance",
+            "vote_spacing_days": 7
+          },
+          {
+            "advocacy_fee_cents": 150000,
+            "advocacy_shift_bp": 780,
+            "case_strength_bp": 1800,
+            "channel": "legacy",
+            "evidence_axis": 0,
+            "evidence_floor_bp": 0,
+            "evidence_shift_bp": 680,
+            "exempt_reviewed_service": false,
+            "explanation": "The state studies whether its connection crews can reserve enough power for other applicants. A smaller reservation remains eligible.",
+            "first_agenda_day": 0,
+            "hearing_days": 18,
+            "id": "policy.ca_connection",
+            "implementation_days": 14,
+            "issue": "investment",
+            "jurisdiction": "US-CA",
+            "permit_watts": 150000,
+            "repeat_years": 4,
+            "review_days": 0,
+            "review_floor_bp": 0,
+            "rule": "site_power",
+            "term_days": 1080,
+            "title": "California connection review",
+            "vote_spacing_days": 7
+          },
+          {
+            "advocacy_fee_cents": 150000,
+            "advocacy_shift_bp": 780,
+            "case_strength_bp": 650,
+            "channel": "licensed",
+            "evidence_axis": 1,
+            "evidence_floor_bp": 6200,
+            "evidence_shift_bp": 680,
+            "exempt_reviewed_service": false,
+            "explanation": "Would require independent scanned-table evidence for newly licensed services. It faces a heightened procedural review after signature.",
+            "first_agenda_day": 461,
+            "hearing_days": 18,
+            "id": "policy.licence_review",
+            "implementation_days": 21,
+            "issue": "competition",
+            "jurisdiction": "US",
+            "permit_watts": 0,
+            "repeat_years": 4,
+            "review_days": 18,
+            "review_floor_bp": 7900,
+            "rule": "launch_evidence",
+            "term_days": 540,
+            "title": "Licensed checkpoint audit",
+            "vote_spacing_days": 7
+          },
+          {
+            "advocacy_fee_cents": 150000,
+            "advocacy_shift_bp": 780,
+            "case_strength_bp": -4000,
+            "channel": "legacy",
+            "evidence_axis": 0,
+            "evidence_floor_bp": 0,
+            "evidence_shift_bp": 680,
+            "exempt_reviewed_service": false,
+            "explanation": "A proposed temporary cap on new site permits. The local bloc prioritizes preserving smaller grid reservations.",
+            "first_agenda_day": 159,
+            "hearing_days": 18,
+            "id": "policy.tx_capacity",
+            "implementation_days": 21,
+            "issue": "innovation",
+            "jurisdiction": "US-TX",
+            "permit_watts": 240000,
+            "repeat_years": 4,
+            "review_days": 0,
+            "review_floor_bp": 0,
+            "rule": "site_power",
+            "term_days": 720,
+            "title": "Texas connection cap",
+            "vote_spacing_days": 7
+          },
+          {
+            "advocacy_fee_cents": 150000,
+            "advocacy_shift_bp": 780,
+            "case_strength_bp": 1800,
+            "channel": "legacy",
+            "evidence_axis": 0,
+            "evidence_floor_bp": 0,
+            "evidence_shift_bp": 680,
+            "exempt_reviewed_service": false,
+            "explanation": "Applies to new Washington site commitments while the state reviews the queue. Already reserved sites keep their connection dates.",
+            "first_agenda_day": 376,
+            "hearing_days": 18,
+            "id": "policy.wa_connection",
+            "implementation_days": 30,
+            "issue": "access",
+            "jurisdiction": "US-WA",
+            "permit_watts": 120000,
+            "repeat_years": 4,
+            "review_days": 0,
+            "review_floor_bp": 0,
+            "rule": "site_power",
+            "term_days": 365,
+            "title": "Washington grid sequencing",
+            "vote_spacing_days": 7
+          }
+        ]
+      },
+      "id": "civic.domestic",
+      "kind": "us_civic",
+      "revision": 1
+    },
+    {
+      "entry_node": "briefing",
+      "id": "civic.election_briefing",
+      "kind": "flow",
+      "lifecycle": {
+        "cooldown_days": 1,
+        "max_occurrences_per_scope": 768,
+        "mode": "recurring",
+        "occurrence_scope": "world",
+        "repeat_policy": "after_cooldown_while_eligible"
+      },
+      "nodes": {
+        "briefing": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "civic.election_briefing"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "revision": 1,
+      "scope": "world",
+      "tags": [
+        "base_event",
+        "civic"
+      ],
+      "trigger": {
+        "fact": "world.civic_election_today",
+        "op": "eq",
+        "unit": "boolean",
+        "value": true
+      }
+    },
+    {
+      "entry_node": "briefing",
+      "id": "civic.implementation_briefing",
+      "kind": "flow",
+      "lifecycle": {
+        "cooldown_days": 1,
+        "max_occurrences_per_scope": 768,
+        "mode": "recurring",
+        "occurrence_scope": "world",
+        "repeat_policy": "after_cooldown_while_eligible"
+      },
+      "nodes": {
+        "briefing": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "civic.implementation_briefing"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "revision": 1,
+      "scope": "world",
+      "tags": [
+        "base_event",
+        "civic"
+      ],
+      "trigger": {
+        "fact": "world.civic_rule_effective_today",
+        "op": "eq",
+        "unit": "boolean",
+        "value": true
+      }
+    },
     {
       "id": "market.global_launch",
       "kind": "regional_markets",
@@ -7378,6 +8548,7 @@
       ],
       "capacity_milli_CU_per_day": 100000,
       "cash_cents": 120000000,
+      "civic": "civic.domestic",
       "ends_before": "2017-01-01",
       "flows": [
         "slice.research_milestone",
@@ -7388,7 +8559,9 @@
         "slice.supplier_offer",
         "slice.market_shift",
         "slice.recovery_opportunity",
-        "operations.site_outcome"
+        "operations.site_outcome",
+        "civic.election_briefing",
+        "civic.implementation_briefing"
       ],
       "headquarters_choices": [
         "US-CA",
@@ -9573,7 +10746,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 5,
+      "revision": 6,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -9819,6 +10992,7 @@
       ],
       "capacity_milli_CU_per_day": 100000,
       "cash_cents": 120000000,
+      "civic": "civic.domestic",
       "competition": {
         "catchup_acquired_bp": 1500,
         "catchup_cash_cents": 0,
@@ -9839,7 +11013,9 @@
         "slice.supplier_offer",
         "slice.market_shift",
         "slice.recovery_opportunity",
-        "operations.site_outcome"
+        "operations.site_outcome",
+        "civic.election_briefing",
+        "civic.implementation_briefing"
       ],
       "headquarters_choices": [
         "US-CA",
@@ -12173,7 +13349,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 6,
+      "revision": 7,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -13574,6 +14750,7 @@
       ],
       "capacity_milli_CU_per_day": 100000,
       "cash_cents": 120000000,
+      "civic": "civic.domestic",
       "competition": {
         "catchup_acquired_bp": 1500,
         "catchup_cash_cents": 0,
@@ -13594,7 +14771,9 @@
         "slice.supplier_offer",
         "slice.market_shift",
         "slice.recovery_opportunity",
-        "operations.site_outcome"
+        "operations.site_outcome",
+        "civic.election_briefing",
+        "civic.implementation_briefing"
       ],
       "headquarters_choices": [
         "US-CA",
@@ -15928,7 +17107,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 6,
+      "revision": 7,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -17329,6 +18508,7 @@
       ],
       "capacity_milli_CU_per_day": 100000,
       "cash_cents": 120000000,
+      "civic": "civic.domestic",
       "competition": {
         "catchup_acquired_bp": 1500,
         "catchup_cash_cents": 30000000,
@@ -17349,7 +18529,9 @@
         "slice.supplier_offer",
         "slice.market_shift",
         "slice.recovery_opportunity",
-        "operations.site_outcome"
+        "operations.site_outcome",
+        "civic.election_briefing",
+        "civic.implementation_briefing"
       ],
       "headquarters_choices": [
         "US-CA",
@@ -19683,7 +20865,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 6,
+      "revision": 7,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -21084,6 +22266,7 @@
       ],
       "capacity_milli_CU_per_day": 100000,
       "cash_cents": 120000000,
+      "civic": "civic.domestic",
       "competition": {
         "catchup_acquired_bp": 1500,
         "catchup_cash_cents": 0,
@@ -21104,7 +22287,9 @@
         "slice.supplier_offer",
         "slice.market_shift",
         "slice.recovery_opportunity",
-        "operations.site_outcome"
+        "operations.site_outcome",
+        "civic.election_briefing",
+        "civic.implementation_briefing"
       ],
       "headquarters_choices": [
         "US-CA",
@@ -23438,7 +24623,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 6,
+      "revision": 7,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -25252,6 +26437,8 @@
     }
   ],
   "messages": {
+    "civic.election_briefing": "The election count is in. Open Civic for the seat breakdown, economic inputs and dates when the new terms begin.",
+    "civic.implementation_briefing": "A policy completed agency implementation today. Open Civic for the effective jurisdiction, eligibility rules and expiration.",
     "operations.site.outcome": "Operations recorded a site outcome. Review its cause, current capacity and recovery terms in Operations.",
     "slice.demand.decrease": "A fictional business spending cycle lowers discretionary enterprise demand by 20% for 30 days. Existing signed task promises remain protected.",
     "slice.demand.expired": "The temporary demand condition has expired. Base demand resumes; completed work and settled bills are unchanged.",

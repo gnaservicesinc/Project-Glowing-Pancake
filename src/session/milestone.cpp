@@ -28,6 +28,10 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
             }
         }
         if (!result.deadline) throw std::invalid_argument("There is no future construction, delivery, staffing, inspection or lease milestone.");
+    } else if (kind=="civic") {
+        if (s.civic && s.civic->next_boundary && *s.civic->next_boundary > s.date && *s.civic->next_boundary < s.end_date)
+            result.deadline = s.civic->next_boundary;
+        if (!result.deadline) throw std::invalid_argument("There is no later civic event within the campaign.");
     } else if (kind=="deadline") {
         const auto consider=[&](core::OrdinalDay day){if (day>=s.date && day<=s.end_date && (!result.deadline || day<*result.deadline)) result.deadline=day;};
         if (s.accounts) {
@@ -69,7 +73,7 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
         }
         if (!result.deadline) throw std::invalid_argument("There is no known future deadline inside this scenario.");
         if (*result.deadline==s.date) throw std::invalid_argument("A real deadline is today. Review the obligation before advancing.");
-    } else throw std::invalid_argument("Choose project, evaluation, site milestone or actual deadline.");
+    } else throw std::invalid_argument("Choose a project, evaluation, site, civic event or actual deadline.");
     return result;
 }
 bool milestone_reached(const runtime::Checkpoint& checkpoint,const Milestone& milestone) {

@@ -11,6 +11,7 @@
 #include "management_json.hpp"
 #include "infrastructure_json.hpp"
 #include "resilience_json.hpp"
+#include "civic_json.hpp"
 #include "mergers_json.hpp"
 #include "competition_history_json.hpp"
 #include "heavyweight_json.hpp"
@@ -129,7 +130,7 @@ Json simulation_json(const core::SimulationState& state) {
         {"day",receipt.day.value()},{"cause",receipt.cause},{"reservation_id",receipt.reservation_id},
         {"cash_delta_cents",receipt.cash_delta.value()}});
     for (std::size_t index=0;index<core::stream_count;++index) random[core::stream_names[index]]=state.random[index];
-    return Json{{"revision",state.revision},{"date",state.date.value()},{"end_date",state.end_date.value()},
+    Json result{{"revision",state.revision},{"date",state.date.value()},{"end_date",state.end_date.value()},
         {"phase",enumeration(state.phase,phase_names)},{"paused",state.paused},{"cash_cents",state.cash.value()},
         {"next_reservation_id",state.next_reservation_id},{"next_receipt_id",state.next_receipt_id},
         {"reservations",std::move(reservations)},{"opening_actions",std::move(opening)},
@@ -154,6 +155,8 @@ Json simulation_json(const core::SimulationState& state) {
         {"deployments",state.deployments?detail::deployment_json(*state.deployments):Json(nullptr)},
         {"business_offers_mode",state.business_offers?"catalog":"foundation"},
         {"business_offers",state.business_offers?business_offers_json(*state.business_offers):Json(nullptr)}};
+    if (state.civic) result["civic"] = detail::civic_json(*state.civic);
+    return result;
 }
 core::SimulationState parse_simulation(const Json& value) {
     if (!value.is_object()) detail::invalid("simulation","Expected object");
@@ -162,7 +165,7 @@ core::SimulationState parse_simulation(const Json& value) {
         (void)ignored;
         if (name!="accounts" && name!="accounting_mode" && name!="capacity" && name!="capacity_mode" &&
             name!="market" && name!="market_mode" && name!="liquidity" && name!="liquidity_mode" && name!="lab" && name!="lab_mode" &&
-            name!="business_offers" && name!="business_offers_mode" && name!="deployment_mode" && name!="deployments" && name!="management_mode" && name!="management" && name!="infrastructure_mode" && name!="infrastructure" && name!="resilience")
+            name!="business_offers" && name!="business_offers_mode" && name!="deployment_mode" && name!="deployments" && name!="management_mode" && name!="management" && name!="infrastructure_mode" && name!="infrastructure" && name!="resilience" && name!="civic")
             prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"simulation",{"revision","date","end_date","phase","paused","cash_cents",
@@ -182,6 +185,7 @@ core::SimulationState parse_simulation(const Json& value) {
         else if (mode!="foundation" || !value.at("infrastructure").is_null()) detail::invalid("infrastructure","Infrastructure mode differs from its state");
     }
     if (value.contains("resilience") && !value.at("resilience").is_null()) result.resilience=detail::parse_resilience(value.at("resilience"));
+    if (value.contains("civic")) result.civic = detail::parse_civic(value.at("civic"));
     if (value.contains("management_mode")!=value.contains("management")) detail::invalid("management","Management mode/state must appear together");
     if (value.contains("management_mode")) {
         const auto mode=detail::text(value.at("management_mode"),"management_mode",16);

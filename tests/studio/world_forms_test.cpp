@@ -108,7 +108,7 @@ void forms(Scratch& s) {
     check(studio::duplicate_scenario(d,scenario_id,"scenario.authored"),"Scenario template duplication failed");
     check(std::holds_alternative<content::ScenarioDefinition>(d.collection().find("scenario.authored")->data),"New scenario is not a typed runtime definition");
     refused(d,[&]{(void)studio::duplicate_scenario(d,scenario_id,"scenario.authored");});
-    check(studio::WorldForm::open(d,scenario_id,root).apply(d,{{"resilience",""},{"regional_markets",""},{"@enabled/infrastructure","false"}}) && studio::world_states(d,scenario_id).empty(),"Coupled optional systems could not be disabled");
+    check(studio::WorldForm::open(d,scenario_id,root).apply(d,{{"civic",""},{"resilience",""},{"regional_markets",""},{"@enabled/infrastructure","false"}}) && studio::world_states(d,scenario_id).empty(),"Coupled optional systems could not be disabled");
     check(studio::add_missing_scenario_sections(d,scenario_id,"scenario.authored") && studio::world_states(d,scenario_id).size()==51,"Missing systems could not be restored from a complete typed scenario");
     d.save("world-authored.json");studio::DraftDocument reopened{s.path,"data/drafts/world-authored.json"};
     check(reopened.program().canonical_content_bytes==d.program().canonical_content_bytes && !d.dirty(),"World draft failed exact save/reopen");

@@ -8,6 +8,7 @@
 #include <pgp/content/management_catalog.hpp>
 #include <pgp/content/infrastructure_catalog.hpp>
 #include <pgp/content/resilience_catalog.hpp>
+#include <pgp/content/civic_catalog.hpp>
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
@@ -159,6 +160,7 @@ struct ScenarioDefinition {
     std::optional<core::InfrastructureCatalog> infrastructure{};
     std::string regional_markets{};
     std::string resilience{};
+    std::string civic{};
 };
 struct ResearchDefinition {
     std::vector<std::string> all_of;
@@ -168,7 +170,8 @@ struct ResearchDefinition {
     pgp::core::MilliCU work;
 };
 struct DealDefinition { pgp::core::Cents minimum_payment; pgp::core::Days minimum_duration; };
-using DefinitionData = std::variant<ScenarioDefinition, ResearchDefinition, FlowDefinition, DealDefinition, RegionalMarkets,core::ResilienceCatalog>;
+using DefinitionData = std::variant<ScenarioDefinition, ResearchDefinition, FlowDefinition, DealDefinition,
+    RegionalMarkets, core::ResilienceCatalog, core::CivicCatalog>;
 struct Definition {
     std::string id;
     std::uint32_t revision;
@@ -197,6 +200,7 @@ struct Collection {
 [[nodiscard]] std::string_view definition_kind(const Definition& definition);
 [[nodiscard]] const RegionalMarkets* regional_markets(const Collection& collection, const ScenarioDefinition& scenario);
 [[nodiscard]] const core::ResilienceCatalog* resilience_catalog(const Collection&,const ScenarioDefinition&);
+[[nodiscard]] const core::CivicCatalog* civic_catalog(const Collection&, const ScenarioDefinition&);
 [[nodiscard]] MarketSetup scenario_market_setup(const Collection& collection, const ScenarioDefinition& scenario);
 [[nodiscard]] std::vector<core::ServiceDefinition> scenario_services(const Collection& collection, const ScenarioDefinition& scenario);
 

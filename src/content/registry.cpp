@@ -194,6 +194,7 @@ Registry foundation_registry() {
     Registry result;
     result.register_system("slice",{"foundation"});
     result.register_system("resilience",{"slice"});
+    result.register_system("civic", {"slice"});
     const auto maximum = std::numeric_limits<std::int64_t>::max();
     const auto minimum = std::numeric_limits<std::int64_t>::min();
     auto number = [&](std::string id, Scope scope, Unit unit, std::int64_t low, std::int64_t high, std::string help,std::string provider="foundation") {
@@ -215,6 +216,8 @@ Registry foundation_registry() {
            "Number of committed public breakthroughs; an announcement is not new research work.");
     boolean("company.has_exclusive_compute_supplier", "Whether an exclusive supplier contract is already signed.");
     boolean("company.has_compute_lease", "Whether the company has a current compute lease.");
+    boolean("world.civic_election_today", "A US election ballot was counted on this prepared morning.", Scope::world, "civic");
+    boolean("world.civic_rule_effective_today", "An implemented US or state rule took effect on this prepared morning.", Scope::world, "civic");
     boolean("company.has_research_partner", "Whether the company has a current research partnership.");
     boolean("company.is_operating", "Whether company operations remain active.");
     result.register_relation({"company.capacity_sources", Scope::company, Scope::capacity_source, core::capacity_source_limit,

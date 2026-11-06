@@ -104,10 +104,11 @@ void consume(SimulationState& state, std::uint64_t id, Cents amount) {
         row.status = ReservationStatus::completed;
     }
 }
-void prepare_opening(SimulationState& state) {
+void prepare_opening(SimulationState& state, const std::vector<MarketAdoption>* industry_adoptions = nullptr) {
     if (state.phase != DayPhase::opening) {
         return;
     }
+    prepare_civic(state, industry_adoptions);
     prepare_governance(state);
     prepare_management(state);
     prepare_infrastructure(state);
@@ -173,6 +174,7 @@ void validate(const SimulationState& state,bool deep=true) {
     if (state.management) {validate_management(state,deep);validate_governance(state,deep);}
     validate_infrastructure(state,deep);
     validate_resilience(state,deep);
+    validate_civic(state,deep);
     if (state.deployments) {
         if (!state.lab || !state.market || !state.capacity) invalid("Deployments require lab, market and capacity");
         if (deep) validate_deployments(*state.deployments,*state.lab,*state.capacity,*state.market);
@@ -477,7 +479,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     next.paused = true;
                 } else {
                     next.phase = DayPhase::opening;
-                    prepare_opening(next);
+                    prepare_opening(next, action.market_allocation ? &action.industry_adoptions : nullptr);
                 }
             } else if constexpr (std::is_same_v<Action, SetPaused>) {
                 if (!action.paused && required_site_alert(next)) refuse(CommandReason::morning_not_ready,"Review the site disruption before resuming time.");
@@ -695,8 +697,17 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     return row.service_id==action.service_id && !row.stopped_on;
                 })) refuse(CommandReason::dependent_commitment,"Stop the service replica before replacing its qualified checkpoint.");
                 if (!next.deployments) refuse(CommandReason::invalid_status,"This scenario has no deployable service catalog.");
+                if (auto blocked = civic_launch_block(next.civic ? &*next.civic : nullptr, next, action, next.date); !blocked.empty())
+                    refuse(CommandReason::invalid_argument, std::move(blocked));
                 deploy_model(*next.deployments,lab(next),accounts(next),capacity(next),market(next),next.date,action);
                 (void)receipt(next,"deploy_model");
+            } else if constexpr (std::is_same_v<Action, FundPolicyAdvocacy>) {
+                const auto before = next.cash;
+                fund_policy_advocacy(next, action, reserved_cash(next));
+                (void)receipt(next, "fund_policy_advocacy", 0, checked_unit_subtract(next.cash, before));
+            } else if constexpr (std::is_same_v<Action, SubmitPolicyEvidence>) {
+                submit_policy_evidence(next, action);
+                (void)receipt(next, "submit_policy_evidence");
             } else if constexpr (std::is_same_v<Action, TakeFinancing>) {
                 const auto before=next.cash;take_financing(next,action.id);(void)receipt(next,"take_financing",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, HireSpecialist>) {

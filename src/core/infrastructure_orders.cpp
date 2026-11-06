@@ -31,6 +31,8 @@ SiteBuildPreview preview_site_build(const SimulationState& s,const BuildOwnedSit
         connection=std::max(connection,row.grid_on);
     }
     if (committed+request.grid_watts>state.grid_watts) invalid("That state has insufficient unreserved grid capacity");
+    if (const auto blocked = civic_site_block(s.civic ? &*s.civic : nullptr, request.state_id, request.grid_watts, s.date); !blocked.empty())
+        throw std::invalid_argument(blocked);
     const auto gross=checked_unit_add(state.construction_base,Cents{mul_div_floor(static_cast<std::uint64_t>(state.construction_per_kw.value()),request.grid_watts/1000,1).quotient});
     const auto incentive=std::min(state.incentive_cap,Cents{mul_div_floor(static_cast<std::uint64_t>(gross.value()),static_cast<std::uint64_t>(state.construction_incentive.value()),10000).quotient});
     OwnedSite planned;planned.cooling=request.cooling;planned.grid_watts=request.grid_watts;

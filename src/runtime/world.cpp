@@ -229,6 +229,12 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
         return value;
     }
     if (metadata.id == "company.cash_cents") return world.simulation.cash.value();
+    if (metadata.id == "world.civic_election_today") {
+        const auto& civic = world.simulation.civic;
+        return civic && !civic->elections.empty() && civic->elections.back().day == world.simulation.date;
+    }
+    if (metadata.id == "world.civic_rule_effective_today")
+        return world.simulation.civic && core::civic_rule_effective_today(*world.simulation.civic, world.simulation.date);
     if (world.simulation.infrastructure && world.simulation.accounts &&
         (metadata.id=="company.has_compute_lease" || metadata.id=="company.monthly_compute_bill_cents")) {
         core::Cents total{0};
@@ -320,6 +326,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                                           bool validate_core_simulation) {
     const auto& world = checkpoint.world;
     const auto& state = checkpoint.runtime;
+    if (world.simulation.civic && world.scenario_id.empty()) invalid("US institutions require an authored source scenario");
     if (!world.scenario_id.empty()) {
         const auto* definition=program.collection.find(world.scenario_id);
         const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
@@ -331,6 +338,10 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             if (!world.simulation.resilience || (validate_core_simulation && world.simulation.resilience->catalog!=*risks))
                 invalid("Saved site risks differ from the authored scenario");
         } else if (world.simulation.resilience) invalid("This scenario did not authorize site resilience rules");
+        if (const auto* civic = content::civic_catalog(program.collection, *scenario)) {
+            if (!world.simulation.civic || (validate_core_simulation && world.simulation.civic->catalog != *civic))
+                invalid("Saved civic rules differ from the authored scenario");
+        } else if (world.simulation.civic) invalid("This scenario did not authorize a civic calendar");
         if (world.simulation.infrastructure) {
             const auto& base=world.simulation.infrastructure->executive_base;
             if ((base=="US-CA"?"state.us_ca":base=="US-TX"?"state.us_tx":base=="US-WA"?"state.us_wa":"")!=world.state_id ||
@@ -397,6 +408,22 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     }
     validate_competition(world,program,validate_core_simulation);
     validate_acquisitions(world,program,validate_core_simulation);
+    if (validate_core_simulation) {
+        if (world.competition) for (const auto& rival : world.competition->companies)
+            if (rival.simulation.civic) invalid("US institutions belong to the shared world, not a rival checkpoint");
+        if (world.simulation.civic) {
+            const auto& civic = *world.simulation.civic;
+            if (!world.simulation.market || civic.politics_origin != core::RandomStreams{world.root_seed}.snapshot()[static_cast<std::size_t>(core::RandomStream::politics)])
+                invalid("The civic calendar lost its domestic market or campaign politics seed");
+            const auto& market = *world.simulation.market;
+            const auto& adoption = world.competition && world.competition->setup ? world.competition->adoptions : market.adoptions;
+            for (const auto& election : civic.elections)
+                if (election.adoption != core::civic_adoption(market, adoption, election.day))
+                    invalid("Election adoption inputs differ from the last settled domestic market review");
+            if (world.competition) for (const auto& rival : world.competition->companies)
+                core::validate_civic_deployments(civic, rival.simulation);
+        }
+    }
     if (world.simulation.phase == core::DayPhase::closed &&
         (!world.facts.contains("company.is_operating") || world.facts.at("company.is_operating") != content::Scalar{false}))
         invalid("Closed company still claims an operating business fact");
@@ -409,7 +436,8 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
         invalid("Invalid world identity, date, counterparty or count");
     for (const auto& [id, value] : world.facts) {
         const auto* metadata = program.registry.fact(id);
-        if (!metadata || metadata->default_value || id == "company.cash_cents" || metadata->provider=="slice" || business_member_scope(metadata->scope))
+        if (!metadata || metadata->default_value || id == "company.cash_cents" || metadata->provider=="slice" ||
+            metadata->provider=="civic" || business_member_scope(metadata->scope))
             invalid("Unknown or duplicated owning world fact");
         scalar_valid(value, *metadata);
     }

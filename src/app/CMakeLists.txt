@@ -25,6 +25,7 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/FlowPresentation.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/ManagementPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/InfrastructurePanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/CivicPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/DomesticMap.qml")
 qt_add_resources(pgp-game domestic_map
     PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"

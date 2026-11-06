@@ -152,7 +152,7 @@ void specialist_ending(const Json& source) {
 }
 void pause_milestone(const Json& source) {
     const auto program=compile(source,false);auto engine=begin(program);training(engine);
-    auto settings=persistence::Settings{};settings.autosave_enabled=false;
+    auto settings=persistence::Settings{};settings.autosave_enabled=false;settings.auto_pause_alerts=false;
     session::Campaign campaign{program,engine.checkpoint(),std::filesystem::current_path()/"unused-management-autosaves",settings};
     const auto milestone=session::plan_milestone(campaign.checkpoint(),"project");
     for (unsigned i=0;i<3;++i) {

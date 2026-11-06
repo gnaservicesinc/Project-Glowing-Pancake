@@ -4,7 +4,8 @@ add_library(pgp_core STATIC build_configuration.cpp build_identity.cpp
     checked_arithmetic.cpp calendar.cpp random.cpp integer_codec.cpp simulation.cpp accounts.cpp capacity.cpp
     allocation.cpp market.cpp liquidity.cpp lab.cpp business_offers.cpp deployment.cpp management.cpp governance.cpp governance_validation.cpp
     infrastructure.cpp infrastructure_orders.cpp infrastructure_physics.cpp infrastructure_calendar.cpp infrastructure_catalog.cpp infrastructure_validation.cpp
-    resilience.cpp resilience_catalog.cpp resilience_incidents.cpp resilience_replicas.cpp resilience_validation.cpp)
+    resilience.cpp resilience_catalog.cpp resilience_incidents.cpp resilience_replicas.cpp resilience_validation.cpp
+    civic.cpp civic_calendar.cpp civic_validation.cpp)
 add_library(pgp::core ALIAS pgp_core)
 target_include_directories(pgp_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(pgp_core PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")

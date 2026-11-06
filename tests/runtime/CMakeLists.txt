@@ -169,3 +169,10 @@ target_include_directories(pgp-resilience-test SYSTEM PRIVATE "${PROJECT_SOURCE_
 target_compile_definitions(pgp-resilience-test PRIVATE PGP_RESILIENCE_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-resilience-test)
 add_test(NAME runtime.resilience COMMAND pgp-resilience-test)
+
+add_executable(pgp-civic-test civic_test.cpp)
+target_link_libraries(pgp-civic-test PRIVATE pgp::session)
+target_include_directories(pgp-civic-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-civic-test PRIVATE PGP_CIVIC_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-civic-test)
+add_test(NAME runtime.civic COMMAND pgp-civic-test)

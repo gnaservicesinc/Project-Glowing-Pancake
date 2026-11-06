@@ -147,6 +147,12 @@ ApplicationWindow {
                         onClicked: window.room = "operations"
                     }
                     Action {
+                        objectName: "civicTab"; text: qsTr("Civic")
+                        visible: !campaign.welcome && campaign.civic.available
+                        checked: window.room === "civic"
+                        onClicked: window.room = "civic"
+                    }
+                    Action {
                         objectName: "pauseButton"
                         text: campaign.paused ? qsTr("Play") : qsTr("Pause")
                         enabled: !campaign.busy && (!campaign.paused || campaign.canPlay)
@@ -403,7 +409,7 @@ ApplicationWindow {
                     }
                 }
                 Panel {
-                    visible: !campaign.welcome && campaign.management.available && window.room !== "operations" && campaign.showGuide && campaign.management.ending.length === 0
+                    visible: !campaign.welcome && campaign.management.available && (window.room === "office" || window.room === "lab") && campaign.showGuide && campaign.management.ending.length === 0
                     contentItem: ColumnLayout {
                         Heading { text: qsTr("Getting started") }
                         Copy { text: campaign.management.guide }
@@ -422,8 +428,12 @@ ApplicationWindow {
                     visible: !campaign.welcome && campaign.infrastructure.available && window.room === "operations"
                     contentItem: InfrastructurePanel { textSize: window.textSize }
                 }
+                Panel {
+                    visible: !campaign.welcome && campaign.civic.available && window.room === "civic"
+                    contentItem: CivicPanel { textSize: window.textSize }
+                }
                 GridLayout {
-                    visible: !campaign.welcome && window.room !== "operations" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
+                    visible: !campaign.welcome && window.room !== "operations" && window.room !== "civic" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
                     Layout.fillWidth: true
                     columns: window.narrow || campaign.compactManagement ? 1 : 2
                     columnSpacing: 10

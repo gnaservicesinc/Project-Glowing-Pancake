@@ -1,6 +1,6 @@
 # Implementation backlog
 
-Baseline 1.2 with 2026-11-04 event clarification · **35 of 52 steps complete for Mac feature development**.
+Baseline 1.2 with 2026-11-04 event clarification · **36 of 52 steps complete for Mac feature development**.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Feature dependencies are satisfied by implemented Mac behavior and focused checks. Native platform, packaging and device qualification stay deferred to release work under the user’s current instruction. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
 The dated batch notes below retain the earlier acceptance count and prerequisite
@@ -184,7 +184,7 @@ before returning to `E1A-04`/`E1A-05`/`E1b`.
 
 ## M6 — Politics and society
 
-- [ ] **M6-01 — US institutions, policy, and election calendar.** Role: simulation/content. Depends: M5-02, M4-03. Seat blocs, proposals, votes, executive/agency implementation and state policies. Show effective dates, eligibility, evidence and influence costs. Elections and delayed rules survive save/load.
+- [x] **M6-01 — US institutions, policy, and election calendar.** Role: simulation/content. Depends: M5-02, M4-03. Seat blocs, proposals, votes, executive/agency implementation and state policies. Show effective dates, eligibility, evidence and influence costs. Elections and delayed rules survive save/load. **Completed 2026-11-05.** The Civic room covers all 51 jurisdictions, the staggered election calendar, state and federal dockets, disclosed advocacy and independent evidence. Effective rules govern new site permits and US service launches. The 39 focused checks cover agency and election replay, jurisdiction, the paid disclosure ledger and independent evidence. A 200% text Metal walkthrough reopens the exact paid-docket checkpoint. Reviewed content 0.8.0-dev.1, generation 8. [Controls and rules](../src/core/CIVIC.md).
 - [ ] **M6-02 — Macro response, global coordination, and media.** Role: simulation/content. Depends: M6-01. Adoption-to-world-effects lags, five welfare indices, standards forum, access restrictions, advertising and audience reputation. Company spend affects delivered capacity/outcomes before welfare changes; no single world-law toggle.
 - [ ] **M6-03 — Executive/public conflicts and authority paths.** Role: simulation/UI/content. Depends: M6-02. Multi-stage disputes, testimony, commitments, audience-specific identity, institutional authority, abstract coercive control and resistance. Advertising/market share alone cannot satisfy domination.
 

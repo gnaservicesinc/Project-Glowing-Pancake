@@ -24,6 +24,12 @@ runtime::Checkpoint start_fixture(const runtime::CompiledProgram& program, const
         state.world.simulation.random = core::RandomStreams{*fixture.seed}.snapshot();
         if (state.world.simulation.lab) state.world.simulation.lab->research_stream_origin=
             state.world.simulation.random[static_cast<std::size_t>(core::RandomStream::research)];
+        if (state.world.simulation.civic) {
+            auto& simulation = state.world.simulation;
+            simulation.civic = core::opening_civic(simulation.civic->catalog, simulation.date,
+                simulation.random[static_cast<std::size_t>(core::RandomStream::politics)]);
+            core::prepare_civic(simulation);
+        }
         const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find(fixture.scenario_id)->data);
         if (scenario.competition) runtime::initialize_competition(state.world,program,scenario.rivals,scenario.competition);
     }

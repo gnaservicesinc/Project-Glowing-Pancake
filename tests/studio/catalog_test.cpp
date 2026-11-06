@@ -25,7 +25,11 @@ struct Scratch {
     fs::path path=fs::path{PGP_CATALOG_SCRATCH}/("catalog-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     Scratch() {
         fs::create_directories(path/".git");put(path/"CMakeLists.txt","# test\n");put(path/"src/content/collection.cpp","// test\n");
-        put(path/"project-versions.json",read(PGP_CATALOG_VERSIONS));put(path/"data/runtime/first-playable.json",read(PGP_CATALOG_SOURCE));
+        auto versions=nlohmann::json::parse(read(PGP_CATALOG_VERSIONS));
+        auto runtime=nlohmann::json::parse(read(PGP_CATALOG_SOURCE));
+        versions["components"]["content"]="0.0.0-dev";runtime["content_version"]="0.0.0-dev";
+        for(auto& definition:runtime.at("definitions")) definition["revision"]=1;
+        put(path/"project-versions.json",versions.dump());put(path/"data/runtime/first-playable.json",runtime.dump());
     }
     ~Scratch(){std::error_code error;fs::remove_all(path,error);}
 };
@@ -197,19 +201,19 @@ void assets(Scratch& scratch,studio::DraftDocument& draft) {
     check(draft.replace(candidate),"Asset pin did not enter undo and canonical content");
     draft.save();
     const auto target="data/runtime/first-playable.json";
-    const auto report=studio::review_snapshot(scratch.path,{"data/drafts/catalog-authored.json",target,"0.8.0-dev.1","Catalog and provenance review","reject-prior-content",{}});
+    const auto original=read(scratch.path/target);
+    const studio::SnapshotRequest request{"data/drafts/catalog-authored.json",target,
+        "0.1.0-dev.1","Catalog and provenance review","reject-prior-content",{}};
+    const auto report=studio::review_snapshot(scratch.path,request);
     check(report.runtime_changed && report.report_json.find(sealed.evidence_hash)!=std::string::npos,
         "Snapshot review omitted the pinned file and evidence");
     put(license,"Externally changed evidence.\n");
-    refused(draft,[&]{(void)studio::finalize_snapshot(scratch.path,{"data/drafts/catalog-authored.json",target,
-        "0.8.0-dev.1","Catalog and provenance review","reject-prior-content",{}},report.plan_id);});
-    check(read(scratch.path/target)==read(PGP_CATALOG_SOURCE),"Refused asset review changed the runtime collection");
+    refused(draft,[&]{(void)studio::finalize_snapshot(scratch.path,request,report.plan_id);});
+    check(read(scratch.path/target)==original,"Refused asset review changed the runtime collection");
     put(license,"Original geometry fixture for testing the asset authoring pipeline.\n");
-    const studio::SnapshotRequest request{"data/drafts/catalog-authored.json",target,
-        "0.8.0-dev.1","Catalog and provenance review","reject-prior-content",{}};
     const auto finalized=studio::finalize_snapshot(scratch.path,request,report.plan_id);
     const auto manifest=Json::parse(read(scratch.path/"data/runtime/content-manifest.json"));
-    check(finalized.content_version=="0.8.0-dev.1" && studio::check_snapshot(scratch.path).collection_hash==finalized.collection_hash &&
+    check(finalized.content_version==request.content_version && studio::check_snapshot(scratch.path).collection_hash==finalized.collection_hash &&
         manifest.at("assets").size()==1 && manifest.at("assets")[0].at("license_evidence_hash")==sealed.evidence_hash,
         "Finalized snapshot omitted exact asset and credit identity");
     studio::AssetRegister fresh{scratch.path};

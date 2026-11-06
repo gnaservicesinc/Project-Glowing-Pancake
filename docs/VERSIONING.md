@@ -4,7 +4,7 @@ Planning baseline 1.2 · Updated 2026-11-05 · Shared identity, internal snapsho
 
 ## 1. One source, several different identities
 
-[`project-versions.json`](../project-versions.json) is the checked-in source of game, editor, content, and compatibility versions. Game and editor remain `0.0.0-dev`. The current reviewed internal content snapshot is `0.7.0-dev.1`. The planning phase distinguishes these development identities from publishable artifacts. Compatibility values of 1 identify the initial content, runtime and save contracts. Studio supports reviewed save copies between finalized generations under those contracts. Documentation baseline 1.2 identifies the plan.
+[`project-versions.json`](../project-versions.json) is the checked-in source of game, editor, content, and compatibility versions. Game and editor remain `0.0.0-dev`. The current reviewed internal content snapshot is `0.8.0-dev.1`. The planning phase distinguishes these development identities from publishable artifacts. Compatibility values of 1 identify the initial content, runtime and save contracts. Studio supports reviewed save copies between finalized generations under those contracts. Documentation baseline 1.2 identifies the plan.
 
 | Identity | Meaning | Changes when |
 | --- | --- | --- |

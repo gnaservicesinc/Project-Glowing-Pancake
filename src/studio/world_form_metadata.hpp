@@ -36,6 +36,7 @@ inline std::string units(std::string_view path) {
     if(path.find("cents_per_1000_liters")!=path.npos) return "constant-2014 cents per 1,000 liters";
     if(path.find("per_kw_cents")!=path.npos) return "constant-2014 cents per kW";
     if(path.find("cents")!=path.npos) return "constant-2014 cents";
+    if(path.ends_with("/first_agenda_day")) return "days since 2014-01-01";
     if(path.find("_bp")!=path.npos || path.find("basis_points")!=path.npos) return "basis points (100 bp = 1%)";
     if(path.find("milli_CU_per_day")!=path.npos) return "milli-CU per day (1,000 = 1 CU/day)";
     if(path.find("milli_CU")!=path.npos) return "milli-CU (1,000 = 1 CU)";
@@ -62,6 +63,9 @@ inline std::string help(std::string_view path) {
     if(key=="task_target") return "Actual delivered useful work needed for the work portion of the slice score. The other score components retain their own weights.";
     if(key=="opening_founder_share_bp") return "Must equal this founder’s actual opening ownership. Stage the ownership table and this baseline together.";
     if(key=="grid_lead_days") return "Delay from ordering a site until the grid connection is available. Construction, hardware, operators and inspection have separate readiness dates.";
+    if(key=="first_agenda_day") return "Date this public docket opens. Committee, chamber, executive, review and agency dates follow the authored terms.";
+    if(key=="permit_watts") return "Limit on newly authorized site reservations in this state while the rule is effective.";
+    if(key=="evidence_axis") return "Independent evaluation domain index. 0 is documents and 1 is scanned tables.";
     if(key=="map_sha256" || key=="map_asset_id") return "Identity of the prepared offline map asset. Retain its matching hash and provenance.";
     if(key=="assumptions") return "Visible authored-balance assumptions. Label fictional exposure and future parameters honestly.";
     if(path.find("/monthly_probability_bp/")!=path.npos) return "Monthly chance for this named hazard; all hazards together must leave a quiet outcome. Profiles are authored game balance.";
@@ -80,11 +84,12 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
     std::string definition_kind;
     if(key=="regional_markets") definition_kind="regional_markets";
     if(key=="resilience") definition_kind="site_resilience";
+    if(key=="civic") definition_kind="us_civic";
     if(array_key=="flows") definition_kind="flow";
     if(parent.find("/prerequisites/")!=std::string_view::npos) definition_kind="research";
     if(array_key=="headquarters_choices") {add("US-CA","California");add("US-TX","Texas");add("US-WA","Washington");}
     if(!definition_kind.empty()) {
-        if(key=="regional_markets" || key=="resilience") add("","Disabled");
+        if(key=="regional_markets" || key=="resilience" || key=="civic") add("","Disabled");
         for(const auto& [id,d]:draft.collection().definitions) if(content::definition_kind(d)==definition_kind) add(id);
     }
     const auto* def=draft.collection().find(scenario);
@@ -99,6 +104,18 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
     if(key=="state_id" || key=="state" || key=="from" || key=="to") {
         if(s.infrastructure) for(const auto& row:s.infrastructure->states) add(row.id,row.name);
     }
+    if(key=="jurisdiction") {
+        add("US","United States");
+        if(s.infrastructure) for(const auto& row:s.infrastructure->states) add(row.id,row.name);
+    }
+    if(key=="issue" || (key=="priority" && path.find("/constituencies/")!=path.npos))
+        for(std::size_t issue=0;issue<core::civic_issues;++issue) {
+            const auto id=std::string(core::civic_key(static_cast<core::CivicIssue>(issue)));add(id,label(id));
+        }
+    if(key=="rule" && path.find("/catalog/policies/")!=path.npos)
+        for(const auto rule:{core::CivicRule::launch_evidence,core::CivicRule::site_power}) {
+            const auto id=std::string(core::civic_key(rule));add(id,label(id));
+        }
     if(key=="source_id") add("lease.initial","Opening compute lease");
     if(key=="founder") for(const auto& [id,amount]:s.ownership) {(void)amount;add(id);}
     if(array_key=="research" || array_key=="requires_research" || array_key=="all_of" || array_key=="any_of") {

@@ -103016,6 +103016,111 @@
         "prepared_headquarters": 15,
         "scenarios": 5
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "02e872feef74de148cfffd966c8ed93efb0bce130f8f3a9b78e2c2b3641adbb8",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "civic.domestic",
+          "kind": "us_civic",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "a7a89e4186801dd81a73c53f5aace27133e76d01b6d47a1a85d659c1f2743680",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "civic.election_briefing",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "80b811c9f78f4ff645506b249e93e24602895aa89745174973be8d02a588a29f",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "civic.implementation_briefing",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "a9dc041299f4a15f0bdc4c08b000ed39c543089b7ef2882ebb2c6934f7052500",
+          "before_hash": "dfbcd807e688187d18d8924a92a653adf064b3515561437fc1d426aef8be0e73",
+          "change": "changed",
+          "id": "scenario.first_playable",
+          "kind": "scenario",
+          "old_revision": 5,
+          "revision": 6
+        },
+        {
+          "after_hash": "8c0654f71398af13ba1375ac46be7d72fb4bd7fc6f33b0aa703cfb7b352f482c",
+          "before_hash": "573e7fe840802d95468eb91c1236152f8ff01de106f9fe41c86d2a7ade89b716",
+          "change": "changed",
+          "id": "scenario.world_competition",
+          "kind": "scenario",
+          "old_revision": 6,
+          "revision": 7
+        },
+        {
+          "after_hash": "c3f35bf8b392ce39a82d95f81b8c0723189dd510c7299907b68fde2b0d3d4a3a",
+          "before_hash": "8053173663a61700ae5c6a80233afdfd81e10b3590d192b3b0fd3c0091550085",
+          "change": "changed",
+          "id": "scenario.world_expanded",
+          "kind": "scenario",
+          "old_revision": 6,
+          "revision": 7
+        },
+        {
+          "after_hash": "8581d7b92463701690b977c1d1c282193938324b237d4d2135724e393a6f3c00",
+          "before_hash": "391682d4e78685cb12abff0a649945b3116853cc0322bd7b910f087c45d0dc84",
+          "change": "changed",
+          "id": "scenario.world_forgiving",
+          "kind": "scenario",
+          "old_revision": 6,
+          "revision": 7
+        },
+        {
+          "after_hash": "b4f02a95bd624051d015f4a1f457877e0abea170e30ee0d06662c432476a7947",
+          "before_hash": "a2b46d6524b2162659b8a79197d2ede71aadc2b00351ef638ff7d89c8ba950ca",
+          "change": "changed",
+          "id": "scenario.world_reduced",
+          "kind": "scenario",
+          "old_revision": 6,
+          "revision": 7
+        }
+      ],
+      "changed_text_keys": [
+        "civic.election_briefing",
+        "civic.implementation_briefing"
+      ],
+      "collection_hash": "f588eea017e490726b1c37cabf5be6e578b607564c94c55c59924e1853ffca76",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.8.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 8,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.7.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000007.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000008.collection.json",
+      "summary": "Add fictional US institutions, staggered elections, disclosed influence, and federal launch and state permit dockets.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 15,
+        "lints": [],
+        "prepared_headquarters": 15,
+        "scenarios": 5
+      }
     }
   ],
   "format": 1

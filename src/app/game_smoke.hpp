@@ -15,3 +15,5 @@ void schedule_playable_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
 
 void schedule_infrastructure_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
     QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot);
+void schedule_civic_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
+    QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot);

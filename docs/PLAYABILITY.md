@@ -27,11 +27,12 @@ independent human validation and release qualification remain open.
 | M5-03: site hazards and resilience | Inspect seasonal exposure, install protections, reserve a funded service replica, insure damage and manage repair/recovery | Implemented on Mac; 45 physical/financial/replay checks, bundled 200% Metal purchases and exact reload. [Resilience controls](../src/core/RESILIENCE.md) |
 | E2-01: scenario/world authoring | Edit current scenario settings, slice scoring, resources, rivals, policies and state/region profiles; inspect actual opening impacts | Implemented on Mac; 68 authoring checks, Metal forms at 100%/200% text, map/list and 900-pixel pane switching, exact draft reopen. [Studio workflow](../src/studio/WORLD.md) |
 | E2-02: catalog and flow reuse | Edit research and catalogs, review typed reference changes, localize messages, pin reviewed assets and bind reusable group calls | Implemented on Mac with 69 focused checks, saved nested calls and a 200% text Metal walkthrough. [Studio workflow](../src/studio/CATALOGS.md) |
+| M6-01: domestic politics | Inspect seats and dockets, submit evidence, fund bounded advocacy and plan around US and state rules | Implemented on Mac with saved elections, agency dates and disclosures. The 200% text Metal walkthrough paid and reloaded the actual hearing checkpoint. [Civic room](../src/core/CIVIC.md) |
 | M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Deferred until all components are in place and the user is ready for v1 work; no sessions conducted |
 
 There is no calendar estimate inferred from task counts: tasks vary substantially
 in size, and native packaging, authors and players have separate evidence gates.
-Full century simulation, politics, broader editor catalogs and final art are
+Full century simulation, international coordination and final art are
 later milestones. The required typed editor canvas and graphical finalizer are
 implemented on Mac; human author qualification remains deferred.
 

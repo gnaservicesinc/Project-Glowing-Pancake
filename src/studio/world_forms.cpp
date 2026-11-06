@@ -22,7 +22,7 @@ std::vector<std::string> roots(const DraftDocument& d,const Json& doc,std::strin
     const auto* s=def?std::get_if<content::ScenarioDefinition>(&def->data):nullptr;
     if(!s) throw std::invalid_argument("Select an existing scenario.");
     std::vector<std::string> result{definition_path(doc,scenario)};
-    for(const auto& id:{s->regional_markets,s->resilience}) if(!id.empty()) result.push_back(definition_path(doc,id));
+    for(const auto& id:{s->regional_markets,s->resilience,s->civic}) if(!id.empty()) result.push_back(definition_path(doc,id));
     return result;
 }
 std::vector<std::string> catalog_roots(const Json& doc,std::string_view scenario) {
@@ -39,6 +39,8 @@ std::vector<std::string> catalog_roots(const Json& doc,std::string_view scenario
 bool fixed_array(std::string_view path) {
     return path.ends_with("/weights") || path.ends_with("/priorities") || path.find("/monthly_probability_bp")!=path.npos ||
         path.ends_with("/infrastructure/states") || path.ends_with("/catalog/exposures") ||
+        path.ends_with("/catalog/constituencies") || path.ends_with("/catalog/blocs") ||
+        path.ends_with("/positions_bp") || path.ends_with("/preferences_bp") || path.ends_with("/senate_classes") ||
         (path.find("/definitions/market.")==0 && (path.ends_with("/regions") || path.ends_with("/products/offers") || path.ends_with("/products/segments")));
 }
 Json entry_template(const DraftDocument& d,const Json& doc,std::string_view scenario,std::string_view path,std::size_t index) {
@@ -290,7 +292,7 @@ std::string WorldForm::proposal(const DraftDocument& d,const std::map<std::strin
     }
     for(const auto& [key,value_text]:changes) if(key.starts_with("@enabled/") && value_text=="false") value.erase(key.substr(9));
     if(value.is_object() && value.contains("kind") && value.at("kind")=="scenario")
-        for(const auto* reference:{"regional_markets","resilience"})
+        for(const auto* reference:{"regional_markets","resilience","civic"})
             if(value.contains(reference) && value.at(reference)=="") value.erase(reference);
     return value.dump();
 }

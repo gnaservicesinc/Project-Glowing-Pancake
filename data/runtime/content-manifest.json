@@ -1,14 +1,32 @@
 {
   "assets": [],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "4b669644fdeb3af74f1f5676e272e4cf3d183b1b5787d8bc64ccace82561cc34",
+  "collection_hash": "f588eea017e490726b1c37cabf5be6e578b607564c94c55c59924e1853ffca76",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.7.0-dev.1",
+  "content_version": "0.8.0-dev.1",
   "definitions": [
+    {
+      "id": "civic.domestic",
+      "kind": "us_civic",
+      "revision": 1,
+      "semantic_hash": "b6d1b7cb7a6304d2f69bdbaad0c510496efdff988851c252a584031001b2fabb"
+    },
+    {
+      "id": "civic.election_briefing",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "affa684257f46f0dec6854553bcdb84a022895f77ca01616a707b5cb82869d54"
+    },
+    {
+      "id": "civic.implementation_briefing",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "df7ac5015ecd35bc39bb25c986b8e0610b9ecdfb4aa0555447ce43bf0f16b5f6"
+    },
     {
       "id": "market.global_launch",
       "kind": "regional_markets",
@@ -66,32 +84,32 @@
     {
       "id": "scenario.first_playable",
       "kind": "scenario",
-      "revision": 5,
-      "semantic_hash": "07476ef599b1af2d85e6c6c5a236ab434a0e7b118ad2788b4c19eb437bf636cb"
+      "revision": 6,
+      "semantic_hash": "327f06afb355d5eb18270abbd9ef807c24506ae74dfdec572899a44eae568dcf"
     },
     {
       "id": "scenario.world_competition",
       "kind": "scenario",
-      "revision": 6,
-      "semantic_hash": "09a20d46b07aa2611918f7bd846c279d023c6aa7e050c9e5c13d0a5f3a5cdda5"
+      "revision": 7,
+      "semantic_hash": "3e8b3c523c3bb2ebae92738ff2680285752365e3d98591bdd9b0db00b47a0fd2"
     },
     {
       "id": "scenario.world_expanded",
       "kind": "scenario",
-      "revision": 6,
-      "semantic_hash": "d156bcf0ea719346d0be40b489d90b05fe08e7d7831b9da9c41f9b356c9f0340"
+      "revision": 7,
+      "semantic_hash": "2cffdee0cd3ed20a343073e65cabd37abbe710c687dd232da37e9331cc5e9a7e"
     },
     {
       "id": "scenario.world_forgiving",
       "kind": "scenario",
-      "revision": 6,
-      "semantic_hash": "dbcda2db292f09c13ff4d708318cfa09b4b62bca8b6ca5c256b88bc85e1cf0e1"
+      "revision": 7,
+      "semantic_hash": "c8076c284b9c46e41de763c76684ccb4906a8b7d6fb275ceedf415f0a3d996a1"
     },
     {
       "id": "scenario.world_reduced",
       "kind": "scenario",
-      "revision": 6,
-      "semantic_hash": "9123c6e2e7f7030e1a8182809db1ccefdd1f7ee644f18757001345b59bc90ff7"
+      "revision": 7,
+      "semantic_hash": "ae88f8c470310991e715ba689c0a5efc03c4006b67d0e48c529b0c3e2544f323"
     },
     {
       "id": "slice.evaluation_finding",
@@ -143,8 +161,8 @@
     }
   ],
   "format": 1,
-  "generation": 7,
-  "messages_hash": "d3db5155f083f8a5294c96378cdea86cbc6f84040008ff8fe91523780d1115ee",
+  "generation": 8,
+  "messages_hash": "7b91575fb9e0eb7a893a840e7a05d62ef6b2d2a370881196686953f57edf03ab",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
     "scenario.first_playable": [
@@ -156,7 +174,9 @@
       "slice.supplier_offer",
       "slice.market_shift",
       "slice.recovery_opportunity",
-      "operations.site_outcome"
+      "operations.site_outcome",
+      "civic.election_briefing",
+      "civic.implementation_briefing"
     ],
     "scenario.world_competition": [
       "slice.research_milestone",
@@ -167,7 +187,9 @@
       "slice.supplier_offer",
       "slice.market_shift",
       "slice.recovery_opportunity",
-      "operations.site_outcome"
+      "operations.site_outcome",
+      "civic.election_briefing",
+      "civic.implementation_briefing"
     ],
     "scenario.world_expanded": [
       "slice.research_milestone",
@@ -178,7 +200,9 @@
       "slice.supplier_offer",
       "slice.market_shift",
       "slice.recovery_opportunity",
-      "operations.site_outcome"
+      "operations.site_outcome",
+      "civic.election_briefing",
+      "civic.implementation_briefing"
     ],
     "scenario.world_forgiving": [
       "slice.research_milestone",
@@ -189,7 +213,9 @@
       "slice.supplier_offer",
       "slice.market_shift",
       "slice.recovery_opportunity",
-      "operations.site_outcome"
+      "operations.site_outcome",
+      "civic.election_briefing",
+      "civic.implementation_briefing"
     ],
     "scenario.world_reduced": [
       "slice.research_milestone",
@@ -200,8 +226,10 @@
       "slice.supplier_offer",
       "slice.market_shift",
       "slice.recovery_opportunity",
-      "operations.site_outcome"
+      "operations.site_outcome",
+      "civic.election_briefing",
+      "civic.implementation_briefing"
     ]
   },
-  "source_hash": "6b279272df0228864aa13f646fd78273a622a3023064623748ef17538108d4e3"
+  "source_hash": "4fc54a93e979cb6ded9205e582c06ef529fbb8e4602445dc6a7659e52ceb1526"
 }
