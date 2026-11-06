@@ -23,3 +23,5 @@ void schedule_frontier_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
     QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot);
 void schedule_succession_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
     QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot);
+void schedule_objectives_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
+    QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot);

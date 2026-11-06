@@ -177,7 +177,7 @@ WorldState foundation_world(core::Cents cash) {
 }
 std::vector<std::string> supported_effects() {
     return {"adjust_cash", "record_decision", "open_negotiation", "register_owned_modifier", "remove_owned_modifier", "set_variable",
-        "accept_business_offer", "temporary_demand_change"};
+        "accept_business_offer", "temporary_demand_change", "record_world_catastrophe"};
 }
 content::Scalar read_fact(const WorldState& world, const content::FactMetadata& metadata,
                           const ScopeBinding& binding) {
@@ -384,7 +384,8 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     if (!world.scenario_id.empty()) {
         const auto* definition=program.collection.find(world.scenario_id);
         const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
-        if (!scenario || scenario->starts_on!=world.campaign_start || scenario->ends_before!=world.simulation.end_date)
+        if (!scenario || scenario->starts_on!=world.campaign_start ||
+            (!world.objectives && scenario->ends_before!=world.simulation.end_date))
             invalid("Saved source scenario is absent or has different campaign dates");
         if (validate_core_simulation && (scenario->infrastructure ? (!world.simulation.infrastructure || world.simulation.infrastructure->catalog!=*scenario->infrastructure) : world.simulation.infrastructure.has_value()))
             invalid("Saved owned infrastructure rules differ from the source scenario");
@@ -397,7 +398,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                 invalid("Saved civic rules differ from the authored scenario");
         } else if (world.simulation.civic) invalid("This scenario did not authorize a civic calendar");
         if (const auto* society=content::society_catalog(program.collection,*scenario)) {
-            if(!world.society || world.society->prepared_on!=world.simulation.date ||
+            if(!world.society || world.society->prepared_on!=campaign_day(world) ||
                 (validate_core_simulation && world.society->catalog!=*society))
                 invalid("Saved regional society differs from the authored scenario or prepared morning");
         } else if(world.society) invalid("This scenario did not authorize regional society");
@@ -436,8 +437,9 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
         for (const auto& [id, definition] : program.collection.definitions) {
             if (!world.scenario_id.empty() && id!=world.scenario_id) continue;
             const auto* scenario = std::get_if<content::ScenarioDefinition>(&definition.data);
+            const auto authored_deadline=world.objectives?world.objectives->deadline:world.simulation.end_date;
             if (!scenario || !scenario->lab || scenario->starts_on != world.campaign_start ||
-                scenario->ends_before != world.simulation.end_date) continue;
+                scenario->ends_before != authored_deadline) continue;
             matching_lab_scenario = true;
             if (world.simulation.lab && world.simulation.lab->catalog == content::scenario_lab_catalog(program.collection, *scenario)) {
                 matching_catalog = true;
@@ -478,6 +480,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     validate_competition(world,program,validate_core_simulation);
     validate_acquisitions(world,program,validate_core_simulation);
     if(validate_core_simulation) validate_authority_world(world);
+    validate_objectives(world,program,validate_core_simulation);
     if (validate_core_simulation) {
         if (world.competition) for (const auto& rival : world.competition->companies)
             if (rival.simulation.civic) invalid("US institutions belong to the shared world, not a rival checkpoint");
@@ -787,6 +790,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     }
     using ModifierKey = std::tuple<std::uint64_t, ScopeBinding, std::string>;
     std::map<ModifierKey, OwnedModifier> recorded_modifiers;
+    std::size_t catastrophe_count=0;
     for (const auto& receipt : state.receipts) {
         if (quiet_incidents.contains(receipt.activation_id)) invalid("Quiet incident has an effect receipt");
         const auto& activation = by_id(state.activations, receipt.activation_id);
@@ -827,7 +831,16 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             if (receipt.counterparty_delta != core::Cents{0}) invalid("Non-cash receipt changes counterparty");
             const auto* before = std::get_if<std::int64_t>(&receipt.before);
             if (!before) invalid("Effect receipt has the wrong before-value type");
-            if (receipt.operation == "accept_business_offer") {
+            if(receipt.operation=="record_world_catastrophe") {
+                const auto* key=std::get_if<std::string>(&receipt.after);
+                const auto* end=world.objectives && world.objectives->end?&*world.objectives->end:nullptr;
+                if(!key || !program.collection.message(*key) ||
+                   *key!=std::get<std::string>(owner.effects[receipt.effect_index].arguments.at("cause_key")) ||
+                   receipt.target.scope!=content::Scope::world || !end ||
+                   (*before==0 ? (end->cause!=CampaignEndCause::catastrophe || end->source!=*key || end->day!=receipt.day || ++catastrophe_count!=1) :
+                    (*before!=1 || world.objectives->mode!=ObjectiveMode::sandbox || receipt.day<end->day)))
+                    invalid("A world-ending event must match a committed authored cause.");
+            } else if (receipt.operation == "accept_business_offer") {
                 const auto* after=std::get_if<std::int64_t>(&receipt.after);
                 if (!after || !world.simulation.business_offers || *before<0 || *after<0) invalid("Business offer receipt lacks its actual committed state");
                 const auto& id=std::get<std::string>(owner.effects[receipt.effect_index].arguments.at("offer_id"));
@@ -921,6 +934,8 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                    !presentation.resolved || !presentation.choices.empty() || !presentation.selected_choice.empty())
             invalid("Invalid saved news/result presentation");
     }
+    if(world.objectives && world.objectives->end && world.objectives->end->cause==CampaignEndCause::catastrophe && catastrophe_count!=1)
+        invalid("The catastrophe postmortem lost its world event receipt.");
     if (state.prepared_day && std::any_of(state.activations.begin(), state.activations.end(), [](const auto& activation) {
         return activation.status == ActivationStatus::awaiting_choice || activation.status == ActivationStatus::ready;
     })) invalid("Prepared runtime morning still contains required work");

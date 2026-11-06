@@ -6,7 +6,7 @@ ColumnLayout {
     id: panel
     required property int textSize
     readonly property var desk: campaign.leadership
-    readonly property bool editable: desk.editable && !campaign.busy
+    readonly property bool editable: desk.editable && !campaign.busy && campaign.companyEditable
     spacing: 10
     component Copy: Label {
         Layout.fillWidth: true

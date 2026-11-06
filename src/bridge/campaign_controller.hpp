@@ -9,6 +9,7 @@
 #include "institutions_controller.hpp"
 #include "frontier_controller.hpp"
 #include "succession_controller.hpp"
+#include "objectives_controller.hpp"
 
 #include <QThread>
 #include <QUrl>
@@ -24,6 +25,7 @@ class CampaignController final : public QObject {
     Q_PROPERTY(InstitutionsController* institutions READ institutions CONSTANT)
     Q_PROPERTY(FrontierController* frontier READ frontier CONSTANT)
     Q_PROPERTY(SuccessionController* leadership READ leadership CONSTANT)
+    Q_PROPERTY(ObjectivesController* objectives READ objectives CONSTANT)
     Q_PROPERTY(int daysPerSecond READ daysPerSecond WRITE setDaysPerSecond NOTIFY stateChanged)
     Q_PROPERTY(bool welcome READ welcome NOTIFY stateChanged)
     Q_PROPERTY(QVariantList headquarters READ headquarters CONSTANT)
@@ -43,6 +45,7 @@ class CampaignController final : public QObject {
     Q_PROPERTY(bool paused READ paused NOTIFY stateChanged)
     Q_PROPERTY(bool canAdvance READ canAdvance NOTIFY stateChanged)
     Q_PROPERTY(bool canPlay READ canPlay NOTIFY stateChanged)
+    Q_PROPERTY(bool companyEditable READ companyEditable NOTIFY stateChanged)
     Q_PROPERTY(QUrl saveFolder READ saveFolder CONSTANT)
     Q_PROPERTY(bool busy READ busy NOTIFY stateChanged)
     Q_PROPERTY(QString notice READ notice NOTIFY noticeChanged)
@@ -71,6 +74,7 @@ public:
     InstitutionsController* institutions() const { return institutions_; }
     FrontierController* frontier() const { return frontier_; }
     SuccessionController* leadership() const {return leadership_;}
+    ObjectivesController* objectives() const {return objectives_;}
     int daysPerSecond() const { return days_per_second_; }
     void setDaysPerSecond(int value);
     bool welcome() const { return welcome_; }
@@ -91,6 +95,7 @@ public:
     void setShowGuide(bool value);
     Q_INVOKABLE void newCampaign(QString headquarters, bool stories = true);
     Q_INVOKABLE void newCampaignOptions(QString headquarters, bool stories, QString scenario);
+    Q_INVOKABLE void newCampaignWithObjectives(QString headquarters,bool stories,QString scenario,QString primary,QStringList secondary);
     Q_INVOKABLE void openWelcome();
     [[nodiscard]] QString date() const;
     [[nodiscard]] bool ready() const noexcept { return static_cast<bool>(snapshot_); }
@@ -102,6 +107,7 @@ public:
     [[nodiscard]] bool paused() const;
     [[nodiscard]] bool canAdvance() const;
     [[nodiscard]] bool canPlay() const;
+    [[nodiscard]] bool companyEditable() const;
     [[nodiscard]] QUrl saveFolder() const { return save_folder_; }
     [[nodiscard]] bool busy() const noexcept { return busy_; }
     [[nodiscard]] QString notice() const { return notice_; }
@@ -157,6 +163,7 @@ private:
     InstitutionsController* institutions_;
     FrontierController* frontier_;
     SuccessionController* leadership_;
+    ObjectivesController* objectives_;
     bool welcome_ = false;
     int days_per_second_ = 1;
     QThread thread_;

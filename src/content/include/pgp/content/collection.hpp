@@ -13,6 +13,7 @@
 #include <pgp/content/authority_catalog.hpp>
 #include <pgp/content/frontier_catalog.hpp>
 #include <pgp/core/calendar.hpp>
+#include <pgp/core/objectives.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
@@ -167,6 +168,7 @@ struct ScenarioDefinition {
     std::string society{};
     std::string authority{};
     std::string frontier{};
+    std::optional<core::ObjectiveCharter> objectives{};
 };
 struct ResearchDefinition {
     std::vector<std::string> all_of;

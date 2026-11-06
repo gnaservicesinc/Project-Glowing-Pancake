@@ -225,18 +225,18 @@ void advance_society(WorldState& world,core::OrdinalDay settled) {
     const auto civil=from_ordinal(settled);
     if(civil.day==days_in_month(civil.year,civil.month))
         close_society_month(*world.society,settled,observations(world,settled));
-    prepare_society(*world.society,world.simulation.date);
+    prepare_society(*world.society,campaign_day(world));
 }
 void validate_society_world(const WorldState& world) {
     if(!world.society) return;
     const auto& society=*world.society;
-    validate_society(society,world.simulation.date);
+    validate_society(society,campaign_day(world));
     if(society.starts_on!=world.campaign_start || !world.simulation.accounts || !world.simulation.market)
         invalid("Regional society lost its source campaign, accounts or market.");
     for(const auto& month:society.months)
         if(observations(world,month.month_end)!=month.outcomes) invalid("Regional outcomes differ from actual settled company delivery receipts.");
-    if(from_ordinal(world.simulation.date).day!=1 && world.simulation.date>world.campaign_start)
-        (void)observations(world,OrdinalDay{checked_subtract(world.simulation.date.value(),1)});
+    if(from_ordinal(campaign_day(world)).day!=1 && campaign_day(world)>world.campaign_start)
+        (void)observations(world,OrdinalDay{checked_subtract(campaign_day(world).value(),1)});
     std::map<std::string,const Posting*,std::less<>> payments;
     for(const auto& posting:world.simulation.accounts->postings)
         if(posting.key.starts_with("society.")) payments.emplace(posting.key,&posting);

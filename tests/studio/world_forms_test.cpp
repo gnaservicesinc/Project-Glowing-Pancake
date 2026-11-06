@@ -179,6 +179,24 @@ void succession_forms(Scratch& s) {
         rename.apply(d) && d.undo() && d.program().canonical_content_bytes==before,
         "Renaming founder board rights stranded a succession charter reference");
 }
+void objective_forms(Scratch& s) {
+    studio::DraftDocument d{s.path,"data/runtime/first-playable.json"};
+    constexpr std::string_view century="scenario.century_frontier", plateau="scenario.century_plateau";
+    auto form=studio::WorldForm::open(d,century,"/definitions/scenario.century_frontier/objectives");
+    const auto primary=[](const auto& f){return f.key=="primary";};
+    check(std::ranges::find_if(form.fields(),primary)->options.size()==6,
+        "The century charter does not expose all six typed objectives.");
+    const auto before=d.program().canonical_content_bytes;
+    check(form.apply(d,{{"primary","domination"},{"profit_multiple","4"}}) && d.undo() &&
+        d.program().canonical_content_bytes==before,"Objective changes bypassed the shared review and undo boundary.");
+    refused(d,[&]{(void)studio::WorldForm::open(d,century,"/definitions/scenario.century_frontier/objectives").apply(d,{{"profit_multiple","6"}});});
+    form=studio::WorldForm::open(d,plateau,"/definitions/scenario.century_plateau/objectives");
+    check(std::ranges::find_if(form.fields(),primary)->options.size()==5,
+        "A plateau allowed the unavailable ASI primary objective.");
+    const auto program="/definitions/society.century/catalog/development";
+    check(studio::WorldForm::open(d,century,program).apply(d,{{"monthly_gain_bp","45"}}) && d.undo() &&
+        d.program().canonical_content_bytes==before,"The linked society development terms cannot be edited and undone.");
+}
 #if PGP_WORLD_QT
 void controller(Scratch& s) {
     studio::DraftDocument d{s.path,"data/runtime/first-playable.json"};studio::WorldController c;
@@ -223,7 +241,7 @@ int main(int argc,char** argv) {
 #else
     (void)argc;(void)argv;
 #endif
-    try {Scratch s;forms(s);frontier_forms(s);succession_forms(s);
+    try {Scratch s;forms(s);frontier_forms(s);succession_forms(s);objective_forms(s);
 #if PGP_WORLD_QT
         controller(s);
 #endif

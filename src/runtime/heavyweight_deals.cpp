@@ -15,9 +15,9 @@ RivalCompany& owner(WorldState& world,std::string_view id) {
 }
 bool open(const CompetitiveOffer& offer) {return offer.status==CompetitiveOfferStatus::pending || offer.status==CompetitiveOfferStatus::active;}
 void release(WorldState& world,RivalCompany& rival,CompetitiveOffer& offer,CompetitiveOfferStatus status) {
-    if (rival.simulation.phase==DayPhase::closed) {offer.status=CompetitiveOfferStatus::failed;offer.resolved_on=world.simulation.date;return;}
+    if (rival.simulation.phase==DayPhase::closed) {offer.status=CompetitiveOfferStatus::failed;offer.resolved_on=campaign_day(world);return;}
     if (!competition_detail::submit_rival(rival,CancelReservation{offer.reservation_id})) invalid("Funded competitive offer could not release its own escrow");
-    offer.status=status;offer.resolved_on=world.simulation.date;
+    offer.status=status;offer.resolved_on=campaign_day(world);
 }
 std::uint64_t delivered(const MarketState& market,const MarketDay& day,std::string_view product) {
     std::uint64_t result=0;for (const auto& row:day.discretionary) if (row.product_id==product) result+=row.tasks;
@@ -30,7 +30,8 @@ std::uint64_t delivered(const MarketState& market,const MarketDay& day,std::stri
 }
 namespace competition_detail {
 void issue_competitive_offers(WorldState& world,const CompiledProgram& program,RivalCompany& rival) {
-    auto& response=*rival.response;if (response.offers_issued || world.simulation.date.value()>=world.simulation.end_date.value()-1) return;
+    auto& response=*rival.response;if (response.offers_issued || campaign_day(world).value()>=campaign_calendar_limit(world).value()-1) return;
+    if(observing_world(world)) {response.offers_issued=true;return;}
     const auto& definition=rival_definition(program,rival.definition_id);const auto& policy=*definition.response;
     response.offers_issued=true;
     for (const auto kind:{CompetitiveOfferKind::publication,CompetitiveOfferKind::pilot}) {
@@ -46,10 +47,10 @@ void issue_competitive_offers(WorldState& world,const CompiledProgram& program,R
         if (!submit_rival(rival,ReserveFunds{"Funded "+std::string(to_string(kind))+" agreement",amount,true})) invalid("A feasible competitive offer could not reserve actual cash");
         const auto reservation=rival.simulation.reservations.back().id;
         CompetitiveOffer offer;offer.id=id;offer.company_id=rival.definition_id;offer.subject=subject;offer.kind=kind;offer.amount=amount;offer.reservation_id=reservation;
-        offer.issued_on=world.simulation.date;offer.respond_by=std::min(OrdinalDay{world.simulation.end_date.value()-1},advance_days(offer.issued_on,policy.offer_response));
+        offer.issued_on=campaign_day(world);offer.respond_by=std::min(OrdinalDay{campaign_calendar_limit(world).value()-1},advance_days(offer.issued_on,policy.offer_response));
         offer.required_tasks=kind==CompetitiveOfferKind::pilot?policy.pilot_tasks:0;
         world.competition->offers.push_back(std::move(offer));
-        world.competition->notices.push_back({rival.definition_id,"offer",world.simulation.date,world.competition->offers.back().respond_by,id});
+        world.competition->notices.push_back({rival.definition_id,"offer",campaign_day(world),world.competition->offers.back().respond_by,id});
     }
 }
 void cancel_pending_competitive_offers(WorldState& world,RivalCompany& rival) {
@@ -59,19 +60,19 @@ void cancel_pending_competitive_offers(WorldState& world,RivalCompany& rival) {
 void respond_to_competitive_offer(WorldState& world,const CompiledProgram& program,std::string_view id,bool accept) {
     if (!world.competition || !world.competition->setup || world.simulation.phase!=DayPhase::work_ready) invalid("Competitive offers require a prepared operating company");
     auto& offers=world.competition->offers;const auto it=std::find_if(offers.begin(),offers.end(),[&](const auto& row){return row.id==id;});
-    if (it==offers.end() || it->status!=CompetitiveOfferStatus::pending || world.simulation.date>=it->respond_by) invalid("This competitive offer is absent, answered or past its response deadline");
+    if (it==offers.end() || it->status!=CompetitiveOfferStatus::pending || campaign_day(world)>=it->respond_by) invalid("This competitive offer is absent, answered or past its response deadline");
     auto& rival=owner(world,it->company_id);
     if (rival.simulation.phase==DayPhase::closed || rival.response->phase!=HeavyweightPhase::compete) invalid("The offering program is no longer competing");
     if (!accept) {release(world,rival,*it,CompetitiveOfferStatus::declined);return;}
     if (it->kind==CompetitiveOfferKind::publication && std::any_of(world.simulation.lab->publications.begin(),world.simulation.lab->publications.end(),[&](const auto& row){return row.research_id==it->subject;})) invalid("This result is already public; the offer requests a new publication");
     if (it->kind==CompetitiveOfferKind::pilot && std::none_of(world.simulation.market->products.begin(),world.simulation.market->products.end(),[&](const auto& row){return row.id==it->subject;})) invalid("Qualify the offered pilot service before accepting its delivery commitment");
-    it->status=CompetitiveOfferStatus::active;it->accepted_on=world.simulation.date;
-    it->due_on=std::min(OrdinalDay{world.simulation.end_date.value()-1},advance_days(*it->accepted_on,rival_definition(program,rival.definition_id).response->offer_term));
+    it->status=CompetitiveOfferStatus::active;it->accepted_on=campaign_day(world);
+    it->due_on=std::min(OrdinalDay{campaign_calendar_limit(world).value()-1},advance_days(*it->accepted_on,rival_definition(program,rival.definition_id).response->offer_term));
 }
 void update_competitive_offers(WorldState& world,const CompiledProgram&) {
     if (!world.competition || world.competition->offers.empty()) return;
     for (auto& offer:world.competition->offers) if (open(offer)) {
-        auto& rival=owner(world,offer.company_id);const auto day=world.simulation.date;
+        auto& rival=owner(world,offer.company_id);const auto day=campaign_day(world);
         if (rival.simulation.phase==DayPhase::closed) {release(world,rival,offer,CompetitiveOfferStatus::failed);continue;}
         if (offer.status==CompetitiveOfferStatus::pending) {if (day>=offer.respond_by) release(world,rival,offer,CompetitiveOfferStatus::expired);continue;}
         bool complete=false;

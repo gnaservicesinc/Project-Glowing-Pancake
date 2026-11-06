@@ -21,7 +21,13 @@ bool SocietyController::editable() const {return available() && world().simulati
     (snapshot_->driver_halted || world().simulation.paused);}
 QString SocietyController::assumptions() const {
     if(!available()) return {};
-    return text(society().catalog.assumptions)+QStringLiteral(" Welfare uses a %1-month lag. Components have equal weight within each index. Scores are 0–100.").arg(society().catalog.lag_months);
+    auto result=text(society().catalog.assumptions)+QStringLiteral(" Welfare uses a %1-month lag. Components have equal weight within each index. Scores are 0–100.").arg(society().catalog.lag_months);
+    if(const auto& d=society().catalog.development) {
+        const auto value=[](BasisPoints n){return score(static_cast<std::uint32_t>(n.value()));};
+        result+=QStringLiteral(" Each region gains %1 points after a month with at least %2% of public demand, %3% of total demand, and independent quality at least %4/100. Other months erode %5 points. The gain is capped at %6 points.")
+            .arg(value(d->monthly_gain),value(d->public_coverage),value(d->useful_coverage),value(d->evidence_floor),value(d->monthly_decay),value(d->maximum_gain));
+    }
+    return result;
 }
 QString SocietyController::global() const {
     if(!available()) return {};

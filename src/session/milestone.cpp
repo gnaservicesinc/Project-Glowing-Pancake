@@ -5,7 +5,14 @@
 namespace pgp::session {
 Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view kind) {
     const auto& s=checkpoint.world.simulation;Milestone result;result.kind=kind;
-    if (kind=="project" || kind=="evaluation") {
+    if(kind=="objectives") {
+        result.deadline=runtime::next_objective_boundary(checkpoint.world);
+        if(!result.deadline) throw std::invalid_argument("There is no later scored objective check in this campaign.");
+    } else if(runtime::observing_world(checkpoint.world)) {
+        if(kind=="society" && checkpoint.world.society)
+            result.deadline=core::next_society_boundary(*checkpoint.world.society,runtime::campaign_day(checkpoint.world));
+        if(!result.deadline) throw std::invalid_argument("Observer mode can advance to a regional world date.");
+    } else if (kind=="project" || kind=="evaluation") {
         if (s.capacity) for (const auto& work:s.capacity->projects)
             if (work.status==core::ProjectStatus::active && work.kind!=core::ProjectKind::serving && work.kind!=core::ProjectKind::replication &&
                 (kind=="project" || work.kind==core::ProjectKind::evaluation)) result.projects.push_back(work.id);
@@ -83,6 +90,7 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
             if (offer!=s.business_offers->catalog.end() && offer->kind==core::BusinessOfferKind::compute_lease) consider(core::lease_expiry(*s.business_offers,offer->id));
         }
         if(const auto next=core::next_succession_boundary(s)) consider(*next);
+        if(const auto next=runtime::next_objective_boundary(checkpoint.world)) consider(*next);
         if (!result.deadline) throw std::invalid_argument("There is no known future deadline inside this scenario.");
         if (*result.deadline==s.date) throw std::invalid_argument("A real deadline is today. Review the obligation before advancing.");
     } else throw std::invalid_argument("Choose a project, evaluation, site, civic event or actual deadline.");
@@ -90,6 +98,9 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
 }
 bool milestone_reached(const runtime::Checkpoint& checkpoint,const Milestone& milestone) {
     const auto& s=checkpoint.world.simulation;
+    if(runtime::objective_time_stopped(checkpoint.world) || runtime::required_objective_review(checkpoint.world)) return true;
+    if(runtime::observing_world(checkpoint.world))
+        return !milestone.deadline || runtime::campaign_day(checkpoint.world)>=*milestone.deadline;
     if (s.phase==core::DayPhase::finished || s.phase==core::DayPhase::closed) return true;
     if (milestone.deadline) return s.date>=*milestone.deadline;
     if (!s.capacity) return true;

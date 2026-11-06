@@ -42,13 +42,13 @@ std::uint32_t delivered_player_products(const WorldState& world) {
     return count;
 }
 void enter_due(WorldState& world,const CompiledProgram& program) {
-    const auto day=world.simulation.date;
+    const auto day=campaign_day(world);
     for (auto& rival:world.competition->companies) {
         auto& plan=*rival.planning;if (plan.entered_on) continue;
         const auto& definition=rival_definition(program,rival.definition_id);
         if (definition.response) continue;
         const auto earliest=advance_days(world.campaign_start,definition.start_after);
-        if (day<earliest || day>=world.simulation.end_date) continue;
+        if (day<earliest || day>=campaign_calendar_limit(world)) continue;
         if (definition.player_deployment_threshold>0) {
             if (!rival.warned_on && delivered_player_products(world)>=definition.player_deployment_threshold) {
                 rival.warned_on=day;world.competition->notices.push_back({definition.id,"warning",day,advance_days(day,definition.warning_lead)});
@@ -66,7 +66,8 @@ RivalObservation observe(const WorldState& world,OrdinalDay day,std::uint64_t dr
     const auto quote_day=day>world.campaign_start?OrdinalDay{day.value()-1}:day;
     for (const auto& release:world.competition->releases) if (release.day<day) {
         const auto* owner=company(world,release.company_id);
-        if (!owner || !owner->market || ((owner->phase==DayPhase::closed || owner->phase==DayPhase::finished) && owner->date<=quote_day)) continue;
+        if (!owner || !owner->market || ((owner->phase==DayPhase::closed || owner->phase==DayPhase::finished ||
+            (observing_world(world) && owner==&world.simulation)) && owner->date<=quote_day)) continue;
         const auto source=std::find_if(world.competition->companies.begin(),world.competition->companies.end(),[&](const auto& row){return row.definition_id==release.company_id;});
         if (source!=world.competition->companies.end() && source->response && source->response->retired_on && *source->response->retired_on<=quote_day) continue;
         providers.insert(release.company_id);prices.push_back(market_price_on(*owner->market,release.product_id,quote_day).value());
@@ -261,11 +262,11 @@ void diffuse(WorldState& world,RivalCompany& rival) {
 }
 std::uint64_t rival_seed(const WorldState& world,const content::RivalDefinition& definition) {return world.root_seed^definition.seed;}
 SimulationState dormant_company(const WorldState& world,const content::RivalDefinition& definition) {
-    SimulationState result;result.date=world.campaign_start;result.end_date=world.simulation.end_date;result.random=RandomStreams{rival_seed(world,definition)}.snapshot();return result;
+    SimulationState result;result.date=world.campaign_start;result.end_date=campaign_calendar_limit(world);result.random=RandomStreams{rival_seed(world,definition)}.snapshot();return result;
 }
 SimulationState opening_rival(const WorldState& world,const CompiledProgram& program,const content::RivalDefinition& definition,OrdinalDay day) {
     const auto& authored=scenario(world,program);SimulationState state;
-    state.date=day;state.end_date=world.simulation.end_date;state.cash=definition.cash;state.random=RandomStreams{rival_seed(world,definition)}.snapshot();
+    state.date=day;state.end_date=campaign_calendar_limit(world);state.cash=definition.cash;state.random=RandomStreams{rival_seed(world,definition)}.snapshot();
     state.accounts=opening_accounts(definition.cash,day,definition.id);
     add_recurring(*state.accounts,{"payroll",definition.monthly_payroll,day,std::nullopt,"Rival payroll"});
     add_recurring(*state.accounts,{"compute_lease",definition.monthly_lease,day,std::nullopt,"Rival compute lease"});
@@ -343,7 +344,7 @@ void initialize_planning(WorldState& world,const CompiledProgram& program,const 
 }
 void prepare_rival_morning(WorldState& world,const CompiledProgram& program,RivalCompany& rival) {
     if (!rival.planning->entered_on || !active(rival.simulation) || (rival.response && rival.response->retired_on)) return;
-    const auto day=world.simulation.date;
+    const auto day=campaign_day(world);
     if (const auto warning=liquidity_report(*rival.simulation.liquidity).pending_warning) if (!submit(rival,AcknowledgeLiquidityWarning{*warning})) invalid("Rival liquidity warning was not acknowledged");
     std::vector<std::string> accepted_ids;
     if (rival.simulation.business_offers) for (const auto& row:rival.simulation.business_offers->accepted) accepted_ids.push_back(row.offer_id);

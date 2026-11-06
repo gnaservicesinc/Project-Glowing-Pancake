@@ -805,15 +805,18 @@ RegionalMarkets parse_regional_markets(const Json& value, const std::string& pat
     }
     if (seen_regions != required_regions) fail("regional_markets",path,"The catalog must cover all eight market regions");
     catalog.products = parse_market_setup(value.at("products"),child(path,"products"),core::OrdinalDay{0},core::OrdinalDay{1});
-    if (!catalog.products.contracts.empty() || catalog.products.offers.size()!=12 || catalog.products.segments.size()!=48)
-        fail("regional_markets",path,"Author twelve launch templates and six customer groups per region without initial commitments");
+    if (!catalog.products.contracts.empty() || catalog.products.offers.size()<12 || catalog.products.segments.size()!=48)
+        fail("regional_markets",path,"Author at least twelve launch templates and six customer groups per region without initial commitments");
     std::map<core::ProductChannel,std::size_t> channels;
     auto market = core::opening_market();
     for (const auto& offer : catalog.products.offers) {
-        if (offer.product.channel == core::ProductChannel::legacy || ++channels[offer.product.channel] > 2)
-            fail("regional_markets",path,"Each of the six model channels needs two templates");
+        if (offer.product.channel == core::ProductChannel::legacy)
+            fail("regional_markets",path,"Regional launch templates need one of the six model channels.");
+        ++channels[offer.product.channel];
         market.products.push_back(offer.product);
     }
+    if(channels.size()!=6 || std::any_of(channels.begin(),channels.end(),[](const auto& row){return row.second<2;}))
+        fail("regional_markets",path,"Each of the six model channels needs at least two templates.");
     std::set<std::string> expected_segments;
     for (const auto& region : catalog.regions) {
         for (const auto* group : {"enterprise","developers","consumers","public_services","science","industrial"}) {
@@ -860,7 +863,7 @@ RegionalMarkets parse_regional_markets(const Json& value, const std::string& pat
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society", "authority", "frontier"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society", "authority", "frontier", "objectives"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -985,6 +988,34 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
             fail("frontier",path,"Frontier scenarios need qualified services, Lab, owned infrastructure, and planned rivals when rivals are present.");
         result.frontier = id(value.at("frontier"),path);
     }
+    if (value.contains("objectives")) {
+        const auto p=child(path,"objectives");
+        const auto& row=value.at("objectives");
+        fields(row,p,{"primary","secondary","receivables_realizable_bp","physical_assets_realizable_bp","profit_multiple"},
+                     {"primary","secondary","receivables_realizable_bp","physical_assets_realizable_bp","profit_multiple"});
+        if (result.authority.empty() || result.frontier.empty() || !result.management->succession || !result.competition)
+            fail("objectives",p,"Century objectives need world welfare, authority, frontier research, a succession charter and shared markets.");
+        const auto objective=[&](const Json& token) {
+            const auto kind=core::objective_kind(text(token,p,32));
+            if (!kind) fail("objectives",p,"Unknown objective. Choose monopoly, domination, utopia, profit, asi or survival.");
+            return *kind;
+        };
+        core::ObjectiveCharter charter;
+        charter.opening.primary=objective(row.at("primary"));
+        const auto& secondary=row.at("secondary");
+        if (!secondary.is_array() || secondary.size()>=core::objective_kinds.size())
+            fail("objectives",p,"Expected up to five distinct secondary objectives.");
+        for (const auto& token:secondary) charter.opening.secondary.push_back(objective(token));
+        charter.receivables_realizable=core::BasisPoints{integer(row.at("receivables_realizable_bp"),p,0,10000)};
+        charter.physical_assets_realizable=core::BasisPoints{integer(row.at("physical_assets_realizable_bp"),p,0,10000)};
+        charter.profit_multiple=static_cast<std::uint32_t>(integer(row.at("profit_multiple"),p,0,5));
+        try {
+            core::validate_objective_charter(charter);
+            if (result.starts_on>core::objective_window_start(result.ends_before,core::ObjectiveKind::utopia))
+                fail("objectives",p,"A scored campaign must include the entire ten-year welfare window.");
+        } catch (const std::exception& error) { fail("objectives",p,error.what()); }
+        result.objectives=std::move(charter);
+    }
     if (value.contains("business_plan")) {
         const auto plan_path = child(path,"business_plan");
         const auto& plan = value.at("business_plan");
@@ -1079,6 +1110,9 @@ void validate_references(const Collection& collection, const Registry& registry)
             if (!scenario_definition->civic.empty()) {
                 (void)reference(scenario_definition->civic, "us_civic", path);
                 const auto& civic = *civic_catalog(collection, *scenario_definition);
+                if(!scenario_definition->objectives && std::any_of(civic.policies.begin(),civic.policies.end(),
+                    [](const auto& policy){return policy.rule==core::CivicRule::final_closure;}))
+                    fail("civic",path,"Final closure needs a scenario with scored endings and observer continuation.");
                 std::set<std::string> constituencies, states;
                 for (const auto& state : civic.constituencies) constituencies.insert(state.id);
                 for (const auto& state : scenario_definition->infrastructure->states) states.insert(state.id);
@@ -1120,6 +1154,8 @@ void validate_references(const Collection& collection, const Registry& registry)
                     if (!scenario_definition->frontier.empty()) {
                         (void)reference(scenario_definition->frontier,"frontier_research",path);
                         const auto& future = *frontier_catalog(collection,*scenario_definition);
+                        if (scenario_definition->objectives)
+                            core::validate_objective_selection(scenario_definition->objectives->opening,future.asi_route);
                         const auto start = std::max(scenario_definition->starts_on,future.branches_after);
                         if (core::advance_days(start,core::Days{future.asi_route?365:120})>=scenario_definition->ends_before)
                             fail("frontier",path,"The scenario must leave time for actual independent assessment and replication windows.");
@@ -1222,6 +1258,10 @@ void validate_references(const Collection& collection, const Registry& registry)
                     links.push_back(node_value.subflow_id);
                 }
                 for (const auto& effect_value : node_value.effects) {
+                    if(effect_value.operation=="record_world_catastrophe" &&
+                        (flow_definition->scope!=Scope::world || effect_value.target!="self" ||
+                         !collection.message(std::get<std::string>(effect_value.arguments.at("cause_key")))))
+                        fail("objectives",child(path,node_id),"A world-ending effect needs a world self target and a defined cause message.");
                     if (effect_value.operation == "set_variable" && read_only.contains(std::get<std::string>(effect_value.arguments.at("variable"))))
                         fail("group", child(path, node_id), "An input port cannot receive an assignment");
                     const auto* metadata = registry.effect(effect_value.operation);

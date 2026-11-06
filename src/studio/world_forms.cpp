@@ -48,7 +48,7 @@ bool fixed_array(std::string_view path) {
         path.ends_with("/catalog/public_services") || path.ends_with("/catalog/science") || path.ends_with("/catalog/industry") ||
         path.ends_with("/identity_effects_bp") || path.find("/identity_effects_bp/")!=path.npos ||
         path.ends_with("/positions_bp") || path.ends_with("/preferences_bp") || path.ends_with("/senate_classes") ||
-        (path.find("/definitions/market.")==0 && (path.ends_with("/regions") || path.ends_with("/products/offers") || path.ends_with("/products/segments")));
+        (path.find("/definitions/market.")==0 && (path.ends_with("/regions") || path.ends_with("/products/segments")));
 }
 Json entry_template(const DraftDocument& d,const Json& doc,std::string_view scenario,std::string_view path,std::size_t index) {
     const auto& array=doc.at(Json::json_pointer{std::string(path)});
@@ -60,6 +60,7 @@ Json entry_template(const DraftDocument& d,const Json& doc,std::string_view scen
     }
     if(!array.empty()) return array[index];
     const auto key=last(path);
+    if(path.ends_with("/objectives/secondary")) return "";
     for(const auto* name:{"research","flows","headquarters_choices","requires_research","data_ids","all_of","any_of","recipes","services","covered","regions"})
         if(key==name && !path.ends_with("/lab/research") && !path.ends_with("/lab/recipes")) return "";
     if(key=="contracts") {

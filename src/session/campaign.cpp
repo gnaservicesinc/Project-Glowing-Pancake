@@ -27,7 +27,8 @@ void Campaign::set_settings(persistence::Settings settings) {
 OperationResult Campaign::operate(
     const std::function<runtime::RuntimeResult(runtime::Runtime&)>& operation, bool before_commit) {
     const auto prior_phase = engine_.checkpoint().world.simulation.phase;
-    const auto prior_day = engine_.checkpoint().world.simulation.date;
+    const auto prior_day = runtime::campaign_day(engine_.checkpoint().world);
+    const bool prior_objective_end=runtime::objective_time_stopped(engine_.checkpoint().world);
     const auto prior_revision = engine_.checkpoint().world.simulation.revision;
     const auto prior_notices=engine_.checkpoint().world.simulation.management?engine_.checkpoint().world.simulation.management->notices.size():0;
     const auto prior_rivals=engine_.checkpoint().world.competition?engine_.checkpoint().world.competition->notices.size():0;
@@ -64,12 +65,14 @@ OperationResult Campaign::operate(
         }
     }
     const auto& after = engine_.checkpoint();
-    const bool ended = (after.world.simulation.phase == core::DayPhase::finished ||
+    const auto day=runtime::campaign_day(after.world);
+    const bool ended = (!prior_objective_end && runtime::objective_time_stopped(after.world)) ||
+                      ((after.world.simulation.phase == core::DayPhase::finished ||
                        after.world.simulation.phase == core::DayPhase::closed) &&
-                      prior_phase != after.world.simulation.phase;
-    if (settings_.autosave_enabled && (after.world.simulation.date != prior_day || ended)) {
+                      prior_phase != after.world.simulation.phase);
+    if (settings_.autosave_enabled && (day != prior_day || ended)) {
         const auto prior_date = core::from_ordinal(prior_day);
-        const auto current_date = core::from_ordinal(after.world.simulation.date);
+        const auto current_date = core::from_ordinal(day);
         if (ended || prior_date.month != current_date.month || prior_date.year != current_date.year) {
             try {
                 (void)autosaves_.write(engine_.program(), after, ended ?
@@ -81,6 +84,11 @@ OperationResult Campaign::operate(
             }
         }
     }
+    if(runtime::observing_world(after.world)) return {std::move(outcome),{},false};
+    if(runtime::objective_time_stopped(after.world))
+        return {std::move(outcome),{},true,ended?std::optional<std::string>{"Campaign outcome is ready in Objectives."}:std::nullopt};
+    if(const auto breach=runtime::required_objective_review(after.world))
+        return {std::move(outcome),{},true,runtime::objective_breach_explanation(after.world,*breach)};
     const bool liquidity_halt = after.world.simulation.liquidity &&
         (core::liquidity_report(*after.world.simulation.liquidity).pending_warning.has_value() ||
          after.world.simulation.liquidity->status == core::LiquidityStatus::closed);
@@ -150,6 +158,8 @@ OperationResult Campaign::prepare_opening(std::uint64_t expected_revision) {
 OperationResult Campaign::submit(const core::Command& command) {
     const auto* reservation = std::get_if<core::ReserveFunds>(&command.action);
     const bool irreversible = (reservation && !reservation->reversible) ||
+        std::holds_alternative<core::EndWithPostmortem>(command.action) ||
+        std::holds_alternative<core::ContinueAfterEnding>(command.action) ||
         std::holds_alternative<core::ConsumeReservation>(command.action) ||
         std::holds_alternative<core::ResolveOpeningChoice>(command.action) ||
         std::holds_alternative<core::AddRecurringObligation>(command.action) ||

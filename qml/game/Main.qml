@@ -177,6 +177,12 @@ ApplicationWindow {
                         onClicked: window.room = "leadership"
                     }
                     Action {
+                        objectName: "objectivesTab"; text: qsTr("Objectives")
+                        visible: !campaign.welcome && campaign.objectives.available
+                        checked: window.room === "objectives"
+                        onClicked: window.room = "objectives"
+                    }
+                    Action {
                         objectName: "pauseButton"
                         text: campaign.paused ? qsTr("Play") : qsTr("Pause")
                         enabled: !campaign.busy && (!campaign.paused || campaign.canPlay)
@@ -202,6 +208,7 @@ ApplicationWindow {
                         implicitWidth: window.textSize * 11
                         model: [{id:"project",label:qsTr("Next project")},{id:"evaluation",label:qsTr("Next evaluation")},{id:"deadline",label:qsTr("Next deadline")}]
                             .concat(campaign.leadership.available ? [{id:"leadership",label:qsTr("Next leadership date")}] : [])
+                            .concat(campaign.objectives.nextCheck ? [{id:"objectives",label:qsTr("Next objective check")}] : [])
                         textRole: "label"
                         font.pixelSize: window.textSize
                         Accessible.name: qsTr("Advance target")
@@ -336,6 +343,17 @@ ApplicationWindow {
                                 enabled: !campaign.busy
                                 onClicked: campaign.leadership.acknowledge()
                             }
+                            Action {
+                                objectName: "openObjectivePostmortem"; text: qsTr("Open postmortem")
+                                visible: campaign.requiredKind === "objective"
+                                onClicked: window.room = "objectives"
+                            }
+                            Action {
+                                objectName: "continueAfterObjectiveBreach"; text: qsTr("Continue scored play")
+                                visible: campaign.requiredKind === "objective"
+                                enabled: !campaign.busy
+                                onClicked: campaign.objectives.acknowledge()
+                            }
                         }
                     }
                 }
@@ -430,6 +448,21 @@ ApplicationWindow {
                             }
                         }
                         Copy { text: (campaign.scenarios[competitionChoice.currentIndex] || {}).detail || "" }
+                        ObjectivePicker {
+                            id: openingObjectives
+                            readonly property var selectedScenario: campaign.scenarios[competitionChoice.currentIndex] || {}
+                            visible: choices.length > 0
+                            Layout.fillWidth: true
+                            textSize: window.textSize
+                            namePrefix: "openingObjective"
+                            choices: selectedScenario.objectives || []
+                            defaultPrimary: selectedScenario.primary || ""
+                            defaultSecondary: selectedScenario.secondary || []
+                        }
+                        Copy {
+                            text: openingObjectives.selectedScenario.objectiveNote || ""
+                            visible: text.length > 0
+                        }
                         CheckBox {
                             id: includeStories
                             Layout.fillWidth: true
@@ -443,16 +476,28 @@ ApplicationWindow {
                                 wrapMode: Text.Wrap
                             }
                         }
-                        Action { objectName: "newCampaignButton"; text: qsTr("Start new campaign"); enabled: campaign.ready && !campaign.busy; onClicked: campaign.newCampaignOptions(headquartersChoice.currentValue, includeStories.checked, competitionChoice.currentValue) }
+                        Action {
+                            objectName: "newCampaignButton"; text: qsTr("Start new campaign"); enabled: campaign.ready && !campaign.busy
+                            onClicked: campaign.newCampaignWithObjectives(headquartersChoice.currentValue, includeStories.checked,
+                                competitionChoice.currentValue, openingObjectives.visible ? openingObjectives.primary : "", openingObjectives.visible ? openingObjectives.secondary() : [])
+                        }
                         Action { text: qsTr("Load an existing local campaign…"); enabled: campaign.ready && !campaign.busy; onClicked: loadDialog.open() }
                     }
                 }
                 Panel {
-                    visible: !campaign.welcome && campaign.management.ending.length > 0
+                    visible: !campaign.welcome && !campaign.objectives.available && campaign.management.ending.length > 0
                     contentItem: ColumnLayout {
                         Heading { text: qsTr("Campaign outcome") }
                         Copy { text: campaign.management.ending }
                         Action { text: qsTr("Choose a new campaign"); onClicked: campaign.openWelcome() }
+                    }
+                }
+                Panel {
+                    visible: !campaign.welcome && campaign.objectives.ended && window.room !== "objectives"
+                    contentItem: ColumnLayout {
+                        Heading { text: qsTr("Campaign outcome recorded") }
+                        Copy { text: campaign.objectives.overview }
+                        Action { text: qsTr("Review objectives and postmortem"); onClicked: window.room = "objectives" }
                     }
                 }
                 Panel {
@@ -495,8 +540,12 @@ ApplicationWindow {
                     visible: !campaign.welcome && campaign.leadership.available && window.room === "leadership"
                     contentItem: SuccessionPanel { textSize: window.textSize }
                 }
+                Panel {
+                    visible: !campaign.welcome && campaign.objectives.available && window.room === "objectives"
+                    contentItem: ObjectivesPanel { textSize: window.textSize }
+                }
                 GridLayout {
-                    visible: !campaign.welcome && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && window.room !== "institutions" && window.room !== "frontier" && window.room !== "leadership" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
+                    visible: !campaign.welcome && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && window.room !== "institutions" && window.room !== "frontier" && window.room !== "leadership" && window.room !== "objectives" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
                     Layout.fillWidth: true
                     columns: window.narrow || campaign.compactManagement ? 1 : 2
                     columnSpacing: 10

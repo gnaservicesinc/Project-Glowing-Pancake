@@ -5,7 +5,7 @@
 
 namespace pgp::runtime {
 Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scenario_id,
-                           std::string_view headquarters) {
+                           std::string_view headquarters,std::optional<core::ObjectiveSelection> objectives) {
     const auto* definition = program.collection.find(scenario_id);
     if (!definition) throw std::invalid_argument("Scenario definition does not exist");
     const auto* scenario = std::get_if<content::ScenarioDefinition>(&definition->data);
@@ -93,6 +93,8 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     else if (headquarters == "US-WA") world.state_id = "state.us_wa";
     else throw std::invalid_argument("Headquarters has no implemented scope binding");
     initialize_competition(world,program,scenario->rivals,scenario->competition);
+    if(scenario->objectives) initialize_objectives(world,*scenario->objectives,std::move(objectives));
+    else if(objectives) throw std::invalid_argument("This scenario uses its own introductory ending.");
     validate_checkpoint(program, checkpoint);
     return checkpoint;
 }

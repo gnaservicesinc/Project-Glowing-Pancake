@@ -6,6 +6,7 @@
 #include "committed.hpp"
 #include "competition_internal.hpp"
 #include "group_bindings.hpp"
+#include "objectives_internal.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -146,6 +147,15 @@ void apply_effect(Checkpoint& checkpoint, Activation& activation, const content:
             receipt.bound_variable = variable_id;
             receipt.group_calls = std::move(calls);
         }
+        return;
+    }
+    if(effect.operation=="record_world_catastrophe") {
+        const auto& key=std::get<std::string>(effect.arguments.at("cause_key"));
+        if(!checkpoint.world.objectives || activation.binding.scope!=content::Scope::world || effect.target!="self" ||
+           effect.target_scope!=content::Scope::world || !program.collection.message(key))
+            fail(RuntimeReason::effect_rejected,"A world-ending event needs a scored world and an authored cause message.");
+        const auto scored=checkpoint.world.objectives->mode==ObjectiveMode::scored;
+        add_receipt(checkpoint,activation,index,effect.operation,std::int64_t{scored?0:1},key);
         return;
     }
     if (effect.target != "self" || effect.target_scope != activation.binding.scope ||
@@ -594,12 +604,18 @@ RuntimeResult transaction(const CompiledProgram& program, Checkpoint& original, 
         std::size_t steps = 0;
         bool core_already_validated = false;
         action(next, result, steps, core_already_validated);
+        for(std::size_t i=original.runtime.receipts.size();i<next.runtime.receipts.size();++i) {
+            const auto& receipt=next.runtime.receipts[i];
+            if(receipt.operation=="record_world_catastrophe" && std::get<std::int64_t>(receipt.before)==0)
+                objective_detail::finish(next.world,CampaignEndCause::catastrophe,std::get<std::string>(receipt.after));
+        }
+        settle_objectives(next.world,{},program);
         validate_checkpoint_with_simulation(program, next, !core_already_validated);
         original = std::move(next);
         result.revision = original.world.simulation.revision;
         result.committed = true;
         for (auto& path : result.paths) path.committed = true;
-        result.explanation = "The content operation was committed.";
+        if(result.explanation.empty()) result.explanation = "The content operation was committed.";
     } catch (const Failure& failure) {
         result.reason = failure.reason; result.explanation = failure.detail;
     } catch (const detail::DurationBudgetExceeded& error) {
@@ -664,15 +680,18 @@ RuntimeResult Runtime::prepare_opening(std::uint64_t expected_revision) {
          checkpoint_.world.simulation.phase == core::DayPhase::awaiting_choice))
         return {RuntimeReason::accepted, expected_revision, "This morning is already prepared or suspended at its existing choice.", {}, {}};
     return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto& steps, bool&) {
-        if (next.world.simulation.phase == core::DayPhase::finished || next.world.simulation.phase == core::DayPhase::closed)
+        if (objective_time_stopped(next.world) || observing_world(next.world) ||
+            next.world.simulation.phase == core::DayPhase::finished || next.world.simulation.phase == core::DayPhase::closed)
             fail(RuntimeReason::campaign_finished, "The campaign is finished.");
+        if(required_objective_review(next.world))
+            fail(RuntimeReason::morning_not_ready,"Review the irreversible objective breach before preparing more work.");
         prepare(next, program_, result, steps, trace_mode_);
         (void)review_frontier_world(next);
     });
 }
 RuntimeResult Runtime::choose(std::uint64_t expected_revision, std::uint64_t presentation_id, std::string_view choice_id) {
     return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto& steps, bool&) {
-        if (next.world.simulation.phase == core::DayPhase::closed)
+        if (objective_time_stopped(next.world) || observing_world(next.world) || next.world.simulation.phase == core::DayPhase::closed)
             fail(RuntimeReason::campaign_finished,"The company is closed; its final state is preserved.");
         const auto found = std::find_if(next.runtime.presentations.begin(), next.runtime.presentations.end(),
             [presentation_id](const auto& presentation) { return presentation.id == presentation_id; });
@@ -696,6 +715,54 @@ RuntimeResult Runtime::choose(std::uint64_t expected_revision, std::uint64_t pre
 RuntimeResult Runtime::submit(const core::Command& command) {
     if (command.expected_revision != checkpoint_.world.simulation.revision)
         return {RuntimeReason::stale_revision, checkpoint_.world.simulation.revision, "The command's observed revision is stale.", {}, {}};
+    const auto& action=command.action;
+    const bool objectives_command=std::holds_alternative<core::SelectCampaignObjectives>(action) ||
+        std::holds_alternative<core::AcknowledgeObjectiveBreach>(action) || std::holds_alternative<core::EndWithPostmortem>(action) ||
+        std::holds_alternative<core::ContinueAfterEnding>(action);
+    if(objectives_command) return transaction(program_,checkpoint_,command.expected_revision,[&](auto& next,auto& result,auto& steps,bool&) {
+        try {
+            if(const auto* selection=std::get_if<core::SelectCampaignObjectives>(&action)) {
+                select_objectives(next.world,selection->selection);
+                settle_objectives(next.world,{},program_);
+                if(!objective_time_stopped(next.world) && !required_objective_review(next.world))
+                    prepare(next,program_,result,steps,trace_mode_);
+                result.explanation="The campaign objectives were updated.";
+            } else if(const auto* review=std::get_if<core::AcknowledgeObjectiveBreach>(&action)) {
+                acknowledge_objective(next.world,review->objective);
+                if(!required_objective_review(next.world)) prepare(next,program_,result,steps,trace_mode_);
+                result.explanation="Loss recorded. The other scored distinctions are still available.";
+            } else if(std::holds_alternative<core::EndWithPostmortem>(action)) {
+                open_campaign_postmortem(next.world);
+                result.explanation="The scored campaign ended at the recorded breach.";
+            } else {
+                continue_campaign(next.world);
+                competition_detail::refresh_wholesale(next.world,program_);
+                if(!observing_world(next.world)) prepare(next,program_,result,steps,trace_mode_);
+                result.explanation=observing_world(next.world)?"Observer mode preserves the institution's final accounts.":"Sandbox continues with the scored ending preserved.";
+            }
+        } catch(const std::invalid_argument& error) { fail(RuntimeReason::effect_rejected,error.what()); }
+    });
+    if(observing_world(checkpoint_.world)) return transaction(program_,checkpoint_,command.expected_revision,[&](auto& next,auto& result,auto&,bool& core_valid) {
+        auto& world=next.world;
+        if(const auto* pause=std::get_if<core::SetPaused>(&action)) {
+            world.objectives->observer_paused=pause->paused;
+        } else if(const auto* day=std::get_if<core::AdvanceDay>(&action)) {
+            if(day->market_allocation || !day->industry_adoptions.empty() || !day->wholesale_work.empty() || !day->market_influences.empty())
+                fail(RuntimeReason::effect_rejected,"Observer time uses only actual world transactions.");
+            const auto prior=campaign_day(world);
+            if(prior>=core::to_ordinal({9999,1,1})) fail(RuntimeReason::campaign_finished,"The simulation reached its calendar limit.");
+            competition_detail::refresh_wholesale(world,program_,true);
+            const auto assignments=prepare_competition_day(world,program_);
+            world.objectives->observer_day=core::advance_days(prior,core::Days{1});
+            advance_competition(world,program_,prior,assignments);
+            advance_society(world,prior);
+            result.explanation="The world advanced while the institution's final accounts stayed frozen.";
+        } else fail(RuntimeReason::campaign_finished,"Observer mode cannot change the institution's final state.");
+        core_valid=true;
+    });
+    if(objective_time_stopped(checkpoint_.world))
+        return {RuntimeReason::campaign_finished,checkpoint_.world.simulation.revision,
+            "The scored campaign ended; its final accounts remain inspectable.",{}, {}};
     if (checkpoint_.world.simulation.phase == core::DayPhase::closed)
         return {RuntimeReason::campaign_finished,checkpoint_.world.simulation.revision,
             "The company is closed; its final accounts remain inspectable.",{}, {}};
@@ -704,12 +771,17 @@ RuntimeResult Runtime::submit(const core::Command& command) {
     return transaction(program_, checkpoint_, command.expected_revision, [&](auto& next, auto& result, auto& steps, bool& core_already_validated) {
         const bool pause_only = std::holds_alternative<core::SetPaused>(command.action) && std::get<core::SetPaused>(command.action).paused;
         const bool core_choice = std::holds_alternative<core::ResolveOpeningChoice>(command.action);
+        if(required_objective_review(next.world) && (std::holds_alternative<core::AdvanceDay>(action) ||
+            (std::holds_alternative<core::SetPaused>(action) && !pause_only)))
+            fail(RuntimeReason::morning_not_ready,"Review the irreversible objective breach before advancing.");
         if (!pause_only && !core_choice &&
             (has_choice(next.runtime) || next.runtime.prepared_day != next.world.simulation.date))
             fail(RuntimeReason::morning_not_ready, "Resolve required content choices and prepare the morning before work.");
         if(std::holds_alternative<core::AdvanceDay>(command.action) && required_public_case(next.world))
             fail(RuntimeReason::morning_not_ready,"Review and acknowledge the public dispute notice before advancing.");
         if(submit_authority_action(next.world,command.action)) return;
+        if(next.world.objectives && (std::holds_alternative<core::AddMarketSegment>(action) || std::holds_alternative<core::EnableMarket>(action)))
+            fail(RuntimeReason::effect_rejected,"Century scoring uses the authored regional customer roster.");
         if(const auto* media=std::get_if<core::BuyMediaCampaign>(&command.action)) {
             buy_media_campaign(next.world,*media);return;
         }
@@ -780,6 +852,7 @@ RuntimeResult Runtime::submit(const core::Command& command) {
         }
         else competition_detail::refresh_wholesale(next.world,program_);
         const bool institutional_resources_changed=prepare_authority(next.world,next.world.simulation.date!=prior_day?std::optional{prior_day}:std::nullopt);
+        settle_objectives(next.world,next.world.simulation.date!=prior_day?std::optional{prior_day}:std::nullopt,program_);
         update_competitive_offers(next.world,program_);
         update_heavyweight_responses(next.world,program_);
         const auto cash_after_submit = next.world.simulation.cash;
@@ -787,13 +860,14 @@ RuntimeResult Runtime::submit(const core::Command& command) {
         if (next.world.simulation.phase == core::DayPhase::closed) next.world.facts.at("company.is_operating") = false;
         if (next.world.simulation.date != prior_day || next.world.simulation.phase == core::DayPhase::closed)
             next.runtime.prepared_day.reset();
-        if (next.world.simulation.phase == core::DayPhase::work_ready &&
+        if (!objective_time_stopped(next.world) && !required_objective_review(next.world) && next.world.simulation.phase == core::DayPhase::work_ready &&
             next.runtime.prepared_day != next.world.simulation.date) prepare(next, program_, result, steps, trace_mode_);
-        if (!has_choice(next.runtime) && next.runtime.prepared_day==next.world.simulation.date) {
+        if (!objective_time_stopped(next.world) && !required_objective_review(next.world) &&
+            !has_choice(next.runtime) && next.runtime.prepared_day==next.world.simulation.date) {
             core::Cents protected_cash{0};for (const auto& reservation:next.world.simulation.reservations) protected_cash=core::checked_unit_add(protected_cash,reservation.reserved);
             core::review_delegation(next.world.simulation,protected_cash);
         }
-        const bool frontier_resources_changed=review_frontier_world(next);
+        const bool frontier_resources_changed=!objective_time_stopped(next.world) && !required_objective_review(next.world) && review_frontier_world(next);
         core_already_validated = (!institutional_resources_changed && !frontier_resources_changed && next.world.simulation.cash == cash_after_submit &&
                                   next.world.simulation.phase == phase_after_submit &&
                                   next.world.simulation.phase != core::DayPhase::opening &&
@@ -802,6 +876,7 @@ RuntimeResult Runtime::submit(const core::Command& command) {
 }
 RuntimeResult Runtime::respondToCompetitiveOffer(std::uint64_t expected_revision,std::string_view offer_id,bool accept) {
     return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto&,auto&,auto&) {
+        if (objective_time_stopped(next.world) || observing_world(next.world)) fail(RuntimeReason::campaign_finished,"The scored institution is no longer accepting commitments.");
         if (has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date)
             fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required choices before answering an offer.");
         respond_to_competitive_offer(next.world,program_,offer_id,accept);
@@ -810,6 +885,7 @@ RuntimeResult Runtime::respondToCompetitiveOffer(std::uint64_t expected_revision
 }
 RuntimeResult Runtime::proposeAcquisition(std::uint64_t expected_revision,std::string_view target,bool equity) {
     return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto&,auto&,auto&) {
+        if (objective_time_stopped(next.world) || observing_world(next.world)) fail(RuntimeReason::campaign_finished,"The scored institution is no longer accepting commitments.");
         if (has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date || next.world.simulation.phase!=core::DayPhase::work_ready)
             fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required choices before negotiating a merger.");
         propose_acquisition(next.world,program_,target,equity);
@@ -817,6 +893,7 @@ RuntimeResult Runtime::proposeAcquisition(std::uint64_t expected_revision,std::s
 }
 RuntimeResult Runtime::signWholesale(std::uint64_t expected_revision,std::string_view plan,std::string_view source,std::string_view buyer) {
     return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto&,auto&,auto&) {
+        if (objective_time_stopped(next.world) || observing_world(next.world)) fail(RuntimeReason::campaign_finished,"The scored institution is no longer accepting commitments.");
         if (has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date || next.world.simulation.phase!=core::DayPhase::work_ready)
             fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required choices before signing wholesale capacity.");
         sign_wholesale(next.world,program_,plan,source,buyer);
@@ -824,6 +901,7 @@ RuntimeResult Runtime::signWholesale(std::uint64_t expected_revision,std::string
 }
 RuntimeResult Runtime::transferSubsidiaryFunds(std::uint64_t expected_revision,std::string_view target,core::Cents amount,bool funding) {
     return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto&,auto&,auto&) {
+        if (objective_time_stopped(next.world) || observing_world(next.world)) fail(RuntimeReason::campaign_finished,"The scored institution is no longer accepting commitments.");
         if (has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date || next.world.simulation.phase!=core::DayPhase::work_ready)
             fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required choices before transferring group funds.");
         --next.world.simulation.revision;
@@ -832,7 +910,7 @@ RuntimeResult Runtime::transferSubsidiaryFunds(std::uint64_t expected_revision,s
 }
 RuntimeResult Runtime::synthetic_cleanup(std::uint64_t expected_revision, std::uint64_t activation_id) {
     return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto&, bool&) {
-        if (next.world.simulation.phase == core::DayPhase::closed)
+        if (objective_time_stopped(next.world) || observing_world(next.world) || next.world.simulation.phase == core::DayPhase::closed)
             fail(RuntimeReason::campaign_finished,"A closed company retains its final flow state.");
         auto& active = activation_by_id(next.runtime, activation_id);
         if (active.status != ActivationStatus::continuous_active)

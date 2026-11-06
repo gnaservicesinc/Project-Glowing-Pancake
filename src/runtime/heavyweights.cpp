@@ -18,8 +18,8 @@ template<class Function> void public_days(const SimulationState& state,OrdinalDa
 }
 void transition(WorldState& world,RivalCompany& rival,HeavyweightPhase phase,std::string cause,std::optional<OrdinalDay> due={}) {
     auto& response=*rival.response;if (response.transitions.size()>=512) invalid("Heavyweight transition history exceeds its bound");
-    response.phase=phase;response.transitions.push_back({world.simulation.date,phase,std::move(cause),due});
-    world.competition->notices.push_back({rival.definition_id,response.transitions.back().cause=="warning"?"warning":"response",world.simulation.date,due,"response."+std::to_string(response.transitions.size())});
+    response.phase=phase;response.transitions.push_back({campaign_day(world),phase,std::move(cause),due});
+    world.competition->notices.push_back({rival.definition_id,response.transitions.back().cause=="warning"?"warning":"response",campaign_day(world),due,"response."+std::to_string(response.transitions.size())});
 }
 bool run(RivalCompany& rival,CommandAction action) {return competition_detail::submit_rival(rival,std::move(action));}
 bool live(const RivalCompany& rival) {return rival.planning->entered_on && rival.simulation.phase!=DayPhase::closed && rival.simulation.phase!=DayPhase::finished;}
@@ -28,11 +28,11 @@ void retire(WorldState& world,RivalCompany& rival,const content::HeavyweightPoli
     competition_detail::cancel_pending_competitive_offers(world,rival);
     for (const auto& offer:world.competition->offers) if (offer.company_id==rival.definition_id && offer.status==CompetitiveOfferStatus::active) return;
     if (!run(rival,WithdrawOperations{})) invalid("A commitment-free heavyweight could not withdraw its actual operations");
-    rival.response->retired_on=world.simulation.date;
-    transition(world,rival,HeavyweightPhase::consolidate,"withdrawn",advance_days(world.simulation.date,policy.cooldown));
+    rival.response->retired_on=campaign_day(world);
+    transition(world,rival,HeavyweightPhase::consolidate,"withdrawn",advance_days(campaign_day(world),policy.cooldown));
 }
 void mobilize(WorldState& world,const CompiledProgram& program,RivalCompany& rival,const content::RivalDefinition& definition) {
-    const auto& policy=*definition.response;const auto day=world.simulation.date;
+    const auto& policy=*definition.response;const auto day=campaign_day(world);
     rival.response->mobilized_on=day;rival.response->ready_on=advance_days(day,policy.delivery_lead);
     rival.simulation=competition_detail::opening_rival(world,program,definition,day);
     rival.planning->entered_on=day;rival.planning->next_review=*rival.response->ready_on;
@@ -92,8 +92,8 @@ PressureReview observe_heavyweight_pressure(const WorldState& world,const Compil
     result.score=BasisPoints{total};return result;
 }
 void update_heavyweight_responses(WorldState& world,const CompiledProgram& program) {
-    if (!world.competition || !world.competition->setup || world.simulation.date>=world.simulation.end_date) return;
-    const auto day=world.simulation.date;
+    if (!world.competition || !world.competition->setup || campaign_day(world)>=campaign_calendar_limit(world)) return;
+    const auto day=campaign_day(world);
     for (auto& rival:world.competition->companies) if (rival.response) {
         auto& response=*rival.response;const auto& definition=rival_definition(program,rival.definition_id);const auto& policy=*definition.response;
         if (rival.planning->entered_on && !response.retired_on && rival.simulation.phase==DayPhase::closed && response.phase!=HeavyweightPhase::consolidate)

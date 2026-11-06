@@ -89,22 +89,22 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
         if (rival.response.has_value()!=authored.response.has_value()) invalid("Rival response state differs from its authored policy");
         if (rival.warned_on && !rival.response) {
             std::uint32_t released=0;for (const auto& row:state.releases) if (row.company_id==world.company_id && row.day<*rival.warned_on) ++released;
-            if (authored.player_deployment_threshold==0 || *rival.warned_on<earliest || *rival.warned_on>world.simulation.date || released<authored.player_deployment_threshold)
+            if (authored.player_deployment_threshold==0 || *rival.warned_on<earliest || *rival.warned_on>campaign_day(world) || released<authored.player_deployment_threshold)
                 invalid("Heavyweight warning lacks actual prior public customer traction");
         }
         if (!plan.entered_on) {
             if (rival.simulation!=dormant_company(world,authored) || rival.attempted || rival.published_on || !plan.decisions.empty() || plan.next_review!=earliest ||
-                (!rival.response && world.simulation.date>=earliest && world.simulation.date<world.simulation.end_date && (authored.player_deployment_threshold==0 ||
-                    (rival.warned_on && world.simulation.date>=advance_days(*rival.warned_on,authored.warning_lead)))))
+                (!rival.response && campaign_day(world)>=earliest && campaign_day(world)<campaign_calendar_limit(world) && (authored.player_deployment_threshold==0 ||
+                    (rival.warned_on && campaign_day(world)>=advance_days(*rival.warned_on,authored.warning_lead)))))
                 invalid("A scheduled rival spent before entry or skipped its actual entry date");
             continue;
         }
-        const auto entry=rival.response?rival.response->mobilized_on.value_or(world.simulation.end_date):authored.player_deployment_threshold>0?(rival.warned_on?advance_days(*rival.warned_on,authored.warning_lead):world.simulation.end_date):earliest;
+        const auto entry=rival.response?rival.response->mobilized_on.value_or(campaign_calendar_limit(world)):authored.player_deployment_threshold>0?(rival.warned_on?advance_days(*rival.warned_on,authored.warning_lead):campaign_calendar_limit(world)):earliest;
         const auto& simulation=rival.simulation;
-        if (*plan.entered_on!=entry || *plan.entered_on>world.simulation.date || !simulation.accounts || !simulation.lab || !simulation.capacity || !simulation.market || !simulation.deployments || !simulation.management || !simulation.liquidity ||
+        if (*plan.entered_on!=entry || *plan.entered_on>campaign_day(world) || !simulation.accounts || !simulation.lab || !simulation.capacity || !simulation.market || !simulation.deployments || !simulation.management || !simulation.liquidity ||
             simulation.accounts->owner!=authored.id || simulation.lab->catalog!=world.simulation.lab->catalog || simulation.lab->starts_on!=entry ||
-            simulation.end_date!=world.simulation.end_date || simulation.date>world.simulation.date ||
-            (simulation.date!=world.simulation.date && simulation.phase!=DayPhase::closed) ||
+            simulation.end_date!=campaign_calendar_limit(world) || simulation.date>campaign_day(world) ||
+            (simulation.date!=campaign_day(world) && simulation.phase!=DayPhase::closed) ||
             plan.next_review!=advance_days(rival.response?rival.response->ready_on.value_or(entry):entry,Days{static_cast<std::int64_t>(plan.decisions.size())*7})) invalid("Rival entry, resource ownership or weekly/daily cursor is invalid");
         if (simulation.lab->research_stream_origin!=RandomStreams{rival_seed(world,authored)}.snapshot()[static_cast<std::size_t>(RandomStream::research)]) invalid("Rival research stream origin differs from its private seed");
         if (simulation.frontier.has_value()!=world.simulation.frontier.has_value() ||
@@ -129,7 +129,7 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
     }
     for (const auto& notice:state.notices) {
         const auto found=std::find_if(state.companies.begin(),state.companies.end(),[&](const auto& row){return row.definition_id==notice.company_id;});
-        if (found==state.companies.end() || !notice_ids.emplace(notice.company_id,notice.kind,notice.subject).second || notice.day<world.campaign_start || notice.day>world.simulation.date)
+        if (found==state.companies.end() || !notice_ids.emplace(notice.company_id,notice.kind,notice.subject).second || notice.day<world.campaign_start || notice.day>campaign_day(world))
             invalid("Competitive notice has a missing source, duplicate identity or invalid date");
         if (notice.kind=="entry") {if (found->planning->entered_on!=notice.day || notice.response_due || !notice.subject.empty()) invalid("Rival entry notice is not an actual company opening");}
         else if (notice.kind=="warning" && found->response) { /* Checked against the response transition below. */ }

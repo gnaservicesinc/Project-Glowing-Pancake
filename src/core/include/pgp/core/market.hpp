@@ -192,6 +192,7 @@ void set_product_available(MarketState& state, std::string_view product_id, bool
 void set_market_price(MarketState& state, OrdinalDay day, std::string_view product_id, Cents price);
 [[nodiscard]] std::uint64_t effective_market_demand(const MarketState& state, const MarketSegment& segment, OrdinalDay day);
 [[nodiscard]] std::uint64_t public_market_demand(const MarketState& state, const MarketSegment& segment, OrdinalDay day);
+[[nodiscard]] std::uint64_t maximum_daily_demand(const MarketSegment& segment);
 void add_market_demand_change(MarketState& state, OrdinalDay day, MarketDemandChange change);
 void accept_contract(MarketState& state, const CapacityState& capacity, OrdinalDay day, MarketContract contract);
 void validate_contract_acceptance(const MarketState& state, const CapacityState& capacity,

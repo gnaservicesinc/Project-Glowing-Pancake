@@ -3,6 +3,7 @@
 #include <pgp/runtime/compiler.hpp>
 #include <pgp/core/simulation.hpp>
 #include <pgp/runtime/competition.hpp>
+#include <pgp/runtime/objectives.hpp>
 
 #include <map>
 #include <optional>
@@ -48,6 +49,7 @@ struct WorldState {
     std::string scenario_id{};
     std::optional<core::SocietyState> society{};
     std::optional<core::AuthorityState> authority{};
+    std::optional<ObjectivesState> objectives{};
     auto operator<=>(const WorldState&) const = default;
 };
 

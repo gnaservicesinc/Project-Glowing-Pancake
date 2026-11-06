@@ -6,7 +6,7 @@ ColumnLayout {
     id: panel
     required property int textSize
     readonly property var institutions: campaign.institutions
-    readonly property bool editable: institutions.editable && !campaign.busy
+    readonly property bool editable: institutions.editable && !campaign.busy && campaign.companyEditable
     spacing: 10
 
     function showDisputes() {

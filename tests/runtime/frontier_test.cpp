@@ -70,21 +70,41 @@ runtime::CompiledProgram compile(Json source) {
     const auto registry = content::foundation_registry();
     return runtime::compile_collection(content::load_collection(source.dump(),registry),registry);
 }
-runtime::CompiledProgram late_fixture(Json source,std::string_view path="path.accelerating",bool rivals=false) {
+runtime::CompiledProgram late_fixture(Json source,std::string_view path="path.accelerating",bool rivals=false,bool scored=false) {
     const auto full = compile(source);
     const auto& scenario = std::get<content::ScenarioDefinition>(full.collection.find(frontier_id)->data);
     const auto& catalog = *content::frontier_catalog(full.collection,scenario);
     std::uint64_t cooperative_seed = 0;
     while (opening_frontier(catalog,cooperative_seed).path!=path) ++cooperative_seed;
+    if(scored) {
+        const auto original=std::ranges::find_if(source["definitions"],[](const auto& row){return row["id"]=="society.global";});
+        auto society=*original;society["id"]="society.frontier_fixture";
+        society["catalog"]["forum"]["first_agenda_day"]=to_ordinal({2027,1,1}).value();
+        source["definitions"].push_back(std::move(society));
+    }
     // Start near the frontier so the focused test spends its days on the actual
     // authored technologies and protocols rather than replaying thirteen years.
     for (auto& row : source["definitions"]) if (row["id"]==frontier_id || row["id"]==plateau_id) {
         row["starts_on"] = "2027-01-01";
         row["flows"] = {"frontier.conditional_era","frontier.agi_notice","frontier.asi_notice"};
         row["management"]["setbacks"] = Json::array();
-        for (const auto key : {"authority","society","civic","resilience"}) row.erase(key);
-        if (rivals) for (auto& rival:row["rivals"]) rival["start_after_days"]=0;
-        else {row.erase("rivals");row.erase("competition");}
+        for (const auto key : {"civic","resilience"}) row.erase(key);
+        if(scored) {
+            row["society"]="society.frontier_fixture";
+            row["objectives"]={{"primary",row["id"]==frontier_id?"asi":"survival"},{"secondary",Json::array()},
+                {"receivables_realizable_bp",8000},{"physical_assets_realizable_bp",6000},{"profit_multiple",3}};
+            for(auto& rival:row["rivals"]) rival["start_after_days"]=rivals?0:1500;
+            if(rivals && row["id"]==frontier_id) {
+                auto peer=row["rivals"].front();
+                peer["id"]="company.century.parallel";peer["name"]="Parallel Research Cooperative";
+                peer["planning"]["slot"]=2;peer["planning"]["leader"]="Morgan Ives";
+                row["rivals"].push_back(std::move(peer));row["competition"]["domestic"]=2;
+            }
+        } else {
+            for (const auto key : {"authority","society","objectives"}) row.erase(key);
+            if (rivals) for (auto& rival:row["rivals"]) rival["start_after_days"]=0;
+            else {row.erase("rivals");row.erase("competition");}
+        }
         auto& offers = row["business_offers"];
         offers.erase(std::remove_if(offers.begin(),offers.end(),[](const auto& offer){return offer["id"]!="offer.independent_lab";}),offers.end());
         if (row["id"]==frontier_id) row["seed"] = cooperative_seed;
@@ -190,6 +210,14 @@ void frontier_route(const runtime::CompiledProgram& p,bool mesh=true) {
         "The third replicated improvement failed the exact 180-day boundary.");
     check(result.asi_on==state(game).date && result.improvements==3 && result.conservative[10]<9000,
         "Game ASI evidence did not qualify independently of the separate control measure.");
+    if(const auto& world=game.checkpoint().world;world.objectives) {
+        const auto& objectives=*world.objectives;
+        check(objectives.end && objectives.end->cause==runtime::CampaignEndCause::asi_race &&
+            objectives.race && objectives.race->winners==std::vector<std::string>{world.company_id} &&
+            runtime::objective_result(world,ObjectiveKind::asi)==runtime::ObjectiveResult::won && state(game).paused,
+            "A valid early ASI win did not end the primary race and pause.");
+        refuse(game,AdvanceDay{},"final accounts");
+    }
     game = reload(game);
     auto bytes = Json::parse(persistence::encode_save(p,game.checkpoint()));
     bytes["checkpoint"]["world"]["simulation"]["frontier"]["trials"][0]["result"]["lower_bp"][0]=10000;
@@ -222,6 +250,12 @@ void rival_route(const runtime::CompiledProgram& p) {
     });
     check(!earliest_frontier_qualification(future(game),true) && complete_system,
         "A rival qualification certified the player or bypassed the independent protocols.");
+    if(const auto& world=game.checkpoint().world;world.objectives) {
+        const auto& race=*world.objectives->race;
+        check(race.winners==std::vector<std::string>{"company.century.frontier","company.century.parallel"} &&
+            world.objectives->end->day==race.day && runtime::objective_result(world,ObjectiveKind::asi)==runtime::ObjectiveResult::lost,
+            "A same-day independent rival qualifier was dropped or used as a player win.");
+    }
     (void)reload(game);
 }
 void bundle_route(const runtime::CompiledProgram& p) {
@@ -370,12 +404,12 @@ int main(int argc,char** argv) {
             return 0;
         }
         if (argc!=1) throw std::runtime_error("Use --smoke-fixture DIRECTORY or no arguments.");
-        frontier_route(p);
+        frontier_route(late_fixture(draft,"path.accelerating",false,true));
         frontier_route(late_fixture(draft,"path.uneven"),false);
         plateau_route(p);
         bundle_route(p);
         automation(p);
-        rival_route(late_fixture(draft,"path.accelerating",true));
+        rival_route(late_fixture(draft,"path.accelerating",true,true));
         std::cout<<"Frontier evidence passed ("<<checks<<" checks).\n";
     } catch (const std::exception& error) {
         std::cerr<<error.what()<<'\n';

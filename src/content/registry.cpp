@@ -201,6 +201,7 @@ Registry foundation_registry() {
     result.register_system("authority", {"society","civic"});
     result.register_system("frontier", {"slice"});
     result.register_system("succession", {"slice"});
+    result.register_system("objectives", {"authority","frontier","succession"});
     const auto maximum = std::numeric_limits<std::int64_t>::max();
     const auto minimum = std::numeric_limits<std::int64_t>::min();
     auto number = [&](std::string id, Scope scope, Unit unit, std::int64_t low, std::int64_t high, std::string help,std::string provider="foundation") {
@@ -314,6 +315,11 @@ Registry foundation_registry() {
            "Register one owned modifier; do not repeatedly mutate its base value.");
     effect("remove_owned_modifier", {{"key", ValueType::text, Unit::none, 0, 0, true, "", "Owner-local modifier key.", {}}},
            "Remove only this activation's modifier with the named key.");
+    result.register_effect({"record_world_catastrophe",{Scope::world},
+        {{"cause_key",ValueType::text,Unit::none,0,0,true,"","Localized message explaining the irreversible world event.",{}}},
+        "Record a scenario-ending world event in a scored century campaign. The flow supplies its causal trigger and explanation.",
+        {{"target",PortType::scope,Scope::world,Unit::none,false},{"in",PortType::execution,Scope::world,Unit::none,false},
+         {"out",PortType::execution,Scope::world,Unit::none,true}},Boundary::prepared_morning,Visibility::player_known,"objectives",{}});
     result.register_effect({"set_variable", {Scope::company, Scope::world, Scope::state},
         {{"variable", ValueType::text, Unit::none, 0, 0, true, "", "Registered scoped variable ID.", {}}},
         "Assign a checked typed expression to an explicitly scoped variable.",

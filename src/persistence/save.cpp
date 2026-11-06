@@ -12,6 +12,7 @@
 #include "infrastructure_json.hpp"
 #include "resilience_json.hpp"
 #include "civic_json.hpp"
+#include "objectives_json.hpp"
 #include "mergers_json.hpp"
 #include "competition_history_json.hpp"
 #include "heavyweight_json.hpp"
@@ -446,23 +447,33 @@ Json world_json(const WorldState& world) {
     for (const auto& variable:world.variables) variables.push_back({
         {"binding",binding(variable.binding)},{"variable_id",variable.variable_id},{"value",scalar(variable.value)}});
     Json enabled=nullptr;if (world.enabled_flows) enabled=strings(*world.enabled_flows);
-    Json result{{"simulation",simulation_json(world.simulation)},{"company_id",world.company_id},
+    auto simulation=simulation_json(world.simulation);
+    const bool compact=world.objectives && world.simulation.market && world.simulation.market->days.size()>365;
+    if(compact) {
+        detail::CompetitionHistoryBudget history_budget;
+        simulation=detail::compact_competition_history(std::move(simulation),history_budget);
+    }
+    Json result{{"simulation",std::move(simulation)},{"company_id",world.company_id},
         {"world_id",world.world_id},{"state_id",world.state_id},{"campaign_start",world.campaign_start.value()},
         {"scope_created",world.scope_created.value()},{"root_seed",world.root_seed},{"enabled_flows",std::move(enabled)},
         {"facts",std::move(facts)},{"counterparty_cash_cents",world.counterparty_cash.value()},
         {"decisions",strings(world.decisions)},{"negotiations",strings(world.negotiations)},{"variables",std::move(variables)},
-        {"competition_mode",world.competition?(world.competition->setup?"planned":"bounded"):"foundation"},{"competition",world.competition?competition_json(*world.competition):Json(nullptr)}};
+        {"competition_mode",world.competition?(world.competition->setup?"planned":"bounded"):"foundation"},
+        {"competition",world.competition?competition_json(*world.competition):Json(nullptr)}};
+    if(compact) result["simulation_storage"]="history-rows-v2";
     if (!world.scenario_id.empty()) result["scenario_id"]=world.scenario_id;
     if (world.society) result["society"]=detail::society_json(*world.society);
     if (world.authority) result["authority"]=detail::authority_json(*world.authority);
+    if (world.objectives) result["objectives"]=detail::objectives_json(*world.objectives);
     return result;
 }
-WorldState parse_world(const Json& value,const CompiledProgram& program) {
+WorldState parse_world(Json& value,const CompiledProgram& program) {
     if (!value.is_object()) detail::invalid("world","Expected object");
     Json prior_shape=Json::object();
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
-        if (name!="variables" && name!="competition" && name!="competition_mode" && name!="scenario_id" && name!="society" && name!="authority") prior_shape[name]=nullptr;
+        if (name!="variables" && name!="competition" && name!="competition_mode" && name!="scenario_id" && name!="society" &&
+            name!="authority" && name!="objectives" && name!="simulation_storage") prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"world",{"simulation","company_id","world_id","state_id","campaign_start","scope_created",
                                    "root_seed","enabled_flows","facts","counterparty_cash_cents","decisions","negotiations"});
@@ -472,6 +483,7 @@ WorldState parse_world(const Json& value,const CompiledProgram& program) {
     WorldState result;
     if (value.contains("society")) result.society=detail::parse_society(value.at("society"));
     if (value.contains("authority")) result.authority=detail::parse_authority(value.at("authority"));
+    if (value.contains("objectives")) result.objectives=detail::parse_objectives(value.at("objectives"));
     if (value.contains("scenario_id")) result.scenario_id=detail::text(value.at("scenario_id"),"scenario_id",128);
     if (value.contains("competition")!=value.contains("competition_mode")) detail::invalid("competition","Competition mode and state must be present together");
     if (value.contains("competition_mode")) {
@@ -482,7 +494,15 @@ WorldState parse_world(const Json& value,const CompiledProgram& program) {
         }
         else if (mode!="foundation" || !value.at("competition").is_null()) detail::invalid("competition","Competition mode differs from its state");
     }
-    result.simulation=parse_simulation(value.at("simulation"));
+    if(value.contains("simulation_storage")) {
+        if(!result.objectives || detail::text(value.at("simulation_storage"),"world/simulation_storage",32)!="history-rows-v2")
+            detail::invalid("world/simulation_storage","Unsupported compact century history");
+        detail::CompetitionHistoryBudget history_budget;
+        const auto simulation=detail::expand_competition_history(std::move(value.at("simulation")),history_budget,true);
+        result.simulation=parse_simulation(simulation);
+        if(!result.simulation.market || result.simulation.market->days.size()<=365)
+            detail::invalid("world/simulation_storage","The compact history lacks the required settled days");
+    } else result.simulation=parse_simulation(value.at("simulation"));
     result.company_id=detail::text(value.at("company_id"),"company_id",128);
     result.world_id=detail::text(value.at("world_id"),"world_id",128);
     result.state_id=detail::text(value.at("state_id"),"state_id",128);
@@ -808,7 +828,7 @@ LoadedSave decode_save_impl(const runtime::CompiledProgram& program,std::string_
         body.erase("sha256");
         if (digest!=sha256(body.dump())) throw PersistenceError("integrity","Save checksum does not match; use its recovery copy or another autosave");
         const auto sequence=detail::u64(body.at("autosave_sequence"),"autosave_sequence");
-        const auto& state=body.at("checkpoint");detail::fields(state,"checkpoint",{"world","runtime"});
+        auto& state=body.at("checkpoint");detail::fields(state,"checkpoint",{"world","runtime"});
         runtime::Checkpoint checkpoint{parse_world(state.at("world"),program),parse_runtime(state.at("runtime"),program)};
         runtime::validate_checkpoint(program,checkpoint);
         return {std::move(identity),std::move(checkpoint),sequence};

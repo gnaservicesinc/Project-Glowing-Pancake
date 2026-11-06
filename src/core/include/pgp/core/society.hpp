@@ -40,6 +40,14 @@ struct MediaTerms {
     std::uint32_t monthly_limit = 3;
     auto operator<=>(const MediaTerms&) const = default;
 };
+// Durable access and institutional capacity can improve from years of
+// adequately delivered public services. The original regional profile
+// remains the baseline for short scenarios without this program.
+struct SocietyDevelopment {
+    BasisPoints public_coverage{3500}, useful_coverage{2500}, evidence_floor{5500};
+    BasisPoints maximum_gain{4400}, monthly_gain{40}, monthly_decay{15};
+    auto operator<=>(const SocietyDevelopment&) const = default;
+};
 struct SocietyCatalog {
     std::string assumptions;
     std::vector<SocietyRegion> regions;
@@ -47,6 +55,7 @@ struct SocietyCatalog {
     std::uint32_t lag_months = 2;
     MediaTerms media;
     ForumTerms forum;
+    std::optional<SocietyDevelopment> development{};
     auto operator<=>(const SocietyCatalog&) const = default;
 };
 struct RegionOutcomes {
@@ -61,6 +70,7 @@ struct SocietyMonth {
     std::array<RegionOutcomes, society_regions> outcomes{};
     std::array<WelfareComponents, society_regions> components{};
     AudienceScores audiences{};
+    std::optional<std::array<std::uint32_t,society_regions>> durable_gains{};
     auto operator<=>(const SocietyMonth&) const = default;
 };
 struct MediaCampaign {

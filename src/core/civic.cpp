@@ -8,7 +8,7 @@
 namespace pgp::core {
 namespace {
 constexpr std::array<std::string_view, civic_issues> issues{"privacy", "innovation", "labor", "competition", "investment", "security", "access"};
-constexpr std::array<std::string_view, 2> rules{"launch_evidence", "site_power"};
+constexpr std::array<std::string_view, 3> rules{"launch_evidence", "site_power", "final_closure"};
 constexpr std::array<std::string_view, 10> stages{"agenda", "committee", "house", "senate", "executive", "review", "agency", "effective", "rejected", "expired"};
 
 [[noreturn]] void invalid(std::string message) { throw std::invalid_argument(std::move(message)); }
@@ -98,6 +98,11 @@ void validate_civic_catalog(const CivicCatalog& catalog) {
             if (!federal || policy.channel == ProductChannel::legacy || policy.evidence_axis >= lab_domain_count ||
                 policy.evidence_floor.value() == 0 || policy.permit_watts != 0)
                 invalid("A national launch rule needs a named channel and independent evidence threshold.");
+        } else if(policy.rule==CivicRule::final_closure) {
+            if(!federal || policy.repeat_years || policy.review==Days{0} || policy.channel!=ProductChannel::legacy ||
+                policy.evidence_axis>=lab_domain_count || policy.evidence_floor!=BasisPoints{0} ||
+                policy.exempt_reviewed_service || policy.permit_watts)
+                invalid("A final closure must be a one-time federal order with an independent review and no channel or permit restrictions.");
         } else if (federal || policy.channel != ProductChannel::legacy || policy.evidence_axis != 0 ||
             policy.evidence_floor.value() != 0 || policy.exempt_reviewed_service || policy.permit_watts < 1000 ||
             policy.permit_watts > 1'000'000'000 || policy.permit_watts % 1000 != 0)
@@ -119,7 +124,8 @@ bool commenting(const CivicDocket& docket, OrdinalDay day) {
         (docket.stage == CivicStage::agenda || docket.stage == CivicStage::house || docket.stage == CivicStage::senate);
 }
 bool has_evidence(const SimulationState& state, const CivicPolicy& policy, std::string_view evidence, OrdinalDay day) {
-    if (policy.rule == CivicRule::launch_evidence) return evaluated(state, evidence, policy.evidence_axis, day) != nullptr;
+    if (policy.rule == CivicRule::launch_evidence || policy.rule==CivicRule::final_closure)
+        return evaluated(state, evidence, policy.evidence_axis, day) != nullptr;
     if (!state.infrastructure) return false;
     const auto* site = row_named(state.infrastructure->sites, evidence);
     return site && site->state_id == policy.jurisdiction && site->built_on <= day && site->grid_on <= day &&
@@ -149,7 +155,7 @@ std::vector<std::string> civic_evidence_options(const SimulationState& state, co
         std::any_of(docket.submissions.begin(), docket.submissions.end(), [](const auto& row) { return !row.evidence.empty(); })) return result;
     const auto& policy = civic_policy(state.civic->catalog, docket.policy_id);
     if (policy.evidence_shift.value() == 0) return result;
-    if (policy.rule == CivicRule::launch_evidence && state.lab) {
+    if ((policy.rule == CivicRule::launch_evidence || policy.rule==CivicRule::final_closure) && state.lab) {
         for (const auto& row : state.lab->evaluations)
             if (civic_detail::has_evidence(state, policy, row.id, state.date)) result.push_back(row.id);
     } else if (policy.rule == CivicRule::site_power && state.infrastructure) {

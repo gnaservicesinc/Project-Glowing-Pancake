@@ -393,7 +393,10 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                            "Resolve the required opening choice before planning or advancing work.");
                 }
             }
-            if constexpr (std::is_same_v<Action, ReserveFunds>) {
+            if constexpr (std::is_same_v<Action, SelectCampaignObjectives> || std::is_same_v<Action, AcknowledgeObjectiveBreach> ||
+                          std::is_same_v<Action, EndWithPostmortem> || std::is_same_v<Action, ContinueAfterEnding>) {
+                refuse(CommandReason::invalid_argument,"Campaign objectives belong to the shared world transaction.");
+            } else if constexpr (std::is_same_v<Action, ReserveFunds>) {
                 if (!valid_text(action.name) || action.amount.value() <= 0) {
                     refuse(CommandReason::invalid_argument,
                            "A reservation needs a short name and a positive amount of cents.");

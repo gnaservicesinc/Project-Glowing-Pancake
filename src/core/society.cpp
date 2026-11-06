@@ -21,7 +21,8 @@ std::uint32_t bounded(std::int64_t value) { return static_cast<std::uint32_t>(st
 std::uint32_t fraction(std::uint64_t part,std::uint64_t all) {
     return all ? static_cast<std::uint32_t>(mul_div_floor(part,10000,all).quotient) : 0;
 }
-WelfareComponents evolve(const SocietyRegion& profile,const WelfareComponents& before,const RegionOutcomes& outcomes) {
+WelfareComponents evolve(const SocietyRegion& profile,const WelfareComponents& before,const RegionOutcomes& outcomes,
+    std::uint32_t durable_gain) {
     const auto use = static_cast<std::int64_t>(fraction(outcomes.delivered,outcomes.demand));
     const auto public_use = static_cast<std::int64_t>(fraction(outcomes.public_work,outcomes.public_demand));
     const auto science = static_cast<std::int64_t>(fraction(outcomes.science_work,outcomes.demand));
@@ -42,7 +43,7 @@ WelfareComponents evolve(const SocietyRegion& profile,const WelfareComponents& b
         productivity/3+use/8-automation/6,transition,use/6-concentration/8+transition/3};
     WelfareComponents next{};
     for (std::size_t i=0;i<next.size();++i) {
-        const auto target=bounded(static_cast<std::int64_t>(profile.initial[i])+change[i]);
+        const auto target=bounded(static_cast<std::int64_t>(profile.initial[i])+durable_gain+change[i]);
         const auto difference=static_cast<std::int64_t>(target)-before[i];
         const auto magnitude=static_cast<std::uint64_t>(difference<0?-difference:difference);
         const auto step=static_cast<std::int64_t>(mul_div_round_half_up(magnitude,
@@ -50,6 +51,12 @@ WelfareComponents evolve(const SocietyRegion& profile,const WelfareComponents& b
         next[i]=bounded(static_cast<std::int64_t>(before[i])+(difference<0?-step:step));
     }
     return next;
+}
+std::uint32_t develop(const SocietyDevelopment& terms,std::uint32_t before,const RegionOutcomes& observed) {
+    const bool supported=fraction(observed.public_work,observed.public_demand)>=terms.public_coverage.value() &&
+        fraction(observed.delivered,observed.demand)>=terms.useful_coverage.value() && observed.quality>=terms.evidence_floor;
+    const auto gain=static_cast<std::int64_t>(before)+(supported?terms.monthly_gain.value():-terms.monthly_decay.value());
+    return static_cast<std::uint32_t>(std::clamp<std::int64_t>(gain,0,terms.maximum_gain.value()));
 }
 OrdinalDay next_month(OrdinalDay date) {
     const auto civil=from_ordinal(date);
@@ -118,6 +125,12 @@ WelfareIndices welfare_indices(const WelfareComponents& values) {
         (values[8]+values[9]+values[10])/3,(values[11]+values[12]+values[13])/3};
 }
 void validate_society_catalog(const SocietyCatalog& catalog) {
+    if(const auto& d=catalog.development;d &&
+        (d->public_coverage.value()==0 || d->useful_coverage.value()==0 || d->evidence_floor.value()<4000 ||
+         d->maximum_gain.value()<1 || d->maximum_gain.value()>6000 || d->monthly_gain.value()<1 ||
+         d->monthly_gain.value()>100 || d->monthly_gain>d->maximum_gain || d->monthly_decay.value()<1 ||
+         d->monthly_decay>d->monthly_gain))
+        invalid("Long-term regional gains need bounded growth and decay tied to qualified public delivery.");
     if(catalog.assumptions.empty() || catalog.assumptions.size()>1024 || catalog.regions.size()!=society_regions ||
         catalog.lag_months<1 || catalog.lag_months>12 || catalog.media.fee.value()<1 || catalog.media.fee.value()>100000000 ||
         catalog.media.duration.value()<1 || catalog.media.duration.value()>180 ||
@@ -180,10 +193,19 @@ void close_society_month(SocietyState& state,OrdinalDay day,const std::array<Reg
         invalid("Regional society closes consecutive complete calendar months.");
     SocietyMonth row;row.month_end=day;row.outcomes=observed;
     const auto size=state.months.size();
+    if(state.catalog.development)
+        row.durable_gains=size?state.months.back().durable_gains:std::optional{std::array<std::uint32_t,society_regions>{}};
     for(std::size_t i=0;i<society_regions;++i) {
         row.components[i]=size?state.months.back().components[i]:state.catalog.regions[i].initial;
-        if(size>=state.catalog.lag_months) row.components[i]=evolve(state.catalog.regions[i],row.components[i],
-            state.months[size-state.catalog.lag_months].outcomes[i]);
+        if(size>=state.catalog.lag_months) {
+            const auto& input=state.months[size-state.catalog.lag_months].outcomes[i];
+            auto gain=0U;
+            if(row.durable_gains) {
+                gain=develop(*state.catalog.development,(*row.durable_gains)[i],input);
+                (*row.durable_gains)[i]=gain;
+            }
+            row.components[i]=evolve(state.catalog.regions[i],row.components[i],input,gain);
+        }
     }
     const AudienceScores initial{5000,5000,5000,5000,5000,5000};
     row.audiences=next_audiences(size?state.months.back().audiences:initial,observed);

@@ -30,6 +30,8 @@ QString stage(CivicStage value, bool federal) {
     return {};
 }
 QString policy_terms(const CivicPolicy& policy) {
+    if(policy.rule==CivicRule::final_closure)
+        return QStringLiteral("A final federal closure ends institutional play if the order takes effect after review. Review the dated hearing and evidence options before the decision.");
     if (policy.rule == CivicRule::site_power)
         return QStringLiteral("New site permits up to %1 kW in %2. Earlier authorized reservations keep their terms.")
             .arg(number(policy.permit_watts / 1000), text(policy.jurisdiction));

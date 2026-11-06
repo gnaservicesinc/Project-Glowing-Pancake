@@ -12,7 +12,7 @@ inline constexpr std::size_t civic_blocs = 3, civic_issues = 7, civic_jurisdicti
 inline constexpr std::size_t civic_election_limit = 256, civic_docket_limit = 2048;
 inline constexpr std::size_t civic_advocacy_limit = 3;
 enum class CivicIssue { privacy, innovation, labor, competition, investment, security, access };
-enum class CivicRule { launch_evidence, site_power };
+enum class CivicRule { launch_evidence, site_power, final_closure };
 enum class CivicStage { agenda, committee, house, senate, executive, review, agency, effective, rejected, expired };
 [[nodiscard]] std::string_view civic_key(CivicIssue);
 [[nodiscard]] std::string_view civic_key(CivicRule);

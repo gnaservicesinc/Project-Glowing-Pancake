@@ -10,12 +10,19 @@
 namespace pgp::bridge {
 namespace {
 bool pending_decision(const runtime::Checkpoint& checkpoint) {
+    if(runtime::observing_world(checkpoint.world)) return false;
     const auto& state = checkpoint.world.simulation;
-    return core::required_management_notice(state) || core::required_site_alert(state) || state.phase == core::DayPhase::awaiting_choice ||
+    return runtime::required_objective_review(checkpoint.world) || core::required_management_notice(state) ||
+        core::required_site_alert(state) || state.phase == core::DayPhase::awaiting_choice ||
         (state.liquidity && core::liquidity_report(*state.liquidity).pending_warning.has_value()) ||
         std::any_of(checkpoint.runtime.presentations.begin(),checkpoint.runtime.presentations.end(),[](const auto& row) {
             return row.kind == runtime::PresentationKind::dialogue && !row.resolved;
         });
+}
+bool clock_ready(const runtime::Checkpoint& checkpoint) {
+    if(runtime::objective_time_stopped(checkpoint.world) || runtime::campaign_paused(checkpoint.world) || pending_decision(checkpoint)) return false;
+    if(runtime::observing_world(checkpoint.world)) return runtime::campaign_day(checkpoint.world)<runtime::campaign_calendar_limit(checkpoint.world);
+    return checkpoint.world.simulation.phase==core::DayPhase::work_ready;
 }
 QString error_text(const std::exception& error) { return QString::fromUtf8(error.what()); }
 }
@@ -35,9 +42,7 @@ void CampaignWorker::requireOwningThread() const {
 void CampaignWorker::publish() {
     last_publish_.restart();
     auto checkpoint = campaign_.checkpoint();
-    const auto& state = checkpoint.world.simulation;
-    const bool running = !halted_ && !state.paused && state.phase == core::DayPhase::work_ready &&
-        !pending_decision(checkpoint);
+    const bool running = !halted_ && clock_ready(checkpoint);
     if (running && !timer_->isActive()) timer_->start();
     if (!running) timer_->stop();
     emit snapshotReady(std::make_shared<const CampaignSnapshot>(CampaignSnapshot{
@@ -56,13 +61,12 @@ void CampaignWorker::complete(std::uint64_t token, const session::OperationResul
     }
     if (!result.command.accepted() || result.storage_notice) emit noticeRaised(message);
     const auto& current=campaign_.checkpoint();
-    if (token!=0 || halted_ || current.world.simulation.paused || pending_decision(current) ||
-        current.world.simulation.phase==core::DayPhase::finished || current.world.simulation.phase==core::DayPhase::closed ||
+    if (token!=0 || halted_ || !clock_ready(current) ||
         !result.command.accepted() || last_publish_.elapsed()>=100) publish();
     if (token != 0) emit operationCompleted(static_cast<qulonglong>(token),result.command.accepted(),
         result.command.accepted() && !result.storage_notice ? QString{} : message);
 }
-void CampaignWorker::newCampaign(std::uint64_t token,std::string headquarters,bool stories,std::string id) {
+void CampaignWorker::newCampaign(std::uint64_t token,std::string headquarters,bool stories,std::string id,std::optional<core::ObjectiveSelection> objectives) {
     requireOwningThread();
     try {
         if (generation_==std::numeric_limits<std::uint64_t>::max()) throw std::overflow_error("Campaign generation is exhausted");
@@ -73,7 +77,7 @@ void CampaignWorker::newCampaign(std::uint64_t token,std::string headquarters,bo
         const auto* selected=campaign_.program().collection.find(id);
         const auto* selected_scenario=selected?std::get_if<content::ScenarioDefinition>(&selected->data):nullptr;
         if (!selected_scenario || !selected_scenario->service_catalog) throw std::invalid_argument("Choose a playable scenario from this content collection");
-        auto initial=runtime::begin_scenario(campaign_.program(),id,headquarters);
+        auto initial=runtime::begin_scenario(campaign_.program(),id,headquarters,std::move(objectives));
         if (!stories && initial.world.enabled_flows) {
             auto& roots=*initial.world.enabled_flows;
             roots.erase(std::remove_if(roots.begin(),roots.end(),[&](const auto& flow_id) {
@@ -94,7 +98,8 @@ void CampaignWorker::start() {
     requireOwningThread();
     try {
         const auto state = campaign_.checkpoint().world.simulation;
-        if (state.phase != core::DayPhase::finished && state.phase != core::DayPhase::closed) {
+        if (!runtime::objective_time_stopped(campaign_.checkpoint().world) && !runtime::observing_world(campaign_.checkpoint().world) &&
+            state.phase != core::DayPhase::finished && state.phase != core::DayPhase::closed) {
             const auto result = campaign_.prepare_opening(state.revision);
             if (!result.command.accepted() || result.storage_notice) {
                 complete(0,result);
@@ -169,7 +174,7 @@ void CampaignWorker::tick() {
     requireOwningThread();
     const auto& checkpoint = campaign_.checkpoint();
     const auto& state = checkpoint.world.simulation;
-    if (halted_ || state.paused || state.phase != core::DayPhase::work_ready || pending_decision(checkpoint)) return;
+    if (halted_ || !clock_ready(checkpoint)) return;
     try { complete(0,campaign_.submit({state.revision,core::AdvanceDay{}})); }
     catch (const std::exception& error) { pauseDriver(); emit noticeRaised(error_text(error)); publish(); }
 }

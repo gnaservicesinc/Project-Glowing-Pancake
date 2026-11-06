@@ -1281,3 +1281,76 @@ void schedule_succession_smoke(QQuickWindow& window,pgp::bridge::CampaignControl
     });
     timer->start();
 }
+
+void schedule_objectives_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,
+    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot) {
+    using namespace pgp;
+    struct State { int phase=0,attempts=0;bridge::CampaignSnapshotPtr saved; };
+    const auto run=std::make_shared<State>();
+    auto* timer=new QTimer(&window);timer->setInterval(25);
+    const auto start=paths.saves_directory/"objective-start.pgpsave";
+    const auto save=paths.saves_directory/"objective-breach.pgpsave";
+    const auto start_url=QUrl::fromLocalFile(QString::fromStdU16String(start.u16string()));
+    const auto save_url=QUrl::fromLocalFile(QString::fromStdU16String(save.u16string()));
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,run,expected,start_url,save_url,save,screenshot] {
+        const auto fail=[&](const char* why){qCritical()<<"Objectives smoke failed"<<run->phase<<why<<campaign.notice();timer->stop();QCoreApplication::exit(3);};
+        const auto item=[&](const char* name){return visual_item(window.contentItem(),QString::fromLatin1(name));};
+        const auto press=[&](const char* name){auto* control=item(name);reveal_top(control);if(key(window,control,Qt::Key_Space)) return true;fail(name);return false;};
+        if(++run->attempts>650) {fail("timed out");return;}
+        if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
+        if(window.rendererInterface()->graphicsApi()!=expected) {fail("graphics backend");return;}
+        const auto snapshot=campaign.snapshot();const auto& world=snapshot->checkpoint.world;
+        auto* desk=campaign.objectives();
+        const auto breach_day=core::to_ordinal({2104,2,1});
+        switch(run->phase) {
+        case 0: campaign.loadFrom(start_url);++run->phase;return;
+        case 1:
+            if(!desk->available() || desk->primary()!=QStringLiteral("utopia") || !world.objectives->months.empty()) {fail("unsettled fixture");return;}
+            if(press("objectivesTab")) ++run->phase;return;
+        case 2: if(press("stepButton")) ++run->phase;return;
+        case 3:
+            if(runtime::campaign_day(world)!=breach_day || campaign.requiredKind()!=QStringLiteral("objective") || !campaign.paused() || campaign.canAdvance()) {
+                fail("actual month-end loss and automatic pause");return;
+            }
+            if(press("openObjectivePostmortem")) ++run->phase;return;
+        case 4: {
+            auto* postmortem=item("objectivesPostmortem");
+            if(!postmortem || !postmortem->isVisible() || !postmortem->property("text").toString().contains(QStringLiteral("2104-01-31"))) {
+                fail("causal postmortem date");return;
+            }
+            if(!screenshot.isEmpty()) {reveal_top(postmortem);if(!window.grabWindow().save(screenshot)) {fail("objective screenshot");return;}}
+            run->saved=snapshot;campaign.saveTo(save_url);++run->phase;return;
+        }
+        case 5:
+            if(!std::filesystem::is_regular_file(save)) {fail("breach save");return;}
+            campaign.loadFrom(save_url);++run->phase;return;
+        case 6:
+            if(snapshot->generation==run->saved->generation || snapshot->checkpoint!=run->saved->checkpoint || campaign.requiredKind()!=QStringLiteral("objective")) {
+                fail("exact breach reload");return;
+            }
+            if(press("continueScoredObjectives")) ++run->phase;return;
+        case 7:
+            if(campaign.requiredKind()!=QStringLiteral("none") || runtime::objective_result(world,core::ObjectiveKind::utopia)!=runtime::ObjectiveResult::lost) {
+                fail("continuation erased the lost check");return;
+            }
+            if(press("stepButton")) ++run->phase;return;
+        case 8:
+            if(world.simulation.date!=core::advance_days(breach_day,core::Days{1}) || !desk->canEndEarly()) {fail("one more scored day");return;}
+            if(press("endScoredObjectives")) ++run->phase;return;
+        case 9: if(press("confirmObjectiveAction")) ++run->phase;return;
+        case 10:
+            if(!runtime::objective_time_stopped(world) || campaign.canAdvance()) {fail("recorded early ending");return;}
+            if(press("continueAfterObjectiveEnding")) ++run->phase;return;
+        case 11: if(press("confirmObjectiveAction")) ++run->phase;return;
+        case 12: if(press("stepButton")) ++run->phase;return;
+        default:
+            if(world.objectives->mode!=runtime::ObjectiveMode::sandbox ||
+                world.objectives->end->day!=core::advance_days(breach_day,core::Days{1}) ||
+                world.simulation.date!=core::advance_days(breach_day,core::Days{2})) {fail("sandbox work and preserved score");return;}
+            qInfo().noquote()<<"Objectives smoke passed"<<graphics::name(expected)<<"text="<<campaign.textScalePercent()
+                <<"settled breach, exact reload, scored continuation, early postmortem and sandbox"<<std::filesystem::file_size(save)<<"bytes";
+            timer->stop();QCoreApplication::exit(0);
+        }
+    });
+    timer->start();
+}

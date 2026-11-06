@@ -6,7 +6,7 @@ ColumnLayout {
     id: panel
     required property int textSize
     readonly property var infra: campaign.infrastructure
-    readonly property bool editable: campaign.paused && !campaign.busy && campaign.canAdvance
+    readonly property bool editable: campaign.paused && !campaign.busy && campaign.canAdvance && campaign.companyEditable
     property string section: "map"
     property bool showMap: true
     property var comparison: ({})

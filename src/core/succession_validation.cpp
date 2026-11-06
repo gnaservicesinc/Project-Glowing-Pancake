@@ -15,7 +15,7 @@ void validate_succession_catalog(const SuccessionCatalog& c) {
         c.chair_retirement_age<c.executive_retirement_age || c.chair_retirement_age>90 || c.minimum_candidate_age<25 ||
         c.maximum_candidate_age<c.minimum_candidate_age || c.maximum_candidate_age>=c.executive_retirement_age ||
         c.maximum_term_years<5 || c.maximum_term_years>30 || c.caretaker_term_years<3 || c.caretaker_term_years>10 ||
-        c.caretaker_term_years>c.maximum_term_years || c.chair_seats==0 || c.chair_seats>3 || c.trust_seats==0 || c.trust_seats>c.chair_seats ||
+        c.caretaker_term_years>c.maximum_term_years || c.chair_seats==0 || c.chair_seats>3 || c.trust_seats>c.chair_seats ||
         c.transition_days.value()<30 || c.transition_days.value()>365 || c.planning_notice<c.transition_days || c.planning_notice.value()>1096 ||
         c.vote_window.value()<7 || c.vote_window.value()>60 || c.vote_window>=c.transition_days || c.transition_work.value()<=0 || c.transition_work.value()>100000000 ||
         c.founder_salary.value()<0 || c.founder_salary.value()>10000000 || c.chair_salary.value()<0 || c.chair_salary>c.founder_salary ||

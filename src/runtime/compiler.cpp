@@ -314,6 +314,14 @@ Json definition_json(const Definition& definition, const std::string& key) {
         if (!scenario->society.empty()) result["society"] = scenario->society;
         if (!scenario->authority.empty()) result["authority"] = scenario->authority;
         if (!scenario->frontier.empty()) result["frontier"] = scenario->frontier;
+        if(scenario->objectives) {
+            const auto& rules=*scenario->objectives;
+            auto secondary=Json::array();
+            for(auto kind:rules.opening.secondary) secondary.push_back(core::objective_key(kind));
+            result["objectives"]={{"primary",core::objective_key(rules.opening.primary)},{"secondary",std::move(secondary)},
+                {"receivables_realizable_bp",rules.receivables_realizable.value()},
+                {"physical_assets_realizable_bp",rules.physical_assets_realizable.value()},{"profit_multiple",rules.profit_multiple}};
+        }
         if (scenario->service_catalog) result["service_catalog"]=Json::parse(canonical_market_setup_bytes(*scenario->service_catalog,scenario->starts_on));
         if (scenario->market)
             result["market"] = Json::parse(canonical_market_setup_bytes(*scenario->market,scenario->starts_on));

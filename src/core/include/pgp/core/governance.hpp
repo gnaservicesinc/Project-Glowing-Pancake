@@ -119,6 +119,7 @@ void prepare_governance(SimulationState&);
 [[nodiscard]] bool required_governance_notice(const SimulationState&);
 [[nodiscard]] BasisPoints unallocated_option_pool(const SimulationState&);
 [[nodiscard]] std::vector<BoardMember> current_board(const SimulationState&);
+[[nodiscard]] std::vector<EquityHolding> corporate_holdings_before(const SimulationState&,OrdinalDay);
 void company_equity(SimulationState&,std::string investor,Cents proceeds,BasisPoints acquired,std::string key,bool assets=false);
 void negotiate_corporate_finance(SimulationState&,std::string_view);
 void appoint_executive(SimulationState&,std::string_view,bool hybrid,Cents protected_cash);

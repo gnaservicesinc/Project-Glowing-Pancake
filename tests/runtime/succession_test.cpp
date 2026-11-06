@@ -56,7 +56,7 @@ runtime::CompiledProgram fixture(Json source,bool rivals=false) {
         row["management"]["setbacks"]=Json::array();
         row["management"]["succession"]["founder_birth_year"]=1958;
         row["management"]["succession"]["chair_retirement_age"]=70;
-        for(const auto key:{"authority","society","civic","resilience"}) row.erase(key);
+        for(const auto key:{"authority","society","civic","resilience","objectives"}) row.erase(key);
         if(rivals) for(auto& rival:row["rivals"]) rival["start_after_days"]=0;
         else {row.erase("rivals");row.erase("competition");}
     }

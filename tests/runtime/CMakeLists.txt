@@ -204,3 +204,11 @@ target_include_directories(pgp-succession-test SYSTEM PRIVATE "${PROJECT_SOURCE_
 target_compile_definitions(pgp-succession-test PRIVATE PGP_SUCCESSION_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-succession-test)
 add_test(NAME runtime.succession COMMAND pgp-succession-test)
+
+add_executable(pgp-objectives-test objectives_test.cpp)
+target_link_libraries(pgp-objectives-test PRIVATE pgp::session)
+target_include_directories(pgp-objectives-test PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+target_include_directories(pgp-objectives-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-objectives-test PRIVATE PGP_OBJECTIVE_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-objectives-test)
+add_test(NAME runtime.objectives COMMAND pgp-objectives-test)

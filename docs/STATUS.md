@@ -4,8 +4,8 @@ Updated 2026-11-06 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**40 of 52 steps complete for Mac feature development. M7-03 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03, M6-01 through M6-03 and M7-01/02.
+**41 of 52 steps complete for Mac feature development. M8-01 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03, M6-01 through M6-03 and M7-01 through M7-03.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -25,6 +25,14 @@ local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
 
+- M7-03 adds the six century objectives, strict month-end checks, audited
+  founder wealth, same-day ASI ties and recorded failure reviews. Players can
+  continue scoring other distinctions, end at a postmortem, or continue in
+  sandbox or observer mode. A final-decade fixture wins all five deadline
+  goals, loses Domination on a last-day branch, and reloads at the boundary.
+  Metal controls at 100% and 200% text reopen the actual breach. Reviewed
+  content **0.13.0-dev.1**, generation **13**, validates seven scenarios
+  and 21 headquarters openings. [Objectives and rules](../src/runtime/OBJECTIVES.md).
 - M7-02 adds Leadership to the century scenarios. Named successor cohorts,
   actual board votes and paid preparation produce dated handovers. Executive
   and personal-chair terms end, while the original founder trust and company
@@ -520,10 +528,11 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation is M7-03, six objectives and postmortems.**
-Implement the exact final windows, terminal legacy valuation, ties, feasibility
-alerts, objective changes and sandbox continuation.
-E2-04 editor download qualification follows M7-03 and the later native release work.
+**Next implementation is M8-01, content and asset coverage.**
+Expand useful events and story layers across the six strategies and eras,
+complete cleared audio and credits, and check play with optional stories
+disabled. E2-04 editor download qualification stays with the deferred
+native release work.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

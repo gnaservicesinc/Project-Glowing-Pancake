@@ -204,6 +204,17 @@ void respond_corporate_dispute(SimulationState& s,std::string_view id,bool waive
     }
     it->acknowledged=true;
 }
+std::vector<EquityHolding> corporate_holdings_before(const SimulationState& s,OrdinalDay before) {
+    const auto& rules=catalog(s);
+    const auto& g=*s.management->governance;
+    auto result=g.opening_holdings;
+    std::vector<OptionGrant> grants;
+    for(const auto& event:g.capital) {
+        if(event.day>=before) break;
+        apply_capital(result,grants,g.appointments,rules,event);
+    }
+    return result;
+}
 void prepare_governance(SimulationState& s) {
     if (!s.management || !s.management->governance || s.phase==DayPhase::closed || s.phase==DayPhase::finished) return;
     auto& g=governance(s);const auto& c=catalog(s);

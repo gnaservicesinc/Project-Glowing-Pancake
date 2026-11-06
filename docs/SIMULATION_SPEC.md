@@ -227,6 +227,13 @@ Laws are typed modifiers with jurisdiction, affected activities, thresholds, exe
 
 Regions update monthly from adoption and actual deployment outcomes: productivity, labor displacement/retraining, public-service access, energy strain, concentration, information integrity, and social trust. Policy and investment change adaptation rates with lags. Do not award world welfare directly from dollars spent. Calculate funded capacity, delivered services, access, and resulting welfare. Distinguish a private campaign contribution from an operating public-service investment.
 
+Century regional profiles can add a capped, durable gain to the original
+welfare baseline. Each region earns it only from settled public service,
+overall useful delivery and independent quality that meet the published
+thresholds. The usual observation lag applies. Below-threshold months erode
+part of the accumulated gain. The charter reports coverage, quality, growth,
+decay and the cap; approved spending alone cannot move this measure.
+
 The five utopia indices (basic needs, health, civic agency, ecological resilience, shared prosperity) are bounded 0–100, with published component weights. Initial v1 weights are equal within each index: basic needs = food/housing/essential-service access; health = effective care access/prevention; agency = institutional checks/civil participation/information integrity; resilience = emissions trend/resource resilience/adaptation capacity; prosperity = median real income opportunity/transition support/distribution. Components are game measures, not official international statistics. Population-weighted global values and each region's minimum are shown separately.
 
 Governance authority is also explicit: enforceable participation in standards/procurement, control of critical infrastructure with binding decision rights, and institutional delegation combine into regional soft authority; control over abstract coercive institutions produces hard authority and resistance. Ordinary revenue, media attention, or market share is insufficient. Soft authority decays when agreements expire or institutions revoke mandates. Hard authority requires continuing capacity and can trigger coordinated resistance, service disruption, sanctions, staff refusal, and loss of legitimacy. No tactical weapons, real coercion instructions, or real people are depicted.

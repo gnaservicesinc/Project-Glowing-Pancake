@@ -1,13 +1,13 @@
 {
   "assets": [],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "fd7ced86b8056098245152752ba60451d1bcb34fed5b33f2caa2842c1167229a",
+  "collection_hash": "953af89a734d19cbd2c4dfcd1b0f545aa3b62effc44f700afc8458877e8d33bf",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.12.0-dev.1",
+  "content_version": "0.13.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -80,6 +80,12 @@
       "kind": "frontier_research",
       "revision": 1,
       "semantic_hash": "a5826db39e2341240d244674389f324789a5922665352339d316f9a7f618f48f"
+    },
+    {
+      "id": "market.century",
+      "kind": "regional_markets",
+      "revision": 1,
+      "semantic_hash": "c012522e1fcdaa2363bde774480013f23b7bf4218a7a4c898d9b18f3781c7dec"
     },
     {
       "id": "market.global_launch",
@@ -192,14 +198,14 @@
     {
       "id": "scenario.century_frontier",
       "kind": "scenario",
-      "revision": 2,
-      "semantic_hash": "432dd4c7a5179453af30f6aed2bea2976bd4a2d6ee83b4146116f318e0f74589"
+      "revision": 3,
+      "semantic_hash": "bc9b529620103aadad3d7356cc93202f788666c80ff6c319e996d8e5d7b9c798"
     },
     {
       "id": "scenario.century_plateau",
       "kind": "scenario",
-      "revision": 2,
-      "semantic_hash": "30e170b831a1af5f7519b8286d50a576eabe5335cc9759dcc390e5fb2d3cbdf6"
+      "revision": 3,
+      "semantic_hash": "e78e14bae18a6ec903063234969216c59b0042206aa7064fc06d3ca3eeeae0ae"
     },
     {
       "id": "scenario.first_playable",
@@ -280,6 +286,12 @@
       "semantic_hash": "f94f1b075a833bc98812b425f59466d2f011f8c056bd6bc1041322ff6612a70d"
     },
     {
+      "id": "society.century",
+      "kind": "regional_society",
+      "revision": 1,
+      "semantic_hash": "6f0ed2d5695038b7d8f796a9e634ded05b8cf569c0eb87576a2585a39dc734a1"
+    },
+    {
       "id": "society.forum_briefing",
       "kind": "flow",
       "revision": 1,
@@ -299,7 +311,7 @@
     }
   ],
   "format": 1,
-  "generation": 12,
+  "generation": 13,
   "messages_hash": "423a6e398d7f281fa5ee683f7ebdcfc524dfa14e70769013c3f4ba7f83b8ad13",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
@@ -436,5 +448,5 @@
       "authority.executive_disclosure"
     ]
   },
-  "source_hash": "091734dafc94b5ebba2c50d890bb6f5974b9f1ec9114ff19253a9dca8f3fe184"
+  "source_hash": "8951bcc41362ef7800c4c94f672b0cef435b233b4f3b79b5a55fa4e97db6ec10"
 }

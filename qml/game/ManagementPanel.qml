@@ -10,7 +10,7 @@ ColumnLayout {
     property string officeSection: "offers"
     property var manager: campaign.management
     property var trainingData: []
-    readonly property bool editable: campaign.paused && !campaign.busy
+    readonly property bool editable: campaign.paused && !campaign.busy && campaign.companyEditable
     spacing: 10
 
     component Copy: Label {
@@ -114,7 +114,8 @@ ColumnLayout {
                 required property var modelData
                 objectName: "office_" + modelData.id
                 text: modelData.label
-                visible: modelData.id !== "markets" || manager.regionalMarkets.count > 0
+                visible: (modelData.id !== "markets" || manager.regionalMarkets.count > 0) &&
+                         (modelData.id !== "score" || !campaign.objectives.available)
                 font.pixelSize: panel.textSize
                 checked: panel.officeSection === modelData.id
                 Accessible.name: text
@@ -410,7 +411,7 @@ ColumnLayout {
     }
     ColumnLayout {
         Layout.fillWidth: true
-        visible: panel.room === "office" && panel.officeSection === "score"
+        visible: panel.room === "office" && panel.officeSection === "score" && !campaign.objectives.available
         Copy { text: manager.scoreText }
         Copy { text: qsTr("Survival is awarded at the ending; work counts actual delivered tasks. Profit excludes financing proceeds. Evidence counts independently measured domains used by deployed checkpoints. Ownership points reflect retained founder stake. Scores remain provisional while time can advance.") }
     }

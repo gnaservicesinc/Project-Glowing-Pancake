@@ -13,6 +13,7 @@
 
 namespace pgp::core {
 namespace {
+constexpr std::int64_t maximum_demand_factor=15000;
 [[noreturn]] void invalid(const char* message) { throw std::invalid_argument(message); }
 void text_valid(std::string_view text, std::size_t maximum = 100) {
     if (text.empty() || text.size() > maximum || std::any_of(text.begin(), text.end(),
@@ -222,8 +223,11 @@ std::uint64_t public_market_demand(const MarketState& state, const MarketSegment
     for (const auto& change:state.demand_changes)
         if (change.segment_id==segment.id && change.starts_on<=day && day<change.expires_before)
             delta=checked_add(delta,change.delta.value());
-    const auto factor=std::clamp(checked_add(10000,delta),INT64_C(5000),INT64_C(15000));
+    const auto factor=std::clamp(checked_add(10000,delta),INT64_C(5000),maximum_demand_factor);
     return std::min(market_task_limit,mul_div_round_half_up(segment.daily_tasks,static_cast<std::uint64_t>(factor),10000));
+}
+std::uint64_t maximum_daily_demand(const MarketSegment& segment) {
+    return std::min(market_task_limit,mul_div_round_half_up(segment.daily_tasks,static_cast<std::uint64_t>(maximum_demand_factor),10000));
 }
 std::uint64_t effective_market_demand(const MarketState& state,const MarketSegment& segment,OrdinalDay day) {
     const auto demand=public_market_demand(state,segment,day);

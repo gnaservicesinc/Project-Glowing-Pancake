@@ -45,7 +45,7 @@ std::vector<MarketAdoption> adoption(const WorldState& world,OrdinalDay day) {
     std::map<std::string_view, SegmentReview> reviews;
     for (auto date = begin; date <= day; date = advance_days(date, Days{1})) {
         const auto* player = settled(world.simulation,date);
-        if (!player) continue;
+        if (!player && !(regional && observing_world(world) && date>=world.simulation.date)) continue;
         if (regional) {
             for (const auto& segment : player_market.segments)
                 reviews[segment.id].demand += effective_market_demand(player_market, segment, date);
@@ -86,8 +86,8 @@ std::vector<MarketAdoption> adoption(const WorldState& world,OrdinalDay day) {
 }
 }
 IndustryAllocations prepare_competition_day(WorldState& world,const CompiledProgram& program) {
-    if (!world.competition || !world.competition->setup || !operating(world.simulation)) return {};
-    const auto day=world.simulation.date;
+    if (!world.competition || !world.competition->setup || (!operating(world.simulation) && !observing_world(world))) return {};
+    const auto day=campaign_day(world);
     for (auto& rival:world.competition->companies) competition_detail::prepare_rival_morning(world,program,rival);
     // Copy each newly public demand incident into the same owning market rules.
     // A new entrant joins an active incident from its actual opening date.
@@ -106,13 +106,15 @@ IndustryAllocations prepare_competition_day(WorldState& world,const CompiledProg
     }
     const auto installed=industry_adoption_snapshot(world);
     std::map<std::string,MarketOpportunity,std::less<>> opportunities;
-    for (const auto* seller:sellers(world)) if (operating(*seller) && seller->market)
+    for (const auto* seller:sellers(world)) if (operating(*seller) && seller->market && !(observing_world(world) && seller==&world.simulation))
         opportunities.emplace(seller->market->owner,market_opportunity(*seller->market,*seller->capacity,day,&installed,
             regional_market_conditions(world,*seller,day)));
+    if(opportunities.empty()) return {};
     std::vector<AllocationProduct> products;std::vector<AllocationSegment> segments;
     for (std::size_t index=0; index<world.simulation.market->segments.size(); ++index) {
         const auto& row = world.simulation.market->segments[index];
-        const auto& own = opportunities.at(world.company_id).segments.at(index);
+        const auto player=opportunities.find(world.company_id);
+        const auto& own = (player==opportunities.end()?opportunities.begin():player)->second.segments.at(index);
         AllocationSegment segment{row.id,effective_market_demand(*world.simulation.market,row,day),row.daily_budget,own.outside_weight,{},row.customer_compute};
         std::uint64_t promised=0;Cents charged{0};
         for (const auto& [owner,opportunity]:opportunities) {
@@ -148,7 +150,7 @@ IndustryAllocations prepare_competition_day(WorldState& world,const CompiledProg
 std::vector<MarketAdoption> industry_adoption_snapshot(const WorldState& world, std::optional<OrdinalDay> work_day) {
     std::vector<MarketAdoption> result;std::set<std::string> segments;
     if (world.competition && world.competition->setup) {
-        const auto civil = from_ordinal(work_day.value_or(world.simulation.date));
+        const auto civil = from_ordinal(work_day.value_or(campaign_day(world)));
         const auto recent = OrdinalDay{checked_subtract(to_ordinal({civil.year,civil.month,1}).value(),1)};
         for (auto row=world.competition->adoptions.rbegin();row!=world.competition->adoptions.rend();++row) {
             if (regional_market(*world.simulation.market) && row->reviewed_on < recent) break;
@@ -213,10 +215,10 @@ void validate_industry(const WorldState& world,bool deep) {
     std::vector<DayTotals> totals(market.segments.size());
     std::vector<std::vector<InstalledShare>> installed(market.segments.size());
     std::vector<MarketAdoption> expected;
-    for (const auto& record : market.days) {
+    for (auto day_date=market.starts_on;day_date<campaign_day(world);day_date=advance_days(day_date,Days{1})) {
         std::fill(totals.begin(), totals.end(), DayTotals{});
         for (const auto* seller : participants) {
-            const auto* day = settled(*seller, record.day);
+            const auto* day = settled(*seller, day_date);
             if (!day) continue;
             for (const auto& row : day->segments) {
                 auto& total = totals[indices.at(row.segment_id)];
@@ -234,7 +236,7 @@ void validate_industry(const WorldState& world,bool deep) {
                 const auto share = std::find_if(installed[index].begin(), installed[index].end(), [&](const auto& row) { return row.product_id == id; });
                 const auto incumbent = share == installed[index].end() ? 0 : share->share.value();
                 const auto limit = market_migration(find(seller->market->products, sale.product_id), segment).value();
-                const auto demand = effective_market_demand(market, segment, record.day);
+                const auto demand = effective_market_demand(market, segment, day_date);
                 const auto cap = mul_div_floor(demand, static_cast<std::uint64_t>(std::min<std::int64_t>(10000, incumbent + limit)), 10000).quotient;
                 if (sale.tasks > cap) invalid("Industry delivery bypassed its shared monthly migration limit");
             }
@@ -243,14 +245,14 @@ void validate_industry(const WorldState& world,bool deep) {
             const auto& total = totals[i];
             if (total.delivered == 0 && total.promised == 0 && total.charged.value() == 0) continue;
             const auto& segment = market.segments[i];
-            const auto demand = effective_market_demand(market, segment, record.day);
+            const auto demand = effective_market_demand(market, segment, day_date);
             if (total.delivered > demand || total.promised > demand || total.charged > segment.daily_budget ||
                 total.local_work.value() > segment.customer_compute.value())
                 invalid("Industry history duplicates useful work, buyer hardware or customer budget");
         }
-        const auto civil = from_ordinal(record.day);
+        const auto civil = from_ordinal(day_date);
         if (civil.day == days_in_month(civil.year,civil.month)) {
-            auto rows = adoption(world,record.day);
+            auto rows = adoption(world,day_date);
             if (regional) for (auto& shares : installed) shares.clear();
             for (const auto& row : rows) installed[indices.at(row.segment_id)] = row.shares;
             expected.insert(expected.end(), std::make_move_iterator(rows.begin()), std::make_move_iterator(rows.end()));

@@ -159,7 +159,7 @@ void refresh_wholesale(WorldState& world,const CompiledProgram& program,bool set
     auto& seller=world.simulation;
     for (auto& owned:seller.capacity->sources) owned.wholesale_reserved=MilliCUPerDay{0};
     const auto plans=wholesale_plans(world,program);
-    const auto day=seller.date;
+    const auto day=campaign_day(world);
     for (auto& contract:world.competition->wholesale) {
         auto& rival=buyer(world,contract.buyer_id);
         auto& customer=rival.simulation;
@@ -170,7 +170,7 @@ void refresh_wholesale(WorldState& world,const CompiledProgram& program,bool set
             if (day==last_boundary(contract)) finish_imported_work(rival,id);
             continue;
         }
-        if (closed(seller) || closed(customer) || (settling && (!operating(seller) || !operating(customer)))) {
+        if (observing_world(world) || closed(seller) || closed(customer) || (settling && (!operating(seller) || !operating(customer)))) {
             auto& reserve=escrow(customer,contract.reservation_id);
             reserve.reserved=Cents{0};reserve.status=ReservationStatus::cancelled;
             contract.terminated_on=day;
@@ -265,7 +265,8 @@ void validate_wholesale(const WorldState& world,const CompiledProgram& program,b
                 contract.ends_before>seller.end_date || end<start || end>contract.ends_before || !compatible(owned,plan) ||
                 owned.owner!=world.company_id || owned.provider!=world.company_id || !owned.available_from || start<*owned.available_from ||
                 (contract.terminated_on && (end>=contract.ends_before || end>seller.date ||
-                    !((seller.phase==DayPhase::closed && seller.date==end) || (customer.phase==DayPhase::closed && customer.date==end)))))
+                    !(((seller.phase==DayPhase::closed || observing_world(world)) && seller.date==end) ||
+                      (customer.phase==DayPhase::closed && customer.date==end)))))
                 invalid("Wholesale ownership, dates, compatibility or exclusivity are invalid");
             previous=start;buyer_ends.insert_or_assign(contract.buyer_id,end);
             if (contract.daily_ceiling!=daily_ceiling(seller,owned,plan)) invalid("Wholesale fee exceeds or bypasses its funded electricity terms");

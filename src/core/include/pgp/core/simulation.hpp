@@ -8,6 +8,7 @@
 #include <pgp/core/lab.hpp>
 #include <pgp/core/deployment.hpp>
 #include <pgp/core/management.hpp>
+#include <pgp/core/objectives.hpp>
 #include <pgp/core/business_offers.hpp>
 #include <pgp/core/infrastructure.hpp>
 #include <pgp/core/resilience.hpp>
@@ -187,7 +188,8 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    SubmitPublicTestimony,MakePublicPromise,RequestInstitutionalMandate,NegotiatePublicCase,
                                    NegotiateExecutiveDispute,AcknowledgePublicCase,RelinquishInstitutionalMandate,DirectRegionalProcurement,
                                    RegisterFrontierSystem,StartFrontierTrial,AuthorizeFrontierResearch,AuthorizeFrontierRefresh,CancelFrontierPolicy,
-                                   ProposeSuccession,VoteSuccession,CancelSuccession,RetireFounderChair,AcknowledgeSuccession>;
+                                   ProposeSuccession,VoteSuccession,CancelSuccession,RetireFounderChair,AcknowledgeSuccession,
+                                   SelectCampaignObjectives,AcknowledgeObjectiveBreach,EndWithPostmortem,ContinueAfterEnding>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

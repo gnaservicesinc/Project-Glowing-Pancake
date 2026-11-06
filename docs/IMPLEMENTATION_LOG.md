@@ -1382,3 +1382,42 @@ no lints. The **2035/2114/2514** checks verify cohort availability and ages.
 Century/500-year endurance retains its M8 gate. The roadmap stands at **40/52**.
 M7-03 continues with the six objectives and postmortems. Human studies remain
 deferred until components are in place and the user is ready for v1 preparation.
+
+## M7-03 — Six objectives and postmortems (2026-11-06)
+
+Added goal setup, the Objectives room, exact monthly observations and reviewed
+continuations. Monopoly aggregates delivered work and uses the shared demand
+ceiling before declaring impossibility. Domination and Utopia keep their
+first failed mandatory check. Profit uses an audited final-year valuation and
+beneficial ownership; ASI retains all same-day qualifiers. Survival requires
+operating work as well as team and liquidity evidence. Insolvency, loss of
+directing rights, final enforceable orders and authored catastrophes retain
+their source causes and overdue obligations. Sandbox keeps the scored result;
+observer time preserves the failed institution's accounts and advances rivals
+and regional outcomes.
+
+Century profiles gain durable welfare from actual qualified public delivery,
+and separate regional toolkits support that route without ASI. The scoring
+floors and window dates did not change. Longer player saves use the same
+bounded, lossless history tables as planned rivals.
+
+All **78 optimized Mac CTests passed in 50.12 seconds** with four workers,
+including **57 objective/continuation checks**, **191 Frontier checks** and
+**95 Studio world-form checks**. The separate final-decade replay wins all
+five deadline objectives, loses Domination when the last day's authority is
+relinquished, reopens the exact **10,839,777-byte** result, and settles another
+sandbox day. The fixture starts with favorable welfare and one highly weighted
+region; this is a rules and persistence check. Independent ASI runs prove
+early victory and two same-day rival winners.
+
+The Metal controls at **100%/200% text** use a prepared late opening. They
+settle the first Utopia check, show its postmortem, reopen the exact
+**293,153-byte** breach, continue scoring, end early and then advance in
+sandbox. The bundled 200% route still reaches its solvent 2017 ending.
+
+The shared writer finalized **0.13.0-dev.1**, generation **13**, collection
+hash `953af89a734d19cbd2c4dfcd1b0f545aa3b62effc44f700afc8458877e8d33bf`.
+All seven scenarios and 21 headquarters openings/reloads passed with no
+lints. The roadmap is **41/52**. M8-01 is next: event, asset, audio and credit
+coverage. Full endurance, human studies and release qualification retain
+their own gates. [Objectives and reproduction commands](../src/runtime/OBJECTIVES.md).

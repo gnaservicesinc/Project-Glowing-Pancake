@@ -143,6 +143,7 @@ std::vector<BoardMember> succession_board(const SimulationState& s,std::vector<B
         member.seats=control.role==FounderRole::chair?c.chair_seats:c.trust_seats;
         member.name=control.role==FounderRole::chair?c.founder_name+", chair":"Founder trust representative";
     }
+    std::erase_if(board,[](const auto& member){return member.seats==0;});
     const auto& term=actor.terms.at(control.term-1);
     board.push_back({"leadership.ceo",term.name+", chief executive",1,false,c.cash_floor,BasisPoints{1000}});
     return board;

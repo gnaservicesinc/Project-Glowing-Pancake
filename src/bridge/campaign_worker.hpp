@@ -16,7 +16,8 @@ public:
     CampaignWorker(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
                    persistence::LocalPaths paths, persistence::Settings settings,
                    QObject* parent = nullptr);
-    void newCampaign(std::uint64_t token,std::string headquarters,bool stories,std::string scenario_id = {});
+    void newCampaign(std::uint64_t token,std::string headquarters,bool stories,std::string scenario_id = {},
+        std::optional<core::ObjectiveSelection> objectives = {});
     void advanceTo(std::uint64_t token,std::uint64_t revision,std::string kind);
     void setSpeed(int days_per_second);
     void start();

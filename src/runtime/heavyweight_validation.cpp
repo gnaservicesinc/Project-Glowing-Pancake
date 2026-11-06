@@ -17,20 +17,20 @@ void offers(const WorldState& world,const CompiledProgram& program) {
         const auto& rival=owner(world,offer.company_id);const auto& policy=*rival_definition(program,offer.company_id).response;
         const auto amount=offer.kind==CompetitiveOfferKind::publication?policy.publication_fee:policy.pilot_fee;
         const auto subject=offer.kind==CompetitiveOfferKind::publication?policy.publication_node:policy.pilot_product;
-        const auto cutoff=OrdinalDay{world.simulation.end_date.value()-1};
+        const auto cutoff=OrdinalDay{campaign_calendar_limit(world).value()-1};
         if (!ids.insert(offer.id).second || !reservations.emplace(offer.company_id,offer.reservation_id).second || offer.id!=offer.company_id+"."+std::string(to_string(offer.kind)) || offer.amount!=amount || amount.value()==0 || offer.subject!=subject ||
-            offer.required_tasks!=(offer.kind==CompetitiveOfferKind::pilot?policy.pilot_tasks:0) || offer.issued_on<*rival.response->ready_on || offer.issued_on>world.simulation.date || offer.respond_by!=std::min(cutoff,advance_days(offer.issued_on,policy.offer_response)) || offer.respond_by<=offer.issued_on)
+            offer.required_tasks!=(offer.kind==CompetitiveOfferKind::pilot?policy.pilot_tasks:0) || offer.issued_on<*rival.response->ready_on || offer.issued_on>campaign_day(world) || offer.respond_by!=std::min(cutoff,advance_days(offer.issued_on,policy.offer_response)) || offer.respond_by<=offer.issued_on)
             invalid("Competitive offer changed its bounded identity, disclosed terms or issuance date");
         const auto found=std::find_if(rival.simulation.reservations.begin(),rival.simulation.reservations.end(),[&](const auto& row){return row.id==offer.reservation_id;});
         if (found==rival.simulation.reservations.end() || found->name!="Funded "+std::string(to_string(offer.kind))+" agreement" || !found->reversible) invalid("Competitive offer has no real owned cash reservation");
         if (std::count_if(world.competition->notices.begin(),world.competition->notices.end(),[&](const auto& row){return row.kind=="offer" && row.subject==offer.id && row.company_id==offer.company_id && row.day==offer.issued_on && row.response_due==offer.respond_by;})!=1)
             invalid("Competitive offer lost its unique public response notice");
         const bool pending=offer.status==CompetitiveOfferStatus::pending,active=offer.status==CompetitiveOfferStatus::active,paid=offer.status==CompetitiveOfferStatus::paid,failed=offer.status==CompetitiveOfferStatus::failed;
-        if (to_string(offer.status)=="invalid" || (pending && (offer.accepted_on || world.simulation.date>=offer.respond_by)) || (active && !offer.accepted_on) ||
-            ((pending || active)?offer.resolved_on.has_value():!offer.resolved_on.has_value()) || (offer.resolved_on && (*offer.resolved_on<offer.issued_on || *offer.resolved_on>world.simulation.date))) invalid("Competitive offer status/deadline history is inconsistent");
+        if (to_string(offer.status)=="invalid" || (pending && (offer.accepted_on || campaign_day(world)>=offer.respond_by)) || (active && !offer.accepted_on) ||
+            ((pending || active)?offer.resolved_on.has_value():!offer.resolved_on.has_value()) || (offer.resolved_on && (*offer.resolved_on<offer.issued_on || *offer.resolved_on>campaign_day(world)))) invalid("Competitive offer status/deadline history is inconsistent");
         if (offer.accepted_on) {
             if (*offer.accepted_on<offer.issued_on || *offer.accepted_on>=offer.respond_by || offer.due_on!=std::min(cutoff,advance_days(*offer.accepted_on,policy.offer_term)) || *offer.due_on<=*offer.accepted_on ||
-                (offer.resolved_on && *offer.resolved_on<*offer.accepted_on) || (active && world.simulation.date>=*offer.due_on) || offer.status==CompetitiveOfferStatus::declined || offer.status==CompetitiveOfferStatus::cancelled)
+                (offer.resolved_on && *offer.resolved_on<*offer.accepted_on) || (active && campaign_day(world)>=*offer.due_on) || offer.status==CompetitiveOfferStatus::declined || offer.status==CompetitiveOfferStatus::cancelled)
                 invalid("Accepted competitive offer lost its finite fulfillment window");
         } else if (offer.due_on || offer.last_delivery_day || offer.delivered_tasks!=0 || active || paid) invalid("Unaccepted offer manufactured work, a deadline or a payout");
         const auto expected=(pending || active || failed)?ReservationStatus::active:paid?ReservationStatus::completed:ReservationStatus::cancelled;
@@ -40,7 +40,7 @@ void offers(const WorldState& world,const CompiledProgram& program) {
         if (offer.status==CompetitiveOfferStatus::declined && *offer.resolved_on>=offer.respond_by) invalid("Competitive decline occurred after the response window");
         if (offer.kind==CompetitiveOfferKind::pilot && offer.accepted_on) {
             std::uint64_t tasks=0;std::optional<OrdinalDay> last;
-            const auto through=offer.resolved_on?OrdinalDay{offer.resolved_on->value()-1}:OrdinalDay{world.simulation.date.value()-1};
+            const auto through=offer.resolved_on?OrdinalDay{offer.resolved_on->value()-1}:OrdinalDay{campaign_day(world).value()-1};
             for (const auto& day:world.simulation.market->days) if (day.day>=*offer.accepted_on && day.day<*offer.due_on && day.day<=through) {
                 last=day.day;for (const auto& row:day.discretionary) if (row.product_id==offer.subject) tasks+=row.tasks;
                 for (const auto& row:day.contracts) if (row.delivered_tasks>0) {
@@ -78,7 +78,7 @@ void replay(const WorldState& world,const CompiledProgram& program,const RivalCo
         if (std::count_if(world.competition->notices.begin(),world.competition->notices.end(),[&](const auto& n){return n.company_id==rival.definition_id && n.subject==subject && n.day==day && n.kind==(cause=="warning"?"warning":"response") && n.response_due==due;})!=1) invalid("Heavyweight transition lost its unique public notice");
         ++transition_index;state.phase=phase;
     };
-    const auto end=std::min(world.simulation.date,OrdinalDay{world.simulation.end_date.value()-1});
+    const auto end=std::min(campaign_day(world),OrdinalDay{campaign_calendar_limit(world).value()-1});
     for (auto day=world.campaign_start;day<=end;day=advance_days(day,Days{1})) {
         const bool closed=rival.planning->entered_on && rival.simulation.phase==DayPhase::closed && day>rival.simulation.date;
         if (state.mobilized_on && !state.retired_on && closed && state.phase!=HeavyweightPhase::consolidate) emit(day,HeavyweightPhase::consolidate,"insolvency");
@@ -99,7 +99,7 @@ void replay(const WorldState& world,const CompiledProgram& program,const RivalCo
             if (!hired || !leased) emit(day,HeavyweightPhase::consolidate,"resources_unaffordable");
         }
         if (state.phase==HeavyweightPhase::mobilize && !closed && state.ready_on && day>=*state.ready_on) emit(day,HeavyweightPhase::compete,"compete");
-        if (state.phase==HeavyweightPhase::compete && !closed && day.value()<world.simulation.end_date.value()-1) state.offers_issued=true;
+        if (state.phase==HeavyweightPhase::compete && !closed && day.value()<campaign_calendar_limit(world).value()-1) state.offers_issued=true;
         if (state.phase==HeavyweightPhase::consolidate) {
             bool committed=false;
             for (const auto& offer:world.competition->offers) if (offer.company_id==rival.definition_id && offer.accepted_on && *offer.accepted_on<=day && (!offer.resolved_on || *offer.resolved_on>day)) committed=true;

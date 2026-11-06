@@ -6,7 +6,7 @@ ColumnLayout {
     id: panel
     required property int textSize
     readonly property var civic: campaign.civic
-    readonly property bool editable: !campaign.busy && campaign.paused
+    readonly property bool editable: !campaign.busy && campaign.paused && campaign.companyEditable
     spacing: 10
 
     component Copy: Label {

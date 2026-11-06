@@ -110,6 +110,15 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
     const auto* def=draft.collection().find(scenario);
     if(!def || !std::holds_alternative<content::ScenarioDefinition>(def->data)) return out;
     const auto& s=std::get<content::ScenarioDefinition>(def->data);
+    if((parent.ends_with("/objectives") && key=="primary") || parent.ends_with("/objectives/secondary")) {
+        const auto* future=content::frontier_catalog(draft.collection(),s);
+        for(auto kind:core::objective_kinds) if(kind!=core::ObjectiveKind::asi || (future && future->asi_route))
+            add(std::string(core::objective_key(kind)),std::string(core::objective_name(kind)));
+    }
+    if(key=="rule" && parent.find("/catalog/policies/")!=parent.npos)
+        for(auto rule:{core::CivicRule::launch_evidence,core::CivicRule::site_power,core::CivicRule::final_closure}) {
+            const std::string id(core::civic_key(rule));add(id,label(id));
+        }
     if(key=="founder_board" && s.management && s.management->governance)
         for(const auto& member:s.management->governance->board) if(member.player) add(member.id,member.name);
     if(parent.find("/catalog/gates/")!=parent.npos) {

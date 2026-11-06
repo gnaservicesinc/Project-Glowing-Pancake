@@ -103567,6 +103567,72 @@
         "prepared_headquarters": 21,
         "scenarios": 7
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "2e08e4e507d6bdbc828c2ddc3388151ca9db53b372908186c8b3ab79176683fc",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "market.century",
+          "kind": "regional_markets",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "7a353e9bd2b843d6afe3ec2bdfeaf803415182f22824f3e17c0a7d6fa7fa43be",
+          "before_hash": "ee7f159afe2d012acfdec3f38cb2ee098cb5579481cb178efb9164b23f862de3",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 2,
+          "revision": 3
+        },
+        {
+          "after_hash": "92d0e766c4c99c11d92636acd3dfe97fa53794d2ca85c93020c2be71c3a18c24",
+          "before_hash": "1046684a6196d6abb6c20f84dd33a68729e9d8aa56625777c1c54911ea8d6765",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 2,
+          "revision": 3
+        },
+        {
+          "after_hash": "83d5f0fe0a329a9560ef008683bdbaae960657a8375052043ed1e3f788fffb55",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "society.century",
+          "kind": "regional_society",
+          "old_revision": null,
+          "revision": 1
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "953af89a734d19cbd2c4dfcd1b0f545aa3b62effc44f700afc8458877e8d33bf",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.13.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 13,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.12.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000012.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000013.collection.json",
+      "summary": "Add the six century objectives, preserved endings, and lasting gains from regional public service.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 21,
+        "lints": [],
+        "prepared_headquarters": 21,
+        "scenarios": 7
+      }
     }
   ],
   "format": 1
