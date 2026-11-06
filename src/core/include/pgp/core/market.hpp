@@ -12,6 +12,9 @@ inline constexpr std::size_t market_product_limit = 64;
 inline constexpr std::size_t market_contract_limit = 256;
 inline constexpr std::size_t market_day_limit = 40960;
 inline constexpr std::size_t market_record_limit = 262144;
+// Retention for one segment summary and delivery per region per day over
+// the supported history. Active products and commitments have their own caps.
+inline constexpr std::size_t market_settlement_limit = market_day_limit * market_segment_limit * 2;
 inline constexpr std::uint64_t market_task_limit = 1'000'000'000;
 inline constexpr std::int64_t market_price_limit = 100'000'000;
 inline constexpr std::uint64_t market_utility_limit = 1'000'000;
@@ -114,6 +117,10 @@ struct MarketDay {
     std::optional<std::uint64_t> total_demand{};
     auto operator<=>(const MarketDay&) const = default;
 };
+struct MarketHistoryCount {
+    std::size_t rows = 0;
+    void add(const MarketDay& day);
+};
 struct InstalledShare {
     std::string product_id; // "outside" is the explicit non-AI alternative.
     BasisPoints share{0};
@@ -150,7 +157,7 @@ struct MarketState {
     std::vector<MarketProduct> products;
     std::vector<MarketSegment> segments;
     std::vector<MarketContract> contracts;
-    PagedHistory<MarketDay, 4> days;
+    PagedHistory<MarketDay, 4, MarketHistoryCount> days;
     std::vector<MarketAdoption> adoptions;
     std::vector<MarketDemandChange> demand_changes{};
     std::vector<ProductCapacityBinding> capacity_bindings{};

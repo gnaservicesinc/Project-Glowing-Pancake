@@ -95,7 +95,7 @@ public first deliveries, research publications/insights, dated prices and shared
 monthly adoption. Each company still owns its complete core ledger, capacity,
 work, customer and liquidity histories.
 
-Planned-company `simulation_storage: "history-rows-v2"` stores repeated history
+Short planned-company `simulation_storage: "history-rows-v2"` stores repeated history
 records as fixed-column rows with a per-company `history_strings` table. Only
 specified string columns use indices; normal named core records are restored
 before the existing typed decoder and deep validation. The reader also accepts
@@ -103,12 +103,30 @@ explicit v1 rows and the earlier named representation. Unknown formats/columns,
 missing cells, invalid string indices and duplicate table entries fail. This is
 lossless storage, with no ledger or work history discarded.
 
-Across all companies, expansion is bounded to four million cells and 64 MiB of
+For the v2 tables, expansion is bounded to four million cells and 64 MiB of
 referenced string data; each table has at most 100,000 distinct strings of at
 most 512 bytes. Input retains the 25 MiB default byte limit and four-million
-JSON-event budget. Checksums are not a substitute for these bounds or actual
-financial/resource/public-provenance validation. Current three-year preset
-checks do not qualify century-scale save sizes; that remains M8 work.
+JSON-event budget.
+
+After 365 settled days, century companies and planned rivals use
+`simulation_storage: "history-blocks-v3"`. Command receipts, journal
+postings and invoices, daily market and capacity records, adoption
+history and rival decisions store their row count and independently
+packed blocks. A block contains up to 256 rows
+and expands to at most 2 MiB of JSON, including repeated rows. Consecutive
+market and capacity days with identical contents share one stored row.
+Their dates follow the original close cursor. The reader restores one
+block at a time and applies the same typed bounds and checkpoint
+validation. Posting IDs follow their original sequence. Each posting
+pattern carries its debit, credit, cause and key form. Amount and invoice
+offsets refer to the preceding entry with that pattern. Arbitrary keys
+stay literal. All historical rows, current obligations and evidence links
+survive.
+
+The file still has the configured envelope byte and JSON-event limits.
+Current builds read the previous formats. Older readers preserve a v3
+save and report unsupported history storage. Full century and sandbox
+size and latency remain M8 acceptance checks.
 
 Response-bearing heavyweights also retain named pressure reviews, phase
 transitions, warning/delivery/withdrawal dates and funded agreement records.

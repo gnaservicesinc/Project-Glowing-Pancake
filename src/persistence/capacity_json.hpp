@@ -4,6 +4,6 @@
 #include <pgp/core/capacity.hpp>
 
 namespace pgp::persistence::detail {
-[[nodiscard]] Json capacity_json(const core::CapacityState& state);
-[[nodiscard]] core::CapacityState parse_capacity(const Json& value);
+[[nodiscard]] Json capacity_json(const core::CapacityState& state, bool packed = false);
+[[nodiscard]] core::CapacityState parse_capacity(const Json& value, bool packed = false);
 }

@@ -1489,3 +1489,36 @@ M8-02 remains open. Continue with bounded historical storage, longer save
 and resume checks, and the matched open, frontier and infrastructure
 policies. The century and 500-year runs remain acceptance gates. Human
 playtests remain deferred until v1 preparation.
+
+### Packed saves and rival succession
+
+The first century attempt reached 2056-01-02. A rival's market history
+had crossed the old shared record cap, which prevented that rival from
+acknowledging its leadership handover. Settlement history now has a
+separate bound tied to supported days and segment count. The market checks
+it when recording the day's work. Rival leadership refusals identify the
+company and the underlying reason.
+
+Long histories now use bounded save blocks. Repeated daily records share
+their stored values, and ledger patterns encode dated keys and offsets
+while preserving the original rows. The four-year save from the previous
+build read successfully and repacked from 13,585,070 to 3,073,700 bytes.
+The restored game produced an identical next day. In the 43-year Frontier
+checkpoint, named command receipts made up 19.5 MB of the 38.4 MB file.
+Packing receipt deltas and monthly adoption brought that same checkpoint
+to 15,196,601 bytes. It reopened exactly under the default 25 MiB limit,
+and advancing one day matched the original. Encode and decode took
+5.75s and 4.20s on the M2 Max.
+
+All 79 optimized Mac CTests passed. The packed competition regression
+reopens an active planner, checks its next weekly decision and rejects
+bad backreferences and inconsistent row counts even after rehashing.
+
+The continued stock Frontier run advanced to 2091-01-31, 77 years after
+opening. At the start of January, ten of fifteen entrants were operating
+and player cumulative profit was 94,421,254 constant-2014 cents. The
+262,144-posting bound stopped the January 31 transaction and rolled it
+back. The run took 676s and peaked at 2.34 GB RSS, including save and
+reload attempts. Next work is to reduce in-memory history costs and
+move the posting bound with validated retention before the century and
+sandbox checks. M8-02 remains open at 42/52.

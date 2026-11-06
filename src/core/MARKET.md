@@ -57,10 +57,10 @@ from subsequent history. Existing segment preferences are immutable in this
 primitive API; future catalog/product-launch tooling supplies explicit preference
 updates rather than silently inventing coefficients.
 
-The kernel supports 16 segments, 64 products and 1,024 edges; this owner supports
-256 contracts, 40,960 daily records and 262,144 required receipt rows. Tasks are
-bounded to one billion per segment/day, task prices to 100 million cents and
-utilities to one million before squaring. Limits fail explicitly without
-silently discarding history. Century/sandbox retention and full rival/channel
-accounting remain later work. Engineering tests/demo data are not finalized
-release content or evidence of a viable three-year strategy.
+The market supports 64 segments, 64 products, 256 contracts and 40,960
+closed days. The settlement history allows two detail rows per segment per
+supported day across the whole journal. The market checks the bound when
+appending each day. Adoption history has its own record bound. Tasks are
+bounded to one billion per segment per day, task prices to 100 million
+cents and utilities to one million before squaring. Longer sandbox
+retention remains part of endurance validation.

@@ -1,4 +1,5 @@
 #include "market_json.hpp"
+#include "history_blocks.hpp"
 
 #include <algorithm>
 #include <array>
@@ -29,13 +30,14 @@ core::Cents cents(const Json& value) { return core::Cents{i64(value,"market/cent
 std::uint64_t tasks(const Json& value) { return u64(value,"market/tasks",core::market_task_limit); }
 std::uint64_t utility(const Json& value) { return u64(value,"market/utility",core::market_utility_limit); }
 void count_records(std::size_t& count,std::size_t added) {
-    if (added>core::market_record_limit-count) invalid("market/history","Market history exceeds its combined record bound");
+    if (added>core::market_settlement_limit-count) invalid("market/history","Market history exceeds its combined record bound");
     count+=added;
 }
 }
 
-Json market_json(const core::MarketState& state) {
-    Json products=Json::array(),segments=Json::array(),contracts=Json::array(),days=Json::array(),adoptions=Json::array();
+Json market_json(const core::MarketState& state, bool packed) {
+    Json products=Json::array(),segments=Json::array(),contracts=Json::array();
+    HistoryRows days{packed}, adoptions{packed};
     for (const auto& product:state.products) {
         products.push_back({{"id",product.id},{"capacity_project_id",product.capacity_project_id},
             {"price_per_task_cents",product.price_per_task.value()},{"available",product.available}});
@@ -93,16 +95,18 @@ Json market_json(const core::MarketState& state) {
             {"contract_tasks",segment.contract_tasks},{"discretionary_tasks",segment.discretionary_tasks},
             {"outside_tasks",segment.outside_tasks},{"charged_cents",segment.charged.value()},
             {"unspent_cents",segment.unspent.value()},{"outside_reason",segment.outside_reason}});
-        days.push_back({{"day",closed.day.value()},{"contracts",std::move(contract_results)},
+        Json daily{{"contracts",std::move(contract_results)},
             {"discretionary",std::move(discretionary)},{"segments",std::move(segment_results)},
-            {"allocation_rounds",closed.allocation_rounds}});
-        if (closed.total_demand) days.back()["total_demand"] = *closed.total_demand;
+            {"allocation_rounds",closed.allocation_rounds}};
+        if (!packed) daily["day"] = closed.day.value();
+        if (closed.total_demand) daily["total_demand"] = *closed.total_demand;
+        days.push(std::move(daily));
     }
     for (const auto& adoption:state.adoptions) {
         Json shares=Json::array();
         for (const auto& share:adoption.shares) shares.push_back({
             {"product_id",share.product_id},{"share_basis_points",share.share.value()}});
-        adoptions.push_back({{"reviewed_on",adoption.reviewed_on.value()},{"segment_id",adoption.segment_id},
+        adoptions.push({{"reviewed_on",adoption.reviewed_on.value()},{"segment_id",adoption.segment_id},
             {"observed_tasks",adoption.observed_tasks},{"shares",std::move(shares)}});
     }
     Json bindings=Json::array();
@@ -115,10 +119,10 @@ Json market_json(const core::MarketState& state) {
     return {{"owner",state.owner},{"starts_on",state.starts_on.value()},
         {"closed_through",optional_day(state.closed_through)},{"products",std::move(products)},
         {"segments",std::move(segments)},{"contracts",std::move(contracts)},
-        {"days",std::move(days)},{"adoptions",std::move(adoptions)},{"demand_changes",std::move(changes)},{"capacity_bindings",std::move(bindings)},{"prices",std::move(prices)}};
+        {"days",days.finish()},{"adoptions",adoptions.finish()},{"demand_changes",std::move(changes)},{"capacity_bindings",std::move(bindings)},{"prices",std::move(prices)}};
 }
 
-core::MarketState parse_market(const Json& value) {
+core::MarketState parse_market(const Json& value, bool packed) {
     fields(value,"market",{"owner","starts_on","closed_through","products","segments","contracts","days","adoptions"},{"demand_changes","capacity_bindings","prices"});
     core::MarketState result;
     if (value.contains("prices")) {
@@ -196,11 +200,12 @@ core::MarketState parse_market(const Json& value) {
             day(contract.at("ends_before")),parse_optional_day(contract.at("started_on")),parse_optional_day(contract.at("stopped_on")),
             parse_status(contract.at("status")),label(contract.at("cause"))});
     }
-    const auto& days=value.at("days");array(days,"market/days",core::market_day_limit);
     std::size_t records=0;
-    for (const auto& closed:days) {
-        fields(closed,"market/day",{"day","contracts","discretionary","segments","allocation_rounds"},{"total_demand"});
-        core::MarketDay row;row.day=day(closed.at("day"));
+    read_history_rows(value.at("days"), "market/days", core::market_day_limit, packed, [&](const Json& closed) {
+        if (packed) fields(closed,"market/day",{"contracts","discretionary","segments","allocation_rounds"},{"total_demand"});
+        else fields(closed,"market/day",{"day","contracts","discretionary","segments","allocation_rounds"},{"total_demand"});
+        core::MarketDay row;
+        row.day = packed ? core::advance_days(result.starts_on, core::Days{result.days.size()}) : day(closed.at("day"));
         row.allocation_rounds=u64(closed.at("allocation_rounds"),"market/allocation_rounds");
         if (closed.contains("total_demand"))
             row.total_demand = u64(closed.at("total_demand"),"market/total_demand",core::market_segment_limit*core::market_task_limit);
@@ -232,9 +237,10 @@ core::MarketState parse_market(const Json& value) {
                 text(segment.at("outside_reason"),"market/outside_reason",256,true)});
         }
         result.days.push_back(std::move(row));
-    }
-    const auto& adoptions=value.at("adoptions");array(adoptions,"market/adoptions",core::market_record_limit);
-    for (const auto& adoption:adoptions) {
+    });
+    const auto& adoptions=value.at("adoptions");
+    read_history_rows(adoptions, "market/adoptions", core::market_record_limit,
+                      packed && !adoptions.is_array(), [&](const Json& adoption) {
         fields(adoption,"market/adoption",{"reviewed_on","segment_id","observed_tasks","shares"});
         core::MarketAdoption row;
         row.reviewed_on=day(adoption.at("reviewed_on"));row.segment_id=label(adoption.at("segment_id"));
@@ -245,8 +251,7 @@ core::MarketState parse_market(const Json& value) {
             row.shares.push_back({label(share.at("product_id")),core::BasisPoints{i64(share.at("share_basis_points"),"market/share")}});
         }
         result.adoptions.push_back(std::move(row));
-    }
-    core::validate_market(result);
+    });
     return result;
 }
 }

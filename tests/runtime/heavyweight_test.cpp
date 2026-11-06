@@ -82,12 +82,12 @@ void warning_delivery_and_reloads() {
     // private billing and signed-demand-floor fields that this model must omit.
     auto private_billing=before.world;
     auto& days=private_billing.simulation.market->days;
-    for (std::size_t i=0;i<days.size();++i) {
-        auto day=days[i];
+    const auto history=std::move(days);
+    for (auto day:history) {
         for (auto& segment:day.segments) {
             segment.charged=checked_unit_add(segment.charged,Cents{12345});segment.demand+=500;
         }
-        days.replace(i,std::move(day));
+        days.push_back(std::move(day));
     }
     for (auto& contract:private_billing.simulation.market->contracts) {contract.monthly_fee=checked_unit_add(contract.monthly_fee,Cents{1000000});contract.usage_price=Cents{999};}
     check(runtime::observe_heavyweight_pressure(private_billing,program,id,before.world.simulation.date)==observation,"The response model read hidden contract billing or private demand floors");

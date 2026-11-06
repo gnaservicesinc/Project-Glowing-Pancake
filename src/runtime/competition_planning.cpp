@@ -30,6 +30,13 @@ bool submit(RivalCompany& rival,CommandAction action,std::string* explanation=nu
     if (result.accepted()) rival.simulation=std::move(candidate).release_checkpoint();
     return result.accepted();
 }
+void acknowledge_leadership(RivalCompany& rival) {
+    while (const auto* notice=required_succession_notice(rival.simulation)) {
+        std::string explanation;
+        if (!submit(rival,AcknowledgeSuccession{notice->id},&explanation))
+            throw std::invalid_argument("Rival "+rival.definition_id+" could not acknowledge leadership. "+explanation);
+    }
+}
 void advance(RivalCompany& rival,AdvanceDay day) {
     Simulation candidate{std::move(rival.simulation),TrustedSimulationState{}};
     const auto result=candidate.submit_in_transaction({candidate.checkpoint().revision,std::move(day)});
@@ -295,9 +302,9 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
 RivalObservation public_observation(const WorldState& world,OrdinalDay day,std::uint64_t draw) {return observe(world,day,draw);}
 bool submit_rival(RivalCompany& rival,CommandAction action) {return submit(rival,std::move(action));}
 void review_rival(WorldState& world,const CompiledProgram& program,RivalCompany& rival) {
-    while(const auto* notice=required_succession_notice(rival.simulation))
-        if(!submit(rival,AcknowledgeSuccession{notice->id})) break;
-    auto& plan=*rival.planning;if (!plan.entered_on || !active(rival.simulation) || rival.simulation.date<plan.next_review) return;
+    auto& plan=*rival.planning;if (!plan.entered_on || !active(rival.simulation)) return;
+    acknowledge_leadership(rival);
+    if (rival.simulation.date<plan.next_review) return;
     if (rival.response && rival.response->phase!=HeavyweightPhase::compete) return;
     if (plan.decisions.size()>=8192) invalid("Rival weekly decision history exceeds its century bound");
     const auto& definition=rival_definition(program,rival.definition_id);diffuse(world,rival);
@@ -345,6 +352,7 @@ void initialize_planning(WorldState& world,const CompiledProgram& program,const 
 void prepare_rival_morning(WorldState& world,const CompiledProgram& program,RivalCompany& rival) {
     if (!rival.planning->entered_on || !active(rival.simulation) || (rival.response && rival.response->retired_on)) return;
     const auto day=campaign_day(world);
+    acknowledge_leadership(rival);
     if (const auto warning=liquidity_report(*rival.simulation.liquidity).pending_warning) if (!submit(rival,AcknowledgeLiquidityWarning{*warning})) invalid("Rival liquidity warning was not acknowledged");
     std::vector<std::string> accepted_ids;
     if (rival.simulation.business_offers) for (const auto& row:rival.simulation.business_offers->accepted) accepted_ids.push_back(row.offer_id);

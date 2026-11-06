@@ -236,6 +236,11 @@ void add_market_demand_change(MarketState& state, OrdinalDay day, MarketDemandCh
         next.demand_changes.push_back(std::move(change));
     });
 }
+void MarketHistoryCount::add(const MarketDay& day) {
+    const auto added = day.contracts.size() + day.discretionary.size() + day.segments.size();
+    if (added > market_settlement_limit - rows) invalid("Market settlement history reached its retained row bound");
+    rows += added;
+}
 MarketReport market_report(const MarketState& state) {
     MarketReport report;
     for (const auto& day : state.days) {
@@ -398,7 +403,6 @@ void validate_market(const MarketState& state) {
         default: invalid("Unknown contract status");
         }
     }
-    std::size_t records = 0;
     std::unordered_map<std::string_view, std::size_t> contract_days;
     contract_days.reserve(state.contracts.size());
     std::unordered_set<std::string_view> seen_segments;
@@ -438,8 +442,6 @@ void validate_market(const MarketState& state) {
             for (const auto* segment:dated_demand) total_demand+=effective_market_demand(state,*segment,day.day);
             if (*day.total_demand != total_demand) invalid("Regional customer demand differs from the authored and dated terms");
         }
-        records += day.contracts.size() + day.discretionary.size() + day.segments.size();
-        if (records > market_record_limit) invalid("Market required records exceed their deterministic bound");
         delivered_contract.clear();
         delivered_discretionary.clear();
         promised.clear();
@@ -997,6 +999,7 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
     const std::vector<MarketAdoption>* industry_adoptions, std::span<const WholesaleUse> wholesale, const MarketInfluences& influences) {
     if (validate_io) validate_market_links(state, accounts, capacity);
     require_day(state, day);
+    if (state.days.size() >= market_day_limit) invalid("Market history reached its supported day bound");
     MarketState market_candidate; AccountsState ledger_candidate; CapacityState capacity_candidate;
     if (validate_io) { market_candidate=state; ledger_candidate=accounts; capacity_candidate=capacity; }
     auto& next=validate_io?market_candidate:state;

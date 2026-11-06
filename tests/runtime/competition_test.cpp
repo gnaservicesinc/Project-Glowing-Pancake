@@ -141,6 +141,26 @@ void budgeted_actions_and_reload() {
     malformed=Json::parse(bytes);auto& strings=malformed["checkpoint"]["world"]["competition"]["companies"][0]["simulation"]["history_strings"];strings.push_back(strings.front());invalid_save(program,malformed);
     malformed=Json::parse(bytes);malformed["checkpoint"]["world"]["competition"]["companies"][0]["planning"]["decisions"][0]["observation"]["demand_upper"]=1;invalid_save(program,malformed);
     malformed=Json::parse(bytes);malformed["checkpoint"]["world"]["scenario_id"]="scenario.absent";invalid_save(program,malformed);
+
+    step(game, 172);
+    const auto archived = persistence::encode_save(program, game.checkpoint());
+    auto reopened = persistence::decode_save(program, archived);
+    check(reopened.checkpoint == game.checkpoint(), "Packed company history changed the checkpoint");
+    auto document = Json::parse(archived);
+    auto& packed_company = document["checkpoint"]["world"]["competition"]["companies"][0];
+    check(packed_company.at("simulation_storage") == "history-blocks-v3", "Long company history missed the packed save path");
+    auto& postings = packed_company["simulation"]["accounts"]["postings"];
+    auto& blocks = postings["blocks"];
+    const auto valid_block = blocks.at(0);
+    blocks[0] = "gAAA"; // A backreference with zero distance.
+    invalid_save(program, document);
+    blocks[0] = valid_block;
+    postings["count"] = postings["count"].get<std::size_t>() + 1;
+    invalid_save(program, document);
+    runtime::Runtime resumed{program, std::move(reopened.checkpoint)};
+    step(game, 7);
+    step(resumed, 7);
+    check(resumed.checkpoint() == game.checkpoint(), "Reloaded packed history changed the next weekly decision");
 }
 void research_diffusion() {
     auto document=compact();auto& selected=scenario(document);selected["competition"]["domestic"]=1;

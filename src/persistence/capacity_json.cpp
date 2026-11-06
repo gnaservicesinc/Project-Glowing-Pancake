@@ -1,4 +1,5 @@
 #include "capacity_json.hpp"
+#include "history_blocks.hpp"
 
 #include <algorithm>
 #include <array>
@@ -35,8 +36,9 @@ std::uint32_t staff(const Json& value) {
 }
 }
 
-Json capacity_json(const core::CapacityState& state) {
-    Json sources=Json::array(),projects=Json::array(),days=Json::array();
+Json capacity_json(const core::CapacityState& state, bool packed) {
+    Json sources=Json::array(),projects=Json::array();
+    HistoryRows days{packed};
     for (const auto& source:state.sources) {
         sources.push_back({
         {"id",source.id},{"physical_id",source.physical_id},{"owner",source.owner},{"provider",source.provider},
@@ -77,17 +79,19 @@ Json capacity_json(const core::CapacityState& state) {
             {"project_id",project.project_id},{"work_milli_CU",project.work.value()},
             {"useful_tasks",project.useful_tasks},{"assigned_staff",project.assigned_staff},
             {"protected_tasks",project.protected_tasks}});
-        days.push_back({{"day",closed.day.value()},{"sources",std::move(source_usage)},{"projects",std::move(project_work)}});
+        Json daily{{"sources",std::move(source_usage)},{"projects",std::move(project_work)}};
+        if (!packed) daily["day"] = closed.day.value();
+        days.push(std::move(daily));
     }
     Json staff_additions=Json::array(),staff_departures=Json::array();
     for (const auto& row:state.staff_additions) staff_additions.push_back({{"id",row.id},{"day",row.day.value()},{"people",row.people}});
     for (const auto& row:state.staff_departures) staff_departures.push_back({{"id",row.id},{"day",row.day.value()},{"people",row.people}});
     return {{"staff_additions",std::move(staff_additions)},{"staff_departures",std::move(staff_departures)},{"owner",state.owner},{"starts_on",state.starts_on.value()},
         {"closed_through",optional_day(state.closed_through)},{"available_staff",state.available_staff},
-        {"sources",std::move(sources)},{"projects",std::move(projects)},{"days",std::move(days)}};
+        {"sources",std::move(sources)},{"projects",std::move(projects)},{"days",days.finish()}};
 }
 
-core::CapacityState parse_capacity(const Json& value) {
+core::CapacityState parse_capacity(const Json& value, bool packed) {
     fields(value,"capacity",{"owner","starts_on","closed_through","available_staff","sources","projects","days"},{"staff_additions","staff_departures"});
     core::CapacityState result;
     if (value.contains("staff_departures")) {
@@ -132,12 +136,12 @@ core::CapacityState parse_capacity(const Json& value) {
             label(project.at("cause")), project.contains("customer_inference") &&
                 boolean(project.at("customer_inference"),"capacity/customer_inference")});
     }
-    const auto& days=value.at("days");array(days,"capacity/days",core::capacity_day_limit);
     std::size_t project_records=0;
-    for (const auto& closed:days) {
-        fields(closed,"capacity/closed_day",{"day","sources","projects"});
+    read_history_rows(value.at("days"), "capacity/days", core::capacity_day_limit, packed, [&](const Json& closed) {
+        if (packed) fields(closed,"capacity/closed_day",{"sources","projects"});
+        else fields(closed,"capacity/closed_day",{"day","sources","projects"});
         core::CapacityDay row;
-        row.day=day(closed.at("day"));
+        row.day = packed ? core::advance_days(result.starts_on, core::Days{result.days.size()}) : day(closed.at("day"));
         const auto& source_usage=closed.at("sources");array(source_usage,"capacity/day/sources",core::capacity_source_limit);
         for (const auto& source:source_usage) {
             fields(source,"capacity/source_usage",{"source_id","effective_milli_CU_per_day","used_milli_CU"},
@@ -164,8 +168,7 @@ core::CapacityState parse_capacity(const Json& value) {
                 project.contains("protected_tasks")?u64(project.at("protected_tasks"),"capacity/project_work/protected_tasks"):0});
         }
         result.days.push_back(std::move(row));
-    }
-    core::validate_capacity(result);
+    });
     return result;
 }
 }
