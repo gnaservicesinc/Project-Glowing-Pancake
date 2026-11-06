@@ -3,6 +3,7 @@
 #include <pgp/core/accounts.hpp>
 #include <pgp/core/capacity.hpp>
 #include <pgp/core/allocation.hpp>
+#include <functional>
 
 namespace pgp::core {
 
@@ -165,6 +166,13 @@ struct MarketReport {
     std::uint32_t active_contracts = 0;
     auto operator<=>(const MarketReport&) const = default;
 };
+struct MarketInfluence {
+    std::string product_id, segment_id;
+    BasisPoints awareness{0};
+    bool eligible = true;
+    auto operator<=>(const MarketInfluence&) const = default;
+};
+using MarketInfluences = std::vector<MarketInfluence>;
 [[nodiscard]] MarketState opening_market(OrdinalDay starts_on = OrdinalDay{0},
                                          std::string owner = "company.player");
 [[nodiscard]] MarketReport market_report(const MarketState& state);
@@ -207,9 +215,9 @@ struct MarketOpportunity {
 // The same contract-priority/capacity/eligibility calculation is used for a
 // single company and for shared multi-company demand. It never closes work.
 [[nodiscard]] MarketOpportunity market_opportunity(const MarketState& state, const CapacityState& capacity, OrdinalDay day,
-    const std::vector<MarketAdoption>* industry_adoptions = nullptr);
+    const std::vector<MarketAdoption>* industry_adoptions = nullptr, const MarketInfluences& influences = {});
 [[nodiscard]] CapacityDay preview_market_work(const MarketState& state, const CapacityState& capacity, OrdinalDay day,
-    const AllocationResult& assigned, const std::vector<MarketAdoption>& industry_adoptions);
+    const AllocationResult& assigned, const std::vector<MarketAdoption>& industry_adoptions, const MarketInfluences& influences = {});
 // An industry allocation is checked against this company's actual opportunity;
 // other providers count as outside in its own report. The world coordinator
 // additionally conserves the single customer demand/budget across all sellers.
@@ -217,5 +225,5 @@ void close_market_day(MarketState& state, AccountsState& accounts,
                       CapacityState& capacity, OrdinalDay day, bool validate_io = true,
                       const AllocationResult* assigned = nullptr,
                       const std::vector<MarketAdoption>* industry_adoptions = nullptr,
-                      std::span<const WholesaleUse> wholesale = {});
+                      std::span<const WholesaleUse> wholesale = {}, const MarketInfluences& influences = {});
 } // namespace pgp::core

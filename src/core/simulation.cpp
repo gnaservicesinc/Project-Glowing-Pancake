@@ -431,6 +431,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 row.status = ReservationStatus::cancelled;
                 (void)receipt(next, "cancel_unconsumed_reservation", action.id);
             } else if constexpr (std::is_same_v<Action, AdvanceDay>) {
+                if (!action.market_influences.empty() && !outer_transaction)
+                    refuse(CommandReason::invalid_argument,"Regional market conditions belong to the shared world transaction.");
                 if (!action.wholesale_work.empty() && (!outer_transaction || !next.infrastructure || !next.capacity))
                     refuse(CommandReason::invalid_argument,"Only the world can settle exported work from an owned site.");
                 if ((!action.industry_adoptions.empty() && !action.market_allocation) ||
@@ -453,7 +455,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if (next.market)
                     close_market_day(*next.market, accounts(next), capacity(next), next.date, false,
                         action.market_allocation ? &*action.market_allocation : nullptr,
-                        action.market_allocation ? &action.industry_adoptions : nullptr, action.wholesale_work);
+                        action.market_allocation ? &action.industry_adoptions : nullptr, action.wholesale_work, action.market_influences);
                 else if (next.capacity) close_capacity_day(*next.capacity, next.date, false, action.wholesale_work);
                 if (next.lab) close_lab_day(*next.lab, *next.capacity, next.date, next.random);
                 close_infrastructure_day(next);
@@ -708,6 +710,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             } else if constexpr (std::is_same_v<Action, SubmitPolicyEvidence>) {
                 submit_policy_evidence(next, action);
                 (void)receipt(next, "submit_policy_evidence");
+            } else if constexpr (std::is_same_v<Action, BuyMediaCampaign> || std::is_same_v<Action, EndorseForumStandard>) {
+                refuse(CommandReason::invalid_argument,"Regional media and standards require the owning world transaction.");
             } else if constexpr (std::is_same_v<Action, TakeFinancing>) {
                 const auto before=next.cash;take_financing(next,action.id);(void)receipt(next,"take_financing",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, HireSpecialist>) {

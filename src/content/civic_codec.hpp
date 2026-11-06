@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pgp/core/civic.hpp>
+#include "society_codec.hpp"
 #include <nlohmann/json.hpp>
 #include <limits>
 #include <stdexcept>
@@ -52,10 +53,13 @@ template<class T, class Field> void fields(T& row, Field field) {
         field("influence_bp", row.influence);
     } else if constexpr (std::is_same_v<Type, core::CivicDecision>) {
         field("stage", row.stage); field("day", row.day); field("yes", row.yes); field("seats", row.seats); field("passed", row.passed);
-    }
+    } else society_codec::fields(row,field);
 }
 template<class T> constexpr std::size_t maximum_rows() {
-    if constexpr (std::is_same_v<T, core::CivicElection>) return core::civic_election_limit;
+    if constexpr (std::is_same_v<T,core::SocietyMonth>) return core::society_month_limit;
+    else if constexpr (std::is_same_v<T,core::MediaCampaign>) return core::society_campaign_limit;
+    else if constexpr (std::is_same_v<T,core::ForumRound>) return core::society_forum_limit;
+    else if constexpr (std::is_same_v<T, core::CivicElection>) return core::civic_election_limit;
     else if constexpr (std::is_same_v<T, core::CivicDocket>) return core::civic_docket_limit;
     else if constexpr (std::is_same_v<T, core::CivicSubmission>) return core::civic_advocacy_limit + 1;
     else if constexpr (std::is_same_v<T, core::CivicDecision>) return 5;

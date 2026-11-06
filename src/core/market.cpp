@@ -812,8 +812,21 @@ struct MarketClosePlan {
     std::vector<AllocationSegment> segments;
 };
 MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool,OrdinalDay day,bool validate_io,
-    const std::vector<MarketAdoption>* industry_adoptions = nullptr) {
+    const std::vector<MarketAdoption>* industry_adoptions = nullptr, const MarketInfluences& influences = {}) {
     require_day(next,day);
+    if (influences.size() > market_product_limit * market_segment_limit) invalid("Regional market influence exceeds its size bound");
+    std::map<std::pair<std::string,std::string>, const MarketInfluence*> contextual;
+    for (const auto& influence : influences) {
+        (void)find_id(next.products, influence.product_id);
+        (void)find_id(next.segments, influence.segment_id);
+        if (influence.awareness.value() > 3000 ||
+            !contextual.emplace(std::pair{influence.product_id,influence.segment_id}, &influence).second)
+            invalid("Regional awareness and eligibility need unique bounded market links");
+    }
+    const auto context = [&](const std::string& product, const std::string& segment) -> const MarketInfluence* {
+        const auto found = contextual.find({product,segment});
+        return found == contextual.end() ? nullptr : found->second;
+    };
     if (industry_adoptions) {
         if (industry_adoptions->size()>market_segment_limit) invalid("Industry opportunity needs one bounded adoption snapshot per segment");
         std::set<std::string> segments;
@@ -837,8 +850,11 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
         if (row.status == ContractStatus::pending && day >= row.start_by) {
             record.contracts.push_back({row.id, 0, 0, Cents{0}, Cents{0}, Cents{0}, row.missed_start_penalty});
         } else if (row.status == ContractStatus::active) {
-            requested_contracts[row.product_id] += row.tasks_per_day;
-            product_contracts[row.product_id].push_back({row.id, row.tasks_per_day});
+            const auto* rule = context(row.product_id,row.segment_id);
+            if (!rule || rule->eligible) {
+                requested_contracts[row.product_id] += row.tasks_per_day;
+                product_contracts[row.product_id].push_back({row.id, row.tasks_per_day});
+            }
         }
     }
     std::vector<ServingRequest> full_requests;
@@ -903,6 +919,8 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
         const auto outside_share = share("outside");
         for (const auto& pref : row.preferences) {
             const auto& product_row = find_id(next.products, pref.product_id);
+            const auto* rule = context(product_row.id,row.id);
+            if (rule && !rule->eligible) continue;
             if (!pref.eligible || !market_access(product_row, row) || !available(product_row, pool) ||
                 product_row.price_per_task > pref.willingness_to_pay) continue;
             const auto& profile = project(pool, product_row);
@@ -911,7 +929,9 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
             const auto old_share = share(product_row.id);
             const auto other_installed = 10000 - outside_share - old_share;
             const auto switching = mul_div_round_half_up(pref.switching_cost, other_installed, 10000);
-            const auto utility = pref.utility > switching ? pref.utility - switching : 0;
+            const auto awareness = rule ? static_cast<std::uint64_t>(rule->awareness.value()) : 0;
+            const auto known = std::min(market_utility_limit, mul_div_round_half_up(pref.utility, 10000 + awareness, 10000));
+            const auto utility = known > switching ? known - switching : 0;
             const auto migration = static_cast<std::uint64_t>(market_migration(product_row, row).value());
             const auto adoption_cap = std::min<std::uint64_t>(10000, old_share + migration);
             const auto limit = mul_div_floor(demand, adoption_cap, 10000).quotient;
@@ -966,19 +986,20 @@ std::vector<ServingRequest> actual_serving_requests(const MarketState& market, c
     return requests;
 }
 }
-MarketOpportunity market_opportunity(const MarketState& state,const CapacityState& capacity,OrdinalDay day,const std::vector<MarketAdoption>* adoptions) {
-    auto plan=prepare_market(state,capacity,day,false,adoptions);std::vector<MarketContractClaim> claims;
+MarketOpportunity market_opportunity(const MarketState& state,const CapacityState& capacity,OrdinalDay day,
+    const std::vector<MarketAdoption>* adoptions, const MarketInfluences& influences) {
+    auto plan=prepare_market(state,capacity,day,false,adoptions,influences);std::vector<MarketContractClaim> claims;
     for (const auto& row:state.segments) claims.push_back({row.id,plan.segment_reserved[row.id],plan.segment_charged.contains(row.id)?plan.segment_charged.at(row.id):Cents{0}});
     return {std::move(plan.products),std::move(plan.segments),std::move(claims)};
 }
 CapacityDay preview_market_work(const MarketState& state, const CapacityState& capacity, OrdinalDay day,
-    const AllocationResult& assigned, const std::vector<MarketAdoption>& industry_adoptions) {
-    const auto plan = prepare_market(state, capacity, day, false, &industry_adoptions);
+    const AllocationResult& assigned, const std::vector<MarketAdoption>& industry_adoptions, const MarketInfluences& influences) {
+    const auto plan = prepare_market(state, capacity, day, false, &industry_adoptions,influences);
     validate_assigned(plan, assigned);
     return preview_capacity_day(capacity, day, actual_serving_requests(state, capacity, plan, assigned), false);
 }
 void close_market_day(MarketState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day, bool validate_io, const AllocationResult* assigned,
-    const std::vector<MarketAdoption>* industry_adoptions, std::span<const WholesaleUse> wholesale) {
+    const std::vector<MarketAdoption>* industry_adoptions, std::span<const WholesaleUse> wholesale, const MarketInfluences& influences) {
     if (validate_io) validate_market_links(state, accounts, capacity);
     require_day(state, day);
     MarketState market_candidate; AccountsState ledger_candidate; CapacityState capacity_candidate;
@@ -992,7 +1013,7 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
         if (row.kind == ProjectKind::serving && row.status == ProjectStatus::active && !linked.contains(row.id))
             invalid("Every active serving workload must be linked before market work advances");
     if (industry_adoptions && !assigned) invalid("Industry adoption context requires its shared allocation");
-    auto prepared=prepare_market(next,pool,day,validate_io,industry_adoptions);
+    auto prepared=prepare_market(next,pool,day,validate_io,industry_adoptions,influences);
     if (assigned) validate_assigned(prepared,*assigned);
     auto& record=prepared.record;
     auto& segment_reserved=prepared.segment_reserved;
