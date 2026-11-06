@@ -1,6 +1,7 @@
 #include <pgp/runtime/scenario.hpp>
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
+#include "../content/slice_fixture.hpp"
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <fstream>
@@ -18,6 +19,7 @@ Json compact() {
     auto& selected=scenario(document);selected["flows"]=Json::array();selected["management"]["setbacks"]=Json::array();
     selected["competition"]["domestic"]=2;selected["competition"]["international"]=0;selected["competition"]["heavyweights"]=0;
     for (auto& rival:selected["rivals"]) if (rival["planning"]["group"]=="domestic") rival["start_after_days"]=rival["planning"]["slot"]==1?0:14;
+    pgp_test::prune_unused_flows(document);
     return document;
 }
 void apply(runtime::Runtime& game,core::CommandAction action) {

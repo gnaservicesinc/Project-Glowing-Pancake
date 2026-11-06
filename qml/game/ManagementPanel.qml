@@ -127,6 +127,15 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "lab" && panel.section === "data"
         Copy { text: qsTr("License rights and coverage before training. Purchased data affects new training; an existing checkpoint keeps its original mixture.") }
+        TextField {
+            objectName: "dataOfferFilter"
+            Layout.fillWidth: true
+            font.pixelSize: panel.textSize
+            placeholderText: qsTr("Filter data offers")
+            Accessible.name: placeholderText
+            text: manager.dataOffers.filterText
+            onTextEdited: manager.dataOffers.filterText = text
+        }
         Selection { heading: qsTr("Data offers"); rows: manager.dataOffers }
         Action {
             objectName: "buyDataButton"
@@ -138,6 +147,15 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "lab" && panel.section === "research"
+        TextField {
+            objectName: "researchTopicFilter"
+            Layout.fillWidth: true
+            font.pixelSize: panel.textSize
+            placeholderText: qsTr("Filter research topics")
+            Accessible.name: placeholderText
+            text: manager.researchTopics.filterText
+            onTextEdited: manager.researchTopics.filterText = text
+        }
         Selection { heading: qsTr("Research topics"); rows: manager.researchTopics }
         Choice { id: researchSource; objectName: "researchSourceChoice"; label: qsTr("Research compute source"); options: manager.sources }
         Field { id: researchRate; objectName: "researchRateField"; label: qsTr("Research CU per day"); value: manager.recommended.testingRate || "" }

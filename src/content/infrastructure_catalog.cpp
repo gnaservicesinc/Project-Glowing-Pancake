@@ -34,7 +34,10 @@ template<class T> T decode(const Json& j) {
         if (!j.is_number_integer() || (j.is_number_unsigned() && j.get<std::uint64_t>()>static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()))) invalid();
         const auto value=j.get<std::int64_t>();if constexpr (std::is_integral_v<T>) {if (!std::in_range<T>(value)) invalid();return static_cast<T>(value);}else return T{value};
     } else if constexpr (requires(T v) {v.push_back(typename T::value_type{});}) {
-        using Row=typename T::value_type;constexpr std::size_t maximum=std::is_same_v<Row,core::StateSiteProfile>?51:(std::is_same_v<Row,core::TravelRoute>?100:16);
+        using Row=typename T::value_type;
+        constexpr std::size_t maximum=std::is_same_v<Row,core::StateSiteProfile>?51:
+            (std::is_same_v<Row,core::TravelRoute>?100:
+                (std::is_same_v<Row,core::HardwareFamily>?core::infrastructure_hardware_family_limit:16));
         if (!j.is_array() || j.size()>maximum) invalid();T rows;for (const auto& row:j) rows.push_back(decode<Row>(row));return rows;
     } else {
         if (!j.is_object()) invalid();T result;std::size_t fields=0;

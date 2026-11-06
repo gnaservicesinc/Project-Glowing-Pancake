@@ -1,6 +1,7 @@
 #include "game_smoke.hpp"
 
 #include "campaign_controller.hpp"
+#include "music_controller.hpp"
 #include <pgp/graphics/graphics_policy.hpp>
 #include <pgp/runtime/authority.hpp>
 
@@ -52,6 +53,89 @@ struct SmokeState {
     pgp::core::OrdinalDay date{0};
     QString project;
 };
+}
+
+void schedule_music_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,MusicController& music,
+    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot) {
+    enum class Phase { settings, dialog, enabled, excerpt, muted };
+    struct State {
+        Phase phase = Phase::settings;
+        int ticks = 0;
+        QString backend;
+    };
+    auto smoke = std::make_shared<State>();
+    auto* timer = new QTimer(&window);
+    timer->setInterval(80);
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,smoke,expected,paths,screenshot] {
+        const auto item = [&](const char* name) { return visual_item(window.contentItem(),QString::fromLatin1(name)); };
+        const auto press = [&](const char* name) { return key(window,item(name),Qt::Key_Space); };
+        const auto fail = [&](const char* reason) {
+            qCritical() << "Music and credits smoke failed:" << reason << static_cast<int>(smoke->phase) << music.status();
+            timer->stop();
+            QCoreApplication::exit(3);
+        };
+        if (++smoke->ticks > 200) { fail("timed out"); return; }
+        if (!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
+        switch (smoke->phase) {
+        case Phase::settings:
+            if (window.rendererInterface()->graphicsApi() != expected || music.credits().size() != 7 ||
+                campaign.musicEnabled() || music.playing() || std::filesystem::exists(paths.settings_file) ||
+                !press("settingsButton") || !press("reduceMotionControl")) {
+                fail("fresh settings, seven credits, keyboard or renderer"); return;
+            }
+            smoke->phase = Phase::dialog;
+            break;
+        case Phase::dialog:
+            if (!campaign.reducedMotion() || !press("musicCreditsButton")) { fail("reduced motion or credits button"); return; }
+            smoke->phase = Phase::enabled;
+            break;
+        case Phase::enabled: {
+            auto* control = item("musicEnabledControl");
+            const auto* accessible = control ? QAccessible::queryAccessibleInterface(control) : nullptr;
+            if (!accessible || accessible->text(QAccessible::Name).isEmpty() ||
+                !music.licenseText(0).contains(QStringLiteral("Attribution 4.0 International")) ||
+                !music.licenseText(3).contains(QStringLiteral("GNU LESSER GENERAL PUBLIC LICENSE")) ||
+                !press("musicEnabledControl")) {
+                fail("credits, license text, accessible focus or music toggle"); return;
+            }
+            smoke->phase = Phase::excerpt;
+            break;
+        }
+        case Phase::excerpt: {
+            auto* track = item("musicTrackControl");
+            auto* volume = item("musicVolumeControl");
+            if (!campaign.musicEnabled() || !music.playing() ||
+                !music.status().contains(QStringLiteral("Atemübungen")) ||
+                !key(window,track,Qt::Key_End) || !press("musicExcerptControl") ||
+                !key(window,volume,Qt::Key_Left)) {
+                fail("native ambient/tension playback, keyboard selector or volume"); return;
+            }
+            smoke->backend = music.backend();
+            smoke->phase = Phase::muted;
+            break;
+        }
+        case Phase::muted:
+            if (campaign.musicEnabled()) {
+                if (!music.playing() || !music.status().contains(QStringLiteral("004")) || campaign.musicVolume() != 95) {
+                    fail("selected tension excerpt or persisted volume"); return;
+                }
+                if (!screenshot.isEmpty() && !window.grabWindow().save(screenshot)) { fail("screenshot"); return; }
+                if (!press("musicEnabledControl")) { fail("turn music off"); return; }
+                return;
+            }
+            if (music.playing() || !pgp::persistence::load_settings(paths.settings_file).reduced_motion ||
+                pgp::persistence::load_settings(paths.settings_file).music_enabled || !press("closeMusicCredits")) {
+                fail("silent state, saved preferences or return from the credits"); return;
+            }
+            qInfo().noquote() << "Seven music credits and offline notices, ambient and tension output via"
+                              << smoke->backend << ", keyboard and reduced motion at"
+                              << campaign.textScalePercent() << "% text.";
+            timer->stop();
+            QCoreApplication::exit(0);
+            break;
+        }
+    });
+    timer->start();
 }
 
 void schedule_game_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,

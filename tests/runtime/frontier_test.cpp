@@ -1,6 +1,7 @@
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/runtime/scenario.hpp>
+#include "../content/slice_fixture.hpp"
 #include <pgp/runtime/competition.hpp>
 #include <nlohmann/json.hpp>
 #include <algorithm>
@@ -107,8 +108,19 @@ runtime::CompiledProgram late_fixture(Json source,std::string_view path="path.ac
         }
         auto& offers = row["business_offers"];
         offers.erase(std::remove_if(offers.begin(),offers.end(),[](const auto& offer){return offer["id"]!="offer.independent_lab";}),offers.end());
+        if (row.contains("rivals")) {
+            auto& roster = row["rivals"];
+            roster.erase(std::remove_if(roster.begin(),roster.end(),[](const auto& company) {
+                return company["id"]!="company.century.frontier" && company["id"]!="company.century.parallel";
+            }),roster.end());
+            roster.front()["planning"]["slot"]=1;
+            row["competition"]["domestic"]=roster.size();
+            row["competition"]["international"]=0;
+            row["competition"]["heavyweights"]=0;
+        }
         if (row["id"]==frontier_id) row["seed"] = cooperative_seed;
     }
+    pgp_test::prune_unused_flows(source);
     return compile(std::move(source));
 }
 void research(runtime::Runtime& game,std::string_view topic) {

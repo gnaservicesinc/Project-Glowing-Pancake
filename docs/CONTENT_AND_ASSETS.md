@@ -1,6 +1,6 @@
 # Content, art, audio, and provenance
 
-Baseline 1.2 · No production assets have been obtained yet
+Baseline 1.2 · Reviewed Mac campaign content 0.14.0-dev.1
 
 ## Writing direction
 
@@ -31,6 +31,22 @@ The 120-event budget allocates roughly 20 research/data, 20 product/customer, 20
 
 Every strategic path needs content: profitable specialist, open ecosystem, frontier lab, public-service partnership, infrastructure provider, and authority-seeking institution. Each has an early opportunity, an operational problem, a late-game scaling issue, and consequences that connect to at least two other systems.
 
+Both century scenarios enable 120 flows. The 101 additions include six
+AI-assisted optional story starters, three seeded regional demand incidents,
+and 70 flows tagged for opportunity or recovery. Short reports point to actual
+contracts, lab evidence, votes, settlements, appointments or measurements.
+The Cedar Desk story follows the same missed-start settlement as the baseline
+report. Its reminder is optional, and the ordinary recovery pilot remains
+available independently. Human authors can replace or extend the story starters
+in Studio during v1 preparation.
+
+The century Lab has 60 research topics across the original foundations and
+seven tracks, with 24 data offers and 18 rack families. New research chains
+unlock particular recipes, independent panels and rack families. The roster
+starts six companies and schedules nine more, with heavyweight entry still
+subject to observed pressure. Eight executive appointment offers and 24 names
+in four recurring succession tracks support the people and board paths.
+
 ## Graphical content production
 
 Human authors use the separately downloaded [Content Studio](CONTENT_EDITOR.md) to browse and maintain the repository's current content. A categorized library links events/flows, scenarios, research, hardware, people, policies, localization and asset records. Trigger boxes connect to ordered effects and events; node graph, forms and outline expose one definition with searchable references and useful scope/unit/tooltips. Ordinary content editing does not require scripts or raw JSON. The base game contains only reviewed runtime data. E1a first supplies complete forms/outline and inspection for slice events; E1b completes the linked-box canvas and graphical finalizer before M4.
@@ -58,6 +74,12 @@ Baseline detectors and story layers share a source occurrence/receipt. Declare w
 
 Use original QML shapes and prepared geometry for charts, maps, framing, and simple icons. Prefer appropriate existing freely licensed raster art for room scenes; custom project art fills gaps. Generating a bitmap is an option only when it solves a documented asset need and is consistent with the user's preference for existing suitable assets. No art generation is required for planning or M0.
 
+The game uses seven original room schematics and four contextual illustrations
+for campaign setup, Inbox, Leadership and Objectives. They are static and
+decorative. The adjacent labels, lists and controls carry the game information.
+The procedural art supplies the current Mac scenes. The broader reusable icon
+budget remains a production art target.
+
 Runtime raster images use PNG or JPEG. Vector map data and original QML geometry are data/code, not forbidden image codecs. Preserve editable sources when art is created for the project and include their provenance. No video is needed in 1.0. Avoid HEIC/HEVC, AVIF, JPEG XL/XS, and unreviewed media pipelines; do not make a worldwide patent-freedom promise about any format.
 
 Technical illustrations clarify modeled relationships rather than pretend to reproduce a real benchmark. Historical hardware uses fictional names/appearance. State/site risk colors have symbols/text alternatives; map claims identify the source year and authored approximations. Natural Earth provides public-domain world boundaries; Census provides simplified domestic cartographic boundaries. The selected release, transformation and resulting geometry must be recorded. [Natural Earth terms](https://www.naturalearthdata.com/about/terms-of-use/), [Census boundaries](https://www.census.gov/geographies/mapping-files/time-series/geo/cartographic-boundary.html).
@@ -69,6 +91,17 @@ Possible low-cost UI source: Kenney's asset pages identify their game assets as 
 Prefer ENDE's human-created catalog. Maintain a coherent, restrained ambient/electronic palette with low distraction during finance/research work. Tension tracks should signal a changed situation without making routine decisions feel like emergencies. Music can be muted independently; critical cues also appear as text/icons. No generated soundtrack and no mandatory voice acting.
 
 Audio uses an optional playback adapter and silent fallback, without requiring the missing local Qt Multimedia module. Probe/pin miniaudio plus stb_vorbis before adopting it; disable unneeded decoders and restrict accepted input encodings. Use local Ogg Vorbis music only after decoder deployment is verified across the native matrix; short PCM WAV cues are the conservative effect format. Store original downloaded sources if redistribution permits, and record any encoding, edit, loop points and volume adjustment. A site license and a particular track's license are both checked; free to download is not a sufficient rights record. The ENDE standard license currently identifies CC BY 4.0 and game use. Keep attribution even where the site offers a waiver. [ENDE license](https://ende.app/en/standard-license).
+
+The Mac soundtrack plays five ambient and two tension excerpts from Sascha
+Ende’s catalog. Music starts with the player's opt-in and has a separate volume
+control. A required site, liquidity, institutional or objective review can
+queue one tension excerpt. The underlying review is always visible on screen.
+The bundled PCM16 WAV excerpts are 24 or 28 seconds. The checkout preserves the
+published MP3 bytes, exact excerpt offsets and edits, and the license record.
+Settings exposes track credits, local license notices and a deliberate link to
+each recording page. [Track credits](../assets/audio/CREDITS.json)
+· [Source evidence](../assets/audio/ENDE-SOURCES.json)
+· [Artist catalog](https://ende.app/en/sascha).
 
 ## License and asset register
 

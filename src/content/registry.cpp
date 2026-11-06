@@ -202,6 +202,7 @@ Registry foundation_registry() {
     result.register_system("frontier", {"slice"});
     result.register_system("succession", {"slice"});
     result.register_system("objectives", {"authority","frontier","succession"});
+    result.register_system("campaign", {"objectives","resilience"});
     const auto maximum = std::numeric_limits<std::int64_t>::max();
     const auto minimum = std::numeric_limits<std::int64_t>::min();
     auto number = [&](std::string id, Scope scope, Unit unit, std::int64_t low, std::int64_t high, std::string help,std::string provider="foundation") {
@@ -245,6 +246,70 @@ Registry foundation_registry() {
     }
     boolean("company.has_research_partner", "Whether the company has a current research partnership.");
     boolean("company.is_operating", "Whether company operations remain active.");
+    number("company.campaign_days",Scope::company,Unit::days,0,maximum,
+        "Days elapsed since this campaign opened.", "campaign");
+    number("world.campaign_days",Scope::world,Unit::days,0,maximum,
+        "Days elapsed since this campaign opened.", "campaign");
+    const std::pair<std::string_view,std::string_view> company_counts[]{
+        {"data_licenses","Data offers already licensed by the company."},
+        {"open_licenses","Licensed data offers that permit open weight release."},
+        {"research_only_licenses","Licensed offers restricted to research use."},
+        {"trained_models","Model checkpoints with work actually performed."},
+        {"independent_evaluations","Completed independent evaluations of actual checkpoints."},
+        {"published_research","Research results actually published by this company."},
+        {"adopted_research","Public research credits adopted from another company."},
+        {"frontier_systems","Registered systems built from deployed services."},
+        {"frontier_assessments","Completed Frontier assessment reports, including reports that did not qualify."},
+        {"frontier_programs","Authorized Frontier research queues or standing tracks."},
+        {"successful_refreshes","Evaluated product refreshes that actually deployed a replacement."},
+        {"held_refreshes","Completed refresh runs that retained the previous deployment."},
+        {"product_launches","Deployments that actually committed, including replacements."},
+        {"active_services","Available product channels with an actual current deployment."},
+        {"hosted_services","Available licensed or open-weight products using customer compute."},
+        {"active_contracts","Signed contracts currently serving."},
+        {"missed_contracts","Signed contracts that missed their service start."},
+        {"contract_shortfalls_today","Contracts with unmet promised tasks in the last settled day."},
+        {"served_tasks_today","Useful tasks actually settled for this company on the last work day."},
+        {"price_changes","Committed changes to live product prices."},
+        {"executive_appointments","Executive appointments still in force."},
+        {"vesting_grants","Outstanding hybrid compensation grants inside the reserved share pool."},
+        {"open_board_votes","Current board motions with a response window."},
+        {"board_refusals","Board motions that expired or were rejected."},
+        {"executive_remedies","Corporate disputes resolved, waived or accelerated under recorded terms."},
+        {"handover_count","Completed chief executive handovers, including caretaker continuity."},
+        {"capital_events","New corporate debt or equity entries, excluding opening ownership."},
+        {"resolved_workouts","Liquidity workouts resolved by settling the recorded obligations."},
+        {"acquisitions","Companies actually acquired by the player's company."},
+        {"site_orders","Owned sites under construction or operating."},
+        {"online_sites","Owned sites actually commissioned and still open."},
+        {"online_racks","Delivered, commissioned racks still in service."},
+        {"open_site_incidents","Outstanding disruptions with recovery work still due."},
+        {"site_repairs","Site incidents with a documented repair."},
+        {"paid_site_claims","Site incidents with an insurance payment actually received."},
+        {"ready_replicas","Synchronized and available geographic service replicas."},
+        {"wholesale_contracts","Funded wholesale contracts currently in term."},
+        {"used_wholesale_contracts","Contracts with at least one day of metered wholesale compute use."},
+        {"public_testimonies","Disclosed independent evidence filed in the public record."},
+        {"fulfilled_promises","Public commitments marked met by recorded work or publication."},
+        {"public_cases","Public cases still awaiting a remedy or review."},
+        {"public_remedies","Public cases resolved after actual review or remedial work."},
+        {"approved_mandates","Institutional agreements approved and still in term."}
+    };
+    for (const auto& [id,help] : company_counts)
+        number("company."+std::string(id),Scope::company,Unit::count,0,maximum,std::string(help),"campaign");
+    number("world.rival_entries",Scope::world,Unit::count,0,maximum,
+        "Rival entries publicly announced by the shared competition simulation.","campaign");
+    number("world.rival_closures",Scope::world,Unit::count,0,maximum,
+        "Rival closures recorded in public news.","campaign");
+    number("world.public_regions",Scope::world,Unit::count,0,8,
+        "Regions with actual player public-service delivery in the last settled month.","campaign");
+    number("world.durable_regions",Scope::world,Unit::count,0,8,
+        "Regions with retained gains from measured public delivery and independent evidence.","campaign");
+    boolean("company.small_supplier_eligible","The small opening supplier lease can actually be accepted.",Scope::company,"campaign");
+    boolean("company.document_recovery_eligible","The opening narrow document pilot can actually be accepted.",Scope::company,"campaign");
+    boolean("company.regional_recovery_eligible","The shorter regional recovery pilot can actually be accepted.",Scope::company,"campaign");
+    boolean("company.cooperative_burst_eligible","The cooperative's short power-included lease can actually be accepted.",Scope::company,"campaign");
+    boolean("company.independent_lab_eligible","The independent compute lab's annual term can actually be accepted.",Scope::company,"campaign");
     result.register_relation({"company.capacity_sources", Scope::company, Scope::capacity_source, core::capacity_source_limit,
         "Compute sources controlled by this company, including leased supply."});
     result.register_relation({"company.projects", Scope::company, Scope::project, core::capacity_project_limit,

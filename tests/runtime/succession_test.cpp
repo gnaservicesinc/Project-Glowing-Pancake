@@ -1,6 +1,7 @@
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/runtime/scenario.hpp>
+#include "../content/slice_fixture.hpp"
 #include <pgp/runtime/legacy.hpp>
 #include <pgp/runtime/competition.hpp>
 #include <nlohmann/json.hpp>
@@ -57,9 +58,20 @@ runtime::CompiledProgram fixture(Json source,bool rivals=false) {
         row["management"]["succession"]["founder_birth_year"]=1958;
         row["management"]["succession"]["chair_retirement_age"]=70;
         for(const auto key:{"authority","society","civic","resilience","objectives"}) row.erase(key);
-        if(rivals) for(auto& rival:row["rivals"]) rival["start_after_days"]=0;
+        if(rivals) {
+            auto& roster=row["rivals"];
+            roster.erase(std::remove_if(roster.begin(),roster.end(),[](const auto& company) {
+                return company["id"]!="company.century.frontier";
+            }),roster.end());
+            roster.front()["start_after_days"]=0;
+            roster.front()["planning"]["slot"]=1;
+            row["competition"]["domestic"]=1;
+            row["competition"]["international"]=0;
+            row["competition"]["heavyweights"]=0;
+        }
         else {row.erase("rivals");row.erase("competition");}
     }
+    pgp_test::prune_unused_flows(source);
     return compile(std::move(source));
 }
 runtime::Runtime begin(const runtime::CompiledProgram& p) {

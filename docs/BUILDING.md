@@ -214,6 +214,12 @@ use existing projects and actual known deadlines. See the [player path](PLAYABIL
 Without `--portable-root`, saves/settings use the application's standard local
 directories. Builds never launch a window.
 
+Open **Settings → Music and credits** to enable the local soundtrack, set its
+volume or read the bundled notices. New Mac builds include the optional
+Core Audio backend. Configure with `-DPGP_ENABLE_AUDIO=OFF` to build the silent
+adapter. The explicit `--smoke-test --music-smoke --portable-root DIR`
+walkthrough requires a fresh scratch directory and checks native audio output.
+
 An explicit `--content FILE` still opens an engineering collection. `--scenario`
 selects an authored scenario (otherwise the first one is used); `--headquarters`
 defaults to `US-CA` for this explicit fixture path. The bundled game chooses

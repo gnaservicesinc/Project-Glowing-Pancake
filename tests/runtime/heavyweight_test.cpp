@@ -12,7 +12,10 @@ void check(bool value,const char* reason) {++checks;if (!value) throw std::runti
 runtime::CompiledProgram fixture(unsigned budget_case=0) {
     std::ifstream file{PGP_HEAVYWEIGHT_SOURCE};const std::string bytes{std::istreambuf_iterator<char>{file},{}};
     const auto registry=content::foundation_registry();auto collection=content::load_collection(bytes,registry);
-    for (auto it=collection.definitions.begin();it!=collection.definitions.end();) if (std::holds_alternative<content::ScenarioDefinition>(it->second.data) && it->first!="scenario.world_competition") it=collection.definitions.erase(it);else ++it;
+    std::erase_if(collection.definitions,[](const auto& entry) {
+        return std::holds_alternative<content::FlowDefinition>(entry.second.data) ||
+            (std::holds_alternative<content::ScenarioDefinition>(entry.second.data) && entry.first!="scenario.world_competition");
+    });
     auto& scenario=std::get<content::ScenarioDefinition>(collection.definitions.at("scenario.world_competition").data);
     scenario.flows.clear();scenario.management->setbacks.clear();scenario.competition->domestic=0;scenario.competition->international=0;scenario.competition->heavyweights=1;
     for (auto& offer:scenario.management->financing) offer.public_announcement=true;

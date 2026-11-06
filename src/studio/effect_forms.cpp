@@ -26,7 +26,9 @@ std::vector<FormOption> argument_choices(const Collection& collection, const Arg
                 for (const auto& offer:scenario->business_offers)
                     if (included.insert(offer.id).second) options.push_back({offer.id,offer.name});
             } else if (argument.reference_kind=="market_segment" && scenario->market) {
-                for (const auto& segment:scenario->market->segments)
+                const auto* regional=regional_markets(collection,*scenario);
+                const auto& segments=regional?regional->products.segments:scenario->market->segments;
+                for (const auto& segment:segments)
                     if (included.insert(segment.id).second) options.push_back({segment.id,segment.id});
             }
         }

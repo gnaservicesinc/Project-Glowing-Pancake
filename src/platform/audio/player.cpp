@@ -88,7 +88,16 @@ Result Player::load(const std::filesystem::path& path) {
     if (!input.read(reinterpret_cast<char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()))) {
         return {false, "Audio file could not be read completely."};
     }
-    auto decoded = detail::decode(bytes, extension == ".ogg");
+    return load_bytes(bytes, extension == ".ogg");
+}
+
+Result Player::load_bundled_wave(std::span<const unsigned char> bytes) {
+    return load_bytes(bytes, false);
+}
+
+Result Player::load_bytes(std::span<const unsigned char> bytes, bool vorbis) {
+    if (bytes.empty() || bytes.size() > 4U * 1024U * 1024U) return {false, "Audio exceeds the 4 MiB encoded limit."};
+    auto decoded = detail::decode(bytes, vorbis);
     if (!decoded.error.empty()) return {false, std::move(decoded.error)};
     // Decode first: failed loads preserve the previously validated clip.
     impl_->close_device();

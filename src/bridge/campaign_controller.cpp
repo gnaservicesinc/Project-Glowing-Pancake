@@ -508,4 +508,11 @@ void CampaignController::setTextScalePercent(int value) {
 void CampaignController::setCompactManagement(bool value) { auto settings = settings_; settings.compact_management = value; changeSettings(settings); }
 void CampaignController::setReducedMotion(bool value) { auto settings = settings_; settings.reduced_motion = value; changeSettings(settings); }
 void CampaignController::setAutosaveEnabled(bool value) { auto settings = settings_; settings.autosave_enabled = value; changeSettings(settings); }
+void CampaignController::setMusicEnabled(bool value) { auto settings = settings_; settings.music_enabled = value; changeSettings(settings); }
+void CampaignController::setMusicVolume(int value) {
+    if (value < 0 || value > 100) return;
+    auto settings = settings_;
+    settings.volume_percent = static_cast<std::uint32_t>(value);
+    changeSettings(settings);
+}
 }

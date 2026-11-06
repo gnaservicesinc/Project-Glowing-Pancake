@@ -160,10 +160,14 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
                 .arg(text(row.provenance),text(row.rights),percent(row.quality),percent(row.contamination),percent(row.coverage[0]),percent(row.coverage[1]),row.commercial_use?QStringLiteral("permitted"):QStringLiteral("prohibited")),
                 owned?QStringLiteral("Licensed"):QStringLiteral("Unlicensed"),!owned,{{QStringLiteral("owned"),owned}}});
         }
+        const auto title_for=[&](const std::string& id) {
+            const auto title=program.collection.messages.find(id+".title");
+            return title!=program.collection.messages.end()?text(title->second):readable(id);
+        };
         for (const auto& row:s.lab->catalog.research) {
             QStringList prerequisites;
-            for (const auto& id:row.all_of) prerequisites.push_back(readable(id));
-            QStringList alternatives; for (const auto& id:row.any_of) alternatives.push_back(readable(id));
+            for (const auto& id:row.all_of) prerequisites.push_back(title_for(id));
+            QStringList alternatives; for (const auto& id:row.any_of) alternatives.push_back(title_for(id));
             if (!alternatives.empty()) prerequisites.push_back(QStringLiteral("one of: ")+alternatives.join(QStringLiteral(", ")));
             const auto status=research_status(*s.lab,*s.capacity,row);
             const bool completed=std::any_of(s.lab->research.begin(),s.lab->research.end(),[&](const auto& run){return run.research_id==row.id && run.completed;});
@@ -172,10 +176,12 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             const bool has_insight=std::any_of(s.lab->insights.begin(),s.lab->insights.end(),[&](const auto& value){return value.research_id==row.id;});
             const bool can_adopt=insight && !has_insight && !completed && status!=QStringLiteral("In progress") &&
                 s.date>=core::advance_days(insight->published_on,snapshot_->checkpoint.world.competition->setup->publication_delay);
-            research.push_back({text(row.id),readable(row.id),money(row.cash)+QStringLiteral(" · ")+QString::number(row.staff_days.value())+QStringLiteral(" staff-days"),
+            research.push_back({text(row.id),title_for(row.id),money(row.cash)+QStringLiteral(" · ")+QString::number(row.staff_days.value())+QStringLiteral(" staff-days"),
                 QStringLiteral("%1 CU of finite experiments plus %2 staff-days. Both must complete.\nPrerequisites: %3\nPaid work and staff time are not refunded when stopped.")
                     .arg(cu(row.experiment_work.value()),QString::number(row.staff_days.value()),prerequisites.isEmpty()?QStringLiteral("none"):prerequisites.join(QStringLiteral(", "))),status,
                 status!=QStringLiteral("Completed") && status!=QStringLiteral("In progress"),{{QStringLiteral("completed"),completed},{QStringLiteral("published"),published},{QStringLiteral("canAdopt"),can_adopt}}});
+            if (const auto description=program.collection.messages.find(row.id+".detail"); description!=program.collection.messages.end())
+                research.back().detail=text(description->second)+QStringLiteral("\n\n")+research.back().detail;
             research.back().detail+=published?QStringLiteral("\nPublished: other companies can adopt this result after the disclosed delay."):QStringLiteral("\nThis result remains private until explicitly published.");
             if (insight) research.back().detail+=QStringLiteral("\nPublic result from %1 · published %2 · adoption available %3 · %4 work credit. Cash and prerequisites are unchanged.")
                 .arg(readable(insight->publisher),text(core::iso_date(insight->published_on)),text(core::iso_date(core::advance_days(insight->published_on,snapshot_->checkpoint.world.competition->setup->publication_delay))),percent(insight->credit));

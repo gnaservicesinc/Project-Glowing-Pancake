@@ -22,6 +22,7 @@ struct Scratch {
         fs::create_directories(root / ".git"); put(root / "CMakeLists.txt", "# fixture\n"); put(root / "src/content/collection.cpp", "// fixture\n");
         auto versions = Json::parse(read(PGP_SNAPSHOT_UI_VERSIONS)); versions["components"]["content"] = "0.0.0-dev";
         auto content = Json::parse(read(PGP_SNAPSHOT_UI_SOURCE)); content["content_version"] = "0.0.0-dev";
+        content.erase("asset_records"); // The synthetic checkout has no imported assets.
         for (auto& definition:content.at("definitions")) definition["revision"]=1;
         put(root / "project-versions.json", versions.dump(2)); put(root / "data/runtime/first-playable.json", content.dump(2));
         studio::SnapshotRequest first{"data/runtime/first-playable.json", "data/runtime/first-playable.json", "0.1.0-dev.1", "Initial controller fixture.", "reject-prior-content", {}};

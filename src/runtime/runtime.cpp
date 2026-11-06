@@ -399,6 +399,9 @@ bool condition_met(const content::Condition& condition, const ScopeBinding& bind
 void ensure_lifecycles(Checkpoint& checkpoint, const CompiledProgram& program) {
     auto& state = checkpoint.runtime;
     const auto& world = checkpoint.world;
+    // Explicit scenario roots are immutable for the life of a runtime. A
+    // validated complete set does not need rebuilding on every morning.
+    if (world.enabled_flows && state.lifecycles.size() == world.enabled_flows->size()) return;
     for (const auto& [id, definition] : program.collection.definitions) {
         const auto* current = std::get_if<content::FlowDefinition>(&definition.data);
         if (!current || current->group) continue;
@@ -554,9 +557,6 @@ void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResu
         }
         if (entry.last_checked == today) continue;
         entry.last_checked = today;
-        const bool eligible = condition_met(definition.trigger, entry.binding, program, checkpoint, result,
-                                             "flows/" + entry.definition_id + "/trigger", entry.definition_id, condition_work, trace_mode);
-        entry.was_eligible = eligible;
         bool due_now = true;
         if (definition.lifecycle.mode == content::LifecycleMode::interval)
             due_now = interval_ready(entry, definition.lifecycle, today, steps);
@@ -567,6 +567,15 @@ void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResu
         const bool continuous = definition.lifecycle.mode == content::LifecycleMode::continuous;
         const bool permitted = continuous ? (entry.occurrences == 0 || definition.lifecycle.allow_reentry) :
                                             entry.occurrences < definition.lifecycle.max_occurrences;
+        // Duration observation above is independent of the interval. Normal
+        // play only reads the trigger when this root can actually start.
+        if (trace_mode != InspectionMode::author_fixture && (!due_now || !permitted || entry.active_activation)) {
+            entry.was_eligible = false;
+            continue;
+        }
+        const bool eligible = condition_met(definition.trigger, entry.binding, program, checkpoint, result,
+                                             "flows/" + entry.definition_id + "/trigger", entry.definition_id, condition_work, trace_mode);
+        entry.was_eligible = eligible;
         if (!eligible || !due_now || !permitted || entry.active_activation) continue;
         start_activation(checkpoint, entry, definition, program, result, steps);
         if (has_choice(state)) return;

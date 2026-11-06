@@ -2,6 +2,7 @@
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/runtime/scenario.hpp>
+#include "../content/slice_fixture.hpp"
 #include <pgp/runtime/authority.hpp>
 #include <pgp/session/campaign.hpp>
 #include <nlohmann/json.hpp>
@@ -106,7 +107,15 @@ CompiledProgram near_window(bool catastrophic=false,bool control_loss=false) {
         leadership["founder_birth_year"]=control_loss?2034:2075;
         if(control_loss) leadership["trust_seats"]=0;
         d.erase("resilience");
-        for(auto& r:d["rivals"]) r["start_after_days"]=0;
+        auto& rivals=d["rivals"];
+        rivals.erase(std::remove_if(rivals.begin(),rivals.end(),[](const auto& row) {
+            return row["id"]!="company.century.frontier";
+        }),rivals.end());
+        rivals.front()["start_after_days"]=0;
+        rivals.front()["planning"]["slot"]=1;
+        d["competition"]["domestic"]=1;
+        d["competition"]["international"]=0;
+        d["competition"]["heavyweights"]=0;
         if(catastrophic && d["id"]==frontier) d["flows"]={"objectives.fixture_catastrophe"};
     }
     if(catastrophic) {
@@ -120,6 +129,7 @@ CompiledProgram near_window(bool catastrophic=false,bool control_loss=false) {
             "cause_key":"objectives.fixture_cause"}]},"end":{"kind":"end"}}
         })"));
     }
+    pgp_test::prune_unused_flows(data);
     return compile(data);
 }
 void strict_rules() {

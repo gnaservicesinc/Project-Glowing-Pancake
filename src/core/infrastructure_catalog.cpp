@@ -7,7 +7,8 @@ void validate_infrastructure_catalog(const InfrastructureCatalog& c) {
     const auto money=[](Cents v,bool positive=false) {return v.value()>=(positive?1:0) && v.value()<=1'000'000'000'000LL;};
     const auto lead=[](Days v,bool positive=false) {return v.value()>=(positive?1:0) && v.value()<=3650;};
     if (!identifier(c.map_asset_id) || c.map_sha256.size()!=64 || !std::all_of(c.map_sha256.begin(),c.map_sha256.end(),[](unsigned char ch){return (ch>='0' && ch<='9') || (ch>='a' && ch<='f');}) ||
-        !text(c.assumptions,4096) || c.states.size()!=51 || c.hardware.empty() || c.hardware.size()>16 || c.travel.empty() || c.travel.size()>100 ||
+        !text(c.assumptions,4096) || c.states.size()!=51 || c.hardware.empty() ||
+        c.hardware.size()>infrastructure_hardware_family_limit || c.travel.empty() || c.travel.size()>100 ||
         c.building_life.value()==0 || c.building_life.value()>36524 || !lead(c.initial_lease_notice,true) ||
         !money(c.onsite_inspection,true) || !money(c.remote_inspection,true) || !money(c.delegated_inspection,true) ||
         !lead(c.onsite_booking_lead,true) || !lead(c.remote_booking_lead,true) || !lead(c.delegated_booking_lead,true) ||

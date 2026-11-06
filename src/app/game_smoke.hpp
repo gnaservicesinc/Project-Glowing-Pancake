@@ -5,6 +5,7 @@
 #include <QString>
 
 class QQuickWindow;
+class MusicController;
 namespace pgp::bridge { class CampaignController; }
 // Runs only on an explicit command with an explicit portable scratch root.
 void schedule_game_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
@@ -25,3 +26,6 @@ void schedule_succession_smoke(QQuickWindow& window, pgp::bridge::CampaignContro
     QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot);
 void schedule_objectives_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
     QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot);
+void schedule_music_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
+    MusicController& music, QSGRendererInterface::GraphicsApi expected,
+    pgp::persistence::LocalPaths paths, QString screenshot);

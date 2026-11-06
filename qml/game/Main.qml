@@ -107,6 +107,15 @@ ApplicationWindow {
         contentItem: Label { text: qsTr("Save first if you want to return to this campaign. Starting a new one replaces the current unsaved session. Existing local save files remain available."); textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: window.textSize }
         onAccepted: campaign.openWelcome()
     }
+    MusicCredits {
+        id: musicCredits
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(740, window.width - 32)
+        height: Math.min(620, window.height - 32)
+        textSize: window.textSize
+        reducedMotion: campaign.reducedMotion
+        onClosed: musicCreditsButton.forceActiveFocus()
+    }
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 12
@@ -251,6 +260,12 @@ ApplicationWindow {
             contentWidth: availableWidth
             clip: true
             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+            Binding {
+                target: scroll.contentItem
+                property: "boundsBehavior"
+                value: campaign.reducedMotion ? Flickable.StopAtBounds : Flickable.DragOverBounds
+                when: scroll.contentItem !== null
+            }
 
             function reveal(item) {
                 if (!item || item === scroll || !scroll.contentItem)
@@ -358,6 +373,13 @@ ApplicationWindow {
                     }
                 }
 
+                RoomScene {
+                    objectName: "roomScene"
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: window.narrow ? 48 : 66
+                    room: campaign.welcome ? "welcome" : window.room
+                }
+
                 Panel {
                     visible: campaign.notice.length > 0
                     contentItem: RowLayout {
@@ -394,9 +416,16 @@ ApplicationWindow {
                             }
                             Action {
                                 text: qsTr("Reduce motion")
+                                objectName: "reduceMotionControl"
                                 checked: campaign.reducedMotion
                                 enabled: !campaign.busy
                                 onClicked: campaign.reducedMotion = !campaign.reducedMotion
+                            }
+                            Action {
+                                id: musicCreditsButton
+                                objectName: "musicCreditsButton"
+                                text: qsTr("Music and credits…")
+                                onClicked: musicCredits.open()
                             }
                             CheckBox { objectName: "pauseProjectsControl"; text: qsTr("Pause on project completion"); font.pixelSize: window.textSize; Accessible.name: text; checked: campaign.autoPauseProjects; enabled: !campaign.busy; onClicked: campaign.autoPauseProjects = checked }
                             CheckBox { objectName: "pauseEvaluationsControl"; text: qsTr("Pause on evaluation results"); font.pixelSize: window.textSize; Accessible.name: text; checked: campaign.autoPauseEvaluations; enabled: !campaign.busy; onClicked: campaign.autoPauseEvaluations = checked }
@@ -667,7 +696,12 @@ ApplicationWindow {
         }
     }
 
-    onActiveFocusItemChanged: scroll.reveal(activeFocusItem)
+    onActiveFocusItemChanged: {
+        if (musicCredits.visible)
+            musicCredits.reveal(activeFocusItem)
+        else
+            scroll.reveal(activeFocusItem)
+    }
 
     Dialog {
         id: cancelDialog

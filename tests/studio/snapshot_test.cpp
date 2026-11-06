@@ -25,6 +25,7 @@ struct Scratch {
         // checkout's content component has its first reviewed development version.
         auto versions=Json::parse(read(root/"project-versions.json"));versions["components"]["content"]="0.0.0-dev";put(root/"project-versions.json",versions.dump(2));
         auto doc=Json::parse(read(root/"data/runtime/first-playable.json"));doc["content_version"]="0.0.0-dev";
+        doc.erase("asset_records"); // The synthetic checkout has no imported assets.
         for (auto& definition:doc.at("definitions")) definition["revision"]=1;
         put(root/"data/runtime/first-playable.json",doc.dump(2));
     }

@@ -62,6 +62,8 @@ class CampaignController final : public QObject {
     Q_PROPERTY(bool compactManagement READ compactManagement WRITE setCompactManagement NOTIFY settingsChanged)
     Q_PROPERTY(bool reducedMotion READ reducedMotion WRITE setReducedMotion NOTIFY settingsChanged)
     Q_PROPERTY(bool autosaveEnabled READ autosaveEnabled WRITE setAutosaveEnabled NOTIFY settingsChanged)
+    Q_PROPERTY(bool musicEnabled READ musicEnabled WRITE setMusicEnabled NOTIFY settingsChanged)
+    Q_PROPERTY(int musicVolume READ musicVolume WRITE setMusicVolume NOTIFY settingsChanged)
 public:
     CampaignController(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
                        persistence::LocalPaths paths, persistence::Settings initial_settings = {},
@@ -126,6 +128,10 @@ public:
     [[nodiscard]] bool compactManagement() const noexcept { return settings_.compact_management; }
     [[nodiscard]] bool reducedMotion() const noexcept { return settings_.reduced_motion; }
     [[nodiscard]] bool autosaveEnabled() const noexcept { return settings_.autosave_enabled; }
+    [[nodiscard]] bool musicEnabled() const noexcept { return settings_.music_enabled; }
+    [[nodiscard]] int musicVolume() const noexcept { return static_cast<int>(settings_.volume_percent); }
+    void setMusicEnabled(bool value);
+    void setMusicVolume(int value);
     void setTextScalePercent(int value);
     void setCompactManagement(bool value);
     void setReducedMotion(bool value);

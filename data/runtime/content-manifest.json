@@ -1,13 +1,102 @@
 {
-  "assets": [],
+  "assets": [
+    {
+      "credit_text": "U.S. Census Bureau, 2024 Cartographic Boundary Files, 1:5,000,000. Prepared and modified for game display; Alaska/Hawaii insets and an enlarged DC marker.",
+      "id": "map.us_states_2024",
+      "kind": "data",
+      "license_evidence_hash": "238a296562f9fa1b806f9697da2fdebd808de275269e454ab0795ef1d39dc0b3",
+      "license_evidence_path": "assets/maps/CENSUS_TERMS.txt",
+      "license_id": "LicenseRef-US-Census-Cartographic-2024",
+      "path": "assets/maps/us-states-2024.json",
+      "record_hash": "48df6d20c9ccd97cffba0345087efa6bd8a1c7cfbf9a4b1040fe9bbe7144d25f",
+      "sha256": "5474e9cfe468b8104ccea24d2a7ae263e1e5e1eab6daeb69752acc987dc98fc2"
+    },
+    {
+      "credit_text": "Atemübungen by Sascha Ende (ENDE.APP), CC BY 4.0. 28-second excerpt starting at 12s, 22.05 kHz stereo PCM16 WAV, -4dB gain, 1.5s fade in and 2.5s fade out.",
+      "id": "music.atemubungen",
+      "kind": "audio",
+      "license_evidence_hash": "50b589c865ae6c93896609a0e0b128ef725ba6ccb4926fb33c27023dd3632a55",
+      "license_evidence_path": "assets/audio/ENDE-SOURCES.json",
+      "license_id": "CC-BY-4.0",
+      "path": "assets/audio/music/atemubungen.wav",
+      "record_hash": "b5f5aaeb60aaeccff7e2fd913dc211c9f5bce844c17ea0f797276a993c4ea46d",
+      "sha256": "0bd6c589da21ee7d2472062801dec40ed08b5c6c42a0c83daa35c7d7dd1ab37e"
+    },
+    {
+      "credit_text": "Gedanklichkeit by Sascha Ende (ENDE.APP), CC BY 4.0. 28-second excerpt starting at 18s, 22.05 kHz stereo PCM16 WAV, -4dB gain, 1.5s fade in and 2.5s fade out.",
+      "id": "music.gedanklichkeit",
+      "kind": "audio",
+      "license_evidence_hash": "50b589c865ae6c93896609a0e0b128ef725ba6ccb4926fb33c27023dd3632a55",
+      "license_evidence_path": "assets/audio/ENDE-SOURCES.json",
+      "license_id": "CC-BY-4.0",
+      "path": "assets/audio/music/gedanklichkeit.wav",
+      "record_hash": "b5407f553828e94c6f99a10d10fd507829312f3657f136aab201446554c2bf96",
+      "sha256": "29592b0eb1c341269dda951c3ea3f9f41619213bd18e0e7beae6d97f46a5fcb5"
+    },
+    {
+      "credit_text": "Sheltered Swan by Sascha Ende (ENDE.APP), CC BY 4.0. 28-second excerpt starting at 12s, 22.05 kHz stereo PCM16 WAV, -4dB gain, 1.5s fade in and 2.5s fade out.",
+      "id": "music.sheltered_swan",
+      "kind": "audio",
+      "license_evidence_hash": "50b589c865ae6c93896609a0e0b128ef725ba6ccb4926fb33c27023dd3632a55",
+      "license_evidence_path": "assets/audio/ENDE-SOURCES.json",
+      "license_id": "CC-BY-4.0",
+      "path": "assets/audio/music/sheltered_swan.wav",
+      "record_hash": "b89265b9d93c3ed92b5788b849a48bf28cb7c3a5a49f2f3c0b817bfbbbc5c7d4",
+      "sha256": "8c0dcf5246368ea6585d435163353913098c2def8e194b8eb97165e8b4fae004"
+    },
+    {
+      "credit_text": "Silence Of The Sea by Sascha Ende (ENDE.APP), CC BY 4.0. 28-second excerpt starting at 14s, 22.05 kHz stereo PCM16 WAV, -4dB gain, 1.5s fade in and 2.5s fade out.",
+      "id": "music.silence_of_the_sea",
+      "kind": "audio",
+      "license_evidence_hash": "50b589c865ae6c93896609a0e0b128ef725ba6ccb4926fb33c27023dd3632a55",
+      "license_evidence_path": "assets/audio/ENDE-SOURCES.json",
+      "license_id": "CC-BY-4.0",
+      "path": "assets/audio/music/silence_of_the_sea.wav",
+      "record_hash": "54347c17a59996b973ffa15f10a0057bae6f697bcae49093607e66d34452804f",
+      "sha256": "567d5c7524512081d48afa1fb0800bcf17432217193d9a803f5e7c7162a084de"
+    },
+    {
+      "credit_text": "Cinematic Suspense Series Episode 002 by Sascha Ende (ENDE.APP), CC BY 4.0. 24-second excerpt starting at 16s, 22.05 kHz stereo PCM16 WAV, -7dB gain, 1.5s fade in and 2.5s fade out.",
+      "id": "music.suspense_002",
+      "kind": "audio",
+      "license_evidence_hash": "50b589c865ae6c93896609a0e0b128ef725ba6ccb4926fb33c27023dd3632a55",
+      "license_evidence_path": "assets/audio/ENDE-SOURCES.json",
+      "license_id": "CC-BY-4.0",
+      "path": "assets/audio/music/suspense_002.wav",
+      "record_hash": "7ea62ad3797a740e3f1d3a42a25a1be1c6f26f4cd0ffc32c95a674f135ff3d7e",
+      "sha256": "0d74c612fcd05dc1a1a41b026bfad44bdfe90e91f90c967a76c97dabf11b0546"
+    },
+    {
+      "credit_text": "Cinematic Suspense Series Episode 004 by Sascha Ende (ENDE.APP), CC BY 4.0. 24-second excerpt starting at 26s, 22.05 kHz stereo PCM16 WAV, -7dB gain, 1.5s fade in and 2.5s fade out.",
+      "id": "music.suspense_004",
+      "kind": "audio",
+      "license_evidence_hash": "50b589c865ae6c93896609a0e0b128ef725ba6ccb4926fb33c27023dd3632a55",
+      "license_evidence_path": "assets/audio/ENDE-SOURCES.json",
+      "license_id": "CC-BY-4.0",
+      "path": "assets/audio/music/suspense_004.wav",
+      "record_hash": "bdb5d09c98e2dd402a811e1dda4bcc71be2cf31f4ddc396863363e404d798e26",
+      "sha256": "0a6df7472746ed96f7fed4d3d0f6fc00ebc6d0ec2a9f210cf565cd5cf275afe4"
+    },
+    {
+      "credit_text": "Weitblick by Sascha Ende (ENDE.APP), CC BY 4.0. 28-second excerpt starting at 5s, 22.05 kHz stereo PCM16 WAV, -4dB gain, 1.5s fade in and 2.5s fade out.",
+      "id": "music.weitblick",
+      "kind": "audio",
+      "license_evidence_hash": "50b589c865ae6c93896609a0e0b128ef725ba6ccb4926fb33c27023dd3632a55",
+      "license_evidence_path": "assets/audio/ENDE-SOURCES.json",
+      "license_id": "CC-BY-4.0",
+      "path": "assets/audio/music/weitblick.wav",
+      "record_hash": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b",
+      "sha256": "dc246e01fdc7ff60a757e6803c4342b09e07626a52f1afd1643358d17f2ca0f9"
+    }
+  ],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "953af89a734d19cbd2c4dfcd1b0f545aa3b62effc44f700afc8458877e8d33bf",
+  "collection_hash": "484ec8a5dd16d5cae7c9abb9b621c0c9183328ca84db938966ab41cad748aa06",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.13.0-dev.1",
+  "content_version": "0.14.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -32,6 +121,576 @@
       "kind": "flow",
       "revision": 1,
       "semantic_hash": "e6eafffe5d1248043aebb79c3461e6ba2900c7c933a8ccdf8fa5de68741b3838"
+    },
+    {
+      "id": "century.finance_competition.acquisition_close",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "868e91b07622cbbcdc33a94a482b0431124bb22fda87b40ab15f1a48545c7ea7"
+    },
+    {
+      "id": "century.finance_competition.actual_capital",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "022def595d209ff9a8263a217e15cc38df88efea7ddc88dee7810dd46957b60e"
+    },
+    {
+      "id": "century.finance_competition.cash_and_evidence",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "ac615cca30f76c1bf4c76ca9e7fd7c680e9b6e0b4439f1bb17a682d3fb1eab5d"
+    },
+    {
+      "id": "century.finance_competition.cash_collection",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "88ae73040a085858db5d9b6d2cbb7df10d9110dcf5992a8eeb4b17b8f3fa3418"
+    },
+    {
+      "id": "century.finance_competition.cash_watch",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "dd999801eb1ef3b6ff52a385afa1d2728a49f7b83f4a74de4307eef84ad80116"
+    },
+    {
+      "id": "century.finance_competition.combined_books",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "a38ad97a0b56c0b0cee1aec22df5334f89ed141223be63f96814b2abfd394c48"
+    },
+    {
+      "id": "century.finance_competition.concentration_watch",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "418c76768d6bec84adeb94502879478df2b91c6fbc45cb0de3ab257c3789ab17"
+    },
+    {
+      "id": "century.finance_competition.early_entries",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "13a5ad59520ab9b50d1e551670663888bd9f2763781aa47202c0a67ee20d49dd"
+    },
+    {
+      "id": "century.finance_competition.financing_stack",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "0ce7edc01c98e7adb3a8d3ee7a28d8512e14dab40a8ea6742461f6580416672b"
+    },
+    {
+      "id": "century.finance_competition.lease_margin",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "2ddf49f25f8c02fc83370499fb15aa16044ef6ab32c4bb9b0edf5c266c66693a"
+    },
+    {
+      "id": "century.finance_competition.market_entry_wave",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "20facbd3f766c4702dd295dcc2a2e4e93cbd46b70eac3421c98a944b6088a1b2"
+    },
+    {
+      "id": "century.finance_competition.public_methods",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "e0d59b376aadfdd3e7dec343d70869b39ca87a29e37074938873e635cdda06c0"
+    },
+    {
+      "id": "century.finance_competition.reconciled_workout",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "ab2867f05354533f90ea233aa5db153ef2451de96bce3c27864172888719357d"
+    },
+    {
+      "id": "century.finance_competition.reserve",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "d3cbca432bd5d44e7da530b013ff904bbf70f76510dcdb785ac14b5c2da65c72"
+    },
+    {
+      "id": "century.finance_competition.rival_exit",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "35f62231262562ee3d45fe5182f733f5e20c06c4bbc003ba59496a2082b6f229"
+    },
+    {
+      "id": "century.infrastructure_community.awaiting_power",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "0ec5cf5a07c5dc9777db9b363e15c6583be9d6be10f9f61ca1f553be24489f69"
+    },
+    {
+      "id": "century.infrastructure_community.claim_payment",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "c76baa639bcc1c92b5d75b1ad0ff2f05f1896aa2173ae656eab7b7584d3f236b"
+    },
+    {
+      "id": "century.infrastructure_community.construction",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "ec00e6d96b90cd02cb61ae31111feb1f8da45b1e5f850539bdd343b8c3cc66f2"
+    },
+    {
+      "id": "century.infrastructure_community.dense_build",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "38f32822aedf2284c74c517b37d6a5a5041a422c3234508f8721ab701efd62e1"
+    },
+    {
+      "id": "century.infrastructure_community.first_rack",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "c9524f921360211e93c6371a4aa36f575cbcd175d68601d189d26b6154d826c8"
+    },
+    {
+      "id": "century.infrastructure_community.first_site",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "94ddfc6160b00cdeaf545ffe20c3e333fe9709f11bb4799cccb336d02e5f01b0"
+    },
+    {
+      "id": "century.infrastructure_community.first_wholesale",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "1a0fa084de6b9f5af5b705462f7075c79fe8fea51d576997a01019adabf036e8"
+    },
+    {
+      "id": "century.infrastructure_community.metered_wholesale",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "9372c7da9c7936fd9ea7e44ccf38a6d357f79811f062b2cc791aa41835499875"
+    },
+    {
+      "id": "century.infrastructure_community.multiple_buyers",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "c37b1a74e30116ff7a991942260346e1398660c886916597dcd4db3c66a4c9a9"
+    },
+    {
+      "id": "century.infrastructure_community.recovery_design",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "cbac73e095cf8ac7551f5bad78119458f4a71315196520e24f76109880c729e3"
+    },
+    {
+      "id": "century.infrastructure_community.regional_reserve",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "4a2ff56fb58dbca9a53b814a8357a5d5a4a639aa117b3ea0d3fa6bc512dc0580"
+    },
+    {
+      "id": "century.infrastructure_community.renewal_review",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "bafbb178830466224926703b29439325b67c81162ea8f00edec53bef6c429c4b"
+    },
+    {
+      "id": "century.infrastructure_community.repair_record",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "b80d101aa97d1e01e6d627f54490ddb38030766e732227584c53568804ed8a0d"
+    },
+    {
+      "id": "century.infrastructure_community.replica_ready",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "5fc4944bcf046cf51c541fdcdd3e542818b2a413beaf72dab129c510df5de094"
+    },
+    {
+      "id": "century.infrastructure_community.second_site",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "b5c21325d9b749b84b45c2ac6c7f62a7384d5082e22c0dc9c0fd4c64da55d3c5"
+    },
+    {
+      "id": "century.infrastructure_community.site_outstanding",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "21341343b45a806884aa5790b4421e4a69d8fbf9d0f02067b4b769fbd106e3f7"
+    },
+    {
+      "id": "century.people_board.board_overlaps",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "1fa9d13ab4787bd78373ebec5a44a1e9e03f2f7a9c7b0438da001e224f76b5cc"
+    },
+    {
+      "id": "century.people_board.board_window",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "a324aaa0e56c1aa396fb20a1c5d1dcf42b8b436973c130a2c87f028720593bee"
+    },
+    {
+      "id": "century.people_board.chairs_calendar",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "d31579dceae46d30ec9fa1ebaaecda33b48a13260247d3449992154bd3f9df48"
+    },
+    {
+      "id": "century.people_board.continuity_roster",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "7d1e7e88edd4ad866b4465e57b279a87c33e41d7c1007b12b658b7a9f7097b45"
+    },
+    {
+      "id": "century.people_board.executive_repair",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "5ecc6d644941ee2a328335eac6f822b5b73549f2c6dd3c94d2105163913cf854"
+    },
+    {
+      "id": "century.people_board.first_appointment",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "98263111b9297e60024945bcedd648d7d8bc4eb18d3c0f7c93001a7d3d881ade"
+    },
+    {
+      "id": "century.people_board.former_executive",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "42d6050e09bb219c95b8ea20a7a67aaefe4d3c3f57acd659a02dfde77bb191fa"
+    },
+    {
+      "id": "century.people_board.handover_day",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "8d4a31899760a6beb0d632744d8dbfda780ddf7bc071316a742abe114b3af273"
+    },
+    {
+      "id": "century.people_board.public_partners",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "7a030300a9b4ca1a22ea064d36ccb5c3e55894e1f37f1cc5353bfb6a51329ff1"
+    },
+    {
+      "id": "century.people_board.rejected_motion",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "3763bece5e59d4e4a093da39afff64707c3c787c3c9a073f0a727c459056a229"
+    },
+    {
+      "id": "century.people_board.review_pool",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "c9ebb7f025cc6cb3fed6eff4415f288343b59e9097ca110a78ec968748421dd0"
+    },
+    {
+      "id": "century.people_board.second_view",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "2264d50fb8dfc86b32224f5f9fbe9400fea52f40840d05f4aff1e2063e9b65bd"
+    },
+    {
+      "id": "century.people_board.steady_specialist",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "71ab513ad435647f3e4f6081ea453909cee67d8aa9a6d36bb1b564d380bdb003"
+    },
+    {
+      "id": "century.people_board.trust_review",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "233eee536474b4f73a8cc5c74b2493ffd4efdb7c8b8052459ca6b85c23ec0098"
+    },
+    {
+      "id": "century.people_board.vesting_schedule",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "163fcc61712bafee1bb421b31a81a29532a92d0267eda5545cf8eebc903baa6b"
+    },
+    {
+      "id": "century.policy_world.authority_split",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "2bc859585d4950710a122219ebc3458274f92a8100cb5f81773d3e466bdee8b5"
+    },
+    {
+      "id": "century.policy_world.case_repair",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "c85717cb2d344c5d20f99cba2bdf2fc7876be1ffd1be7c2105384134e76bef30"
+    },
+    {
+      "id": "century.policy_world.durable_provision",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "721eee8945759289a69d37be4046b7a568a6df89a41939618895739473f506ea"
+    },
+    {
+      "id": "century.policy_world.first_promise",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "fdec81f12e08f03eff31abb62c207b6ddab2d34899c7d6baaaa32253a0e41eb2"
+    },
+    {
+      "id": "century.policy_world.first_testimony",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "688c796b59eaa67092199663c576542a4b81eda60d1d910e209c60e32a366bc2"
+    },
+    {
+      "id": "century.policy_world.high_coverage_review",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "42b4dbfa6a47f5abf36e9ebdd2551a4f2b1815255b88727a4720a40347bc5697"
+    },
+    {
+      "id": "century.policy_world.local_rule",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "e3a2cab0ce4dacb088706fbbff0d1e00132546fe850cc43b36aab7c9614512aa"
+    },
+    {
+      "id": "century.policy_world.mandate",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "709c7455b1c29e5a89da17ec69f47489607183742d323a8fea849c0a296c24a4"
+    },
+    {
+      "id": "century.policy_world.members_review",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "7365b46b685846798dbe36a0d77736309efc187afaf7298df5ae8449f6ad66c7"
+    },
+    {
+      "id": "century.policy_world.open_case",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "e42f5e8af538f6f811c788ddc80b46209175d287594c04012aa4ff9315d4797c"
+    },
+    {
+      "id": "century.policy_world.parallel_mandates",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "942fdaae92d7f9e2ebfd88774af932045a1a864e6769906b3b3094febbe7793b"
+    },
+    {
+      "id": "century.policy_world.public_footprint",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "855a480680274a28a77807101a0a0255bdcf72e088ca67b99e7c43dca6d7d91f"
+    },
+    {
+      "id": "century.policy_world.public_region",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "ef5f4759122caafb757eab12fbe13a723e294e1258fd3cdbfbe6f29e7a2452e2"
+    },
+    {
+      "id": "century.policy_world.unequal_health",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "6ea62c65ef8476a1494c8f3dcb34ae63bfb9c2addde2e770d2eabaae924e4b8b"
+    },
+    {
+      "id": "century.policy_world.wide_basic_needs",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "697072ec01fc70b6986525962971acff82009ec54112ab1c4eaa4fe16e57ea7b"
+    },
+    {
+      "id": "century.product_customer.buyer_hardware",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "8bb9c3bb7c5a145b8c649903470837ed0c69a3ebd7854b6801208060d09e3e02"
+    },
+    {
+      "id": "century.product_customer.cedar_quarter",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "a7fbb88ce429a0efbc7877cf595bf1e6dc8c29d8727cbf8d351f1aa4892dd23e"
+    },
+    {
+      "id": "century.product_customer.cedar_recovery",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "59730dc4da770ee4a0eb6974c6c39cc35eabb9d569b4631a5ba24bd9c0cdfa33"
+    },
+    {
+      "id": "century.product_customer.customer_backlog",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "1c1f8419f406432766c079741f0f04f4ddaa01267d2cefa668906970fbf1edfe"
+    },
+    {
+      "id": "century.product_customer.district_rollout",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "5accd898a90454b75caf9d3b718c0b7c01d7eaeb397359b269ba2d81eaece8dc"
+    },
+    {
+      "id": "century.product_customer.evidence_boundary",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "f739b42a7972633d7289b14d3b82f58cbb510554994c9928a3e4b0c4ce22d578"
+    },
+    {
+      "id": "century.product_customer.failure_review",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "344fed3ef8eb1a6821f4dd0c890652a735dd3b46a56cd1b45ce1c84cff7693fe"
+    },
+    {
+      "id": "century.product_customer.field_scale",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "991fe95be722e85761c5140ca8d30eeac517860591406936394027d02f5c40c2"
+    },
+    {
+      "id": "century.product_customer.first_paid_day",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "b2197ec766f92cc7cd45b264df34734af224624de7a6c8fe4d8d2a0675373e1b"
+    },
+    {
+      "id": "century.product_customer.first_price",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "abed5fe76352ac35de0afc9fe1547fc5278034445d9dbc3d7b25dadb48ebcb3e"
+    },
+    {
+      "id": "century.product_customer.first_promise",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "f79b7b2c10f950c071e89990791acff05eb81bc92758c1009600b816d7b95461"
+    },
+    {
+      "id": "century.product_customer.first_release",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "26aa3ea55c829b96d85fb2cf1083418d1d474e6a60466b2478031ac9133bec4e"
+    },
+    {
+      "id": "century.product_customer.harbormark_cycle",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "5e14a2ba784602d820b8b2113df98eb513b3724b7b20cb7e9e65ebcb4569b3c3"
+    },
+    {
+      "id": "century.product_customer.hosted_spread",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "b23a9cfc2ae3ca0df0a0e86775570ccd5b4195a7e6974cd9160535c1d578fe51"
+    },
+    {
+      "id": "century.product_customer.missed_start",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "0137fe63c67d9745beacb80787219591cbd27487d26a6fd158eb142cd589eeb2"
+    },
+    {
+      "id": "century.product_customer.multi_channel",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "463eb85af027819561737f6beba0592657ad74162bc6d919c2c3a72155ce2ca7"
+    },
+    {
+      "id": "century.product_customer.renewal_delivery",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "30ac1de80ec81a4504da2d7fb4eb791edc1c34c10bef8c64ab4f098c19020584"
+    },
+    {
+      "id": "century.product_customer.revenue_mix",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "8d10334231488adaa0b3fd6dba55369101d63a26b17e1558a658761c1997152c"
+    },
+    {
+      "id": "century.product_customer.service_rebalance",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "aed11ba21108d8a16aa5d2128990ad5bd9625490111ef00c7ec94909e0700e97"
+    },
+    {
+      "id": "century.research_data.assessment_compare",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "d5a0ed941bbbbefa986ab418a17ca58e17da047fb521af1930e780ae33f39e8c"
+    },
+    {
+      "id": "century.research_data.checkpoint",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "3eb3b4bc3516a7bbe8f7f0759311a2df8a3c9fd0e69e708762b461381cb36c82"
+    },
+    {
+      "id": "century.research_data.first_license",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "e2703443e875ce4ff473c07581ea574aada9c5c1dccf5f004163a9873ceb9dc3"
+    },
+    {
+      "id": "century.research_data.first_publication",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "de5a6c4d34576b4f2681412b6f77aeaf8d3ab45929ad5c70922ec970de1dbf21"
+    },
+    {
+      "id": "century.research_data.held_refresh",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "67a743484c23491c2ca8d32f103bbf05617994327df74f8e238fc6fe77da0814"
+    },
+    {
+      "id": "century.research_data.independent_holdout",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "5d05215efda03468804c1f566980e63795bb29cef42ccfdad1595907fcfb2c9b"
+    },
+    {
+      "id": "century.research_data.observed_adoption",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "eb60f66f96ba38df816070a21b4603fe75f513f68f6a1dae9a825dde2c0aca1e"
+    },
+    {
+      "id": "century.research_data.open_archive",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "e3f512f649a331fd9509b7153a01294de3d36a0246480a97b74d0e79793b26b1"
+    },
+    {
+      "id": "century.research_data.portfolio",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "2090cab8bbf2ff678e030786dc42543e115501b2a69ad1a087a5af708cd15bbf"
+    },
+    {
+      "id": "century.research_data.queue_review",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "f96b5076835fa5939e7539c7220274d3e0500097f0a0f2fdaf1ba10e181472d0"
+    },
+    {
+      "id": "century.research_data.refresh_rollout",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "52c15f41bd33359f404f3f1137a04ec72632d23797741d559fc497d9bd772829"
+    },
+    {
+      "id": "century.research_data.registered_system",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "c64667bcf4c2e039e082a7696627733864106bdfa08078a2e583566e2bf60fc0"
+    },
+    {
+      "id": "century.research_data.restricted_archive",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "ae96df1eed160666be02ef68317b068083cc02ae6e7f66a01701f6d223a22343"
+    },
+    {
+      "id": "century.research_data.rights_ledger",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "7eb74715a0a26e5075021edfc4c2c0469e209e12f1c1f5fb7a137ed764821f67"
+    },
+    {
+      "id": "century.research_data.scan_shortfall",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "1045db2e6fdbe7d6f6f69f5897d4f36f3e45223ef829c51072a58908c7ceb6ff"
     },
     {
       "id": "civic.domestic",
@@ -72,14 +731,14 @@
     {
       "id": "frontier.frontier_paths",
       "kind": "frontier_research",
-      "revision": 1,
-      "semantic_hash": "37faca7344eb881bff87151ccb0cd54c904582cba356d2f6355219d1c62dbbd5"
+      "revision": 2,
+      "semantic_hash": "3cb0a9d0b0d559118cf0b49d589222a67e4f8a2efd2aeeeacce0fd0c4074ce8c"
     },
     {
       "id": "frontier.plateau_paths",
       "kind": "frontier_research",
-      "revision": 1,
-      "semantic_hash": "a5826db39e2341240d244674389f324789a5922665352339d316f9a7f618f48f"
+      "revision": 2,
+      "semantic_hash": "9b3bda68a8283f949fa1e49d29abc0442ae1dca00abdf656521ecf543f30aa53"
     },
     {
       "id": "market.century",
@@ -106,6 +765,96 @@
       "semantic_hash": "cdcfae79794a56380be21e13dd81ce038b45df0af77a2cab79fc973e07125cd3"
     },
     {
+      "id": "research.compute.fabric_qos",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "5a45a93148f73c04063bbd42ca72ec6a90cddf63ed6bf3375d6dab4321d49f1b"
+    },
+    {
+      "id": "research.compute.flexible_duty",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "6e22c7317cfa18e41cda313817245c020afc6a5d0166a5cacaa1786b0d8a98ab"
+    },
+    {
+      "id": "research.compute.kernel_layout",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "7e00c3077c0d8d6ba0feddd2704ad582059077a84b872924e21732a5d9baa903"
+    },
+    {
+      "id": "research.compute.local_memory",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "65367b5ccbf7f87848fe6199b519b130e63d9b096b64dbfc1ff5938fffcbd2b4"
+    },
+    {
+      "id": "research.compute.low_precision",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "dcf50194433ac1aa09d20f18547b52b94e7ed5ef9230eb628bd2fce537439bca"
+    },
+    {
+      "id": "research.compute.pooled_boards",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "d63f39e16e256befb3644c330090ed2b660fa0644603ae72df286b850796ad05"
+    },
+    {
+      "id": "research.compute.queue_metering",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "4b19ef5f72e3c7852680ac16692210d85d1b484121c41522fcdd13a09a5db760"
+    },
+    {
+      "id": "research.compute.sparse_serving",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "015a83666bb5c6a455e0db31c8e7be76143550b6476a29ec7ccaee1e7972658f"
+    },
+    {
+      "id": "research.compute.thermal_profiles",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "e62de0284f55f99fcdd359a71952667f62a317b38a3771feef372bed894e36c2"
+    },
+    {
+      "id": "research.data.consent_registry",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "dbcc3ed782a5fbf766e6221262c48731e8f43b1d0890ee01f7f5eb38c7d13921"
+    },
+    {
+      "id": "research.data.exchange_protocol",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "dc78af35bf0c1e67b66a21cb58bbc50ae1baa892a1f1ec5f08a180d9cd58646a"
+    },
+    {
+      "id": "research.data.grid_normalization",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "ab0243935e947b62bed736b43586180e346a9d02b2e9058a523db1e3b85185ae"
+    },
+    {
+      "id": "research.data.partition_audit",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "d85d407c08f745db068e63944dbe2fdc84c09017e1dff42e7640956f33d85ed9"
+    },
+    {
+      "id": "research.data.receipt_layout",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "d5e9049c1dac4ae626779898de8eca12d1f9fe510b0c259eff160be1aef29cb5"
+    },
+    {
+      "id": "research.data.table_indexing",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "d4f07d066af257f169ee442aadfa3640dbc36f964865d08f829ddf89805173c0"
+    },
+    {
       "id": "research.data_deduplication",
       "kind": "research",
       "revision": 2,
@@ -128,6 +877,78 @@
       "kind": "research",
       "revision": 1,
       "semantic_hash": "8d4f1116b83b2bb041059c93779099236cbd181e71cd58f7c9e89b467e183f9d"
+    },
+    {
+      "id": "research.evidence.edge_failures",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "fdee7eefa6c88e9c96f667cac9952acf7573eb4e1824a9b84ef1353cff894652"
+    },
+    {
+      "id": "research.evidence.rare_cases",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "bb4cff81fcdf35a3c97e636a58ba8c5fd99595b4faa7ee2e5c2dbcb66979f86e"
+    },
+    {
+      "id": "research.evidence.regional_labeling",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "d39113e0f6d9d95ea67a5d51eb0037960d526a61dee18165a59f256104fcaf7a"
+    },
+    {
+      "id": "research.evidence.service_evidence",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "b82f13b20c996d9f73c0a200d94811fb951081b392fa51f2563427d80f990e7c"
+    },
+    {
+      "id": "research.evidence.stress_replay",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "0349d89bb7aa7b983726a5123ac00ab99197759c989ab729a7267cac23637bc4"
+    },
+    {
+      "id": "research.evidence.transfer_holdouts",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "9b609af1369c5903d8bfc4dbc9eda0bd2f36e1158d04feeaea791842274392ee"
+    },
+    {
+      "id": "research.frontier.cross_source_transfer",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "0cd431960c8259a36b772e7b63551847414f3196daab7fc1cf1d567b59c6a522"
+    },
+    {
+      "id": "research.frontier.efficient_prototypes",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "6729280e28c0fc12d6e8bceeda156086d2aa0dc53e88ea1a48b948ddb8a1f696"
+    },
+    {
+      "id": "research.frontier.field_metering",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "d226127d566113eb818b7e40539069ab28e0dcca4c1d5e4403a08d2b7820884e"
+    },
+    {
+      "id": "research.frontier.integrated_measurement",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "fb7f9860dd356f98755cf5b039be78fcff6bc9f612693cb673c3e4e3c1a7124e"
+    },
+    {
+      "id": "research.frontier.prototype_replication",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "62d7a7b04b3f34d342270afdf5c2c5f118876ce8577455b93a1b600d685e0661"
+    },
+    {
+      "id": "research.frontier.sensor_alignment",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "bae585fc8b3d828befd60a9f08067623198410481a2e192fa72cf81113e0813c"
     },
     {
       "id": "research.frontier_fabric",
@@ -160,10 +981,118 @@
       "semantic_hash": "66eae7704aae1305e099c1939afeb1609825bdbd863a710e1b2989b786d8a542"
     },
     {
+      "id": "research.models.adapter_maps",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "4d71ae7577de93ac7247951e476348df8b25a328552464093ae3dfbe059eddcb"
+    },
+    {
+      "id": "research.models.bounded_tools",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "1220d7654f03eaa005838dab43460460ce340525b6eaa31d5a4a45a1491cc202"
+    },
+    {
+      "id": "research.models.budgeted_refresh",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "e6fac3f1c7a3cc0494505d7482929b031b32cebf4def4c555da46fba591c038e"
+    },
+    {
+      "id": "research.models.grounded_synthesis",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "b7a040a327c7f952e9882c71d162b097ece703357f0c789499822fb328bf0312"
+    },
+    {
+      "id": "research.models.indexed_retrieval",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "0616bb0cbba782cc77c3a83b107dbdc62e8c4fc7bbecf50b42c64e0e9135a752"
+    },
+    {
+      "id": "research.models.region_adapters",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "bc556a441a91a02ebb0c453202cee8cbc96f3de66451156771ef37d33a446fdb"
+    },
+    {
+      "id": "research.models.supervised_agents",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "a2d7b514e75d3da5f8a0a78e28a770a06962343ead0c2a326eddc5c005c06d11"
+    },
+    {
+      "id": "research.models.task_containment",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "668e256ecd7759906497acce5af7993d4f406155448117fb03cbccc86b711e11"
+    },
+    {
+      "id": "research.models.verified_workflow",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "ffa6fe0dab7199d5f8eb7c524a30654d7d6b2c95fffa50004413eb0235d37b95"
+    },
+    {
       "id": "research.multimodal_systems",
       "kind": "research",
       "revision": 1,
       "semantic_hash": "ca4057ddaae11659dc1d22ac20ada62775fb6614ffe8e201d61e0495c5bf791b"
+    },
+    {
+      "id": "research.operations.cold_replica",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "0043397bf1a7d500a5658feed725b8f27e06ee2c53de9e61e6a047fcd27bfe5b"
+    },
+    {
+      "id": "research.operations.fault_diagnostics",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "dd64a136c15b83f9ed3ca317daecfc8e995fb6417196e3c722f5f3dbe7cf0f52"
+    },
+    {
+      "id": "research.operations.resilient_backplane",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "fa64f8468b0b3a4e13e15356bb8048cdd3d544721a9d7508d3fee11b9ec050ff"
+    },
+    {
+      "id": "research.public.benchmark_exchange",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "8463f519f15b5a1af11770f791ef311ed3c0442ebebded38d02514d2dadac370"
+    },
+    {
+      "id": "research.public.continuity_packages",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "7271173cf775864a523b2648d6bbc1f1249c39c1a9bbf7cde1059bb33f530bda"
+    },
+    {
+      "id": "research.public.local_rollout",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "bf543414b8f4a0f48930c12c7a498a9b96af7b07530c590c952f8136fe7deb71"
+    },
+    {
+      "id": "research.public.publication_package",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "efc02af78f8d38674763bf01b30eaa01adfd38dc2f60efdf12fd14e6912eead9"
+    },
+    {
+      "id": "research.public.replication_handbook",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "98cf256a219175eec233081f71058cae6ba821c729940a7593d1952cb41b2f4d"
+    },
+    {
+      "id": "research.public.translated_tables",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "1b690f04b4fe5639350db1fa3d29e0130e6c52747f45fac55b3b24a1684d2e5b"
     },
     {
       "id": "research.refresh_measurement",
@@ -198,14 +1127,14 @@
     {
       "id": "scenario.century_frontier",
       "kind": "scenario",
-      "revision": 3,
-      "semantic_hash": "bc9b529620103aadad3d7356cc93202f788666c80ff6c319e996d8e5d7b9c798"
+      "revision": 4,
+      "semantic_hash": "e02b97209234b5dd7951b850689687dfc76eedc05c98fa4d52afa67c60a70443"
     },
     {
       "id": "scenario.century_plateau",
       "kind": "scenario",
-      "revision": 3,
-      "semantic_hash": "e78e14bae18a6ec903063234969216c59b0042206aa7064fc06d3ca3eeeae0ae"
+      "revision": 4,
+      "semantic_hash": "d977856a50281927e7075a904cb3b19645778664ac93e7de0f08106dd6b075a1"
     },
     {
       "id": "scenario.first_playable",
@@ -264,8 +1193,8 @@
     {
       "id": "slice.recovery_opportunity",
       "kind": "flow",
-      "revision": 2,
-      "semantic_hash": "caaf8fcc3399d056aad052ba02c8e84321dc049a47a0fd0cee30b1b9129a9ffe"
+      "revision": 3,
+      "semantic_hash": "9aeee9aa6312843f0d25bd4b3f0f52c3e6044a0077db787371416ca0fb2bea7b"
     },
     {
       "id": "slice.research_milestone",
@@ -282,8 +1211,8 @@
     {
       "id": "slice.supplier_offer",
       "kind": "flow",
-      "revision": 2,
-      "semantic_hash": "f94f1b075a833bc98812b425f59466d2f011f8c056bd6bc1041322ff6612a70d"
+      "revision": 3,
+      "semantic_hash": "201056752d74f0e512d10b134f94608bff90fa3d2d2cd8d5a972abbfb38d24fe"
     },
     {
       "id": "society.century",
@@ -308,11 +1237,47 @@
       "kind": "flow",
       "revision": 1,
       "semantic_hash": "40091c59d3cbe4a44239a3ab19570f907aa4a915cb0be560c4d9c2458978dad4"
+    },
+    {
+      "id": "story.after_the_vote",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "abcd7924dea665b234c7e7bf9a2a959ad9b9c01a68caee0ccbb1f1e79e712ea7"
+    },
+    {
+      "id": "story.cedar_delivery_review",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "f9ba1066ec4d0ce76a1599ea85234caeebf8b92df674e289af195a67baca027f"
+    },
+    {
+      "id": "story.field_lab",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "557e111d74d0471f135137a7902a344a1811d20274ee2847026eb90669975528"
+    },
+    {
+      "id": "story.harbormark_continuity",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "cad3490ca898d55902d93e25d3feca0ecebe0775e03c10e0175091e4c8a121c2"
+    },
+    {
+      "id": "story.morrow_cooperative",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "668d441263eb7debe37b00e50ca23bebd54b1814d6b5d6d5c514ab691307b5cd"
+    },
+    {
+      "id": "story.willow_council",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "c99e922d39ab6e8438f8de728824f5e3859ce020b8c22e6cae1f8fd0e8e336f8"
     }
   ],
   "format": 1,
-  "generation": 13,
-  "messages_hash": "423a6e398d7f281fa5ee683f7ebdcfc524dfa14e70769013c3f4ba7f83b8ad13",
+  "generation": 14,
+  "messages_hash": "76acd56ce7cc4c5f6a169926e56546b6355b34ffd8805cffdac9e96a0fefe9d4",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
     "scenario.century_frontier": [
@@ -334,7 +1299,108 @@
       "authority.executive_disclosure",
       "frontier.conditional_era",
       "frontier.agi_notice",
-      "frontier.asi_notice"
+      "frontier.asi_notice",
+      "century.research_data.first_license",
+      "century.research_data.open_archive",
+      "century.research_data.restricted_archive",
+      "century.research_data.checkpoint",
+      "century.research_data.independent_holdout",
+      "century.research_data.scan_shortfall",
+      "century.research_data.portfolio",
+      "century.research_data.rights_ledger",
+      "century.research_data.first_publication",
+      "century.research_data.observed_adoption",
+      "century.research_data.queue_review",
+      "century.research_data.registered_system",
+      "century.research_data.assessment_compare",
+      "century.research_data.held_refresh",
+      "century.research_data.refresh_rollout",
+      "century.product_customer.first_release",
+      "century.product_customer.first_promise",
+      "century.product_customer.first_paid_day",
+      "century.product_customer.failure_review",
+      "century.product_customer.missed_start",
+      "century.product_customer.first_price",
+      "century.product_customer.multi_channel",
+      "century.product_customer.buyer_hardware",
+      "century.product_customer.hosted_spread",
+      "century.product_customer.revenue_mix",
+      "century.product_customer.evidence_boundary",
+      "century.product_customer.renewal_delivery",
+      "century.product_customer.customer_backlog",
+      "century.product_customer.field_scale",
+      "century.product_customer.service_rebalance",
+      "century.people_board.first_appointment",
+      "century.people_board.vesting_schedule",
+      "century.people_board.second_view",
+      "century.people_board.board_window",
+      "century.people_board.rejected_motion",
+      "century.people_board.executive_repair",
+      "century.people_board.chairs_calendar",
+      "century.people_board.handover_day",
+      "century.people_board.former_executive",
+      "century.people_board.trust_review",
+      "century.people_board.continuity_roster",
+      "century.people_board.steady_specialist",
+      "century.people_board.public_partners",
+      "century.people_board.review_pool",
+      "century.people_board.board_overlaps",
+      "century.finance_competition.reserve",
+      "century.finance_competition.cash_watch",
+      "century.finance_competition.reconciled_workout",
+      "century.finance_competition.actual_capital",
+      "century.finance_competition.financing_stack",
+      "century.finance_competition.acquisition_close",
+      "century.finance_competition.combined_books",
+      "century.finance_competition.early_entries",
+      "century.finance_competition.market_entry_wave",
+      "century.finance_competition.public_methods",
+      "century.finance_competition.rival_exit",
+      "century.finance_competition.concentration_watch",
+      "century.finance_competition.cash_and_evidence",
+      "century.finance_competition.lease_margin",
+      "century.finance_competition.cash_collection",
+      "century.infrastructure_community.construction",
+      "century.infrastructure_community.awaiting_power",
+      "century.infrastructure_community.first_site",
+      "century.infrastructure_community.first_rack",
+      "century.infrastructure_community.second_site",
+      "century.infrastructure_community.site_outstanding",
+      "century.infrastructure_community.repair_record",
+      "century.infrastructure_community.claim_payment",
+      "century.infrastructure_community.replica_ready",
+      "century.infrastructure_community.first_wholesale",
+      "century.infrastructure_community.metered_wholesale",
+      "century.infrastructure_community.dense_build",
+      "century.infrastructure_community.regional_reserve",
+      "century.infrastructure_community.multiple_buyers",
+      "century.infrastructure_community.recovery_design",
+      "century.policy_world.first_testimony",
+      "century.policy_world.public_region",
+      "century.policy_world.public_footprint",
+      "century.policy_world.first_promise",
+      "century.policy_world.open_case",
+      "century.policy_world.case_repair",
+      "century.policy_world.mandate",
+      "century.policy_world.parallel_mandates",
+      "century.policy_world.members_review",
+      "century.policy_world.local_rule",
+      "century.policy_world.wide_basic_needs",
+      "century.policy_world.unequal_health",
+      "century.policy_world.durable_provision",
+      "century.policy_world.authority_split",
+      "century.policy_world.high_coverage_review",
+      "century.product_customer.cedar_recovery",
+      "story.cedar_delivery_review",
+      "story.morrow_cooperative",
+      "story.field_lab",
+      "story.harbormark_continuity",
+      "story.willow_council",
+      "story.after_the_vote",
+      "century.infrastructure_community.renewal_review",
+      "century.product_customer.cedar_quarter",
+      "century.product_customer.district_rollout",
+      "century.product_customer.harbormark_cycle"
     ],
     "scenario.century_plateau": [
       "slice.research_milestone",
@@ -355,7 +1421,108 @@
       "authority.executive_disclosure",
       "frontier.conditional_era",
       "frontier.agi_notice",
-      "frontier.asi_notice"
+      "frontier.asi_notice",
+      "century.research_data.first_license",
+      "century.research_data.open_archive",
+      "century.research_data.restricted_archive",
+      "century.research_data.checkpoint",
+      "century.research_data.independent_holdout",
+      "century.research_data.scan_shortfall",
+      "century.research_data.portfolio",
+      "century.research_data.rights_ledger",
+      "century.research_data.first_publication",
+      "century.research_data.observed_adoption",
+      "century.research_data.queue_review",
+      "century.research_data.registered_system",
+      "century.research_data.assessment_compare",
+      "century.research_data.held_refresh",
+      "century.research_data.refresh_rollout",
+      "century.product_customer.first_release",
+      "century.product_customer.first_promise",
+      "century.product_customer.first_paid_day",
+      "century.product_customer.failure_review",
+      "century.product_customer.missed_start",
+      "century.product_customer.first_price",
+      "century.product_customer.multi_channel",
+      "century.product_customer.buyer_hardware",
+      "century.product_customer.hosted_spread",
+      "century.product_customer.revenue_mix",
+      "century.product_customer.evidence_boundary",
+      "century.product_customer.renewal_delivery",
+      "century.product_customer.customer_backlog",
+      "century.product_customer.field_scale",
+      "century.product_customer.service_rebalance",
+      "century.people_board.first_appointment",
+      "century.people_board.vesting_schedule",
+      "century.people_board.second_view",
+      "century.people_board.board_window",
+      "century.people_board.rejected_motion",
+      "century.people_board.executive_repair",
+      "century.people_board.chairs_calendar",
+      "century.people_board.handover_day",
+      "century.people_board.former_executive",
+      "century.people_board.trust_review",
+      "century.people_board.continuity_roster",
+      "century.people_board.steady_specialist",
+      "century.people_board.public_partners",
+      "century.people_board.review_pool",
+      "century.people_board.board_overlaps",
+      "century.finance_competition.reserve",
+      "century.finance_competition.cash_watch",
+      "century.finance_competition.reconciled_workout",
+      "century.finance_competition.actual_capital",
+      "century.finance_competition.financing_stack",
+      "century.finance_competition.acquisition_close",
+      "century.finance_competition.combined_books",
+      "century.finance_competition.early_entries",
+      "century.finance_competition.market_entry_wave",
+      "century.finance_competition.public_methods",
+      "century.finance_competition.rival_exit",
+      "century.finance_competition.concentration_watch",
+      "century.finance_competition.cash_and_evidence",
+      "century.finance_competition.lease_margin",
+      "century.finance_competition.cash_collection",
+      "century.infrastructure_community.construction",
+      "century.infrastructure_community.awaiting_power",
+      "century.infrastructure_community.first_site",
+      "century.infrastructure_community.first_rack",
+      "century.infrastructure_community.second_site",
+      "century.infrastructure_community.site_outstanding",
+      "century.infrastructure_community.repair_record",
+      "century.infrastructure_community.claim_payment",
+      "century.infrastructure_community.replica_ready",
+      "century.infrastructure_community.first_wholesale",
+      "century.infrastructure_community.metered_wholesale",
+      "century.infrastructure_community.dense_build",
+      "century.infrastructure_community.regional_reserve",
+      "century.infrastructure_community.multiple_buyers",
+      "century.infrastructure_community.recovery_design",
+      "century.policy_world.first_testimony",
+      "century.policy_world.public_region",
+      "century.policy_world.public_footprint",
+      "century.policy_world.first_promise",
+      "century.policy_world.open_case",
+      "century.policy_world.case_repair",
+      "century.policy_world.mandate",
+      "century.policy_world.parallel_mandates",
+      "century.policy_world.members_review",
+      "century.policy_world.local_rule",
+      "century.policy_world.wide_basic_needs",
+      "century.policy_world.unequal_health",
+      "century.policy_world.durable_provision",
+      "century.policy_world.authority_split",
+      "century.policy_world.high_coverage_review",
+      "century.product_customer.cedar_recovery",
+      "story.cedar_delivery_review",
+      "story.morrow_cooperative",
+      "story.field_lab",
+      "story.harbormark_continuity",
+      "story.willow_council",
+      "story.after_the_vote",
+      "century.infrastructure_community.renewal_review",
+      "century.product_customer.cedar_quarter",
+      "century.product_customer.district_rollout",
+      "century.product_customer.harbormark_cycle"
     ],
     "scenario.first_playable": [
       "slice.research_milestone",
@@ -448,5 +1615,5 @@
       "authority.executive_disclosure"
     ]
   },
-  "source_hash": "8951bcc41362ef7800c4c94f672b0cef435b233b4f3b79b5a55fa4e97db6ec10"
+  "source_hash": "90bcc8aa734859693b814da9a1d25154be4e11d19fe28c16e7237fd8d812ff2a"
 }

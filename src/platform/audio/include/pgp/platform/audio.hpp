@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <span>
 #include <string>
 
 namespace pgp::audio {
@@ -39,6 +40,8 @@ public:
     Player& operator=(const Player&) = delete;
 
     [[nodiscard]] Result load(const std::filesystem::path& path);
+    // Decode bytes from a caller-verified bundled resource without a temp file.
+    [[nodiscard]] Result load_bundled_wave(std::span<const unsigned char> bytes);
     [[nodiscard]] Result play();
     void stop();
     void set_volume(float value);
@@ -51,6 +54,7 @@ public:
     void notify_device_lost();
 
 private:
+    [[nodiscard]] Result load_bytes(std::span<const unsigned char> bytes, bool vorbis);
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };

@@ -22,7 +22,10 @@ GovernanceCatalog rules() {
 runtime::CompiledProgram fixture() {
     std::ifstream f{PGP_GOVERNANCE_SOURCE};const std::string bytes{std::istreambuf_iterator<char>{f},{}};
     const auto registry=content::foundation_registry();auto collection=content::load_collection(bytes,registry);
-    for (auto it=collection.definitions.begin();it!=collection.definitions.end();) if (std::holds_alternative<content::ScenarioDefinition>(it->second.data) && it->first!="scenario.world_competition") it=collection.definitions.erase(it);else ++it;
+    std::erase_if(collection.definitions,[](const auto& entry) {
+        return std::holds_alternative<content::FlowDefinition>(entry.second.data) ||
+            (std::holds_alternative<content::ScenarioDefinition>(entry.second.data) && entry.first!="scenario.world_competition");
+    });
     auto& s=std::get<content::ScenarioDefinition>(collection.definitions.at("scenario.world_competition").data);
     s.flows.clear();s.management->setbacks.clear();s.management->governance=rules();s.competition->domestic=1;s.competition->international=0;s.competition->heavyweights=0;
     for (auto& rival:s.rivals) if (rival.planning->group=="domestic" && rival.planning->slot==1) rival.planning->services={"product.document_specialist","product.documents"};

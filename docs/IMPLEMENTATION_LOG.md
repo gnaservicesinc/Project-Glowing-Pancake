@@ -1421,3 +1421,37 @@ All seven scenarios and 21 headquarters openings/reloads passed with no
 lints. The roadmap is **41/52**. M8-01 is next: event, asset, audio and credit
 coverage. Full endurance, human studies and release qualification retain
 their own gates. [Objectives and reproduction commands](../src/runtime/OBJECTIVES.md).
+
+## M8-01 — Century content, room illustrations and offline music
+
+Completed 2026-11-06. Both century openings now use 120 flows with six
+strategic paths and six subject areas. The new flows include 70 opportunity
+and recovery reports or choices, six AI-assisted optional story starters and
+three seeded demand incidents. The Lab has 60 topics, 24 data offers and
+new recipes and independent panels. Operations has 18 rack families. Six
+rivals are active at opening, with nine later entrants and the original
+independent Frontier rival retained.
+
+The focused runtime test trained and evaluated a model, missed a real start,
+then signed and delivered a narrower pilot with optional stories disabled.
+A matched run followed the same settlement into the Cedar Desk story. Its
+pending choice and seven-day reminder survived exact reload. An accepted
+cooperative lease charged its setup and expired with its planned follow-up.
+The three regional incidents exercised both signed directions, quiet draws and
+saved expiry using isolated opening reviews. The test inspected the authored
+follow-up through Studio’s shared inspector.
+
+The Mac game ships seven human-created, credited PCM excerpts and 11 original
+room and context illustrations. Metal and Core Audio walkthroughs passed at
+100% and 200% text with keyboard, volume, reduced motion and local notices.
+The bundled 200% introductory campaign reached its solvent 2017 ending with
+exact reload and 226,921,342 cents. Studio loaded its library at 200% text.
+All **79 optimized Mac CTests passed in 75.96s**. The two Studio snapshot
+suites account for most of that time.
+
+The shared writer finalized content **0.14.0-dev.1**, generation **14**,
+with hash `484ec8a5dd16d5cae7c9abb9b621c0c9183328ca84db938966ab41cad748aa06`.
+It verified seven scenarios, 21 exact prepared saves and eight asset seals
+with zero lints. The soundtrack source, edits and terms are linked from
+[content and assets](CONTENT_AND_ASSETS.md). The roadmap is **42/52**.
+M8-02 owns long-run balance and endurance.

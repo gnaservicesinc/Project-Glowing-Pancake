@@ -33,11 +33,12 @@ independent human validation and release qualification remain open.
 | M7-01: conditional futures | Select a century research scenario, inspect conditions, qualify a deployed system and authorize bounded research or product refresh | Implemented on Mac with 188 runtime checks, 85 Studio checks and Metal controls at 100%/200% text against an explicit late opening. Both feasible branches and a rival reach independently recorded ASI; a plateau reaches AGI. Final objectives and endurance follow in M7/M8. [Frontier room](../src/core/FRONTIER.md) |
 | M7-02: succession and founder legacy | Review a successor, fund preparation, reach a dated handover, retire the personal chair and inspect retained ownership/cash | Implemented on Mac with 77 runtime checks, 90 Studio checks and Metal controls at 100%/200% text against a near-retirement fixture. Company work and founder ownership continue through actual handovers and caretaker terms. [Leadership room](../src/core/SUCCESSION.md) |
 | M7-03: six objectives and postmortems | Choose goals, inspect the final windows and exact scores, review an irreversible loss, then continue in scored play, sandbox or observer mode | Implemented on Mac. The final-decade fixture wins all five deadline goals, and independent ASI tests exercise a player win and same-day rival ties. Metal controls at 100%/200% text reopen the exact breach. [Objectives](../src/runtime/OBJECTIVES.md) |
+| M8-01: century events, catalog and music | Use expanded Lab catalogs, follow a recovery offer, toggle optional stories at setup, and review local music credits | Both century scenarios have 120 flows and the staged 15-company roster. A real missed pilot is recoverable with either story setting. Music and credits are under Settings. [Content and asset coverage](CONTENT_AND_ASSETS.md) |
 | M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Deferred until all components are in place and the user is ready for v1 work; no sessions conducted |
 
 There is no calendar estimate inferred from task counts: tasks vary substantially
 in size, and native packaging, authors and players have separate evidence gates.
-Century endurance and final assets are later milestones. The required typed editor canvas and graphical finalizer are
+Century endurance and final release qualification are later milestones. The required typed editor canvas and graphical finalizer are
 implemented on Mac; human author qualification remains deferred.
 
 ## Play the current campaign

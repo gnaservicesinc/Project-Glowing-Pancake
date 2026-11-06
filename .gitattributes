@@ -3,5 +3,7 @@
 third_party/audio/miniaudio/miniaudio.h -whitespace
 third_party/audio/stb/stb_vorbis.c -whitespace
 assets/maps/sources/* -text -whitespace
+assets/audio/CC-BY-4.0.txt -text -whitespace
+assets/notices/Qt-LGPL-3.0.txt -text -whitespace
 # The bundled asset is checked by SHA-256 on every platform.
 assets/maps/us-states-2024.json text eol=lf

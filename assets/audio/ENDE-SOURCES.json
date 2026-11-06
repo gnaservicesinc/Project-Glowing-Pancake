@@ -1,0 +1,81 @@
+{
+  "format": 1,
+  "verified_on": "2026-11-06",
+  "artist_catalog": "https://ende.app/en/sascha",
+  "standard_license": "https://ende.app/en/standard-license",
+  "license_text": "assets/audio/CC-BY-4.0.txt",
+  "basis": "The artist catalog identifies Sascha’s unassisted recordings. Each recording page declares a CC BY 4.0 license and links the published audio in its MusicRecording metadata. The source files preserve those published MP3 bytes.",
+  "tracks": [
+    {
+      "id": "music.atemubungen",
+      "title": "Atemübungen",
+      "recording_page": "https://ende.app/en/song/80-atemubungen",
+      "path": "assets/audio/sources/ende-80.mp3",
+      "sha256": "74fa3d8e76a0cddef885391061a8d6e6eae8693f28a95db5f3092622e27f7749",
+      "url": "https://ende.app/storage/mp3low/418_858d93cb086b3bce708954a035d69f8fd64567f66415efa3dab3d0ad8e9170e2.mp3",
+      "published_on": "2012-10-15",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "id": "music.weitblick",
+      "title": "Weitblick",
+      "recording_page": "https://ende.app/en/song/460-weitblick",
+      "path": "assets/audio/sources/ende-460.mp3",
+      "sha256": "e16d6253fb9778a0ee26e092469c43a8688b6dbb2c9158386b8115be1721c3b0",
+      "url": "https://ende.app/storage/mp3low/62712064dacb237395c8113134f7b0b89f390d6279e37b3723b8e2d3d6ea7554.mp3",
+      "published_on": "2016-01-11",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "id": "music.gedanklichkeit",
+      "title": "Gedanklichkeit",
+      "recording_page": "https://ende.app/en/song/541-gedanklichkeit",
+      "path": "assets/audio/sources/ende-541.mp3",
+      "sha256": "b7abf9a26b16ea6c45104b36cf9756c9d4cd9cca5293e95982509a775c201b33",
+      "url": "https://ende.app/storage/mp3low/207735529c52e8c0c4864b999866bc56053cf9f234698292e7402fc7b4da41cd.mp3",
+      "published_on": "2016-11-14",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "id": "music.sheltered_swan",
+      "title": "Sheltered Swan",
+      "recording_page": "https://ende.app/en/song/4973-sheltered-swan",
+      "path": "assets/audio/sources/ende-4973.mp3",
+      "sha256": "2f54a95b8706245bf6f2d08479033ad70e17fb4771fb75e09e327b44e46c5e96",
+      "url": "https://ende.app/storage/mp3low/5ce1a637ddbb21558292023.mp3",
+      "published_on": "2019-05-19",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "id": "music.silence_of_the_sea",
+      "title": "Silence Of The Sea",
+      "recording_page": "https://ende.app/en/song/12275-silence-of-the-sea",
+      "path": "assets/audio/sources/ende-12275.mp3",
+      "sha256": "0fcff90e72047abcf5c05ce9a42dd798b75f7a788a6561b58e767e5597ef0bd3",
+      "url": "https://ende.app/storage/mp3low/zIUtYfKGUgOHl8U6XWl8BN2Vq3a0hKk2hsmRIJop.mp3",
+      "published_on": "2024-04-15",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "id": "music.suspense_002",
+      "title": "Cinematic Suspense Series Episode 002",
+      "recording_page": "https://ende.app/en/song/5789-cinematic-suspense-series-episode-002",
+      "path": "assets/audio/sources/ende-5789.mp3",
+      "sha256": "00c16e0c06a051a3a0cc8826df8e08bd57e8ab8477c6c42e54b9a2ac8297c3e9",
+      "url": "https://ende.app/storage/mp3low/5e20e95137e651579215185.mp3",
+      "published_on": "2020-01-16",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "id": "music.suspense_004",
+      "title": "Cinematic Suspense Series Episode 004",
+      "recording_page": "https://ende.app/en/song/5798-cinematic-suspense-series-episode-004",
+      "path": "assets/audio/sources/ende-5798.mp3",
+      "sha256": "35b690aeee00af95356724335e524c6b79f62b2df18b77885d6ab273e774c701",
+      "url": "https://ende.app/storage/mp3low/5e2780433d15f1579647043.mp3",
+      "published_on": "2020-01-21",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    }
+  ],
+  "license_text_sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+}

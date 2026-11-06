@@ -17,6 +17,7 @@ struct Settings {
     bool show_guide = true;
     std::uint32_t text_scale_percent = 100;
     std::uint32_t volume_percent = 100;
+    bool music_enabled = false;
     auto operator<=>(const Settings&) const = default;
 };
 [[nodiscard]] std::string encode_settings(const Settings& settings);

@@ -1,4 +1,4 @@
-option(PGP_ENABLE_AUDIO "Compile optional native playback; silent fallback always remains" OFF)
+option(PGP_ENABLE_AUDIO "Compile optional native playback; silent fallback always remains" ${APPLE})
 
 set(pgp_audio_vendor "${PROJECT_SOURCE_DIR}/third_party/audio")
 add_library(pgp_audio_vorbis STATIC stb_vorbis_impl.cpp)

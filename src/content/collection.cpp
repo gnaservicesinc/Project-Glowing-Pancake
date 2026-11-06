@@ -1278,8 +1278,11 @@ void validate_references(const Collection& collection, const Registry& registry)
                                     if (!scenario) continue;
                                     if (argument.reference_kind=="business_offer")
                                         exists=exists || std::any_of(scenario->business_offers.begin(),scenario->business_offers.end(),[&](const auto& row){return row.id==target;});
-                                    else if (scenario->market)
-                                        exists=exists || std::any_of(scenario->market->segments.begin(),scenario->market->segments.end(),[&](const auto& row){return row.id==target;});
+                                    else if (scenario->market) {
+                                        const auto* regional = regional_markets(collection, *scenario);
+                                        const auto& segments = regional ? regional->products.segments : scenario->market->segments;
+                                        exists = exists || std::ranges::any_of(segments, [&](const auto& row) { return row.id == target; });
+                                    }
                                 }
                                 if (!exists) fail("dangling_reference",child(path,node_id),"Referenced scenario offer or market segment does not exist");
                             } else (void)reference(target, argument.reference_kind, child(path, node_id));

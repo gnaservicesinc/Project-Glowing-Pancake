@@ -4,8 +4,8 @@ Updated 2026-11-06 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**41 of 52 steps complete for Mac feature development. M8-01 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03, M6-01 through M6-03 and M7-01 through M7-03.
+**42 of 52 steps complete for Mac feature development. M8-02 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03, M6-01 through M6-03 M7-01 through M7-03 and M8-01.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -25,6 +25,16 @@ local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
 
+- M8-01 expands both century scenarios to 120 flows, 60 research topics,
+  24 data offers, 18 rack families and the staged 15-company roster. A real
+  pilot recovers from a missed start with optional stories disabled. With the
+  story enabled, its saved reminder links to the same settlement. Three
+  seeded regional incidents and a paid cooperative lease expire on their
+  disclosed dates. Music and credits work by keyboard at 100% and 200% text
+  with native Core Audio and Metal. All **79 optimized Mac CTests** pass.
+  Reviewed content **0.14.0-dev.1**, generation **14**, verifies all seven
+  scenarios, 21 exact headquarters saves and eight asset seals.
+  [Coverage and source records](CONTENT_AND_ASSETS.md).
 - M7-03 adds the six century objectives, strict month-end checks, audited
   founder wealth, same-day ASI ties and recorded failure reviews. Players can
   continue scoring other distinctions, end at a postmortem, or continue in
@@ -528,11 +538,10 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation is M8-01, content and asset coverage.**
-Expand useful events and story layers across the six strategies and eras,
-complete cleared audio and credits, and check play with optional stories
-disabled. E2-04 editor download qualification stays with the deferred
-native release work.
+**Next implementation is M8-02, balance and long-run validation.**
+Compare matched strategies, measure the full roster and verify century and
+sandbox endurance. The human campaign waits for v1 preparation. E2-04 editor
+download qualification stays with the deferred native release work.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

@@ -4,6 +4,7 @@
 
 #include "duration.hpp"
 #include "committed.hpp"
+#include "campaign_facts.hpp"
 #include "group_bindings.hpp"
 
 #include <algorithm>
@@ -231,6 +232,7 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
         return value;
     }
     if (metadata.id == "company.cash_cents") return world.simulation.cash.value();
+    if (metadata.provider == "campaign") return detail::campaign_fact(world, metadata.id);
     if(metadata.provider=="succession") {
         const auto& state=world.simulation;
         if(metadata.id=="company.has_succession_charter") return state.succession.has_value();

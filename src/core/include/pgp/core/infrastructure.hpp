@@ -28,6 +28,7 @@ struct HardwareFamily {
     std::vector<std::string> requires_research;
     auto operator<=>(const HardwareFamily&) const = default;
 };
+inline constexpr std::size_t infrastructure_hardware_family_limit = 18;
 struct TravelRoute {
     std::string from,to;
     Days one_way{0};Cents fare{0};

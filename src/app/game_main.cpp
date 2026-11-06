@@ -1,5 +1,6 @@
 #include "campaign_controller.hpp"
 #include "game_smoke.hpp"
+#include "music_controller.hpp"
 
 #include <pgp/core/build_identity.hpp>
 #include <pgp/graphics/graphics_policy.hpp>
@@ -48,6 +49,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("frontier-smoke"),QStringLiteral("Exercise Frontier controls with an explicit local late-era fixture.")});
     parser.addOption({QStringLiteral("leadership-smoke"),QStringLiteral("Exercise succession, board review and the retained founder trust with an explicit local fixture.")});
     parser.addOption({QStringLiteral("objectives-smoke"),QStringLiteral("Exercise a settled objective breach, postmortem and sandbox with an explicit local fixture.")});
+    parser.addOption({QStringLiteral("music-smoke"),QStringLiteral("Exercise the bundled credits, keyboard and native music output.")});
     parser.addOption({QStringLiteral("screenshot"),QStringLiteral("Capture the smoke-test window."),QStringLiteral("file")});
     parser.process(application);
     if (parser.isSet(QStringLiteral("build-info"))) { core::write_build_identity(std::cout); return 0; }
@@ -59,8 +61,9 @@ int main(int argc, char* argv[]) {
     const bool objectives_smoke = parser.isSet(QStringLiteral("objectives-smoke"));
     const bool infrastructure_smoke = parser.isSet(QStringLiteral("infrastructure-smoke"));
     const bool competition_smoke = parser.isSet(QStringLiteral("competition-smoke"));
+    const bool music_smoke = parser.isSet(QStringLiteral("music-smoke"));
     const auto variants = static_cast<int>(society_smoke) + static_cast<int>(institutions_smoke) +
-        static_cast<int>(civic_smoke) + static_cast<int>(infrastructure_smoke) + static_cast<int>(competition_smoke) + static_cast<int>(frontier_smoke) + static_cast<int>(leadership_smoke) + static_cast<int>(objectives_smoke);
+        static_cast<int>(civic_smoke) + static_cast<int>(infrastructure_smoke) + static_cast<int>(competition_smoke) + static_cast<int>(frontier_smoke) + static_cast<int>(leadership_smoke) + static_cast<int>(objectives_smoke) + static_cast<int>(music_smoke);
     if (!parser.positionalArguments().isEmpty() ||
         (parser.isSet(QStringLiteral("screenshot")) && !parser.isSet(QStringLiteral("smoke-test"))) ||
         (variants > 0 && !parser.isSet(QStringLiteral("smoke-test"))) || variants > 1 ||
@@ -98,6 +101,15 @@ int main(int argc, char* argv[]) {
         QQuickStyle::setStyle(QStringLiteral("Basic"));
         bridge::CampaignController campaign{std::move(program),std::move(initial),paths,settings,nullptr,
             bundled || competition_smoke || infrastructure_smoke || institutions_smoke};
+        MusicController music;
+        const auto sync_music = [&] {
+            const auto kind = campaign.requiredKind();
+            const auto urgent = kind == QStringLiteral("objective") || kind == QStringLiteral("liquidity") ||
+                                kind == QStringLiteral("site") || kind == QStringLiteral("institution");
+            music.configure(campaign.musicEnabled(),campaign.musicVolume(),urgent);
+        };
+        QObject::connect(&campaign,&bridge::CampaignController::settingsChanged,&music,sync_music);
+        QObject::connect(&campaign,&bridge::CampaignController::stateChanged,&music,sync_music);
         QQmlApplicationEngine engine;
         const auto qt_imports = QLibraryInfo::path(QLibraryInfo::QmlImportsPath);
         engine.setImportPathList({qt_imports,QStringLiteral("qrc:/qt/qml")});
@@ -107,6 +119,7 @@ int main(int argc, char* argv[]) {
         const auto resource_stats = resources::install_resource_guards(engine,std::move(policy));
         Q_UNUSED(resource_stats);
         engine.rootContext()->setContextProperty(QStringLiteral("campaign"),&campaign);
+        engine.rootContext()->setContextProperty(QStringLiteral("soundtrack"),&music);
         engine.load(QUrl(QStringLiteral("qrc:/pgp/game/Main.qml")));
         if (engine.rootObjects().isEmpty()) return 2;
         auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().first());
@@ -118,7 +131,9 @@ int main(int argc, char* argv[]) {
         });
         if (parser.isSet(QStringLiteral("smoke-test"))) {
             window->resize(1280,720);
-            if (objectives_smoke)
+            if (music_smoke)
+                schedule_music_smoke(*window,campaign,music,selection.api,paths,parser.value(QStringLiteral("screenshot")));
+            else if (objectives_smoke)
                 schedule_objectives_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
             else if (leadership_smoke)
                 schedule_succession_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
@@ -132,6 +147,7 @@ int main(int argc, char* argv[]) {
             else schedule_game_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
         }
         window->show();
+        sync_music();
         return application.exec();
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 2; }
 }

@@ -28,6 +28,7 @@ struct Scratch {
         auto versions=nlohmann::json::parse(read(PGP_CATALOG_VERSIONS));
         auto runtime=nlohmann::json::parse(read(PGP_CATALOG_SOURCE));
         versions["components"]["content"]="0.0.0-dev";runtime["content_version"]="0.0.0-dev";
+        runtime.erase("asset_records"); // This fixture imports and reviews its own file.
         for(auto& definition:runtime.at("definitions")) definition["revision"]=1;
         put(path/"project-versions.json",versions.dump());put(path/"data/runtime/first-playable.json",runtime.dump());
     }
