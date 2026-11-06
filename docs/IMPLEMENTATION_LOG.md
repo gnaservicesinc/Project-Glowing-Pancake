@@ -1264,3 +1264,32 @@ Game/editor remain planning placeholders; no release or automatic cross-content
 migration is implied. Count: **37/52**. Next: **M6-03 executive/public conflicts
 and institutional authority**. Human sessions remain deferred until components
 are in place and the user is ready for v1. No testers were contacted.
+
+## M6-03 — Public disputes and institutional authority · 2026-11-06
+
+Institutions presents independent testimony, dated publication and delivery
+commitments, six audience records, and a formal response path for public
+and executive disputes. One negotiated extension reserves real staff and
+compute. The underlying publication or delivery determines whether the case
+is resolved or disclosed.
+
+Standards, infrastructure, delegation and hard authority use named regional
+agreements with actual fees, paid teams and continuing public delivery.
+Procurement gates apply to shared market settlement and preserve the terms
+of signed work. Resistance reduces effective hard authority and can end a
+team's operation and suspend regional sales. Save replay reconciles dated
+decisions, payments, staffing, delivery and month-end coverage with their
+source records. [Institutions controls and rules](../src/runtime/AUTHORITY.md).
+
+The 67 authority checks cover all four roles, restored delivery, expiry,
+sanctions, concurrent executive responses, forged records and exact reloads.
+The optimized Mac suite passed across its initial run and the corrected
+authority fixture rerun. The 100% and 200% text Metal walkthroughs used the
+bundled content and reopened the exact 695,571-byte save. Snapshot tests
+still dominate the suite duration.
+
+The shared writer finalized 0.10.0-dev.1, generation 10, with hash
+`a233bc8aaa2fa8fa46f7a41fa0858fcc4a770247a5725fe22bf6ba4eb8e8183d`.
+All five scenarios and 15 headquarters saves validated without lints.
+The roadmap stands at 38 of 52 completed steps. M7-01 continues with
+conditional future research, game AGI/ASI and bounded automation.

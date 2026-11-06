@@ -13,6 +13,7 @@
 #include <pgp/core/resilience.hpp>
 #include <pgp/core/civic.hpp>
 #include <pgp/core/society.hpp>
+#include <pgp/core/authority.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
@@ -179,7 +180,9 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    NegotiateCorporateFinance,AppointExecutive,ProposePoolExpansion,VoteBoardMotion,RespondCorporateDispute,TransferCompanyOwnership,TransferGroupFunds,
                                    BuildOwnedSite,OrderOwnedHardware,HireSiteOperators,SetSitePowerLimit,RetireOwnedHardware,CloseOwnedSite,ScheduleSiteAppointment,CancelSiteAppointment,NoticeInitialLeaseTermination,
                                    BuySiteProtection,InsureSite,ReplicateService,StopServiceReplica,AcknowledgeSiteAlert,
-                                   FundPolicyAdvocacy,SubmitPolicyEvidence,BuyMediaCampaign,EndorseForumStandard>;
+                                   FundPolicyAdvocacy,SubmitPolicyEvidence,BuyMediaCampaign,EndorseForumStandard,
+                                   SubmitPublicTestimony,MakePublicPromise,RequestInstitutionalMandate,NegotiatePublicCase,
+                                   NegotiateExecutiveDispute,AcknowledgePublicCase,RelinquishInstitutionalMandate,DirectRegionalProcurement>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

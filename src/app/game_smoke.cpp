@@ -2,6 +2,7 @@
 
 #include "campaign_controller.hpp"
 #include <pgp/graphics/graphics_policy.hpp>
+#include <pgp/runtime/authority.hpp>
 
 #include <QAccessible>
 #include <QCoreApplication>
@@ -824,7 +825,7 @@ void schedule_civic_smoke(QQuickWindow& window, pgp::bridge::CampaignController&
 }
 
 void schedule_society_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,
-    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot) {
+    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot,bool institutions) {
     using namespace pgp;
     struct State {
         int phase=0,attempts=0;
@@ -834,10 +835,10 @@ void schedule_society_smoke(QQuickWindow& window,pgp::bridge::CampaignController
         bridge::CampaignSnapshotPtr saved;
     };
     const auto run=std::make_shared<State>();auto* timer=new QTimer(&window);timer->setInterval(24);
-    const auto save=paths.saves_directory/"society-smoke.pgpsave";
+    const auto save=paths.saves_directory/(institutions?"institutions-smoke.pgpsave":"society-smoke.pgpsave");
     const auto url=QUrl::fromLocalFile(QString::fromStdU16String(save.u16string()));
-    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,run,expected,save,url,screenshot] {
-        const auto fail=[&](const char* why){qCritical()<<"Society smoke failed"<<run->phase<<why<<campaign.notice();timer->stop();QCoreApplication::exit(3);};
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,run,expected,save,url,screenshot,institutions] {
+        const auto fail=[&](const char* why){qCritical()<<(institutions?"Institutions smoke failed":"Society smoke failed")<<run->phase<<why<<campaign.notice();timer->stop();QCoreApplication::exit(3);};
         const auto item=[&](const char* name){return visual_item(window.contentItem(),QString::fromLatin1(name));};
         const auto press=[&](const char* name){auto* control=item(name);reveal_top(control);if(key(window,control,Qt::Key_Space)) return true;fail(name);return false;};
         if(++run->attempts>2400) {fail("timed out");return;}
@@ -847,6 +848,126 @@ void schedule_society_smoke(QQuickWindow& window,pgp::bridge::CampaignController
         if(!campaign.welcome() && campaign.requiredKind()==QStringLiteral("content")) {
             const auto choices=campaign.requiredChoices();if(choices.isEmpty()) {fail("required choice missing");return;}
             campaign.choose(choices.back().toMap().value("choiceId").toString());return;
+        }
+        if(institutions && run->phase>=6) {
+            const auto& world=snapshot->checkpoint.world;
+            auto* desk=campaign.institutions();
+            if(!world.authority || !desk->available()) {fail("authority actor is unavailable");return;}
+            const auto& a=*world.authority;
+            const auto section=[&](int index) {
+                auto* picker=item("institutionsSection");
+                if(picker && picker->setProperty("currentIndex",index)) return true;
+                fail("institutions section");
+                return false;
+            };
+            const auto confirm=[&] {
+                if(desk->reviewText().isEmpty()) {fail("institutional terms were not displayed");return false;}
+                return press("confirmInstitutionAction");
+            };
+            const auto capture=[&](QString suffix,const char* reveal) {
+                if(screenshot.isEmpty()) return true;
+                auto target=screenshot;
+                if(!suffix.isEmpty()) {
+                    const auto dot=target.lastIndexOf(u'.');if(dot>=0) target.truncate(dot);
+                    target+=suffix+QStringLiteral(".png");
+                }
+                reveal_top(item(reveal));
+                if(window.grabWindow().save(target)) return true;
+                fail("institutional screenshot");return false;
+            };
+            if(campaign.requiredKind()==QStringLiteral("management")) {campaign.acknowledgeManagement();return;}
+            if(campaign.requiredKind()==QStringLiteral("site")) {campaign.acknowledgeSiteAlert();return;}
+            switch(run->phase) {
+            case 6:
+                if(state.deployments->records.empty() || desk->regions()->rowCount()!=8) {fail("deployed service or eight regions");return;}
+                if(press("institutionsTab")) ++run->phase;
+                return;
+            case 7:
+                desk->regions()->setSelectedId(QStringLiteral("region.europe"));
+                if(section(1)) ++run->phase;
+                return;
+            case 8: if(press("reviewInstitutionTestimony")) ++run->phase;return;
+            case 9:
+                if(!a.testimonies.empty()) {fail("preview disclosed the report");return;}
+                if(confirm()) ++run->phase;
+                return;
+            case 10:
+                if(a.testimonies.size()!=1 || QString::fromStdString(a.testimonies.front().report)!=run->report) {fail("actual testimony");return;}
+                if(press("reviewInstitutionServicePromise")) ++run->phase;
+                return;
+            case 11: if(confirm()) ++run->phase;return;
+            case 12: if(press("reviewInstitutionPublicationPromise")) ++run->phase;return;
+            case 13: if(confirm()) ++run->phase;return;
+            case 14:
+                if(!campaign.paused()) return;
+                if(a.promises.size()!=2) {fail("public commitments");return;}
+                if(a.cases.empty()) {(void)press("advanceInstitutions");return;}
+                if(campaign.requiredKind()!=QStringLiteral("institution") || state.date!=a.promises.back().due_on ||
+                    !campaign.requiredText().contains(QStringLiteral("public commitment"))) {fail("prepared morning halted for actual concern");return;}
+                if(press("openInstitutionNotice")) ++run->phase;
+                return;
+            case 15: if(press("reviewInstitutionCitation")) ++run->phase;return;
+            case 16: if(confirm()) ++run->phase;return;
+            case 17: if(press("acknowledgeInstitutionalNotice")) ++run->phase;return;
+            case 18: {
+                if(!campaign.paused()) return;
+                const auto formal=core::advance_days(a.cases.front().opened_on,a.catalog.concern_period);
+                if(state.date<formal) {(void)press("advanceInstitutions");return;}
+                if(state.date!=formal || campaign.requiredKind()!=QStringLiteral("institution") || !a.cases.front().testimony) {fail("formal response boundary");return;}
+                run->cash=state.cash;
+                if(press("reviewInstitutionNegotiation")) ++run->phase;
+                return;
+            }
+            case 19:
+                if(state.cash!=run->cash || a.cases.front().negotiated_on) {fail("review altered the dispute");return;}
+                if(confirm()) ++run->phase;
+                return;
+            case 20:
+                if(!a.cases.front().negotiated_on || state.cash.value()!=run->cash.value()-a.catalog.remedy_fee.value()) {fail("negotiated response or fee");return;}
+                if(press("labTab")) ++run->phase;
+                return;
+            case 21:
+                if(press("lab_research")) {
+                    management->researchTopics()->setSelectedId(QStringLiteral("research.held_out_evaluation"));
+                    ++run->phase;
+                }
+                return;
+            case 22: if(press("publishResearchButton")) ++run->phase;return;
+            case 23:
+                if(!a.cases.front().resolved_on || !a.promises.front().met_on) {fail("publication or service did not satisfy its obligation");return;}
+                if(press("institutionsTab") && section(0)) ++run->phase;
+                return;
+            case 24: {
+                const auto roles=desk->roles();
+                const auto role=std::ranges::find_if(roles,[](const auto& row){return row.toMap().value("id")==QStringLiteral("institution.delegation");});
+                auto* picker=item("institutionRole");
+                if(!picker || role==roles.end() || !picker->setProperty("currentIndex",static_cast<int>(role-roles.begin()))) {fail("select delegation");return;}
+                run->cash=state.cash;
+                if(press("reviewInstitutionMandate")) ++run->phase;
+                return;
+            }
+            case 25:
+                if(state.cash!=run->cash || !a.mandates.empty() || !desk->reviewText().contains(QStringLiteral("Europe Public Services Council"))) {
+                    fail("named terms or preview mutation");return;
+                }
+                if(capture(QStringLiteral(".terms"),"institutionsReviewText") && confirm()) ++run->phase;
+                return;
+            case 26:
+                if(!campaign.paused()) return;
+                if(a.mandates.size()!=1 || a.mandates.front().region!="region.europe") {fail("funded delegation");return;}
+                if(a.mandates.front().reviews.empty()) {(void)press("advanceInstitutions");return;}
+                if(runtime::mandate_status(world,a.mandates.front(),state.date)!="operating") {fail("actual operating grant");return;}
+                if(!capture({},"institutionCoverage")) return;
+                run->saved=snapshot;campaign.saveTo(url);++run->phase;return;
+            case 27:
+                if(!std::filesystem::is_regular_file(save)) {fail("save missing");return;}
+                campaign.loadFrom(url);++run->phase;return;
+            default:
+                if(snapshot->generation==run->saved->generation || snapshot->checkpoint!=run->saved->checkpoint) {fail("exact institutional reload");return;}
+                qInfo().noquote()<<"Institutions smoke passed"<<graphics::name(expected)<<"text="<<campaign.textScalePercent()
+                    <<"testimony, commitments, formal response, paid delegation and exact reload"<<std::filesystem::file_size(save)<<"bytes";
+                timer->stop();QCoreApplication::exit(0);return;
+            }
         }
         switch(run->phase) {
         case 0: {

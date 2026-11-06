@@ -860,7 +860,7 @@ RegionalMarkets parse_regional_markets(const Json& value, const std::string& pat
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society", "authority"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -973,6 +973,11 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         if (result.regional_markets.empty() || !result.lab)
             fail("society", path, "Regional society needs regional customers and independent evaluation");
         result.society = id(value.at("society"), path);
+    }
+    if(value.contains("authority")) {
+        if(result.society.empty() || !result.management || !result.infrastructure)
+            fail("authority",path,"Institutional authority needs regional society, company management and actual infrastructure.");
+        result.authority=id(value.at("authority"),path);
     }
     if (value.contains("business_plan")) {
         const auto plan_path = child(path,"business_plan");
@@ -1091,6 +1096,13 @@ void validate_references(const Collection& collection, const Registry& registry)
                 }
             }
             if (scenario_definition->lab) {
+                if(!scenario_definition->authority.empty()) {
+                    (void)reference(scenario_definition->authority,"institutional_authority",path);
+                    const auto& a=*authority_catalog(collection,*scenario_definition);
+                    const auto& regions=society_catalog(collection,*scenario_definition)->regions;
+                    for(std::size_t i=0;i<a.regions.size();++i) if(a.regions[i].id!=regions[i].id)
+                        fail("authority",path,"Institutional issuers and welfare regions must agree.");
+                }
                 try {
                     const auto catalog=scenario_lab_catalog(collection, *scenario_definition);
                     const auto services = scenario_services(collection, *scenario_definition);
@@ -1281,6 +1293,7 @@ std::string_view definition_kind(const Definition& definition) {
     if (std::holds_alternative<core::ResilienceCatalog>(definition.data)) return "site_resilience";
     if (std::holds_alternative<core::CivicCatalog>(definition.data)) return "us_civic";
     if (std::holds_alternative<core::SocietyCatalog>(definition.data)) return "regional_society";
+    if (std::holds_alternative<core::AuthorityCatalog>(definition.data)) return "institutional_authority";
     return "deal";
 }
 bool is_incident_stream(core::RandomStream stream) noexcept {
@@ -1428,6 +1441,11 @@ Collection load_collection(std::string_view document, const Registry& registry) 
                 fields(value, path, {"id", "kind", "revision", "catalog"}, {"id", "kind", "revision", "catalog"});
                 try { return load_society_catalog(value.at("catalog").dump()); }
                 catch (const std::exception& error) { fail("society", path, error.what()); }
+            }
+            if(kind=="institutional_authority") {
+                fields(value,path,{"id","kind","revision","catalog"},{"id","kind","revision","catalog"});
+                try {return load_authority_catalog(value.at("catalog").dump());}
+                catch(const std::exception& error) {fail("authority",path,error.what());}
             }
             if (kind == "deal") {
                 fields(value, path, {"id", "kind", "revision", "minimum_payment_cents", "minimum_duration_days"},

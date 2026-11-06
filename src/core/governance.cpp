@@ -251,6 +251,18 @@ void prepare_governance(SimulationState& s) {
         } else if (s.date>=advance_days(d.opened_on,c.concern_period) && d.status==CorporateDisputeStatus::concern) {d.status=CorporateDisputeStatus::formal;d.acknowledged=false;s.paused=true;}
     }
 }
+void extend_executive_response(SimulationState& s,std::string_view id,std::string project) {
+    auto& g=governance(s);
+    const auto it=std::find_if(g.disputes.begin(),g.disputes.end(),[&](const auto& row){return row.id==id;});
+    if(it==g.disputes.end() || it->kind!="publication" || it->status!=CorporateDisputeStatus::formal ||
+        it->negotiated_on || s.date>=it->deadline) invalid("Negotiate one formal publication dispute before its response deadline.");
+    const auto& work=find(s.capacity->projects,project);
+    const auto due=advance_days(it->deadline,catalog(s).response_window);
+    if(work.kind!=ProjectKind::research || work.status!=ProjectStatus::active || work.starts_on!=s.date ||
+        work.total_work!=integrate(work.requested,Days{due.value()-s.date.value()}) || work.staff==0)
+        invalid("The executive extension needs a funded review team through the extended deadline.");
+    it->negotiated_on=s.date;it->review_project=std::move(project);it->deadline=due;it->acknowledged=true;
+}
 bool required_governance_notice(const SimulationState& s) {
     if (!s.management || !s.management->governance) return false;
     return std::any_of(s.management->governance->disputes.begin(),s.management->governance->disputes.end(),[](const auto& d){return !d.acknowledged;});

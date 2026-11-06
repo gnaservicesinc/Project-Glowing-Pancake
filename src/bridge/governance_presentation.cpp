@@ -76,9 +76,11 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
         auto detail=tr("Cause: %1 · %2. First concern %3; formal recommendation %4; respond by %5.\n").arg(d.kind=="publication"?tr("Publication commitment"):tr("Cash covenant"),subject_label(d.subject),date(d.opened_on),date(core::advance_days(d.opened_on,c.concern_period)),date(d.deadline));
         detail+=d.kind=="publication"?tr("Publish the promised completed research. Paying a bonus does not satisfy this commitment. Unresolved terms lead to departure; earned shares and past costs remain."):tr("Restore the agreed cash floor, repay outstanding principal, or negotiate the disclosed one-time covenant waiver. Acknowledgment preserves the obligation and original response date.");
         if (d.kind=="covenant") for (const auto& f:c.financing) if (f.id==d.subject) detail+=tr("\nPermanent covenant waiver: %1 cash. Principal, interest and maturity remain due.").arg(money(f.waiver_fee));
+        if (d.negotiated_on) detail+=tr("\nA funded response review began on %1. The extended deadline is %2.").arg(date(*d.negotiated_on),date(d.deadline));
         if (d.resolved_on) detail+=tr("\n%1 on %2.").arg(dispute_status(d.status),date(*d.resolved_on));
         const bool open=d.status==core::CorporateDisputeStatus::concern || d.status==core::CorporateDisputeStatus::formal;
-        result.disputes.push_back({text(d.id),subject_label(d.subject),date(d.deadline),detail,dispute_status(d.status),!d.acknowledged,{{QStringLiteral("waiver"),open && d.kind=="covenant"}}});
+        result.disputes.push_back({text(d.id),subject_label(d.subject),date(d.deadline),detail,
+            open && d.negotiated_on?tr("Negotiated response"):dispute_status(d.status),!d.acknowledged,{{QStringLiteral("waiver"),open && d.kind=="covenant"}}});
     }
     if (checkpoint.world.competition) for (const auto& rival:checkpoint.world.competition->companies) if (rival.planning && rival.planning->entered_on && !rival.response) {
         const auto& definition=runtime::rival_definition(program,rival.definition_id);

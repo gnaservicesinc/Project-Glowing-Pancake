@@ -103226,6 +103226,121 @@
         "prepared_headquarters": 15,
         "scenarios": 5
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "3877eb453605fe39558211a37380787b3da05a1cd9b025f79a892f91a884b31b",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "authority.executive_disclosure",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "98941dae0dfc5be15d2b3db476fce873727b4cf3baae6c03cba08683a5ec4d95",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "authority.institutions",
+          "kind": "institutional_authority",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "3ef1518aafa41eea0a0d046a822e2cb0e0f356b7d0cd12c268048c6b51872edd",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "authority.monthly_review",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "b36c93939bc7e29500382bf8641b3169104e4ffc3feb1c8a81519307bcf9916c",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "authority.public_review",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "32566c96e71a77d3fc34b4ec4b2c206a153d94a9c0b866bcc1a322b34814b542",
+          "before_hash": "a47240e56c29397d702dcc49d5c0dd35116c8b573bf2fed98e0c37230e3ac79b",
+          "change": "changed",
+          "id": "scenario.first_playable",
+          "kind": "scenario",
+          "old_revision": 7,
+          "revision": 8
+        },
+        {
+          "after_hash": "48b3bdbf4f3c25f1f443521b8525750ad8f53d71c6c286de8da04ba7cfea4511",
+          "before_hash": "19cc03e2741546bf9ad30928cfad626fcc40ab620017cc05356e931fa0a1f025",
+          "change": "changed",
+          "id": "scenario.world_competition",
+          "kind": "scenario",
+          "old_revision": 8,
+          "revision": 9
+        },
+        {
+          "after_hash": "44cb5fe0a646c699faa521921b77c3b8a801b0db61858d2260e47ce5ecf57b7a",
+          "before_hash": "ced215e654f8e3b42da9ee968183d8f12ef5c3d3a897fc0b1199dace5987a61e",
+          "change": "changed",
+          "id": "scenario.world_expanded",
+          "kind": "scenario",
+          "old_revision": 8,
+          "revision": 9
+        },
+        {
+          "after_hash": "94e90adb31b549aeecdae1624b9506f345793470b0927b22c513da53776fecda",
+          "before_hash": "9ce7fabc90bb69f1473460d4875ab995952f5c2ea4d86308565c3f0901b61151",
+          "change": "changed",
+          "id": "scenario.world_forgiving",
+          "kind": "scenario",
+          "old_revision": 8,
+          "revision": 9
+        },
+        {
+          "after_hash": "d6a3a9adce2f1dc7c802904f17bc70ee0b185e7eda17d89b45cb95a7caedb3cc",
+          "before_hash": "260664f922946e3ce86d9b2d15f4b3053bcaff6fd08095121815091079dbd303",
+          "change": "changed",
+          "id": "scenario.world_reduced",
+          "kind": "scenario",
+          "old_revision": 8,
+          "revision": 9
+        }
+      ],
+      "changed_text_keys": [
+        "authority.executive_disclosure",
+        "authority.monthly_review",
+        "authority.public_review"
+      ],
+      "collection_hash": "a233bc8aaa2fa8fa46f7a41fa0858fcc4a770247a5725fe22bf6ba4eb8e8183d",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.10.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 10,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.9.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000009.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000010.collection.json",
+      "summary": "Add dated public commitments, executive and public disputes, regional institutional authority, and resistance.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 15,
+        "lints": [],
+        "prepared_headquarters": 15,
+        "scenarios": 5
+      }
     }
   ],
   "format": 1

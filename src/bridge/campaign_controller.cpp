@@ -1,4 +1,5 @@
 #include "campaign_controller.hpp"
+#include <pgp/runtime/authority.hpp>
 #include "flow_presentation.hpp"
 
 #include <pgp/core/integer_codec.hpp>
@@ -114,7 +115,8 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const 
 CampaignController::CampaignController(runtime::CompiledProgram program,runtime::Checkpoint checkpoint,
     persistence::LocalPaths paths,persistence::Settings initial_settings,QObject* parent,bool welcome)
     : QObject(parent),program_(program),management_(new ManagementController(this)),infrastructure_(new InfrastructureController(this)),
-      civic_(new CivicController(this)),society_(new SocietyController(this)),welcome_(welcome),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
+      civic_(new CivicController(this)),society_(new SocietyController(this)),institutions_(new InstitutionsController(this)),
+      welcome_(welcome),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
       save_folder_(QUrl::fromLocalFile(QString::fromStdU16String(paths.saves_directory.u16string()))) {
     connect(management_,&ManagementController::actionRequested,this,&CampaignController::submit);
     connect(infrastructure_,&InfrastructureController::actionRequested,this,&CampaignController::submit);
@@ -123,6 +125,8 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
     connect(civic_, &CivicController::noticeRaised, this, &CampaignController::setNotice);
     connect(society_, &SocietyController::actionRequested, this, &CampaignController::submit);
     connect(society_, &SocietyController::noticeRaised, this, &CampaignController::setNotice);
+    connect(institutions_, &InstitutionsController::actionRequested, this, &CampaignController::submit);
+    connect(institutions_, &InstitutionsController::noticeRaised, this, &CampaignController::setNotice);
     connect(management_,&ManagementController::competitiveResponseRequested,this,[this](QString id,bool accept) {
         if (!paused() || !beginOperation()) return;
         const auto revision=snapshot_->checkpoint.world.simulation.revision;
@@ -183,6 +187,7 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     infrastructure_->update(snapshot,program_,replace);
     civic_->update(snapshot, replace);
     society_->update(snapshot, replace);
+    institutions_->update(snapshot, replace);
     auto inbox = inbox_rows(snapshot->checkpoint,program_.collection,*management_);
     if (!first && replace) welcome_=false;
     if (replace) { projects_->beginCampaign(std::move(projects)); inbox_->beginCampaign(std::move(inbox)); }
@@ -285,6 +290,12 @@ QString CampaignController::requiredKind() const {
     if (needsWarning()) return QStringLiteral("liquidity");
     if (core::required_management_notice(snapshot_->checkpoint.world.simulation)) return QStringLiteral("management");
     if (core::required_site_alert(snapshot_->checkpoint.world.simulation)) return QStringLiteral("site");
+    if (runtime::required_public_case(snapshot_->checkpoint.world)) return QStringLiteral("institution");
+    if (core::required_governance_notice(snapshot_->checkpoint.world.simulation)) {
+        const auto& disputes=snapshot_->checkpoint.world.simulation.management->governance->disputes;
+        const auto row=std::ranges::find_if(disputes,[](const auto& d){return !d.acknowledged;});
+        return institutions_->available() && row->kind=="publication"?QStringLiteral("executive"):QStringLiteral("governance");
+    }
     return QStringLiteral("none");
 }
 QString CampaignController::requiredTitle() const {
@@ -294,11 +305,19 @@ QString CampaignController::requiredTitle() const {
     if (kind == QStringLiteral("liquidity")) return QStringLiteral("Unpaid obligations need a response");
     if (kind == QStringLiteral("management")) return QStringLiteral("Temporary compute setback");
     if (kind==QStringLiteral("site")) return QStringLiteral("Owned site disruption");
+    if (kind==QStringLiteral("institution")) return QStringLiteral("Public case needs attention");
+    if (kind==QStringLiteral("executive") || kind==QStringLiteral("governance")) return QStringLiteral("Corporate response needs attention");
     return {};
 }
 QString CampaignController::requiredText() const {
     const auto kind = requiredKind();
     if (kind==QStringLiteral("site")) return text(core::required_site_alert(snapshot_->checkpoint.world.simulation)->cause);
+    if (kind==QStringLiteral("institution")) return institutions_->requiredCaseText();
+    if (kind==QStringLiteral("executive") || kind==QStringLiteral("governance")) {
+        const auto& disputes=snapshot_->checkpoint.world.simulation.management->governance->disputes;
+        const auto row=std::ranges::find_if(disputes,[](const auto& d){return !d.acknowledged;});
+        return management_->corporateDisputes()->row(text(row->id)).value(QStringLiteral("detail")).toString();
+    }
     if (kind == QStringLiteral("management")) {
         for (const auto& n:snapshot_->checkpoint.world.simulation.management->notices) if (n.required && !n.acknowledged) return management_->alertDetail(n);
     }
@@ -383,6 +402,19 @@ void CampaignController::acknowledgeManagement() {
 void CampaignController::acknowledgeSiteAlert() {
     if (snapshot_) if (const auto* alert=core::required_site_alert(snapshot_->checkpoint.world.simulation))
         submit(core::AcknowledgeSiteAlert{alert->id});
+}
+void CampaignController::acknowledgeInstitutionalNotice() {
+    if(!snapshot_) return;
+    const auto& world=snapshot_->checkpoint.world;
+    if(world.authority) for(const auto& row:world.authority->cases) if(!row.acknowledged) {
+        submit(core::AcknowledgePublicCase{row.id});
+        return;
+    }
+    if(core::required_governance_notice(world.simulation))
+        for(const auto& row:world.simulation.management->governance->disputes) if(!row.acknowledged) {
+            submit(core::RespondCorporateDispute{row.id,false});
+            return;
+        }
 }
 void CampaignController::setAutoPauseProjects(bool value) {auto settings=settings_;settings.auto_pause_projects=value;changeSettings(settings);}
 void CampaignController::setAutoPauseEvaluations(bool value) {auto settings=settings_;settings.auto_pause_evaluations=value;changeSettings(settings);}

@@ -450,6 +450,7 @@ Json world_json(const WorldState& world) {
         {"competition_mode",world.competition?(world.competition->setup?"planned":"bounded"):"foundation"},{"competition",world.competition?competition_json(*world.competition):Json(nullptr)}};
     if (!world.scenario_id.empty()) result["scenario_id"]=world.scenario_id;
     if (world.society) result["society"]=detail::society_json(*world.society);
+    if (world.authority) result["authority"]=detail::authority_json(*world.authority);
     return result;
 }
 WorldState parse_world(const Json& value,const CompiledProgram& program) {
@@ -457,7 +458,7 @@ WorldState parse_world(const Json& value,const CompiledProgram& program) {
     Json prior_shape=Json::object();
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
-        if (name!="variables" && name!="competition" && name!="competition_mode" && name!="scenario_id" && name!="society") prior_shape[name]=nullptr;
+        if (name!="variables" && name!="competition" && name!="competition_mode" && name!="scenario_id" && name!="society" && name!="authority") prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"world",{"simulation","company_id","world_id","state_id","campaign_start","scope_created",
                                    "root_seed","enabled_flows","facts","counterparty_cash_cents","decisions","negotiations"});
@@ -466,6 +467,7 @@ WorldState parse_world(const Json& value,const CompiledProgram& program) {
     })) detail::invalid("variables","Registered variables require an explicit value collection");
     WorldState result;
     if (value.contains("society")) result.society=detail::parse_society(value.at("society"));
+    if (value.contains("authority")) result.authority=detail::parse_authority(value.at("authority"));
     if (value.contains("scenario_id")) result.scenario_id=detail::text(value.at("scenario_id"),"scenario_id",128);
     if (value.contains("competition")!=value.contains("competition_mode")) detail::invalid("competition","Competition mode and state must be present together");
     if (value.contains("competition_mode")) {

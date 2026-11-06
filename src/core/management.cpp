@@ -246,7 +246,12 @@ void validate_management(const SimulationState& s,bool deep) {
                 !paid("debt/financing/"+offer.id,row.day,offer.proceeds,Account::cash,Account::debt)) invalid("Financing differs from its real debt/proceeds");
         }
     }
-    if (s.capacity->staff_additions.size()!=m.specialists.size()+(m.governance?m.governance->appointments.size():0)) invalid("Team additions lack their actual hired specialists or executives");
+    // Regional contract teams are reconciled with their fees, payroll and
+    // operating agreements by the world actor. Management owns ordinary hires.
+    const auto management_hires=std::ranges::count_if(s.capacity->staff_additions,
+        [](const auto& row){return !row.id.starts_with(authority_hire_prefix);});
+    if (static_cast<std::size_t>(management_hires)!=m.specialists.size()+(m.governance?m.governance->appointments.size():0))
+        invalid("Team additions lack their actual hired specialists or executives");
     for (const auto& row:m.specialists) {
         const auto& offer=find(m.catalog.specialists,row.offer_id);
         if (!ids.insert(row.offer_id).second || row.day<s.accounts->starts_on || row.day>s.date) invalid("Specialist acceptance repeats or has an invalid date");

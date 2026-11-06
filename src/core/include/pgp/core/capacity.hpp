@@ -76,6 +76,7 @@ struct CapacityDay {
     auto operator<=>(const CapacityDay&) const = default;
 };
 inline constexpr std::size_t capacity_source_limit = 256;
+inline constexpr std::size_t capacity_staff_change_limit = 8192;
 inline constexpr std::size_t capacity_project_limit = 4096;
 inline constexpr std::size_t capacity_day_limit = 40960;
 inline constexpr std::size_t capacity_work_record_limit = 262144;

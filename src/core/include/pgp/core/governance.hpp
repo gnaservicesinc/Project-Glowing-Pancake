@@ -91,6 +91,8 @@ struct CorporateDispute {
     bool acknowledged=false;
     Cents opening_cash{0};
     std::uint64_t posting_cursor=0,publication_cursor=0;
+    std::optional<OrdinalDay> negotiated_on;
+    std::string review_project;
     auto operator<=>(const CorporateDispute&) const = default;
 };
 struct GovernanceState {
@@ -123,4 +125,5 @@ void propose_pool_expansion(SimulationState&,BasisPoints);
 void propose_acquisition_board(SimulationState&,std::string target,Cents cash,Cents asset_value,BasisPoints shares);
 void vote_board_motion(SimulationState&,std::string_view,bool,Cents protected_cash);
 void respond_corporate_dispute(SimulationState&,std::string_view,bool,Cents protected_cash);
+void extend_executive_response(SimulationState&,std::string_view dispute,std::string project);
 }

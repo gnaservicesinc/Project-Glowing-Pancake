@@ -1,4 +1,5 @@
 #include <pgp/session/milestone.hpp>
+#include <pgp/runtime/authority.hpp>
 #include <algorithm>
 #include <stdexcept>
 namespace pgp::session {
@@ -36,6 +37,9 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
         if(checkpoint.world.society) result.deadline=core::next_society_boundary(*checkpoint.world.society,s.date);
         if(result.deadline && *result.deadline>=s.end_date) result.deadline.reset();
         if(!result.deadline) throw std::invalid_argument("There is no later regional month or forum date within this campaign.");
+    } else if (kind=="institutions") {
+        result.deadline=runtime::next_authority_boundary(checkpoint.world);
+        if(!result.deadline) throw std::invalid_argument("There is no later institutional response or review date in this campaign.");
     } else if (kind=="deadline") {
         const auto consider=[&](core::OrdinalDay day){if (day>=s.date && day<=s.end_date && (!result.deadline || day<*result.deadline)) result.deadline=day;};
         if (s.accounts) {

@@ -5,6 +5,7 @@ add_library(pgp_bridge STATIC reservation_model.cpp reservation_model.hpp
     infrastructure_controller.cpp infrastructure_controller.hpp resilience_presentation.cpp resilience_presentation.hpp
     civic_controller.cpp civic_controller.hpp
     society_controller.cpp society_controller.hpp
+    institutions_controller.cpp institutions_controller.hpp
     campaign_snapshot.hpp flow_presentation.cpp flow_presentation.hpp)
 add_library(pgp::bridge ALIAS pgp_bridge)
 set_target_properties(pgp_bridge PROPERTIES AUTOMOC ON)

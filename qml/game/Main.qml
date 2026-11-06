@@ -159,6 +159,12 @@ ApplicationWindow {
                         onClicked: window.room = "society"
                     }
                     Action {
+                        objectName: "institutionsTab"; text: qsTr("Institutions")
+                        visible: !campaign.welcome && campaign.institutions.available
+                        checked: window.room === "institutions"
+                        onClicked: window.room = "institutions"
+                    }
+                    Action {
                         objectName: "pauseButton"
                         text: campaign.paused ? qsTr("Play") : qsTr("Pause")
                         enabled: !campaign.busy && (!campaign.paused || campaign.canPlay)
@@ -294,6 +300,17 @@ ApplicationWindow {
                                 visible: campaign.requiredKind === "liquidity"
                                 enabled: !campaign.busy
                                 onClicked: campaign.acknowledgeWarning()
+                            }
+                            Action {
+                                objectName: "openInstitutionNotice"; text: qsTr("Open dispute")
+                                visible: campaign.requiredKind === "institution" || campaign.requiredKind === "executive"
+                                onClicked: { window.room = "institutions"; institutionsPanel.showDisputes() }
+                            }
+                            Action {
+                                objectName: "acknowledgeInstitutionalNotice"; text: qsTr("Acknowledge notice")
+                                visible: campaign.requiredKind === "institution" || campaign.requiredKind === "executive" || campaign.requiredKind === "governance"
+                                enabled: !campaign.busy
+                                onClicked: campaign.acknowledgeInstitutionalNotice()
                             }
                         }
                     }
@@ -442,8 +459,12 @@ ApplicationWindow {
                     visible: !campaign.welcome && campaign.society.available && window.room === "society"
                     contentItem: SocietyPanel { textSize: window.textSize }
                 }
+                Panel {
+                    visible: !campaign.welcome && campaign.institutions.available && window.room === "institutions"
+                    contentItem: InstitutionsPanel { id: institutionsPanel; textSize: window.textSize }
+                }
                 GridLayout {
-                    visible: !campaign.welcome && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
+                    visible: !campaign.welcome && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && window.room !== "institutions" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
                     Layout.fillWidth: true
                     columns: window.narrow || campaign.compactManagement ? 1 : 2
                     columnSpacing: 10

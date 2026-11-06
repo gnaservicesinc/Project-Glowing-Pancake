@@ -29,11 +29,12 @@ independent human validation and release qualification remain open.
 | E2-02: catalog and flow reuse | Edit research and catalogs, review typed reference changes, localize messages, pin reviewed assets and bind reusable group calls | Implemented on Mac with 69 focused checks, saved nested calls and a 200% text Metal walkthrough. [Studio workflow](../src/studio/CATALOGS.md) |
 | M6-01: domestic politics | Inspect seats and dockets, submit evidence, fund bounded advocacy and plan around US and state rules | Implemented on Mac with saved elections, agency dates and disclosures. The 200% text Metal walkthrough paid and reloaded the actual hearing checkpoint. [Civic room](../src/core/CIVIC.md) |
 | M6-02: regional society and media | Inspect regional work, five welfare indices and minima; review member standards dates and paid media/disclosures | Implemented on Mac with source-reconciled outcomes and saves. Metal controls at 100%/200% text confirm both paid actions, stop at a monthly boundary and reload exactly. [World room](../src/runtime/SOCIETY.md) |
+| M6-03: disputes and institutional authority | Disclose evidence, make public commitments, negotiate responses and operate named regional agreements | Implemented on Mac. Bundled Metal checks at 100% and 200% text cover testimony, a dated response, publication, a funded delegation and exact save reload. [Institutions room](../src/runtime/AUTHORITY.md) |
 | M3-04: validated first playable | Five independent 30–45-minute sessions; three complete unaided; material comprehension problems fixed | Deferred until all components are in place and the user is ready for v1 work; no sessions conducted |
 
 There is no calendar estimate inferred from task counts: tasks vary substantially
 in size, and native packaging, authors and players have separate evidence gates.
-Full century simulation, institutional authority and final art are
+Full century simulation and final art are
 later milestones. The required typed editor canvas and graphical finalizer are
 implemented on Mac; human author qualification remains deferred.
 

@@ -21,6 +21,7 @@ std::string family(std::string_view kind) {
 std::string record_family(std::string_view path,std::string_view kind) {
     if(path.empty()) return std::string(kind);
     const auto array=parent(path);
+    if(array.ends_with("/catalog/offers") && kind=="institutional_authority") return "institution_role";
     if(array.ends_with("/lab/data")) return "dataset";
     if(array.ends_with("/lab/research")) return "research";
     if(array.ends_with("/lab/recipes")) return "recipe";
@@ -51,6 +52,7 @@ std::string reference_family(std::string_view key,std::string_view path,std::str
     if(key=="resilience") return "site_resilience";
     if(key=="civic") return "us_civic";
     if(key=="society") return "regional_society";
+    if(key=="authority") return "institutional_authority";
     if(array=="flows") return "flow";
     if(array=="research" || array=="requires_research" || array=="all_of" || array=="any_of" || key=="publication_node" || key=="publication_research") return "research";
     if(array=="recipes" || key=="recipe_id" || key=="required_recipe") return "recipe";
@@ -136,7 +138,7 @@ std::vector<ContentReference> content_uses(const CatalogIndex& index,std::string
         std::map<std::string,std::vector<const ContentReference*>,std::less<>> reverse;
         for(const auto& ref:index.references)
             if(ref.family=="flow" || ref.family=="scenario" || ref.family=="research" || ref.family=="regional_markets" ||
-                ref.family=="site_resilience" || ref.family=="us_civic" || ref.family=="regional_society")
+                ref.family=="site_resilience" || ref.family=="us_civic" || ref.family=="regional_society" || ref.family=="institutional_authority")
                 reverse[ref.id].push_back(&ref);
         std::vector<std::string> pending{owners.begin(),owners.end()};
         for(std::size_t i=0;i<pending.size();++i) {

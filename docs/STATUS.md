@@ -1,11 +1,11 @@
 # Project status and next handoff
 
-Updated 2026-11-05 · Implementation started against planning baseline 1.2
+Updated 2026-11-06 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**37 of 52 steps complete for Mac feature development. M6-03 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03 and M6-01/02.
+**38 of 52 steps complete for Mac feature development. M7-01 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03 and M6-01 through M6-03.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -25,6 +25,16 @@ local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
 
+- M6-03 adds the Institutions room for testimony, public commitments, six
+  audience records, executive and public disputes, and four funded agreement
+  types. Actual staffing, compute, evidence and regional delivery determine
+  authority. Procurement and resistance affect market settlement. All 75
+  optimized Mac tests passed across the suite and the corrected fixture rerun,
+  including 67 focused authority checks. Bundled Metal walkthroughs at
+  100% and 200% text exercise testimony, negotiation, publication and an
+  operating delegation with exact reopening of a 695,571-byte save. The shared
+  writer validated content **0.10.0-dev.1**, generation **10**, across all
+  15 headquarters openings. [Institutions controls and rules](../src/runtime/AUTHORITY.md).
 - M6-02 adds World with five welfare indices, fourteen equally weighted
   components, regional minima, six audience reputations and disclosed media.
   Settled work from all sellers reaches welfare after the authored lag.
@@ -453,7 +463,7 @@ supplies the typed canvas and E1B-02 completes graphical review/finalization.
 E2-01 through E2-03 supply scenario forms, catalogs, localization, asset credits,
 typed reusable flows, finalized revision comparisons and reviewed save copies.
 Human studies wait for v1 preparation after all components are in place.
-16 steps remain unchecked, including those studies and deferred platform/release
+14 steps remain unchecked, including those studies and deferred platform/release
 work. [Playability checkpoints](PLAYABILITY.md) distinguish implemented paths
 from unperformed human and release qualification.
 
@@ -486,9 +496,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation is M6-02, macro response, global coordination and media.**
-Use settled adoption to drive lagged welfare changes. Add the international
-standards forum, regional access rules and audience-specific media effects.
+**Next implementation is M7-01, conditional future and game AGI/ASI.**
+Add branching future research, advanced recipes and hardware, independent
+assessment windows, and bounded research and product refresh policies.
 E2-04 editor download qualification follows M7-03 and the later native release work.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions

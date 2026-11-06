@@ -47,6 +47,7 @@ struct WorldState {
     std::optional<CompetitionState> competition{};
     std::string scenario_id{};
     std::optional<core::SocietyState> society{};
+    std::optional<core::AuthorityState> authority{};
     auto operator<=>(const WorldState&) const = default;
 };
 

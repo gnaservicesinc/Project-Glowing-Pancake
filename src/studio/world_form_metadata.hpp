@@ -66,6 +66,10 @@ inline std::string help(std::string_view path) {
     if(key=="first_agenda_day") return "Date this public docket opens. Committee, chamber, executive, review and agency dates follow the authored terms.";
     if(key=="permit_watts") return "Limit on newly authorized site reservations in this state while the rule is effective.";
     if(key=="evidence_axis") return "Independent evaluation domain index. 0 is documents and 1 is scanned tables.";
+    if(key=="rights") return "Describe the actual regional procurement rights and operating obligations granted by this role.";
+    if(key=="public_work") return "Public tasks required in the last settled regional month. Reviews prorate the same obligation to their actual interval.";
+    if(key=="points_bp") return "Maximum authority from a fully operating role. Hard authority is reduced by regional resistance.";
+    if(path.find("/identity_effects_bp/")!=path.npos) return "Signed audience confidence change when this public event occurs. Its effect fades over the authored memory window.";
     if(key=="map_sha256" || key=="map_asset_id") return "Identity of the prepared offline map asset. Retain its matching hash and provenance.";
     if(key=="assumptions") return "Visible authored-balance assumptions. Label fictional exposure and future parameters honestly.";
     if(path.find("/monthly_probability_bp/")!=path.npos) return "Monthly chance for this named hazard; all hazards together must leave a quiet outcome. Profiles are authored game balance.";
@@ -86,11 +90,12 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
     if(key=="resilience") definition_kind="site_resilience";
     if(key=="civic") definition_kind="us_civic";
     if(key=="society") definition_kind="regional_society";
+    if(key=="authority") definition_kind="institutional_authority";
     if(array_key=="flows") definition_kind="flow";
     if(parent.find("/prerequisites/")!=std::string_view::npos) definition_kind="research";
     if(array_key=="headquarters_choices") {add("US-CA","California");add("US-TX","Texas");add("US-WA","Washington");}
     if(!definition_kind.empty()) {
-        if(key=="regional_markets" || key=="resilience" || key=="civic" || key=="society") add("","Disabled");
+        if(key=="regional_markets" || key=="resilience" || key=="civic" || key=="society" || key=="authority") add("","Disabled");
         for(const auto& [id,d]:draft.collection().definitions) if(content::definition_kind(d)==definition_kind) add(id);
     }
     const auto* def=draft.collection().find(scenario);

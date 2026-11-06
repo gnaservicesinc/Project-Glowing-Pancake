@@ -150,7 +150,9 @@ ColumnLayout {
         Action {
             objectName: "publishResearchButton"
             text: qsTr("Publish completed research")
-            enabled: panel.editable && manager.plannedCompetition && (manager.researchTopics.selectedRow.fields || {}).completed === true && (manager.researchTopics.selectedRow.fields || {}).published !== true
+            enabled: panel.editable && (manager.plannedCompetition || campaign.institutions.available)
+                     && (manager.researchTopics.selectedRow.fields || {}).completed === true
+                     && (manager.researchTopics.selectedRow.fields || {}).published !== true
             onClicked: manager.publishResearch(manager.researchTopics.selectedId)
         }
         Action {

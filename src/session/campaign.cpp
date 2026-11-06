@@ -1,4 +1,5 @@
 #include <pgp/session/campaign.hpp>
+#include <pgp/runtime/authority.hpp>
 #include <algorithm>
 
 namespace pgp::session {
@@ -135,6 +136,7 @@ OperationResult Campaign::operate(
                 pause_notice="A funded agreement reached its deadline. Review the recorded outcome in Office → Rivals.";
     }
     if (core::required_governance_notice(after.world.simulation)) pause_notice="A corporate concern or outcome needs review in Office → Board and people. Its response deadline is saved.";
+    if (runtime::required_public_case(after.world)) pause_notice="An institutional notice needs review in Institutions. Its response deadline is saved.";
     return {std::move(outcome), {}, liquidity_halt || core::required_management_notice(after.world.simulation) ||
         core::required_site_alert(after.world.simulation) || core::required_governance_notice(after.world.simulation) || pause_notice.has_value(),std::move(pause_notice)};
 }
@@ -162,6 +164,7 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::CancelContract>(command.action) ||
         std::holds_alternative<core::BuyData>(command.action) ||
         std::holds_alternative<core::StartResearch>(command.action) ||
+        std::holds_alternative<core::PublishResearch>(command.action) ||
         std::holds_alternative<core::StartTraining>(command.action) ||
         std::holds_alternative<core::StartEvaluation>(command.action) ||
         std::holds_alternative<core::DeployModel>(command.action) ||
@@ -169,6 +172,13 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::SubmitPolicyEvidence>(command.action) ||
         std::holds_alternative<core::BuyMediaCampaign>(command.action) ||
         std::holds_alternative<core::EndorseForumStandard>(command.action) ||
+        std::holds_alternative<core::SubmitPublicTestimony>(command.action) ||
+        std::holds_alternative<core::MakePublicPromise>(command.action) ||
+        std::holds_alternative<core::RequestInstitutionalMandate>(command.action) ||
+        std::holds_alternative<core::NegotiatePublicCase>(command.action) ||
+        std::holds_alternative<core::NegotiateExecutiveDispute>(command.action) ||
+        std::holds_alternative<core::RelinquishInstitutionalMandate>(command.action) ||
+        std::holds_alternative<core::DirectRegionalProcurement>(command.action) ||
         std::holds_alternative<core::BuySiteProtection>(command.action) ||
         std::holds_alternative<core::InsureSite>(command.action) ||
         std::holds_alternative<core::ReplicateService>(command.action) ||

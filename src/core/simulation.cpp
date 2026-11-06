@@ -554,6 +554,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                         next.date, std::nullopt, "Serving support: " + action.project.id});
                 (void)receipt(next, "reserve_project");
             } else if constexpr (std::is_same_v<Action, CancelProject>) {
+                if(next.management && next.management->governance) for(const auto& dispute:next.management->governance->disputes)
+                    if(dispute.review_project==action.id && !dispute.resolved_on)
+                        refuse(CommandReason::dependent_commitment,"The negotiated executive response reserves this review team until the promise is resolved or its deadline passes.");
                 if (next.resilience) for (const auto& replica:next.resilience->replicas) if (!replica.stopped_on &&
                     (replica.sync_project==action.id || (next.market && std::any_of(next.market->products.begin(),next.market->products.end(),[&](const auto& product){
                         return product.id==replica.service_id && product.capacity_project_id==action.id;
@@ -710,7 +713,11 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             } else if constexpr (std::is_same_v<Action, SubmitPolicyEvidence>) {
                 submit_policy_evidence(next, action);
                 (void)receipt(next, "submit_policy_evidence");
-            } else if constexpr (std::is_same_v<Action, BuyMediaCampaign> || std::is_same_v<Action, EndorseForumStandard>) {
+            } else if constexpr (std::is_same_v<Action, BuyMediaCampaign> || std::is_same_v<Action, EndorseForumStandard> ||
+                std::is_same_v<Action, SubmitPublicTestimony> || std::is_same_v<Action, MakePublicPromise> ||
+                std::is_same_v<Action, RequestInstitutionalMandate> || std::is_same_v<Action, NegotiatePublicCase> ||
+                std::is_same_v<Action, NegotiateExecutiveDispute> || std::is_same_v<Action, AcknowledgePublicCase> ||
+                std::is_same_v<Action, RelinquishInstitutionalMandate> || std::is_same_v<Action, DirectRegionalProcurement>) {
                 refuse(CommandReason::invalid_argument,"Regional media and standards require the owning world transaction.");
             } else if constexpr (std::is_same_v<Action, TakeFinancing>) {
                 const auto before=next.cash;take_financing(next,action.id);(void)receipt(next,"take_financing",0,checked_unit_subtract(next.cash,before));

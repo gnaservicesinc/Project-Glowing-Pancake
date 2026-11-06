@@ -22,7 +22,7 @@ std::vector<std::string> roots(const DraftDocument& d,const Json& doc,std::strin
     const auto* s=def?std::get_if<content::ScenarioDefinition>(&def->data):nullptr;
     if(!s) throw std::invalid_argument("Select an existing scenario.");
     std::vector<std::string> result{definition_path(doc,scenario)};
-    for(const auto& id:{s->regional_markets,s->resilience,s->civic,s->society}) if(!id.empty()) result.push_back(definition_path(doc,id));
+    for(const auto& id:{s->regional_markets,s->resilience,s->civic,s->society,s->authority}) if(!id.empty()) result.push_back(definition_path(doc,id));
     return result;
 }
 std::vector<std::string> catalog_roots(const Json& doc,std::string_view scenario) {
@@ -40,8 +40,9 @@ bool fixed_array(std::string_view path) {
     return path.ends_with("/weights") || path.ends_with("/priorities") || path.find("/monthly_probability_bp")!=path.npos ||
         path.ends_with("/infrastructure/states") || path.ends_with("/catalog/exposures") ||
         path.ends_with("/catalog/constituencies") || path.ends_with("/catalog/blocs") ||
-        path.ends_with("/catalog/regions") || path.ends_with("/initial_components_bp") ||
+        path.ends_with("/catalog/regions") || path.ends_with("/catalog/offers") || path.ends_with("/initial_components_bp") ||
         path.ends_with("/catalog/public_services") || path.ends_with("/catalog/science") || path.ends_with("/catalog/industry") ||
+        path.ends_with("/identity_effects_bp") || path.find("/identity_effects_bp/")!=path.npos ||
         path.ends_with("/positions_bp") || path.ends_with("/preferences_bp") || path.ends_with("/senate_classes") ||
         (path.find("/definitions/market.")==0 && (path.ends_with("/regions") || path.ends_with("/products/offers") || path.ends_with("/products/segments")));
 }
@@ -122,6 +123,13 @@ void current(const DraftDocument& d,const DraftDocument* expected,std::uint64_t 
     if(&d!=expected || d.edit_revision()!=revision) throw std::invalid_argument("The document changed. Select the section again before applying these fields.");
 }
 std::string index_label(std::string_view path,std::size_t index,std::size_t count) {
+    if(count==7 && path.ends_with("/identity_effects_bp")) {
+        constexpr std::array<const char*,7> events{"Independent testimony","Fulfilled commitment","Broken commitment",
+            "Executive disclosure","Coercive application","Resistance disclosure","Revoked agreement"};
+        return events[index];
+    }
+    if(count==core::society_audiences && path.find("/identity_effects_bp/")!=path.npos)
+        return std::string(core::society_audience_name(index));
     if(path.ends_with("/monthly_probability_bp") && count==core::site_hazard_count)
         return label(std::string(core::hazard_key(static_cast<core::SiteHazard>(index))));
     if(path.ends_with("/scoring/weights")) {
@@ -296,7 +304,7 @@ std::string WorldForm::proposal(const DraftDocument& d,const std::map<std::strin
     }
     for(const auto& [key,value_text]:changes) if(key.starts_with("@enabled/") && value_text=="false") value.erase(key.substr(9));
     if(value.is_object() && value.contains("kind") && value.at("kind")=="scenario")
-        for(const auto* reference:{"regional_markets","resilience","civic","society"})
+        for(const auto* reference:{"regional_markets","resilience","civic","society","authority"})
             if(value.contains(reference) && value.at(reference)=="") value.erase(reference);
     return value.dump();
 }

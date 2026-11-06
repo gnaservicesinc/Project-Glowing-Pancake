@@ -183,3 +183,10 @@ target_include_directories(pgp-society-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR
 target_compile_definitions(pgp-society-test PRIVATE PGP_SOCIETY_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-society-test)
 add_test(NAME runtime.society COMMAND pgp-society-test)
+
+add_executable(pgp-authority-test authority_test.cpp)
+target_link_libraries(pgp-authority-test PRIVATE pgp::session)
+target_include_directories(pgp-authority-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-authority-test PRIVATE PGP_AUTHORITY_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-authority-test)
+add_test(NAME runtime.authority COMMAND pgp-authority-test)

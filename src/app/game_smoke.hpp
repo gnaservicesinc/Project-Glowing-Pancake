@@ -18,4 +18,4 @@ void schedule_infrastructure_smoke(QQuickWindow& window, pgp::bridge::CampaignCo
 void schedule_civic_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
     QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot);
 void schedule_society_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
-    QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot);
+    QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot, bool institutions = false);

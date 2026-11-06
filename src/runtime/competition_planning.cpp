@@ -1,5 +1,6 @@
 #include "competition_internal.hpp"
 #include <pgp/runtime/society.hpp>
+#include <pgp/runtime/authority.hpp>
 #include <algorithm>
 #include <set>
 #include <stdexcept>
@@ -300,7 +301,7 @@ void advance_planning(WorldState& world,const CompiledProgram& program,OrdinalDa
         AdvanceDay next;if (const auto it=assignments.find(rival.definition_id);it!=assignments.end()) {
             next.market_allocation=it->second;next.industry_adoptions=industry_adoption_snapshot(world,prior);
         }
-        next.market_influences=society_market_conditions(world,rival.simulation,prior);
+        next.market_influences=regional_market_conditions(world,rival.simulation,prior);
         advance(rival,std::move(next));
         if (rival.simulation.phase==DayPhase::closed) world.competition->notices.push_back({rival.definition_id,"closure",rival.simulation.date,std::nullopt});
     }
