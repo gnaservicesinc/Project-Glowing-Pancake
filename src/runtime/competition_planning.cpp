@@ -120,20 +120,23 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
     }
     const LabAllocation allocation{source,MilliCUPerDay{std::min(compute.value(),definition.training_rate.value())},std::min(staff,2U)};
     const bool can_work=staff>0 && compute.value()>0 && affordable(Cents{0});
-    if (std::none_of(lab.licenses.begin(),lab.licenses.end(),[&](const auto& row){return row.offer_id==definition.data_id;})) {
+    if (frontier_technology_block(s,FrontierTechnology::data,definition.data_id,s.date).empty() &&
+        std::none_of(lab.licenses.begin(),lab.licenses.end(),[&](const auto& row){return row.offer_id==definition.data_id;})) {
         const auto& data=find(lab.catalog.data,definition.data_id);
         if (affordable(data.price)) offer(0,"data",data.id,500,BuyData{data.id});
     }
     for (std::size_t i=0;i<profile.research.size();++i) {
         const auto& node=find(lab.catalog.research,profile.research[i]);
         const bool in_progress=std::any_of(lab.research.begin(),lab.research.end(),[&](const auto& run){return run.research_id==node.id && find(s.capacity->projects,run.project_id).status!=ProjectStatus::cancelled;});
-        if (can_work && !in_progress && requires_met(lab,node.all_of) && (node.any_of.empty() || std::any_of(node.any_of.begin(),node.any_of.end(),[&](const auto& id){return completed(lab,id);})) && affordable(node.cash))
+        if (can_work && !in_progress && frontier_technology_block(s,FrontierTechnology::research,node.id,s.date).empty() &&
+            requires_met(lab,node.all_of) && (node.any_of.empty() || std::any_of(node.any_of.begin(),node.any_of.end(),[&](const auto& id){return completed(lab,id);})) && affordable(node.cash))
             offer(1,"research",node.id,350-static_cast<std::int64_t>(i),StartResearch{node.id,allocation});
         if (profile.publish_results && completed(lab,node.id) && std::none_of(lab.publications.begin(),lab.publications.end(),[&](const auto& row){return row.research_id==node.id;}))
             offer(9,"publish",node.id,80,PublishResearch{node.id});
     }
     if (can_work && lab.models.size()<profile.recipes.size()) for (std::size_t i=0;i<profile.recipes.size();++i) {
         const auto& recipe=find(lab.catalog.recipes,profile.recipes[i]);
+        if (!frontier_technology_block(s,FrontierTechnology::recipe,recipe.id,s.date).empty()) continue;
         if (std::any_of(lab.models.begin(),lab.models.end(),[&](const auto& row){return row.recipe_id==recipe.id;})) continue;
         TrainingRequest request{"model."+recipe.id,recipe.id,"",{definition.data_id},source,allocation.daily_compute,allocation.staff,
             MilliCU{std::clamp(definition.training_work.value(),recipe.minimum_work.value(),recipe.maximum_work.value())}};
@@ -184,9 +187,59 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
     if (rival.parent_company.empty() && usable<protected_runway) for (const auto& financing:s.management->catalog.financing)
         if (std::none_of(s.management->financing.begin(),s.management->financing.end(),[&](const auto& row){return row.offer_id==financing.id;}))
             offer(7,"finance",financing.id,800,TakeFinancing{financing.id});
-    if (compute.value()<definition.training_rate.value()/2 && s.business_offers) for (const auto& growth:s.business_offers->catalog)
+    bool independent_supply_needed=false;
+    if (s.frontier && s.date>=s.frontier->catalog.branches_after) {
+        const auto& future=*s.frontier;
+        const auto independently_measured=[&](const DeploymentRecord& release) {
+            const auto& evidence=find(lab.evaluations,release.evidence_id);
+            return find(lab.catalog.evaluations,evidence.plan_id).independent;
+        };
+        for (std::size_t i=0; i<s.deployments->records.size(); ++i) {
+            const auto& release=s.deployments->records[i];
+            const auto& model=find(lab.models,release.model_id);
+            if (find(s.capacity->projects,release.project_id).status!=ProjectStatus::active ||
+                !independently_measured(release) || std::ranges::none_of(future.catalog.recipes,[&](const auto& row){return row.id==model.recipe_id;}) ||
+                std::ranges::any_of(future.systems,[&](const auto& system){return std::ranges::find(system.deployments,i+1)!=system.deployments.end();}))
+                continue;
+            offer(3,"frontier_system",release.service_id,510,RegisterFrontierSystem{"Frontier service assessment",{release.service_id}});
+        }
+        for (const auto& system:future.systems) {
+            const auto status=frontier_qualification(future,system.id);
+            const auto try_trial=[&](FrontierTrialKind kind,std::string_view protocol) {
+                if (!can_work) return;
+                for (const auto& supply:s.capacity->sources) {
+                    const auto rate=std::min(company_capacity(supply).value(),allocation.daily_compute.value());
+                    if (rate<=0) continue;
+                    StartFrontierTrial request{system.id,kind,std::string(protocol),{supply.id,MilliCUPerDay{rate},allocation.staff}};
+                    try {
+                        const auto quote=quote_frontier_trial(s,request,Cents{0});
+                        if (affordable(quote.fee)) {
+                            offer(3,"frontier_trial",std::string(protocol),520,std::move(request));
+                            return;
+                        }
+                    } catch (const std::invalid_argument&) {
+                        // A future window, unavailable supply or failed evidence
+                        // leaves the firm free to take another feasible action.
+                    }
+                }
+            };
+            if (status.assessments<3) {
+                for (const auto& panel:future.catalog.panels) try_trial(FrontierTrialKind::assessment,panel.id);
+            } else if (future.catalog.asi_route && !status.asi_on) {
+                for (const auto& experiment:future.catalog.experiments) {
+                    try_trial(FrontierTrialKind::experiment,experiment.id);
+                    try_trial(FrontierTrialKind::replication,experiment.id);
+                }
+                if (std::ranges::any_of(future.trials,[&](const auto& trial){
+                    return trial.system==system.id && trial.kind==FrontierTrialKind::experiment && trial.result && trial.result->valid;
+                }) && std::ranges::count_if(s.capacity->sources,[](const auto& supply){return company_capacity(supply).value()>0;})<2)
+                    independent_supply_needed=true;
+            }
+        }
+    }
+    if ((independent_supply_needed || compute.value()<definition.training_rate.value()/2) && s.business_offers) for (const auto& growth:s.business_offers->catalog)
         if (affordable(growth.setup_cost,growth.monthly_amount) && business_offer_eligible(*s.business_offers,growth,*s.accounts,*s.capacity,s.market,s.date,Cents{0}))
-            offer(8,"expand",growth.id,100,AcceptBusinessOffer{growth.id});
+            offer(8,"expand",growth.id,independent_supply_needed?540:100,AcceptBusinessOffer{growth.id});
     std::sort(result.begin(),result.end(),[](const auto& a,const auto& b){return std::tuple{-a.score,a.action,a.subject}<std::tuple{-b.score,b.action,b.subject};});
     return result;
 }
@@ -224,6 +277,8 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
     state.market->segments=content::scenario_market_setup(program.collection,authored).segments;
     for (auto& segment:state.market->segments) segment.preferences.clear();
     state.deployments=DeploymentState{content::scenario_services(program.collection,authored),{}};
+    if (world.simulation.frontier)
+        state.frontier=opening_frontier(world.simulation.frontier->catalog,world.simulation.frontier->seed);
     state.management=ManagementState{*authored.management,{},{},{},{},{},{}};state.management->catalog.setbacks.clear();
     state.management->catalog.governance.reset();
     state.management->catalog.scoring.founder="founder";

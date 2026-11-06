@@ -79,6 +79,8 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         world.simulation.management->governance=std::move(corporate);
     }
     if (scenario->service_catalog) world.simulation.deployments=core::DeploymentState{content::scenario_services(program.collection,*scenario),{}};
+    if (const auto* catalog=content::frontier_catalog(program.collection,*scenario))
+        world.simulation.frontier=core::opening_frontier(*catalog,scenario->seed);
     if (!scenario->business_offers.empty()) world.simulation.business_offers=core::BusinessOffersState{scenario->business_offers,{}};
     world.facts.at("company.has_compute_lease") = scenario->leased_capacity.value() > 0;
     if (const auto lease = scenario->monthly_commitments.find("compute_lease");

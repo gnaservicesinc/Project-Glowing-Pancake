@@ -8,4 +8,6 @@ Json society_json(const core::SocietyState& state) { return content::civic_codec
 core::SocietyState parse_society(const Json& value) { return content::civic_codec::decode<core::SocietyState>(value); }
 Json authority_json(const core::AuthorityState& value) {return content::civic_codec::encode(value);}
 core::AuthorityState parse_authority(const Json& value) {return content::civic_codec::decode<core::AuthorityState>(value);}
+Json frontier_json(const core::FrontierState& value) {return content::civic_codec::encode(value);}
+core::FrontierState parse_frontier(const Json& value) {return content::civic_codec::decode<core::FrontierState>(value);}
 }

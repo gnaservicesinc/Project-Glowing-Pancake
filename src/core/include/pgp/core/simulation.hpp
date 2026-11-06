@@ -14,6 +14,7 @@
 #include <pgp/core/civic.hpp>
 #include <pgp/core/society.hpp>
 #include <pgp/core/authority.hpp>
+#include <pgp/core/frontier.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
@@ -107,6 +108,7 @@ struct SimulationState {
     std::optional<InfrastructureState> infrastructure{};
     std::optional<ResilienceState> resilience{};
     std::optional<CivicState> civic{};
+    std::optional<FrontierState> frontier{};
     auto operator<=>(const SimulationState&) const = default;
 };
 
@@ -182,7 +184,8 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    BuySiteProtection,InsureSite,ReplicateService,StopServiceReplica,AcknowledgeSiteAlert,
                                    FundPolicyAdvocacy,SubmitPolicyEvidence,BuyMediaCampaign,EndorseForumStandard,
                                    SubmitPublicTestimony,MakePublicPromise,RequestInstitutionalMandate,NegotiatePublicCase,
-                                   NegotiateExecutiveDispute,AcknowledgePublicCase,RelinquishInstitutionalMandate,DirectRegionalProcurement>;
+                                   NegotiateExecutiveDispute,AcknowledgePublicCase,RelinquishInstitutionalMandate,DirectRegionalProcurement,
+                                   RegisterFrontierSystem,StartFrontierTrial,AuthorizeFrontierResearch,AuthorizeFrontierRefresh,CancelFrontierPolicy>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

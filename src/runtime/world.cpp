@@ -231,6 +231,13 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
         return value;
     }
     if (metadata.id == "company.cash_cents") return world.simulation.cash.value();
+    if (metadata.provider=="frontier") {
+        const auto& state=world.simulation;
+        if (!state.frontier) return false;
+        if (metadata.id=="company.frontier_era_today")
+            return state.date==std::max(state.frontier->catalog.branches_after,state.accounts->starts_on);
+        return core::earliest_frontier_qualification(*state.frontier,metadata.id=="company.game_asi_today")==state.date;
+    }
     if(metadata.provider=="authority") {
         const auto& a=world.authority;const auto day=world.simulation.date;
         if(metadata.id=="world.authority_population_coverage_bp" || metadata.id=="world.authority_output_coverage_bp") {
@@ -365,7 +372,8 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                                           bool validate_core_simulation) {
     const auto& world = checkpoint.world;
     const auto& state = checkpoint.runtime;
-    if ((world.simulation.civic || world.society || world.authority) && world.scenario_id.empty()) invalid("Institutions and regional society require an authored source scenario");
+    if ((world.simulation.civic || world.society || world.authority || world.simulation.frontier) && world.scenario_id.empty())
+        invalid("Institutions, society and frontier research require an authored source scenario");
     if (!world.scenario_id.empty()) {
         const auto* definition=program.collection.find(world.scenario_id);
         const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
@@ -390,6 +398,11 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             if(!world.authority || world.authority->prepared_on!=world.simulation.date ||
                 (validate_core_simulation && world.authority->catalog!=*authority)) invalid("Saved institutions differ from the authored scenario or prepared morning.");
         } else if(world.authority) invalid("This scenario did not authorize institutional authority.");
+        if (const auto* frontier=content::frontier_catalog(program.collection,*scenario)) {
+            if (!world.simulation.frontier || world.simulation.frontier->seed!=scenario->seed ||
+                (validate_core_simulation && world.simulation.frontier->catalog!=*frontier))
+                invalid("Saved frontier research differs from the authored scenario and seed.");
+        } else if (world.simulation.frontier) invalid("This scenario did not authorize frontier research.");
         if (world.simulation.infrastructure) {
             const auto& base=world.simulation.infrastructure->executive_base;
             if ((base=="US-CA"?"state.us_ca":base=="US-TX"?"state.us_tx":base=="US-WA"?"state.us_wa":"")!=world.state_id ||
@@ -487,7 +500,8 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     for (const auto& [id, value] : world.facts) {
         const auto* metadata = program.registry.fact(id);
         if (!metadata || metadata->default_value || id == "company.cash_cents" || metadata->provider=="slice" ||
-            metadata->provider=="civic" || metadata->provider=="society" || metadata->provider=="authority" || business_member_scope(metadata->scope))
+            metadata->provider=="civic" || metadata->provider=="society" || metadata->provider=="authority" ||
+            metadata->provider=="frontier" || business_member_scope(metadata->scope))
             invalid("Unknown or duplicated owning world fact");
         scalar_valid(value, *metadata);
     }

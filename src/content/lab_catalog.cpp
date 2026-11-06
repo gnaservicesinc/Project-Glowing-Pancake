@@ -85,9 +85,14 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
             boolean(row.at("commercial_use")), open_release});
     }
     for (const auto& row : doc.at("research")) {
-        fields(row, {"id", "all_of", "any_of", "cash_cents", "staff_days", "experiment_milli_CU"});
+        auto shape = row;
+        const auto repeats = row.contains("repeat_limit") ? integer(row.at("repeat_limit")) : 1;
+        if (repeats<1 || repeats>12) invalid("Research repetitions must be finite and within their bound");
+        shape.erase("repeat_limit");
+        fields(shape, {"id", "all_of", "any_of", "cash_cents", "staff_days", "experiment_milli_CU"});
         catalog.research.push_back({text(row.at("id")), ids(row.at("all_of")), ids(row.at("any_of")),
-            core::Cents{integer(row.at("cash_cents"))}, core::Days{integer(row.at("staff_days"))}, core::MilliCU{integer(row.at("experiment_milli_CU"))}});
+            core::Cents{integer(row.at("cash_cents"))}, core::Days{integer(row.at("staff_days"))},
+            core::MilliCU{integer(row.at("experiment_milli_CU"))},static_cast<std::uint32_t>(repeats)});
     }
     for (const auto& row : doc.at("recipes")) {
         fields(row, {"id", "name", "requires_research", "baseline_bp", "gain_bp", "ceiling_bp", "fit_bp", "data_scale", "compute_scale_milli_CU",
@@ -117,8 +122,11 @@ std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
             {"contamination_bp",row->contamination.value()},{"commercial_use",row->commercial_use}});
         if (row->open_weight_release) data.back()["open_weight_release"] = true;
     }
-    for (const auto* row : ordered(catalog.research)) research.push_back({{"id",row->id},{"all_of",row->all_of},{"any_of",row->any_of},
-        {"cash_cents",row->cash.value()},{"staff_days",row->staff_days.value()},{"experiment_milli_CU",row->experiment_work.value()}});
+    for (const auto* row : ordered(catalog.research)) {
+        research.push_back({{"id",row->id},{"all_of",row->all_of},{"any_of",row->any_of},
+            {"cash_cents",row->cash.value()},{"staff_days",row->staff_days.value()},{"experiment_milli_CU",row->experiment_work.value()}});
+        if (row->repeat_limit!=1) research.back()["repeat_limit"]=row->repeat_limit;
+    }
     for (const auto* row : ordered(catalog.recipes)) recipes.push_back({{"id",row->id},{"name",row->name},{"requires_research",row->requires_research},
         {"baseline_bp",profile_json(row->baseline)},{"gain_bp",profile_json(row->gain)},{"ceiling_bp",profile_json(row->ceiling)},{"fit_bp",profile_json(row->fit)},
         {"data_scale",{{"documents",row->data_scale[0]},{"scanned_tables",row->data_scale[1]}}},{"compute_scale_milli_CU",row->compute_scale.value()},
@@ -138,7 +146,7 @@ core::LabCatalog scenario_lab_catalog(const Collection& collection, const Scenar
         const auto* definition = collection.find(id);
         if (!definition || !std::holds_alternative<ResearchDefinition>(definition->data)) invalid("Scenario research reference is not a research node");
         const auto& node = std::get<ResearchDefinition>(definition->data);
-        result.research.push_back({id, node.all_of, node.any_of, node.cash, node.staff_days, node.work});
+        result.research.push_back({id, node.all_of, node.any_of, node.cash, node.staff_days, node.work, node.repeat_limit});
     }
     // Canonical order is also the saved catalog comparison order.
     result = load_lab_catalog(canonical_lab_catalog(result));

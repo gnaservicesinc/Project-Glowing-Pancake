@@ -565,6 +565,18 @@ void prepare(Checkpoint& checkpoint, const CompiledProgram& program, RuntimeResu
     core::Cents protected_cash{0};for (const auto& reservation:checkpoint.world.simulation.reservations) protected_cash=core::checked_unit_add(protected_cash,reservation.reserved);
     core::review_delegation(checkpoint.world.simulation,protected_cash);
 }
+bool review_frontier_world(Checkpoint& checkpoint) {
+    auto& world=checkpoint.world;
+    auto& state=world.simulation;
+    if (!state.frontier || checkpoint.runtime.prepared_day!=state.date || has_choice(checkpoint.runtime) ||
+        required_public_case(world)) return false;
+    core::Cents protected_cash{0};
+    for (const auto& reservation:state.reservations)
+        protected_cash=core::checked_unit_add(protected_cash,reservation.reserved);
+    return core::review_frontier_policies(state,protected_cash,[&](const auto& company,const auto& launch){
+        return society_launch_block(world.society?&*world.society:nullptr,company,launch,company.date);
+    });
+}
 template<class Function>
 RuntimeResult transaction(const CompiledProgram& program, Checkpoint& original, std::uint64_t expected, Function action) {
     RuntimeResult result;
@@ -655,6 +667,7 @@ RuntimeResult Runtime::prepare_opening(std::uint64_t expected_revision) {
         if (next.world.simulation.phase == core::DayPhase::finished || next.world.simulation.phase == core::DayPhase::closed)
             fail(RuntimeReason::campaign_finished, "The campaign is finished.");
         prepare(next, program_, result, steps, trace_mode_);
+        (void)review_frontier_world(next);
     });
 }
 RuntimeResult Runtime::choose(std::uint64_t expected_revision, std::uint64_t presentation_id, std::string_view choice_id) {
@@ -677,6 +690,7 @@ RuntimeResult Runtime::choose(std::uint64_t expected_revision, std::uint64_t pre
         active.current_node = selected->next;
         execute(next, active, program_, result, steps);
         prepare(next, program_, result, steps, trace_mode_);
+        (void)review_frontier_world(next);
     });
 }
 RuntimeResult Runtime::submit(const core::Command& command) {
@@ -779,7 +793,8 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             core::Cents protected_cash{0};for (const auto& reservation:next.world.simulation.reservations) protected_cash=core::checked_unit_add(protected_cash,reservation.reserved);
             core::review_delegation(next.world.simulation,protected_cash);
         }
-        core_already_validated = (!institutional_resources_changed && next.world.simulation.cash == cash_after_submit &&
+        const bool frontier_resources_changed=review_frontier_world(next);
+        core_already_validated = (!institutional_resources_changed && !frontier_resources_changed && next.world.simulation.cash == cash_after_submit &&
                                   next.world.simulation.phase == phase_after_submit &&
                                   next.world.simulation.phase != core::DayPhase::opening &&
                                   !std::holds_alternative<core::VoteBoardMotion>(command.action));

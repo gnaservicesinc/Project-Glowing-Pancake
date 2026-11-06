@@ -860,7 +860,7 @@ RegionalMarkets parse_regional_markets(const Json& value, const std::string& pat
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society", "authority"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society", "authority", "frontier"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -979,6 +979,12 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
             fail("authority",path,"Institutional authority needs regional society, company management and actual infrastructure.");
         result.authority=id(value.at("authority"),path);
     }
+    if (value.contains("frontier")) {
+        if (!result.lab || !result.service_catalog || !result.market || !result.management || !result.infrastructure ||
+            (!result.rivals.empty() && !result.competition))
+            fail("frontier",path,"Frontier scenarios need qualified services, Lab, owned infrastructure, and planned rivals when rivals are present.");
+        result.frontier = id(value.at("frontier"),path);
+    }
     if (value.contains("business_plan")) {
         const auto plan_path = child(path,"business_plan");
         const auto& plan = value.at("business_plan");
@@ -1029,7 +1035,7 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
     return result;
 }
 ResearchDefinition research(const Json& value, const std::string& path) {
-    fields(value, path, {"id", "kind", "revision", "prerequisites", "cash_cents", "staff_days", "work_milli_CU"},
+    fields(value, path, {"id", "kind", "revision", "prerequisites", "cash_cents", "staff_days", "work_milli_CU", "repeat_limit"},
            {"id", "kind", "revision", "prerequisites", "cash_cents", "staff_days", "work_milli_CU"});
     const auto& prerequisites = value.at("prerequisites");
     fields(prerequisites, child(path, "prerequisites"), {"all_of", "any_of"}, {"all_of", "any_of"});
@@ -1037,7 +1043,8 @@ ResearchDefinition research(const Json& value, const std::string& path) {
             identifiers(prerequisites.at("any_of"), child(path, "prerequisites/any_of")),
             pgp::core::Cents{integer(value.at("cash_cents"), child(path, "cash_cents"))},
             pgp::core::Days{integer(value.at("staff_days"), child(path, "staff_days"))},
-            pgp::core::MilliCU{integer(value.at("work_milli_CU"), child(path, "work_milli_CU"))}};
+            pgp::core::MilliCU{integer(value.at("work_milli_CU"), child(path, "work_milli_CU"))},
+            value.contains("repeat_limit") ? positive(value.at("repeat_limit"),child(path,"repeat_limit"),12) : 1};
 }
 
 void validate_references(const Collection& collection, const Registry& registry) {
@@ -1106,6 +1113,16 @@ void validate_references(const Collection& collection, const Registry& registry)
                 try {
                     const auto catalog=scenario_lab_catalog(collection, *scenario_definition);
                     const auto services = scenario_services(collection, *scenario_definition);
+                    if (!scenario_definition->frontier.empty()) {
+                        (void)reference(scenario_definition->frontier,"frontier_research",path);
+                        const auto& future = *frontier_catalog(collection,*scenario_definition);
+                        const auto start = std::max(scenario_definition->starts_on,future.branches_after);
+                        if (core::advance_days(start,core::Days{future.asi_route?365:120})>=scenario_definition->ends_before)
+                            fail("frontier",path,"The scenario must leave time for actual independent assessment and replication windows.");
+                        std::vector<std::string> hardware;
+                        for (const auto& row : scenario_definition->infrastructure->hardware) hardware.push_back(row.id);
+                        core::validate_frontier_links(future,catalog,hardware);
+                    }
                     for (const auto& service : services) {
                         for (const auto& required : service.required_research)
                             if (std::none_of(catalog.research.begin(), catalog.research.end(), [&](const auto& row) { return row.id==required; }))
@@ -1294,6 +1311,7 @@ std::string_view definition_kind(const Definition& definition) {
     if (std::holds_alternative<core::CivicCatalog>(definition.data)) return "us_civic";
     if (std::holds_alternative<core::SocietyCatalog>(definition.data)) return "regional_society";
     if (std::holds_alternative<core::AuthorityCatalog>(definition.data)) return "institutional_authority";
+    if (std::holds_alternative<core::FrontierCatalog>(definition.data)) return "frontier_research";
     return "deal";
 }
 bool is_incident_stream(core::RandomStream stream) noexcept {
@@ -1345,7 +1363,7 @@ Registry registry_with_variables(const Registry& registry, const std::vector<Fac
     return result;
 }
 Collection load_collection(std::string_view document, const Registry& registry) {
-    if (document.size() > maximum_document_bytes) fail("budget", "/", "Content document exceeds one MiB");
+    if (document.size() > maximum_document_bytes) fail("budget", "/", "Content document exceeds two MiB");
     std::vector<std::set<std::string>> keys;
     std::size_t tokens = 0;
     auto callback = [&](int depth, Json::parse_event_t event, Json& parsed) {
@@ -1446,6 +1464,11 @@ Collection load_collection(std::string_view document, const Registry& registry) 
                 fields(value,path,{"id","kind","revision","catalog"},{"id","kind","revision","catalog"});
                 try {return load_authority_catalog(value.at("catalog").dump());}
                 catch(const std::exception& error) {fail("authority",path,error.what());}
+            }
+            if (kind=="frontier_research") {
+                fields(value,path,{"id","kind","revision","catalog"},{"id","kind","revision","catalog"});
+                try { return load_frontier_catalog(value.at("catalog").dump()); }
+                catch (const std::exception& error) { fail("frontier",path,error.what()); }
             }
             if (kind == "deal") {
                 fields(value, path, {"id", "kind", "revision", "minimum_payment_cents", "minimum_duration_days"},

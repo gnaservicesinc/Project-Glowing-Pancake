@@ -11,6 +11,7 @@
 #include <pgp/content/civic_catalog.hpp>
 #include <pgp/content/society_catalog.hpp>
 #include <pgp/content/authority_catalog.hpp>
+#include <pgp/content/frontier_catalog.hpp>
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
@@ -20,7 +21,7 @@
 namespace pgp::content {
 
 inline constexpr std::uint32_t content_schema = 1;
-inline constexpr std::size_t maximum_document_bytes = 1'048'576;
+inline constexpr std::size_t maximum_document_bytes = 2'097'152;
 
 class ValidationError : public std::runtime_error {
 public:
@@ -165,6 +166,7 @@ struct ScenarioDefinition {
     std::string civic{};
     std::string society{};
     std::string authority{};
+    std::string frontier{};
 };
 struct ResearchDefinition {
     std::vector<std::string> all_of;
@@ -172,10 +174,11 @@ struct ResearchDefinition {
     pgp::core::Cents cash;
     pgp::core::Days staff_days;
     pgp::core::MilliCU work;
+    std::uint32_t repeat_limit = 1;
 };
 struct DealDefinition { pgp::core::Cents minimum_payment; pgp::core::Days minimum_duration; };
 using DefinitionData = std::variant<ScenarioDefinition, ResearchDefinition, FlowDefinition, DealDefinition,
-    RegionalMarkets, core::ResilienceCatalog, core::CivicCatalog, core::SocietyCatalog, core::AuthorityCatalog>;
+    RegionalMarkets, core::ResilienceCatalog, core::CivicCatalog, core::SocietyCatalog, core::AuthorityCatalog, core::FrontierCatalog>;
 struct Definition {
     std::string id;
     std::uint32_t revision;
@@ -207,6 +210,7 @@ struct Collection {
 [[nodiscard]] const core::CivicCatalog* civic_catalog(const Collection&, const ScenarioDefinition&);
 [[nodiscard]] const core::SocietyCatalog* society_catalog(const Collection&, const ScenarioDefinition&);
 [[nodiscard]] const core::AuthorityCatalog* authority_catalog(const Collection&,const ScenarioDefinition&);
+[[nodiscard]] const core::FrontierCatalog* frontier_catalog(const Collection&,const ScenarioDefinition&);
 [[nodiscard]] MarketSetup scenario_market_setup(const Collection& collection, const ScenarioDefinition& scenario);
 [[nodiscard]] std::vector<core::ServiceDefinition> scenario_services(const Collection& collection, const ScenarioDefinition& scenario);
 

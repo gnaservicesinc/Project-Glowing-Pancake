@@ -165,6 +165,10 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::BuyData>(command.action) ||
         std::holds_alternative<core::StartResearch>(command.action) ||
         std::holds_alternative<core::PublishResearch>(command.action) ||
+        std::holds_alternative<core::StartFrontierTrial>(command.action) ||
+        std::holds_alternative<core::AuthorizeFrontierResearch>(command.action) ||
+        std::holds_alternative<core::AuthorizeFrontierRefresh>(command.action) ||
+        std::holds_alternative<core::CancelFrontierPolicy>(command.action) ||
         std::holds_alternative<core::StartTraining>(command.action) ||
         std::holds_alternative<core::StartEvaluation>(command.action) ||
         std::holds_alternative<core::DeployModel>(command.action) ||

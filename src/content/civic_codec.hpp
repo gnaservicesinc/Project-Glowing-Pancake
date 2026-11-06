@@ -3,6 +3,7 @@
 #include <pgp/core/civic.hpp>
 #include "society_codec.hpp"
 #include "authority_codec.hpp"
+#include "frontier_codec.hpp"
 #include <nlohmann/json.hpp>
 #include <limits>
 #include <stdexcept>
@@ -54,11 +55,21 @@ template<class T, class Field> void fields(T& row, Field field) {
         field("influence_bp", row.influence);
     } else if constexpr (std::is_same_v<Type, core::CivicDecision>) {
         field("stage", row.stage); field("day", row.day); field("yes", row.yes); field("seats", row.seats); field("passed", row.passed);
-    } else {society_codec::fields(row,field);authority_codec::fields(row,field);}
+    } else {
+        society_codec::fields(row,field);
+        authority_codec::fields(row,field);
+        frontier_codec::fields(row,field);
+    }
 }
 template<class T> constexpr std::size_t maximum_rows() {
     if constexpr (std::is_same_v<T,core::SocietyMonth>) return core::society_month_limit;
     else if constexpr (std::is_same_v<T,core::AuthorityMonth>) return core::society_month_limit;
+    else if constexpr (std::is_same_v<T,core::FrontierTrial>) return core::frontier_trial_limit;
+    else if constexpr (std::is_same_v<T,core::FrontierSystem>) return core::frontier_system_limit;
+    else if constexpr (std::is_same_v<T,core::FrontierGate>) return 64;
+    else if constexpr (std::is_same_v<T,core::FrontierResearchProgram> || std::is_same_v<T,core::FrontierRefreshProgram>) return core::frontier_policy_limit;
+    else if constexpr (std::is_same_v<T,core::FrontierResearchDecision> || std::is_same_v<T,core::FrontierRefreshRun>) return core::frontier_policy_run_limit;
+    else if constexpr (std::is_same_v<T,std::string>) return 64;
     else if constexpr (std::is_same_v<T,core::AuthorityMandate> || std::is_same_v<T,core::PublicTestimony> ||
         std::is_same_v<T,core::PublicPromise> || std::is_same_v<T,core::ExecutiveNegotiation>) return core::authority_record_limit;
     else if constexpr (std::is_same_v<T,core::PublicCase>) return core::authority_case_limit;
@@ -84,6 +95,11 @@ template<class T> T decode(const Json& value) {
         const auto name=decode<std::string>(value);
         constexpr auto count=std::is_same_v<T,core::AuthorityKind>?4U:std::is_same_v<T,core::PublicPromiseKind>?2U:3U;
         for(std::size_t i=0;i<count;++i) if(core::authority_key(static_cast<T>(i))==name) return static_cast<T>(i);
+        invalid();
+    } else if constexpr (frontier_codec::enum_count<T> != 0) {
+        const auto name = decode<std::string>(value);
+        for (std::size_t i=0; i<frontier_codec::enum_count<T>; ++i)
+            if (core::frontier_key(static_cast<T>(i))==name) return static_cast<T>(i);
         invalid();
     } else if constexpr (std::is_enum_v<T>) {
         const auto name = decode<std::string>(value);
@@ -132,6 +148,7 @@ template<class T> Json encode(const T& value) {
     if constexpr (std::is_same_v<T, std::string> || std::is_integral_v<T>) return value;
     else if constexpr (std::is_same_v<T, core::ProductChannel>) return core::channel_key(value);
     else if constexpr (authority_codec::is_enum<T>) return core::authority_key(value);
+    else if constexpr (frontier_codec::enum_count<T> != 0) return core::frontier_key(value);
     else if constexpr (std::is_enum_v<T>) return core::civic_key(value);
     else if constexpr (Optional<T>::value) return value ? encode(*value) : Json(nullptr);
     else if constexpr (requires { value.value(); }) return value.value();

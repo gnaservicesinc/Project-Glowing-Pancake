@@ -54,6 +54,7 @@ void resources(const WorldState& world,const CompiledProgram& program,const Riva
     for (const auto& row:state.lab->models) if (!row.project_id.empty()) projects.insert(row.project_id);
     for (const auto& row:state.lab->evaluations) projects.insert(row.project_id);
     for (const auto& row:state.deployments->records) projects.insert(row.project_id);
+    if (state.frontier) for (const auto& row:state.frontier->trials) projects.insert(row.project);
     if (state.capacity->projects.size()!=projects.size()) invalid("Rival work is not owned by actual research, training, evaluation or qualified serving");
     for (const auto& project:state.capacity->projects) if (!projects.contains(project.id)) invalid("Rival has an unowned work project");
     for (const auto& change:state.market->demand_changes) {
@@ -102,6 +103,10 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
             (simulation.date!=world.simulation.date && simulation.phase!=DayPhase::closed) ||
             plan.next_review!=advance_days(rival.response?rival.response->ready_on.value_or(entry):entry,Days{static_cast<std::int64_t>(plan.decisions.size())*7})) invalid("Rival entry, resource ownership or weekly/daily cursor is invalid");
         if (simulation.lab->research_stream_origin!=RandomStreams{rival_seed(world,authored)}.snapshot()[static_cast<std::size_t>(RandomStream::research)]) invalid("Rival research stream origin differs from its private seed");
+        if (simulation.frontier.has_value()!=world.simulation.frontier.has_value() ||
+            (simulation.frontier && (simulation.frontier->seed!=world.simulation.frontier->seed ||
+                (deep && simulation.frontier->catalog!=world.simulation.frontier->catalog))))
+            invalid("Rival frontier work differs from the shared future conditions and scenario.");
         if (simulation.lab->models.size()>authored.planning->recipes.size()) invalid("Rival trained outside its bounded strategy portfolio");
         for (const auto& insight:simulation.lab->insights) validate_public_insight(world,insight);
         if (!deep) continue;
@@ -109,7 +114,7 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
         std::uint64_t stream=RandomStreams{rival_seed(world,authored)}.snapshot()[static_cast<std::size_t>(RandomStream::rivals)];
         for (std::size_t i=0;i<plan.decisions.size();++i) {
             const auto& decision=plan.decisions[i];SplitMix64 next{stream};const auto draw=next.next();
-            const std::set<std::string> actions{"wait","data","research","train","evaluate","deploy","price","hire","repay","finance","expand","publish"};
+            const std::set<std::string> actions{"wait","data","research","train","evaluate","deploy","price","hire","repay","finance","expand","publish","frontier_system","frontier_trial"};
             if (decision.day!=advance_days(rival.response?rival.response->ready_on.value_or(entry):entry,Days{static_cast<std::int64_t>(i)*7}) || decision.day>simulation.date || decision.stream_before!=stream || decision.stream_after!=next.state() ||
                 !actions.contains(decision.action) || decision.explanation.empty() || decision.explanation.size()>1024 || decision.subject.size()>256 ||
                 decision.observation!=public_observation(world,decision.day,draw))

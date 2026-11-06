@@ -74,6 +74,7 @@ int main(int argc, char* argv[]) {
             persistence::save_identity(program).content_hash!=core::build_identity().runtime_content_hash)
             throw std::runtime_error("Bundled content differs from its finalized build manifest. Rebuild from a consistent snapshot.");
         std::string scenario_id=parser.value(QStringLiteral("scenario")).toStdString();
+        if (scenario_id.empty() && program.collection.find("scenario.first_playable")) scenario_id="scenario.first_playable";
         if (scenario_id.empty()) for (const auto& [id,definition]:program.collection.definitions)
             if (std::holds_alternative<content::ScenarioDefinition>(definition.data)) { scenario_id=id;break; }
         auto initial = runtime::begin_scenario(program,scenario_id,parser.value(QStringLiteral("headquarters")).toStdString());

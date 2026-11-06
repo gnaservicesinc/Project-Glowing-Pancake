@@ -165,6 +165,12 @@ ApplicationWindow {
                         onClicked: window.room = "institutions"
                     }
                     Action {
+                        objectName: "frontierTab"; text: qsTr("Frontier")
+                        visible: !campaign.welcome && campaign.frontier.available
+                        checked: window.room === "frontier"
+                        onClicked: window.room = "frontier"
+                    }
+                    Action {
                         objectName: "pauseButton"
                         text: campaign.paused ? qsTr("Play") : qsTr("Pause")
                         enabled: !campaign.busy && (!campaign.paused || campaign.canPlay)
@@ -463,8 +469,12 @@ ApplicationWindow {
                     visible: !campaign.welcome && campaign.institutions.available && window.room === "institutions"
                     contentItem: InstitutionsPanel { id: institutionsPanel; textSize: window.textSize }
                 }
+                Panel {
+                    visible: !campaign.welcome && campaign.frontier.available && window.room === "frontier"
+                    contentItem: FrontierPanel { textSize: window.textSize }
+                }
                 GridLayout {
-                    visible: !campaign.welcome && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && window.room !== "institutions" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
+                    visible: !campaign.welcome && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && window.room !== "institutions" && window.room !== "frontier" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
                     Layout.fillWidth: true
                     columns: window.narrow || campaign.compactManagement ? 1 : 2
                     columnSpacing: 10

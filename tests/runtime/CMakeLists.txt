@@ -190,3 +190,10 @@ target_include_directories(pgp-authority-test SYSTEM PRIVATE "${PROJECT_SOURCE_D
 target_compile_definitions(pgp-authority-test PRIVATE PGP_AUTHORITY_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-authority-test)
 add_test(NAME runtime.authority COMMAND pgp-authority-test)
+
+add_executable(pgp-frontier-test frontier_test.cpp)
+target_link_libraries(pgp-frontier-test PRIVATE pgp::session)
+target_include_directories(pgp-frontier-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-frontier-test PRIVATE PGP_FRONTIER_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/m7-01-frontier.json")
+pgp_project_target(pgp-frontier-test)
+add_test(NAME runtime.frontier COMMAND pgp-frontier-test)

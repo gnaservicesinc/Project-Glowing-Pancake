@@ -179,6 +179,7 @@ void validate(const SimulationState& state,bool deep=true) {
         if (!state.lab || !state.market || !state.capacity) invalid("Deployments require lab, market and capacity");
         if (deep) validate_deployments(*state.deployments,*state.lab,*state.capacity,*state.market);
     }
+    validate_frontier(state,deep);
     if (state.business_offers) {
         if (!state.accounts || !state.capacity) invalid("Business offers require accounts and capacity");
         validate_business_offers(*state.business_offers,*state.accounts,*state.capacity,state.market,false);
@@ -377,6 +378,10 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
         ++next.revision;
         std::optional<std::uint64_t> new_reservation;
         const auto command_receipt = next.next_receipt_id;
+        const auto require_technology = [&](FrontierTechnology kind,std::string_view id) {
+            if (auto blocked=frontier_technology_block(next,kind,id,next.date); !blocked.empty())
+                refuse(CommandReason::dependent_commitment,std::move(blocked));
+        };
         std::visit([&](const auto& action) {
             using Action = std::decay_t<decltype(action)>;
             if constexpr (!std::is_same_v<Action, ResolveOpeningChoice> &&
@@ -465,6 +470,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 }
                 (void)receipt(next, "advance_day", 0, checked_unit_subtract(next.cash, cash_before));
                 next.date = advance_days(next.date, Days{1});
+                prepare_frontier(next);
                 sample_site_hazards(next);
                 prepare_governance(next);
                 prepare_management(next);
@@ -542,6 +548,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 next.cash = accounts_report(*next.accounts).cash;
                 (void)receipt(next, "invest_equity", 0, checked_unit_subtract(next.cash, before));
             } else if constexpr (std::is_same_v<Action, ReserveProject>) {
+                if (action.project.id.starts_with("frontier.trial/"))
+                    refuse(CommandReason::dependent_commitment,"Commission independent work through its frontier protocol.");
                 if (action.project.customer_inference)
                     refuse(CommandReason::invalid_argument, "Customer hardware is assigned by a qualified local deployment.");
                 if (next.lab && action.project.id.starts_with("lab/"))
@@ -602,6 +610,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             } else if constexpr (std::is_same_v<Action, BuildOwnedSite>) {
                 const auto before=next.cash;build_owned_site(next,action,reserved_cash(next));(void)receipt(next,"build_owned_site",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, OrderOwnedHardware>) {
+                require_technology(FrontierTechnology::hardware,action.family_id);
                 const auto before=next.cash;order_owned_hardware(next,action,reserved_cash(next));(void)receipt(next,"order_owned_hardware",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, HireSiteOperators>) {
                 const auto before=next.cash;hire_site_operators(next,action,reserved_cash(next));(void)receipt(next,"hire_site_operators",0,checked_unit_subtract(next.cash,before));
@@ -670,11 +679,13 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 acknowledge_liquidity_warning(*next.liquidity,action.id);
                 (void)receipt(next,"acknowledge_liquidity_warning");
             } else if constexpr (std::is_same_v<Action, BuyData>) {
+                require_technology(FrontierTechnology::data,action.offer_id);
                 const auto before = next.cash;
                 buy_data(lab(next), accounts(next), next.date, action.offer_id, reserved_cash(next));
                 next.cash = accounts_report(*next.accounts).cash;
                 (void)receipt(next, "buy_data", 0, checked_unit_subtract(next.cash, before));
             } else if constexpr (std::is_same_v<Action, StartResearch>) {
+                require_technology(FrontierTechnology::research,action.research_id);
                 const auto before = next.cash;
                 start_research(lab(next), accounts(next), capacity(next), next.date, action.research_id, action.allocation, reserved_cash(next));
                 next.cash = accounts_report(*next.accounts).cash;
@@ -686,17 +697,40 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 acquire_research_insight(lab(next),next.date,action.insight);
                 (void)receipt(next,"acquire_public_research");
             } else if constexpr (std::is_same_v<Action, StartTraining>) {
+                if (action.request.model_id.starts_with(frontier_refresh_prefix))
+                    refuse(CommandReason::dependent_commitment,"Automated candidate identities belong to their authorized refresh.");
+                require_technology(FrontierTechnology::recipe,action.request.recipe_id);
                 start_training(lab(next), capacity(next), next.date, action.request);
                 (void)receipt(next, "start_training");
             } else if constexpr (std::is_same_v<Action, CloneModel>) {
+                if (action.id.starts_with(frontier_refresh_prefix))
+                    refuse(CommandReason::dependent_commitment,"Automated candidate identities belong to their authorized refresh.");
                 clone_model(lab(next), capacity(next), next.date, action.source_id, action.id);
                 (void)receipt(next, "clone_checkpoint");
             } else if constexpr (std::is_same_v<Action, StartEvaluation>) {
+                if (action.id.starts_with(frontier_refresh_prefix))
+                    refuse(CommandReason::dependent_commitment,"Automated evidence identities belong to their authorized refresh.");
                 const auto before = next.cash;
                 start_evaluation(lab(next), accounts(next), capacity(next), next.date,
                     action.id, action.model_id, action.plan_id, action.allocation, reserved_cash(next));
                 next.cash = accounts_report(*next.accounts).cash;
                 (void)receipt(next, "start_evaluation", 0, checked_unit_subtract(next.cash, before));
+            } else if constexpr (std::is_same_v<Action, RegisterFrontierSystem>) {
+                register_frontier_system(next,action);
+                (void)receipt(next,"register_frontier_system");
+            } else if constexpr (std::is_same_v<Action, StartFrontierTrial>) {
+                const auto before=next.cash;
+                start_frontier_trial(next,action,reserved_cash(next));
+                (void)receipt(next,"commission_frontier_trial",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, AuthorizeFrontierResearch>) {
+                authorize_frontier_research(next,action.plan);
+                (void)receipt(next,"authorize_frontier_research");
+            } else if constexpr (std::is_same_v<Action, AuthorizeFrontierRefresh>) {
+                authorize_frontier_refresh(next,action.plan);
+                (void)receipt(next,"authorize_frontier_refresh");
+            } else if constexpr (std::is_same_v<Action, CancelFrontierPolicy>) {
+                cancel_frontier_policy(next,action);
+                (void)receipt(next,"cancel_frontier_policy");
             } else if constexpr (std::is_same_v<Action, DeployModel>) {
                 if (next.resilience && std::any_of(next.resilience->replicas.begin(),next.resilience->replicas.end(),[&](const auto& row){
                     return row.service_id==action.service_id && !row.stopped_on;

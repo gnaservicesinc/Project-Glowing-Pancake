@@ -1,4 +1,5 @@
 #include "management_controller.hpp"
+#include "lab_inputs.hpp"
 #include "flow_presentation.hpp"
 #include "heavyweight_presentation.hpp"
 #include "governance_presentation.hpp"
@@ -80,24 +81,7 @@ std::vector<CampaignRow> regional_rows(const runtime::WorldState& world,const co
     }
     return rows;
 }
-std::int64_t integer(QString input,std::int64_t maximum) {
-    static const QRegularExpression pattern{QStringLiteral("^[0-9]{1,12}$")};
-    if (!pattern.match(input).hasMatch()) throw std::invalid_argument("Enter a positive whole number");
-    bool ok=false; const auto value=input.toLongLong(&ok);
-    if (!ok || value<=0 || value>maximum) throw std::invalid_argument("The entered amount exceeds its allowed range");
-    return value;
-}
-std::int64_t compute(QString input) {
-    static const QRegularExpression pattern{QStringLiteral("^([0-9]{1,9})(?:\\.([0-9]{1,3}))?$")};
-    const auto match=pattern.match(input);
-    if (!match.hasMatch()) throw std::invalid_argument("Compute uses CU with at most three decimal places");
-    const auto value=match.captured(1).toLongLong()*1000+match.captured(2).leftJustified(3,QLatin1Char('0')).toLongLong();
-    if (value<=0) throw std::invalid_argument("Compute must be positive");
-    return value;
-}
-core::LabAllocation allocation(QString source,QString rate,QString staff) {
-    return {source.toStdString(),core::MilliCUPerDay{compute(rate)},static_cast<std::uint32_t>(integer(staff,1'000'000))};
-}
+using namespace lab_inputs;
 core::TrainingRequest request(QString id,QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent) {
     core::TrainingRequest result; result.model_id=id.toStdString(); result.recipe_id=recipe.toStdString();
     result.parent_id=parent.toStdString(); result.source_id=source.toStdString();
@@ -501,13 +485,6 @@ void ManagementController::repayDebt(QString id) {
 }
 
 namespace pgp::bridge {
-namespace {
-core::Cents policy_money(const QString& input) {
-    static const QRegularExpression pattern{QStringLiteral("^([0-9]{1,10})(?:\\.([0-9]{1,2}))?$")};
-    const auto match=pattern.match(input);if (!match.hasMatch()) throw std::invalid_argument("Enter dollars with at most two decimal places");
-    return core::Cents{match.captured(1).toLongLong()*100+match.captured(2).leftJustified(2,QLatin1Char('0')).toLongLong()};
-}
-}
 void ManagementController::takeFinancing(QString id) {if (editable()) emit actionRequested(core::TakeFinancing{id.toStdString()});}
 void ManagementController::hireSpecialist(QString id) {if (editable()) emit actionRequested(core::HireSpecialist{id.toStdString()});}
 void ManagementController::authorizeEvaluation(QString model,QString plan,QString source,QString rate,QString staff,QString budget,QString reserve,QString interval,QString runs) {

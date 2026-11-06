@@ -33,6 +33,7 @@ struct LabResearch {
     Cents cash{0};
     Days staff_days{0};
     MilliCU experiment_work{0};
+    std::uint32_t repeat_limit = 1;
     auto operator<=>(const LabResearch&) const = default;
 };
 struct TrainingRecipe {

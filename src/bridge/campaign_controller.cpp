@@ -116,6 +116,7 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
     persistence::LocalPaths paths,persistence::Settings initial_settings,QObject* parent,bool welcome)
     : QObject(parent),program_(program),management_(new ManagementController(this)),infrastructure_(new InfrastructureController(this)),
       civic_(new CivicController(this)),society_(new SocietyController(this)),institutions_(new InstitutionsController(this)),
+      frontier_(new FrontierController(this)),
       welcome_(welcome),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
       save_folder_(QUrl::fromLocalFile(QString::fromStdU16String(paths.saves_directory.u16string()))) {
     connect(management_,&ManagementController::actionRequested,this,&CampaignController::submit);
@@ -127,6 +128,8 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
     connect(society_, &SocietyController::noticeRaised, this, &CampaignController::setNotice);
     connect(institutions_, &InstitutionsController::actionRequested, this, &CampaignController::submit);
     connect(institutions_, &InstitutionsController::noticeRaised, this, &CampaignController::setNotice);
+    connect(frontier_, &FrontierController::actionRequested, this, &CampaignController::submit);
+    connect(frontier_, &FrontierController::noticeRaised, this, &CampaignController::setNotice);
     connect(management_,&ManagementController::competitiveResponseRequested,this,[this](QString id,bool accept) {
         if (!paused() || !beginOperation()) return;
         const auto revision=snapshot_->checkpoint.world.simulation.revision;
@@ -188,6 +191,7 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     civic_->update(snapshot, replace);
     society_->update(snapshot, replace);
     institutions_->update(snapshot, replace);
+    frontier_->update(snapshot, replace);
     auto inbox = inbox_rows(snapshot->checkpoint,program_.collection,*management_);
     if (!first && replace) welcome_=false;
     if (replace) { projects_->beginCampaign(std::move(projects)); inbox_->beginCampaign(std::move(inbox)); }
@@ -222,6 +226,11 @@ QVariantList CampaignController::scenarios() const {
             std::uint64_t demand=0;for (const auto& segment:scenario->market->segments) demand+=segment.daily_tasks;
             detail=QStringLiteral("Up to three US and three international startups enter initially; later startups enter on the authored schedule. Rivals pay for work and use public information. Shared demand is %1 tasks/day. %2")
                 .arg(demand).arg(setup.catchup_cash.value()>0?QStringLiteral("Each rival may take one disclosed %1 equity round for %2.%3% ownership; no recurring catch-up subsidy.").arg(money(setup.catchup_cash)).arg(setup.catchup_acquired.value()/100).arg(setup.catchup_acquired.value()%100,2,10,QLatin1Char('0')):QStringLiteral("No catch-up funding is available."));
+        }
+        if (const auto* frontier=content::frontier_catalog(program_.collection,*scenario)) {
+            label=text(frontier->name);
+            detail=text(frontier->assumptions)+QStringLiteral(" Campaign dates %1 through %2.")
+                .arg(text(core::iso_date(scenario->starts_on)),text(core::iso_date(core::OrdinalDay{scenario->ends_before.value()-1})));
         }
         result.push_back(QVariantMap{{QStringLiteral("id"),text(id)},{QStringLiteral("label"),label},{QStringLiteral("detail"),detail}});
     }

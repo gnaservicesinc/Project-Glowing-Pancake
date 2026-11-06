@@ -53,6 +53,8 @@ std::string reference_family(std::string_view key,std::string_view path,std::str
     if(key=="civic") return "us_civic";
     if(key=="society") return "regional_society";
     if(key=="authority") return "institutional_authority";
+    if(key=="frontier") return "frontier_research";
+    if(kind=="frontier_research" && (key=="refresh_research" || key=="research")) return "research";
     if(array=="flows") return "flow";
     if(array=="research" || array=="requires_research" || array=="all_of" || array=="any_of" || key=="publication_node" || key=="publication_research") return "research";
     if(array=="recipes" || key=="recipe_id" || key=="required_recipe") return "recipe";
@@ -93,12 +95,21 @@ void index_node(CatalogIndex& index,const content::Registry& registry,const Json
             const auto child=path+"/"+detail::pointer_escape(key);
             if(value.is_string()) {
                 auto reference=reference_family(key,child,kind);
+                bool linked_identity=false;
+                if (kind=="frontier_research") {
+                    if (key=="target" && parent(relative).ends_with("/gates")) {
+                        reference=node.value("kind",std::string{});
+                        if (reference=="data") reference="dataset";
+                    }
+                    if (key=="id" && parent(relative).ends_with("/corpora")) { reference="dataset"; linked_identity=true; }
+                    if (key=="id" && parent(relative).ends_with("/recipes")) { reference="recipe"; linked_identity=true; }
+                }
                 if(effect) for(const auto& arg:effect->arguments) if(arg.name==key && arg.type==content::ValueType::reference) reference=family(arg.reference_kind);
                 if(kind=="flow" && key=="fact") {
                     const auto* fact=registry.fact(value.get<std::string>());
                     reference=fact && fact->default_value?"variable":"fact";
                 }
-                if((key!="id" || relative.ends_with("/bindings")) && !reference.empty() && !value.get_ref<const std::string&>().empty())
+                if((key!="id" || linked_identity || relative.ends_with("/bindings")) && !reference.empty() && !value.get_ref<const std::string&>().empty())
                     index.references.push_back({reference,value,owner,child});
             } else if(value.is_structured()) index_node(index,registry,value,child,owner,kind,relative+"/"+detail::pointer_escape(key));
         }
@@ -138,7 +149,8 @@ std::vector<ContentReference> content_uses(const CatalogIndex& index,std::string
         std::map<std::string,std::vector<const ContentReference*>,std::less<>> reverse;
         for(const auto& ref:index.references)
             if(ref.family=="flow" || ref.family=="scenario" || ref.family=="research" || ref.family=="regional_markets" ||
-                ref.family=="site_resilience" || ref.family=="us_civic" || ref.family=="regional_society" || ref.family=="institutional_authority")
+                ref.family=="site_resilience" || ref.family=="us_civic" || ref.family=="regional_society" || ref.family=="institutional_authority" ||
+                ref.family=="frontier_research")
                 reverse[ref.id].push_back(&ref);
         std::vector<std::string> pending{owners.begin(),owners.end()};
         for(std::size_t i=0;i<pending.size();++i) {

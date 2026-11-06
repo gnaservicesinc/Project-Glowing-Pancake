@@ -69,6 +69,10 @@ inline std::string help(std::string_view path) {
     if(key=="rights") return "Describe the actual regional procurement rights and operating obligations granted by this role.";
     if(key=="public_work") return "Public tasks required in the last settled regional month. Reviews prorate the same obligation to their actual interval.";
     if(key=="points_bp") return "Maximum authority from a fully operating role. Hard authority is reduced by regional resistance.";
+    if(key=="branches_after_day") return "Ordinal day since 2014-01-01 when the conditional era starts. Technology still depends on seeded conditions and research.";
+    if(key=="asi_route") return "Every seeded path needs a feasible game ASI recipe, evidence and replication route when selected.";
+    if(key=="refresh_review_age_days") return "Maximum age of a completed deployment methods experiment at refresh start and rollout.";
+    if(key=="repeat_limit") return "Maximum completed finite experiments for this topic. Each repeat needs actual funding, staff and work.";
     if(path.find("/identity_effects_bp/")!=path.npos) return "Signed audience confidence change when this public event occurs. Its effect fades over the authored memory window.";
     if(key=="map_sha256" || key=="map_asset_id") return "Identity of the prepared offline map asset. Retain its matching hash and provenance.";
     if(key=="assumptions") return "Visible authored-balance assumptions. Label fictional exposure and future parameters honestly.";
@@ -91,11 +95,13 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
     if(key=="civic") definition_kind="us_civic";
     if(key=="society") definition_kind="regional_society";
     if(key=="authority") definition_kind="institutional_authority";
+    if(key=="frontier") definition_kind="frontier_research";
+    if(key=="refresh_research" || (key=="research" && path.find("/catalog/experiments/")!=path.npos)) definition_kind="research";
     if(array_key=="flows") definition_kind="flow";
     if(parent.find("/prerequisites/")!=std::string_view::npos) definition_kind="research";
     if(array_key=="headquarters_choices") {add("US-CA","California");add("US-TX","Texas");add("US-WA","Washington");}
     if(!definition_kind.empty()) {
-        if(key=="regional_markets" || key=="resilience" || key=="civic" || key=="society" || key=="authority") add("","Disabled");
+        if(key=="regional_markets" || key=="resilience" || key=="civic" || key=="society" || key=="authority" || key=="frontier") add("","Disabled");
         for(const auto& [id,d]:draft.collection().definitions) if(content::definition_kind(d)==definition_kind) add(id);
     }
     const auto* def=draft.collection().find(scenario);

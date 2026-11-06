@@ -167,6 +167,7 @@ void validate_lab_catalog(const LabCatalog& catalog) {
     for (const auto& node : catalog.research) {
         references(node.all_of); references(node.any_of);
         if (node.cash.value() < 0 || node.staff_days.value() == 0 || node.staff_days.value() > 1'000'000 ||
+            node.repeat_limit<1 || node.repeat_limit>12 ||
             node.experiment_work.value() == 0 || node.experiment_work.value() > 1'000'000'000'000LL)
             invalid("Research requires bounded positive staff-days and experiment work");
         visit(node, 0);
@@ -258,11 +259,14 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
         std::none_of(node.any_of.begin(), node.any_of.end(), [&](const auto& id) { return completed(state, id); })))
         invalid("Research prerequisites are not complete");
     std::size_t attempt = 1;
+    std::uint32_t completed_runs = 0;
     for (const auto& run : state.research) if (run.research_id == research_id) {
-        if (find(capacity.projects, run.project_id).status != ProjectStatus::cancelled)
-            invalid("This research is already active or completed");
+        const auto status = find(capacity.projects,run.project_id).status;
+        if (status == ProjectStatus::active) invalid("This research is already active");
+        if (status == ProjectStatus::completed) ++completed_runs;
         ++attempt;
     }
+    if (completed_runs>=node.repeat_limit) invalid("This research has completed its authored number of experiments");
     if (state.research.size() >= lab_record_limit) invalid("Research run record limit was reached");
     if (allocation.staff == 0) invalid("Research needs assigned staff");
     const auto days = node.staff_days.value() / allocation.staff + (node.staff_days.value() % allocation.staff != 0 ? 1 : 0);
@@ -371,7 +375,7 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         if (!publication_ids.insert(row.research_id).second || row.day>today || !knowledge_on(state,capacity,row.research_id,row.day)) invalid("Publication lacks a unique actual completed result");
     identities(state.models, lab_record_limit); identities(state.evaluations, lab_record_limit);
     std::set<std::string_view> licenses, projects, prior_models;
-    std::map<std::string_view, std::size_t> attempts;
+    std::map<std::string_view, std::size_t> attempts, completed_runs;
     const auto payment = [&](std::string_view key, Cents cash, OrdinalDay day) {
         if (deep && cash.value() > 0 && std::none_of(accounts.postings.begin(), accounts.postings.end(), [&](const auto& posting) {
             return posting.key == key && posting.day == day && posting.credit == Account::cash &&
@@ -389,6 +393,9 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         const auto& node = find(state.catalog.research, run.research_id);
         const auto& work = find(capacity.projects, run.project_id);
         const auto attempt = ++attempts[node.id];
+        auto& prior_completions = completed_runs[node.id];
+        if (prior_completions>=node.repeat_limit) invalid("Research exceeded its authored repetition limit");
+        if (run.completed) ++prior_completions;
         const auto credit=insight_on(state,node.id,work.starts_on);
         const auto minimum=insight_work(std::max(node.experiment_work,integrate(work.requested,
             Days{node.staff_days.value()/std::max(work.staff,1U)+(node.staff_days.value()%std::max(work.staff,1U)!=0?1:0)})),credit);
@@ -402,8 +409,9 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
                 if (&prior == &run) break;
                 if (prior.research_id == node.id) {
                     const auto& previous = find(capacity.projects, prior.project_id);
-                    if (previous.status != ProjectStatus::cancelled || !previous.stopped_on || *previous.stopped_on > work.starts_on)
-                        invalid("Research retry precedes cancellation of its previous attempt");
+                    if (previous.status == ProjectStatus::active || !previous.stopped_on || *previous.stopped_on > work.starts_on ||
+                        (previous.status==ProjectStatus::completed && *previous.stopped_on==work.starts_on))
+                        invalid("Research retry precedes the settled end of its previous attempt");
                 }
             }
         }

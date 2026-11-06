@@ -156,6 +156,7 @@ Json simulation_json(const core::SimulationState& state) {
         {"business_offers_mode",state.business_offers?"catalog":"foundation"},
         {"business_offers",state.business_offers?business_offers_json(*state.business_offers):Json(nullptr)}};
     if (state.civic) result["civic"] = detail::civic_json(*state.civic);
+    if (state.frontier) result["frontier"] = detail::frontier_json(*state.frontier);
     return result;
 }
 core::SimulationState parse_simulation(const Json& value) {
@@ -165,7 +166,7 @@ core::SimulationState parse_simulation(const Json& value) {
         (void)ignored;
         if (name!="accounts" && name!="accounting_mode" && name!="capacity" && name!="capacity_mode" &&
             name!="market" && name!="market_mode" && name!="liquidity" && name!="liquidity_mode" && name!="lab" && name!="lab_mode" &&
-            name!="business_offers" && name!="business_offers_mode" && name!="deployment_mode" && name!="deployments" && name!="management_mode" && name!="management" && name!="infrastructure_mode" && name!="infrastructure" && name!="resilience" && name!="civic")
+            name!="business_offers" && name!="business_offers_mode" && name!="deployment_mode" && name!="deployments" && name!="management_mode" && name!="management" && name!="infrastructure_mode" && name!="infrastructure" && name!="resilience" && name!="civic" && name!="frontier")
             prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"simulation",{"revision","date","end_date","phase","paused","cash_cents",
@@ -186,6 +187,7 @@ core::SimulationState parse_simulation(const Json& value) {
     }
     if (value.contains("resilience") && !value.at("resilience").is_null()) result.resilience=detail::parse_resilience(value.at("resilience"));
     if (value.contains("civic")) result.civic = detail::parse_civic(value.at("civic"));
+    if (value.contains("frontier")) result.frontier = detail::parse_frontier(value.at("frontier"));
     if (value.contains("management_mode")!=value.contains("management")) detail::invalid("management","Management mode/state must appear together");
     if (value.contains("management_mode")) {
         const auto mode=detail::text(value.at("management_mode"),"management_mode",16);
