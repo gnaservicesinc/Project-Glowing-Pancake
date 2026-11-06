@@ -1,5 +1,7 @@
 #pragma once
 
+#include <pgp/core/paged_history.hpp>
+
 #include <pgp/core/calendar.hpp>
 
 #include <cstdint>
@@ -93,7 +95,7 @@ struct CapacityState {
     std::uint32_t available_staff = 0;
     std::vector<CapacitySource> sources;
     std::vector<CapacityProject> projects;
-    std::vector<CapacityDay> days;
+    PagedHistory<CapacityDay, 8> days;
     std::vector<StaffAddition> staff_additions{};
     std::vector<StaffAddition> staff_departures{};
     auto operator<=>(const CapacityState&) const = default;

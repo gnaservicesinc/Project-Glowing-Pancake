@@ -74,19 +74,8 @@ std::string invoice_id(std::string_view kind, std::string_view id, OrdinalDay da
 }
 void invoice(AccountsState& accounts, OrdinalDay day, std::string id, InvoiceKind kind,
              Cents amount, std::string cause) {
-    if (amount.value() == 0) return;
-    const auto account_day = accounts.closed_through ? advance_days(*accounts.closed_through, Days{1}) : accounts.starts_on;
-    if (account_day != day) invalid("Accounts mutation must name the current unclosed day");
-    if (accounts.postings.size() >= accounts_posting_limit || accounts.invoices.size() >= accounts_document_limit ||
-        accounts.next_posting_id == 0 || accounts.next_posting_id == std::numeric_limits<std::uint64_t>::max())
-        invalid("Accounts ledger exceeds its deterministic record or identifier bound");
-    text_valid(id, 100); text_valid(cause, 256);
-    if (amount.value() < 0) invalid("New invoice must have a positive amount, zero settlement and due date on or after today");
-    const Account debit = kind == InvoiceKind::receivable ? Account::receivables : Account::expenses;
-    const Account credit = kind == InvoiceKind::receivable ? Account::revenue : Account::payables;
-    accounts.postings.push_back({accounts.next_posting_id++, day, debit, credit, amount, cause, accounts.owner, "invoice.issue:" + id, id});
-    accounts.invoices.push_back({std::move(id), kind, day, amount, Cents{0}, std::move(cause)});
-    std::sort(accounts.invoices.begin(), accounts.invoices.end(), [](const auto& a, const auto& b) { return a.id < b.id; });
+    if (amount.value() != 0)
+        issue_market_invoice(accounts, day, {std::move(id), kind, day, amount, Cents{0}, std::move(cause)});
 }
 Cents net_charge(const ContractDayResult& result) {
     return checked_unit_add(checked_unit_subtract(result.gross_fee, result.service_credit), result.usage_charge);

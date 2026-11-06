@@ -41,24 +41,23 @@ void require_day(const AccountsState& state, OrdinalDay day) {
     if (day != current_day(state)) invalid("Accounts mutation must name the current unclosed day");
 }
 Cents balance(const AccountsState& state, Account account) {
-    Cents amount{0};
-    for (const auto& posting : state.postings) {
-        if (posting.debit == account)
-            amount = checked_unit_add(amount, debit_normal(account) ? posting.amount : Cents{-posting.amount.value()});
-        if (posting.credit == account)
-            amount = checked_unit_add(amount, debit_normal(account) ? Cents{-posting.amount.value()} : posting.amount);
-    }
-    return amount;
+    return state.postings.totals().balances[index(account)];
+}
+void append_trusted(AccountsState& state, OrdinalDay day, Account debit, Account credit,
+                    Cents amount, std::string cause, std::string key, std::string document_id = {}) {
+    if (amount.value() <= 0 || debit == credit) invalid("Posting needs a positive amount and distinct accounts");
+    if (state.postings.size() >= accounts_posting_limit || state.next_posting_id == 0 ||
+        state.next_posting_id == std::numeric_limits<std::uint64_t>::max())
+        invalid("The bounded ledger is full; no required posting was discarded");
+    state.postings.push_back({state.next_posting_id, day, debit, credit, amount,
+                              std::move(cause), state.owner, std::move(key), std::move(document_id)});
+    ++state.next_posting_id;
 }
 void append(AccountsState& state, OrdinalDay day, Account debit, Account credit,
             Cents amount, std::string cause, std::string key, std::string document_id = {}) {
-    if (amount.value() <= 0 || debit == credit) invalid("Posting needs a positive amount and distinct accounts");
-    if (state.postings.size() >= accounts_posting_limit || state.next_posting_id == std::numeric_limits<std::uint64_t>::max())
-        invalid("The bounded ledger is full; no required posting was discarded");
     if (std::any_of(state.postings.begin(), state.postings.end(), [&](const auto& row) { return row.key == key; }))
         invalid("This transaction key has already been committed");
-    state.postings.push_back({state.next_posting_id++, day, debit, credit, amount,
-                              std::move(cause), state.owner, std::move(key), std::move(document_id)});
+    append_trusted(state, day, debit, credit, amount, std::move(cause), std::move(key), std::move(document_id));
 }
 template<class Operation> void mutate(AccountsState& state, Operation operation) {
     validate_accounts(state);
@@ -67,12 +66,6 @@ template<class Operation> void mutate(AccountsState& state, Operation operation)
     validate_accounts(candidate);
     state = std::move(candidate);
 }
-Invoice& invoice_by_id(AccountsState& state, std::string_view id) {
-    const auto found = std::find_if(state.invoices.begin(), state.invoices.end(),
-        [id](const auto& row) { return row.id == id; });
-    if (found == state.invoices.end()) invalid("Invoice does not exist");
-    return *found;
-}
 Debt& debt_by_id(AccountsState& state, std::string_view id) {
     const auto found = std::find_if(state.debts.begin(), state.debts.end(),
         [id](const auto& row) { return row.id == id; });
@@ -80,14 +73,18 @@ Debt& debt_by_id(AccountsState& state, std::string_view id) {
     return *found;
 }
 Cents outstanding(const Invoice& invoice) { return checked_unit_subtract(invoice.amount, invoice.settled); }
+bool live_invoice(const Invoice& invoice, std::optional<OrdinalDay> closed_through) {
+    return invoice.settled < invoice.amount || !closed_through || invoice.due > *closed_through;
+}
 Cents available_cash(const AccountsState& state, Cents protected_cash) {
     if (protected_cash.value() < 0) invalid("Protected cash cannot be negative");
     const auto result = checked_unit_subtract(balance(state, Account::cash), protected_cash);
     if (result.value() < 0) invalid("Cash reservations exceed ledger cash");
     return result;
 }
-void settle(AccountsState& state, OrdinalDay day, Invoice& invoice, Cents amount,
+void settle(AccountsState& state, OrdinalDay day, std::size_t row, Cents amount,
             Cents protected_cash, std::string key) {
+    const auto& invoice = state.invoices[row];
     if (amount.value() <= 0 || amount > outstanding(invoice)) invalid("Invoice settlement exceeds its outstanding amount");
     if (invoice.kind == InvoiceKind::payable) {
         if (amount > available_cash(state, protected_cash)) invalid("Invoice payment would consume protected or unavailable cash");
@@ -95,7 +92,8 @@ void settle(AccountsState& state, OrdinalDay day, Invoice& invoice, Cents amount
     } else {
         append(state, day, Account::cash, Account::receivables, amount, invoice.cause, std::move(key), invoice.id);
     }
-    invoice.settled = checked_unit_add(invoice.settled, amount);
+    state.invoices.set_amounts(row, invoice.amount, checked_unit_add(invoice.settled, amount));
+    if (state.closed_through) state.invoices.retire_settled(*state.closed_through);
 }
 OrdinalDay month_start(OrdinalDay day) {
     const auto date = from_ordinal(day);
@@ -105,25 +103,17 @@ OrdinalDay month_end(OrdinalDay day) {
     const auto date = from_ordinal(day);
     return to_ordinal({date.year, date.month, days_in_month(date.year, date.month)});
 }
-void append_trusted(AccountsState& state, OrdinalDay day, Account debit, Account credit,
-                    Cents amount, std::string cause, std::string key, std::string document_id = {}) {
-    if (amount.value() <= 0 || debit == credit) invalid("Posting needs a positive amount and distinct accounts");
-    if (state.postings.size() >= accounts_posting_limit || state.next_posting_id == std::numeric_limits<std::uint64_t>::max())
-        invalid("The bounded ledger is full; no required posting was discarded");
-    state.postings.push_back({state.next_posting_id++, day, debit, credit, amount,
-                              std::move(cause), state.owner, std::move(key), std::move(document_id)});
-}
 void accrue(AccountsState& state, OrdinalDay day, std::string id, Cents amount, std::string cause) {
     if (amount == Cents{0}) return;
-    auto found = std::find_if(state.invoices.begin(), state.invoices.end(),
-        [&](const auto& invoice) { return invoice.id == id; });
-    if (found == state.invoices.end()) {
-        if (state.invoices.size() >= accounts_document_limit) invalid("The bounded invoice register is full");
-        state.invoices.push_back({id, InvoiceKind::payable, month_end(day), Cents{0}, Cents{0}, cause});
-        found = std::prev(state.invoices.end());
-    } else if (found->kind != InvoiceKind::payable || found->due != month_end(day) || found->cause != cause)
-        invalid("An accrued obligation conflicts with an existing invoice");
-    found->amount = checked_unit_add(found->amount, amount);
+    const auto due = month_end(day);
+    if (const auto row = state.invoices.find(id)) {
+        const auto& invoice = state.invoices[*row];
+        if (invoice.kind != InvoiceKind::payable || invoice.due != due || invoice.cause != cause)
+            invalid("An accrued obligation conflicts with an existing invoice");
+        state.invoices.set_amounts(*row, checked_unit_add(invoice.amount, amount), invoice.settled);
+    } else {
+        state.invoices.push_back({id, InvoiceKind::payable, due, amount, Cents{0}, cause}, state.closed_through);
+    }
     append_trusted(state, day, Account::expenses, Account::payables, amount, std::move(cause),
                    "accrue/" + id + "/" + iso_date(day), id);
 }
@@ -159,7 +149,7 @@ void close_day(AccountsState& state, OrdinalDay day, Cents protected_cash) {
     // Collection precedes payment. A due receivable represents an agreed,
     // collectible amount; uncertain/late customers will supply explicit terms.
     std::vector<std::size_t> due;
-    for (std::size_t i = 0; i < state.invoices.size(); ++i)
+    for (const auto i : state.invoices.live_rows())
         if (state.invoices[i].due <= day && outstanding(state.invoices[i]).value() > 0) due.push_back(i);
     std::sort(due.begin(), due.end(), [&](auto left, auto right) {
         const auto& a = state.invoices[left]; const auto& b = state.invoices[right];
@@ -168,7 +158,7 @@ void close_day(AccountsState& state, OrdinalDay day, Cents protected_cash) {
         return std::tie(kind_a, a.due, a.id) < std::tie(kind_b, b.due, b.id);
     });
     for (const auto i : due) {
-        auto& invoice = state.invoices[i];
+        const auto& invoice = state.invoices[i];
         auto amount = outstanding(invoice);
         if (invoice.kind == InvoiceKind::payable) amount = std::min(amount, current_available);
         if (amount.value() > 0) {
@@ -181,9 +171,10 @@ void close_day(AccountsState& state, OrdinalDay day, Cents protected_cash) {
                                "settle/" + invoice.id + "/" + iso_date(day), invoice.id);
                 current_available = checked_unit_add(current_available, amount);
             }
-            invoice.settled = checked_unit_add(invoice.settled, amount);
+            state.invoices.set_amounts(i, invoice.amount, checked_unit_add(invoice.settled, amount));
         }
     }
+    state.invoices.retire_settled(day);
     state.closed_through = day;
 }
 } // namespace
@@ -202,16 +193,71 @@ std::string_view to_string(Account account) noexcept {
     }
     return "invalid";
 }
-AccountsReport accounts_report(const AccountsState& state) {
-    std::array<Cents, 9> balances{Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}};
-    for (const auto& posting : state.postings) {
-        auto& debit = balances[index(posting.debit)];
-        auto& credit = balances[index(posting.credit)];
-        debit = checked_unit_add(debit, debit_normal(posting.debit) ? posting.amount : Cents{-posting.amount.value()});
-        credit = checked_unit_add(credit, debit_normal(posting.credit) ? Cents{-posting.amount.value()} : posting.amount);
-    }
+void PostingTotals::add(const Posting& posting) {
+    auto& debit = balances[index(posting.debit)];
+    auto& credit = balances[index(posting.credit)];
+    debit = checked_unit_add(debit, debit_normal(posting.debit) ? posting.amount : Cents{-posting.amount.value()});
+    credit = checked_unit_add(credit, debit_normal(posting.credit) ? Cents{-posting.amount.value()} : posting.amount);
+}
+static AccountsReport report(const PostingTotals& totals) {
+    const auto& balances = totals.balances;
     return {balances[0], balances[1], balances[2], balances[3], balances[4], balances[5], balances[6],
             balances[7], balances[8], checked_unit_subtract(balances[7], balances[8])};
+}
+AccountsReport accounts_report(const AccountsState& state) {
+    return report(state.postings.totals());
+}
+AccountsReport accounts_report_at(const AccountsState& state, std::size_t posting_count) {
+    if (posting_count > state.postings.size()) invalid("The ledger cursor exceeds its recorded history");
+    if (posting_count == state.postings.size()) return accounts_report(state);
+    PostingTotals totals;
+    for (std::size_t i = 0; i < posting_count; ++i) totals.add(state.postings[i]);
+    return report(totals);
+}
+
+std::size_t InvoiceRegister::bucket(const Index& index, std::string_view id) const {
+    const auto mask = index.size() - 1;
+    auto slot = std::hash<std::string_view>{}(id) & mask;
+    while (index[slot] != 0 && rows_[index[slot] - 1].id != id) slot = (slot + 1) & mask;
+    return slot;
+}
+std::optional<std::size_t> InvoiceRegister::find(std::string_view id) const {
+    if (by_id_.empty()) return {};
+    const auto value = by_id_[bucket(by_id_, id)];
+    if (value == 0) return {};
+    return value - 1;
+}
+void InvoiceRegister::push_back(Invoice invoice, std::optional<OrdinalDay> closed_through) {
+    if (rows_.size() >= accounts_document_limit) invalid("The retained invoice history is full");
+    const bool live = live_invoice(invoice, closed_through);
+    if (live && live_.size() >= accounts_open_invoice_limit) invalid("The open invoice register is full");
+    if (find(invoice.id)) invalid("Invoice identity has already been committed");
+
+    auto indexed = by_id_;
+    if (rows_.size() * 2 >= by_id_.size()) {
+        indexed = {};
+        const auto count = std::max<std::size_t>(16, by_id_.size() * 2);
+        for (std::size_t i = 0; i < count; ++i) indexed.push_back(0);
+        for (std::size_t i = 0; i < rows_.size(); ++i) indexed.replace(bucket(indexed, rows_[i].id), i + 1);
+    }
+    indexed.replace(bucket(indexed, invoice.id), rows_.size() + 1);
+    if (live) live_.push_back(rows_.size());
+    try {
+        rows_.push_back(std::move(invoice));
+    } catch (...) {
+        if (live) live_.pop_back();
+        throw;
+    }
+    by_id_ = std::move(indexed);
+}
+void InvoiceRegister::set_amounts(std::size_t row, Cents amount, Cents settled) {
+    auto invoice = rows_.at(row);
+    invoice.amount = amount;
+    invoice.settled = settled;
+    rows_.replace(row, std::move(invoice));
+}
+void InvoiceRegister::retire_settled(OrdinalDay day) {
+    std::erase_if(live_, [&](const auto row) { return !live_invoice(rows_[row], day); });
 }
 void validate_accounts(const AccountsState& state) {
     text_valid(state.owner);
@@ -221,6 +267,7 @@ void validate_accounts(const AccountsState& state) {
         if (*state.closed_through < state.starts_on) invalid("Accounts closed cursor predates the opening");
     }
     if (state.postings.size() > accounts_posting_limit || state.invoices.size() > accounts_document_limit ||
+        state.invoices.live_rows().size() > accounts_open_invoice_limit ||
         state.recurring.size() > accounts_terms_limit || state.debts.size() > accounts_terms_limit ||
         state.holdings.empty() || state.holdings.size() > accounts_terms_limit ||
         state.next_posting_id != state.postings.size() + 1)
@@ -321,6 +368,8 @@ void validate_accounts(const AccountsState& state) {
         invalid("Ledger contains a negative asset, liability, income or cost balance");
     keys.reset(state.invoices.size());
     Cents receivables{0}, payables{0};
+    auto live = state.invoices.live_rows().begin();
+    std::size_t row = 0;
     for (const auto& invoice : state.invoices) {
         text_valid(invoice.id); text_valid(invoice.cause);
         (void)from_ordinal(invoice.due);
@@ -333,7 +382,15 @@ void validate_accounts(const AccountsState& state) {
             invalid("Invoice amount and settlement differ from their own committed postings");
         auto& total = invoice.kind == InvoiceKind::receivable ? receivables : payables;
         total = checked_unit_add(total, outstanding(invoice));
+        if (live_invoice(invoice, state.closed_through)) {
+            if (live == state.invoices.live_rows().end() || *live != row)
+                invalid("Open invoice index differs from the reconciled ledger");
+            ++live;
+        }
+        ++row;
     }
+    if (live != state.invoices.live_rows().end())
+        invalid("Open invoice index contains a closed invoice");
     if (receivable_documents.count + payable_documents.count != state.invoices.size())
         invalid("Ledger links an unknown invoice identity");
     if (receivables != report.receivables || payables != report.payables)
@@ -504,11 +561,29 @@ void issue_invoice(AccountsState& state, OrdinalDay day, Invoice invoice) {
         else if (invoice.kind == InvoiceKind::payable)
             append(candidate, day, Account::expenses, Account::payables, invoice.amount, invoice.cause, "invoice/" + invoice.id, invoice.id);
         else invalid("Unknown invoice kind");
-        candidate.invoices.push_back(std::move(invoice));
+        candidate.invoices.push_back(std::move(invoice), candidate.closed_through);
     });
 }
+void issue_market_invoice(AccountsState& state, OrdinalDay day, Invoice invoice) {
+    require_day(state, day);
+    text_valid(invoice.id, 100); text_valid(invoice.cause);
+    if (invoice.amount.value() <= 0 || invoice.settled != Cents{0} || invoice.due != day)
+        invalid("Market invoice must have a positive unsettled amount due today");
+    if (invoice.kind != InvoiceKind::receivable && invoice.kind != InvoiceKind::payable)
+        invalid("Unknown market invoice kind");
+    const auto receivable = invoice.kind == InvoiceKind::receivable;
+    append_trusted(state, day, receivable ? Account::receivables : Account::expenses,
+                   receivable ? Account::revenue : Account::payables, invoice.amount,
+                   invoice.cause, "invoice.issue:" + invoice.id, invoice.id);
+    state.invoices.push_back(std::move(invoice), state.closed_through);
+}
 void settle_invoice(AccountsState& state, OrdinalDay day, std::string_view id, Cents amount, Cents protected_cash, std::string key) {
-    mutate(state, [&](auto& candidate) { require_day(candidate, day); user_key_valid(key); settle(candidate, day, invoice_by_id(candidate, id), amount, protected_cash, std::move(key)); });
+    mutate(state, [&](auto& candidate) {
+        require_day(candidate, day); user_key_valid(key);
+        const auto row = candidate.invoices.find(id);
+        if (!row) invalid("Invoice does not exist");
+        settle(candidate, day, *row, amount, protected_cash, std::move(key));
+    });
 }
 void draw_debt(AccountsState& state, OrdinalDay day, Debt debt, std::string cause) {
     mutate(state, [&](auto& candidate) {
@@ -638,9 +713,11 @@ CashProjection project_cash(const AccountsState& state,OrdinalDay through,Cents 
     }
     validate_accounts(candidate);
     CashProjection result{through, balance(candidate, Account::cash), available_cash(candidate, protected_cash), Cents{0}, Cents{0}};
-    for (const auto& invoice : candidate.invoices)
+    for (const auto row : candidate.invoices.live_rows()) {
+        const auto& invoice = candidate.invoices[row];
         if (invoice.kind == InvoiceKind::payable && invoice.due <= through)
             result.overdue_payables = checked_unit_add(result.overdue_payables, outstanding(invoice));
+    }
     for (const auto& debt : candidate.debts)
         if (debt.due <= through) result.due_principal = checked_unit_add(result.due_principal, debt.principal);
     return result;

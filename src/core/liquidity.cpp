@@ -51,10 +51,11 @@ void apply_exposure(LiquidityState& state, LiquidityExposure exposure) {
 }
 void validate_reference(const LiquidityCause& cause, const AccountsState& accounts) {
     if (cause.kind == LiquidityCauseKind::payable) {
-        const auto found = std::find_if(accounts.invoices.begin(), accounts.invoices.end(),
-            [&](const auto& invoice) { return invoice.id == cause.reference; });
-        if (found == accounts.invoices.end() || found->kind != InvoiceKind::payable || found->due != cause.due ||
-            found->amount < cause.unpaid || found->cause != cause.cause)
+        const auto row = accounts.invoices.find(cause.reference);
+        if (!row) invalid("Liquidity warning refers to an unknown payable");
+        const auto& invoice = accounts.invoices[*row];
+        if (invoice.kind != InvoiceKind::payable || invoice.due != cause.due ||
+            invoice.amount < cause.unpaid || invoice.cause != cause.cause)
             invalid("Liquidity warning refers to an unknown or incompatible payable");
     } else {
         const auto found = std::find_if(accounts.debts.begin(), accounts.debts.end(),
@@ -84,7 +85,8 @@ LiquidityExposure exposure_unchecked(const AccountsState& accounts, std::optiona
     LiquidityExposure exposure;
     if (!due_through) return exposure;
     (void)from_ordinal(*due_through);
-    for (const auto& invoice : accounts.invoices) {
+    for (const auto row : accounts.invoices.live_rows()) {
+        const auto& invoice = accounts.invoices[row];
         if (invoice.kind != InvoiceKind::payable || invoice.due > *due_through) continue;
         const auto unpaid = checked_unit_subtract(invoice.amount, invoice.settled);
         if (unpaid.value() == 0) continue;

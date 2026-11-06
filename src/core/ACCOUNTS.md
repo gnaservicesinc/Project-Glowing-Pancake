@@ -52,9 +52,15 @@ and agreed invoice collections; it does not forecast future customer acquisition
 Reload validation checks canonical posting chronology and individual invoice and
 debt reconciliation, then reconstructs fixed-obligation accruals and monthly debt
 interest residues through the saved close cursor. Changing terms or resetting an
-interest cursor cannot silently skip recognized charges. The state has explicit
-limits: 262,144 postings, 8,192 invoices, 256 recurring terms/debts/holders, and a
-36,524-day projection horizon. No required financial history is silently dropped.
+interest cursor cannot silently skip recognized charges. Daily settlement visits
+only unpaid and future-due invoices. Settled records retain their identities and
+amounts for audit, including when the open register is empty. Ledger reports use
+checked balances derived as postings append and rebuilt from postings on load.
+Checkpoint copies share historical pages and isolate changes on write.
+
+The state bounds are 262,144 postings, 524,288 retained invoices, 8,192 unpaid or
+future-due invoices, 256 recurring terms/debts/holders, and a 36,524-day projection
+horizon. The save continues to record the ordered postings and invoices.
 Full-century history retention, archival/compaction and long-run performance must
 be revisited before M8 acceptance; this module's focused checks establish the
 opening business accounting cases.

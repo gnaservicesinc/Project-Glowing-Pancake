@@ -89,7 +89,7 @@ core::AccountsState parse_accounts(const Json& value) {
         result.invoices.push_back({label(invoice.at("id")),
             kind=="payable"?core::InvoiceKind::payable:core::InvoiceKind::receivable,
             day(invoice.at("due")),cents(invoice.at("amount_cents")),
-            cents(invoice.at("settled_cents")),label(invoice.at("cause"))});
+            cents(invoice.at("settled_cents")),label(invoice.at("cause"))}, result.closed_through);
     }
     const auto& recurring=value.at("recurring");array(recurring,"accounts/recurring",core::accounts_terms_limit);
     for (const auto& obligation:recurring) {

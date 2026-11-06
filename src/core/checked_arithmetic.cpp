@@ -14,6 +14,8 @@ Wide multiply(Wide value, std::uint64_t factor) {
     // Base-2^32 schoolbook multiplication. Each accumulation is bounded by
     // (2^32-1)^2 + 2*(2^32-1), exactly UINT64_MAX.
     constexpr std::uint64_t mask = 0xffffffffULL;
+    if (value.high == 0 && (value.low | factor) <= mask)
+        return {0, value.low * factor};
     const std::array<std::uint32_t, 4> left{
         static_cast<std::uint32_t>(value.low & mask),
         static_cast<std::uint32_t>(value.low >> 32),
@@ -57,6 +59,8 @@ Wide exact_product(std::span<const std::uint64_t> factors) {
 }
 
 QuotientRemainder divide(Wide numerator, std::uint64_t denominator) {
+    if (numerator.high == 0)
+        return {numerator.low / denominator, numerator.low % denominator};
     if (numerator.high >= denominator) {
         throw std::overflow_error("arithmetic quotient exceeds 64 bits");
     }

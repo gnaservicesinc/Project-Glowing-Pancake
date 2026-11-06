@@ -1455,3 +1455,37 @@ It verified seven scenarios, 21 exact prepared saves and eight asset seals
 with zero lints. The soundtrack source, edits and terms are linked from
 [content and assets](CONTENT_AND_ASSETS.md). The roadmap is **42/52**.
 M8-02 owns long-run balance and endurance.
+
+## M8-02 — Endurance investigation
+
+The stock Frontier specialist run on an M2 Max hit the old 8,192-invoice
+bound on 2029-09-28. The player had 55,346 postings, so the refusal came
+from the invoice register. Daily settlement now uses an index of unpaid and
+future-due bills. New invoices enter the history in issuance order, and
+collections and payments keep their due-date and ID ordering. Account,
+capacity and market histories share pages across rollback
+checkpoints. Running ledger totals and a native-width path for exact
+multiplication and division reduce daily arithmetic. Saves retain the
+existing typed rows and rebuild the ledger index and totals on load.
+
+```sh
+build/release/bin/pgp-headless --endurance data/runtime/first-playable.json scenario.century_frontier 2035-01-01
+```
+
+The command uses the existing paid specialist opening with optional story
+roots disabled, then advances the ordinary game and handles required
+decisions. An optional seed allows reproducible comparisons. The Frontier
+run matched the baseline cash, posting, activation and active-rival counts
+at every shared January boundary. Its 2029-01-01 checkpoint took 26.20s
+instead of 205.91s. The run reached 2035-01-01 in 57.72s with 13 active
+rivals, 73,083 player postings and 10,554 retained invoices. The save audit
+reached the existing expanded-history cell limit. The four-year Frontier
+checkpoint reloaded exactly from 13,585,070 bytes. A two-year Plateau run
+with the same seed also reloaded exactly. All 79 optimized Mac CTests
+passed, including a regression that reconciles more than 8,192 settled
+invoices and rejects reuse of an old identity.
+
+M8-02 remains open. Continue with bounded historical storage, longer save
+and resume checks, and the matched open, frontier and infrastructure
+policies. The century and 500-year runs remain acceptance gates. Human
+playtests remain deferred until v1 preparation.

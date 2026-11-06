@@ -20,7 +20,7 @@ const RivalCompany& target(const WorldState& w,std::string_view id) {
 RivalCompany& target(WorldState& w,std::string_view id) {return const_cast<RivalCompany&>(target(std::as_const(w),id));}
 Cents net_assets(const AccountsState& a,std::uint64_t count) {
     if (count>a.postings.size()) invalid("Due diligence references unavailable account history");
-    auto copy=a;copy.postings.resize(static_cast<std::size_t>(count));const auto r=accounts_report(copy);
+    const auto r=accounts_report_at(a,static_cast<std::size_t>(count));
     auto value=checked_add(checked_add(r.cash.value(),r.receivables.value()),r.assets.value());
     value=checked_subtract(value,r.accumulated_depreciation.value());value=checked_subtract(value,r.payables.value());value=checked_subtract(value,r.debt.value());
     return Cents{std::max<std::int64_t>(value,0)};
@@ -189,8 +189,8 @@ void validate_acquisitions(const WorldState& w,const CompiledProgram& p,bool dee
             auto expected=q.sellers;for (auto& h:expected) h.shares=BasisPoints{0};expected.push_back({"parent/"+w.company_id,BasisPoints{10000},false});
             if (r.simulation.accounts->holdings!=expected) invalid("Subsidiary retained control was diluted or duplicated");
             if (q.acquired_posting_cursor<q.target_posting_cursor || q.acquired_posting_cursor>r.simulation.accounts->postings.size()) invalid("Acquisition opening earnings lack their actual posting boundary");
-            auto opening=*r.simulation.accounts;opening.postings.resize(static_cast<std::size_t>(q.acquired_posting_cursor));
-            if (accounts_report(opening).profit!=q.acquired_profit || std::none_of(r.simulation.receipts.begin(),r.simulation.receipts.end(),[&](const auto& receipt){return receipt.cause=="transfer_company_ownership" && receipt.day==*q.completed_on;})) invalid("Acquisition opening earnings/control do not reconcile");
+            if (accounts_report_at(*r.simulation.accounts,static_cast<std::size_t>(q.acquired_posting_cursor)).profit!=q.acquired_profit ||
+                std::none_of(r.simulation.receipts.begin(),r.simulation.receipts.end(),[&](const auto& receipt){return receipt.cause=="transfer_company_ownership" && receipt.day==*q.completed_on;})) invalid("Acquisition opening earnings/control do not reconcile");
             const auto paid=std::find_if(w.simulation.accounts->postings.begin(),w.simulation.accounts->postings.end(),[&](const auto& posting){return posting.key=="merger.cash/"+q.motion_id;});
             if (paid==w.simulation.accounts->postings.end() || paid->day!=*q.completed_on || paid->amount!=q.cash || paid->debit!=Account::assets || paid->credit!=Account::cash) invalid("Merger lacks actual cash consideration");
             if (q.shares.value()>0) {

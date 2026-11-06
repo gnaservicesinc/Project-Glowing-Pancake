@@ -157,7 +157,11 @@ void financing_and_rejections() {
     try { validate_accounts(malformed); } catch (const std::exception&) { invalid = true; }
     check(invalid, "Corrupt ownership totals must refuse restore");
     malformed = state;
-    malformed.postings.front().amount = Cents{-1};
+    auto negative = malformed.postings.front();
+    negative.amount = Cents{-1};
+    malformed.postings = {};
+    malformed.postings.push_back(std::move(negative));
+    for (std::size_t i = 1; i < state.postings.size(); ++i) malformed.postings.push_back(state.postings[i]);
     invalid = false;
     try { validate_accounts(malformed); } catch (const std::exception&) { invalid = true; }
     check(invalid, "Negative journal amounts must refuse restore");
@@ -189,8 +193,8 @@ void identity_and_history_validation() {
     issue_invoice(state, OrdinalDay{0}, {"first", InvoiceKind::payable, OrdinalDay{30}, Cents{100}, Cents{0}, "First bill"});
     issue_invoice(state, OrdinalDay{0}, {"second", InvoiceKind::payable, OrdinalDay{30}, Cents{200}, Cents{0}, "Second bill"});
     auto corrupt = state;
-    corrupt.invoices[0].amount = Cents{101};
-    corrupt.invoices[1].amount = Cents{199};
+    corrupt.invoices.set_amounts(0, Cents{101}, Cents{0});
+    corrupt.invoices.set_amounts(1, Cents{199}, Cents{0});
     bool rejected = false;
     try { validate_accounts(corrupt); } catch (const std::exception&) { rejected = true; }
     check(rejected, "Per-document corruption must reject even when aggregate payable still reconciles");
@@ -204,6 +208,31 @@ void identity_and_history_validation() {
     try { validate_accounts(corrupt); } catch (const std::exception&) { rejected = true; }
     check(rejected, "Debt interest residue must match the actual closed-day principal history");
 }
+void settled_invoice_history() {
+    auto state = opening_accounts(Cents{10});
+    auto earlier = state;
+    for (std::size_t i = 0; i <= accounts_open_invoice_limit; ++i) {
+        const auto day = OrdinalDay{i};
+        issue_market_invoice(state, day, {"market.sale/" + iso_date(day), InvoiceKind::receivable,
+                             day, Cents{2}, Cents{0}, "Daily sales"});
+        close_accounts_day(state, day, Cents{0}, false);
+        if (i == 31) earlier = state;
+    }
+    check(state.invoices.size() == accounts_open_invoice_limit + 1 && state.invoices.live_rows().empty(),
+          "Settled daily sales must remain auditable without filling the open invoice register");
+    check(earlier.invoices.size() == 32 && accounts_report(earlier).cash == Cents{74} &&
+          accounts_report_at(state, earlier.postings.size()) == accounts_report(earlier),
+          "Growing the ledger must preserve the rollback checkpoint and historical balances");
+    check(accounts_report(state).cash == Cents{10 + 2 * state.invoices.size()},
+          "Each archived sale must collect exactly once");
+    const auto next_day = OrdinalDay{accounts_open_invoice_limit + 1};
+    const auto& first_invoice = earlier.invoices[0];
+    refuses_unchanged(state, [&] {
+        issue_invoice(state, next_day, {first_invoice.id, first_invoice.kind, next_day,
+                      first_invoice.amount, Cents{0}, first_invoice.cause});
+    });
+    balanced(state);
+}
 }
 int main() {
     try {
@@ -212,6 +241,7 @@ int main() {
         invoices_and_protected_cash();
         financing_and_rejections();
         identity_and_history_validation();
+        settled_invoice_history();
         std::cout << checks << " accounts checks passed\n";
         return 0;
     } catch (const std::exception& error) {

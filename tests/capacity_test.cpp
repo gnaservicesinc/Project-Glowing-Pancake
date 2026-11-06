@@ -135,7 +135,9 @@ void outages_and_cancellation() {
     refuses_unchanged(state, [&] { cancel_project(state, OrdinalDay{3}, "train"); });
     refuses_unchanged(state, [&] { update_effective_capacity(state, OrdinalDay{3}, "lease", MilliCUPerDay{100001}); });
     auto corrupt = state;
-    corrupt.days.front().projects.front().work = MilliCU{99999};
+    auto wrong_work = corrupt.days.front();
+    wrong_work.projects.front().work = MilliCU{99999};
+    corrupt.days.replace(0, std::move(wrong_work));
     bool rejected = false;
     try { validate_capacity(corrupt); } catch (const std::exception&) { rejected = true; }
     check(rejected, "Corrupt daily work must refuse restore");

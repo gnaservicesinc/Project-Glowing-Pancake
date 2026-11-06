@@ -150,7 +150,7 @@ struct MarketState {
     std::vector<MarketProduct> products;
     std::vector<MarketSegment> segments;
     std::vector<MarketContract> contracts;
-    std::vector<MarketDay> days;
+    PagedHistory<MarketDay, 4> days;
     std::vector<MarketAdoption> adoptions;
     std::vector<MarketDemandChange> demand_changes{};
     std::vector<ProductCapacityBinding> capacity_bindings{};

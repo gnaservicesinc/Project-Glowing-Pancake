@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <map>
+#include <ranges>
 #include <set>
 #include <stdexcept>
 #include <tuple>
@@ -76,7 +77,7 @@ FinancialInputs inputs(const SimulationState& institution,OrdinalDay before,Ordi
     FinancialInputs result;
     const auto& accounts=*institution.accounts;
     result.personal_cash=succession_catalog(institution).personal_cash;
-    for(const auto& p:std::span{accounts.postings}.first(cutoff(accounts,before))) {
+    for(const auto& p:accounts.postings | std::views::take(static_cast<std::ptrdiff_t>(cutoff(accounts,before)))) {
         add(result.cash,balance(p,Account::cash));
         add(result.receivables,balance(p,Account::receivables));
         add(result.payables,Cents{-balance(p,Account::payables).value()});
@@ -117,7 +118,7 @@ LiquidityExposure recorded_exposure(const AccountsState& accounts,std::size_t cu
         bills.emplace(i.id,Obligation{{LiquidityCauseKind::payable,i.id,i.due,Cents{0},i.cause}});
     for(const auto& d:accounts.debts) if(d.due<=through)
         debts.emplace(d.id,Obligation{{LiquidityCauseKind::matured_debt,d.id,d.due,Cents{0},{}}});
-    for(const auto& p:std::span{accounts.postings}.first(cursor)) {
+    for(const auto& p:accounts.postings | std::views::take(static_cast<std::ptrdiff_t>(cursor))) {
         if(const auto it=bills.find(p.document_id);it!=bills.end()) add(it->second.cause.unpaid,Cents{-balance(p,Account::payables).value()});
         if(const auto it=debts.find(p.document_id);it!=debts.end()) {
             add(it->second.cause.unpaid,Cents{-balance(p,Account::debt).value()});

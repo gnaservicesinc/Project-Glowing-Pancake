@@ -7,6 +7,7 @@
 #include "business_run.hpp"
 #include "lab_demo.hpp"
 #include "events_demo.hpp"
+#include "endurance_run.hpp"
 
 #include <iostream>
 #include <string_view>
@@ -15,7 +16,9 @@
 namespace {
 constexpr std::string_view usage =
     "Usage: pgp-headless [--help | --build-info | --foundation-demo | --validate-content FILE | --accounts-demo FILE | --capacity-demo FILE | --market-demo FILE | --business-run FILE STRATEGY | --flow-demo FILE [--save FILE]]\n"
-    "Also: --lab-demo FILE | --events-demo FILE | --specialist-demo FILE | --competition-demo FILE [standard|reduced|expanded|forgiving] [DAYS]\nBusiness strategies: expansion, baseline, rescue. Builds never launch the application.\n";
+    "Also: --lab-demo FILE | --events-demo FILE | --specialist-demo FILE | --competition-demo FILE [standard|reduced|expanded|forgiving] [DAYS]\n"
+    "      --endurance FILE SCENARIO THROUGH_DATE [SEED]\n"
+    "Business strategies: expansion, baseline, rescue. Builds never launch the application.\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -58,6 +61,10 @@ int main(int argc, char* argv[]) {
                 if (result.ec!=std::errc{} || result.ptr!=input.data()+input.size()) throw std::invalid_argument("Days must be a bounded whole number");}
             run_competition_demo(argv[2],argc>=4?argv[3]:"standard",days,std::cout);return 0;
         } catch (const std::exception& error) {std::cerr<<error.what()<<'\n';return 1;}
+    }
+    if ((argc == 5 || argc == 6) && std::string_view{argv[1]} == "--endurance") {
+        try { run_endurance(argv[2], argv[3], argv[4], argc == 6 ? argv[5] : nullptr, std::cout); return 0; }
+        catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
     }
     if (argc == 3 && std::string_view{argv[1]} == "--capacity-demo") {
         try { run_capacity_demo(argv[2], std::cout); return 0; }

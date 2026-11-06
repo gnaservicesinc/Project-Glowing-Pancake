@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pgp/core/calendar.hpp>
+#include <pgp/core/paged_history.hpp>
 
 #include <array>
 #include <optional>
@@ -60,15 +61,48 @@ struct EquityHolding {
     auto operator<=>(const EquityHolding&) const = default;
 };
 inline constexpr std::size_t accounts_posting_limit = 262144;
-inline constexpr std::size_t accounts_document_limit = 8192;
+inline constexpr std::size_t accounts_document_limit = 524288;
+inline constexpr std::size_t accounts_open_invoice_limit = 8192;
 inline constexpr std::size_t accounts_terms_limit = 256;
+struct PostingTotals {
+    std::array<Cents, 9> balances{
+        Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}};
+    void add(const Posting& posting);
+};
+
+class InvoiceRegister {
+    using Index = PagedHistory<std::size_t, 64>;
+
+public:
+    [[nodiscard]] std::size_t size() const { return rows_.size(); }
+    const Invoice& operator[](std::size_t row) const { return rows_[row]; }
+    auto begin() const { return rows_.begin(); }
+    auto end() const { return rows_.end(); }
+    [[nodiscard]] std::optional<std::size_t> find(std::string_view id) const;
+    [[nodiscard]] const std::vector<std::size_t>& live_rows() const { return live_; }
+
+    void push_back(Invoice invoice, std::optional<OrdinalDay> closed_through);
+    void set_amounts(std::size_t row, Cents amount, Cents settled);
+    void retire_settled(OrdinalDay day);
+    bool operator==(const InvoiceRegister& other) const { return rows_ == other.rows_; }
+    auto operator<=>(const InvoiceRegister& other) const { return rows_ <=> other.rows_; }
+
+private:
+    [[nodiscard]] std::size_t bucket(const Index& index, std::string_view id) const;
+    PagedHistory<Invoice, 16> rows_;
+    Index by_id_;
+    // Keep unpaid invoices and future-due bills, which can still accrue
+    // even if their current balance was settled early.
+    std::vector<std::size_t> live_;
+};
+
 struct AccountsState {
     std::string owner = "company.player";
     OrdinalDay starts_on{0};
     std::optional<OrdinalDay> closed_through;
     std::uint64_t next_posting_id = 1;
-    std::vector<Posting> postings;
-    std::vector<Invoice> invoices;
+    PagedHistory<Posting, 32, PostingTotals> postings;
+    InvoiceRegister invoices;
     std::vector<RecurringObligation> recurring;
     std::vector<Debt> debts;
     std::vector<EquityHolding> holdings;
@@ -92,6 +126,7 @@ struct AccountsReport {
 [[nodiscard]] AccountsState opening_accounts(Cents cash, OrdinalDay starts_on = OrdinalDay{0},
                                             std::string owner = "company.player");
 [[nodiscard]] AccountsReport accounts_report(const AccountsState& state);
+[[nodiscard]] AccountsReport accounts_report_at(const AccountsState& state, std::size_t posting_count);
 void validate_accounts(const AccountsState& state);
 // Each mutation validates a copied candidate and commits atomically. Reused
 // document/transaction keys are refused, including previously settled records.
@@ -102,6 +137,8 @@ void add_recurring(AccountsState& state, RecurringObligation obligation);
 // exclusive end equal to the start represents cancellation before first work.
 void end_recurring(AccountsState& state, std::string_view id, OrdinalDay ends_before);
 void issue_invoice(AccountsState& state, OrdinalDay day, Invoice invoice);
+// Market settlement owns the dated invoice identity and runs in a candidate.
+void issue_market_invoice(AccountsState& state, OrdinalDay day, Invoice invoice);
 void settle_invoice(AccountsState& state, OrdinalDay day, std::string_view id,
                     Cents amount, Cents protected_cash, std::string key);
 void draw_debt(AccountsState& state, OrdinalDay day, Debt debt, std::string cause);

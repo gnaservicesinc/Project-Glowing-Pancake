@@ -36,10 +36,10 @@ runtime::Checkpoint start_fixture(const runtime::CompiledProgram& program, const
     return state;
 }
 
-template<class Record> std::vector<Record> since(const std::vector<Record>& records, std::uint64_t next_id) {
+template<class Records> auto since(const Records& records, std::uint64_t next_id) {
     const auto first = std::lower_bound(records.begin(), records.end(), next_id,
         [](const auto& row, auto id) { return row.id < id; });
-    return {first, records.end()};
+    return std::vector(first, records.end());
 }
 
 template<class Operation> ProbeStep run(runtime::Runtime& engine, Operation operation) {
