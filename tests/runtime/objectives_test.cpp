@@ -369,6 +369,8 @@ void terminal_replay() {
             d["monthly_commitments_cents"]=Json::object();
             d["management"]["succession"]["founder_salary_cents"]=0;
             d["management"]["succession"]["chair_salary_cents"]=0;
+            d["management"]["succession"]["founder_birth_year"]=
+                2114-d["management"]["succession"]["executive_retirement_age"].get<int>();
             d.erase("civic");
             d["authority"]="authority.terminal_fixture";
         } else if(d["id"]=="society.fixture_objectives") {
@@ -431,7 +433,12 @@ void terminal_replay() {
             objective_breach_explanation(game.checkpoint().world,objective));
     std::size_t bytes=0;
     game=reload(game,&bytes);
+    const auto scored=objectives(game).end;
+    check(state(game).succession->terms.back().due_on==deadline,"The fixture must retire its executive at the scored boundary.");
     apply(game,ContinueAfterEnding{});
+    check(state(game).succession->terms.back().starts_on==deadline && objectives(game).end==scored,
+        "Continuing must open the due leadership change and preserve the scored ending.");
+    prepare_mandatory(game);
     apply(game,AdvanceDay{});
     check(state(game).date==advance_days(deadline,Days{1}) && objectives(game).end->day==deadline,
         "A won century did not play into the sandbox.");

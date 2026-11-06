@@ -76,7 +76,7 @@ struct TransactionReceipt {
 
 inline constexpr std::size_t simulation_reservation_limit = 4096;
 inline constexpr std::size_t simulation_opening_limit = 4096;
-inline constexpr std::size_t simulation_receipt_limit = 65536;
+inline constexpr std::size_t simulation_receipt_limit = retained_campaign_days + 65'536;
 
 // Copyable persistence boundary; no serializer is introduced by this task.
 // opening_cursor is the first unhandled action in (due,id) order. A suspended
@@ -94,7 +94,7 @@ struct SimulationState {
     std::vector<OpeningAction> opening_actions;
     std::size_t opening_cursor = 0;
     std::optional<std::uint64_t> pending_choice;
-    std::vector<TransactionReceipt> receipts;
+    PagedHistory<TransactionReceipt, 16> receipts;
     RandomSnapshot random = RandomStreams{0}.snapshot();
     // nullopt preserves legacy engineering fixtures without inventing history.
     // Business scenarios reconcile the cash projection against their ledger.
@@ -202,6 +202,10 @@ struct CommandResult {
 
 struct TrustedSimulationState {};
 void validate_simulation(const SimulationState& state);
+// The world supplies an already validated transaction candidate. A scored
+// deadline has an unprepared morning that must be opened before validation.
+void extend_campaign(SimulationState& state, OrdinalDay end_date,
+                     const std::vector<MarketAdoption>* industry_adoptions = nullptr);
 
 class Simulation {
 public:

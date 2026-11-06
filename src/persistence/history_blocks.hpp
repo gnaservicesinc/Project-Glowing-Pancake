@@ -1,6 +1,7 @@
 #pragma once
 
 #include "json_support.hpp"
+#include <type_traits>
 
 namespace pgp::persistence::detail {
 
@@ -13,9 +14,11 @@ class HistoryRows {
 public:
     explicit HistoryRows(bool packed) : packed_(packed) {}
     void push(Json row);
+    void repeat();
     [[nodiscard]] Json finish();
 
 private:
+    void push_packed(std::string encoded);
     void flush();
     void flush_repeats();
     bool packed_;
@@ -37,9 +40,13 @@ struct DecodedHistoryBlock {
 template<class Consume>
 void read_history_rows(const Json& value, std::string_view path, std::size_t limit,
                        bool packed, Consume consume) {
+    const auto accept = [&](const Json& row, bool repeated) {
+        if constexpr (std::is_invocable_v<Consume&, const Json&, bool>) consume(row, repeated);
+        else consume(row);
+    };
     if (!packed) {
         array(value, path, limit);
-        for (const auto& row : value) consume(row);
+        for (const auto& row : value) accept(row, false);
         return;
     }
     fields(value, path, {"count", "blocks"});
@@ -59,13 +66,13 @@ void read_history_rows(const Json& value, std::string_view path, std::size_t lim
                 const auto row_bytes = previous->dump().size() + 1;
                 if (repeats > bytes_left / row_bytes) invalid(path, "Repeated history exceeds its expanded byte bound");
                 bytes_left -= static_cast<std::size_t>(repeats) * row_bytes;
-                for (std::uint64_t i = 0; i < repeats; ++i) consume(*previous);
+                for (std::uint64_t i = 0; i < repeats; ++i) accept(*previous, true);
                 available -= static_cast<std::size_t>(repeats);
                 remaining -= static_cast<std::size_t>(repeats);
                 previous = nullptr;
             } else {
                 if (available == 0) invalid(path, "History blocks exceed their declared row count");
-                consume(row);
+                accept(row, false);
                 --available;
                 --remaining;
                 previous = &row;

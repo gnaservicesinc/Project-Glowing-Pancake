@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pgp/core/paged_history.hpp>
+#include <pgp/core/day_rows.hpp>
 
 #include <pgp/core/calendar.hpp>
 
@@ -73,15 +74,19 @@ struct ProjectDayWork {
 };
 struct CapacityDay {
     OrdinalDay day{0};
-    std::vector<SourceDayUsage> sources;
-    std::vector<ProjectDayWork> projects;
+    DayRows<SourceDayUsage> sources;
+    DayRows<ProjectDayWork> projects;
+    void share_unchanged(const CapacityDay& previous) {
+        sources.reuse_equal(previous.sources);
+        projects.reuse_equal(previous.projects);
+    }
     auto operator<=>(const CapacityDay&) const = default;
 };
 inline constexpr std::size_t capacity_source_limit = 256;
 inline constexpr std::size_t capacity_staff_change_limit = 8192;
 inline constexpr std::size_t capacity_project_limit = 4096;
-inline constexpr std::size_t capacity_day_limit = 40960;
-inline constexpr std::size_t capacity_work_record_limit = 262144;
+inline constexpr std::size_t capacity_day_limit = retained_campaign_days;
+inline constexpr std::size_t capacity_work_record_limit = capacity_day_limit * 16;
 struct StaffAddition {
     std::string id;
     OrdinalDay day{0};

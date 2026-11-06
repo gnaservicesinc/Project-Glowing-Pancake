@@ -85,7 +85,7 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
         const auto& authored=rival_definition(program,rival.definition_id);
         if (!rival.planning || !authored.planning) invalid("A planned company lost its author profile or continuation");
         const auto& plan=*rival.planning;const auto earliest=advance_days(world.campaign_start,authored.start_after);
-        if (plan.decisions.size()>8192) invalid("Rival weekly decisions exceed their century bound");
+        if (plan.decisions.size()>rival_decision_limit) invalid("Rival weekly decisions exceed their retention bound");
         if (rival.response.has_value()!=authored.response.has_value()) invalid("Rival response state differs from its authored policy");
         if (rival.warned_on && !rival.response) {
             std::uint32_t released=0;for (const auto& row:state.releases) if (row.company_id==world.company_id && row.day<*rival.warned_on) ++released;

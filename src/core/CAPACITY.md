@@ -48,8 +48,8 @@ finite recorded history to reconcile totals, staff/output bounds, active-day
 coverage, cancellation and exact completion cursors. It does not replay the full
 calendar for each mutation. Mutations copy, validate and commit atomically.
 
-Limits are 256 sources, 4,096 projects, 40,960 daily records and 262,144 daily
-project-work records. Required history is never silently removed. Full-century
-and 500-year sandbox
-history compaction/performance, deeper hardware catalogs, research/model effects,
-contract demand/refunds and wholesale capacity are later owning tasks.
+Limits are 256 sources, 4,096 projects, 220,000 daily records and 3,520,000
+retained project-work rows. Consecutive days share unchanged source or
+project detail. Each day retains its date, physical usage and project
+results for reconciliation. Sandbox throughput and memory remain part of
+endurance validation.

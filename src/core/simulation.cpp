@@ -132,7 +132,7 @@ void prepare_opening(SimulationState& state, const std::vector<MarketAdoption>* 
     state.phase = DayPhase::work_ready;
 }
 
-void validate(const SimulationState& state,bool deep=true) {
+void validate(const SimulationState& state,bool deep=true,std::size_t first_receipt=0) {
     const auto invalid = [](const char* message) { throw std::invalid_argument{message}; };
     (void)from_ordinal(state.date);
     (void)from_ordinal(state.end_date);
@@ -281,8 +281,10 @@ void validate(const SimulationState& state,bool deep=true) {
         break;
     default: invalid("Unknown daily phase");
     }
-    std::uint64_t prior_receipt = 0;
-    for (const auto& item : state.receipts) {
+    if (first_receipt > state.receipts.size()) invalid("A transaction discarded committed receipts");
+    auto prior_receipt = first_receipt == 0 ? std::uint64_t{0} : state.receipts[first_receipt - 1].id;
+    for (auto i = first_receipt; i < state.receipts.size(); ++i) {
+        const auto& item = state.receipts[i];
         if (item.id <= prior_receipt || item.id >= state.next_receipt_id ||
             item.revision > state.revision || item.day > state.date || !valid_text(item.cause) ||
             (item.reservation_id != 0 && !std::any_of(state.reservations.begin(),
@@ -340,6 +342,23 @@ void validate_simulation(const SimulationState& state) {
     if (state.lab) validate_lab(*state.lab, *state.capacity, *state.accounts, state.random);
     if (state.business_offers) validate_business_offers(*state.business_offers,*state.accounts,*state.capacity,state.market);
 }
+void extend_campaign(SimulationState& state, OrdinalDay end_date,
+                     const std::vector<MarketAdoption>* industry_adoptions) {
+    (void)from_ordinal(end_date);
+    if (end_date <= state.date || end_date < state.end_date)
+        throw std::invalid_argument("A continuation needs a later campaign end");
+    state.end_date = end_date;
+    state.paused = true;
+    if (state.phase != DayPhase::finished) return;
+    state.phase = DayPhase::opening;
+    // Site sampling skipped the original terminal morning.
+    sample_site_hazards(state);
+    try {
+        prepare_opening(state, industry_adoptions);
+    } catch (const Refusal& failure) {
+        throw std::invalid_argument(failure.explanation);
+    }
+}
 
 Simulation::Simulation(Cents cash) : Simulation{[cash] {
     SimulationState state;
@@ -376,6 +395,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
         if (state_.phase == DayPhase::finished || state_.phase == DayPhase::closed) {
             refuse(CommandReason::campaign_finished, "The campaign ended; its final accounts remain available for inspection.");
         }
+        const auto previous_receipts = state_.receipts.size();
         auto next = outer_transaction?std::move(state_):state_;
         ++next.revision;
         std::optional<std::uint64_t> new_reservation;
@@ -834,7 +854,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
         // its checked append. Replaying the full ledger/capacity/market history
         // here would turn a campaign into quadratic validation work. External
         // restores, explicit state validation and non-daily commands stay deep.
-        validate(next,!std::holds_alternative<AdvanceDay>(command.action));
+        const bool advanced = std::holds_alternative<AdvanceDay>(command.action);
+        validate(next,!advanced,advanced ? previous_receipts : 0);
         state_ = std::move(next);
         return {CommandReason::accepted, state_.revision, command_receipt, new_reservation,
                 "The action was committed."};

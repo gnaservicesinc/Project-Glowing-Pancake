@@ -84,8 +84,10 @@ void warning_delivery_and_reloads() {
     auto& days=private_billing.simulation.market->days;
     const auto history=std::move(days);
     for (auto day:history) {
-        for (auto& segment:day.segments) {
+        for (std::size_t i=0;i<day.segments.size();++i) {
+            auto segment=day.segments[i];
             segment.charged=checked_unit_add(segment.charged,Cents{12345});segment.demand+=500;
+            day.segments.replace(i,std::move(segment));
         }
         days.push_back(std::move(day));
     }

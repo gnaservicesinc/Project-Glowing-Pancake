@@ -4,7 +4,7 @@
 
 namespace pgp::core {
 inline constexpr std::size_t society_regions = 8, society_components = 14, society_audiences = 6;
-inline constexpr std::size_t society_month_limit = 6144, society_campaign_limit = 4096, society_forum_limit = 256;
+inline constexpr std::size_t society_month_limit = retained_campaign_months, society_campaign_limit = 4096, society_forum_limit = 256;
 using WelfareComponents = std::array<std::uint32_t, society_components>;
 using WelfareIndices = std::array<std::uint32_t, 5>;
 using AudienceScores = std::array<std::uint32_t, society_audiences>;

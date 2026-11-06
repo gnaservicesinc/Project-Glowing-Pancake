@@ -87,7 +87,7 @@ void report(const runtime::Checkpoint& checkpoint, std::size_t required, Clock::
 }
 
 void run_endurance(const char* path, std::string_view scenario_id, std::string_view through_date,
-                   const char* seed, std::ostream& output) {
+                   EnduranceOptions options, std::ostream& output) {
     const auto start = Clock::now();
     const auto registry = content::foundation_registry();
     auto collection = content::load_collection(read_content_file(path), registry);
@@ -96,8 +96,8 @@ void run_endurance(const char* path, std::string_view scenario_id, std::string_v
         std::get_if<content::ScenarioDefinition>(&definition->second.data);
     if (!scenario || !scenario->competition || !scenario->objectives)
         throw std::invalid_argument("Choose an authored century competition scenario");
-    if (seed) {
-        const std::string_view input{seed};
+    if (options.seed) {
+        const std::string_view input{options.seed};
         const auto parsed = std::from_chars(input.data(), input.data() + input.size(), scenario->seed);
         if (parsed.ec != std::errc{} || parsed.ptr != input.data() + input.size())
             throw std::invalid_argument("Seed must be an unsigned 64-bit integer");
@@ -105,13 +105,22 @@ void run_endurance(const char* path, std::string_view scenario_id, std::string_v
     const auto through = parse_iso_date(through_date);
     if (through <= scenario->starts_on) throw std::invalid_argument("Endurance date must follow the scenario start");
     const auto program = runtime::compile_collection(collection, registry, runtime::supported_effects());
-    output << "Specialist " << scenario_id << " content=" << collection.content_version
+    output << (options.resume ? "Resume " : "Specialist ") << scenario_id << " content=" << collection.content_version
            << " seed=" << scenario->seed << " through=" << through_date << '\n' << std::flush;
-    const auto opening_day = std::min(through, advance_days(scenario->starts_on, Days{181}));
-    auto opening = session::run_competition_specialist(program, scenario_id, opening_day);
-    if (opening.stop != session::SliceStop::requested_boundary)
-        throw std::runtime_error("The specialist opening ended before its requested boundary");
-    Runtime engine{program, std::move(opening.checkpoint)};
+    const auto initial = [&] {
+        if (options.resume) {
+            auto loaded = persistence::load_file(program, options.resume);
+            if (loaded.checkpoint.world.scenario_id != scenario_id || loaded.checkpoint.world.simulation.date > through)
+                throw std::invalid_argument("Resume requires the same scenario and a date at or after the checkpoint");
+            return std::move(loaded.checkpoint);
+        }
+        const auto opening_day = std::min(through, advance_days(scenario->starts_on, Days{181}));
+        auto opening = session::run_competition_specialist(program, scenario_id, opening_day);
+        if (opening.stop != session::SliceStop::requested_boundary)
+            throw std::runtime_error("The specialist opening ended before its requested boundary");
+        return std::move(opening.checkpoint);
+    };
+    Runtime engine{program, initial()};
     std::size_t required = 0;
     try {
         while (engine.current_state().world.simulation.date < through) {
@@ -136,7 +145,11 @@ void run_endurance(const char* path, std::string_view scenario_id, std::string_v
         }
         report(engine.current_state(), required, start, output);
         const auto save_start = Clock::now();
-        const auto bytes = persistence::encode_save(program, engine.current_state());
+        const auto bytes = [&] {
+            if (!options.save) return persistence::encode_save(program, engine.current_state());
+            persistence::save_file(program, engine.current_state(), options.save);
+            return persistence::read_bounded(options.save);
+        }();
         const auto save_seconds = elapsed(save_start);
         const auto load_start = Clock::now();
         const auto loaded = persistence::decode_save(program, bytes);

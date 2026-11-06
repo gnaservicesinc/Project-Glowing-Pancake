@@ -3,10 +3,16 @@
 #include <pgp/core/units.hpp>
 
 #include <compare>
+#include <cstddef>
 #include <string>
 #include <string_view>
 
 namespace pgp::core {
+
+// Storage budgets cover the scored century and five more sandbox centuries.
+// These budgets bound retained records independently of the calendar itself.
+inline constexpr std::size_t retained_campaign_days = 220'000;
+inline constexpr std::size_t retained_campaign_months = (retained_campaign_days + 27) / 28;
 
 struct CivilDate {
     int year;

@@ -57,10 +57,10 @@ from subsequent history. Existing segment preferences are immutable in this
 primitive API; future catalog/product-launch tooling supplies explicit preference
 updates rather than silently inventing coefficients.
 
-The market supports 64 segments, 64 products, 256 contracts and 40,960
+The market supports 64 segments, 64 products, 256 contracts and 220,000
 closed days. The settlement history allows two detail rows per segment per
 supported day across the whole journal. The market checks the bound when
 appending each day. Adoption history has its own record bound. Tasks are
 bounded to one billion per segment per day, task prices to 100 million
-cents and utilities to one million before squaring. Longer sandbox
-retention remains part of endurance validation.
+cents and utilities to one million before squaring. Adjacent days share
+unchanged contract, sale and segment rows while keeping individual dates.

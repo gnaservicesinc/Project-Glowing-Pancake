@@ -136,8 +136,12 @@ void outages_and_cancellation() {
     refuses_unchanged(state, [&] { update_effective_capacity(state, OrdinalDay{3}, "lease", MilliCUPerDay{100001}); });
     auto corrupt = state;
     auto wrong_work = corrupt.days.front();
-    wrong_work.projects.front().work = MilliCU{99999};
+    auto edited_project = wrong_work.projects.front();
+    edited_project.work = MilliCU{99999};
+    wrong_work.projects.replace(0, std::move(edited_project));
     corrupt.days.replace(0, std::move(wrong_work));
+    check(state.days.front().projects.front().work != MilliCU{99999},
+          "Editing a candidate must preserve the shared settled day");
     bool rejected = false;
     try { validate_capacity(corrupt); } catch (const std::exception&) { rejected = true; }
     check(rejected, "Corrupt daily work must refuse restore");

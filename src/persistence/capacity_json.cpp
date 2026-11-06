@@ -63,7 +63,13 @@ Json capacity_json(const core::CapacityState& state, bool packed) {
             {"cause",project.cause}});
         if (project.customer_inference) projects.back()["customer_inference"] = true;
     }
+    const core::CapacityDay* prior = nullptr;
     for (const auto& closed:state.days) {
+        if (packed && prior && prior->sources == closed.sources && prior->projects == closed.projects) {
+            days.repeat();
+            continue;
+        }
+        prior = &closed;
         Json source_usage=Json::array(),project_work=Json::array();
         for (const auto& source:closed.sources) {
             source_usage.push_back({{"source_id",source.source_id},{"effective_milli_CU_per_day",source.effective.value()},
@@ -137,11 +143,24 @@ core::CapacityState parse_capacity(const Json& value, bool packed) {
                 boolean(project.at("customer_inference"),"capacity/customer_inference")});
     }
     std::size_t project_records=0;
-    read_history_rows(value.at("days"), "capacity/days", core::capacity_day_limit, packed, [&](const Json& closed) {
+    const auto count_work = [&](std::size_t added) {
+        if (added > core::capacity_work_record_limit - project_records)
+            invalid("capacity/day/projects", "Project work history exceeds its total record bound");
+        project_records += added;
+    };
+    read_history_rows(value.at("days"), "capacity/days", core::capacity_day_limit, packed, [&](const Json& closed, bool repeat) {
+        const auto closed_day = packed ? core::advance_days(result.starts_on, core::Days{result.days.size()}) : day(closed.at("day"));
+        if (repeat) {
+            auto row = result.days.back();
+            row.day = closed_day;
+            count_work(row.projects.size());
+            result.days.push_back(std::move(row));
+            return;
+        }
         if (packed) fields(closed,"capacity/closed_day",{"sources","projects"});
         else fields(closed,"capacity/closed_day",{"day","sources","projects"});
         core::CapacityDay row;
-        row.day = packed ? core::advance_days(result.starts_on, core::Days{result.days.size()}) : day(closed.at("day"));
+        row.day = closed_day;
         const auto& source_usage=closed.at("sources");array(source_usage,"capacity/day/sources",core::capacity_source_limit);
         for (const auto& source:source_usage) {
             fields(source,"capacity/source_usage",{"source_id","effective_milli_CU_per_day","used_milli_CU"},
@@ -152,9 +171,7 @@ core::CapacityState parse_capacity(const Json& value, bool packed) {
                 source.contains("replica_available_milli_CU_per_day") ? rate(source.at("replica_available_milli_CU_per_day")) : core::MilliCUPerDay{0}});
         }
         const auto& project_work=closed.at("projects");array(project_work,"capacity/day/projects",core::capacity_project_limit);
-        if (project_work.size()>core::capacity_work_record_limit-project_records)
-            invalid("capacity/day/projects","Project work history exceeds its total record bound");
-        project_records+=project_work.size();
+        count_work(project_work.size());
         for (const auto& project:project_work) {
             if (!project.is_object()) invalid("capacity/project_work","Expected object");
             Json prior_shape=Json::object();
@@ -167,6 +184,7 @@ core::CapacityState parse_capacity(const Json& value, bool packed) {
                 u64(project.at("useful_tasks"),"capacity/project_work/useful_tasks"),staff(project.at("assigned_staff")),
                 project.contains("protected_tasks")?u64(project.at("protected_tasks"),"capacity/project_work/protected_tasks"):0});
         }
+        if (!result.days.empty()) row.share_unchanged(result.days.back());
         result.days.push_back(std::move(row));
     });
     return result;

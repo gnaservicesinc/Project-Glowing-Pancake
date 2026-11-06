@@ -306,7 +306,7 @@ void review_rival(WorldState& world,const CompiledProgram& program,RivalCompany&
     acknowledge_leadership(rival);
     if (rival.simulation.date<plan.next_review) return;
     if (rival.response && rival.response->phase!=HeavyweightPhase::compete) return;
-    if (plan.decisions.size()>=8192) invalid("Rival weekly decision history exceeds its century bound");
+    if (plan.decisions.size()>=rival_decision_limit) invalid("Rival weekly decision history exceeds its retention bound");
     const auto& definition=rival_definition(program,rival.definition_id);diffuse(world,rival);
     const auto stream_index=static_cast<std::size_t>(RandomStream::rivals);const auto before=rival.simulation.random[stream_index];
     SplitMix64 stream{before};const auto draw=stream.next();rival.simulation.random[stream_index]=stream.state();

@@ -26,6 +26,13 @@ class PagedHistory {
     static_assert(PageSize > 0);
     static constexpr std::size_t fanout = 16;
     struct Node {
+        Node() = default;
+        Node(const Node& other) : children(other.children) {
+            if (!other.rows.empty()) {
+                rows.reserve(PageSize);
+                rows.insert(rows.end(), other.rows.begin(), other.rows.end());
+            }
+        }
         std::array<std::shared_ptr<Node>, fanout> children{};
         std::vector<T> rows;
     };
@@ -136,7 +143,10 @@ private:
             if (!*slot) *slot = std::make_shared<Node>();
             else if (slot->use_count() > 1) *slot = std::make_shared<Node>(**slot);
             auto& node = **slot;
-            if (span == 1) return node.rows;
+            if (span == 1) {
+                if (node.rows.capacity() == 0) node.rows.reserve(PageSize);
+                return node.rows;
+            }
             span /= fanout;
             slot = &node.children[page / span];
             page %= span;

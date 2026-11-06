@@ -267,18 +267,13 @@ void continue_campaign(WorldState& world) {
     auto& o=*world.objectives;
     if(!o.end) open_campaign_postmortem(world);
     const bool observer=actual_failure(o.end->cause);
-    auto extend=[](SimulationState& actor) {
-        actor.end_date=sandbox_limit();
-        actor.paused=true;
-        if(actor.phase==DayPhase::finished) {
-            actor.phase=DayPhase::opening;
-            actor=std::move(Simulation{std::move(actor)}).release_checkpoint();
-        }
-    };
     o.mode=observer?ObjectiveMode::observer:ObjectiveMode::sandbox;
     if(observer) o.observer_day=world.simulation.date;
-    else extend(world.simulation);
-    for(auto& actor:world.competition->companies) extend(actor.simulation);
+    else {
+        const auto installed=industry_adoption_snapshot(world);
+        extend_campaign(world.simulation,sandbox_limit(),&installed);
+    }
+    for(auto& actor:world.competition->companies) extend_campaign(actor.simulation,sandbox_limit());
 }
 
 void validate_objectives(const WorldState& world,const CompiledProgram& program,bool deep) {

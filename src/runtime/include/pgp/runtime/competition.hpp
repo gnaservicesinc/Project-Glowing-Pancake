@@ -24,10 +24,11 @@ struct RivalDecision {
     RivalObservation observation;
     auto operator<=>(const RivalDecision&) const = default;
 };
+inline constexpr std::size_t rival_decision_limit = (core::retained_campaign_days + 6) / 7;
 struct RivalPlanState {
     std::optional<core::OrdinalDay> entered_on;
     core::OrdinalDay next_review{0};
-    std::vector<RivalDecision> decisions;
+    core::PagedHistory<RivalDecision, 16> decisions;
     auto operator<=>(const RivalPlanState&) const = default;
 };
 struct RivalCompany {

@@ -1076,10 +1076,11 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
     if (regional) invoice(ledger, day, invoice_id("sale", "combined", day), InvoiceKind::receivable,
                           combined_sales, "Delivered regional customer work");
     close_capacity_day(pool, day, actual_serving_requests(next, pool, prepared, allocation), false, wholesale);
-    std::sort(record.contracts.begin(), record.contracts.end(), [](const auto& a, const auto& b) { return a.contract_id < b.contract_id; });
-    std::sort(record.discretionary.begin(), record.discretionary.end(), [](const auto& a, const auto& b) {
+    record.contracts.sort([](const auto& a, const auto& b) { return a.contract_id < b.contract_id; });
+    record.discretionary.sort([](const auto& a, const auto& b) {
         return std::tie(a.segment_id, a.product_id) < std::tie(b.segment_id, b.product_id);
     });
+    if (!next.days.empty()) record.share_unchanged(next.days.back());
     next.days.push_back(std::move(record)); next.closed_through = day;
     if (month_end(day)) review_adoption(next, day);
     if (validate_io) {

@@ -10,8 +10,8 @@ namespace pgp::core {
 inline constexpr std::size_t market_segment_limit = allocation_segment_limit;
 inline constexpr std::size_t market_product_limit = 64;
 inline constexpr std::size_t market_contract_limit = 256;
-inline constexpr std::size_t market_day_limit = 40960;
-inline constexpr std::size_t market_record_limit = 262144;
+inline constexpr std::size_t market_day_limit = retained_campaign_days;
+inline constexpr std::size_t market_record_limit = retained_campaign_months * market_segment_limit;
 // Retention for one segment summary and delivery per region per day over
 // the supported history. Active products and commitments have their own caps.
 inline constexpr std::size_t market_settlement_limit = market_day_limit * market_segment_limit * 2;
@@ -110,11 +110,16 @@ struct MarketSegmentDay {
 };
 struct MarketDay {
     OrdinalDay day{0};
-    std::vector<ContractDayResult> contracts;
-    std::vector<MarketDelivery> discretionary;
-    std::vector<MarketSegmentDay> segments;
+    DayRows<ContractDayResult> contracts;
+    DayRows<MarketDelivery> discretionary;
+    DayRows<MarketSegmentDay> segments;
     std::uint64_t allocation_rounds = 0;
     std::optional<std::uint64_t> total_demand{};
+    void share_unchanged(const MarketDay& previous) {
+        contracts.reuse_equal(previous.contracts);
+        discretionary.reuse_equal(previous.discretionary);
+        segments.reuse_equal(previous.segments);
+    }
     auto operator<=>(const MarketDay&) const = default;
 };
 struct MarketHistoryCount {

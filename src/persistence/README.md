@@ -121,7 +121,11 @@ validation. Posting IDs follow their original sequence. Each posting
 pattern carries its debit, credit, cause and key form. Amount and invoice
 offsets refer to the preceding entry with that pattern. Arbitrary keys
 stay literal. All historical rows, current obligations and evidence links
-survive.
+survive. Dated invoices also reuse their stem and cause and keep exact
+offsets for due dates and amounts. Older named rows and the first v3
+invoice layout still load. Monthly society records use the same bounded
+blocks after the first twelve months. Rival decisions retain their
+observations and reconstruct the original single draw from its stream.
 
 The file still has the configured envelope byte and JSON-event limits.
 Current builds read the previous formats. Older readers preserve a v3

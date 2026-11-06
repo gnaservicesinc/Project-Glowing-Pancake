@@ -60,8 +60,8 @@ struct EquityHolding {
     bool reserved_pool = false;
     auto operator<=>(const EquityHolding&) const = default;
 };
-inline constexpr std::size_t accounts_posting_limit = 262144;
-inline constexpr std::size_t accounts_document_limit = 524288;
+inline constexpr std::size_t accounts_posting_limit = retained_campaign_days * 16;
+inline constexpr std::size_t accounts_document_limit = retained_campaign_days * 4;
 inline constexpr std::size_t accounts_open_invoice_limit = 8192;
 inline constexpr std::size_t accounts_terms_limit = 256;
 struct PostingTotals {

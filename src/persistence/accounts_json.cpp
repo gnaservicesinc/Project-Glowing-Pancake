@@ -36,6 +36,10 @@ std::string invoice_month(core::OrdinalDay due) {
     const auto date = core::from_ordinal(due);
     return core::iso_date(core::to_ordinal({date.year, date.month, 1}));
 }
+std::string dated_invoice_id(std::string stem, bool month, core::OrdinalDay due) {
+    stem += month ? invoice_month(due) : core::iso_date(due);
+    return stem;
+}
 Json packed_invoice_id(const core::Invoice& invoice) {
     const std::string_view id = invoice.id;
     constexpr std::size_t date_size = 10;
@@ -47,14 +51,17 @@ Json packed_invoice_id(const core::Invoice& invoice) {
     }
     return invoice.id;
 }
-std::string parse_invoice_id(const Json& value, core::OrdinalDay due) {
-    if (value.is_string()) return label(value);
+std::pair<std::string, bool> parse_invoice_stem(const Json& value) {
     array(value, "accounts/invoice/dated_id", 2);
     if (value.size() != 2) invalid("accounts/invoice/dated_id", "Dated invoice needs a stem and calendar reference");
     auto stem = text(value.at(0), "accounts/invoice/stem", 246);
     if (!stem.ends_with('/')) invalid("accounts/invoice/stem", "Dated invoice stem must end with a slash");
-    stem += boolean(value.at(1), "accounts/invoice/month") ? invoice_month(due) : core::iso_date(due);
-    return stem;
+    return {std::move(stem), boolean(value.at(1), "accounts/invoice/month")};
+}
+std::string parse_invoice_id(const Json& value, core::OrdinalDay due) {
+    if (value.is_string()) return label(value);
+    auto [stem, month] = parse_invoice_stem(value);
+    return dated_invoice_id(std::move(stem), month, due);
 }
 
 constexpr std::array<std::string_view, 5> key_prefixes{"invoice.issue:", "invoice/", "accrue/", "settle/", "debt/"};
@@ -163,15 +170,73 @@ core::Posting parse_archived_posting(const Json& row, const core::AccountsState&
     return {state.postings.size() + 1, posted_on, pattern.debit, pattern.credit, core::Cents{pattern.prior.amount},
             pattern.cause, state.owner, std::move(key), std::move(document)};
 }
-core::Invoice parse_archived_invoice(const Json& row) {
+core::InvoiceKind parse_invoice_kind(const Json& value) {
+    return u64(value, "accounts/invoice/kind", 1) == 0 ? core::InvoiceKind::receivable : core::InvoiceKind::payable;
+}
+core::Cents invoice_settled(core::Cents amount, core::Cents unpaid) {
+    if (unpaid.value() < 0 || unpaid > amount) invalid("accounts/invoice/unpaid", "Unpaid amount exceeds the invoice");
+    return core::checked_unit_subtract(amount, unpaid);
+}
+struct InvoiceOffsets {
+    core::OrdinalDay due{0};
+    core::Cents amount{0};
+};
+struct InvoicePatterns {
+    std::map<std::tuple<std::string, bool, core::InvoiceKind, std::string_view>, std::size_t> ids;
+    std::vector<InvoiceOffsets> offsets;
+    Json rows = Json::array();
+};
+Json archived_invoice(const core::Invoice& invoice, InvoicePatterns& patterns) {
+    auto id = packed_invoice_id(invoice);
+    const auto kind = invoice.kind == core::InvoiceKind::receivable ? 0 : 1;
+    const auto unpaid = core::checked_unit_subtract(invoice.amount, invoice.settled).value();
+    if (id.is_string()) return Json::array({std::move(id), kind, invoice.due.value(), invoice.amount.value(), unpaid, invoice.cause});
+    auto key = std::tuple{id.at(0).get<std::string>(), id.at(1).get<bool>(), invoice.kind, std::string_view{invoice.cause}};
+    const auto [entry, inserted] = patterns.ids.try_emplace(std::move(key), patterns.offsets.size());
+    if (inserted) {
+        patterns.rows.push_back(Json::array({std::move(id), kind, invoice.cause}));
+        patterns.offsets.emplace_back();
+    }
+    auto& prior = patterns.offsets[entry->second];
+    const auto due = core::checked_subtract(invoice.due.value(), std::exchange(prior.due, invoice.due).value());
+    const auto amount = core::checked_unit_subtract(invoice.amount, std::exchange(prior.amount, invoice.amount));
+    return Json::array({entry->second, due, amount.value(), unpaid});
+}
+struct RestoredInvoicePattern {
+    std::string stem;
+    bool month;
+    core::InvoiceKind kind;
+    std::string cause;
+    InvoiceOffsets prior;
+};
+std::vector<RestoredInvoicePattern> parse_invoice_patterns(const Json& table) {
+    array(table, "accounts/invoice_patterns", core::accounts_document_limit);
+    std::vector<RestoredInvoicePattern> result;
+    for (const auto& row : table) {
+        array(row, "accounts/invoice_pattern", 3);
+        if (row.size() != 3) invalid("accounts/invoice_pattern", "Missing invoice pattern columns");
+        auto [stem, month] = parse_invoice_stem(row.at(0));
+        result.push_back({std::move(stem), month, parse_invoice_kind(row.at(1)), label(row.at(2)), {}});
+    }
+    return result;
+}
+core::Invoice parse_archived_invoice(const Json& row, std::vector<RestoredInvoicePattern>& patterns) {
     array(row, "accounts/invoice", 6);
+    if (row.size() == 4) {
+        const auto index = u64(row.at(0), "accounts/invoice/pattern");
+        if (index >= patterns.size()) invalid("accounts/invoice/pattern", "Unknown invoice pattern");
+        auto& pattern = patterns[static_cast<std::size_t>(index)];
+        auto& prior = pattern.prior;
+        prior.due = core::OrdinalDay{core::checked_add(prior.due.value(), i64(row.at(1), "accounts/invoice/due_delta"))};
+        prior.amount = core::checked_unit_add(prior.amount, cents(row.at(2)));
+        return {dated_invoice_id(pattern.stem, pattern.month, prior.due), pattern.kind, prior.due, prior.amount,
+            invoice_settled(prior.amount, cents(row.at(3))), pattern.cause};
+    }
     if (row.size() != 6) invalid("accounts/invoice", "Archived invoice has missing columns");
     const auto due = day(row.at(2));
     const auto amount = cents(row.at(3));
-    const auto unpaid = cents(row.at(4));
-    if (unpaid.value() < 0 || unpaid > amount) invalid("accounts/invoice/unpaid", "Unpaid amount exceeds the invoice");
-    return {parse_invoice_id(row.at(0), due), static_cast<core::InvoiceKind>(u64(row.at(1), "accounts/invoice/kind", 1)),
-            due, amount, core::checked_unit_subtract(amount, unpaid), label(row.at(5))};
+    return {parse_invoice_id(row.at(0), due), parse_invoice_kind(row.at(1)),
+            due, amount, invoice_settled(amount, cents(row.at(4))), label(row.at(5))};
 }
 }
 
@@ -179,6 +244,7 @@ Json accounts_json(const core::AccountsState& state, bool packed) {
     HistoryRows postings{packed}, invoices{packed};
     Json recurring=Json::array(), debts=Json::array(),holdings=Json::array();
     PostingPatterns patterns{state.starts_on};
+    InvoicePatterns invoice_patterns;
     for (const auto& posting:state.postings) postings.push(packed ? archived_posting(posting, state.invoices, patterns) : Json{
         {"id",posting.id},{"day",posting.day.value()},
         {"debit",account_json(posting.debit)},{"credit",account_json(posting.credit)},
@@ -187,9 +253,7 @@ Json accounts_json(const core::AccountsState& state, bool packed) {
     for (const auto& invoice:state.invoices) {
         if (invoice.kind!=core::InvoiceKind::receivable && invoice.kind!=core::InvoiceKind::payable)
             invalid("accounts/invoice/kind","Unsupported invoice kind");
-        if (packed) invoices.push(Json::array({packed_invoice_id(invoice), static_cast<unsigned>(invoice.kind),
-            invoice.due.value(), invoice.amount.value(),
-            core::checked_unit_subtract(invoice.amount, invoice.settled).value(), invoice.cause}));
+        if (packed) invoices.push(archived_invoice(invoice, invoice_patterns));
         else invoices.push({{"id",invoice.id},
             {"kind",invoice.kind==core::InvoiceKind::receivable?"receivable":"payable"},
             {"due",invoice.due.value()},{"amount_cents",invoice.amount.value()},
@@ -211,23 +275,28 @@ Json accounts_json(const core::AccountsState& state, bool packed) {
         {"closed_through",optional_day(state.closed_through)},{"next_posting_id",state.next_posting_id},
         {"postings",postings.finish()},{"invoices",invoices.finish()},
         {"recurring",std::move(recurring)},{"debts",std::move(debts)},{"holdings",std::move(holdings)}};
-    if (packed) result["posting_patterns"] = std::move(patterns.rows);
+    if (packed) {
+        result["posting_patterns"] = std::move(patterns.rows);
+        result["invoice_patterns"] = std::move(invoice_patterns.rows);
+    }
     return result;
 }
 
 core::AccountsState parse_accounts(const Json& value, bool packed) {
     fields(value,"accounts",{"owner","starts_on","closed_through","next_posting_id",
-        "postings","invoices","recurring","debts","holdings"},{"posting_patterns"});
-    if (value.contains("posting_patterns") != packed)
+        "postings","invoices","recurring","debts","holdings"},{"posting_patterns","invoice_patterns"});
+    if (value.contains("posting_patterns") != packed || (!packed && value.contains("invoice_patterns")))
         invalid("accounts/posting_patterns", "Posting patterns must match the accounts storage format");
     core::AccountsState result;
     result.owner=label(value.at("owner"));
     result.starts_on=day(value.at("starts_on"));
     result.closed_through=parse_optional_day(value.at("closed_through"));
     result.next_posting_id=u64(value.at("next_posting_id"),"accounts/next_posting_id");
+    auto invoice_patterns = value.contains("invoice_patterns") ?
+        parse_invoice_patterns(value.at("invoice_patterns")) : std::vector<RestoredInvoicePattern>{};
     read_history_rows(value.at("invoices"), "accounts/invoices", core::accounts_document_limit, packed, [&](const Json& invoice) {
         if (packed) {
-            result.invoices.push_back(parse_archived_invoice(invoice), result.closed_through);
+            result.invoices.push_back(parse_archived_invoice(invoice, invoice_patterns), result.closed_through);
             return;
         }
         fields(invoice,"accounts/invoice",{"id","kind","due","amount_cents","settled_cents","cause"});

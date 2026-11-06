@@ -744,8 +744,17 @@ RuntimeResult Runtime::submit(const core::Command& command) {
                 open_campaign_postmortem(next.world);
                 result.explanation="The scored campaign ended at the recorded breach.";
             } else {
+                const bool finished_morning=next.world.simulation.phase==core::DayPhase::finished;
                 continue_campaign(next.world);
                 competition_detail::refresh_wholesale(next.world,program_);
+                if (finished_morning) {
+                    update_competitive_offers(next.world,program_);
+                    update_heavyweight_responses(next.world,program_);
+                    for (auto& rival:next.world.competition->companies)
+                        competition_detail::review_rival(next.world,program_,rival);
+                    competition_detail::collect_public_results(next.world,
+                        core::OrdinalDay{next.world.simulation.date.value()-1});
+                }
                 if(!observing_world(next.world)) prepare(next,program_,result,steps,trace_mode_);
                 result.explanation=observing_world(next.world)?"Observer mode preserves the institution's final accounts.":"Sandbox continues with the scored ending preserved.";
             }

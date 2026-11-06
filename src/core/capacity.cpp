@@ -470,8 +470,8 @@ CapacityDay preview_capacity_day_unchecked(const CapacityState& state, OrdinalDa
         const auto priority = serves ? maximum_tasks(MilliCU{protected_work[i]}, row.inference_milli_CU_per_task) : 0;
         record.projects.push_back({row.id, MilliCU{allocations[i]}, tasks, row.staff, priority});
     }
-    std::sort(record.sources.begin(), record.sources.end(), [](const auto& a, const auto& b) { return a.source_id < b.source_id; });
-    std::sort(record.projects.begin(), record.projects.end(), [](const auto& a, const auto& b) { return a.project_id < b.project_id; });
+    record.sources.sort([](const auto& a, const auto& b) { return a.source_id < b.source_id; });
+    record.projects.sort([](const auto& a, const auto& b) { return a.project_id < b.project_id; });
     return record;
 }
 } // namespace
@@ -484,6 +484,7 @@ CapacityDay preview_capacity_day(const CapacityState& state, OrdinalDay day,
 void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<ServingRequest>& serving,
                         bool validate_io, std::span<const WholesaleUse> wholesale) {
     const auto apply_day = [&](CapacityState& candidate) {
+        if (candidate.days.size() >= capacity_day_limit) invalid("Capacity history reached its supported day bound");
         auto record = preview_capacity_day_unchecked(candidate, day, serving);
         for (const auto& transfer : wholesale) {
             const auto found = std::find_if(record.sources.begin(), record.sources.end(),
@@ -491,7 +492,9 @@ void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<
             if (found == record.sources.end() || transfer.work.value() <= 0 || found->wholesale_used.value() != 0 ||
                 transfer.work.value() > found->wholesale_available.value())
                 invalid("Wholesale work exceeds its reserved physical source");
-            found->wholesale_used = transfer.work;
+            auto usage = *found;
+            usage.wholesale_used = transfer.work;
+            record.sources.replace(static_cast<std::size_t>(found - record.sources.begin()), std::move(usage));
         }
         for (std::size_t i = 0; i < candidate.projects.size(); ++i) {
             auto& row = candidate.projects[i];
@@ -506,6 +509,7 @@ void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<
                 row.status = ProjectStatus::completed; row.stopped_on = day;
             }
         }
+        if (!candidate.days.empty()) record.share_unchanged(candidate.days.back());
         candidate.days.push_back(std::move(record)); candidate.closed_through = day;
     };
     if (validate_io) mutate(state, apply_day);

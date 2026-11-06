@@ -1522,3 +1522,45 @@ back. The run took 676s and peaked at 2.34 GB RSS, including save and
 reload attempts. Next work is to reduce in-memory history costs and
 move the posting bound with validated retention before the century and
 sandbox checks. M8-02 remains open at 42/52.
+
+### Scored century and sandbox opening
+
+The 2091-01-31 checkpoint captured 262,143 postings and seven live
+invoices before the old refusal. Daily transactions now share receipt
+and rival decision pages and validate new daily receipts as they append.
+Adjacent market and capacity days share unchanged detail in memory and
+reuse it during save and load. Core history budgets cover 220,000 dates,
+with separate limits for live commitments. Full restore still validates
+the detailed journal.
+
+The stock Frontier specialist resumed that exact checkpoint and reached
+2114-01-01 after all 36,524 workdays. It won Survival, had ten operating
+rivals out of fifteen entrants, and closed with 4,903,261,354 cents of
+cash and 373,261,354 cents of cumulative profit in constant 2014 money.
+The 100-year checkpoint reopened exactly from 21,156,302 bytes at the
+default limit after packing dated invoice patterns, society months and
+weekly decisions.
+
+Four rivals reached retirement on the scored deadline. Sandbox opening
+now processes the owning morning systems before validating the extended
+campaign, including due leadership and rival reviews. The normal
+headless command resumed and saved 2114-01-02 exactly in 21,164,112 bytes.
+The original score is identical and all four caretakers start on the
+correct date. Save and load took 7.92s and 8.39s on the M2 Max. The
+two-second target and the long-run memory target remain open.
+
+```sh
+build/release/bin/pgp-headless --endurance data/runtime/first-playable.json scenario.century_frontier 2114-01-02 --resume /path/to/century.pgpsave --save /path/to/sandbox.pgpsave
+```
+
+All 79 optimized Mac CTests and the focused ten-year terminal replay
+passed. The terminal replay tests an executive due to retire on the
+scored date and preserves the five non-race outcomes after continuation.
+A same-seed three-year open ecosystem probe published research, deployed
+three services and earned 115,419,907 cents of cumulative profit.
+Its 1,555,157-byte checkpoint reloaded exactly. A separate owned-rack
+provider probe funded 24 contracts and recorded 4,088 paid contract days,
+11,370,000 milli-CU of buyer work and 400,624,000 cents of wholesale
+receipts. It ended 970,770 cents below break-even after costs and reopened
+its 1,567,196-byte checkpoint exactly. M8-02 remains open for the longer
+strategy comparisons and 500-year run.

@@ -58,9 +58,9 @@ amounts for audit, including when the open register is empty. Ledger reports use
 checked balances derived as postings append and rebuilt from postings on load.
 Checkpoint copies share historical pages and isolate changes on write.
 
-The state bounds are 262,144 postings, 524,288 retained invoices, 8,192 unpaid or
-future-due invoices, 256 recurring terms/debts/holders, and a 36,524-day projection
-horizon. The save continues to record the ordered postings and invoices.
-Full-century history retention, archival/compaction and long-run performance must
-be revisited before M8 acceptance; this module's focused checks establish the
-opening business accounting cases.
+The history budget allows 16 postings and four invoices per supported day
+across the retained journal, for up to 3,520,000 postings and 880,000 invoices.
+The open register remains capped at 8,192 unpaid or future-due invoices.
+There are separate bounds of 256 recurring terms, debts and holders and
+36,524 days per cash projection. Saves retain the original posting and
+invoice order. The scored century and sandbox have separate validation runs.

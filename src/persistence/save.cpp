@@ -372,6 +372,35 @@ std::vector<WholesaleContract> parse_wholesale(const Json& value) {
     }
     return result;
 }
+struct DecisionCursor {
+    OrdinalDay day{0};
+    std::uint64_t stream = 0;
+};
+Json packed_decision(const RivalDecision& decision, DecisionCursor& cursor) {
+    const auto gap = core::checked_subtract(decision.day.value(), std::exchange(cursor.day, decision.day).value());
+    const auto stream_gap = decision.stream_before - cursor.stream;
+    cursor.stream = decision.stream_after;
+    const auto& observation = decision.observation;
+    return Json::array({gap, decision.action, decision.subject, decision.explanation, decision.accepted,
+        stream_gap, observation.public_providers, observation.public_price.value(),
+        observation.demand_lower, observation.demand_upper});
+}
+RivalDecision parse_packed_decision(const Json& row, DecisionCursor& cursor) {
+    detail::array(row, "competition/decision", 10);
+    if (row.size() != 10) detail::invalid("competition/decision", "Missing packed decision columns");
+    cursor.day = OrdinalDay{core::checked_add(cursor.day.value(), detail::i64(row.at(0), "competition/decision/day_gap"))};
+    const auto before = cursor.stream + detail::u64(row.at(5), "competition/decision/stream_gap");
+    core::SplitMix64 draw{before};
+    (void)draw.next();
+    cursor.stream = draw.state();
+    const auto providers = static_cast<std::uint32_t>(detail::u64(row.at(6), "competition/decision/providers", 21));
+    RivalObservation observation{cursor.day, providers, Cents{detail::i64(row.at(7), "competition/decision/price")},
+        detail::u64(row.at(8), "competition/decision/demand_lower"), detail::u64(row.at(9), "competition/decision/demand_upper")};
+    return {cursor.day, detail::text(row.at(1), "competition/decision/action", 32),
+        detail::text(row.at(2), "competition/decision/subject", 256, true),
+        detail::text(row.at(3), "competition/decision/explanation", 1024),
+        detail::boolean(row.at(4), "competition/decision/accepted"), before, cursor.stream, observation};
+}
 Json competition_json(const CompetitionState& state, bool packed_world) {
     Json companies=Json::array(),notices=Json::array();
     detail::CompetitionHistoryBudget history_budget;
@@ -386,7 +415,12 @@ Json competition_json(const CompetitionState& state, bool packed_world) {
                 company["simulation_storage"]="history-rows-v2";
             }
             detail::HistoryRows decisions{packed};
+            DecisionCursor cursor;
             for (const auto& decision:row.planning->decisions) {
+                if (packed) {
+                    decisions.push(packed_decision(decision, cursor));
+                    continue;
+                }
                 const auto& observation=decision.observation;
                 decisions.push({{"day",decision.day.value()},{"action",decision.action},{"subject",decision.subject},{"explanation",decision.explanation},
                     {"accepted",decision.accepted},{"stream_before",decision.stream_before},{"stream_after",decision.stream_after},
@@ -464,7 +498,12 @@ CompetitionState parse_competition(const Json& value, bool packed_world) {
         if (row.contains("planning")) {
             const auto& plan=row.at("planning");detail::fields(plan,"competition/plan",{"entered_on","next_review","decisions"});
             RivalPlanState next{parse_day(plan.at("entered_on")),OrdinalDay{detail::i64(plan.at("next_review"),"next_review")},{}};
-            detail::read_history_rows(plan.at("decisions"), "competition/decisions", 8192, packed, [&](const Json& decision) {
+            DecisionCursor cursor;
+            detail::read_history_rows(plan.at("decisions"), "competition/decisions", rival_decision_limit, packed, [&](const Json& decision) {
+                if (packed && decision.is_array()) {
+                    next.decisions.push_back(parse_packed_decision(decision, cursor));
+                    return;
+                }
                 detail::fields(decision,"competition/decision",{"day","action","subject","explanation","accepted","stream_before","stream_after","observation"});
                 const auto& observation=decision.at("observation");detail::fields(observation,"competition/observation",{"day","providers","price","demand_lower","demand_upper"});
                 const auto providers=detail::u64(observation.at("providers"),"providers");if (providers>21) detail::invalid("providers","Public provider count exceeds its bound");
@@ -473,6 +512,8 @@ CompetitionState parse_competition(const Json& value, bool packed_world) {
                 next.decisions.push_back({OrdinalDay{detail::i64(decision.at("day"),"day")},detail::text(decision.at("action"),"action",32),detail::text(decision.at("subject"),"subject",256,true),
                     detail::text(decision.at("explanation"),"explanation",1024),detail::boolean(decision.at("accepted"),"accepted"),detail::u64(decision.at("stream_before"),"stream_before"),
                     detail::u64(decision.at("stream_after"),"stream_after"),observed});
+                cursor.day = next.decisions.back().day;
+                cursor.stream = next.decisions.back().stream_after;
             });
             company.planning=std::move(next);
         }

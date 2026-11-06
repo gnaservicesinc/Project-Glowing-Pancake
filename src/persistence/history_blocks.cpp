@@ -133,7 +133,13 @@ void HistoryRows::push(Json row) {
         return;
     }
     if (!row.is_array() && !row.is_object()) invalid(path, "Expected a history record");
-    auto encoded = row.dump();
+    push_packed(row.dump());
+}
+void HistoryRows::repeat() {
+    if (!packed_ || previous_.empty()) invalid(path, "No packed history row to repeat");
+    push_packed(previous_);
+}
+void HistoryRows::push_packed(std::string encoded) {
     if (encoded.size() > block_bytes - 2) invalid(path, "History row exceeds its expanded byte bound");
     // Budget the expanded rows and leave room for bounded repeat markers.
     constexpr auto repeat_overhead = 4 * history_block_rows;
