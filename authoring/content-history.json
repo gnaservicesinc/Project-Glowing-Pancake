@@ -103341,6 +103341,184 @@
         "prepared_headquarters": 15,
         "scenarios": 5
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "d3669c7e2a20b7e9740c265abc83c8556fbe66d1966a338c79a05cd3bd8b5fbf",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "frontier.agi_notice",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "322193e7da1105f5257fd565f0ef5339ba1ab8b5baca6d4eb92970a814fbb3f8",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "frontier.asi_notice",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "b6c6c05813844da954a239dc95567577ce30eedd76162f19efcbe00cce87ebc0",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "frontier.conditional_era",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "2d0723cbdd2208276c4131e69a0cf3046138b3dab898a5728d79d95c620b4447",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "frontier.frontier_paths",
+          "kind": "frontier_research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "ebba505f6b4437df54709b09970fbb50ab857037909db72062f9242b85465498",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "frontier.plateau_paths",
+          "kind": "frontier_research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "1a911e26ec33bc6d3c32ae82971d6f109988e68c32b333c16286c76de5629a91",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.attention_systems",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "035741af646aae09f50ca7f645eb7368c3ae2c6e7dd68c8557af7f30a26e45a8",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.energy_prototype",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "91128fa157b1a3a047f7e5c270aeb15a4f9789a97d4874ff02281decbb926603",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.frontier_fabric",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "2bb9a3407b4cbd14aece52abc51f06b68c5c413d6ee6a1e6ee667566779e6ae3",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.integrated_science",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "27e03029eaadde6de5f5329ff66afdf0459bea1bf70d351e8feee7a8cfdf6bc3",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.materials_prototype",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "01a226b7301318262abb5ec152baa96e3a446fba026eec57e4519446622996b4",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.methods_prototype",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "8d92e650741043ce3158973d2e65d7e3b841aaf7d1d4f183540be470d2864836",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.multimodal_systems",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "e7f5ed5e0e0fa9517fd5107ca46d0236f078d7c03e6543b90ce90786ef7ebe8c",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.refresh_measurement",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "b56998e91473b48ac872936eb864d7b698cd120a59275f0083d4b9f31b89a4f8",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.workflow_verification",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "62fc2b1547a8e86ce93940fc2f21ba415c13e5d370b6b74b2b5b2d1c6825e673",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "9e2da3a25ab3c180c05efa045bcf7414948d45e6360cce470e7af821ec49b2b5",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": null,
+          "revision": 1
+        }
+      ],
+      "changed_text_keys": [
+        "frontier.agi_notice.body",
+        "frontier.asi_notice.body",
+        "frontier.conditional_era.body"
+      ],
+      "collection_hash": "cb6dcc1ebf95e25960b2c6715a8176fd29f0d56b41a8c688fb5c660673c099d7",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.11.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 11,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.10.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000010.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000011.collection.json",
+      "summary": "Conditional century branches, independent AGI and ASI protocols, bounded research policies and evaluated product refresh.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 21,
+        "lints": [],
+        "prepared_headquarters": 21,
+        "scenarios": 7
+      }
     }
   ],
   "format": 1

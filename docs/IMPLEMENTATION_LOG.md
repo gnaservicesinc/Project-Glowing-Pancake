@@ -1293,3 +1293,46 @@ The shared writer finalized 0.10.0-dev.1, generation 10, with hash
 All five scenarios and 15 headquarters saves validated without lints.
 The roadmap stands at 38 of 52 completed steps. M7-01 continues with
 conditional future research, game AGI/ASI and bounded automation.
+
+## M7-01 — Conditional futures and independent evidence · 2026-11-06
+
+Frontier exposes two 2014–2114 scenarios with seeded progress, energy, social
+adaptation, cooperation and research conditions. Advanced data, recipes,
+research and hardware require actual funded work and their current conditions.
+The accelerating and uneven branches have feasible game ASI routes. The energy
+plateau reaches broad competence while its disclosed ceiling excludes ASI.
+
+Deployed systems retain exact model versions and combine member costs and
+failure modes. Three paid held-out panels span at least 90 days. Advanced
+evidence then needs distinct prototypes and three physical replications across
+at least 180 days. Control remains a separate reported property. Ordered
+research queues, finite standing tracks and mature refresh policies recheck
+funding, licensed data, prerequisites and spare resources. Refresh retains the
+incumbent through independent evaluation and a qualified rollout. Office
+reports rival qualifications from the same paid protocols.
+[Controls, ownership and bounds](../src/core/FRONTIER.md).
+
+All 76 optimized Mac CTests passed across the suite and focused Studio rerun.
+The initial suite took 47.50 seconds with four parallel workers and exposed a
+missing Studio research-reference picker. The correction resolves research
+through the shared scenario catalog and allows a gate's kind and target to
+change atomically. Its 85 authoring checks pass. The 188 Frontier checks cover
+both paid player ASI routes, plateau AGI, rival ASI, exact time boundaries,
+cooperating-member failure, cancelled and stale work, standing experiments,
+protected serving, refresh evaluation/rollout and forged-save refusal.
+
+Finalized-content Metal walkthroughs at 1280×720 and 100%/200% text use an
+explicit 2027 opening fixture with an actual trained, evaluated and deployed
+model. QML controls register it, preview/pay for independent assessment,
+review/cancel bounded queues and refresh, and reopen the exact 473,735-byte
+save. Screenshots were inspected for readable terms and evidence. The bundled
+2014–2017 walkthrough also reaches a solvent scored ending with exact reload.
+The late fixture verifies the component paths; full century balance and
+endurance retain their M8 acceptance requirements.
+
+The shared writer finalized content 0.11.0-dev.1, generation 11, with hash
+`cb6dcc1ebf95e25960b2c6715a8176fd29f0d56b41a8c688fb5c660673c099d7`.
+All seven scenarios and 21 prepared headquarters saves passed without lints.
+The roadmap stands at 39 of 52 complete. M7-02 continues with succession and
+founder legacy, followed by M7-03's six objectives. Human studies and native
+platform/release qualification retain their deferred gates.

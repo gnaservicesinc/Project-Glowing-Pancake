@@ -90,13 +90,18 @@ core::TrainingRequest request(QString id,QString recipe,QString source,QStringLi
     result.work=core::MilliCU{compute(work)}; return result;
 }
 QVariantMap option(std::string_view id,QString label) { return {{QStringLiteral("id"),text(id)},{QStringLiteral("label"),std::move(label)}}; }
-QString research_status(const core::LabState& lab,const core::CapacityState& capacity,std::string_view id) {
-    for (const auto& run:lab.research) if (run.research_id==id) {
-        if (run.completed) return QStringLiteral("Completed");
+QString research_status(const core::LabState& lab,const core::CapacityState& capacity,const core::LabResearch& topic) {
+    std::uint32_t completed=0;
+    bool stopped=false;
+    for (const auto& run:lab.research) if (run.research_id==topic.id) {
+        if (run.completed) {++completed;continue;}
         const auto* p=find(capacity.projects,run.project_id);
-        return p && p->status==core::ProjectStatus::active?QStringLiteral("In progress"):QStringLiteral("Stopped; retry available");
+        if (p && p->status==core::ProjectStatus::active) return QStringLiteral("In progress");
+        stopped=true;
     }
-    return QStringLiteral("Available to research");
+    if (completed>=topic.repeat_limit) return QStringLiteral("Completed");
+    if (completed>0) return QStringLiteral("Repeat available · %1 of %2 complete").arg(completed).arg(topic.repeat_limit);
+    return stopped?QStringLiteral("Stopped; retry available"):QStringLiteral("Available to research");
 }
 QString offer_terms(const core::BusinessOffer& offer) {
     return QStringLiteral("%1\n%2/month · setup %3 · %4 days\n%5\nAvailable %6 through %7 (exclusive). Accepted once.")
@@ -160,16 +165,17 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             for (const auto& id:row.all_of) prerequisites.push_back(readable(id));
             QStringList alternatives; for (const auto& id:row.any_of) alternatives.push_back(readable(id));
             if (!alternatives.empty()) prerequisites.push_back(QStringLiteral("one of: ")+alternatives.join(QStringLiteral(", ")));
-            const auto status=research_status(*s.lab,*s.capacity,row.id);
+            const auto status=research_status(*s.lab,*s.capacity,row);
+            const bool completed=std::any_of(s.lab->research.begin(),s.lab->research.end(),[&](const auto& run){return run.research_id==row.id && run.completed;});
             const bool published=std::any_of(s.lab->publications.begin(),s.lab->publications.end(),[&](const auto& publication){return publication.research_id==row.id;});
             const auto insight=public_insight(snapshot_->checkpoint.world,row.id);
             const bool has_insight=std::any_of(s.lab->insights.begin(),s.lab->insights.end(),[&](const auto& value){return value.research_id==row.id;});
-            const bool can_adopt=insight && !has_insight && status!=QStringLiteral("Completed") && status!=QStringLiteral("In progress") &&
+            const bool can_adopt=insight && !has_insight && !completed && status!=QStringLiteral("In progress") &&
                 s.date>=core::advance_days(insight->published_on,snapshot_->checkpoint.world.competition->setup->publication_delay);
             research.push_back({text(row.id),readable(row.id),money(row.cash)+QStringLiteral(" · ")+QString::number(row.staff_days.value())+QStringLiteral(" staff-days"),
                 QStringLiteral("%1 CU of finite experiments plus %2 staff-days. Both must complete.\nPrerequisites: %3\nPaid work and staff time are not refunded when stopped.")
                     .arg(cu(row.experiment_work.value()),QString::number(row.staff_days.value()),prerequisites.isEmpty()?QStringLiteral("none"):prerequisites.join(QStringLiteral(", "))),status,
-                status!=QStringLiteral("Completed") && status!=QStringLiteral("In progress"),{{QStringLiteral("completed"),status==QStringLiteral("Completed")},{QStringLiteral("published"),published},{QStringLiteral("canAdopt"),can_adopt}}});
+                status!=QStringLiteral("Completed") && status!=QStringLiteral("In progress"),{{QStringLiteral("completed"),completed},{QStringLiteral("published"),published},{QStringLiteral("canAdopt"),can_adopt}}});
             research.back().detail+=published?QStringLiteral("\nPublished: other companies can adopt this result after the disclosed delay."):QStringLiteral("\nThis result remains private until explicitly published.");
             if (insight) research.back().detail+=QStringLiteral("\nPublic result from %1 · published %2 · adoption available %3 · %4 work credit. Cash and prerequisites are unchanged.")
                 .arg(readable(insight->publisher),text(core::iso_date(insight->published_on)),text(core::iso_date(core::advance_days(insight->published_on,snapshot_->checkpoint.world.competition->setup->publication_delay))),percent(insight->credit));
@@ -245,6 +251,18 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
         rivals.push_back({QStringLiteral("release:")+text(release.company_id)+QLatin1Char(':')+text(release.product_id),text(definition.name)+QStringLiteral(" · ")+readable(release.product_id),
             money(product->price_per_task)+QStringLiteral(" per task"),QStringLiteral("Public customer deliveries began %1. %2 · %3. This quote reveals the price of a released service; private model capability, cash and future decisions stay hidden.")
                 .arg(text(core::iso_date(release.day)),text(definition.planning->leader),text(definition.planning->region)),rival.phase==core::DayPhase::closed?QStringLiteral("Closed provider"):(company->response && company->response->retired_on)?QStringLiteral("Withdrawn program"):QStringLiteral("Public service"),false});
+    }
+    if (snapshot_->checkpoint.world.competition) for (const auto& company:snapshot_->checkpoint.world.competition->companies) {
+        if (!company.simulation.frontier) continue;
+        const auto& frontier=*company.simulation.frontier;
+        const auto asi=core::earliest_frontier_qualification(frontier,true);
+        const auto agi=core::earliest_frontier_qualification(frontier,false);
+        if (!agi && !asi) continue;
+        const auto& definition=runtime::rival_definition(program,company.definition_id);
+        const auto day=asi?*asi:*agi;
+        rivals.push_back({QStringLiteral("frontier:")+text(company.definition_id),text(definition.name),text(core::iso_date(day)),
+            QStringLiteral("Independent assessment of a deployed system completed on %1. Qualification follows paid held-out panels, observed useful work and, for game ASI, independent physical replication.")
+                .arg(text(core::iso_date(day))),asi?QStringLiteral("Game ASI independently recorded"):QStringLiteral("Game AGI independently recorded"),false});
     }
     if (s.accounts) {
         for (const auto& row:s.accounts->invoices) if (row.kind==core::InvoiceKind::payable && row.settled<row.amount) {

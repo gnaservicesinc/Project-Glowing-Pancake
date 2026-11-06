@@ -10,6 +10,7 @@ class FrontierController final : public QObject {
     Q_PROPERTY(bool available READ available NOTIFY changed)
     Q_PROPERTY(bool editable READ editable NOTIFY changed)
     Q_PROPERTY(QString overview READ overview NOTIFY changed)
+    Q_PROPERTY(QString requirements READ requirements CONSTANT)
     Q_PROPERTY(QString reviewText READ reviewText NOTIFY changed)
     Q_PROPERTY(StableListModel* systems READ systems CONSTANT)
     Q_PROPERTY(StableListModel* technology READ technology CONSTANT)
@@ -27,6 +28,7 @@ public:
     [[nodiscard]] bool available() const;
     [[nodiscard]] bool editable() const;
     [[nodiscard]] QString overview() const;
+    [[nodiscard]] QString requirements() const;
     [[nodiscard]] QString reviewText() const {return review_text_;}
     StableListModel* systems() {return &systems_;}
     StableListModel* technology() {return &technology_;}

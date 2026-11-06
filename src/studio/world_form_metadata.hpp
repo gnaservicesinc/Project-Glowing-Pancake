@@ -107,6 +107,27 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
     const auto* def=draft.collection().find(scenario);
     if(!def || !std::holds_alternative<content::ScenarioDefinition>(def->data)) return out;
     const auto& s=std::get<content::ScenarioDefinition>(def->data);
+    if(parent.find("/catalog/gates/")!=parent.npos) {
+        if(key=="kind") for(const auto kind:{core::FrontierTechnology::data,core::FrontierTechnology::research,
+                core::FrontierTechnology::recipe,core::FrontierTechnology::hardware}) {
+            const auto id=std::string(core::frontier_key(kind));add(id,label(id));
+        }
+        if(key=="target") {
+            // Offer all typed targets so kind and target can change in the
+            // same validated transaction. Research may live in definitions.
+            if(s.lab) {
+                const auto lab=content::scenario_lab_catalog(draft.collection(),s);
+                for(const auto& row:lab.data) add(row.id,row.name+" · Data");
+                for(const auto& row:lab.research) add(row.id,row.id+" · Research");
+                for(const auto& row:lab.recipes) add(row.id,row.name+" · Recipe");
+            }
+            if(s.infrastructure) for(const auto& row:s.infrastructure->hardware) add(row.id,row.name+" · Hardware");
+        }
+    }
+    if(key=="id" && s.lab) {
+        if(parent.find("/catalog/corpora/")!=parent.npos) for(const auto& row:s.lab->data) add(row.id,row.name);
+        if(parent.find("/catalog/recipes/")!=parent.npos) for(const auto& row:s.lab->recipes) add(row.id,row.name);
+    }
     if(key=="recipe_id" || key=="required_recipe" || array_key=="recipes") {
         if(s.lab) for(const auto& row:s.lab->recipes) add(row.id,row.name);
     }

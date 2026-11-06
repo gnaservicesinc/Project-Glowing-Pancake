@@ -62,6 +62,12 @@ bool FrontierController::editable() const {
     return available() && company().phase==DayPhase::work_ready && (snapshot_->driver_halted || company().paused) &&
         snapshot_->checkpoint.runtime.prepared_day==company().date;
 }
+QString FrontierController::requirements() const {
+    return QStringLiteral("Game AGI needs three independent panels across at least %1 days. The lower bounds must reach %2 in six domains, %3 in transfer, %4 in reliability and %5 in autonomous workflows. Game ASI needs %6 in all six domains, %7 in novel science and three replicated improvements across at least %8 days. Control is reported separately.")
+        .arg(frontier_assessment_span.value()).arg(points(frontier_agi_domain),points(frontier_agi_transfer),
+            points(frontier_agi_reliability),points(frontier_agi_workflows),points(frontier_asi_domain),points(frontier_asi_novelty))
+        .arg(frontier_replication_span.value());
+}
 QString FrontierController::overview() const {
     if (!available()) return {};
     const auto& actor=future();

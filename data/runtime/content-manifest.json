@@ -1,13 +1,13 @@
 {
   "assets": [],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "a233bc8aaa2fa8fa46f7a41fa0858fcc4a770247a5725fe22bf6ba4eb8e8183d",
+  "collection_hash": "cb6dcc1ebf95e25960b2c6715a8176fd29f0d56b41a8c688fb5c660673c099d7",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.10.0-dev.1",
+  "content_version": "0.11.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -52,6 +52,36 @@
       "semantic_hash": "df7ac5015ecd35bc39bb25c986b8e0610b9ecdfb4aa0555447ce43bf0f16b5f6"
     },
     {
+      "id": "frontier.agi_notice",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "9a5c8a3f3f674548b5b0814506992fc703b3929fc5472d1ce640a60772ebacab"
+    },
+    {
+      "id": "frontier.asi_notice",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "2caaa49cbfe46559266d8d6a472e3970b71e471ba7feb27e26f5a79b14a978cb"
+    },
+    {
+      "id": "frontier.conditional_era",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "5dc95d3dc3ab1aba94433def074e4ceae60f316ed488a077ce85c5f0a7d0a88a"
+    },
+    {
+      "id": "frontier.frontier_paths",
+      "kind": "frontier_research",
+      "revision": 1,
+      "semantic_hash": "37faca7344eb881bff87151ccb0cd54c904582cba356d2f6355219d1c62dbbd5"
+    },
+    {
+      "id": "frontier.plateau_paths",
+      "kind": "frontier_research",
+      "revision": 1,
+      "semantic_hash": "a5826db39e2341240d244674389f324789a5922665352339d316f9a7f618f48f"
+    },
+    {
       "id": "market.global_launch",
       "kind": "regional_markets",
       "revision": 1,
@@ -62,6 +92,12 @@
       "kind": "flow",
       "revision": 1,
       "semantic_hash": "dfe7fbb1820c429ba0d4134830c85cb4d886da085598fc372f3cd8ae2caaff60"
+    },
+    {
+      "id": "research.attention_systems",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "cdcfae79794a56380be21e13dd81ce038b45df0af77a2cab79fc973e07125cd3"
     },
     {
       "id": "research.data_deduplication",
@@ -82,10 +118,52 @@
       "semantic_hash": "7c6c08a2caa26776af5ae381591641339c109bdb97b7ebf7d518fb939e665a00"
     },
     {
+      "id": "research.energy_prototype",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "8d4f1116b83b2bb041059c93779099236cbd181e71cd58f7c9e89b467e183f9d"
+    },
+    {
+      "id": "research.frontier_fabric",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "d3d2bfb362c914598fa49a57cbeb027f6b78229cad071c54bf568c66c1b20ef6"
+    },
+    {
       "id": "research.held_out_evaluation",
       "kind": "research",
       "revision": 2,
       "semantic_hash": "571e0b355a305e463a0a6e6822151a92515fdd1f8da670a280302a397da9bee0"
+    },
+    {
+      "id": "research.integrated_science",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "460823356fd3ba00caa8f4dc39eb4e29f6a6b93fd6ea12f8876efceb507dc05d"
+    },
+    {
+      "id": "research.materials_prototype",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "592e86905aee6d2e6d25bd8f59d54d7598547463e88171d1f5c82671d4f23ec2"
+    },
+    {
+      "id": "research.methods_prototype",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "66eae7704aae1305e099c1939afeb1609825bdbd863a710e1b2989b786d8a542"
+    },
+    {
+      "id": "research.multimodal_systems",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "ca4057ddaae11659dc1d22ac20ada62775fb6614ffe8e201d61e0495c5bf791b"
+    },
+    {
+      "id": "research.refresh_measurement",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "76950423d82dcb5ab2bff036f0056f83527914ecb5e88b768b941372fd4519fa"
     },
     {
       "id": "research.reproducible_tooling",
@@ -100,10 +178,28 @@
       "semantic_hash": "9ec1bd64b23d08685c096aaa61e069e1015e47873bd31555a675699507927164"
     },
     {
+      "id": "research.workflow_verification",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "0ec2545553b50d9e08f42cf8cf1ef5be827b241604a9efb9a4adae7da7ace784"
+    },
+    {
       "id": "resilience.domestic",
       "kind": "site_resilience",
       "revision": 1,
       "semantic_hash": "0a4f2c095153c7797d43120c7df216013c2749352fbf135e4590fbbf10b942d4"
+    },
+    {
+      "id": "scenario.century_frontier",
+      "kind": "scenario",
+      "revision": 1,
+      "semantic_hash": "fe2b677208444ce5f144885aff6d8fe984225fa6bde0563a43e72bb153da49fd"
+    },
+    {
+      "id": "scenario.century_plateau",
+      "kind": "scenario",
+      "revision": 1,
+      "semantic_hash": "2bb76ad86bc380c78e3e0b84b80589af8bf0d183444e3132610695fae677d6dc"
     },
     {
       "id": "scenario.first_playable",
@@ -203,10 +299,52 @@
     }
   ],
   "format": 1,
-  "generation": 10,
-  "messages_hash": "55be2f562491f0b96436e5f969a9781e51b3822571920a3f71dc5b335608a89f",
+  "generation": 11,
+  "messages_hash": "423a6e398d7f281fa5ee683f7ebdcfc524dfa14e70769013c3f4ba7f83b8ad13",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
+    "scenario.century_frontier": [
+      "slice.research_milestone",
+      "slice.evaluation_finding",
+      "slice.pilot_result",
+      "slice.liquidity_warning",
+      "slice.rival_notice",
+      "slice.supplier_offer",
+      "slice.market_shift",
+      "slice.recovery_opportunity",
+      "operations.site_outcome",
+      "civic.election_briefing",
+      "civic.implementation_briefing",
+      "society.monthly_briefing",
+      "society.forum_briefing",
+      "authority.public_review",
+      "authority.monthly_review",
+      "authority.executive_disclosure",
+      "frontier.conditional_era",
+      "frontier.agi_notice",
+      "frontier.asi_notice"
+    ],
+    "scenario.century_plateau": [
+      "slice.research_milestone",
+      "slice.evaluation_finding",
+      "slice.pilot_result",
+      "slice.liquidity_warning",
+      "slice.rival_notice",
+      "slice.supplier_offer",
+      "slice.market_shift",
+      "slice.recovery_opportunity",
+      "operations.site_outcome",
+      "civic.election_briefing",
+      "civic.implementation_briefing",
+      "society.monthly_briefing",
+      "society.forum_briefing",
+      "authority.public_review",
+      "authority.monthly_review",
+      "authority.executive_disclosure",
+      "frontier.conditional_era",
+      "frontier.agi_notice",
+      "frontier.asi_notice"
+    ],
     "scenario.first_playable": [
       "slice.research_milestone",
       "slice.evaluation_finding",
@@ -298,5 +436,5 @@
       "authority.executive_disclosure"
     ]
   },
-  "source_hash": "1d222855a8726b2ca456b839d72ef0a42f292272ff6a75ca9f28cc42c1941bc2"
+  "source_hash": "4a9daa5a3d90f1f0becdc636e990895d62cbe82a09fda958f091e6a5949f0a48"
 }

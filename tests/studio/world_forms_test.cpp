@@ -131,6 +131,35 @@ void forms(Scratch& s) {
     put(s.path/"data/drafts/world-authored.json",read(s.path/"data/drafts/world-authored.json")+"\n");
     refused(d,[&]{d.save();});
 }
+void frontier_forms(Scratch& s) {
+    studio::DraftDocument d{s.path,"data/runtime/first-playable.json"};
+    constexpr std::string_view century="scenario.century_frontier";
+    const std::string catalog="/definitions/frontier.frontier_paths/catalog";
+    const auto rows=studio::world_outline(d,century);
+    check(std::any_of(rows.begin(),rows.end(),[&](const auto& row){return row.key==catalog;}),"Century world forms omit their linked Frontier catalog");
+    const auto gate=studio::WorldForm::open(d,century,catalog+"/gates/0");
+    const auto target=std::find_if(gate.fields().begin(),gate.fields().end(),[](const auto& f){return f.key=="target";});
+    check(target!=gate.fields().end() && target->control==studio::FormControl::choice && target->options.size()>8,
+        "A Frontier gate cannot select its typed Lab research reference");
+    const auto original=d.program().canonical_content_bytes;
+    check(gate.apply(d,{{"kind","data"},{"target","data.open_documents"}}) && d.undo() && d.program().canonical_content_bytes==original,
+        "A Frontier gate cannot change its technology kind and typed target in one validated edit");
+    const auto conditions=catalog+"/paths/0/minimum_bp";
+    const auto scores=catalog+"/recipes/0/ceiling_bp";
+    auto form=studio::WorldForm::open(d,century,conditions);
+    check(!form.can_append() && form.fields().size()==core::future_condition_count && form.fields()[0].label=="Progress",
+        "Seeded conditions lost fixed named axes");
+    form=studio::WorldForm::open(d,century,scores);
+    check(!form.can_append() && form.fields().size()==core::frontier_extra_count && form.fields()[0].label=="Perception" &&
+        !studio::WorldForm::open(d,century,scores+"/0").can_remove(),"Frontier capability axes became extensible or unnamed");
+    refused(d,[&]{(void)studio::WorldForm::append(d,century,scores,0);});
+    form=studio::WorldForm::open(d,century,catalog+"/panels/0");
+    const auto before=d.program().canonical_content_bytes;
+    const auto margin=std::find_if(form.fields().begin(),form.fields().end(),[](const auto& f){return f.key=="margin_bp";});
+    check(margin!=form.fields().end() && form.apply(d,{{"margin_bp",std::to_string(std::stoul(margin->value)+1)}}) &&
+        d.program().canonical_content_bytes!=before && d.undo() && d.program().canonical_content_bytes==before,
+        "Frontier protocol edits did not validate and share the ordinary undo boundary");
+}
 #if PGP_WORLD_QT
 void controller(Scratch& s) {
     studio::DraftDocument d{s.path,"data/runtime/first-playable.json"};studio::WorldController c;
@@ -175,7 +204,7 @@ int main(int argc,char** argv) {
 #else
     (void)argc;(void)argv;
 #endif
-    try {Scratch s;forms(s);
+    try {Scratch s;forms(s);frontier_forms(s);
 #if PGP_WORLD_QT
         controller(s);
 #endif

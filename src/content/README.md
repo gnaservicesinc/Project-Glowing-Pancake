@@ -139,7 +139,7 @@ eight. Positive-weight cycles that would accumulate frames are refused even
 with a delay. Depth is computed by bounded reverse-edge propagation, so shared
 converging branches do not enumerate exponentially many paths.
 
-Input budgets: one MiB, JSON nesting 48 and 100,000 parser events; at most 2,048
+Input budgets: two MiB, JSON nesting 48 and 100,000 parser events; at most 2,048
 definitions, 512 nodes per flow, 64 effects/sequence children per node, 32 choices
 per dialogue, and 128 condition terms with nesting 16. All JSON object keys must
 be unique. Fraction/exponent numeric tokens, unsupported schemas/kinds, unknown

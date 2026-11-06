@@ -149,7 +149,7 @@ ColumnLayout {
         visible: section.currentIndex === 0
         Heading { text: qsTr("Assess deployed systems") }
         Copy {
-            text: qsTr("Game AGI needs three independent panels across at least 90 days. The lower bounds must reach 75 in six domains, 70 in transfer, 85 in reliability and 80 in autonomous workflows. Game ASI needs 90 in all six domains, 95 in novel science and three replicated improvements across at least 180 days. Control is reported separately.")
+            text: panel.frontier.requirements
         }
         Field { id: systemName; inputName: "frontierSystemName"; label: qsTr("Name for the deployed system") }
         Checks { id: members; options: panel.frontier.services; optionName: "frontierMember" }
@@ -169,8 +169,8 @@ ColumnLayout {
         GridLayout {
             Layout.fillWidth: true
             columns: panel.width >= panel.textSize * 29 ? 2 : 1
-            Field { id: trialRate; label: qsTr("Trial compute per day (CU)"); initialValue: campaign.management.recommended.testingRate || "" }
-            Field { id: trialStaff; label: qsTr("Trial staff"); initialValue: campaign.management.recommended.researchStaff || "" }
+            Field { id: trialRate; inputName: "frontierTrialRate"; label: qsTr("Trial compute per day (CU)"); initialValue: campaign.management.recommended.testingRate || "" }
+            Field { id: trialStaff; inputName: "frontierTrialStaff"; label: qsTr("Trial staff"); initialValue: campaign.management.recommended.researchStaff || "" }
         }
         Action {
             objectName: "reviewFrontierTrial"
@@ -203,7 +203,7 @@ ColumnLayout {
             visible: researchMode.currentIndex === 0
             property var topics: []
             id: queue
-            Picker { id: queuedTopic; model: panel.frontier.researchTopics; Accessible.name: qsTr("Topic to add to queue") }
+            Picker { id: queuedTopic; objectName: "frontierQueuedTopic"; model: panel.frontier.researchTopics; Accessible.name: qsTr("Topic to add to queue") }
             Flow {
                 Layout.fillWidth: true
                 spacing: 6
@@ -262,15 +262,15 @@ ColumnLayout {
         visible: section.currentIndex === 3
         Heading { text: qsTr("Authorize mature product refresh") }
         Copy { text: qsTr("Select a service and the candidate's licensed data. Keep the deployment method review current through Lab or a standing track. Each replacement needs better independent evidence and must preserve the service's existing terms.") }
-        Picker { id: service; model: panel.frontier.refreshServices; Accessible.name: qsTr("Service to refresh") }
-        Picker { id: recipe; model: campaign.management.recipes; Accessible.name: qsTr("Candidate recipe") }
-        Picker { id: evaluation; model: campaign.management.evaluations; Accessible.name: qsTr("Independent evaluation plan") }
+        Picker { id: service; objectName: "frontierRefreshService"; model: panel.frontier.refreshServices; Accessible.name: qsTr("Service to refresh") }
+        Picker { id: recipe; objectName: "frontierRefreshRecipe"; model: campaign.management.recipes; Accessible.name: qsTr("Candidate recipe") }
+        Picker { id: evaluation; objectName: "frontierRefreshEvaluation"; model: campaign.management.evaluations; Accessible.name: qsTr("Independent evaluation plan") }
         Checks { id: data; options: panel.frontier.licensedData; optionName: "frontierRefreshData" }
         GridLayout {
             Layout.fillWidth: true
             columns: panel.width >= panel.textSize * 29 ? 2 : 1
-            Field { id: work; label: qsTr("Candidate work (CU)") }
-            Field { id: gain; label: qsTr("Required improvement (points out of 100)") }
+            Field { id: work; inputName: "frontierRefreshWork"; label: qsTr("Candidate work (CU)") }
+            Field { id: gain; inputName: "frontierRefreshGain"; label: qsTr("Required improvement (points out of 100)") }
         }
         Budget { id: refreshBudget; prefix: "frontierRefresh" }
         Action {

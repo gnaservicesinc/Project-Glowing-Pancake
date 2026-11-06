@@ -1042,3 +1042,136 @@ void schedule_society_smoke(QQuickWindow& window,pgp::bridge::CampaignController
     });
     timer->start();
 }
+
+void schedule_frontier_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,
+    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot) {
+    using namespace pgp;
+    struct State {
+        int phase=0,attempts=0;
+        core::Cents cash{0},fee{0};
+        core::OrdinalDay result_on{0};
+        bridge::CampaignSnapshotPtr saved;
+    };
+    const auto run=std::make_shared<State>();
+    auto* timer=new QTimer(&window);timer->setInterval(24);
+    const auto starting=paths.saves_directory/"frontier-start.pgpsave";
+    const auto save=paths.saves_directory/"frontier-smoke.pgpsave";
+    const auto url=QUrl::fromLocalFile(QString::fromStdU16String(save.u16string()));
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,run,expected,starting,save,url,screenshot] {
+        const auto fail=[&](const char* why){qCritical()<<"Frontier smoke failed"<<run->phase<<why<<campaign.notice();timer->stop();QCoreApplication::exit(3);};
+        const auto item=[&](const char* name){return visual_item(window.contentItem(),QString::fromLatin1(name));};
+        const auto press=[&](const char* name){auto* control=item(name);reveal_top(control);if(key(window,control,Qt::Key_Space)) return true;fail(name);return false;};
+        const auto set=[&](const char* name,const char* value){auto* field=item(name);if(field && field->setProperty("text",QString::fromLatin1(value))) return true;fail(name);return false;};
+        const auto choose=[&](const char* name,const char* id) {
+            auto* picker=item(name);
+            if (!picker) {fail(name);return false;}
+            const auto rows=picker->property("model").toList();
+            for (qsizetype i=0;i<rows.size();++i) if (rows[i].toMap().value("id").toString()==QString::fromLatin1(id)) {
+                if (!key(window,picker,Qt::Key_Home)) break;
+                for (qsizetype step=0;step<i;++step) if (!key(window,picker,Qt::Key_Down)) {fail(name);return false;}
+                return true;
+            }
+            fail(name);return false;
+        };
+        const auto section=[&](int index) {
+            auto* picker=item("frontierSection");
+            if(picker && picker->setProperty("currentIndex",index)) return true;
+            fail("Frontier section");return false;
+        };
+        const auto capture=[&](QString suffix,const char* reveal) {
+            if(screenshot.isEmpty()) return true;
+            auto target=screenshot;
+            if(!suffix.isEmpty()) {const auto dot=target.lastIndexOf(u'.');if(dot>=0) target.truncate(dot);target+=suffix+QStringLiteral(".png");}
+            reveal_top(item(reveal));
+            if(window.grabWindow().save(target)) return true;
+            fail("Frontier screenshot");return false;
+        };
+        if(++run->attempts>1200) {fail("timed out");return;}
+        if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
+        if(window.rendererInterface()->graphicsApi()!=expected) {fail("graphics backend");return;}
+        if(campaign.requiredKind()==QStringLiteral("content")) {
+            const auto choices=campaign.requiredChoices();if(choices.isEmpty()) {fail("required choice missing");return;}
+            campaign.choose(choices.back().toMap().value("choiceId").toString());return;
+        }
+        if(campaign.requiredKind()==QStringLiteral("management")) {campaign.acknowledgeManagement();return;}
+        if(campaign.requiredKind()==QStringLiteral("site")) {campaign.acknowledgeSiteAlert();return;}
+        const auto snapshot=campaign.snapshot();const auto& state=snapshot->checkpoint.world.simulation;
+        auto* desk=campaign.frontier();
+        switch(run->phase) {
+        case 0:
+            campaign.loadFrom(QUrl::fromLocalFile(QString::fromStdU16String(starting.u16string())));++run->phase;return;
+        case 1:
+            if(!desk->available() || !desk->editable() || !state.frontier->systems.empty() || state.deployments->records.size()!=1) {fail("prepared late-era fixture");return;}
+            if(press("frontierTab")) ++run->phase;return;
+        case 2:
+            if(set("frontierSystemName","Native research service") && press("frontierMember") && press("reviewFrontierSystem")) {
+                run->cash=state.cash;++run->phase;
+            }
+            return;
+        case 3:
+            if(desk->reviewText().isEmpty() || state.cash!=run->cash || !state.frontier->systems.empty()) {fail("registration preview changed state");return;}
+            if(capture(QStringLiteral("-registration"),"frontierReview") && press("confirmFrontierAction")) ++run->phase;return;
+        case 4:
+            if(state.frontier->systems.size()!=1 || desk->systems()->rowCount()!=1) {fail("deployed system registration");return;}
+            if(choose("frontierTrialSource","lease.initial") && set("frontierTrialRate","100") && set("frontierTrialStaff","2") && press("reviewFrontierTrial")) ++run->phase;
+            return;
+        case 5: {
+            const auto& panel=state.frontier->catalog.panels.front();
+            const auto quote=core::quote_frontier_trial(state,{1,core::FrontierTrialKind::assessment,panel.id,{"lease.initial",core::MilliCUPerDay{100000},2}},core::Cents{0});
+            if(desk->reviewText().isEmpty() || state.cash!=run->cash || !state.frontier->trials.empty()) {fail("paid assessment preview changed state");return;}
+            run->fee=quote.fee;run->result_on=quote.earliest_result;
+            if(capture(QStringLiteral("-terms"),"frontierReview") && press("confirmFrontierAction")) ++run->phase;return;
+        }
+        case 6:
+            if(state.frontier->trials.size()!=1 || core::checked_unit_subtract(run->cash,state.cash)!=run->fee) {fail("actual assessment funding");return;}
+            campaign.advanceTo(QStringLiteral("evaluation"));++run->phase;return;
+        case 7:
+            if(!campaign.paused()) return;
+            if(state.date<run->result_on) {campaign.advanceTo(QStringLiteral("evaluation"));return;}
+            if(state.date!=run->result_on || !state.frontier->trials.front().result || !state.frontier->trials.front().result->valid ||
+                core::frontier_qualification(*state.frontier,1).agi_on) {fail("independent result or premature qualification");return;}
+            if(capture({},"frontierSystemsDetail") && section(2)) ++run->phase;return;
+        case 8:
+            if(choose("frontierQueuedTopic","research.refresh_measurement") && press("appendFrontierQueue") &&
+                set("frontierResearchLimit","50000") && set("frontierResearchReserve","20000") && set("frontierResearchInterval","14") &&
+                set("frontierResearchRate","40") && set("frontierResearchStaff","2") && press("reviewFrontierResearch")) ++run->phase;
+            return;
+        case 9:
+            if(desk->reviewText().isEmpty() || !state.frontier->research_programs.empty()) {fail("research preview");return;}
+            if(press("confirmFrontierAction")) ++run->phase;return;
+        case 10:
+            if(state.frontier->research_programs.size()!=1 || !state.frontier->research_programs.front().decisions.empty()) {fail("bounded ordered queue");return;}
+            if(press("cancelFrontierResearch")) ++run->phase;return;
+        case 11: if(press("confirmFrontierAction")) ++run->phase;return;
+        case 12:
+            if(!state.frontier->research_programs.front().cancelled_on) {fail("research cancellation");return;}
+            if(capture(QStringLiteral("-queue"),"frontierResearchProgramsDetail") && section(3)) ++run->phase;return;
+        case 13:
+            if(choose("frontierRefreshRecipe","recipe.frontier_mesh") && choose("frontierRefreshEvaluation","evaluation.held_out") && press("frontierRefreshData") &&
+                set("frontierRefreshWork","30000") && set("frontierRefreshGain","1") && set("frontierRefreshRate","100") && set("frontierRefreshStaff","2") &&
+                set("frontierRefreshLimit","50000") && set("frontierRefreshReserve","20000") && set("frontierRefreshInterval","90") &&
+                set("frontierRefreshRuns","1") && press("reviewFrontierRefresh")) ++run->phase;
+            return;
+        case 14:
+            if(desk->reviewText().isEmpty() || !state.frontier->refresh_programs.empty()) {fail("refresh preview");return;}
+            if(capture(QStringLiteral("-refresh"),"frontierReview") && press("confirmFrontierAction")) ++run->phase;return;
+        case 15:
+            if(state.frontier->refresh_programs.size()!=1 || !state.frontier->refresh_programs.front().runs.empty()) {fail("bounded refresh authorization");return;}
+            if(press("cancelFrontierRefresh")) ++run->phase;return;
+        case 16: if(press("confirmFrontierAction")) ++run->phase;return;
+        case 17:
+            if(!state.frontier->refresh_programs.front().cancelled_on || state.deployments->records.size()!=1) {fail("refresh cancellation or serving protection");return;}
+            run->saved=snapshot;campaign.saveTo(url);++run->phase;return;
+        case 18:
+            if(!std::filesystem::is_regular_file(save)) {fail("save missing");return;}
+            campaign.loadFrom(url);++run->phase;return;
+        default:
+            if(snapshot->generation==run->saved->generation || snapshot->checkpoint!=run->saved->checkpoint) {fail("exact Frontier reload");return;}
+            qInfo().noquote()<<"Frontier smoke passed"<<graphics::name(expected)<<"text="<<campaign.textScalePercent()
+                <<"deployed system, paid independent assessment, bounded queue, refresh authorization, cancellations and exact reload"
+                <<std::filesystem::file_size(save)<<"bytes";
+            timer->stop();QCoreApplication::exit(0);
+        }
+    });
+    timer->start();
+}

@@ -44,6 +44,7 @@ bool fixed_array(std::string_view path) {
         path.ends_with("/catalog/regions") || path.ends_with("/catalog/offers") || path.ends_with("/initial_components_bp") ||
         path.ends_with("/catalog/panels") || path.ends_with("/catalog/experiments") ||
         path.ends_with("/minimum_bp") || path.ends_with("/maximum_bp") ||
+        path.ends_with("/baseline_bp") || path.ends_with("/gain_bp") || path.ends_with("/ceiling_bp") || path.ends_with("/coverage_bp") ||
         path.ends_with("/catalog/public_services") || path.ends_with("/catalog/science") || path.ends_with("/catalog/industry") ||
         path.ends_with("/identity_effects_bp") || path.find("/identity_effects_bp/")!=path.npos ||
         path.ends_with("/positions_bp") || path.ends_with("/preferences_bp") || path.ends_with("/senate_classes") ||
@@ -237,7 +238,8 @@ void WorldForm::build(const DraftDocument& d,bool adding) {
         WorldField f;f.key=std::move(key);f.label=std::move(name);f.value=scalar(scalar_value);
         f.options=choices(d,doc,scenario_,field_path,scalar_value);
         f.control=!f.options.empty()?FormControl::choice:scalar_value.is_number_integer()?FormControl::integer:FormControl::text;
-        if(!adding && (f.key=="id" || f.key=="revision" || f.key=="deprecated" || (f.key=="kind" && path_.find("/business_offers/")==path_.npos))) {
+        if(!adding && (f.key=="id" || f.key=="revision" || f.key=="deprecated" ||
+            (f.key=="kind" && path_.find("/business_offers/")==path_.npos && path_.find("/catalog/gates/")==path_.npos))) {
             f.control=FormControl::note;f.options.clear();
             f.help="Stable identity and revision. Duplicate to create a new definition; the snapshot writer owns revisions.";
         } else {

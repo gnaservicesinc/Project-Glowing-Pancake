@@ -4,8 +4,8 @@ Updated 2026-11-06 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**38 of 52 steps complete for Mac feature development. M7-01 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03 and M6-01 through M6-03.
+**39 of 52 steps complete for Mac feature development. M7-02 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03, M6-01 through M6-03 and M7-01.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -25,6 +25,19 @@ local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
 
+- M7-01 adds Frontier and two 2014–2114 scenarios with seeded conditions,
+  advanced recipes/hardware, independent game AGI/ASI evidence, bounded
+  research queues/standing tracks and evaluated product refresh. The 188
+  focused checks exercise both player ASI routes, a plateau, rival ASI,
+  cooperating systems and exact assessment/replication windows. All 76
+  optimized Mac CTests pass across the suite and focused Studio rerun.
+  Metal walkthroughs at 100%/200% text use a deliberately late opening and
+  an actual trained/deployed service, then reopen the exact 473,735-byte save.
+  The bundled introductory route still reaches its solvent 2017 ending.
+  Reviewed content **0.11.0-dev.1**, generation **11**, validates all seven
+  scenarios and 21 headquarters saves. Succession, final objective accounting
+  and century endurance are the next M7/M8 work.
+  [Frontier controls and bounds](../src/core/FRONTIER.md).
 - M6-03 adds the Institutions room for testimony, public commitments, six
   audience records, executive and public disputes, and four funded agreement
   types. Actual staffing, compute, evidence and regional delivery determine
@@ -496,9 +509,9 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation is M7-01, conditional future and game AGI/ASI.**
-Add branching future research, advanced recipes and hardware, independent
-assessment windows, and bounded research and product refresh policies.
+**Next implementation is M7-02, succession and founder legacy.**
+Plan successor leadership, executive/chair relationships and conserved
+founder-legacy wealth while retaining company obligations and trust.
 E2-04 editor download qualification follows M7-03 and the later native release work.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions

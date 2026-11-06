@@ -1,6 +1,7 @@
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/runtime/scenario.hpp>
+#include <pgp/runtime/competition.hpp>
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <iostream>
@@ -69,19 +70,21 @@ runtime::CompiledProgram compile(Json source) {
     const auto registry = content::foundation_registry();
     return runtime::compile_collection(content::load_collection(source.dump(),registry),registry);
 }
-runtime::CompiledProgram late_fixture(Json source) {
+runtime::CompiledProgram late_fixture(Json source,std::string_view path="path.accelerating",bool rivals=false) {
     const auto full = compile(source);
     const auto& scenario = std::get<content::ScenarioDefinition>(full.collection.find(frontier_id)->data);
     const auto& catalog = *content::frontier_catalog(full.collection,scenario);
     std::uint64_t cooperative_seed = 0;
-    while (opening_frontier(catalog,cooperative_seed).path!="path.accelerating") ++cooperative_seed;
+    while (opening_frontier(catalog,cooperative_seed).path!=path) ++cooperative_seed;
     // Start near the frontier so the focused test spends its days on the actual
     // authored technologies and protocols rather than replaying thirteen years.
     for (auto& row : source["definitions"]) if (row["id"]==frontier_id || row["id"]==plateau_id) {
         row["starts_on"] = "2027-01-01";
         row["flows"] = {"frontier.conditional_era","frontier.agi_notice","frontier.asi_notice"};
         row["management"]["setbacks"] = Json::array();
-        for (const auto key : {"rivals","competition","authority","society","civic","resilience"}) row.erase(key);
+        for (const auto key : {"authority","society","civic","resilience"}) row.erase(key);
+        if (rivals) for (auto& rival:row["rivals"]) rival["start_after_days"]=0;
+        else {row.erase("rivals");row.erase("competition");}
         auto& offers = row["business_offers"];
         offers.erase(std::remove_if(offers.begin(),offers.end(),[](const auto& offer){return offer["id"]!="offer.independent_lab";}),offers.end());
         if (row["id"]==frontier_id) row["seed"] = cooperative_seed;
@@ -92,7 +95,7 @@ void research(runtime::Runtime& game,std::string_view topic) {
     apply(game,StartResearch{std::string(topic),{"lease.initial",MilliCUPerDay{140000},4}});
     finish(game,state(game).lab->research.back().project_id);
 }
-void prepare_system(runtime::Runtime& game, bool mesh) {
+void prepare_system(runtime::Runtime& game, bool mesh,bool register_system=true) {
     for (const auto topic : {"research.reproducible_tooling","research.held_out_evaluation","research.sequence_modeling",
             "research.attention_systems","research.multimodal_systems","research.workflow_verification","research.integrated_science"})
         research(game,topic);
@@ -119,6 +122,7 @@ void prepare_system(runtime::Runtime& game, bool mesh) {
     apply(game,StartEvaluation{"evidence.frontier","model.frontier","evaluation.held_out",{"lease.initial",MilliCUPerDay{30000},1}});
     finish(game,state(game).lab->evaluations.back().project_id);
     apply(game,DeployModel{"product.document_classification","model.frontier","evidence.frontier",source,false,"region.us"});
+    if (!register_system) return;
     apply(game,RegisterFrontierSystem{"Fictional integrated research service",{"product.document_classification"}});
     refuse(game,RegisterFrontierSystem{"Same deployed version",{"product.document_classification"}});
 }
@@ -152,12 +156,17 @@ void panels(runtime::Runtime& game) {
     check(frontier_qualification(future(game),1).agi_on==state(game).date &&
         !frontier_qualification(future(game),1).asi_on,"Three independent windows did not establish AGI separately from replication.");
 }
-void frontier_route(const runtime::CompiledProgram& p) {
+void frontier_route(const runtime::CompiledProgram& p,bool mesh=true) {
     auto game = begin(p,frontier_id);
-    check(future_path(future(game)).id=="path.accelerating","The tested frontier seed did not open its intended conditions.");
+    check(future_path(future(game)).id==(mesh?"path.accelerating":"path.uneven"),"The tested frontier seed did not open its intended conditions.");
     refuse(game,StartResearch{"research.integrated_science",{"lease.initial",MilliCUPerDay{100000},2}},"prerequisites");
-    prepare_system(game,true);
+    prepare_system(game,mesh);
     panels(game);
+    std::string independent_source="owned/science.fabric";
+    if (!mesh) {
+        apply(game,AcceptBusinessOffer{"offer.independent_lab"});
+        independent_source=state(game).capacity->sources.back().id;
+    }
     const auto protocols = future(game).catalog.experiments;
     for (std::size_t i=0; i<protocols.size(); ++i) {
         const auto& experiment = protocols[i];
@@ -170,12 +179,15 @@ void frontier_route(const runtime::CompiledProgram& p) {
             advance(game,OrdinalDay{exact.value()-24});
         }
         refuse(game,StartFrontierTrial{1,FrontierTrialKind::replication,experiment.id,{"lease.initial",MilliCUPerDay{100000},2}},"separate physical");
-        (void)commission(game,FrontierTrialKind::replication,experiment.id,"owned/science.fabric");
+        (void)commission(game,FrontierTrialKind::replication,experiment.id,independent_source);
         finish(game,future(game).trials.back().project);
         check(future(game).trials.back().result && future(game).trials.back().result->valid,"An independent improvement did not replicate.");
         if (i+1<protocols.size()) check(!frontier_qualification(future(game),1).asi_on,"A partial replication sequence qualified early.");
     }
     const auto result = frontier_qualification(future(game),1);
+    const auto first_replication=std::ranges::find(future(game).trials,FrontierTrialKind::replication,&FrontierTrial::kind);
+    check(state(game).date==advance_days(first_replication->result->observed_on,frontier_replication_span),
+        "The third replicated improvement failed the exact 180-day boundary.");
     check(result.asi_on==state(game).date && result.improvements==3 && result.conservative[10]<9000,
         "Game ASI evidence did not qualify independently of the separate control measure.");
     game = reload(game);
@@ -187,6 +199,74 @@ void frontier_route(const runtime::CompiledProgram& p) {
     try { (void)persistence::decode_save(p,bytes.dump()); }
     catch (const persistence::PersistenceError&) { rejected=true; }
     check(rejected,"A correctly checksummed forged frontier score was accepted.");
+}
+void rival_route(const runtime::CompiledProgram& p) {
+    auto game=begin(p,frontier_id);
+    const auto qualified=[&] {
+        const auto& rival=game.current_state().world.competition->companies.front().simulation;
+        return rival.frontier && earliest_frontier_qualification(*rival.frontier,true).has_value();
+    };
+    const auto limit=advance_days(state(game).date,Days{1100});
+    while (!qualified() && state(game).date<limit) advance(game,advance_days(state(game).date,Days{1}));
+    if (!qualified()) {
+        const auto& rival=game.current_state().world.competition->companies.front();
+        std::cerr<<"Rival frontier cash "<<rival.simulation.cash.value()<<" on "<<iso_date(state(game).date)<<'\n';
+        for (const auto& decision:rival.planning->decisions)
+            std::cerr<<iso_date(decision.day)<<' '<<decision.action<<' '<<decision.subject<<' '<<decision.explanation<<'\n';
+    }
+    check(qualified(),"The authored frontier rival failed to complete the same paid ASI route.");
+    const auto& rival=game.current_state().world.competition->companies.front().simulation;
+    const bool complete_system=std::ranges::any_of(rival.frontier->systems,[&](const auto& system) {
+        const auto evidence=frontier_qualification(*rival.frontier,system.id);
+        return evidence.asi_on && evidence.assessments==3 && evidence.improvements==3;
+    });
+    check(!earliest_frontier_qualification(future(game),true) && complete_system,
+        "A rival qualification certified the player or bypassed the independent protocols.");
+    (void)reload(game);
+}
+void bundle_route(const runtime::CompiledProgram& p) {
+    auto game=begin(p,frontier_id);
+    prepare_system(game,true);
+    apply(game,BuyData{"data.open_documents"});
+    apply(game,StartTraining{{"model.bundle_member","recipe.document_baseline","",{"data.open_documents"},"lease.initial",MilliCUPerDay{60000},3,MilliCU{3600000}}});
+    finish(game,state(game).lab->models.back().project_id);
+    apply(game,StartEvaluation{"evidence.bundle_member","model.bundle_member","evaluation.held_out",{"lease.initial",MilliCUPerDay{30000},1}});
+    finish(game,state(game).lab->evaluations.back().project_id);
+    apply(game,DeployModel{"product.documents","model.bundle_member","evidence.bundle_member","lease.initial",false});
+    const auto serving=state(game).deployments->records.back().project_id;
+    apply(game,RegisterFrontierSystem{"Cooperating deployed services",{"product.document_classification","product.documents"}});
+    const auto panel=future(game).catalog.panels;
+    StartFrontierTrial combined{2,FrontierTrialKind::assessment,panel[0].id,{"lease.initial",MilliCUPerDay{100000},4}};
+    const auto solo=quote_frontier_trial(state(game),{1,combined.kind,combined.protocol,{"lease.initial",MilliCUPerDay{100000},2}},Cents{0});
+    const auto quote=quote_frontier_trial(state(game),combined,Cents{0});
+    auto understaffed=combined;understaffed.allocation.staff=2;
+    refuse(game,understaffed,"staff per deployed member");
+    check(quote.fee==checked_unit_add(solo.fee,solo.fee) && quote.work>=checked_unit_add(panel[0].terms.work,panel[0].terms.work),
+        "The cooperating system ignored combined physical verification costs.");
+    apply(game,combined);
+    finish(game,future(game).trials.back().project);
+    const auto result=*future(game).trials.back().result;
+    check(result.valid && result.field_tasks>0 && result.lower[0]>7500 && result.lower[7]==0,
+        "A cooperating system ignored its weaker member's operational reliability.");
+    combined.protocol=panel[1].id;
+    apply(game,combined);
+    apply(game,CancelProject{serving});
+    finish(game,future(game).trials.back().project);
+    check(future(game).trials.back().result && !future(game).trials.back().result->valid &&
+        !frontier_qualification(future(game),2).agi_on,"A stopped cooperating member left valid evidence behind.");
+    combined.protocol=panel[2].id;
+    refuse(game,combined,"operating service");
+    (void)reload(game);
+}
+void smoke_fixture(const runtime::CompiledProgram& p,const std::filesystem::path& directory) {
+    if (!std::filesystem::create_directories(directory)) throw std::runtime_error("Choose a new smoke fixture directory.");
+    auto game=begin(p,frontier_id);
+    prepare_system(game,true,false);
+    persistence::atomic_write(directory/"collection.json",p.canonical_content_bytes,
+        [](std::string_view){throw std::runtime_error("The fixture content already exists.");},content::maximum_document_bytes,false);
+    const auto paths=persistence::local_paths(directory);
+    persistence::save_file(p,game.checkpoint(),paths.saves_directory/"frontier-start.pgpsave");
+    std::cout<<"Prepared native Frontier fixture at "<<directory<<'\n';
 }
 void plateau_route(const runtime::CompiledProgram& p) {
     auto game = begin(p,plateau_id);
@@ -275,7 +355,7 @@ void automation(const runtime::CompiledProgram& p) {
     (void)reload(game);
 }
 }
-int main() {
+int main(int argc,char** argv) {
     try {
         const auto draft = Json::parse(persistence::read_bounded(PGP_FRONTIER_SOURCE,content::maximum_document_bytes));
         const auto bundled = compile(draft);
@@ -285,9 +365,17 @@ int main() {
         refuse(opening,BuyData{"data.frontier_corpora"},"conditional future");
         refuse(opening,OrderOwnedHardware{"early","unused","rack.frontier_mesh"},"conditional future");
         const auto p = late_fixture(draft);
+        if (argc==3 && std::string_view{argv[1]}=="--smoke-fixture") {
+            smoke_fixture(p,argv[2]);
+            return 0;
+        }
+        if (argc!=1) throw std::runtime_error("Use --smoke-fixture DIRECTORY or no arguments.");
         frontier_route(p);
+        frontier_route(late_fixture(draft,"path.uneven"),false);
         plateau_route(p);
+        bundle_route(p);
         automation(p);
+        rival_route(late_fixture(draft,"path.accelerating",true));
         std::cout<<"Frontier evidence passed ("<<checks<<" checks).\n";
     } catch (const std::exception& error) {
         std::cerr<<error.what()<<'\n';
