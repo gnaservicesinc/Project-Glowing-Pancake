@@ -72,8 +72,10 @@ bool prerequisites(const SimulationState& state, const std::vector<std::string>&
     return std::ranges::all_of(all,known) && (any.empty() || std::ranges::any_of(any,known));
 }
 bool within_budget(const SimulationState& state, const FrontierBudget& budget, Cents paid, Cents fee, Cents protected_cash) {
+    const auto floor=fee.value()>0?std::max(budget.reserve,operating_reserve_target(state)):budget.reserve;
+    const auto available=checked_unit_subtract(state.cash,protected_cash);
     return fee<=checked_unit_subtract(budget.limit,paid) &&
-        checked_unit_add(fee,budget.reserve)<=checked_unit_subtract(state.cash,protected_cash);
+        available>=floor && fee<=checked_unit_subtract(available,floor);
 }
 Cents research_spent(const FrontierResearchProgram& program) {
     Cents result{0};

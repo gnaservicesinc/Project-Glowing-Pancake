@@ -51,8 +51,10 @@ struct ManagementAcceptance {
     auto operator<=>(const ManagementAcceptance&) const = default;
 };
 inline constexpr std::size_t management_decision_limit=65536;
+inline constexpr std::size_t management_policy_limit=256;
+inline constexpr std::size_t enabled_policy_limit=8;
 inline constexpr std::uint32_t pricing_review_limit=10000;
-enum class DelegationKind { evaluation, lease_renewal, pricing };
+enum class DelegationKind { evaluation, lease_renewal, pricing, operating_reserve, hardware_replacement };
 struct PricingBounds {
     Cents floor{0},ceiling{0},step{0};
     BasisPoints low_utilization{2500},high_utilization{8500};
@@ -120,6 +122,9 @@ void hire_specialist(SimulationState& state,std::string_view id,Cents protected_
 void add_delegation_policy(SimulationState& state,DelegationPolicy policy);
 void set_delegation_enabled(SimulationState& state,std::string_view id,bool enabled);
 void suspend_pricing_policies(SimulationState& state,std::string_view product);
+[[nodiscard]] Cents operating_reserve_target(const SimulationState& state);
+[[nodiscard]] Cents discretionary_cash(const SimulationState& state);
+void require_operating_reserve(Cents cash_before,const SimulationState& after);
 struct PricingReview {
     Cents quote{0};
     std::string explanation;

@@ -21,6 +21,9 @@ QString money(core::Cents v) {
     for (auto pos=whole.size()-3;pos>0;pos-=3) whole.insert(pos,QLatin1Char(','));
     return (raw<0?QStringLiteral("−$"):QStringLiteral("$"))+whole+QStringLiteral(".%1").arg(magnitude%100,2,10,QLatin1Char('0'));
 }
+QString money_input(core::Cents value) {
+    return QStringLiteral("%1.%2").arg(value.value()/100).arg(value.value()%100,2,10,QLatin1Char('0'));
+}
 QString percent(core::BasisPoints v) { return QStringLiteral("%1.%2%").arg(v.value()/100).arg(v.value()%100,2,10,QLatin1Char('0')); }
 QString channel_name(core::ProductChannel channel) {
     using core::ProductChannel;
@@ -217,7 +220,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
                 {{QStringLiteral("modelId"),text(row.model_id)},{QStringLiteral("completed"),row.completed},{QStringLiteral("independent"),row.independent}}});
         }
     }
-    core::Cents protected_cash{0};for (const auto& reservation:s.reservations) protected_cash=core::checked_unit_add(protected_cash,reservation.reserved);
+    const auto protected_cash=core::checked_unit_subtract(s.cash,core::discretionary_cash(s));
     if (s.business_offers) for (const auto& row:s.business_offers->catalog) {
         const auto it=std::find_if(s.business_offers->accepted.begin(),s.business_offers->accepted.end(),[&](const auto& a){return a.offer_id==row.id;});
         const bool eligible=core::business_offer_eligible(*s.business_offers,row,*s.accounts,*s.capacity,s.market,s.date,protected_cash);
@@ -302,6 +305,27 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
                 QStringLiteral("Adds one available staff member today and a recurring salary. Past work keeps its actual staffing. Extra staff does not create compute or improve model capability for free."),hired?QStringLiteral("Hired"):QStringLiteral("Available"),!hired});
         }
         for (const auto& p:m.policies) {
+            if (p.kind==core::DelegationKind::operating_reserve) {
+                policies.push_back({text(p.id),tr("Operating cash reserve"),tr("%1 target").arg(money(p.reserve_floor)),
+                    p.enabled?operatingReserveText():tr("Suspended. Resume this policy to restore its original target."),
+                    p.enabled?tr("Protecting cash"):tr("Suspended"),false,{{QStringLiteral("enabled"),p.enabled}}});
+                continue;
+            }
+            if (p.kind==core::DelegationKind::hardware_replacement) {
+                const auto& infrastructure=*s.infrastructure;
+                const auto* family=find(infrastructure.catalog.hardware,p.plan_id);
+                const auto* rack=find(infrastructure.hardware,p.target_id);
+                const auto* site=find(infrastructure.sites,rack->site_id);
+                const auto status=p.runs==2?tr("Replaced"):!p.enabled?tr("Suspended"):
+                    p.runs==0?tr("Order scheduled"):tr("Replacement ordered");
+                auto detail=tr("%1 at %2 → %3\nPurchase ceiling %4 · maintenance ceiling %5/month · cash floor %6")
+                    .arg(text(p.target_id),text(site->name),text(family->name),money(p.budget),money(p.monthly_ceiling),money(p.reserve_floor));
+                if (p.runs<2) detail+=tr("\nNext eligible review %1").arg(text(core::iso_date(p.next_review)));
+                if (!p.blocked.empty()) detail+=QLatin1Char('\n')+text(p.blocked);
+                policies.push_back({text(p.id),tr("Replace obsolete hardware"),tr("%1 paid · %2 of 2 actions").arg(money(p.committed)).arg(p.runs),
+                    std::move(detail),status,false,{{QStringLiteral("enabled"),p.enabled}}});
+                continue;
+            }
             if (p.kind==core::DelegationKind::pricing && p.pricing) {
                 policies.push_back({text(p.id),QStringLiteral("Bounded product pricing"),QStringLiteral("%1 / %2 reviews · %3 to %4").arg(p.runs).arg(p.maximum_runs).arg(money(p.pricing->floor),money(p.pricing->ceiling)),
                     QStringLiteral("Product %1 · next review %2 · every %3 days\nStep %4 · low utilization %5 · high utilization %6\nReserve floor %7 · no spending authority\n%8\nEach review uses up to seven settled days. Manual price changes suspend this policy. Counters and prior decisions are retained.")
@@ -414,9 +438,8 @@ QString ManagementController::scoreText() const {
 QVariantMap ManagementController::policyDefaults() const {
     if (!snapshot_ || !state().management) return {};
     const auto& c=state().management->catalog;
-    const auto input=[](core::Cents value){return QStringLiteral("%1.%2").arg(value.value()/100).arg(value.value()%100,2,10,QLatin1Char('0'));};
-    return {{QStringLiteral("budget"),input(c.default_policy_budget)},{QStringLiteral("reserve"),input(c.default_reserve_floor)},
-        {QStringLiteral("monthly"),input(c.default_monthly_ceiling)},{QStringLiteral("runs"),QString::number(c.default_policy_runs)},
+    return {{QStringLiteral("budget"),money_input(c.default_policy_budget)},{QStringLiteral("reserve"),money_input(c.default_reserve_floor)},
+        {QStringLiteral("monthly"),money_input(c.default_monthly_ceiling)},{QStringLiteral("runs"),QString::number(c.default_policy_runs)},
         {QStringLiteral("interval"),QString::number(c.minimum_evaluation_interval.value())}};
 }
 QVariantList ManagementController::renewableLeases() const {
@@ -439,6 +462,81 @@ QVariantList ManagementController::pricedProducts() const {
     }
     return result;
 }
+QString ManagementController::operatingReserveText() const {
+    if (!snapshot_) return {};
+    const auto target=core::operating_reserve_target(state());
+    if (target.value()==0) return tr("No operating reserve is enabled.");
+    const auto protected_amount=std::min(target,core::uncommitted_cash(state()));
+    auto result=tr("%1 of %2 protected · %3 available for new spending.")
+        .arg(money(protected_amount),money(target),money(core::discretionary_cash(state())));
+    if (protected_amount<target)
+        result+=tr(" New cash replenishes the reserve after existing commitments.");
+    return result;
+}
+QVariantList ManagementController::replacementRacks() const {
+    QVariantList result;
+    if (!snapshot_ || !state().infrastructure) return result;
+    const auto& infrastructure=*state().infrastructure;
+    for (const auto& rack:infrastructure.hardware) {
+        if (!rack.commissioned_on || rack.retired_on) continue;
+        const auto* family=find(infrastructure.catalog.hardware,rack.family_id);
+        const auto* site=find(infrastructure.sites,rack.site_id);
+        const auto eligible=core::advance_days(rack.delivered_on,family->useful_life);
+        if (eligible>=state().end_date) continue;
+        result.push_back(option(rack.id,tr("%1 · %2 at %3 · eligible %4")
+            .arg(text(rack.id),text(family->name),text(site->name),text(core::iso_date(eligible)))));
+    }
+    return result;
+}
+QVariantList ManagementController::replacementFamilies(QString rack) const {
+    QVariantList result;
+    if (!snapshot_ || !state().infrastructure || rack.isEmpty()) return result;
+    const auto& infrastructure=*state().infrastructure;
+    const auto id=rack.toStdString();
+    const auto* original=find(infrastructure.hardware,id);
+    if (!original || original->retired_on) return result;
+    for (const auto& family:infrastructure.catalog.hardware) {
+        try {
+            const auto terms=core::hardware_replacement_terms(state(),id,family.id);
+            auto row=option(family.id,tr("%1 · %2 to buy · %3/month maintenance")
+                .arg(text(family.name),money(terms.purchase),money(terms.monthly_maintenance)));
+            row.insert(QStringLiteral("purchase"),money_input(terms.purchase));
+            row.insert(QStringLiteral("maintenance"),money_input(terms.monthly_maintenance));
+            if (family.id==original->family_id) result.push_front(std::move(row));
+            else result.push_back(std::move(row));
+        } catch (const std::invalid_argument&) {
+            // Only compatible families are offered for this incumbent.
+        }
+    }
+    return result;
+}
+void ManagementController::authorizeOperatingReserve(QString target) {
+    if (!editable()) return;
+    try {
+        core::DelegationPolicy policy;
+        policy.id=nextId(QStringLiteral("policy.")).toStdString();
+        policy.kind=core::DelegationKind::operating_reserve;
+        policy.reserve_floor=policy_money(target);
+        policy.interval=core::Days{0};
+        emit actionRequested(core::AddDelegationPolicy{std::move(policy)});
+    } catch (const std::exception& error) {emit noticeRaised(QString::fromUtf8(error.what()));}
+}
+void ManagementController::authorizeHardwareReplacement(QString rack,QString family,QString purchase,QString monthly,QString reserve) {
+    if (!editable()) return;
+    try {
+        core::DelegationPolicy policy;
+        policy.id=nextId(QStringLiteral("policy.")).toStdString();
+        policy.kind=core::DelegationKind::hardware_replacement;
+        policy.target_id=rack.toStdString();
+        policy.plan_id=family.toStdString();
+        policy.budget=policy_money(purchase);
+        policy.monthly_ceiling=policy_money(monthly);
+        policy.reserve_floor=policy_money(reserve);
+        policy.interval=core::Days{1};
+        policy.maximum_runs=2;
+        emit actionRequested(core::AddDelegationPolicy{std::move(policy)});
+    } catch (const std::exception& error) {emit noticeRaised(QString::fromUtf8(error.what()));}
+}
 int ManagementController::decisionPageCount() const {
     if (!snapshot_ || !state().management) return 0;
     return static_cast<int>((state().management->decisions.size()+127)/128);
@@ -455,15 +553,24 @@ std::vector<CampaignRow> ManagementController::policyDecisionRows() const {
     rows.reserve(end-begin);
     for (auto i=end;i>begin;) {
         --i;const auto& d=history[i];auto detail=text(d.explanation);
-        if (!d.result_id.empty()) detail+=QStringLiteral("\nResult: ")+text(d.result_id);
+        const auto* policy=find(state().management->policies,d.policy_id);
+        auto status=d.overridden?tr("Player override · suspended"):d.accepted?tr("Committed"):tr("Refused · suspended");
+        if (policy && policy->kind==core::DelegationKind::operating_reserve) {
+            status=d.result_id=="reserve_enabled"?tr("Reserve enabled"):tr("Reserve suspended");
+            detail+=tr("\nAuthorized target %1").arg(money(policy->reserve_floor));
+        } else if (!d.result_id.empty()) {
+            detail+=tr("\nResult: %1").arg(text(d.result_id));
+            if (policy && policy->kind==core::DelegationKind::hardware_replacement)
+                status=d.result_id==policy->target_id?tr("Old rack retired"):tr("Replacement ordered");
+        }
         if (d.price_event_cursor && *d.price_event_cursor>0 && *d.price_event_cursor<=state().market->price_events.size()) {
             const auto& e=state().market->price_events[static_cast<std::size_t>(*d.price_event_cursor-1)];
+            status=tr("Price reviewed");
             detail+=QStringLiteral("\n%1: %2 → %3 per task. No cash spent; existing contracts retain their terms.").arg(readable(e.product_id),money(e.before),money(e.after));
         }
         // StableListModel sorts identities; a fixed inverse cursor keeps newest first.
         const auto identity=QStringLiteral("decision:%1").arg(static_cast<qulonglong>(core::management_decision_limit-i),5,10,QLatin1Char('0'));
-        rows.push_back({identity,text(d.policy_id),text(core::iso_date(d.day))+QStringLiteral(" · ")+money(d.commitment),std::move(detail),
-            d.overridden?QStringLiteral("Player override; suspended"):d.accepted?(d.price_event_cursor?QStringLiteral("Price reviewed"):QStringLiteral("Committed")):QStringLiteral("Refused; policy suspended"),false});
+        rows.push_back({identity,text(d.policy_id),text(core::iso_date(d.day))+QStringLiteral(" · ")+money(d.commitment),std::move(detail),std::move(status),false});
     }
     return rows;
 }

@@ -96,8 +96,7 @@ void complete_approved_acquisitions(WorldState& w,const CompiledProgram&) {
         if (m==motions.end() || m->status!=BoardMotionStatus::approved) continue;
         auto& r=target(w,q.target);
         if (!r.parent_company.empty() || r.simulation.phase!=DayPhase::work_ready || r.simulation.accounts->holdings!=q.sellers || r.simulation.management->governance) invalid("The seller's control or ownership changed after its quote; review new terms");
-        Cents protected_cash{0};for (const auto& reserve:w.simulation.reservations) protected_cash=checked_unit_add(protected_cash,reserve.reserved);
-        if (q.cash>checked_unit_subtract(w.simulation.cash,protected_cash)) invalid("The merger exceeds real unreserved buyer cash");
+        if (q.cash>discretionary_cash(w.simulation)) invalid("The merger exceeds buyer cash available for new spending");
         record_cash(*w.simulation.accounts,w.simulation.date,Cents{-q.cash.value()},Account::assets,"Acquisition consideration: "+q.target,"merger.cash/"+q.motion_id);
         w.simulation.cash=accounts_report(*w.simulation.accounts).cash;
         if (q.shares.value()>0) company_equity(w.simulation,"merger.sellers/"+q.target,checked_unit_subtract(q.value,q.cash),q.shares,"merger.equity/"+q.motion_id,true);
@@ -128,7 +127,7 @@ void transfer_subsidiary_funds(WorldState& w,std::string_view id,Cents amount,bo
     if (!competition_detail::submit_rival(r,child)) invalid("The subsidiary could not commit its actual cash-transfer leg");
     Simulation parent{std::move(w.simulation),TrustedSimulationState{}};
     const auto result=parent.submit_in_transaction({parent.checkpoint().revision,TransferGroupFunds{w.company_id,std::string(id),sequence,amount,funding,true}});
-    if (!result.accepted()) invalid("The parent cannot commit that transfer from its actual unreserved cash");
+    if (!result.accepted()) throw std::invalid_argument(result.explanation);
     w.simulation=std::move(parent).release_checkpoint();at->transfers.push_back({w.simulation.date,amount,funding});
 }
 OwnedGroupReport owned_group_report(const WorldState& w) {

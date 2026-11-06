@@ -7,15 +7,16 @@ the Qt adapters format reports and queue the same commands.
 
 ## Finite standing policies
 
-`AddDelegationPolicy` authorizes independent evaluation of one checkpoint or
-renewal of one accepted, renewable compute lease. A campaign permits at most
-eight policies, twelve accepted runs per policy and 128 decision records.
+`AddDelegationPolicy` authorizes independent evaluation, paid compute lease
+renewal, bounded pricing, an operating cash reserve or replacement of one
+owned rack. A campaign retains up to 256 authorizations with eight enabled
+at once. The Office pages through up to 65,536 decisions.
 Evaluation specifies a plan, source, staff/rate ceilings, minimum interval,
-total cash budget and reserve floor. Training can finish before the first
-test; a live checkpoint is never evaluated. The previous test must stop
-before another begins. Starting tests rechecks methodology prerequisites,
-actual unreserved resources and the full fee. Neither scheduling nor the
-preview samples a future evaluation draw.
+total cash budget and reserve floor, with up to twelve accepted runs.
+Training can finish before the first test. Use an immutable checkpoint to
+evaluate a running model. A previous test must stop before another begins.
+Starting tests rechecks methodology prerequisites, unreserved resources and
+the full fee. Evaluation draws occur when the work settles.
 
 Renewal is limited to the actual expiry morning. It pays setup again and
 creates a separate recurring obligation for the next finite term. The policy
@@ -25,6 +26,28 @@ The ledger still pays only actual setup and accrued service. The cash reserve
 must cover that conservative new commitment. Accepting a lease remains
 once-only; duplicate commands cannot clone its capacity.
 
+Bounded pricing reviews recent settled discretionary demand against available
+serving slots and moves a public quote by at most one authorized step. Each
+review has a saved before/after price event. Manual price changes suspend the
+policy while preserving its audit. Existing contracts retain their terms.
+
+One operating reserve can protect a chosen cash target at a time. It reduces
+cash available for new discretionary commitments, including ordinary and
+frontier delegation. Paid delegated actions use the higher of their own floor
+and the operating reserve. Accepted bills, principal repayments and story consequences can draw
+down the reserve. New receipts refill it before becoming available for new
+spending. Authorization, suspension and resumption appear in the policy log.
+
+A hardware replacement authorizes one specific installed rack, one compatible
+family and separate purchase and monthly maintenance ceilings. It can order
+at the original rack's rated useful-life date, measured from delivery. The
+site needs a spare slot and enough power and paid operators to stage both.
+After the successor commissions and has at least the old rack's rated usable
+capacity, the policy waits for the original rack's active and paused work,
+customer, wholesale and replica commitments to clear. Retirement uses the
+ordinary disposal ledger. A suspended in-flight replacement retains its paid
+order, and resumption uses that same order.
+
 Policies run in stable authorization order at the prepared morning after
 required content decisions. Only actual eligible attempts copy a candidate;
 idle daily reviews do not replay ledger or capacity history. A refused attempt
@@ -32,7 +55,7 @@ spends nothing, records its cause and suspends the policy. Suspending/resuming
 keeps spent budget, accepted-run count and the next review date. There is no
 automatic deployment, story response, financing, infinite retry or charter change.
 Strict save loading reconciles decisions against real evaluation projects,
-lease terms, payments, counters and cursors.
+lease terms, quotes, reserve controls, hardware orders and retirements.
 
 ## Recovery and financing
 

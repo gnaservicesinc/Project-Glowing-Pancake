@@ -29,6 +29,8 @@ class ManagementController final : public QObject {
     Q_PROPERTY(QVariantMap policyDefaults READ policyDefaults NOTIFY changed)
     Q_PROPERTY(QVariantList renewableLeases READ renewableLeases NOTIFY changed)
     Q_PROPERTY(QVariantList pricedProducts READ pricedProducts NOTIFY changed)
+    Q_PROPERTY(QVariantList replacementRacks READ replacementRacks NOTIFY changed)
+    Q_PROPERTY(QString operatingReserveText READ operatingReserveText NOTIFY changed)
     Q_PROPERTY(int decisionPage READ decisionPage NOTIFY changed)
     Q_PROPERTY(int decisionPageCount READ decisionPageCount NOTIFY changed)
     Q_PROPERTY(QString decisionPageLabel READ decisionPageLabel NOTIFY changed)
@@ -99,6 +101,11 @@ public:
     QVariantMap policyDefaults() const;
     QVariantList renewableLeases() const;
     QVariantList pricedProducts() const;
+    QVariantList replacementRacks() const;
+    QString operatingReserveText() const;
+    Q_INVOKABLE QVariantList replacementFamilies(QString rack) const;
+    Q_INVOKABLE void authorizeOperatingReserve(QString target);
+    Q_INVOKABLE void authorizeHardwareReplacement(QString rack,QString family,QString purchase,QString monthly,QString reserve);
     int decisionPage() const {return decision_page_;}
     int decisionPageCount() const;
     QString decisionPageLabel() const;

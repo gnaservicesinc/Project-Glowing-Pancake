@@ -33,9 +33,10 @@ running models, including retained work, released/rechecked allocations and
 exact saved pause history. Bounded price delegation now joins evaluation and
 lease-renewal policies, with player-selected ranges, steps, utilization thresholds,
 cadence and finite review counts. Manual overrides suspend it and retain the
-original audit. Continue initial component implementation, including the remaining
-reserve and hardware delegation requirements; their presence in the design does
-not mean they have been implemented.
+original audit. The Office also supports a company cash reserve and staged
+replacement of a specified obsolete rack under purchase and maintenance ceilings.
+Continue the initial coverage pass with financing. The design's later IPO has
+no current game command or player control.
 
 ## M0 — Toolchain and platform proof
 

@@ -29,9 +29,6 @@ Cents reserved_cash(const SimulationState& state) {
     }
     return reserved;
 }
-Cents available(const SimulationState& state) {
-    return checked_unit_subtract(state.cash, reserved_cash(state));
-}
 AccountsState& accounts(SimulationState& state) {
     if (!state.accounts) refuse(CommandReason::invalid_status, "This engineering fixture has no business accounts.");
     return *state.accounts;
@@ -220,7 +217,7 @@ void validate(const SimulationState& state,bool deep=true,std::size_t first_rece
         std::adjacent_find(ids.begin(), ids.end()) != ids.end()) {
         invalid("Reservation IDs must have a unique canonical order");
     }
-    if (available(state).value() < 0) {
+    if (uncommitted_cash(state).value() < 0) {
         invalid("Reservations exceed available cash");
     }
     ids.clear();
@@ -298,6 +295,10 @@ void validate(const SimulationState& state,bool deep=true,std::size_t first_rece
     }
 }
 } // namespace
+
+Cents uncommitted_cash(const SimulationState& state) {
+    return checked_unit_subtract(state.cash,reserved_cash(state));
+}
 
 std::string_view to_string(DayPhase value) noexcept {
     switch (value) {
@@ -396,6 +397,12 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             refuse(CommandReason::campaign_finished, "The campaign ended; its final accounts remain available for inspection.");
         }
         const auto previous_receipts = state_.receipts.size();
+        const bool reserve_applies=!std::holds_alternative<AdvanceDay>(command.action) &&
+            !std::holds_alternative<ResolveOpeningChoice>(command.action) &&
+            !std::holds_alternative<SettleInvoice>(command.action) &&
+            !std::holds_alternative<RepayDebt>(command.action) &&
+            operating_reserve_target(state_).value()>0;
+        const auto uncommitted_before=reserve_applies?uncommitted_cash(state_):Cents{0};
         auto next = outer_transaction?std::move(state_):state_;
         ++next.revision;
         std::optional<std::uint64_t> new_reservation;
@@ -424,7 +431,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if (next.reservations.size() >= simulation_reservation_limit) {
                     refuse(CommandReason::limit_exceeded, "The reservation count limit was reached.");
                 }
-                if (action.amount > available(next)) {
+                if (action.amount > uncommitted_cash(next)) {
                     refuse(CommandReason::insufficient_funds,
                            "Available cash is already reserved for other commitments.");
                 }
@@ -863,6 +870,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 (void)receipt(next,"external_demand_change");
             }
         }, command.action);
+        if (reserve_applies) require_operating_reserve(uncommitted_before,next);
         if (!std::holds_alternative<AdvanceDay>(command.action)) {prepare_governance(next);prepare_succession(next);prepare_infrastructure(next);}
         if (next.liquidity && !std::holds_alternative<AdvanceDay>(command.action))
             refresh_liquidity(*next.liquidity,*next.accounts);
@@ -891,7 +899,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
 std::shared_ptr<const SimulationSnapshot> Simulation::snapshot() const {
     return std::make_shared<const SimulationSnapshot>(SimulationSnapshot{
         state_.revision, state_.date, state_.phase, state_.paused, state_.cash,
-        available(state_), state_.pending_choice, state_.reservations,
+        discretionary_cash(state_), state_.pending_choice, state_.reservations,
         state_.accounts ? std::optional{accounts_report(*state_.accounts)} : std::nullopt,
         state_.capacity ? std::optional{capacity_report(*state_.capacity)} : std::nullopt,
         state_.market ? std::optional{market_report(*state_.market)} : std::nullopt,

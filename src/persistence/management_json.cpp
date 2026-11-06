@@ -1,18 +1,29 @@
 #include "management_json.hpp"
 #include "governance_json.hpp"
 #include <pgp/content/management_catalog.hpp>
+#include <algorithm>
+#include <array>
 namespace pgp::persistence::detail {
 namespace {
 std::string label(const Json& value,bool empty=false) {return text(value,"management/text",1024,empty);}
 core::OrdinalDay day(const Json& value) {return core::OrdinalDay{i64(value,"management/day")};}
 core::Cents cents(const Json& value) {return core::Cents{i64(value,"management/cents")};}
+constexpr std::array policy_kinds{
+    std::string_view{"evaluation"},std::string_view{"lease_renewal"},std::string_view{"pricing"},
+    std::string_view{"operating_reserve"},std::string_view{"hardware_replacement"}};
+core::DelegationKind policy_kind(const Json& value) {
+    const auto name=label(value);
+    const auto it=std::ranges::find(policy_kinds,name);
+    if (it==policy_kinds.end()) invalid("management/kind","Unsupported policy kind");
+    return static_cast<core::DelegationKind>(it-policy_kinds.begin());
+}
 }
 Json management_json(const core::ManagementState& m) {
     Json financing=Json::array(),specialists=Json::array(),policies=Json::array(),decisions=Json::array(),notices=Json::array();
     for (const auto& row:m.financing) financing.push_back({{"offer",row.offer_id},{"day",row.day.value()}});
     for (const auto& row:m.specialists) specialists.push_back({{"offer",row.offer_id},{"day",row.day.value()}});
     for (const auto& p:m.policies) {
-        Json row{{"id",p.id},{"target",p.target_id},{"plan",p.plan_id},{"kind",p.kind==core::DelegationKind::evaluation?"evaluation":p.kind==core::DelegationKind::lease_renewal?"lease_renewal":"pricing"},
+        Json row{{"id",p.id},{"target",p.target_id},{"plan",p.plan_id},{"kind",policy_kinds.at(static_cast<std::size_t>(p.kind))},
         {"source",p.allocation.source_id},{"daily_compute",p.allocation.daily_compute.value()},{"staff",p.allocation.staff},
         {"budget",p.budget.value()},{"reserve",p.reserve_floor.value()},{"monthly_ceiling",p.monthly_ceiling.value()},{"interval",p.interval.value()},{"maximum_runs",p.maximum_runs},
         {"enabled",p.enabled},{"created_on",p.created_on.value()},{"next_review",p.next_review.value()},{"runs",p.runs},{"committed",p.committed.value()},{"blocked",p.blocked}};
@@ -40,14 +51,13 @@ core::ManagementState parse_management(const Json& source) {
     core::ManagementState m;m.governance=std::move(governance);m.catalog=content::load_management_catalog(j.at("catalog").dump());
     if (!j.at("reviewed_on").is_null()) m.reviewed_on=day(j.at("reviewed_on"));
     array(j.at("financing"),"management/financing",8);array(j.at("specialists"),"management/specialists",8);
-    array(j.at("policies"),"management/policies",8);array(j.at("decisions"),"management/decisions",core::management_decision_limit);array(j.at("notices"),"management/notices",256);
+    array(j.at("policies"),"management/policies",core::management_policy_limit);array(j.at("decisions"),"management/decisions",core::management_decision_limit);array(j.at("notices"),"management/notices",256);
     for (const auto& r:j.at("financing")) {fields(r,"management/acceptance",{"offer","day"});m.financing.push_back({label(r.at("offer")),day(r.at("day"))});}
     for (const auto& r:j.at("specialists")) {fields(r,"management/acceptance",{"offer","day"});m.specialists.push_back({label(r.at("offer")),day(r.at("day"))});}
     for (const auto& p:j.at("policies")) {
         fields(p,"management/policy",{"id","target","plan","kind","source","daily_compute","staff","budget","reserve","monthly_ceiling","interval","maximum_runs","enabled","created_on","next_review","runs","committed","blocked"},{"pricing"});
-        core::DelegationPolicy value;value.id=label(p.at("id"));value.target_id=label(p.at("target"));value.plan_id=label(p.at("plan"),true);
-        const auto kind=label(p.at("kind"));if (kind!="evaluation" && kind!="lease_renewal" && kind!="pricing") invalid("management/kind","Unsupported policy kind");
-        value.kind=kind=="evaluation"?core::DelegationKind::evaluation:kind=="lease_renewal"?core::DelegationKind::lease_renewal:core::DelegationKind::pricing;
+        core::DelegationPolicy value;value.id=label(p.at("id"));value.target_id=label(p.at("target"),true);value.plan_id=label(p.at("plan"),true);
+        value.kind=policy_kind(p.at("kind"));
         if (p.contains("pricing")) {
             const auto& b=p.at("pricing");fields(b,"management/pricing",{"floor","ceiling","step","low","high"});
             value.pricing=core::PricingBounds{cents(b.at("floor")),cents(b.at("ceiling")),cents(b.at("step")),

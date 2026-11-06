@@ -801,14 +801,23 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             fail(RuntimeReason::morning_not_ready, "Resolve required content choices and prepare the morning before work.");
         if(std::holds_alternative<core::AdvanceDay>(command.action) && required_public_case(next.world))
             fail(RuntimeReason::morning_not_ready,"Review and acknowledge the public dispute notice before advancing.");
-        if(submit_authority_action(next.world,command.action)) return;
+        const auto before=core::operating_reserve_target(next.world.simulation).value()>0?
+            core::uncommitted_cash(next.world.simulation):core::Cents{0};
+        if (submit_authority_action(next.world,command.action)) {
+            core::require_operating_reserve(before,next.world.simulation);
+            return;
+        }
         if(next.world.objectives && (std::holds_alternative<core::AddMarketSegment>(action) || std::holds_alternative<core::EnableMarket>(action)))
             fail(RuntimeReason::effect_rejected,"Century scoring uses the authored regional customer roster.");
         if(const auto* media=std::get_if<core::BuyMediaCampaign>(&command.action)) {
-            buy_media_campaign(next.world,*media);return;
+            buy_media_campaign(next.world,*media);
+            core::require_operating_reserve(before,next.world.simulation);
+            return;
         }
         if(const auto* forum=std::get_if<core::EndorseForumStandard>(&command.action)) {
-            endorse_forum_standard(next.world,*forum);return;
+            endorse_forum_standard(next.world,*forum);
+            core::require_operating_reserve(before,next.world.simulation);
+            return;
         }
         --next.world.simulation.revision;
         const auto prior_day = next.world.simulation.date;

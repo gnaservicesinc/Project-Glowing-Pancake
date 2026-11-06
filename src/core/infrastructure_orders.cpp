@@ -63,6 +63,67 @@ void order_owned_hardware(SimulationState& s,const OrderOwnedHardware& request,C
     i.hardware.push_back({request.id,request.site_id,request.family_id,source,s.date,delivery,std::nullopt,std::nullopt,f.purchase_cost,Cents{0},Cents{0},0});
     add_notice(s,"ordered/hardware/"+request.id,"hardware_ordered",request.id,s.date);
 }
+HardwareReplacementTerms hardware_replacement_terms(const SimulationState& s,std::string_view incumbent,std::string_view family_id) {
+    const auto& infrastructure_state=infrastructure(s);
+    const auto& old=find(infrastructure_state.hardware,incumbent);
+    const auto& current=family(s,old);
+    const auto& replacement=find(infrastructure_state.catalog.hardware,family_id);
+    if (!old.commissioned_on || replacement.capacity<current.capacity || replacement.memory_mib<current.memory_mib ||
+        replacement.interconnect!=current.interconnect)
+        invalid("Choose commissioned hardware and a replacement with at least its capacity, memory and the same interconnect");
+    return {advance_days(old.delivered_on,current.useful_life),replacement.purchase_cost,replacement.monthly_maintenance};
+}
+void order_hardware_replacement(SimulationState& s,std::string_view incumbent,std::string_view family_id,std::string id,Cents protected_cash) {
+    const auto terms=hardware_replacement_terms(s,incumbent,family_id);
+    const auto& i=infrastructure(s);
+    const auto& old=find(i.hardware,incumbent);
+    if (old.retired_on || s.date<terms.eligible_on) invalid("The original rack must still be installed and past its rated useful life");
+    if (auto blocked=frontier_technology_block(s,FrontierTechnology::hardware,family_id,s.date); !blocked.empty())
+        throw std::invalid_argument(blocked);
+    const auto& replacement=find(i.catalog.hardware,family_id);
+    const auto& owned=site(s,old.site_id);
+    const auto& state=profile(s,owned);
+    const auto delivery=advance_days(s.date,replacement.delivery_lead);
+    auto watts=replacement.active_it_watts;
+    auto operators=replacement.operators;
+    for (const auto& existing:i.hardware) {
+        if (existing.site_id!=owned.id || existing.retired_on) continue;
+        const auto& installed=family(s,existing);
+        watts+=installed.active_it_watts;
+        operators+=installed.operators;
+    }
+    const auto facility=facility_limit(state,owned,owned.power.back().watts);
+    const auto it_watts=mul_div_floor(facility,1000,pue(state,owned.cooling)).quotient;
+    if (watts>it_watts || operators>operators_on(s,owned,delivery))
+        invalid("The site needs enough authorized power and paid operators for both racks during replacement");
+    order_owned_hardware(s,{std::move(id),owned.id,std::string(family_id)},protected_cash);
+}
+std::string hardware_retirement_wait(const SimulationState& s,std::string_view incumbent,std::string_view replacement) {
+    const auto& i=infrastructure(s);
+    const auto& old=find(i.hardware,incumbent);
+    const auto& next=find(i.hardware,replacement);
+    if (old.retired_on || next.retired_on) invalid("The original rack or its replacement was manually retired");
+    if (!next.commissioned_on) return "Waiting for replacement delivery, power and commissioning.";
+    const auto& source=find(s.capacity->sources,next.source_id);
+    if (company_capacity(source)<family(s,old).capacity) return "Waiting for the replacement to supply at least the old rack's rated capacity.";
+    if (std::any_of(s.capacity->projects.begin(),s.capacity->projects.end(),[&](const auto& project) {
+        return project.source_id==old.source_id && (project.status==ProjectStatus::active || project.status==ProjectStatus::paused);
+    })) return "Waiting for active or paused work on the old rack to finish or move.";
+    const auto& old_source=find(s.capacity->sources,old.source_id);
+    if (old_source.wholesale_reserved.value()>0 || old_source.replica_reserved.value()>0)
+        return "Waiting for wholesale and replica commitments on the old rack to end.";
+    if (s.resilience && std::ranges::any_of(s.resilience->replicas,[&](const auto& replica) {
+        return !replica.stopped_on && (replica.primary_source==old.source_id || replica.backup_source==old.source_id);
+    })) return "Waiting for replication commitments on the old rack to end.";
+    if (s.market) for (const auto& product:s.market->products) {
+        const auto& project=find(s.capacity->projects,product.capacity_project_id);
+        if (project.source_id!=old.source_id) continue;
+        if (std::ranges::any_of(s.market->contracts,[&](const auto& contract) {
+            return contract.product_id==product.id && (contract.status==ContractStatus::active || contract.status==ContractStatus::pending);
+        })) return "Waiting for customer contracts on the old rack to end or migrate.";
+    }
+    return {};
+}
 void hire_site_operators(SimulationState& s,const HireSiteOperators& request,Cents protected_cash) {
     auto& i=infrastructure(s);const auto& owned=site(s,request.site_id);const auto& state=profile(s,owned);std::uint64_t people=request.people;
     for (const auto& hire:i.hires) if (hire.site_id==owned.id) people+=hire.people;

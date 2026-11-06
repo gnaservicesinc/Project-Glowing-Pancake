@@ -26,11 +26,6 @@ QString money(core::Cents amount) {
     return (raw < 0 ? QStringLiteral("−$") : QStringLiteral("$")) + whole + QLatin1Char('.') +
         QStringLiteral("%1").arg(static_cast<qulonglong>(magnitude % 100),2,10,QLatin1Char('0'));
 }
-core::Cents available(const core::SimulationState& state) {
-    auto result = state.cash;
-    for (const auto& row : state.reservations) result = core::checked_unit_subtract(result,row.reserved);
-    return result;
-}
 std::filesystem::path local_path(const QUrl& url) {
     if (!url.isLocalFile() || !url.host().isEmpty() || url.hasQuery() || url.hasFragment())
         throw std::invalid_argument("Choose an absolute local save file.");
@@ -395,7 +390,7 @@ void CampaignController::setShowGuide(bool value) { auto settings=settings_;sett
 QString CampaignController::date() const { return snapshot_ ? text(core::iso_date(runtime::campaign_day(snapshot_->checkpoint.world))) : QStringLiteral("Preparing campaign…"); }
 QString CampaignController::revision() const { return snapshot_ ? integer(snapshot_->checkpoint.world.simulation.revision) : QString{}; }
 QString CampaignController::cashText() const { return snapshot_ ? money(snapshot_->checkpoint.world.simulation.cash) : QStringLiteral("—"); }
-QString CampaignController::availableText() const { return snapshot_ ? money(available(snapshot_->checkpoint.world.simulation)) : QStringLiteral("—"); }
+QString CampaignController::availableText() const { return snapshot_ ? money(core::discretionary_cash(snapshot_->checkpoint.world.simulation)) : QStringLiteral("—"); }
 QString CampaignController::phaseText() const {
     if (!snapshot_) return QStringLiteral("Preparing");
     if(runtime::observing_world(snapshot_->checkpoint.world)) return paused()?QStringLiteral("Observer paused"):QStringLiteral("Observing");

@@ -404,8 +404,20 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "policies"
-        Copy { text: qsTr("Authorize a finite policy. Each attempt rechecks its bounds and cash floor. Refused actions spend nothing and suspend the policy. Disabling or re-enabling preserves counters. A policy never chooses a story response or deploys a model.") }
-        Choice { id: policyKind; objectName: "policyKindChoice"; label: qsTr("Policy type"); options: [{id:"evaluation",label:qsTr("Schedule independent evaluations")},{id:"lease_renewal",label:qsTr("Renew a paid compute lease")},{id:"pricing",label:qsTr("Adjust a product price within bounds")}] }
+        Copy { text: qsTr("Each policy follows the limits you authorize. If an action is refused, the policy suspends and records the reason. You can suspend or resume a policy and keep its counters and past decisions.") }
+        Copy { text: manager.operatingReserveText; font.bold: true }
+        Choice {
+            id: policyKind
+            objectName: "policyKindChoice"
+            label: qsTr("Policy type")
+            options: [
+                {id:"evaluation",label:qsTr("Schedule independent evaluations")},
+                {id:"lease_renewal",label:qsTr("Renew a paid compute lease")},
+                {id:"pricing",label:qsTr("Adjust a product price within bounds")},
+                {id:"operating_reserve",label:qsTr("Maintain an operating cash reserve")},
+                {id:"hardware_replacement",label:qsTr("Replace obsolete owned hardware")}
+            ]
+        }
         Choice { id: policyModel; label: qsTr("Model checkpoint (may still be training)"); rows: manager.models; visible: policyKind.value === "evaluation" }
         Choice { id: policyPlan; label: qsTr("Independent evaluation plan"); options: manager.evaluations; visible: policyKind.value === "evaluation" }
         Choice { id: policySource; label: qsTr("Evaluation source"); options: manager.sources; visible: policyKind.value === "evaluation" }
@@ -435,16 +447,49 @@ ColumnLayout {
                 }
             }
         }
-        Field { id: policyBudget; label: qsTr("Total policy commitment budget, dollars"); value: manager.policyDefaults.budget || ""; visible: policyKind.value !== "pricing" }
-        Field { id: policyReserve; objectName: "policyReserveField"; label: qsTr("Minimum cash after commitment, dollars"); value: manager.policyDefaults.reserve || "" }
-        Field { id: policyRuns; objectName: "policyRunsField"; label: qsTr("Maximum authorized runs"); value: manager.policyDefaults.runs || ""; visible: policyKind.value !== "pricing" }
+        ColumnLayout {
+            visible: policyKind.value === "hardware_replacement"
+            Layout.fillWidth: true
+            Choice { id: oldRack; objectName: "replacementRackChoice"; label: qsTr("Installed rack and first eligible date"); options: visible ? manager.replacementRacks : [] }
+            Choice {
+                id: replacementFamily
+                objectName: "replacementFamilyChoice"
+                label: qsTr("Compatible replacement and quoted cost")
+                options: {
+                    const currentRevision = campaign.revision
+                    return visible ? manager.replacementFamilies(oldRack.value) : []
+                }
+            }
+            Field { id: replacementPurchase; label: qsTr("Maximum replacement purchase, dollars"); value: replacementFamily.selectedOption.purchase || "" }
+            Field { id: replacementMonthly; label: qsTr("Maximum replacement maintenance per month, dollars"); value: replacementFamily.selectedOption.maintenance || "" }
+            Copy {
+                text: oldRack.options.length === 0
+                    ? qsTr("Commission owned hardware in Operations to schedule a replacement within this campaign.")
+                    : qsTr("Order one rack when the original reaches its rated useful life. The site needs a spare rack slot and enough paid operators and power for both. After the replacement is operational, the old rack retires once its active and paused work, contracts and replicas have cleared. Metered electricity and water follow the site's actual use.")
+            }
+        }
+        Copy {
+            visible: policyKind.value === "operating_reserve"
+            text: qsTr("Keep this amount available for operating costs. New purchases and delegated spending use cash above the target. Existing obligations, debt repayment and story consequences can draw it down. Incoming cash replenishes it automatically. Suspend the policy to release the reserve.")
+        }
+        Field { id: policyBudget; label: qsTr("Total policy commitment budget, dollars"); value: manager.policyDefaults.budget || ""; visible: policyKind.value === "evaluation" || policyKind.value === "lease_renewal" }
+        Field {
+            id: policyReserve
+            objectName: "policyReserveField"
+            label: policyKind.value === "operating_reserve" ? qsTr("Cash reserve target, dollars") : qsTr("Minimum cash after commitment, dollars")
+            value: manager.policyDefaults.reserve || ""
+        }
+        Field { id: policyRuns; objectName: "policyRunsField"; label: qsTr("Maximum authorized runs"); value: manager.policyDefaults.runs || ""; visible: policyKind.value === "evaluation" || policyKind.value === "lease_renewal" }
         Copy { visible: policyKind.value === "lease_renewal"; text: qsTr("Renewal occurs on the expiry morning. The policy debits a conservative full-term commitment ceiling (setup plus enough monthly bills for the entire term); the ledger pays actual setup and daily accrued bills. It cannot renew a missed deadline retroactively.") }
         Action {
             objectName: "authorizePolicyButton"
             text: qsTr("Authorize bounded policy")
+            enabled: panel.editable && (policyKind.value !== "hardware_replacement" || (oldRack.value.length > 0 && replacementFamily.value.length > 0))
             onClicked: {
                 if (policyKind.value === "evaluation") manager.authorizeEvaluation(policyModel.value, policyPlan.value, policySource.value, policyRate.value, policyStaff.value, policyBudget.value, policyReserve.value, policyInterval.value, policyRuns.value)
                 else if (policyKind.value === "pricing") manager.authorizePricing(priceProduct.value, priceFloor.value, priceCeiling.value, priceStep.value, priceLow.value, priceHigh.value, priceInterval.value, priceRuns.value, policyReserve.value)
+                else if (policyKind.value === "operating_reserve") manager.authorizeOperatingReserve(policyReserve.value)
+                else if (policyKind.value === "hardware_replacement") manager.authorizeHardwareReplacement(oldRack.value, replacementFamily.value, replacementPurchase.value, replacementMonthly.value, policyReserve.value)
                 else manager.authorizeRenewal(policyLease.value, policyBudget.value, policyReserve.value, policyMonthly.value, policyRuns.value)
             }
         }

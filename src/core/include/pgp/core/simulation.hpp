@@ -205,6 +205,7 @@ struct CommandResult {
 
 struct TrustedSimulationState {};
 void validate_simulation(const SimulationState& state);
+[[nodiscard]] Cents uncommitted_cash(const SimulationState& state);
 // The world supplies an already validated transaction candidate. A scored
 // deadline has an unprepared morning that must be opened before validation.
 void extend_campaign(SimulationState& state, OrdinalDay end_date,

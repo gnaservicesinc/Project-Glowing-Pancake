@@ -87,6 +87,8 @@ runtime::CompiledProgram late_fixture(Json source,std::string_view path="path.ac
     // authored technologies and protocols rather than replaying thirteen years.
     for (auto& row : source["definitions"]) if (row["id"]==frontier_id || row["id"]==plateau_id) {
         row["starts_on"] = "2027-01-01";
+        // This late opening skips the original 2014 founder contact windows.
+        row.erase("backgrounds");
         row["flows"] = {"frontier.conditional_era","frontier.agi_notice","frontier.asi_notice"};
         row["management"]["setbacks"] = Json::array();
         for (const auto key : {"civic","resilience"}) row.erase(key);

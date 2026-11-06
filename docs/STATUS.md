@@ -596,8 +596,20 @@ The decision log shows 128 records per page, with all prior pages accessible.
 The optimized build and four focused checks pass (5.43s); short offscreen QML
 checks at 100%/200% text pass through authorization, review, override and reopening.
 
-Next are the remaining initial component gaps, including reserve and hardware
-delegation. The roadmap remains 42/52 checked while design coverage is completed.
+The Office adds two more bounded policies. An operating reserve sets a company
+cash target for new spending, including delegated research and procurement.
+Accepted bills and principal can draw on the reserve. Receipts refill it
+automatically and the decision log retains its authorizations and releases.
+Hardware replacement buys a compatible successor at the original rack's rated
+useful-life date under purchase and monthly maintenance ceilings. It stages the
+successor at the same site, then waits for commissioning, enough usable capacity
+and clearance of active or paused work and protected commitments before retiring
+the original. Both actions reconcile against actual paid hardware records.
+The optimized build and five focused checks pass, with offscreen QML form and
+save/reopen checks at 100% and 200% text.
+
+Next is the financing coverage pass, including the later IPO specified in the
+design. The roadmap remains 42/52 checked while design coverage is completed.
 M8-02 stays deferred. Human work waits until the user is ready, and E2-04 editor
 downloads stay with deferred release preparation.
 

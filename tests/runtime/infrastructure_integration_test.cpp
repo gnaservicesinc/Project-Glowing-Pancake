@@ -74,5 +74,115 @@ void run(const char* path) {
     forged=encoded;owned(forged)["notices"][0]["day"]=1;corrupt(program,forged);
     std::cout<<checks<<" infrastructure integration checks passed; "<<encoded.dump().size()<<" bytes with two metered sites\n";
 }
+void run_delegation() {
+    const auto registry=content::foundation_registry();
+    auto collection=content::load_collection(persistence::read_bounded(PGP_INFRASTRUCTURE_SOURCE,content::maximum_document_bytes),registry);
+    auto& scenario=std::get<content::ScenarioDefinition>(collection.definitions.at("scenario.first_playable").data);
+    scenario.flows.clear();
+    scenario.rivals.clear();
+    scenario.competition.reset();
+    scenario.management->setbacks.clear();
+    auto& washington=*std::ranges::find(scenario.infrastructure->states,"US-WA",&StateSiteProfile::id);
+    washington.build_lead=Days{2};
+    washington.grid_lead=Days{2};
+    washington.operator_hire_lead=Days{1};
+    auto& rack=*std::ranges::find(scenario.infrastructure->hardware,"rack.reference",&HardwareFamily::id);
+    rack.delivery_lead=Days{2};
+    rack.useful_life=Days{6};
+    const auto program=runtime::compile_collection(collection,registry);
+    runtime::Runtime game{program,runtime::begin_scenario(program,"scenario.first_playable","US-WA")};
+    check(game.prepare_opening(state(game).revision).accepted(),"Prepare delegation fixture");
+    apply(game,BuildOwnedSite{"workshop","Workshop","US-WA",30000,CoolingMode::air});
+    apply(game,OrderOwnedHardware{"old","workshop","rack.reference"});
+    apply(game,HireSiteOperators{"crew","workshop",1});
+    const auto inspection=advance_days(state(game).date,Days{3});
+    apply(game,ScheduleSiteAppointment{"inspect","workshop",inspection,AppointmentMode::delegated});
+    advance(game,inspection);
+    apply(game,BuyData{"data.licensed_documents"});
+    apply(game,StartTraining{{"maintained","recipe.document_baseline","",{"data.licensed_documents"},"owned/old",MilliCUPerDay{60000},4,MilliCU{3600000}}});
+    apply(game,PauseProject{"lab/train/maintained"});
+
+    DelegationPolicy reserve;
+    reserve.id="reserve";
+    reserve.kind=DelegationKind::operating_reserve;
+    reserve.reserve_floor=uncommitted_cash(state(game));
+    reserve.interval=Days{0};
+    apply(game,AddDelegationPolicy{reserve});
+    check(discretionary_cash(state(game))==Cents{0},"Operating reserve did not reduce spendable cash");
+    refuse(game,ReserveFunds{"New commitment",Cents{1},true});
+    auto duplicate=reserve;
+    duplicate.id="duplicate";
+    refuse(game,AddDelegationPolicy{duplicate});
+    apply(game,IssueInvoice{{"fixture.bill",InvoiceKind::payable,state(game).date,Cents{10000},Cents{0},"Existing operating bill"}});
+    apply(game,AdvanceDay{});
+    check(state(game).cash==checked_unit_subtract(reserve.reserve_floor,Cents{10000}) &&
+          operating_reserve_target(state(game))==reserve.reserve_floor,"Due bills must still pay from reserved operating cash");
+    apply(game,IssueInvoice{{"fixture.receivable",InvoiceKind::receivable,state(game).date,Cents{10100},Cents{0},"Customer receipt"}});
+    apply(game,AdvanceDay{});
+    check(discretionary_cash(state(game))==Cents{100},"Incoming cash did not replenish the reserve before new spending");
+    exact(program,game);
+
+    DelegationPolicy policy;
+    policy.id="rack";
+    policy.kind=DelegationKind::hardware_replacement;
+    policy.target_id="old";
+    policy.plan_id="rack.reference";
+    policy.budget=rack.purchase_cost;
+    policy.monthly_ceiling=rack.monthly_maintenance;
+    policy.maximum_runs=2;
+    policy.interval=Days{1};
+    auto bad=policy;
+    bad.monthly_ceiling=Cents{0};
+    refuse(game,AddDelegationPolicy{bad});
+    apply(game,AddDelegationPolicy{policy});
+    const auto eligible=hardware_replacement_terms(state(game),"old","rack.reference").eligible_on;
+    advance(game,OrdinalDay{eligible.value()-1});
+    check(state(game).infrastructure->hardware.size()==1,"Replacement ordered before the rated life ended");
+    apply(game,AdvanceDay{});
+    check(!state(game).management->policies.back().enabled && state(game).management->policies.back().blocked.find("reserve")!=std::string::npos &&
+          state(game).infrastructure->hardware.size()==1,"Delegated purchase consumed the operating reserve");
+    apply(game,SetDelegationEnabled{reserve.id,false});
+    apply(game,SetDelegationEnabled{policy.id,true});
+    apply(game,AdvanceDay{});
+    check(state(game).infrastructure->hardware.size()==1 && !state(game).management->policies.back().enabled &&
+          state(game).management->policies.back().blocked.find("operators")!=std::string::npos,
+          "Replacement bought hardware without staging headroom");
+    apply(game,HireSiteOperators{"additional","workshop",1});
+    apply(game,SetDelegationEnabled{policy.id,true});
+    const auto before=state(game).cash;
+    apply(game,AdvanceDay{});
+    check(state(game).infrastructure->hardware.size()==2 &&
+          state(game).cash==checked_unit_subtract(before,rack.purchase_cost) &&
+          state(game).management->policies.back().runs==1 && !state(game).infrastructure->hardware.front().retired_on,
+          "Replacement must order exactly one paid rack while retaining the original");
+    apply(game,SetDelegationEnabled{policy.id,false});
+    bad=policy;
+    bad.id="duplicate-rack";
+    refuse(game,AddDelegationPolicy{bad});
+    apply(game,SetDelegationEnabled{policy.id,true});
+    advance(game,state(game).infrastructure->hardware.back().delivered_on);
+    check(state(game).infrastructure->hardware.back().commissioned_on &&
+          !state(game).infrastructure->hardware.front().retired_on &&
+          state(game).management->policies.back().blocked.find("paused work")!=std::string::npos,
+          "A commissioned replacement retired a source still needed by paused work");
+    const auto saved=persistence::decode_save(program,persistence::encode_save(program,game.checkpoint())).checkpoint;
+    check(saved==game.checkpoint(),"Pending replacement and suspended reserve did not survive reopening");
+    runtime::Runtime reopened{program,saved};
+    apply(reopened,CancelProject{"lab/train/maintained"});
+    apply(reopened,AdvanceDay{});
+    check(state(reopened).infrastructure->hardware.front().retired_on==state(reopened).date &&
+          source(reopened,"owned/old").effective==MilliCUPerDay{0} &&
+          source(reopened,"owned/replacement.rack").effective==rack.capacity &&
+          state(reopened).management->policies.back().runs==2 && !state(reopened).management->policies.back().enabled,
+          "Replacement did not retire only the old rack after dependent work cleared");
+    exact(program,reopened);
+    std::cout<<checks<<" operating delegation checks passed\n";
 }
-int main(int argc,char** argv) {try {run(argc>1?argv[1]:PGP_INFRASTRUCTURE_SOURCE);return 0;}catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;}}
+}
+int main(int argc,char** argv) {
+    try {
+        if (argc>1 && std::string_view{argv[1]}=="--delegation") run_delegation();
+        else run(argc>1?argv[1]:PGP_INFRASTRUCTURE_SOURCE);
+        return 0;
+    } catch (const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;}
+}

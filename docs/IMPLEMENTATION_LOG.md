@@ -1784,3 +1784,23 @@ offscreen real-QML checks at 100%/200% text authorize the policy through the
 form, run a review, suspend/resume, override through the normal price control
 and save/reopen exactly. These are engineering checks; no human playtest,
 extended campaign, event expansion or balancing was performed.
+
+### Operating reserve and hardware replacement
+
+The operating reserve protects a company-wide target from new discretionary
+commitments. Existing bills and principal can use it, and incoming cash
+restores the protected amount automatically. The Office shows the protected
+amount and logs authorization, suspension and resumption.
+
+An owned-rack replacement authorizes one compatible successor, its purchase
+and maintenance ceilings, and a cash floor. The purchase uses ordinary
+infrastructure commands once the original reaches its rated life. The
+successor needs room, power and operators during staging. Retirement waits
+for usable replacement capacity and all dependent work and commitments to
+clear. Paid orders and retirement decisions survive exact reload.
+
+The optimized Mac build passes. Focused operating delegation, infrastructure,
+pricing, Frontier and bridge checks pass. The Frontier fixture starts in 2027
+and now skips founder contact offers tied to the original 2014 opening.
+Offscreen QML at 100% and 200% text covers both authorization forms, actual
+purchase, commissioning, retirement and exact save/reopen.

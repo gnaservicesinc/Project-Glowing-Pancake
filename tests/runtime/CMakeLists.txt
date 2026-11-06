@@ -177,6 +177,7 @@ target_include_directories(pgp-infrastructure-integration-test SYSTEM PRIVATE "$
 target_compile_definitions(pgp-infrastructure-integration-test PRIVATE PGP_INFRASTRUCTURE_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-infrastructure-integration-test)
 add_test(NAME runtime.infrastructure COMMAND pgp-infrastructure-integration-test)
+add_test(NAME runtime.operating-delegation COMMAND pgp-infrastructure-integration-test --delegation)
 set_tests_properties(runtime.infrastructure PROPERTIES TIMEOUT 30)
 
 add_executable(pgp-regional-market-test regional_market_test.cpp)

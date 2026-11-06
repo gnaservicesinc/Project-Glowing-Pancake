@@ -27,15 +27,41 @@ void notice(ManagementState& state,std::string id,std::string kind,std::string s
     state.notices.push_back({std::move(id),std::move(kind),std::move(subject),day,deadline,required,false});
 }
 std::string evaluation_id(const DelegationPolicy& policy,std::uint32_t run) { return "delegated."+policy.id+"."+std::to_string(run); }
+std::string replacement_id(const DelegationPolicy& policy) { return "replacement."+policy.id; }
+bool empty_allocation(const DelegationPolicy& policy) {
+    return policy.allocation.source_id.empty() && policy.allocation.daily_compute.value()==0 && policy.allocation.staff==0;
+}
 void policy_shape(const SimulationState& state,const DelegationPolicy& p) {
     const auto& catalog=state.management->catalog;
-    const bool pricing=p.kind==DelegationKind::pricing;
-    if (p.id.empty() || p.id.size()>32 || p.target_id.empty() || (pricing?p.budget.value()!=0:p.budget.value()<=0) || p.reserve_floor.value()<0 ||
-        p.monthly_ceiling.value()<0 || p.maximum_runs==0 || p.maximum_runs>(pricing?pricing_review_limit:catalog.maximum_policy_runs) ||
-        p.runs>p.maximum_runs || p.committed.value()<0 || p.committed>p.budget || p.interval<(pricing?Days{7}:catalog.minimum_evaluation_interval) || p.interval.value()>365 ||
+    if (p.id.empty() || p.id.size()>32 || p.budget.value()<0 || p.reserve_floor.value()<0 ||
+        p.monthly_ceiling.value()<0 || p.maximum_runs==0 || p.runs>p.maximum_runs ||
+        p.committed.value()<0 || p.committed>p.budget || p.interval.value()>365 ||
         p.created_on<state.accounts->starts_on || p.created_on>state.date || p.next_review<p.created_on)
-        invalid("Policy needs finite runs, budget, reserve, interval and valid dated bounds");
-    if (!pricing && p.pricing) invalid("Only a price policy can authorize pricing bounds");
+        invalid("Policy needs finite authorization and valid dated bounds");
+    if (p.kind!=DelegationKind::pricing && p.pricing) invalid("Only a price policy can authorize pricing bounds");
+    if (p.kind==DelegationKind::operating_reserve) {
+        if (p.reserve_floor.value()==0 || p.budget.value()!=0 || p.monthly_ceiling.value()!=0 ||
+            !p.target_id.empty() || !p.plan_id.empty() || !empty_allocation(p) ||
+            p.interval.value()!=0 || p.maximum_runs!=1 || p.runs!=0 || p.next_review!=p.created_on)
+            invalid("An operating reserve needs a positive cash target and no spending authority");
+        return;
+    }
+    if (p.target_id.empty()) invalid("Choose a target for this policy");
+    if (p.kind==DelegationKind::hardware_replacement) {
+        if (!state.infrastructure || p.interval!=Days{1} || p.maximum_runs!=2 || !empty_allocation(p) ||
+            !std::ranges::all_of(p.id,[](unsigned char ch) {
+                return (ch>='a' && ch<='z') || (ch>='0' && ch<='9') || ch=='.' || ch=='-' || ch=='_';
+            })) invalid("Replacement needs owned hardware, a valid identity and two finite actions");
+        const auto terms=hardware_replacement_terms(state,p.target_id,p.plan_id);
+        const auto& old=find(state.infrastructure->hardware,p.target_id);
+        if (*old.commissioned_on>p.created_on || terms.purchase>p.budget || terms.monthly_maintenance>p.monthly_ceiling)
+            invalid("Replacement requires a commissioned original rack and explicit purchase and monthly maintenance ceilings");
+        return;
+    }
+    if (p.kind==DelegationKind::evaluation || p.kind==DelegationKind::lease_renewal) {
+        if (p.budget.value()==0 || p.maximum_runs>catalog.maximum_policy_runs || p.interval<catalog.minimum_evaluation_interval)
+            invalid("Evaluation and lease policies need bounded runs, spending and review intervals");
+    }
     if (p.kind==DelegationKind::evaluation) {
         (void)find(state.lab->models,p.target_id);const auto& plan=find(state.lab->catalog.evaluations,p.plan_id);
         (void)find(state.capacity->sources,p.allocation.source_id);
@@ -48,9 +74,10 @@ void policy_shape(const SimulationState& state,const DelegationPolicy& p) {
             !p.plan_id.empty() || !p.allocation.source_id.empty() || p.allocation.daily_compute.value()!=0 || p.allocation.staff!=0)
             invalid("Renewal policy needs renewable terms and a monthly ceiling, without evaluation allocations");
         (void)lease_expiry(*state.business_offers,p.target_id);
-    } else if (pricing) {
+    } else if (p.kind==DelegationKind::pricing) {
         const auto& product=find(state.market->products,p.target_id);
-        if (!p.pricing || product.channel==ProductChannel::open_weights || !p.plan_id.empty() ||
+        if (!p.pricing || p.budget.value()!=0 || p.maximum_runs>pricing_review_limit || p.interval<Days{7} ||
+            product.channel==ProductChannel::open_weights || !p.plan_id.empty() ||
             !p.allocation.source_id.empty() || p.allocation.daily_compute.value()!=0 || p.allocation.staff!=0 || p.monthly_ceiling.value()!=0)
             invalid("Pricing needs explicit price bounds, a paid product and no spending or work allocation");
         const auto& b=*p.pricing;
@@ -69,6 +96,49 @@ void pricing_ready(const SimulationState& s,const DelegationPolicy& p) {
         return other.kind==DelegationKind::pricing && other.enabled && other.target_id==p.target_id && other.id!=p.id;
     })) invalid("Suspend the other enabled price policy for this product first");
 }
+bool replacement_pending(const SimulationState& s,const DelegationPolicy& policy) {
+    return policy.runs==1 && !find(s.infrastructure->hardware,replacement_id(policy)).retired_on;
+}
+void replacement_ready(const SimulationState& s,const DelegationPolicy& policy) {
+    const auto& hardware=s.infrastructure->hardware;
+    if (find(hardware,policy.target_id).retired_on) invalid("The original rack was already retired");
+    const auto id=replacement_id(policy);
+    const auto order=std::ranges::find(hardware,id,&HardwareOrder::id);
+    if (policy.runs==0 && order!=hardware.end()) invalid("The replacement order identity is already in use");
+    if (policy.runs==1 && (order==hardware.end() || order->retired_on)) invalid("The replacement order is no longer available");
+    if (std::ranges::any_of(s.management->policies,[&](const auto& other) {
+        return other.kind==DelegationKind::hardware_replacement && other.target_id==policy.target_id &&
+            other.id!=policy.id && (other.enabled || replacement_pending(s,other));
+    })) invalid("An enabled policy or paid replacement already covers this rack");
+}
+bool decision_room(const SimulationState& state) {
+    const auto reserved_slot=operating_reserve_target(state).value()>0?1U:0U;
+    return state.management->decisions.size()<management_decision_limit-reserved_slot;
+}
+void record_reserve_control(SimulationState& state,const DelegationPolicy& policy) {
+    state.management->decisions.push_back({policy.id,policy.enabled?"reserve_enabled":"reserve_suspended",
+        policy.enabled?"Operating cash protected from new spending. Accepted bills and principal can still be paid.":"Operating reserve released for new spending.",
+        state.date,Cents{0},true});
+}
+void check_enable_capacity(const ManagementState& state) {
+    if (std::ranges::count_if(state.policies,[](const auto& p){return p.enabled;})>=static_cast<std::ptrdiff_t>(enabled_policy_limit))
+        invalid("Suspend an enabled policy before enabling another");
+}
+}
+Cents operating_reserve_target(const SimulationState& state) {
+    if (state.management) for (const auto& policy:state.management->policies)
+        if (policy.kind==DelegationKind::operating_reserve && policy.enabled) return policy.reserve_floor;
+    return Cents{0};
+}
+Cents discretionary_cash(const SimulationState& state) {
+    return std::max(Cents{0},checked_unit_subtract(uncommitted_cash(state),operating_reserve_target(state)));
+}
+void require_operating_reserve(Cents cash_before,const SimulationState& after) {
+    const auto target=operating_reserve_target(after);
+    if (target.value()==0) return;
+    const auto available=uncommitted_cash(after);
+    if (available<target && available<cash_before)
+        invalid("New spending would use the operating reserve. Review the policy in Office or choose a smaller commitment.");
 }
 void validate_management_catalog(const ManagementCatalog& c) {
     if(c.succession) {
@@ -122,10 +192,23 @@ void hire_specialist(SimulationState& s,std::string_view id,Cents protected_cash
 }
 void add_delegation_policy(SimulationState& s,DelegationPolicy p) {
     auto& m=management(s);
-    if (m.policies.size()>=8 || std::any_of(m.policies.begin(),m.policies.end(),[&](const auto& row){return row.id==p.id;})) invalid("Use a distinct policy within the eight-policy limit");
+    if (m.policies.size()>=management_policy_limit || std::any_of(m.policies.begin(),m.policies.end(),[&](const auto& row){return row.id==p.id;}))
+        invalid("Choose a distinct policy within the saved authorization limit");
+    check_enable_capacity(m);
     p.created_on=s.date;p.next_review=advance_days(s.date,Days{1});p.runs=0;p.committed=Cents{0};p.blocked.clear();p.enabled=true;
+    if (p.kind==DelegationKind::operating_reserve) p.next_review=s.date;
     policy_shape(s,p);
     if (p.kind==DelegationKind::pricing) pricing_ready(s,p);
+    if (p.kind==DelegationKind::operating_reserve) {
+        if (operating_reserve_target(s).value()>0) invalid("Suspend the current operating reserve before authorizing a new target");
+        if (m.decisions.size()+2>management_decision_limit) invalid("The policy audit has no room for both reserve authorization and release");
+        record_reserve_control(s,p);
+    }
+    if (p.kind==DelegationKind::hardware_replacement) {
+        replacement_ready(s,p);
+        p.next_review=std::max(p.next_review,hardware_replacement_terms(s,p.target_id,p.plan_id).eligible_on);
+        if (p.next_review>=s.end_date) invalid("The original rack reaches its rated useful life after the campaign");
+    }
     if (p.kind==DelegationKind::lease_renewal) {
         p.next_review=lease_expiry(*s.business_offers,p.target_id);
         if (p.next_review<=s.date) invalid("Authorize renewal before the expiry morning; an expired lease requires an explicit current-day renewal");
@@ -136,14 +219,26 @@ void set_delegation_enabled(SimulationState& s,std::string_view id,bool enabled)
     auto& m=management(s);const auto found=std::find_if(m.policies.begin(),m.policies.end(),[&](const auto& p){return p.id==id;});
     if (found==m.policies.end()) invalid("Delegation policy does not exist");
     auto& p=*found;
-    if (enabled && (p.runs>=p.maximum_runs || (p.kind!=DelegationKind::pricing && p.committed>=p.budget))) invalid("This policy exhausted its authorized runs or budget; its counters cannot reset");
-    if (enabled && p.kind==DelegationKind::pricing) pricing_ready(s,p);
+    if (enabled==p.enabled) return;
+    if (enabled) {
+        check_enable_capacity(m);
+        const bool spending=p.kind==DelegationKind::evaluation || p.kind==DelegationKind::lease_renewal;
+        if (p.runs>=p.maximum_runs || (spending && p.committed>=p.budget))
+            invalid("This policy exhausted its authorized runs or budget. Its counters cannot reset.");
+        if (p.kind==DelegationKind::pricing) pricing_ready(s,p);
+        if (p.kind==DelegationKind::hardware_replacement) replacement_ready(s,p);
+        if (p.kind==DelegationKind::operating_reserve) {
+            if (operating_reserve_target(s).value()>0) invalid("Suspend the other operating reserve before enabling this one");
+            if (m.decisions.size()+2>management_decision_limit) invalid("The policy audit has no room for both reserve authorization and release");
+        }
+    }
     p.enabled=enabled;if (enabled) p.blocked.clear();
+    if (p.kind==DelegationKind::operating_reserve) record_reserve_control(s,p);
 }
 void suspend_pricing_policies(SimulationState& s,std::string_view product) {
     if (!s.management) return;
     for (auto& p:s.management->policies) if (p.kind==DelegationKind::pricing && p.enabled && p.target_id==product) {
-        if (s.management->decisions.size()>=management_decision_limit) invalid("Policy audit is full; suspend the price policy before changing the quote");
+        if (!decision_room(s)) invalid("Policy audit is full. Suspend the price policy before changing the quote.");
         p.enabled=false;p.blocked="Player override: pricing policy suspended; bounds and counters retained.";
         s.management->decisions.push_back({p.id,"",p.blocked,s.date,Cents{0},false,std::nullopt,true});
     }
@@ -153,9 +248,13 @@ void review_delegation(SimulationState& s,Cents protected_cash) {
         (s.liquidity && liquidity_report(*s.liquidity).pending_warning) || s.management->reviewed_on==s.date) return;
     s.management->reviewed_on=s.date;
     for (std::size_t i=0;i<s.management->policies.size();++i) {
-        const auto& p=s.management->policies[i];
-        if (!p.enabled || p.runs>=p.maximum_runs || p.next_review>s.date) continue;
-        if (s.management->decisions.size()>=management_decision_limit) {s.management->policies[i].enabled=false;s.management->policies[i].blocked="The finite policy decision history is full.";continue;}
+        auto& p=s.management->policies[i];
+        if (!p.enabled || p.kind==DelegationKind::operating_reserve || p.runs>=p.maximum_runs || p.next_review>s.date) continue;
+        if (!decision_room(s)) {
+            p.enabled=false;
+            p.blocked="The finite policy decision history is full.";
+            continue;
+        }
         if (p.kind==DelegationKind::evaluation) {
             const auto& model=find(s.lab->models,p.target_id);
             if (!model.project_id.empty()) {
@@ -168,27 +267,56 @@ void review_delegation(SimulationState& s,Cents protected_cash) {
                 if(status==ProjectStatus::active || status==ProjectStatus::paused) continue;
             }
         }
-        // Only an actual bounded attempt copies history. Idle daily reviews do
-        // not clone accounts/capacity or run a complete load-time replay.
-        auto candidate=s;auto& proposed=candidate.management->policies[i];
         try {
-            Cents cost{0};std::string result_id;std::string explanation="Authorized action committed within cash, staff and compute bounds.";
+            const bool replacement=p.kind==DelegationKind::hardware_replacement;
+            if (replacement) {
+                replacement_ready(s,p);
+                if (p.runs==1) {
+                    p.blocked=hardware_retirement_wait(s,p.target_id,replacement_id(p));
+                    if (!p.blocked.empty()) continue;
+                }
+            }
+            Cents cost{0};
+            std::string result_id;
+            std::string explanation="Authorized action committed within cash, staff and compute bounds.";
             std::optional<std::uint64_t> price_cursor;
             if (p.kind==DelegationKind::evaluation) cost=find(s.lab->catalog.evaluations,p.plan_id).cash;
             else if (p.kind==DelegationKind::lease_renewal) {
                 const auto& offer=find(s.business_offers->catalog,p.target_id);
                 if (offer.monthly_amount>p.monthly_ceiling) invalid("Lease renewal exceeds the authorized monthly ceiling");
                 cost=lease_commitment_ceiling(offer);
+            } else if (replacement && p.runs==0) {
+                cost=hardware_replacement_terms(s,p.target_id,p.plan_id).purchase;
             }
+            const auto available=checked_unit_subtract(s.cash,protected_cash);
+            const auto floor=cost.value()>0?std::max(p.reserve_floor,operating_reserve_target(s)):p.reserve_floor;
             if (cost>checked_unit_subtract(p.budget,p.committed) ||
-                checked_unit_add(cost,p.reserve_floor)>checked_unit_subtract(s.cash,protected_cash))
+                (!(replacement && p.runs==1) && (available<floor || cost>checked_unit_subtract(available,floor))))
                 invalid("Delegated commitment exceeds the remaining total budget or cash reserve floor");
+            // Waits only inspect current commitments. Copy a candidate for an actual action.
+            auto candidate=s;
+            auto& proposed=candidate.management->policies[i];
+            proposed.next_review=advance_days(s.date,p.interval);
             if (p.kind==DelegationKind::evaluation) {
                 result_id=evaluation_id(p,p.runs+1);
                 start_evaluation(*candidate.lab,*candidate.accounts,*candidate.capacity,s.date,result_id,p.target_id,p.plan_id,p.allocation,protected_cash);
             } else if (p.kind==DelegationKind::lease_renewal) {
                 renew_compute_lease(*candidate.business_offers,*candidate.accounts,*candidate.capacity,s.date,p.target_id,protected_cash);
                 result_id=std::to_string(candidate.business_offers->renewals.size());
+                proposed.next_review=lease_expiry(*candidate.business_offers,p.target_id);
+            } else if (replacement) {
+                if (p.runs==0) {
+                    result_id=replacement_id(p);
+                    order_hardware_replacement(candidate,p.target_id,p.plan_id,result_id,protected_cash);
+                    const auto delivery=find(candidate.infrastructure->hardware,result_id).delivered_on;
+                    proposed.next_review=std::max(proposed.next_review,delivery);
+                    explanation="Replacement purchased. The old rack stays installed until its replacement is operational and its own commitments clear.";
+                } else {
+                    result_id=p.target_id;
+                    retire_owned_hardware(candidate,p.target_id);
+                    explanation="Obsolete rack retired after its replacement supplied the required capacity and all dependent work cleared.";
+                }
+                prepare_infrastructure(candidate);
             } else {
                 pricing_ready(s,p);
                 const auto review=pricing_review(s,p,s.date,find(s.market->products,p.target_id).price_per_task);
@@ -196,7 +324,7 @@ void review_delegation(SimulationState& s,Cents protected_cash) {
                 price_cursor=candidate.market->price_events.size();explanation=review.explanation;
             }
             ++proposed.runs;proposed.committed=checked_unit_add(proposed.committed,cost);
-            proposed.next_review=p.kind==DelegationKind::lease_renewal?lease_expiry(*candidate.business_offers,p.target_id):advance_days(s.date,p.interval);
+            proposed.blocked.clear();
             if (proposed.runs>=proposed.maximum_runs) proposed.enabled=false;
             candidate.cash=accounts_report(*candidate.accounts).cash;
             candidate.management->decisions.push_back({p.id,result_id,std::move(explanation),s.date,cost,true,price_cursor});
@@ -204,7 +332,8 @@ void review_delegation(SimulationState& s,Cents protected_cash) {
         } catch (const std::invalid_argument& error) {
             auto& refused=s.management->policies[i];refused.enabled=false;refused.blocked=error.what();
             s.management->decisions.push_back({refused.id,"",refused.blocked,s.date,Cents{0},false});
-            notice(*s.management,"policy.blocked/"+refused.id+"/"+std::to_string(s.management->decisions.size()),"policy_blocked",refused.id,s.date);
+            if (s.management->notices.size()<128)
+                notice(*s.management,"policy.blocked/"+refused.id+"/"+std::to_string(s.management->decisions.size()),"policy_blocked",refused.id,s.date);
         }
     }
 }
@@ -276,10 +405,13 @@ void validate_management(const SimulationState& s,bool deep) {
     }
     if (!s.accounts || !s.capacity || !s.lab || !s.market || !s.deployments) invalid("Management requires the playable company modules");
     const auto& m=*s.management;
-    if (m.financing.size()>m.catalog.financing.size() || m.specialists.size()>m.catalog.specialists.size() || m.policies.size()>8 ||
+    if (m.financing.size()>m.catalog.financing.size() || m.specialists.size()>m.catalog.specialists.size() || m.policies.size()>management_policy_limit ||
         m.decisions.size()>management_decision_limit || m.notices.size()>256 || (m.reviewed_on && (*m.reviewed_on<s.accounts->starts_on || *m.reviewed_on>s.date)))
         invalid("Management history exceeds its bounds or daily cursor");
     if (!deep) return;
+    if (std::ranges::count_if(m.policies,[](const auto& p){return p.enabled;})>static_cast<std::ptrdiff_t>(enabled_policy_limit) ||
+        (operating_reserve_target(s).value()>0 && m.decisions.size()==management_decision_limit))
+        invalid("Active policies exceed the limit or the reserve has no remaining release slot");
     validate_management_catalog(m.catalog);
     const auto paid=[&](std::string_view key,OrdinalDay day,Cents amount,Account debit,Account credit) {
         return std::any_of(s.accounts->postings.begin(),s.accounts->postings.end(),[&](const auto& p){return p.key==key && p.day==day && p.amount==amount && p.debit==debit && p.credit==credit;});
@@ -313,19 +445,44 @@ void validate_management(const SimulationState& s,bool deep) {
             (offer.signing_cost.value()>0 && !paid("specialist/"+offer.id,row.day,offer.signing_cost,Account::expenses,Account::cash)))
             invalid("Specialist lacks its paid signing, dated staff addition or recurring payroll");
     }
-    std::set<std::string> enabled_prices;
+    std::map<std::string_view,std::vector<const DelegationDecision*>> decisions_by_policy;
+    std::optional<OrdinalDay> previous_decision_day;
+    for (const auto& d:m.decisions) {
+        if (previous_decision_day && d.day<*previous_decision_day) invalid("Policy decision history is out of order");
+        previous_decision_day=d.day;
+        decisions_by_policy[d.policy_id].push_back(&d);
+    }
+    std::set<std::string> enabled_prices,replacing_hardware;
+    bool reserve_enabled=false;
     std::set<std::uint64_t> price_references;
     for (const auto& p:m.policies) {
         if (!ids.insert(p.id).second) invalid("Delegation policy identity is duplicated");
         policy_shape(s,p);
         if (p.kind==DelegationKind::pricing && p.enabled && !enabled_prices.insert(p.target_id).second)
             invalid("Multiple enabled policies cannot set the same product price");
+        if (p.kind==DelegationKind::hardware_replacement && (p.enabled || replacement_pending(s,p)) &&
+            !replacing_hardware.insert(p.target_id).second)
+            invalid("Multiple live replacements target the same rack");
         std::uint32_t runs=0;Cents committed{0};std::optional<OrdinalDay> last;
-        for (const auto& d:m.decisions) if (d.policy_id==p.id) {
+        auto expected_review=advance_days(p.created_on,Days{1});
+        if (p.kind==DelegationKind::hardware_replacement)
+            expected_review=std::max(expected_review,hardware_replacement_terms(s,p.target_id,p.plan_id).eligible_on);
+        const auto& decisions=decisions_by_policy[p.id];
+        bool reserve_active=false;
+        for (const auto* entry:decisions) {
+            const auto& d=*entry;
             if (d.day<p.created_on || d.day>s.date || d.explanation.empty() || d.explanation.size()>1024 ||
                 (!d.accepted && (d.commitment.value()!=0 || !d.result_id.empty() || d.price_event_cursor)) ||
                 (d.overridden && (d.accepted || p.kind!=DelegationKind::pricing)) ||
                 (p.kind!=DelegationKind::pricing && d.price_event_cursor)) invalid("Delegation decision has invalid date or refusal state");
+            if (p.kind==DelegationKind::operating_reserve) {
+                if (!d.accepted || d.commitment.value()!=0 ||
+                    d.result_id!=(reserve_active?"reserve_suspended":"reserve_enabled") ||
+                    (entry==decisions.front() && d.day!=p.created_on))
+                    invalid("Reserve history must alternate actual authorization and release");
+                reserve_active=!reserve_active;
+                continue;
+            }
             if (!d.accepted) continue;
             ++runs;committed=checked_unit_add(committed,d.commitment);
             if (last && d.day<advance_days(*last,p.kind==DelegationKind::lease_renewal?Days{1}:p.interval)) invalid("Delegation replay repeats within its interval");
@@ -339,6 +496,22 @@ void validate_management(const SimulationState& s,bool deep) {
                 const auto it=std::find_if(s.business_offers->renewals.begin(),s.business_offers->renewals.end(),[&](const auto& r){return r.offer_id==p.target_id && r.renewed_on==d.day;});
                 if (it==s.business_offers->renewals.end() || d.result_id!=std::to_string(static_cast<std::size_t>(it-s.business_offers->renewals.begin())+1) ||
                     d.commitment!=lease_commitment_ceiling(find(s.business_offers->catalog,p.target_id))) invalid("Delegated renewal lacks its actual lease commitment");
+            } else if (p.kind==DelegationKind::hardware_replacement) {
+                const auto& old=find(s.infrastructure->hardware,p.target_id);
+                const auto& order=find(s.infrastructure->hardware,replacement_id(p));
+                if (runs>2 || d.day<expected_review || order.site_id!=old.site_id || order.family_id!=p.plan_id)
+                    invalid("Replacement decision lacks its authorized order or date");
+                if (runs==1) {
+                    if (d.result_id!=order.id || order.ordered_on!=d.day || d.commitment!=order.paid ||
+                        (old.retired_on && *old.retired_on<d.day))
+                        invalid("Replacement purchase differs from its paid hardware order");
+                    expected_review=std::max(advance_days(d.day,Days{1}),order.delivered_on);
+                } else {
+                    if (d.result_id!=old.id || old.retired_on!=d.day || !order.commissioned_on ||
+                        *order.commissioned_on>d.day || (order.retired_on && *order.retired_on<d.day) || d.commitment.value()!=0)
+                        invalid("Replacement retirement lacks the commissioned successor or actual disposal");
+                    expected_review=advance_days(d.day,Days{1});
+                }
             } else {
                 if (d.commitment.value()!=0 || !d.result_id.empty() || !d.price_event_cursor || *d.price_event_cursor==0 ||
                     *d.price_event_cursor>s.market->price_events.size() || !price_references.insert(*d.price_event_cursor).second ||
@@ -351,8 +524,14 @@ void validate_management(const SimulationState& s,bool deep) {
                 if (replay.quote!=event.after || replay.explanation!=d.explanation) invalid("Price decision differs from settled operating evidence");
             }
         }
-        auto expected_review=advance_days(p.created_on,Days{1});
-        if (p.kind!=DelegationKind::lease_renewal && last) expected_review=advance_days(*last,p.interval);
+        if (p.kind==DelegationKind::operating_reserve) {
+            if (decisions.empty() || reserve_active!=p.enabled || (reserve_enabled && p.enabled))
+                invalid("The operating reserve differs from its authorization history");
+            reserve_enabled=reserve_enabled || p.enabled;
+            expected_review=p.created_on;
+        }
+        if ((p.kind==DelegationKind::pricing || p.kind==DelegationKind::evaluation) && last)
+            expected_review=advance_days(*last,p.interval);
         if (p.kind==DelegationKind::lease_renewal) {
             expected_review=lease_expiry(*s.business_offers,p.target_id);
             if (last) expected_review=advance_days(*last,find(s.business_offers->catalog,p.target_id).term);
@@ -364,8 +543,9 @@ void validate_management(const SimulationState& s,bool deep) {
         }
         if (p.next_review!=expected_review) invalid("Policy next-review cursor differs from actual authorized attempts");
         if (runs!=p.runs || committed!=p.committed || (p.runs==p.maximum_runs && p.enabled)) invalid("Delegation counters or authorization differ from decisions");
+        decisions_by_policy.erase(p.id);
     }
-    for (const auto& d:m.decisions) (void)find(m.policies,d.policy_id);
+    if (!decisions_by_policy.empty()) invalid("Policy decisions refer to an unavailable authorization");
     for (std::size_t i=0;i<s.market->price_events.size();++i)
         if (!s.market->price_events[i].actor.empty() && !price_references.contains(i+1)) invalid("Delegated price event lacks an accepted policy decision");
     std::set<std::string> notice_ids;
