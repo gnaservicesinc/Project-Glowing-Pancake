@@ -5,6 +5,7 @@
 #include "management_controller.hpp"
 #include "infrastructure_controller.hpp"
 #include "civic_controller.hpp"
+#include "society_controller.hpp"
 
 #include <QThread>
 #include <QUrl>
@@ -16,6 +17,7 @@ class CampaignController final : public QObject {
     Q_PROPERTY(ManagementController* management READ management CONSTANT)
     Q_PROPERTY(InfrastructureController* infrastructure READ infrastructure CONSTANT)
     Q_PROPERTY(CivicController* civic READ civic CONSTANT)
+    Q_PROPERTY(SocietyController* society READ society CONSTANT)
     Q_PROPERTY(int daysPerSecond READ daysPerSecond WRITE setDaysPerSecond NOTIFY stateChanged)
     Q_PROPERTY(bool welcome READ welcome NOTIFY stateChanged)
     Q_PROPERTY(QVariantList headquarters READ headquarters CONSTANT)
@@ -59,6 +61,7 @@ public:
     ManagementController* management() const { return management_; }
     InfrastructureController* infrastructure() const { return infrastructure_; }
     CivicController* civic() const { return civic_; }
+    SocietyController* society() const { return society_; }
     int daysPerSecond() const { return days_per_second_; }
     void setDaysPerSecond(int value);
     bool welcome() const { return welcome_; }
@@ -140,6 +143,7 @@ private:
     ManagementController* management_;
     InfrastructureController* infrastructure_;
     CivicController* civic_;
+    SocietyController* society_;
     bool welcome_ = false;
     int days_per_second_ = 1;
     QThread thread_;

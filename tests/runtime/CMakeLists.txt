@@ -176,3 +176,10 @@ target_include_directories(pgp-civic-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/
 target_compile_definitions(pgp-civic-test PRIVATE PGP_CIVIC_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-civic-test)
 add_test(NAME runtime.civic COMMAND pgp-civic-test)
+
+add_executable(pgp-society-test society_test.cpp)
+target_link_libraries(pgp-society-test PRIVATE pgp::session)
+target_include_directories(pgp-society-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-society-test PRIVATE PGP_SOCIETY_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-society-test)
+add_test(NAME runtime.society COMMAND pgp-society-test)

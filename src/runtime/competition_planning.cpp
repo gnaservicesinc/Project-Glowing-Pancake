@@ -1,4 +1,5 @@
 #include "competition_internal.hpp"
+#include <pgp/runtime/society.hpp>
 #include <algorithm>
 #include <set>
 #include <stdexcept>
@@ -83,7 +84,7 @@ RivalObservation observe(const WorldState& world,OrdinalDay day,std::uint64_t dr
 }
 struct Candidate {std::uint32_t kind;std::string action,subject;std::int64_t score;CommandAction command;};
 std::vector<Candidate> candidates(const RivalCompany& rival,const content::RivalDefinition& definition,
-    const RivalObservation& observation,std::uint64_t draw,const CivicState* civic) {
+    const RivalObservation& observation,std::uint64_t draw,const CivicState* civic,const SocietyState* society) {
     const auto& s=rival.simulation;const auto& profile=*definition.planning;const auto& lab=*s.lab;
     std::vector<Candidate> result;SplitMix64 variation{draw};
     std::array<std::uint32_t,10> noise{};for (auto& value:noise) value=static_cast<std::uint32_t>(variation.bounded(31));
@@ -153,7 +154,8 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
             if (qualified && requires_met(lab,service.required_research) && staff>=service.serving.staff &&
                 (local || !hosting_source.empty()) && std::none_of(s.deployments->records.begin(),s.deployments->records.end(),[&](const auto& row){return row.service_id==id;}) && affordable(Cents{0},service.serving.monthly_support_cost)) {
                 DeployModel launch{id,model.id,evidence.id,local?"":hosting_source,service.product.channel==ProductChannel::agent};
-                if (civic_launch_block(civic,s,launch,s.date).empty()) offer(4,"deploy",id,650,std::move(launch));
+                if (civic_launch_block(civic,s,launch,s.date).empty() && society_launch_block(society,s,launch,s.date).empty())
+                    offer(4,"deploy",id,650,std::move(launch));
             }
         }
     }
@@ -241,7 +243,8 @@ void review_rival(WorldState& world,const CompiledProgram& program,RivalCompany&
     const auto stream_index=static_cast<std::size_t>(RandomStream::rivals);const auto before=rival.simulation.random[stream_index];
     SplitMix64 stream{before};const auto draw=stream.next();rival.simulation.random[stream_index]=stream.state();
     const auto observation=observe(world,rival.simulation.date,draw);
-    auto actions=candidates(rival,definition,observation,draw,world.simulation.civic ? &*world.simulation.civic : nullptr);
+    auto actions=candidates(rival,definition,observation,draw,world.simulation.civic ? &*world.simulation.civic : nullptr,
+        world.society?&*world.society:nullptr);
     RivalDecision decision{rival.simulation.date,"wait","","Conserve runway; no feasible action met the company's resource and reserve limits.",false,before,stream.state(),observation};
     if (!actions.empty()) {
         auto selected=std::move(actions.front());decision.action=std::move(selected.action);decision.subject=std::move(selected.subject);
@@ -297,6 +300,7 @@ void advance_planning(WorldState& world,const CompiledProgram& program,OrdinalDa
         AdvanceDay next;if (const auto it=assignments.find(rival.definition_id);it!=assignments.end()) {
             next.market_allocation=it->second;next.industry_adoptions=industry_adoption_snapshot(world,prior);
         }
+        next.market_influences=society_market_conditions(world,rival.simulation,prior);
         advance(rival,std::move(next));
         if (rival.simulation.phase==DayPhase::closed) world.competition->notices.push_back({rival.definition_id,"closure",rival.simulation.date,std::nullopt});
     }

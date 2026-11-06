@@ -822,3 +822,102 @@ void schedule_civic_smoke(QQuickWindow& window, pgp::bridge::CampaignController&
     });
     timer->start();
 }
+
+void schedule_society_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,
+    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot) {
+    using namespace pgp;
+    struct State {
+        int phase=0,attempts=0;
+        QString model,report;
+        core::Cents cash{0};
+        core::OrdinalDay boundary{0};
+        bridge::CampaignSnapshotPtr saved;
+    };
+    const auto run=std::make_shared<State>();auto* timer=new QTimer(&window);timer->setInterval(24);
+    const auto save=paths.saves_directory/"society-smoke.pgpsave";
+    const auto url=QUrl::fromLocalFile(QString::fromStdU16String(save.u16string()));
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,run,expected,save,url,screenshot] {
+        const auto fail=[&](const char* why){qCritical()<<"Society smoke failed"<<run->phase<<why<<campaign.notice();timer->stop();QCoreApplication::exit(3);};
+        const auto item=[&](const char* name){return visual_item(window.contentItem(),QString::fromLatin1(name));};
+        const auto press=[&](const char* name){auto* control=item(name);reveal_top(control);if(key(window,control,Qt::Key_Space)) return true;fail(name);return false;};
+        if(++run->attempts>2400) {fail("timed out");return;}
+        if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
+        const auto snapshot=campaign.snapshot();const auto& state=snapshot->checkpoint.world.simulation;
+        auto* society=campaign.society();auto* management=campaign.management();
+        if(!campaign.welcome() && campaign.requiredKind()==QStringLiteral("content")) {
+            const auto choices=campaign.requiredChoices();if(choices.isEmpty()) {fail("required choice missing");return;}
+            campaign.choose(choices.back().toMap().value("choiceId").toString());return;
+        }
+        switch(run->phase) {
+        case 0: {
+            if(!campaign.welcome() || !society->available() || std::filesystem::exists(save) || window.rendererInterface()->graphicsApi()!=expected) {fail("scratch campaign or renderer");return;}
+            const auto choices=campaign.scenarios();
+            const auto selected=std::find_if(choices.begin(),choices.end(),[](const auto& row){return row.toMap().value("id")==QStringLiteral("scenario.first_playable");});
+            auto* picker=item("competitionChoice");
+            if(!picker || selected==choices.end() || !picker->setProperty("currentIndex",static_cast<int>(selected-choices.begin()))) {fail("intro scenario selection");return;}
+            campaign.setDaysPerSecond(60);if(press("newCampaignButton")) ++run->phase;return;
+        }
+        case 1: management->buyData(QStringLiteral("data.open_documents"));++run->phase;return;
+        case 2: management->research(QStringLiteral("research.held_out_evaluation"),QStringLiteral("lease.initial"),QStringLiteral("20"),QStringLiteral("2"));++run->phase;return;
+        case 3: management->train(QStringLiteral("recipe.document_baseline"),QStringLiteral("lease.initial"),{QStringLiteral("data.open_documents")},QStringLiteral("60"),QStringLiteral("3"),QStringLiteral("3600"));++run->phase;return;
+        case 4: {
+            if(state.lab->models.empty()) {fail("training command");return;}
+            const auto& model=state.lab->models.back();
+            const auto work=std::find_if(state.capacity->projects.begin(),state.capacity->projects.end(),[&](const auto& row){return row.id==model.project_id;});
+            if(work==state.capacity->projects.end()) {fail("training project");return;}
+            if(work->status==core::ProjectStatus::active) {if(campaign.paused()) campaign.advanceTo(QStringLiteral("project"));return;}
+            run->model=QString::fromStdString(model.id);
+            management->evaluate(run->model,QStringLiteral("evaluation.held_out"),QStringLiteral("lease.initial"),QStringLiteral("20"),QStringLiteral("1"));++run->phase;return;
+        }
+        case 5:
+            if(state.lab->evaluations.empty()) {fail("evaluation command");return;}
+            if(!state.lab->evaluations.back().completed) {if(campaign.paused()) campaign.advanceTo(QStringLiteral("evaluation"));return;}
+            run->report=QString::fromStdString(state.lab->evaluations.back().id);
+            management->deploy(QStringLiteral("product.education_model"),run->model,run->report,{},false,QStringLiteral("region.europe"));++run->phase;return;
+        case 6:
+            if(state.deployments->records.empty()) {fail("deployment command");return;}
+            if(press("societyTab")) ++run->phase;return;
+        case 7:
+            if(society->regions()->rowCount()!=8 || !society->global().contains(QStringLiteral("lowest region")) ||
+                !society->forum().contains(QStringLiteral("ballot"))) {fail("regional or forum readouts");return;}
+            society->regions()->setSelectedId(QStringLiteral("region.europe"));++run->phase;return;
+        case 8:
+            run->cash=state.cash;if(press("reviewMediaCampaign")) ++run->phase;return;
+        case 9:
+            if(society->reviewText().isEmpty() || state.cash!=run->cash) {fail("media review mutated cash");return;}
+            if(press("confirmSocietyAction")) ++run->phase;return;
+        case 10:
+            if(snapshot->checkpoint.world.society->campaigns.size()!=1 || run->cash.value()-state.cash.value()!=snapshot->checkpoint.world.society->catalog.media.fee.value()) {fail("media fee or receipt");return;}
+            run->cash=state.cash;if(press("reviewForumEndorsement")) ++run->phase;return;
+        case 11:
+            if(society->reviewText().isEmpty() || state.cash!=run->cash) {fail("forum review mutated cash");return;}
+            if(!screenshot.isEmpty()) {
+                auto actions=screenshot;const auto dot=actions.lastIndexOf(u'.');if(dot>=0) actions.truncate(dot);actions+=QStringLiteral(".actions.png");
+                reveal_top(item("societyReview"));if(!window.grabWindow().save(actions)) {fail("disclosure screenshot");return;}
+            }
+            if(press("confirmSocietyAction")) ++run->phase;return;
+        case 12: {
+            const auto& shared=*snapshot->checkpoint.world.society;
+            if(shared.rounds.front().endorsements.size()!=1 || shared.rounds.front().endorsements.front().region!="region.europe" ||
+                run->cash.value()-state.cash.value()!=shared.catalog.forum.endorsement_fee.value()) {fail("forum disclosure or exact fee");return;}
+            run->boundary=*core::next_society_boundary(shared,state.date);
+            if(press("advanceSociety")) ++run->phase;return;
+        }
+        case 13:
+            if(!campaign.paused()) return;
+            if(state.date<run->boundary) {(void)press("advanceSociety");return;}
+            if(state.date!=run->boundary || snapshot->checkpoint.world.society->months.empty()) {fail("regional boundary stop");return;}
+            if(!screenshot.isEmpty()) {reveal_top(item("societyGlobal"));if(!window.grabWindow().save(screenshot)) {fail("world screenshot");return;}}
+            run->saved=snapshot;campaign.saveTo(url);++run->phase;return;
+        case 14:
+            if(!std::filesystem::is_regular_file(save)) {fail("save missing");return;}
+            campaign.loadFrom(url);++run->phase;return;
+        default:
+            if(snapshot->generation==run->saved->generation || snapshot->checkpoint!=run->saved->checkpoint) {fail("exact reload");return;}
+            qInfo().noquote()<<"Society smoke passed"<<graphics::name(expected)<<"text="<<campaign.textScalePercent()
+                <<"8 regional profiles, delivered welfare, media preview/payment, member disclosure, month boundary and exact reload"<<std::filesystem::file_size(save)<<"bytes";
+            timer->stop();QCoreApplication::exit(0);
+        }
+    });
+    timer->start();
+}

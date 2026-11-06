@@ -1226,3 +1226,41 @@ unchanged review **0.68s versus 1.20s**, with identical report bytes.
 Count: **30/52 Mac feature steps**. Next: **M5-02 international profiles, product
 channels and wholesale compute**. Human and native release qualification remain
 deferred.
+
+
+## M6-02 — Regional society, standards and media · 2026-11-05
+
+World exposes eight regional profiles, fourteen welfare components, five indices,
+population-weighted global values and regional minima. Every monthly observation
+reconciles with settled work from all sellers. Welfare applies an authored lag;
+quality, concentration and serving energy effects scale with actual uptake.
+Private spending cannot directly buy welfare. Six audience reputations follow
+delivered evidence and reliability, with separately visible paid awareness.
+
+Standards use a quorum, per-member votes and separate local implementation and
+expiration dates. Effective rules govern player/rival deployment and actual
+market delivery. Restricted signed work still incurs its credits and penalties.
+The finite media budget and diminishing returns feed the shared customer
+allocator; willingness, migration and physical capacity remain binding.
+Campaign disclosures pin their original deployment and exact expense posting.
+Shared typed facts, Studio forms, reference edits and the existing save/flow
+runtime own these systems. [Player path and published formulas](../src/runtime/SOCIETY.md).
+
+All **74 optimized Mac CTests passed in 98.38s**. The **61 society assertions**
+cover hand-audited component weights and lags, token delivery, actual restricted
+work and contract credits, qualifying redeployment, quorum/member dates, paid
+awareness, non-independent evidence, stale commands, protected cash, forged
+source histories and pending exact save replay. Authoring snapshot tests dominate
+the full-suite duration; performance qualification remains open. Studio form
+checks cover welfare authoring and fixed dimensions; bridge checks cover typed
+paid reviews and the halted fast-forward driver. Metal at **1280×720** and
+**100%/200% text** exercises actual QML reviews/confirmations for both paid
+actions, a real monthly stop and exact reopening of the **562,154-byte** save.
+
+The shared writer finalized **0.9.0-dev.1**, generation **9**, hash
+`dbc32414e55b3dd050595610312ca3304670511d951f3fac7c80be1589a0cab0`;
+all five scenarios and 15 prepared headquarters saves validate without lints.
+Game/editor remain planning placeholders; no release or automatic cross-content
+migration is implied. Count: **37/52**. Next: **M6-03 executive/public conflicts
+and institutional authority**. Human sessions remain deferred until components
+are in place and the user is ready for v1. No testers were contacted.

@@ -860,7 +860,7 @@ RegionalMarkets parse_regional_markets(const Json& value, const std::string& pat
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -969,6 +969,11 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
             fail("civic", path, "US institutions need state profiles, independent evaluation and customer services");
         result.civic = id(value.at("civic"), path);
     }
+    if (value.contains("society")) {
+        if (result.regional_markets.empty() || !result.lab)
+            fail("society", path, "Regional society needs regional customers and independent evaluation");
+        result.society = id(value.at("society"), path);
+    }
     if (value.contains("business_plan")) {
         const auto plan_path = child(path,"business_plan");
         const auto& plan = value.at("business_plan");
@@ -1066,6 +1071,24 @@ void validate_references(const Collection& collection, const Registry& registry)
                 for (const auto& policy : civic.policies) if (policy.rule == core::CivicRule::launch_evidence &&
                     std::none_of(services.begin(), services.end(), [&](const auto& row) { return row.product.channel == policy.channel; }))
                     fail("civic", path, "A launch rule must govern a channel offered by its scenario");
+            }
+            if (!scenario_definition->society.empty()) {
+                (void)reference(scenario_definition->society, "regional_society", path);
+                const auto& society = *society_catalog(collection, *scenario_definition);
+                std::set<std::string> profiles, markets;
+                for (const auto& row : society.regions) profiles.insert(row.id);
+                for (const auto& row : regional_markets(collection, *scenario_definition)->regions) markets.insert(row.id);
+                if (profiles != markets) fail("society", path, "Welfare and customer regions must agree");
+                const auto setup=scenario_market_setup(collection,*scenario_definition);
+                for(const auto* group:{&society.public_services,&society.science,&society.industry}) {
+                    std::set<std::string> covered;
+                    for(const auto& id:*group) {
+                        const auto row=std::find_if(setup.segments.begin(),setup.segments.end(),[&](const auto& segment){return segment.id==id;});
+                        if(row==setup.segments.end() || !covered.insert(row->region_id).second)
+                            fail("society",path,"Each outcome sector needs a real customer group in every region");
+                    }
+                    if(covered!=profiles) fail("society",path,"Outcome sectors must cover all eight regions");
+                }
             }
             if (scenario_definition->lab) {
                 try {
@@ -1257,6 +1280,7 @@ std::string_view definition_kind(const Definition& definition) {
     if (std::holds_alternative<RegionalMarkets>(definition.data)) return "regional_markets";
     if (std::holds_alternative<core::ResilienceCatalog>(definition.data)) return "site_resilience";
     if (std::holds_alternative<core::CivicCatalog>(definition.data)) return "us_civic";
+    if (std::holds_alternative<core::SocietyCatalog>(definition.data)) return "regional_society";
     return "deal";
 }
 bool is_incident_stream(core::RandomStream stream) noexcept {
@@ -1399,6 +1423,11 @@ Collection load_collection(std::string_view document, const Registry& registry) 
                 fields(value, path, {"id", "kind", "revision", "catalog"}, {"id", "kind", "revision", "catalog"});
                 try { return load_civic_catalog(value.at("catalog").dump()); }
                 catch (const std::exception& error) { fail("civic", path, error.what()); }
+            }
+            if (kind == "regional_society") {
+                fields(value, path, {"id", "kind", "revision", "catalog"}, {"id", "kind", "revision", "catalog"});
+                try { return load_society_catalog(value.at("catalog").dump()); }
+                catch (const std::exception& error) { fail("society", path, error.what()); }
             }
             if (kind == "deal") {
                 fields(value, path, {"id", "kind", "revision", "minimum_payment_cents", "minimum_duration_days"},

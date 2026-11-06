@@ -38,6 +38,21 @@ template<class Action> void refused(studio::DraftDocument& d,Action action) {
     try {action();}catch(const std::exception&){failed=true;}
     check(failed && before==d.program().canonical_content_bytes && revision==d.edit_revision(),"Rejected catalog edit changed document state or history");
 }
+void scoped_sector_references(const runtime::CompiledProgram& original) {
+    auto collection=original.collection;
+    auto& flow=std::get<content::FlowDefinition>(collection.definitions.at("society.monthly_briefing").data);
+    auto node=flow.nodes.extract(flow.entry_node);node.key()="science";
+    flow.entry_node="science";flow.nodes.insert(std::move(node));
+    const auto program=runtime::compile_collection(std::move(collection),original.registry);
+    const auto index=studio::catalog_index(program);
+    const auto messages=studio::content_uses(index,"text","society.monthly_briefing",false);
+    check(std::any_of(messages.begin(),messages.end(),[](const auto& ref){return ref.path.ends_with("/nodes/science/text_key");}),
+        "A flow node named science was mistaken for a society sector reference");
+    const auto& society=std::get<core::SocietyCatalog>(program.collection.definitions.at("society.global").data);
+    const auto sectors=studio::content_uses(index,"segment",society.science.front(),false);
+    check(std::any_of(sectors.begin(),sectors.end(),[](const auto& ref){return ref.owner=="society.global";}),
+        "An actual society sector lost its typed customer reference");
+}
 void index_and_refactor(studio::DraftDocument& d) {
     auto next=d.collection();
     content::FlowDefinition literal{};literal.scope=content::Scope::company;
@@ -223,7 +238,7 @@ void assets(Scratch& scratch,studio::DraftDocument& draft) {
 }
 }
 int main() {
-    try {Scratch s;studio::DraftDocument d{s.path,"data/runtime/first-playable.json"};index_and_refactor(d);
+    try {Scratch s;studio::DraftDocument d{s.path,"data/runtime/first-playable.json"};scoped_sector_references(d.program());index_and_refactor(d);
         reusable_group(s.path);
         assets(s,d);
         studio::DraftDocument reopened{s.path,"data/drafts/catalog-authored.json"};

@@ -105,6 +105,10 @@ OperationResult Campaign::operate(
                 pause_notice="The election count is published. Review seat changes and the swearing-in dates in Civic.";
         }
     }
+    if(settings_.auto_pause_alerts && after.world.society && after.world.simulation.date!=prior_day)
+        for(const auto& round:after.world.society->rounds) for(const auto& member:round.members)
+            if(member.effective_from==after.world.simulation.date)
+                pause_notice="A regional standards rule is effective today. Review member dates and service evidence in World.";
     // Optional notification preferences never suppress a real deadline stop.
     // This external-driver halt happens on the prepared morning before any
     // due-day work; the player can still finance, pay or cancel explicitly.
@@ -163,6 +167,8 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::DeployModel>(command.action) ||
         std::holds_alternative<core::FundPolicyAdvocacy>(command.action) ||
         std::holds_alternative<core::SubmitPolicyEvidence>(command.action) ||
+        std::holds_alternative<core::BuyMediaCampaign>(command.action) ||
+        std::holds_alternative<core::EndorseForumStandard>(command.action) ||
         std::holds_alternative<core::BuySiteProtection>(command.action) ||
         std::holds_alternative<core::InsureSite>(command.action) ||
         std::holds_alternative<core::ReplicateService>(command.action) ||

@@ -43,13 +43,15 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("competition-smoke"),QStringLiteral("Use the standard rival roster, publication/adoption and pricing path in the explicit playable smoke.")});
     parser.addOption({QStringLiteral("infrastructure-smoke"),QStringLiteral("Exercise the map, paid owned infrastructure and calendar in the explicit playable smoke.")});
     parser.addOption({QStringLiteral("civic-smoke"),QStringLiteral("Exercise the civic docket, payment and exact reload in the explicit playable smoke.")});
+    parser.addOption({QStringLiteral("society-smoke"),QStringLiteral("Exercise regional outcomes, paid media and standards disclosures in the explicit playable smoke.")});
     parser.addOption({QStringLiteral("screenshot"),QStringLiteral("Capture the smoke-test window."),QStringLiteral("file")});
     parser.process(application);
     if (parser.isSet(QStringLiteral("build-info"))) { core::write_build_identity(std::cout); return 0; }
     const bool civic_smoke = parser.isSet(QStringLiteral("civic-smoke"));
+    const bool society_smoke = parser.isSet(QStringLiteral("society-smoke"));
     const bool infrastructure_smoke = parser.isSet(QStringLiteral("infrastructure-smoke"));
     const bool competition_smoke = parser.isSet(QStringLiteral("competition-smoke"));
-    const auto variants = static_cast<int>(civic_smoke) + static_cast<int>(infrastructure_smoke) + static_cast<int>(competition_smoke);
+    const auto variants = static_cast<int>(society_smoke) + static_cast<int>(civic_smoke) + static_cast<int>(infrastructure_smoke) + static_cast<int>(competition_smoke);
     if (!parser.positionalArguments().isEmpty() ||
         (parser.isSet(QStringLiteral("screenshot")) && !parser.isSet(QStringLiteral("smoke-test"))) ||
         (variants > 0 && !parser.isSet(QStringLiteral("smoke-test"))) || variants > 1 ||
@@ -104,7 +106,8 @@ int main(int argc, char* argv[]) {
         });
         if (parser.isSet(QStringLiteral("smoke-test"))) {
             window->resize(1280,720);
-            if (civic_smoke) schedule_civic_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
+            if (society_smoke) schedule_society_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
+            else if (civic_smoke) schedule_civic_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
             else if (infrastructure_smoke) schedule_infrastructure_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
             else if (bundled || competition_smoke) schedule_playable_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")),competition_smoke);
             else schedule_game_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));

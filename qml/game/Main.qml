@@ -153,6 +153,12 @@ ApplicationWindow {
                         onClicked: window.room = "civic"
                     }
                     Action {
+                        objectName: "societyTab"; text: qsTr("World")
+                        visible: !campaign.welcome && campaign.society.available
+                        checked: window.room === "society"
+                        onClicked: window.room = "society"
+                    }
+                    Action {
                         objectName: "pauseButton"
                         text: campaign.paused ? qsTr("Play") : qsTr("Pause")
                         enabled: !campaign.busy && (!campaign.paused || campaign.canPlay)
@@ -432,8 +438,12 @@ ApplicationWindow {
                     visible: !campaign.welcome && campaign.civic.available && window.room === "civic"
                     contentItem: CivicPanel { textSize: window.textSize }
                 }
+                Panel {
+                    visible: !campaign.welcome && campaign.society.available && window.room === "society"
+                    contentItem: SocietyPanel { textSize: window.textSize }
+                }
                 GridLayout {
-                    visible: !campaign.welcome && window.room !== "operations" && window.room !== "civic" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
+                    visible: !campaign.welcome && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
                     Layout.fillWidth: true
                     columns: window.narrow || campaign.compactManagement ? 1 : 2
                     columnSpacing: 10

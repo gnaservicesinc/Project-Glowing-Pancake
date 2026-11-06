@@ -1,4 +1,5 @@
 #include <pgp/runtime/runtime.hpp>
+#include <pgp/runtime/society.hpp>
 
 #include "duration.hpp"
 #include "committed.hpp"
@@ -686,25 +687,35 @@ RuntimeResult Runtime::submit(const core::Command& command) {
     // Core submit increments once itself; transaction's reservation is removed
     // inside the copied state so the whole command/opening shares one revision.
     return transaction(program_, checkpoint_, command.expected_revision, [&](auto& next, auto& result, auto& steps, bool& core_already_validated) {
-        --next.world.simulation.revision;
         const bool pause_only = std::holds_alternative<core::SetPaused>(command.action) && std::get<core::SetPaused>(command.action).paused;
         const bool core_choice = std::holds_alternative<core::ResolveOpeningChoice>(command.action);
         if (!pause_only && !core_choice &&
             (has_choice(next.runtime) || next.runtime.prepared_day != next.world.simulation.date))
             fail(RuntimeReason::morning_not_ready, "Resolve required content choices and prepare the morning before work.");
+        if(const auto* media=std::get_if<core::BuyMediaCampaign>(&command.action)) {
+            buy_media_campaign(next.world,*media);return;
+        }
+        if(const auto* forum=std::get_if<core::EndorseForumStandard>(&command.action)) {
+            endorse_forum_standard(next.world,*forum);return;
+        }
+        --next.world.simulation.revision;
         const auto prior_day = next.world.simulation.date;
         auto actual=command;IndustryAllocations assignments;
         if (std::holds_alternative<core::TransferCompanyOwnership>(actual.action) || std::holds_alternative<core::TransferGroupFunds>(actual.action)) fail(RuntimeReason::effect_rejected,"Company control and group transfers require the owning bilateral runtime transaction.");
         if (auto* day=std::get_if<core::AdvanceDay>(&actual.action)) {
-            if (day->market_allocation || !day->industry_adoptions.empty() || !day->wholesale_work.empty())
+            if (day->market_allocation || !day->industry_adoptions.empty() || !day->wholesale_work.empty() || !day->market_influences.empty())
                 fail(RuntimeReason::effect_rejected,"Industry allocations and wholesale work belong to the shared world settlement.");
             competition_detail::refresh_wholesale(next.world,program_,true);
             assignments=prepare_competition_day(next.world,program_);
             day->wholesale_work=competition_detail::settle_wholesale(next.world,program_,assignments);
+            day->market_influences=society_market_conditions(next.world,next.world.simulation,prior_day);
             if (const auto it=assignments.find(next.world.company_id);it!=assignments.end()) {
                 day->market_allocation=it->second;day->industry_adoptions=industry_adoption_snapshot(next.world);
             }
         }
+        if(const auto* launch=std::get_if<core::DeployModel>(&actual.action))
+            if(const auto blocked=society_launch_block(next.world.society?&*next.world.society:nullptr,next.world.simulation,*launch,prior_day); !blocked.empty())
+                fail(RuntimeReason::effect_rejected,blocked);
         if (const auto* insight=std::get_if<core::AcquireResearchInsight>(&actual.action)) validate_public_insight(next.world,insight->insight);
         core::Simulation core_state{std::move(next.world.simulation), core::TrustedSimulationState{}};
         const auto outcome = core_state.submit_in_transaction(actual);
@@ -717,7 +728,10 @@ RuntimeResult Runtime::submit(const core::Command& command) {
         next.world.simulation = std::move(core_state).release_checkpoint();
         complete_approved_acquisitions(next.world,program_);
         core::prepare_governance(next.world.simulation);
-        if (next.world.simulation.date!=prior_day) advance_competition(next.world,program_,prior_day,assignments);
+        if (next.world.simulation.date!=prior_day) {
+            advance_competition(next.world,program_,prior_day,assignments);
+            advance_society(next.world,prior_day);
+        }
         else competition_detail::refresh_wholesale(next.world,program_);
         update_competitive_offers(next.world,program_);
         update_heavyweight_responses(next.world,program_);

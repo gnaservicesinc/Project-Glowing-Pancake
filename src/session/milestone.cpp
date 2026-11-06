@@ -32,6 +32,10 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
         if (s.civic && s.civic->next_boundary && *s.civic->next_boundary > s.date && *s.civic->next_boundary < s.end_date)
             result.deadline = s.civic->next_boundary;
         if (!result.deadline) throw std::invalid_argument("There is no later civic event within the campaign.");
+    } else if (kind=="society") {
+        if(checkpoint.world.society) result.deadline=core::next_society_boundary(*checkpoint.world.society,s.date);
+        if(result.deadline && *result.deadline>=s.end_date) result.deadline.reset();
+        if(!result.deadline) throw std::invalid_argument("There is no later regional month or forum date within this campaign.");
     } else if (kind=="deadline") {
         const auto consider=[&](core::OrdinalDay day){if (day>=s.date && day<=s.end_date && (!result.deadline || day<*result.deadline)) result.deadline=day;};
         if (s.accounts) {

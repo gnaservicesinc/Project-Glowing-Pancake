@@ -12,6 +12,7 @@
 #include <pgp/core/infrastructure.hpp>
 #include <pgp/core/resilience.hpp>
 #include <pgp/core/civic.hpp>
+#include <pgp/core/society.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
@@ -132,6 +133,7 @@ struct AdvanceDay {
     std::optional<AllocationResult> market_allocation{};
     std::vector<MarketAdoption> industry_adoptions{};
     std::vector<WholesaleUse> wholesale_work{};
+    MarketInfluences market_influences{};
 };
 struct SetPaused { bool paused; };
 struct ResolveOpeningChoice { std::uint64_t id; bool accept; };
@@ -177,7 +179,7 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    NegotiateCorporateFinance,AppointExecutive,ProposePoolExpansion,VoteBoardMotion,RespondCorporateDispute,TransferCompanyOwnership,TransferGroupFunds,
                                    BuildOwnedSite,OrderOwnedHardware,HireSiteOperators,SetSitePowerLimit,RetireOwnedHardware,CloseOwnedSite,ScheduleSiteAppointment,CancelSiteAppointment,NoticeInitialLeaseTermination,
                                    BuySiteProtection,InsureSite,ReplicateService,StopServiceReplica,AcknowledgeSiteAlert,
-                                   FundPolicyAdvocacy,SubmitPolicyEvidence>;
+                                   FundPolicyAdvocacy,SubmitPolicyEvidence,BuyMediaCampaign,EndorseForumStandard>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

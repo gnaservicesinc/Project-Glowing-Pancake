@@ -4,35 +4,13 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**36 of 52 steps complete for Mac feature development. M6-02 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03 and M6-01.
+**37 of 52 steps complete for Mac feature development. M6-03 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03 and M6-01/02.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
 prepared for that later phase; no testers are being arranged and no human
 sessions have been conducted.
-
-**Paused at the user's request on 2026-11-05.** The completed implementation
-checkpoint is M6-01 (`802f58e`); the completed count remains **36/52**, with
-**16 steps open**. No further implementation should run until the user resumes.
-Unfinished M6-02 work is pushed separately at `7141d39` on
-[`codex/m6-02-paused-2026-11-05`](https://github.com/gnaservicesinc/Project-Glowing-Pancake/tree/codex/m6-02-paused-2026-11-05).
-That branch contains initial regional welfare/forum state, market influence
-plumbing, and codec/catalog scaffolding. It has **not been built or tested**
-and is not merged into `main`; M6-02 remains open. The last completed feature's
-73 optimized Mac CTests and Metal walkthrough are recorded below; they do not
-validate this unfinished work. No build or tests were rerun for this pause.
-
-To resume M6-02, start from that preserved branch and review its partial
-interfaces before extending them. The society catalog currently references
-scenario/definition fields that still need integration. Complete the catalog,
-compiler and save codec; then add owning runtime transactions, monthly outcomes
-from actual settled work, and matching access/awareness context for player,
-rival and wholesale allocation. Commands still need payment/evidence validation;
-typed facts, Studio forms, game controls and authored content remain to be
-connected. Validate lagged welfare, per-member forum dates, restricted delivery,
-advertising limits and exact save replay before closing M6-02. Keep human
-playtests/author studies and platform/release qualification deferred as above.
 
 On 2026-11-05, core/runtime/session daily validation and state-copy bottlenecks were
 eliminated, reducing the three-year business scenario test (`session.business-scenario`)
@@ -47,6 +25,18 @@ local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
 
+- M6-02 adds World with five welfare indices, fourteen equally weighted
+  components, regional minima, six audience reputations and disclosed media.
+  Settled work from all sellers reaches welfare after the authored lag.
+  Standards require a quorum and separate member implementation dates;
+  restrictions apply to real delivery and preserve signed obligations.
+  All **74 optimized Mac CTests passed in 98.38s**, including **61 society
+  checks**. Most full-suite time is in authoring snapshot checks; the later
+  performance target remains open. Metal controls at **100%/200% text**
+  confirm both paid actions, stop at the actual month boundary and reopen
+  the exact **562,154-byte** save. Finalized content **0.9.0-dev.1**,
+  generation **9**, passes all 15 headquarters checks.
+  [World controls and source reconciliation](../src/runtime/SOCIETY.md).
 - M6-01 adds a Civic room with House and staggered Senate seats, the
   presidential calendar, state institutions and the public docket. Typed
   laws govern new US service launches and state grid permits after votes,

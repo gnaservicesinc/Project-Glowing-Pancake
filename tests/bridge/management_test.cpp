@@ -1,4 +1,5 @@
 #include "management_controller.hpp"
+#include "society_controller.hpp"
 #include <pgp/session/slice_run.hpp>
 #include <pgp/runtime/scenario.hpp>
 #include <QCoreApplication>
@@ -51,6 +52,31 @@ void run() {
     management.authorizeEvaluation(QStringLiteral("baseline"),QStringLiteral("evaluation.held_out"),QStringLiteral("lease.initial"),QStringLiteral("20"),QStringLiteral("1"),QStringLiteral("4000.00"),QStringLiteral("100000"),QStringLiteral("30"),QStringLiteral("2"));
     check(commands==2 && later->checkpoint==advanced,"Policy form mutated authority or failed to emit its bounded command");
     check(management.scoreText().contains(QStringLiteral("Provisional")) && management.scoreText().contains(QStringLiteral("founder")),"Score presentation hid its provisional status or ownership tradeoff");
+    bridge::SocietyController society;
+    society.update(later,true);society.regions()->setSelectedId(QStringLiteral("region.us"));
+    check(society.regions()->rowCount()==8 && society.global().contains(QStringLiteral("lowest region")) &&
+        society.audiences().contains(QStringLiteral("Communities")),"World controls omitted a region, minimum or named audience");
+    const auto services=society.services();check(!services.empty(),"A deployed service with real evidence is absent from media choices");
+    int society_commands=0;core::CommandAction last=core::SetPaused{true};
+    QObject::connect(&society,&bridge::SocietyController::actionRequested,[&](core::CommandAction action){++society_commands;last=std::move(action);});
+    society.reviewMedia(services.front().toMap().value("id").toString(),2);
+    check(!society.reviewText().isEmpty() && society_commands==0 && later->checkpoint==advanced,"Media review mutated authority or emitted a payment");
+    society.confirmAction();
+    check(society_commands==1 && std::holds_alternative<core::BuyMediaCampaign>(last) &&
+        std::get<core::BuyMediaCampaign>(last).region=="region.us", "Media confirmation lost the reviewed region or command");
+    society.reviewMedia(services.front().toMap().value("id").toString(),2);
+    auto changed=advanced;++changed.world.simulation.revision;
+    auto incoming=std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,changed,{},true});
+    society.update(incoming,false);society.confirmAction();
+    check(society_commands==1 && society.reviewText().isEmpty() && society.regions()->selectedId()==QStringLiteral("region.us"),
+        "A stale media review survived a new revision or changed region selection");
+    society.reviewEndorsement(society.evidence().front().toString(),true);society.confirmAction();
+    check(society_commands==2 && std::holds_alternative<core::EndorseForumStandard>(last) && later->checkpoint==advanced,
+        "Forum review mutated the snapshot or omitted its typed disclosure");
+    changed.world.simulation.paused=false;
+    society.update(std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,changed,{},true}),false);
+    society.reviewMedia(services.front().toMap().value("id").toString(),2);
+    check(!society.reviewText().isEmpty(),"A stopped calendar driver disabled World review controls");
 }
 }
 int main(int argc,char** argv) {QCoreApplication application{argc,argv};try {run();std::cout<<checks<<" management checks passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

@@ -66,6 +66,10 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
             world.simulation.random[static_cast<std::size_t>(core::RandomStream::politics)]);
         core::prepare_civic(world.simulation);
     }
+    if (const auto* catalog = content::society_catalog(program.collection, *scenario)) {
+        world.society = core::opening_society(*catalog, scenario->starts_on);
+        core::prepare_society(*world.society, scenario->starts_on);
+    }
     if (scenario->management && scenario->management->governance) {
         core::GovernanceState corporate;corporate.opening_holdings=world.simulation.accounts->holdings;
         world.simulation.management->governance=std::move(corporate);

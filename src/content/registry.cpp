@@ -1,5 +1,6 @@
 #include <pgp/content/registry.hpp>
 #include <pgp/core/market.hpp>
+#include <pgp/core/society.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -195,6 +196,7 @@ Registry foundation_registry() {
     result.register_system("slice",{"foundation"});
     result.register_system("resilience",{"slice"});
     result.register_system("civic", {"slice"});
+    result.register_system("society", {"slice"});
     const auto maximum = std::numeric_limits<std::int64_t>::max();
     const auto minimum = std::numeric_limits<std::int64_t>::min();
     auto number = [&](std::string id, Scope scope, Unit unit, std::int64_t low, std::int64_t high, std::string help,std::string provider="foundation") {
@@ -218,6 +220,13 @@ Registry foundation_registry() {
     boolean("company.has_compute_lease", "Whether the company has a current compute lease.");
     boolean("world.civic_election_today", "A US election ballot was counted on this prepared morning.", Scope::world, "civic");
     boolean("world.civic_rule_effective_today", "An implemented US or state rule took effect on this prepared morning.", Scope::world, "civic");
+    boolean("world.society_month_today", "Actual regional work closed a monthly observation on the previous day.", Scope::world, "society");
+    boolean("world.forum_changed_today", "A standards agenda, ballot, local implementation or expiration occurs today.", Scope::world, "society");
+    for(std::size_t i=0;i<5;++i) {
+        const auto key=std::string(core::welfare_index_key(i));
+        number("world.welfare_"+key+"_bp",Scope::world,Unit::basis_points,0,10000,"Population-weighted regional welfare, 100 bp = 1 point.","society");
+        number("world.minimum_"+key+"_bp",Scope::world,Unit::basis_points,0,10000,"Lowest region's welfare, 100 bp = 1 point.","society");
+    }
     boolean("company.has_research_partner", "Whether the company has a current research partnership.");
     boolean("company.is_operating", "Whether company operations remain active.");
     result.register_relation({"company.capacity_sources", Scope::company, Scope::capacity_source, core::capacity_source_limit,

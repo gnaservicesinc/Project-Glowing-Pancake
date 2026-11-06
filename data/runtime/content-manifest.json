@@ -1,13 +1,13 @@
 {
   "assets": [],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "f588eea017e490726b1c37cabf5be6e578b607564c94c55c59924e1853ffca76",
+  "collection_hash": "dbc32414e55b3dd050595610312ca3304670511d951f3fac7c80be1589a0cab0",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.8.0-dev.1",
+  "content_version": "0.9.0-dev.1",
   "definitions": [
     {
       "id": "civic.domestic",
@@ -84,32 +84,32 @@
     {
       "id": "scenario.first_playable",
       "kind": "scenario",
-      "revision": 6,
-      "semantic_hash": "327f06afb355d5eb18270abbd9ef807c24506ae74dfdec572899a44eae568dcf"
+      "revision": 7,
+      "semantic_hash": "60a2e1b4cdec42b0cd386d1342d7fece90b9d807e28cab2e846d47f7488f6599"
     },
     {
       "id": "scenario.world_competition",
       "kind": "scenario",
-      "revision": 7,
-      "semantic_hash": "3e8b3c523c3bb2ebae92738ff2680285752365e3d98591bdd9b0db00b47a0fd2"
+      "revision": 8,
+      "semantic_hash": "3a825912d6723d09792b5ae03f571f06e08b76565b26782a70f9ea1d5c04993f"
     },
     {
       "id": "scenario.world_expanded",
       "kind": "scenario",
-      "revision": 7,
-      "semantic_hash": "2cffdee0cd3ed20a343073e65cabd37abbe710c687dd232da37e9331cc5e9a7e"
+      "revision": 8,
+      "semantic_hash": "53e6ee8cddff3b605a01e13f77263bee611c09bb77f6b655ecae26f7ec4bed08"
     },
     {
       "id": "scenario.world_forgiving",
       "kind": "scenario",
-      "revision": 7,
-      "semantic_hash": "c8076c284b9c46e41de763c76684ccb4906a8b7d6fb275ceedf415f0a3d996a1"
+      "revision": 8,
+      "semantic_hash": "90aebd8e6c0bca243b420ae96b1e2f1cf30487d620536ee87ea8b6f74a8ca420"
     },
     {
       "id": "scenario.world_reduced",
       "kind": "scenario",
-      "revision": 7,
-      "semantic_hash": "ae88f8c470310991e715ba689c0a5efc03c4006b67d0e48c529b0c3e2544f323"
+      "revision": 8,
+      "semantic_hash": "fa7baea21b7d56ed17cd287c55ffe775ad86c0213e78e6b689b8a5b333400e0c"
     },
     {
       "id": "slice.evaluation_finding",
@@ -158,11 +158,29 @@
       "kind": "flow",
       "revision": 2,
       "semantic_hash": "f94f1b075a833bc98812b425f59466d2f011f8c056bd6bc1041322ff6612a70d"
+    },
+    {
+      "id": "society.forum_briefing",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "8044f552044ff1a1ee78b742ab631fcd249e33d64dbd596ab7f971eca6a9cf4f"
+    },
+    {
+      "id": "society.global",
+      "kind": "regional_society",
+      "revision": 1,
+      "semantic_hash": "891a3e5070156b0f1ab687842c3aa217748618e460d0dd96f3a291052fcbded5"
+    },
+    {
+      "id": "society.monthly_briefing",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "40091c59d3cbe4a44239a3ab19570f907aa4a915cb0be560c4d9c2458978dad4"
     }
   ],
   "format": 1,
-  "generation": 8,
-  "messages_hash": "7b91575fb9e0eb7a893a840e7a05d62ef6b2d2a370881196686953f57edf03ab",
+  "generation": 9,
+  "messages_hash": "221a096f0d520d9010eac92b6b5e60e3e93145aac5ef8dc79d49ca95150d7b35",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
     "scenario.first_playable": [
@@ -176,7 +194,9 @@
       "slice.recovery_opportunity",
       "operations.site_outcome",
       "civic.election_briefing",
-      "civic.implementation_briefing"
+      "civic.implementation_briefing",
+      "society.monthly_briefing",
+      "society.forum_briefing"
     ],
     "scenario.world_competition": [
       "slice.research_milestone",
@@ -189,7 +209,9 @@
       "slice.recovery_opportunity",
       "operations.site_outcome",
       "civic.election_briefing",
-      "civic.implementation_briefing"
+      "civic.implementation_briefing",
+      "society.monthly_briefing",
+      "society.forum_briefing"
     ],
     "scenario.world_expanded": [
       "slice.research_milestone",
@@ -202,7 +224,9 @@
       "slice.recovery_opportunity",
       "operations.site_outcome",
       "civic.election_briefing",
-      "civic.implementation_briefing"
+      "civic.implementation_briefing",
+      "society.monthly_briefing",
+      "society.forum_briefing"
     ],
     "scenario.world_forgiving": [
       "slice.research_milestone",
@@ -215,7 +239,9 @@
       "slice.recovery_opportunity",
       "operations.site_outcome",
       "civic.election_briefing",
-      "civic.implementation_briefing"
+      "civic.implementation_briefing",
+      "society.monthly_briefing",
+      "society.forum_briefing"
     ],
     "scenario.world_reduced": [
       "slice.research_milestone",
@@ -228,8 +254,10 @@
       "slice.recovery_opportunity",
       "operations.site_outcome",
       "civic.election_briefing",
-      "civic.implementation_briefing"
+      "civic.implementation_briefing",
+      "society.monthly_briefing",
+      "society.forum_briefing"
     ]
   },
-  "source_hash": "4fc54a93e979cb6ded9205e582c06ef529fbb8e4602445dc6a7659e52ceb1526"
+  "source_hash": "19842c74fddc47c49a9d331ce448aa0d49e6b33fa272d371bcc46d90a08aee2f"
 }

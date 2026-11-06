@@ -85,11 +85,12 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
     if(key=="regional_markets") definition_kind="regional_markets";
     if(key=="resilience") definition_kind="site_resilience";
     if(key=="civic") definition_kind="us_civic";
+    if(key=="society") definition_kind="regional_society";
     if(array_key=="flows") definition_kind="flow";
     if(parent.find("/prerequisites/")!=std::string_view::npos) definition_kind="research";
     if(array_key=="headquarters_choices") {add("US-CA","California");add("US-TX","Texas");add("US-WA","Washington");}
     if(!definition_kind.empty()) {
-        if(key=="regional_markets" || key=="resilience" || key=="civic") add("","Disabled");
+        if(key=="regional_markets" || key=="resilience" || key=="civic" || key=="society") add("","Disabled");
         for(const auto& [id,d]:draft.collection().definitions) if(content::definition_kind(d)==definition_kind) add(id);
     }
     const auto* def=draft.collection().find(scenario);
@@ -135,7 +136,8 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
         core::ProductChannel::consumer,core::ProductChannel::licensed,core::ProductChannel::open_weights,core::ProductChannel::agent}) {
         const auto id=std::string(core::channel_key(channel));add(id,label(id));
     }
-    if(key=="segment_id") for(const auto& row:content::scenario_market_setup(draft.collection(),s).segments) add(row.id);
+    if(key=="segment_id" || array_key=="public_services" || array_key=="science" || array_key=="industry")
+        for(const auto& row:content::scenario_market_setup(draft.collection(),s).segments) add(row.id);
     if(key=="product_id" && path.find("/market/contracts/")!=path.npos) {
         if(s.market) for(const auto& row:s.market->offers) add(row.product.id);
     } else if(key=="pilot_product" || key=="product_id" || array_key=="services")

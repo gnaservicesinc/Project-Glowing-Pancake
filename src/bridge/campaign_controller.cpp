@@ -114,13 +114,15 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const 
 CampaignController::CampaignController(runtime::CompiledProgram program,runtime::Checkpoint checkpoint,
     persistence::LocalPaths paths,persistence::Settings initial_settings,QObject* parent,bool welcome)
     : QObject(parent),program_(program),management_(new ManagementController(this)),infrastructure_(new InfrastructureController(this)),
-      civic_(new CivicController(this)),welcome_(welcome),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
+      civic_(new CivicController(this)),society_(new SocietyController(this)),welcome_(welcome),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
       save_folder_(QUrl::fromLocalFile(QString::fromStdU16String(paths.saves_directory.u16string()))) {
     connect(management_,&ManagementController::actionRequested,this,&CampaignController::submit);
     connect(infrastructure_,&InfrastructureController::actionRequested,this,&CampaignController::submit);
     connect(infrastructure_,&InfrastructureController::noticeRaised,this,&CampaignController::setNotice);
     connect(civic_, &CivicController::actionRequested, this, &CampaignController::submit);
     connect(civic_, &CivicController::noticeRaised, this, &CampaignController::setNotice);
+    connect(society_, &SocietyController::actionRequested, this, &CampaignController::submit);
+    connect(society_, &SocietyController::noticeRaised, this, &CampaignController::setNotice);
     connect(management_,&ManagementController::competitiveResponseRequested,this,[this](QString id,bool accept) {
         if (!paused() || !beginOperation()) return;
         const auto revision=snapshot_->checkpoint.world.simulation.revision;
@@ -180,6 +182,7 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     management_->update(snapshot,program_,replace);
     infrastructure_->update(snapshot,program_,replace);
     civic_->update(snapshot, replace);
+    society_->update(snapshot, replace);
     auto inbox = inbox_rows(snapshot->checkpoint,program_.collection,*management_);
     if (!first && replace) welcome_=false;
     if (replace) { projects_->beginCampaign(std::move(projects)); inbox_->beginCampaign(std::move(inbox)); }

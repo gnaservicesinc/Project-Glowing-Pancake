@@ -1,4 +1,5 @@
 #include <pgp/runtime/runtime.hpp>
+#include <pgp/runtime/society.hpp>
 
 #include "duration.hpp"
 #include "committed.hpp"
@@ -229,6 +230,25 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
         return value;
     }
     if (metadata.id == "company.cash_cents") return world.simulation.cash.value();
+    if(metadata.provider=="society") {
+        const auto& society=world.society;
+        if(metadata.id=="world.society_month_today") return society && !society->months.empty() &&
+            society->months.back().month_end.value()+1==world.simulation.date.value();
+        if(metadata.id=="world.forum_changed_today") {
+            if(!society) return false;
+            const auto day=world.simulation.date;
+            for(const auto& round:society->rounds) {
+                if(round.opened_on==day || round.ballot_on==day || round.expires_before==day) return true;
+                for(const auto& member:round.members) if(member.effective_from==day) return true;
+            }
+            return false;
+        }
+        for(std::size_t i=0;i<5;++i) {
+            const auto key=std::string(core::welfare_index_key(i));
+            if(metadata.id=="world.welfare_"+key+"_bp") return static_cast<std::int64_t>(society?core::global_welfare(*society)[i]:0);
+            if(metadata.id=="world.minimum_"+key+"_bp") return static_cast<std::int64_t>(society?core::minimum_welfare(*society)[i]:0);
+        }
+    }
     if (metadata.id == "world.civic_election_today") {
         const auto& civic = world.simulation.civic;
         return civic && !civic->elections.empty() && civic->elections.back().day == world.simulation.date;
@@ -326,7 +346,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                                           bool validate_core_simulation) {
     const auto& world = checkpoint.world;
     const auto& state = checkpoint.runtime;
-    if (world.simulation.civic && world.scenario_id.empty()) invalid("US institutions require an authored source scenario");
+    if ((world.simulation.civic || world.society) && world.scenario_id.empty()) invalid("Institutions and regional society require an authored source scenario");
     if (!world.scenario_id.empty()) {
         const auto* definition=program.collection.find(world.scenario_id);
         const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
@@ -342,6 +362,11 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             if (!world.simulation.civic || (validate_core_simulation && world.simulation.civic->catalog != *civic))
                 invalid("Saved civic rules differ from the authored scenario");
         } else if (world.simulation.civic) invalid("This scenario did not authorize a civic calendar");
+        if (const auto* society=content::society_catalog(program.collection,*scenario)) {
+            if(!world.society || world.society->prepared_on!=world.simulation.date ||
+                (validate_core_simulation && world.society->catalog!=*society))
+                invalid("Saved regional society differs from the authored scenario or prepared morning");
+        } else if(world.society) invalid("This scenario did not authorize regional society");
         if (world.simulation.infrastructure) {
             const auto& base=world.simulation.infrastructure->executive_base;
             if ((base=="US-CA"?"state.us_ca":base=="US-TX"?"state.us_tx":base=="US-WA"?"state.us_wa":"")!=world.state_id ||
@@ -353,6 +378,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     // Core validation runs on a copy only when an unfinished opening needs
     // preparation; otherwise validate the core state directly in place.
     if (validate_core_simulation) {
+        validate_society_world(world);
         if (world.simulation.phase == core::DayPhase::opening) {
             (void)core::Simulation{world.simulation};
         } else {
@@ -437,7 +463,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     for (const auto& [id, value] : world.facts) {
         const auto* metadata = program.registry.fact(id);
         if (!metadata || metadata->default_value || id == "company.cash_cents" || metadata->provider=="slice" ||
-            metadata->provider=="civic" || business_member_scope(metadata->scope))
+            metadata->provider=="civic" || metadata->provider=="society" || business_member_scope(metadata->scope))
             invalid("Unknown or duplicated owning world fact");
         scalar_valid(value, *metadata);
     }

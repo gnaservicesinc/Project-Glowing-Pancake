@@ -50,13 +50,15 @@ std::string reference_family(std::string_view key,std::string_view path,std::str
     if(key=="regional_markets") return "regional_markets";
     if(key=="resilience") return "site_resilience";
     if(key=="civic") return "us_civic";
+    if(key=="society") return "regional_society";
     if(array=="flows") return "flow";
     if(array=="research" || array=="requires_research" || array=="all_of" || array=="any_of" || key=="publication_node" || key=="publication_research") return "research";
     if(array=="recipes" || key=="recipe_id" || key=="required_recipe") return "recipe";
     if(array=="data_ids" || key=="data_id") return "dataset";
     if(key=="plan_id" || key=="evaluation_id") return "evaluation";
     if(array=="services" || key=="product_id" || key=="pilot_product") return "product";
-    if(key=="segment_id") return "segment";
+    if(key=="segment_id" || (kind=="regional_society" &&
+        (array=="public_services" || array=="science" || array=="industry"))) return "segment";
     if(key=="specialist_id") return "specialist";
     if(key=="lease_offer_id") return "business_offer";
     if(key=="source_id") return "capacity_source";
@@ -134,7 +136,7 @@ std::vector<ContentReference> content_uses(const CatalogIndex& index,std::string
         std::map<std::string,std::vector<const ContentReference*>,std::less<>> reverse;
         for(const auto& ref:index.references)
             if(ref.family=="flow" || ref.family=="scenario" || ref.family=="research" || ref.family=="regional_markets" ||
-                ref.family=="site_resilience" || ref.family=="us_civic")
+                ref.family=="site_resilience" || ref.family=="us_civic" || ref.family=="regional_society")
                 reverse[ref.id].push_back(&ref);
         std::vector<std::string> pending{owners.begin(),owners.end()};
         for(std::size_t i=0;i<pending.size();++i) {

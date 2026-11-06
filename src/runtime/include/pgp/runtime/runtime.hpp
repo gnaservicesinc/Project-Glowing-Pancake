@@ -46,6 +46,7 @@ struct WorldState {
     std::vector<VariableValue> variables{};
     std::optional<CompetitionState> competition{};
     std::string scenario_id{};
+    std::optional<core::SocietyState> society{};
     auto operator<=>(const WorldState&) const = default;
 };
 

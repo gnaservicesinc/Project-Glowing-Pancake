@@ -103121,6 +103121,111 @@
         "prepared_headquarters": 15,
         "scenarios": 5
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "a47240e56c29397d702dcc49d5c0dd35116c8b573bf2fed98e0c37230e3ac79b",
+          "before_hash": "a9dc041299f4a15f0bdc4c08b000ed39c543089b7ef2882ebb2c6934f7052500",
+          "change": "changed",
+          "id": "scenario.first_playable",
+          "kind": "scenario",
+          "old_revision": 6,
+          "revision": 7
+        },
+        {
+          "after_hash": "19cc03e2741546bf9ad30928cfad626fcc40ab620017cc05356e931fa0a1f025",
+          "before_hash": "8c0654f71398af13ba1375ac46be7d72fb4bd7fc6f33b0aa703cfb7b352f482c",
+          "change": "changed",
+          "id": "scenario.world_competition",
+          "kind": "scenario",
+          "old_revision": 7,
+          "revision": 8
+        },
+        {
+          "after_hash": "ced215e654f8e3b42da9ee968183d8f12ef5c3d3a897fc0b1199dace5987a61e",
+          "before_hash": "c3f35bf8b392ce39a82d95f81b8c0723189dd510c7299907b68fde2b0d3d4a3a",
+          "change": "changed",
+          "id": "scenario.world_expanded",
+          "kind": "scenario",
+          "old_revision": 7,
+          "revision": 8
+        },
+        {
+          "after_hash": "9ce7fabc90bb69f1473460d4875ab995952f5c2ea4d86308565c3f0901b61151",
+          "before_hash": "8581d7b92463701690b977c1d1c282193938324b237d4d2135724e393a6f3c00",
+          "change": "changed",
+          "id": "scenario.world_forgiving",
+          "kind": "scenario",
+          "old_revision": 7,
+          "revision": 8
+        },
+        {
+          "after_hash": "260664f922946e3ce86d9b2d15f4b3053bcaff6fd08095121815091079dbd303",
+          "before_hash": "b4f02a95bd624051d015f4a1f457877e0abea170e30ee0d06662c432476a7947",
+          "change": "changed",
+          "id": "scenario.world_reduced",
+          "kind": "scenario",
+          "old_revision": 7,
+          "revision": 8
+        },
+        {
+          "after_hash": "bc6899593c008d0ff21b1ec3f0a91a02ea6301491ebc4f8e682b3b4f2738b909",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "society.forum_briefing",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "4ebde2ae0e7680e04314cbb476d987537e995a0c608af2a4711078266f0cf09c",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "society.global",
+          "kind": "regional_society",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "af42ba019805747ad0238b27e806390a0c26b0c520f4fb11fc2ffc27207e09a7",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "society.monthly_briefing",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        }
+      ],
+      "changed_text_keys": [
+        "society.forum_briefing",
+        "society.monthly_briefing"
+      ],
+      "collection_hash": "dbc32414e55b3dd050595610312ca3304670511d951f3fac7c80be1589a0cab0",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.9.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 9,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.8.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000008.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000009.collection.json",
+      "summary": "Regional welfare from settled services, member standards and disclosed media.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 15,
+        "lints": [],
+        "prepared_headquarters": 15,
+        "scenarios": 5
+      }
     }
   ],
   "format": 1
