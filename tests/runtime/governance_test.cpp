@@ -45,9 +45,99 @@ void step(runtime::Runtime& game,unsigned n) {
 BasisPoints holding(const SimulationState& s,std::string_view id) {for (const auto& h:s.accounts->holdings) if (h.holder==id) return h.shares;return BasisPoints{0};}
 void refuse(runtime::Runtime& game,CommandAction command) {const auto before=game.checkpoint();check(!game.submit({state(game).revision,std::move(command)}).accepted() && game.checkpoint()==before,"Refused corporate command changed state");}
 void corrupt(const runtime::CompiledProgram& p,Json j) {j.erase("sha256");j["sha256"]=persistence::sha256(j.dump());bool rejected=false;try {(void)persistence::decode_save(p,j.dump());}catch(const persistence::PersistenceError&){rejected=true;}check(rejected,"Forged corporate continuation was accepted");}
+void public_listing_route() {
+    const auto registry=content::foundation_registry();
+    auto collection=content::load_collection(persistence::read_bounded(PGP_GOVERNANCE_SOURCE,content::maximum_document_bytes),registry);
+    const auto& century=std::get<content::ScenarioDefinition>(collection.definitions.at("scenario.century_frontier").data);
+    const auto& authored=*century.management->governance;
+    check(authored.public_listing && authored.public_listing->minimum_age==Days{3650} &&
+          authored.public_listing->performance_days==Days{365},"The century campaign lacks its authored IPO");
+    auto listing=*authored.public_listing;
+    const auto offer=*std::ranges::find(authored.financing,listing.offer_id,&CorporateFinanceTerms::id);
+    auto& scenario=std::get<content::ScenarioDefinition>(collection.definitions.at("scenario.first_playable").data);
+    scenario.flows.clear();
+    scenario.rivals.clear();
+    scenario.competition.reset();
+    scenario.management->setbacks.clear();
+    listing.minimum_age=Days{28};
+    listing.performance_days=Days{28};
+    scenario.management->governance->public_listing=listing;
+    scenario.management->governance->financing.push_back(offer);
+    const auto program=runtime::compile_collection(collection,registry);
+    runtime::Runtime game{program,runtime::begin_scenario(program,"scenario.first_playable","US-CA")};
+    check(game.prepare_opening(state(game).revision).accepted(),"IPO fixture could not prepare the morning");
+    refuse(game,NegotiateCorporateFinance{offer.id});
+    refuse(game,InvestEquity{"investor/"+offer.id,offer.proceeds,offer.acquired,"corporate/"+offer.id});
+    step(game,28);
+    refuse(game,NegotiateCorporateFinance{offer.id});
+    apply(game,IssueInvoice{{"fixture.sale",InvoiceKind::receivable,state(game).date,Cents{110'000'000},Cents{0},"Settled service revenue for IPO fixture"}});
+    refuse(game,NegotiateCorporateFinance{offer.id});
+    step(game,1);
+    const auto before=accounts_report(*state(game).accounts);
+    const auto director="seat/"+offer.id;
+    const auto founder_id=state(game).management->catalog.scoring.founder;
+    const auto founder=holding(state(game),founder_id);
+    apply(game,NegotiateCorporateFinance{offer.id});
+    const auto motion=corporate(game).motions.back().id;
+    check(state(game).cash==before.cash && !public_listing_date(state(game)),"IPO raised cash before a board vote");
+    refuse(game,NegotiateCorporateFinance{offer.id});
+    roundtrip(program,game);
+    runtime::Runtime stressed{program,game.checkpoint()};
+    apply(stressed,IssueInvoice{{"fixture.loss",InvoiceKind::payable,state(stressed).date,Cents{120'000'000},Cents{0},"New loss before the listing vote"}});
+    step(stressed,1);
+    refuse(stressed,VoteBoardMotion{motion,true});
+
+    apply(game,VoteBoardMotion{motion,true});
+    const auto after=accounts_report(*state(game).accounts);
+    check(corporate(game).motions.back().executed && public_listing_date(state(game))==state(game).date &&
+          after.cash==checked_unit_add(before.cash,offer.proceeds) && after.profit==before.profit,
+          "Approved listing failed to raise the disclosed contributed capital");
+    check(holding(state(game),"investor/"+offer.id)==offer.acquired && holding(state(game),founder_id)<founder,
+          "Listing did not conserve dilution of the existing ownership");
+    check(std::ranges::none_of(corporate(game).motions.back().ballots,[&](const auto& b){return b.member==director;}) &&
+          std::ranges::any_of(current_board(state(game)),[&](const auto& b){return b.id==director;}),
+          "Public director voted on its own appointment or failed to join");
+    refuse(game,NegotiateCorporateFinance{offer.id});
+    const auto vote_on_pool=[&](runtime::Runtime& current,bool expected) {
+        apply(current,ProposePoolExpansion{BasisPoints{100}});
+        apply(current,VoteBoardMotion{corporate(current).motions.back().id,true});
+        const auto& votes=corporate(current).motions.back().ballots;
+        const auto public_vote=std::ranges::find(votes,director,&BoardBallot::member);
+        check(public_vote!=votes.end() && public_vote->support==expected,"The public director did not follow its filing and dilution rules");
+    };
+    vote_on_pool(game,true);
+    const auto april=to_ordinal({2014,4,1});
+    while (state(game).date<OrdinalDay{april.value()-1}) step(game,1);
+    check(corporate(game).public_filings.empty(),"An unsettled quarter was published early");
+    step(game,1);
+    const auto& filing=corporate(game).public_filings.back();
+    check(corporate(game).public_filings.size()==1 && filing.starts_on==*public_listing_date(state(game)) &&
+          filing.ends_before==april && filing.revenue==Cents{0} && filing.profit().value()<0 &&
+          filing.ending_cash==state(game).cash,"First public filing did not reflect its actual partial quarter");
+    vote_on_pool(game,false);
+    const auto save=persistence::encode_save(program,game.checkpoint());
+    auto forged=Json::parse(save);
+    forged["checkpoint"]["world"]["simulation"]["management"]["governance"]["public_filings"][0]["revenue"]=1;
+    corrupt(program,std::move(forged));
+    const auto restored=persistence::decode_save(program,save).checkpoint;
+    check(restored==game.checkpoint(),"Listing, public seat, vote and filing did not reopen exactly");
+    runtime::Runtime reopened{program,restored};
+    apply(reopened,IssueInvoice{{"fixture.next_sale",InvoiceKind::receivable,state(reopened).date,Cents{110'000'000},Cents{0},"Second-quarter commercial revenue"}});
+    const auto july=to_ordinal({2014,7,1});
+    while (state(reopened).date<july) step(reopened,1);
+    check(corporate(reopened).public_filings.size()==2 && corporate(reopened).public_filings.back().profit().value()>0,
+          "Quarterly reporting did not continue after reopening");
+    vote_on_pool(reopened,true);
+    roundtrip(program,reopened);
+    std::cout<<checks<<" public listing checks passed\n";
 }
-int main() {
+}
+int main(int argc,char** argv) {
  try {
+    if (argc>1 && std::string_view{argv[1]}=="--public-listing") {
+        public_listing_route();
+        return 0;
+    }
     const auto p=fixture();runtime::Runtime game{p,runtime::begin_scenario(p,"scenario.world_competition","US-CA")};
     check(game.prepare_opening(state(game).revision).accepted(),"Opening preparation failed");
     check(unallocated_option_pool(state(game))==BasisPoints{500},"Opening pool was duplicated");

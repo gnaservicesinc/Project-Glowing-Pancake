@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.16.0-dev.1",
+  "content_version": "0.17.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -22631,9 +22631,30 @@
               "proceeds_cents": 30000000,
               "term_days": 0,
               "waiver_fee_cents": 0
+            },
+            {
+              "acquired_bp": 1000,
+              "board_seat": true,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.public_listing",
+              "monthly_interest_bp": 0,
+              "name": "Initial public offering",
+              "negotiation": "public_listing",
+              "proceeds_cents": 500000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
             }
           ],
           "maximum_pool_expansion_bp": 1000,
+          "public_listing": {
+            "director_cash_floor_cents": 75000000,
+            "director_maximum_dilution_bp": 500,
+            "minimum_age_days": 3650,
+            "minimum_profit_cents": 1000000,
+            "minimum_revenue_cents": 100000000,
+            "offer": "corporate.public_listing",
+            "performance_days": 365
+          },
           "response_window_days": 30,
           "subsidiary_cash_floor_cents": 10000000,
           "subsidiary_reserve_days": 30,
@@ -22860,7 +22881,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 6,
+      "revision": 7,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -27676,9 +27697,30 @@
               "proceeds_cents": 30000000,
               "term_days": 0,
               "waiver_fee_cents": 0
+            },
+            {
+              "acquired_bp": 1000,
+              "board_seat": true,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.public_listing",
+              "monthly_interest_bp": 0,
+              "name": "Initial public offering",
+              "negotiation": "public_listing",
+              "proceeds_cents": 500000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
             }
           ],
           "maximum_pool_expansion_bp": 1000,
+          "public_listing": {
+            "director_cash_floor_cents": 75000000,
+            "director_maximum_dilution_bp": 500,
+            "minimum_age_days": 3650,
+            "minimum_profit_cents": 1000000,
+            "minimum_revenue_cents": 100000000,
+            "offer": "corporate.public_listing",
+            "performance_days": 365
+          },
           "response_window_days": 30,
           "subsidiary_cash_floor_cents": 10000000,
           "subsidiary_reserve_days": 30,
@@ -27905,7 +27947,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 6,
+      "revision": 7,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

@@ -49,6 +49,8 @@ class ManagementController final : public QObject {
     Q_PROPERTY(bool governanceAvailable READ governanceAvailable NOTIFY changed)
     Q_PROPERTY(QString ownershipText READ ownershipText NOTIFY changed)
     Q_PROPERTY(QString boardText READ boardText NOTIFY changed)
+    Q_PROPERTY(QString publicListingText READ publicListingText NOTIFY changed)
+    Q_PROPERTY(int publicFilingCount READ publicFilingCount NOTIFY changed)
     Q_PROPERTY(StableListModel* corporateFinance READ corporateFinance CONSTANT)
     Q_PROPERTY(StableListModel* executives READ executives CONSTANT)
     Q_PROPERTY(StableListModel* charters READ charters CONSTANT)
@@ -64,6 +66,10 @@ public:
     bool governanceAvailable() const;
     QString ownershipText() const {return ownership_text_;}
     QString boardText() const {return board_text_;}
+    QString publicListingText() const;
+    int publicFilingCount() const;
+    Q_INVOKABLE QString publicFiling(int newestOffset) const;
+    Q_INVOKABLE QVariantMap listingPreview(QString offer) const;
     StableListModel* corporateFinance() const {return corporate_finance_;}
     StableListModel* executives() const {return executives_;}
     StableListModel* charters() const {return charters_;}

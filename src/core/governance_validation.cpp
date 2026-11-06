@@ -41,6 +41,18 @@ void validate_governance_catalog(const GovernanceCatalog& c) {
             (f.term.value()==0 ? f.acquired.value()==0 || f.acquired.value()>3000 || f.monthly_interest.value()!=0 || f.covenant_cash_floor.value()!=0 || f.waiver_fee.value()!=0:
              f.term.value()<30 || f.term.value()>1096 || f.acquired.value()!=0 || (f.covenant_cash_floor.value()>0 && f.waiver_fee.value()==0))) invalid("Negotiated finance needs explicit cash, equity/debt and covenant terms");
     }
+    if (c.public_listing) {
+        const auto& rules=*c.public_listing;
+        const auto& offer=find(c.financing,rules.offer_id);
+        if (offer.term.value()!=0 || !offer.board_seat || rules.performance_days.value()<28 || rules.performance_days.value()>366 ||
+            rules.minimum_age<rules.performance_days || rules.minimum_age.value()>36524 ||
+            rules.minimum_revenue.value()<=0 || rules.minimum_revenue.value()>100000000000LL ||
+            rules.minimum_profit.value()<=0 || rules.minimum_profit>rules.minimum_revenue ||
+            rules.director_cash_floor.value()<0 || rules.director_cash_floor.value()>1000000000 ||
+            rules.director_maximum_dilution.value()>3000 ||
+            std::ranges::count(c.financing,offer.negotiation,&CorporateFinanceTerms::negotiation)!=1)
+            invalid("A public listing needs one finite equity offer, settled performance thresholds and disclosed shareholder rights");
+    }
     for (const auto& e:c.executives) {
         label(e.id,64);label(e.name);label(e.role,64);label(e.priorities,512);label(e.publication_research,64,true);
         if (!ids.insert(e.id).second || e.signing_cost.value()<0 || e.signing_cost.value()>100000000 || e.cash_salary.value()<=0 ||
@@ -70,7 +82,8 @@ void validate_governance(const SimulationState& s,bool deep) {
     if (management.governance.has_value()!=management.catalog.governance.has_value()) invalid("Corporate rules and saved continuation must be present together");
     if (!management.governance) return;
     const auto& g=*management.governance;const auto& c=catalog(s);
-    if (g.charters.size()>129 || g.appointments.size()>8 || g.grants.size()>8 || g.capital.size()>8192 || g.motions.size()>128 || g.disputes.size()>32 || g.opening_holdings.size()>accounts_terms_limit)
+    if (g.charters.size()>129 || g.appointments.size()>8 || g.grants.size()>8 || g.capital.size()>8192 || g.motions.size()>128 ||
+        g.disputes.size()>32 || g.opening_holdings.size()>accounts_terms_limit || g.public_filings.size()>public_filing_limit)
         invalid("Corporate history exceeds its bounded records");
     if (!deep) return;
     validate_governance_catalog(c);
@@ -93,11 +106,15 @@ void validate_governance(const SimulationState& s,bool deep) {
     }
     auto holdings=g.opening_holdings;std::vector<OptionGrant> grants;std::optional<OrdinalDay> prior;
     std::set<std::string> corporate_posts;
+    const auto listing_key=c.public_listing?"corporate/"+c.public_listing->offer_id:std::string{};
+    const auto listing_holder=c.public_listing?"investor/"+c.public_listing->offer_id:std::string{};
     for (const auto& e:g.capital) {
         label(e.subject,128);label(e.key,256);
         if (e.day<s.accounts->starts_on || e.day>s.date || (prior && e.day<*prior)) invalid("Capital events are not ordered actual dates");
         prior=e.day;
         if (e.kind=="investment" || e.kind=="asset_equity") {
+            if (c.public_listing && e.subject==listing_holder && e.key!=listing_key)
+                invalid("Public float must come from the approved listing issue");
             if (e.consideration.value()<=0 || !corporate_posts.insert(e.key).second) invalid("An ownership issue needs distinct real consideration");
             (void)posting(s,e.key,e.day,e.consideration,e.kind=="investment"?Account::cash:Account::assets,Account::equity);
             if (e.key.starts_with("corporate/")) {
@@ -152,6 +169,7 @@ void validate_governance(const SimulationState& s,bool deep) {
             obligation.cause!="Employee program under "+charter.name) invalid("Charter employee program differs from its funded monthly commitment");
     }
     if(charter_bills.size()!=expected_charter_bills.size()) invalid("Employee program has no approved charter");
+    validate_public_filings(s);
     std::set<std::string> finance;
     for (std::size_t index=0;index<g.motions.size();++index) {
         const auto& m=g.motions[index];
@@ -162,6 +180,10 @@ void validate_governance(const SimulationState& s,bool deep) {
         if (m.kind==BoardMotionKind::financing) {
             const auto& f=find(c.financing,m.subject);
             if (m.cash!=f.proceeds || m.shares!=f.acquired || m.asset_value.value()!=0 || ((m.executed || m.status==BoardMotionStatus::pending) && !finance.insert(f.negotiation).second)) invalid("Negotiated financing terms changed or alternative counteroffers were used twice");
+            if (c.public_listing && c.public_listing->offer_id==f.id &&
+                (!listing_qualification(s,m.opened_on).qualified ||
+                 (m.player_vote && m.resolved_on && !listing_qualification(s,*m.resolved_on).qualified)))
+                invalid("The listing motion lacks its dated settled qualification");
             if (m.executed) {
                 const auto key="corporate/"+f.id;
                 if (f.term.value()==0) (void)posting(s,key,*m.resolved_on,f.proceeds,Account::cash,Account::equity);
@@ -200,6 +222,8 @@ void validate_governance(const SimulationState& s,bool deep) {
                 (m.status==BoardMotionStatus::approved && !m.executed && m.kind!=BoardMotionKind::acquisition)) invalid("Board outcome differs from the majority and executed commitment");
         }
     }
+    if (c.public_listing && corporate_posts.contains(listing_key)!=public_listing_date(s).has_value())
+        invalid("Public equity issue and approved listing vote do not reconcile");
     std::set<std::string> disputes;std::map<std::pair<std::string,std::string>,std::size_t> episodes;
     for (const auto& d:g.disputes) {
         const bool open=d.status==CorporateDisputeStatus::concern || d.status==CorporateDisputeStatus::formal;

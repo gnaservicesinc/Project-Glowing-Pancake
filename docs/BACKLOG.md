@@ -35,8 +35,10 @@ lease-renewal policies, with player-selected ranges, steps, utilization threshol
 cadence and finite review counts. Manual overrides suspend it and retain the
 original audit. The Office also supports a company cash reserve and staged
 replacement of a specified obsolete rack under purchase and maintenance ceilings.
-Continue the initial coverage pass with financing. The design's later IPO has
-no current game command or player control.
+Both century scenarios now support an IPO with settled financial qualification,
+board approval, conserving equity dilution, public filings and a new director.
+Continue the initial financing coverage pass with restricted grants and expiring
+cloud credits.
 
 ## M0 — Toolchain and platform proof
 

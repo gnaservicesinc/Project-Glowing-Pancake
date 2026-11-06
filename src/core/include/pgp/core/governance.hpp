@@ -33,6 +33,13 @@ struct OrganizationalCharter {
     BasisPoints maximum_dilution{0};
     auto operator<=>(const OrganizationalCharter&) const = default;
 };
+struct PublicListingRules {
+    std::string offer_id;
+    Days minimum_age{3650},performance_days{365};
+    Cents minimum_revenue{0},minimum_profit{0},director_cash_floor{0};
+    BasisPoints director_maximum_dilution{0};
+    auto operator<=>(const PublicListingRules&) const = default;
+};
 struct GovernanceCatalog {
     std::vector<CorporateFinanceTerms> financing;
     std::vector<ExecutiveCandidate> executives;
@@ -43,6 +50,7 @@ struct GovernanceCatalog {
     Cents subsidiary_cash_floor{10000000};
     Days subsidiary_reserve_days{30};
     std::vector<OrganizationalCharter> charters{};
+    std::optional<PublicListingRules> public_listing{};
     auto operator<=>(const GovernanceCatalog&) const = default;
 };
 struct ExecutiveAppointment {
@@ -109,6 +117,18 @@ struct CharterChange {
     OrdinalDay day{0};
     auto operator<=>(const CharterChange&) const = default;
 };
+inline constexpr std::size_t public_filing_limit=retained_campaign_days/89+2;
+struct PublicFiling {
+    OrdinalDay starts_on{0},ends_before{0};
+    Cents revenue{0},expenses{0},ending_cash{0};
+    [[nodiscard]] Cents profit() const {return checked_unit_subtract(revenue,expenses);}
+    auto operator<=>(const PublicFiling&) const = default;
+};
+struct ListingQualification {
+    OrdinalDay eligible_on{0};
+    Cents revenue{0},profit{0};
+    bool old_enough=false,qualified=false;
+};
 struct GovernanceState {
     std::vector<EquityHolding> opening_holdings;
     std::vector<ExecutiveAppointment> appointments;
@@ -117,6 +137,7 @@ struct GovernanceState {
     std::vector<BoardMotion> motions;
     std::vector<CorporateDispute> disputes;
     std::vector<CharterChange> charters{};
+    PagedHistory<PublicFiling,16> public_filings;
     auto operator<=>(const GovernanceState&) const = default;
 };
 struct NegotiateCorporateFinance { std::string terms_id; };
@@ -131,6 +152,10 @@ struct TransferGroupFunds { std::string parent,target;std::uint32_t sequence=0;C
 void validate_governance_catalog(const GovernanceCatalog&);
 void validate_governance(const SimulationState&,bool deep=true);
 void prepare_governance(SimulationState&);
+void close_public_reporting_day(SimulationState&);
+[[nodiscard]] ListingQualification listing_qualification(const SimulationState&,OrdinalDay);
+[[nodiscard]] std::optional<OrdinalDay> public_listing_date(const SimulationState&);
+[[nodiscard]] const PublicFiling* latest_public_filing(const SimulationState&,OrdinalDay);
 [[nodiscard]] bool required_governance_notice(const SimulationState&);
 [[nodiscard]] BasisPoints unallocated_option_pool(const SimulationState&);
 [[nodiscard]] std::vector<BoardMember> current_board(const SimulationState&);

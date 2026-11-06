@@ -171,6 +171,7 @@ target_include_directories(pgp-governance-test SYSTEM PRIVATE "${PROJECT_SOURCE_
 target_compile_definitions(pgp-governance-test PRIVATE PGP_GOVERNANCE_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-governance-test)
 add_test(NAME runtime.governance COMMAND pgp-governance-test)
+add_test(NAME runtime.public-listing COMMAND pgp-governance-test --public-listing)
 add_executable(pgp-infrastructure-integration-test infrastructure_integration_test.cpp)
 target_link_libraries(pgp-infrastructure-integration-test PRIVATE pgp::session)
 target_include_directories(pgp-infrastructure-integration-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")

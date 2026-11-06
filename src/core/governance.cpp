@@ -18,6 +18,23 @@ bool finance_used(const SimulationState& s,std::string_view id) {
         if (m.kind==BoardMotionKind::financing && find(catalog(s).financing,m.subject).negotiation==proposed.negotiation && (m.status==BoardMotionStatus::pending || m.executed)) return true;
     return false;
 }
+void require_listing_qualification(const SimulationState& state,std::string_view offer) {
+    const auto& rules=catalog(state).public_listing;
+    if (!rules || rules->offer_id!=offer) return;
+    const auto qualification=listing_qualification(state,state.date);
+    if (!qualification.old_enough)
+        throw std::invalid_argument("The listing can be proposed from "+iso_date(qualification.eligible_on));
+    if (!qualification.qualified)
+        invalid("The IPO requires the disclosed revenue and profit over its settled qualification window");
+}
+BoardMember financing_director(const GovernanceCatalog& rules,const CorporateFinanceTerms& finance) {
+    if (rules.public_listing && rules.public_listing->offer_id==finance.id) {
+        const auto& listing=*rules.public_listing;
+        return {"seat/"+finance.id,"Public shareholder director",1,false,
+            listing.director_cash_floor,listing.director_maximum_dilution};
+    }
+    return {"seat/"+finance.id,finance.name+" representative",1,false,finance.covenant_cash_floor,BasisPoints{1500}};
+}
 void depart(SimulationState& s,std::string_view id) {
     auto& g=governance(s);
     auto appointment=std::find_if(g.appointments.begin(),g.appointments.end(),[&](const auto& a){return a.candidate==id;});
@@ -120,14 +137,15 @@ void apply_charter(SimulationState& s,std::string_view id,std::string motion) {
 }
 std::vector<BoardBallot> ballots_for(const SimulationState& s,const BoardMotion& motion,bool player,Cents cash) {
     const auto after=motion.kind==BoardMotionKind::financing?checked_unit_add(cash,motion.cash):checked_unit_subtract(cash,motion.cash);
-    auto members=catalog(s).board;
+    const auto& rules=catalog(s);
+    auto members=rules.board;
     for (const auto& prior:s.management->governance->motions) if (prior.kind==BoardMotionKind::financing && prior.executed && prior.id!=motion.id) {
-        const auto& f=find(catalog(s).financing,prior.subject);bool preceded=false;
+        const auto& f=find(rules.financing,prior.subject);bool preceded=false;
         for (std::size_t i=0;i<std::min<std::uint64_t>(motion.posting_cursor,s.accounts->postings.size());++i) {
             const auto& posting=s.accounts->postings[i];
             if (posting.key==(f.term.value()==0?"corporate/":"debt/corporate/")+f.id) preceded=true;
         }
-        if (f.board_seat && preceded) members.push_back({"seat/"+f.id,f.name+" representative",1,false,f.covenant_cash_floor,BasisPoints{1500}});
+        if (f.board_seat && preceded) members.push_back(financing_director(rules,f));
     }
     members=succession_board(s,std::move(members),motion.leadership_cursor);
     members=charter_board(s,std::move(members),motion.charter_cursor);
@@ -135,9 +153,13 @@ std::vector<BoardBallot> ballots_for(const SimulationState& s,const BoardMotion&
         const auto& proposed=find(catalog(s).charters,motion.subject);
         for(auto& member:members) if(!member.player) member.cash_floor=std::max(member.cash_floor,proposed.cash_floor);
     }
+    const auto* filing=rules.public_listing?latest_public_filing(s,motion.resolved_on.value_or(s.date)):nullptr;
+    const bool restrict_expansion=filing && filing->profit().value()<0 &&
+        (motion.kind==BoardMotionKind::acquisition || motion.kind==BoardMotionKind::pool_expansion);
+    const auto public_seat=restrict_expansion?"seat/"+rules.public_listing->offer_id:std::string{};
     std::vector<BoardBallot> votes;
     for (const auto& member:members) votes.push_back({member.id,member.seats,member.player?player:
-        after>=member.cash_floor && motion.shares<=member.maximum_dilution});
+        member.id!=public_seat && after>=member.cash_floor && motion.shares<=member.maximum_dilution});
     return votes;
 }
 void execute_finance(SimulationState& s,BoardMotion& m) {
@@ -153,10 +175,11 @@ BasisPoints unallocated_option_pool(const SimulationState& s) {
     return BasisPoints{checked_subtract(shares_of(s.accounts->holdings,pool_id(s.accounts->holdings)).value(),used)};
 }
 std::vector<BoardMember> current_board(const SimulationState& s) {
-    auto rows=catalog(s).board;
+    const auto& rules=catalog(s);
+    auto rows=rules.board;
     for (const auto& m:s.management->governance->motions) if (m.kind==BoardMotionKind::financing && m.executed) {
-        const auto& f=find(catalog(s).financing,m.subject);
-        if (f.board_seat) rows.push_back({"seat/"+f.id,f.name+" representative",1,false,f.covenant_cash_floor,BasisPoints{1500}});
+        const auto& f=find(rules.financing,m.subject);
+        if (f.board_seat) rows.push_back(financing_director(rules,f));
     }
     return charter_board(s,succession_board(s,std::move(rows),s.succession?s.succession->controls.size():0),s.management->governance->charters.size());
 }
@@ -177,6 +200,7 @@ void company_equity(SimulationState& s,std::string investor,Cents proceeds,Basis
 void negotiate_corporate_finance(SimulationState& s,std::string_view id) {
     const auto& terms=find(catalog(s).financing,id);
     if (finance_used(s,id)) invalid("This negotiated financing is already pending or completed");
+    require_listing_qualification(s,id);
     if (terms.term.value()>0 && advance_days(s.date,terms.term)>=s.end_date) invalid("The loan maturity must fall inside this campaign");
     (void)new_motion(s,BoardMotionKind::financing,std::string(id),terms.proceeds,Cents{0},terms.acquired);
 }
@@ -220,6 +244,7 @@ void vote_board_motion(SimulationState& s,std::string_view id,bool support,Cents
     auto& g=governance(s);const auto it=std::find_if(g.motions.begin(),g.motions.end(),[&](const auto& m){return m.id==id;});
     if (it==g.motions.end() || it->status!=BoardMotionStatus::pending || s.date>=it->deadline) invalid("The board motion is resolved or its response window has ended");
     auto& m=*it;
+    if (m.kind==BoardMotionKind::financing) require_listing_qualification(s,m.subject);
     if (m.kind==BoardMotionKind::acquisition && m.cash>checked_unit_subtract(s.cash,protected_cash)) invalid("The acquisition exceeds unreserved cash");
     m.reviewed_cash=s.cash;m.posting_cursor=s.accounts->postings.size();m.leadership_cursor=s.succession?s.succession->controls.size():0;
     m.charter_cursor=g.charters.size();

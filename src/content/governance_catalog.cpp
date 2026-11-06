@@ -25,8 +25,18 @@ core::GovernanceCatalog load_governance_catalog(std::string_view bytes) {
     });
     Json charters=Json::array();
     if(j.contains("charters")) {charters=j.at("charters");j.erase("charters");}
+    core::GovernanceCatalog c;
+    if (j.contains("public_listing")) {
+        const auto& rules=j.at("public_listing");
+        fields(rules,{"offer","minimum_age_days","performance_days","minimum_revenue_cents","minimum_profit_cents","director_cash_floor_cents","director_maximum_dilution_bp"});
+        c.public_listing=core::PublicListingRules{text(rules.at("offer")),core::Days{integer(rules.at("minimum_age_days"))},
+            core::Days{integer(rules.at("performance_days"))},core::Cents{integer(rules.at("minimum_revenue_cents"))},
+            core::Cents{integer(rules.at("minimum_profit_cents"))},core::Cents{integer(rules.at("director_cash_floor_cents"))},
+            core::BasisPoints{integer(rules.at("director_maximum_dilution_bp"))}};
+        j.erase("public_listing");
+    }
     fields(j,{"financing","executives","board","vote_window_days","concern_period_days","response_window_days","maximum_pool_expansion_bp","acquisition_equity_bp","acquisition_premium_cents","subsidiary_cash_floor_cents","subsidiary_reserve_days"});
-    core::GovernanceCatalog c;array(j.at("financing"),8);array(j.at("executives"),8);array(j.at("board"),8);
+    array(j.at("financing"),8);array(j.at("executives"),8);array(j.at("board"),8);
     array(charters,8);
     for(const auto& r:charters) {
         fields(r,{"id","name","priorities","employee_expectations","cash_floor_cents","maximum_dilution_bp","monthly_employee_budget_cents"});
@@ -62,6 +72,13 @@ std::string canonical_governance_catalog(const core::GovernanceCatalog& c) {
         result["charters"]=Json::array();
         for(const auto& r:c.charters) result["charters"].push_back({{"id",r.id},{"name",r.name},{"priorities",r.priorities},{"employee_expectations",r.employee_expectations},
             {"cash_floor_cents",r.cash_floor.value()},{"maximum_dilution_bp",r.maximum_dilution.value()},{"monthly_employee_budget_cents",r.monthly_employee_budget.value()}});
+    }
+    if (c.public_listing) {
+        const auto& rules=*c.public_listing;
+        result["public_listing"]={{"offer",rules.offer_id},{"minimum_age_days",rules.minimum_age.value()},
+            {"performance_days",rules.performance_days.value()},{"minimum_revenue_cents",rules.minimum_revenue.value()},
+            {"minimum_profit_cents",rules.minimum_profit.value()},{"director_cash_floor_cents",rules.director_cash_floor.value()},
+            {"director_maximum_dilution_bp",rules.director_maximum_dilution.value()}};
     }
     return result.dump();
 }

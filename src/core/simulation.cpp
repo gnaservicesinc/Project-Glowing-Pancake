@@ -500,6 +500,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if (next.accounts) {
                     close_accounts_day(*next.accounts, next.date, reserved_cash(next), false);
                     next.cash = accounts_report(*next.accounts).cash;
+                    close_public_reporting_day(next);
                 }
                 (void)receipt(next, "advance_day", 0, checked_unit_subtract(next.cash, cash_before));
                 next.date = advance_days(next.date, Days{1});

@@ -34,13 +34,28 @@ Json governance_json(const core::GovernanceState& g) {
         result["charters"]=Json::array();
         for(const auto& r:g.charters) result["charters"].push_back({{"charter",r.charter},{"motion",r.motion},{"day",r.day.value()}});
     }
+    if (!g.public_filings.empty()) {
+        result["public_filings"]=Json::array();
+        for (const auto& filing:g.public_filings) {
+            result["public_filings"].push_back({{"starts_on",filing.starts_on.value()},{"ends_before",filing.ends_before.value()},
+                {"revenue",filing.revenue.value()},{"expenses",filing.expenses.value()},{"cash",filing.ending_cash.value()}});
+        }
+    }
     return result;
 }
 core::GovernanceState parse_governance(const Json& j) {
-    fields(j,"governance",{"opening_holdings","appointments","grants","capital","motions","disputes"},{"charters"});
+    fields(j,"governance",{"opening_holdings","appointments","grants","capital","motions","disputes"},{"charters","public_filings"});
     array(j.at("opening_holdings"),"governance/opening",core::accounts_terms_limit);array(j.at("appointments"),"governance/appointments",8);array(j.at("grants"),"governance/grants",8);
     array(j.at("capital"),"governance/capital",8192);array(j.at("motions"),"governance/motions",128);array(j.at("disputes"),"governance/disputes",32);
     core::GovernanceState g;
+    if (j.contains("public_filings")) {
+        array(j.at("public_filings"),"governance/public_filings",core::public_filing_limit);
+        for (const auto& filing:j.at("public_filings")) {
+            fields(filing,"governance/public_filing",{"starts_on","ends_before","revenue","expenses","cash"});
+            g.public_filings.push_back({day(filing.at("starts_on")),day(filing.at("ends_before")),
+                cents(filing.at("revenue")),cents(filing.at("expenses")),cents(filing.at("cash"))});
+        }
+    }
     if(j.contains("charters")) {
         array(j.at("charters"),"governance/charters",129);
         for(const auto& r:j.at("charters")) {

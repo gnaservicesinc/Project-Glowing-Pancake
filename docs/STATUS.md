@@ -608,8 +608,17 @@ the original. Both actions reconcile against actual paid hardware records.
 The optimized build and five focused checks pass, with offscreen QML form and
 save/reopen checks at 100% and 200% text.
 
-Next is the financing coverage pass, including the later IPO specified in the
-design. The roadmap remains 42/52 checked while design coverage is completed.
+Both century scenarios now have an IPO. It uses a disclosed age and settled
+revenue/profit window, and the majority vote rechecks eligibility. Listing
+raises contributed equity and adds a public shareholder director. The parent
+company files quarterly results from closed accounts. After a reported loss,
+the director opposes acquisitions and pool expansion. The public issuance also
+enters the existing heavyweight financing observation.
+Internal content 0.17.0-dev.1 finalizes these terms. The optimized build, four
+focused checks and offscreen review, vote and filing checks at 100% and 200% pass.
+
+Next is restricted grant and cloud credit financing. The roadmap remains 42/52
+checked while design coverage is completed.
 M8-02 stays deferred. Human work waits until the user is ready, and E2-04 editor
 downloads stay with deferred release preparation.
 

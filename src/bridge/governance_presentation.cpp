@@ -25,6 +25,7 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
     if (!s.management || !s.management->governance || !s.management->catalog.governance) return result;
     const auto& g=*s.management->governance;const auto& c=*s.management->catalog.governance;
     const auto board=core::current_board(s);
+    const auto listed=core::public_listing_date(s);
     const auto subject_label=[&](const std::string& id) {
         if (id=="option_pool") return tr("Reserved option pool");
         for (const auto& f:c.financing) if (f.id==id) return text(f.name);
@@ -38,7 +39,8 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
         QString label=text(h.holder);
         if (h.holder=="founder") label=tr("Founder");else if (h.holder=="cofounder") label=tr("Cofounder");else if (h.holder=="option_pool") label=tr("Reserved option pool");else if (h.holder=="seed_investor") label=tr("Seed investor");
         for (const auto& e:c.executives) if (h.holder=="executive.grant/"+e.id) label=tr("%1 · vested grant").arg(text(e.name));
-        for (const auto& f:c.financing) if (h.holder=="investor/"+f.id) label=text(f.name);
+        for (const auto& f:c.financing) if (h.holder=="investor/"+f.id)
+            label=c.public_listing && c.public_listing->offer_id==f.id?tr("Public shareholders"):text(f.name);
         for (const auto& f:s.management->catalog.financing) if (h.holder=="investor/"+f.id) label=text(f.name);
         if (checkpoint.world.competition) for (const auto& q:checkpoint.world.competition->acquisitions) if (h.holder=="merger.sellers/"+q.target) label=tr("%1 · seller trust").arg(text(runtime::rival_definition(program,q.target).name));
         result.ownership+=tr("%1: %2%3\n").arg(label,percent(h.shares),h.reserved_pool?tr(" (reserved pool)"):QString{});
@@ -49,6 +51,12 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
     }
     result.board=tr("Board motions have a %1-day response window. A majority of seats decides; financing dilution does not itself change seats. Each nonplayer position uses cash after the proposed action and its maximum dilution. Review the recorded votes after deciding.\n").arg(c.vote_window.value());
     for (const auto& member:board) result.board+=tr("%1: %2 seats · %3\n").arg(text(member.name)).arg(member.seats).arg(member.player?tr("your vote"):tr("supports cash ≥ %1 and dilution ≤ %2").arg(money(member.cash_floor),percent(member.maximum_dilution)));
+    if (listed) {
+        const auto* filing=core::latest_public_filing(s,s.date);
+        result.board+=filing && filing->profit().value()<0?
+            tr("The last public filing reported a loss. The public shareholder director will oppose acquisitions and pool expansion.\n"):
+            tr("The public shareholder director opposes acquisitions and pool expansion after a reported quarterly loss.\n");
+    }
     if(const auto* charter=core::active_charter(s)) result.board+=tr("Current charter: %1. %2 Employees expect %3 Monthly employee program: %4.\n")
         .arg(text(charter->name),text(charter->priorities),text(charter->employee_expectations),money(charter->monthly_employee_budget));
     const bool amendment_pending=std::any_of(g.motions.begin(),g.motions.end(),[](const auto& m){return m.kind==core::BoardMotionKind::charter && m.status==core::BoardMotionStatus::pending;});
@@ -61,6 +69,19 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
     for(const auto& change:g.charters) result.board+=tr("%1: %2 · %3\n").arg(date(change.day),subject_label(change.charter),change.motion.empty()?tr("selected at formation"):tr("approved by %1").arg(text(change.motion)));
     for (const auto& f:c.financing) {
         const bool used=std::any_of(g.motions.begin(),g.motions.end(),[&](const auto& m){return m.kind==core::BoardMotionKind::financing && (m.status==core::BoardMotionStatus::pending || m.executed) && std::any_of(c.financing.begin(),c.financing.end(),[&](const auto& prior){return prior.id==m.subject && prior.negotiation==f.negotiation;});});
+        if (c.public_listing && c.public_listing->offer_id==f.id) {
+            const auto& rules=*c.public_listing;
+            const auto eligible=core::advance_days(s.accounts->starts_on,rules.minimum_age);
+            auto detail=tr("Offer %1 of fully diluted ownership to public shareholders for %2 in net cash. A majority of the current board must approve. The new issue dilutes existing holdings and unvested grants once.\n"
+                "From %3, qualify with at least %4 revenue and %5 profit over the last %6 settled days. The vote rechecks these thresholds.\n"
+                "After listing, the company publishes quarterly revenue, expenses, profit and cash. Public shareholders get one board seat. Their director supports cash of at least %7 after the proposed action and dilution of at most %8, subject to the charter. After a reported loss, the director opposes acquisitions and pool expansion.")
+                .arg(percent(f.acquired),money(f.proceeds),date(eligible),money(rules.minimum_revenue),money(rules.minimum_profit),
+                     QString::number(rules.performance_days.value()),money(rules.director_cash_floor),percent(rules.director_maximum_dilution));
+            result.financing.push_back({text(f.id),text(f.name),money(f.proceeds),std::move(detail),
+                listed?tr("Listed on %1").arg(date(*listed)):used?tr("Pending board vote"):tr("Review qualification"),
+                !used,{{QStringLiteral("listing"),true}}});
+            continue;
+        }
         auto detail=tr("Negotiate this fixed counteroffer, then submit it to the board. Proposing terms pays nothing. Approval rechecks and commits the exact terms once.\nCash proceeds: %1. New fully diluted ownership: %2. Board representative: %3.\n").arg(money(f.proceeds),percent(f.acquired),f.board_seat?tr("one seat"):tr("none"));
         if (f.term.value()>0) detail+=tr("Loan term %1 days · interest %2 per month · principal remains due. Cash covenant: at least %3. A breach first raises a concern, then a formal recommendation after %4 days and a %5-day response window. Restore cash, repay the debt, or buy the one permanent covenant waiver for %6; maturity and interest remain. Unresolved breach accelerates maturity to no later than 30 days after the response deadline.\n").arg(f.term.value()).arg(percent(f.monthly_interest),money(f.covenant_cash_floor)).arg(c.concern_period.value()).arg(c.response_window.value()).arg(money(f.waiver_fee));
         else detail+=tr("Equity proceeds are contributed capital, not product revenue. All existing holdings and unvested claims dilute once.\n");
@@ -83,6 +104,8 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
             detail+=tr("Charter amendment: %1\nEmployees expect %2 Monthly program %3. Proposed cash floor %4; dilution ceiling %5. Approval replaces the current charter and future employee program charges from this day. Prior costs remain due.\n")
                 .arg(text(charter.priorities),text(charter.employee_expectations),money(charter.monthly_employee_budget),money(charter.cash_floor),percent(charter.maximum_dilution));
         }
+        if (m.kind==core::BoardMotionKind::financing && c.public_listing && m.subject==c.public_listing->offer_id)
+            detail+=tr("IPO approval issues the public float and starts automatic quarterly disclosures. The new public director joins after this vote.\n");
         if (m.resolved_on) detail+=tr("%1 on %2.\n").arg(motion_status(m.status),date(*m.resolved_on));
         for (const auto& b:m.ballots) {QString member=readable(b.member);for (const auto& seat:board) if (seat.id==b.member) member=text(seat.name);detail+=tr("%1: %2 seats · %3\n").arg(member).arg(b.seats).arg(b.support?tr("support"):tr("oppose"));}
         result.motions.push_back({text(m.id),subject_label(m.subject),percent(m.shares),detail,motion_status(m.status),m.status==core::BoardMotionStatus::pending,{}});

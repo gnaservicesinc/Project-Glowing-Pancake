@@ -138,6 +138,44 @@ ManagementController::ManagementController(QObject* parent):QObject(parent),fund
     contracts_(new StableListModel(this)),rivals_(new StableListModel(this)),payables_(new StableListModel(this)),heavyweights_(new StableListModel(this)),competitive_offers_(new StableListModel(this)),corporate_finance_(new StableListModel(this)),executives_(new StableListModel(this)),
     board_motions_(new StableListModel(this)),corporate_disputes_(new StableListModel(this)),merger_targets_(new StableListModel(this)),charters_(new StableListModel(this)),regional_markets_(new StableListModel(this)) {}
 bool ManagementController::available() const { return snapshot_ && state().lab && state().deployments; }
+QString ManagementController::publicListingText() const {
+    if (!snapshot_) return {};
+    const auto listed=core::public_listing_date(state());
+    if (!listed) return {};
+    return tr("Publicly listed on %1. Quarterly filings report the parent company's settled accounts.")
+        .arg(text(core::iso_date(*listed)));
+}
+int ManagementController::publicFilingCount() const {
+    if (!governanceAvailable()) return 0;
+    return static_cast<int>(state().management->governance->public_filings.size());
+}
+QString ManagementController::publicFiling(int newestOffset) const {
+    const auto count=publicFilingCount();
+    if (newestOffset<0 || newestOffset>=count) return tr("The first filing will appear after the current calendar quarter closes.");
+    const auto& filing=state().management->governance->public_filings[static_cast<std::size_t>(count-1-newestOffset)];
+    return tr("Published %1 · results from %2 up to publication\nRevenue %3 · expenses %4 · profit %5\nQuarter-end cash %6")
+        .arg(text(core::iso_date(filing.ends_before)),text(core::iso_date(filing.starts_on)),money(filing.revenue),
+             money(filing.expenses),money(filing.profit()),money(filing.ending_cash));
+}
+QVariantMap ManagementController::listingPreview(QString offer) const {
+    if (!governanceAvailable()) return {};
+    const auto& rules=state().management->catalog.governance->public_listing;
+    if (!rules || offer!=text(rules->offer_id)) return {};
+    const auto row=corporate_finance_->row(offer);
+    const auto qualification=core::listing_qualification(state(),state().date);
+    QString detail;
+    if (qualification.old_enough) {
+        detail=tr("Actual settled revenue %1 · profit %2. %3")
+            .arg(money(qualification.revenue),money(qualification.profit),
+                 qualification.qualified?tr("Financial thresholds met."):tr("Financial thresholds still open."));
+    } else detail=tr("The company reaches the minimum age on %1.").arg(text(core::iso_date(qualification.eligible_on)));
+    const auto window=state().management->catalog.governance->vote_window;
+    const bool time=core::advance_days(state().date,window)<state().end_date;
+    if (!time) detail+=tr("\nThe campaign has no remaining board response window.");
+    detail+=QStringLiteral("\n\n")+row.value(QStringLiteral("detail")).toString();
+    return {{QStringLiteral("detail"),std::move(detail)},
+            {QStringLiteral("ready"),qualification.qualified && time && row.value(QStringLiteral("actionable")).toBool()}};
+}
 bool ManagementController::plannedCompetition() const {return snapshot_ && snapshot_->checkpoint.world.competition && snapshot_->checkpoint.world.competition->setup.has_value();}
 QString ManagementController::competitionSummary() const {
     if (!plannedCompetition()) return QStringLiteral("Introductory roster. Public notices describe finite rival training and heavyweight warnings.");

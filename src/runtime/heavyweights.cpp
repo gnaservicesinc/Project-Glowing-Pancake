@@ -80,6 +80,8 @@ PressureReview observe_heavyweight_pressure(const WorldState& world,const Compil
             const auto offer=std::find_if(catalog.begin(),catalog.end(),[&](const auto& row){return row.id==accepted.offer_id;});
             if (offer!=catalog.end() && offer->public_announcement) ++result.disclosed_rounds;
         }
+        if (const auto listed=public_listing_date(*source);listed && *listed>=finance_begin && *listed<day)
+            ++result.disclosed_rounds;
     }
     result.public_services=static_cast<std::uint32_t>(services.size());
     const auto window=static_cast<std::uint64_t>(std::max<std::int64_t>(1,day.value()-begin.value()));

@@ -529,11 +529,47 @@ ColumnLayout {
             Action { objectName: "proposePoolButton"; text: qsTr("Propose explicit pool-expansion dilution to board"); onClicked: manager.proposePool(poolBp.value) }
         }
         ColumnLayout {
+            id: corporateFinancePage
             Layout.fillWidth: true
             visible: manager.governanceAvailable && corporatePage.value === "finance"
-            Copy { text: qsTr("Compare the available counteroffers. Submitting terms creates a board motion; cash, dilution, interest and a representative commit only if the board approves.") }
-            Selection { objectName: "corporateFinanceSelection"; heading: qsTr("Financing counteroffers"); rows: manager.corporateFinance }
-            Action { objectName: "negotiateFinanceButton"; text: qsTr("Submit selected counteroffer to board"); enabled: panel.editable && manager.corporateFinance.selectedRow.actionable === true; onClicked: manager.negotiateFinance(manager.corporateFinance.selectedId) }
+            readonly property bool listingSelected: (manager.corporateFinance.selectedRow.fields || {}).listing === true
+            property int filingOffset: 0
+            readonly property int currentOffset: Math.min(filingOffset, Math.max(0, manager.publicFilingCount - 1))
+            Copy { text: qsTr("Submitting financing terms creates a board motion. Cash, dilution, interest and board rights take effect on approval.") }
+            Selection { objectName: "corporateFinanceSelection"; heading: qsTr("Financing and public listing"); rows: manager.corporateFinance }
+            Action {
+                objectName: "negotiateFinanceButton"
+                text: corporateFinancePage.listingSelected ? qsTr("Review IPO qualification") : qsTr("Submit selected counteroffer to board")
+                enabled: panel.editable && manager.corporateFinance.selectedRow.actionable === true
+                onClicked: {
+                    const offer = manager.corporateFinance.selectedId
+                    if (!corporateFinancePage.listingSelected) {
+                        manager.negotiateFinance(offer)
+                        return
+                    }
+                    const preview = manager.listingPreview(offer)
+                    corporateDialog.review("listing", offer, preview.detail || "", preview.ready === true)
+                }
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                visible: manager.publicListingText.length > 0
+                Copy { text: qsTr("Public filings"); font.bold: true; color: "#ffd897" }
+                Copy { text: manager.publicListingText }
+                Copy {
+                    objectName: "publicFilingDetail"
+                    text: {
+                        const count = manager.publicFilingCount
+                        return manager.publicFiling(count === 0 ? 0 : corporateFinancePage.currentOffset)
+                    }
+                }
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    Action { text: qsTr("Newer filing"); enabled: corporateFinancePage.currentOffset > 0; onClicked: corporateFinancePage.filingOffset = corporateFinancePage.currentOffset - 1 }
+                    Action { text: qsTr("Older filing"); enabled: corporateFinancePage.currentOffset + 1 < manager.publicFilingCount; onClicked: corporateFinancePage.filingOffset = corporateFinancePage.currentOffset + 1 }
+                }
+            }
         }
         ColumnLayout {
             Layout.fillWidth: true
@@ -576,13 +612,20 @@ ColumnLayout {
         property string subjectId: ""
         property string terms: ""
         property string groupAmount: ""
-        function review(kind, subject, detail) { actionKind = kind; subjectId = subject; terms = detail; open() }
-        title: actionKind === "hireEquity" ? qsTr("Agree cash-plus-equity compensation?") : actionKind === "hireCash" ? qsTr("Agree cash-only compensation?") : qsTr("Confirm reviewed corporate terms?")
+        property bool confirmable: true
+        function review(kind, subject, detail, canConfirm) {
+            actionKind = kind
+            subjectId = subject
+            terms = detail
+            confirmable = canConfirm !== false
+            open()
+        }
+        title: actionKind === "listing" ? qsTr("Review public listing") : actionKind === "hireEquity" ? qsTr("Agree cash-plus-equity compensation?") : actionKind === "hireCash" ? qsTr("Agree cash-only compensation?") : qsTr("Confirm reviewed corporate terms?")
         modal: true
         anchors.centerIn: Overlay.overlay
         width: Math.min(720, Overlay.overlay.width - 36)
         height: Math.min(620, Overlay.overlay.height - 60)
-        standardButtons: Dialog.Ok | Dialog.Cancel
+        standardButtons: confirmable ? (Dialog.Ok | Dialog.Cancel) : Dialog.Close
         contentItem: ScrollView {
             id: corporateTerms
             clip: true
@@ -590,7 +633,9 @@ ColumnLayout {
             Label { width: corporateTerms.availableWidth; text: corporateDialog.terms; textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: panel.textSize }
         }
         onAccepted: {
-            if (actionKind === "hireCash" || actionKind === "hireEquity") manager.appointExecutive(subjectId, actionKind === "hireEquity")
+            if (!confirmable) return
+            if (actionKind === "listing") manager.negotiateFinance(subjectId)
+            else if (actionKind === "hireCash" || actionKind === "hireEquity") manager.appointExecutive(subjectId, actionKind === "hireEquity")
             else if (actionKind === "voteYes") manager.voteBoard(subjectId, true)
             else if (actionKind === "waiver") manager.respondDispute(subjectId, true)
             else if (actionKind === "groupFund" || actionKind === "groupDividend") manager.transferSubsidiaryFunds(subjectId, groupAmount, actionKind === "groupFund")

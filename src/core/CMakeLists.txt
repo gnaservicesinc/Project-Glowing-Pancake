@@ -2,7 +2,7 @@ configure_file("${PROJECT_SOURCE_DIR}/cmake/build_identity_data.hpp.in"
     "${CMAKE_CURRENT_BINARY_DIR}/generated/build_identity_data.hpp" @ONLY)
 add_library(pgp_core STATIC build_configuration.cpp build_identity.cpp
     checked_arithmetic.cpp calendar.cpp random.cpp integer_codec.cpp simulation.cpp accounts.cpp capacity.cpp
-    allocation.cpp market.cpp liquidity.cpp lab.cpp business_offers.cpp deployment.cpp management.cpp pricing.cpp governance.cpp governance_validation.cpp
+    allocation.cpp market.cpp liquidity.cpp lab.cpp business_offers.cpp deployment.cpp management.cpp pricing.cpp governance.cpp governance_validation.cpp public_listing.cpp
     infrastructure.cpp infrastructure_orders.cpp infrastructure_physics.cpp infrastructure_calendar.cpp infrastructure_catalog.cpp infrastructure_validation.cpp
     resilience.cpp resilience_catalog.cpp resilience_incidents.cpp resilience_replicas.cpp resilience_validation.cpp
     civic.cpp civic_calendar.cpp civic_validation.cpp society.cpp authority.cpp frontier_catalog.cpp frontier.cpp frontier_automation.cpp

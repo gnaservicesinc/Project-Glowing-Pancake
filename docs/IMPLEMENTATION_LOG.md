@@ -1804,3 +1804,29 @@ pricing, Frontier and bridge checks pass. The Frontier fixture starts in 2027
 and now skips founder contact offers tied to the original 2014 opening.
 Offscreen QML at 100% and 200% text covers both authorization forms, actual
 purchase, commissioning, retirement and exact save/reopen.
+
+### Initial public offering
+
+Both century scenarios have a once-only IPO through the existing financing
+motion and equity ledger. The provisional Standard offer raises $5 million
+for 10% ownership. Qualification opens after 3,650 days with at least
+$1 million in revenue and $10,000 profit across 365 settled days. The board
+vote rechecks qualification and uses the actual charter and director rights.
+Public shareholders add a director after approval. Their cash and dilution
+terms apply to future votes. After a published loss, the director opposes
+acquisitions and pool expansion until a subsequent non-loss filing.
+
+The core publishes quarterly revenue, expenses, profit and ending cash from
+the parent ledger. The first period begins on listing day. Save validation
+reconciles issuance with the approved vote and each filing with its
+settled period. The announced raise enters heavyweight public financing
+observations. Filings and qualification are visible in the Office financing
+section.
+
+Internal content 0.17.0-dev.1 changes two scenarios and passes the shared
+finalizer check, including 21 prepared opening round trips. Previous saves
+retain their prior content identity under the existing version contract.
+The optimized build and four focused checks pass. The listing fixture checks
+same-day and deteriorating qualification, conserved ownership, two real
+quarter closes, director ballots and rejection of a forged filing. Short
+offscreen checks at 100% and 200% exercise review, vote, filing and reopening.

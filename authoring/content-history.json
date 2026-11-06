@@ -105448,6 +105448,54 @@
         "prepared_headquarters": 21,
         "scenarios": 7
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "2e802d41b988241b34d06664feb5c034c6ef3c9248bc70d8223e7470ffda231f",
+          "before_hash": "b43185cd3fc8ba34af541a3aadcf52e5987aebb160d2ed9df948407a6843b916",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 6,
+          "revision": 7
+        },
+        {
+          "after_hash": "0ddd10aff9457ce5b1e6fb4a81585d209fda8a6a4ffb4588ff752ddfeefe1f6d",
+          "before_hash": "047a69ae54967ea91670529235dea6d4fca9a1315d5dac49a6b72736d8aa6339",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 6,
+          "revision": 7
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "e9f510c516ba50faf091c7d8d64b03e00225c614ec2a29956861c9ef83bbf45a",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.17.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 17,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.16.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000016.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000017.collection.json",
+      "summary": "Add provisional IPO terms to both century campaigns.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 21,
+        "lints": [],
+        "prepared_headquarters": 21,
+        "scenarios": 7
+      }
     }
   ],
   "format": 1
