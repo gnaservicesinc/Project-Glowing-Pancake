@@ -740,7 +740,7 @@ void check_identity(const SaveIdentity& actual,const SaveIdentity& expected) {
     if (actual.content_schema!=expected.content_schema) throw PersistenceError("content_schema","Content schema does not match; no migration was guessed");
     if (actual.game_version!=expected.game_version) throw PersistenceError("game_version","This development save requires its exact game version");
     if (actual.content_version!=expected.content_version || actual.content_hash!=expected.content_hash)
-        throw PersistenceError("content_identity","Saved definition collection differs from the loaded collection");
+        throw PersistenceError("content_identity","This save requires its original content revision or a reviewed migration copy.");
 }
 void limits_valid(SaveLimits limits) {
     if (limits.maximum_bytes==0 || limits.maximum_bytes>64U*1024U*1024U)
@@ -809,6 +809,26 @@ std::string encode_save(const runtime::CompiledProgram& program,const runtime::C
 }
 LoadedSave decode_save(const runtime::CompiledProgram& program,std::string_view bytes,SaveLimits limits) {
     return decode_save_impl(program,bytes,limits,nullptr);
+}
+namespace {
+SaveIdentity revision_identity(const runtime::CompiledProgram& program, std::string_view game_version) {
+    if (game_version.empty() || game_version.size() > 256)
+        throw PersistenceError("game_version", "A bounded finalized game version is required for revision review");
+    auto identity = save_identity(program);
+    identity.game_version = game_version;
+    return identity;
+}
+}
+LoadedSave decode_revision_save(const runtime::CompiledProgram& program,
+    std::string_view game_version, std::string_view bytes, SaveLimits limits) {
+    const auto identity = revision_identity(program, game_version);
+    return decode_save_impl(program, bytes, limits, &identity);
+}
+std::string encode_revision_save(const runtime::CompiledProgram& program,
+    std::string_view game_version, const runtime::Checkpoint& checkpoint,
+    std::uint64_t autosave_sequence, SaveLimits limits) {
+    const auto identity = revision_identity(program, game_version);
+    return encode_save_impl(program, checkpoint, autosave_sequence, limits, &identity);
 }
 void validate_save_roundtrips(const runtime::CompiledProgram& program,std::span<const runtime::Checkpoint> checkpoints,SaveLimits limits) {
     limits_valid(limits);

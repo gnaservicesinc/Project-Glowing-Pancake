@@ -34,8 +34,10 @@ full unsigned 64-bit storage for seed/RNG/IDs. Unknown fields, duplicate keys,
 floating/exponent numbers, invalid UTF-8, excessive depth/tokens/counts, invalid
 references and unsupported identities fail. The default byte cap is 25 MiB;
 callers can select a stricter bound up to a 64 MiB hard ceiling. No original is
-deleted or guessed into a future format. Development saves require the exact
-game/content/rules identity; no migration is claimed yet.
+deleted or guessed into a future format. Ordinary loads require the exact
+game, content and rules identity. Studio can separately decode a supported
+finalized revision, apply reviewed typed mappings and validate a copy against
+the destination identity. [Revision review](../studio/SNAPSHOTS.md#compare-finalized-revisions-and-review-a-campaign-copy).
 
 The world `variables` array stores explicit overrides of registered defaults.
 Each strict record has `binding`, `variable_id` and the existing typed `value`

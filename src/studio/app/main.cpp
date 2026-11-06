@@ -1,6 +1,8 @@
 #include "probe_controller.hpp"
 #include "canvas_controller.hpp"
 #include "snapshot_controller.hpp"
+#include "revision_controller.hpp"
+#include "revision_walkthrough.hpp"
 #include "world_controller.hpp"
 #include "world_walkthrough.hpp"
 #include "asset_controller.hpp"
@@ -84,6 +86,7 @@ class Browser final : public QObject {
     Q_PROPERTY(QObject* probeController READ probeController CONSTANT)
     Q_PROPERTY(QObject* canvasController READ canvasController CONSTANT)
     Q_PROPERTY(QObject* snapshotController READ snapshotController CONSTANT)
+    Q_PROPERTY(QObject* revisionController READ revisionController CONSTANT)
     Q_PROPERTY(QObject* worldController READ worldController CONSTANT)
     Q_PROPERTY(QObject* assetController READ assetController CONSTANT)
     Q_PROPERTY(bool worldMode READ worldMode NOTIFY draftChanged)
@@ -137,6 +140,7 @@ public:
     [[nodiscard]] QObject* probeController() noexcept { return &probe_; }
     [[nodiscard]] QObject* canvasController() noexcept { return &canvas_; }
     [[nodiscard]] QObject* snapshotController() noexcept { return &snapshot_; }
+    [[nodiscard]] QObject* revisionController() noexcept { return &revisions_; }
     [[nodiscard]] QObject* worldController() noexcept { return &world_; }
     [[nodiscard]] QObject* assetController() noexcept { return &assets_; }
     [[nodiscard]] bool worldMode() const noexcept { return world_mode_; }
@@ -526,6 +530,7 @@ private:
     }
     studio::ProbeController probe_;
     studio::SnapshotController snapshot_;
+    studio::RevisionController revisions_;
     studio::AssetController assets_;
     studio::WorldController world_;
     bool world_mode_=false;
@@ -563,6 +568,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("finalizer-walkthrough"), QStringLiteral("Run graphical review/finalization, conflicts and recovery after the forms/canvas walkthrough on a fresh checkout copy."), QStringLiteral("report.json")});
     parser.addOption({QStringLiteral("world-walkthrough"), QStringLiteral("Run scenario/world forms, atomic batches, map/list and actual opening checks on a fresh checkout copy."), QStringLiteral("report.json")});
     parser.addOption({QStringLiteral("catalog-walkthrough"), QStringLiteral("Run catalog editing, reference review, localization, asset pins and group calls on a fresh checkout copy."), QStringLiteral("report.json")});
+    parser.addOption({QStringLiteral("revision-walkthrough"), QStringLiteral("Run finalized comparison, matched fixtures and reviewed save export on the prepared scratch checkout."), QStringLiteral("report.json")});
     parser.addOption({QStringLiteral("text-scale"), QStringLiteral("Editor text scale: 100 or 200 percent."), QStringLiteral("percent"), QStringLiteral("100")});
     parser.addOption({QStringLiteral("screenshot"), QStringLiteral("Save the walkthrough's rendered editor window to a new PNG."), QStringLiteral("file.png")});
     parser.process(application);
@@ -570,19 +576,20 @@ int main(int argc, char* argv[]) {
     const bool finalizer_walkthrough = parser.isSet(QStringLiteral("finalizer-walkthrough"));
     const bool world_walkthrough = parser.isSet(QStringLiteral("world-walkthrough"));
     const bool catalog_walkthrough = parser.isSet(QStringLiteral("catalog-walkthrough"));
-    const bool run_walkthrough = parser.isSet(QStringLiteral("walkthrough")) || canvas_walkthrough || finalizer_walkthrough || world_walkthrough || catalog_walkthrough;
+    const bool revision_walkthrough = parser.isSet(QStringLiteral("revision-walkthrough"));
+    const bool run_walkthrough = parser.isSet(QStringLiteral("walkthrough")) || canvas_walkthrough || finalizer_walkthrough || world_walkthrough || catalog_walkthrough || revision_walkthrough;
     if (!parser.positionalArguments().isEmpty() ||
         ((parser.isSet(QStringLiteral("check-view")) || run_walkthrough) && !parser.isSet(QStringLiteral("project"))) ||
         (parser.isSet(QStringLiteral("check-view")) && run_walkthrough) ||
         (static_cast<int>(parser.isSet(QStringLiteral("walkthrough"))) + static_cast<int>(canvas_walkthrough) +
-            static_cast<int>(finalizer_walkthrough) + static_cast<int>(world_walkthrough) + static_cast<int>(catalog_walkthrough) > 1) ||
+            static_cast<int>(finalizer_walkthrough) + static_cast<int>(world_walkthrough) + static_cast<int>(catalog_walkthrough) + static_cast<int>(revision_walkthrough) > 1) ||
         (parser.isSet(QStringLiteral("screenshot")) && !run_walkthrough)) parser.showHelp(2);
     try {
         const auto scale=parser.value(QStringLiteral("text-scale"));
         if(scale!=QStringLiteral("100") && scale!=QStringLiteral("200")) throw std::invalid_argument("Choose editor text scale 100 or 200.");
         auto font=QGuiApplication::font();font.setPointSizeF(font.pointSizeF()*(scale==QStringLiteral("200")?2.0:1.0));QGuiApplication::setFont(font);
         for (const auto& option : {QStringLiteral("walkthrough"), QStringLiteral("canvas-walkthrough"), QStringLiteral("finalizer-walkthrough"),
-                QStringLiteral("world-walkthrough"), QStringLiteral("catalog-walkthrough"), QStringLiteral("screenshot")})
+                QStringLiteral("world-walkthrough"), QStringLiteral("catalog-walkthrough"), QStringLiteral("revision-walkthrough"), QStringLiteral("screenshot")})
             if (parser.isSet(option) && std::filesystem::exists(std::filesystem::path{parser.value(option).toStdU16String()}))
                 throw std::invalid_argument("Choose new walkthrough report/screenshot filenames; existing output was preserved.");
         Browser browser;
@@ -695,22 +702,25 @@ int main(int argc, char* argv[]) {
             });
         if (run_walkthrough) window->resize(1280, 720);
         window->show();
-        if(world_walkthrough || catalog_walkthrough) {
+        if(world_walkthrough || catalog_walkthrough || revision_walkthrough) {
             const auto screenshot=parser.value(QStringLiteral("screenshot"));
             auto report=world_walkthrough?studio::run_world_walkthrough(browser,*window,screenshot):
-                studio::run_catalog_walkthrough(browser,*window,screenshot);
+                catalog_walkthrough ? studio::run_catalog_walkthrough(browser,*window,screenshot) :
+                studio::run_revision_walkthrough(browser,*window,screenshot);
             if(guards->denied_requests.load()!=0) throw std::runtime_error("The editor walkthrough attempted a blocked resource request.");
             const auto renderer=window->rendererInterface()->graphicsApi()==QSGRendererInterface::Metal?QStringLiteral("Metal"):
                 window->rendererInterface()->graphicsApi()==QSGRendererInterface::Software?QStringLiteral("Software"):QStringLiteral("Other native backend");
             report.insert(QStringLiteral("renderer"),renderer);report.insert(QStringLiteral("text_scale"),scale.toInt());
             const auto bytes=QJsonDocument{report}.toJson(QJsonDocument::Indented);
-            const auto destination=parser.value(world_walkthrough?QStringLiteral("world-walkthrough"):QStringLiteral("catalog-walkthrough"));
+            const auto destination=parser.value(world_walkthrough ? QStringLiteral("world-walkthrough") :
+                catalog_walkthrough ? QStringLiteral("catalog-walkthrough") : QStringLiteral("revision-walkthrough"));
             persistence::atomic_write(std::filesystem::path{destination.toStdU16String()},
                 std::string_view{bytes.constData(),static_cast<std::size_t>(bytes.size())},
                 [](std::string_view){throw std::invalid_argument("Choose a new report filename.");},4U*1024U*1024U,false);
             if(world_walkthrough) std::cout<<"Studio world walkthrough passed: "<<report.value(QStringLiteral("form_submissions")).toInt()
                 <<" QML inputs, coupled batches, 51-state keyboard/pointer map, actual opening/save, draft reopen and 900px workspace; ";
-            else std::cout<<"Studio catalog walkthrough passed: catalog edits, reviewed references, locale fallback, verified asset pin, typed group call and draft reopen; ";
+            else if(catalog_walkthrough) std::cout<<"Studio catalog walkthrough passed: catalog edits, reviewed references, locale fallback, verified asset pin, typed group call and draft reopen; ";
+            else std::cout<<"Studio revision walkthrough passed: finalized differences, matched day, explicit mapping, preserved original and exact migrated reload; ";
             std::cout<<renderer.toStdString()<<" text "<<scale.toStdString()<<'\n';
             return 0;
         }

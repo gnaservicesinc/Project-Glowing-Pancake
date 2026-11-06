@@ -10,6 +10,10 @@
 #include <memory>
 
 namespace pgp::studio {
+void append_probe_step(QStringList& lines, const ProbeStep& step);
+void append_probe_effects(QStringList& lines, const std::vector<runtime::EffectReceipt>& receipts);
+void append_probe_continuations(QStringList& lines, const runtime::Checkpoint& checkpoint);
+
 class ProbeController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(QStringList scenarios READ scenarios NOTIFY changed)

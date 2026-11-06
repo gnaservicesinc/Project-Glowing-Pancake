@@ -11,7 +11,7 @@ struct SnapshotRequest {
     std::filesystem::path source;
     std::filesystem::path target = "data/runtime/first-playable.json";
     std::string content_version,summary;
-    // Explicitly refuse cross-content saves until a real migration exists.
+    // Ordinary game loads require exact content. Studio reviews copies separately.
     std::string save_policy = "reject-prior-content";
     std::optional<std::string> game_version;
 };

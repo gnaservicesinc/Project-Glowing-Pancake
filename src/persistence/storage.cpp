@@ -102,6 +102,20 @@ void replace(const std::filesystem::path& temporary,const std::filesystem::path&
     if (::rename(temporary.c_str(),target.c_str())!=0) io_error("Cannot atomically replace local file");
 #endif
 }
+void install_new(const std::filesystem::path& temporary, const std::filesystem::path& target) {
+#ifdef _WIN32
+    if (MoveFileExW(temporary.c_str(), target.c_str(), MOVEFILE_WRITE_THROUGH)) return;
+    if (GetLastError() != ERROR_ALREADY_EXISTS && GetLastError() != ERROR_FILE_EXISTS)
+        io_error("Cannot install new local file");
+#else
+    if (::link(temporary.c_str(), target.c_str()) == 0) {
+        if (::unlink(temporary.c_str()) != 0) io_error("Cannot remove the published temporary sibling");
+        return;
+    }
+    if (errno != EEXIST) io_error("Cannot install new local file");
+#endif
+    throw PersistenceError("conflict", "A local file appeared while its new copy was prepared");
+}
 void sync_directory(const std::filesystem::path& directory) {
 #ifndef _WIN32
     int flags=O_RDONLY;
@@ -180,7 +194,9 @@ void atomic_write(const std::filesystem::path& path,std::string_view bytes,
         } else if (existing_regular(path)) {
             throw PersistenceError("conflict","A local file appeared while its replacement was prepared");
         }
-        replace(temporary,path);owns_temporary=false;
+        if (expected_exists == false) install_new(temporary,path);
+        else replace(temporary,path);
+        owns_temporary=false;
         sync_directory(parent);
     } catch (...) {
         if (owns_temporary) std::filesystem::remove(temporary,error);

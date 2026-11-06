@@ -16,8 +16,7 @@ struct SaveIdentity {
     std::uint32_t content_schema;
     std::string game_version;
     std::string content_version;
-    // SHA256 of compiler canonical definition-collection bytes. This initial
-    // identity covers no unimplemented shipped asset/localization catalog.
+    // SHA256 of the compiler's canonical runtime collection bytes.
     std::string content_hash;
     auto operator<=>(const SaveIdentity&) const = default;
 };
@@ -37,6 +36,14 @@ struct LoadedSave {
                                       SaveLimits limits = {});
 [[nodiscard]] LoadedSave decode_save(const runtime::CompiledProgram& program,
                                      std::string_view bytes, SaveLimits limits = {});
+// Offline revision review supplies the exact game identity from the selected
+// finalized history. These still require this build's rules, schema and save
+// format, exact content identity, checksums and full checkpoint validation.
+[[nodiscard]] LoadedSave decode_revision_save(const runtime::CompiledProgram& program,
+    std::string_view game_version, std::string_view bytes, SaveLimits limits = {});
+[[nodiscard]] std::string encode_revision_save(const runtime::CompiledProgram& program,
+    std::string_view game_version, const runtime::Checkpoint& checkpoint,
+    std::uint64_t autosave_sequence, SaveLimits limits = {});
 // Validate the immutable program identity once for this synchronous batch.
 // Every checkpoint still goes through the ordinary encoder and decoder.
 void validate_save_roundtrips(const runtime::CompiledProgram& program,

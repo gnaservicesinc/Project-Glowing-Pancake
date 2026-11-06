@@ -4,8 +4,8 @@ Updated 2026-11-05 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**34 of 52 steps complete for Mac feature development. E2-03 is next.** Completed work includes
-M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03 and E2-01/02.
+**35 of 52 steps complete for Mac feature development. M6-01 is next.** Completed work includes
+M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03 and E2-01 through E2-03.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
@@ -24,6 +24,16 @@ local optimized builds and focused changed-behavior checks. Native matrices are
 manual-only; cross-platform/full release qualification is deferred and does not
 block Mac implementation. Keep build caches between batches.
 
+- E2-03 compares all seven finalized generations by their recorded hashes.
+  Matched fixtures show changed reach and actual committed effects. Typed
+  save maps preserve nested waits, pending decisions, occurrence counters,
+  RNG, history and owned modifiers in a separately validated copy. The
+  receipt records both identities and the exact original and copy hashes.
+  All **72 optimized Mac CTests passed**, including **46 revision checks**
+  for incompatible chains, unknown fields, stale inputs, a 512-node graph
+  and natural continuous cleanup. The **200% text Metal** walkthrough
+  reviewed an explicit flow mapping and reopened the **151,891-byte**
+  export. [Revision workflow](../src/studio/SNAPSHOTS.md#compare-finalized-revisions-and-review-a-campaign-copy)
 - E2-02 adds catalog search and structured edits for research, recipes,
   data, hardware, products and people. Reviewed renames show typed uses
   across the collection and commit through shared undo. The library retains
@@ -416,10 +426,10 @@ edits typed flows through forms/outline and inspects copied runtime state.
 The shared writer finalizes validated internal snapshots through both graphical
 review and the maintainer CLI. E1A-05 demonstrates the authoring path, E1B-01
 supplies the typed canvas and E1B-02 completes graphical review/finalization.
-E2-01 and E2-02 supply scenario forms, catalogs, localization, asset credits
-and typed reusable flows.
+E2-01 through E2-03 supply scenario forms, catalogs, localization, asset credits,
+typed reusable flows, finalized revision comparisons and reviewed save copies.
 Human studies wait for v1 preparation after all components are in place.
-18 steps remain unchecked, including those studies and deferred platform/release
+17 steps remain unchecked, including those studies and deferred platform/release
 work. [Playability checkpoints](PLAYABILITY.md) distinguish implemented paths
 from unperformed human and release qualification.
 
@@ -452,9 +462,10 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation is E2-03, cross-revision content and save review.**
-Compare finalized generations, run matched fixtures, and validate explicit
-node and identity migrations with pending saves and retained originals.
+**Next implementation is M6-01, US institutions, policy and the election calendar.**
+Implement seat blocs, proposals, votes, executive and agency implementation,
+state policies and exact continuation across effective dates and elections.
+E2-04 editor download qualification follows M7-03 and the later native release work.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

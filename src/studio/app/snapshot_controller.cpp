@@ -110,7 +110,7 @@ bool SnapshotController::review(const QString& source, const QString& version, c
             .arg(value_text(validation.at("scenarios")), value_text(validation.at("prepared_headquarters")), value_text(validation.at("exact_prepared_save_roundtrips")));
         for (const auto& lint : validation.at("lints")) notices_.push_back(text(lint.at("code").get<std::string>() + " · " + lint.at("path").get<std::string>() + " · " + lint.at("explanation").get<std::string>()));
         const auto& result = report.at("result");
-        release_ = QStringLiteral("Required game version %1 · %2.\nSave policy: prior content saves are refused and preserved; no migration is claimed.\nNative packages, migrations and release qualification remain open.")
+        release_ = QStringLiteral("Required game version %1 · %2.\nOrdinary loads require exact content identity. Compare finalized revisions to validate and export an individual save copy.\nNative package and release qualification remain open.")
             .arg(value_text(result.at("required_game_version")), result.at("game_version_requirement_resolved").get<bool>() ? QStringLiteral("version requirement satisfied") : QStringLiteral("version requirement unresolved"));
         plan_id_ = text(review.plan_id);
         emit changed(); return true;

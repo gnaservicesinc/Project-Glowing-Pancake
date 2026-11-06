@@ -167,9 +167,58 @@ review and Git preservation remain separate actions.
   128 history batches and bounded JSON bytes/depth/tokens. The current slice
   validates 15 definitions, one scenario and three headquarters. This proves
   opening/save consistency; full scenario and semantic review remain separate.
-- Save policy is explicitly `reject-prior-content`: the real save loader rejects
-  mismatched content identity and preserves the original save. This tool cannot
-  claim a migration. Cross-revision continuation review remains E2-03.
+- The snapshot save policy `reject-prior-content` applies to ordinary game
+  loads. Studio can review and export an individual campaign copy using
+  the finalized generations below.
+
+## Compare finalized revisions and review a campaign copy
+
+Open **Compare revisions** and select two generations. Studio verifies the
+committed history and collection hashes with the shared compiler. The changes
+tab shows exact before/after fields for definitions, localized text, scoped
+variables and pinned assets. Select a section or page through all changed fields.
+
+**Matched fixtures** prepares each selected scenario with a common opening
+date, headquarters and seed. Prepare both, advance one day or select the same
+response ID on both sides. The two reports show actual trigger checks, bound
+targets, committed paths, receipts, cash, postings, modifiers and continuations.
+If a paired step fails or reaches different dates, both fixture states stay at
+the preceding step. An unmatched required response marks where the timelines
+diverge. Start a new fixture to try another seed or headquarters.
+
+1. Compare the source generation with the current finalized generation.
+   In **Save migration**, enter the absolute path to the original local save
+   or its recovery copy. Studio checks the exact recorded game and content
+   identities with this build's supported rules, schema and save format.
+2. Add explicit one-to-one maps for renamed flows, nodes, scenarios, deals,
+   scoped variables and text keys. Map a renamed flow before mapping its
+   nodes. Supply a review note and validate. Existing campaigns retain their
+   enabled roots, with explicit identity mappings applied. New roots apply to
+   fresh campaigns. Keep retired flow bodies available when old saves still
+   need them.
+3. Inspect the saved waits, frame/return locations, history counts and digest.
+   Acknowledge the review and choose a new export name. Open the exported
+   `.work/revision-review/NAME/campaign.pgpsave` with the destination game
+   build. The sibling `review.json` records both identities, file digests,
+   mappings and pending chains. The original and existing exports are preserved.
+
+The validator checks equivalent saved flow behavior under the maps, including
+ordered effects and branches, existing occurrence rules, delayed duration and
+continuous exits. It retains committed receipts, RNG, counters, typed values,
+owned modifiers and all core business state. It refuses rewrites of recorded
+effects, unsafe catalog changes, unsupported fields and stale inputs. A flow
+rename can change the order of future simultaneous work where the runtime sorts
+by ID. The preview and migration receipt describe specific fixtures and copies.
+Release compatibility still requires evidence for each supported release pair.
+
+Run `ctest --test-dir build/release -R '^studio\.revision-review$' --output-on-failure`
+for archived history, exact continuation and refusal checks. For the rendered
+walkthrough, use a disposable copy with the finalized history, rename
+`slice.supplier_offer` to `slice.supplier_reviewed` through the typed catalog
+refactor, save and finalize it as a new generation. Then run
+`build/release/bin/pgp-editor --project "$SCRATCH_CHECKOUT" --revision-walkthrough "$SCRATCH_REPORT" --text-scale 200`.
+The check stages a flow map through the graphical controls and reloads the
+export with the real save codec.
 
 ## Owned artifacts and hashes
 

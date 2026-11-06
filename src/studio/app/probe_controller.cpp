@@ -59,6 +59,52 @@ void condition_lines(QStringList& lines, const runtime::ConditionTrace& trace) {
 }
 } // namespace
 
+void append_probe_step(QStringList& lines, const ProbeStep& step) {
+    lines << QStringLiteral("%1 → %2 · cash %3 → %4 constant 2014 cents")
+        .arg(text(core::iso_date(step.before_date)), text(core::iso_date(step.after_date)),
+             QString::number(static_cast<qlonglong>(step.before_cash.value())),
+             QString::number(static_cast<qlonglong>(step.after_cash.value())));
+    for (const auto& check : step.trace.condition_checks)
+        lines << QStringLiteral("%1 · %2 · %3").arg(text(check.path), binding(check.binding), truth(check.result));
+    runtime::ConditionTrace observed;
+    observed.clauses = step.trace.clauses; observed.durations = step.trace.durations; observed.selections = step.trace.selections;
+    condition_lines(lines, observed);
+    for (const auto& path : step.trace.paths)
+        lines << QStringLiteral("%1 · %2 · %3 · %4").arg(text(path.path), binding(path.binding),
+            path.committed ? QStringLiteral("committed") : QStringLiteral("candidate"), text(path.detail));
+    lines << QStringLiteral("\nOperation ledger");
+    for (const auto& posting : step.postings)
+        lines << QStringLiteral("#%1 · debit %2 · credit %3 · %4 constant 2014 cents · %5")
+            .arg(number(posting.id), text(core::to_string(posting.debit)), text(core::to_string(posting.credit)),
+                 QString::number(static_cast<qlonglong>(posting.amount.value())), text(posting.cause));
+    lines << QStringLiteral("\nModifiers after this operation");
+    for (const auto& modifier : step.active_modifiers)
+        lines << QStringLiteral("Owner %1 · %2 · %3 · %4 basis point delta")
+            .arg(number(modifier.activation_id), binding(modifier.binding), text(modifier.field),
+                 QString::number(static_cast<qlonglong>(modifier.add_basis_points)));
+}
+void append_probe_effects(QStringList& lines, const std::vector<runtime::EffectReceipt>& receipts) {
+    for (const auto& receipt : receipts)
+        lines << QStringLiteral("%1 · %2 / %3 · effect %4 · %5 · %6 · %7 → %8 · counterparty %9 cents")
+            .arg(text(core::iso_date(receipt.day)), text(receipt.flow_id), text(receipt.node_id), number(receipt.effect_index + 1),
+                 text(receipt.operation), binding(receipt.target) +
+                     (receipt.bound_variable.empty() ? QString{} : QStringLiteral(" · ") + text(receipt.bound_variable)),
+                 scalar(receipt.before), scalar(receipt.after),
+                 QString::number(static_cast<qlonglong>(receipt.counterparty_delta.value())));
+}
+void append_probe_continuations(QStringList& lines, const runtime::Checkpoint& checkpoint) {
+    lines << QStringLiteral("\nContinuation queue");
+    for (const auto& activation : checkpoint.runtime.activations) {
+        if (activation.status == runtime::ActivationStatus::completed) continue;
+        lines << QStringLiteral("Owner %1 · %2 / %3 · %4 · due %5")
+            .arg(number(activation.id), text(activation.current_flow), text(activation.current_node), binding(activation.binding),
+                 activation.due ? text(core::iso_date(*activation.due)) : QStringLiteral("none"));
+        for (const auto& frame : activation.frames)
+            lines << QStringLiteral("  %1 / %2 · next child %3 · return %4")
+                .arg(text(frame.flow_id), text(frame.sequence_node), number(frame.next_child), text(frame.return_node));
+    }
+}
+
 ProbeController::ProbeController() {
     timer_.setInterval(0);
     connect(&timer_, &QTimer::timeout, this, &ProbeController::advance_one);
@@ -221,50 +267,14 @@ void ProbeController::refresh_report() {
     }
     if (step_) {
         lines << (synthetic_ ? QStringLiteral("\nSynthetic cleanup probe on a separate copy") : QStringLiteral("\nLast real runtime operation"));
-        lines << QStringLiteral("%1 → %2 · cash %3 → %4 constant 2014 cents")
-            .arg(text(core::iso_date(step_->before_date)), text(core::iso_date(step_->after_date)),
-                 QString::number(static_cast<qlonglong>(step_->before_cash.value())),
-                 QString::number(static_cast<qlonglong>(step_->after_cash.value())));
-        for (const auto& check : step_->trace.condition_checks)
-            lines << QStringLiteral("%1 · %2 · %3").arg(text(check.path), binding(check.binding), truth(check.result));
-        runtime::ConditionTrace observed;
-        observed.clauses = step_->trace.clauses; observed.durations = step_->trace.durations; observed.selections = step_->trace.selections;
-        condition_lines(lines, observed);
-        for (const auto& path : step_->trace.paths)
-            lines << QStringLiteral("%1 · %2 · %3 · %4").arg(text(path.path), binding(path.binding),
-                path.committed ? QStringLiteral("committed") : QStringLiteral("candidate"), text(path.detail));
-        lines << QStringLiteral("\nOperation ledger");
-        for (const auto& posting : step_->postings)
-            lines << QStringLiteral("#%1 · debit %2 · credit %3 · %4 constant 2014 cents · %5")
-                .arg(number(posting.id), text(core::to_string(posting.debit)), text(core::to_string(posting.credit)),
-                     QString::number(static_cast<qlonglong>(posting.amount.value())), text(posting.cause));
-        lines << QStringLiteral("\nModifiers after this operation");
-        for (const auto& modifier : step_->active_modifiers)
-            lines << QStringLiteral("Owner %1 · %2 · %3 · %4 basis point delta")
-                .arg(number(modifier.activation_id), binding(modifier.binding), text(modifier.field),
-                     QString::number(static_cast<qlonglong>(modifier.add_basis_points)));
+        append_probe_step(lines, *step_);
         if (synthetic_) for (const auto& receipt : step_->effects)
             lines << QStringLiteral("Separate-copy cleanup · owner %1 · %2 · %3 → %4")
                 .arg(number(receipt.activation_id), binding(receipt.target), scalar(receipt.before), scalar(receipt.after));
     }
     lines << QStringLiteral("\nCommitted effects on the natural fixture timeline");
-    for (const auto& receipt : probe_->state().runtime.receipts)
-        lines << QStringLiteral("%1 · %2 / %3 · effect %4 · %5 · %6 · %7 → %8 · counterparty %9 cents")
-            .arg(text(core::iso_date(receipt.day)), text(receipt.flow_id), text(receipt.node_id), number(receipt.effect_index + 1),
-                 text(receipt.operation), binding(receipt.target) +
-                     (receipt.bound_variable.empty() ? QString{} : QStringLiteral(" · ") + text(receipt.bound_variable)),
-                 scalar(receipt.before), scalar(receipt.after),
-                 QString::number(static_cast<qlonglong>(receipt.counterparty_delta.value())));
-    lines << QStringLiteral("\nContinuation queue");
-    for (const auto& activation : probe_->state().runtime.activations) {
-        if (activation.status == runtime::ActivationStatus::completed) continue;
-        lines << QStringLiteral("Owner %1 · %2 / %3 · %4 · due %5")
-            .arg(number(activation.id), text(activation.current_flow), text(activation.current_node), binding(activation.binding),
-                 activation.due ? text(core::iso_date(*activation.due)) : QStringLiteral("none"));
-        for (const auto& frame : activation.frames)
-            lines << QStringLiteral("  %1 / %2 · next child %3 · return %4")
-                .arg(text(frame.flow_id), text(frame.sequence_node), number(frame.next_child), text(frame.return_node));
-    }
+    append_probe_effects(lines, probe_->state().runtime.receipts);
+    append_probe_continuations(lines, probe_->state());
     if (!boundaries_.empty()) {
         lines << QStringLiteral("\nTrigger-only clause boundary overrides · isolated facts · individual clause truth");
         for (const auto& sample : boundaries_)

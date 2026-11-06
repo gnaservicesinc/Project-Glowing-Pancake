@@ -4,7 +4,7 @@ Planning baseline 1.2 · Updated 2026-11-05 · Shared identity, internal snapsho
 
 ## 1. One source, several different identities
 
-[`project-versions.json`](../project-versions.json) is the checked-in source of game, editor, content, and compatibility versions. Game/editor remain `0.0.0-dev`; the current reviewed internal content snapshot is `0.7.0-dev.1`. `phase: planning` remains and prevents these development identities being mistaken for publishable artifacts. Compatibility values of 1 identify the implemented initial content/runtime/save contracts; cross-revision save migrations remain future work. Documentation baseline 1.2 is not an application release number.
+[`project-versions.json`](../project-versions.json) is the checked-in source of game, editor, content, and compatibility versions. Game and editor remain `0.0.0-dev`. The current reviewed internal content snapshot is `0.7.0-dev.1`. The planning phase distinguishes these development identities from publishable artifacts. Compatibility values of 1 identify the initial content, runtime and save contracts. Studio supports reviewed save copies between finalized generations under those contracts. Documentation baseline 1.2 identifies the plan.
 
 | Identity | Meaning | Changes when |
 | --- | --- | --- |
@@ -57,6 +57,11 @@ Saves retain exact content/rules/schema identity, definition revisions for pendi
 After a game/platform update, migrations either retain required retired definitions until active instances finish or explicitly map old nodes/IDs/state into compatible definitions. Any changed continuation is documented in migration metadata. Preserve the original save and offer a clear unsupported-version error when no safe path exists. A pure text correction can be compatible, but it still changes shipped content identity. Cross-version continuation is not claimed to reproduce an older ruleset's future exactly.
 
 Release fixtures cover saves paused on each important choice/result, scheduled consequence, cooldown boundary and continuous modifier. This matters because distribution clients may install updates independently of the game. No in-game updater, server, or remote migration lookup is added.
+
+E2-03 implements offline review of an individual campaign against two verified
+finalized generations. The separate Studio exports a new save and its review
+receipt after validating equivalent saved flow behavior and exact checkpoint
+reload. Normal game loads keep exact identity checks. [Migration workflow](../src/studio/SNAPSHOTS.md#compare-finalized-revisions-and-review-a-campaign-copy).
 
 ## 5. Future Snapcraft connection
 
@@ -118,8 +123,9 @@ version meets the recorded content requirement. The Python record check does
 not replace the C++ compiler/runtime validation. The command **always returns nonzero with
 `release_ready: false`** until the following owning gates exist:
 
-- E2: cross-revision compatibility/migration evidence beyond the current explicit
-  exact-content save refusal policy.
+- E2 and M9: reviewed compatibility evidence for the specific released version
+  pairs. E2-03 provides the offline comparison, migration and verification path
+  for internal generations.
 - M9: released-history/payload-reuse enforcement, dependency/source/license
   manifest, native package and clean-device evidence.
 
@@ -130,8 +136,8 @@ These checks cannot be supplied as a handful of command-line approval booleans.
 The metadata reader does not finalize content or rewrite manifests. The separate
 `pgp-content-tool` and the Studio graphical finalizer implement internal
 finalization through the journaled shared writer, record required game bumps
-and preserve draft bytes. None creates tags, publishes artifacts or implies
-cross-content save compatibility.
+and preserve draft bytes. Cross-content save review is an explicit Studio
+operation separate from finalization.
 Future gate implementations must use actual owning artifacts and maintain this
 fail-closed behavior. A pending snapshot transaction blocks configuration and
 must be recovered before building.

@@ -166,6 +166,11 @@ Tests run on copied state and a copied RNG stream. They cannot alter a live camp
 
 Opening a checkout verifies the project marker and schema compatibility; a packaged game folder is not an editable project. Unknown schema versions open read-only with an explanation. Detect external file changes by content hash, preserve existing unknown fields where the supported schema allows them, and block stale overwrites. Import assets through an explicit copy/provenance operation into the checkout. Do not follow output paths outside the selected project or write changes to another repository.
 
+**Compare revisions** opens two verified finalized generations, shows their
+changed fields, and runs the same fixture actions against both. Review an
+older campaign with typed node and identity maps, inspect the saved
+continuations, and export a validated copy with its receipt. [Revision review and migration controls](../src/studio/SNAPSHOTS.md#compare-finalized-revisions-and-review-a-campaign-copy).
+
 Undo/redo and local crash-recovery drafts are available. Multi-file saves use a staged change set, a recovery journal/backups, pre-write conflict checks, and a final manifest marker; a filesystem does not provide magic atomic multi-file writes. Recovery either completes a valid generation or restores the prior generation without discarding concurrent edits. Review shows changed files, IDs, references, text, effects, versions, and validation evidence before finalizing a content revision.
 
 “Save draft” does not publish, commit, push, or bump a released version per keystroke. **Finalize content revision** validates the selected batch, updates entity revisions/content version/changelog through [the versioning contract](VERSIONING.md), and marks whether a game release version must change. Normal Git review/commit/push remains a separate repository action. No store credentials, remote collaboration server, telemetry, runtime AI, or automatic updater are added to the Studio.

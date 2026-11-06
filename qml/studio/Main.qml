@@ -42,10 +42,13 @@ ApplicationWindow {
         anchors.fill: parent
         anchors.margins: 20
         spacing: 12
-        RowLayout {
+        GridLayout {
+            id: libraryHeader
             Layout.fillWidth: true
+            columns: window.width >= 960 ? 4 : window.width >= 820 ? 3 : 2
             Label {
                 Layout.fillWidth: true
+                Layout.columnSpan: libraryHeader.columns === 4 ? 1 : libraryHeader.columns
                 text: window.showLibrary || !studio.editing ? qsTr("Content library") : qsTr("Content Studio")
                 font.pixelSize: 25
                 font.bold: true
@@ -61,6 +64,12 @@ ApplicationWindow {
                 text: qsTr("Review content revision")
                 enabled: studio.checkout.length > 0
                 onClicked: revisionReview.open()
+            }
+            Button {
+                objectName: "openRevisionComparison"
+                text: qsTr("Compare revisions")
+                enabled: studio.checkout.length > 0
+                onClicked: revisionComparison.open()
             }
         }
         RowLayout {
@@ -440,6 +449,11 @@ ApplicationWindow {
     SnapshotReview {
         id: revisionReview
         finalizer: studio.snapshotController
+    }
+    RevisionComparison {
+        id: revisionComparison
+        reviewer: studio.revisionController
+        checkout: studio.checkout
     }
     AssetEditor { id: assetEditor; author: studio.assetController; session: studio }
     GroupTools { id: groupTools; author: studio }

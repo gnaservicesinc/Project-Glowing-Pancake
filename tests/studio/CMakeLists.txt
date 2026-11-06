@@ -43,6 +43,14 @@ target_compile_definitions(pgp-catalog-test PRIVATE PGP_CATALOG_SOURCE="${PROJEC
     PGP_CATALOG_VERSIONS="${PROJECT_SOURCE_DIR}/project-versions.json" PGP_CATALOG_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
 pgp_project_target(pgp-catalog-test)
 add_test(NAME studio.catalogs COMMAND pgp-catalog-test)
+add_executable(pgp-revision-review-test revision_review_test.cpp)
+target_link_libraries(pgp-revision-review-test PRIVATE pgp::studio_library)
+target_include_directories(pgp-revision-review-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-revision-review-test PRIVATE PGP_REVISION_CHECKOUT="${PROJECT_SOURCE_DIR}"
+    PGP_REVISION_FOUNDATION="${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json"
+    PGP_REVISION_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
+pgp_project_target(pgp-revision-review-test)
+add_test(NAME studio.revision-review COMMAND pgp-revision-review-test)
 if(NOT PGP_CORE_ONLY)
     add_executable(pgp-snapshot-controller-test snapshot_controller_test.cpp
         "${PROJECT_SOURCE_DIR}/src/studio/app/snapshot_controller.cpp"
