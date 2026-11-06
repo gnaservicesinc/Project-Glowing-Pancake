@@ -103519,6 +103519,54 @@
         "prepared_headquarters": 21,
         "scenarios": 7
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "ee7f159afe2d012acfdec3f38cb2ee098cb5579481cb178efb9164b23f862de3",
+          "before_hash": "62fc2b1547a8e86ce93940fc2f21ba415c13e5d370b6b74b2b5b2d1c6825e673",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "1046684a6196d6abb6c20f84dd33a68729e9d8aa56625777c1c54911ea8d6765",
+          "before_hash": "9e2da3a25ab3c180c05efa045bcf7414948d45e6360cce470e7af821ec49b2b5",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 1,
+          "revision": 2
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "fd7ced86b8056098245152752ba60451d1bcb34fed5b33f2caa2842c1167229a",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.12.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 12,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.11.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000011.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000012.collection.json",
+      "summary": "Finite executive succession, funded handovers, founder chair and retained legacy trust.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 21,
+        "lints": [],
+        "prepared_headquarters": 21,
+        "scenarios": 7
+      }
     }
   ],
   "format": 1

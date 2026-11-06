@@ -112,6 +112,7 @@ preserves legacy scenarios. Development saves still require the exact finalized
 content identity. `runtime.governance` covers refusal, vesting/dilution, causes,
 response windows, paid waivers, ownership transfers, group conservation and exact
 reload. The explicit `--competition-smoke` adds the actual corporate QML path.
-Century balance, objective accounting windows, succession and broad editor
-catalog forms retain their later milestone work. Human studies and platform /
+Century balance and objective accounting windows retain their later milestone
+work. Century charters now provide [succession and the retained founder trust](../core/SUCCESSION.md),
+with reviewed handovers in Leadership and typed charter fields in Studio. Human studies and platform /
 release qualification remain deferred under the user's instruction.

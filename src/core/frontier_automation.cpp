@@ -349,7 +349,7 @@ void cancel_frontier_policy(SimulationState& state, const CancelFrontierPolicy& 
 }
 bool review_frontier_policies(SimulationState& state,Cents protected_cash,const FrontierLaunchGuard& guard) {
     if (!state.frontier || state.phase!=DayPhase::work_ready || required_management_notice(state) ||
-        required_governance_notice(state) || required_site_alert(state) ||
+        required_governance_notice(state) || required_site_alert(state) || required_succession_notice(state) ||
         (state.liquidity && liquidity_report(*state.liquidity).pending_warning) ||
         state.frontier->policies_reviewed_on==state.date ||
         (state.frontier->research_programs.empty() && state.frontier->refresh_programs.empty())) return false;

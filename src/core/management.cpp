@@ -50,6 +50,13 @@ void policy_shape(const SimulationState& state,const DelegationPolicy& p) {
 }
 }
 void validate_management_catalog(const ManagementCatalog& c) {
+    if(c.succession) {
+        validate_succession_catalog(*c.succession);
+        if(c.governance && std::ranges::none_of(c.governance->board,[&](const auto& b){return b.id==c.succession->founder_board && b.player;}))
+            invalid("The succession charter must name the founder's actual board rights.");
+        if(c.governance && std::ranges::any_of(c.governance->board,[](const auto& b){return b.id=="leadership.ceo";}))
+            invalid("The leadership.ceo board identity is reserved for the current successor.");
+    }
     if (c.governance) validate_governance_catalog(*c.governance);
     if (c.default_policy_budget.value()<=0 || c.default_reserve_floor.value()<0 || c.default_monthly_ceiling.value()<=0 ||
         c.default_policy_runs==0 || c.default_policy_runs>c.maximum_policy_runs || c.financing.size()>8 || c.specialists.size()>8 || c.setbacks.size()>8 || c.maximum_policy_runs==0 || c.maximum_policy_runs>12 ||
@@ -111,7 +118,7 @@ void set_delegation_enabled(SimulationState& s,std::string_view id,bool enabled)
     p.enabled=enabled;if (enabled) p.blocked.clear();
 }
 void review_delegation(SimulationState& s,Cents protected_cash) {
-    if (!s.management || s.phase!=DayPhase::work_ready || required_management_notice(s) ||
+    if (!s.management || s.phase!=DayPhase::work_ready || required_management_notice(s) || required_succession_notice(s) ||
         (s.liquidity && liquidity_report(*s.liquidity).pending_warning) || s.management->reviewed_on==s.date) return;
     s.management->reviewed_on=s.date;
     for (std::size_t i=0;i<s.management->policies.size();++i) {

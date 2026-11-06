@@ -136,6 +136,7 @@ OperationResult Campaign::operate(
                 pause_notice="A funded agreement reached its deadline. Review the recorded outcome in Office → Rivals.";
     }
     if (core::required_governance_notice(after.world.simulation)) pause_notice="A corporate concern or outcome needs review in Office → Board and people. Its response deadline is saved.";
+    if (core::required_succession_notice(after.world.simulation)) pause_notice="A leadership deadline or handover needs review in Leadership. Its dated plan and company obligations are saved.";
     if (runtime::required_public_case(after.world)) pause_notice="An institutional notice needs review in Institutions. Its response deadline is saved.";
     return {std::move(outcome), {}, liquidity_halt || core::required_management_notice(after.world.simulation) ||
         core::required_site_alert(after.world.simulation) || core::required_governance_notice(after.world.simulation) || pause_notice.has_value(),std::move(pause_notice)};

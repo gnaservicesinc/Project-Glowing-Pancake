@@ -110,6 +110,7 @@ void prepare_opening(SimulationState& state, const std::vector<MarketAdoption>* 
     }
     prepare_civic(state, industry_adoptions);
     prepare_governance(state);
+    prepare_succession(state);
     prepare_management(state);
     prepare_infrastructure(state);
     if (state.business_offers) expire_business_offers(*state.business_offers,*state.capacity,state.date);
@@ -172,6 +173,7 @@ void validate(const SimulationState& state,bool deep=true) {
         validate_lab(*state.lab, *state.capacity, *state.accounts, state.random, false);
     }
     if (state.management) {validate_management(state,deep);validate_governance(state,deep);}
+    validate_succession(state,deep);
     validate_infrastructure(state,deep);
     validate_resilience(state,deep);
     validate_civic(state,deep);
@@ -446,6 +448,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if (required_management_notice(next)) refuse(CommandReason::morning_not_ready,"Acknowledge the capacity setback and its recovery date before advancing.");
                 if (required_site_alert(next)) refuse(CommandReason::morning_not_ready,"Review the site disruption before advancing work.");
                 if (required_governance_notice(next)) refuse(CommandReason::morning_not_ready,"Review the corporate concern, deadline or outcome before advancing.");
+                if (required_succession_notice(next)) refuse(CommandReason::morning_not_ready,"Review the leadership deadline or handover before advancing.");
                 if (next.liquidity && liquidity_report(*next.liquidity).pending_warning)
                     refuse(CommandReason::morning_not_ready, "Acknowledge the insolvency warning and its 30-day response window before advancing.");
                 if (next.liquidity && next.liquidity->status == LiquidityStatus::workout &&
@@ -473,6 +476,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 prepare_frontier(next);
                 sample_site_hazards(next);
                 prepare_governance(next);
+                prepare_succession(next);
                 prepare_management(next);
                 prepare_infrastructure(next);
                 if (next.liquidity) {
@@ -731,6 +735,17 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             } else if constexpr (std::is_same_v<Action, CancelFrontierPolicy>) {
                 cancel_frontier_policy(next,action);
                 (void)receipt(next,"cancel_frontier_policy");
+            } else if constexpr (std::is_same_v<Action, ProposeSuccession>) {
+                propose_succession(next,action);(void)receipt(next,"propose_succession");
+            } else if constexpr (std::is_same_v<Action, VoteSuccession>) {
+                const auto before=next.cash;vote_succession(next,action,reserved_cash(next));
+                (void)receipt(next,"vote_succession",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, CancelSuccession>) {
+                cancel_succession(next,action.id);(void)receipt(next,"cancel_succession");
+            } else if constexpr (std::is_same_v<Action, RetireFounderChair>) {
+                retire_founder_chair(next);(void)receipt(next,"retire_founder_chair");
+            } else if constexpr (std::is_same_v<Action, AcknowledgeSuccession>) {
+                acknowledge_succession(next,action.id);(void)receipt(next,"acknowledge_succession");
             } else if constexpr (std::is_same_v<Action, DeployModel>) {
                 if (next.resilience && std::any_of(next.resilience->replicas.begin(),next.resilience->replicas.end(),[&](const auto& row){
                     return row.service_id==action.service_id && !row.stopped_on;
@@ -809,7 +824,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 (void)receipt(next,"external_demand_change");
             }
         }, command.action);
-        if (!std::holds_alternative<AdvanceDay>(command.action)) {prepare_governance(next);prepare_infrastructure(next);}
+        if (!std::holds_alternative<AdvanceDay>(command.action)) {prepare_governance(next);prepare_succession(next);prepare_infrastructure(next);}
         if (next.liquidity && !std::holds_alternative<AdvanceDay>(command.action))
             refresh_liquidity(*next.liquidity,*next.accounts);
         // The input was validated at construction; every daily subsystem owns

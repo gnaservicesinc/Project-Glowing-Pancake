@@ -117,6 +117,7 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
     : QObject(parent),program_(program),management_(new ManagementController(this)),infrastructure_(new InfrastructureController(this)),
       civic_(new CivicController(this)),society_(new SocietyController(this)),institutions_(new InstitutionsController(this)),
       frontier_(new FrontierController(this)),
+      leadership_(new SuccessionController(this)),
       welcome_(welcome),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
       save_folder_(QUrl::fromLocalFile(QString::fromStdU16String(paths.saves_directory.u16string()))) {
     connect(management_,&ManagementController::actionRequested,this,&CampaignController::submit);
@@ -130,6 +131,8 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
     connect(institutions_, &InstitutionsController::noticeRaised, this, &CampaignController::setNotice);
     connect(frontier_, &FrontierController::actionRequested, this, &CampaignController::submit);
     connect(frontier_, &FrontierController::noticeRaised, this, &CampaignController::setNotice);
+    connect(leadership_,&SuccessionController::actionRequested,this,&CampaignController::submit);
+    connect(leadership_,&SuccessionController::noticeRaised,this,&CampaignController::setNotice);
     connect(management_,&ManagementController::competitiveResponseRequested,this,[this](QString id,bool accept) {
         if (!paused() || !beginOperation()) return;
         const auto revision=snapshot_->checkpoint.world.simulation.revision;
@@ -192,6 +195,7 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     society_->update(snapshot, replace);
     institutions_->update(snapshot, replace);
     frontier_->update(snapshot, replace);
+    leadership_->update(snapshot,replace);
     auto inbox = inbox_rows(snapshot->checkpoint,program_.collection,*management_);
     if (!first && replace) welcome_=false;
     if (replace) { projects_->beginCampaign(std::move(projects)); inbox_->beginCampaign(std::move(inbox)); }
@@ -299,6 +303,7 @@ QString CampaignController::requiredKind() const {
     if (needsWarning()) return QStringLiteral("liquidity");
     if (core::required_management_notice(snapshot_->checkpoint.world.simulation)) return QStringLiteral("management");
     if (core::required_site_alert(snapshot_->checkpoint.world.simulation)) return QStringLiteral("site");
+    if (core::required_succession_notice(snapshot_->checkpoint.world.simulation)) return QStringLiteral("leadership");
     if (runtime::required_public_case(snapshot_->checkpoint.world)) return QStringLiteral("institution");
     if (core::required_governance_notice(snapshot_->checkpoint.world.simulation)) {
         const auto& disputes=snapshot_->checkpoint.world.simulation.management->governance->disputes;
@@ -309,6 +314,7 @@ QString CampaignController::requiredKind() const {
 }
 QString CampaignController::requiredTitle() const {
     const auto kind = requiredKind();
+    if(kind==QStringLiteral("leadership")) return QStringLiteral("Leadership planning and continuity");
     if (kind == QStringLiteral("core")) return QStringLiteral("Delivery decision");
     if (kind == QStringLiteral("content")) return presentation_heading(*waitingPresentation(),program_.collection);
     if (kind == QStringLiteral("liquidity")) return QStringLiteral("Unpaid obligations need a response");
@@ -320,6 +326,7 @@ QString CampaignController::requiredTitle() const {
 }
 QString CampaignController::requiredText() const {
     const auto kind = requiredKind();
+    if(kind==QStringLiteral("leadership")) return leadership_->noticeText();
     if (kind==QStringLiteral("site")) return text(core::required_site_alert(snapshot_->checkpoint.world.simulation)->cause);
     if (kind==QStringLiteral("institution")) return institutions_->requiredCaseText();
     if (kind==QStringLiteral("executive") || kind==QStringLiteral("governance")) {

@@ -197,3 +197,10 @@ target_include_directories(pgp-frontier-test SYSTEM PRIVATE "${PROJECT_SOURCE_DI
 target_compile_definitions(pgp-frontier-test PRIVATE PGP_FRONTIER_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-frontier-test)
 add_test(NAME runtime.frontier COMMAND pgp-frontier-test)
+
+add_executable(pgp-succession-test succession_test.cpp)
+target_link_libraries(pgp-succession-test PRIVATE pgp::session)
+target_include_directories(pgp-succession-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-succession-test PRIVATE PGP_SUCCESSION_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-succession-test)
+add_test(NAME runtime.succession COMMAND pgp-succession-test)

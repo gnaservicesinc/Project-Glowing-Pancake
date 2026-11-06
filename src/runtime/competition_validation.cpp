@@ -33,6 +33,9 @@ void resources(const WorldState& world,const CompiledProgram& program,const Riva
     if (rival.response && !rival.response->retired_on && std::any_of(rival.response->transitions.begin(),rival.response->transitions.end(),[](const auto& row){return row.cause=="compete";})) initial_source.effective=initial_source.nominal;
     if (find(state.capacity->sources,"lease.initial")!=initial_source) invalid("Rival initial compute capacity differs from its finite opening/delivery terms");
     for (auto obligation:initial.accounts->recurring) {
+        // Finite leadership engagements reconcile their salary and end dates
+        // against the actual term history in the owning core validator.
+        if(obligation.id.starts_with("leadership/")) continue;
         if (rival.response && rival.response->retired_on) obligation.ends_before=rival.response->retired_on;
         if (find(state.accounts->recurring,obligation.id)!=obligation) invalid("Rival changed its authored recurring costs without a real withdrawal");
     }
@@ -55,6 +58,7 @@ void resources(const WorldState& world,const CompiledProgram& program,const Riva
     for (const auto& row:state.lab->evaluations) projects.insert(row.project_id);
     for (const auto& row:state.deployments->records) projects.insert(row.project_id);
     if (state.frontier) for (const auto& row:state.frontier->trials) projects.insert(row.project);
+    if (state.succession) for (const auto& row:state.succession->plans) if(!row.project.empty()) projects.insert(row.project);
     if (state.capacity->projects.size()!=projects.size()) invalid("Rival work is not owned by actual research, training, evaluation or qualified serving");
     for (const auto& project:state.capacity->projects) if (!projects.contains(project.id)) invalid("Rival has an unowned work project");
     for (const auto& change:state.market->demand_changes) {

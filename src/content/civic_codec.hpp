@@ -4,6 +4,7 @@
 #include "society_codec.hpp"
 #include "authority_codec.hpp"
 #include "frontier_codec.hpp"
+#include "succession_codec.hpp"
 #include <nlohmann/json.hpp>
 #include <limits>
 #include <stdexcept>
@@ -59,10 +60,16 @@ template<class T, class Field> void fields(T& row, Field field) {
         society_codec::fields(row,field);
         authority_codec::fields(row,field);
         frontier_codec::fields(row,field);
+        succession_codec::fields(row,field);
     }
 }
 template<class T> constexpr std::size_t maximum_rows() {
-    if constexpr (std::is_same_v<T,core::SocietyMonth>) return core::society_month_limit;
+    if constexpr (std::is_same_v<T,core::LeadershipTerm>) return core::succession_term_limit;
+    else if constexpr (std::is_same_v<T,core::LeadershipControl> || std::is_same_v<T,core::SuccessionNotice>) return core::succession_notice_limit;
+    else if constexpr (std::is_same_v<T,core::SuccessionPlan>) return core::succession_plan_limit;
+    else if constexpr (std::is_same_v<T,core::LeadershipTrack>) return 4;
+    else if constexpr (std::is_same_v<T,core::BoardBallot>) return 17;
+    else if constexpr (std::is_same_v<T,core::SocietyMonth>) return core::society_month_limit;
     else if constexpr (std::is_same_v<T,core::AuthorityMonth>) return core::society_month_limit;
     else if constexpr (std::is_same_v<T,core::FrontierTrial>) return core::frontier_trial_limit;
     else if constexpr (std::is_same_v<T,core::FrontierSystem>) return core::frontier_system_limit;
@@ -89,6 +96,10 @@ template<class T> T decode(const Json& value) {
     } else if constexpr (std::is_same_v<T, bool>) {
         if (!value.is_boolean()) invalid();
         return value.get<bool>();
+    } else if constexpr (succession_codec::enum_count<T> != 0) {
+        const auto number=decode<unsigned>(value);
+        if(number>=succession_codec::enum_count<T>) invalid();
+        return static_cast<T>(number);
     } else if constexpr (std::is_same_v<T, core::ProductChannel>) {
         return core::parse_channel(decode<std::string>(value));
     } else if constexpr (authority_codec::is_enum<T>) {
@@ -146,6 +157,7 @@ template<class T> T decode(const Json& value) {
 }
 template<class T> Json encode(const T& value) {
     if constexpr (std::is_same_v<T, std::string> || std::is_integral_v<T>) return value;
+    else if constexpr (succession_codec::enum_count<T> != 0) return static_cast<unsigned>(value);
     else if constexpr (std::is_same_v<T, core::ProductChannel>) return core::channel_key(value);
     else if constexpr (authority_codec::is_enum<T>) return core::authority_key(value);
     else if constexpr (frontier_codec::enum_count<T> != 0) return core::frontier_key(value);

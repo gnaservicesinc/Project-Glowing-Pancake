@@ -109,6 +109,7 @@ std::vector<BoardBallot> ballots_for(const SimulationState& s,const BoardMotion&
         }
         if (f.board_seat && preceded) members.push_back({"seat/"+f.id,f.name+" representative",1,false,f.covenant_cash_floor,BasisPoints{1500}});
     }
+    members=succession_board(s,std::move(members),motion.leadership_cursor);
     std::vector<BoardBallot> votes;
     for (const auto& member:members) votes.push_back({member.id,member.seats,member.player?player:
         after>=member.cash_floor && motion.shares<=member.maximum_dilution});
@@ -132,7 +133,7 @@ std::vector<BoardMember> current_board(const SimulationState& s) {
         const auto& f=find(catalog(s).financing,m.subject);
         if (f.board_seat) rows.push_back({"seat/"+f.id,f.name+" representative",1,false,f.covenant_cash_floor,BasisPoints{1500}});
     }
-    return rows;
+    return succession_board(s,std::move(rows),s.succession?s.succession->controls.size():0);
 }
 void company_equity(SimulationState& s,std::string investor,Cents proceeds,BasisPoints acquired,std::string key,bool assets) {
     if (!s.accounts) invalid("Equity requires company accounts");
@@ -180,7 +181,8 @@ void vote_board_motion(SimulationState& s,std::string_view id,bool support,Cents
     if (it==g.motions.end() || it->status!=BoardMotionStatus::pending || s.date>=it->deadline) invalid("The board motion is resolved or its response window has ended");
     auto& m=*it;
     if (m.kind==BoardMotionKind::acquisition && m.cash>checked_unit_subtract(s.cash,protected_cash)) invalid("The acquisition exceeds unreserved cash");
-    m.reviewed_cash=s.cash;m.posting_cursor=s.accounts->postings.size();m.player_vote=support;m.ballots=ballots_for(s,m,support,s.cash);
+    m.reviewed_cash=s.cash;m.posting_cursor=s.accounts->postings.size();m.leadership_cursor=s.succession?s.succession->controls.size():0;
+    m.player_vote=support;m.ballots=ballots_for(s,m,support,s.cash);
     std::uint32_t yes=0,total=0;for (const auto& b:m.ballots) {total+=b.seats;if (b.support) yes+=b.seats;}
     m.resolved_on=s.date;m.status=yes>total/2?BoardMotionStatus::approved:BoardMotionStatus::rejected;
     if (m.status==BoardMotionStatus::approved) {

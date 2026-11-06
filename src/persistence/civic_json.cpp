@@ -10,4 +10,6 @@ Json authority_json(const core::AuthorityState& value) {return content::civic_co
 core::AuthorityState parse_authority(const Json& value) {return content::civic_codec::decode<core::AuthorityState>(value);}
 Json frontier_json(const core::FrontierState& value) {return content::civic_codec::encode(value);}
 core::FrontierState parse_frontier(const Json& value) {return content::civic_codec::decode<core::FrontierState>(value);}
+Json succession_json(const core::SuccessionState& value) {return content::civic_codec::encode(value);}
+core::SuccessionState parse_succession(const Json& value) {return content::civic_codec::decode<core::SuccessionState>(value);}
 }

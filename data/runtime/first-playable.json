@@ -1,6 +1,6 @@
 {
   "content_schema": 1,
-  "content_version": "0.11.0-dev.1",
+  "content_version": "0.12.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -12288,7 +12288,63 @@
             "name": "Evaluation and service specialist",
             "signing_cost_cents": 200000
           }
-        ]
+        ],
+        "succession": {
+          "caretaker_term_years": 5,
+          "cash_floor_cents": 10000000,
+          "chair_retirement_age": 80,
+          "chair_salary_cents": 200000,
+          "chair_seats": 1,
+          "executive_retirement_age": 70,
+          "founder_birth_year": 1980,
+          "founder_board": "board.founder",
+          "founder_name": "Founding director",
+          "founder_salary_cents": 500000,
+          "maximum_candidate_age": 60,
+          "maximum_term_years": 20,
+          "minimum_candidate_age": 35,
+          "personal_cash_cents": 0,
+          "personal_liabilities_cents": 0,
+          "planning_notice_days": 365,
+          "tracks": [
+            {
+              "cohort_years": 20,
+              "first_birth_year": 1990,
+              "id": "leadership.delivery",
+              "monthly_salary_cents": 1800000,
+              "names": [
+                "Mira Chen",
+                "Adrian Vale",
+                "Noor Alvarez",
+                "Tessa Marin",
+                "Robin Okafor",
+                "Emery Tran"
+              ],
+              "priorities": "Preserve signed customer work, publish measured service evidence and maintain cash discipline.",
+              "signing_cost_cents": 2500000
+            },
+            {
+              "cohort_years": 20,
+              "first_birth_year": 1992,
+              "id": "leadership.research",
+              "monthly_salary_cents": 2100000,
+              "names": [
+                "Leila Park",
+                "Samir Mora",
+                "Avery Mensah",
+                "Inez Rowan",
+                "Dev Patel",
+                "Jules Santos"
+              ],
+              "priorities": "Fund reproducible research while retaining existing product and employee commitments.",
+              "signing_cost_cents": 3500000
+            }
+          ],
+          "transition_days": 90,
+          "transition_work_milli_CU": 900000,
+          "trust_seats": 1,
+          "vote_window_days": 14
+        }
       },
       "market": {
         "contracts": [],
@@ -12335,7 +12391,7 @@
         "research.refresh_measurement"
       ],
       "resilience": "resilience.domestic",
-      "revision": 1,
+      "revision": 2,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -15040,7 +15096,63 @@
             "name": "Evaluation and service specialist",
             "signing_cost_cents": 200000
           }
-        ]
+        ],
+        "succession": {
+          "caretaker_term_years": 5,
+          "cash_floor_cents": 10000000,
+          "chair_retirement_age": 80,
+          "chair_salary_cents": 200000,
+          "chair_seats": 1,
+          "executive_retirement_age": 70,
+          "founder_birth_year": 1980,
+          "founder_board": "board.founder",
+          "founder_name": "Founding director",
+          "founder_salary_cents": 500000,
+          "maximum_candidate_age": 60,
+          "maximum_term_years": 20,
+          "minimum_candidate_age": 35,
+          "personal_cash_cents": 0,
+          "personal_liabilities_cents": 0,
+          "planning_notice_days": 365,
+          "tracks": [
+            {
+              "cohort_years": 20,
+              "first_birth_year": 1990,
+              "id": "leadership.delivery",
+              "monthly_salary_cents": 1800000,
+              "names": [
+                "Mira Chen",
+                "Adrian Vale",
+                "Noor Alvarez",
+                "Tessa Marin",
+                "Robin Okafor",
+                "Emery Tran"
+              ],
+              "priorities": "Preserve signed customer work, publish measured service evidence and maintain cash discipline.",
+              "signing_cost_cents": 2500000
+            },
+            {
+              "cohort_years": 20,
+              "first_birth_year": 1992,
+              "id": "leadership.research",
+              "monthly_salary_cents": 2100000,
+              "names": [
+                "Leila Park",
+                "Samir Mora",
+                "Avery Mensah",
+                "Inez Rowan",
+                "Dev Patel",
+                "Jules Santos"
+              ],
+              "priorities": "Fund reproducible research while retaining existing product and employee commitments.",
+              "signing_cost_cents": 3500000
+            }
+          ],
+          "transition_days": 90,
+          "transition_work_milli_CU": 900000,
+          "trust_seats": 1,
+          "vote_window_days": 14
+        }
       },
       "market": {
         "contracts": [],
@@ -15087,7 +15199,7 @@
         "research.refresh_measurement"
       ],
       "resilience": "resilience.domestic",
-      "revision": 1,
+      "revision": 2,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

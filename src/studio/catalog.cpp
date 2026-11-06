@@ -33,6 +33,7 @@ std::string record_family(std::string_view path,std::string_view kind) {
     if(array.ends_with("/governance/financing")) return "corporate_financing";
     if(array.ends_with("/governance/executives")) return "executive";
     if(array.ends_with("/governance/board")) return "board";
+    if(array.ends_with("/succession/tracks")) return "leadership_track";
     if(array.ends_with("/management/financing")) return "financing";
     if(array.ends_with("/management/specialists")) return "specialist";
     if(array.ends_with("/management/setbacks")) return "setback";
@@ -54,6 +55,7 @@ std::string reference_family(std::string_view key,std::string_view path,std::str
     if(key=="society") return "regional_society";
     if(key=="authority") return "institutional_authority";
     if(key=="frontier") return "frontier_research";
+    if(key=="founder_board") return "board";
     if(kind=="frontier_research" && (key=="refresh_research" || key=="research")) return "research";
     if(array=="flows") return "flow";
     if(array=="research" || array=="requires_research" || array=="all_of" || array=="any_of" || key=="publication_node" || key=="publication_research") return "research";

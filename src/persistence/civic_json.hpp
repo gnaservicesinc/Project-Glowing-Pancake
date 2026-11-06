@@ -5,6 +5,7 @@
 #include <pgp/core/society.hpp>
 #include <pgp/core/authority.hpp>
 #include <pgp/core/frontier.hpp>
+#include <pgp/core/succession.hpp>
 
 namespace pgp::persistence::detail {
 [[nodiscard]] Json civic_json(const core::CivicState&);
@@ -15,4 +16,6 @@ namespace pgp::persistence::detail {
 [[nodiscard]] core::AuthorityState parse_authority(const Json&);
 [[nodiscard]] Json frontier_json(const core::FrontierState&);
 [[nodiscard]] core::FrontierState parse_frontier(const Json&);
+[[nodiscard]] Json succession_json(const core::SuccessionState&);
+[[nodiscard]] core::SuccessionState parse_succession(const Json&);
 }

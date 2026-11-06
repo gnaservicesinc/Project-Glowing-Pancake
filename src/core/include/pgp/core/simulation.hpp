@@ -109,6 +109,7 @@ struct SimulationState {
     std::optional<ResilienceState> resilience{};
     std::optional<CivicState> civic{};
     std::optional<FrontierState> frontier{};
+    std::optional<SuccessionState> succession{};
     auto operator<=>(const SimulationState&) const = default;
 };
 
@@ -185,7 +186,8 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    FundPolicyAdvocacy,SubmitPolicyEvidence,BuyMediaCampaign,EndorseForumStandard,
                                    SubmitPublicTestimony,MakePublicPromise,RequestInstitutionalMandate,NegotiatePublicCase,
                                    NegotiateExecutiveDispute,AcknowledgePublicCase,RelinquishInstitutionalMandate,DirectRegionalProcurement,
-                                   RegisterFrontierSystem,StartFrontierTrial,AuthorizeFrontierResearch,AuthorizeFrontierRefresh,CancelFrontierPolicy>;
+                                   RegisterFrontierSystem,StartFrontierTrial,AuthorizeFrontierResearch,AuthorizeFrontierRefresh,CancelFrontierPolicy,
+                                   ProposeSuccession,VoteSuccession,CancelSuccession,RetireFounderChair,AcknowledgeSuccession>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

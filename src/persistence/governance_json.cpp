@@ -1,4 +1,5 @@
 #include "governance_json.hpp"
+#include <pgp/core/succession.hpp>
 namespace pgp::persistence::detail {
 namespace {
 std::string label(const Json& j) {return text(j,"governance/text",256);}
@@ -19,6 +20,7 @@ Json governance_json(const core::GovernanceState& g) {
         motions.push_back({{"id",m.id},{"subject",m.subject},{"kind",static_cast<unsigned>(m.kind)},{"status",static_cast<unsigned>(m.status)},
             {"opened_on",m.opened_on.value()},{"deadline",m.deadline.value()},{"resolved_on",optional_day(m.resolved_on)},{"cash",m.cash.value()},{"asset_value",m.asset_value.value()},
             {"reviewed_cash",m.reviewed_cash.value()},{"shares",m.shares.value()},{"posting_cursor",m.posting_cursor},{"player_vote",m.player_vote?Json(*m.player_vote):Json(nullptr)},{"ballots",std::move(ballots)},{"executed",m.executed}});
+        if(m.leadership_cursor) motions.back()["leadership_cursor"]=m.leadership_cursor;
     }
     for (const auto& d:g.disputes) {
         Json row{{"id",d.id},{"subject",d.subject},{"kind",d.kind},{"opened_on",d.opened_on.value()},{"deadline",d.deadline.value()},
@@ -38,12 +40,13 @@ core::GovernanceState parse_governance(const Json& j) {
     for (const auto& r:j.at("grants")) {fields(r,"governance/grant",{"candidate","unvested","departed"});g.grants.push_back({label(r.at("candidate")),bp(r.at("unvested")),boolean(r.at("departed"),"governance/departed")});}
     for (const auto& e:j.at("capital")) {fields(e,"governance/capital-event",{"kind","subject","key","day","shares","consideration"});g.capital.push_back({label(e.at("kind")),label(e.at("subject")),label(e.at("key")),day(e.at("day")),bp(e.at("shares")),cents(e.at("consideration"))});}
     for (const auto& m:j.at("motions")) {
-        fields(m,"governance/motion",{"id","subject","kind","status","opened_on","deadline","resolved_on","cash","asset_value","reviewed_cash","shares","posting_cursor","player_vote","ballots","executed"});
+        fields(m,"governance/motion",{"id","subject","kind","status","opened_on","deadline","resolved_on","cash","asset_value","reviewed_cash","shares","posting_cursor","player_vote","ballots","executed"},{"leadership_cursor"});
         core::BoardMotion r;r.id=label(m.at("id"));r.subject=label(m.at("subject"));r.kind=static_cast<core::BoardMotionKind>(u64(m.at("kind"),"governance/motion-kind",2));r.status=static_cast<core::BoardMotionStatus>(u64(m.at("status"),"governance/motion-status",3));
         r.opened_on=day(m.at("opened_on"));r.deadline=day(m.at("deadline"));r.resolved_on=optional_day(m.at("resolved_on"));r.cash=cents(m.at("cash"));r.asset_value=cents(m.at("asset_value"));r.reviewed_cash=cents(m.at("reviewed_cash"));r.shares=bp(m.at("shares"));r.posting_cursor=u64(m.at("posting_cursor"),"governance/posting-cursor",core::accounts_posting_limit);
         if (!m.at("player_vote").is_null()) r.player_vote=boolean(m.at("player_vote"),"governance/vote");
-        array(m.at("ballots"),"governance/ballots",16);for (const auto& b:m.at("ballots")) {fields(b,"governance/ballot",{"member","seats","support"});r.ballots.push_back({label(b.at("member")),static_cast<std::uint32_t>(u64(b.at("seats"),"governance/seats",3)),boolean(b.at("support"),"governance/support")});}
+        array(m.at("ballots"),"governance/ballots",17);for (const auto& b:m.at("ballots")) {fields(b,"governance/ballot",{"member","seats","support"});r.ballots.push_back({label(b.at("member")),static_cast<std::uint32_t>(u64(b.at("seats"),"governance/seats",3)),boolean(b.at("support"),"governance/support")});}
         r.executed=boolean(m.at("executed"),"governance/executed");g.motions.push_back(std::move(r));
+        if(m.contains("leadership_cursor")) g.motions.back().leadership_cursor=u64(m.at("leadership_cursor"),"governance/leadership-cursor",core::succession_notice_limit);
     }
     for (const auto& d:j.at("disputes")) {
         fields(d,"governance/dispute",{"id","subject","kind","opened_on","deadline","status","resolved_on","acknowledged","opening_cash","posting_cursor","publication_cursor"},{"negotiated_on","review_project"});

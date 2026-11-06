@@ -200,6 +200,7 @@ Registry foundation_registry() {
     result.register_system("society", {"slice"});
     result.register_system("authority", {"society","civic"});
     result.register_system("frontier", {"slice"});
+    result.register_system("succession", {"slice"});
     const auto maximum = std::numeric_limits<std::int64_t>::max();
     const auto minimum = std::numeric_limits<std::int64_t>::min();
     auto number = [&](std::string id, Scope scope, Unit unit, std::int64_t low, std::int64_t high, std::string help,std::string provider="foundation") {
@@ -233,6 +234,9 @@ Registry foundation_registry() {
     boolean("company.frontier_era_today","The conditional future opens on this prepared morning.",Scope::company,"frontier");
     boolean("company.game_agi_today","Independent assessments establish the game AGI requirements today.",Scope::company,"frontier");
     boolean("company.game_asi_today","Independent experiments establish the game ASI requirements today.",Scope::company,"frontier");
+    boolean("company.has_succession_charter","This institution has a finite executive succession charter.",Scope::company,"succession");
+    boolean("company.leadership_handover_today","A prepared successor or charter caretaker took office on this morning.",Scope::company,"succession");
+    boolean("company.founder_is_chair","The original founder currently holds the personal chair role.",Scope::company,"succession");
     for(std::size_t i=0;i<5;++i) {
         const auto key=std::string(core::welfare_index_key(i));
         number("world.welfare_"+key+"_bp",Scope::world,Unit::basis_points,0,10000,"Population-weighted regional welfare, 100 bp = 1 point.","society");

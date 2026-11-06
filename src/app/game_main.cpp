@@ -46,6 +46,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("society-smoke"),QStringLiteral("Exercise regional outcomes, paid media and standards disclosures in the explicit playable smoke.")});
     parser.addOption({QStringLiteral("institutions-smoke"),QStringLiteral("Exercise public testimony, disputes and a funded institutional agreement.")});
     parser.addOption({QStringLiteral("frontier-smoke"),QStringLiteral("Exercise Frontier controls with an explicit local late-era fixture.")});
+    parser.addOption({QStringLiteral("leadership-smoke"),QStringLiteral("Exercise succession, board review and the retained founder trust with an explicit local fixture.")});
     parser.addOption({QStringLiteral("screenshot"),QStringLiteral("Capture the smoke-test window."),QStringLiteral("file")});
     parser.process(application);
     if (parser.isSet(QStringLiteral("build-info"))) { core::write_build_identity(std::cout); return 0; }
@@ -53,14 +54,15 @@ int main(int argc, char* argv[]) {
     const bool society_smoke = parser.isSet(QStringLiteral("society-smoke"));
     const bool institutions_smoke = parser.isSet(QStringLiteral("institutions-smoke"));
     const bool frontier_smoke = parser.isSet(QStringLiteral("frontier-smoke"));
+    const bool leadership_smoke = parser.isSet(QStringLiteral("leadership-smoke"));
     const bool infrastructure_smoke = parser.isSet(QStringLiteral("infrastructure-smoke"));
     const bool competition_smoke = parser.isSet(QStringLiteral("competition-smoke"));
     const auto variants = static_cast<int>(society_smoke) + static_cast<int>(institutions_smoke) +
-        static_cast<int>(civic_smoke) + static_cast<int>(infrastructure_smoke) + static_cast<int>(competition_smoke) + static_cast<int>(frontier_smoke);
+        static_cast<int>(civic_smoke) + static_cast<int>(infrastructure_smoke) + static_cast<int>(competition_smoke) + static_cast<int>(frontier_smoke) + static_cast<int>(leadership_smoke);
     if (!parser.positionalArguments().isEmpty() ||
         (parser.isSet(QStringLiteral("screenshot")) && !parser.isSet(QStringLiteral("smoke-test"))) ||
         (variants > 0 && !parser.isSet(QStringLiteral("smoke-test"))) || variants > 1 ||
-        (frontier_smoke && !parser.isSet(QStringLiteral("content"))) ||
+        ((frontier_smoke || leadership_smoke) && !parser.isSet(QStringLiteral("content"))) ||
         (parser.isSet(QStringLiteral("smoke-test")) && !parser.isSet(QStringLiteral("portable-root")))) parser.showHelp(2);
     try {
         const bool bundled=!parser.isSet(QStringLiteral("content"));
@@ -114,7 +116,9 @@ int main(int argc, char* argv[]) {
         });
         if (parser.isSet(QStringLiteral("smoke-test"))) {
             window->resize(1280,720);
-            if (frontier_smoke)
+            if (leadership_smoke)
+                schedule_succession_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
+            else if (frontier_smoke)
                 schedule_frontier_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
             else if (society_smoke || institutions_smoke)
                 schedule_society_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")),institutions_smoke);

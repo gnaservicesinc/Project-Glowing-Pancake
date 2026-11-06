@@ -80,6 +80,7 @@ struct BoardMotion {
     std::optional<bool> player_vote;
     std::vector<BoardBallot> ballots;
     bool executed=false;
+    std::uint64_t leadership_cursor=0;
     auto operator<=>(const BoardMotion&) const = default;
 };
 enum class CorporateDisputeStatus { concern,formal,resolved,departed,accelerated,waived };

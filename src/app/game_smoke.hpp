@@ -21,3 +21,5 @@ void schedule_society_smoke(QQuickWindow& window, pgp::bridge::CampaignControlle
     QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot, bool institutions = false);
 void schedule_frontier_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
     QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot);
+void schedule_succession_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
+    QSGRendererInterface::GraphicsApi expected, pgp::persistence::LocalPaths paths, QString screenshot);

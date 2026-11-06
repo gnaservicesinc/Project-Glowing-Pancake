@@ -121,7 +121,7 @@ void validate_governance(const SimulationState& s,bool deep) {
         const auto& m=g.motions[index];
         if (m.executed && (!m.resolved_on || m.status!=BoardMotionStatus::approved)) invalid("An executed motion lacks an approved dated vote");
         if (m.id!="board."+std::to_string(index+1) || m.opened_on<s.accounts->starts_on || m.opened_on>s.date ||
-            m.deadline!=advance_days(m.opened_on,c.vote_window) || m.deadline>=s.end_date || m.ballots.size()>16 || m.cash.value()<0 || m.asset_value.value()<0 ||
+            m.deadline!=advance_days(m.opened_on,c.vote_window) || m.deadline>=s.end_date || m.ballots.size()>17 || m.cash.value()<0 || m.asset_value.value()<0 ||
             (m.resolved_on && (*m.resolved_on<m.opened_on || *m.resolved_on>s.date))) invalid("Board motion has invalid identity, response window or terms");
         if (m.kind==BoardMotionKind::financing) {
             const auto& f=find(c.financing,m.subject);
@@ -142,10 +142,14 @@ void validate_governance(const SimulationState& s,bool deep) {
             if (m.subject.empty() || m.cash.value()<=0 || m.asset_value<m.cash || m.shares>c.acquisition_equity) invalid("Acquisition board terms are malformed");
         } else invalid("Unsupported board motion kind");
         if (m.status==BoardMotionStatus::pending || m.status==BoardMotionStatus::expired) {
-            if (m.player_vote || !m.ballots.empty() || m.posting_cursor!=0 || m.reviewed_cash.value()!=0 || m.executed ||
+            if (m.player_vote || !m.ballots.empty() || m.posting_cursor!=0 || m.leadership_cursor!=0 || m.reviewed_cash.value()!=0 || m.executed ||
                 (m.status==BoardMotionStatus::pending ? m.resolved_on.has_value() || s.date>=m.deadline:m.resolved_on!=m.deadline || s.date<m.deadline)) invalid("Unvoted board motion contains a fabricated result");
         } else {
             if (!m.player_vote || !m.resolved_on || *m.resolved_on>=m.deadline || m.posting_cursor>s.accounts->postings.size()) invalid("Board decision lacks its actual vote boundary");
+            if(s.succession && (m.leadership_cursor==0 || m.leadership_cursor>s.succession->controls.size() ||
+                s.succession->controls[m.leadership_cursor-1].day>*m.resolved_on ||
+                (m.leadership_cursor<s.succession->controls.size() && s.succession->controls[m.leadership_cursor].day<*m.resolved_on)))
+                invalid("Board votes used leadership rights from a different date.");
             std::int64_t cash=0;for (std::size_t i=0;i<m.posting_cursor;++i) {const auto& p=s.accounts->postings[i];if (p.day>*m.resolved_on) invalid("Board review includes future postings");if (p.debit==Account::cash) cash=checked_add(cash,p.amount.value());if (p.credit==Account::cash) cash=checked_subtract(cash,p.amount.value());}
             if (m.reviewed_cash!=Cents{cash} || m.ballots!=ballots_for(s,m,*m.player_vote,m.reviewed_cash)) invalid("Board votes differ from actual seats, rights or disclosed positions");
             std::uint32_t yes=0,total=0;for (const auto& b:m.ballots) {total+=b.seats;if (b.support) yes+=b.seats;}

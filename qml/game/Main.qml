@@ -171,6 +171,12 @@ ApplicationWindow {
                         onClicked: window.room = "frontier"
                     }
                     Action {
+                        objectName: "leadershipTab"; text: qsTr("Leadership")
+                        visible: !campaign.welcome && campaign.leadership.available
+                        checked: window.room === "leadership"
+                        onClicked: window.room = "leadership"
+                    }
+                    Action {
                         objectName: "pauseButton"
                         text: campaign.paused ? qsTr("Play") : qsTr("Pause")
                         enabled: !campaign.busy && (!campaign.paused || campaign.canPlay)
@@ -195,6 +201,7 @@ ApplicationWindow {
                         id: milestoneChoice
                         implicitWidth: window.textSize * 11
                         model: [{id:"project",label:qsTr("Next project")},{id:"evaluation",label:qsTr("Next evaluation")},{id:"deadline",label:qsTr("Next deadline")}]
+                            .concat(campaign.leadership.available ? [{id:"leadership",label:qsTr("Next leadership date")}] : [])
                         textRole: "label"
                         font.pixelSize: window.textSize
                         Accessible.name: qsTr("Advance target")
@@ -317,6 +324,17 @@ ApplicationWindow {
                                 visible: campaign.requiredKind === "institution" || campaign.requiredKind === "executive" || campaign.requiredKind === "governance"
                                 enabled: !campaign.busy
                                 onClicked: campaign.acknowledgeInstitutionalNotice()
+                            }
+                            Action {
+                                objectName: "openLeadershipNotice"; text: qsTr("Open Leadership")
+                                visible: campaign.requiredKind === "leadership"
+                                onClicked: window.room = "leadership"
+                            }
+                            Action {
+                                objectName: "acknowledgeLeadershipNotice"; text: qsTr("Acknowledge leadership notice")
+                                visible: campaign.requiredKind === "leadership"
+                                enabled: !campaign.busy
+                                onClicked: campaign.leadership.acknowledge()
                             }
                         }
                     }
@@ -473,8 +491,12 @@ ApplicationWindow {
                     visible: !campaign.welcome && campaign.frontier.available && window.room === "frontier"
                     contentItem: FrontierPanel { textSize: window.textSize }
                 }
+                Panel {
+                    visible: !campaign.welcome && campaign.leadership.available && window.room === "leadership"
+                    contentItem: SuccessionPanel { textSize: window.textSize }
+                }
                 GridLayout {
-                    visible: !campaign.welcome && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && window.room !== "institutions" && window.room !== "frontier" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
+                    visible: !campaign.welcome && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && window.room !== "institutions" && window.room !== "frontier" && window.room !== "leadership" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
                     Layout.fillWidth: true
                     columns: window.narrow || campaign.compactManagement ? 1 : 2
                     columnSpacing: 10

@@ -1059,6 +1059,10 @@ void validate_references(const Collection& collection, const Registry& registry)
     for (const auto& [name, definition] : collection.definitions) {
         const auto path = child("/definitions", name);
         if (const auto* scenario_definition = std::get_if<ScenarioDefinition>(&definition.data)) {
+            if(scenario_definition->management && scenario_definition->management->succession) {
+                if(!scenario_definition->management->governance) fail("succession",path,"A scenario succession charter needs its actual founding board rights.");
+                core::validate_succession_opening(*scenario_definition->management->succession,scenario_definition->starts_on,scenario_definition->ends_before);
+            }
             for (const auto& target : scenario_definition->research) (void)reference(target, "research", path);
             if (!scenario_definition->regional_markets.empty()) {
                 (void)reference(scenario_definition->regional_markets,"regional_markets",path);

@@ -73,6 +73,9 @@ inline std::string help(std::string_view path) {
     if(key=="asi_route") return "Every seeded path needs a feasible game ASI recipe, evidence and replication route when selected.";
     if(key=="refresh_review_age_days") return "Maximum age of a completed deployment methods experiment at refresh start and rollout.";
     if(key=="repeat_limit") return "Maximum completed finite experiments for this topic. Each repeat needs actual funding, staff and work.";
+    if(key=="founder_birth_year" || key=="first_birth_year") return "Calendar birth year used for the charter's finite careers. Later cohorts are distinct people with separate identities.";
+    if(key=="founder_board") return "The founder's existing board rights. The charter changes their personal chair and trust representation after succession.";
+    if(key=="maximum_term_years" || key=="executive_retirement_age" || key=="chair_retirement_age") return "Career limit in calendar years. Planning notices precede the actual deadline and the caretaker charter preserves company obligations.";
     if(path.find("/identity_effects_bp/")!=path.npos) return "Signed audience confidence change when this public event occurs. Its effect fades over the authored memory window.";
     if(key=="map_sha256" || key=="map_asset_id") return "Identity of the prepared offline map asset. Retain its matching hash and provenance.";
     if(key=="assumptions") return "Visible authored-balance assumptions. Label fictional exposure and future parameters honestly.";
@@ -107,6 +110,8 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
     const auto* def=draft.collection().find(scenario);
     if(!def || !std::holds_alternative<content::ScenarioDefinition>(def->data)) return out;
     const auto& s=std::get<content::ScenarioDefinition>(def->data);
+    if(key=="founder_board" && s.management && s.management->governance)
+        for(const auto& member:s.management->governance->board) if(member.player) add(member.id,member.name);
     if(parent.find("/catalog/gates/")!=parent.npos) {
         if(key=="kind") for(const auto kind:{core::FrontierTechnology::data,core::FrontierTechnology::research,
                 core::FrontierTechnology::recipe,core::FrontierTechnology::hardware}) {

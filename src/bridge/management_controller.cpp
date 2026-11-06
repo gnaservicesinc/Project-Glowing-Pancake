@@ -250,7 +250,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
         const auto* product=find(rival.market->products,release.product_id);if (!product) continue;
         rivals.push_back({QStringLiteral("release:")+text(release.company_id)+QLatin1Char(':')+text(release.product_id),text(definition.name)+QStringLiteral(" · ")+readable(release.product_id),
             money(product->price_per_task)+QStringLiteral(" per task"),QStringLiteral("Public customer deliveries began %1. %2 · %3. This quote reveals the price of a released service; private model capability, cash and future decisions stay hidden.")
-                .arg(text(core::iso_date(release.day)),text(definition.planning->leader),text(definition.planning->region)),rival.phase==core::DayPhase::closed?QStringLiteral("Closed provider"):(company->response && company->response->retired_on)?QStringLiteral("Withdrawn program"):QStringLiteral("Public service"),false});
+                .arg(text(core::iso_date(release.day)),text(rival.succession?rival.succession->terms.back().name:definition.planning->leader),text(definition.planning->region)),rival.phase==core::DayPhase::closed?QStringLiteral("Closed provider"):(company->response && company->response->retired_on)?QStringLiteral("Withdrawn program"):QStringLiteral("Public service"),false});
     }
     if (snapshot_->checkpoint.world.competition) for (const auto& company:snapshot_->checkpoint.world.competition->companies) {
         if (!company.simulation.frontier) continue;

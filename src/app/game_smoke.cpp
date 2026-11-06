@@ -1175,3 +1175,109 @@ void schedule_frontier_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
     });
     timer->start();
 }
+
+void schedule_succession_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,
+    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot) {
+    using namespace pgp;
+    struct State {
+        int phase=0,attempts=0;
+        core::Cents cash{0};core::OrdinalDay handover{0};
+        std::vector<core::EquityHolding> holdings;
+        bridge::CampaignSnapshotPtr saved;
+    };
+    const auto run=std::make_shared<State>();auto* timer=new QTimer(&window);timer->setInterval(24);
+    const auto starting=paths.saves_directory/"leadership-start.pgpsave";
+    const auto save=paths.saves_directory/"leadership-smoke.pgpsave";
+    const auto url=QUrl::fromLocalFile(QString::fromStdU16String(save.u16string()));
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,run,expected,starting,save,url,screenshot] {
+        const auto fail=[&](const char* why){qCritical()<<"Leadership smoke failed"<<run->phase<<why<<campaign.notice();timer->stop();QCoreApplication::exit(3);};
+        const auto item=[&](const char* name){return visual_item(window.contentItem(),QString::fromLatin1(name));};
+        const auto press=[&](const char* name){auto* control=item(name);reveal_top(control);if(key(window,control,Qt::Key_Space)) return true;fail(name);return false;};
+        const auto set=[&](const char* name,const char* value){auto* field=item(name);if(field && field->setProperty("text",QString::fromLatin1(value))) return true;fail(name);return false;};
+        const auto capture=[&](QString suffix,const char* reveal) {
+            if(screenshot.isEmpty()) return true;
+            auto target=screenshot;
+            if(!suffix.isEmpty()) {const auto dot=target.lastIndexOf(u'.');if(dot>=0) target.truncate(dot);target+=suffix+QStringLiteral(".png");}
+            reveal_top(item(reveal));if(window.grabWindow().save(target)) return true;fail("leadership screenshot");return false;
+        };
+        if(++run->attempts>1800) {fail("timed out");return;}
+        if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
+        if(window.rendererInterface()->graphicsApi()!=expected) {fail("graphics backend");return;}
+        if(campaign.requiredKind()==QStringLiteral("content")) {
+            const auto choices=campaign.requiredChoices();if(choices.isEmpty()) {fail("required choice missing");return;}
+            campaign.choose(choices.back().toMap().value("choiceId").toString());return;
+        }
+        if(campaign.requiredKind()==QStringLiteral("management")) {campaign.acknowledgeManagement();return;}
+        if(campaign.requiredKind()==QStringLiteral("site")) {campaign.acknowledgeSiteAlert();return;}
+        const auto snapshot=campaign.snapshot();const auto& company=snapshot->checkpoint.world.simulation;
+        auto* desk=campaign.leadership();
+        switch(run->phase) {
+        case 0: campaign.loadFrom(QUrl::fromLocalFile(QString::fromStdU16String(starting.u16string())));++run->phase;return;
+        case 1:
+            if(!desk->available() || !desk->editable() || company.succession->terms.size()!=1) {fail("prepared leadership fixture");return;}
+            run->holdings=company.accounts->holdings;run->cash=company.cash;campaign.setDaysPerSecond(60);
+            if(press("leadershipTab")) ++run->phase;return;
+        case 2:
+            if(set("leadershipRate","10") && set("leadershipStaff","1") && press("leadershipRetainChair") && press("reviewLeadershipNomination")) ++run->phase;return;
+        case 3:
+            if(desk->reviewText().isEmpty() || !company.succession->plans.empty() || company.cash!=run->cash) {fail("nomination preview changed state");return;}
+            if(capture(QStringLiteral("-nomination"),"leadershipReview") && press("confirmLeadershipAction")) ++run->phase;return;
+        case 4:
+            if(company.succession->plans.size()!=1 || company.cash!=run->cash) {fail("nomination needs a real board vote");return;}
+            run->handover=company.succession->plans.front().handover_on;
+            if(press("reviewLeadershipSupport")) ++run->phase;return;
+        case 5:
+            if(desk->reviewText().isEmpty() || company.cash!=run->cash || !company.succession->plans.front().project.empty()) {fail("board preview changed cash or funded work");return;}
+            if(capture(QStringLiteral("-board"),"leadershipReview") && press("confirmLeadershipAction")) ++run->phase;return;
+        case 6: {
+            const auto& p=company.succession->plans.front();
+            const auto person=core::leadership_candidate(core::succession_catalog(company),p.candidate);
+            if(p.status!=core::SuccessionStatus::approved || core::checked_unit_subtract(run->cash,company.cash)!=person.signing_cost || p.ballots.empty()) {fail("paid board-approved transition");return;}
+            if(press("advanceLeadership")) ++run->phase;return;
+        }
+        case 7:
+            if(!campaign.paused()) return;
+            if(company.date<run->handover) {(void)press("advanceLeadership");return;}
+            if(company.date!=run->handover || company.succession->terms.size()!=2 || !desk->founderChair() ||
+                company.accounts->holdings!=run->holdings || campaign.requiredKind()!=QStringLiteral("leadership")) {fail("actual handover, retained trust or required review");return;}
+            if(capture({},"leadershipOverview") && press("acknowledgeLeadership")) ++run->phase;return;
+        case 8: if(press("reviewFounderChairRetirement")) ++run->phase;return;
+        case 9:
+            if(desk->reviewText().isEmpty() || !desk->founderChair()) {fail("chair retirement preview");return;}
+            if(capture(QStringLiteral("-chair"),"leadershipReview") && press("confirmLeadershipAction")) ++run->phase;return;
+        case 10:
+            if(core::founder_role(*company.succession)!=core::FounderRole::trust || company.accounts->holdings!=run->holdings || company.succession->terms.size()!=2) {fail("retained trust and operating successor");return;}
+            if(press("acknowledgeLeadership")) ++run->phase;return;
+        case 11: {
+            auto* picker=item("leadershipCandidate");const auto choices=picker?picker->property("model").toList():QVariantList{};
+            const auto current=QString::fromStdString(company.succession->terms.back().person);
+            for(qsizetype i=0;i<choices.size();++i) if(choices[i].toMap().value("id").toString()!=current) {
+                if(!key(window,picker,Qt::Key_Home)) {fail("successor picker");return;}
+                for(qsizetype step=0;step<i;++step) (void)key(window,picker,Qt::Key_Down);
+                if(press("reviewLeadershipNomination")) ++run->phase;return;
+            }
+            fail("next eligible successor");return;
+        }
+        case 12: if(press("confirmLeadershipAction")) ++run->phase;return;
+        case 13:
+            if(company.succession->plans.size()!=2) {fail("next leadership proposal");return;}
+            desk->plans()->setSelectedId(QStringLiteral("2"));++run->phase;return;
+        case 14: if(press("reviewLeadershipCancellation")) ++run->phase;return;
+        case 15: if(press("confirmLeadershipAction")) ++run->phase;return;
+        case 16:
+            if(company.succession->plans.back().status!=core::SuccessionStatus::cancelled || company.succession->terms.size()!=2) {fail("cancelled next plan displaced current executive");return;}
+            if(!capture(QStringLiteral("-trust"),"leadershipOverview")) return;
+            run->saved=snapshot;campaign.saveTo(url);++run->phase;return;
+        case 17:
+            if(!std::filesystem::is_regular_file(save)) {fail("leadership save missing");return;}
+            campaign.loadFrom(url);++run->phase;return;
+        default:
+            if(snapshot->generation==run->saved->generation || snapshot->checkpoint!=run->saved->checkpoint) {fail("exact leadership reload");return;}
+            qInfo().noquote()<<"Leadership smoke passed"<<graphics::name(expected)<<"text="<<campaign.textScalePercent()
+                <<"nomination, actual board vote/payment, prepared handover, founder chair retirement, cancelled next plan and exact reload"
+                <<std::filesystem::file_size(save)<<"bytes";
+            timer->stop();QCoreApplication::exit(0);
+        }
+    });
+    timer->start();
+}

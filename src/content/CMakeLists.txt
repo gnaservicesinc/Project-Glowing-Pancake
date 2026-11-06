@@ -1,4 +1,4 @@
-add_library(pgp_content STATIC registry.cpp collection.cpp market_setup.cpp business_plan.cpp lab_catalog.cpp world_setup.cpp management_catalog.cpp governance_catalog.cpp heavyweight_policy.cpp infrastructure_catalog.cpp resilience_catalog.cpp civic_catalog.cpp society_catalog.cpp authority_catalog.cpp frontier_catalog.cpp)
+add_library(pgp_content STATIC registry.cpp collection.cpp market_setup.cpp business_plan.cpp lab_catalog.cpp world_setup.cpp management_catalog.cpp governance_catalog.cpp heavyweight_policy.cpp infrastructure_catalog.cpp resilience_catalog.cpp civic_catalog.cpp society_catalog.cpp authority_catalog.cpp frontier_catalog.cpp succession_catalog.cpp)
 add_library(pgp::content ALIAS pgp_content)
 target_include_directories(pgp_content PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(pgp_content SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")

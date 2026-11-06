@@ -231,6 +231,13 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
         return value;
     }
     if (metadata.id == "company.cash_cents") return world.simulation.cash.value();
+    if(metadata.provider=="succession") {
+        const auto& state=world.simulation;
+        if(metadata.id=="company.has_succession_charter") return state.succession.has_value();
+        if(!state.succession) return false;
+        if(metadata.id=="company.founder_is_chair") return core::founder_role(*state.succession)==core::FounderRole::chair;
+        return state.succession->terms.size()>1 && state.succession->terms.back().starts_on==state.date;
+    }
     if (metadata.provider=="frontier") {
         const auto& state=world.simulation;
         if (!state.frontier) return false;

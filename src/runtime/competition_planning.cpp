@@ -282,6 +282,8 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
     state.management=ManagementState{*authored.management,{},{},{},{},{},{}};state.management->catalog.setbacks.clear();
     state.management->catalog.governance.reset();
     state.management->catalog.scoring.founder="founder";
+    if(state.management->catalog.succession) state.management->catalog.succession->founder_name=definition.planning->leader;
+    initialize_succession(state);
     if (definition.response) {state.management->catalog.financing.clear();state.capacity->sources.front().effective=MilliCUPerDay{0};}
     if (!definition.response && world.competition->setup->catchup_cash.value()>0) state.management->catalog.financing.push_back({"finance.disclosed_catchup","Disclosed finite catch-up equity",world.competition->setup->catchup_cash,world.competition->setup->catchup_acquired,BasisPoints{0},Days{0}});
     BusinessOffersState growth;
@@ -292,6 +294,8 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
 RivalObservation public_observation(const WorldState& world,OrdinalDay day,std::uint64_t draw) {return observe(world,day,draw);}
 bool submit_rival(RivalCompany& rival,CommandAction action) {return submit(rival,std::move(action));}
 void review_rival(WorldState& world,const CompiledProgram& program,RivalCompany& rival) {
+    while(const auto* notice=required_succession_notice(rival.simulation))
+        if(!submit(rival,AcknowledgeSuccession{notice->id})) break;
     auto& plan=*rival.planning;if (!plan.entered_on || !active(rival.simulation) || rival.simulation.date<plan.next_review) return;
     if (rival.response && rival.response->phase!=HeavyweightPhase::compete) return;
     if (plan.decisions.size()>=8192) invalid("Rival weekly decision history exceeds its century bound");

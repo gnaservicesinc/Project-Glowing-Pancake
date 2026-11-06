@@ -2,6 +2,7 @@
 #include <pgp/core/lab.hpp>
 #include <pgp/core/market.hpp>
 #include <pgp/core/governance.hpp>
+#include <pgp/core/succession.hpp>
 
 namespace pgp::core {
 struct SimulationState;
@@ -41,6 +42,7 @@ struct ManagementCatalog {
     Cents default_policy_budget{0},default_reserve_floor{0},default_monthly_ceiling{0};
     std::uint32_t default_policy_runs=1;
     std::optional<GovernanceCatalog> governance{};
+    std::optional<SuccessionCatalog> succession{};
     auto operator<=>(const ManagementCatalog&) const = default;
 };
 struct ManagementAcceptance {

@@ -1,13 +1,13 @@
 {
   "assets": [],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "cb6dcc1ebf95e25960b2c6715a8176fd29f0d56b41a8c688fb5c660673c099d7",
+  "collection_hash": "fd7ced86b8056098245152752ba60451d1bcb34fed5b33f2caa2842c1167229a",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.11.0-dev.1",
+  "content_version": "0.12.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -192,14 +192,14 @@
     {
       "id": "scenario.century_frontier",
       "kind": "scenario",
-      "revision": 1,
-      "semantic_hash": "fe2b677208444ce5f144885aff6d8fe984225fa6bde0563a43e72bb153da49fd"
+      "revision": 2,
+      "semantic_hash": "432dd4c7a5179453af30f6aed2bea2976bd4a2d6ee83b4146116f318e0f74589"
     },
     {
       "id": "scenario.century_plateau",
       "kind": "scenario",
-      "revision": 1,
-      "semantic_hash": "2bb76ad86bc380c78e3e0b84b80589af8bf0d183444e3132610695fae677d6dc"
+      "revision": 2,
+      "semantic_hash": "30e170b831a1af5f7519b8286d50a576eabe5335cc9759dcc390e5fb2d3cbdf6"
     },
     {
       "id": "scenario.first_playable",
@@ -299,7 +299,7 @@
     }
   ],
   "format": 1,
-  "generation": 11,
+  "generation": 12,
   "messages_hash": "423a6e398d7f281fa5ee683f7ebdcfc524dfa14e70769013c3f4ba7f83b8ad13",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
@@ -436,5 +436,5 @@
       "authority.executive_disclosure"
     ]
   },
-  "source_hash": "4a9daa5a3d90f1f0becdc636e990895d62cbe82a09fda958f091e6a5949f0a48"
+  "source_hash": "091734dafc94b5ebba2c50d890bb6f5974b9f1ec9114ff19253a9dca8f3fe184"
 }

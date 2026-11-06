@@ -1336,3 +1336,49 @@ All seven scenarios and 21 prepared headquarters saves passed without lints.
 The roadmap stands at 39 of 52 complete. M7-02 continues with succession and
 founder legacy, followed by M7-03's six objectives. Human studies and native
 platform/release qualification retain their deferred gates.
+
+## M7-02 — Succession and retained founder legacy · 2026-11-06
+
+Leadership exposes named candidate cohorts, explicit career dates, reviewed
+board votes and paid finite transition work. The century charter uses a
+20-year executive term, retirement by 70 and a personal founder chair through
+80. Funded preparation retains current serving and other commitments. Missed
+or cancelled plans retain their actual expenses and invoke the finite paid
+caretaker charter when retirement arrives. Company obligations, operational
+staff and original founder ownership persist through the actual handover.
+
+The founder trust receives only paid founder/chair compensation. Acquisition
+settlements retain its actual cash and beneficial share of the parent's pooled
+seller holding, including later dilution. Current reports use consolidated
+group book value and include company cash within equity. M7-03 owns terminal
+objective prices and audited-profit adjustments. Historical board votes retain
+their actual leadership-control boundary. Rival founders retain their authored
+names, and their salary end dates reconcile to the same finite term history.
+[Leadership controls and accounting](../src/core/SUCCESSION.md).
+
+All **77 optimized Mac CTests passed in 46.56 seconds** with four workers.
+The maximum-board adjustment then passed the governance and succession tests
+again in 3.71 seconds. The **77 succession/legacy checks** cover service and
+bill continuity, board funding, exact handover/retirement dates, cancelled/expired/unfunded plans,
+player and rival caretakers, source-backed founder cash, retained acquisition
+consideration, later dilution, facts, forged saves and exact reopening. The
+**90 Studio checks** include charter fields and a board rename that retains
+its typed succession reference. Snapshot tests still dominate suite time.
+
+Finalized-content Metal walkthroughs at **1280×720**, **100%/200% text** use
+an explicit 2027 fixture with a near-retirement founder and earlier personal
+chair deadline. They retain the actual fees, payroll, board and preparation
+rules. QML controls nominate, preview and pay for the transition, stop at the
+dated handover, retire the chair, cancel another proposal and reopen the exact
+**536,905-byte** save. The final picker excludes the incumbent. The 200% route
+passes again after that presentation adjustment. Screenshots show readable
+votes, compensation and book reports. The bundled **200%** introductory route
+also reaches its solvent scored 2017 ending with exact reload.
+
+The shared writer finalized content **0.12.0-dev.1**, generation **12**, hash
+`fd7ced86b8056098245152752ba60451d1bcb34fed5b33f2caa2842c1167229a`.
+All seven scenarios and 21 headquarters openings/save roundtrips passed with
+no lints. The **2035/2114/2514** checks verify cohort availability and ages.
+Century/500-year endurance retains its M8 gate. The roadmap stands at **40/52**.
+M7-03 continues with the six objectives and postmortems. Human studies remain
+deferred until components are in place and the user is ready for v1 preparation.

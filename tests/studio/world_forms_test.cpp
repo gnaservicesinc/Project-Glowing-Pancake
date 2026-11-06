@@ -1,4 +1,5 @@
 #include <pgp/studio/world_forms.hpp>
+#include <pgp/studio/catalog.hpp>
 #include <pgp/persistence/storage.hpp>
 #include <pgp/runtime/scenario.hpp>
 #include <chrono>
@@ -160,6 +161,24 @@ void frontier_forms(Scratch& s) {
         d.program().canonical_content_bytes!=before && d.undo() && d.program().canonical_content_bytes==before,
         "Frontier protocol edits did not validate and share the ordinary undo boundary");
 }
+void succession_forms(Scratch& s) {
+    studio::DraftDocument d{s.path,"data/runtime/first-playable.json"};
+    constexpr std::string_view century="scenario.century_frontier";
+    const std::string path="/definitions/scenario.century_frontier/management/succession";
+    auto form=studio::WorldForm::open(d,century,path);
+    const auto reference=std::find_if(form.fields().begin(),form.fields().end(),[](const auto& f){return f.key=="founder_board";});
+    check(reference!=form.fields().end() && reference->control==studio::FormControl::choice && !reference->options.empty(),
+        "The leadership charter cannot select actual founder board rights");
+    const auto before=d.program().canonical_content_bytes;
+    check(form.apply(d,{{"transition_days","120"}}) && d.undo() && d.program().canonical_content_bytes==before,
+        "Leadership preparation edits bypassed validation or shared undo");
+    refused(d,[&]{(void)studio::WorldForm::open(d,century,path).apply(d,{{"founder_board","board.missing"}});});
+    refused(d,[&]{(void)studio::WorldForm::open(d,century,path).apply(d,{{"maximum_candidate_age","70"}});});
+    auto rename=studio::RefactorPlan::rename(d,"board","board.founder","board.legacy");
+    check(std::any_of(rename.changes().begin(),rename.changes().end(),[](const auto& r){return r.path.ends_with("/succession/founder_board");}) &&
+        rename.apply(d) && d.undo() && d.program().canonical_content_bytes==before,
+        "Renaming founder board rights stranded a succession charter reference");
+}
 #if PGP_WORLD_QT
 void controller(Scratch& s) {
     studio::DraftDocument d{s.path,"data/runtime/first-playable.json"};studio::WorldController c;
@@ -204,7 +223,7 @@ int main(int argc,char** argv) {
 #else
     (void)argc;(void)argv;
 #endif
-    try {Scratch s;forms(s);frontier_forms(s);
+    try {Scratch s;forms(s);frontier_forms(s);succession_forms(s);
 #if PGP_WORLD_QT
         controller(s);
 #endif

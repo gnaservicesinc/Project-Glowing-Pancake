@@ -10,6 +10,9 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
             if (work.status==core::ProjectStatus::active && work.kind!=core::ProjectKind::serving && work.kind!=core::ProjectKind::replication &&
                 (kind=="project" || work.kind==core::ProjectKind::evaluation)) result.projects.push_back(work.id);
         if (result.projects.empty()) throw std::invalid_argument("Start a matching finite project before advancing to its completion.");
+    } else if (kind=="leadership") {
+        result.deadline=core::next_succession_boundary(s);
+        if(!result.deadline) throw std::invalid_argument("There is no later leadership boundary within this campaign.");
     } else if (kind=="site") {
         const auto consider=[&](core::OrdinalDay day){if (day>s.date && day<=s.end_date && (!result.deadline || day<*result.deadline)) result.deadline=day;};
         if (s.infrastructure) {
@@ -79,6 +82,7 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
             const auto offer=std::find_if(s.business_offers->catalog.begin(),s.business_offers->catalog.end(),[&](const auto& o){return o.id==accepted.offer_id;});
             if (offer!=s.business_offers->catalog.end() && offer->kind==core::BusinessOfferKind::compute_lease) consider(core::lease_expiry(*s.business_offers,offer->id));
         }
+        if(const auto next=core::next_succession_boundary(s)) consider(*next);
         if (!result.deadline) throw std::invalid_argument("There is no known future deadline inside this scenario.");
         if (*result.deadline==s.date) throw std::invalid_argument("A real deadline is today. Review the obligation before advancing.");
     } else throw std::invalid_argument("Choose a project, evaluation, site, civic event or actual deadline.");
