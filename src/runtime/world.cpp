@@ -154,8 +154,9 @@ void validate_site_random_history(const CompiledProgram& program,const Checkpoin
     }
     if (expected!=world.simulation.random[domain]) invalid("A site hazard consumed an unrecorded or rerolled random draw");
 }
-template<class Row> void identities(const std::vector<Row>& rows, std::uint64_t next) {
-    if (next == 0 || rows.size() > maximum_records) invalid("Runtime identifier/count limit");
+template<class Row> void identities(const std::vector<Row>& rows, std::uint64_t next,
+                                    std::size_t maximum = maximum_records) {
+    if (next == 0 || rows.size() > maximum) invalid("Runtime identifier/count limit");
     std::uint64_t previous = 0;
     for (const auto& row : rows) {
         if (row.id <= previous || row.id >= next) invalid("Runtime IDs must be unique and canonical");
@@ -569,11 +570,11 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             }
         }
     }
-    if (state.activations.size() > maximum_activations || state.lifecycles.size() > 512 ||
+    if (state.activations.size() > maximum_activation_history || state.lifecycles.size() > 512 ||
         state.modifiers.size() > maximum_activations || state.receipts.size() > maximum_records ||
         state.presentations.size() > maximum_records || state.random_resolutions.size() > maximum_records)
         invalid("Runtime collection count budget exceeded");
-    identities(state.activations, state.next_activation_id);
+    identities(state.activations, state.next_activation_id, maximum_activation_history);
     identities(state.receipts, state.next_receipt_id);
     identities(state.presentations, state.next_presentation_id);
     if (state.prepared_day && (*state.prepared_day != world.simulation.date || world.simulation.phase != core::DayPhase::work_ready))
@@ -583,7 +584,10 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     for (const auto& resolution : state.random_resolutions)
         selections.insert_or_assign({resolution.activation_id, resolution.flow_id, resolution.node_id}, &resolution);
     std::map<std::pair<std::string, ScopeBinding>, std::uint32_t> counts;
+    std::size_t live_activations = 0;
     for (const auto& activation : state.activations) {
+        if (activation.status != ActivationStatus::completed && ++live_activations > maximum_activations)
+            invalid("Live activation count budget exceeded");
         const auto& root = flow(program, activation.definition_id);
         const auto* definition = program.collection.find(activation.definition_id);
         if (root.group || !binding_exists(world, activation.binding) || activation.binding.scope != root.scope ||

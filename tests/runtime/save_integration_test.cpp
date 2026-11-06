@@ -141,8 +141,59 @@ void source_selection_and_scenario_data() {
     catch (const std::invalid_argument&) { refused = true; }
     require(refused, "Unavailable headquarters refused");
 }
+void retained_occurrences() {
+    auto source = integration_fixture::program(PGP_RUNTIME_FIXTURE_PATH, false);
+    auto& flow = std::get<content::FlowDefinition>(source.collection.definitions.at("flow.news.monthly_operations").data);
+    flow.lifecycle.max_occurrences = 5000;
+    flow.lifecycle.interval = content::Interval{content::IntervalUnit::days, 1};
+    flow.lifecycle.anchor = content::Anchor{content::AnchorKind::campaign_start, std::nullopt};
+    flow.entry_node = "done";
+    flow.nodes.clear();
+    content::Node end{};
+    end.kind = content::NodeKind::end;
+    flow.nodes.emplace("done", std::move(end));
+    const auto program = runtime::compile_collection(source.collection, source.registry);
+    runtime::Checkpoint initial;
+    initial.world = runtime::foundation_world();
+    initial.world.enabled_flows = std::vector<std::string>{"flow.news.monthly_operations"};
+    runtime::Runtime opening{program, initial};
+    integration_fixture::prepare(opening);
+    auto retained = opening.checkpoint();
+    const auto first = retained.runtime.activations.front();
+    for (std::uint64_t id = 2; id <= runtime::maximum_activations; ++id) {
+        auto occurrence = first;
+        occurrence.id = id;
+        occurrence.started_on = core::OrdinalDay{static_cast<std::int64_t>(id - 1)};
+        retained.runtime.activations.push_back(std::move(occurrence));
+    }
+    auto& lifecycle = retained.runtime.lifecycles.front();
+    lifecycle.occurrences = runtime::maximum_activations;
+    lifecycle.last_checked = lifecycle.last_started = core::OrdinalDay{runtime::maximum_activations - 1};
+    lifecycle.interval_index = runtime::maximum_activations;
+    retained.runtime.next_activation_id = runtime::maximum_activations + 1;
+    retained.runtime.prepared_day.reset();
+    retained.world.simulation.date = core::OrdinalDay{runtime::maximum_activations};
+    runtime::Runtime continued{program, retained};
+    integration_fixture::prepare(continued);
+    require(continued.current_state().runtime.activations.size() == runtime::maximum_activations + 1 &&
+                continued.current_state().runtime.activations.back().status == runtime::ActivationStatus::completed,
+            "Completed history must allow the next ordinary occurrence past the old live limit");
+    const auto bytes = persistence::encode_save(program, continued.current_state());
+    const auto loaded = persistence::decode_save(program, bytes);
+    require(loaded.checkpoint == continued.current_state(), "Retained occurrences must reopen exactly past the old limit");
+    runtime::Runtime resumed{program, loaded.checkpoint};
+    integration_fixture::step(continued);
+    integration_fixture::step(resumed);
+    require(resumed.current_state() == continued.current_state(), "The next retained occurrence must replay exactly");
+    auto corrupt = loaded.checkpoint;
+    ++corrupt.runtime.lifecycles.front().occurrences;
+    bool refused = false;
+    try { runtime::validate_checkpoint(program, corrupt); }
+    catch (const std::invalid_argument&) { refused = true; }
+    require(refused, "Retained occurrence history must still reconcile to lifecycle counts");
+}
 } // namespace
 int main() {
-    try { source_selection_and_scenario_data(); interrupted_sequence_and_choice(); }
+    try { source_selection_and_scenario_data(); interrupted_sequence_and_choice(); retained_occurrences(); }
     catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
 }

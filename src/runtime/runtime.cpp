@@ -456,7 +456,11 @@ void start_activation(Checkpoint& checkpoint, LifecycleState& entry, const conte
                       const CompiledProgram& program, RuntimeResult& result, std::size_t& steps,
                       std::optional<CommittedSource> source = std::nullopt) {
     auto& state = checkpoint.runtime;
-    if (state.activations.size() >= maximum_activations || entry.occurrences == std::numeric_limits<std::uint32_t>::max())
+    const auto live = static_cast<std::size_t>(std::count_if(state.lifecycles.begin(), state.lifecycles.end(), [](const auto& row) {
+        return row.active_activation.has_value();
+    }));
+    if (state.activations.size() >= maximum_activation_history || live >= maximum_activations ||
+        entry.occurrences == std::numeric_limits<std::uint32_t>::max())
         fail(RuntimeReason::budget_exceeded, "Activation/occurrence count budget exceeded.");
     Activation active;
     active.id = identifier(state.next_activation_id);

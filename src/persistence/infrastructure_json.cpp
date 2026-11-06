@@ -36,7 +36,7 @@ template<class T> T decode(const Json& j) {
     else if constexpr (Optional<T>::value) {if (j.is_null()) return {};return decode<typename T::value_type>(j);}
     else if constexpr (requires(T v) {v.value();}) return T{i64(j,"infrastructure/unit")};
     else if constexpr (requires(T v) {v.push_back(typename T::value_type{});}) {
-        using Row=typename T::value_type;constexpr std::size_t bound=std::is_same_v<Row,core::OwnedSite>?50:(std::is_same_v<Row,core::HardwareOrder>?200:(std::is_same_v<Row,core::SiteOperatorHire>?400:(std::is_same_v<Row,core::SiteAppointment>?512:(std::is_same_v<Row,core::InfrastructureNotice>?4096:(std::is_same_v<Row,core::SitePowerLimit>?40960:6000)))));
+        using Row=typename T::value_type;constexpr std::size_t bound=std::is_same_v<Row,core::OwnedSite>?50:(std::is_same_v<Row,core::HardwareOrder>?200:(std::is_same_v<Row,core::SiteOperatorHire>?400:(std::is_same_v<Row,core::SiteAppointment>?512:(std::is_same_v<Row,core::InfrastructureNotice>?4096:(std::is_same_v<Row,core::SitePowerLimit>?40960:core::retained_campaign_months)))));
         array(j,"infrastructure/records",bound);T rows;for (const auto& row:j) rows.push_back(decode<Row>(row));return rows;
     } else {
         if (!j.is_object()) invalid("infrastructure/record","Expected typed object");T row;std::size_t fields=0;

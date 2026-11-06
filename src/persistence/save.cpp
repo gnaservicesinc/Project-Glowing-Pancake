@@ -737,7 +737,7 @@ RuntimeState parse_runtime(const Json& value,const CompiledProgram& program) {
     result.next_receipt_id=detail::u64(value.at("next_receipt_id"),"next_receipt_id");
     result.next_presentation_id=detail::u64(value.at("next_presentation_id"),"next_presentation_id");
     result.prepared_day=parse_day(value.at("prepared_day"));
-    const auto& activations=value.at("activations");detail::array(activations,"activations",maximum_activations);
+    const auto& activations=value.at("activations");detail::array(activations,"activations",maximum_activation_history);
     for (const auto& item:activations) {
         detail::fields(item,"activation",{"id","definition_id","definition_revision","started_on","binding","current_flow","current_node",
             "frames","status","due","wait_started","presentation_id","node_visits","exiting"},{"committed_source"});

@@ -1564,3 +1564,38 @@ provider probe funded 24 contracts and recorded 4,088 paid contract days,
 receipts. It ended 970,770 cents below break-even after costs and reopened
 its 1,567,196-byte checkpoint exactly. M8-02 remains open for the longer
 strategy comparisons and 500-year run.
+
+### Sandbox event history and shared market reviews
+
+The sandbox control stopped on 2159-06-30 when 4,096 retained event
+occurrences filled the live-event budget. Completed occurrence history
+now has its own bound for the retained campaign horizon. Live events,
+modifiers, lifecycle ownership, occurrence counters and saved random
+history keep their independent checks. Election and monthly site-meter
+history bounds also cover the scored century and five sandbox centuries.
+
+Company and industry monthly market reviews now use shared history pages.
+A live profile had shown those vectors being copied on daily transactions.
+On the 64 GB M2 Max, the same 2125–2130 checkpoint run took 45.33s before
+this change and 26.35s after it, excluding save/load. Both produced the
+identical 23,651,661-byte checkpoint. Other engineering jobs were running
+during these measurements. The optimized build and 31 focused runtime,
+civic, infrastructure and persistence CTests passed. A regression starts
+the next ordinary event after 4,096 completed occurrences, reopens it
+exactly and rejects a forged lifecycle count.
+
+The faster sandbox reached 2175-01-01 with 4,529 retained occurrences,
+eight operating rivals and an exact 30,309,660-byte checkpoint. This
+engineering save requires the explicit 64 MiB diagnostic limit. Save
+and load took 12.41s and 15.57s. These results exceed the normal save
+size and latency targets, and memory remains above target. The exact
+checkpoint is the restart for the remaining sandbox years.
+
+A same-seed open ecosystem route also completed all 36,524 scored days.
+It retained one publication and three deployed services, earned
+2,875,959,249 cents of cumulative profit and ended with ten operating
+rivals. Its 21,262,819-byte checkpoint reloaded exactly. Both century
+routes used seed 20140108 and content 0.14.0-dev.1 with optional stories
+disabled. Longer infrastructure and frontier comparisons and the full
+500-year sandbox check remain in M8-02. Human studies remain deferred
+until v1 preparation.

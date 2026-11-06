@@ -9,7 +9,8 @@ namespace pgp::core {
 struct SimulationState;
 struct DeployModel;
 inline constexpr std::size_t civic_blocs = 3, civic_issues = 7, civic_jurisdictions = 51;
-inline constexpr std::size_t civic_election_limit = 256, civic_docket_limit = 2048;
+inline constexpr std::size_t civic_election_limit = (retained_campaign_months + 23) / 24;
+inline constexpr std::size_t civic_docket_limit = 2048;
 inline constexpr std::size_t civic_advocacy_limit = 3;
 enum class CivicIssue { privacy, innovation, labor, competition, investment, security, access };
 enum class CivicRule { launch_evidence, site_power, final_closure };
@@ -124,6 +125,7 @@ void validate_civic_catalog(const CivicCatalog&);
 void validate_civic(const SimulationState&, bool deep);
 void prepare_civic(SimulationState&, const std::vector<MarketAdoption>* industry_adoptions = nullptr);
 [[nodiscard]] BasisPoints civic_adoption(const MarketState&, std::span<const MarketAdoption>, OrdinalDay);
+[[nodiscard]] BasisPoints civic_adoption(const MarketState&, const MarketAdoptionHistory&, OrdinalDay);
 [[nodiscard]] CivicInstitutions civic_institutions(const CivicState&, OrdinalDay);
 [[nodiscard]] CivicSeats civic_senate(const CivicInstitutions&);
 [[nodiscard]] std::optional<OrdinalDay> next_civic_election(OrdinalDay from);

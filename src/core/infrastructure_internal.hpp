@@ -6,7 +6,8 @@
 #include <tuple>
 #include <utility>
 namespace pgp::core::infrastructure_detail {
-inline constexpr std::size_t maximum_hardware_orders=200,maximum_hires=400,maximum_appointments=512,maximum_notices=4096,maximum_months_per_site=6000;
+inline constexpr std::size_t maximum_hardware_orders=200,maximum_hires=400,maximum_appointments=512,maximum_notices=4096;
+inline constexpr std::size_t maximum_months_per_site=retained_campaign_months;
 [[noreturn]] inline void invalid(const char* message) {throw std::invalid_argument(message);}
 template<class Rows> const auto& find(const Rows& rows,std::string_view id) {
     const auto it=std::find_if(rows.begin(),rows.end(),[&](const auto& row){return row.id==id;});

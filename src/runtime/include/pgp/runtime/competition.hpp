@@ -58,7 +58,7 @@ struct CompetitionState {
     std::vector<RivalNotice> notices;
     std::optional<content::CompetitionSetup> setup{};
     std::vector<PublicProductRelease> releases{};
-    std::vector<core::MarketAdoption> adoptions{};
+    core::MarketAdoptionHistory adoptions{};
     std::vector<CompetitiveOffer> offers{};
     std::vector<AcquisitionRecord> acquisitions{};
     std::vector<WholesaleContract> wholesale{};

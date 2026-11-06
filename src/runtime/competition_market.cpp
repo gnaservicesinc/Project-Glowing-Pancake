@@ -174,7 +174,7 @@ void append_industry_adoption(WorldState& world,OrdinalDay day) {
     const auto civil=from_ordinal(day);if (civil.day!=days_in_month(civil.year,civil.month)) return;
     auto rows=adoption(world,day);auto& target=world.competition->adoptions;
     if (target.size()+rows.size()>market_record_limit) invalid("Industry adoption history exceeds its bound");
-    target.insert(target.end(),std::make_move_iterator(rows.begin()),std::make_move_iterator(rows.end()));
+    for (auto& row : rows) target.push_back(std::move(row));
 }
 void validate_industry(const WorldState& world,bool deep) {
     if (!world.simulation.market || world.competition->adoptions.size()>market_record_limit) invalid("Planned competition needs a bounded shared market");
@@ -214,7 +214,7 @@ void validate_industry(const WorldState& world,bool deep) {
     };
     std::vector<DayTotals> totals(market.segments.size());
     std::vector<std::vector<InstalledShare>> installed(market.segments.size());
-    std::vector<MarketAdoption> expected;
+    MarketAdoptionHistory expected;
     for (auto day_date=market.starts_on;day_date<campaign_day(world);day_date=advance_days(day_date,Days{1})) {
         std::fill(totals.begin(), totals.end(), DayTotals{});
         for (const auto* seller : participants) {
@@ -255,7 +255,7 @@ void validate_industry(const WorldState& world,bool deep) {
             auto rows = adoption(world,day_date);
             if (regional) for (auto& shares : installed) shares.clear();
             for (const auto& row : rows) installed[indices.at(row.segment_id)] = row.shares;
-            expected.insert(expected.end(), std::make_move_iterator(rows.begin()), std::make_move_iterator(rows.end()));
+            for (auto& row : rows) expected.push_back(std::move(row));
         }
     }
     if (expected!=world.competition->adoptions) invalid("Industry adoption differs from actual work across all sellers");

@@ -96,7 +96,7 @@ std::uint64_t installed(const MarketState& state, std::string_view segment_id, s
     }
     return product_id == "outside" ? 10000 : 0;
 }
-void append_monthly_adoption(const MarketState& state, std::vector<MarketAdoption>& adoptions, OrdinalDay day) {
+void append_monthly_adoption(const MarketState& state, MarketAdoptionHistory& adoptions, OrdinalDay day) {
     const auto begin = month_start(day);
     const bool regional = regional_market(state);
     const auto first = std::lower_bound(state.days.begin(),state.days.end(),begin,
@@ -554,8 +554,7 @@ void validate_market(const MarketState& state) {
     }
     // Recompute monthly adoption from actual useful work, without replaying
     // eligibility or reading current product availability as historical truth.
-    std::vector<MarketAdoption> reviewed_adoptions;
-    reviewed_adoptions.reserve(state.adoptions.size());
+    MarketAdoptionHistory reviewed_adoptions;
     for (const auto& day : state.days) if (month_end(day.day)) append_monthly_adoption(state, reviewed_adoptions, day.day);
     if (reviewed_adoptions != state.adoptions) invalid("Installed monthly shares differ from committed useful-work history");
     (void)market_report(state);

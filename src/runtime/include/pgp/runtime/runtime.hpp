@@ -13,6 +13,8 @@
 namespace pgp::runtime {
 
 inline constexpr std::size_t maximum_activations = 4096;
+// Completed occurrences remain available for causal and random-stream checks.
+inline constexpr std::size_t maximum_activation_history = core::retained_campaign_days;
 inline constexpr std::size_t maximum_records = 65536;
 inline constexpr std::size_t maximum_continuation_frames = 8;
 inline constexpr std::size_t maximum_steps_per_operation = 4096;

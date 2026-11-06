@@ -138,6 +138,7 @@ struct MarketAdoption {
     std::vector<InstalledShare> shares;
     auto operator<=>(const MarketAdoption&) const = default;
 };
+using MarketAdoptionHistory = PagedHistory<MarketAdoption, 16>;
 struct MarketDemandChange {
     std::string id, segment_id;
     OrdinalDay starts_on{0}, expires_before{0};
@@ -163,7 +164,7 @@ struct MarketState {
     std::vector<MarketSegment> segments;
     std::vector<MarketContract> contracts;
     PagedHistory<MarketDay, 4, MarketHistoryCount> days;
-    std::vector<MarketAdoption> adoptions;
+    MarketAdoptionHistory adoptions;
     std::vector<MarketDemandChange> demand_changes{};
     std::vector<ProductCapacityBinding> capacity_bindings{};
     std::vector<MarketPriceChange> prices{};

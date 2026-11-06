@@ -278,7 +278,8 @@ CivicState opening_civic(CivicCatalog catalog, OrdinalDay start, std::uint64_t s
     return civic;
 }
 
-BasisPoints civic_adoption(const MarketState& market, std::span<const MarketAdoption> adoptions, OrdinalDay day) {
+template<class Rows>
+static BasisPoints civic_adoption_rows(const MarketState& market, const Rows& adoptions, OrdinalDay day) {
     const auto current = from_ordinal(day);
     const auto end = OrdinalDay{to_ordinal({current.year, current.month, 1}).value() - 1};
     const auto first = std::lower_bound(adoptions.begin(), adoptions.end(), end,
@@ -293,6 +294,13 @@ BasisPoints civic_adoption(const MarketState& market, std::span<const MarketAdop
         weighted += row->observed_tasks * static_cast<std::uint64_t>(10000 - outside->share.value());
     }
     return BasisPoints{tasks ? weighted / tasks : 0};
+}
+
+BasisPoints civic_adoption(const MarketState& market, std::span<const MarketAdoption> adoptions, OrdinalDay day) {
+    return civic_adoption_rows(market, adoptions, day);
+}
+BasisPoints civic_adoption(const MarketState& market, const MarketAdoptionHistory& adoptions, OrdinalDay day) {
+    return civic_adoption_rows(market, adoptions, day);
 }
 
 void prepare_civic(SimulationState& state, const std::vector<MarketAdoption>* industry_adoptions) {
