@@ -4,7 +4,7 @@ Updated 2026-11-06 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**42 of 52 steps complete for Mac feature development. M8-02 is next.** Completed work includes
+**42 of 52 roadmap items are checked. Initial feature completion is the current priority.** Completed work includes
 M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03, M6-01 through M6-03 M7-01 through M7-03 and M8-01.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
@@ -538,10 +538,20 @@ does not claim an optimal-utility solver or a viable three-year strategy.
 
 ## Next task
 
-**Next implementation is M8-02, balance and long-run validation.**
-Compare matched strategies, measure the full roster and verify century and
-sandbox endurance. The human campaign waits for v1 preparation. E2-04 editor
-download qualification stays with the deferred native release work.
+**Next implementation closes initial feature gaps against the game design.**
+The 2026-11-06 user instruction sets the order as initial features, expansion
+and refinement with human feedback, substantial event expansion, then balance.
+Extended endurance runs and broad regression are deferred. Use short checks
+for changed behavior. The existing 42 checked batches do not prove complete
+coverage of the full design.
+
+The first confirmed gap is campaign setup. The current creation controls offer
+scenario, headquarters, optional stories and objectives. The design also calls
+for company/founder identity, pronouns, founder background, charter and an
+editable world seed with visible starting effects. Implement that path before
+returning to M8-02. Continue checking the other initial design requirements
+against source and ordinary player controls. Human work waits until the user
+is ready, and E2-04 editor downloads stay with deferred release preparation.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

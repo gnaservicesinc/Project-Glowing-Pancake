@@ -17,7 +17,8 @@ namespace {
 constexpr std::string_view usage =
     "Usage: pgp-headless [--help | --build-info | --foundation-demo | --validate-content FILE | --accounts-demo FILE | --capacity-demo FILE | --market-demo FILE | --business-run FILE STRATEGY | --flow-demo FILE [--save FILE]]\n"
     "Also: --lab-demo FILE | --events-demo FILE | --specialist-demo FILE | --competition-demo FILE [standard|reduced|expanded|forgiving] [DAYS]\n"
-    "      --endurance FILE SCENARIO THROUGH_DATE [SEED] [--resume SAVE] [--save SAVE]\n"
+    "      --endurance FILE SCENARIO THROUGH_DATE [SEED] [--strategy specialist|open|frontier|infrastructure] [--resume SAVE] [--save SAVE]\n"
+    "                  [--checkpoint-years YEARS] [--save-limit-mib MIB]\n"
     "Business strategies: expansion, baseline, rescue. Builds never launch the application.\n";
 }
 
@@ -69,9 +70,12 @@ int main(int argc, char* argv[]) {
             if (next < argc && !std::string_view{argv[next]}.starts_with("--")) options.seed = argv[next++];
             while (next < argc) {
                 const std::string_view flag{argv[next++]};
-                if (next == argc) throw std::invalid_argument("An endurance option needs a save path");
+                if (next == argc) throw std::invalid_argument("An endurance option needs a value");
                 if (flag == "--resume" && !options.resume) options.resume = argv[next++];
                 else if (flag == "--save" && !options.save) options.save = argv[next++];
+                else if (flag == "--strategy" && !options.strategy) options.strategy = argv[next++];
+                else if (flag == "--save-limit-mib" && !options.save_limit_mib) options.save_limit_mib = argv[next++];
+                else if (flag == "--checkpoint-years" && !options.checkpoint_years) options.checkpoint_years = argv[next++];
                 else throw std::invalid_argument("Unknown or repeated endurance option");
             }
             run_endurance(argv[2], argv[3], argv[4], options, std::cout);

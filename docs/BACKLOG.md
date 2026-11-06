@@ -13,6 +13,13 @@ for v1 work. Their human studies do not block M4 or later component implementati
 Engineering checks continue during development. The [prepared session kit](playtests/M3-session-guide.md)
 is held for that later phase; no recruitment or sessions are underway.
 
+**2026-11-06 sequencing instruction:** implement all initial features first,
+then expand and refine with human feedback, then add substantial event content,
+then balance. Extended endurance runs and broad regression are deferred during
+feature implementation. Short checks for changed behavior continue. The current
+42 checked items record implemented batches. A feature-coverage pass against
+the design is required before moving into feedback, event expansion or M8-02.
+
 ## M0 — Toolchain and platform proof
 
 M0-03 is complete for the current Mac feature-development scope. Its

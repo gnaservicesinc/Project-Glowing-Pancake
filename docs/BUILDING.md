@@ -40,6 +40,39 @@ Unknown existing directories, symlinked build paths and owner-marker mismatches
 are refused. Changed toolchain selections require an explicit clean of that
 configuration. User saves and unrelated outputs are outside cleanup.
 
+## Run matched century strategies
+
+These workloads are deferred under the 2026-11-06 feature-first instruction.
+Use short checks of changed behavior while initial features are incomplete.
+
+The headless endurance driver uses the bundled century catalogs, ordinary
+commands and saved independent random streams. Choose `specialist`, `open`,
+`frontier` or `infrastructure` with the same scenario and seed to compare
+funded strategies. Annual reports include cash, cumulative profit, rival
+attrition, required decisions, deployments and independent Frontier results.
+The concentration fields estimate AI-provider shares and HHI from the last
+settled monthly installed shares, weighted by segment demand. They exclude
+the outside alternative and group products by their publishing company.
+
+```sh
+build/release/bin/pgp-headless --endurance data/runtime/first-playable.json scenario.century_frontier 2114-01-01 --strategy frontier --save /path/to/frontier.pgpsave --checkpoint-years 25
+```
+
+`--resume /path/to/save.pgpsave` continues that exact content identity and
+scenario. Pass the strategy again to continue its decisions. The default
+strategy is specialist. The open route publishes research and deploys
+open and licensed services. Infrastructure funds a Washington site and
+offers actual prepaid wholesale terms. Frontier funds an eight-topic
+queue, an advanced service and independent assessments and replications.
+
+An explicit checkpoint interval saves/reopens at that many calendar years
+and retains the prior valid save as `.bak`. On a refused operation it also
+tries to save the last accepted state. The ordinary save limit is 25 MiB.
+`--save-limit-mib 64` selects the existing diagnostic envelope for larger
+engineering runs and reports when a checkpoint exceeds the default limit.
+Intervals must be 1–500 years and explicit save limits 1–64 MiB. These
+commands are engineering workloads for the bundled catalogs.
+
 ## Browse a checkout in Content Studio
 
 ```sh

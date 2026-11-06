@@ -1599,3 +1599,25 @@ routes used seed 20140108 and content 0.14.0-dev.1 with optional stories
 disabled. Longer infrastructure and frontier comparisons and the full
 500-year sandbox check remain in M8-02. Human studies remain deferred
 until v1 preparation.
+
+### Feature-first sequencing correction
+
+The 2026-11-06 user instruction defers extended testing and balancing until
+the initial features are implemented. The following phases are expansion
+and refinement with human feedback, substantial event expansion, then balance.
+The live sandbox and infrastructure endurance processes were stopped. Their
+latest exact checkpoints and the completed Frontier century remain local.
+
+The existing strategy-driver work is retained for that later phase. The
+headless command supports specialist, open, frontier and infrastructure
+routes, periodic exact checkpoints and explicit bounded diagnostic saves.
+Short entry-point checks cover the four routes and one-day resumed saves.
+The maintained open route matches the earlier 2025 save byte for byte, and
+the maintained Frontier route matches the earlier 2030 save byte for byte.
+
+The roadmap's checked batches do not establish full design coverage. An
+initial source/control pass found that campaign creation exposes scenario,
+headquarters, stories and objectives, while the design also requires company
+and founder identity, pronouns, background, charter and an editable world seed.
+Those setup controls are the next feature work. The repository instructions
+and current handoff now prioritize feature completion with short checks.
