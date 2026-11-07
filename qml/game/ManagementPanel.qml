@@ -143,6 +143,79 @@ ColumnLayout {
             enabled: panel.editable && manager.dataOffers.selectedRow.actionable === true
             onClicked: manager.buyData(manager.dataOffers.selectedId)
         }
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: manager.synthesisRecipes.length > 0
+            Copy { text: qsTr("Generate verified training data"); font.bold: true }
+            Copy { text: qsTr("Choose a frozen teacher, independent evidence, and a licensed verification source outside its training mixture. Generation and filtering use paid staff and compute.") }
+            Choice {
+                id: synthesisRecipe
+                objectName: "synthesisRecipeChoice"
+                label: qsTr("Generation recipe")
+                options: manager.synthesisRecipes
+            }
+            Copy { text: synthesisRecipe.selectedOption.detail || "" }
+            Choice {
+                id: synthesisTeacher
+                objectName: "synthesisTeacherChoice"
+                label: qsTr("Frozen teacher checkpoint")
+                options: manager.synthesisTeachers
+                onOptionsChanged: if (!options.some(o => o.id === value)) value = options.length ? options[0].id : ""
+            }
+            Choice {
+                id: synthesisEvidence
+                objectName: "synthesisEvidenceChoice"
+                label: qsTr("Independent report for the teacher")
+                options: manager.synthesisTeachers.length > 0 ? manager.synthesisEvidence(synthesisTeacher.value) : []
+                onOptionsChanged: if (!options.some(o => o.id === value)) value = options.length ? options[0].id : ""
+            }
+            Choice {
+                id: synthesisVerification
+                objectName: "synthesisVerificationChoice"
+                label: qsTr("Licensed verification source")
+                options: manager.synthesisRecipes.length > 0 ? manager.synthesisVerification(synthesisRecipe.value, synthesisTeacher.value) : []
+                onOptionsChanged: if (!options.some(o => o.id === value)) value = options.length ? options[0].id : ""
+            }
+            Field { id: synthesisUnits; objectName: "synthesisUnitsField"; label: qsTr("Attempted records"); value: "10000" }
+            Choice { id: synthesisSource; objectName: "synthesisSourceChoice"; label: qsTr("Generation compute source"); options: manager.sources }
+            Field { id: synthesisRate; objectName: "synthesisRateField"; label: qsTr("Generation CU per day"); value: manager.recommended.testingRate || "20" }
+            Field { id: synthesisStaff; objectName: "synthesisStaffField"; label: qsTr("Generation and verification staff"); value: "1" }
+            Action {
+                objectName: "reviewSynthesisButton"
+                text: qsTr("Review generation and verification…")
+                enabled: panel.editable && synthesisTeacher.value.length > 0 && synthesisEvidence.value.length > 0 && synthesisVerification.value.length > 0
+                onClicked: {
+                    const request = [synthesisRecipe.value, synthesisTeacher.value, synthesisEvidence.value,
+                        synthesisVerification.value, synthesisUnits.value, synthesisSource.value, synthesisRate.value, synthesisStaff.value]
+                    const quote = manager.synthesisQuote(...request)
+                    releaseDialog.review("synthesis", "", qsTr("Review synthetic-data generation"), quote.detail || "", quote.ready === true, request)
+                }
+            }
+        }
+        Repeater {
+            model: manager.synthesisJobs
+            ColumnLayout {
+                required property var modelData
+                Layout.fillWidth: true
+                Copy { text: modelData.id + " · " + modelData.status; font.bold: true }
+                Copy { objectName: "synthesisJobDetail_" + modelData.id; text: modelData.detail }
+                Action {
+                    text: qsTr("Pause generation")
+                    visible: modelData.active
+                    onClicked: campaign.projectPause(modelData.projectId)
+                }
+                Action {
+                    text: qsTr("Resume generation")
+                    visible: modelData.paused
+                    onClicked: campaign.projectResume(modelData.projectId)
+                }
+                Action {
+                    text: qsTr("Cancel remaining generation")
+                    visible: modelData.active || modelData.paused
+                    onClicked: campaign.projectCancel(modelData.projectId)
+                }
+            }
+        }
     }
     ColumnLayout {
         Layout.fillWidth: true
@@ -904,7 +977,8 @@ ColumnLayout {
         }
         onAccepted: {
             if (!confirmable) return
-            if (kind === "stage") manager.stageRollout(...request)
+            if (kind === "synthesis") manager.generateData(...request)
+            else if (kind === "stage") manager.stageRollout(...request)
             else if (kind === "publishWeights" || kind === "deployAgent") manager.deploy(...request)
             else if (kind === "rollback") manager.rollbackService(serviceId)
             else if (kind === "compatibility") manager.commitCompatibility(...request)

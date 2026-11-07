@@ -144,6 +144,12 @@ std::vector<CampaignRow> regional_rows(const runtime::WorldState& world,const co
     return rows;
 }
 using namespace lab_inputs;
+core::GenerateDataset synthesis_request(const QString& id,const QString& recipe,const QString& teacher,
+    const QString& evidence,const QString& verification,const QString& units,const QString& source,
+    const QString& rate,const QString& staff) {
+    return {id.toStdString(),recipe.toStdString(),teacher.toStdString(),evidence.toStdString(),verification.toStdString(),
+        static_cast<std::uint64_t>(integer(units,1'000'000'000'000)),allocation(source,rate,staff)};
+}
 std::optional<core::AgentControls> agent_controls(const QString& tools,const QString& oversight) {
     if (tools.isEmpty() && oversight.isEmpty()) return {};
     return core::AgentControls{core::parse_agent_tools(tools.toStdString()),core::parse_agent_oversight(oversight.toStdString())};
@@ -487,12 +493,18 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
     if (s.lab) {
         const auto report=core::lab_report(*s.lab,*s.capacity);
         for (const auto& row:report.data_offers) {
-            const bool owned=std::any_of(report.licenses.begin(),report.licenses.end(),[&](const auto& l){return l.offer_id==row.id;});
+            const auto generated=std::ranges::find(s.lab->generated,row.id,&core::GeneratedDataset::id);
+            const bool synthetic=generated!=s.lab->generated.end();
+            const bool owned=synthetic || std::any_of(report.licenses.begin(),report.licenses.end(),[&](const auto& l){return l.offer_id==row.id;});
             data.push_back({text(row.id),text(row.name),money(row.price)+QStringLiteral(" · ")+number(row.unique_units)+QStringLiteral(" unique records"),
                 tr("%1\n%2\nQuality %3 · contamination %4\nCoverage · %5\nDomain fit · %6\nCommercial use · %7")
                 .arg(text(row.provenance),text(row.rights),percent(row.quality),percent(row.contamination),
                     lab_profile(row.coverage),lab_profile(row.relevance),row.commercial_use?tr("Permitted"):tr("Prohibited")),
-                owned?QStringLiteral("Licensed"):QStringLiteral("Unlicensed"),!owned,{{QStringLiteral("owned"),owned}}});
+                synthetic?tr("Generated and verified"):owned?QStringLiteral("Licensed"):QStringLiteral("Unlicensed"),!owned,
+                {{QStringLiteral("owned"),owned},{QStringLiteral("synthetic"),synthetic}}});
+            if (synthetic) data.back().detail+=tr("\nTeacher %1 · report %2\nVerification source %3\n%4 attempted records · %5 retained after filtering")
+                .arg(text(generated->teacher_id),text(generated->evidence_id),readable(generated->verification_id),
+                    number(generated->attempted_units),number(row.unique_units));
         }
         const auto title_for=[&](const std::string& id) {
             const auto title=program.collection.messages.find(id+".title");
@@ -526,7 +538,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
         }
         for (const auto& row:report.models) {
             const auto* actual=find(s.lab->models,row.id); QStringList mixture;
-            for (const auto& id:actual->data_ids) { const auto* d=find(s.lab->catalog.data,id); mixture.push_back(d?text(d->name):readable(id)); }
+            for (const auto& id:actual->data_ids) mixture.push_back(text(core::lab_data(*s.lab,id).name));
             const auto* work=find(s.capacity->projects,actual->project_id);
             models.push_back({text(row.id),text(row.id),readable(row.recipe_id)+QStringLiteral(" · ")+cu(row.consumed_work.value())+QStringLiteral(" CU consumed"),
                 QStringLiteral("Data: %1\nParent checkpoint: %2\n%3\nServing cost %4 CU/task. True capability remains unknown until measured. A clone copies consumed work; it adds no training.")
@@ -740,6 +752,105 @@ QVariantList ManagementController::evaluations() const {
         result.push_back(value);
     }
     return result;
+}
+QVariantList ManagementController::synthesisRecipes() const {
+    QVariantList result;
+    if (!available()) return result;
+    for (const auto& recipe:state().lab->catalog.synthesis) {
+        auto item=option(recipe.id,text(recipe.name));
+        QStringList research;
+        for (const auto& id:recipe.requires_research) research.push_back(readable(id));
+        item.insert(QStringLiteral("detail"),tr("%1 · independently measured teacher lower bound at least %2\nUp to %3 attempted records · %4 verification fee\nResearch · %5")
+            .arg(lab_domain(recipe.domain),percent(recipe.minimum_teacher),number(recipe.maximum_units),money(recipe.fee),
+                research.isEmpty()?tr("None"):research.join(QStringLiteral(", "))));
+        result.push_back(std::move(item));
+    }
+    return result;
+}
+QVariantList ManagementController::synthesisTeachers() const {
+    QVariantList result;
+    if (!available()) return result;
+    for (const auto& model:state().lab->models) {
+        const auto* work=find(state().capacity->projects,model.project_id);
+        if (model.consumed_work.value()>0 && (!work ||
+            (work->status!=core::ProjectStatus::active && work->status!=core::ProjectStatus::paused)))
+            result.push_back(option(model.id,tr("%1 · %2 CU trained").arg(text(model.id),cu(model.consumed_work.value()))));
+    }
+    return result;
+}
+QVariantList ManagementController::synthesisEvidence(QString teacher) const {
+    QVariantList result;
+    if (!available()) return result;
+    for (const auto& evidence:state().lab->evaluations) {
+        const auto* plan=find(state().lab->catalog.evaluations,evidence.plan_id);
+        if (evidence.model_id==teacher.toStdString() && evidence.completed && plan && plan->independent)
+            result.push_back(option(evidence.id,tr("%1 · %2").arg(text(evidence.id),text(plan->name))));
+    }
+    return result;
+}
+QVariantList ManagementController::synthesisVerification(QString recipe,QString teacher) const {
+    QVariantList result;
+    if (!available()) return result;
+    const auto* generation=find(state().lab->catalog.synthesis,recipe.toStdString());
+    const auto* model=find(state().lab->models,teacher.toStdString());
+    if (!generation || !model) return result;
+    for (const auto& offer:state().lab->catalog.data) {
+        const bool licensed=std::ranges::any_of(state().lab->licenses,[&](const auto& row) { return row.offer_id==offer.id; });
+        if (licensed && offer.coverage[generation->domain].value()>0 && offer.relevance[generation->domain].value()>0 &&
+            std::ranges::find(model->data_ids,offer.id)==model->data_ids.end())
+            result.push_back(option(offer.id,text(offer.name)));
+    }
+    return result;
+}
+QVariantList ManagementController::synthesisJobs() const {
+    QVariantList result;
+    if (!available()) return result;
+    for (const auto& job:state().lab->generated) {
+        const auto* work=find(state().capacity->projects,job.project_id);
+        if (!work) continue;
+        const bool active=work->status==core::ProjectStatus::active;
+        const bool paused=work->status==core::ProjectStatus::paused;
+        const auto status=job.output?tr("Verified and available"):paused?tr("Paused"):
+            active?tr("Generating and verifying"):tr("Cancelled");
+        auto detail=tr("Teacher %1 · report %2\nVerification source %3\n%4 attempted records · %5 of %6 CU completed")
+            .arg(text(job.teacher_id),text(job.evidence_id),readable(job.verification_id),number(job.attempted_units),
+                cu(work->completed_work.value()),cu(work->total_work.value()));
+        if (job.output) detail+=tr("\n%1 verified records are available for a fresh training mixture.").arg(number(job.output->unique_units));
+        result.push_back(QVariantMap{{QStringLiteral("id"),text(job.id)},{QStringLiteral("status"),status},
+            {QStringLiteral("detail"),detail},{QStringLiteral("projectId"),text(job.project_id)},
+            {QStringLiteral("active"),active},{QStringLiteral("paused"),paused}});
+    }
+    return result;
+}
+QVariantMap ManagementController::synthesisQuote(QString recipe,QString teacher,QString evidence,QString verification,
+    QString units,QString source,QString rate,QString staff) const {
+    if (!available()) return {};
+    try {
+        const auto request=synthesis_request(QStringLiteral("synthetic.preview"),recipe,teacher,evidence,verification,units,source,rate,staff);
+        const auto& s=state();
+        const auto quote=core::preview_synthesis(*s.lab,*s.capacity,s.date,request);
+        const auto* supply=find(s.capacity->sources,request.allocation.source_id);
+        std::int64_t assigned=0;
+        for (const auto& work:s.capacity->projects)
+            if (work.status==core::ProjectStatus::active && work.source_id==request.allocation.source_id)
+                assigned=core::checked_add(assigned,work.requested.value());
+        const auto capacity=core::capacity_report(*s.capacity);
+        const bool resources=supply && core::company_capacity(*supply).value()-assigned>=request.allocation.daily_compute.value() &&
+            capacity.available_staff-capacity.assigned_staff>=request.allocation.staff;
+        const bool funded=core::discretionary_cash(s)>=quote.fee;
+        auto detail=tr("Generate %1 attempted records with teacher %2 and report %3. Verify against %4.\n\n"
+            "%5 verification fee · %6 total CU · %7 staff · earliest %8 days\n"
+            "Estimated retained records %9–%10 · %11 records remain in the source diversity allowance.\n"
+            "Commercial deployment · %12. Weight redistribution · %13.\n\n"
+            "Completed verified records become available for a fresh training mixture. Starting rechecks the allocation and cash.")
+            .arg(number(request.attempted_units),teacher,evidence,readable(request.verification_id),money(quote.fee),
+                cu(quote.work.value()),staff,QString::number(quote.minimum_days.value()),number(quote.retained_lower),
+                number(quote.retained_upper),number(quote.diversity_remaining),quote.commercial_use?tr("Permitted"):tr("Restricted"),
+                quote.open_weight_release?tr("Permitted"):tr("Restricted"));
+        if (!resources) detail+=tr("\nFree compute or staff are below the requested allocation.");
+        if (!funded) detail+=tr("\nThe verification fee exceeds available cash after reserves.");
+        return {{QStringLiteral("ready"),resources && funded},{QStringLiteral("detail"),detail}};
+    } catch (const std::exception& error) { return {{QStringLiteral("ready"),false},{QStringLiteral("detail"),QString::fromUtf8(error.what())}}; }
 }
 QVariantList ManagementController::sources() const {
     QVariantList result; if (!snapshot_ || !state().capacity) return result;
@@ -1338,6 +1449,12 @@ bool ManagementController::editable() {
 }
 QString ManagementController::nextId(QString prefix) const { return prefix+QString::number(static_cast<qulonglong>(state().revision+1)); }
 void ManagementController::buyData(QString id) { if (editable()) emit actionRequested(core::BuyData{id.toStdString()}); }
+void ManagementController::generateData(QString recipe,QString teacher,QString evidence,QString verification,
+    QString units,QString source,QString rate,QString staff) {
+    if (!editable()) return;
+    try { emit actionRequested(synthesis_request(nextId(QStringLiteral("synthetic.")),recipe,teacher,evidence,verification,units,source,rate,staff)); }
+    catch (const std::exception& error) { emit noticeRaised(QString::fromUtf8(error.what())); }
+}
 void ManagementController::research(QString id,QString source,QString rate,QString staff) {
     if (!editable()) return; try { emit actionRequested(core::StartResearch{id.toStdString(),allocation(source,rate,staff)}); } catch (const std::exception& e) { emit noticeRaised(QString::fromUtf8(e.what())); }
 }

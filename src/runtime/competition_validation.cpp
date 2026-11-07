@@ -56,6 +56,7 @@ void resources(const WorldState& world,const CompiledProgram& program,const Riva
     for (const auto& row:state.lab->research) projects.insert(row.project_id);
     for (const auto& row:state.lab->models) if (!row.project_id.empty()) projects.insert(row.project_id);
     for (const auto& row:state.lab->evaluations) projects.insert(row.project_id);
+    for (const auto& row:state.lab->generated) projects.insert(row.project_id);
     for (const auto& row:state.deployments->records) projects.insert(row.project_id);
     if (state.frontier) for (const auto& row:state.frontier->trials) projects.insert(row.project);
     if (state.succession) for (const auto& row:state.succession->plans) if(!row.project.empty()) projects.insert(row.project);

@@ -30,7 +30,8 @@ template<class Rows> void identities(const Rows& rows, std::size_t bound) {
     }
 }
 bool licensed(const LabState& state, std::string_view id) {
-    return std::any_of(state.licenses.begin(), state.licenses.end(), [&](const auto& row) { return row.offer_id == id; });
+    return std::any_of(state.licenses.begin(), state.licenses.end(), [&](const auto& row) { return row.offer_id == id; }) ||
+        std::ranges::any_of(state.generated,[&](const auto& row) { return row.id==id && row.output.has_value(); });
 }
 bool completed(const LabState& state, std::string_view id) {
     return std::any_of(state.research.begin(), state.research.end(), [&](const auto& row) {
@@ -117,13 +118,13 @@ std::vector<std::string> data_union(const LabState& state, const TrainingRequest
     }
     std::sort(ids.begin(), ids.end()); ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
     if (ids.empty()) invalid("A training mixture needs at least one data source");
-    for (const auto& id : ids) (void)find(state.catalog.data, id);
+    for (const auto& id : ids) (void)lab_data(state,id);
     return ids;
 }
-std::array<std::uint64_t, lab_domain_count> effective_data(const LabCatalog& catalog, const LabModel& model) {
+std::array<std::uint64_t, lab_domain_count> effective_data(const LabCatalog& catalog, const LabModel& model,std::span<const GeneratedDataset> generated) {
     std::array<std::uint64_t, lab_domain_count> result{};
     for (const auto& id : model.data_ids) {
-        const auto& offer = find(catalog.data, id);
+        const auto& offer = lab_data(catalog,generated,id);
         for (std::size_t j = 0; j < lab_domain_count; ++j) {
             const std::uint64_t factors[]{offer.unique_units, static_cast<std::uint64_t>(offer.quality.value()),
                 static_cast<std::uint64_t>(offer.relevance[j].value()), static_cast<std::uint64_t>(offer.coverage[j].value())};
@@ -145,7 +146,7 @@ void resolve_evidence(const LabState& state, EvaluationEvidence& evidence, Split
     std::int64_t contamination = 0;
     if (!plan.independent)
         for (const auto& id : model.data_ids)
-            contamination = std::max(contamination, find(state.catalog.data, id).contamination.value());
+            contamination = std::max(contamination, lab_data(state,id).contamination.value());
     evidence.stream_before = stream.state();
     evidence.findings.clear();
     evidence.measured = evidence.lower = evidence.upper = empty_lab_profile;
@@ -167,6 +168,7 @@ void resolve_evidence(const LabState& state, EvaluationEvidence& evidence, Split
 } // namespace
 
 void validate_lab_catalog(const LabCatalog& catalog) {
+    validate_synthetic_catalog(catalog);
     identities(catalog.data, lab_catalog_limit); identities(catalog.research, lab_catalog_limit);
     identities(catalog.recipes, lab_catalog_limit); identities(catalog.evaluations, lab_catalog_limit);
     if (catalog.data.empty() || catalog.recipes.empty() || catalog.evaluations.empty()) invalid("Lab catalog is incomplete");
@@ -224,9 +226,9 @@ void validate_lab_catalog(const LabCatalog& catalog) {
     }
 }
 
-LabProfile model_capability(const LabCatalog& catalog, const LabModel& model) {
+LabProfile model_capability(const LabCatalog& catalog, const LabModel& model,std::span<const GeneratedDataset> generated) {
     const auto& recipe = find(catalog.recipes, model.recipe_id);
-    const auto units = effective_data(catalog, model);
+    const auto units = effective_data(catalog,model,generated);
     const auto compute = saturation(static_cast<std::uint64_t>(model.consumed_work.value()),
                                     static_cast<std::uint64_t>(recipe.compute_scale.value()));
     LabProfile result = empty_lab_profile;
@@ -257,8 +259,8 @@ TrainingPreview preview_training(const LabState& state, const TrainingRequest& r
         result.unowned_data_cost = checked_unit_add(result.unowned_data_cost, find(state.catalog.data, id).price);
     }
     result.prerequisites_met = requires_met(state, recipe.requires_research);
-    const auto profile = model_capability(state.catalog, model);
-    const auto units = effective_data(state.catalog, model);
+    const auto profile = model_capability(state.catalog,model,state.generated);
+    const auto units = effective_data(state.catalog,model,state.generated);
     const auto compute = saturation(static_cast<std::uint64_t>(model.consumed_work.value()), static_cast<std::uint64_t>(recipe.compute_scale.value()));
     for (std::size_t j = 0; j < lab_domain_count; ++j) {
         if (recipe.data_scale[j]==0) continue;
@@ -343,7 +345,7 @@ void start_training(LabState& state, CapacityState& capacity, OrdinalDay day, co
         model.inherited_work = parent.consumed_work;
     }
     model.consumed_work = model.inherited_work;
-    model.capability = model_capability(state.catalog, model);
+    model.capability = model_capability(state.catalog,model,state.generated);
     auto row = project("lab/train/" + model.id, ProjectKind::training, day,
         {request.source_id, request.daily_compute, request.staff}, request.work);
     row.minimum_memory_mib = recipe.minimum_memory_mib; row.interconnect = recipe.interconnect;
@@ -389,11 +391,12 @@ void start_evaluation(LabState& state, AccountsState& accounts, CapacityState& c
 void close_lab_day(LabState& state, const CapacityState& capacity, OrdinalDay day, RandomSnapshot& random) {
     require_day(state, day);
     if (capacity.closed_through != day) invalid("Lab outcomes require settled actual capacity work");
+    close_synthetic_data(state,capacity,day);
     for (auto& run : state.research)
         run.completed = find(capacity.projects, run.project_id).status == ProjectStatus::completed;
     for (auto& model : state.models) if (!model.project_id.empty()) {
         model.consumed_work = checked_unit_add(model.inherited_work, find(capacity.projects, model.project_id).completed_work);
-        model.capability = model_capability(state.catalog, model);
+        model.capability = model_capability(state.catalog,model,state.generated);
     }
     auto streams = RandomStreams::restore(random);
     for (auto& evidence : state.evaluations)
@@ -475,16 +478,24 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
                 *find(capacity.projects, row.project_id).stopped_on < work.starts_on;
         })) invalid("Research alternative prerequisite was not complete at acceptance");
     }
+    validate_synthetic_data(state,capacity,accounts,deep);
+    for (const auto& row:state.generated)
+        if (!projects.insert(row.project_id).second) invalid("Synthetic data duplicated a lab project owner");
     const auto snapshots=deep?checkpoint_work(state,capacity):std::unordered_map<std::string_view,MilliCU>{};
     for (const auto& model : state.models) {
         const auto& recipe = find(state.catalog.recipes, model.recipe_id);
         if (model.created_on < state.starts_on || model.created_on > today || model.data_ids.empty() || model.data_ids.size() > lab_catalog_limit ||
             !std::is_sorted(model.data_ids.begin(), model.data_ids.end()) || std::adjacent_find(model.data_ids.begin(), model.data_ids.end()) != model.data_ids.end())
             invalid("Model creation or unique data mixture is invalid");
-        for (const auto& id : model.data_ids)
-            if (std::none_of(state.licenses.begin(), state.licenses.end(), [&](const auto& license) {
-                return license.offer_id == id && license.acquired_on <= model.created_on;
+        for (const auto& id : model.data_ids) {
+            if (const auto generated=std::ranges::find(state.generated,id,&GeneratedDataset::id);generated!=state.generated.end()) {
+                const auto& work=find(capacity.projects,generated->project_id);
+                if (!generated->output || !work.stopped_on || *work.stopped_on>=model.created_on)
+                    invalid("Model used generated data before verification completed");
+            } else if (std::none_of(state.licenses.begin(),state.licenses.end(),[&](const auto& license) {
+                return license.offer_id==id && license.acquired_on<=model.created_on;
             })) invalid("Model used data before its actual license acquisition");
+        }
         for (const auto& id : recipe.requires_research)
             if (!knowledge_on(state,capacity,id,model.created_on)) invalid("Model used research before it completed");
         if (!model.parent_id.empty()) {
@@ -514,7 +525,7 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
                 !projects.insert(work.id).second) invalid("Model has a foreign, incompatible or duplicate training commitment");
             expected = checked_unit_add(expected, work.completed_work);
         } else if (model.parent_id.empty()) invalid("Model has neither training nor a checkpoint parent");
-        if (model.consumed_work != expected || model.capability != model_capability(state.catalog, model))
+        if (model.consumed_work != expected || model.capability != model_capability(state.catalog,model,state.generated))
             invalid("Model capability differs from actual cumulative resources");
         prior_models.insert(model.id);
     }
@@ -556,6 +567,11 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
 }
 LabReport lab_report(const LabState& state, const CapacityState& capacity) {
     LabReport result; result.data_offers = state.catalog.data; result.licenses = state.licenses; result.research = state.research;
+    for (const auto& row:state.generated) if (row.output) {
+        result.data_offers.push_back(*row.output);
+        const auto& work=find(capacity.projects,row.project_id);
+        result.licenses.push_back({row.id,advance_days(*work.stopped_on,Days{1})});
+    }
     for (const auto& model : state.models)
         result.models.push_back({model.id, model.recipe_id, model.parent_id, model.consumed_work,
             !model.project_id.empty() && (find(capacity.projects, model.project_id).status == ProjectStatus::active || find(capacity.projects,model.project_id).status==ProjectStatus::paused),

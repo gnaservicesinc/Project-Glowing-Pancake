@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.22.0-dev.1",
+  "content_version": "0.23.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -21856,6 +21856,27 @@
             },
             "rights": "Research use only. Commercial service and weight redistribution excluded.",
             "unique_units": 2600000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.workflow_checks",
+            "name": "Independent workflow checks",
+            "price_cents": 320000,
+            "provenance": "Fictional licensed tool-work verification cases, authored independently of the robotics trajectories.",
+            "quality_bp": 9700,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 240000
           }
         ],
         "evaluations": [
@@ -22517,7 +22538,39 @@
             ]
           }
         ],
-        "research": []
+        "research": [],
+        "synthesis": [
+          {
+            "diversity_bp": 2500,
+            "domain": "documents",
+            "fee_cents": 100000,
+            "id": "synthesis.document",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified document examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          },
+          {
+            "diversity_bp": 2500,
+            "domain": "autonomous_workflows",
+            "fee_cents": 100000,
+            "id": "synthesis.workflow",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified autonomous workflow examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          }
+        ]
       },
       "lease_energy_included": true,
       "management": {
@@ -23091,7 +23144,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 12,
+      "revision": 13,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -27100,6 +27153,27 @@
             },
             "rights": "Research use only. Commercial service and weight redistribution excluded.",
             "unique_units": 2600000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.workflow_checks",
+            "name": "Independent workflow checks",
+            "price_cents": 320000,
+            "provenance": "Fictional licensed tool-work verification cases, authored independently of the robotics trajectories.",
+            "quality_bp": 9700,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 240000
           }
         ],
         "evaluations": [
@@ -27761,7 +27835,39 @@
             ]
           }
         ],
-        "research": []
+        "research": [],
+        "synthesis": [
+          {
+            "diversity_bp": 2500,
+            "domain": "documents",
+            "fee_cents": 100000,
+            "id": "synthesis.document",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified document examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          },
+          {
+            "diversity_bp": 2500,
+            "domain": "autonomous_workflows",
+            "fee_cents": 100000,
+            "id": "synthesis.workflow",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified autonomous workflow examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          }
+        ]
       },
       "lease_energy_included": true,
       "management": {
@@ -28335,7 +28441,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 12,
+      "revision": 13,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -31516,6 +31622,27 @@
             },
             "rights": "Research only; commercial clearance unavailable",
             "unique_units": 2000000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.workflow_checks",
+            "name": "Independent workflow checks",
+            "price_cents": 320000,
+            "provenance": "Fictional licensed tool-work verification cases, authored independently of the robotics trajectories.",
+            "quality_bp": 9700,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 240000
           }
         ],
         "evaluations": [
@@ -31829,7 +31956,39 @@
             ]
           }
         ],
-        "research": []
+        "research": [],
+        "synthesis": [
+          {
+            "diversity_bp": 2500,
+            "domain": "documents",
+            "fee_cents": 100000,
+            "id": "synthesis.document",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified document examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          },
+          {
+            "diversity_bp": 2500,
+            "domain": "autonomous_workflows",
+            "fee_cents": 100000,
+            "id": "synthesis.workflow",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified autonomous workflow examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          }
+        ]
       },
       "lease_energy_included": true,
       "management": {
@@ -32144,7 +32303,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 15,
+      "revision": 16,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -34477,6 +34636,27 @@
             },
             "rights": "Research only; commercial clearance unavailable",
             "unique_units": 2000000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.workflow_checks",
+            "name": "Independent workflow checks",
+            "price_cents": 320000,
+            "provenance": "Fictional licensed tool-work verification cases, authored independently of the robotics trajectories.",
+            "quality_bp": 9700,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 240000
           }
         ],
         "evaluations": [
@@ -34790,7 +34970,39 @@
             ]
           }
         ],
-        "research": []
+        "research": [],
+        "synthesis": [
+          {
+            "diversity_bp": 2500,
+            "domain": "documents",
+            "fee_cents": 100000,
+            "id": "synthesis.document",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified document examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          },
+          {
+            "diversity_bp": 2500,
+            "domain": "autonomous_workflows",
+            "fee_cents": 100000,
+            "id": "synthesis.workflow",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified autonomous workflow examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          }
+        ]
       },
       "lease_energy_included": true,
       "management": {
@@ -35107,7 +35319,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 16,
+      "revision": 17,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -38595,6 +38807,27 @@
             },
             "rights": "Research only; commercial clearance unavailable",
             "unique_units": 2000000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.workflow_checks",
+            "name": "Independent workflow checks",
+            "price_cents": 320000,
+            "provenance": "Fictional licensed tool-work verification cases, authored independently of the robotics trajectories.",
+            "quality_bp": 9700,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 240000
           }
         ],
         "evaluations": [
@@ -38908,7 +39141,39 @@
             ]
           }
         ],
-        "research": []
+        "research": [],
+        "synthesis": [
+          {
+            "diversity_bp": 2500,
+            "domain": "documents",
+            "fee_cents": 100000,
+            "id": "synthesis.document",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified document examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          },
+          {
+            "diversity_bp": 2500,
+            "domain": "autonomous_workflows",
+            "fee_cents": 100000,
+            "id": "synthesis.workflow",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified autonomous workflow examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          }
+        ]
       },
       "lease_energy_included": true,
       "management": {
@@ -39225,7 +39490,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 16,
+      "revision": 17,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -42713,6 +42978,27 @@
             },
             "rights": "Research only; commercial clearance unavailable",
             "unique_units": 2000000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.workflow_checks",
+            "name": "Independent workflow checks",
+            "price_cents": 320000,
+            "provenance": "Fictional licensed tool-work verification cases, authored independently of the robotics trajectories.",
+            "quality_bp": 9700,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 240000
           }
         ],
         "evaluations": [
@@ -43026,7 +43312,39 @@
             ]
           }
         ],
-        "research": []
+        "research": [],
+        "synthesis": [
+          {
+            "diversity_bp": 2500,
+            "domain": "documents",
+            "fee_cents": 100000,
+            "id": "synthesis.document",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified document examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          },
+          {
+            "diversity_bp": 2500,
+            "domain": "autonomous_workflows",
+            "fee_cents": 100000,
+            "id": "synthesis.workflow",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified autonomous workflow examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          }
+        ]
       },
       "lease_energy_included": true,
       "management": {
@@ -43343,7 +43661,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 16,
+      "revision": 17,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -46831,6 +47149,27 @@
             },
             "rights": "Research only; commercial clearance unavailable",
             "unique_units": 2000000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.workflow_checks",
+            "name": "Independent workflow checks",
+            "price_cents": 320000,
+            "provenance": "Fictional licensed tool-work verification cases, authored independently of the robotics trajectories.",
+            "quality_bp": 9700,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 240000
           }
         ],
         "evaluations": [
@@ -47144,7 +47483,39 @@
             ]
           }
         ],
-        "research": []
+        "research": [],
+        "synthesis": [
+          {
+            "diversity_bp": 2500,
+            "domain": "documents",
+            "fee_cents": 100000,
+            "id": "synthesis.document",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified document examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          },
+          {
+            "diversity_bp": 2500,
+            "domain": "autonomous_workflows",
+            "fee_cents": 100000,
+            "id": "synthesis.workflow",
+            "maximum_units": 200000,
+            "minimum_teacher_bp": 5000,
+            "name": "Verified autonomous workflow examples",
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "staff_days": 4,
+            "verification_milli_CU_per_unit": 2
+          }
+        ]
       },
       "lease_energy_included": true,
       "management": {
@@ -47461,7 +47832,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 16,
+      "revision": 17,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,

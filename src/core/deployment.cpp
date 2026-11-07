@@ -70,7 +70,7 @@ CapacityProject qualified_project(const ServiceDefinition& definition,const LabS
     for (std::size_t visited=0;;++visited) {
         if (visited>=lab_record_limit) invalid("Model lineage exceeds its bound");
         for (const auto& data_id:ancestor->data_ids) {
-            const auto& rights = find(lab.catalog.data,data_id);
+            const auto& rights = lab_data(lab,data_id);
             if (!rights.commercial_use)
                 invalid("This model includes research-only data; train a new commercially cleared model");
             if (definition.product.channel == ProductChannel::open_weights && !rights.open_weight_release)

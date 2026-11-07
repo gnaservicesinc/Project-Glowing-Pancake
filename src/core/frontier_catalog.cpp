@@ -24,10 +24,10 @@ bool condition_met(const FutureConditions& actual, const FutureConditions& minim
         if (actual[i] < minimum[i]) return false;
     return true;
 }
-FrontierScores model_scores(const FrontierCatalog& catalog, const FuturePath& path, const LabCatalog& lab, const LabModel& model) {
+FrontierScores model_scores(const FrontierCatalog& catalog, const FuturePath& path, const LabCatalog& lab, const LabModel& model,std::span<const GeneratedDataset> generated) {
     FrontierScores result{};
     const auto branch_ceiling = static_cast<std::uint32_t>(path.ceiling.value());
-    const auto task_capability = model_capability(lab, model);
+    const auto task_capability = model_capability(lab,model,generated);
     for (std::size_t i = 0; i < introductory_lab_domains; ++i)
         result[i] = std::min(branch_ceiling, static_cast<std::uint32_t>(task_capability[i].value()));
     const auto* profile = named(catalog.recipes, model.recipe_id);

@@ -106018,6 +106018,99 @@
         "prepared_headquarters": 21,
         "scenarios": 7
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "aff46a91dd259f40008c44b904c5a8cc812852e1dde31d604db9a723b1f34948",
+          "before_hash": "1a977e3f6b9e40586e0cd3ca76adb21e5848f91323f6f13a07a39374801fc17b",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 12,
+          "revision": 13
+        },
+        {
+          "after_hash": "18b56145edbe69aee7fbc54124d817e012042d76dcb43e0f0dcffa43086afb09",
+          "before_hash": "9e023be68e2afa9d272efcc31fef54d3471529301e937c0681b588ce83d042fd",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 12,
+          "revision": 13
+        },
+        {
+          "after_hash": "7845971cfc9fdc3a03505427df93cefb85eb8d6bbce4fe1345124c195452e3a2",
+          "before_hash": "b6465a97d952831f7b32aa8e001180c4b02b577a24ec0baa18c8c6f145ba7b95",
+          "change": "changed",
+          "id": "scenario.first_playable",
+          "kind": "scenario",
+          "old_revision": 15,
+          "revision": 16
+        },
+        {
+          "after_hash": "764f0fdfca53265861debeadda83e06128b5ab0b0e02236fcd50ac28edf39cc8",
+          "before_hash": "b737c2f8a17e109b3ac814b6356289efe43491b86c5ef3736b98178974b687b7",
+          "change": "changed",
+          "id": "scenario.world_competition",
+          "kind": "scenario",
+          "old_revision": 16,
+          "revision": 17
+        },
+        {
+          "after_hash": "d0c7234910658992ae937dd33086890921167f5061093ae32cd5594e8320f539",
+          "before_hash": "f199b7c137a7a737213d4ad9b00b9b4d8f55085c4471064b0aacf9220e3a8dd5",
+          "change": "changed",
+          "id": "scenario.world_expanded",
+          "kind": "scenario",
+          "old_revision": 16,
+          "revision": 17
+        },
+        {
+          "after_hash": "857aecc3377f1b8870bf0c4e6482ab8330195b93ac98c377a91c8df471979df7",
+          "before_hash": "f1895f41df72f4f792c50b0463e710cc259554f8f33f9464401c73adddee771e",
+          "change": "changed",
+          "id": "scenario.world_forgiving",
+          "kind": "scenario",
+          "old_revision": 16,
+          "revision": 17
+        },
+        {
+          "after_hash": "6712b1a12d9138461d84f9d449ce948c85fd34c2a11564856710fbe1b912a89f",
+          "before_hash": "02749079b1a47aa6a632ceff699565503b76ba3c0f724365bbb06552f5ee15b9",
+          "change": "changed",
+          "id": "scenario.world_reduced",
+          "kind": "scenario",
+          "old_revision": 16,
+          "revision": 17
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "4c17bf9013351a306c4c146e667c9af60746ac755941e14686ec97b1df17b3be",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.23.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 23,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.22.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000022.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000023.collection.json",
+      "summary": "Add paid teacher-based generation and external verification of bounded synthetic training data.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 21,
+        "lints": [],
+        "prepared_headquarters": 21,
+        "scenarios": 7
+      }
     }
   ],
   "format": 1

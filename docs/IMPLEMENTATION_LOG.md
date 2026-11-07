@@ -2029,3 +2029,32 @@ The optimized Mac build and 13 focused CTests pass across the initial run and
 corrected fixture checks. Offscreen keyboard checks at 100% and 200% text
 open the saved reliability warning, acknowledge it, compare the Office's
 production and trial samples, resume work and reopen the exact save.
+
+### Paid synthetic-data generation and verification
+
+Lab Data now offers document and workflow generation with a frozen teacher,
+completed independent evidence and an external licensed verification source.
+The quote uses measured intervals; actual retained yield uses the frozen
+teacher and authored filtering/diversity. Real finite compute/staff work and
+a one-time fee precede output. Pending/cancelled jobs supply no dataset.
+Pause/resume releases and rechecks reservations, preserving work and fees.
+Completed output carries source rights, contamination, coverage and lineage
+into fresh training, qualification and deployment. Source/domain budgets and
+teacher fingerprints prevent clones or renamed jobs from multiplying data.
+
+The shared writer finalized **0.23.0-dev.1**, generation **23**, after reviewing
+seven scenario changes and all 21 exact opening saves. The original generation
+22 hash still verifies. Optional empty fields preserve archived canonical
+identity; normal save opening still requires matching content.
+
+The optimized Mac build and 13 focused CTests pass across the initial run and
+corrected Lab rerun. The Lab fixture covers both recipes, paid work, paused
+and cancelled saves, retries, the shared cap, clone refusal, fresh training,
+independent evaluation, actual customer work, redistribution rights and forged
+output rejection. The UI walkthrough initially caught a reversed posting key;
+the pause fixture caught missing command ownership. Both were fixed before
+the final passes. Offscreen keyboard checks at 100% and 200% text review the
+quote, confirm payment, complete five days of work, select the new corpus for
+training and reopen exact saves. These are engineering checks on a prepared
+fixture; human testing, endurance, balance and release qualification remain
+deferred. The next initial feature is authored deployment incident risk.

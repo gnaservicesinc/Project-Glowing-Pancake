@@ -8,7 +8,7 @@
 namespace pgp::persistence::detail {
 namespace {
 constexpr std::array<std::string_view,3> source_names{"leased","owned","imported"};
-constexpr std::array<std::string_view,5> project_names{"training","research","evaluation","serving","replication"};
+constexpr std::array<std::string_view,6> project_names{"training","research","evaluation","serving","replication","data_generation"};
 constexpr std::array<std::string_view,4> status_names{"active","completed","cancelled","paused"};
 template<class Enum,std::size_t Size> Json enum_json(Enum value,const std::array<std::string_view,Size>& names) {
     const auto index=static_cast<std::size_t>(value);

@@ -3,8 +3,9 @@
 `lab.hpp` owns delivered data licenses, research attempts, checkpoint lineage and
 evaluation evidence. Scenarios supply a validated catalog; the shared compiler
 hash includes every numeric input. The first-playable catalog in
-`data/runtime/first-playable.json` has eight fictional data offers, six research
-nodes, six recipes and four evaluation plans. The data licenses apply to game
+`data/runtime/first-playable.json` has nine fictional data offers, six research
+nodes, six training recipes, four evaluation plans and two synthetic-data
+recipes. The data licenses apply to game
 models. The game simulates training and evaluation offline.
 
 All mutations use revision-checked `Simulation` commands and the existing
@@ -61,6 +62,35 @@ hand-calculated arithmetic case, malformed data/saves, paid unlocks/retries,
 resource/payment failures, cancellation, outage recovery, clone/mixture exploits,
 untested subgroups, narrower audit uncertainty and matched save continuation.
 
+
+## Generate verified training data
+
+Lab Data can commission a finite document or workflow generation job. Choose
+an immutable trained teacher, its completed independent report, a separately
+licensed verification source and paid compute/staff. The verification source
+must be absent from the teacher's entire training lineage. Research and the
+report must have finished before the job starts. The quote shows the one-time
+fee, actual generation/filtering work, earliest completion, uncertain retained
+yield, remaining source diversity and inherited commercial/distribution rights.
+
+`synthetic_data.cpp` owns generation and validation. The job reserves a real
+`data_generation` capacity project; it can pause, resume or cancel. Spent work
+and fees stay spent. Completed verification exposes an immutable dataset for
+a fresh training mixture on the next morning. Pending or cancelled jobs supply
+no training data. Existing models retain their original mixture and work.
+
+Yield depends on frozen teacher capability, verification quality and authored
+diversity. Public estimates use the teacher's measured interval. Coverage stays
+within both the independent report and verification source. Rights intersect
+all teacher inputs and the verification license; contamination also follows the
+inputs. One shared source/domain allowance limits repeated jobs. Cloning a
+teacher cannot create a new diversity allowance. Cancelled jobs permit a new
+paid attempt, while completed output retains its reservation.
+
+Saves retain the teacher, report, verification source, accepted date, attempted
+units, project and completed output. Loading checks their dates, actual work,
+unique fee and derived output. Authored catalogs stay immutable. Empty synthesis
+fields remain omitted so older archived content keeps its original hash.
 
 ## Qualified deployment
 

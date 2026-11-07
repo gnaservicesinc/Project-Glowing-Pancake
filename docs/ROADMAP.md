@@ -2,6 +2,14 @@
 
 Baseline 1.2 · 2026-11-03 · Gate-driven plan, not a promised calendar
 
+**Implementation remains active, 2026-11-07.** The original checklist has
+42 of 52 acceptance steps checked. All ten open steps belong to deferred human,
+balance, platform and release phases; there is no blocked implementation step
+42. The [feature coverage pass](STATUS.md#initial-feature-coverage) has delivered
+19 additional batches within earlier milestones, most recently verified
+synthetic data. Next is authored deployment incident risk and response.
+Continue initial features before human feedback, event expansion and balance.
+
 **Current sequencing, 2026-11-05:** finish the components before beginning v1
 human testing. Independent player sessions (M3-04) and the author study
 (E1B-03) are deferred until the user is ready for that phase. They retain their

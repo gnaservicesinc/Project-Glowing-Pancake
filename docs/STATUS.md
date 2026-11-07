@@ -4,7 +4,15 @@ Updated 2026-11-07 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**Initial feature work is active. 42 of 52 roadmap acceptance steps are checked.** Completed batches include
+**Initial feature work is active. Latest delivery: verified synthetic training
+data in Lab. Next: authored deployment incident risk and response.**
+
+The original roadmap has **42 of 52 acceptance steps checked**. Its ten open
+steps are deferred human, balance, platform and release gates; they do not
+block current implementation. The coverage pass below has delivered 19
+additional feature batches within earlier milestones. That batch count is
+separate from the 52 acceptance steps and does not imply complete design
+coverage. Completed milestones include
 M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03, M6-01 through M6-03 M7-01 through M7-03 and M8-01.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
@@ -714,10 +722,23 @@ Staged candidates keep separate results. Two regional demand incidents also
 change the mix of agent tasks until their expiry. Generation **22** of reviewed
 content is **0.22.0-dev.1** and passes all 21 prepared opening round trips.
 
-The next Lab gap is paid synthetic-data generation. Add a bounded job using
-an immutable teacher checkpoint, real staff and compute, and verification
-before the generated data becomes a training input. Retain teacher lineage,
-rights, and the limits of its measured coverage.
+Lab Data now generates verified document or workflow examples using a frozen
+teacher, independent evidence and a separately licensed verification source.
+Paid finite work reserves compute and staff, supports pause/resume and retains
+spent fees on cancellation. Completed output becomes a fresh training input
+with saved lineage, coverage and rights. Shared source diversity limits and
+teacher fingerprints prevent cloning from multiplying available information.
+Reviewed content **0.23.0-dev.1**, generation **23**, validates all seven
+scenarios and 21 exact opening saves. The optimized build, 13 focused CTests
+and offscreen keyboard checks at 100%/200% text pass.
+
+**Next initial feature:** scenario-authored deployment incident risk, with
+visible risk bands, monthly risk-stream sampling, saved incident scheduling,
+actual consequences and recovery. The design's exposure, autonomy, task
+severity and control lookup is still missing; daily agent failures and local
+site hazards cover different mechanisms. Implement this core loop before
+expanding its event catalog. Commissioned/consented data delivery and opted-in
+product feedback remain additional source-acquisition gaps for the coverage pass.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

@@ -36,6 +36,9 @@ class ManagementController final : public QObject {
     Q_PROPERTY(QString decisionPageLabel READ decisionPageLabel NOTIFY changed)
     Q_PROPERTY(QVariantList recipes READ recipes NOTIFY changed)
     Q_PROPERTY(QVariantList evaluations READ evaluations NOTIFY changed)
+    Q_PROPERTY(QVariantList synthesisRecipes READ synthesisRecipes NOTIFY changed)
+    Q_PROPERTY(QVariantList synthesisTeachers READ synthesisTeachers NOTIFY changed)
+    Q_PROPERTY(QVariantList synthesisJobs READ synthesisJobs NOTIFY changed)
     Q_PROPERTY(QVariantList sources READ sources NOTIFY changed)
     Q_PROPERTY(QVariantList services READ services NOTIFY changed)
     Q_PROPERTY(QVariantList launchRegions READ launchRegions NOTIFY changed)
@@ -131,6 +134,15 @@ public:
     Q_INVOKABLE void acknowledgeAlert(QString id);
     QVariantList recipes() const;
     QVariantList evaluations() const;
+    QVariantList synthesisRecipes() const;
+    QVariantList synthesisTeachers() const;
+    QVariantList synthesisJobs() const;
+    Q_INVOKABLE QVariantList synthesisEvidence(QString teacher) const;
+    Q_INVOKABLE QVariantList synthesisVerification(QString recipe,QString teacher) const;
+    Q_INVOKABLE QVariantMap synthesisQuote(QString recipe,QString teacher,QString evidence,QString verification,
+        QString units,QString source,QString rate,QString staff) const;
+    Q_INVOKABLE void generateData(QString recipe,QString teacher,QString evidence,QString verification,
+        QString units,QString source,QString rate,QString staff);
     QVariantList sources() const;
     QVariantList services() const;
     QVariantMap recommended() const;

@@ -93,7 +93,9 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
         return true;
     };
     const auto doc = Json::parse(bytes.begin(), bytes.end(), callback);
-    fields(doc, {"data", "research", "recipes", "evaluations"});
+    auto document_shape=doc;
+    document_shape.erase("synthesis");
+    fields(document_shape, {"data", "research", "recipes", "evaluations"});
     core::LabCatalog catalog;
     for (const auto field : {"data", "research", "recipes", "evaluations"}) array(doc.at(field));
     for (const auto& row : doc.at("data")) {
@@ -132,6 +134,22 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
             profile(row.at("coverage_bp")), profile(row.at("required_bp")), core::BasisPoints{integer(row.at("uncertainty_bp"))},
             boolean(row.at("independent")), core::MilliCU{integer(row.at("work_milli_CU"))}, core::Cents{integer(row.at("cash_cents"))}});
     }
+    if (doc.contains("synthesis")) {
+        array(doc.at("synthesis"));
+        for (const auto& row:doc.at("synthesis")) {
+            fields(row,{"id","name","requires_research","domain","fee_cents","verification_milli_CU_per_unit",
+                "staff_days","maximum_units","diversity_bp","minimum_teacher_bp"});
+            const auto domain=text(row.at("domain"));
+            const auto axis=std::ranges::find(core::lab_domain_names,domain);
+            if (axis==core::lab_domain_names.end()) invalid("Synthetic data requires a supported Lab task domain");
+            const auto units=integer(row.at("maximum_units"));
+            if (units==0 || units>1'000'000'000'000ULL) invalid("Synthetic data units exceed the finite corpus bound");
+            catalog.synthesis.push_back({text(row.at("id")),text(row.at("name")),ids(row.at("requires_research")),
+                static_cast<std::size_t>(axis-core::lab_domain_names.begin()),core::Cents{integer(row.at("fee_cents"))},
+                core::MilliCU{integer(row.at("verification_milli_CU_per_unit"))},core::Days{integer(row.at("staff_days"))},
+                units,core::BasisPoints{integer(row.at("diversity_bp"))},core::BasisPoints{integer(row.at("minimum_teacher_bp"))}});
+        }
+    }
     return catalog;
 }
 std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
@@ -157,7 +175,19 @@ std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
     for (const auto* row : ordered(catalog.evaluations)) evaluations.push_back({{"id",row->id},{"name",row->name},{"requires_research",row->requires_research},
         {"coverage_bp",profile_json(row->coverage)},{"required_bp",profile_json(row->required)},{"uncertainty_bp",row->uncertainty.value()},
         {"independent",row->independent},{"work_milli_CU",row->work.value()},{"cash_cents",row->cash.value()}});
-    return Json{{"data",std::move(data)},{"research",std::move(research)},{"recipes",std::move(recipes)},{"evaluations",std::move(evaluations)}}.dump();
+    Json result{{"data",std::move(data)},{"research",std::move(research)},{"recipes",std::move(recipes)},{"evaluations",std::move(evaluations)}};
+    if (!catalog.synthesis.empty()) {
+        auto& rows=result["synthesis"]=Json::array();
+        for (const auto* row:ordered(catalog.synthesis)) {
+            if (row->domain>=core::lab_domain_count) invalid("Synthetic data has an unsupported Lab task domain");
+            rows.push_back({{"id",row->id},{"name",row->name},{"requires_research",row->requires_research},
+                {"domain",core::lab_domain_names[row->domain]},{"fee_cents",row->fee.value()},
+                {"verification_milli_CU_per_unit",row->verification_per_unit.value()},{"staff_days",row->staff_days.value()},
+                {"maximum_units",row->maximum_units},{"diversity_bp",row->diversity.value()},
+                {"minimum_teacher_bp",row->minimum_teacher.value()}});
+        }
+    }
+    return result.dump();
 }
 core::LabCatalog scenario_lab_catalog(const Collection& collection, const ScenarioDefinition& scenario) {
     if (!scenario.lab) throw std::invalid_argument("Scenario has no lab catalog");

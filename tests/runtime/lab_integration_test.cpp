@@ -4,9 +4,11 @@
 #include <pgp/runtime/scenario.hpp>
 #include <nlohmann/json.hpp>
 
+#include <array>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <utility>
 
 namespace {
 using namespace pgp;
@@ -91,7 +93,7 @@ void arithmetic_case(const runtime::CompiledProgram& program) {
 }
 void complete_loop(const runtime::CompiledProgram& program) {
     auto game = engine(program);
-    check(lab(game).catalog.data.size() == 8 && lab(game).catalog.research.size() == 6,
+    check(lab(game).catalog.data.size() == 9 && lab(game).catalog.research.size() == 6,
         "Slice lacks introductory and specialist offers or the six research nodes");
     const auto initial_random = game.checkpoint().world.simulation.random;
     const auto preview_state = game.checkpoint();
@@ -277,8 +279,179 @@ void specialist_services(const runtime::CompiledProgram& program) {
     launch(sequence,"product.social_companion",4,false,false);
     launch(train_and_measure("recipe.efficient",{"data.open_documents","data.science_problems"},3),
         "product.research_toolkit",3,true,false);
-    launch(train_and_measure("recipe.image_features",{"data.open_documents","data.consented_scans","data.robotics_rollouts"},5),
-        "product.robotics_agent",5,false,true);
+    auto robotics=train_and_measure("recipe.image_features",{"data.open_documents","data.consented_scans","data.robotics_rollouts"},5);
+    launch(robotics,"product.robotics_agent",5,false,true);
+    apply(robotics,BuyData{"data.workflow_checks"});
+    const GenerateDataset workflow{"synthetic.workflow","synthesis.workflow","specialist","suite","data.workflow_checks",
+        20000,{"lease.initial",MilliCUPerDay{100000},2}};
+    apply(robotics,workflow);
+    days(robotics,5);
+    const auto& workflow_output=lab(robotics).generated.back().output;
+    check(workflow_output && workflow_output->unique_units>0 && workflow_output->coverage[5].value()>0 &&
+        workflow_output->coverage[0]==BasisPoints{0},
+        "The workflow generation recipe lost its independent verification or target-domain coverage");
+    const auto workflow_save=persistence::encode_save(program,robotics.checkpoint());
+    check(persistence::decode_save(program,workflow_save).checkpoint==robotics.checkpoint(),
+        "Verified workflow data did not reopen with its teacher and source lineage");
+}
+
+void synthetic_data(const runtime::CompiledProgram& program) {
+    using namespace core;
+    auto game=engine(program);
+    const auto simulation=[&]() -> const SimulationState& { return game.current_state().world.simulation; };
+    const LabAllocation research{"lease.initial",MilliCUPerDay{20000},2};
+    for (const auto id:{"research.held_out_evaluation","research.reproducible_tooling"}) {
+        apply(game,StartResearch{id,research});
+        days(game,3);
+    }
+    apply(game,BuyData{"data.open_documents"});
+    apply(game,StartTraining{training("teacher",{"data.open_documents"})});
+    days(game,60);
+    const LabAllocation assessment{"lease.initial",MilliCUPerDay{20000},1};
+    apply(game,StartEvaluation{"teacher.holdout","teacher","evaluation.held_out",assessment});
+    apply(game,StartEvaluation{"teacher.headline","teacher","evaluation.headline",assessment});
+    days(game,3);
+    GenerateDataset request{"synthetic.verified","synthesis.document","teacher","teacher.holdout","data.licensed_documents",
+        20000,{"lease.initial",MilliCUPerDay{100000},2}};
+    refuse(game,request);
+    apply(game,BuyData{"data.licensed_documents"});
+    auto bad=request;
+    bad.verification_id="data.open_documents";
+    refuse(game,bad);
+    bad=request;
+    bad.evidence_id="teacher.headline";
+    refuse(game,bad);
+    bad=request;
+    bad.attempted_units=200001;
+    refuse(game,bad);
+    const auto before_preview=game.checkpoint();
+    const auto quote=preview_synthesis(lab(game),*simulation().capacity,simulation().date,request);
+    check(quote.fee==Cents{100000} && quote.work==MilliCU{440000} && quote.minimum_days==Days{5} &&
+        quote.retained_lower>0 && quote.retained_upper>=quote.retained_lower &&
+        quote.commercial_use && !quote.open_weight_release && game.checkpoint()==before_preview,
+        "Generation preview lost its paid work, conservative yield, rights or read-only behavior");
+    const auto original_catalog=lab(game).catalog;
+    const auto cash=simulation().cash;
+    apply(game,request);
+    check(simulation().cash==checked_unit_subtract(cash,quote.fee) && lab(game).generated.size()==1 &&
+        !lab(game).generated.front().output && lab(game).catalog==original_catalog,
+        "Starting synthesis published data early, changed authored terms or lost its fee");
+    const auto project_id=lab(game).generated.front().project_id;
+    const auto& projects=simulation().capacity->projects;
+    const auto generation=std::ranges::find(projects,project_id,&CapacityProject::id);
+    check(generation!=projects.end() && generation->kind==ProjectKind::data_generation &&
+        generation->total_work==quote.work && generation->requested==request.allocation.daily_compute &&
+        generation->staff==request.allocation.staff,"Generation omitted its exact finite staff and compute commitment");
+    auto student=training("student",{"data.open_documents",request.id});
+    student.work=MilliCU{6000000};
+    refuse(game,StartTraining{student});
+    runtime::Runtime resumed{program,persistence::decode_save(program,persistence::encode_save(program,game.checkpoint())).checkpoint};
+    auto paused=game;
+    days(paused,1);
+    const auto paused_work=[&]() -> const CapacityProject& {
+        return *std::ranges::find(paused.current_state().world.simulation.capacity->projects,project_id,&CapacityProject::id);
+    };
+    const auto spent_work=paused_work().completed_work;
+    const auto pause_cash=paused.current_state().world.simulation.cash;
+    apply(paused,PauseProject{project_id});
+    check(paused.current_state().world.simulation.cash==pause_cash,"Pausing synthesis refunded its nonrefundable fee");
+    days(paused,2);
+    check(paused_work().completed_work==spent_work && !lab(paused).generated.front().output,
+        "Paused synthesis consumed work or materialized an unfinished corpus");
+    paused=runtime::Runtime{program,persistence::decode_save(program,persistence::encode_save(program,paused.checkpoint())).checkpoint};
+    apply(paused,ResumeProject{project_id});
+    days(paused,4);
+    check(lab(paused).generated.front().output && paused_work().completed_work==quote.work,
+        "Resumed synthesis failed to finish its original paid work");
+    check(persistence::decode_save(program,persistence::encode_save(program,paused.checkpoint())).checkpoint==paused.checkpoint(),
+        "Synthesis pause history or its completed output did not reopen exactly");
+    auto cancelled=game;
+    days(cancelled,1);
+    const auto cancel_cash=cancelled.current_state().world.simulation.cash;
+    apply(cancelled,CancelProject{project_id});
+    check(!lab(cancelled).generated.front().output && cancelled.current_state().world.simulation.cash==cancel_cash,
+        "Cancellation published a partial dataset or refunded the spent fee");
+    days(cancelled,5);
+    check(!lab(cancelled).generated.front().output,"Cancelled synthesis materialized output after its former end date");
+    auto retry=request;
+    retry.id="synthetic.retry";
+    apply(cancelled,retry);
+    check(lab(cancelled).generated.size()==2 && !lab(cancelled).generated.back().output,
+        "Cancelling a generation job prevented a fresh paid retry");
+    check(persistence::decode_save(program,persistence::encode_save(program,cancelled.checkpoint())).checkpoint==cancelled.checkpoint(),
+        "Cancelled generation and its funded retry did not reopen exactly");
+    for (unsigned day=0;day<5;++day) {
+        days(game,1);
+        days(resumed,1);
+        check(game.checkpoint()==resumed.checkpoint(),"Pending synthesis changed output or costs across reload");
+    }
+    const auto& output=lab(game).generated.front().output;
+    check(output && output->id==request.id && output->unique_units>=quote.retained_lower &&
+        output->unique_units<=quote.retained_upper && output->commercial_use && !output->open_weight_release &&
+        output->coverage[1]==BasisPoints{0} && lab(game).catalog==original_catalog,
+        "Completed synthesis lost verified yield, source rights, domain scope or catalog immutability");
+    const auto report=lab_report(lab(game),*simulation().capacity);
+    check(std::ranges::find(report.data_offers,request.id,&DataOffer::id)!=report.data_offers.end() &&
+        std::ranges::find(report.licenses,request.id,&DataLicense::offer_id)!=report.licenses.end(),
+        "Completed generated data was absent from the training selection");
+    auto plain=student;
+    plain.data_ids={"data.open_documents"};
+    check(preview_training(lab(game),student).lower[0]>preview_training(lab(game),plain).lower[0],
+        "Verified synthetic data did not contribute to a fresh model's data-limited capability");
+    apply(game,CloneModel{"teacher","teacher.clone"});
+    apply(game,StartEvaluation{"clone.holdout","teacher.clone","evaluation.held_out",assessment});
+    days(game,3);
+    auto duplicate=request;
+    duplicate.id="synthetic.clone";
+    duplicate.teacher_id="teacher.clone";
+    duplicate.evidence_id="clone.holdout";
+    refuse(game,duplicate);
+    auto diversity=game;
+    for (const auto& [id,work]:std::array<std::pair<const char*,std::int64_t>,2>{
+            std::pair{"teacher.cap_a",60000},std::pair{"teacher.cap_b",120000}}) {
+        auto continuation=training(id,{"data.open_documents"});
+        continuation.parent_id="teacher";
+        continuation.work=MilliCU{work};
+        apply(diversity,StartTraining{continuation});
+        days(diversity,static_cast<unsigned>(work/60000));
+        apply(diversity,StartEvaluation{std::string(id)+".holdout",id,"evaluation.held_out",assessment});
+        days(diversity,3);
+    }
+    auto fill=request;
+    fill.id="synthetic.diversity";
+    fill.teacher_id="teacher.cap_a";
+    fill.evidence_id="teacher.cap_a.holdout";
+    fill.attempted_units=200000;
+    apply(diversity,fill);
+    auto over_budget=request;
+    over_budget.id="synthetic.over_budget";
+    over_budget.teacher_id="teacher.cap_b";
+    over_budget.evidence_id="teacher.cap_b.holdout";
+    over_budget.attempted_units=30001;
+    const auto before_budget=diversity.checkpoint();
+    const auto refused_budget=diversity.submit({before_budget.world.simulation.revision,over_budget});
+    check(!refused_budget.accepted() && refused_budget.explanation.find("diversity")!=std::string::npos &&
+        diversity.checkpoint()==before_budget,
+        "Distinct teacher checkpoints bypassed the verifier's shared diversity budget");
+    check(persistence::decode_save(program,persistence::encode_save(program,diversity.checkpoint())).checkpoint==diversity.checkpoint(),
+        "The shared diversity commitment did not survive exact pending-job reload");
+    apply(game,StartTraining{student});
+    days(game,100);
+    apply(game,StartEvaluation{"student.holdout","student","evaluation.held_out",assessment});
+    days(game,3);
+    refuse(game,DeployModel{"product.education_model","student","student.holdout","",false,"region.europe"});
+    apply(game,DeployModel{"product.documents","student","student.holdout","lease.initial",false});
+    days(game,1);
+    check(std::ranges::any_of(simulation().market->days.back().discretionary,[](const auto& sale) {
+        return sale.product_id=="product.documents" && sale.tasks>0;
+    }),"A trained and measured synthetic-data student failed to serve customer work");
+    const auto saved=persistence::encode_save(program,game.checkpoint());
+    check(persistence::decode_save(program,saved).checkpoint==game.checkpoint(),
+        "Generated lineage, student evaluation and deployed service did not reopen exactly");
+    auto forged=Json::parse(saved);
+    auto& retained=forged["checkpoint"]["world"]["simulation"]["lab"]["generated"][0]["output"]["unique_units"];
+    retained=retained.get<std::uint64_t>()+1;
+    malformed_save(program,std::move(forged));
 }
 }
 int main() {
@@ -287,6 +460,7 @@ int main() {
         const auto source = Json::parse(bytes); const auto program = compile(source);
         content_boundaries(source,program); arithmetic_case(program); complete_loop(program); unlocks_and_controls(program);
         specialist_services(program);
+        synthetic_data(program);
         std::cout << checks << " lab content, resource, lineage, evidence and reload checks passed\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

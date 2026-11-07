@@ -49,10 +49,13 @@ void check_refresh_plan(const SimulationState& state, const FrontierRefreshPlan&
         std::adjacent_find(plan.data.begin(),plan.data.end())!=plan.data.end())
         invalid("Refresh needs licensed commercial data, independent evaluation, a finite candidate and private deployment rights.");
     for (const auto& id : plan.data) {
-        const auto& data=require_named(state.lab->catalog.data,id);
-        if (!data.commercial_use || std::ranges::none_of(state.lab->licenses,[&](const auto& license){
-            return license.offer_id==id && license.acquired_on<=day;
-        })) invalid("Refresh cannot buy new rights or use data outside an actual commercial license.");
+        const auto& data=lab_data(*state.lab,id);
+        const auto generated=std::ranges::find(state.lab->generated,id,&GeneratedDataset::id);
+        const bool licensed=generated!=state.lab->generated.end()?generated->output.has_value() &&
+            require_named(state.capacity->projects,generated->project_id).stopped_on<day:
+            std::ranges::any_of(state.lab->licenses,[&](const auto& license){return license.offer_id==id && license.acquired_on<=day;});
+        if (!data.commercial_use || !licensed)
+            invalid("Refresh cannot buy new rights or use data outside an actual commercial license.");
     }
     if (!latest_deployment(state,plan.service,day)) invalid("Select a deployed service to authorize mature refresh.");
 }

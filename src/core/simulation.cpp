@@ -625,7 +625,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             } else if constexpr (std::is_same_v<Action, PauseProject> || std::is_same_v<Action, ResumeProject>) {
                 const bool owned=next.lab && (std::any_of(next.lab->research.begin(),next.lab->research.end(),[&](const auto& r){return r.project_id==action.id;}) ||
                     std::any_of(next.lab->models.begin(),next.lab->models.end(),[&](const auto& r){return r.project_id==action.id;}) ||
-                    std::any_of(next.lab->evaluations.begin(),next.lab->evaluations.end(),[&](const auto& r){return r.project_id==action.id;}));
+                    std::any_of(next.lab->evaluations.begin(),next.lab->evaluations.end(),[&](const auto& r){return r.project_id==action.id;}) ||
+                    std::any_of(next.lab->generated.begin(),next.lab->generated.end(),[&](const auto& r){return r.project_id==action.id;}));
                 if(!owned) refuse(CommandReason::invalid_argument,"Pause and resume apply to this company's finite laboratory projects");
                 if constexpr(std::is_same_v<Action,PauseProject>) {
                     if(next.management && next.management->governance) for(const auto& d:next.management->governance->disputes)
@@ -782,6 +783,11 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             } else if constexpr (std::is_same_v<Action, AcquireResearchInsight>) {
                 acquire_research_insight(lab(next),next.date,action.insight);
                 (void)receipt(next,"acquire_public_research");
+            } else if constexpr (std::is_same_v<Action, GenerateDataset>) {
+                const auto before=next.cash;
+                generate_dataset(lab(next),accounts(next),capacity(next),next.date,action,reserved_cash(next));
+                next.cash=accounts_report(*next.accounts).cash;
+                (void)receipt(next,"generate_and_verify_data",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, StartTraining>) {
                 if (action.request.model_id.starts_with(frontier_refresh_prefix))
                     refuse(CommandReason::dependent_commitment,"Automated candidate identities belong to their authorized refresh.");

@@ -5,6 +5,7 @@
 #include <pgp/core/random.hpp>
 
 #include <array>
+#include <span>
 
 namespace pgp::core {
 // Keep the introductory axes first in authored profiles, saves and old evidence streams.
@@ -70,11 +71,23 @@ struct EvaluationPlan {
     Cents cash{0};
     auto operator<=>(const EvaluationPlan&) const = default;
 };
+struct SyntheticRecipe {
+    std::string id,name;
+    std::vector<std::string> requires_research;
+    std::size_t domain=0;
+    Cents fee{0};
+    MilliCU verification_per_unit{0};
+    Days staff_days{1};
+    std::uint64_t maximum_units=0;
+    BasisPoints diversity{0},minimum_teacher{0};
+    auto operator<=>(const SyntheticRecipe&) const = default;
+};
 struct LabCatalog {
     std::vector<DataOffer> data;
     std::vector<LabResearch> research;
     std::vector<TrainingRecipe> recipes;
     std::vector<EvaluationPlan> evaluations;
+    std::vector<SyntheticRecipe> synthesis{};
     auto operator<=>(const LabCatalog&) const = default;
 };
 struct DataLicense {
@@ -120,6 +133,14 @@ struct EvaluationEvidence {
     std::uint64_t stream_before = 0, stream_after = 0;
     auto operator<=>(const EvaluationEvidence&) const = default;
 };
+struct GeneratedDataset {
+    std::string id,recipe_id,teacher_id,evidence_id,verification_id,project_id;
+    OrdinalDay started_on{0};
+    MilliCU teacher_work{0};
+    std::uint64_t attempted_units=0;
+    std::optional<DataOffer> output{};
+    auto operator<=>(const GeneratedDataset&) const = default;
+};
 struct LabState {
     std::string owner = "company.player";
     OrdinalDay starts_on{0};
@@ -132,6 +153,7 @@ struct LabState {
     std::vector<EvaluationEvidence> evaluations;
     std::vector<ResearchPublication> publications{};
     std::vector<ResearchInsight> insights{};
+    std::vector<GeneratedDataset> generated{};
     auto operator<=>(const LabState&) const = default;
 };
 struct TrainingRequest {
@@ -147,6 +169,18 @@ struct LabAllocation {
     MilliCUPerDay daily_compute{0};
     std::uint32_t staff = 0;
     auto operator<=>(const LabAllocation&) const = default;
+};
+struct GenerateDataset {
+    std::string id,recipe_id,teacher_id,evidence_id,verification_id;
+    std::uint64_t attempted_units=0;
+    LabAllocation allocation;
+};
+struct SyntheticPreview {
+    Cents fee{0};
+    MilliCU work{0};
+    Days minimum_days{0};
+    std::uint64_t retained_lower=0,retained_upper=0,diversity_remaining=0;
+    bool commercial_use=false,open_weight_release=false;
 };
 struct TrainingPreview {
     Days minimum_days{0};
@@ -178,10 +212,18 @@ struct LabReport {
 };
 
 void validate_lab_catalog(const LabCatalog& catalog);
+void validate_synthetic_catalog(const LabCatalog&);
+[[nodiscard]] const DataOffer& lab_data(const LabCatalog&,std::span<const GeneratedDataset>,std::string_view id);
+[[nodiscard]] const DataOffer& lab_data(const LabState&,std::string_view id);
+[[nodiscard]] SyntheticPreview preview_synthesis(const LabState&,const CapacityState&,OrdinalDay,const GenerateDataset&);
+void generate_dataset(LabState&,AccountsState&,CapacityState&,OrdinalDay,const GenerateDataset&,Cents protected_cash);
+void close_synthetic_data(LabState&,const CapacityState&,OrdinalDay);
+void validate_synthetic_data(const LabState&,const CapacityState&,const AccountsState&,bool deep);
 void checkpoint_model(LabState&,const CapacityState&,OrdinalDay,std::string_view source_id,std::string id);
 void validate_lab(const LabState& state, const CapacityState& capacity, const AccountsState& accounts,
                   const RandomSnapshot& random, bool deep = true);
-[[nodiscard]] LabProfile model_capability(const LabCatalog& catalog, const LabModel& model);
+[[nodiscard]] LabProfile model_capability(const LabCatalog& catalog, const LabModel& model,
+    std::span<const GeneratedDataset> generated={});
 [[nodiscard]] TrainingPreview preview_training(const LabState& state, const TrainingRequest& request);
 [[nodiscard]] LabReport lab_report(const LabState& state, const CapacityState& capacity);
 // Mutators operate inside Simulation's copied transaction; costs and capacity

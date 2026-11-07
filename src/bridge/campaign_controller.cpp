@@ -42,6 +42,7 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
         for(const auto& r:state.lab->research) lab_projects.insert(r.project_id);
         for(const auto& r:state.lab->models) if(!r.project_id.empty()) lab_projects.insert(r.project_id);
         for(const auto& r:state.lab->evaluations) lab_projects.insert(r.project_id);
+        for(const auto& r:state.lab->generated) lab_projects.insert(r.project_id);
     }
     if(state.management && state.management->governance) for(const auto& d:state.management->governance->disputes)
         if(!d.resolved_on && !d.review_project.empty()) protected_projects.insert(d.review_project);
@@ -53,6 +54,7 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
         case core::ProjectKind::evaluation: kind = QStringLiteral("Evaluation"); break;
         case core::ProjectKind::serving: kind = QStringLiteral("Serving"); break;
         case core::ProjectKind::replication: kind = QStringLiteral("Replica synchronization"); break;
+        case core::ProjectKind::data_generation: kind = QStringLiteral("Generate and verify data"); break;
         }
         QString status;
         switch (project.status) {

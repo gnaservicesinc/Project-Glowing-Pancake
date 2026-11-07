@@ -213,7 +213,7 @@ void validate_capacity(const CapacityState& state) {
                 row.status == ProjectStatus::completed)
                 invalid("Serving project has an invalid checked useful-task profile");
             break;
-        case ProjectKind::training: case ProjectKind::research: case ProjectKind::evaluation:
+        case ProjectKind::training: case ProjectKind::research: case ProjectKind::evaluation: case ProjectKind::data_generation:
             if (row.total_work.value() <= 0 || row.completed_work > row.total_work || row.tasks_per_day != 0 ||
                 row.inference_milli_CU_per_task.value() != 0 || row.useful_tasks != 0 || row.monthly_support_cost.value() != 0)
                 invalid("Finite project has invalid work or serving-only fields");
@@ -225,7 +225,8 @@ void validate_capacity(const CapacityState& state) {
             break;
         default: invalid("Unknown project kind");
         }
-        if(row.pauses.size()>128 || (!row.pauses.empty() && row.kind!=ProjectKind::training && row.kind!=ProjectKind::research && row.kind!=ProjectKind::evaluation))
+        if(row.pauses.size()>128 || (!row.pauses.empty() && row.kind!=ProjectKind::training &&
+            row.kind!=ProjectKind::research && row.kind!=ProjectKind::evaluation && row.kind!=ProjectKind::data_generation))
             invalid("Only finite lab work supports bounded pause history");
         for(std::size_t i=0;i<row.pauses.size();++i) {
             const auto& pause=row.pauses[i];
@@ -431,7 +432,7 @@ void cancel_project(CapacityState& state, OrdinalDay day, std::string_view proje
 void pause_project(CapacityState& state,OrdinalDay day,std::string_view id) {
     mutate(state,[&](auto& candidate) {
         require_day(candidate,day);auto& row=project(candidate,id);
-        if(row.status!=ProjectStatus::active || (row.kind!=ProjectKind::training && row.kind!=ProjectKind::research && row.kind!=ProjectKind::evaluation) || row.pauses.size()>=128)
+        if(row.status!=ProjectStatus::active || (row.kind!=ProjectKind::training && row.kind!=ProjectKind::research && row.kind!=ProjectKind::evaluation && row.kind!=ProjectKind::data_generation) || row.pauses.size()>=128)
             invalid("Pause requires active finite lab work within its pause-history limit");
         row.pauses.push_back({day,{}});row.status=ProjectStatus::paused;
     });
