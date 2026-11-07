@@ -105589,6 +105589,99 @@
         "prepared_headquarters": 21,
         "scenarios": 7
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "f9a8d0c830564a01690f7406b4b64353e310d333a2e308653bd485a9c5132989",
+          "before_hash": "ea7ae5960723eb04a6b4ac3ca63b6e85d83c4789dccaed38c6a4cba5d8841075",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 8,
+          "revision": 9
+        },
+        {
+          "after_hash": "be21263c85edf6e54a9e3eefe38c6354995e01b5590df4c8f55cbb558e349996",
+          "before_hash": "c22b2db24de9591f4ab4f62791fb36e1bfc710a561f844ca35a880e62dc2fe73",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 8,
+          "revision": 9
+        },
+        {
+          "after_hash": "e42ecb2c4f50fae7008ec6b328e48be7389970b877a2e7d61966fe873cc2fffd",
+          "before_hash": "99791c5108fad471b0f5f25068b1a33c4f7709eeb566961a9a687b0c97dda0a4",
+          "change": "changed",
+          "id": "scenario.first_playable",
+          "kind": "scenario",
+          "old_revision": 11,
+          "revision": 12
+        },
+        {
+          "after_hash": "0a5b73b507420a7e0ee79916e2968d07d4eea7bdeb2cd749582b41d774e4d74e",
+          "before_hash": "cc7817aa505dc9e7499c3fd1d0c8b3012e2735b6a4bd94f31d177ad9d828939c",
+          "change": "changed",
+          "id": "scenario.world_competition",
+          "kind": "scenario",
+          "old_revision": 12,
+          "revision": 13
+        },
+        {
+          "after_hash": "b9e0f15c119dbc84d455c7fdcc2b0170cf80c779cfa3873cf1066b1feeec0ecb",
+          "before_hash": "4168b9a9257b0ba189d4a9bd086e3753060500d0a895b34700f3310a8a717117",
+          "change": "changed",
+          "id": "scenario.world_expanded",
+          "kind": "scenario",
+          "old_revision": 12,
+          "revision": 13
+        },
+        {
+          "after_hash": "dda34c22b5240825019cf846f50f2f82057a038537e1051ba83905986bc213a7",
+          "before_hash": "0497262d7e32f7145f45d2bd49dbc73e324246bf954d82a636aea3b0179913ed",
+          "change": "changed",
+          "id": "scenario.world_forgiving",
+          "kind": "scenario",
+          "old_revision": 12,
+          "revision": 13
+        },
+        {
+          "after_hash": "cce50f041f637585d8364e6254bf543d43999d6798297e47c46ede0aea1bf7c2",
+          "before_hash": "d1c9b8d5373b7d5345afe5bac9275119910675b5ee3a850100110c4f97bd9e46",
+          "change": "changed",
+          "id": "scenario.world_reduced",
+          "kind": "scenario",
+          "old_revision": 12,
+          "revision": 13
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "3fb79c6a7ad14e63917c3b96a22772ebe038769457b0698d786056104becc09f",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.19.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 19,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.18.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000018.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000019.collection.json",
+      "summary": "Add refundable enterprise customer advances",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 21,
+        "lints": [],
+        "prepared_headquarters": 21,
+        "scenarios": 7
+      }
     }
   ],
   "format": 1

@@ -81,6 +81,8 @@ FinancialInputs inputs(const SimulationState& institution,OrdinalDay before,Ordi
         add(result.cash,balance(p,Account::cash));
         add(result.receivables,balance(p,Account::receivables));
         add(result.payables,Cents{-balance(p,Account::payables).value()});
+        // The liquidation calculation also owes any unearned advances.
+        add(result.payables,Cents{-balance(p,Account::customer_advances).value()});
         add(result.debt,Cents{-balance(p,Account::debt).value()});
         // Site/hardware cost less recorded depreciation and disposals.
         // Investments in subsidiaries and internal funding are not physical
@@ -221,7 +223,8 @@ SurvivalEvidence terminal_survival(const WorldState& world) {
         const auto& ledger=institution->accounts->postings;
         auto p=std::lower_bound(ledger.begin(),ledger.end(),first,[](const auto& row,OrdinalDay date){return row.day<date;});
         for(;p!=ledger.end() && p->day<deadline;++p)
-            if(p->debit==Account::cash && p->credit==Account::receivables && market_invoice(p->document_id)) paid.insert(p->document_id);
+            if((p->debit==Account::cash || p->debit==Account::customer_advances) &&
+               p->credit==Account::receivables && market_invoice(p->document_id)) paid.insert(p->document_id);
         if(institution->market) {
             const auto& market=*institution->market;
             auto day=std::lower_bound(market.days.begin(),market.days.end(),first,[](const auto& row,OrdinalDay date){return row.day<date;});

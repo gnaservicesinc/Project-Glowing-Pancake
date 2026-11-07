@@ -90,6 +90,7 @@ CompiledProgram near_window(bool catastrophic=false,bool control_loss=false) {
     data["definitions"].push_back(std::move(regional));
     for(auto& d:data["definitions"]) if(d["id"]==frontier || d["id"]==plateau) {
         d["starts_on"]=control_loss?"2103-12-01":"2104-01-01";
+        d.erase("backgrounds"); // Founder contacts belong to the original 2014 opening.
         d["society"]="society.fixture_objectives";
         if(control_loss) {
             // This charter offers a personal chair but no trustee board seat.

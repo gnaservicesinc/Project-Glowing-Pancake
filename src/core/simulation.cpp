@@ -139,6 +139,8 @@ void validate(const SimulationState& state,bool deep=true,std::size_t first_rece
     if (state.accounts) {
         if (deep && !state.market && !state.liquidity) validate_accounts(*state.accounts);
         const auto& ledger = *state.accounts;
+        if (ledger.postings.totals().customer_advance_entries>0 && (!state.market || !state.business_offers))
+            invalid("Customer advances require their market and offer catalog");
         if (accounts_report(ledger).cash != state.cash || ledger.starts_on > state.date ||
             (ledger.closed_through ? advance_days(*ledger.closed_through, Days{1}) != state.date : ledger.starts_on != state.date) ||
             (deep && std::any_of(ledger.postings.begin(), ledger.postings.end(), [&](const auto& entry) { return entry.day > state.date; })))
@@ -714,6 +716,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 suspend_pricing_policies(next,action.id);
                 (void)receipt(next, "market_price_change");
             } else if constexpr (std::is_same_v<Action, AcceptContract>) {
+                if (action.contract.customer_advance!=Cents{0})
+                    refuse(CommandReason::invalid_argument,"Customer advances require an authored offer.");
                 accept_contract(market(next), capacity(next), next.date, action.contract);
                 (void)receipt(next, "accept_contract");
             } else if constexpr (std::is_same_v<Action, StartContract>) {

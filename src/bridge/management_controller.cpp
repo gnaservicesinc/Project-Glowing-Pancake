@@ -159,11 +159,15 @@ QString research_status(const core::LabState& lab,const core::CapacityState& cap
     return stopped?QStringLiteral("Stopped; retry available"):QStringLiteral("Available to research");
 }
 QString offer_terms(const core::BusinessOffer& offer) {
-    return QStringLiteral("%1\n%2/month · setup %3 · %4 days\n%5\nAvailable %6 through %7 (exclusive). Accepted once.")
+    auto terms=QStringLiteral("%1\n%2/month · setup %3 · %4 days\n%5\nAvailable %6 through %7 (exclusive). Accepted once.")
         .arg(text(offer.name),money(offer.monthly_amount),money(offer.setup_cost),QString::number(offer.term.value()),
             offer.kind==core::BusinessOfferKind::compute_lease ? cu(offer.capacity.value())+QStringLiteral(" CU/day; power included. Capacity expires at term end.") :
             number(offer.tasks_per_day)+QStringLiteral(" promised tasks/day · ")+readable(offer.product_id)+QStringLiteral(". Revenue follows actual delivery; no setup revenue."),
             text(core::iso_date(offer.available_from)),text(core::iso_date(offer.available_before)));
+    if (offer.customer_advance.value()>0)
+        terms+=QObject::tr("\nThe customer pays %1 when you accept. The advance adds cash immediately. Earned service charges use it first. Any unused balance is due back when the contract ends or you cancel it.")
+            .arg(money(offer.customer_advance));
+    return terms;
 }
 std::optional<core::ResearchInsight> public_insight(const runtime::WorldState& world,std::string_view id) {
     if (!world.competition || !world.competition->setup || world.competition->setup->publication_credit.value()==0) return {};
@@ -307,8 +311,12 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
     if (s.business_offers) for (const auto& row:s.business_offers->catalog) {
         const auto it=std::find_if(s.business_offers->accepted.begin(),s.business_offers->accepted.end(),[&](const auto& a){return a.offer_id==row.id;});
         const bool eligible=core::business_offer_eligible(*s.business_offers,row,*s.accounts,*s.capacity,s.market,s.date,protected_cash);
-        offers.push_back({text(row.id),text(row.name),money(row.monthly_amount)+QStringLiteral("/month · ")+QString::number(row.term.value())+QStringLiteral(" days"),offer_terms(row),
-            it!=s.business_offers->accepted.end()?QStringLiteral("Accepted; ends ")+text(core::iso_date(it->expires_before)):eligible?QStringLiteral("Eligible"):QStringLiteral("Requirements unmet / outside offer window"),eligible});
+        auto summary=money(row.monthly_amount)+QStringLiteral("/month · ")+QString::number(row.term.value())+QStringLiteral(" days");
+        const bool advance=row.customer_advance.value()>0;
+        if (advance) summary+=tr(" · %1 advance").arg(money(row.customer_advance));
+        offers.push_back({text(row.id),text(row.name),std::move(summary),offer_terms(row),
+            it!=s.business_offers->accepted.end()?QStringLiteral("Accepted; ends ")+text(core::iso_date(it->expires_before)):eligible?QStringLiteral("Eligible"):QStringLiteral("Requirements unmet / outside offer window"),eligible,
+            {{QStringLiteral("customerAdvance"),advance}}});
     }
     if (s.market) {
         for (const auto& row:s.market->products) {
@@ -329,6 +337,21 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
                 QStringLiteral("%1\nAccepted %2 · starts by %3 · ends %4 (exclusive)\nMissing task penalty %5 · cancellation %6\nService credits apply to undelivered promised work. Cancellation preserves consumed costs and settled invoices.")
                     .arg(text(row.cause),text(core::iso_date(row.accepted_on)),text(core::iso_date(row.start_by)),text(core::iso_date(row.ends_before)),money(row.missing_task_penalty),money(row.cancellation_penalty)),
                 row.status==core::ContractStatus::active?QStringLiteral("Active"):row.status==core::ContractStatus::pending?QStringLiteral("Pending"):row.status==core::ContractStatus::completed?QStringLiteral("Completed"):row.status==core::ContractStatus::cancelled?QStringLiteral("Cancelled"):QStringLiteral("Missed"),active});
+            if (row.customer_advance.value()>0) {
+                auto& detail=contracts.back().detail;
+                detail+=tr("\nReceived %1 in advance. %2 has paid for delivered work.")
+                    .arg(money(row.customer_advance),money(row.advance_applied));
+                if (const auto refund=core::customer_refund(row)) {
+                    const auto index=s.accounts->invoices.find(refund->id);
+                    const auto paid=index?s.accounts->invoices[*index].settled:core::Cents{0};
+                    detail+=tr("\nRefund of %1 due %2. Paid %3, outstanding %4.")
+                        .arg(money(refund->amount),text(core::iso_date(refund->due)),money(paid),
+                             money(core::checked_unit_subtract(refund->amount,paid)));
+                } else if (active && row.unearned_advance().value()>0) {
+                    detail+=tr("\nUnused advance %1. Cancelling today makes this amount due back today.")
+                        .arg(money(row.unearned_advance()));
+                }
+            }
         }
     }
     if (snapshot_->checkpoint.world.competition) for (const auto& notice:snapshot_->checkpoint.world.competition->notices) {
@@ -500,8 +523,11 @@ QString ManagementController::briefing() const {
     const auto market=state().market?core::market_report(*state().market):core::MarketReport{};
     auto monthly=core::infrastructure_monthly_fixed_cost(state(),state().date);
     for (const auto& term:state().accounts->recurring) if (term.starts_on<=state().date && (!term.ends_before || state().date<*term.ends_before)) monthly=core::checked_unit_add(monthly,term.monthly_amount);
-    return QStringLiteral("Committed recurring costs %5/month\nCustomer charges %1 · %2 useful tasks delivered\nUnpaid invoices %3 · debt %4\nCosts accrue as time advances; revenue follows actual delivery.")
+    auto briefing=QStringLiteral("Committed recurring costs %5/month\nCustomer charges %1 · %2 useful tasks delivered\nUnpaid invoices %3 · debt %4\nCosts accrue as time advances; revenue follows actual delivery.")
         .arg(money(market.customer_charges),number(market.delivered_tasks),money(report.payables),money(report.debt),money(monthly));
+    if (report.customer_advances.value()>0)
+        briefing+=tr("\nUnused customer advances %1").arg(money(report.customer_advances));
+    return briefing;
 }
 QString ManagementController::guide() const {
     if (!available()) return {};

@@ -8,9 +8,9 @@
 
 namespace pgp::persistence::detail {
 namespace {
-constexpr std::array<std::string_view,9> account_names{
+constexpr std::array<std::string_view,10> account_names{
     "cash","receivables","assets","accumulated_depreciation",
-    "payables","debt","equity","revenue","expenses"};
+    "payables","debt","equity","revenue","expenses","customer_advances"};
 Json account_json(core::Account account) {
     const auto index=static_cast<std::size_t>(account);
     if (index>=account_names.size()) invalid("accounts/account","Unsupported account");

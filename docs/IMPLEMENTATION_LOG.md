@@ -1847,3 +1847,23 @@ focused CTests pass. The financing fixture follows a capped grant and daily
 lease credits through expiry, exact reload and the first cash payment against
 an identical uncredited company. The offscreen QML checks at 100% and 200% text
 exercise claim, Lab payment, the supplier invoice and exact save/reopen.
+
+### Enterprise customer advances
+
+The opening enterprise offer includes a provisional $20,000 advance in all
+seven scenarios. The customer pays when the player accepts with a qualified
+service. The full delivery invoice still records earned revenue. The advance
+settles it before any further cash collection. Unused cash becomes a refund
+payable on the final delivery day or the cancellation morning. A partially
+unpaid refund remains in Accounts and enters the ordinary liquidity workout.
+Company and founder valuations deduct the outstanding liability.
+
+The shared content writer finalized 0.19.0-dev.1 with 21 exact opening saves.
+Eight focused Mac checks pass. The short market fixture covers full and partial
+prepaid invoices, natural expiry after lost delivery, cancellation, arrears,
+and rejection of forged advance balances. The late objective fixture now
+skips the opening founder contacts. The offscreen checks at 100% and 200% text
+review the offer and cancellation, save and reopen an unpaid refund, then
+settle it through the ordinary daily close. The compact ledger/market codecs
+round-trip those records, and a prior 0.18.0-dev.1 save re-encodes exactly
+with its matching reviewed content.

@@ -205,6 +205,87 @@ void contract_priority_credits_and_deadline(const runtime::CompiledProgram& prog
           cancelled.checkpoint().world.simulation.cash==core::Cents{119998766},
           "Cancellation must preserve its agreed penalty without free revenue or repeat charges");
 }
+void customer_prepayment(const runtime::CompiledProgram& program) {
+    using namespace core;
+    auto opening=setup(program,false,Cents{0},1000,Cents{100000},Cents{0}).checkpoint();
+    auto& simulation=opening.world.simulation;
+    BusinessOffer offer;
+    offer.id="offer.prepaid"; offer.name="Prepaid documents"; offer.kind=BusinessOfferKind::enterprise_contract;
+    offer.available_before=OrdinalDay{30}; offer.term=Days{3}; offer.monthly_amount=Cents{3100};
+    offer.segment_id="enterprise"; offer.product_id="product.docs"; offer.tasks_per_day=1000;
+    offer.customer_advance=Cents{150};
+    simulation.business_offers=BusinessOffersState{{offer},{}};
+    runtime::Runtime engine{program,opening};
+    const auto report=[](const auto& game) { return accounts_report(*game.current_state().world.simulation.accounts); };
+    const auto before=report(engine);
+    auto fabricated=contract(); fabricated.customer_advance=Cents{100};
+    refused_unchanged(engine,AcceptContract{fabricated});
+    apply(engine,AcceptBusinessOffer{offer.id});
+    refused_unchanged(engine,AcceptBusinessOffer{offer.id});
+    const auto advance=report(engine);
+    check(advance.cash==checked_unit_add(before.cash,offer.customer_advance) && advance.customer_advances==offer.customer_advance &&
+          advance.revenue==before.revenue && advance.expenses==before.expenses && advance.debt==before.debt &&
+          book_net_assets(advance)==book_net_assets(before),"Acceptance changed profit, equity value, or debt instead of borrowing from future delivery");
+
+    integration_fixture::step(engine);
+    const std::string id="pilot/"+offer.id;
+    const auto first=report(engine);
+    check(first.cash==advance.cash && first.revenue==Cents{100} && first.customer_advances==Cents{50} &&
+          first.receivables==Cents{0},"The first earned invoice was collected twice or did not consume the advance");
+    const auto bytes=persistence::encode_save(program,engine.checkpoint());
+    auto saved=persistence::decode_save(program,bytes).checkpoint;
+    check(saved==engine.checkpoint(),"Save lost the partly used advance");
+    auto forged=Json::parse(bytes);
+    forged["checkpoint"]["world"]["simulation"]["market"]["contracts"][0]["advance_applied_cents"]=99;
+    invalid_save(program,forged);
+    forged=Json::parse(bytes);
+    forged["checkpoint"]["world"]["simulation"]["business_offers"]["accepted"]=Json::array();
+    invalid_save(program,forged);
+
+    auto resumed=runtime::Runtime{program,saved};
+    integration_fixture::step(resumed);
+    integration_fixture::step(engine);
+    check(resumed.checkpoint()==engine.checkpoint(),"Partial invoice settlement replayed incorrectly after reload");
+    const auto second=report(engine);
+    check(second.cash==checked_unit_add(first.cash,Cents{50}) && second.revenue==Cents{200} &&
+          second.customer_advances==Cents{0},"Crossing the advance balance failed to collect only the uncovered charge");
+    integration_fixture::step(engine);
+    check(saved_contract(engine.checkpoint(),id).status==ContractStatus::completed &&
+          report(engine).cash==checked_unit_add(before.cash,Cents{300}) && report(engine).revenue==Cents{300},
+          "Completing a fully earned advance changed the ordinary contract total");
+
+    auto interrupted=runtime::Runtime{program,saved};
+    apply(interrupted,SetMarketProductAvailable{"product.docs",false});
+    integration_fixture::step(interrupted);integration_fixture::step(interrupted);
+    check(saved_contract(interrupted.checkpoint(),id).status==ContractStatus::completed &&
+          report(interrupted).cash==checked_unit_add(before.cash,Cents{100}) && report(interrupted).revenue==Cents{100} &&
+          report(interrupted).customer_advances==Cents{0},"Term completion with service credits failed to refund the unearned advance");
+
+    auto cancelled=runtime::Runtime{program,std::move(saved)};
+    const auto spend=checked_unit_subtract(first.cash,Cents{10});
+    const auto reservation=cancelled.current_state().world.simulation.next_reservation_id;
+    apply(cancelled,ReserveFunds{"Operating spend",spend});
+    apply(cancelled,ConsumeReservation{reservation,spend});
+    const auto before_cancel=report(cancelled);
+    apply(cancelled,CancelContract{id});
+    refused_unchanged(cancelled,CancelContract{id});
+    const auto due=report(cancelled);
+    check(due.cash==before_cancel.cash && due.expenses==before_cancel.expenses &&
+          due.payables==checked_unit_add(before_cancel.payables,Cents{50}) &&
+          due.customer_advances==Cents{0},"Cancellation did not convert the unused balance into a refund payable");
+    integration_fixture::step(cancelled);
+    const auto ending=cancelled.checkpoint();
+    const auto& closed=ending.world.simulation;
+    const auto refund=customer_refund(saved_contract(ending,id));
+    check(refund.has_value(),"The cancelled contract lost its refund terms");
+    const auto refund_row=closed.accounts->invoices.find(refund->id);
+    const auto warning=liquidity_report(*closed.liquidity);
+    check(refund_row && closed.accounts->invoices[*refund_row].settled==Cents{10} && closed.cash==Cents{0} &&
+          warning.pending_warning && warning.unpaid_payables==Cents{40} && warning.oldest &&
+          warning.oldest->reference==refund->id,"The unpaid part of a customer refund did not trigger the actual liquidity warning");
+    check(persistence::decode_save(program,persistence::encode_save(program,ending)).checkpoint==ending,
+          "Partially unpaid customer refund did not reopen exactly");
+}
 void installed_incumbency_and_legacy(const runtime::CompiledProgram& program) {
     auto engine=initial(program);
     apply(engine,core::ReserveProject{serving("serve",core::Cents{0})});
@@ -244,7 +325,7 @@ int main() {
     try {
         const auto program=integration_fixture::program(PGP_RUNTIME_FIXTURE_PATH,false);
         two_months_and_reload(program);fee_usage_budget_and_actual_work(program);
-        contract_priority_credits_and_deadline(program);installed_incumbency_and_legacy(program);
+        contract_priority_credits_and_deadline(program);customer_prepayment(program);installed_incumbency_and_legacy(program);
         std::cout << checks << " market command/save integration checks passed\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << error.what() << '\n';return 1; }

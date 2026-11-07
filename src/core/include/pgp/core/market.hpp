@@ -76,6 +76,9 @@ struct MarketContract {
     std::optional<OrdinalDay> stopped_on;
     ContractStatus status = ContractStatus::pending;
     std::string cause;
+    Cents customer_advance{0};
+    Cents advance_applied{0};
+    [[nodiscard]] Cents unearned_advance() const { return checked_unit_subtract(customer_advance, advance_applied); }
     auto operator<=>(const MarketContract&) const = default;
 };
 struct ContractDayResult {
@@ -221,6 +224,7 @@ void validate_contract_acceptance(const MarketState& state, const CapacityState&
                                   OrdinalDay day, const MarketContract& contract);
 void start_contract(MarketState& state, const CapacityState& capacity, OrdinalDay day, std::string_view contract_id);
 void cancel_contract(MarketState& state, AccountsState& accounts, OrdinalDay day, std::string_view contract_id);
+[[nodiscard]] std::optional<Invoice> customer_refund(const MarketContract& contract);
 // Atomically plan contracts first, allocate residual demand/budgets, close actual
 // serving/training work and recognize invoices. Caller closes accounts next.
 // validate_io=false is reserved for an already copied enclosing transaction;

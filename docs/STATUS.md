@@ -626,8 +626,17 @@ passes review across all seven scenarios and 21 headquarters openings. The
 optimized build, six focused checks and short QML save/reopen checks at 100%
 and 200% text pass.
 
-Next is ordinary customer prepayment. The roadmap remains 42/52 checked while
-design coverage is completed.
+The opening enterprise offer in all seven scenarios now includes a $20,000
+advance. Accepting adds cash and a matching customer liability. Only earned
+delivery counts as revenue. Any unused advance becomes a payable at the end
+of the contract or on cancellation. Compare the terms in Office → Compare
+offers and follow usage and refunds in Office → Contracts. Internal content
+0.19.0-dev.1 passed the seven-scenario and 21-opening review. The optimized
+Mac build, eight focused checks and short QML runs at 100% and 200% text passed.
+
+Next is the Accounts view for cash flow, profit and loss, balance sheet, unit
+economics and 3/12-month cash scenarios. The roadmap remains 42/52 checked
+while design coverage is completed.
 M8-02 stays deferred. Human work waits until the user is ready, and E2-04 editor
 downloads stay with deferred release preparation.
 

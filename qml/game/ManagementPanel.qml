@@ -332,12 +332,21 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "offers"
         Copy { text: qsTr("Compare the monthly payment, task promise and term together. Customer offers need a qualified service. A compute lease adds capacity and a bill for its finite term.") }
-        Selection { heading: qsTr("Business offers"); rows: manager.offers }
+        Selection { objectName: "businessOfferSelection"; heading: qsTr("Business offers"); rows: manager.offers }
         Action {
             objectName: "acceptOfferButton"
-            text: qsTr("Accept selected terms")
+            readonly property bool prepaid: manager.offers.selectedRow.fields?.customerAdvance === true
+            text: prepaid ? qsTr("Review customer advance…") : qsTr("Accept selected terms")
             enabled: panel.editable && manager.offers.selectedRow.actionable === true
-            onClicked: manager.acceptOffer(manager.offers.selectedId)
+            onClicked: {
+                if (prepaid) {
+                    advanceDialog.offerId = manager.offers.selectedId
+                    advanceDialog.terms = manager.offers.selectedRow.detail
+                    advanceDialog.open()
+                } else {
+                    manager.acceptOffer(manager.offers.selectedId)
+                }
+            }
         }
     }
     ColumnLayout {
@@ -355,8 +364,17 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "contracts"
-        Selection { heading: qsTr("Customer contracts"); rows: manager.contracts }
-        Action { text: qsTr("Cancel selected contract…"); enabled: panel.editable && manager.contracts.selectedRow.actionable === true; onClicked: cancelDialog.open() }
+        Selection { objectName: "customerContractSelection"; heading: qsTr("Customer contracts"); rows: manager.contracts }
+        Action {
+            objectName: "cancelCustomerContractButton"
+            text: qsTr("Cancel selected contract…")
+            enabled: panel.editable && manager.contracts.selectedRow.actionable === true
+            onClicked: {
+                cancelDialog.contractId = manager.contracts.selectedId
+                cancelDialog.terms = manager.contracts.selectedRow.detail
+                cancelDialog.open()
+            }
+        }
     }
     ColumnLayout {
         Layout.fillWidth: true
@@ -679,13 +697,41 @@ ColumnLayout {
         onAccepted: manager.respondCompetitiveOffer(offerId, true)
     }
     Dialog {
+        id: advanceDialog
+        objectName: "customerAdvanceConfirmation"
+        property string offerId: ""
+        property string terms: ""
+        title: qsTr("Accept contract and receive advance?")
+        modal: true
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(620, Overlay.overlay.width - 36)
+        height: Math.min(620, Overlay.overlay.height - 60)
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        contentItem: ScrollView {
+            id: advanceTerms
+            clip: true
+            contentWidth: availableWidth
+            Label { width: advanceTerms.availableWidth; text: advanceDialog.terms; textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: panel.textSize }
+        }
+        onAccepted: manager.acceptOffer(offerId)
+    }
+    Dialog {
         id: cancelDialog
+        objectName: "cancelCustomerContractConfirmation"
+        property string contractId: ""
+        property string terms: ""
         title: qsTr("Cancel customer commitment?")
         modal: true
         anchors.centerIn: Overlay.overlay
         width: Math.min(620, Overlay.overlay.width - 36)
+        height: Math.min(560, Overlay.overlay.height - 60)
         standardButtons: Dialog.Ok | Dialog.Cancel
-        contentItem: Label { text: manager.contracts.selectedRow.detail || ""; textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: panel.textSize }
-        onAccepted: manager.cancelContract(manager.contracts.selectedId)
+        contentItem: ScrollView {
+            id: cancellationTerms
+            clip: true
+            contentWidth: availableWidth
+            Label { width: cancellationTerms.availableWidth; text: cancelDialog.terms; textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: panel.textSize }
+        }
+        onAccepted: manager.cancelContract(contractId)
     }
 }

@@ -13,7 +13,7 @@
 namespace pgp::core {
 
 enum class Account { cash, receivables, assets, accumulated_depreciation,
-                     payables, debt, equity, revenue, expenses };
+                     payables, debt, equity, revenue, expenses, customer_advances };
 [[nodiscard]] std::string_view to_string(Account account) noexcept;
 struct Posting {
     std::uint64_t id = 0;
@@ -66,9 +66,10 @@ inline constexpr std::size_t accounts_document_limit = retained_campaign_days * 
 inline constexpr std::size_t accounts_open_invoice_limit = 8192;
 inline constexpr std::size_t accounts_terms_limit = 256;
 struct PostingTotals {
-    std::array<Cents, 9> balances{
-        Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}};
+    std::array<Cents, 10> balances{
+        Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}};
     std::size_t supplier_credits=0;
+    std::size_t customer_advance_entries=0;
     void add(const Posting& posting);
 };
 
@@ -123,12 +124,14 @@ struct AccountsReport {
     Cents revenue{0};
     Cents expenses{0};
     Cents profit{0};
+    Cents customer_advances{0};
     auto operator<=>(const AccountsReport&) const = default;
 };
 [[nodiscard]] AccountsState opening_accounts(Cents cash, OrdinalDay starts_on = OrdinalDay{0},
                                             std::string owner = "company.player");
 [[nodiscard]] AccountsReport accounts_report(const AccountsState& state);
 [[nodiscard]] AccountsReport accounts_report_at(const AccountsState& state, std::size_t posting_count);
+[[nodiscard]] Cents book_net_assets(const AccountsReport& report);
 void validate_accounts(const AccountsState& state);
 // Each mutation validates a copied candidate and commits atomically. Reused
 // document/transaction keys are refused, including previously settled records.
@@ -139,8 +142,14 @@ void add_recurring(AccountsState& state, RecurringObligation obligation);
 // exclusive end equal to the start represents cancellation before first work.
 void end_recurring(AccountsState& state, std::string_view id, OrdinalDay ends_before);
 void issue_invoice(AccountsState& state, OrdinalDay day, Invoice invoice);
-// Market settlement owns the dated invoice identity and runs in a candidate.
-void issue_market_invoice(AccountsState& state, OrdinalDay day, Invoice invoice);
+// Market settlement owns these identities and rolls back the entire candidate
+// if an advance, delivery invoice, or refund fails to post.
+inline constexpr std::string_view customer_advance_prefix="customer.advance/";
+inline constexpr std::string_view customer_application_prefix="customer.apply/";
+inline constexpr std::string_view customer_refund_prefix="market.refund/";
+void receive_customer_advance(AccountsState& state, OrdinalDay day, std::string_view contract, Cents amount);
+void issue_market_invoice(AccountsState& state, OrdinalDay day, Invoice invoice, Cents prepaid=Cents{0});
+void issue_customer_refund(AccountsState& state, OrdinalDay day, Invoice invoice);
 void settle_invoice(AccountsState& state, OrdinalDay day, std::string_view id,
                     Cents amount, Cents protected_cash, std::string key);
 void draw_debt(AccountsState& state, OrdinalDay day, Debt debt, std::string cause);

@@ -21,12 +21,13 @@ void text_valid(std::string_view text, std::size_t maximum = 256) {
 }
 void user_key_valid(std::string_view key) {
     text_valid(key, 512);
-    for (const auto prefix : {"opening", "debt/", "invoice/", "accrue/", "settle/", "wholesale/"})
+    for (const std::string_view prefix : {"opening", "debt/", "invoice/", "accrue/", "settle/", "wholesale/",
+                                          "customer.advance/", "customer.apply/"})
         if (key.starts_with(prefix)) invalid("This transaction key namespace belongs to an owning accounts system");
 }
 std::size_t index(Account account) {
     const auto value = static_cast<std::size_t>(account);
-    if (value > static_cast<std::size_t>(Account::expenses)) invalid("Unknown ledger account");
+    if (value > static_cast<std::size_t>(Account::customer_advances)) invalid("Unknown ledger account");
     return value;
 }
 bool debit_normal(Account account) {
@@ -209,6 +210,7 @@ std::string_view to_string(Account account) noexcept {
     case Account::equity: return "equity";
     case Account::revenue: return "revenue";
     case Account::expenses: return "expenses";
+    case Account::customer_advances: return "customer_advances";
     }
     return "invalid";
 }
@@ -218,11 +220,13 @@ void PostingTotals::add(const Posting& posting) {
     debit = checked_unit_add(debit, debit_normal(posting.debit) ? posting.amount : Cents{-posting.amount.value()});
     credit = checked_unit_add(credit, debit_normal(posting.credit) ? Cents{-posting.amount.value()} : posting.amount);
     if (posting.debit==Account::payables && posting.credit==Account::expenses) ++supplier_credits;
+    if (posting.debit==Account::customer_advances || posting.credit==Account::customer_advances)
+        ++customer_advance_entries;
 }
 static AccountsReport report(const PostingTotals& totals) {
     const auto& balances = totals.balances;
     return {balances[0], balances[1], balances[2], balances[3], balances[4], balances[5], balances[6],
-            balances[7], balances[8], checked_unit_subtract(balances[7], balances[8])};
+            balances[7], balances[8], checked_unit_subtract(balances[7], balances[8]), balances[9]};
 }
 AccountsReport accounts_report(const AccountsState& state) {
     return report(state.postings.totals());
@@ -233,6 +237,13 @@ AccountsReport accounts_report_at(const AccountsState& state, std::size_t postin
     PostingTotals totals;
     for (std::size_t i = 0; i < posting_count; ++i) totals.add(state.postings[i]);
     return report(totals);
+}
+Cents book_net_assets(const AccountsReport& report) {
+    auto net = checked_unit_add(checked_unit_add(report.cash, report.receivables), report.assets);
+    net = checked_unit_subtract(net, report.accumulated_depreciation);
+    net = checked_unit_subtract(net, report.payables);
+    net = checked_unit_subtract(net, report.debt);
+    return checked_unit_subtract(net, report.customer_advances);
 }
 
 std::size_t InvoiceRegister::bucket(const Index& index, std::string_view id) const {
@@ -351,6 +362,7 @@ void validate_accounts(const AccountsState& state) {
     payable_documents.init(state.invoices.size());
     debt_documents.init(state.debts.size());
     const auto latest = current_day(state);
+    Cents advances{0};
     for (const auto& posting : state.postings) {
         (void)index(posting.debit); (void)index(posting.credit);
         text_valid(posting.cause); text_valid(posting.key, 512);
@@ -365,14 +377,22 @@ void validate_accounts(const AccountsState& state) {
             auto& totals = documents[posting.document_id];
             const bool recognition = debit_normal(account) ? posting.debit == account : posting.credit == account;
             if (recognition) {
-                if ((debit_normal(account) ? posting.credit : posting.debit) != recognized_offset)
+                const auto offset = debit_normal(account) ? posting.credit : posting.debit;
+                const bool customer_refund = account==Account::payables && offset==Account::customer_advances &&
+                    posting.document_id.starts_with(customer_refund_prefix) &&
+                    posting.key=="invoice.issue:"+posting.document_id;
+                if (offset != recognized_offset && !customer_refund)
                     invalid("Subledger recognition has an invalid economic offset");
                 totals.recognized = checked_unit_add(totals.recognized, posting.amount);
             } else {
+                const auto offset = debit_normal(account) ? posting.debit : posting.credit;
                 const bool supplier_credit=account==Account::payables && posting.credit==Account::expenses &&
                     posting.key.starts_with(supplier_credit_prefix) && posting.document_id.starts_with("recurring/");
-                if ((debit_normal(account) ? posting.debit : posting.credit) != Account::cash && !supplier_credit)
-                    invalid("Subledger settlement must move cash or apply a supplier credit to its bill");
+                const bool prepaid = account==Account::receivables && offset==Account::customer_advances &&
+                    posting.document_id.starts_with("market.contract/") &&
+                    posting.key==std::string(customer_application_prefix)+posting.document_id;
+                if (offset != Account::cash && !supplier_credit && !prepaid)
+                    invalid("Subledger settlement must use cash, an eligible supplier credit or a customer advance");
                 totals.settled = checked_unit_add(totals.settled, posting.amount);
                 if (totals.settled > totals.recognized) invalid("Subledger settlement precedes its recognized amount");
             }
@@ -381,7 +401,17 @@ void validate_accounts(const AccountsState& state) {
         const bool linked = subledger(Account::receivables, receivable_documents, Account::revenue) ||
             subledger(Account::payables, payable_documents, Account::expenses) ||
             subledger(Account::debt, debt_documents, Account::cash);
-        if (!linked && !posting.document_id.empty()) invalid("Posting links a document without a subledger account");
+        if (posting.credit==Account::customer_advances) {
+            text_valid(posting.document_id,100);
+            if (posting.debit!=Account::cash || posting.key!=std::string(customer_advance_prefix)+posting.document_id)
+                invalid("Customer advance must receive cash for an identified contract");
+            advances=checked_unit_add(advances,posting.amount);
+        } else if (posting.debit==Account::customer_advances) {
+            if (!linked || (posting.credit!=Account::receivables && posting.credit!=Account::payables))
+                invalid("Customer advance can only settle delivery or fund a refund payable");
+            advances=checked_unit_subtract(advances,posting.amount);
+            if (advances.value()<0) invalid("Customer advance use precedes its receipt");
+        } else if (!linked && !posting.document_id.empty()) invalid("Posting links a document without a subledger account");
     }
     auto report = accounts_report(state);
     if (report.cash.value() < 0 || report.receivables.value() < 0 || report.assets.value() < 0 ||
@@ -586,7 +616,13 @@ void issue_invoice(AccountsState& state, OrdinalDay day, Invoice invoice) {
         candidate.invoices.push_back(std::move(invoice), candidate.closed_through);
     });
 }
-void issue_market_invoice(AccountsState& state, OrdinalDay day, Invoice invoice) {
+void receive_customer_advance(AccountsState& state, OrdinalDay day, std::string_view contract, Cents amount) {
+    require_day(state, day);
+    text_valid(contract,100);
+    append_trusted(state, day, Account::cash, Account::customer_advances, amount, "Customer advance",
+                   std::string(customer_advance_prefix)+std::string(contract), std::string(contract));
+}
+void issue_market_invoice(AccountsState& state, OrdinalDay day, Invoice invoice, Cents prepaid) {
     require_day(state, day);
     text_valid(invoice.id, 100); text_valid(invoice.cause);
     if (invoice.amount.value() <= 0 || invoice.settled != Cents{0} || invoice.due != day)
@@ -594,9 +630,28 @@ void issue_market_invoice(AccountsState& state, OrdinalDay day, Invoice invoice)
     if (invoice.kind != InvoiceKind::receivable && invoice.kind != InvoiceKind::payable)
         invalid("Unknown market invoice kind");
     const auto receivable = invoice.kind == InvoiceKind::receivable;
+    if (prepaid.value()<0 || prepaid>invoice.amount || prepaid>balance(state, Account::customer_advances) ||
+        (prepaid.value()>0 && (!receivable || !invoice.id.starts_with("market.contract/"))))
+        invalid("Customer advance can settle only the earned amount of its delivery invoice");
     append_trusted(state, day, receivable ? Account::receivables : Account::expenses,
                    receivable ? Account::revenue : Account::payables, invoice.amount,
                    invoice.cause, "invoice.issue:" + invoice.id, invoice.id);
+    if (prepaid.value()>0) {
+        append_trusted(state, day, Account::customer_advances, Account::receivables, prepaid,
+                       "Customer advance applied to delivered work", std::string(customer_application_prefix)+invoice.id, invoice.id);
+        invoice.settled=prepaid;
+    }
+    state.invoices.push_back(std::move(invoice), state.closed_through);
+}
+void issue_customer_refund(AccountsState& state, OrdinalDay day, Invoice invoice) {
+    require_day(state, day);
+    text_valid(invoice.id,100); text_valid(invoice.cause);
+    if (!invoice.id.starts_with(customer_refund_prefix) || invoice.kind!=InvoiceKind::payable ||
+        invoice.due!=day || invoice.settled!=Cents{0} || invoice.amount.value()<=0 ||
+        invoice.amount>balance(state,Account::customer_advances))
+        invalid("Customer refund must transfer an unused advance to a payable due today");
+    append_trusted(state, day, Account::customer_advances, Account::payables, invoice.amount,
+                   invoice.cause, "invoice.issue:"+invoice.id, invoice.id);
     state.invoices.push_back(std::move(invoice), state.closed_through);
 }
 void settle_invoice(AccountsState& state, OrdinalDay day, std::string_view id, Cents amount, Cents protected_cash, std::string key) {

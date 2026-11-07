@@ -49,6 +49,11 @@ std::vector<core::BusinessOffer> load_business_offer_catalog(std::string_view by
     const auto doc=parse(bytes); array(doc,32); std::vector<core::BusinessOffer> result;
     for (auto row:doc) {
         if (!row.contains("renewable")) row["renewable"]=false;
+        core::Cents customer_advance{0};
+        if (row.contains("customer_advance_cents")) {
+            customer_advance=core::Cents{number(row.at("customer_advance_cents"))};
+            row.erase("customer_advance_cents");
+        }
         fields(row,{"id","name","kind","available_from","available_before","term_days","setup_cost_cents","monthly_amount_cents",
             "capacity_milli_CU_per_day","segment_id","product_id","tasks_per_day","renewable"});
         const auto kind=text(row.at("kind"));
@@ -61,6 +66,7 @@ std::vector<core::BusinessOffer> load_business_offer_catalog(std::string_view by
             core::MilliCUPerDay{number(row.at("capacity_milli_CU_per_day"))},text(row.at("segment_id"),true),text(row.at("product_id"),true),number(row.at("tasks_per_day"))});
         if (!row.at("renewable").is_boolean()) invalid("Renewable flag must be boolean");
         result.back().renewable=row.at("renewable").get<bool>();
+        result.back().customer_advance=customer_advance;
         if (!valid_id(result.back().id)) invalid("Business offer needs a stable content ID");
     }
     std::sort(result.begin(),result.end(),[](const auto& a,const auto& b){return a.id<b.id;});
@@ -68,11 +74,14 @@ std::vector<core::BusinessOffer> load_business_offer_catalog(std::string_view by
 }
 std::string canonical_business_offer_catalog(const std::vector<core::BusinessOffer>& offers) {
     Json result=Json::array();
-    for (const auto& row:offers) result.push_back({{"id",row.id},{"name",row.name},{"kind",row.kind==core::BusinessOfferKind::compute_lease?"compute_lease":
+    for (const auto& row:offers) {
+        result.push_back({{"id",row.id},{"name",row.name},{"kind",row.kind==core::BusinessOfferKind::compute_lease?"compute_lease":
         row.kind==core::BusinessOfferKind::recovery_pilot?"recovery_pilot":"enterprise_contract"},
         {"available_from",core::iso_date(row.available_from)},{"available_before",core::iso_date(row.available_before)},
         {"term_days",row.term.value()},{"setup_cost_cents",row.setup_cost.value()},{"monthly_amount_cents",row.monthly_amount.value()},
         {"capacity_milli_CU_per_day",row.capacity.value()},{"segment_id",row.segment_id},{"product_id",row.product_id},{"tasks_per_day",row.tasks_per_day},{"renewable",row.renewable}});
+        if (row.customer_advance.value()>0) result.back()["customer_advance_cents"]=row.customer_advance.value();
+    }
     return result.dump();
 }
 std::vector<RivalDefinition> load_rival_definitions(std::string_view bytes) {

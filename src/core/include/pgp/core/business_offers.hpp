@@ -13,6 +13,7 @@ struct BusinessOffer {
     std::string segment_id, product_id;
     std::uint64_t tasks_per_day = 0;
     bool renewable = false;
+    Cents customer_advance{0};
     auto operator<=>(const BusinessOffer&) const = default;
 };
 struct AcceptedBusinessOffer {

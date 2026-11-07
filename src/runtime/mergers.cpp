@@ -20,10 +20,7 @@ const RivalCompany& target(const WorldState& w,std::string_view id) {
 RivalCompany& target(WorldState& w,std::string_view id) {return const_cast<RivalCompany&>(target(std::as_const(w),id));}
 Cents net_assets(const AccountsState& a,std::uint64_t count) {
     if (count>a.postings.size()) invalid("Due diligence references unavailable account history");
-    const auto r=accounts_report_at(a,static_cast<std::size_t>(count));
-    auto value=checked_add(checked_add(r.cash.value(),r.receivables.value()),r.assets.value());
-    value=checked_subtract(value,r.accumulated_depreciation.value());value=checked_subtract(value,r.payables.value());value=checked_subtract(value,r.debt.value());
-    return Cents{std::max<std::int64_t>(value,0)};
+    return std::max(Cents{0},book_net_assets(accounts_report_at(a,static_cast<std::size_t>(count))));
 }
 BasisPoints equity_price(Cents buyer_value,Cents noncash,BasisPoints cap) {
     const auto denominator=checked_unit_add(buyer_value,noncash);
@@ -134,8 +131,7 @@ OwnedGroupReport owned_group_report(const WorldState& w) {
     OwnedGroupReport group;if (!w.simulation.accounts) return group;
     const auto add=[&](const AccountsState& a) {
         const auto r=accounts_report(a);group.cash=checked_unit_add(group.cash,r.cash);group.operating_profit=checked_unit_add(group.operating_profit,r.profit);
-        auto net=checked_add(checked_add(r.cash.value(),r.receivables.value()),r.assets.value());net=checked_subtract(net,r.accumulated_depreciation.value());net=checked_subtract(net,r.payables.value());net=checked_subtract(net,r.debt.value());
-        group.net_assets=checked_unit_add(group.net_assets,Cents{net});
+        group.net_assets=checked_unit_add(group.net_assets,book_net_assets(r));
     };
     add(*w.simulation.accounts);
     if (w.competition) for (const auto& q:w.competition->acquisitions) if (q.completed_on) {

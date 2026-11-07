@@ -291,6 +291,7 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
         bool corporate=false,corporate_completed=false,dividend_paid=false;
         QString competitive_pilot,competitive_paper;
         std::int64_t before_agreement_cash=0;
+        core::Cents before_customer_cash{0};
     };
     auto smoke=std::make_shared<PlayableSmoke>();
     auto* timer=new QTimer(&window);timer->setInterval(20);
@@ -403,9 +404,19 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
                 if (press("setProductPriceButton")) smoke->phase=38;return;
             }
             press("officeTab");press("office_offers");manager->offers()->setSelectedId(QStringLiteral("offer.enterprise_service"));
-            if (press("acceptOfferButton")) smoke->phase=10;return;
+            smoke->before_customer_cash=state.cash;
+            if (press("acceptOfferButton"))
+                smoke->phase=manager->offers()->selectedRow().value(QStringLiteral("fields")).toMap()
+                    .value(QStringLiteral("customerAdvance")).toBool()?44:10;
+            return;
         case 10:
             if (state.market->contracts.empty()) {fail("customer offer did not create contract");return;}
+            for (const auto& contract:state.market->contracts) if (contract.id=="pilot/offer.enterprise_service" &&
+                contract.customer_advance.value()>0 &&
+                (state.cash!=core::checked_unit_add(smoke->before_customer_cash,contract.customer_advance) ||
+                 core::accounts_report(*state.accounts).customer_advances!=contract.customer_advance)) {
+                fail("customer advance cash or liability");return;
+            }
             manager->offers()->setSelectedId(QStringLiteral("offer.supplier_small"));
             if (press("acceptOfferButton")) smoke->phase=34;return;
         case 11:
@@ -621,6 +632,10 @@ void schedule_playable_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             if (manager->competitiveOffers()->row(smoke->competitive_paper).value(QStringLiteral("fields")).toMap().value(QStringLiteral("status"))!=QStringLiteral("declined")) {fail("explicit publication offer decline");return;}
             reveal_top(item("heavyweightBriefingDetail"));if (!capture(QStringLiteral("-response"))) {fail("public pressure briefing capture");return;}
             smoke->paper_declined=true;play();smoke->phase=21;return;
+        case 44:
+            if (!capture(QStringLiteral("-advance"))) {fail("customer advance terms capture");return;}
+            if (!key(window,visual_button(window.contentItem(),QStringLiteral("OK")),Qt::Key_Space)) {fail("customer advance confirmation keyboard");return;}
+            smoke->phase=10;return;
         default:fail("unknown smoke phase");return;
         }
     });

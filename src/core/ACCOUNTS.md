@@ -8,12 +8,21 @@ invent a historical ledger. The simulation's cash field must equal journal cash.
 
 Each positive posting names one debit and credit, a stable identity/key, day,
 owner and cause. Cash, receivables, assets and expenses are debit-positive;
-accumulated depreciation, payables, debt, equity and revenue are credit-positive.
+accumulated depreciation, payables, debt, equity, revenue and customer advances
+are credit-positive.
 Reports derive balances and profit from postings. Reservations remain simulation
 commitments: creating or cancelling one does not recognize an expense. Consuming
 one recognizes the delivered purchase once. Invoices recognize revenue or expense
 separately from subsequent cash collection/payment. Debt and equity proceeds do
 not create product revenue. Generic engineering flow cash transfers use equity.
+
+An enterprise customer advance increases cash and its own liability. On
+delivery, the gross earned invoice recognizes revenue once. Any advance applied
+to the invoice reduces both the receivable and the liability. The remaining
+receivable follows ordinary cash collection. Cancellation or completion
+transfers any unearned balance to a refund payable due that day. The market
+reconciles the advance, applications and refund to that contract's saved terms
+and delivery history. Net book assets deduct the outstanding liability.
 
 Recurring terms accrue daily using the difference between successive cumulative
 floors of `monthly_cents * active_days / actual_days_in_month`. Mid-month starts

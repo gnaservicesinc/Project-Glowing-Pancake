@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.18.0-dev.1",
+  "content_version": "0.19.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -18991,6 +18991,7 @@
           "available_before": "2017-01-01",
           "available_from": "2014-01-01",
           "capacity_milli_CU_per_day": 0,
+          "customer_advance_cents": 2000000,
           "id": "offer.enterprise_service",
           "kind": "enterprise_contract",
           "monthly_amount_cents": 2500000,
@@ -22909,7 +22910,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 8,
+      "revision": 9,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -24085,6 +24086,7 @@
           "available_before": "2017-01-01",
           "available_from": "2014-01-01",
           "capacity_milli_CU_per_day": 0,
+          "customer_advance_cents": 2000000,
           "id": "offer.enterprise_service",
           "kind": "enterprise_contract",
           "monthly_amount_cents": 2500000,
@@ -28003,7 +28005,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 8,
+      "revision": 9,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -29164,6 +29166,7 @@
           "available_before": "2017-01-01",
           "available_from": "2014-01-01",
           "capacity_milli_CU_per_day": 0,
+          "customer_advance_cents": 2000000,
           "id": "offer.enterprise_service",
           "kind": "enterprise_contract",
           "monthly_amount_cents": 2500000,
@@ -31662,7 +31665,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 11,
+      "revision": 12,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -31965,6 +31968,7 @@
           "available_before": "2017-01-01",
           "available_from": "2014-01-01",
           "capacity_milli_CU_per_day": 0,
+          "customer_advance_cents": 2000000,
           "id": "offer.enterprise_service",
           "kind": "enterprise_contract",
           "monthly_amount_cents": 2500000,
@@ -34475,7 +34479,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 12,
+      "revision": 13,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -35933,6 +35937,7 @@
           "available_before": "2017-01-01",
           "available_from": "2014-01-01",
           "capacity_milli_CU_per_day": 0,
+          "customer_advance_cents": 2000000,
           "id": "offer.enterprise_service",
           "kind": "enterprise_contract",
           "monthly_amount_cents": 2500000,
@@ -38443,7 +38448,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 12,
+      "revision": 13,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -39901,6 +39906,7 @@
           "available_before": "2017-01-01",
           "available_from": "2014-01-01",
           "capacity_milli_CU_per_day": 0,
+          "customer_advance_cents": 2000000,
           "id": "offer.enterprise_service",
           "kind": "enterprise_contract",
           "monthly_amount_cents": 2500000,
@@ -42411,7 +42417,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 12,
+      "revision": 13,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -43869,6 +43875,7 @@
           "available_before": "2017-01-01",
           "available_from": "2014-01-01",
           "capacity_milli_CU_per_day": 0,
+          "customer_advance_cents": 2000000,
           "id": "offer.enterprise_service",
           "kind": "enterprise_contract",
           "monthly_amount_cents": 2500000,
@@ -46379,7 +46386,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 12,
+      "revision": 13,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,

@@ -20,6 +20,7 @@ MarketContract contract(const BusinessOffer& offer,OrdinalDay day) {
     row.tasks_per_day=offer.tasks_per_day; row.monthly_fee=offer.monthly_amount;
     row.accepted_on=day; row.start_by=advance_days(day,Days{1}); row.ends_before=advance_days(day,offer.term);
     row.cause="Accepted customer offer: "+offer.name;
+    row.customer_advance=offer.customer_advance;
     return row;
 }
 void apply(BusinessOffersState& state,AccountsState& accounts,CapacityState& capacity,std::optional<MarketState>& market,
@@ -38,9 +39,10 @@ void apply(BusinessOffersState& state,AccountsState& accounts,CapacityState& cap
         add_capacity_source(capacity,day,std::move(source));
         add_recurring(accounts,{"offer.lease/"+offer.id,offer.monthly_amount,day,expires,"Compute lease: "+offer.name});
     } else {
-        if (!market || !find(market->products,offer.product_id).available) invalid("A recovery pilot requires an available product");
+        if (!market || !find(market->products,offer.product_id).available) invalid("A customer contract requires an available product");
         const auto row=contract(offer,day);
         accept_contract(*market,capacity,day,row); start_contract(*market,capacity,day,row.id);
+        if (row.customer_advance.value()>0) receive_customer_advance(accounts,day,row.id,row.customer_advance);
     }
     state.accepted.push_back({offer.id,day,expires});
 }
@@ -55,6 +57,9 @@ void validate_business_offer_catalog(const std::vector<BusinessOffer>& catalog) 
             offer.monthly_amount.value()<=0 || offer.monthly_amount.value()>1'000'000'000'000LL)
             invalid("Business offer identity, window, term or cost is invalid");
         (void)from_ordinal(offer.available_from); (void)from_ordinal(offer.available_before);
+        if (offer.customer_advance.value()<0 || offer.customer_advance>offer.monthly_amount ||
+            (offer.customer_advance.value()>0 && offer.kind!=BusinessOfferKind::enterprise_contract))
+            invalid("An enterprise customer advance is limited to one monthly fee");
         if (offer.kind==BusinessOfferKind::compute_lease) {
             if (offer.capacity.value()==0 || offer.capacity.value()>1'000'000 || !offer.segment_id.empty() ||
                 !offer.product_id.empty() || offer.tasks_per_day!=0) invalid("Compute offer has invalid capacity or pilot-only terms");
@@ -139,6 +144,7 @@ void validate_business_offers(const BusinessOffersState& state,const AccountsSta
         prior->second=row.expires_before;
     }
     std::set<std::string_view> seen;
+    std::size_t prepaid_contracts=0;
     for (const auto& accepted:state.accepted) {
         const auto& offer=find(state.catalog,accepted.offer_id);
         if (!seen.insert(offer.id).second || accepted.accepted_on<offer.available_from || accepted.accepted_on>=offer.available_before ||
@@ -156,13 +162,19 @@ void validate_business_offers(const BusinessOffersState& state,const AccountsSta
                 obligation.starts_on!=accepted.accepted_on || obligation.ends_before!=accepted.expires_before || obligation.monthly_amount!=offer.monthly_amount)
                 invalid("Accepted lease differs from its actual source or obligation");
         } else {
-            if (!market) invalid("Accepted pilot has no customer market");
-            const auto& actual=find(market->contracts,contract_id(offer)); const auto expected=contract(offer,accepted.accepted_on);
-            if (actual.product_id!=expected.product_id || actual.segment_id!=expected.segment_id || actual.monthly_fee!=expected.monthly_fee ||
-                actual.tasks_per_day!=expected.tasks_per_day || actual.accepted_on!=expected.accepted_on || actual.ends_before!=expected.ends_before ||
-                actual.start_by!=expected.start_by || actual.started_on!=accepted.accepted_on || actual.cause!=expected.cause)
-                invalid("Accepted pilot differs from its disclosed actual contract");
+            if (!market) invalid("Accepted customer contract has no market");
+            const auto& actual=find(market->contracts,contract_id(offer));
+            auto expected=contract(offer,accepted.accepted_on);
+            expected.started_on=accepted.accepted_on;
+            expected.stopped_on=actual.stopped_on;
+            expected.status=actual.status;
+            expected.advance_applied=actual.advance_applied;
+            if (actual!=expected) invalid("Accepted customer contract differs from the disclosed terms");
+            if (offer.customer_advance.value()>0) ++prepaid_contracts;
         }
     }
+    if (deep && market && static_cast<std::size_t>(std::count_if(market->contracts.begin(),market->contracts.end(),
+            [](const auto& row){return row.customer_advance.value()>0;}))!=prepaid_contracts)
+        invalid("Customer advance has no matching accepted offer");
 }
 }

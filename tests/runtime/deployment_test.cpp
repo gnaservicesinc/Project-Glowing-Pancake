@@ -35,6 +35,7 @@ void run() {
     apply(game,core::StartResearch{"research.held_out_evaluation",{"lease.initial",core::MilliCUPerDay{20000},2}});
     apply(game,core::StartTraining{{"baseline","recipe.document_baseline","",{"data.licensed_documents"},"lease.initial",core::MilliCUPerDay{60000},3,core::MilliCU{3600000}}});
     refused(game,core::DeployModel{"product.documents","baseline","missing","lease.initial",false});
+    refused(game,core::AcceptBusinessOffer{"offer.enterprise_service"});
     days(game,60);
     apply(game,core::StartEvaluation{"heldout","baseline","evaluation.held_out",allocation});
     apply(game,core::StartEvaluation{"headline","baseline","evaluation.headline",allocation});
@@ -47,7 +48,12 @@ void run() {
     const auto truth=game.current_state().world.simulation.lab->models.front();
     const auto rng=game.current_state().world.simulation.random;
     apply(game,core::DeployModel{"product.documents","baseline","heldout","lease.initial",false});
+    const auto before=core::accounts_report(*game.current_state().world.simulation.accounts);
     apply(game,core::AcceptBusinessOffer{"offer.enterprise_service"});
+    const auto prepaid=core::accounts_report(*game.current_state().world.simulation.accounts);
+    check(prepaid.cash==core::checked_unit_add(before.cash,core::Cents{2000000}) &&
+          prepaid.customer_advances==core::Cents{2000000} && prepaid.revenue==before.revenue,
+          "The bundled enterprise customer did not pay the disclosed refundable advance");
     apply(game,core::DeployModel{"product.documents_tables","baseline","heldout","lease.initial",true});
     const auto& reviewed=game.current_state().world.simulation.capacity->projects.back();
     check(reviewed.tasks_per_day==500 && reviewed.staff==2 && reviewed.monthly_support_cost.value()==2000000 && reviewed.requested.value()==10000,"Review control omitted its throughput, staff, support or compute cost");

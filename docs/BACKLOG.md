@@ -39,7 +39,11 @@ Both century scenarios now support an IPO with settled financial qualification,
 board approval, conserving equity dilution, public filings and a new director.
 Restricted research grants and expiring cloud credits are now claimable in the
 Office. They apply to eligible costs through the Lab and supplier ledger.
-Ordinary customer prepayments are the next financing gap.
+The opening enterprise offer now pays a refundable customer advance. Actual
+delivery applies the balance to its own invoices, and unused cash becomes a
+refund payable when the commitment ends. Next is the player-facing Accounts
+view for cash flow, profit and loss, balance sheet, unit economics and 3/12-month
+cash scenarios.
 
 ## M0 — Toolchain and platform proof
 

@@ -73,9 +73,9 @@ std::string invoice_id(std::string_view kind, std::string_view id, OrdinalDay da
     return "market." + std::string(kind) + "/" + std::string(id) + "/" + iso_date(day);
 }
 void invoice(AccountsState& accounts, OrdinalDay day, std::string id, InvoiceKind kind,
-             Cents amount, std::string cause) {
+             Cents amount, std::string cause, Cents prepaid = Cents{0}) {
     if (amount.value() != 0)
-        issue_market_invoice(accounts, day, {std::move(id), kind, day, amount, Cents{0}, std::move(cause)});
+        issue_market_invoice(accounts, day, {std::move(id), kind, day, amount, Cents{0}, std::move(cause)}, prepaid);
 }
 Cents net_charge(const ContractDayResult& result) {
     return checked_unit_add(checked_unit_subtract(result.gross_fee, result.service_credit), result.usage_charge);
@@ -382,6 +382,8 @@ void validate_market(const MarketState& state) {
             contract.usage_price.value() < 0 || contract.usage_price.value() > market_price_limit ||
             contract.missing_task_penalty.value() < 0 || contract.missing_task_penalty.value() > market_price_limit ||
             contract.missed_start_penalty.value() < 0 || contract.cancellation_penalty.value() < 0 ||
+            contract.customer_advance.value()<0 || contract.customer_advance>contract.monthly_fee ||
+            contract.advance_applied.value()<0 || contract.advance_applied>contract.customer_advance ||
             contract.accepted_on < state.starts_on || contract.accepted_on > latest || contract.start_by < contract.accepted_on ||
             contract.ends_before <= contract.start_by)
             invalid("Contract identity, price, demand or deadline is invalid");
@@ -612,6 +614,34 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
         if (amount.value() > 0 && !expected.emplace(std::move(id), ExpectedInvoice{kind, amount, day}).second)
             invalid("Market consequences repeat an invoice identity");
     };
+    std::unordered_map<std::string_view, const Posting*> advance_entries;
+    if (const auto count=accounts.postings.totals().customer_advance_entries; count>0) {
+        advance_entries.reserve(count);
+        for (const auto& posting:accounts.postings)
+            if (posting.debit==Account::customer_advances || posting.credit==Account::customer_advances)
+                advance_entries.emplace(posting.key, &posting);
+    }
+    struct AdvanceAudit {
+        Cents remaining{0};
+        std::uint64_t last_entry=0;
+    };
+    std::unordered_map<std::string_view, AdvanceAudit> advances;
+    const auto expect_advance = [&](AdvanceAudit& audit, const std::string& key, std::string_view document,
+                                    OrdinalDay day, Cents amount, Account debit, Account credit) {
+        const auto found=advance_entries.find(key);
+        if (found==advance_entries.end() || found->second->day!=day || found->second->amount!=amount ||
+            found->second->debit!=debit || found->second->credit!=credit ||
+            found->second->document_id!=document || found->second->id<=audit.last_entry)
+            invalid("Customer advance posting differs from the accepted offer, delivered work or refund");
+        audit.last_entry=found->second->id;
+        advance_entries.erase(found);
+    };
+    for (const auto& contract:state.contracts) if (contract.customer_advance.value()>0) {
+        auto& audit=advances[contract.id];
+        audit.remaining=contract.customer_advance;
+        expect_advance(audit, std::string(customer_advance_prefix)+contract.id, contract.id,
+                       contract.accepted_on, contract.customer_advance, Account::cash, Account::customer_advances);
+    }
     std::unordered_map<std::string_view, std::uint64_t> delivered, protected_delivered;
     delivered.reserve(state.products.size());
     protected_delivered.reserve(state.products.size());
@@ -624,8 +654,17 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
             delivered[contract.product_id] += result.delivered_tasks;
             protected_delivered[contract.product_id] += result.delivered_tasks;
             const auto charge = net_charge(result);
-            if (charge.value() > 0)
-                expect("market.contract/" + contract.id + "/" + date_text, InvoiceKind::receivable, charge, day.day);
+            if (charge.value() > 0) {
+                const auto id="market.contract/" + contract.id + "/" + date_text;
+                expect(id, InvoiceKind::receivable, charge, day.day);
+                if (const auto found=advances.find(contract.id); found!=advances.end() && found->second.remaining.value()>0) {
+                    auto& audit=found->second;
+                    const auto prepaid=std::min(charge, audit.remaining);
+                    expect_advance(audit, std::string(customer_application_prefix)+id, id, day.day, prepaid,
+                                   Account::customer_advances, Account::receivables);
+                    audit.remaining=checked_unit_subtract(audit.remaining, prepaid);
+                }
+            }
             if (result.penalty.value() > 0)
                 expect("market.penalty/" + contract.id + "/" + date_text, InvoiceKind::payable, result.penalty, day.day);
         }
@@ -677,10 +716,22 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
             }
         }
     }
-    for (const auto& contract : state.contracts)
+    for (const auto& contract : state.contracts) {
         if (contract.status == ContractStatus::cancelled)
             expect(invoice_id("cancel", contract.id, *contract.stopped_on), InvoiceKind::payable,
                    contract.cancellation_penalty, *contract.stopped_on);
+        if (const auto found=advances.find(contract.id); found!=advances.end()) {
+            auto& audit=found->second;
+            if (audit.remaining!=contract.unearned_advance())
+                invalid("Customer advance balance differs from actual billed delivery");
+            if (const auto refund=customer_refund(contract)) {
+                expect(refund->id, refund->kind, refund->amount, refund->due);
+                expect_advance(audit, "invoice.issue:"+refund->id, refund->id, refund->due, refund->amount,
+                               Account::customer_advances, Account::payables);
+            }
+        }
+    }
+    if (!advance_entries.empty()) invalid("Ledger contains customer advance postings without a matching obligation");
     for (const auto& row : accounts.invoices) {
         if (!row.id.starts_with("market.")) continue;
         const auto found = expected.find(row.id);
@@ -756,6 +807,7 @@ void add_market_preference(MarketState& state,std::string_view segment_id,Market
 void validate_contract_acceptance(const MarketState& state,const CapacityState& capacity,OrdinalDay day,const MarketContract& contract) {
         require_day(state, day);
         if (contract.status != ContractStatus::pending || contract.accepted_on != day || contract.started_on || contract.stopped_on ||
+            contract.advance_applied!=Cents{0} ||
             state.contracts.size()>=market_contract_limit || std::any_of(state.contracts.begin(),state.contracts.end(),[&](const auto& row){return row.id==contract.id;}))
             invalid("A newly accepted contract must record today's acceptance without prior delivery state");
         const auto& segment = find_id(state.segments, contract.segment_id);
@@ -803,6 +855,15 @@ void start_contract(MarketState& state, const CapacityState& capacity, OrdinalDa
         found->started_on = day; found->status = ContractStatus::active;
     });
 }
+std::optional<Invoice> customer_refund(const MarketContract& contract) {
+    if (!contract.stopped_on || contract.unearned_advance()==Cents{0}) return std::nullopt;
+    // Completion posts on the last work day. Cancellation posts on the
+    // morning the player ends the commitment, before that day's work.
+    const auto due=contract.status==ContractStatus::completed
+        ? OrdinalDay{checked_subtract(contract.stopped_on->value(), 1)} : *contract.stopped_on;
+    return Invoice{invoice_id("refund", contract.id, due), InvoiceKind::payable, due,
+                   contract.unearned_advance(), Cents{0}, "Unused customer advance refund: "+contract.id};
+}
 void cancel_contract(MarketState& state, AccountsState& accounts, OrdinalDay day, std::string_view contract_id) {
     validate_market(state); validate_accounts(accounts); require_day(state, day);
     auto next = state; auto ledger = accounts;
@@ -812,6 +873,7 @@ void cancel_contract(MarketState& state, AccountsState& accounts, OrdinalDay day
     found->status = ContractStatus::cancelled; found->stopped_on = day;
     invoice(ledger, day, invoice_id("cancel", found->id, day), InvoiceKind::payable,
             found->cancellation_penalty, found->cause);
+    if (const auto refund=customer_refund(*found)) issue_customer_refund(ledger, day, *refund);
     validate_market(next); validate_accounts(ledger);
     state = std::move(next); accounts = std::move(ledger);
 }
@@ -1039,8 +1101,12 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
         auto& row=*found;
         if (row.status==ContractStatus::pending) {row.status=ContractStatus::missed;row.stopped_on=row.start_by;}
         else if (advance_days(day,Days{1})>=row.ends_before) {row.status=ContractStatus::completed;row.stopped_on=row.ends_before;}
-        invoice(ledger,day,invoice_id("contract",row.id,day),InvoiceKind::receivable,net_charge(result),row.cause);
+        const auto charge=net_charge(result);
+        const auto prepaid=std::min(charge,row.unearned_advance());
+        invoice(ledger,day,invoice_id("contract",row.id,day),InvoiceKind::receivable,charge,row.cause,prepaid);
+        row.advance_applied=checked_unit_add(row.advance_applied,prepaid);
         invoice(ledger,day,invoice_id("penalty",row.id,day),InvoiceKind::payable,result.penalty,row.cause);
+        if (const auto refund=customer_refund(row)) issue_customer_refund(ledger, day, *refund);
     }
     AllocationResult stand_alone;
     if (!assigned) stand_alone = allocate_demand(prepared.products, prepared.segments);

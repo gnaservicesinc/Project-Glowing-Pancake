@@ -65,7 +65,8 @@ Json market_json(const core::MarketState& state, bool packed) {
             encoded["requires_local"] = segment.requires_local;
         }
     }
-    for (const auto& contract:state.contracts) contracts.push_back({
+    for (const auto& contract:state.contracts) {
+        contracts.push_back({
         {"id",contract.id},{"segment_id",contract.segment_id},{"product_id",contract.product_id},
         {"tasks_per_day",contract.tasks_per_day},{"monthly_fee_cents",contract.monthly_fee.value()},
         {"usage_price_cents",contract.usage_price.value()},
@@ -77,6 +78,11 @@ Json market_json(const core::MarketState& state, bool packed) {
         {"ends_before",contract.ends_before.value()},{"started_on",optional_day(contract.started_on)},
         {"stopped_on",optional_day(contract.stopped_on)},{"status",status_json(contract.status)},
         {"cause",contract.cause}});
+        if (contract.customer_advance.value()>0) {
+            contracts.back()["customer_advance_cents"]=contract.customer_advance.value();
+            contracts.back()["advance_applied_cents"]=contract.advance_applied.value();
+        }
+    }
     const core::MarketDay* prior = nullptr;
     for (const auto& closed:state.days) {
         if (packed && prior && prior->contracts == closed.contracts && prior->discretionary == closed.discretionary &&
@@ -213,7 +219,8 @@ core::MarketState parse_market(const Json& value, bool packed) {
     for (const auto& contract:contracts) {
         fields(contract,"market/contract",{"id","segment_id","product_id","tasks_per_day","monthly_fee_cents","usage_price_cents",
             "service_credit_basis_points","missing_task_penalty_cents","missed_start_penalty_cents","cancellation_penalty_cents",
-            "accepted_on","start_by","ends_before","started_on","stopped_on","status","cause"});
+            "accepted_on","start_by","ends_before","started_on","stopped_on","status","cause"},
+            {"customer_advance_cents","advance_applied_cents"});
         result.contracts.push_back({label(contract.at("id")),label(contract.at("segment_id")),label(contract.at("product_id")),
             tasks(contract.at("tasks_per_day")),cents(contract.at("monthly_fee_cents")),cents(contract.at("usage_price_cents")),
             core::BasisPoints{i64(contract.at("service_credit_basis_points"),"market/service_credit_basis_points")},
@@ -221,6 +228,12 @@ core::MarketState parse_market(const Json& value, bool packed) {
             cents(contract.at("cancellation_penalty_cents")),day(contract.at("accepted_on")),day(contract.at("start_by")),
             day(contract.at("ends_before")),parse_optional_day(contract.at("started_on")),parse_optional_day(contract.at("stopped_on")),
             parse_status(contract.at("status")),label(contract.at("cause"))});
+        if (contract.contains("customer_advance_cents")!=contract.contains("advance_applied_cents"))
+            invalid("market/contract","Customer advance and application totals must be present together");
+        if (contract.contains("customer_advance_cents")) {
+            result.contracts.back().customer_advance=cents(contract.at("customer_advance_cents"));
+            result.contracts.back().advance_applied=cents(contract.at("advance_applied_cents"));
+        }
     }
     std::size_t records=0;
     read_history_rows(value.at("days"), "market/days", core::market_day_limit, packed, [&](const Json& closed, bool repeat) {

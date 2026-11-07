@@ -17,9 +17,7 @@ BasisPoints holding(const SimulationState& s,std::string_view holder) {
 }
 Cents equity_book(const WorldState& world,std::string_view id) {
     if(id==world.company_id) return Cents{std::max<std::int64_t>(0,owned_group_report(world).net_assets.value())};
-    const auto r=accounts_report(*company(world,id).accounts);
-    const auto assets=checked_unit_subtract(checked_unit_add(checked_unit_add(r.cash,r.receivables),r.assets),r.accumulated_depreciation);
-    return Cents{std::max<std::int64_t>(0,checked_unit_subtract(checked_unit_subtract(assets,r.payables),r.debt).value())};
+    return std::max(Cents{0},book_net_assets(accounts_report(*company(world,id).accounts)));
 }
 }
 FounderLegacy founder_legacy(const WorldState& world,std::string_view institution) {
