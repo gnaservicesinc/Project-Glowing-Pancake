@@ -82,12 +82,26 @@ struct SyntheticRecipe {
     BasisPoints diversity{0},minimum_teacher{0};
     auto operator<=>(const SyntheticRecipe&) const = default;
 };
+struct FeedbackConsent {
+    std::string product_id, segment_id;
+    BasisPoints opted_in_share{0};
+    auto operator<=>(const FeedbackConsent&) const = default;
+};
+struct DataAcquisitionOffer {
+    // Price is the commissioning fee. For feedback, unique_units is a cap.
+    DataOffer dataset;
+    Days collection_days{1}, staff_days{1};
+    MilliCU review_work{0};
+    std::optional<FeedbackConsent> feedback{};
+    auto operator<=>(const DataAcquisitionOffer&) const = default;
+};
 struct LabCatalog {
     std::vector<DataOffer> data;
     std::vector<LabResearch> research;
     std::vector<TrainingRecipe> recipes;
     std::vector<EvaluationPlan> evaluations;
     std::vector<SyntheticRecipe> synthesis{};
+    std::vector<DataAcquisitionOffer> acquisition{};
     auto operator<=>(const LabCatalog&) const = default;
 };
 struct DataLicense {
@@ -141,6 +155,12 @@ struct GeneratedDataset {
     std::optional<DataOffer> output{};
     auto operator<=>(const GeneratedDataset&) const = default;
 };
+struct DataAcquisition {
+    std::string offer_id, project_id;
+    std::optional<std::uint64_t> settled_deliveries{};
+    std::optional<DataOffer> output{};
+    auto operator<=>(const DataAcquisition&) const = default;
+};
 struct LabState {
     std::string owner = "company.player";
     OrdinalDay starts_on{0};
@@ -154,6 +174,7 @@ struct LabState {
     std::vector<ResearchPublication> publications{};
     std::vector<ResearchInsight> insights{};
     std::vector<GeneratedDataset> generated{};
+    std::vector<DataAcquisition> acquisitions{};
     auto operator<=>(const LabState&) const = default;
 };
 struct TrainingRequest {
@@ -174,6 +195,16 @@ struct GenerateDataset {
     std::string id,recipe_id,teacher_id,evidence_id,verification_id;
     std::uint64_t attempted_units=0;
     LabAllocation allocation;
+};
+struct StartDataAcquisition {
+    std::string offer_id;
+    LabAllocation allocation;
+};
+struct DataAcquisitionPreview {
+    Cents fee{0};
+    MilliCU work{0};
+    Days minimum_days{0};
+    OrdinalDay collection_ends_before{0};
 };
 struct SyntheticPreview {
     Cents fee{0};
@@ -213,8 +244,14 @@ struct LabReport {
 
 void validate_lab_catalog(const LabCatalog& catalog);
 void validate_synthetic_catalog(const LabCatalog&);
-[[nodiscard]] const DataOffer& lab_data(const LabCatalog&,std::span<const GeneratedDataset>,std::string_view id);
+void validate_acquisition_catalog(const LabCatalog&);
 [[nodiscard]] const DataOffer& lab_data(const LabState&,std::string_view id);
+[[nodiscard]] std::optional<OrdinalDay> data_available_on(const LabState&,const CapacityState&,std::string_view id);
+struct SimulationState;
+[[nodiscard]] DataAcquisitionPreview preview_data_acquisition(const SimulationState&,const StartDataAcquisition&);
+void start_data_acquisition(SimulationState&,const StartDataAcquisition&,Cents protected_cash);
+void close_data_acquisitions(SimulationState&);
+void validate_data_acquisitions(const SimulationState&,bool deep);
 [[nodiscard]] SyntheticPreview preview_synthesis(const LabState&,const CapacityState&,OrdinalDay,const GenerateDataset&);
 void generate_dataset(LabState&,AccountsState&,CapacityState&,OrdinalDay,const GenerateDataset&,Cents protected_cash);
 void close_synthetic_data(LabState&,const CapacityState&,OrdinalDay);
@@ -223,7 +260,7 @@ void checkpoint_model(LabState&,const CapacityState&,OrdinalDay,std::string_view
 void validate_lab(const LabState& state, const CapacityState& capacity, const AccountsState& accounts,
                   const RandomSnapshot& random, bool deep = true);
 [[nodiscard]] LabProfile model_capability(const LabCatalog& catalog, const LabModel& model,
-    std::span<const GeneratedDataset> generated={});
+    std::span<const GeneratedDataset> generated={},std::span<const DataAcquisition> acquired={});
 [[nodiscard]] TrainingPreview preview_training(const LabState& state, const TrainingRequest& request);
 [[nodiscard]] LabReport lab_report(const LabState& state, const CapacityState& capacity);
 // Mutators operate inside Simulation's copied transaction; costs and capacity

@@ -174,6 +174,7 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::StartContract>(command.action) ||
         std::holds_alternative<core::CancelContract>(command.action) ||
         std::holds_alternative<core::BuyData>(command.action) ||
+        std::holds_alternative<core::StartDataAcquisition>(command.action) ||
         std::holds_alternative<core::StartResearch>(command.action) ||
         std::holds_alternative<core::PublishResearch>(command.action) ||
         std::holds_alternative<core::StartFrontierTrial>(command.action) ||

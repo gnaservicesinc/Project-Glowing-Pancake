@@ -578,16 +578,28 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
         for (const auto& row:report.data_offers) {
             const auto generated=std::ranges::find(s.lab->generated,row.id,&core::GeneratedDataset::id);
             const bool synthetic=generated!=s.lab->generated.end();
+            const auto collection=std::ranges::find_if(s.lab->acquisitions,[&](const auto& job){
+                return job.offer_id==row.id && job.output.has_value();
+            });
+            const bool collected=collection!=s.lab->acquisitions.end();
             const bool owned=synthetic || std::any_of(report.licenses.begin(),report.licenses.end(),[&](const auto& l){return l.offer_id==row.id;});
             data.push_back({text(row.id),text(row.name),money(row.price)+QStringLiteral(" · ")+number(row.unique_units)+QStringLiteral(" unique records"),
                 tr("%1\n%2\nQuality %3 · contamination %4\nCoverage · %5\nDomain fit · %6\nCommercial use · %7")
                 .arg(text(row.provenance),text(row.rights),percent(row.quality),percent(row.contamination),
                     lab_profile(row.coverage),lab_profile(row.relevance),row.commercial_use?tr("Permitted"):tr("Prohibited")),
-                synthetic?tr("Generated and verified"):owned?QStringLiteral("Licensed"):QStringLiteral("Unlicensed"),!owned,
+                synthetic?tr("Generated and verified"):collected?tr("Collected and reviewed"):owned?QStringLiteral("Licensed"):QStringLiteral("Unlicensed"),!owned,
                 {{QStringLiteral("owned"),owned},{QStringLiteral("synthetic"),synthetic}}});
             if (synthetic) data.back().detail+=tr("\nTeacher %1 · report %2\nVerification source %3\n%4 attempted records · %5 retained after filtering")
                 .arg(text(generated->teacher_id),text(generated->evidence_id),readable(generated->verification_id),
                     number(generated->attempted_units),number(row.unique_units));
+            if (collected) {
+                const auto* work=find(s.capacity->projects,collection->project_id);
+                data.back().detail+=tr("\nCollection %1 · completed %2")
+                    .arg(text(collection->project_id),text(core::iso_date(*work->stopped_on)));
+                if (collection->settled_deliveries)
+                    data.back().detail+=tr("\n%1 settled customer deliveries yielded %2 opted-in records.")
+                        .arg(number(*collection->settled_deliveries),number(row.unique_units));
+            }
         }
         const auto title_for=[&](const std::string& id) {
             const auto title=program.collection.messages.find(id+".title");
@@ -933,6 +945,81 @@ QVariantMap ManagementController::synthesisQuote(QString recipe,QString teacher,
                 quote.open_weight_release?tr("Permitted"):tr("Restricted"));
         if (!resources) detail+=tr("\nFree compute or staff are below the requested allocation.");
         if (!funded) detail+=tr("\nThe verification fee exceeds available cash after reserves.");
+        return {{QStringLiteral("ready"),resources && funded},{QStringLiteral("detail"),detail}};
+    } catch (const std::exception& error) { return {{QStringLiteral("ready"),false},{QStringLiteral("detail"),QString::fromUtf8(error.what())}}; }
+}
+QVariantList ManagementController::collectionOffers() const {
+    QVariantList result;
+    if (!available()) return result;
+    for (const auto& terms:state().lab->catalog.acquisition) {
+        const auto& dataset=terms.dataset;
+        auto item=option(dataset.id,text(dataset.name));
+        auto detail=tr("%1 · %2 collection days · %3 staff-days minimum\n%4\n%5\nCoverage · %6")
+            .arg(money(dataset.price),QString::number(terms.collection_days.value()),
+                QString::number(terms.staff_days.value()),text(dataset.provenance),text(dataset.rights),lab_profile(dataset.coverage));
+        if (terms.feedback)
+            detail+=tr("\n%1 · %2 · up to %3 of settled deliveries, capped at %4 records.")
+                .arg(readable(terms.feedback->product_id),readable(terms.feedback->segment_id),
+                    percent(terms.feedback->opted_in_share),number(dataset.unique_units));
+        else detail+=tr("\n%1 consented records on delivery.").arg(number(dataset.unique_units));
+        item.insert(QStringLiteral("detail"),std::move(detail));
+        result.push_back(std::move(item));
+    }
+    return result;
+}
+QVariantList ManagementController::collectionJobs() const {
+    QVariantList result;
+    if (!available()) return result;
+    const auto& s=state();
+    for (const auto& job:s.lab->acquisitions) {
+        const auto* work=find(s.capacity->projects,job.project_id);
+        const auto terms=std::ranges::find(s.lab->catalog.acquisition,job.offer_id,[](const auto& row){return row.dataset.id;});
+        if (!work || terms==s.lab->catalog.acquisition.end()) continue;
+        const bool active=work->status==core::ProjectStatus::active;
+        const bool paused=work->status==core::ProjectStatus::paused;
+        const auto status=job.output?tr("Delivered"):active?tr("Collecting and reviewing"):paused?tr("Paused"):
+            work->status==core::ProjectStatus::completed?tr("Completed without opted-in records"):tr("Cancelled");
+        auto detail=tr("Started %1 · fee paid %2 · %3 of %4 CU completed")
+            .arg(text(core::iso_date(work->starts_on)),money(terms->dataset.price),cu(work->completed_work.value()),cu(work->total_work.value()));
+        if (terms->feedback) detail+=tr("\nConsent window ends before %1.")
+            .arg(text(core::iso_date(core::advance_days(work->starts_on,terms->collection_days))));
+        if (job.settled_deliveries) detail+=tr("\n%1 settled deliveries in the consent window.").arg(number(*job.settled_deliveries));
+        if (job.output) detail+=tr("\n%1 records are available for fresh training.").arg(number(job.output->unique_units));
+        result.push_back(QVariantMap{{QStringLiteral("label"),text(terms->dataset.name)+QStringLiteral(" · ")+status},
+            {QStringLiteral("detail"),detail},{QStringLiteral("projectId"),text(job.project_id)},
+            {QStringLiteral("active"),active},{QStringLiteral("paused"),paused}});
+    }
+    return result;
+}
+QVariantMap ManagementController::collectionQuote(QString offer,QString source,QString rate,QString staff) const {
+    if (!available()) return {};
+    try {
+        const core::StartDataAcquisition request{offer.toStdString(),allocation(source,rate,staff)};
+        const auto& s=state();
+        const auto quote=core::preview_data_acquisition(s,request);
+        const auto terms=std::ranges::find(s.lab->catalog.acquisition,request.offer_id,[](const auto& row){return row.dataset.id;});
+        const auto* supply=find(s.capacity->sources,request.allocation.source_id);
+        std::int64_t assigned=0;
+        for (const auto& work:s.capacity->projects)
+            if (work.status==core::ProjectStatus::active && work.source_id==request.allocation.source_id)
+                assigned=core::checked_add(assigned,work.requested.value());
+        const auto capacity=core::capacity_report(*s.capacity);
+        const bool resources=supply && core::company_capacity(*supply).value()-assigned>=request.allocation.daily_compute.value() &&
+            capacity.available_staff-capacity.assigned_staff>=request.allocation.staff;
+        const bool funded=core::discretionary_cash(s)>=quote.fee;
+        auto detail=tr("%1\n%2 fee · %3 total CU · %4 staff · earliest %5 days")
+            .arg(text(terms->dataset.name),money(quote.fee),cu(quote.work.value()),staff,QString::number(quote.minimum_days.value()));
+        if (terms->feedback)
+            detail+=tr("\n\n%1 of settled deliveries for %2 in %3 may contribute, up to %4 records. Consent ends before %5. Pausing keeps that date. A quiet window can yield an empty batch.")
+                .arg(percent(terms->feedback->opted_in_share),readable(terms->feedback->product_id),readable(terms->feedback->segment_id),
+                    number(terms->dataset.unique_units),text(core::iso_date(quote.collection_ends_before)));
+        detail+=tr("\n\n%1\n%2").arg(text(terms->dataset.provenance),text(terms->dataset.rights));
+        detail+=tr("\nCommercial deployment · %1. Weight redistribution · %2.")
+            .arg(terms->dataset.commercial_use?tr("Permitted"):tr("Restricted"),
+                terms->dataset.open_weight_release?tr("Permitted"):tr("Restricted"));
+        detail+=tr("\n\nCompleted data enters the Lab for fresh training. Cancellation releases the allocation and keeps the fee and work already spent.");
+        if (!resources) detail+=tr("\nFree compute or staff are below the requested allocation.");
+        if (!funded) detail+=tr("\nThe fee exceeds available cash after reserves.");
         return {{QStringLiteral("ready"),resources && funded},{QStringLiteral("detail"),detail}};
     } catch (const std::exception& error) { return {{QStringLiteral("ready"),false},{QStringLiteral("detail"),QString::fromUtf8(error.what())}}; }
 }
@@ -1564,6 +1651,11 @@ void ManagementController::generateData(QString recipe,QString teacher,QString e
     QString units,QString source,QString rate,QString staff) {
     if (!editable()) return;
     try { emit actionRequested(synthesis_request(nextId(QStringLiteral("synthetic.")),recipe,teacher,evidence,verification,units,source,rate,staff)); }
+    catch (const std::exception& error) { emit noticeRaised(QString::fromUtf8(error.what())); }
+}
+void ManagementController::startCollection(QString offer,QString source,QString rate,QString staff) {
+    if (!editable()) return;
+    try { emit actionRequested(core::StartDataAcquisition{offer.toStdString(),allocation(source,rate,staff)}); }
     catch (const std::exception& error) { emit noticeRaised(QString::fromUtf8(error.what())); }
 }
 void ManagementController::research(QString id,QString source,QString rate,QString staff) {

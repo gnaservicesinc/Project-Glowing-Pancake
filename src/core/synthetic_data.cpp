@@ -151,14 +151,6 @@ GenerateDataset request_for(const GeneratedDataset& job,const CapacityProject& w
         {work.source_id,work.requested,work.staff}};
 }
 }
-const DataOffer& lab_data(const LabCatalog& catalog,std::span<const GeneratedDataset> generated,std::string_view id) {
-    const auto authored=std::ranges::find(catalog.data,id,&DataOffer::id);
-    if (authored!=catalog.data.end()) return *authored;
-    const auto job=std::ranges::find(generated,id,&GeneratedDataset::id);
-    if (job==generated.end() || !job->output) invalid("The generated dataset has not completed verification");
-    return *job->output;
-}
-const DataOffer& lab_data(const LabState& state,std::string_view id) { return lab_data(state.catalog,state.generated,id); }
 void validate_synthetic_catalog(const LabCatalog& catalog) {
     if (catalog.synthesis.size()>lab_catalog_limit) invalid("Synthetic recipe catalog exceeds its bound");
     std::set<std::string_view> ids;

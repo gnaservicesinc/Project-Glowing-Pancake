@@ -181,7 +181,7 @@ FrontierScores bundle_scores(const SimulationState& state, const FrontierSystem&
     bool first = true;
     for (const auto id : bundle.deployments) {
         const auto& release = deployment(state,id);
-        const auto model = model_scores(future.catalog,future_path(future),state.lab->catalog,require_named(state.lab->models,release.model_id),state.lab->generated);
+        const auto model = model_scores(future.catalog,future_path(future),state.lab->catalog,require_named(state.lab->models,release.model_id),state.lab->generated,state.lab->acquisitions);
         for (std::size_t i=0; i<model.size(); ++i) {
             // Specialized members can cover different tasks. Transfer,
             // reliability, workflow and control inherit the weakest member.

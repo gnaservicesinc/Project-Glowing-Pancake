@@ -18,7 +18,7 @@ template<class Rows> const auto& require_named(const Rows& rows, std::string_vie
 }
 [[nodiscard]] bool text_valid(std::string_view, std::size_t maximum = 120);
 [[nodiscard]] bool condition_met(const FutureConditions& actual, const FutureConditions& minimum);
-[[nodiscard]] FrontierScores model_scores(const FrontierCatalog&, const FuturePath&, const LabCatalog&, const LabModel&,std::span<const GeneratedDataset> generated={});
+[[nodiscard]] FrontierScores model_scores(const FrontierCatalog&, const FuturePath&, const LabCatalog&, const LabModel&,std::span<const GeneratedDataset> generated={},std::span<const DataAcquisition> acquired={});
 [[nodiscard]] bool meets_agi(const FrontierScores&);
 [[nodiscard]] bool meets_asi(const FrontierScores&);
 [[nodiscard]] const FrontierSystem& system(const FrontierState&, std::uint64_t);

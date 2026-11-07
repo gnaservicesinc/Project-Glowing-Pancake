@@ -1211,6 +1211,21 @@ void validate_references(const Collection& collection, const Registry& registry)
                 try {
                     const auto catalog=scenario_lab_catalog(collection, *scenario_definition);
                     const auto services = scenario_services(collection, *scenario_definition);
+                    if(std::ranges::any_of(catalog.acquisition,[](const auto& offer){return offer.feedback.has_value();})) {
+                        const auto market=scenario_market_setup(collection,*scenario_definition);
+                        for(const auto& offer:catalog.acquisition) if(offer.feedback) {
+                            const auto& consent=*offer.feedback;
+                            const auto service=std::ranges::find(services,consent.product_id,[](const auto& row){return row.product.id;});
+                            const auto group=std::ranges::find(market.segments,consent.segment_id,&core::MarketSegment::id);
+                            if(service==services.end() || service->product.channel==core::ProductChannel::open_weights ||
+                                group==market.segments.end() || !core::market_access(service->product,*group) ||
+                                !std::ranges::any_of(service->preferences,[&](const auto& edge) {
+                                    return edge.segment_id==consent.segment_id && edge.preference.eligible;
+                                }))
+                                fail("lab",path,"A feedback agreement needs a hosted service and a consenting eligible customer group");
+                        }
+                    }
+
                     if (!scenario_definition->frontier.empty()) {
                         (void)reference(scenario_definition->frontier,"frontier_research",path);
                         const auto& future = *frontier_catalog(collection,*scenario_definition);

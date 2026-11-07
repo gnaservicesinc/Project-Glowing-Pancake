@@ -72,6 +72,25 @@ Json data_scale_json(const std::array<std::uint64_t,core::lab_domain_count>& val
         if (i<core::introductory_lab_domains || value[i]>0) result[core::lab_domain_names[i]]=value[i];
     return result;
 }
+core::DataOffer parse_data(const Json& row) {
+    auto shape=row;
+    const bool open_release=shape.contains("open_weight_release") && boolean(shape.at("open_weight_release"));
+    shape.erase("open_weight_release");
+    fields(shape,{"id","name","provenance","rights","price_cents","unique_units","quality_bp","relevance_bp",
+        "coverage_bp","contamination_bp","commercial_use"});
+    return {text(row.at("id")),text(row.at("name")),text(row.at("provenance")),text(row.at("rights")),
+        core::Cents{integer(row.at("price_cents"))},integer(row.at("unique_units")),core::BasisPoints{integer(row.at("quality_bp"))},
+        profile(row.at("relevance_bp")),profile(row.at("coverage_bp")),core::BasisPoints{integer(row.at("contamination_bp"))},
+        boolean(row.at("commercial_use")),open_release};
+}
+Json encode_data(const core::DataOffer& row) {
+    Json result{{"id",row.id},{"name",row.name},{"provenance",row.provenance},{"rights",row.rights},
+        {"price_cents",row.price.value()},{"unique_units",row.unique_units},{"quality_bp",row.quality.value()},
+        {"relevance_bp",profile_json(row.relevance)},{"coverage_bp",profile_json(row.coverage)},
+        {"contamination_bp",row.contamination.value()},{"commercial_use",row.commercial_use}};
+    if(row.open_weight_release) result["open_weight_release"]=true;
+    return result;
+}
 template<class Rows> auto ordered(const Rows& rows) {
     std::vector<const typename Rows::value_type*> result;
     for (const auto& row : rows) result.push_back(&row);
@@ -95,19 +114,11 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
     const auto doc = Json::parse(bytes.begin(), bytes.end(), callback);
     auto document_shape=doc;
     document_shape.erase("synthesis");
+    document_shape.erase("acquisition");
     fields(document_shape, {"data", "research", "recipes", "evaluations"});
     core::LabCatalog catalog;
     for (const auto field : {"data", "research", "recipes", "evaluations"}) array(doc.at(field));
-    for (const auto& row : doc.at("data")) {
-        auto shape = row;
-        const bool open_release = shape.contains("open_weight_release") && boolean(shape.at("open_weight_release"));
-        shape.erase("open_weight_release");
-        fields(shape, {"id", "name", "provenance", "rights", "price_cents", "unique_units", "quality_bp", "relevance_bp", "coverage_bp", "contamination_bp", "commercial_use"});
-        catalog.data.push_back({text(row.at("id")), text(row.at("name")), text(row.at("provenance")), text(row.at("rights")),
-            core::Cents{integer(row.at("price_cents"))}, integer(row.at("unique_units")), core::BasisPoints{integer(row.at("quality_bp"))},
-            profile(row.at("relevance_bp")), profile(row.at("coverage_bp")), core::BasisPoints{integer(row.at("contamination_bp"))},
-            boolean(row.at("commercial_use")), open_release});
-    }
+    for (const auto& row : doc.at("data")) catalog.data.push_back(parse_data(row));
     for (const auto& row : doc.at("research")) {
         auto shape = row;
         const auto repeats = row.contains("repeat_limit") ? integer(row.at("repeat_limit")) : 1;
@@ -150,17 +161,32 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
                 units,core::BasisPoints{integer(row.at("diversity_bp"))},core::BasisPoints{integer(row.at("minimum_teacher_bp"))}});
         }
     }
+    if(doc.contains("acquisition")) {
+        array(doc.at("acquisition"));
+        for(const auto& row:doc.at("acquisition")) {
+            auto shape=row;
+            shape.erase("feedback");
+            fields(shape,{"dataset","collection_days","staff_days","review_work_milli_CU"});
+            core::DataAcquisitionOffer offer{parse_data(row.at("dataset")),
+                core::Days{integer(row.at("collection_days"))},core::Days{integer(row.at("staff_days"))},
+                core::MilliCU{integer(row.at("review_work_milli_CU"))}};
+            if(!valid_id(offer.dataset.id)) invalid("Collection needs a valid dataset ID");
+            if(row.contains("feedback")) {
+                const auto& feedback=row.at("feedback");
+                fields(feedback,{"product","segment","opted_in_share_bp"});
+                const auto product=text(feedback.at("product"));
+                const auto segment=text(feedback.at("segment"));
+                if(!valid_id(product) || !valid_id(segment)) invalid("Feedback needs a valid service and customer group ID");
+                offer.feedback=core::FeedbackConsent{product,segment,core::BasisPoints{integer(feedback.at("opted_in_share_bp"))}};
+            }
+            catalog.acquisition.push_back(std::move(offer));
+        }
+    }
     return catalog;
 }
 std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
     Json data = Json::array(), research = Json::array(), recipes = Json::array(), evaluations = Json::array();
-    for (const auto* row : ordered(catalog.data)) {
-        data.push_back({{"id",row->id},{"name",row->name},{"provenance",row->provenance},{"rights",row->rights},
-        {"price_cents",row->price.value()},{"unique_units",row->unique_units},{"quality_bp",row->quality.value()},
-        {"relevance_bp",profile_json(row->relevance)},{"coverage_bp",profile_json(row->coverage)},
-            {"contamination_bp",row->contamination.value()},{"commercial_use",row->commercial_use}});
-        if (row->open_weight_release) data.back()["open_weight_release"] = true;
-    }
+    for (const auto* row : ordered(catalog.data)) data.push_back(encode_data(*row));
     for (const auto* row : ordered(catalog.research)) {
         research.push_back({{"id",row->id},{"all_of",row->all_of},{"any_of",row->any_of},
             {"cash_cents",row->cash.value()},{"staff_days",row->staff_days.value()},{"experiment_milli_CU",row->experiment_work.value()}});
@@ -185,6 +211,18 @@ std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
                 {"verification_milli_CU_per_unit",row->verification_per_unit.value()},{"staff_days",row->staff_days.value()},
                 {"maximum_units",row->maximum_units},{"diversity_bp",row->diversity.value()},
                 {"minimum_teacher_bp",row->minimum_teacher.value()}});
+        }
+    }
+    if(!catalog.acquisition.empty()) {
+        auto& rows=result["acquisition"]=Json::array();
+        std::vector<const core::DataAcquisitionOffer*> offers;
+        for(const auto& offer:catalog.acquisition) offers.push_back(&offer);
+        std::ranges::sort(offers,{},[](const auto* offer){return offer->dataset.id;});
+        for(const auto* offer:offers) {
+            rows.push_back({{"dataset",encode_data(offer->dataset)},{"collection_days",offer->collection_days.value()},
+                {"staff_days",offer->staff_days.value()},{"review_work_milli_CU",offer->review_work.value()}});
+            if(offer->feedback) rows.back()["feedback"]={{"product",offer->feedback->product_id},
+                {"segment",offer->feedback->segment_id},{"opted_in_share_bp",offer->feedback->opted_in_share.value()}};
         }
     }
     return result.dump();

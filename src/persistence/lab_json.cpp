@@ -55,10 +55,18 @@ Json lab_json(const core::LabState& state) {
             if (row.output) rows.back()["output"]=data_offer_json(*row.output);
         }
     }
+    if(!state.acquisitions.empty()) {
+        auto& rows=result["acquisitions"]=Json::array();
+        for(const auto& job:state.acquisitions) {
+            rows.push_back({{"offer_id",job.offer_id},{"project_id",job.project_id}});
+            if(job.settled_deliveries) rows.back()["settled_deliveries"]=*job.settled_deliveries;
+            if(job.output) rows.back()["output"]=data_offer_json(*job.output);
+        }
+    }
     return result;
 }
 core::LabState parse_lab(const Json& value) {
-    fields(value,"lab",{"owner","starts_on","closed_through","research_stream_origin","catalog","licenses","research","models","evaluations"},{"publications","insights","generated"});
+    fields(value,"lab",{"owner","starts_on","closed_through","research_stream_origin","catalog","licenses","research","models","evaluations"},{"publications","insights","generated","acquisitions"});
     core::LabState state;
     state.owner=label(value.at("owner")); state.starts_on=core::OrdinalDay{i64(value.at("starts_on"),"lab/starts_on")};
     if (!value.at("closed_through").is_null()) state.closed_through=core::OrdinalDay{i64(value.at("closed_through"),"lab/closed_through")};
@@ -120,6 +128,16 @@ core::LabState parse_lab(const Json& value) {
                 core::MilliCU{i64(row.at("teacher_work_milli_CU"),"lab/generated/teacher_work")},
                 u64(row.at("attempted_units"),"lab/generated/attempted_units",1'000'000'000'000ULL),
                 row.contains("output")?std::optional{parse_data_offer(row.at("output"))}:std::nullopt});
+        }
+    }
+    if(value.contains("acquisitions")) {
+        array(value.at("acquisitions"),"lab/acquisitions",core::lab_catalog_limit);
+        for(const auto& row:value.at("acquisitions")) {
+            fields(row,"lab/acquisition",{"offer_id","project_id"},{"settled_deliveries","output"});
+            core::DataAcquisition job{label(row.at("offer_id")),label(row.at("project_id"))};
+            if(row.contains("settled_deliveries")) job.settled_deliveries=u64(row.at("settled_deliveries"),"lab/acquisition/settled_deliveries");
+            if(row.contains("output")) job.output=parse_data_offer(row.at("output"));
+            state.acquisitions.push_back(std::move(job));
         }
     }
     return state;

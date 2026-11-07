@@ -2088,3 +2088,32 @@ paid response, actual recovery and exact save reopening. The shared writer
 finalized content **0.24.0-dev.1**, generation **24**, after validating all seven
 scenarios and 21 exact prepared openings. The original generation-23 hash
 also passed verification.
+
+### Paid data commissions and opted-in product feedback
+
+Lab Data now offers paid table transcription commissions, research-only
+university corpora, and opted-in enterprise feedback for the two document
+services. Collection reserves actual staff and compute. The reviewed fee
+and work stay spent on cancellation, and a completed corpus becomes a
+separate licensed input for fresh training.
+
+Feedback retains the accepted service, customer group and fixed consent
+window. Only settled signed and discretionary deliveries within that
+window contribute. The share and cap determine the final volume. Pauses
+preserve the consent dates, and an empty result grants no dataset. The
+save validator reconciles the payment, work, window and settled deliveries.
+Lab evaluation and commercial and open-weight qualification resolve the
+same saved data rights.
+
+The shared writer finalized content **0.25.0-dev.1**, generation **25**,
+after verifying all seven scenarios and 21 exact prepared openings.
+Generation 24's original hash still verifies. The Lab fixture checks both
+delivery routes, empty feedback, cancellation, paid retry, pause and
+resume, training, exact reopening and forged feedback-volume refusal.
+The offscreen keyboard walkthrough at 100% and 200% text commissioned
+300,000 table records, collected 8,000 opted-in records from 20,000
+settled deliveries, and used both corpora in a fresh training job.
+
+The optimized Mac build and 14 focused CTests passed, including the 180
+Lab assertions, deployment and Frontier use, and Studio catalog and
+world-form checks.

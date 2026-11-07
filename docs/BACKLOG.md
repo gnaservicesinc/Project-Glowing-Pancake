@@ -1,10 +1,10 @@
 # Implementation backlog
 
 Baseline 1.2 with 2026-11-04 event clarification · **Initial feature implementation active**.
-The latest batch adds deployment incident risk and recovery. Commissioned data
-and opted-in product feedback are next. The original acceptance checklist
-remains **42 of 52** with ten later gates. The coverage pass has delivered
-20 additional feature batches within the earlier milestones.
+The latest batch adds commissioned data and opted-in product feedback. Staff
+workload and recovery are next. The original acceptance checklist remains
+**42 of 52** with ten later gates. The coverage pass has delivered 21
+additional feature batches within the earlier milestones.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Feature dependencies are satisfied by implemented Mac behavior and focused checks. Native platform, packaging and device qualification stay deferred to release work under the user’s current instruction. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
 The dated batch notes below retain the earlier acceptance count and prerequisite
@@ -76,9 +76,13 @@ incidents. Monthly draws use settled work. Containment stops the affected
 release, compensation is booked as a payable, and paid investigation work
 restores service. Discovery and recovery use the shared news runtime.
 
-**Next initial feature:** commissioned consented data and opted-in product
-feedback. Give both paths finite delivery and visible rights, with feedback
-limited to actual work by consenting customers.
+Lab Data now delivers commissioned corpora and collects opted-in feedback
+from actual work by the named customer group and service. Each job has a
+finite work requirement, an upfront fee, and recorded training rights.
+
+**Next initial feature:** staff workload and recovery. Connect sustained
+load to effective staff work, explain the effect in Office, and let players
+reduce pressure by changing assignments and commitments.
 
 ## M0 — Toolchain and platform proof
 

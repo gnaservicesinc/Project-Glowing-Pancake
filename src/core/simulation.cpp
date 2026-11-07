@@ -203,6 +203,7 @@ void validate(const SimulationState& state,bool deep=true,std::size_t first_rece
         if (!state.lab || !state.market || !state.capacity) invalid("Deployments require lab, market and capacity");
         if (deep) validate_deployments(*state.deployments,*state.lab,*state.capacity,*state.market);
     }
+    validate_data_acquisitions(state,deep);
     validate_deployment_risk(state,deep);
     validate_frontier(state,deep);
     if (state.business_offers) {
@@ -522,7 +523,10 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                         action.market_allocation ? &*action.market_allocation : nullptr,
                         action.market_allocation ? &action.industry_adoptions : nullptr, action.wholesale_work, action.market_influences);
                 else if (next.capacity) close_capacity_day(*next.capacity, next.date, false, action.wholesale_work);
-                if (next.lab) close_lab_day(*next.lab, *next.capacity, next.date, next.random);
+                if (next.lab) {
+                    close_data_acquisitions(next);
+                    close_lab_day(*next.lab, *next.capacity, next.date, next.random);
+                }
                 close_infrastructure_day(next);
                 if (next.accounts) {
                     const auto credits=redeem_cloud_credits(next);
@@ -634,7 +638,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 const bool owned=next.lab && (std::any_of(next.lab->research.begin(),next.lab->research.end(),[&](const auto& r){return r.project_id==action.id;}) ||
                     std::any_of(next.lab->models.begin(),next.lab->models.end(),[&](const auto& r){return r.project_id==action.id;}) ||
                     std::any_of(next.lab->evaluations.begin(),next.lab->evaluations.end(),[&](const auto& r){return r.project_id==action.id;}) ||
-                    std::any_of(next.lab->generated.begin(),next.lab->generated.end(),[&](const auto& r){return r.project_id==action.id;}));
+                    std::any_of(next.lab->generated.begin(),next.lab->generated.end(),[&](const auto& r){return r.project_id==action.id;}) ||
+                    std::ranges::any_of(next.lab->acquisitions,[&](const auto& r){return r.project_id==action.id;}));
                 const bool response = next.deployments && next.deployments->risk &&
                     std::ranges::any_of(next.deployments->risk->responses,[&](const auto& row){return row.project_id==action.id;});
                 if(!owned && !response) refuse(CommandReason::invalid_argument,"Choose a finite laboratory or incident response project owned by this company");
@@ -800,6 +805,10 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             } else if constexpr (std::is_same_v<Action, AcquireResearchInsight>) {
                 acquire_research_insight(lab(next),next.date,action.insight);
                 (void)receipt(next,"acquire_public_research");
+            } else if constexpr (std::is_same_v<Action, StartDataAcquisition>) {
+                const auto before=next.cash;
+                start_data_acquisition(next,action,reserved_cash(next));
+                (void)receipt(next,"collect_training_data",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, GenerateDataset>) {
                 const auto before=next.cash;
                 generate_dataset(lab(next),accounts(next),capacity(next),next.date,action,reserved_cash(next));

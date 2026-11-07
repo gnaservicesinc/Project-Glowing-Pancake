@@ -4,13 +4,12 @@ Updated 2026-11-07 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**Initial feature coverage is active.** Office Services now supports deployment
-incident risk and recovery. Next is commissioning consented Lab data and
-collecting opted-in product feedback.
+**Initial feature coverage is active.** Lab Data now supports paid commissions
+and opted-in feedback. Staff workload and recovery are the next core gap.
 
 The original roadmap has **42 of 52 acceptance steps checked**. Its ten open
 steps are deferred human, balance, platform and release gates; they do not
-block current implementation. The coverage pass below has delivered 20
+block current implementation. The coverage pass below has delivered 21
 additional feature batches within earlier milestones. That batch count is
 separate from the 52 acceptance steps and does not imply complete design
 coverage. Completed milestones include
@@ -743,10 +742,18 @@ Replacing the release preserves its incident and bill. The Inbox records
 discovery and recovery on their actual dates. Content **0.24.0-dev.1**,
 generation **24**, validates seven scenarios and 21 exact prepared openings.
 
-**Next initial feature:** implement commissioned consented data with a paid
-delivery job, and let eligible buyers opt in to providing product feedback
-bounded by their settled work. Keep acquisition costs, rights and lineage
-visible in the Lab.
+Lab Data now offers commissioned table transcriptions, licensed university
+experiments, and opt-in agreements for enterprise document customers. Jobs
+reserve staff and compute, retain fees on cancellation, and deliver immutable
+corpora after actual work. Feedback counts only settled deliveries for the
+named service and buyer group inside the accepted consent window. The grant
+limits the opted-in share and redistribution rights. Completed output becomes
+available for fresh training. Reviewed content **0.25.0-dev.1**, generation
+**25**, validates seven scenarios and 21 exact prepared openings.
+
+**Next initial feature:** staff workload and recovery. Make sustained load
+visible, let the player reduce pressure by changing staffing or commitments,
+and carry the effect on effective staff work across saves.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

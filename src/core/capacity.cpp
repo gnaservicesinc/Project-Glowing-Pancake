@@ -49,7 +49,7 @@ bool in_interval(const std::vector<ProjectPause>& intervals,OrdinalDay day) {
 bool paused_on(const CapacityProject& row,OrdinalDay day) { return in_interval(row.pauses,day); }
 bool pausable(ProjectKind kind) {
     return kind==ProjectKind::training || kind==ProjectKind::research || kind==ProjectKind::evaluation ||
-        kind==ProjectKind::data_generation || kind==ProjectKind::incident_response;
+        kind==ProjectKind::data_generation || kind==ProjectKind::incident_response || kind==ProjectKind::data_acquisition;
 }
 template<class Operation> void mutate(CapacityState& state, Operation operation) {
     validate_capacity(state);
@@ -219,7 +219,7 @@ void validate_capacity(const CapacityState& state) {
                 row.status == ProjectStatus::completed)
                 invalid("Serving project has an invalid checked useful-task profile");
             break;
-        case ProjectKind::training: case ProjectKind::research: case ProjectKind::evaluation: case ProjectKind::data_generation: case ProjectKind::incident_response:
+        case ProjectKind::training: case ProjectKind::research: case ProjectKind::evaluation: case ProjectKind::data_generation: case ProjectKind::incident_response: case ProjectKind::data_acquisition:
             if (row.total_work.value() <= 0 || row.completed_work > row.total_work || row.tasks_per_day != 0 ||
                 row.inference_milli_CU_per_task.value() != 0 || row.useful_tasks != 0 || row.monthly_support_cost.value() != 0)
                 invalid("Finite project has invalid work or serving-only fields");

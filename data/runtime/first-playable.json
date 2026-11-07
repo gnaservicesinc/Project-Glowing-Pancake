@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.24.0-dev.1",
+  "content_version": "0.25.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -22942,6 +22942,117 @@
       },
       "kind": "scenario",
       "lab": {
+        "acquisition": [
+          {
+            "collection_days": 7,
+            "dataset": {
+              "commercial_use": false,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 9000
+              },
+              "id": "collected.academic_experiments",
+              "name": "Commission university experiment records",
+              "price_cents": 240000,
+              "provenance": "A fictional university consortium supplies licensed, screened experiments and recorded results for research.",
+              "quality_bp": 9600,
+              "relevance_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 10000
+              },
+              "rights": "Research use only. The agreement excludes commercial deployment and weight redistribution.",
+              "unique_units": 240000
+            },
+            "review_work_milli_CU": 140000,
+            "staff_days": 7
+          },
+          {
+            "collection_days": 5,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 2500,
+                "scanned_tables": 10000
+              },
+              "id": "collected.consented_tables",
+              "name": "Commission consented table transcriptions",
+              "open_weight_release": true,
+              "price_cents": 450000,
+              "provenance": "A paid contributor cooperative supplies original table scans and verified transcriptions under an explicit training agreement.",
+              "quality_bp": 9300,
+              "relevance_bp": {
+                "documents": 1000,
+                "scanned_tables": 10000
+              },
+              "rights": "Commercial training, deployment and redistribution of trained weights with cooperative attribution.",
+              "unique_units": 300000
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 6
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.enterprise_feedback",
+              "name": "Collect enterprise document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.documents",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.specialist_feedback",
+              "name": "Collect specialist document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.document_specialist",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          }
+        ],
         "data": [
           {
             "commercial_use": true,
@@ -24780,7 +24891,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 14,
+      "revision": 15,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -28240,6 +28351,117 @@
       },
       "kind": "scenario",
       "lab": {
+        "acquisition": [
+          {
+            "collection_days": 7,
+            "dataset": {
+              "commercial_use": false,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 9000
+              },
+              "id": "collected.academic_experiments",
+              "name": "Commission university experiment records",
+              "price_cents": 240000,
+              "provenance": "A fictional university consortium supplies licensed, screened experiments and recorded results for research.",
+              "quality_bp": 9600,
+              "relevance_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 10000
+              },
+              "rights": "Research use only. The agreement excludes commercial deployment and weight redistribution.",
+              "unique_units": 240000
+            },
+            "review_work_milli_CU": 140000,
+            "staff_days": 7
+          },
+          {
+            "collection_days": 5,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 2500,
+                "scanned_tables": 10000
+              },
+              "id": "collected.consented_tables",
+              "name": "Commission consented table transcriptions",
+              "open_weight_release": true,
+              "price_cents": 450000,
+              "provenance": "A paid contributor cooperative supplies original table scans and verified transcriptions under an explicit training agreement.",
+              "quality_bp": 9300,
+              "relevance_bp": {
+                "documents": 1000,
+                "scanned_tables": 10000
+              },
+              "rights": "Commercial training, deployment and redistribution of trained weights with cooperative attribution.",
+              "unique_units": 300000
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 6
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.enterprise_feedback",
+              "name": "Collect enterprise document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.documents",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.specialist_feedback",
+              "name": "Collect specialist document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.document_specialist",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          }
+        ],
         "data": [
           {
             "commercial_use": true,
@@ -30078,7 +30300,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 14,
+      "revision": 15,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -33097,6 +33319,117 @@
       },
       "kind": "scenario",
       "lab": {
+        "acquisition": [
+          {
+            "collection_days": 7,
+            "dataset": {
+              "commercial_use": false,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 9000
+              },
+              "id": "collected.academic_experiments",
+              "name": "Commission university experiment records",
+              "price_cents": 240000,
+              "provenance": "A fictional university consortium supplies licensed, screened experiments and recorded results for research.",
+              "quality_bp": 9600,
+              "relevance_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 10000
+              },
+              "rights": "Research use only. The agreement excludes commercial deployment and weight redistribution.",
+              "unique_units": 240000
+            },
+            "review_work_milli_CU": 140000,
+            "staff_days": 7
+          },
+          {
+            "collection_days": 5,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 2500,
+                "scanned_tables": 10000
+              },
+              "id": "collected.consented_tables",
+              "name": "Commission consented table transcriptions",
+              "open_weight_release": true,
+              "price_cents": 450000,
+              "provenance": "A paid contributor cooperative supplies original table scans and verified transcriptions under an explicit training agreement.",
+              "quality_bp": 9300,
+              "relevance_bp": {
+                "documents": 1000,
+                "scanned_tables": 10000
+              },
+              "rights": "Commercial training, deployment and redistribution of trained weights with cooperative attribution.",
+              "unique_units": 300000
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 6
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.enterprise_feedback",
+              "name": "Collect enterprise document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.documents",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.specialist_feedback",
+              "name": "Collect specialist document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.document_specialist",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          }
+        ],
         "data": [
           {
             "commercial_use": true,
@@ -33941,7 +34274,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 17,
+      "revision": 18,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -36112,6 +36445,117 @@
       },
       "kind": "scenario",
       "lab": {
+        "acquisition": [
+          {
+            "collection_days": 7,
+            "dataset": {
+              "commercial_use": false,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 9000
+              },
+              "id": "collected.academic_experiments",
+              "name": "Commission university experiment records",
+              "price_cents": 240000,
+              "provenance": "A fictional university consortium supplies licensed, screened experiments and recorded results for research.",
+              "quality_bp": 9600,
+              "relevance_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 10000
+              },
+              "rights": "Research use only. The agreement excludes commercial deployment and weight redistribution.",
+              "unique_units": 240000
+            },
+            "review_work_milli_CU": 140000,
+            "staff_days": 7
+          },
+          {
+            "collection_days": 5,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 2500,
+                "scanned_tables": 10000
+              },
+              "id": "collected.consented_tables",
+              "name": "Commission consented table transcriptions",
+              "open_weight_release": true,
+              "price_cents": 450000,
+              "provenance": "A paid contributor cooperative supplies original table scans and verified transcriptions under an explicit training agreement.",
+              "quality_bp": 9300,
+              "relevance_bp": {
+                "documents": 1000,
+                "scanned_tables": 10000
+              },
+              "rights": "Commercial training, deployment and redistribution of trained weights with cooperative attribution.",
+              "unique_units": 300000
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 6
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.enterprise_feedback",
+              "name": "Collect enterprise document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.documents",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.specialist_feedback",
+              "name": "Collect specialist document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.document_specialist",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          }
+        ],
         "data": [
           {
             "commercial_use": true,
@@ -36958,7 +37402,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 18,
+      "revision": 19,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -40284,6 +40728,117 @@
       },
       "kind": "scenario",
       "lab": {
+        "acquisition": [
+          {
+            "collection_days": 7,
+            "dataset": {
+              "commercial_use": false,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 9000
+              },
+              "id": "collected.academic_experiments",
+              "name": "Commission university experiment records",
+              "price_cents": 240000,
+              "provenance": "A fictional university consortium supplies licensed, screened experiments and recorded results for research.",
+              "quality_bp": 9600,
+              "relevance_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 10000
+              },
+              "rights": "Research use only. The agreement excludes commercial deployment and weight redistribution.",
+              "unique_units": 240000
+            },
+            "review_work_milli_CU": 140000,
+            "staff_days": 7
+          },
+          {
+            "collection_days": 5,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 2500,
+                "scanned_tables": 10000
+              },
+              "id": "collected.consented_tables",
+              "name": "Commission consented table transcriptions",
+              "open_weight_release": true,
+              "price_cents": 450000,
+              "provenance": "A paid contributor cooperative supplies original table scans and verified transcriptions under an explicit training agreement.",
+              "quality_bp": 9300,
+              "relevance_bp": {
+                "documents": 1000,
+                "scanned_tables": 10000
+              },
+              "rights": "Commercial training, deployment and redistribution of trained weights with cooperative attribution.",
+              "unique_units": 300000
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 6
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.enterprise_feedback",
+              "name": "Collect enterprise document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.documents",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.specialist_feedback",
+              "name": "Collect specialist document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.document_specialist",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          }
+        ],
         "data": [
           {
             "commercial_use": true,
@@ -41130,7 +41685,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 18,
+      "revision": 19,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -44456,6 +45011,117 @@
       },
       "kind": "scenario",
       "lab": {
+        "acquisition": [
+          {
+            "collection_days": 7,
+            "dataset": {
+              "commercial_use": false,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 9000
+              },
+              "id": "collected.academic_experiments",
+              "name": "Commission university experiment records",
+              "price_cents": 240000,
+              "provenance": "A fictional university consortium supplies licensed, screened experiments and recorded results for research.",
+              "quality_bp": 9600,
+              "relevance_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 10000
+              },
+              "rights": "Research use only. The agreement excludes commercial deployment and weight redistribution.",
+              "unique_units": 240000
+            },
+            "review_work_milli_CU": 140000,
+            "staff_days": 7
+          },
+          {
+            "collection_days": 5,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 2500,
+                "scanned_tables": 10000
+              },
+              "id": "collected.consented_tables",
+              "name": "Commission consented table transcriptions",
+              "open_weight_release": true,
+              "price_cents": 450000,
+              "provenance": "A paid contributor cooperative supplies original table scans and verified transcriptions under an explicit training agreement.",
+              "quality_bp": 9300,
+              "relevance_bp": {
+                "documents": 1000,
+                "scanned_tables": 10000
+              },
+              "rights": "Commercial training, deployment and redistribution of trained weights with cooperative attribution.",
+              "unique_units": 300000
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 6
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.enterprise_feedback",
+              "name": "Collect enterprise document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.documents",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.specialist_feedback",
+              "name": "Collect specialist document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.document_specialist",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          }
+        ],
         "data": [
           {
             "commercial_use": true,
@@ -45302,7 +45968,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 18,
+      "revision": 19,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -48628,6 +49294,117 @@
       },
       "kind": "scenario",
       "lab": {
+        "acquisition": [
+          {
+            "collection_days": 7,
+            "dataset": {
+              "commercial_use": false,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 9000
+              },
+              "id": "collected.academic_experiments",
+              "name": "Commission university experiment records",
+              "price_cents": 240000,
+              "provenance": "A fictional university consortium supplies licensed, screened experiments and recorded results for research.",
+              "quality_bp": 9600,
+              "relevance_bp": {
+                "documents": 0,
+                "scanned_tables": 0,
+                "science_industry": 10000
+              },
+              "rights": "Research use only. The agreement excludes commercial deployment and weight redistribution.",
+              "unique_units": 240000
+            },
+            "review_work_milli_CU": 140000,
+            "staff_days": 7
+          },
+          {
+            "collection_days": 5,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 2500,
+                "scanned_tables": 10000
+              },
+              "id": "collected.consented_tables",
+              "name": "Commission consented table transcriptions",
+              "open_weight_release": true,
+              "price_cents": 450000,
+              "provenance": "A paid contributor cooperative supplies original table scans and verified transcriptions under an explicit training agreement.",
+              "quality_bp": 9300,
+              "relevance_bp": {
+                "documents": 1000,
+                "scanned_tables": 10000
+              },
+              "rights": "Commercial training, deployment and redistribution of trained weights with cooperative attribution.",
+              "unique_units": 300000
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 6
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.enterprise_feedback",
+              "name": "Collect enterprise document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.documents",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          },
+          {
+            "collection_days": 10,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 0,
+              "coverage_bp": {
+                "documents": 7000,
+                "scanned_tables": 0
+              },
+              "id": "collected.specialist_feedback",
+              "name": "Collect specialist document feedback",
+              "price_cents": 70000,
+              "provenance": "Participating enterprise customers grant use of a bounded share of new settled document tasks during the consent window.",
+              "quality_bp": 8600,
+              "relevance_bp": {
+                "documents": 10000,
+                "scanned_tables": 0
+              },
+              "rights": "Commercial training and hosted deployment. The agreement excludes source sharing and weight redistribution.",
+              "unique_units": 12000
+            },
+            "feedback": {
+              "opted_in_share_bp": 4000,
+              "product": "product.document_specialist",
+              "segment": "segment.enterprise"
+            },
+            "review_work_milli_CU": 100000,
+            "staff_days": 4
+          }
+        ],
         "data": [
           {
             "commercial_use": true,
@@ -49474,7 +50251,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 18,
+      "revision": 19,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,

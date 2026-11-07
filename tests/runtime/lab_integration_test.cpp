@@ -453,6 +453,100 @@ void synthetic_data(const runtime::CompiledProgram& program) {
     retained=retained.get<std::uint64_t>()+1;
     malformed_save(program,std::move(forged));
 }
+void acquired_data(const runtime::CompiledProgram& program) {
+    using namespace core;
+    auto game=engine(program);
+    const auto state=[&]() -> const SimulationState& {return game.current_state().world.simulation;};
+    const auto save=[&](const runtime::Runtime& current) {
+        const auto bytes=persistence::encode_save(program,current.checkpoint());
+        check(persistence::decode_save(program,bytes).checkpoint==current.checkpoint(),
+            "Collected data, consent and project history must reopen exactly");
+        return bytes;
+    };
+    const StartDataAcquisition commission{"collected.consented_tables",{"lease.initial",MilliCUPerDay{20000},2}};
+    const StartDataAcquisition feedback{"collected.enterprise_feedback",{"lease.initial",MilliCUPerDay{10000},1}};
+    refuse(game,feedback);
+    refuse(game,BuyData{commission.offer_id});
+    const auto before=game.checkpoint();
+    const auto quote=preview_data_acquisition(state(),commission);
+    check(quote.fee==Cents{450000} && quote.work==MilliCU{100000} && quote.minimum_days==Days{5} &&
+        game.checkpoint()==before,"Commissioning preview omitted paid terms or changed the campaign");
+    const auto cash=state().cash;
+    apply(game,commission);
+    const auto project=lab(game).acquisitions.front().project_id;
+    check(state().cash==checked_unit_subtract(cash,quote.fee) &&
+        !lab(game).acquisitions.front().output && !data_available_on(lab(game),*state().capacity,commission.offer_id),
+        "Commissioned data became usable before the work completed or skipped its paid fee");
+    refuse(game,StartTraining{training("pending_commission",{commission.offer_id})});
+    refuse(game,commission);
+    auto cancelled=game;
+    apply(cancelled,CancelProject{project});
+    check(cancelled.current_state().world.simulation.cash==state().cash && !lab(cancelled).acquisitions.front().output,
+        "Cancelling released a corpus or refunded its collection fee");
+    apply(cancelled,commission);
+    save(cancelled);
+    days(game,1);
+    apply(game,PauseProject{project});
+    days(game,2);
+    check(!lab(game).acquisitions.front().output,"Paused collection delivered before its work finished");
+    game=runtime::Runtime{program,persistence::decode_save(program,save(game)).checkpoint};
+    apply(game,ResumeProject{project});
+    days(game,4);
+    const auto& corpus=lab_data(lab(game),commission.offer_id);
+    check(corpus.unique_units==300000 && corpus.open_weight_release &&
+        data_available_on(lab(game),*state().capacity,commission.offer_id)==state().date,
+        "Consented commission lost its record count, rights or availability date");
+    refuse(game,commission);
+    apply(game,BuyData{"data.licensed_documents"});
+    const LabAllocation assessment{"lease.initial",MilliCUPerDay{20000},2};
+    apply(game,StartResearch{"research.held_out_evaluation",assessment});
+    apply(game,StartTraining{training("collected_teacher",{"data.licensed_documents",commission.offer_id})});
+    days(game,60);
+    apply(game,StartEvaluation{"collected_holdout","collected_teacher","evaluation.held_out",assessment});
+    days(game,3);
+    apply(game,DeployModel{"product.documents","collected_teacher","collected_holdout","lease.initial",false});
+    const auto start=state().date;
+    const auto collection=preview_data_acquisition(state(),feedback);
+    auto empty=game;
+    apply(empty,feedback);
+    const auto service=std::ranges::find(state().market->products,"product.documents",&MarketProduct::id);
+    apply(empty,CancelProject{service->capacity_project_id});
+    days(empty,10);
+    check(lab(empty).acquisitions.back().settled_deliveries==0 && !lab(empty).acquisitions.back().output,
+        "A feedback agreement invented records without an eligible delivery");
+    save(empty);
+    apply(game,AcceptBusinessOffer{"offer.enterprise_service"});
+    const auto cash_before=state().cash;
+    apply(game,feedback);
+    check(state().cash==checked_unit_subtract(cash_before,collection.fee) && !lab(game).acquisitions.back().output,
+        "Opted-in collection did not reserve paid work or published early");
+    const auto feedback_work=lab(game).acquisitions.back().project_id;
+    days(game,3);
+    apply(game,PauseProject{feedback_work});
+    days(game,2);
+    apply(game,ResumeProject{feedback_work});
+    runtime::Runtime resumed{program,persistence::decode_save(program,save(game)).checkpoint};
+    days(game,7); days(resumed,7);
+    check(game.checkpoint()==resumed.checkpoint(),"Opted-in feedback diverged after a pending save reload");
+    std::uint64_t settled=0;
+    for(const auto& row:state().market->days) if(row.day>=start && row.day<collection.collection_ends_before) {
+        for(const auto& sale:row.discretionary)
+            if(sale.product_id=="product.documents" && sale.segment_id=="segment.enterprise") settled+=sale.tasks;
+        for(const auto& contract:row.contracts) settled+=contract.delivered_tasks;
+    }
+    const auto& delivered=lab(game).acquisitions.back();
+    check(settled>0 && delivered.settled_deliveries==settled && delivered.output &&
+        delivered.output->unique_units==std::min<std::uint64_t>(12000,settled*4/10) &&
+        delivered.output->commercial_use && !delivered.output->open_weight_release,
+        "Feedback exceeded its dated customer consent, counted unrelated tasks or lost redistribution restrictions");
+    refuse(game,feedback);
+    apply(game,StartTraining{training("feedback_student",{"data.licensed_documents",feedback.offer_id})});
+    auto forged=Json::parse(save(game));
+    auto& records=forged["checkpoint"]["world"]["simulation"]["lab"]["acquisitions"];
+    records[1]["settled_deliveries"]=settled+1;
+    malformed_save(program,std::move(forged));
+}
+
 }
 int main() {
     try {
@@ -461,6 +555,7 @@ int main() {
         content_boundaries(source,program); arithmetic_case(program); complete_loop(program); unlocks_and_controls(program);
         specialist_services(program);
         synthetic_data(program);
+        acquired_data(program);
         std::cout << checks << " lab content, resource, lineage, evidence and reload checks passed\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

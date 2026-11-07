@@ -43,6 +43,7 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
         for(const auto& r:state.lab->models) if(!r.project_id.empty()) lab_projects.insert(r.project_id);
         for(const auto& r:state.lab->evaluations) lab_projects.insert(r.project_id);
         for(const auto& r:state.lab->generated) lab_projects.insert(r.project_id);
+        for(const auto& r:state.lab->acquisitions) lab_projects.insert(r.project_id);
     }
     if(state.deployments && state.deployments->risk)
         for(const auto& response:state.deployments->risk->responses) lab_projects.insert(response.project_id);
@@ -56,6 +57,7 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
         case core::ProjectKind::evaluation: kind = QStringLiteral("Evaluation"); break;
         case core::ProjectKind::serving: kind = QStringLiteral("Serving"); break;
         case core::ProjectKind::replication: kind = QStringLiteral("Replica synchronization"); break;
+        case core::ProjectKind::data_acquisition: kind = QStringLiteral("Collect and review data"); break;
         case core::ProjectKind::data_generation: kind = QStringLiteral("Generate and verify data"); break;
         case core::ProjectKind::incident_response: kind = QStringLiteral("Deployment incident response"); break;
         }

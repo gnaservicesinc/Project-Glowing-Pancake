@@ -145,6 +145,57 @@ ColumnLayout {
         }
         ColumnLayout {
             Layout.fillWidth: true
+            visible: manager.collectionOffers.length > 0
+            Copy { text: qsTr("Commission data or collect opted-in feedback"); font.bold: true }
+            Choice {
+                id: collectionOffer
+                objectName: "collectionOfferChoice"
+                label: qsTr("Data collection agreement")
+                options: manager.collectionOffers
+            }
+            Copy { text: collectionOffer.selectedOption.detail || "" }
+            Choice { id: collectionSource; objectName: "collectionSourceChoice"; label: qsTr("Collection compute source"); options: manager.sources }
+            Field { id: collectionRate; objectName: "collectionRateField"; label: qsTr("Collection CU per day"); value: "10" }
+            Field { id: collectionStaff; objectName: "collectionStaffField"; label: qsTr("Collection staff"); value: "1" }
+            Action {
+                objectName: "reviewCollectionButton"
+                text: qsTr("Review data collection…")
+                enabled: panel.editable && collectionOffer.value.length > 0 && collectionSource.value.length > 0
+                onClicked: {
+                    const request = [collectionOffer.value, collectionSource.value, collectionRate.value, collectionStaff.value]
+                    const quote = manager.collectionQuote(...request)
+                    releaseDialog.review("collection", "", qsTr("Review paid data collection"), quote.detail || "", quote.ready === true, request)
+                }
+            }
+        }
+        Repeater {
+            model: manager.collectionJobs
+            ColumnLayout {
+                required property var modelData
+                Layout.fillWidth: true
+                Copy { text: modelData.label; font.bold: true }
+                Copy { objectName: "collectionJobDetail_" + modelData.projectId; text: modelData.detail }
+                Action {
+                    text: qsTr("Pause collection")
+                    visible: modelData.active
+                    onClicked: campaign.projectPause(modelData.projectId)
+                }
+                Action {
+                    text: qsTr("Resume collection")
+                    visible: modelData.paused
+                    onClicked: campaign.projectResume(modelData.projectId)
+                }
+                Action {
+                    text: qsTr("Cancel remaining collection")
+                    visible: modelData.active || modelData.paused
+                    onClicked: releaseDialog.review("cancelCollection", "", qsTr("Cancel this data collection?"),
+                        qsTr("Release the allocation. The paid fee and completed work stay spent. The cancelled job delivers no dataset."),
+                        true, [modelData.projectId])
+                }
+            }
+        }
+        ColumnLayout {
+            Layout.fillWidth: true
             visible: manager.synthesisRecipes.length > 0
             Copy { text: qsTr("Generate verified training data"); font.bold: true }
             Copy { text: qsTr("Choose a frozen teacher, independent evidence, and a licensed verification source outside its training mixture. Generation and filtering use paid staff and compute.") }
@@ -1038,6 +1089,8 @@ ColumnLayout {
         onAccepted: {
             if (!confirmable) return
             if (kind === "synthesis") manager.generateData(...request)
+            else if (kind === "collection") manager.startCollection(...request)
+            else if (kind === "cancelCollection") campaign.projectCancel(request[0])
             else if (kind === "incidentResponse") manager.respondDeploymentIncident(...request)
             else if (kind === "cancelIncidentResponse") campaign.projectCancel(request[0])
             else if (kind === "stage") manager.stageRollout(...request)

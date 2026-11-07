@@ -63,6 +63,27 @@ resource/payment failures, cancellation, outage recovery, clone/mixture exploits
 untested subgroups, narrower audit uncertainty and matched save continuation.
 
 
+## Commission a corpus or collect opted-in feedback
+
+Lab Data lists paid collection agreements with provenance, coverage, volume,
+and use rights. Review the fee, staff, compute and earliest delivery before
+starting. Pausing releases the allocation and keeps the work already completed.
+Cancelling delivers no corpus and keeps the fee spent.
+
+A commission delivers the agreed volume once the job completes. Feedback uses
+the named service and customer group, including settled signed and
+discretionary work during the consent window. That window starts on the
+acceptance day and keeps its end date during pauses. The reviewed volume is
+the opted-in share of settled deliveries, rounded down and capped by the
+agreement. A completed empty window can be retried as a new paid job.
+Feedback grants exclude redistribution of trained weights.
+
+Both paths produce an immutable training input on the morning after completion.
+Saved jobs retain the agreement, capacity project, settlement volume and
+result. Loading reconciles the fee, work, consent dates and actual deliveries
+before accepting the corpus. Deployment uses the same rights lookup for
+purchased, collected and generated data.
+
 ## Generate verified training data
 
 Lab Data can commission a finite document or workflow generation job. Choose
