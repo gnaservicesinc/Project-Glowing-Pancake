@@ -237,34 +237,54 @@ DeliveryRule regional_delivery_rule(const WorldState& w,const SimulationState& s
     }
     return {};
 }
-bool delivery_allowed(const AuthorityCatalog& catalog,const SimulationState& seller,std::string_view product,OrdinalDay day,DeliveryRule rule) {
+bool delivery_allowed(const AuthorityCatalog& catalog,const SimulationState& seller,std::string_view product,OrdinalDay day,
+                      DeliveryRule rule,const DeploymentRecord* version=nullptr) {
     if(rule.sanction) return false;
     if(!rule.procurement) return true;
-    const auto* deployment=deployed(seller,product,day);
+    const auto* deployment=version?version:deployed(seller,product,day);
     const auto* report=deployment?society_evidence(seller,deployment->evidence_id,0,day):nullptr;
     return report && report->lower[0]>=catalog.procurement_floor;
 }
 }
-bool institutional_delivery_allowed(const WorldState& w,const SimulationState& seller,std::string_view product,std::string_view group,OrdinalDay day) {
+bool institutional_delivery_allowed(const WorldState& w,const SimulationState& seller,std::string_view product,
+                                    std::string_view group,OrdinalDay day,const DeploymentRecord* version) {
     if(!w.authority || !seller.market || (w.authority->mandates.empty() && w.authority->cases.empty())) return true;
     const auto* segment=named(seller.market->segments,group);
     if(!segment) invalid("Institutional delivery lost its customer group.");
-    return delivery_allowed(w.authority->catalog,seller,product,day,regional_delivery_rule(w,seller,*segment,day));
+    return delivery_allowed(w.authority->catalog,seller,product,day,regional_delivery_rule(w,seller,*segment,day),version);
 }
 MarketInfluences regional_market_conditions(const WorldState& w,const SimulationState& seller,OrdinalDay day) {
     auto result=society_market_conditions(w,seller,day);
-    if(!w.authority || !seller.market || (w.authority->mandates.empty() && w.authority->cases.empty())) return result;
-    const auto restrict=[&](const std::string& product,const std::string& segment) {
-        const auto it=std::find_if(result.begin(),result.end(),[&](const auto& row){return row.product_id==product && row.segment_id==segment;});
-        if(it!=result.end()) it->eligible=false;
-        else result.push_back({product,segment,BasisPoints{0},false});
+    if(!seller.market) return result;
+    const bool authority=w.authority && (!w.authority->mandates.empty() || !w.authority->cases.empty());
+    std::vector<std::pair<const MarketProduct*,const DeploymentRecord*>> trials;
+    if (seller.deployments && (authority || w.society)) for (const auto& route:seller.market->trials) {
+        if (route.starts_on>day || day>=route.stopped_on.value_or(route.ends_before)) continue;
+        const auto* candidate=trial_release(*seller.deployments,route);
+        const auto* offer=named(seller.market->products,route.product_id);
+        if (!candidate || !offer) invalid("A staged release lost its product or evidence");
+        trials.emplace_back(offer,candidate);
+    }
+    if (!authority && trials.empty()) return result;
+    const auto restrict=[&](const std::string& product,const std::string& segment,bool trial_only) {
+        auto it=std::find_if(result.begin(),result.end(),[&](const auto& row){return row.product_id==product && row.segment_id==segment;});
+        if (it==result.end()) {
+            result.push_back({product,segment,BasisPoints{0},true,true});
+            it=std::prev(result.end());
+        }
+        if (trial_only) it->trial_eligible=false;
+        else it->eligible=false;
     };
     for(const auto& segment:seller.market->segments) {
-        const auto rule=regional_delivery_rule(w,seller,segment,day);
-        if(!rule.sanction && !rule.procurement) continue;
+        const auto rule=authority?regional_delivery_rule(w,seller,segment,day):DeliveryRule{};
         // A signed contract can name a service outside discretionary preferences.
-        for(const auto& product:seller.market->products)
-            if(!delivery_allowed(w.authority->catalog,seller,product.id,day,rule)) restrict(product.id,segment.id);
+        if (rule.sanction || rule.procurement) for(const auto& product:seller.market->products)
+            if(!delivery_allowed(w.authority->catalog,seller,product.id,day,rule)) restrict(product.id,segment.id,false);
+        for (const auto& [product,candidate]:trials) {
+            if (!forum_allows_release(w.society?&*w.society:nullptr,seller,*product,segment,candidate,day) ||
+                (authority && !delivery_allowed(w.authority->catalog,seller,product->id,day,rule,candidate)))
+                restrict(product->id,segment.id,true);
+        }
     }
     return result;
 }

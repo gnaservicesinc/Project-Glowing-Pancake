@@ -652,7 +652,16 @@ Internal content 0.20.0-dev.1 passed review for all 21 headquarters openings.
 The optimized build, 12 focused checks and short keyboard checks at 100%
 and 200% text pass.
 
-Next is the product lifecycle, beginning with staged rollouts and rollback.
+Lab → Deploy can stage a qualified candidate alongside a live release for a
+limited share of discretionary orders. Production keeps signed work. The trial
+reserves staff and compute and pays support until it ends. Office → Services
+shows settled trial deliveries and lets the player promote, discard or restore
+the previous distinct qualified release. Promotion and rollback recheck full
+capacity, signed promises and current launch rules.
+The optimized Mac build and 12 focused checks pass. Short offscreen keyboard
+checks at 100% and 200% text cover stage, settled work, promotion and rollback.
+
+Next are product deprecation notice and compatibility commitments.
 The roadmap remains 42/52 checked while design coverage is completed.
 M8-02 stays deferred. Human work waits until the user is ready, and E2-04 editor
 downloads stay with deferred release preparation.

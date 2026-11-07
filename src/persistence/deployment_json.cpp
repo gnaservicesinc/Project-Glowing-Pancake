@@ -9,6 +9,20 @@ core::LabProfile parse_profile(const Json& j) {
 }
 std::string label(const Json& j) { return text(j,"deployment/text",256); }
 core::Cents cents(const Json& j) { return core::Cents{i64(j,"deployment/cents")}; }
+Json release(const core::DeploymentRecord& row) {
+    Json result{{"service",row.service_id},{"model",row.model_id},{"evidence",row.evidence_id},
+        {"project",row.project_id},{"review",row.human_review},{"day",row.deployed_on.value()}};
+    if (!row.region_id.empty()) result["region"]=row.region_id;
+    if (row.restored_release>0) result["restored_release"]=row.restored_release;
+    return result;
+}
+core::DeploymentRecord parse_release(const Json& row) {
+    fields(row,"deployment/record",{"service","model","evidence","project","review","day"},{"region","restored_release"});
+    return {label(row.at("service")),label(row.at("model")),label(row.at("evidence")),label(row.at("project")),
+        boolean(row.at("review"),"deployment/review"),core::OrdinalDay{i64(row.at("day"),"deployment/day")},
+        row.contains("region")?label(row.at("region")):std::string{},
+        row.contains("restored_release")?u64(row.at("restored_release"),"deployment/restore",core::lab_record_limit):0};
+}
 }
 Json deployment_json(const core::DeploymentState& state) {
     Json catalog=Json::array(), records=Json::array();
@@ -27,15 +41,18 @@ Json deployment_json(const core::DeploymentState& state) {
         if (p.monthly_migration.value() != 10000) catalog.back()["migration"] = p.monthly_migration.value();
         if (!row.required_research.empty()) catalog.back()["research"] = row.required_research;
     }
-    for (const auto& row:state.records) {
-        records.push_back({{"service",row.service_id},{"model",row.model_id},{"evidence",row.evidence_id},
-            {"project",row.project_id},{"review",row.human_review},{"day",row.deployed_on.value()}});
-        if (!row.region_id.empty()) records.back()["region"] = row.region_id;
+    for (const auto& row:state.records) records.push_back(release(row));
+    Json result{{"catalog",std::move(catalog)},{"records",std::move(records)}};
+    if (!state.rollouts.empty()) {
+        result["rollouts"]=Json::array();
+        for (const auto& row:state.rollouts) result["rollouts"].push_back({
+            {"candidate",release(row.candidate)},{"incumbent_release",row.incumbent_release},
+            {"resolved_on",row.resolved_on?Json(row.resolved_on->value()):Json(nullptr)},{"promoted_release",row.promoted_release}});
     }
-    return {{"catalog",std::move(catalog)},{"records",std::move(records)}};
+    return result;
 }
 core::DeploymentState parse_deployment(const Json& j) {
-    fields(j,"deployment",{"catalog","records"});
+    fields(j,"deployment",{"catalog","records"},{"rollouts"});
     array(j.at("catalog"),"deployment/catalog",core::market_product_limit);
     array(j.at("records"),"deployment/records",core::lab_record_limit);
     core::DeploymentState state;
@@ -71,11 +88,18 @@ core::DeploymentState parse_deployment(const Json& j) {
         }
         state.catalog.push_back(std::move(value));
     }
-    for (const auto& row:j.at("records")) {
-        fields(row,"deployment/record",{"service","model","evidence","project","review","day"},{"region"});
-        state.records.push_back({label(row.at("service")),label(row.at("model")),label(row.at("evidence")),label(row.at("project")),
-            boolean(row.at("review"),"deployment/review"),core::OrdinalDay{i64(row.at("day"),"deployment/day")},
-            row.contains("region") ? label(row.at("region")) : std::string{}});
+    for (const auto& row:j.at("records")) state.records.push_back(parse_release(row));
+    if (j.contains("rollouts")) {
+        const auto& rollouts=j.at("rollouts");
+        array(rollouts,"deployment/rollouts",core::service_trial_limit);
+        for (const auto& row:rollouts) {
+            fields(row,"deployment/rollout",{"candidate","incumbent_release","resolved_on","promoted_release"});
+            const auto& resolved=row.at("resolved_on");
+            state.rollouts.push_back({parse_release(row.at("candidate")),
+                u64(row.at("incumbent_release"),"deployment/rollout/incumbent",core::lab_record_limit),
+                resolved.is_null()?std::nullopt:std::optional{core::OrdinalDay{i64(resolved,"deployment/rollout/resolved_on")}},
+                u64(row.at("promoted_release"),"deployment/rollout/promotion",core::lab_record_limit)});
+        }
     }
     core::validate_service_catalog(state.catalog);
     return state;

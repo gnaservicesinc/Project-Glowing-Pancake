@@ -26,11 +26,20 @@ struct DeploymentRecord {
     bool human_review = false;
     OrdinalDay deployed_on{0};
     std::string region_id{};
+    std::uint64_t restored_release=0;
     auto operator<=>(const DeploymentRecord&) const = default;
+};
+struct ServiceRollout {
+    DeploymentRecord candidate;
+    std::uint64_t incumbent_release=0;
+    std::optional<OrdinalDay> resolved_on{};
+    std::uint64_t promoted_release=0;
+    auto operator<=>(const ServiceRollout&) const = default;
 };
 struct DeploymentState {
     std::vector<ServiceDefinition> catalog;
     std::vector<DeploymentRecord> records;
+    std::vector<ServiceRollout> rollouts{};
     auto operator<=>(const DeploymentState&) const = default;
 };
 struct DeployModel {
@@ -38,6 +47,26 @@ struct DeployModel {
     bool human_review = false;
     std::string region_id{};
 };
+struct StageServiceRollout {
+    DeployModel candidate;
+    BasisPoints share{2000};
+    Days term{14};
+};
+struct FinishServiceRollout { std::string service_id; bool promote=false; };
+struct RollbackService { std::string service_id; };
+struct SimulationState;
+
+[[nodiscard]] const ServiceRollout* pending_rollout(const DeploymentState&,std::string_view service);
+[[nodiscard]] const DeploymentRecord* trial_release(const DeploymentState&,const MarketTrial&);
+[[nodiscard]] DeployModel release_request(const DeploymentRecord&,const CapacityState&);
+[[nodiscard]] std::uint64_t rollback_release(const DeploymentState&,const MarketState&,std::string_view service);
+[[nodiscard]] CapacityProject preview_rollout(const SimulationState&,const StageServiceRollout&);
+void stage_service_rollout(SimulationState&,const StageServiceRollout&);
+void finish_service_rollout(SimulationState&,const FinishServiceRollout&);
+void rollback_service(SimulationState&,const RollbackService&);
+void expire_service_rollouts(SimulationState&);
+void discard_service_rollouts(SimulationState&);
+void validate_service_rollouts(const DeploymentState&,const LabState&,const CapacityState&,const MarketState&);
 void validate_service_catalog(const std::vector<ServiceDefinition>& catalog);
 void validate_deployments(const DeploymentState& state, const LabState& lab,
     const CapacityState& capacity, const MarketState& market);

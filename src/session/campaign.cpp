@@ -183,6 +183,9 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::StartTraining>(command.action) ||
         std::holds_alternative<core::StartEvaluation>(command.action) ||
         std::holds_alternative<core::DeployModel>(command.action) ||
+        std::holds_alternative<core::StageServiceRollout>(command.action) ||
+        std::holds_alternative<core::FinishServiceRollout>(command.action) ||
+        std::holds_alternative<core::RollbackService>(command.action) ||
         std::holds_alternative<core::FundPolicyAdvocacy>(command.action) ||
         std::holds_alternative<core::SubmitPolicyEvidence>(command.action) ||
         std::holds_alternative<core::BuyMediaCampaign>(command.action) ||

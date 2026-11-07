@@ -103,6 +103,7 @@ Json market_json(const core::MarketState& state, bool packed) {
                 {"tasks",delivery.tasks},{"charged_cents",delivery.charged.value()}});
             if (delivery.customer_compute.value() != 0)
                 discretionary.back()["customer_compute_milli_CU"] = delivery.customer_compute.value();
+            if (delivery.trial_tasks>0) discretionary.back()["trial_tasks"]=delivery.trial_tasks;
         }
         for (const auto& segment:closed.segments) segment_results.push_back({
             {"segment_id",segment.segment_id},{"demand",segment.demand},{"budget_cents",segment.budget.value()},
@@ -140,11 +141,18 @@ Json market_json(const core::MarketState& state, bool packed) {
             {"before",e.before.value()},{"after",e.after.value()},{"actor",e.actor}});
         result["price_events"]=std::move(events);
     }
+    if (!state.trials.empty()) {
+        result["service_trials"]=Json::array();
+        for (const auto& trial:state.trials) result["service_trials"].push_back({
+            {"product",trial.product_id},{"project",trial.project_id},{"starts",trial.starts_on.value()},
+            {"ends",trial.ends_before.value()},{"share_bp",trial.share.value()},{"stopped_on",optional_day(trial.stopped_on)}});
+    }
     return result;
 }
 
 core::MarketState parse_market(const Json& value, bool packed) {
-    fields(value,"market",{"owner","starts_on","closed_through","products","segments","contracts","days","adoptions"},{"demand_changes","capacity_bindings","prices","price_events"});
+    fields(value,"market",{"owner","starts_on","closed_through","products","segments","contracts","days","adoptions"},
+        {"demand_changes","capacity_bindings","prices","price_events","service_trials"});
     core::MarketState result;
     if (value.contains("prices")) {
         array(value.at("prices"),"market/prices",core::market_price_history_limit);
@@ -165,6 +173,16 @@ core::MarketState parse_market(const Json& value, bool packed) {
         for (const auto& row:value.at("capacity_bindings")) {
             fields(row,"market/binding",{"product","project","starts"});
             result.capacity_bindings.push_back({label(row.at("product")),label(row.at("project")),day(row.at("starts"))});
+        }
+    }
+    if (value.contains("service_trials")) {
+        const auto& trials=value.at("service_trials");
+        array(trials,"market/service_trials",core::service_trial_limit);
+        for (const auto& trial:trials) {
+            fields(trial,"market/service_trial",{"product","project","starts","ends","share_bp","stopped_on"});
+            result.trials.push_back({label(trial.at("product")),label(trial.at("project")),day(trial.at("starts")),
+                day(trial.at("ends")),core::BasisPoints{i64(trial.at("share_bp"),"market/service_trial/share")},
+                parse_optional_day(trial.at("stopped_on"))});
         }
     }
     result.owner=label(value.at("owner"));
@@ -264,10 +282,11 @@ core::MarketState parse_market(const Json& value, bool packed) {
         const auto& discretionary=closed.at("discretionary");array(discretionary,"market/day/discretionary",core::market_segment_limit*core::market_product_limit);
         count_records(records,discretionary.size());
         for (const auto& delivery:discretionary) {
-            fields(delivery,"market/delivery",{"segment_id","product_id","tasks","charged_cents"},{"customer_compute_milli_CU"});
+            fields(delivery,"market/delivery",{"segment_id","product_id","tasks","charged_cents"},{"customer_compute_milli_CU","trial_tasks"});
             row.discretionary.push_back({label(delivery.at("segment_id")),label(delivery.at("product_id")),
                 tasks(delivery.at("tasks")),cents(delivery.at("charged_cents")),
-                core::MilliCU{delivery.contains("customer_compute_milli_CU") ? i64(delivery.at("customer_compute_milli_CU"),"market/delivery/compute") : 0}});
+                core::MilliCU{delivery.contains("customer_compute_milli_CU") ? i64(delivery.at("customer_compute_milli_CU"),"market/delivery/compute") : 0},
+                delivery.contains("trial_tasks")?tasks(delivery.at("trial_tasks")):0});
         }
         const auto& segment_results=closed.at("segments");array(segment_results,"market/day/segments",core::market_segment_limit);
         count_records(records,segment_results.size());

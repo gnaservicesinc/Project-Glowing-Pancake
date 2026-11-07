@@ -46,7 +46,9 @@ sheet, 30 settled days of cash flow and profit and loss, and actual unit
 economics. Three 3- and 12-month cash scenarios apply recorded commitments and
 vary recent discretionary demand. All seven scenarios now use fictional
 quarterly corporate tax with capped relief, a dated bill and visible payment.
-Next is the product lifecycle, beginning with staged rollouts and rollback.
+The Lab can stage a qualified candidate on discretionary orders. Office Services
+shows actual trial deliveries and supports promotion, discard and rollback to the
+prior qualified version. Next are deprecation notice and compatibility commitments.
 
 ## M0 — Toolchain and platform proof
 

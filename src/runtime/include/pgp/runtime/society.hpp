@@ -8,6 +8,8 @@ namespace pgp::runtime {
     const core::DeployModel&, core::OrdinalDay);
 [[nodiscard]] core::MarketInfluences society_market_conditions(const WorldState&, const core::SimulationState&,
     core::OrdinalDay);
+[[nodiscard]] bool forum_allows_release(const core::SocietyState*,const core::SimulationState&,
+    const core::MarketProduct&,const core::MarketSegment&,const core::DeploymentRecord*,core::OrdinalDay);
 [[nodiscard]] core::MediaCampaign preview_media_campaign(const WorldState&,const core::BuyMediaCampaign&);
 void buy_media_campaign(WorldState&, const core::BuyMediaCampaign&);
 void endorse_forum_standard(WorldState&, const core::EndorseForumStandard&);

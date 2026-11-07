@@ -12,7 +12,8 @@ struct PublicIdentityEvent {
 [[nodiscard]] bool prepare_authority(WorldState&,std::optional<core::OrdinalDay> settled={});
 void validate_authority_world(const WorldState&);
 [[nodiscard]] core::MarketInfluences regional_market_conditions(const WorldState&,const core::SimulationState&,core::OrdinalDay);
-[[nodiscard]] bool institutional_delivery_allowed(const WorldState&,const core::SimulationState&,std::string_view product,std::string_view segment,core::OrdinalDay);
+[[nodiscard]] bool institutional_delivery_allowed(const WorldState&,const core::SimulationState&,std::string_view product,
+    std::string_view segment,core::OrdinalDay,const core::DeploymentRecord* version=nullptr);
 [[nodiscard]] std::vector<const core::DeploymentRecord*> public_service_deployments(const WorldState&,std::string_view region);
 [[nodiscard]] core::AuthorityMonth authority_snapshot(const WorldState&,core::OrdinalDay);
 [[nodiscard]] std::string_view mandate_status(const WorldState&,const core::AuthorityMandate&,core::OrdinalDay);

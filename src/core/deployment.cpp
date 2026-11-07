@@ -1,4 +1,5 @@
 #include <pgp/core/deployment.hpp>
+#include "deployment_internal.hpp"
 #include <algorithm>
 #include <set>
 #include <stdexcept>
@@ -11,6 +12,8 @@ template<class Rows> const auto& find(const Rows& rows,std::string_view id) {
     if (row==rows.end()) invalid("Deployment refers to a missing model, evidence, recipe or capacity record");
     return *row;
 }
+}
+namespace deployment_detail {
 const ServiceDefinition& service(const DeploymentState& state,std::string_view id) {
     const auto row=std::find_if(state.catalog.begin(),state.catalog.end(),[&](const auto& value){return value.product.id==id;});
     if (row==state.catalog.end()) invalid("Choose an offered service scope");
@@ -84,6 +87,7 @@ CapacityProject qualified_project(const ServiceDefinition& definition,const LabS
     return project;
 }
 }
+using namespace deployment_detail;
 void validate_service_catalog(const std::vector<ServiceDefinition>& catalog) {
     if (catalog.empty() || catalog.size()>market_product_limit) invalid("Service catalog must be bounded and nonempty");
     std::set<std::string> ids;
@@ -113,6 +117,8 @@ void validate_service_catalog(const std::vector<ServiceDefinition>& catalog) {
 void deploy_model(DeploymentState& state,const LabState& lab,AccountsState& accounts,CapacityState& capacity,
                   MarketState& market,OrdinalDay day,const DeployModel& request) {
     if (state.records.size()>=lab_record_limit) invalid("Deployment history is full");
+    if (pending_rollout(state,request.service_id))
+        invalid("Promote or discard the service's staged release before replacing production.");
     const auto& definition=service(state,request.service_id);
     const auto existing=std::find_if(market.products.begin(),market.products.end(),[&](const auto& row){return row.id==request.service_id;});
     const auto region = existing == market.products.end() ? request.region_id : existing->region_id;
@@ -174,10 +180,19 @@ void validate_deployments(const DeploymentState& state,const LabState& lab,const
         auto comparable=work; comparable.status=ProjectStatus::active; comparable.stopped_on.reset(); comparable.useful_tasks=0; comparable.completed_work=MilliCU{0};
         if (comparable!=expected || market.capacity_bindings[i]!=ProductCapacityBinding{row.service_id,row.project_id,row.deployed_on})
             invalid("Deployment differs from its qualified evidence, review costs or actual serving work");
+        if (row.restored_release>0) {
+            if (row.restored_release>i) invalid("Rollback must restore an earlier production release");
+            const auto& prior=state.records[static_cast<std::size_t>(row.restored_release-1)];
+            if (prior.service_id!=row.service_id || prior.model_id!=row.model_id || prior.evidence_id!=row.evidence_id ||
+                prior.human_review!=row.human_review || prior.region_id!=row.region_id ||
+                find(capacity.projects,prior.project_id).source_id!=work.source_id)
+                invalid("Rollback differs from the retained qualified release");
+        }
     }
     for (const auto& product:market.products) {
         if (std::none_of(state.records.begin(),state.records.end(),[&](const auto& row){return row.service_id==product.id;}))
             invalid("Market product has no qualified deployment");
     }
+    validate_service_rollouts(state,lab,capacity,market);
 }
 }

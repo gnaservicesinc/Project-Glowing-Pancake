@@ -109,6 +109,7 @@ void prepare_opening(SimulationState& state, const std::vector<MarketAdoption>* 
     prepare_governance(state);
     prepare_succession(state);
     prepare_management(state);
+    expire_service_rollouts(state);
     prepare_infrastructure(state);
     if (state.business_offers) expire_business_offers(*state.business_offers,*state.capacity,state.date);
     while (state.opening_cursor < state.opening_actions.size()) {
@@ -156,13 +157,19 @@ void validate(const SimulationState& state,bool deep=true,std::size_t first_rece
             if (project.monthly_support_cost == Cents{0}) continue;
             const auto term = std::find_if(state.accounts->recurring.begin(), state.accounts->recurring.end(),
                 [&](const auto& obligation) { return obligation.id == "support/" + project.id; });
+            auto ends_before=project.stopped_on;
+            if (!ends_before && state.market && term!=state.accounts->recurring.end() && term->ends_before) {
+                const auto trial=std::ranges::find(state.market->trials,project.id,&MarketTrial::project_id);
+                if (trial!=state.market->trials.end()) ends_before=trial->ends_before;
+            }
             if (term == state.accounts->recurring.end() || term->monthly_amount != project.monthly_support_cost ||
-                term->starts_on != project.starts_on || term->ends_before != project.stopped_on)
+                term->starts_on != project.starts_on || term->ends_before != ends_before)
                 invalid("Serving support terms differ from their owning capacity commitment");
         }
     }
     if (state.market) {
         if (!state.accounts || !state.capacity) invalid("A market requires accounts and shared capacity");
+        if (!state.deployments && !state.market->trials.empty()) invalid("Service trials require qualified release records");
         if (deep) validate_market_links(*state.market, *state.accounts, *state.capacity);
         else if (state.market->owner!=state.accounts->owner || state.market->closed_through!=state.accounts->closed_through)
             invalid("Market settlement differs from the owned account cursor");
@@ -513,6 +520,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 prepare_governance(next);
                 prepare_succession(next);
                 prepare_management(next);
+                expire_service_rollouts(next);
                 prepare_infrastructure(next);
                 if (next.liquidity) {
                     observe_liquidity(*next.liquidity, *next.accounts, next.date, false);
@@ -611,6 +619,10 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     pause_project(capacity(next),next.date,action.id);(void)receipt(next,"pause_project");
                 } else {resume_project(capacity(next),next.date,action.id);(void)receipt(next,"resume_project");}
             } else if constexpr (std::is_same_v<Action, CancelProject>) {
+                if (next.deployments) for (const auto& rollout:next.deployments->rollouts) if (!rollout.resolved_on &&
+                    (rollout.candidate.project_id==action.id ||
+                     next.deployments->records.at(static_cast<std::size_t>(rollout.incumbent_release-1)).project_id==action.id))
+                    refuse(CommandReason::dependent_commitment,"Promote or discard the staged release before stopping its serving work.");
                 if(next.management && next.management->governance) for(const auto& dispute:next.management->governance->disputes)
                     if(dispute.review_project==action.id && !dispute.resolved_on)
                         refuse(CommandReason::dependent_commitment,"The negotiated executive response reserves this review team until the promise is resolved or its deadline passes.");
@@ -638,6 +650,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if (next.market) for (const auto& contract:next.market->contracts)
                     if (contract.status==ContractStatus::active || contract.status==ContractStatus::pending)
                         refuse(CommandReason::dependent_commitment,"Resolve customer contracts before withdrawing operations.");
+                discard_service_rollouts(next);
                 std::vector<std::string> projects,recurring,sources;
                 for (const auto& row:next.capacity->projects) if (row.status==ProjectStatus::active) projects.push_back(row.id);
                 for (const auto& row:next.accounts->recurring)
@@ -805,6 +818,12 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     refuse(CommandReason::invalid_argument, std::move(blocked));
                 deploy_model(*next.deployments,lab(next),accounts(next),capacity(next),market(next),next.date,action);
                 (void)receipt(next,"deploy_model");
+            } else if constexpr (std::is_same_v<Action, StageServiceRollout>) {
+                stage_service_rollout(next,action);(void)receipt(next,"stage_service_rollout");
+            } else if constexpr (std::is_same_v<Action, FinishServiceRollout>) {
+                finish_service_rollout(next,action);(void)receipt(next,action.promote?"promote_service_rollout":"discard_service_rollout");
+            } else if constexpr (std::is_same_v<Action, RollbackService>) {
+                rollback_service(next,action);(void)receipt(next,"rollback_service");
             } else if constexpr (std::is_same_v<Action, FundPolicyAdvocacy>) {
                 const auto before = next.cash;
                 fund_policy_advocacy(next, action, reserved_cash(next));

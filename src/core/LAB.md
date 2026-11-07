@@ -69,6 +69,23 @@ active/pending customer commitments first. Full save validation reconciles the
 authored catalog, exact evidence, dated serving profiles and support obligations;
 none of that history is replayed inside the daily advancement path.
 
+`StageServiceRollout` qualifies a candidate through the same evidence and rights
+checks, then reserves a smaller dated serving project. It uses the live product's
+territory, quote and demand. Each buyer's settled discretionary work can route up
+to the chosen share to the candidate if its actual resources and eligibility allow
+it. Signed work always routes to production. The two workloads reconcile to one
+customer charge. Customer-hosted candidates keep the current hardware footprint.
+Support is prorated to the candidate's daily task cap and ends with the trial.
+
+`FinishServiceRollout` discards the candidate or promotes it after actual trial
+delivery. Promotion reserves a full production profile and rechecks signed terms
+and current launch rules. At the deadline the trial reservation ends and the
+decision stays available. `RollbackService` records a new production binding to
+the previous distinct model, evidence and review configuration on its retained
+source, subject to the same qualification and resource checks. Release history,
+settled work, invoices and signed terms remain available after either decision.
+An active geographic replica must be stopped before staging or restoring a release.
+
 `runtime.deployment` covers qualification, commercial rights, paid review,
 resource refusal/rollback, contract protection, replacement, clones, forged
 history and exact saves. `bridge.management` checks player options, amount

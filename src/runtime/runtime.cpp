@@ -862,7 +862,21 @@ RuntimeResult Runtime::submit(const core::Command& command) {
                     fail(RuntimeReason::effect_rejected,"Resolve the negotiated public review before withdrawing operations.");
             }
         }
-        if(const auto* launch=std::get_if<core::DeployModel>(&actual.action))
+        const auto& company=next.world.simulation;
+        const auto* launch=std::get_if<core::DeployModel>(&actual.action);
+        std::optional<core::DeployModel> retained_release;
+        if (const auto* stage=std::get_if<core::StageServiceRollout>(&actual.action)) launch=&stage->candidate;
+        if (company.deployments && company.capacity && company.market) {
+            if (const auto* finish=std::get_if<core::FinishServiceRollout>(&actual.action); finish && finish->promote) {
+                if (const auto* trial=core::pending_rollout(*company.deployments,finish->service_id))
+                    retained_release=core::release_request(trial->candidate,*company.capacity);
+            } else if (const auto* rollback=std::get_if<core::RollbackService>(&actual.action)) {
+                const auto prior=core::rollback_release(*company.deployments,*company.market,rollback->service_id);
+                if (prior>0) retained_release=core::release_request(company.deployments->records[static_cast<std::size_t>(prior-1)],*company.capacity);
+            }
+        }
+        if (retained_release) launch=&*retained_release;
+        if(launch)
             if(const auto blocked=society_launch_block(next.world.society?&*next.world.society:nullptr,next.world.simulation,*launch,prior_day); !blocked.empty())
                 fail(RuntimeReason::effect_rejected,blocked);
         if (const auto* insight=std::get_if<core::AcquireResearchInsight>(&actual.action)) validate_public_insight(next.world,insight->insight);

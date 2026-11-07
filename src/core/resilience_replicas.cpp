@@ -28,6 +28,8 @@ void refresh_replica_reservations(SimulationState& s) {
 }
 }
 void replicate_service(SimulationState& s,const ReplicateService& request,Cents protected_cash) {
+    if (s.deployments && pending_rollout(*s.deployments,request.service_id))
+        invalid("Promote or discard the staged release before adding geographic replication");
     auto& r=risks(s);
     const auto& live=product(s,request.service_id);
     const auto& primary=find(s.capacity->projects,live.capacity_project_id);

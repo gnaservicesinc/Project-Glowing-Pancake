@@ -102,28 +102,28 @@ std::array<RegionOutcomes,society_regions> observations(const WorldState& world,
         auto& supplier=supplier_work[owner];
         const bool player=source==&world.simulation;
         const auto delivery=[&](std::string_view segment_id,std::string_view product_id,std::uint64_t tasks,
-            std::uint64_t promised,std::uint64_t missed,OrdinalDay day) {
+            std::uint64_t promised,std::uint64_t missed,OrdinalDay day,const DeploymentRecord* version=nullptr) {
             const auto* segment=named(market.segments,segment_id);
             const auto* product=named(market.products,product_id);
             if(!segment || !product) invalid("A regional delivery lost its customer or product.");
             if(segment->region_id.empty()) return;
             const auto index=society_region_index(society.catalog,segment->region_id);
             auto& row=result[index];row.delivered+=tasks;row.promised+=promised;row.missed+=missed;supplier[index]+=tasks;
-            if(tasks && product->channel==society.catalog.forum.channel && forum_enforced(society,segment->region_id,day) &&
-                !qualified(society,*source,product->id,day)) invalid("A restricted product delivered without the required independent evidence.");
-            if(tasks && !institutional_delivery_allowed(world,*source,product->id,segment->id,day))
+            if(tasks && !forum_allows_release(&society,*source,*product,*segment,version,day))
+                invalid("A restricted release delivered without the required independent evidence.");
+            if(tasks && !institutional_delivery_allowed(world,*source,product->id,segment->id,day,version))
                 invalid("An actual delivery bypassed a binding regional procurement rule or sanction.");
             if(in(society.catalog.public_services,segment->id)) {row.public_work+=tasks;if(player) row.player_public+=tasks;}
             if(in(society.catalog.science,segment->id)) {row.science_work+=tasks;if(player) row.player_science+=tasks;}
             if(in(society.catalog.industry,segment->id)) row.industrial_work+=tasks;
             if(product->channel==ProductChannel::agent) row.agent_work+=tasks;
-            const auto* deployment=deployed(*source,product_id,day);
+            const auto* deployment=version?version:deployed(*source,product_id,day);
             const auto* report=deployment?society_evidence(*source,deployment->evidence_id,society.catalog.forum.evidence_axis,day):nullptr;
             const auto quality=report?static_cast<std::uint64_t>(report->lower[society.catalog.forum.evidence_axis].value()):0;
             weighted_quality[index]+=tasks*quality;
             if(player) {row.player_work+=tasks;row.player_promised+=promised;row.player_missed+=missed;player_quality[index]+=tasks*quality;}
-            std::string_view project_id=product->capacity_project_id;
-            for(auto it=market.capacity_bindings.rbegin();it!=market.capacity_bindings.rend();++it)
+            std::string_view project_id=version?version->project_id:product->capacity_project_id;
+            for(auto it=market.capacity_bindings.rbegin();!version && it!=market.capacity_bindings.rend();++it)
                 if(it->product_id==product_id && it->starts_on<=day) {project_id=it->project_id;break;}
             const auto* project=source->capacity?named(source->capacity->projects,project_id):nullptr;
             if(tasks && !project) invalid("Delivered work lost its metered serving project.");
@@ -131,7 +131,15 @@ std::array<RegionOutcomes,society_regions> observations(const WorldState& world,
         };
         auto it=std::lower_bound(market.days.begin(),market.days.end(),first,[](const auto& row,OrdinalDay date){return row.day<date;});
         for(;it!=market.days.end() && it->day<=month_end;++it) {
-            for(const auto& row:it->discretionary) delivery(row.segment_id,row.product_id,row.tasks,0,0,it->day);
+            for(const auto& row:it->discretionary) {
+                delivery(row.segment_id,row.product_id,row.tasks-row.trial_tasks,0,0,it->day);
+                if (row.trial_tasks>0) {
+                    const auto* trial=market_trial(market,row.product_id,it->day);
+                    const auto* version=trial && source->deployments?trial_release(*source->deployments,*trial):nullptr;
+                    if (!version) invalid("A settled trial lost its qualified release");
+                    delivery(row.segment_id,row.product_id,row.trial_tasks,0,0,it->day,version);
+                }
+            }
             for(const auto& row:it->contracts) {
                 const auto* contract=named(market.contracts,row.contract_id);
                 if(!contract) invalid("A regional contract receipt lost its signed terms.");
@@ -187,6 +195,15 @@ std::string society_launch_block(const core::SocietyState* society,const core::S
                 std::to_string(society->catalog.forum.evidence_floor.value()/100)+"/100, then redeploy with that report.";
     }
     return {};
+}
+bool forum_allows_release(const SocietyState* society,const SimulationState& state,const MarketProduct& product,
+                          const MarketSegment& segment,const DeploymentRecord* version,OrdinalDay day) {
+    if (!society || segment.region_id.empty() || product.channel!=society->catalog.forum.channel ||
+        !forum_enforced(*society,segment.region_id,day)) return true;
+    if (!version) return qualified(*society,state,product.id,day);
+    const auto* report=society_evidence(state,version->evidence_id,society->catalog.forum.evidence_axis,day);
+    return report && report->model_id==version->model_id &&
+        report->lower[society->catalog.forum.evidence_axis]>=society->catalog.forum.evidence_floor;
 }
 core::MarketInfluences society_market_conditions(const WorldState& world,const core::SimulationState& source,core::OrdinalDay day) {
     if(!world.society || !source.market) return {};
@@ -259,8 +276,13 @@ void validate_society_world(const WorldState& world) {
         payment(forum_key(round.id,row.region),row.paid,row.day);
     }
     if(!payments.empty()) invalid("The company has an orphaned regional media or forum payment.");
-    for(const auto* source:sellers(world)) if(source->deployments) for(const auto& row:source->deployments->records)
-        if(!society_launch_block(&society,*source,{row.service_id,row.model_id,row.evidence_id,{},row.human_review,row.region_id},row.deployed_on).empty())
-            invalid("A saved deployment bypassed its region's effective standards rule.");
+    for(const auto* source:sellers(world)) if(source->deployments) {
+        const auto verify=[&](const DeploymentRecord& row) {
+            if(!society_launch_block(&society,*source,{row.service_id,row.model_id,row.evidence_id,{},row.human_review,row.region_id},row.deployed_on).empty())
+                invalid("A saved release bypassed its region's effective standards rule.");
+        };
+        for (const auto& row:source->deployments->records) verify(row);
+        for (const auto& rollout:source->deployments->rollouts) verify(rollout.candidate);
+    }
 }
 } // namespace pgp::runtime

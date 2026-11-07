@@ -60,6 +60,14 @@ For the original small-campaign opening route, select **Introductory roster**:
 6. To broaden the promise, license consented scans and train a **fresh** model on both datasets. Evaluate that model, then deploy the documents-and-tables service with its matching evidence. Paid human review is another offered response, with lower throughput, extra staff and a real recurring cost.
 7. Keep the company funded while time advances through January 2017. Required choices stop work. Inspect public rival notices, contracts, unpaid obligations and the tiered inbox. Save/load preserves the exact campaign boundary.
 
+Once a service is live, select a different qualified checkpoint, report or review
+setting in **Lab → Deploy**. Review a trial of 1–30 days and up to 50% of eligible
+discretionary orders. The quoted reservation uses your staff and compute budget.
+Signed work stays with production. In **Office → Services**, inspect the trial's
+actual deliveries before promoting it or discarding it. An expired trial releases
+its resources and waits for your decision. After replacement, **Review rollback**
+shows the previous distinct release and rechecks it before restoring production.
+
 Office → **Funding and team** shows fixed equity/loan terms and a paid specialist.
 Equity reduces retained founder ownership; the loan creates interest and a real
 principal deadline. Repay principal in Accounts. The efficient document service

@@ -100,6 +100,7 @@ struct MarketDelivery {
     std::uint64_t tasks = 0;
     Cents charged{0};
     MilliCU customer_compute{0};
+    std::uint64_t trial_tasks=0;
     auto operator<=>(const MarketDelivery&) const = default;
 };
 struct MarketSegmentDay {
@@ -156,6 +157,16 @@ struct ProductCapacityBinding {
     OrdinalDay starts_on{0};
     auto operator<=>(const ProductCapacityBinding&) const = default;
 };
+inline constexpr std::size_t service_trial_limit=256;
+inline constexpr std::uint32_t service_trial_days_limit=30;
+inline constexpr std::int64_t service_trial_share_limit=5000;
+struct MarketTrial {
+    std::string product_id, project_id;
+    OrdinalDay starts_on{0}, ends_before{0};
+    BasisPoints share{0};
+    std::optional<OrdinalDay> stopped_on{};
+    auto operator<=>(const MarketTrial&) const = default;
+};
 struct MarketPriceChange {
     std::string product_id;
     OrdinalDay starts_on{0};
@@ -183,6 +194,7 @@ struct MarketState {
     std::vector<ProductCapacityBinding> capacity_bindings{};
     std::vector<MarketPriceChange> prices{};
     PagedHistory<MarketPriceEvent,64> price_events{};
+    std::vector<MarketTrial> trials{};
     auto operator<=>(const MarketState&) const = default;
 };
 struct MarketReport {
@@ -198,12 +210,14 @@ struct MarketInfluence {
     std::string product_id, segment_id;
     BasisPoints awareness{0};
     bool eligible = true;
+    bool trial_eligible = true;
     auto operator<=>(const MarketInfluence&) const = default;
 };
 using MarketInfluences = std::vector<MarketInfluence>;
 [[nodiscard]] MarketState opening_market(OrdinalDay starts_on = OrdinalDay{0},
                                          std::string owner = "company.player");
 [[nodiscard]] MarketReport market_report(const MarketState& state);
+[[nodiscard]] const MarketTrial* market_trial(const MarketState&,std::string_view product,OrdinalDay);
 [[nodiscard]] ContractDayResult contract_delivery(const MarketContract&,OrdinalDay,std::uint64_t delivered_tasks);
 [[nodiscard]] bool regional_market(const MarketState& state);
 [[nodiscard]] bool market_access(const MarketProduct& product, const MarketSegment& segment);

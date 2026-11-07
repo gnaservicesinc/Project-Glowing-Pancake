@@ -1909,3 +1909,18 @@ The optimized Mac build and 12 focused CTests pass, including a dated
 payment after exact reload and rejection of a forged credit. Keyboard
 checks at 100% and 200% show the real assessment and payment. Compact taxed
 accounts and a prior save with matching content both round-trip exactly.
+
+### Staged service rollout and rollback
+
+Lab Deploy stages a qualified candidate for up to 30 days and 50% of eligible
+discretionary traffic. The candidate has a separate staff, compute and dated
+support commitment. One customer charge covers each delivery, and production
+handles all signed work. Candidate-specific restrictions can block its traffic
+independently. Trial expiry releases resources and leaves the promotion decision
+in Office Services. Rollback restores the prior distinct qualified configuration
+as a new production binding and retains actual invoices and delivery history.
+
+The optimized Mac build and 12 focused CTests pass. The rollout check covers
+zero-work promotion refusal, a candidate-specific hold, expiry, protected contract
+delivery and rejection of a forged share. Short offscreen keyboard checks at 100%
+and 200% text exercise stage, actual work, promotion, rollback and exact saves.

@@ -236,11 +236,13 @@ bool civic_rule_effective_today(const CivicState& civic, OrdinalDay day) { retur
 
 void validate_civic_deployments(const CivicState& civic, const SimulationState& state) {
     if (!state.deployments) return;
-    for (const auto& deployment : state.deployments->records) {
+    const auto verify=[&](const DeploymentRecord& deployment) {
         const DeployModel request{deployment.service_id, deployment.model_id, deployment.evidence_id, {},
             deployment.human_review, deployment.region_id};
         if (const auto blocked = civic_launch_block(&civic, state, request, deployment.deployed_on); !blocked.empty())
             invalid("Saved deployment lacks the evidence required on its launch date. " + blocked);
-    }
+    };
+    for (const auto& deployment:state.deployments->records) verify(deployment);
+    for (const auto& rollout:state.deployments->rollouts) verify(rollout.candidate);
 }
 } // namespace pgp::core

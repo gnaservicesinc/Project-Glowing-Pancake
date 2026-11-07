@@ -182,7 +182,7 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    EnableMarket, AddMarketProduct, AddMarketSegment, AddMarketPreference,
                                    SetMarketProductAvailable, SetMarketPrice, AcceptContract, StartContract, CancelContract,
                                    AcknowledgeLiquidityWarning, BuyData, StartResearch, PublishResearch, AcquireResearchInsight, StartTraining, CloneModel, CheckpointModel, StartEvaluation,
-                                   AcceptBusinessOffer, AddMarketDemandChange, DeployModel,
+                                   AcceptBusinessOffer, AddMarketDemandChange, DeployModel, StageServiceRollout, FinishServiceRollout, RollbackService,
                                    TakeFinancing,HireSpecialist,AddDelegationPolicy,SetDelegationEnabled,ReviewDelegation,AcknowledgeManagementNotice,RenewComputeLease,
                                    NegotiateCorporateFinance,AppointExecutive,ProposePoolExpansion,ProposeCharter,VoteBoardMotion,RespondCorporateDispute,TransferCompanyOwnership,TransferGroupFunds,
                                    BuildOwnedSite,OrderOwnedHardware,HireSiteOperators,SetSitePowerLimit,RetireOwnedHardware,CloseOwnedSite,ScheduleSiteAppointment,CancelSiteAppointment,NoticeInitialLeaseTermination,

@@ -272,6 +272,12 @@ MarketReport market_report(const MarketState& state) {
     }
     return report;
 }
+const MarketTrial* market_trial(const MarketState& state,std::string_view product_id,OrdinalDay day) {
+    for (auto it=state.trials.rbegin();it!=state.trials.rend();++it)
+        if (it->product_id==product_id && it->starts_on<=day && day<it->stopped_on.value_or(it->ends_before))
+            return &*it;
+    return nullptr;
+}
 void validate_market(const MarketState& state) {
     text_valid(state.owner, 128); (void)from_ordinal(state.starts_on);
     if (state.products.size() > market_product_limit || state.segments.size() > market_segment_limit ||
@@ -284,6 +290,26 @@ void validate_market(const MarketState& state) {
             invalid("Market daily close cursor differs from complete history");
     } else if (!state.days.empty()) invalid("Market daily history has no close cursor");
     const auto latest = current_day(state);
+    if (state.trials.size()>service_trial_limit) invalid("Service trial history exceeds its bound");
+    std::map<std::string_view,OrdinalDay> trial_ends;
+    std::set<std::string_view> trial_projects;
+    std::optional<OrdinalDay> prior_trial;
+    for (const auto& trial:state.trials) {
+        (void)find_id(state.products,trial.product_id);
+        text_valid(trial.project_id);
+        (void)from_ordinal(trial.ends_before);
+        const auto end=trial.stopped_on.value_or(trial.ends_before);
+        const auto prior=trial_ends.find(trial.product_id);
+        if (trial.starts_on<state.starts_on || trial.starts_on>latest || trial.ends_before<=trial.starts_on ||
+            trial.ends_before.value()-trial.starts_on.value()>service_trial_days_limit ||
+            trial.share.value()==0 || trial.share.value()>service_trial_share_limit ||
+            (trial.stopped_on && (end<trial.starts_on || end>trial.ends_before || end>latest)) ||
+            (prior!=trial_ends.end() && trial.starts_on<prior->second) ||
+            (prior_trial && trial.starts_on<*prior_trial) || !trial_projects.insert(trial.project_id).second)
+            invalid("Service trial has an invalid date, share or overlapping serving project");
+        prior_trial=trial.starts_on;
+        trial_ends.insert_or_assign(trial.product_id,end);
+    }
     if (state.demand_changes.size()>64) invalid("External demand incident history exceeds its bound");
     std::set<std::string_view> change_ids;
     for (const auto& change:state.demand_changes) {
@@ -508,6 +534,11 @@ void validate_market(const MarketState& state) {
                 customer_hosted(product_row.channel) != (delivery.customer_compute.value() > 0) ||
                 market_price_on(state,product_row.id,day.day) > pref->willingness_to_pay)
                 invalid("Discretionary delivery has invalid eligibility, identity, tasks or price");
+            if (delivery.trial_tasks>0) {
+                const auto* trial=market_trial(state,delivery.product_id,day.day);
+                if (!trial || delivery.trial_tasks>mul_div_floor(delivery.tasks,static_cast<std::uint64_t>(trial->share.value()),10000).quotient)
+                    invalid("Discretionary work exceeded the staged release's dated traffic share");
+            }
             if (delivery.customer_compute.value() > 0) {
                 auto& used = customer_work.try_emplace(segment.id, MilliCU{0}).first->second;
                 used = checked_unit_add(used, delivery.customer_compute);
@@ -612,6 +643,14 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
     }
     for (const auto& [id,binding]:last_binding)
         if (find_id(state.products,id).capacity_project_id!=binding.second) invalid("Current product differs from its last serving profile");
+    for (const auto& trial:state.trials) {
+        const auto& work=find_id(capacity.projects,trial.project_id);
+        if (work.kind!=ProjectKind::serving || work.starts_on!=trial.starts_on || work.stopped_on!=trial.stopped_on ||
+            work.status!=(trial.stopped_on?ProjectStatus::cancelled:ProjectStatus::active) ||
+            work.customer_inference!=customer_hosted(find_id(state.products,trial.product_id).channel) ||
+            !bound_projects.insert(trial.project_id).second)
+            invalid("Service trial does not own a separate dated serving project");
+    }
     struct ExpectedInvoice { InvoiceKind kind; Cents amount; OrdinalDay due; };
     std::unordered_map<std::string, ExpectedInvoice> expected;
     expected.reserve(state.days.size() * 4 + state.contracts.size());
@@ -648,6 +687,7 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
                        contract.accepted_on, contract.customer_advance, Account::cash, Account::customer_advances);
     }
     std::unordered_map<std::string_view, std::uint64_t> delivered, protected_delivered;
+    std::map<std::pair<OrdinalDay,std::string_view>,std::uint64_t> trial_work;
     delivered.reserve(state.products.size());
     protected_delivered.reserve(state.products.size());
     for (const auto& day : state.days) {
@@ -674,7 +714,8 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
                 expect("market.penalty/" + contract.id + "/" + date_text, InvoiceKind::payable, result.penalty, day.day);
         }
         for (const auto& result : day.discretionary) {
-            delivered[result.product_id] += result.tasks;
+            delivered[result.product_id] += result.tasks-result.trial_tasks;
+            if (result.trial_tasks>0) trial_work[{day.day,result.product_id}]+=result.trial_tasks;
             if (!day.total_demand && result.charged.value() > 0)
                 expect("market.sale/" + result.segment_id + "/" + result.product_id + "/" + date_text,
                        InvoiceKind::receivable, result.charged, day.day);
@@ -719,6 +760,19 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
                         invalid("Local inference bypassed actual buyer compute or compatibility");
                 }
             }
+        }
+    }
+    for (const auto& trial:state.trials) {
+        const auto end=std::min(current_day(state),trial.stopped_on.value_or(trial.ends_before));
+        for (auto day=trial.starts_on;day<end;day=advance_days(day,Days{1})) {
+            const auto& record=capacity.days[static_cast<std::size_t>(day.value()-capacity.starts_on.value())];
+            const auto work=std::find_if(record.projects.begin(),record.projects.end(),[&](const auto& row) {
+                return row.project_id==trial.project_id;
+            });
+            const auto expected=trial_work.find({day,trial.product_id});
+            const auto tasks=expected==trial_work.end()?0:expected->second;
+            if (work==record.projects.end() || work->useful_tasks!=tasks || work->protected_tasks!=0)
+                invalid("Service trial work disagrees with settled orders or used protected traffic");
         }
     }
     for (const auto& contract : state.contracts) {
@@ -883,12 +937,19 @@ void cancel_contract(MarketState& state, AccountsState& accounts, OrdinalDay day
     state = std::move(next); accounts = std::move(ledger);
 }
 namespace {
+using TrialEdge=std::pair<std::string_view,std::string_view>; // product, customer segment
+struct TrialSupply {
+    const MarketTrial* trial;
+    std::uint64_t tasks=0;
+};
 struct MarketClosePlan {
     MarketDay record;
     std::map<std::string,std::uint64_t> product_contract_delivered,segment_reserved,segment_contract_delivered;
     std::map<std::string,Cents> segment_charged;
     std::vector<AllocationProduct> products;
     std::vector<AllocationSegment> segments;
+    std::vector<TrialSupply> trials;
+    std::set<TrialEdge> blocked_trial_edges;
 };
 MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool,OrdinalDay day,bool validate_io,
     const std::vector<MarketAdoption>* industry_adoptions = nullptr, const MarketInfluences& influences = {}) {
@@ -896,12 +957,14 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
     if (influences.size() > market_product_limit * market_segment_limit) invalid("Regional market influence exceeds its size bound");
     using ContextKey=std::pair<std::string_view,std::string_view>;
     std::map<ContextKey, const MarketInfluence*> contextual;
+    std::set<TrialEdge> blocked_trial_edges;
     for (const auto& influence : influences) {
         (void)find_id(next.products, influence.product_id);
         (void)find_id(next.segments, influence.segment_id);
         if (influence.awareness.value() > 3000 ||
             !contextual.emplace(ContextKey{influence.product_id,influence.segment_id}, &influence).second)
             invalid("Regional awareness and eligibility need unique bounded market links");
+        if (!influence.trial_eligible) blocked_trial_edges.emplace(influence.product_id,influence.segment_id);
     }
     const auto context = [&](const std::string& product, const std::string& segment) -> const MarketInfluence* {
         if(contextual.empty()) return nullptr;
@@ -939,6 +1002,7 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
         }
     }
     std::vector<ServingRequest> full_requests;
+    std::vector<TrialSupply> trials;
     for (const auto& row : next.products) {
         const auto& profile = project(pool, row);
         if (profile.status != ProjectStatus::active) continue;
@@ -946,8 +1010,20 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
         if (contracts > profile.tasks_per_day) invalid("Contract tasks exceed the bound serving profile");
         const bool enabled = available(row, pool);
         full_requests.push_back({profile.id, enabled ? contracts : 0, enabled ? profile.tasks_per_day - contracts : 0});
+        const auto* trial=enabled?market_trial(next,row.id,day):nullptr;
+        if (trial && std::ranges::any_of(next.segments,[&](const auto& segment) {
+            const auto* pref=preference(segment,row.id);
+            const auto* rule=context(row.id,segment.id);
+            return pref && pref->eligible && market_access(row,segment) && row.price_per_task<=pref->willingness_to_pay &&
+                (!rule || (rule->eligible && rule->trial_eligible));
+        })) {
+            const auto& candidate=find_id(pool.projects,trial->project_id);
+            full_requests.push_back({candidate.id,0,candidate.tasks_per_day});
+            trials.push_back({trial});
+        }
     }
     const auto plan = preview_capacity_day(pool, day, full_requests,validate_io);
+    for (auto& trial:trials) trial.tasks=total_supply(plan,trial.trial->project_id);
     std::map<std::string, std::uint64_t> delivered_contracts;
     std::map<std::string, std::uint64_t> product_contract_delivered;
     for (const auto& [id, claims] : product_contracts) {
@@ -1020,7 +1096,7 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
         segments.push_back(std::move(segment));
     }
     return {std::move(record),std::move(product_contract_delivered),std::move(segment_reserved),std::move(segment_contract_delivered),
-        std::move(segment_charged),std::move(products),std::move(segments)};
+        std::move(segment_charged),std::move(products),std::move(segments),std::move(trials),std::move(blocked_trial_edges)};
 }
 void validate_assigned(const MarketClosePlan& plan,const AllocationResult& assigned) {
     if (assigned.segments.size()!=plan.segments.size() || assigned.rounds>allocation_edge_limit+allocation_product_limit+allocation_segment_limit)
@@ -1048,20 +1124,49 @@ void validate_assigned(const MarketClosePlan& plan,const AllocationResult& assig
     }
     for (const auto& row:plan.products) if (totals[row.id]>row.capacity) invalid("Industry allocation exceeds actual serving capacity");
 }
-std::vector<ServingRequest> actual_serving_requests(const MarketState& market, const CapacityState& capacity,
+struct ServingSettlement {
+    std::vector<ServingRequest> requests;
+    std::map<TrialEdge,std::uint64_t> trial_tasks;
+};
+ServingSettlement actual_serving_requests(const MarketState& market, const CapacityState& capacity,
     const MarketClosePlan& plan, const AllocationResult& allocation) {
     std::map<std::string, std::uint64_t> discretionary_totals;
     for (const auto& segment : allocation.segments)
         for (const auto& work : segment.deliveries) discretionary_totals[work.product_id] += work.tasks;
-    std::vector<ServingRequest> requests;
+    ServingSettlement result;
+    for (const auto& supply:plan.trials) {
+        if (supply.tasks==0) continue;
+        const auto& trial=*supply.trial;
+        std::vector<WeightedQuota> claims;
+        std::uint64_t wanted=0;
+        for (const auto& segment:allocation.segments) {
+            if (plan.blocked_trial_edges.contains({trial.product_id,segment.id})) continue;
+            const auto sale=std::ranges::find(segment.deliveries,trial.product_id,&AllocationDelivery::product_id);
+            if (sale==segment.deliveries.end()) continue;
+            const auto tasks=mul_div_floor(sale->tasks,static_cast<std::uint64_t>(trial.share.value()),10000).quotient;
+            if (tasks>0) {
+                claims.push_back({segment.id,tasks});
+                wanted+=tasks;
+            }
+        }
+        const auto routed=std::min(wanted,supply.tasks);
+        if (routed==0) continue;
+        for (const auto& share:apportion_units(routed,claims)) if (share.units>0) {
+            // Keep keys from the settled allocation, which outlives the plan.
+            const auto& segment=find_id(allocation.segments,share.id);
+            result.trial_tasks.emplace(TrialEdge{trial.product_id,segment.id},share.units);
+        }
+        result.requests.push_back({trial.project_id,0,routed});
+        discretionary_totals.at(trial.product_id)-=routed;
+    }
     for (const auto& product : market.products) {
         const auto& profile = project(capacity, product);
         if (profile.status != ProjectStatus::active) continue;
         const auto contracted = plan.product_contract_delivered.find(product.id);
-        requests.push_back({profile.id, contracted == plan.product_contract_delivered.end() ? 0 : contracted->second,
+        result.requests.push_back({profile.id, contracted == plan.product_contract_delivered.end() ? 0 : contracted->second,
                             discretionary_totals[product.id]});
     }
-    return requests;
+    return result;
 }
 }
 MarketOpportunity market_opportunity(const MarketState& state,const CapacityState& capacity,OrdinalDay day,
@@ -1074,7 +1179,7 @@ CapacityDay preview_market_work(const MarketState& state, const CapacityState& c
     const AllocationResult& assigned, const std::vector<MarketAdoption>& industry_adoptions, const MarketInfluences& influences) {
     const auto plan = prepare_market(state, capacity, day, false, &industry_adoptions,influences);
     validate_assigned(plan, assigned);
-    return preview_capacity_day(capacity, day, actual_serving_requests(state, capacity, plan, assigned), false);
+    return preview_capacity_day(capacity, day, actual_serving_requests(state, capacity, plan, assigned).requests, false);
 }
 void close_market_day(MarketState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day, bool validate_io, const AllocationResult* assigned,
     const std::vector<MarketAdoption>* industry_adoptions, std::span<const WholesaleUse> wholesale, const MarketInfluences& influences) {
@@ -1088,6 +1193,8 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
     auto& pool=validate_io?capacity_candidate:capacity;
     std::set<std::string> linked;
     for (const auto& product_row : next.products) linked.insert(product_row.capacity_project_id);
+    for (const auto& trial:next.trials)
+        if (!trial.stopped_on) linked.insert(trial.project_id);
     for (const auto& row : pool.projects)
         if (row.kind == ProjectKind::serving && row.status == ProjectStatus::active && !linked.contains(row.id))
             invalid("Every active serving workload must be linked before market work advances");
@@ -1113,6 +1220,7 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
     AllocationResult stand_alone;
     if (!assigned) stand_alone = allocate_demand(prepared.products, prepared.segments);
     const auto& allocation = assigned ? *assigned : stand_alone;
+    const auto serving=actual_serving_requests(next,pool,prepared,allocation);
     record.allocation_rounds = allocation.rounds;
     const bool regional = regional_market(next);
     if (regional) record.total_demand = 0;
@@ -1126,7 +1234,9 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
         for (const auto& work : result.deliveries) {
             const auto per_task = find_id(prepared.products, work.product_id).customer_compute_per_task;
             const auto local_work = per_task.value() > 0 ? required_inference(work.tasks, per_task) : MilliCU{0};
-            record.discretionary.push_back({result.id, work.product_id, work.tasks, work.cost, local_work});
+            const auto trial=serving.trial_tasks.find({work.product_id,result.id});
+            record.discretionary.push_back({result.id, work.product_id, work.tasks, work.cost, local_work,
+                trial==serving.trial_tasks.end()?0:trial->second});
             delivered += work.tasks;
             charged = checked_unit_add(charged, work.cost);
             if (regional) combined_sales = checked_unit_add(combined_sales, work.cost);
@@ -1160,7 +1270,7 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
     }
     if (regional) invoice(ledger, day, invoice_id("sale", "combined", day), InvoiceKind::receivable,
                           combined_sales, "Delivered regional customer work");
-    close_capacity_day(pool, day, actual_serving_requests(next, pool, prepared, allocation), false, wholesale);
+    close_capacity_day(pool, day, serving.requests, false, wholesale);
     record.contracts.sort([](const auto& a, const auto& b) { return a.contract_id < b.contract_id; });
     record.discretionary.sort([](const auto& a, const auto& b) {
         return std::tie(a.segment_id, a.product_id) < std::tie(b.segment_id, b.product_id);

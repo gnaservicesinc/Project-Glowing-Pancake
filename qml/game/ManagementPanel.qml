@@ -287,7 +287,7 @@ ColumnLayout {
         Choice { id: deploymentService; objectName: "deploymentServiceChoice"; label: qsTr("Customer task promise"); options: manager.services }
         Choice { id: deploymentModel; objectName: "deploymentModelChoice"; label: qsTr("Stopped model to serve"); rows: manager.models }
         Choice { id: deploymentEvidence; objectName: "deploymentEvidenceChoice"; label: qsTr("Independent evidence for that model"); rows: manager.evidence }
-        Choice { id: deploymentSource; label: qsTr("Serving compute source"); options: manager.sources; visible: deploymentService.selectedOption.customerHardware !== true }
+        Choice { id: deploymentSource; objectName: "deploymentSourceChoice"; label: qsTr("Serving compute source"); options: manager.sources; visible: deploymentService.selectedOption.customerHardware !== true }
         Choice {
             id: deploymentRegion
             objectName: "deploymentRegionChoice"
@@ -312,12 +312,32 @@ ColumnLayout {
         Action {
             objectName: "deployButton"
             text: qsTr("Qualify and deploy / replace service")
-            enabled: panel.editable && deploymentModel.value.length > 0 && deploymentEvidence.value.length > 0
+            enabled: panel.editable && deploymentModel.value.length > 0 && deploymentEvidence.value.length > 0 && deploymentService.selectedOption.trialPending !== true
             onClicked: manager.deploy(deploymentService.value, deploymentModel.value, deploymentEvidence.value,
                                       deploymentSource.visible ? deploymentSource.value : "",
                                       humanReview.checked || deploymentService.selectedOption.reviewRequired === true,
                                       deploymentRegion.visible ? deploymentRegion.value : "")
         }
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: deploymentService.selectedOption.live === true && deploymentService.selectedOption.trialPending !== true
+            Copy { text: qsTr("Try a qualified checkpoint on a share of discretionary orders before changing production.") }
+            Field { id: trialShare; objectName: "trialShareField"; label: qsTr("Maximum trial share · whole percent (1–50)"); value: "20" }
+            Field { id: trialDays; objectName: "trialDaysField"; label: qsTr("Trial length · days (1–30)"); value: "14" }
+            Action {
+                objectName: "reviewStageRolloutButton"
+                text: qsTr("Review staged rollout…")
+                enabled: panel.editable && deploymentModel.value.length > 0 && deploymentEvidence.value.length > 0
+                onClicked: {
+                    const request = [deploymentService.value, deploymentModel.value, deploymentEvidence.value,
+                        deploymentSource.visible ? deploymentSource.value : "",
+                        humanReview.checked || deploymentService.selectedOption.reviewRequired === true, trialShare.value, trialDays.value]
+                    const quote = manager.rolloutPreview(...request)
+                    releaseDialog.review("stage", deploymentService.value, qsTr("Review staged rollout"), quote.detail || "", quote.ready === true, request)
+                }
+            }
+        }
+        Copy { visible: deploymentService.selectedOption.trialPending === true; text: qsTr("This service has a staged release. Review it in Office → Services.") }
         Selection { heading: qsTr("Deployed services"); rows: manager.products }
         Field { id: productPrice; objectName: "productPriceField"; label: qsTr("Price per task · constant 2014 cents"); value: (manager.products.selectedRow.fields || {}).priceCents || ""; visible: (manager.products.selectedRow.fields || {}).freeWeights !== true }
         Copy { visible: productPrice.visible; text: qsTr("Setting a price suspends any enabled pricing policy for this product. Review its retained bounds and counters in Office → Policies and alerts before resuming.") }
@@ -350,10 +370,34 @@ ColumnLayout {
         }
     }
     ColumnLayout {
+        id: serviceOffice
+        readonly property var selected: manager.products.selectedRow.fields || ({})
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "products"
         Selection { heading: qsTr("Deployed services"); rows: manager.products }
-        Action { text: qsTr("Stop selected service"); enabled: panel.editable && manager.products.selectedId.length > 0; onClicked: campaign.projectCancel(manager.products.selectedRow.fields.projectId) }
+        Action {
+            objectName: "promoteRolloutButton"
+            text: qsTr("Review promotion…")
+            visible: serviceOffice.selected.trialPending === true
+            enabled: panel.editable && serviceOffice.selected.trialCanPromote === true
+            onClicked: releaseDialog.review("promote", manager.products.selectedId, qsTr("Promote this staged release?"),
+                qsTr("Make %1 the production checkpoint, including for signed contracts. Promotion rechecks current rules and the full serving commitment. The prior release remains in history.").arg(serviceOffice.selected.trialCheckpoint), true, [])
+        }
+        Action {
+            objectName: "discardRolloutButton"
+            text: qsTr("Review discarding the trial…")
+            visible: serviceOffice.selected.trialPending === true
+            onClicked: releaseDialog.review("discard", manager.products.selectedId, qsTr("Discard this staged release?"),
+                qsTr("Close the trial for %1 and release any staff and compute it still holds. The production release keeps serving.").arg(serviceOffice.selected.trialCheckpoint), true, [])
+        }
+        Action {
+            objectName: "rollbackServiceButton"
+            text: qsTr("Review rollback…")
+            visible: !!serviceOffice.selected.rollbackTarget
+            onClicked: releaseDialog.review("rollback", manager.products.selectedId, qsTr("Restore the prior release?"),
+                qsTr("%1\n\nRestore this checkpoint, report, review setting and serving source as a new production release. The restored release must meet current rules, resources and signed promises.").arg(serviceOffice.selected.rollbackTarget), true, [])
+        }
+        Action { text: qsTr("Stop selected service"); enabled: panel.editable && manager.products.selectedId.length > 0 && serviceOffice.selected.trialPending !== true; onClicked: campaign.projectCancel(serviceOffice.selected.projectId) }
     }
     ColumnLayout {
         Layout.fillWidth: true
@@ -687,6 +731,42 @@ ColumnLayout {
             Label { width: fundingTerms.availableWidth; text: manager.funding.selectedRow.detail || ""; textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: panel.textSize }
         }
         onAccepted: manager.takeFinancing(manager.funding.selectedId)
+    }
+    Dialog {
+        id: releaseDialog
+        objectName: "serviceReleaseConfirmation"
+        font.pixelSize: panel.textSize
+        property string kind: ""
+        property string serviceId: ""
+        property string terms: ""
+        property bool confirmable: false
+        property var request: []
+        function review(action, service, heading, detail, canConfirm, inputs) {
+            kind = action
+            serviceId = service
+            title = heading
+            terms = detail
+            confirmable = canConfirm
+            request = inputs
+            open()
+        }
+        modal: true
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(680, Overlay.overlay.width - 36)
+        height: Math.min(440, Overlay.overlay.height - 60)
+        standardButtons: confirmable ? (Dialog.Ok | Dialog.Cancel) : Dialog.Close
+        contentItem: ScrollView {
+            id: releaseTerms
+            clip: true
+            contentWidth: availableWidth
+            Label { width: releaseTerms.availableWidth; text: releaseDialog.terms; textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: panel.textSize }
+        }
+        onAccepted: {
+            if (!confirmable) return
+            if (kind === "stage") manager.stageRollout(...request)
+            else if (kind === "rollback") manager.rollbackService(serviceId)
+            else manager.finishRollout(serviceId, kind === "promote")
+        }
     }
     Dialog {
         id: competitiveDialog
