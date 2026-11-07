@@ -58,6 +58,7 @@ void resources(const WorldState& world,const CompiledProgram& program,const Riva
     for (const auto& row:state.lab->evaluations) projects.insert(row.project_id);
     for (const auto& row:state.lab->generated) projects.insert(row.project_id);
     for (const auto& row:state.deployments->records) projects.insert(row.project_id);
+    if (state.deployments->risk) for (const auto& row:state.deployments->risk->responses) projects.insert(row.project_id);
     if (state.frontier) for (const auto& row:state.frontier->trials) projects.insert(row.project);
     if (state.succession) for (const auto& row:state.succession->plans) if(!row.project.empty()) projects.insert(row.project);
     if (state.capacity->projects.size()!=projects.size()) invalid("Rival work is not owned by actual research, training, evaluation or qualified serving");
@@ -84,6 +85,12 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
     std::set<std::tuple<std::string,std::string,std::string>> notice_ids;
     for (const auto& rival:state.companies) {
         const auto& authored=rival_definition(program,rival.definition_id);
+        const auto risk_origin=RandomStreams{rival_seed(world,authored)}.snapshot()[static_cast<std::size_t>(RandomStream::risk)];
+        if (rival.simulation.deployments && rival.simulation.deployments->risk) {
+            if (rival.simulation.deployments->risk->stream_origin!=risk_origin)
+                invalid("Rival deployment risk stream origin differs from its private seed");
+        } else if (rival.simulation.random[static_cast<std::size_t>(RandomStream::risk)]!=risk_origin)
+            invalid("A rival without deployment risk advanced its unowned stream");
         if (!rival.planning || !authored.planning) invalid("A planned company lost its author profile or continuation");
         const auto& plan=*rival.planning;const auto earliest=advance_days(world.campaign_start,authored.start_after);
         if (plan.decisions.size()>rival_decision_limit) invalid("Rival strategy decisions exceed their retention bound");

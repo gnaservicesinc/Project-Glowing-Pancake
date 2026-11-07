@@ -4,34 +4,13 @@ Updated 2026-11-07 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**Paused at the user's request on 2026-11-07.** Last completed, verified
-feature commit: `55f0c24` (synthetic data). Unfinished deployment incident work
-is preserved on `wip/deployment-risk-2026-11-07`; it is not a completed or
-build-verified feature. Resume that branch rather than starting over.
-
-The checkpoint includes the core header/module, optional content/save codecs,
-an appended eighth `risk` stream with legacy seven-stream preservation,
-registry/committed-news integration, bridge/QML controls and a focused test.
-Remaining integration: implement `validate_deployment_risk`, register the core
-sources in CMake, implement serving containment through `CapacityProject.disruptions`
-(zero work while reservations remain), add the `incident_response` finite-kind
-handling, wire commands and daily preparation in `simulation.cpp`, and initialize
-risk in player/rival openings. Rivals need ordinary alert acknowledgment and
-budgeted response behavior. No runtime content has been changed for this batch.
-Author the 48-cell rules and ordinary `deployment.incident_news` committed flow
-through the shared snapshot writer after core integration. Fix mutable discovery
-descriptions before save tests: historical committed causes must not change when
-claims are paid or response work progresses. Bound aggregated same-project/day
-news causes to the persisted 1,024-character contract. Then build incrementally,
-run focused checks and prepare the missing 100%/200% keyboard harness. No build
-or tests were run for this unfinished checkpoint.
-
-**Initial feature coverage. Latest delivery: verified synthetic training
-data in Lab. Next: authored deployment incident risk and response.**
+**Initial feature coverage is active.** Office Services now supports deployment
+incident risk and recovery. Next is commissioning consented Lab data and
+collecting opted-in product feedback.
 
 The original roadmap has **42 of 52 acceptance steps checked**. Its ten open
 steps are deferred human, balance, platform and release gates; they do not
-block current implementation. The coverage pass below has delivered 19
+block current implementation. The coverage pass below has delivered 20
 additional feature batches within earlier milestones. That batch count is
 separate from the 52 acceptance steps and does not imply complete design
 coverage. Completed milestones include
@@ -754,13 +733,20 @@ Reviewed content **0.23.0-dev.1**, generation **23**, validates all seven
 scenarios and 21 exact opening saves. The optimized build, 13 focused CTests
 and offscreen keyboard checks at 100%/200% text pass.
 
-**Next initial feature:** scenario-authored deployment incident risk, with
-visible risk bands, monthly risk-stream sampling, saved incident scheduling,
-actual consequences and recovery. The design's exposure, autonomy, task
-severity and control lookup is still missing; daily agent failures and local
-site hazards cover different mechanisms. Implement this core loop before
-expanding its event catalog. Commissioned/consented data delivery and opted-in
-product feedback remain additional source-acquisition gaps for the coverage pass.
+Office Services shows fictional risk bands for workflow and robotics agents,
+with separate reports for staged releases. Monthly draws use prior settled work,
+the scenario's risk lookup and a saved independent stream. A due incident stops
+the affected release's work, creates a customer compensation bill and pauses
+the morning for review. Other releases retain their resources. A paid
+investigation releases containment after actual staff and compute work.
+Replacing the release preserves its incident and bill. The Inbox records
+discovery and recovery on their actual dates. Content **0.24.0-dev.1**,
+generation **24**, validates seven scenarios and 21 exact prepared openings.
+
+**Next initial feature:** implement commissioned consented data with a paid
+delivery job, and let eligible buyers opt in to providing product feedback
+bounded by their settled work. Keep acquisition costs, rights and lineage
+visible in the Lab.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

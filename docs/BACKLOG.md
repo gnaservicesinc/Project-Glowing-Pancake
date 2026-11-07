@@ -1,10 +1,10 @@
 # Implementation backlog
 
 Baseline 1.2 with 2026-11-04 event clarification · **Initial feature implementation active**.
-Latest delivered batch: verified synthetic data. Next: deployment incident risk
-and response. The original acceptance checklist remains **42 of 52**; its ten
-open gates are deferred under the user's sequence. The coverage pass has
-delivered 19 additional feature batches within the earlier milestones.
+The latest batch adds deployment incident risk and recovery. Commissioned data
+and opted-in product feedback are next. The original acceptance checklist
+remains **42 of 52** with ten later gates. The coverage pass has delivered
+20 additional feature batches within the earlier milestones.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Feature dependencies are satisfied by implemented Mac behavior and focused checks. Native platform, packaging and device qualification stay deferred to release work under the user’s current instruction. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
 The dated batch notes below retain the earlier acceptance count and prerequisite
@@ -71,13 +71,14 @@ and workflow examples through a frozen teacher, independent report and
 external verification source. Paid compute/staff, retained fees, pause/resume,
 immutable output and shared diversity limits survive exact saves.
 
-**Next initial feature:** implement the scenario-authored monthly deployment
-risk lookup, visible bands, risk-stream sampling, saved scheduling and incident
-consequences/recovery required by SIMULATION_SPEC's evaluation/deployment
-section. Keep this core mechanism separate from the later event-content
-expansion. Commissioned/consented data delivery and opted-in product feedback
-are subsequent source-acquisition gaps; keep auditing actual controls against
-the design rather than treating checked milestone boxes as complete coverage.
+Office Services now reports authored deployment risk and shows discovered
+incidents. Monthly draws use settled work. Containment stops the affected
+release, compensation is booked as a payable, and paid investigation work
+restores service. Discovery and recovery use the shared news runtime.
+
+**Next initial feature:** commissioned consented data and opted-in product
+feedback. Give both paths finite delivery and visible rights, with feedback
+limited to actual work by consenting customers.
 
 ## M0 — Toolchain and platform proof
 

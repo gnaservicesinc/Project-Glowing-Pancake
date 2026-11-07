@@ -107,6 +107,7 @@ CapacityProject preview_rollout(const SimulationState& state,const StageServiceR
     require_service_state(state);
     const auto& definition=service(*state.deployments,request.candidate.service_id);
     const auto selection=deployment_detail::with_agent_controls(definition,request.candidate);
+    deployment_detail::require_containment_clear(*state.deployments,*state.lab,selection);
     const auto& current=product(*state.market,selection.service_id);
     const auto& incumbent=workload(*state.capacity,current.capacity_project_id);
     if (!current.available || incumbent.status!=ProjectStatus::active)
@@ -240,6 +241,7 @@ void validate_service_rollouts(const DeploymentState& state,const LabState& lab,
         comparable.stopped_on.reset();
         comparable.useful_tasks=0;
         comparable.completed_work=MilliCU{0};
+        comparable.disruptions.clear();
         if (expected!=comparable) invalid("Service trial differs from its qualified resource profile");
         if (row.promoted_release>0) {
             if (row.promoted_release<=row.incumbent_release || row.promoted_release>state.records.size() || staged.useful_tasks==0)

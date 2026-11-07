@@ -1,5 +1,6 @@
 #include "capacity_json.hpp"
 #include "history_blocks.hpp"
+#include <pgp/core/deployment_risk.hpp>
 
 #include <algorithm>
 #include <array>
@@ -8,7 +9,7 @@
 namespace pgp::persistence::detail {
 namespace {
 constexpr std::array<std::string_view,3> source_names{"leased","owned","imported"};
-constexpr std::array<std::string_view,6> project_names{"training","research","evaluation","serving","replication","data_generation"};
+constexpr std::array<std::string_view,7> project_names{"training","research","evaluation","serving","replication","data_generation","incident_response"};
 constexpr std::array<std::string_view,4> status_names{"active","completed","cancelled","paused"};
 template<class Enum,std::size_t Size> Json enum_json(Enum value,const std::array<std::string_view,Size>& names) {
     const auto index=static_cast<std::size_t>(value);
@@ -64,6 +65,10 @@ Json capacity_json(const core::CapacityState& state, bool packed) {
         if(!project.pauses.empty()) {
             projects.back()["pauses"]=Json::array();
             for(const auto& pause:project.pauses) projects.back()["pauses"].push_back({{"starts_on",pause.starts_on.value()},{"ends_before",optional_day(pause.ends_before)}});
+        }
+        if (!project.disruptions.empty()) {
+            projects.back()["disruptions"]=Json::array();
+            for (const auto& disruption:project.disruptions) projects.back()["disruptions"].push_back({{"starts_on",disruption.starts_on.value()},{"ends_before",optional_day(disruption.ends_before)}});
         }
         if (project.customer_inference) projects.back()["customer_inference"] = true;
     }
@@ -135,7 +140,7 @@ core::CapacityState parse_capacity(const Json& value, bool packed) {
     for (const auto& project:projects) {
         fields(project,"capacity/project",{"id","source_id","kind","status","starts_on","stopped_on","requested_milli_CU_per_day",
             "staff","minimum_memory_mib","interconnect","total_work_milli_CU","completed_work_milli_CU","tasks_per_day",
-            "inference_milli_CU_per_task","useful_tasks","monthly_support_cost_cents","cause"},{"customer_inference","pauses"});
+            "inference_milli_CU_per_task","useful_tasks","monthly_support_cost_cents","cause"},{"customer_inference","pauses","disruptions"});
         result.projects.push_back({label(project.at("id")),text(project.at("source_id"),"capacity/source_id",100,true),
             parse_enum<core::ProjectKind>(project.at("kind"),project_names),
             parse_enum<core::ProjectStatus>(project.at("status"),status_names),day(project.at("starts_on")),
@@ -147,6 +152,13 @@ core::CapacityState parse_capacity(const Json& value, bool packed) {
             core::Cents{i64(project.at("monthly_support_cost_cents"),"capacity/project/monthly_support_cost_cents")},
             label(project.at("cause")), project.contains("customer_inference") &&
                 boolean(project.at("customer_inference"),"capacity/customer_inference")});
+        if (project.contains("disruptions")) {
+            array(project.at("disruptions"),"capacity/project/disruptions",core::deployment_incident_limit);
+            for (const auto& row:project.at("disruptions")) {
+                fields(row,"capacity/project/disruption",{"starts_on","ends_before"});
+                result.projects.back().disruptions.push_back({day(row.at("starts_on")),parse_optional_day(row.at("ends_before"))});
+            }
+        }
         if(project.contains("pauses")) {
             array(project.at("pauses"),"capacity/project/pauses",128);
             for(const auto& row:project.at("pauses")) {

@@ -12,26 +12,14 @@
 namespace pgp::studio {
 namespace {
 runtime::Checkpoint start_fixture(const runtime::CompiledProgram& program, const ProbeFixture& fixture) {
-    auto state = runtime::begin_scenario(program, fixture.scenario_id, fixture.headquarters);
+    runtime::ScenarioOptions options;
+    options.seed = fixture.seed;
+    auto state = runtime::begin_scenario(program, fixture.scenario_id, fixture.headquarters, {}, options);
     if (!fixture.isolated_flow.empty()) {
         const auto* definition = program.collection.find(fixture.isolated_flow);
         if (!definition || !std::holds_alternative<content::FlowDefinition>(definition->data))
             throw std::invalid_argument("Select a flow from this collection to isolate.");
         state.world.enabled_flows = std::vector{fixture.isolated_flow};
-    }
-    if (fixture.seed) {
-        state.world.root_seed = *fixture.seed;
-        state.world.simulation.random = core::RandomStreams{*fixture.seed}.snapshot();
-        if (state.world.simulation.lab) state.world.simulation.lab->research_stream_origin=
-            state.world.simulation.random[static_cast<std::size_t>(core::RandomStream::research)];
-        if (state.world.simulation.civic) {
-            auto& simulation = state.world.simulation;
-            simulation.civic = core::opening_civic(simulation.civic->catalog, simulation.date,
-                simulation.random[static_cast<std::size_t>(core::RandomStream::politics)]);
-            core::prepare_civic(simulation);
-        }
-        const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find(fixture.scenario_id)->data);
-        if (scenario.competition) runtime::initialize_competition(state.world,program,scenario.rivals,scenario.competition);
     }
     return state;
 }

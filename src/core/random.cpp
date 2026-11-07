@@ -46,7 +46,7 @@ RandomStreams::RandomStreams(std::uint64_t root_seed) noexcept
 RandomStreams::RandomStreams(const RandomSnapshot& saved) noexcept
     : streams_{SplitMix64{saved[0]}, SplitMix64{saved[1]}, SplitMix64{saved[2]},
                SplitMix64{saved[3]}, SplitMix64{saved[4]}, SplitMix64{saved[5]},
-               SplitMix64{saved[6]}} {}
+               SplitMix64{saved[6]}, SplitMix64{saved[7]}} {}
 
 SplitMix64& RandomStreams::stream(RandomStream domain) {
     return streams_.at(static_cast<std::size_t>(domain));

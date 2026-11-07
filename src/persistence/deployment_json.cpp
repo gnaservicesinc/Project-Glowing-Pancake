@@ -1,6 +1,8 @@
 #include "deployment_json.hpp"
 #include "lab_profile_json.hpp"
 #include "agent_service_json.hpp"
+#include "deployment_risk_json.hpp"
+#include <pgp/content/deployment_risk.hpp>
 namespace pgp::persistence::detail {
 namespace {
 std::string label(const Json& j) { return text(j,"deployment/text",256); }
@@ -41,6 +43,7 @@ Json deployment_json(const core::DeploymentState& state) {
         if (p.monthly_migration.value() != 10000) catalog.back()["migration"] = p.monthly_migration.value();
         if (!row.required_research.empty()) catalog.back()["research"] = row.required_research;
         if (!row.workload_domain.empty()) catalog.back()["workload_domain"]=row.workload_domain;
+        if (row.incident_risk) catalog.back()["incident_risk"]=Json::parse(content::canonical_deployment_risk_rules(*row.incident_risk));
     }
     for (const auto& row:state.records) records.push_back(release(row));
     Json result{{"catalog",std::move(catalog)},{"records",std::move(records)}};
@@ -50,21 +53,23 @@ Json deployment_json(const core::DeploymentState& state) {
             {"candidate",release(row.candidate)},{"incumbent_release",row.incumbent_release},
             {"resolved_on",row.resolved_on?Json(row.resolved_on->value()):Json(nullptr)},{"promoted_release",row.promoted_release}});
     }
+    if (state.risk) result["risk"]=deployment_risk_json(*state.risk);
     return result;
 }
 core::DeploymentState parse_deployment(const Json& j) {
-    fields(j,"deployment",{"catalog","records"},{"rollouts"});
+    fields(j,"deployment",{"catalog","records"},{"rollouts","risk"});
     array(j.at("catalog"),"deployment/catalog",core::market_product_limit);
     array(j.at("records"),"deployment/records",core::lab_record_limit);
     core::DeploymentState state;
     for (const auto& row:j.at("catalog")) {
         fields(row,"deployment/service",{"id","project","price","available","source","starts","tasks","inference","staff","memory",
             "interconnect","support","cause","required","review_credit","review_staff","review_cost","review_tasks","preferences"},
-            {"required_recipe","channel","migration","research","workload_domain"});
+            {"required_recipe","channel","migration","research","workload_domain","incident_risk"});
         core::ServiceDefinition value;
         value.product={label(row.at("id")),label(row.at("project")),cents(row.at("price")),boolean(row.at("available"),"deployment/available")};
         if (row.contains("required_recipe")) value.required_recipe=text(row.at("required_recipe"),"deployment/required_recipe",64,true);
         if (row.contains("workload_domain")) value.workload_domain=text(row.at("workload_domain"),"deployment/workload_domain",64);
+        if (row.contains("incident_risk")) value.incident_risk=content::load_deployment_risk_rules(row.at("incident_risk").dump());
         if (row.contains("channel")) value.product.channel = core::parse_channel(label(row.at("channel")));
         if (row.contains("migration")) value.product.monthly_migration = core::BasisPoints{i64(row.at("migration"),"deployment/migration")};
         if (row.contains("research")) {
@@ -103,6 +108,7 @@ core::DeploymentState parse_deployment(const Json& j) {
                 u64(row.at("promoted_release"),"deployment/rollout/promotion",core::lab_record_limit)});
         }
     }
+    if (j.contains("risk")) state.risk=parse_deployment_risk(j.at("risk"));
     core::validate_service_catalog(state.catalog);
     return state;
 }

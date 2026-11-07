@@ -31,7 +31,7 @@ struct CapacitySource {
     MilliCUPerDay replica_reserved{0};
     auto operator<=>(const CapacitySource&) const = default;
 };
-enum class ProjectKind { training, research, evaluation, serving, replication, data_generation };
+enum class ProjectKind { training, research, evaluation, serving, replication, data_generation, incident_response };
 enum class ProjectStatus { active, completed, cancelled, paused };
 struct ProjectPause {
     OrdinalDay starts_on{0};
@@ -59,6 +59,9 @@ struct CapacityProject {
     std::string cause;
     bool customer_inference = false;
     std::vector<ProjectPause> pauses{};
+    // Incident containment keeps reservations and records zero work, while
+    // preserving ordinary cancellation and release history.
+    std::vector<ProjectPause> disruptions{};
     auto operator<=>(const CapacityProject&) const = default;
 };
 struct SourceDayUsage {
@@ -130,6 +133,7 @@ struct CapacityReport {
                                              std::uint32_t staff, OrdinalDay starts_on = OrdinalDay{0},
                                              std::string owner = "company.player");
 [[nodiscard]] CapacityReport capacity_report(const CapacityState& state);
+[[nodiscard]] bool project_disrupted(const CapacityProject&,OrdinalDay);
 void validate_capacity(const CapacityState& state);
 void reserve_project(CapacityState& state, OrdinalDay day, CapacityProject project);
 void add_staff_capacity(CapacityState& state, OrdinalDay day, std::string id, std::uint32_t people);

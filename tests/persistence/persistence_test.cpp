@@ -102,6 +102,18 @@ void codec(const runtime::CompiledProgram& compiled,const runtime::Checkpoint& c
           "Autosave generation is explicit envelope metadata");
     check(!bytes.empty()&&bytes.size()<25U*1024U*1024U,"Engineering save below configured size cap");
     auto value=Json::parse(bytes);
+    check(value["checkpoint"]["world"]["simulation"]["random_streams"].size()==7 &&
+          !value["checkpoint"]["world"]["simulation"]["random_streams"].contains("risk"),
+          "Legacy saves retain exactly seven random names and canonical bytes");
+    check(loaded.checkpoint.world.simulation.random[static_cast<std::size_t>(core::RandomStream::risk)]==
+          core::RandomStreams{checkpoint.world.root_seed}.snapshot()[static_cast<std::size_t>(core::RandomStream::risk)],
+          "Absent legacy risk stream reconstructs its company seed without a draw");
+    auto stray_risk=value;
+    stray_risk["checkpoint"]["world"]["simulation"]["random_streams"]["risk"]=0;
+    rejects([&]{(void)decode_save(compiled,rehash(stray_risk));},"invalid_state");
+    auto unowned_risk=checkpoint;
+    ++unowned_risk.world.simulation.random[static_cast<std::size_t>(core::RandomStream::risk)];
+    rejects([&]{(void)encode_save(compiled,unowned_risk);},"invalid_state");
     auto corrupt=value;corrupt["checkpoint"]["world"]["simulation"]["cash_cents"]=200000;
     rejects([&]{(void)decode_save(compiled,corrupt.dump());},"integrity");
     auto future=value;future["identity"]["save_format"]=2;
@@ -282,6 +294,7 @@ void settings_and_ring(const runtime::CompiledProgram& compiled,const runtime::C
     rejects([&]{(void)ring.write(compiled,checkpoint,AutosaveReason::before_irreversible_commitment);});
     check(read_bounded(ring_directory/"autosave-1.pgpsave")=="damaged newest","Corrupt autosave preserved on failed replacement");
     auto prepared=checkpoint;prepared.world.simulation=core::Simulation{core::Cents{100000}}.checkpoint();
+    prepared.world.simulation.random=core::RandomStreams{prepared.world.root_seed}.snapshot();
     AutosaveRing monthly{directory/"monthly"};
     check(monthly.write(compiled,prepared,AutosaveReason::monthly_boundary).has_value(),"Prepared first morning supports monthly autosave");
     auto final_state=prepared;
@@ -297,6 +310,7 @@ void settings_and_ring(const runtime::CompiledProgram& compiled,const runtime::C
           "Campaign-end autosave accepts a valid scenario ending midway through a month");
     rejects([&]{(void)monthly.write(compiled,prepared,AutosaveReason::campaign_end);},"autosave_boundary");
     core::SimulationState january_state;
+    january_state.random=prepared.world.simulation.random;
     january_state.date=core::to_ordinal({2014,1,31});january_state.cash=core::Cents{100000};
     core::Simulation january{january_state};
     const auto due_reservation=january.submit({january.snapshot()->revision,core::ReserveFunds{"First-morning delivery",core::Cents{1000},false}});

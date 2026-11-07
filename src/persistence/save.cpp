@@ -1,6 +1,7 @@
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/core/build_identity.hpp>
+#include <pgp/runtime/competition.hpp>
 #include "json_support.hpp"
 #include "accounts_json.hpp"
 #include "capacity_json.hpp"
@@ -162,7 +163,8 @@ Json simulation_json(const core::SimulationState& state, bool packed) {
     for (const auto& receipt:state.receipts) receipts.push(packed ? packed_receipt(receipt, cursor) : Json{{"id",receipt.id},{"revision",receipt.revision},
         {"day",receipt.day.value()},{"cause",receipt.cause},{"reservation_id",receipt.reservation_id},
         {"cash_delta_cents",receipt.cash_delta.value()}});
-    for (std::size_t index=0;index<core::stream_count;++index) random[core::stream_names[index]]=state.random[index];
+    const auto streams=state.deployments && state.deployments->risk?core::stream_count:static_cast<std::size_t>(core::RandomStream::risk);
+    for (std::size_t index=0;index<streams;++index) random[core::stream_names[index]]=state.random[index];
     Json result{{"revision",state.revision},{"date",state.date.value()},{"end_date",state.end_date.value()},
         {"phase",enumeration(state.phase,phase_names)},{"paused",state.paused},{"cash_cents",state.cash.value()},
         {"next_reservation_id",state.next_reservation_id},{"next_receipt_id",state.next_receipt_id},
@@ -195,7 +197,7 @@ Json simulation_json(const core::SimulationState& state, bool packed) {
 }
 // The typed readers enforce field and storage bounds. Deep reconciliation
 // runs after all world and runtime evidence has been restored.
-core::SimulationState parse_simulation(const Json& value, bool packed = false) {
+core::SimulationState parse_simulation(const Json& value, bool packed = false, std::uint64_t seed = 0) {
     if (!value.is_object()) detail::invalid("simulation","Expected object");
     Json prior_shape=Json::object();
     for (const auto& [name,ignored]:value.items()) {
@@ -209,6 +211,7 @@ core::SimulationState parse_simulation(const Json& value, bool packed = false) {
         "next_reservation_id","next_receipt_id","reservations","opening_actions","opening_cursor",
         "pending_choice","receipts","random_streams"});
     core::SimulationState result;
+    result.random=core::RandomStreams{seed}.snapshot();
     result.revision=detail::u64(value.at("revision"),"revision");
     result.date=OrdinalDay{detail::i64(value.at("date"),"date")};
     result.end_date=OrdinalDay{detail::i64(value.at("end_date"),"end_date")};
@@ -322,8 +325,12 @@ core::SimulationState parse_simulation(const Json& value, bool packed = false) {
             detail::u64(receipt.at("reservation_id"),"reservation_id"),Cents{detail::i64(receipt.at("cash_delta_cents"),"cash_delta_cents")}});
     });
     const auto& random=value.at("random_streams");
-    if (!random.is_object()||random.size()!=core::stream_count) detail::invalid("random_streams","Expected all seven named streams");
-    for (std::size_t index=0;index<core::stream_count;++index) {
+    detail::fields(random,"random_streams",{"research","rivals","markets","geography","politics","hazards","narrative"},{"risk"});
+    const bool risk_enabled=result.deployments && result.deployments->risk.has_value();
+    if (random.contains("risk")!=risk_enabled)
+        detail::invalid("random_streams","Deployment risk requires its explicit owned stream; legacy states retain seven streams");
+    const auto streams=risk_enabled?core::stream_count:static_cast<std::size_t>(core::RandomStream::risk);
+    for (std::size_t index=0;index<streams;++index) {
         const auto name=core::stream_names[index];
         if (!random.contains(name)) detail::invalid("random_streams","A named stream is missing");
         result.random[index]=detail::u64(random.at(name),"random_stream");
@@ -453,7 +460,7 @@ Json competition_json(const CompetitionState& state, bool packed_world) {
     }
     return result;
 }
-CompetitionState parse_competition(const Json& value, bool packed_world) {
+CompetitionState parse_competition(const Json& value, bool packed_world, const CompiledProgram& program, std::uint64_t root_seed) {
     detail::fields(value,"competition",{"companies","notices"},{"setup","releases","adoptions","offers","acquisitions","wholesale"}); CompetitionState result;
     if (value.contains("acquisitions")) result.acquisitions=detail::parse_acquisitions(value.at("acquisitions"));
     if (value.contains("offers")) result.offers=detail::parse_competitive_offers(value.at("offers"));
@@ -489,11 +496,14 @@ CompetitionState parse_competition(const Json& value, bool packed_world) {
         if (!format.empty() && !packed && format!="history-rows-v1" && format!="history-rows-v2")
             detail::invalid("competition/history","Unsupported history storage format; original save was preserved");
         const auto& source = row.at("simulation");
-        auto simulation = format.empty() || packed ? parse_simulation(source, packed) :
-            parse_simulation(detail::expand_competition_history(source, history_budget, format=="history-rows-v2"));
+        const auto definition_id=detail::text(row.at("definition_id"),"competition/definition_id",64);
+        const auto& definition=rival_definition(program,definition_id);
+        const auto seed=result.setup?root_seed^definition.seed:definition.seed;
+        auto simulation = format.empty() || packed ? parse_simulation(source, packed, seed) :
+            parse_simulation(detail::expand_competition_history(source, history_budget, format=="history-rows-v2"), false, seed);
         if (packed && (!row.contains("planning") || !archive_history(simulation)))
             detail::invalid("competition/history", "Packed rival history requires a planned company with settled days");
-        RivalCompany company{detail::text(row.at("definition_id"),"competition/definition_id",64),std::move(simulation),
+        RivalCompany company{definition_id,std::move(simulation),
             detail::boolean(row.at("attempted"),"competition/attempted"),parse_day(row.at("warned_on")),parse_day(row.at("published_on"))};
         if (row.contains("planning")) {
             const auto& plan=row.at("planning");detail::fields(plan,"competition/plan",{"entered_on","next_review","decisions"});
@@ -571,6 +581,7 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
         return entry.second.default_value.has_value();
     })) detail::invalid("variables","Registered variables require an explicit value collection");
     WorldState result;
+    result.root_seed=detail::u64(value.at("root_seed"),"root_seed");
     if (value.contains("difficulty")) result.difficulty=detail::text(value.at("difficulty"),"world/difficulty",128);
     if (value.contains("background")) result.background=detail::text(value.at("background"),"world/background",128);
     if (value.contains("identity")) {
@@ -591,7 +602,7 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
     if (value.contains("competition_mode")) {
         const auto mode=detail::text(value.at("competition_mode"),"competition_mode",16);
         if (mode=="bounded" || mode=="planned") {
-            result.competition=parse_competition(value.at("competition"), packed);
+            result.competition=parse_competition(value.at("competition"), packed, program, result.root_seed);
             if ((mode=="planned")!=result.competition->setup.has_value()) detail::invalid("competition","Competition mode differs from its authored planner setup");
         }
         else if (mode!="foundation" || !value.at("competition").is_null()) detail::invalid("competition","Competition mode differs from its state");
@@ -599,20 +610,19 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
     if(!format.empty()) {
         if(!result.objectives || (format != "history-rows-v2" && !packed))
             detail::invalid("world/simulation_storage","Unsupported compact century history");
-        if (packed) result.simulation = parse_simulation(value.at("simulation"), true);
+        if (packed) result.simulation = parse_simulation(value.at("simulation"), true, result.root_seed);
         else {
             detail::CompetitionHistoryBudget history_budget;
-            result.simulation=parse_simulation(detail::expand_competition_history(std::move(value.at("simulation")), history_budget, true));
+            result.simulation=parse_simulation(detail::expand_competition_history(std::move(value.at("simulation")), history_budget, true), false, result.root_seed);
         }
         if(!archive_history(result.simulation))
             detail::invalid("world/simulation_storage","The compact history lacks the required settled days");
-    } else result.simulation=parse_simulation(value.at("simulation"));
+    } else result.simulation=parse_simulation(value.at("simulation"), false, result.root_seed);
     result.company_id=detail::text(value.at("company_id"),"company_id",128);
     result.world_id=detail::text(value.at("world_id"),"world_id",128);
     result.state_id=detail::text(value.at("state_id"),"state_id",128);
     result.campaign_start=OrdinalDay{detail::i64(value.at("campaign_start"),"campaign_start")};
     result.scope_created=OrdinalDay{detail::i64(value.at("scope_created"),"scope_created")};
-    result.root_seed=detail::u64(value.at("root_seed"),"root_seed");
     if (!value.at("enabled_flows").is_null()) result.enabled_flows=parse_strings(value.at("enabled_flows"),maximum_activations);
     result.counterparty_cash=Cents{detail::i64(value.at("counterparty_cash_cents"),"counterparty_cash_cents")};
     result.decisions=parse_strings(value.at("decisions"));result.negotiations=parse_strings(value.at("negotiations"));

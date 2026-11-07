@@ -147,7 +147,7 @@ OperationResult Campaign::operate(
     if (core::required_succession_notice(after.world.simulation)) pause_notice="A leadership deadline or handover needs review in Leadership. Its dated plan and company obligations are saved.";
     if (runtime::required_public_case(after.world)) pause_notice="An institutional notice needs review in Institutions. Its response deadline is saved.";
     return {std::move(outcome), {}, liquidity_halt || core::required_management_notice(after.world.simulation) ||
-        core::required_site_alert(after.world.simulation) || core::required_governance_notice(after.world.simulation) || pause_notice.has_value(),std::move(pause_notice)};
+        core::required_deployment_incident(after.world.simulation) || core::required_site_alert(after.world.simulation) || core::required_governance_notice(after.world.simulation) || pause_notice.has_value(),std::move(pause_notice)};
 }
 OperationResult Campaign::prepare_opening(std::uint64_t expected_revision) {
     auto result = operate([&](auto& candidate) { return candidate.prepare_opening(expected_revision); }, false);
@@ -200,6 +200,7 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::NegotiateExecutiveDispute>(command.action) ||
         std::holds_alternative<core::RelinquishInstitutionalMandate>(command.action) ||
         std::holds_alternative<core::DirectRegionalProcurement>(command.action) ||
+        std::holds_alternative<core::RespondDeploymentIncident>(command.action) ||
         std::holds_alternative<core::BuySiteProtection>(command.action) ||
         std::holds_alternative<core::InsureSite>(command.action) ||
         std::holds_alternative<core::ReplicateService>(command.action) ||

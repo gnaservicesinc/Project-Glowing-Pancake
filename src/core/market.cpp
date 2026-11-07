@@ -37,8 +37,9 @@ const CapacityProject& project(const CapacityState& state, const MarketProduct& 
     if (row.kind != ProjectKind::serving) invalid("Market product requires a serving capacity project");
     return row;
 }
-bool available(const MarketProduct& product, const CapacityState& capacity) {
-    return product.available && project(capacity, product).status == ProjectStatus::active;
+bool available(const MarketProduct& product, const CapacityState& capacity, OrdinalDay day) {
+    const auto& work=project(capacity,product);
+    return product.available && work.status==ProjectStatus::active && !project_disrupted(work,day);
 }
 const MarketPreference* preference(const MarketSegment& segment, std::string_view product_id) {
     const auto found = std::find_if(segment.preferences.begin(), segment.preferences.end(),
@@ -1078,7 +1079,7 @@ void start_contract(MarketState& state, const CapacityState& capacity, OrdinalDa
         require_day(next, day);
         const auto found = std::find_if(next.contracts.begin(), next.contracts.end(), [&](const auto& row) { return row.id == contract_id; });
         if (found == next.contracts.end() || found->status != ContractStatus::pending || day > found->start_by ||
-            !available(find_id(next.products, found->product_id), capacity))
+            !available(find_id(next.products, found->product_id), capacity,day))
             invalid("Contract cannot start without an eligible available product before its deadline");
         found->started_on = day; found->status = ContractStatus::active;
     });
@@ -1184,7 +1185,7 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
         if (profile.status != ProjectStatus::active) continue;
         const auto contracts = requested_contracts[row.id];
         if (contracts > profile.tasks_per_day) invalid("Contract tasks exceed the bound serving profile");
-        const bool enabled = available(row, pool);
+        const bool enabled = available(row, pool,day);
         full_requests.push_back({profile.id, enabled ? contracts : 0, enabled ? profile.tasks_per_day - contracts : 0});
         const auto* trial=enabled?market_trial(next,row.id,day):nullptr;
         if (trial && std::ranges::any_of(next.segments,[&](const auto& segment) {
@@ -1194,8 +1195,10 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
                 (!rule || (rule->eligible && rule->trial_eligible)) && (trial->weight_audience.empty() || trial->weight_audience==segment.id);
         })) {
             const auto& candidate=find_id(pool.projects,trial->project_id);
-            full_requests.push_back({candidate.id,0,candidate.tasks_per_day});
-            trials.push_back({trial});
+            if (!project_disrupted(candidate,day)) {
+                full_requests.push_back({candidate.id,0,candidate.tasks_per_day});
+                trials.push_back({trial});
+            }
         }
     }
     const auto plan = preview_capacity_day(pool, day, full_requests,validate_io);
@@ -1259,7 +1262,7 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
             if (!pref.eligible || !market_access(product_row, row) || product_row.price_per_task > pref.willingness_to_pay) continue;
             const auto& profile = project(pool, product_row);
             const auto audience=audiences.find(product_row.id);
-            const bool primary=(!rule || rule->eligible) && available(product_row,pool) && market_detail::local_hardware_fits(profile,row) &&
+            const bool primary=(!rule || rule->eligible) && available(product_row,pool,day) && market_detail::local_hardware_fits(profile,row) &&
                 (audience==audiences.end() || audience->second==row.id);
             const auto* copy=primary?nullptr:market_detail::retained_installation(next,pool,product_row,row,rule);
             if (!primary && !copy) continue;

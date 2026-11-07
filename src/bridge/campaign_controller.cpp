@@ -44,6 +44,8 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
         for(const auto& r:state.lab->evaluations) lab_projects.insert(r.project_id);
         for(const auto& r:state.lab->generated) lab_projects.insert(r.project_id);
     }
+    if(state.deployments && state.deployments->risk)
+        for(const auto& response:state.deployments->risk->responses) lab_projects.insert(response.project_id);
     if(state.management && state.management->governance) for(const auto& d:state.management->governance->disputes)
         if(!d.resolved_on && !d.review_project.empty()) protected_projects.insert(d.review_project);
     for (const auto& project : state.capacity->projects) {
@@ -55,6 +57,7 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
         case core::ProjectKind::serving: kind = QStringLiteral("Serving"); break;
         case core::ProjectKind::replication: kind = QStringLiteral("Replica synchronization"); break;
         case core::ProjectKind::data_generation: kind = QStringLiteral("Generate and verify data"); break;
+        case core::ProjectKind::incident_response: kind = QStringLiteral("Deployment incident response"); break;
         }
         QString status;
         switch (project.status) {
@@ -431,6 +434,7 @@ QString CampaignController::requiredKind() const {
     if (snapshot_->checkpoint.world.simulation.pending_choice) return QStringLiteral("core");
     if (waitingPresentation()) return QStringLiteral("content");
     if (needsWarning()) return QStringLiteral("liquidity");
+    if (core::required_deployment_incident(snapshot_->checkpoint.world.simulation)) return QStringLiteral("deploymentIncident");
     if (core::required_management_notice(snapshot_->checkpoint.world.simulation)) return QStringLiteral("management");
     if (core::required_site_alert(snapshot_->checkpoint.world.simulation)) return QStringLiteral("site");
     if (core::required_succession_notice(snapshot_->checkpoint.world.simulation)) return QStringLiteral("leadership");
@@ -449,6 +453,10 @@ QString CampaignController::requiredTitle() const {
     if (kind == QStringLiteral("core")) return QStringLiteral("Delivery decision");
     if (kind == QStringLiteral("content")) return presentation_heading(*waitingPresentation(),program_.collection);
     if (kind == QStringLiteral("liquidity")) return QStringLiteral("Unpaid obligations need a response");
+    if (kind == QStringLiteral("deploymentIncident")) {
+        const auto* alert=core::required_deployment_incident(snapshot_->checkpoint.world.simulation);
+        return alert->recovery?tr("Service recovery completed"):tr("Deployment incident needs attention");
+    }
     if (kind == QStringLiteral("management")) {
         const auto& notices=snapshot_->checkpoint.world.simulation.management->notices;
         const auto next=std::ranges::find_if(notices,[](const auto& row) { return row.required && !row.acknowledged; });
@@ -464,6 +472,11 @@ QString CampaignController::requiredText() const {
     const auto kind = requiredKind();
     if(kind==QStringLiteral("objective")) return objectives_->breachText();
     if(kind==QStringLiteral("leadership")) return leadership_->noticeText();
+    if(kind==QStringLiteral("deploymentIncident")) {
+        const auto& state=snapshot_->checkpoint.world.simulation;
+        return text(core::deployment_incident_description(state,*core::required_deployment_incident(state)))+
+            tr("\n\nReview the affected service in Office → Services. Acknowledgment records that you read this alert; it does not pay compensation or repair the service.");
+    }
     if (kind==QStringLiteral("site")) return text(core::required_site_alert(snapshot_->checkpoint.world.simulation)->cause);
     if (kind==QStringLiteral("institution")) return institutions_->requiredCaseText();
     if (kind==QStringLiteral("executive") || kind==QStringLiteral("governance")) {
@@ -560,6 +573,11 @@ void CampaignController::advanceTo(QString kind) {
 void CampaignController::acknowledgeManagement() {
     if (!snapshot_ || !snapshot_->checkpoint.world.simulation.management) return;
     for (const auto& n:snapshot_->checkpoint.world.simulation.management->notices) if (n.required && !n.acknowledged) {submit(core::AcknowledgeManagementNotice{n.id});return;}
+}
+void CampaignController::acknowledgeDeploymentIncident() {
+    if (!snapshot_) return;
+    if (const auto* alert=core::required_deployment_incident(snapshot_->checkpoint.world.simulation))
+        submit(core::AcknowledgeDeploymentIncident{alert->id});
 }
 void CampaignController::acknowledgeSiteAlert() {
     if (snapshot_) if (const auto* alert=core::required_site_alert(snapshot_->checkpoint.world.simulation))

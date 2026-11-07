@@ -90,13 +90,13 @@
     }
   ],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "4c17bf9013351a306c4c146e667c9af60746ac755941e14686ec97b1df17b3be",
+  "collection_hash": "78ec6d8c5aaeb2b26ed110f3dfd66c5ded519f875bcbb4c11167012d32c3e959",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.23.0-dev.1",
+  "content_version": "0.24.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -711,6 +711,12 @@
       "semantic_hash": "df7ac5015ecd35bc39bb25c986b8e0610b9ecdfb4aa0555447ce43bf0f16b5f6"
     },
     {
+      "id": "deployment.incident_news",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "8f4ddfaaf76b4659a1bae36645a75824f86bfab7fd9210aad73ab3fd9c957ddf"
+    },
+    {
       "id": "frontier.agi_notice",
       "kind": "flow",
       "revision": 1,
@@ -743,14 +749,14 @@
     {
       "id": "market.century",
       "kind": "regional_markets",
-      "revision": 3,
-      "semantic_hash": "d2eeb1d88918b8b53863d5532ee688a8ce5ce88496837477b39343814acf6ffd"
+      "revision": 4,
+      "semantic_hash": "2d4ef83b6c473e7c1eb8e4016d765fcc9b7d4bf994af3dcb88ed7f652ad8bc74"
     },
     {
       "id": "market.global_launch",
       "kind": "regional_markets",
-      "revision": 3,
-      "semantic_hash": "efb0db00dc119c8df422b868c4df3e9d03a48cc14f0586b4b0c10db18bfc8796"
+      "revision": 4,
+      "semantic_hash": "aecf4415e6bb69707565853399dba70bf10079683d2e8466bc3cec2aa8c70a19"
     },
     {
       "id": "operations.site_outcome",
@@ -1127,44 +1133,44 @@
     {
       "id": "scenario.century_frontier",
       "kind": "scenario",
-      "revision": 13,
-      "semantic_hash": "4509a9b6ab123c2fa787a2d6d004c3219b2a8ae33ab246d91f96b054ab23c75c"
+      "revision": 14,
+      "semantic_hash": "cc5a9507d32f00ffec3c0623680fb321a4308a3a76b1db52d5f21fdaf83992df"
     },
     {
       "id": "scenario.century_plateau",
       "kind": "scenario",
-      "revision": 13,
-      "semantic_hash": "d91d6714c099d0c86a1f55d525934e690c97072fd2914827dfdcc314af5dc207"
+      "revision": 14,
+      "semantic_hash": "50f34316bbae6e3fa08ae172871164d2a05b5732da92144a4f1c5eb7307a7b6a"
     },
     {
       "id": "scenario.first_playable",
       "kind": "scenario",
-      "revision": 16,
-      "semantic_hash": "bbbd1afcf36866ad34c87bed3eb1070e5992cdfe1bc48a62caecdeb8bd826140"
+      "revision": 17,
+      "semantic_hash": "e9353cb15546632400c287b91ee4f47f27ed011f7ce82907c5499a91e03ff25b"
     },
     {
       "id": "scenario.world_competition",
       "kind": "scenario",
-      "revision": 17,
-      "semantic_hash": "8b236c9fe48fdb05d52c48a20ea7430b4baa5eb386e1007d3e7793b183de6637"
+      "revision": 18,
+      "semantic_hash": "9e7399bd39d50987030e97d5f9193c3c4737b638b20dd39d5af1aa0e3e0a2cca"
     },
     {
       "id": "scenario.world_expanded",
       "kind": "scenario",
-      "revision": 17,
-      "semantic_hash": "5c49738cad194d29c2f818c9bbf4e90c9702761308dcf7adb827cda37eb8e3c4"
+      "revision": 18,
+      "semantic_hash": "dfd7324fdabd1580a90c995c4840bcaa911d74fff223a4446e71bfec87758a3f"
     },
     {
       "id": "scenario.world_forgiving",
       "kind": "scenario",
-      "revision": 17,
-      "semantic_hash": "078ec235489e3b4f6aa9af47d42113899fddc9d1d24144a2267d4d5b686c3cd7"
+      "revision": 18,
+      "semantic_hash": "9b454beaa750e82b0ec88d3de6b1774697b4410c83923de7ddfa6172900aa5dd"
     },
     {
       "id": "scenario.world_reduced",
       "kind": "scenario",
-      "revision": 17,
-      "semantic_hash": "cf8edf0cf3398574f794cad58723f8c151e753a00be0317ad2b11b26526955ff"
+      "revision": 18,
+      "semantic_hash": "32d3be5c95c8c9e35b9e9bc7e6fbbd3d8f670a6e89509ed7ab17b71ac26e23a8"
     },
     {
       "id": "slice.evaluation_finding",
@@ -1276,8 +1282,8 @@
     }
   ],
   "format": 1,
-  "generation": 23,
-  "messages_hash": "360ebaba734be6c5ec4bdb3fcabf30ebde03e7cc30c0ead5787f2603bc82cbd3",
+  "generation": 24,
+  "messages_hash": "37b8f24f1ab1c613b4a154e6d141ca193a345ba13cede56720d37600d8880f4f",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
     "scenario.century_frontier": [
@@ -1400,7 +1406,8 @@
       "century.infrastructure_community.renewal_review",
       "century.product_customer.cedar_quarter",
       "century.product_customer.district_rollout",
-      "century.product_customer.harbormark_cycle"
+      "century.product_customer.harbormark_cycle",
+      "deployment.incident_news"
     ],
     "scenario.century_plateau": [
       "slice.research_milestone",
@@ -1522,7 +1529,8 @@
       "century.infrastructure_community.renewal_review",
       "century.product_customer.cedar_quarter",
       "century.product_customer.district_rollout",
-      "century.product_customer.harbormark_cycle"
+      "century.product_customer.harbormark_cycle",
+      "deployment.incident_news"
     ],
     "scenario.first_playable": [
       "slice.research_milestone",
@@ -1540,7 +1548,8 @@
       "society.forum_briefing",
       "authority.public_review",
       "authority.monthly_review",
-      "authority.executive_disclosure"
+      "authority.executive_disclosure",
+      "deployment.incident_news"
     ],
     "scenario.world_competition": [
       "slice.research_milestone",
@@ -1558,7 +1567,8 @@
       "society.forum_briefing",
       "authority.public_review",
       "authority.monthly_review",
-      "authority.executive_disclosure"
+      "authority.executive_disclosure",
+      "deployment.incident_news"
     ],
     "scenario.world_expanded": [
       "slice.research_milestone",
@@ -1576,7 +1586,8 @@
       "society.forum_briefing",
       "authority.public_review",
       "authority.monthly_review",
-      "authority.executive_disclosure"
+      "authority.executive_disclosure",
+      "deployment.incident_news"
     ],
     "scenario.world_forgiving": [
       "slice.research_milestone",
@@ -1594,7 +1605,8 @@
       "society.forum_briefing",
       "authority.public_review",
       "authority.monthly_review",
-      "authority.executive_disclosure"
+      "authority.executive_disclosure",
+      "deployment.incident_news"
     ],
     "scenario.world_reduced": [
       "slice.research_milestone",
@@ -1612,8 +1624,9 @@
       "society.forum_briefing",
       "authority.public_review",
       "authority.monthly_review",
-      "authority.executive_disclosure"
+      "authority.executive_disclosure",
+      "deployment.incident_news"
     ]
   },
-  "source_hash": "52f7ba732c9491ac279c237decbb2fd657aa62089a61eee3dc5dc53380f28764"
+  "source_hash": "e75a4b1bad71d4ede9cc2edfd312edee3fd029df3d5306941c8c5d7fe3b51a61"
 }

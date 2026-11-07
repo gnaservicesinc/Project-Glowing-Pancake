@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.23.0-dev.1",
+  "content_version": "0.24.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -6762,6 +6762,41 @@
       }
     },
     {
+      "entry_node": "news",
+      "id": "deployment.incident_news",
+      "kind": "flow",
+      "lifecycle": {
+        "cooldown_days": 0,
+        "max_occurrences_per_scope": 4096,
+        "mode": "recurring",
+        "occurrence_scope": "company",
+        "repeat_policy": "after_cooldown_while_eligible"
+      },
+      "nodes": {
+        "end": {
+          "kind": "end"
+        },
+        "news": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "deployment.incident.news"
+        }
+      },
+      "on_committed": "deployment.incident_outcome",
+      "revision": 1,
+      "scope": "company",
+      "tags": [
+        "base_event",
+        "deployment"
+      ],
+      "trigger": {
+        "fact": "company.is_operating",
+        "op": "eq",
+        "unit": "boolean",
+        "value": true
+      }
+    },
+    {
       "entry_node": "briefing",
       "id": "frontier.agi_notice",
       "kind": "flow",
@@ -8375,6 +8410,406 @@
             "capacity_project_id": "serving.robotics_agent",
             "channel": "agent",
             "id": "product.robotics_agent",
+            "incident_risk": {
+              "assumptions": "Customer deployments can affect physical operations.",
+              "compensation_cents": 800000,
+              "control_threshold_bp": 7300,
+              "domain": "autonomous_workflows",
+              "elevated_from_bp": 100,
+              "exposure": "physical",
+              "high_from_bp": 450,
+              "large_daily_tasks": 600,
+              "lookup": [
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 25,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 10,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 8,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 3,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 325,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 130,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 113,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 45,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 115,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 46,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 40,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 16,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 415,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 166,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 145,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 58,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 335,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 134,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 117,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 46,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 635,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 254,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 222,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 88,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 205,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 82,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 71,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 28,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 505,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 202,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 176,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 70,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 295,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 118,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 103,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 41,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 595,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 238,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 208,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 83,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 515,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 206,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 180,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 72,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 815,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 326,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 285,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 114,
+                  "staged": true,
+                  "supervised": true
+                }
+              ],
+              "response_fee_cents": 200000,
+              "response_staff_days": 6,
+              "response_work_milli_CU": 200000,
+              "severity": "critical"
+            },
             "inference_milli_CU_per_task": 20,
             "interconnect": "general",
             "minimum_memory_mib": 0,
@@ -8474,6 +8909,406 @@
             "capacity_project_id": "serving.workflow_agent",
             "channel": "agent",
             "id": "product.workflow_agent",
+            "incident_risk": {
+              "assumptions": "Customer deployments can affect connected business workflows.",
+              "compensation_cents": 350000,
+              "control_threshold_bp": 7000,
+              "domain": "autonomous_workflows",
+              "elevated_from_bp": 100,
+              "exposure": "public",
+              "high_from_bp": 450,
+              "large_daily_tasks": 800,
+              "lookup": [
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 15,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 6,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 5,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 2,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 235,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 94,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 82,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 32,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 105,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 42,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 36,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 14,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 325,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 130,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 113,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 45,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 325,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 130,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 113,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 45,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 545,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 218,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 190,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 76,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 195,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 78,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 68,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 27,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 415,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 166,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 145,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 58,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 285,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 114,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 99,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 39,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 505,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 202,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 176,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 70,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 505,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 202,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 176,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 70,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 725,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 290,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 253,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 101,
+                  "staged": true,
+                  "supervised": true
+                }
+              ],
+              "response_fee_cents": 90000,
+              "response_staff_days": 4,
+              "response_work_milli_CU": 100000,
+              "severity": "consequential"
+            },
             "inference_milli_CU_per_task": 20,
             "interconnect": "general",
             "minimum_memory_mib": 0,
@@ -10777,7 +11612,7 @@
           "name": "Africa and Middle East"
         }
       ],
-      "revision": 3,
+      "revision": 4,
       "wholesale": [
         {
           "availability_bp": 9500,
@@ -11037,6 +11872,406 @@
             "capacity_project_id": "serving.robotics_agent",
             "channel": "agent",
             "id": "product.robotics_agent",
+            "incident_risk": {
+              "assumptions": "Customer deployments can affect physical operations.",
+              "compensation_cents": 800000,
+              "control_threshold_bp": 7300,
+              "domain": "autonomous_workflows",
+              "elevated_from_bp": 100,
+              "exposure": "physical",
+              "high_from_bp": 450,
+              "large_daily_tasks": 600,
+              "lookup": [
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 25,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 10,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 8,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 3,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 325,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 130,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 113,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 45,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 115,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 46,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 40,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 16,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 415,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 166,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 145,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 58,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 335,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 134,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 117,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 46,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 635,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 254,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 222,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 88,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 205,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 82,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 71,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 28,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 505,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 202,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 176,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 70,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 295,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 118,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 103,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 41,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 595,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 238,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 208,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 83,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 515,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 206,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 180,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 72,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 815,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 326,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 285,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 114,
+                  "staged": true,
+                  "supervised": true
+                }
+              ],
+              "response_fee_cents": 200000,
+              "response_staff_days": 6,
+              "response_work_milli_CU": 200000,
+              "severity": "critical"
+            },
             "inference_milli_CU_per_task": 20,
             "interconnect": "general",
             "minimum_memory_mib": 0,
@@ -11136,6 +12371,406 @@
             "capacity_project_id": "serving.workflow_agent",
             "channel": "agent",
             "id": "product.workflow_agent",
+            "incident_risk": {
+              "assumptions": "Customer deployments can affect connected business workflows.",
+              "compensation_cents": 350000,
+              "control_threshold_bp": 7000,
+              "domain": "autonomous_workflows",
+              "elevated_from_bp": 100,
+              "exposure": "public",
+              "high_from_bp": 450,
+              "large_daily_tasks": 800,
+              "lookup": [
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 15,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 6,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 5,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 2,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 235,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 94,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 82,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 32,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 105,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 42,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 36,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 14,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 325,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 130,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 113,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 45,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 325,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 130,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 113,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": false,
+                  "probability_bp": 45,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 545,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 218,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 190,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": false,
+                  "mismatch": true,
+                  "probability_bp": 76,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 195,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 78,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 68,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 27,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 415,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 166,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 145,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "draft",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 58,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 285,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 114,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 99,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 39,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 505,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 202,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 176,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "internal",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 70,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 505,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 202,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 176,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": false,
+                  "probability_bp": 70,
+                  "staged": true,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 725,
+                  "staged": false,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 290,
+                  "staged": true,
+                  "supervised": false
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 253,
+                  "staged": false,
+                  "supervised": true
+                },
+                {
+                  "autonomy": "external",
+                  "large": true,
+                  "mismatch": true,
+                  "probability_bp": 101,
+                  "staged": true,
+                  "supervised": true
+                }
+              ],
+              "response_fee_cents": 90000,
+              "response_staff_days": 4,
+              "response_work_milli_CU": 100000,
+              "severity": "consequential"
+            },
             "inference_milli_CU_per_task": 20,
             "interconnect": "general",
             "minimum_memory_mib": 0,
@@ -13271,7 +14906,7 @@
           "name": "Africa and Middle East"
         }
       ],
-      "revision": 3,
+      "revision": 4,
       "wholesale": [
         {
           "availability_bp": 9500,
@@ -19277,7 +20912,8 @@
         "century.infrastructure_community.renewal_review",
         "century.product_customer.cedar_quarter",
         "century.product_customer.district_rollout",
-        "century.product_customer.harbormark_cycle"
+        "century.product_customer.harbormark_cycle",
+        "deployment.incident_news"
       ],
       "frontier": "frontier.frontier_paths",
       "headquarters_choices": [
@@ -23144,7 +24780,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 13,
+      "revision": 14,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -24574,7 +26210,8 @@
         "century.infrastructure_community.renewal_review",
         "century.product_customer.cedar_quarter",
         "century.product_customer.district_rollout",
-        "century.product_customer.harbormark_cycle"
+        "century.product_customer.harbormark_cycle",
+        "deployment.incident_news"
       ],
       "frontier": "frontier.plateau_paths",
       "headquarters_choices": [
@@ -28441,7 +30078,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 13,
+      "revision": 14,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -29712,7 +31349,8 @@
         "society.forum_briefing",
         "authority.public_review",
         "authority.monthly_review",
-        "authority.executive_disclosure"
+        "authority.executive_disclosure",
+        "deployment.incident_news"
       ],
       "headquarters_choices": [
         "US-CA",
@@ -32303,7 +33941,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 16,
+      "revision": 17,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -32726,7 +34364,8 @@
         "society.forum_briefing",
         "authority.public_review",
         "authority.monthly_review",
-        "authority.executive_disclosure"
+        "authority.executive_disclosure",
+        "deployment.incident_news"
       ],
       "headquarters_choices": [
         "US-CA",
@@ -35319,7 +36958,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 17,
+      "revision": 18,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -36897,7 +38536,8 @@
         "society.forum_briefing",
         "authority.public_review",
         "authority.monthly_review",
-        "authority.executive_disclosure"
+        "authority.executive_disclosure",
+        "deployment.incident_news"
       ],
       "headquarters_choices": [
         "US-CA",
@@ -39490,7 +41130,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 17,
+      "revision": 18,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -41068,7 +42708,8 @@
         "society.forum_briefing",
         "authority.public_review",
         "authority.monthly_review",
-        "authority.executive_disclosure"
+        "authority.executive_disclosure",
+        "deployment.incident_news"
       ],
       "headquarters_choices": [
         "US-CA",
@@ -43661,7 +45302,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 17,
+      "revision": 18,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -45239,7 +46880,8 @@
         "society.forum_briefing",
         "authority.public_review",
         "authority.monthly_review",
-        "authority.executive_disclosure"
+        "authority.executive_disclosure",
+        "deployment.incident_news"
       ],
       "headquarters_choices": [
         "US-CA",
@@ -47832,7 +49474,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 17,
+      "revision": 18,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -50862,6 +52504,7 @@
     "century.research_data.scan_shortfall.body": "The evaluation leaves a repairable gap\nAt least one independent report lists a concrete limitation. The Lab offers complementary scan and table corpora. A fresh test or a narrower promise can keep existing customers served while you investigate.",
     "civic.election_briefing": "The election count is in. Open Civic for the seat breakdown, economic inputs and dates when the new terms begin.",
     "civic.implementation_briefing": "A policy completed agency implementation today. Open Civic for the effective jurisdiction, eligibility rules and expiration.",
+    "deployment.incident.news": "A deployment incident reached a new stage. Open Office Services to review containment, customer compensation and recovery.",
     "frontier.agi_notice.body": "Independent game AGI assessment. Three independent observation windows established the fictional game AGI criteria for a deployed system.",
     "frontier.asi_notice.body": "Independent game ASI evidence. Independent panels and three physically replicated improvements established the fictional game ASI criteria.",
     "frontier.conditional_era.body": "The conditional future. Energy, cooperation and research now shape technology availability. Review the scenario conditions in Frontier.",

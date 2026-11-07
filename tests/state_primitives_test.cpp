@@ -164,6 +164,8 @@ void random_streams() {
     require(rejection.bounded(1) == 0, "Unit bound");
     rejects<std::invalid_argument>([&] { (void)rejection.bounded(0); }, "Zero random bound accepted");
 
+    static_assert(static_cast<std::size_t>(RandomStream::risk)==7);
+    static_assert(stream_count==8);
     RandomStreams streams{0};
     const auto initial = streams.snapshot();
     require(initial[0] == expected[0] && initial[1] == expected[1] &&
@@ -173,6 +175,12 @@ void random_streams() {
     for (std::size_t index = 0; index < stream_count; ++index) {
         require((research_drawn[index] != initial[index]) == (index == 0), "Research draw changed another stream");
     }
+    auto risk_preview=streams;
+    (void)risk_preview.stream(RandomStream::risk).next();
+    const auto risk_drawn=risk_preview.snapshot();
+    for (std::size_t index=0;index<stream_count;++index)
+        require((risk_drawn[index]!=research_drawn[index])==(index==7), "Risk draw changed a legacy stream");
+    require(stream_names[7]=="risk", "Risk stream name changed its appended ordinal");
     auto preview = streams;
     (void)preview.stream(RandomStream::markets).next();
     require(streams.snapshot() == research_drawn, "Preview copy consumed authoritative randomness");

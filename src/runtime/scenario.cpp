@@ -86,6 +86,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     }
     if(!options.charter.empty()) core::initialize_charter(world.simulation,options.charter);
     if (scenario->service_catalog) world.simulation.deployments=core::DeploymentState{content::scenario_services(program.collection,*scenario),{}};
+    core::initialize_deployment_risk(world.simulation);
     if (const auto* catalog=content::frontier_catalog(program.collection,*scenario))
         world.simulation.frontier=core::opening_frontier(*catalog,seed);
     core::initialize_succession(world.simulation, world.identity ? std::optional{world.identity->founder_name} : std::nullopt);

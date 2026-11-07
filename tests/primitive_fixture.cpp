@@ -38,10 +38,13 @@ struct PrimitiveState {
     std::array<Entity, 3> entities{{{FixtureId{11}, 0}, {FixtureId{3}, 0}, {FixtureId{7}, 0}}};
 };
 
+// The v1 fixture permanently covers the original seven streams. New domains
+// have separate tests and must not rewrite its archived canonical hashes.
+inline constexpr std::size_t fixture_stream_count=7;
 // This is a primitive-only script, not provisional economic/gameplay balance.
 void advance(PrimitiveState& state) {
-    std::array<std::uint64_t, stream_count> draws{};
-    for (std::size_t index = 0; index < stream_count; ++index) {
+    std::array<std::uint64_t, fixture_stream_count> draws{};
+    for (std::size_t index = 0; index < fixture_stream_count; ++index) {
         draws[index] = state.random.stream(static_cast<RandomStream>(index)).bounded(10001);
     }
     const std::array<std::uint64_t, 3> income_factors{draws[0], draws[3], draws[5]};
@@ -72,7 +75,7 @@ std::string canonical(const PrimitiveState& state) {
         + ",\"rate_bp\":" + decimal(state.rate.value())
         + ",\"probability_ppm\":" + decimal(state.probability.value()) + ",\"rng_states\":[";
     const auto random = state.random.snapshot();
-    for (std::size_t index = 0; index < random.size(); ++index) {
+    for (std::size_t index = 0; index < fixture_stream_count; ++index) {
         if (index != 0) { output += ','; }
         output += decimal(random[index]);
     }

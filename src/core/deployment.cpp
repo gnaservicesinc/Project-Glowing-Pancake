@@ -20,6 +20,22 @@ const ServiceDefinition& service(const DeploymentState& state,std::string_view i
     if (row==state.catalog.end()) invalid("Choose an offered service scope");
     return *row;
 }
+void require_containment_clear(const DeploymentState& deployments,const LabState& lab,const DeployModel& selection) {
+    if (!deployments.risk || deployments.risk->open_incidents.empty()) return;
+    const auto& candidate=find(lab.models,selection.model_id);
+    const auto shares_checkpoint=[&](const DeploymentRecord& release,const std::string& affected) {
+        if (release.project_id!=affected || release.service_id!=selection.service_id) return false;
+        const auto& original=find(lab.models,release.model_id);
+        return original.recipe_id==candidate.recipe_id && original.data_ids==candidate.data_ids &&
+            original.consumed_work==candidate.consumed_work;
+    };
+    for (const auto index:deployments.risk->open_incidents) {
+        const auto& affected=deployments.risk->incidents.at(static_cast<std::size_t>(index)).project_id;
+        if (std::ranges::any_of(deployments.records,[&](const auto& release){return shares_checkpoint(release,affected);}) ||
+            std::ranges::any_of(deployments.rollouts,[&](const auto& rollout){return shares_checkpoint(rollout.candidate,affected);}))
+            invalid("Complete incident recovery before relaunching this checkpoint or an identical copy");
+    }
+}
 DeployModel with_agent_controls(const ServiceDefinition& definition,DeployModel request) {
     if (definition.product.channel==ProductChannel::agent) {
         if (!request.agent_controls) request.agent_controls=AgentControls{};
@@ -138,6 +154,10 @@ void validate_service_catalog(const std::vector<ServiceDefinition>& catalog) {
     if (catalog.empty() || catalog.size()>market_product_limit) invalid("Service catalog must be bounded and nonempty");
     std::set<std::string> ids;
     for (const auto& row:catalog) {
+        if (row.incident_risk) {
+            validate_deployment_risk_rules(*row.incident_risk);
+            if (row.product.channel==ProductChannel::open_weights) invalid("Local copies cannot be held by a hosted release incident");
+        }
         if (row.product.id.empty() || !ids.insert(row.product.id).second || row.product.capacity_project_id!=row.serving.id ||
             row.serving.kind!=ProjectKind::serving || row.serving.status!=ProjectStatus::active || row.serving.stopped_on ||
             row.serving.completed_work.value()!=0 || row.serving.useful_tasks!=0 || row.serving.tasks_per_day==0 || row.serving.staff==0 ||
@@ -171,6 +191,7 @@ CapacityProject preview_release(const SimulationState& state,const DeployModel& 
     const auto& definition=service(deployments,selection.service_id);
     if (definition.product.channel!=channel) invalid("Choose a service in the reviewed channel");
     const auto request=with_agent_controls(definition,selection);
+    require_containment_clear(deployments,*state.lab,request);
     if (deployments.records.size()>=lab_record_limit || pending_rollout(deployments,request.service_id))
         invalid("Resolve the pending trial and check the release history before publishing");
     const auto product=std::ranges::find(state.market->products,request.service_id,&MarketProduct::id);
@@ -196,6 +217,7 @@ void deploy_model(DeploymentState& state,const LabState& lab,AccountsState& acco
     if (state.records.size()>=lab_record_limit) invalid("Deployment history is full");
     const auto& definition=service(state,selection.service_id);
     const auto request=with_agent_controls(definition,selection);
+    require_containment_clear(state,lab,request);
     if (pending_rollout(state,request.service_id))
         invalid("Promote or discard the service's staged release before replacing production.");
     const auto existing=std::find_if(market.products.begin(),market.products.end(),[&](const auto& row){return row.id==request.service_id;});
@@ -253,7 +275,7 @@ void validate_deployments(const DeploymentState& state,const LabState& lab,const
         const DeployModel request{row.service_id,row.model_id,row.evidence_id,work.source_id,row.human_review,row.region_id,row.weight_audience,row.agent_controls};
         const auto expected=qualified_project(definition,lab,capacity,request,row.deployed_on,row.project_id);
         require_publication_audience(definition,market,row.region_id,row.weight_audience,expected);
-        auto comparable=work; comparable.status=ProjectStatus::active; comparable.stopped_on.reset(); comparable.useful_tasks=0; comparable.completed_work=MilliCU{0};
+        auto comparable=work; comparable.status=ProjectStatus::active; comparable.stopped_on.reset(); comparable.useful_tasks=0; comparable.completed_work=MilliCU{0}; comparable.disruptions.clear();
         if (comparable!=expected || market.capacity_bindings[i]!=ProductCapacityBinding{row.service_id,row.project_id,row.deployed_on,
             row.weight_audience,agent_plan(definition,lab,request)})
             invalid("Deployment differs from its qualified evidence, review costs or actual serving work");

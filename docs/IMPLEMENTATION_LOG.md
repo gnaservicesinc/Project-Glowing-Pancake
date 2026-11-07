@@ -2058,3 +2058,33 @@ quote, confirm payment, complete five days of work, select the new corpus for
 training and reopen exact saves. These are engineering checks on a prepared
 fixture; human testing, endurance, balance and release qualification remain
 deferred. The next initial feature is authored deployment incident risk.
+
+### Deployment incident risk and recovery
+
+Workflow and robotics agents now have scenario-authored tables for settled
+deployment scale, tool permissions, capability relative to the control margin,
+individual approval, and staged exposure. Each service's exposure and severity
+select its table. Office Services reports fictional bands using the public
+evidence lower bound. Actual monthly draws use immutable checkpoints and a
+dedicated saved stream, with scheduled dates hidden until discovery. Legacy
+saves keep their seven-stream encoding and reconstruct the unused eighth
+stream from the company seed.
+
+A due incident records a compensation payable, contains only the implicated
+release, and pauses for acknowledgment. Its reservation and signed customer
+terms persist, including the ordinary credits for missed delivery. Commission
+a paid investigation using available compute and staff. Work completion and
+paid compensation release the hold on the following morning. An identical
+checkpoint cannot relaunch during containment. Replacement with a different
+checkpoint retains the original claim and investigation. Discovery and
+recovery publish dated outcomes through the shared news runtime.
+
+The optimized Mac build and 17 focused CTests passed across the initial run
+and corrected fixture reruns. The 48 incident checks cover quiet and scheduled
+draws, exact continuation, held customer work and credits, paid response,
+pause/cancel/retry, recovered delivery, and forged save refusals. Offscreen
+keyboard walkthroughs at 100% and 200% text exercised acknowledgment, the
+paid response, actual recovery and exact save reopening. The shared writer
+finalized content **0.24.0-dev.1**, generation **24**, after validating all seven
+scenarios and 21 exact prepared openings. The original generation-23 hash
+also passed verification.

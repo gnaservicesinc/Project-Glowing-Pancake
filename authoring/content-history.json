@@ -106111,6 +106111,128 @@
         "prepared_headquarters": 21,
         "scenarios": 7
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "72b14a9dbdf0483194568adcdf5e9be82df2e36ebe0e8cb9464cd016ff198a07",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "deployment.incident_news",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "4b1ac1fb7fedd00f3db0b560f31a32612fedc160bc01f916b0e689535cbc5f7d",
+          "before_hash": "a493ca443b690df1857849776d02bcd4f52cd1bbb5c8a5142f1bf0fa0b4940b2",
+          "change": "changed",
+          "id": "market.century",
+          "kind": "regional_markets",
+          "old_revision": 3,
+          "revision": 4
+        },
+        {
+          "after_hash": "2f84d4429ce06df209c3fcfceb8b828b6566fa0336d6b93466bfe208fa1a6a50",
+          "before_hash": "ba23d0052ccb81df3cebe55bf8f998f5977046f41acd7fedddc39973ab099951",
+          "change": "changed",
+          "id": "market.global_launch",
+          "kind": "regional_markets",
+          "old_revision": 3,
+          "revision": 4
+        },
+        {
+          "after_hash": "dc86d63befb34cbf2b86b91f467fdc57311b07d6e0137c22dbafc8741edebbcb",
+          "before_hash": "aff46a91dd259f40008c44b904c5a8cc812852e1dde31d604db9a723b1f34948",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 13,
+          "revision": 14
+        },
+        {
+          "after_hash": "d00a5303e3f91e7491edb6b15c9256ee8c5a3762632bd68cece8d75908d84ade",
+          "before_hash": "18b56145edbe69aee7fbc54124d817e012042d76dcb43e0f0dcffa43086afb09",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 13,
+          "revision": 14
+        },
+        {
+          "after_hash": "2f4ca9b31598033c563bb33c244f1883c7f8fa86ec84d086e2be8a7ffb7f7873",
+          "before_hash": "7845971cfc9fdc3a03505427df93cefb85eb8d6bbce4fe1345124c195452e3a2",
+          "change": "changed",
+          "id": "scenario.first_playable",
+          "kind": "scenario",
+          "old_revision": 16,
+          "revision": 17
+        },
+        {
+          "after_hash": "a1c2140091d1046dc8aea58833dfe1ba116d5c83af34e80f22dd79bab6959bfd",
+          "before_hash": "764f0fdfca53265861debeadda83e06128b5ab0b0e02236fcd50ac28edf39cc8",
+          "change": "changed",
+          "id": "scenario.world_competition",
+          "kind": "scenario",
+          "old_revision": 17,
+          "revision": 18
+        },
+        {
+          "after_hash": "0cea9051fb1ebfd5f33845534cd09678b04e543cee949655b616fdb3e1e518ce",
+          "before_hash": "d0c7234910658992ae937dd33086890921167f5061093ae32cd5594e8320f539",
+          "change": "changed",
+          "id": "scenario.world_expanded",
+          "kind": "scenario",
+          "old_revision": 17,
+          "revision": 18
+        },
+        {
+          "after_hash": "e6c442c526e83f9931791eb783ac2f4a93502fd7aad7e230d1b9e41dae6b7699",
+          "before_hash": "857aecc3377f1b8870bf0c4e6482ab8330195b93ac98c377a91c8df471979df7",
+          "change": "changed",
+          "id": "scenario.world_forgiving",
+          "kind": "scenario",
+          "old_revision": 17,
+          "revision": 18
+        },
+        {
+          "after_hash": "cc0ea7a83dd5725a2117143047e77d1a3c63bbbc8494aef612c3597b046c4268",
+          "before_hash": "6712b1a12d9138461d84f9d449ce948c85fd34c2a11564856710fbe1b912a89f",
+          "change": "changed",
+          "id": "scenario.world_reduced",
+          "kind": "scenario",
+          "old_revision": 17,
+          "revision": 18
+        }
+      ],
+      "changed_text_keys": [
+        "deployment.incident.news"
+      ],
+      "collection_hash": "78ec6d8c5aaeb2b26ed110f3dfd66c5ded519f875bcbb4c11167012d32c3e959",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.24.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 24,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.23.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000023.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000024.collection.json",
+      "summary": "Add authored workflow and robotics deployment incident risk, containment, compensation, and paid recovery",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 21,
+        "lints": [],
+        "prepared_headquarters": 21,
+        "scenarios": 7
+      }
     }
   ],
   "format": 1

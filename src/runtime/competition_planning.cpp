@@ -297,6 +297,7 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
     state.market->segments=content::scenario_market_setup(program.collection,authored).segments;
     for (auto& segment:state.market->segments) segment.preferences.clear();
     state.deployments=DeploymentState{content::scenario_services(program.collection,authored),{}};
+    initialize_deployment_risk(state);
     if (world.simulation.frontier)
         state.frontier=opening_frontier(world.simulation.frontier->catalog,world.simulation.frontier->seed);
     state.management=ManagementState{*authored.management,{},{},{},{},{},{}};state.management->catalog.setbacks.clear();
@@ -366,6 +367,40 @@ void prepare_rival_morning(WorldState& world,const CompiledProgram& program,Riva
     if (!rival.planning->entered_on || !active(rival.simulation) || (rival.response && rival.response->retired_on)) return;
     const auto day=campaign_day(world);
     acknowledge_leadership(rival);
+    while (const auto* alert=required_deployment_incident(rival.simulation)) {
+        if (!submit(rival,AcknowledgeDeploymentIncident{alert->id})) invalid("Rival incident notice could not be acknowledged");
+    }
+    if (rival.simulation.deployments && rival.simulation.deployments->risk &&
+        !rival.simulation.deployments->risk->open_incidents.empty()) {
+        // Use the same paid command, free allocation and authored cash buffer
+        // as other rival work. An unfunded response remains contained.
+        const auto& state=rival.simulation;
+        const auto& risk=*state.deployments->risk;
+        const auto report=capacity_report(*state.capacity);
+        const auto floor=rival_definition(program,rival.definition_id).planning->reserve_floor;
+        if (report.available_staff>report.assigned_staff) {
+            for (const auto index:risk.open_incidents) {
+                const auto& incident=risk.incidents.at(static_cast<std::size_t>(index));
+                if (incident.last_response) continue;
+                bool started=false;
+                for (const auto& source:state.capacity->sources) {
+                    std::int64_t used=0;
+                    for (const auto& project:state.capacity->projects)
+                        if (project.source_id==source.id && project.status==ProjectStatus::active)
+                            used=checked_add(used,project.requested.value());
+                    const auto spare=company_capacity(source).value()-used;
+                    if (spare<=0) continue;
+                    RespondDeploymentIncident request{incident.id,source.id,MilliCUPerDay{std::min<std::int64_t>(spare,20000)},
+                        std::min<std::uint32_t>(report.available_staff-report.assigned_staff,2)};
+                    const auto quote=preview_deployment_response(state,request);
+                    if (discretionary_cash(state)>=checked_unit_add(floor,quote.cash_required))
+                        started=submit(rival,std::move(request));
+                    if (started) break;
+                }
+                if (started) break;
+            }
+        }
+    }
     std::vector<std::string> workload_alerts;
     for (const auto& row:rival.simulation.management->notices)
         if ((row.kind==service_workload_notice || row.kind==service_monitoring_limit_notice) &&

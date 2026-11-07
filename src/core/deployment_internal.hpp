@@ -3,6 +3,8 @@
 #include <pgp/core/deployment.hpp>
 
 namespace pgp::core::deployment_detail {
+void require_containment_clear(const DeploymentState&,const LabState&,const DeployModel&);
+
 [[nodiscard]] const ServiceDefinition& service(const DeploymentState&,std::string_view id);
 [[nodiscard]] DeployModel with_agent_controls(const ServiceDefinition&,DeployModel);
 [[nodiscard]] std::optional<AgentPlan> agent_plan(const ServiceDefinition&,const LabState&,const DeployModel&);

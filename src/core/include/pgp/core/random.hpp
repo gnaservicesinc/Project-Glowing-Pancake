@@ -26,11 +26,11 @@ private:
 
 // Ordinals and names are persisted ABI: never reorder or reuse an ordinal.
 enum class RandomStream : std::size_t {
-    research, rivals, markets, geography, politics, hazards, narrative, count
+    research, rivals, markets, geography, politics, hazards, narrative, risk, count
 };
 inline constexpr std::size_t stream_count = static_cast<std::size_t>(RandomStream::count);
 inline constexpr std::array<std::string_view, stream_count> stream_names{
-    "research", "rivals", "markets", "geography", "politics", "hazards", "narrative"
+    "research", "rivals", "markets", "geography", "politics", "hazards", "narrative", "risk"
 };
 using RandomSnapshot = std::array<std::uint64_t, stream_count>;
 

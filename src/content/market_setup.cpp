@@ -1,5 +1,6 @@
 #include <pgp/content/market_setup.hpp>
 #include <pgp/content/collection.hpp>
+#include <pgp/content/deployment_risk.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -78,6 +79,7 @@ std::string canonical_market_setup_bytes(const MarketSetup& setup, core::Ordinal
             {"monthly_support_cost_cents",row.monthly_support_cost.value()}});
         if (!offer->required_recipe.empty()) offers.back()["required_recipe"]=offer->required_recipe;
         if (!offer->workload_domain.empty()) offers.back()["workload_domain"]=offer->workload_domain;
+        if (offer->incident_risk) offers.back()["incident_risk"]=Json::parse(canonical_deployment_risk_rules(*offer->incident_risk));
         if (offer->product.channel != core::ProductChannel::legacy) {
             offers.back()["channel"] = core::channel_key(offer->product.channel);
             offers.back()["monthly_migration_bp"] = offer->product.monthly_migration.value();

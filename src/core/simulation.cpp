@@ -102,6 +102,7 @@ void consume(SimulationState& state, std::uint64_t id, Cents amount) {
     }
 }
 void prepare_service_lifecycle(SimulationState& state) {
+    prepare_deployment_risk(state);
     expire_service_rollouts(state);
     if (retire_due_services(state)>0) (void)receipt(state,"service_retirement_effective");
 }
@@ -202,6 +203,7 @@ void validate(const SimulationState& state,bool deep=true,std::size_t first_rece
         if (!state.lab || !state.market || !state.capacity) invalid("Deployments require lab, market and capacity");
         if (deep) validate_deployments(*state.deployments,*state.lab,*state.capacity,*state.market);
     }
+    validate_deployment_risk(state,deep);
     validate_frontier(state,deep);
     if (state.business_offers) {
         if (!state.accounts || !state.capacity) invalid("Business offers require accounts and capacity");
@@ -500,6 +502,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     (!next.market && (action.market_allocation || !action.industry_adoptions.empty())))
                     refuse(CommandReason::invalid_argument,"Shared industry context requires an actual market and allocation.");
                 if (required_management_notice(next)) refuse(CommandReason::morning_not_ready,"Review the required management alert before advancing.");
+                if (required_deployment_incident(next)) refuse(CommandReason::morning_not_ready,"Review the deployment incident before advancing work.");
                 if (required_site_alert(next)) refuse(CommandReason::morning_not_ready,"Review the site disruption before advancing work.");
                 if (required_governance_notice(next)) refuse(CommandReason::morning_not_ready,"Review the corporate concern, deadline or outcome before advancing.");
                 if (required_succession_notice(next)) refuse(CommandReason::morning_not_ready,"Review the leadership deadline or handover before advancing.");
@@ -551,6 +554,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     prepare_opening(next, action.market_allocation ? &action.industry_adoptions : nullptr);
                 }
             } else if constexpr (std::is_same_v<Action, SetPaused>) {
+                if (!action.paused && required_deployment_incident(next)) refuse(CommandReason::morning_not_ready,"Review the deployment incident before resuming time.");
                 if (!action.paused && required_site_alert(next)) refuse(CommandReason::morning_not_ready,"Review the site disruption before resuming time.");
                 if (!action.paused && required_management_notice(next)) refuse(CommandReason::morning_not_ready,"Acknowledge the required management warning before starting time.");
                 if (!action.paused && next.liquidity && liquidity_report(*next.liquidity).pending_warning)
@@ -584,6 +588,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 add_recurring(accounts(next), action.obligation);
                 (void)receipt(next, "add_recurring_obligation");
             } else if constexpr (std::is_same_v<Action, IssueInvoice>) {
+                if (action.invoice.id.starts_with("deployment.claim/"))
+                    refuse(CommandReason::dependent_commitment,"Only a discovered incident can create its compensation claim.");
                 issue_invoice(accounts(next), next.date, action.invoice);
                 (void)receipt(next, "issue_invoice");
             } else if constexpr (std::is_same_v<Action, SettleInvoice>) {
@@ -609,6 +615,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 next.cash = accounts_report(*next.accounts).cash;
                 (void)receipt(next, "invest_equity", 0, checked_unit_subtract(next.cash, before));
             } else if constexpr (std::is_same_v<Action, ReserveProject>) {
+                if (action.project.kind==ProjectKind::incident_response || action.project.id.starts_with("deployment.response/"))
+                    refuse(CommandReason::dependent_commitment,"Start incident work through its reviewed response.");
                 if (action.project.id.starts_with("frontier.trial/"))
                     refuse(CommandReason::dependent_commitment,"Commission independent work through its frontier protocol.");
                 if (action.project.customer_inference)
@@ -627,7 +635,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     std::any_of(next.lab->models.begin(),next.lab->models.end(),[&](const auto& r){return r.project_id==action.id;}) ||
                     std::any_of(next.lab->evaluations.begin(),next.lab->evaluations.end(),[&](const auto& r){return r.project_id==action.id;}) ||
                     std::any_of(next.lab->generated.begin(),next.lab->generated.end(),[&](const auto& r){return r.project_id==action.id;}));
-                if(!owned) refuse(CommandReason::invalid_argument,"Pause and resume apply to this company's finite laboratory projects");
+                const bool response = next.deployments && next.deployments->risk &&
+                    std::ranges::any_of(next.deployments->risk->responses,[&](const auto& row){return row.project_id==action.id;});
+                if(!owned && !response) refuse(CommandReason::invalid_argument,"Choose a finite laboratory or incident response project owned by this company");
                 if constexpr(std::is_same_v<Action,PauseProject>) {
                     if(next.management && next.management->governance) for(const auto& d:next.management->governance->disputes)
                         if(d.review_project==action.id && !d.resolved_on) refuse(CommandReason::dependent_commitment,"The negotiated executive response reserves this review team until its promise is resolved or its deadline passes");
@@ -719,6 +729,13 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 (void)receipt(next,"replicate_service",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, StopServiceReplica>) {
                 stop_service_replica(next,action.id);(void)receipt(next,"stop_service_replica");
+            } else if constexpr (std::is_same_v<Action, RespondDeploymentIncident>) {
+                const auto before=next.cash;
+                respond_deployment_incident(next,action,reserved_cash(next));
+                (void)receipt(next,"respond_deployment_incident",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, AcknowledgeDeploymentIncident>) {
+                acknowledge_deployment_incident(next,action.id);
+                (void)receipt(next,"acknowledge_deployment_incident");
             } else if constexpr (std::is_same_v<Action, AcknowledgeSiteAlert>) {
                 if (!next.resilience) refuse(CommandReason::invalid_argument,"This scenario has no site alerts.");
                 const auto row=std::find_if(next.resilience->alerts.begin(),next.resilience->alerts.end(),[&](const auto& alert){return alert.id==action.id;});
