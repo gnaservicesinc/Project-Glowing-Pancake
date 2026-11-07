@@ -95,6 +95,26 @@ void opening_costs_and_projection() {
         Account::expenses, "Duplicate data license", "license.initial"); });
     balanced(state);
 }
+void cash_outlook_settlement() {
+    const auto first=to_ordinal({2014,1,30});
+    const auto second=advance_days(first,Days{1});
+    const auto february=advance_days(second,Days{1});
+    auto ledger=opening_accounts(Cents{100},first);
+    draw_debt(ledger,first,{"loan",Cents{50},BasisPoints{0},first,second,0,std::nullopt},"Working capital");
+    add_recurring(ledger,{"lease",Cents{3100},first,february,"Monthly lease"});
+    issue_invoice(ledger,first,{"bill",InvoiceKind::payable,first,Cents{180},Cents{0},"Due bill"});
+    issue_invoice(ledger,first,{"sale",InvoiceKind::receivable,first,Cents{10},Cents{0},"Earned work"});
+    const auto before=ledger;
+    const std::array<ProjectedCashDay,2> path{{{}, {Cents{500},Cents{30}}}};
+    const auto outlook=project_cash_outlook(ledger,first,Cents{20},{{first,february,Cents{20}}},path);
+    check(ledger==before,"Cash outlook edited the live commitments");
+    check(outlook.near_term.cash==Cents{20} && outlook.near_term.available==Cents{0} &&
+          outlook.near_term.overdue_payables==Cents{40} && outlook.first_shortfall==first,
+          "Outlook lost a due receipt, cash reservation or first missed payment");
+    check(outlook.year.cash==Cents{160} && outlook.year.available==Cents{140} &&
+          outlook.year.overdue_payables==Cents{0} && outlook.year.due_principal==Cents{0},
+          "Later receipts failed to clear arrears, recurring costs, site ceiling and then principal");
+}
 void invoices_and_protected_cash() {
     auto state = opening_accounts(Cents{1000});
     issue_invoice(state, OrdinalDay{0}, {"bill", InvoiceKind::payable, OrdinalDay{30},
@@ -238,6 +258,7 @@ int main() {
     try {
         opening_and_calendar_months();
         opening_costs_and_projection();
+        cash_outlook_settlement();
         invoices_and_protected_cash();
         financing_and_rejections();
         identity_and_history_validation();

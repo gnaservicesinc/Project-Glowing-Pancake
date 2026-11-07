@@ -3,6 +3,7 @@
 #include "flow_presentation.hpp"
 #include "heavyweight_presentation.hpp"
 #include "governance_presentation.hpp"
+#include <pgp/core/company_finance.hpp>
 #include <pgp/core/integer_codec.hpp>
 #include <pgp/runtime/scenario.hpp>
 #include <QRegularExpression>
@@ -528,6 +529,93 @@ QString ManagementController::briefing() const {
     if (report.customer_advances.value()>0)
         briefing+=tr("\nUnused customer advances %1").arg(money(report.customer_advances));
     return briefing;
+}
+QVariantMap ManagementController::financialStatements() const {
+    using namespace core;
+    if (!snapshot_ || !state().accounts) return {};
+    const auto& s=state();
+    const auto report=accounts_report(*s.accounts);
+    const auto other_assets=checked_unit_subtract(report.assets,report.accumulated_depreciation);
+    const auto assets=checked_unit_add(checked_unit_add(report.cash,report.receivables),other_assets);
+    QVariantMap result{
+        {QStringLiteral("date"),text(iso_date(s.date))},
+        {QStringLiteral("assets"),tr("Cash %1\nReceivables %2\nOther assets %3\nAccumulated depreciation %4\nTotal assets %5")
+            .arg(money(report.cash),money(report.receivables),money(report.assets),money(report.accumulated_depreciation),money(assets))},
+        {QStringLiteral("liabilities"),tr("Unpaid bills %1\nDebt principal %2\nUnused customer advances %3\nNet assets after liabilities %4")
+            .arg(money(report.payables),money(report.debt),money(report.customer_advances),money(book_net_assets(report)))},
+        {QStringLiteral("equity"),tr("Recorded equity %1\nCumulative profit or loss %2\nCash for new spending after reservations and operating reserve %3")
+            .arg(money(report.equity),money(report.profit),money(discretionary_cash(s)))}
+    };
+    const auto period=recent_company_period(s);
+    if (!period) return result;
+    result.insert(QStringLiteral("period"),tr("%1 through %2")
+        .arg(text(iso_date(period->first)),text(iso_date(period->last))));
+    result.insert(QStringLiteral("profit"),tr("Revenue %1\nExpenses %2\nProfit or loss %3")
+        .arg(money(period->revenue),money(period->expenses),money(checked_unit_subtract(period->revenue,period->expenses))));
+    const auto flow=[&](const CashMovement& movement) {
+        return tr("%1 in · %2 out · %3 net").arg(money(movement.received),money(movement.paid),money(movement.net()));
+    };
+    result.insert(QStringLiteral("cash"),tr("Starting cash %1\nOperations · %2\nInvesting · %3\nFinancing · %4\nEnding cash %5")
+        .arg(money(period->opening_cash),flow(period->operations),flow(period->investing),flow(period->financing),money(period->closing_cash)));
+    auto units=tr("No product tasks delivered in this period.");
+    if (period->delivered_tasks>0) {
+        const auto tasks=static_cast<std::int64_t>(period->delivered_tasks);
+        units=tr("%1 product tasks delivered\nEarned product revenue %2 per task\nService support and penalties %3 per task\nContribution before shared costs %4 per task")
+            .arg(number(period->delivered_tasks),money(Cents{period->product_revenue.value()/tasks}),
+                 money(Cents{period->service_cost.value()/tasks}),
+                 money(Cents{checked_unit_subtract(period->product_revenue,period->service_cost).value()/tasks}));
+        units+=tr("\nShared costs include compute leases, site costs, payroll and research.");
+    }
+    const auto wholesale=runtime::wholesale_sales(snapshot_->checkpoint.world,period->first,period->last);
+    if (wholesale.supplied.value()>0) {
+        const auto per_cu=Cents{mul_div_floor(static_cast<std::uint64_t>(wholesale.cash.value()),1000,
+            static_cast<std::uint64_t>(wholesale.supplied.value())).quotient};
+        units+=tr("\nWholesale supplied %1 CU across the period. Buyers used %2 CU. Earned %3 per CU supplied.")
+            .arg(cu(wholesale.supplied.value()),cu(wholesale.used.value()),money(per_cu));
+    }
+    result.insert(QStringLiteral("units"),units);
+    return result;
+}
+QVariantMap ManagementController::cashScenarios() const {
+    using namespace core;
+    if (!snapshot_ || !state().accounts) return {};
+    const auto& s=state();
+    if (s.phase==DayPhase::closed || s.phase==DayPhase::finished)
+        return {{QStringLiteral("error"),tr("Cash scenarios are available while the company can still operate.")}};
+    try {
+        const auto wholesale=runtime::forecast_wholesale_cash(snapshot_->checkpoint.world);
+        const auto forecast=forecast_company_finances(s,wholesale);
+        const auto point=[&](const CashProjection& value) {
+            return tr("Through %1\nCash %2 · unreserved %3\nOverdue bills %4 · due principal unpaid %5")
+                .arg(text(iso_date(value.through)),money(value.cash),money(value.available),
+                     money(value.overdue_payables),money(value.due_principal));
+        };
+        const std::array<QString,3> labels{tr("Weak demand"),tr("Recent demand"),tr("Strong demand")};
+        QVariantList cases;
+        for (std::size_t i=0;i<forecast.cases.size();++i) {
+            const auto& row=forecast.cases[i];
+            cases.push_back(QVariantMap{
+                {QStringLiteral("title"),tr("%1 · %2% of recent discretionary tasks").arg(labels[i]).arg(row.demand_percent)},
+                {QStringLiteral("sales"),tr("%1 discretionary tasks/day · %2 per day at current prices")
+                    .arg(number(row.tasks_per_day),money(row.discretionary_sales_per_day))},
+                {QStringLiteral("near"),point(row.cash.near_term)},
+                {QStringLiteral("year"),point(row.cash.year)},
+                {QStringLiteral("risk"),row.cash.first_shortfall
+                    ?tr("First projected unpaid obligation on %1.").arg(text(iso_date(*row.cash.first_shortfall)))
+                    :tr("Projected cash covers obligations through both dates.")}
+            });
+        }
+        const auto basis=forecast.sample_days==0?tr("Discretionary sales enter the scenarios after the first settled market day."):
+            tr("Discretionary sales use %1 settled market days and fit today’s serving capacity.").arg(forecast.sample_days);
+        const auto assumptions=basis+tr("\nSigned contracts use recent delivery capped at today’s capacity. New contracts use today’s capacity. "
+            "Earned charges first use any advance, and an unused balance is refunded at term end. Wholesale uses recent receipts through signed terms.\n"
+            "Existing bills, gross lease terms and the owned-site cost ceiling apply. %1 in reservations stays held. Due principal uses remaining cash after bills. "
+            "New purchases, renewals, and unexpected changes are outside these scenarios.").arg(money(forecast.reserved_cash));
+        return {{QStringLiteral("date"),text(iso_date(s.date))},{QStringLiteral("assumptions"),assumptions},
+                {QStringLiteral("cases"),cases}};
+    } catch (const std::exception& error) {
+        return {{QStringLiteral("error"),tr("Cash scenarios are unavailable for this snapshot. %1").arg(QString::fromUtf8(error.what()))}};
+    }
 }
 QString ManagementController::guide() const {
     if (!available()) return {};

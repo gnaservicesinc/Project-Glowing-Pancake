@@ -153,15 +153,22 @@ Cents wholesale_electricity(const SimulationState& s,std::string_view source_id,
     // incremental electricity and round down once to whole cents.
     return Cents{mul_div_floor(factors,static_cast<std::uint64_t>(hardware.capacity.value())*1'000'000'000U).quotient};
 }
-CashProjection project_company_cash(const SimulationState& s,OrdinalDay through,Cents protected_cash) {
+namespace {
+AccountsState forecast_lease_terms(const SimulationState& s) {
     if (!s.accounts) invalid("A company forecast requires accounts");
-    const auto terms=forecast_terms(s);
+    auto ledger=*s.accounts;
     if (s.infrastructure && s.infrastructure->initial_lease_ends_before && *s.infrastructure->initial_lease_ends_before>s.date) {
-        auto ledger=*s.accounts;
         for (auto& term:ledger.recurring) if (term.id=="compute_lease" || term.id=="founder_compute") term.ends_before=s.infrastructure->initial_lease_ends_before;
-        return project_cash(ledger,through,protected_cash,terms);
     }
-    return project_cash(*s.accounts,through,protected_cash,terms);
+    return ledger;
+}
+}
+CashProjection project_company_cash(const SimulationState& s,OrdinalDay through,Cents protected_cash) {
+    return project_cash(forecast_lease_terms(s),through,protected_cash,forecast_terms(s));
+}
+CashOutlook project_company_cash_outlook(const SimulationState& s,OrdinalDay near_through,Cents protected_cash,
+                                         std::span<const ProjectedCashDay> days) {
+    return project_cash_outlook(forecast_lease_terms(s),near_through,protected_cash,forecast_terms(s),days);
 }
 Cents infrastructure_monthly_fixed_cost(const SimulationState& s,OrdinalDay day) {
     Cents total{0};if (s.infrastructure) for (const auto& owned:s.infrastructure->sites) total=checked_unit_add(total,monthly_fixed_cost(s,owned,day));return total;

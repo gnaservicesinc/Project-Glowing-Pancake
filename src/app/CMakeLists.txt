@@ -24,6 +24,7 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/StableEntityList.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FlowPresentation.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/ManagementPanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/AccountsPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/InfrastructurePanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/CivicPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/SocietyPanel.qml"

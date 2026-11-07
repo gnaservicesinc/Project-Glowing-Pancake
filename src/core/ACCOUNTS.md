@@ -58,6 +58,20 @@ cash, available cash, unpaid due payables and due principal separately. It consu
 no authoritative RNG and changes no live cursor. It assumes the current terms
 and agreed invoice collections; it does not forecast future customer acquisition.
 
+The balance sheet uses the current accounts report. `company_finance.hpp`
+reconciles up to 30 settled days of operating, investing and financing cash
+movements. Unit economics uses actual delivered product tasks and
+earned charges, with service support and penalties attributed before shared
+expenses. Wholesale earnings and supplied compute are reported separately.
+
+The 3- and 12-month cash scenarios settle a copy of the live commitments. They
+use current serving capacity, signed billing terms and remaining advances,
+then vary recent discretionary task demand at current prices. Wholesale terms
+use their recent daily receipts. Accrued bills settle on their dates and due
+principal uses cash after bill payments. Reservations stay protected. Owned
+site costs use a conservative ceiling and lease forecasts use gross charges.
+Both the settled period and the forecast avoid replaying earlier journal days.
+
 Reload validation checks canonical posting chronology and individual invoice and
 debt reconciliation, then reconstructs fixed-obligation accruals and monthly debt
 interest residues through the saved close cursor. Changing terms or resetting an

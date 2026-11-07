@@ -780,28 +780,85 @@ void close_accounts_day(AccountsState& state, OrdinalDay day, Cents protected_ca
         close_day(state, day, protected_cash,credits);
     }
 }
+namespace {
+void validate_metered_projection(const std::vector<MeteredProjection>& metered) {
+    if (metered.size()>1024) invalid("Too many explicit metered forecast commitments");
+    for (const auto& term:metered) if (term.daily_ceiling.value()<0 || (term.ends_before && *term.ends_before<term.starts_on)) invalid("Metered forecast needs nonnegative finite dated commitments");
+}
+void accrue_metered_projection(AccountsState& ledger,OrdinalDay day,const std::vector<MeteredProjection>& metered) {
+    Cents ceiling{0};
+    for (const auto& term:metered) if (day>=term.starts_on && (!term.ends_before || day<*term.ends_before))
+        ceiling=checked_unit_add(ceiling,term.daily_ceiling);
+    if (ceiling.value()>0) accrue(ledger,day,"projection/metered/"+iso_date(month_start(day)),ceiling,"Projected owned infrastructure ceiling");
+}
+CashProjection projection_point(const AccountsState& ledger,OrdinalDay through,Cents protected_cash) {
+    CashProjection result{through,balance(ledger,Account::cash),available_cash(ledger,protected_cash),Cents{0},Cents{0}};
+    for (const auto row : ledger.invoices.live_rows()) {
+        const auto& invoice = ledger.invoices[row];
+        if (invoice.kind == InvoiceKind::payable && invoice.due <= through)
+            result.overdue_payables = checked_unit_add(result.overdue_payables, outstanding(invoice));
+    }
+    for (const auto& debt : ledger.debts)
+        if (debt.due <= through) result.due_principal = checked_unit_add(result.due_principal, debt.principal);
+    return result;
+}
+}
 CashProjection project_cash(const AccountsState& state,OrdinalDay through,Cents protected_cash,const std::vector<MeteredProjection>& metered) {
     validate_accounts(state); (void)from_ordinal(through);
     const auto first = current_day(state);
     if (through < state.starts_on || (state.closed_through && through < *state.closed_through) ||
         through.value() - first.value() > 36524) invalid("Cash projection horizon is outside the supported campaign bound");
     auto candidate = state;
-    if (metered.size()>1024) invalid("Too many explicit metered forecast commitments");
-    for (const auto& term:metered) if (term.daily_ceiling.value()<0 || (term.ends_before && *term.ends_before<term.starts_on)) invalid("Metered forecast needs nonnegative finite dated commitments");
+    validate_metered_projection(metered);
     for (auto day=first;day<=through;day=advance_days(day,Days{1})) {
-        Cents ceiling{0};for (const auto& term:metered) if (day>=term.starts_on && (!term.ends_before || day<*term.ends_before)) ceiling=checked_unit_add(ceiling,term.daily_ceiling);
-        if (ceiling.value()>0) accrue(candidate,day,"projection/metered/"+iso_date(month_start(day)),ceiling,"Projected owned infrastructure ceiling");
+        accrue_metered_projection(candidate,day,metered);
         close_day(candidate,day,protected_cash);
+        if (day==through) break;
     }
     validate_accounts(candidate);
-    CashProjection result{through, balance(candidate, Account::cash), available_cash(candidate, protected_cash), Cents{0}, Cents{0}};
-    for (const auto row : candidate.invoices.live_rows()) {
-        const auto& invoice = candidate.invoices[row];
-        if (invoice.kind == InvoiceKind::payable && invoice.due <= through)
-            result.overdue_payables = checked_unit_add(result.overdue_payables, outstanding(invoice));
+    return projection_point(candidate,through,protected_cash);
+}
+CashOutlook project_cash_outlook(const AccountsState& state,OrdinalDay near_through,Cents protected_cash,
+                                 const std::vector<MeteredProjection>& metered,std::span<const ProjectedCashDay> days) {
+    const auto first=current_day(state);
+    if (days.empty() || days.size()>366 || near_through<first || near_through>=advance_days(first,Days{days.size()}))
+        invalid("Cash outlook requires two dates in the next 366 days");
+    validate_metered_projection(metered);
+    // Only these live balances and terms affect future cash. This journal is
+    // disposable and cannot be saved or used to report historical earnings.
+    auto ledger=opening_accounts(balance(state,Account::cash),first,state.owner);
+    ledger.recurring=state.recurring;
+    ledger.debts=state.debts;
+    for (const auto row:state.invoices.live_rows())
+        ledger.invoices.push_back(state.invoices[row],state.closed_through);
+    std::sort(ledger.debts.begin(),ledger.debts.end(),[](const auto& a,const auto& b) {
+        return std::tie(a.due,a.id)<std::tie(b.due,b.id);
+    });
+    CashOutlook result;
+    for (std::size_t i=0;i<days.size();++i) {
+        const auto day=advance_days(first,Days{i});
+        const auto& flow=days[i];
+        if (flow.receipts.value()<0 || flow.bills_due.value()<0) invalid("Forecast receipts and bills must be nonnegative");
+        const auto stamp=iso_date(day);
+        if (flow.receipts.value()>0)
+            append_trusted(ledger,day,Account::cash,Account::revenue,flow.receipts,"Projected customer cash","projection.sale/"+stamp);
+        if (flow.bills_due.value()>0)
+            issue_market_invoice(ledger,day,{"projection.bill/"+stamp,InvoiceKind::payable,day,flow.bills_due,Cents{0},"Projected contract costs"});
+        accrue_metered_projection(ledger,day,metered);
+        close_day(ledger,day,protected_cash);
+        for (auto& debt:ledger.debts) {
+            if (debt.due>day) break;
+            const auto payment=std::min(debt.principal,available_cash(ledger,protected_cash));
+            if (payment.value()==0) continue;
+            append_trusted(ledger,day,Account::debt,Account::cash,payment,"Projected principal","projection.debt/"+debt.id+"/"+stamp,debt.id);
+            debt.principal=checked_unit_subtract(debt.principal,payment);
+        }
+        const auto point=projection_point(ledger,day,protected_cash);
+        if (!result.first_shortfall && (point.overdue_payables.value()>0 || point.due_principal.value()>0))
+            result.first_shortfall=day;
+        if (day==near_through) result.near_term=point;
+        result.year=point;
     }
-    for (const auto& debt : candidate.debts)
-        if (debt.due <= through) result.due_principal = checked_unit_add(result.due_principal, debt.principal);
     return result;
 }
 } // namespace pgp::core

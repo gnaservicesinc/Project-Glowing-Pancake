@@ -634,9 +634,18 @@ offers and follow usage and refunds in Office → Contracts. Internal content
 0.19.0-dev.1 passed the seven-scenario and 21-opening review. The optimized
 Mac build, eight focused checks and short QML runs at 100% and 200% text passed.
 
-Next is the Accounts view for cash flow, profit and loss, balance sheet, unit
-economics and 3/12-month cash scenarios. The roadmap remains 42/52 checked
-while design coverage is completed.
+Office Accounts now has separate statements, cash scenarios, and bills and
+debt views. The statements show current balances and 30 settled days of
+earnings, cash movements and product or wholesale unit economics. The
+3- and 12-month scenarios compare 50%, 100% and 150% of recent discretionary
+delivery at current prices within today's usable capacity. They apply signed
+terms, advance balances, recurring and owned-site costs, and debt payments
+and show the first projected unpaid obligation. The optimized Mac build,
+eight focused checks and short keyboard checks at 100% and 200% text pass.
+
+Next is fictional corporate tax policy with a disclosed taxable base, dated
+bills and visible payments. The roadmap remains 42/52 checked while design
+coverage is completed.
 M8-02 stays deferred. Human work waits until the user is ready, and E2-04 editor
 downloads stay with deferred release preparation.
 

@@ -1,5 +1,6 @@
 #include "integration_fixture.hpp"
 
+#include <pgp/core/company_finance.hpp>
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include <nlohmann/json.hpp>
@@ -215,6 +216,11 @@ void customer_prepayment(const runtime::CompiledProgram& program) {
     offer.segment_id="enterprise"; offer.product_id="product.docs"; offer.tasks_per_day=1000;
     offer.customer_advance=Cents{150};
     simulation.business_offers=BusinessOffersState{{offer},{}};
+    auto ordinary_opening=opening;
+    ordinary_opening.world.simulation.business_offers->catalog.front().customer_advance=Cents{0};
+    runtime::Runtime ordinary{program,std::move(ordinary_opening)};
+    apply(ordinary,AcceptBusinessOffer{offer.id});
+    integration_fixture::step(ordinary);
     runtime::Runtime engine{program,opening};
     const auto report=[](const auto& game) { return accounts_report(*game.current_state().world.simulation.accounts); };
     const auto before=report(engine);
@@ -232,6 +238,10 @@ void customer_prepayment(const runtime::CompiledProgram& program) {
     const auto first=report(engine);
     check(first.cash==advance.cash && first.revenue==Cents{100} && first.customer_advances==Cents{50} &&
           first.receivables==Cents{0},"The first earned invoice was collected twice or did not consume the advance");
+    const auto prepaid_case=forecast_company_finances(engine.current_state().world.simulation);
+    const auto ordinary_case=forecast_company_finances(ordinary.current_state().world.simulation);
+    check(prepaid_case.cases[1].cash.near_term.cash==ordinary_case.cases[1].cash.near_term.cash,
+          "Cash scenarios collected a signed charge already covered by the advance");
     const auto bytes=persistence::encode_save(program,engine.checkpoint());
     auto saved=persistence::decode_save(program,bytes).checkpoint;
     check(saved==engine.checkpoint(),"Save lost the partly used advance");
@@ -256,6 +266,10 @@ void customer_prepayment(const runtime::CompiledProgram& program) {
 
     auto interrupted=runtime::Runtime{program,saved};
     apply(interrupted,SetMarketProductAvailable{"product.docs",false});
+    apply(ordinary,SetMarketProductAvailable{"product.docs",false});
+    check(forecast_company_finances(interrupted.current_state().world.simulation).cases[1].cash.near_term.cash==
+          forecast_company_finances(ordinary.current_state().world.simulation).cases[1].cash.near_term.cash,
+          "Cash scenarios skipped the refund of an advance on unavailable service");
     integration_fixture::step(interrupted);integration_fixture::step(interrupted);
     check(saved_contract(interrupted.checkpoint(),id).status==ContractStatus::completed &&
           report(interrupted).cash==checked_unit_add(before.cash,Cents{100}) && report(interrupted).revenue==Cents{100} &&
@@ -285,6 +299,40 @@ void customer_prepayment(const runtime::CompiledProgram& program) {
           warning.oldest->reference==refund->id,"The unpaid part of a customer refund did not trigger the actual liquidity warning");
     check(persistence::decode_save(program,persistence::encode_save(program,ending)).checkpoint==ending,
           "Partially unpaid customer refund did not reopen exactly");
+}
+void accounts_statements_and_demand(const runtime::CompiledProgram& program) {
+    using namespace core;
+    auto engine=setup(program,false,Cents{3100},800,Cents{100000},Cents{10});
+    check(!recent_company_period(engine.current_state().world.simulation),"An opening morning was counted as settled history");
+    integration_fixture::step(engine);
+    const auto& settled=engine.current_state().world.simulation;
+    const auto settled_cash=settled.cash;
+    const auto period=recent_company_period(settled);
+    check(period && period->delivered_tasks==800 && period->product_revenue==Cents{8000} &&
+          period->service_cost==Cents{100} && period->revenue==Cents{8000},
+          "Actual task economics lost earned work or service expense");
+    check(period->opening_cash==Cents{0} && period->closing_cash==settled_cash &&
+          period->operations.received==Cents{8000} && period->financing.received==Cents{120000000},
+          "Statements did not reconcile opening equity separately from operations");
+    const auto reservation=settled.next_reservation_id;
+    apply(engine,ReserveFunds{"Same morning research",Cents{1000}});
+    apply(engine,ConsumeReservation{reservation,Cents{1000}});
+    const auto before=engine.checkpoint();
+    const auto& today=before.world.simulation;
+    const auto history=recent_company_period(today);
+    check(today.cash==checked_unit_subtract(settled_cash,Cents{1000}) && history &&
+          history->closing_cash==settled_cash && history->expenses==period->expenses,
+          "Same morning spending was attributed to the already settled period");
+    const auto outlook=forecast_company_finances(today);
+    check(engine.checkpoint()==before && outlook.sample_days==1 &&
+          outlook.cases[0].tasks_per_day==400 && outlook.cases[1].tasks_per_day==800 &&
+          outlook.cases[2].tasks_per_day==1000,"Demand scenarios mutated the world or exceeded usable capacity");
+    const auto& low=outlook.cases[0].cash;
+    const auto& high=outlook.cases[2].cash;
+    check(low.near_term.through==parse_iso_date("2014-04-01") &&
+          high.year.through==parse_iso_date("2015-01-01") &&
+          high.near_term.cash==checked_unit_add(low.near_term.cash,Cents{540000}),
+          "Forecast dates or cash differences disagree with signed calendar days and demand");
 }
 void installed_incumbency_and_legacy(const runtime::CompiledProgram& program) {
     auto engine=initial(program);
@@ -325,7 +373,8 @@ int main() {
     try {
         const auto program=integration_fixture::program(PGP_RUNTIME_FIXTURE_PATH,false);
         two_months_and_reload(program);fee_usage_budget_and_actual_work(program);
-        contract_priority_credits_and_deadline(program);customer_prepayment(program);installed_incumbency_and_legacy(program);
+        contract_priority_credits_and_deadline(program);customer_prepayment(program);
+        accounts_statements_and_demand(program);installed_incumbency_and_legacy(program);
         std::cout << checks << " market command/save integration checks passed\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << error.what() << '\n';return 1; }

@@ -89,6 +89,9 @@ struct ContractDayResult {
     Cents service_credit{0};
     Cents usage_charge{0};
     Cents penalty{0};
+    [[nodiscard]] Cents customer_charge() const {
+        return checked_unit_add(checked_unit_subtract(gross_fee, service_credit), usage_charge);
+    }
     auto operator<=>(const ContractDayResult&) const = default;
 };
 struct MarketDelivery {
@@ -201,6 +204,7 @@ using MarketInfluences = std::vector<MarketInfluence>;
 [[nodiscard]] MarketState opening_market(OrdinalDay starts_on = OrdinalDay{0},
                                          std::string owner = "company.player");
 [[nodiscard]] MarketReport market_report(const MarketState& state);
+[[nodiscard]] ContractDayResult contract_delivery(const MarketContract&,OrdinalDay,std::uint64_t delivered_tasks);
 [[nodiscard]] bool regional_market(const MarketState& state);
 [[nodiscard]] bool market_access(const MarketProduct& product, const MarketSegment& segment);
 [[nodiscard]] BasisPoints market_migration(const MarketProduct& product, const MarketSegment& segment);

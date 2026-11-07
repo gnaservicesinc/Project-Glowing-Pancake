@@ -90,6 +90,45 @@ void finish_imported_work(RivalCompany& rival,std::string_view source_id) {
     for (const auto& id:unfinished) if (!competition_detail::submit_rival(rival,CancelProject{id}))
         invalid("An expired wholesale slice could not release its unfinished work");
 }
+WholesaleSales sales(const WholesaleContract& contract,const AccountsState& ledger,std::size_t begin,std::size_t end) {
+    WholesaleSales result;
+    for (auto i=begin;i<end;++i) {
+        const auto& day=contract.days[i];
+        result.supplied=checked_unit_add(result.supplied,MilliCU{day.available.value()});
+        result.used=checked_unit_add(result.used,day.used);
+        if (day.seller_posting>0)
+            result.cash=checked_unit_add(result.cash,ledger.postings.at(static_cast<std::size_t>(day.seller_posting-1)).amount);
+    }
+    return result;
+}
+}
+
+WholesaleSales wholesale_sales(const WorldState& world,OrdinalDay first,OrdinalDay last) {
+    WholesaleSales result;
+    if (!world.competition || !world.simulation.accounts) return result;
+    for (const auto& contract:world.competition->wholesale) {
+        const auto index=[&](OrdinalDay day) {
+            return std::min(contract.days.size(),static_cast<std::size_t>(std::max<std::int64_t>(0,day.value()-contract.starts_on.value())));
+        };
+        const auto portion=sales(contract,*world.simulation.accounts,index(first),index(advance_days(last,Days{1})));
+        result.cash=checked_unit_add(result.cash,portion.cash);
+        result.supplied=checked_unit_add(result.supplied,portion.supplied);
+        result.used=checked_unit_add(result.used,portion.used);
+    }
+    return result;
+}
+std::vector<DatedCustomerCash> forecast_wholesale_cash(const WorldState& world) {
+    std::vector<DatedCustomerCash> result;
+    if (!world.competition || !world.simulation.accounts) return result;
+    const auto today=world.simulation.date;
+    for (const auto& contract:world.competition->wholesale) {
+        const auto end=last_boundary(contract);
+        const auto count=std::min(finance_sample_days,contract.days.size());
+        if (end<=today || count==0) continue;
+        const auto earned=sales(contract,*world.simulation.accounts,contract.days.size()-count,contract.days.size()).cash;
+        result.push_back({contract.starts_on,end,Cents{earned.value()/static_cast<std::int64_t>(count)}});
+    }
+    return result;
 }
 
 std::span<const content::WholesalePlan> wholesale_plans(const WorldState& world,const CompiledProgram& program) {

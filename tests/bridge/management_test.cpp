@@ -31,6 +31,16 @@ void run() {
     auto advanced=session::run_slice_baseline(program,core::OrdinalDay{80}).checkpoint;
     auto later=std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,advanced,{},true});
     management.update(later,program,false);
+    const auto statements=management.financialStatements();
+    check(statements.value("assets").toString().contains(QStringLiteral("Total assets")) &&
+          statements.value("cash").toString().contains(QStringLiteral("Ending cash")) &&
+          statements.value("units").toString().contains(QStringLiteral("Earned product revenue")),
+          "Accounts view omitted current balances, cash reconciliation or actual unit economics");
+    const auto outlook=management.cashScenarios();
+    const auto cases=outlook.value("cases").toList();
+    check(cases.size()==3 && cases.front().toMap().value("near").toString().contains(QStringLiteral("Through")) &&
+          cases.back().toMap().value("year").toString().contains(QStringLiteral("Through")) &&
+          later->checkpoint==advanced,"Accounts forecasts lost their dates, demand cases or read-only behavior");
     check(management.models()->rowCount()==2 && management.evidence()->rowCount()==1 && management.products()->rowCount()==1,"Actual company work is missing from management models");
     const auto evidence=management.evidence()->selectedRow();
     check(evidence.value(QStringLiteral("detail")).toString().contains(QStringLiteral("scanned tables")) && evidence.value(QStringLiteral("fields")).toMap().value(QStringLiteral("independent")).toBool(),"Concrete subgroup result or independence missing");

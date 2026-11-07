@@ -1,6 +1,7 @@
 #pragma once
 #include <pgp/content/market_setup.hpp>
 #include <pgp/core/capacity.hpp>
+#include <pgp/core/company_finance.hpp>
 #include <span>
 
 namespace pgp::runtime {
@@ -31,9 +32,15 @@ struct WholesaleQuote {
     core::OrdinalDay ends_before{0};
     core::Cents funded_ceiling{0};
 };
+struct WholesaleSales {
+    core::Cents cash{0};
+    core::MilliCU supplied{0}, used{0};
+};
 
 [[nodiscard]] std::span<const content::WholesalePlan> wholesale_plans(const WorldState&,const CompiledProgram&);
 [[nodiscard]] WholesaleQuote wholesale_quote(const WorldState&,const CompiledProgram&,std::string_view plan,
     std::string_view source,std::string_view buyer);
 void sign_wholesale(WorldState&,const CompiledProgram&,std::string_view plan,std::string_view source,std::string_view buyer);
+[[nodiscard]] WholesaleSales wholesale_sales(const WorldState&,core::OrdinalDay first,core::OrdinalDay last);
+[[nodiscard]] std::vector<core::DatedCustomerCash> forecast_wholesale_cash(const WorldState&);
 }

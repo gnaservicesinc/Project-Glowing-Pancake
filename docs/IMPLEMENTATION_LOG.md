@@ -1867,3 +1867,26 @@ review the offer and cancellation, save and reopen an unpaid refund, then
 settle it through the ordinary daily close. The compact ledger/market codecs
 round-trip those records, and a prior 0.18.0-dev.1 save re-encodes exactly
 with its matching reviewed content.
+
+### Company accounts and cash scenarios
+
+Office Accounts shows the current balance sheet and up to 30 settled days
+of profit and loss, operating, investing and financing cash flows, and unit
+economics. Product revenue and attributed support and penalties use actual
+delivered tasks. Wholesale reports actual cash and supplied and used compute.
+The settled period reconciles independently of transactions posted this
+morning.
+
+The paused cash scenarios use 50%, 100% and 150% of recent discretionary
+tasks at current prices within usable serving capacity. Each shows 3- and
+12-month balances and the first unpaid obligation. The calculation uses
+live bills, recurring terms, conservative owned-site costs, signed customer
+payments net of advances and refunds, and due principal after bill payments.
+Wholesale uses recent receipts within signed dates. Reservations remain held.
+Reports and forecasts are derived from the existing saved state.
+
+The optimized Mac build and eight focused CTests pass. The checks exercise
+cash reconciliation, calendar dates, capacity limits, customer prepayments,
+refunds, overdue bills, scheduled principal and actual wholesale receipts.
+Short offscreen keyboard checks at 100% and 200% reach all three Accounts
+views and verify that advancing one day clears the old forecast.

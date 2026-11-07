@@ -77,9 +77,6 @@ void invoice(AccountsState& accounts, OrdinalDay day, std::string id, InvoiceKin
     if (amount.value() != 0)
         issue_market_invoice(accounts, day, {std::move(id), kind, day, amount, Cents{0}, std::move(cause)}, prepaid);
 }
-Cents net_charge(const ContractDayResult& result) {
-    return checked_unit_add(checked_unit_subtract(result.gross_fee, result.service_credit), result.usage_charge);
-}
 std::uint64_t weight(std::uint64_t utility, std::uint64_t threshold) {
     const auto positive = utility > threshold ? utility - threshold : 0;
     return mul_div_floor(positive, positive, 1).quotient;
@@ -157,6 +154,14 @@ std::uint64_t total_supply(const CapacityDay& plan, std::string_view project_id)
     return found == plan.projects.end() ? 0 : found->useful_tasks;
 }
 } // namespace
+
+ContractDayResult contract_delivery(const MarketContract& row,OrdinalDay day,std::uint64_t delivered) {
+    if (delivered>row.tasks_per_day) invalid("Contract delivery exceeds the agreed task count");
+    const auto gross=daily_fee(row,day);
+    const auto missing=row.tasks_per_day-delivered;
+    return {row.id,row.tasks_per_day,delivered,gross,credit(row,gross,missing),
+            multiplied(row.usage_price,delivered),multiplied(row.missing_task_penalty,missing)};
+}
 
 std::string_view channel_key(ProductChannel channel) {
     switch (channel) {
@@ -484,7 +489,7 @@ void validate_market(const MarketState& state) {
                 promised[contract.segment_id] += result.promised_tasks;
                 delivered_contract[contract.segment_id] += result.delivered_tasks;
                 auto [found, fresh] = charges.try_emplace(contract.segment_id, Cents{0}); (void)fresh;
-                found->second = checked_unit_add(found->second, net_charge(result));
+                found->second = checked_unit_add(found->second, result.customer_charge());
             }
             ++contract_days[contract.id];
         }
@@ -653,7 +658,7 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
             const auto& contract = find_id(state.contracts, result.contract_id);
             delivered[contract.product_id] += result.delivered_tasks;
             protected_delivered[contract.product_id] += result.delivered_tasks;
-            const auto charge = net_charge(result);
+            const auto charge = result.customer_charge();
             if (charge.value() > 0) {
                 const auto id="market.contract/" + contract.id + "/" + date_text;
                 expect(id, InvoiceKind::receivable, charge, day.day);
@@ -958,15 +963,12 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
     for (const auto& row : next.contracts) {
         if (row.status != ContractStatus::active) continue;
         const auto delivered = delivered_contracts[row.id];
-        const auto gross = daily_fee(row, day);
-        ContractDayResult result{row.id, row.tasks_per_day, delivered, gross,
-            credit(row, gross, row.tasks_per_day - delivered), multiplied(row.usage_price, delivered),
-            multiplied(row.missing_task_penalty, row.tasks_per_day - delivered)};
+        const auto result=contract_delivery(row,day,delivered);
         record.contracts.push_back(result);
         segment_reserved[row.segment_id] += row.tasks_per_day;
         segment_contract_delivered[row.segment_id] += delivered;
         auto [charged, fresh] = segment_charged.try_emplace(row.segment_id, Cents{0}); (void)fresh;
-        charged->second = checked_unit_add(charged->second, net_charge(result));
+        charged->second = checked_unit_add(charged->second, result.customer_charge());
     }
     std::vector<AllocationProduct> products;
     for (const auto& row : next.products) {
@@ -1101,7 +1103,7 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
         auto& row=*found;
         if (row.status==ContractStatus::pending) {row.status=ContractStatus::missed;row.stopped_on=row.start_by;}
         else if (advance_days(day,Days{1})>=row.ends_before) {row.status=ContractStatus::completed;row.stopped_on=row.ends_before;}
-        const auto charge=net_charge(result);
+        const auto charge=result.customer_charge();
         const auto prepaid=std::min(charge,row.unearned_advance());
         invoice(ledger,day,invoice_id("contract",row.id,day),InvoiceKind::receivable,charge,row.cause,prepaid);
         row.advance_applied=checked_unit_add(row.advance_applied,prepaid);

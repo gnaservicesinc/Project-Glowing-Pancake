@@ -399,14 +399,25 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "accounts"
-        Copy { text: manager.briefing }
-        Selection { heading: qsTr("Unpaid obligations"); rows: manager.payables }
-        Action {
-            text: qsTr("Pay selected outstanding amount")
-            enabled: panel.editable && manager.payables.selectedId.length > 0
-            onClicked: {
-                if (manager.payables.selectedRow.fields.debt) manager.repayDebt(manager.payables.selectedId)
-                else manager.payInvoice(manager.payables.selectedId)
+        AccountsPanel {
+            id: accountsPanel
+            Layout.fillWidth: true
+            manager: panel.manager
+            textSize: panel.textSize
+            readyForForecast: campaign.paused && !campaign.busy
+        }
+        ColumnLayout {
+            visible: accountsPanel.section === "bills"
+            Layout.fillWidth: true
+            Copy { text: manager.briefing }
+            Selection { heading: qsTr("Unpaid obligations"); rows: manager.payables }
+            Action {
+                text: qsTr("Pay selected outstanding amount")
+                enabled: panel.editable && manager.payables.selectedId.length > 0
+                onClicked: {
+                    if (manager.payables.selectedRow.fields.debt) manager.repayDebt(manager.payables.selectedId)
+                    else manager.payInvoice(manager.payables.selectedId)
+                }
             }
         }
     }

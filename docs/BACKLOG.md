@@ -41,9 +41,11 @@ Restricted research grants and expiring cloud credits are now claimable in the
 Office. They apply to eligible costs through the Lab and supplier ledger.
 The opening enterprise offer now pays a refundable customer advance. Actual
 delivery applies the balance to its own invoices, and unused cash becomes a
-refund payable when the commitment ends. Next is the player-facing Accounts
-view for cash flow, profit and loss, balance sheet, unit economics and 3/12-month
-cash scenarios.
+refund payable when the commitment ends. Office Accounts now shows the balance
+sheet, 30 settled days of cash flow and profit and loss, and actual unit
+economics. Three 3- and 12-month cash scenarios apply recorded commitments and
+vary recent discretionary demand. Next is a fictional corporate tax policy
+with a disclosed taxable base, dated bills and visible payments.
 
 ## M0 — Toolchain and platform proof
 

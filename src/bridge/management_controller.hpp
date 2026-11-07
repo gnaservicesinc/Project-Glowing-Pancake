@@ -42,6 +42,7 @@ class ManagementController final : public QObject {
     Q_PROPERTY(StableListModel* regionalMarkets READ regionalMarkets CONSTANT)
     Q_PROPERTY(QVariantMap recommended READ recommended NOTIFY changed)
     Q_PROPERTY(QString briefing READ briefing NOTIFY changed)
+    Q_PROPERTY(QVariantMap financialStatements READ financialStatements NOTIFY changed)
     Q_PROPERTY(QString guide READ guide NOTIFY changed)
     Q_PROPERTY(QString ending READ ending NOTIFY changed)
     Q_PROPERTY(bool plannedCompetition READ plannedCompetition NOTIFY changed)
@@ -132,6 +133,8 @@ public:
     QVariantList services() const;
     QVariantMap recommended() const;
     QString briefing() const;
+    QVariantMap financialStatements() const;
+    Q_INVOKABLE QVariantMap cashScenarios() const;
     QString guide() const;
     QString ending() const;
     Q_INVOKABLE QVariantMap trainingPreview(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent={}) const;

@@ -191,7 +191,20 @@ struct MeteredProjection {
     std::optional<OrdinalDay> ends_before;
     Cents daily_ceiling{0};
 };
+struct ProjectedCashDay {
+    Cents receipts{0};
+    Cents bills_due{0};
+};
+struct CashOutlook {
+    CashProjection near_term;
+    CashProjection year;
+    std::optional<OrdinalDay> first_shortfall;
+};
 [[nodiscard]] CashProjection project_cash(const AccountsState& state, OrdinalDay through,
                                          Cents protected_cash = Cents{0},
                                          const std::vector<MeteredProjection>& metered = {});
+// From a trusted snapshot, settle a bounded future cash path using only live
+// commitments. The forecast pays principal after bills when cash permits.
+[[nodiscard]] CashOutlook project_cash_outlook(const AccountsState&, OrdinalDay near_through,
+    Cents protected_cash, const std::vector<MeteredProjection>&, std::span<const ProjectedCashDay> days);
 } // namespace pgp::core

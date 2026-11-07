@@ -159,6 +159,11 @@ void provider_route(const runtime::CompiledProgram& program) {
     const auto net=checked_unit_subtract(accounts_report(*state(game).accounts).profit,profit);
     check(net.value()>0 && state(game).lab->models.empty() && state(game).market->products.empty(),
         "The actual funded provider route could not cover operating costs without a model");
+    const auto sales=runtime::wholesale_sales(world(game),opening,*state(game).accounts->closed_through);
+    const auto future=runtime::forecast_wholesale_cash(world(game));
+    check(sales.cash.value()>0 && sales.used.value()>0 && sales.supplied>=sales.used &&
+          !future.empty() && future.front().per_day.value()>0 && future.front().ends_before==contracts.front().ends_before,
+          "The infrastructure provider lost its actual wholesale sales, capacity or dated receipts");
     check(std::all_of(state(game).market->days.begin(),state(game).market->days.end(),[](const auto& day){return day.discretionary.empty();}),
         "The compute host claimed its buyer's delivered customer work");
     const auto bytes=exact(program,game);

@@ -142,6 +142,8 @@ void validate_infrastructure(const SimulationState&,bool deep=true);
 [[nodiscard]] SiteAppointment preview_site_appointment(const SimulationState&,const ScheduleSiteAppointment&);
 [[nodiscard]] ExecutiveLocation executive_location(const SimulationState&);
 [[nodiscard]] CashProjection project_company_cash(const SimulationState&,OrdinalDay,Cents protected_cash=Cents{0});
+[[nodiscard]] CashOutlook project_company_cash_outlook(const SimulationState&,OrdinalDay near_through,
+    Cents protected_cash,std::span<const ProjectedCashDay>);
 [[nodiscard]] Cents infrastructure_monthly_fixed_cost(const SimulationState&,OrdinalDay);
 void build_owned_site(SimulationState&,const BuildOwnedSite&,Cents protected_cash);
 void order_owned_hardware(SimulationState&,const OrderOwnedHardware&,Cents protected_cash);
