@@ -24,6 +24,10 @@ enum class ProductChannel { legacy, business, api, consumer, licensed, open_weig
 [[nodiscard]] ProductChannel parse_channel(std::string_view key);
 [[nodiscard]] bool customer_hosted(ProductChannel channel);
 
+struct ProductRetirement {
+    OrdinalDay announced_on{0}, retires_on{0};
+    auto operator<=>(const ProductRetirement&) const = default;
+};
 struct MarketProduct {
     std::string id;
     std::string capacity_project_id;
@@ -32,6 +36,7 @@ struct MarketProduct {
     ProductChannel channel = ProductChannel::legacy;
     BasisPoints monthly_migration{10000};
     std::string region_id{};
+    std::optional<ProductRetirement> retirement{};
     auto operator<=>(const MarketProduct&) const = default;
 };
 struct MarketPreference {
@@ -167,6 +172,14 @@ struct MarketTrial {
     std::optional<OrdinalDay> stopped_on{};
     auto operator<=>(const MarketTrial&) const = default;
 };
+inline constexpr std::uint32_t service_term_min_days=30;
+inline constexpr std::uint32_t service_term_max_days=1096;
+inline constexpr std::size_t service_compatibility_limit=4096;
+struct ServiceCompatibility {
+    std::string product_id, project_id;
+    OrdinalDay starts_on{0}, ends_before{0};
+    auto operator<=>(const ServiceCompatibility&) const = default;
+};
 struct MarketPriceChange {
     std::string product_id;
     OrdinalDay starts_on{0};
@@ -195,6 +208,7 @@ struct MarketState {
     std::vector<MarketPriceChange> prices{};
     PagedHistory<MarketPriceEvent,64> price_events{};
     std::vector<MarketTrial> trials{};
+    std::vector<ServiceCompatibility> compatibility{};
     auto operator<=>(const MarketState&) const = default;
 };
 struct MarketReport {
@@ -218,6 +232,7 @@ using MarketInfluences = std::vector<MarketInfluence>;
                                          std::string owner = "company.player");
 [[nodiscard]] MarketReport market_report(const MarketState& state);
 [[nodiscard]] const MarketTrial* market_trial(const MarketState&,std::string_view product,OrdinalDay);
+[[nodiscard]] const ServiceCompatibility* market_compatibility(const MarketState&,std::string_view product,OrdinalDay);
 [[nodiscard]] ContractDayResult contract_delivery(const MarketContract&,OrdinalDay,std::uint64_t delivered_tasks);
 [[nodiscard]] bool regional_market(const MarketState& state);
 [[nodiscard]] bool market_access(const MarketProduct& product, const MarketSegment& segment);

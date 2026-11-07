@@ -196,16 +196,21 @@ CompanyCashForecast forecast_company_finances(const SimulationState& state,std::
     for (std::size_t i=0;i<demand.size();++i) {
         auto& forecast=result.cases[i];
         forecast.demand_percent=demand[i];
+        auto path=base;
         if (sample.days>0) for (const auto& [id,product]:sample.products) {
             (void)id;
             const auto requested=mul_div_floor(product.observed,demand[i],sample.days*100).quotient;
             const auto supplied=std::min(requested,product.extra_capacity);
+            const auto receipts=Cents{mul_div_floor(supplied,static_cast<std::uint64_t>(product.product->price_per_task.value()),1).quotient};
             forecast.tasks_per_day+=supplied;
-            add(forecast.discretionary_sales_per_day,
-                Cents{mul_div_floor(supplied,static_cast<std::uint64_t>(product.product->price_per_task.value()),1).quotient});
+            add(forecast.discretionary_sales_per_day,receipts);
+            auto until=path.size();
+            if (const auto& notice=product.product->retirement; notice) {
+                const auto remaining=std::max<std::int64_t>(0,notice->retires_on.value()-first.value());
+                until=std::min(until,static_cast<std::size_t>(remaining));
+            }
+            for (std::size_t j=0;j<until;++j) add(path[j].receipts,receipts);
         }
-        auto path=base;
-        for (auto& day:path) add(day.receipts,forecast.discretionary_sales_per_day);
         forecast.cash=project_company_cash_outlook(state,near,result.reserved_cash,path);
     }
     return result;

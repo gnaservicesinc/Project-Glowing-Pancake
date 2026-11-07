@@ -56,9 +56,15 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
             for (const auto& invoice:s.accounts->invoices) if (invoice.settled<invoice.amount) consider(invoice.due);
             for (const auto& debt:s.accounts->debts) if (debt.principal.value()>0) consider(debt.due);
         }
-        if (s.market) for (const auto& contract:s.market->contracts) {
-            if (contract.status==core::ContractStatus::pending) consider(contract.start_by);
-            if (contract.status==core::ContractStatus::pending || contract.status==core::ContractStatus::active) consider(contract.ends_before);
+        if (s.market) {
+            for (const auto& contract:s.market->contracts) {
+                if (contract.status==core::ContractStatus::pending) consider(contract.start_by);
+                if (contract.status==core::ContractStatus::pending || contract.status==core::ContractStatus::active) consider(contract.ends_before);
+            }
+            for (const auto& product:s.market->products)
+                if (product.retirement && product.retirement->retires_on>s.date) consider(product.retirement->retires_on);
+            for (const auto& term:s.market->compatibility) if (term.ends_before>s.date) consider(term.ends_before);
+            for (const auto& trial:s.market->trials) if (!trial.stopped_on) consider(trial.ends_before);
         }
         if (s.liquidity) if (const auto deadline=core::liquidity_report(*s.liquidity).deadline) consider(*deadline);
         if (s.management) {

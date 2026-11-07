@@ -145,6 +145,8 @@ public:
     Q_INVOKABLE QString servicePreview(QString service,QString model,bool review) const;
     Q_INVOKABLE QVariantMap rolloutPreview(QString service,QString model,QString evidence,QString source,
         bool review,QString share,QString days) const;
+    Q_INVOKABLE QVariantMap compatibilityQuote(QString service,QString days) const;
+    Q_INVOKABLE QVariantMap retirementQuote(QString service,QString days) const;
     Q_INVOKABLE void buyData(QString id);
     Q_INVOKABLE void research(QString id,QString source,QString rate,QString staff);
     Q_INVOKABLE void publishResearch(QString id);
@@ -158,6 +160,8 @@ public:
     Q_INVOKABLE void stageRollout(QString service,QString model,QString evidence,QString source,bool review,QString share,QString days);
     Q_INVOKABLE void finishRollout(QString service,bool promote);
     Q_INVOKABLE void rollbackService(QString service);
+    Q_INVOKABLE void commitCompatibility(QString service,QString days);
+    Q_INVOKABLE void announceRetirement(QString service,QString days);
     Q_INVOKABLE void acceptOffer(QString id);
     Q_INVOKABLE void respondCompetitiveOffer(QString id,bool accept);
     Q_INVOKABLE void cancelContract(QString id);

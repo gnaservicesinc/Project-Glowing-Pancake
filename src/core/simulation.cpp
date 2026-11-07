@@ -101,6 +101,10 @@ void consume(SimulationState& state, std::uint64_t id, Cents amount) {
         row.status = ReservationStatus::completed;
     }
 }
+void prepare_service_lifecycle(SimulationState& state) {
+    expire_service_rollouts(state);
+    if (retire_due_services(state)>0) (void)receipt(state,"service_retirement_effective");
+}
 void prepare_opening(SimulationState& state, const std::vector<MarketAdoption>* industry_adoptions = nullptr) {
     if (state.phase != DayPhase::opening) {
         return;
@@ -109,7 +113,7 @@ void prepare_opening(SimulationState& state, const std::vector<MarketAdoption>* 
     prepare_governance(state);
     prepare_succession(state);
     prepare_management(state);
-    expire_service_rollouts(state);
+    prepare_service_lifecycle(state);
     prepare_infrastructure(state);
     if (state.business_offers) expire_business_offers(*state.business_offers,*state.capacity,state.date);
     while (state.opening_cursor < state.opening_actions.size()) {
@@ -158,9 +162,11 @@ void validate(const SimulationState& state,bool deep=true,std::size_t first_rece
             const auto term = std::find_if(state.accounts->recurring.begin(), state.accounts->recurring.end(),
                 [&](const auto& obligation) { return obligation.id == "support/" + project.id; });
             auto ends_before=project.stopped_on;
-            if (!ends_before && state.market && term!=state.accounts->recurring.end() && term->ends_before) {
+            if (!ends_before && state.market && project.kind==ProjectKind::serving) {
                 const auto trial=std::ranges::find(state.market->trials,project.id,&MarketTrial::project_id);
                 if (trial!=state.market->trials.end()) ends_before=trial->ends_before;
+                const auto product=std::ranges::find(state.market->products,project.id,&MarketProduct::capacity_project_id);
+                if (product!=state.market->products.end() && product->retirement) ends_before=product->retirement->retires_on;
             }
             if (term == state.accounts->recurring.end() || term->monthly_amount != project.monthly_support_cost ||
                 term->starts_on != project.starts_on || term->ends_before != ends_before)
@@ -169,6 +175,14 @@ void validate(const SimulationState& state,bool deep=true,std::size_t first_rece
     }
     if (state.market) {
         if (!state.accounts || !state.capacity) invalid("A market requires accounts and shared capacity");
+        if (deep) {
+            for (const auto& product:state.market->products) if (product.retirement &&
+                (!state.deployments || product.retirement->retires_on>state.end_date))
+                invalid("Retirement needs a qualified release and a date within the campaign");
+            for (const auto& term:state.market->compatibility)
+                if (!state.deployments || term.ends_before>state.end_date)
+                    invalid("Compatibility needs a qualified release and a date within the campaign");
+        }
         if (!state.deployments && !state.market->trials.empty()) invalid("Service trials require qualified release records");
         if (deep) validate_market_links(*state.market, *state.accounts, *state.capacity);
         else if (state.market->owner!=state.accounts->owner || state.market->closed_through!=state.accounts->closed_through)
@@ -520,7 +534,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 prepare_governance(next);
                 prepare_succession(next);
                 prepare_management(next);
-                expire_service_rollouts(next);
+                prepare_service_lifecycle(next);
                 prepare_infrastructure(next);
                 if (next.liquidity) {
                     observe_liquidity(*next.liquidity, *next.accounts, next.date, false);
@@ -632,6 +646,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     })))) refuse(CommandReason::dependent_commitment,"Stop the service replica before changing either of its workloads.");
                 if (next.market) for (const auto& product:next.market->products) {
                     if (product.capacity_project_id!=action.id) continue;
+                    if (product.retirement || market_compatibility(*next.market,product.id,next.date))
+                        refuse(CommandReason::dependent_commitment,"Keep serving through the published compatibility or retirement period.");
                     for (const auto& contract:next.market->contracts)
                         if (contract.product_id==product.id && (contract.status==ContractStatus::active || contract.status==ContractStatus::pending))
                             refuse(CommandReason::dependent_commitment,"Cancel the dependent customer contract before stopping its service.");
@@ -650,6 +666,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if (next.market) for (const auto& contract:next.market->contracts)
                     if (contract.status==ContractStatus::active || contract.status==ContractStatus::pending)
                         refuse(CommandReason::dependent_commitment,"Resolve customer contracts before withdrawing operations.");
+                if (next.market) for (const auto& product:next.market->products)
+                    if ((product.retirement && next.date<product.retirement->retires_on) || market_compatibility(*next.market,product.id,next.date))
+                        refuse(CommandReason::dependent_commitment,"Wait until the published service commitments end before withdrawing operations.");
                 discard_service_rollouts(next);
                 std::vector<std::string> projects,recurring,sources;
                 for (const auto& row:next.capacity->projects) if (row.status==ProjectStatus::active) projects.push_back(row.id);
@@ -824,6 +843,10 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 finish_service_rollout(next,action);(void)receipt(next,action.promote?"promote_service_rollout":"discard_service_rollout");
             } else if constexpr (std::is_same_v<Action, RollbackService>) {
                 rollback_service(next,action);(void)receipt(next,"rollback_service");
+            } else if constexpr (std::is_same_v<Action, CommitServiceCompatibility>) {
+                commit_service_compatibility(next,action);(void)receipt(next,"commit_service_compatibility");
+            } else if constexpr (std::is_same_v<Action, AnnounceServiceRetirement>) {
+                announce_service_retirement(next,action);(void)receipt(next,"announce_service_retirement");
             } else if constexpr (std::is_same_v<Action, FundPolicyAdvocacy>) {
                 const auto before = next.cash;
                 fund_policy_advocacy(next, action, reserved_cash(next));

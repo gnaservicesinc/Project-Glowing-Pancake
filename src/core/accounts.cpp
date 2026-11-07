@@ -603,11 +603,14 @@ void add_recurring(AccountsState& state, RecurringObligation obligation) {
     });
 }
 void end_recurring(AccountsState& state, std::string_view id, OrdinalDay ends_before) {
+    schedule_recurring_end(state,ends_before,id,ends_before);
+}
+void schedule_recurring_end(AccountsState& state, OrdinalDay day, std::string_view id, OrdinalDay ends_before) {
     mutate(state, [&](auto& candidate) {
-        require_day(candidate, ends_before);
+        require_day(candidate, day);
         const auto found = std::find_if(candidate.recurring.begin(), candidate.recurring.end(),
             [&](const auto& obligation) { return obligation.id == id; });
-        if (found == candidate.recurring.end() || ends_before < found->starts_on ||
+        if (found == candidate.recurring.end() || ends_before < day || ends_before < found->starts_on ||
             (found->ends_before && *found->ends_before <= ends_before))
             invalid("Recurring service is missing or has already ended");
         found->ends_before = ends_before;

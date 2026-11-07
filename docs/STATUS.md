@@ -661,7 +661,15 @@ capacity, signed promises and current launch rules.
 The optimized Mac build and 12 focused checks pass. Short offscreen keyboard
 checks at 100% and 200% text cover stage, settled work, promotion and rollback.
 
-Next are product deprecation notice and compatibility commitments.
+Office Services can now publish a compatibility term or a binding retirement
+date. Replacements and trials must honor published capacity, quality, review
+and buyer hardware terms. Existing customers favor supported integrations.
+After a retirement notice, the latest installed share caps discretionary
+adoption and new contracts must end by retirement. The deadline ends serving
+and support costs after the final contracted day. Cash scenarios apply the
+published end date. The optimized Mac build and 11 focused checks pass.
+
+Next is the customer waitlist and controlled onboarding.
 The roadmap remains 42/52 checked while design coverage is completed.
 M8-02 stays deferred. Human work waits until the user is ready, and E2-04 editor
 downloads stay with deferred release preparation.

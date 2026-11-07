@@ -278,6 +278,11 @@ const MarketTrial* market_trial(const MarketState& state,std::string_view produc
             return &*it;
     return nullptr;
 }
+const ServiceCompatibility* market_compatibility(const MarketState& state,std::string_view product_id,OrdinalDay day) {
+    for (auto it=state.compatibility.rbegin();it!=state.compatibility.rend();++it)
+        if (it->product_id==product_id && it->starts_on<=day) return day<it->ends_before?&*it:nullptr;
+    return nullptr;
+}
 void validate_market(const MarketState& state) {
     text_valid(state.owner, 128); (void)from_ordinal(state.starts_on);
     if (state.products.size() > market_product_limit || state.segments.size() > market_segment_limit ||
@@ -338,6 +343,33 @@ void validate_market(const MarketState& state) {
             product.price_per_task.value() < 0 || product.price_per_task.value() > market_price_limit ||
             (product.channel == ProductChannel::open_weights && product.price_per_task.value()!=0))
             invalid("Product has duplicate identity/source or an invalid task price");
+        if (const auto& notice=product.retirement; notice) {
+            (void)from_ordinal(notice->announced_on);
+            (void)from_ordinal(notice->retires_on);
+            const auto term=notice->retires_on.value()-notice->announced_on.value();
+            if (notice->announced_on<state.starts_on || notice->announced_on>latest ||
+                term<service_term_min_days || term>service_term_max_days)
+                invalid("Product retirement needs a valid dated notice period");
+        }
+    }
+    if (state.compatibility.size()>service_compatibility_limit) invalid("Compatibility commitment history is full");
+    std::map<std::string_view,OrdinalDay> supported_until;
+    std::optional<OrdinalDay> prior_commitment;
+    for (const auto& commitment:state.compatibility) {
+        const auto& product=find_id(state.products,commitment.product_id);
+        text_valid(commitment.project_id);
+        (void)from_ordinal(commitment.starts_on);
+        (void)from_ordinal(commitment.ends_before);
+        const auto term=commitment.ends_before.value()-commitment.starts_on.value();
+        const auto prior=supported_until.find(product.id);
+        if (commitment.starts_on<state.starts_on || commitment.starts_on>latest ||
+            term<service_term_min_days || term>service_term_max_days ||
+            (prior_commitment && *prior_commitment>commitment.starts_on) ||
+            (prior!=supported_until.end() && prior->second>commitment.starts_on) ||
+            (product.retirement && product.retirement->retires_on<commitment.ends_before))
+            invalid("Compatibility commitment has an invalid or overlapping service period");
+        prior_commitment=commitment.starts_on;
+        supported_until.insert_or_assign(product.id,commitment.ends_before);
     }
     if (state.prices.size()>market_price_history_limit || state.price_events.size()>market_price_history_limit) invalid("Market price history exceeds its bound");
     std::optional<std::pair<std::string,OrdinalDay>> previous_price;
@@ -428,6 +460,9 @@ void validate_market(const MarketState& state) {
             if (*contract.stopped_on < contract.accepted_on || *contract.stopped_on > latest ||
                 (contract.started_on && *contract.stopped_on < *contract.started_on)) invalid("Contract stop cursor is invalid");
         }
+        if (const auto& notice=product_row.retirement; notice && contract.ends_before>notice->retires_on &&
+            (contract.accepted_on>notice->announced_on || !contract.stopped_on || *contract.stopped_on>notice->announced_on))
+            invalid("Signed customer terms extend beyond the published retirement date");
         switch (contract.status) {
         case ContractStatus::pending:
             if (contract.started_on || contract.stopped_on || (state.closed_through && *state.closed_through >= contract.start_by))
@@ -531,6 +566,7 @@ void validate_market(const MarketState& state) {
             if (duplicate || delivery.tasks == 0 ||
                 delivery.tasks > market_task_limit || delivery.charged != multiplied(market_price_on(state,product_row.id,day.day), delivery.tasks) ||
                 !pref || !pref->eligible || !market_access(product_row, segment) ||
+                (product_row.retirement && day.day>=product_row.retirement->retires_on) ||
                 customer_hosted(product_row.channel) != (delivery.customer_compute.value() > 0) ||
                 market_price_on(state,product_row.id,day.day) > pref->willingness_to_pay)
                 invalid("Discretionary delivery has invalid eligibility, identity, tasks or price");
@@ -801,6 +837,7 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
     if (!expected.empty()) invalid("Market work is missing a recognized invoice");
 }
 void add_market_product(MarketState& state, const CapacityState& capacity, MarketProduct row) {
+    if (row.retirement) invalid("Publish a retirement notice after launching the service");
     mutate(state, [&](auto& next) {
         (void)project(capacity, row);
         next.capacity_bindings.push_back({row.id,row.capacity_project_id,project(capacity,row).starts_on});
@@ -840,6 +877,7 @@ void set_market_price(MarketState& state,OrdinalDay day,std::string_view id,Cent
         require_day(next,day);
         auto found=std::find_if(next.products.begin(),next.products.end(),[&](const auto& row){return row.id==id;});
         if (found==next.products.end() || price.value()<0 || price.value()>market_price_limit) invalid("Choose an existing product and a bounded nonnegative price");
+        if (found->retirement && day>=found->retirement->retires_on) invalid("A retired service cannot change its quote");
         if (found->channel == ProductChannel::open_weights && price.value() != 0)
             invalid("Published open weights carry no per-task license charge");
         if (found->price_per_task==price && actor.empty()) return;
@@ -871,6 +909,8 @@ void validate_contract_acceptance(const MarketState& state,const CapacityState& 
             invalid("A newly accepted contract must record today's acceptance without prior delivery state");
         const auto& segment = find_id(state.segments, contract.segment_id);
         const auto& product_row = find_id(state.products, contract.product_id);
+        if (product_row.retirement && contract.ends_before>product_row.retirement->retires_on)
+            invalid("This contract would run past the service's published retirement date");
         const auto* pref = preference(segment, product_row.id);
         if (!pref || !pref->eligible || !market_access(product_row, segment) ||
             (product_row.channel != ProductChannel::legacy && product_row.channel != ProductChannel::business) ||
@@ -1003,6 +1043,11 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
     }
     std::vector<ServingRequest> full_requests;
     std::vector<TrialSupply> trials;
+    std::set<std::string_view> supported;
+    for (auto it=next.compatibility.rbegin();it!=next.compatibility.rend();++it) {
+        if (day.value()-it->starts_on.value()>=service_term_max_days) break;
+        if (it->starts_on<=day && day<it->ends_before) supported.insert(it->product_id);
+    }
     for (const auto& row : next.products) {
         const auto& profile = project(pool, row);
         if (profile.status != ProjectStatus::active) continue;
@@ -1084,12 +1129,16 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
             const auto other_installed = 10000 - outside_share - old_share;
             const auto switching = mul_div_round_half_up(pref.switching_cost, other_installed, 10000);
             const auto awareness = rule ? static_cast<std::uint64_t>(rule->awareness.value()) : 0;
-            const auto known = std::min(market_utility_limit, mul_div_round_half_up(pref.utility, 10000 + awareness, 10000));
+            // Installed integrations value a dated support promise. Use their
+            // existing switching cost and share without reserving their orders.
+            const auto continuity = supported.contains(product_row.id)
+                ? mul_div_round_half_up(pref.switching_cost,old_share,10000) : 0;
+            const auto known = std::min(market_utility_limit, mul_div_round_half_up(pref.utility, 10000 + awareness, 10000)+continuity);
             const auto utility = known > switching ? known - switching : 0;
             const auto migration = static_cast<std::uint64_t>(market_migration(product_row, row).value());
-            const auto adoption_cap = std::min<std::uint64_t>(10000, old_share + migration);
+            const auto adoption_cap = product_row.retirement?old_share:std::min<std::uint64_t>(10000, old_share + migration);
             const auto limit = mul_div_floor(demand, adoption_cap, 10000).quotient;
-            const auto retained = product_row.channel != ProductChannel::legacy && old_share > migration
+            const auto retained = !product_row.retirement && product_row.channel != ProductChannel::legacy && old_share > migration
                 ? mul_div_floor(demand, old_share - migration, 10000).quotient : 0;
             segment.edges.push_back({product_row.id, weight(utility, row.reservation_threshold), limit, retained});
         }

@@ -143,6 +143,7 @@ void add_recurring(AccountsState& state, RecurringObligation obligation);
 // Stop future service from the current morning, retaining prior accruals. An
 // exclusive end equal to the start represents cancellation before first work.
 void end_recurring(AccountsState& state, std::string_view id, OrdinalDay ends_before);
+void schedule_recurring_end(AccountsState& state, OrdinalDay day, std::string_view id, OrdinalDay ends_before);
 void issue_invoice(AccountsState& state, OrdinalDay day, Invoice invoice);
 // Market settlement owns these identities and rolls back the entire candidate
 // if an advance, delivery invoice, or refund fails to post.

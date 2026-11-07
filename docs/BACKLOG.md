@@ -48,7 +48,10 @@ vary recent discretionary demand. All seven scenarios now use fictional
 quarterly corporate tax with capped relief, a dated bill and visible payment.
 The Lab can stage a qualified candidate on discretionary orders. Office Services
 shows actual trial deliveries and supports promotion, discard and rollback to the
-prior qualified version. Next are deprecation notice and compatibility commitments.
+prior qualified version. Published compatibility terms protect serving capacity,
+measured quality, review controls and buyer hardware. Retirement notices protect
+existing terms and retire service automatically at the published date. Next is
+the customer waitlist and controlled onboarding.
 
 ## M0 — Toolchain and platform proof
 

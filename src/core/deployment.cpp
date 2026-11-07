@@ -97,7 +97,7 @@ void validate_service_catalog(const std::vector<ServiceDefinition>& catalog) {
             row.serving.completed_work.value()!=0 || row.serving.useful_tasks!=0 || row.serving.tasks_per_day==0 || row.serving.staff==0 ||
             row.review_staff>1'000'000 || row.review_monthly_cost.value()<0 || row.review_tasks_per_day>row.serving.tasks_per_day ||
             (row.review_staff==0)!=(row.review_tasks_per_day==0) || row.preferences.empty() || row.preferences.size()>market_segment_limit ||
-            row.serving.customer_inference || !row.product.region_id.empty() || row.required_research.size()>16 ||
+            row.serving.customer_inference || !row.product.region_id.empty() || row.product.retirement || row.required_research.size()>16 ||
             (row.product.channel == ProductChannel::open_weights && row.product.price_per_task.value()!=0) ||
             (row.product.channel == ProductChannel::agent && row.review_staff==0) ||
             std::none_of(row.required.begin(),row.required.end(),[](auto value){return value.value()>0;}))
@@ -121,12 +121,15 @@ void deploy_model(DeploymentState& state,const LabState& lab,AccountsState& acco
         invalid("Promote or discard the service's staged release before replacing production.");
     const auto& definition=service(state,request.service_id);
     const auto existing=std::find_if(market.products.begin(),market.products.end(),[&](const auto& row){return row.id==request.service_id;});
+    const auto retirement=existing!=market.products.end()?existing->retirement:std::nullopt;
+    if (retirement && day>=retirement->retires_on) invalid("This service retired on its published date. Choose another service.");
     const auto region = existing == market.products.end() ? request.region_id : existing->region_id;
     if (existing != market.products.end() && !request.region_id.empty() && request.region_id != region)
         invalid("A live service keeps its launch territory when replacing a model");
     const auto id=state.records.empty() || std::none_of(capacity.projects.begin(),capacity.projects.end(),[&](const auto& row){return row.id==definition.serving.id;})?
         definition.serving.id:definition.serving.id+"."+std::to_string(state.records.size()+1);
     auto work=qualified_project(definition,lab,capacity,request,day,id);
+    require_compatible(state,lab,capacity,market,request,work,day);
     auto product = definition.product;
     product.region_id = region;
     const auto can_serve = [&](const ServicePreference& preference) {
@@ -153,7 +156,8 @@ void deploy_model(DeploymentState& state,const LabState& lab,AccountsState& acco
     }
     reserve_project(capacity,day,work);
     if (work.monthly_support_cost.value()>0)
-        add_recurring(accounts,{"support/"+work.id,work.monthly_support_cost,day,std::nullopt,"Serving support: "+work.id});
+        add_recurring(accounts,{"support/"+work.id,work.monthly_support_cost,day,
+            retirement?std::optional{retirement->retires_on}:std::nullopt,"Serving support: "+work.id});
     if (existing==market.products.end()) {
         product.capacity_project_id=work.id;
         add_market_product(market,capacity,std::move(product));
@@ -194,5 +198,6 @@ void validate_deployments(const DeploymentState& state,const LabState& lab,const
             invalid("Market product has no qualified deployment");
     }
     validate_service_rollouts(state,lab,capacity,market);
+    validate_service_support(state,lab,capacity,market);
 }
 }

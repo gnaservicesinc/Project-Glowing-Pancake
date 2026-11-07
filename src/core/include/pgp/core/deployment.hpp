@@ -54,8 +54,24 @@ struct StageServiceRollout {
 };
 struct FinishServiceRollout { std::string service_id; bool promote=false; };
 struct RollbackService { std::string service_id; };
+struct CommitServiceCompatibility { std::string service_id; Days term{90}; };
+struct AnnounceServiceRetirement { std::string service_id; Days notice{90}; };
+struct CompatibilityProfile {
+    LabProfile quality=empty_lab_profile;
+    bool human_review=false;
+    std::uint64_t tasks_per_day=0;
+    std::uint64_t customer_memory_mib=0;
+    std::string customer_interconnect;
+    MilliCU customer_compute_per_task{0};
+};
 struct SimulationState;
 
+[[nodiscard]] ServiceCompatibility preview_compatibility(const SimulationState&,const CommitServiceCompatibility&);
+[[nodiscard]] CompatibilityProfile compatibility_profile(const SimulationState&,const ServiceCompatibility&);
+[[nodiscard]] ProductRetirement preview_retirement(const SimulationState&,const AnnounceServiceRetirement&);
+void commit_service_compatibility(SimulationState&,const CommitServiceCompatibility&);
+void announce_service_retirement(SimulationState&,const AnnounceServiceRetirement&);
+[[nodiscard]] std::size_t retire_due_services(SimulationState&);
 [[nodiscard]] const ServiceRollout* pending_rollout(const DeploymentState&,std::string_view service);
 [[nodiscard]] const DeploymentRecord* trial_release(const DeploymentState&,const MarketTrial&);
 [[nodiscard]] DeployModel release_request(const DeploymentRecord&,const CapacityState&);
@@ -67,6 +83,7 @@ void rollback_service(SimulationState&,const RollbackService&);
 void expire_service_rollouts(SimulationState&);
 void discard_service_rollouts(SimulationState&);
 void validate_service_rollouts(const DeploymentState&,const LabState&,const CapacityState&,const MarketState&);
+void validate_service_support(const DeploymentState&,const LabState&,const CapacityState&,const MarketState&);
 void validate_service_catalog(const std::vector<ServiceDefinition>& catalog);
 void validate_deployments(const DeploymentState& state, const LabState& lab,
     const CapacityState& capacity, const MarketState& market);

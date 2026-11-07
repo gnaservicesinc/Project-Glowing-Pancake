@@ -32,6 +32,7 @@ void replicate_service(SimulationState& s,const ReplicateService& request,Cents 
         invalid("Promote or discard the staged release before adding geographic replication");
     auto& r=risks(s);
     const auto& live=product(s,request.service_id);
+    if (live.retirement) invalid("A service with a published retirement date cannot add a geographic replica");
     const auto& primary=find(s.capacity->projects,live.capacity_project_id);
     const auto& spare=capacity_source(s,request.backup_source);
     const auto primary_site=site_for_source(s,primary.source_id);

@@ -1924,3 +1924,17 @@ The optimized Mac build and 12 focused CTests pass. The rollout check covers
 zero-work promotion refusal, a candidate-specific hold, expiry, protected contract
 delivery and rejection of a forged share. Short offscreen keyboard checks at 100%
 and 200% text exercise stage, actual work, promotion, rollback and exact saves.
+
+### Published compatibility and service retirement
+
+Compatibility commitments pin the current qualified production profile and give
+installed customers a preference while that profile remains supported. A published
+retirement date keeps existing signed work, caps discretionary adoption and limits
+new obligations to the remaining term. Expiry releases compute and staff, closes
+support billing and ends projected discretionary receipts for the retired product.
+
+The optimized Mac build and 11 focused CTests pass. The deployment check covers
+incompatible replacement, trial and rollback refusals, signed term conflicts,
+support expiry, final contracted work, and exact reload before and after retirement.
+Short offscreen keyboard checks at 100% and 200% text cover publication, a blocked
+short notice, actual retirement, and exact saves.

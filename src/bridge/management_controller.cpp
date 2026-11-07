@@ -136,6 +136,41 @@ core::StageServiceRollout rollout_request(const QString& service,const QString& 
         core::BasisPoints{integer(share,core::service_trial_share_limit/100)*100},
         core::Days{integer(days,core::service_trial_days_limit)}};
 }
+core::Days service_term(const QString& days) { return core::Days{integer(days,core::service_term_max_days)}; }
+QString compatibility_terms(const core::CompatibilityProfile& profile) {
+    QStringList floors;
+    if (profile.quality[0].value()>0) floors.push_back(QObject::tr("documents ≥ %1").arg(percent(profile.quality[0])));
+    if (profile.quality[1].value()>0) floors.push_back(QObject::tr("scanned tables ≥ %1").arg(percent(profile.quality[1])));
+    auto detail=QObject::tr("Keep at least %1 tasks/day of serving capacity and these measured quality floors · %2.")
+        .arg(number(profile.tasks_per_day),floors.join(QStringLiteral(" · ")));
+    if (profile.human_review) detail+=QObject::tr(" Keep paid human review.");
+    if (profile.customer_compute_per_task.value()>0) detail+=QObject::tr(" Buyer hardware stays within %1 MiB, %2 interconnect and %3 CU per task.")
+        .arg(number(profile.customer_memory_mib),text(profile.customer_interconnect),cu(profile.customer_compute_per_task.value()));
+    return detail;
+}
+void add_service_support(CampaignRow& row,const core::SimulationState& state,const core::MarketProduct& product,bool live) {
+    row.fields.insert(QStringLiteral("live"),live);
+    if (const auto* term=core::market_compatibility(*state.market,product.id,state.date)) {
+        row.fields.insert(QStringLiteral("compatibilityActive"),true);
+        row.detail+=QObject::tr("\nCompatibility commitment ends %1. %2")
+            .arg(text(core::iso_date(term->ends_before)),compatibility_terms(core::compatibility_profile(state,*term)));
+    } else {
+        const auto latest=std::find_if(state.market->compatibility.rbegin(),state.market->compatibility.rend(),
+            [&](const auto& term){return term.product_id==product.id;});
+        if (latest!=state.market->compatibility.rend())
+            row.detail+=QObject::tr("\nLast compatibility commitment ended on %1.").arg(text(core::iso_date(latest->ends_before)));
+    }
+    if (const auto& notice=product.retirement; notice) {
+        const auto date=text(core::iso_date(notice->retires_on));
+        const auto announced=text(core::iso_date(notice->announced_on));
+        const bool retired=state.date>=notice->retires_on;
+        row.fields.insert(QStringLiteral("retirementAnnounced"),true);
+        row.fields.insert(QStringLiteral("retired"),retired);
+        row.status=retired?QObject::tr("Retired"):QObject::tr("Retires %1").arg(date);
+        row.detail+=retired?QObject::tr("\nRetired on %1 after notice on %2. Release and customer history remain available.").arg(date,announced):
+            QObject::tr("\nRetirement announced on %1. Serving ends on %2. Discretionary adoption is limited to existing share. Signed work continues through its term.").arg(announced,date);
+    }
+}
 void add_release_details(CampaignRow& row,const core::SimulationState& state,const core::MarketProduct& product) {
     const auto& releases=*state.deployments;
     const auto current=std::ranges::find(releases.records,product.capacity_project_id,&core::DeploymentRecord::project_id);
@@ -364,16 +399,31 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
     if (s.market) {
         for (const auto& row:s.market->products) {
             const auto* work=find(s.capacity->projects,row.capacity_project_id);
+            const bool live=row.available && work && work->status==core::ProjectStatus::active;
+            const bool retired=row.retirement && s.date>=row.retirement->retires_on;
             const core::DeploymentRecord* deployment=nullptr;
             if (s.deployments) for (const auto& d:s.deployments->records) if (d.service_id==row.id) deployment=&d;
-            products.push_back({text(row.id),readable(row.id),work?number(work->tasks_per_day)+QStringLiteral(" tasks/day · ")+money(work->monthly_support_cost)+QStringLiteral(" support/month"):QString{},
-                deployment?QStringLiteral("Model %1 · evidence %2\nControl: %3\n%4 useful tasks delivered\nSource %5 · %6 CU/day · %7 staff\nRetargeting a service preserves contracts and delivery history.")
-                    .arg(text(deployment->model_id),text(deployment->evidence_id),deployment->human_review?QStringLiteral("Paid human review; lower throughput"):QStringLiteral("Measured model only"),number(work->useful_tasks),work->customer_inference?QStringLiteral("Customer hardware"):text(work->source_id),cu(work->requested.value()),QString::number(work->staff)):QStringLiteral("Engineering service"),
-                work && work->status==core::ProjectStatus::active?QStringLiteral("Serving"):QStringLiteral("Stopped"),false,{{QStringLiteral("projectId"),text(row.capacity_project_id)},{QStringLiteral("priceCents"),QString::number(row.price_per_task.value())},{QStringLiteral("freeWeights"),row.channel==core::ProductChannel::open_weights}}});
+            const auto subtitle=retired?tr("Serving resources released"):work?tr("%1 tasks/day · %2 support/month")
+                .arg(number(work->tasks_per_day),money(work->monthly_support_cost)):QString{};
+            QString detail=tr("Engineering service");
+            if (deployment && work) {
+                detail=tr("Model %1 · report %2\n%3 · %4 useful tasks delivered on this release")
+                    .arg(text(deployment->model_id),text(deployment->evidence_id),
+                         deployment->human_review?tr("Paid human review"):tr("Measured model only"),number(work->useful_tasks));
+                if (!retired) detail+=tr("\nServing source %1 · %2 CU/day · %3 staff")
+                    .arg(work->customer_inference?tr("Customer hardware"):text(work->source_id),cu(work->requested.value()),QString::number(work->staff));
+            }
+            products.push_back({text(row.id),readable(row.id),subtitle,std::move(detail),live?tr("Serving"):tr("Stopped"),false,
+                {{QStringLiteral("projectId"),text(row.capacity_project_id)},{QStringLiteral("priceCents"),QString::number(row.price_per_task.value())},
+                 {QStringLiteral("freeWeights"),row.channel==core::ProductChannel::open_weights}}});
             const auto* region=regions?find(regions->regions,row.region_id):nullptr;
             products.back().detail+=QStringLiteral("\n%1 · %2").arg(channel_name(row.channel),region?text(region->name):QStringLiteral("All eligible regions"));
-            products.back().detail+=QStringLiteral("\nCurrent price: %1 per task. Price changes preserve past invoices and signed contract prices.").arg(money(row.price_per_task));
-            if (deployment) add_release_details(products.back(),s,row);
+            products.back().detail+=(retired?tr("\nLast quote was %1 per task."):
+                tr("\nCurrent price is %1 per task. Price changes preserve past invoices and signed contract prices.")).arg(money(row.price_per_task));
+            if (deployment) {
+                add_release_details(products.back(),s,row);
+                add_service_support(products.back(),s,row,live);
+            }
         }
         for (const auto& row:s.market->contracts) {
             const bool active=row.status==core::ContractStatus::pending || row.status==core::ContractStatus::active;
@@ -552,6 +602,8 @@ QVariantList ManagementController::services() const {
         item.insert(QStringLiteral("existing"),current!=nullptr);
         item.insert(QStringLiteral("live"),current && current->available && work && work->status==core::ProjectStatus::active);
         item.insert(QStringLiteral("trialPending"),core::pending_rollout(*state().deployments,row.product.id)!=nullptr);
+        item.insert(QStringLiteral("retirementAnnounced"),current && current->retirement.has_value());
+        item.insert(QStringLiteral("retired"),current && current->retirement && state().date>=current->retirement->retires_on);
         result.push_back(item);
     }
     return result;
@@ -700,6 +752,9 @@ QVariantMap ManagementController::cashScenarios() const {
             "Existing bills, gross lease terms and the owned-site cost ceiling apply. %1 in reservations stays held. Due principal uses remaining cash after bills. "
             "New purchases, renewals, and unexpected changes are outside these scenarios.").arg(money(forecast.reserved_cash));
         if (s.accounts->taxes) assumptions+=tr("\nCorporate tax uses projected earned income and the current quarterly policy.");
+        if (s.market && std::ranges::any_of(s.market->products,[&](const auto& product) {
+            return product.retirement && product.retirement->retires_on>s.date;
+        })) assumptions+=tr("\nScheduled service retirements end projected discretionary sales and serving support on their published dates.");
         return {{QStringLiteral("date"),text(iso_date(s.date))},{QStringLiteral("assumptions"),assumptions},
                 {QStringLiteral("cases"),cases}};
     } catch (const std::exception& error) {
@@ -967,6 +1022,24 @@ QVariantMap ManagementController::rolloutPreview(QString service,QString model,Q
         return {{QStringLiteral("detail"),QString::fromUtf8(error.what())}};
     }
 }
+QVariantMap ManagementController::compatibilityQuote(QString service,QString days) const {
+    if (!available()) return {};
+    try {
+        const auto term=core::preview_compatibility(state(),{service.toStdString(),service_term(days)});
+        const auto detail=tr("Publish a commitment for %1 through the day before %2. Keep the service operating and apply these terms to each replacement. Established customers favor supported integrations while the commitment is active.\n\n%3")
+            .arg(readable(term.product_id),text(core::iso_date(term.ends_before)),compatibility_terms(core::compatibility_profile(state(),term)));
+        return {{QStringLiteral("ready"),true},{QStringLiteral("detail"),detail}};
+    } catch (const std::exception& error) { return {{QStringLiteral("detail"),QString::fromUtf8(error.what())}}; }
+}
+QVariantMap ManagementController::retirementQuote(QString service,QString days) const {
+    if (!available()) return {};
+    try {
+        const auto notice=core::preview_retirement(state(),{service.toStdString(),service_term(days)});
+        const auto detail=tr("Publish an end date of %1 for %2. Discretionary adoption is limited to the latest installed share from today. Signed work stays protected, and new deals must end by this date.\n\nOn that morning the service stops, releasing its staff, compute and support costs. The retirement date is binding, and the release and customer history stay available.")
+            .arg(text(core::iso_date(notice.retires_on)),readable(service.toStdString()));
+        return {{QStringLiteral("ready"),true},{QStringLiteral("detail"),detail}};
+    } catch (const std::exception& error) { return {{QStringLiteral("detail"),QString::fromUtf8(error.what())}}; }
+}
 bool ManagementController::editable() {
     if (!available()) return false;
     if (state().phase==core::DayPhase::finished || state().phase==core::DayPhase::closed) { emit noticeRaised(QStringLiteral("This campaign has ended."));return false; }
@@ -1009,6 +1082,16 @@ void ManagementController::finishRollout(QString service,bool promote) {
 }
 void ManagementController::rollbackService(QString service) {
     if (editable()) emit actionRequested(core::RollbackService{service.toStdString()});
+}
+void ManagementController::commitCompatibility(QString service,QString days) {
+    if (!editable()) return;
+    try { emit actionRequested(core::CommitServiceCompatibility{service.toStdString(),service_term(days)}); }
+    catch (const std::exception& error) {emit noticeRaised(QString::fromUtf8(error.what()));}
+}
+void ManagementController::announceRetirement(QString service,QString days) {
+    if (!editable()) return;
+    try { emit actionRequested(core::AnnounceServiceRetirement{service.toStdString(),service_term(days)}); }
+    catch (const std::exception& error) {emit noticeRaised(QString::fromUtf8(error.what()));}
 }
 void ManagementController::acceptOffer(QString id) { if (editable()) emit actionRequested(core::AcceptBusinessOffer{id.toStdString()}); }
 void ManagementController::respondCompetitiveOffer(QString id,bool accept) {if (editable()) emit competitiveResponseRequested(std::move(id),accept);}

@@ -90,7 +90,7 @@ DeployModel release_request(const DeploymentRecord& row,const CapacityState& cap
 }
 std::uint64_t rollback_release(const DeploymentState& state,const MarketState& market,std::string_view id) {
     const auto found=std::ranges::find(market.products,id,&MarketProduct::id);
-    if (found==market.products.end() || pending_rollout(state,id)) return 0;
+    if (found==market.products.end() || (found->retirement && !found->available) || pending_rollout(state,id)) return 0;
     const auto current=live_release(state,*found);
     const auto& active=state.records[static_cast<std::size_t>(current-1)];
     for (auto i=current-1;i>0;--i) {
@@ -116,6 +116,8 @@ CapacityProject preview_rollout(const SimulationState& state,const StageServiceR
         request.term.value()==0 || request.term.value()>service_trial_days_limit ||
         advance_days(state.date,request.term)>state.end_date)
         invalid("Choose up to 50% of discretionary traffic for up to 30 days within the campaign");
+    if (current.retirement && advance_days(state.date,request.term)>current.retirement->retires_on)
+        invalid("Choose a trial that ends by the service's published retirement date");
     if (!selection.region_id.empty() && selection.region_id!=current.region_id)
         invalid("A staged release keeps the service's current territory");
     const auto prior=live_release(deployments,current);
@@ -123,8 +125,10 @@ CapacityProject preview_rollout(const SimulationState& state,const StageServiceR
         invalid("Choose a different checkpoint, report or review setting for the candidate");
     require_no_replica(state,selection.service_id);
     require_civic_launch(state,selection);
-    return trial_profile(qualified_project(service(deployments,selection.service_id),*state.lab,*state.capacity,
-        selection,state.date,trial_id(deployments.rollouts.size())),incumbent,request.share);
+    auto work=qualified_project(service(deployments,selection.service_id),*state.lab,*state.capacity,
+        selection,state.date,trial_id(deployments.rollouts.size()));
+    deployment_detail::require_compatible(deployments,*state.lab,*state.capacity,*state.market,selection,work,state.date);
+    return trial_profile(std::move(work),incumbent,request.share);
 }
 void stage_service_rollout(SimulationState& state,const StageServiceRollout& request) {
     auto work=preview_rollout(state,request);
@@ -216,8 +220,10 @@ void validate_service_rollouts(const DeploymentState& state,const LabState& lab,
             (old.stopped_on && (!row.resolved_on || *old.stopped_on<*row.resolved_on)) ||
             (!row.resolved_on && live_release(state,product(market,trial.product_id))!=row.incumbent_release))
             invalid("A staged release changed or lost its incumbent");
-        const auto expected=trial_profile(qualified_project(service(state,candidate.service_id),lab,capacity,
-            launch,trial.starts_on,trial.project_id),old,trial.share);
+        auto full=qualified_project(service(state,candidate.service_id),lab,capacity,launch,trial.starts_on,trial.project_id);
+        if (trial.stopped_on!=trial.starts_on)
+            deployment_detail::require_compatible(state,lab,capacity,market,launch,full,trial.starts_on);
+        const auto expected=trial_profile(std::move(full),old,trial.share);
         auto comparable=staged;
         comparable.status=ProjectStatus::active;
         comparable.stopped_on.reset();

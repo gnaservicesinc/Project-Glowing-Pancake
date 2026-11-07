@@ -86,6 +86,21 @@ source, subject to the same qualification and resource checks. Release history,
 settled work, invoices and signed terms remain available after either decision.
 An active geographic replica must be stopped before staging or restoring a release.
 
+`CommitServiceCompatibility` publishes a 30–1,096 day window against a qualified
+production binding. Updates, rollback and trial candidates preserve its daily
+task capacity, lower bounds in the promised domains after review credit, paid
+review where offered, and buyer hardware requirements. Hosted source changes
+can still qualify. Installed integrations add a preference weighted by their
+existing share and switching cost within ordinary task, price and budget limits.
+
+`AnnounceServiceRetirement` publishes a binding date after all existing contract
+and compatibility terms. Resolve any pending trial and stop an active geographic
+replica before publishing. New signed terms and trials must fit before retirement.
+While the notice is active, discretionary adoption caps at the latest installed
+share. On the retirement morning the game closes any remaining trial decision,
+releases serving resources and ends the scheduled support term. It retains the
+release and billing history. Cash scenarios stop sales on the same date.
+
 `runtime.deployment` covers qualification, commercial rights, paid review,
 resource refusal/rollback, contract protection, replacement, clones, forged
 history and exact saves. `bridge.management` checks player options, amount

@@ -1,5 +1,6 @@
 #include "../content/slice_fixture.hpp"
 #include <pgp/session/slice_run.hpp>
+#include <pgp/core/company_finance.hpp>
 #include <pgp/persistence/save.hpp>
 #include <pgp/runtime/scenario.hpp>
 #include <nlohmann/json.hpp>
@@ -108,6 +109,95 @@ void service_rollout(const runtime::CompiledProgram& program,runtime::Runtime ga
     days(game,1);
     roundtrip(program,game);
 }
+void service_support(const runtime::CompiledProgram& program,runtime::Runtime game) {
+    using namespace core;
+    constexpr std::string_view id="product.documents_tables";
+    const auto state=[&]() -> const SimulationState& {return game.current_state().world.simulation;};
+    const auto product=[&]() -> const MarketProduct& {return *std::ranges::find(state().market->products,id,&MarketProduct::id);};
+    const auto work=[&]() -> const CapacityProject& {
+        return *std::ranges::find(state().capacity->projects,product().capacity_project_id,&CapacityProject::id);
+    };
+    const auto edges=[&]() {
+        const auto plan=market_opportunity(*state().market,*state().capacity,state().date);
+        std::vector<AllocationEdge> rows;
+        for (const auto& segment:plan.segments) for (const auto& edge:segment.edges)
+            if (edge.product_id==id) rows.push_back(edge);
+        return rows;
+    };
+    const auto started=state().date;
+    const auto retires=advance_days(started,Days{36});
+    MarketContract signed_terms;
+    signed_terms.id="support.customer";
+    signed_terms.segment_id=state().market->contracts.front().segment_id;
+    signed_terms.product_id=id;
+    signed_terms.tasks_per_day=100;
+    signed_terms.monthly_fee=Cents{28000};
+    signed_terms.accepted_on=started;
+    signed_terms.start_by=advance_days(started,Days{1});
+    signed_terms.ends_before=retires;
+    signed_terms.cause="Existing integration support";
+    apply(game,AcceptContract{signed_terms});
+    apply(game,StartContract{signed_terms.id});
+    const auto before=edges();
+    const CommitServiceCompatibility promise{std::string(id),Days{32}};
+    const AnnounceServiceRetirement notice{std::string(id),Days{36}};
+    const DeployModel compatible{std::string(id),"targeted","targeted_test","lease.initial",false};
+    const DeployModel breaks_throughput{std::string(id),"targeted","targeted_test","lease.initial",true};
+    refused(game,AnnounceServiceRetirement{std::string(id),Days{35}});
+    auto uncommitted=game;
+    apply(uncommitted,breaks_throughput); // The same paid review is qualified without the 2,000-task commitment.
+    apply(game,promise);
+    const auto after=edges();
+    check(!before.empty() && before.size()==after.size() && after.front().weight>before.front().weight &&
+          after.front().task_limit==before.front().task_limit,"Published support did not help established integrations within the same allocation limits");
+    refused(game,promise);
+    refused(game,CancelProject{work().id});
+    refused(game,breaks_throughput);
+    refused(game,StageServiceRollout{breaks_throughput});
+    refused(game,RollbackService{std::string(id)});
+    const auto prior=work().id;
+    apply(game,compatible);
+    check(work().id!=prior && state().market->compatibility.front().project_id==prior,"A compatible replacement changed the published baseline");
+    apply(game,notice);
+    const auto capped=edges();
+    check(product().retirement->retires_on==retires && capped.front().task_limit<after.front().task_limit,
+          "Published retirement left full new-customer adoption available");
+    auto longer=signed_terms;
+    longer.id="support.too_long";
+    longer.ends_before=advance_days(retires,Days{1});
+    refused(game,AcceptContract{longer});
+    refused(game,notice);
+    roundtrip(program,game);
+    const auto actual=forecast_company_finances(state());
+    auto without_date=state();
+    std::ranges::find(without_date.market->products,id,&MarketProduct::id)->retirement.reset();
+    check(actual.cases[1].cash.year.cash<forecast_company_finances(without_date).cases[1].cash.year.cash,
+          "Cash scenario still credited discretionary sales beyond the published date");
+    auto forged=game.checkpoint();
+    forged.world.simulation.market->compatibility.front().project_id="serving.documents";
+    bool rejected=false;
+    try { runtime::validate_checkpoint(program,forged); } catch (const std::exception&) { rejected=true; }
+    check(rejected,"A compatibility commitment could be reassigned to another service in a save");
+    days(game,32);
+    check(!market_compatibility(*state().market,id,state().date),"The compatibility term failed to expire on its exclusive boundary");
+    apply(game,breaks_throughput);
+    const auto end_term=std::ranges::find(state().accounts->recurring,"support/"+work().id,&RecurringObligation::id);
+    check(end_term!=state().accounts->recurring.end() && end_term->ends_before==retires,"A replacement lost the published support billing end date");
+    refused(game,StageServiceRollout{compatible,BasisPoints{2000},Days{5}});
+    apply(game,StageServiceRollout{compatible,BasisPoints{2000},Days{4}});
+    days(game,4);
+    const auto& last=state().market->days.back();
+    const auto fulfilled=std::ranges::find(last.contracts,signed_terms.id,&ContractDayResult::contract_id);
+    check(state().date==retires && !product().available && work().status==ProjectStatus::cancelled && work().stopped_on==retires &&
+          fulfilled!=last.contracts.end() && fulfilled->delivered_tasks==100 &&
+          state().deployments->rollouts.back().resolved_on==retires,"Retirement failed to close the trial and preserve final contracted work");
+    refused(game,compatible);
+    refused(game,RollbackService{std::string(id)});
+    days(game,1);
+    check(std::ranges::none_of(state().market->days.back().discretionary,[&](const auto& sale){return sale.product_id==id;}),
+          "A retired service still billed new work");
+    roundtrip(program,game);
+}
 void run() {
     std::ifstream file{PGP_SLICE_CONTENT_PATH}; auto doc=nlohmann::json::parse(file);
     pgp_test::scenario_doc(doc)["flows"]=nlohmann::json::array();pgp_test::scenario_doc(doc)["rivals"]=nlohmann::json::array();
@@ -165,6 +255,7 @@ void run() {
     apply(game,core::DeployModel{"product.documents_tables","targeted","targeted_test","lease.initial",false});
     const auto& records=game.current_state().world.simulation.deployments->records;
     check(records.size()==4 && !records.back().human_review,"Targeted model did not replace the review-controlled broader service");
+    service_support(program,game);
     days(game,3);roundtrip(program,game);
     auto tampered=game.checkpoint();tampered.world.simulation.market->capacity_bindings.front().project_id=records.back().project_id;
     bool rejected=false;try { runtime::validate_checkpoint(program,tampered); } catch(const std::exception&) { rejected=true; }

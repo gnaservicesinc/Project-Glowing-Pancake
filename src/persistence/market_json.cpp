@@ -44,6 +44,8 @@ Json market_json(const core::MarketState& state, bool packed) {
         if (product.channel != core::ProductChannel::legacy) products.back()["channel"] = core::channel_key(product.channel);
         if (product.monthly_migration.value() != 10000) products.back()["monthly_migration_bp"] = product.monthly_migration.value();
         if (!product.region_id.empty()) products.back()["region"] = product.region_id;
+        if (const auto& notice=product.retirement; notice) products.back()["retirement"]={
+            {"announced",notice->announced_on.value()},{"retires",notice->retires_on.value()}};
     }
     for (const auto& segment:state.segments) {
         Json preferences=Json::array();
@@ -147,12 +149,17 @@ Json market_json(const core::MarketState& state, bool packed) {
             {"product",trial.product_id},{"project",trial.project_id},{"starts",trial.starts_on.value()},
             {"ends",trial.ends_before.value()},{"share_bp",trial.share.value()},{"stopped_on",optional_day(trial.stopped_on)}});
     }
+    if (!state.compatibility.empty()) {
+        result["compatibility"]=Json::array();
+        for (const auto& term:state.compatibility) result["compatibility"].push_back({
+            {"product",term.product_id},{"project",term.project_id},{"starts",term.starts_on.value()},{"ends",term.ends_before.value()}});
+    }
     return result;
 }
 
 core::MarketState parse_market(const Json& value, bool packed) {
     fields(value,"market",{"owner","starts_on","closed_through","products","segments","contracts","days","adoptions"},
-        {"demand_changes","capacity_bindings","prices","price_events","service_trials"});
+        {"demand_changes","capacity_bindings","prices","price_events","service_trials","compatibility"});
     core::MarketState result;
     if (value.contains("prices")) {
         array(value.at("prices"),"market/prices",core::market_price_history_limit);
@@ -185,6 +192,14 @@ core::MarketState parse_market(const Json& value, bool packed) {
                 parse_optional_day(trial.at("stopped_on"))});
         }
     }
+    if (value.contains("compatibility")) {
+        const auto& terms=value.at("compatibility");
+        array(terms,"market/compatibility",core::service_compatibility_limit);
+        for (const auto& term:terms) {
+            fields(term,"market/compatibility",{"product","project","starts","ends"});
+            result.compatibility.push_back({label(term.at("product")),label(term.at("project")),day(term.at("starts")),day(term.at("ends"))});
+        }
+    }
     result.owner=label(value.at("owner"));
     result.starts_on=day(value.at("starts_on"));
     result.closed_through=parse_optional_day(value.at("closed_through"));
@@ -198,12 +213,17 @@ core::MarketState parse_market(const Json& value, bool packed) {
     }
     const auto& products=value.at("products");array(products,"market/products",core::market_product_limit);
     for (const auto& product:products) {
-        fields(product,"market/product",{"id","capacity_project_id","price_per_task_cents","available"},{"channel","monthly_migration_bp","region"});
+        fields(product,"market/product",{"id","capacity_project_id","price_per_task_cents","available"},{"channel","monthly_migration_bp","region","retirement"});
         result.products.push_back({label(product.at("id")),label(product.at("capacity_project_id")),
             cents(product.at("price_per_task_cents")),boolean(product.at("available"),"market/product/available"),
             product.contains("channel") ? core::parse_channel(label(product.at("channel"))) : core::ProductChannel::legacy,
             core::BasisPoints{product.contains("monthly_migration_bp") ? i64(product.at("monthly_migration_bp"),"market/product/migration") : 10000},
             product.contains("region") ? label(product.at("region")) : std::string{}});
+        if (product.contains("retirement")) {
+            const auto& notice=product.at("retirement");
+            fields(notice,"market/product/retirement",{"announced","retires"});
+            result.products.back().retirement=core::ProductRetirement{day(notice.at("announced")),day(notice.at("retires"))};
+        }
     }
     const auto& segments=value.at("segments");array(segments,"market/segments",core::market_segment_limit);
     for (const auto& segment:segments) {

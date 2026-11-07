@@ -312,7 +312,7 @@ ColumnLayout {
         Action {
             objectName: "deployButton"
             text: qsTr("Qualify and deploy / replace service")
-            enabled: panel.editable && deploymentModel.value.length > 0 && deploymentEvidence.value.length > 0 && deploymentService.selectedOption.trialPending !== true
+            enabled: panel.editable && deploymentModel.value.length > 0 && deploymentEvidence.value.length > 0 && deploymentService.selectedOption.trialPending !== true && deploymentService.selectedOption.retired !== true
             onClicked: manager.deploy(deploymentService.value, deploymentModel.value, deploymentEvidence.value,
                                       deploymentSource.visible ? deploymentSource.value : "",
                                       humanReview.checked || deploymentService.selectedOption.reviewRequired === true,
@@ -338,8 +338,13 @@ ColumnLayout {
             }
         }
         Copy { visible: deploymentService.selectedOption.trialPending === true; text: qsTr("This service has a staged release. Review it in Office → Services.") }
+        Copy {
+            visible: deploymentService.selectedOption.retirementAnnounced === true
+            text: deploymentService.selectedOption.retired === true ? qsTr("This service retired on its published date. Choose another service to launch.") :
+                qsTr("This service has published its retirement date. Trials must end by that date. Updates still need to meet active compatibility commitments.")
+        }
         Selection { heading: qsTr("Deployed services"); rows: manager.products }
-        Field { id: productPrice; objectName: "productPriceField"; label: qsTr("Price per task · constant 2014 cents"); value: (manager.products.selectedRow.fields || {}).priceCents || ""; visible: (manager.products.selectedRow.fields || {}).freeWeights !== true }
+        Field { id: productPrice; objectName: "productPriceField"; label: qsTr("Price per task · constant 2014 cents"); value: (manager.products.selectedRow.fields || {}).priceCents || ""; visible: (manager.products.selectedRow.fields || {}).freeWeights !== true && (manager.products.selectedRow.fields || {}).retired !== true }
         Copy { visible: productPrice.visible; text: qsTr("Setting a price suspends any enabled pricing policy for this product. Review its retained bounds and counters in Office → Policies and alerts before resuming.") }
         Action {
             objectName: "setProductPriceButton"
@@ -397,7 +402,39 @@ ColumnLayout {
             onClicked: releaseDialog.review("rollback", manager.products.selectedId, qsTr("Restore the prior release?"),
                 qsTr("%1\n\nRestore this checkpoint, report, review setting and serving source as a new production release. The restored release must meet current rules, resources and signed promises.").arg(serviceOffice.selected.rollbackTarget), true, [])
         }
-        Action { text: qsTr("Stop selected service"); enabled: panel.editable && manager.products.selectedId.length > 0 && serviceOffice.selected.trialPending !== true; onClicked: campaign.projectCancel(serviceOffice.selected.projectId) }
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: serviceOffice.selected.live === true && serviceOffice.selected.trialPending !== true &&
+                     (serviceOffice.selected.compatibilityActive !== true || serviceOffice.selected.retirementAnnounced !== true)
+            Field { id: serviceTermDays; objectName: "serviceTermDaysField"; label: qsTr("Compatibility or notice period · days (30–1,096)"); value: "90" }
+            Action {
+                objectName: "reviewCompatibilityButton"
+                text: qsTr("Review compatibility commitment…")
+                visible: serviceOffice.selected.compatibilityActive !== true
+                onClicked: {
+                    const inputs = [manager.products.selectedId, serviceTermDays.value]
+                    const quote = manager.compatibilityQuote(...inputs)
+                    releaseDialog.review("compatibility", inputs[0], qsTr("Review compatibility commitment"), quote.detail || "", quote.ready === true, inputs)
+                }
+            }
+            Action {
+                objectName: "reviewRetirementButton"
+                text: qsTr("Review retirement notice…")
+                visible: serviceOffice.selected.retirementAnnounced !== true
+                onClicked: {
+                    const inputs = [manager.products.selectedId, serviceTermDays.value]
+                    const quote = manager.retirementQuote(...inputs)
+                    releaseDialog.review("retirement", inputs[0], qsTr("Review retirement notice"), quote.detail || "", quote.ready === true, inputs)
+                }
+            }
+        }
+        Action {
+            objectName: "stopSelectedServiceButton"
+            text: qsTr("Stop selected service")
+            visible: serviceOffice.selected.live === true
+            enabled: panel.editable && serviceOffice.selected.trialPending !== true && serviceOffice.selected.compatibilityActive !== true && serviceOffice.selected.retirementAnnounced !== true
+            onClicked: campaign.projectCancel(serviceOffice.selected.projectId)
+        }
     }
     ColumnLayout {
         Layout.fillWidth: true
@@ -765,6 +802,8 @@ ColumnLayout {
             if (!confirmable) return
             if (kind === "stage") manager.stageRollout(...request)
             else if (kind === "rollback") manager.rollbackService(serviceId)
+            else if (kind === "compatibility") manager.commitCompatibility(...request)
+            else if (kind === "retirement") manager.announceRetirement(...request)
             else manager.finishRollout(serviceId, kind === "promote")
         }
     }
