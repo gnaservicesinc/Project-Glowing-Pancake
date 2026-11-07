@@ -85,10 +85,12 @@ Json capacity_json(const core::CapacityState& state, bool packed) {
             if (source.replica_available.value()!=0)
                 source_usage.back()["replica_available_milli_CU_per_day"]=source.replica_available.value();
         }
-        for (const auto& project:closed.projects) project_work.push_back({
-            {"project_id",project.project_id},{"work_milli_CU",project.work.value()},
-            {"useful_tasks",project.useful_tasks},{"assigned_staff",project.assigned_staff},
-            {"protected_tasks",project.protected_tasks}});
+        for (const auto& project:closed.projects) {
+            project_work.push_back({{"project_id",project.project_id},{"work_milli_CU",project.work.value()},
+                {"useful_tasks",project.useful_tasks},{"assigned_staff",project.assigned_staff},
+                {"protected_tasks",project.protected_tasks}});
+            if (project.failed_tasks>0) project_work.back()["failed_tasks"]=project.failed_tasks;
+        }
         Json daily{{"sources",std::move(source_usage)},{"projects",std::move(project_work)}};
         if (!packed) daily["day"] = closed.day.value();
         days.push(std::move(daily));
@@ -184,16 +186,12 @@ core::CapacityState parse_capacity(const Json& value, bool packed) {
         const auto& project_work=closed.at("projects");array(project_work,"capacity/day/projects",core::capacity_project_limit);
         count_work(project_work.size());
         for (const auto& project:project_work) {
-            if (!project.is_object()) invalid("capacity/project_work","Expected object");
-            Json prior_shape=Json::object();
-            for (const auto& [name,ignored]:project.items()) {
-                (void)ignored;
-                if (name!="protected_tasks") prior_shape[name]=nullptr;
-            }
-            fields(prior_shape,"capacity/project_work",{"project_id","work_milli_CU","useful_tasks","assigned_staff"});
+            fields(project,"capacity/project_work",{"project_id","work_milli_CU","useful_tasks","assigned_staff"},
+                {"protected_tasks","failed_tasks"});
             row.projects.push_back({label(project.at("project_id")),work(project.at("work_milli_CU")),
                 u64(project.at("useful_tasks"),"capacity/project_work/useful_tasks"),staff(project.at("assigned_staff")),
-                project.contains("protected_tasks")?u64(project.at("protected_tasks"),"capacity/project_work/protected_tasks"):0});
+                project.contains("protected_tasks")?u64(project.at("protected_tasks"),"capacity/project_work/protected_tasks"):0,
+                project.contains("failed_tasks")?u64(project.at("failed_tasks"),"capacity/project_work/failed_tasks"):0});
         }
         if (!result.days.empty()) row.share_unchanged(result.days.back());
         result.days.push_back(std::move(row));

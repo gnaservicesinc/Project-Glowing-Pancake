@@ -142,12 +142,14 @@ public:
     QString guide() const;
     QString ending() const;
     Q_INVOKABLE QVariantMap trainingPreview(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent={}) const;
-    Q_INVOKABLE QString servicePreview(QString service,QString model,bool review) const;
+    Q_INVOKABLE QString servicePreview(QString service,QString model,bool review,QString tools={},QString oversight={}) const;
     Q_INVOKABLE QVariantList weightAudiences(QString service,QString region) const;
     Q_INVOKABLE QVariantMap publicationQuote(QString service,QString model,QString evidence,QString source,
         bool review,QString region,QString audience) const;
+    Q_INVOKABLE QVariantMap agentQuote(QString service,QString model,QString evidence,QString source,
+        bool review,QString region,QString audience,QString tools,QString oversight) const;
     Q_INVOKABLE QVariantMap rolloutPreview(QString service,QString model,QString evidence,QString source,
-        bool review,QString share,QString days,QString audience={}) const;
+        bool review,QString share,QString days,QString audience={},QString tools={},QString oversight={}) const;
     Q_INVOKABLE QVariantMap compatibilityQuote(QString service,QString days) const;
     Q_INVOKABLE QVariantMap retirementQuote(QString service,QString days) const;
     Q_INVOKABLE QVariantMap waitlistQuote(QString service,QString tasks,bool enabled) const;
@@ -160,8 +162,8 @@ public:
     Q_INVOKABLE void clone(QString id);
     Q_INVOKABLE void checkpoint(QString id);
     Q_INVOKABLE void evaluate(QString model,QString plan,QString source,QString rate,QString staff);
-    Q_INVOKABLE void deploy(QString service,QString model,QString evidence,QString source,bool review,QString region,QString audience={});
-    Q_INVOKABLE void stageRollout(QString service,QString model,QString evidence,QString source,bool review,QString share,QString days,QString audience={});
+    Q_INVOKABLE void deploy(QString service,QString model,QString evidence,QString source,bool review,QString region,QString audience={},QString tools={},QString oversight={});
+    Q_INVOKABLE void stageRollout(QString service,QString model,QString evidence,QString source,bool review,QString share,QString days,QString audience={},QString tools={},QString oversight={});
     Q_INVOKABLE void finishRollout(QString service,bool promote);
     Q_INVOKABLE void rollbackService(QString service);
     Q_INVOKABLE void commitCompatibility(QString service,QString days);

@@ -1966,3 +1966,20 @@ limits, compatibility, a scoped replacement, retirement, buyer compute and a
 forged installed release. Offscreen keyboard checks at 100% and 200% verify
 both grant previews, a scoped publication, stopping support, local work and
 exact plain and compact saves.
+
+### Agent service permissions, review and remedies
+
+Lab Deploy quotes staffing, attempt capacity and repair exposure for the
+selected tool permissions and review mode. Office Services reports settled
+attempts, successful work, caught failures, failed writes and remedies. The
+same permissions follow candidates, promotions, rollbacks and compatibility
+terms. An older release without these settings keeps its original behavior
+until replaced.
+
+The optimized Mac build and 13 focused CTests pass. The regional fixture
+checks inference on every attempt, fees on completed work, a payable for
+executed failures, and a guarded trial with caught failures. It rejects an
+altered outcome and verifies promotion, rollback and exact save reopening.
+Offscreen keyboard checks at 100% and 200% text cover both launch quotes,
+confirmation, settlement, the Office results, and exact plain and compact
+market histories.

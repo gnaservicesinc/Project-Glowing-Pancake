@@ -102,16 +102,16 @@ std::array<RegionOutcomes,society_regions> observations(const WorldState& world,
         auto& supplier=supplier_work[owner];
         const bool player=source==&world.simulation;
         const auto delivery=[&](std::string_view segment_id,std::string_view product_id,std::uint64_t tasks,
-            std::uint64_t promised,std::uint64_t missed,OrdinalDay day,const DeploymentRecord* version=nullptr) {
+            std::uint64_t promised,std::uint64_t missed,OrdinalDay day,const DeploymentRecord* version=nullptr,std::uint64_t failed=0) {
             const auto* segment=named(market.segments,segment_id);
             const auto* product=named(market.products,product_id);
             if(!segment || !product) invalid("A regional delivery lost its customer or product.");
             if(segment->region_id.empty()) return;
             const auto index=society_region_index(society.catalog,segment->region_id);
             auto& row=result[index];row.delivered+=tasks;row.promised+=promised;row.missed+=missed;supplier[index]+=tasks;
-            if(tasks && !forum_allows_release(&society,*source,*product,*segment,version,day))
+            if((tasks || failed) && !forum_allows_release(&society,*source,*product,*segment,version,day))
                 invalid("A restricted release delivered without the required independent evidence.");
-            if(tasks && !institutional_delivery_allowed(world,*source,product->id,segment->id,day,version))
+            if((tasks || failed) && !institutional_delivery_allowed(world,*source,product->id,segment->id,day,version))
                 invalid("An actual delivery bypassed a binding regional procurement rule or sanction.");
             if(in(society.catalog.public_services,segment->id)) {row.public_work+=tasks;if(player) row.player_public+=tasks;}
             if(in(society.catalog.science,segment->id)) {row.science_work+=tasks;if(player) row.player_science+=tasks;}
@@ -126,8 +126,8 @@ std::array<RegionOutcomes,society_regions> observations(const WorldState& world,
             for(auto it=market.capacity_bindings.rbegin();!version && it!=market.capacity_bindings.rend();++it)
                 if(it->product_id==product_id && it->starts_on<=day) {project_id=it->project_id;break;}
             const auto* project=source->capacity?named(source->capacity->projects,project_id):nullptr;
-            if(tasks && !project) invalid("Delivered work lost its metered serving project.");
-            if(project) row.compute_milli+=static_cast<std::uint64_t>(required_inference(tasks,project->inference_milli_CU_per_task).value());
+            if((tasks || failed) && !project) invalid("Delivered work lost its metered serving project.");
+            if(project) row.compute_milli+=static_cast<std::uint64_t>(required_inference(tasks+failed,project->inference_milli_CU_per_task).value());
         };
         auto it=std::lower_bound(market.days.begin(),market.days.end(),first,[](const auto& row,OrdinalDay date){return row.day<date;});
         for(;it!=market.days.end() && it->day<=month_end;++it) {
@@ -145,6 +145,16 @@ std::array<RegionOutcomes,society_regions> observations(const WorldState& world,
                     const auto* version=trial && source->deployments?trial_release(*source->deployments,*trial):nullptr;
                     if (!version) invalid("A settled trial lost its qualified release");
                     delivery(row.segment_id,row.product_id,row.trial_tasks,0,0,it->day,version);
+                }
+            }
+            for (const auto& row:it->agent_results) {
+                if (row.production.failed>0)
+                    delivery(row.segment_id,row.product_id,0,0,0,it->day,nullptr,row.production.failed);
+                if (row.trial.failed>0) {
+                    const auto* trial=market_trial(market,row.product_id,it->day);
+                    const auto* version=trial && source->deployments?trial_release(*source->deployments,*trial):nullptr;
+                    if (!version) invalid("A failed trial attempt lost its qualified release.");
+                    delivery(row.segment_id,row.product_id,0,0,0,it->day,version,row.trial.failed);
                 }
             }
             for(const auto& row:it->contracts) {

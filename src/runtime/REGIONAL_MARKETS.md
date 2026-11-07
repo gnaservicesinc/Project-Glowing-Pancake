@@ -58,6 +58,23 @@ demand allocation. It earns no task fees and consumes no vendor staff. Retiremen
 ends new supported distribution and support bills. Copies keep their original
 grant. Saves rebuild the installations from dated distribution and use records.
 
+### Agent permissions and review
+
+Lab Deploy shows the permission level, review mode, staffing and daily
+attempt capacity before confirmation. Draft-only service needs a staff
+execution pass. Individual approval takes a separate check for each action
+and stops failed writes. Internal and external tools can write during batch
+review. The launch quote shows the repair and compensation charge for each
+failed write that executes.
+
+Attempts share the ordinary buyer demand, budget and vendor compute limits.
+Customers pay for completed tasks. Failed attempts use inference and leave
+their demand unmet for the day. Office Services reports completed attempts,
+caught failures, executed failures and the repair payable. Staged candidates
+keep their own permissions and review mode. Their traffic cap applies to
+attempts and promotion requires completed trial work. Rollback restores the
+retained controls and compatibility terms can bind them.
+
 ## Wholesale reservations
 
 **Operations → Wholesale** is available in the planned-roster presets.

@@ -274,7 +274,7 @@ bool run_refresh(SimulationState& state, std::size_t index, Cents protected_cash
         program.waiting="The method review expired before rollout. Complete a fresh review.";
         return false;
     }
-    const DeployModel launch{plan.service,id,id,incumbent_work.source_id,incumbent.human_review,incumbent.region_id,incumbent.weight_audience};
+    const DeployModel launch{plan.service,id,id,incumbent_work.source_id,incumbent.human_review,incumbent.region_id,incumbent.weight_audience,incumbent.agent_controls};
     if (auto blocked=civic_launch_block(state.civic?&*state.civic:nullptr,state,launch,state.date); !blocked.empty()) {
         stop_refresh(state,program,std::move(blocked));
         return false;

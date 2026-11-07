@@ -28,6 +28,7 @@ std::uint64_t live_release(const DeploymentState& deployments,const MarketProduc
 bool same_release(const DeploymentRecord& row,const DeployModel& other) {
     return row.service_id==other.service_id && row.model_id==other.model_id && row.evidence_id==other.evidence_id &&
            row.human_review==other.human_review && row.weight_audience==other.weight_audience &&
+           row.agent_controls.value_or(AgentControls{})==other.agent_controls.value_or(AgentControls{}) &&
            (other.region_id.empty() || row.region_id==other.region_id);
 }
 std::string trial_id(std::size_t index) { return "serving.trial/"+std::to_string(index+1); }
@@ -87,7 +88,7 @@ const DeploymentRecord* trial_release(const DeploymentState& state,const MarketT
     return found==state.rollouts.end()?nullptr:&found->candidate;
 }
 DeployModel release_request(const DeploymentRecord& row,const CapacityState& capacity) {
-    return {row.service_id,row.model_id,row.evidence_id,workload(capacity,row.project_id).source_id,row.human_review,row.region_id,row.weight_audience};
+    return {row.service_id,row.model_id,row.evidence_id,workload(capacity,row.project_id).source_id,row.human_review,row.region_id,row.weight_audience,row.agent_controls};
 }
 std::uint64_t rollback_release(const DeploymentState& state,const MarketState& market,std::string_view id) {
     const auto found=std::ranges::find(market.products,id,&MarketProduct::id);
@@ -97,13 +98,15 @@ std::uint64_t rollback_release(const DeploymentState& state,const MarketState& m
     for (auto i=current-1;i>0;--i) {
         const auto& row=state.records[static_cast<std::size_t>(i-1)];
         if (row.service_id==id && (row.model_id!=active.model_id || row.evidence_id!=active.evidence_id ||
-            row.human_review!=active.human_review || row.weight_audience!=active.weight_audience)) return i;
+            row.human_review!=active.human_review || row.weight_audience!=active.weight_audience ||
+            row.agent_controls.value_or(AgentControls{})!=active.agent_controls.value_or(AgentControls{}))) return i;
     }
     return 0;
 }
 CapacityProject preview_rollout(const SimulationState& state,const StageServiceRollout& request) {
     require_service_state(state);
-    const auto& selection=request.candidate;
+    const auto& definition=service(*state.deployments,request.candidate.service_id);
+    const auto selection=deployment_detail::with_agent_controls(definition,request.candidate);
     const auto& current=product(*state.market,selection.service_id);
     const auto& incumbent=workload(*state.capacity,current.capacity_project_id);
     if (!current.available || incumbent.status!=ProjectStatus::active)
@@ -126,7 +129,6 @@ CapacityProject preview_rollout(const SimulationState& state,const StageServiceR
         invalid("Choose a different checkpoint, report or review setting for the candidate");
     require_no_replica(state,selection.service_id);
     require_civic_launch(state,selection);
-    const auto& definition=service(deployments,selection.service_id);
     auto work=qualified_project(definition,*state.lab,*state.capacity,
         selection,state.date,trial_id(deployments.rollouts.size()));
     deployment_detail::require_publication_audience(definition,*state.market,current.region_id,selection.weight_audience,work);
@@ -135,16 +137,18 @@ CapacityProject preview_rollout(const SimulationState& state,const StageServiceR
 }
 void stage_service_rollout(SimulationState& state,const StageServiceRollout& request) {
     auto work=preview_rollout(state,request);
-    const auto& selection=request.candidate;
+    const auto& definition=service(*state.deployments,request.candidate.service_id);
+    const auto selection=deployment_detail::with_agent_controls(definition,request.candidate);
     const auto& current=product(*state.market,selection.service_id);
     const auto prior=live_release(*state.deployments,current);
     const auto ends_before=advance_days(state.date,request.term);
     reserve_project(*state.capacity,state.date,work);
     if (work.monthly_support_cost.value()>0)
         add_recurring(*state.accounts,{"support/"+work.id,work.monthly_support_cost,state.date,ends_before,"Staged service support: "+work.id});
-    state.market->trials.push_back({selection.service_id,work.id,state.date,ends_before,request.share,{},selection.weight_audience});
+    state.market->trials.push_back({selection.service_id,work.id,state.date,ends_before,request.share,{},selection.weight_audience,
+        deployment_detail::agent_plan(definition,*state.lab,selection)});
     state.deployments->rollouts.push_back({{selection.service_id,selection.model_id,selection.evidence_id,work.id,
-        selection.human_review,state.date,current.region_id,0,selection.weight_audience},prior});
+        selection.human_review,state.date,current.region_id,0,selection.weight_audience,selection.agent_controls},prior});
 }
 void finish_service_rollout(SimulationState& state,const FinishServiceRollout& request) {
     require_service_state(state);
@@ -225,6 +229,8 @@ void validate_service_rollouts(const DeploymentState& state,const LabState& lab,
             invalid("A staged release changed or lost its incumbent");
         const auto& definition=service(state,candidate.service_id);
         auto full=qualified_project(definition,lab,capacity,launch,trial.starts_on,trial.project_id);
+        if (trial.agent_plan!=deployment_detail::agent_plan(definition,lab,launch))
+            invalid("Service trial changed its qualified agent controls");
         deployment_detail::require_publication_audience(definition,market,candidate.region_id,candidate.weight_audience,full);
         if (trial.stopped_on!=trial.starts_on)
             deployment_detail::require_compatible(state,lab,capacity,market,launch,full,trial.starts_on);

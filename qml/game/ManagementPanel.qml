@@ -305,9 +305,31 @@ ColumnLayout {
             onPublishedAudienceChanged: value = publishedAudience
             onOptionsChanged: if (!options.some(o => o.id === value)) value = ""
         }
+        Choice {
+            id: agentTools
+            objectName: "agentToolsChoice"
+            label: qsTr("Tool permissions")
+            visible: deploymentService.selectedOption.reviewRequired === true
+            options: [{id:"draft",label:qsTr("Drafts only · staff execute")}, {id:"internal",label:qsTr("Internal updates")}, {id:"external",label:qsTr("External actions")}]
+            readonly property string currentPolicy: deploymentService.selectedOption.agentTools || "draft"
+            onCurrentPolicyChanged: value = currentPolicy
+        }
+        Choice {
+            id: agentOversight
+            objectName: "agentOversightChoice"
+            label: qsTr("Human oversight")
+            visible: agentTools.visible
+            options: [{id:"each_action",label:qsTr("Approve each action")}, {id:"batch",label:qsTr("Batch review · faster intake")}]
+            readonly property string currentPolicy: deploymentService.selectedOption.agentOversight || "each_action"
+            onCurrentPolicyChanged: value = currentPolicy
+        }
         Connections {
             target: deploymentService
-            function onValueChanged() { weightAudience.value = weightAudience.publishedAudience }
+            function onValueChanged() {
+                weightAudience.value = weightAudience.publishedAudience
+                agentTools.value = agentTools.currentPolicy
+                agentOversight.value = agentOversight.currentPolicy
+            }
         }
         Copy { visible: manager.launchRegions.length > 0; text: qsTr("A service keeps its launch territory when you replace its model.") }
         Copy { visible: deploymentService.selectedOption.reviewRequired === true; text: qsTr("This agent requires paid human review.") }
@@ -322,10 +344,12 @@ ColumnLayout {
             enabled: visible && deploymentService.selectedOption.reviewAllowed === true
             onEnabledChanged: if (!enabled) checked = false
         }
-        Copy { text: manager.servicePreview(deploymentService.value, deploymentModel.value, humanReview.checked || deploymentService.selectedOption.reviewRequired === true) }
+        Copy { text: manager.servicePreview(deploymentService.value, deploymentModel.value, humanReview.checked || deploymentService.selectedOption.reviewRequired === true,
+            agentTools.visible ? agentTools.value : "", agentOversight.visible ? agentOversight.value : "") }
         Action {
             objectName: "deployButton"
-            text: weightAudience.visible ? qsTr("Review weight publication…") : qsTr("Qualify and deploy / replace service")
+            text: weightAudience.visible ? qsTr("Review weight publication…") :
+                agentTools.visible ? qsTr("Review agent deployment…") : qsTr("Qualify and deploy / replace service")
             enabled: panel.editable && deploymentModel.value.length > 0 && deploymentEvidence.value.length > 0 && deploymentService.selectedOption.trialPending !== true && deploymentService.selectedOption.retired !== true
             onClicked: {
                 const request = [deploymentService.value, deploymentModel.value, deploymentEvidence.value,
@@ -334,6 +358,10 @@ ColumnLayout {
                 if (weightAudience.visible) {
                     const quote = manager.publicationQuote(...request)
                     releaseDialog.review("publishWeights", request[0], qsTr("Review open-weight publication"), quote.detail || "", quote.ready === true, request)
+                } else if (agentTools.visible) {
+                    request.push(agentTools.value, agentOversight.value)
+                    const quote = manager.agentQuote(...request)
+                    releaseDialog.review("deployAgent", request[0], qsTr("Review agent deployment"), quote.detail || "", quote.ready === true, request)
                 } else manager.deploy(...request)
             }
         }
@@ -351,7 +379,8 @@ ColumnLayout {
                     const request = [deploymentService.value, deploymentModel.value, deploymentEvidence.value,
                         deploymentSource.visible ? deploymentSource.value : "",
                         humanReview.checked || deploymentService.selectedOption.reviewRequired === true, trialShare.value, trialDays.value,
-                        weightAudience.visible ? weightAudience.value : ""]
+                        weightAudience.visible ? weightAudience.value : "",
+                        agentTools.visible ? agentTools.value : "", agentOversight.visible ? agentOversight.value : ""]
                     const quote = manager.rolloutPreview(...request)
                     releaseDialog.review("stage", deploymentService.value, qsTr("Review staged rollout"), quote.detail || "", quote.ready === true, request)
                 }
@@ -400,7 +429,8 @@ ColumnLayout {
         property bool showWaitingGroups: false
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "products"
-        Selection { heading: qsTr("Deployed services"); rows: manager.products }
+        Selection { objectName: "deployedServices"; heading: qsTr("Deployed services"); rows: manager.products }
+        Copy { visible: !!serviceOffice.selected.trialAgentTerms; text: serviceOffice.selected.trialAgentTerms || "" }
         ColumnLayout {
             Layout.fillWidth: true
             visible: serviceOffice.selected.live === true && serviceOffice.selected.retirementAnnounced !== true
@@ -451,6 +481,8 @@ ColumnLayout {
                 let terms = qsTr("Make %1 the production checkpoint, including for signed contracts. Promotion rechecks current rules and the full serving commitment. The prior release remains in history.").arg(serviceOffice.selected.trialCheckpoint)
                 if (serviceOffice.selected.trialWeightGrant)
                     terms += "\n\n" + qsTr("Publish the frozen weights. %1 Buyers retain copies they receive.").arg(serviceOffice.selected.trialWeightGrant)
+                if (serviceOffice.selected.trialAgentTerms)
+                    terms += "\n\n" + serviceOffice.selected.trialAgentTerms
                 releaseDialog.review("promote", manager.products.selectedId, qsTr("Promote this staged release?"), terms, true, [])
             }
         }
@@ -867,7 +899,7 @@ ColumnLayout {
         onAccepted: {
             if (!confirmable) return
             if (kind === "stage") manager.stageRollout(...request)
-            else if (kind === "publishWeights") manager.deploy(...request)
+            else if (kind === "publishWeights" || kind === "deployAgent") manager.deploy(...request)
             else if (kind === "rollback") manager.rollbackService(serviceId)
             else if (kind === "compatibility") manager.commitCompatibility(...request)
             else if (kind === "retirement") manager.announceRetirement(...request)

@@ -211,7 +211,7 @@ void validate_industry(const WorldState& world,bool deep) {
         }
     }
     struct DayTotals {
-        std::uint64_t delivered = 0;
+        std::uint64_t attempted = 0;
         std::uint64_t promised = 0;
         std::uint64_t waiting = 0;
         Cents charged{0};
@@ -227,32 +227,49 @@ void validate_industry(const WorldState& world,bool deep) {
             if (!day) continue;
             for (const auto& row : day->segments) {
                 auto& total = totals[indices.at(row.segment_id)];
-                total.delivered += row.contract_tasks + row.discretionary_tasks;
+                total.attempted += row.discretionary_tasks;
                 total.charged = checked_unit_add(total.charged, row.charged);
             }
             for (const auto& row : day->contracts)
                 totals[indices.at(find(seller->market->contracts,row.contract_id).segment_id)].promised += row.promised_tasks;
             for (const auto& row:day->waitlists) totals[indices.at(row.segment_id)].waiting+=row.waiting_tasks;
-            for (const auto& sale : day->discretionary) {
-                const auto index = indices.at(sale.segment_id);
+            const auto verify_migration=[&](std::size_t index,std::string_view product,std::uint64_t tasks) {
                 const auto& segment = market.segments[index];
-                auto& total = totals[index];
-                total.local_work = checked_unit_add(total.local_work, sale.customer_compute);
-                const auto id = seller->market->owner + ":" + sale.product_id;
-                const auto share = std::find_if(installed[index].begin(), installed[index].end(), [&](const auto& row) { return row.product_id == id; });
+                const auto id = seller->market->owner + ":" + std::string(product);
+                const auto share = std::ranges::find(installed[index],id,&InstalledShare::product_id);
                 const auto incumbent = share == installed[index].end() ? 0 : share->share.value();
-                const auto limit = market_migration(find(seller->market->products, sale.product_id), segment).value();
+                const auto limit = market_migration(find(seller->market->products, product), segment).value();
                 const auto demand = effective_market_demand(market, segment, day_date);
                 const auto cap = mul_div_floor(demand, static_cast<std::uint64_t>(std::min<std::int64_t>(10000, incumbent + limit)), 10000).quotient;
-                if (sale.tasks > cap) invalid("Industry delivery bypassed its shared monthly migration limit");
+                if (tasks > cap) invalid("Industry attempts bypassed the shared monthly migration limit");
+            };
+            const auto same_edge=[](const auto& lhs,const auto& rhs) {
+                return lhs.segment_id==rhs.segment_id && lhs.product_id==rhs.product_id;
+            };
+            for (const auto& sale : day->discretionary) {
+                const auto index = indices.at(sale.segment_id);
+                auto& total = totals[index];
+                total.local_work = checked_unit_add(total.local_work, sale.customer_compute);
+                if (std::ranges::none_of(day->agent_results,[&](const auto& row) { return same_edge(sale,row); }))
+                    verify_migration(index,sale.product_id,sale.tasks);
+            }
+            for (const auto& row:day->agent_results) {
+                const auto index=indices.at(row.segment_id);
+                const auto failed=row.production.failed+row.trial.failed;
+                const auto sale=std::ranges::find_if(day->discretionary,[&](const auto& work) { return same_edge(work,row); });
+                auto& total=totals[index];
+                total.attempted+=failed;
+                const auto price=market_price_on(*seller->market,row.product_id,day_date);
+                total.charged=checked_unit_add(total.charged,Cents{mul_div_floor(failed,static_cast<std::uint64_t>(price.value()),1).quotient});
+                verify_migration(index,row.product_id,failed+(sale==day->discretionary.end()?0:sale->tasks));
             }
         }
         for (std::size_t i = 0; i < totals.size(); ++i) {
             const auto& total = totals[i];
-            if (total.delivered == 0 && total.promised == 0 && total.waiting == 0 && total.charged.value() == 0) continue;
+            if (total.attempted == 0 && total.promised == 0 && total.waiting == 0 && total.charged.value() == 0) continue;
             const auto& segment = market.segments[i];
             const auto demand = effective_market_demand(market, segment, day_date);
-            if (total.delivered > demand || total.promised > demand || total.waiting>demand-total.promised || total.charged > segment.daily_budget ||
+            if (total.promised > demand || total.attempted > demand-total.promised || total.waiting>demand-total.promised || total.charged > segment.daily_budget ||
                 total.local_work.value() > segment.customer_compute.value())
                 invalid("Industry history duplicates useful work, buyer hardware or customer budget");
         }

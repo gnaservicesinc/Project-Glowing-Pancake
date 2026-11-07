@@ -1,4 +1,5 @@
 #include "deployment_json.hpp"
+#include "agent_service_json.hpp"
 namespace pgp::persistence::detail {
 namespace {
 Json profile(const core::LabProfile& p) { return {p[0].value(),p[1].value()}; }
@@ -15,15 +16,17 @@ Json release(const core::DeploymentRecord& row) {
     if (!row.region_id.empty()) result["region"]=row.region_id;
     if (row.restored_release>0) result["restored_release"]=row.restored_release;
     if (!row.weight_audience.empty()) result["weight_audience"]=row.weight_audience;
+    if (row.agent_controls) result["agent_controls"]=agent_controls_json(*row.agent_controls);
     return result;
 }
 core::DeploymentRecord parse_release(const Json& row) {
-    fields(row,"deployment/record",{"service","model","evidence","project","review","day"},{"region","restored_release","weight_audience"});
+    fields(row,"deployment/record",{"service","model","evidence","project","review","day"},{"region","restored_release","weight_audience","agent_controls"});
     return {label(row.at("service")),label(row.at("model")),label(row.at("evidence")),label(row.at("project")),
         boolean(row.at("review"),"deployment/review"),core::OrdinalDay{i64(row.at("day"),"deployment/day")},
         row.contains("region")?label(row.at("region")):std::string{},
         row.contains("restored_release")?u64(row.at("restored_release"),"deployment/restore",core::lab_record_limit):0,
-        row.contains("weight_audience")?label(row.at("weight_audience")):std::string{}};
+        row.contains("weight_audience")?label(row.at("weight_audience")):std::string{},
+        row.contains("agent_controls")?std::optional{parse_agent_controls(row.at("agent_controls"))}:std::nullopt};
 }
 }
 Json deployment_json(const core::DeploymentState& state) {

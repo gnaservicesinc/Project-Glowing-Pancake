@@ -109,6 +109,71 @@ void published_weights(const runtime::CompiledProgram& program,runtime::Runtime 
     (void)exact(program,game);
 }
 
+void agent_service(const runtime::CompiledProgram& program,runtime::Runtime game) {
+    const std::string product="product.workflow_agent";
+    const AgentControls fast{AgentTools::external,AgentOversight::batch};
+    const AgentControls guarded{AgentTools::draft,AgentOversight::each_action};
+    DeployModel release{product,"model.open","evidence.open","lease.initial",true,"region.europe",{},fast};
+    auto candidate=release;
+    candidate.agent_controls=guarded;
+    check(preview_agent_release(state(game),release).tasks_per_day==700 &&
+        preview_agent_release(state(game),candidate).tasks_per_day==233,
+        "Draft work and individual approvals did not consume review capacity");
+    apply(game,release);
+    apply(game,SetMarketPrice{product,Cents{100}});
+    const auto launch=state(game).date;
+    advance(game,advance_days(launch,Days{1}));
+    const auto& first=state(game).market->days.back();
+    std::uint64_t successful=0,failed=0;
+    Cents remedy{0};
+    for (const auto& sale:first.discretionary) if (sale.product_id==product) {
+        successful+=sale.tasks;
+        check(sale.charged==Cents{sale.tasks*100},"Customers paid for failed attempts");
+    }
+    for (const auto& row:first.agent_results) if (row.product_id==product) {
+        failed+=row.production.failed;
+        remedy=checked_unit_add(remedy,row.production.remedy);
+        check(row.production.executed==row.production.failed,"Batch review concealed an executed failure");
+    }
+    const auto& work=state(game).capacity->days.back().projects;
+    const auto project=std::ranges::find(work,state(game).deployments->records.back().project_id,&ProjectDayWork::project_id);
+    check(successful>0 && failed>0 && project!=work.end() && project->useful_tasks==successful &&
+        project->failed_tasks==failed && project->work==required_inference(successful+failed,MilliCU{20}),
+        "Controlled agent work and actual inference did not reconcile");
+    check(remedy==Cents{failed*328} &&
+        find(state(game).accounts->invoices,"market.agent_remedy/combined/"+iso_date(launch)).amount==remedy,
+        "Failed external actions did not book the disclosed remedy independently of the task quote");
+    (void)exact(program,game);
+    auto forged=*state(game).market;
+    auto bad_day=forged.days.back();
+    auto bad_row=bad_day.agent_results.front();
+    bad_row.production.executed=0;
+    bad_day.agent_results.replace(0,bad_row);
+    decltype(forged.days) forged_days;
+    for (auto it=forged.days.begin();it!=forged.days.end()-1;++it) forged_days.push_back(*it);
+    forged_days.push_back(std::move(bad_day));
+    forged.days=std::move(forged_days);
+    bool rejected=false;
+    try { validate_market(forged); } catch (const std::invalid_argument&) { rejected=true; }
+    check(rejected,"Market accepted a forged write outcome");
+
+    apply(game,StageServiceRollout{candidate,BasisPoints{4000},Days{2}});
+    advance(game,advance_days(state(game).date,Days{1}));
+    const auto& trial_day=state(game).market->days.back();
+    const auto& trial=state(game).market->trials.back();
+    const auto staged=std::ranges::find(state(game).capacity->days.back().projects,trial.project_id,&ProjectDayWork::project_id);
+    check(staged!=state(game).capacity->days.back().projects.end() && staged->useful_tasks>0 && staged->failed_tasks>0,
+        "Guarded candidate failed to log successful and intercepted trial attempts");
+    for (const auto& row:trial_day.agent_results) if (row.product_id==product)
+        check(row.trial.executed==0 && row.trial.remedy==Cents{0},"Draft candidate escaped its tool permissions");
+    (void)exact(program,game);
+    apply(game,FinishServiceRollout{product,true});
+    check(state(game).deployments->records.back().agent_controls==guarded,"Promotion lost the candidate's controls");
+    apply(game,RollbackService{product});
+    check(state(game).deployments->records.back().agent_controls==fast,"Rollback lost the retained controls");
+    (void)exact(program,game);
+}
+
 void local_launches(const runtime::CompiledProgram& program) {
     auto game=begin(program,"scenario.first_playable");
     const auto& simulation=state(game);
@@ -127,6 +192,7 @@ void local_launches(const runtime::CompiledProgram& program) {
     advance(game,advance_days(start,Days{60}));
     apply(game,StartEvaluation{"evidence.open","model.open","evaluation.held_out",{"lease.initial",MilliCUPerDay{20000},1}});
     advance(game,advance_days(state(game).date,Days{4}));
+    agent_service(program,game);
     refuse(game,DeployModel{"product.education_model","model.open","evidence.open","lease.initial",false,"region.europe"});
     refuse(game,DeployModel{"product.education_model","model.open","evidence.open","",false,"region.invalid"});
     apply(game,DeployModel{"product.education_model","model.open","evidence.open","",false,"region.europe"});

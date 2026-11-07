@@ -1,6 +1,6 @@
 # Implementation backlog
 
-Baseline 1.2 with 2026-11-04 event clarification · **42 of 52 steps complete for Mac feature development**.
+Baseline 1.2 with 2026-11-04 event clarification · **42 of 52 roadmap acceptance steps checked**.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Feature dependencies are satisfied by implemented Mac behavior and focused checks. Native platform, packaging and device qualification stay deferred to release work under the user’s current instruction. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
 The dated batch notes below retain the earlier acceptance count and prerequisite
@@ -16,9 +16,10 @@ is held for that later phase; no recruitment or sessions are underway.
 **2026-11-06 sequencing instruction:** implement all initial features first,
 then expand and refine with human feedback, then add substantial event content,
 then balance. Extended endurance runs and broad regression are deferred during
-feature implementation. Short checks for changed behavior continue. The current
-42 checked items record implemented batches. A feature-coverage pass against
-the design is required before moving into feedback, event expansion or M8-02.
+feature implementation. Short checks for changed behavior continue. Track the
+initial feature coverage separately from the
+[ten deferred acceptance steps](STATUS.md#implementation-progress). A coverage
+pass against the design precedes feedback, event expansion and M8-02.
 
 The setup coverage pass now implements company/founder identity, editable
 64-bit seeds, four founder opening packages and three board-amendable charters.
@@ -54,8 +55,10 @@ existing terms and retire service automatically at the published date. Office
 Services also supports a customer waitlist with a daily intake limit, priority
 for established demand, and dated activity by buyer group. Open-weight releases
 now have explicit public-reuse or local-use grants and keep compatible buyer-side
-work available after replacement or retirement. Next are tool permissions,
-oversight, and consequences for agent services.
+work available after replacement or retirement. Agent-service releases now
+choose tool permissions and review cadence. Actual attempts consume compute,
+successful work earns fees, and executed failures book repair payables.
+The next coverage gap is the Lab's authored capability and evaluation axes.
 
 ## M0 — Toolchain and platform proof
 

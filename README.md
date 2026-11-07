@@ -2,7 +2,7 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** 42 of 52 roadmap items are checked as of 2026-11-06, with initial feature completion the current priority. The bundled 2014–2017 campaign is playable through the Office, Lab, Operations, Civic, World, Institutions and Inbox: name the company and founder, choose a world seed, headquarters, founder background, organizational charter and difficulty, license data, research, train, evaluate, qualify a service, compare contracts and respond to events/rivals. The guide can be hidden and reopened. Full keyboard runs at 100% and 200% text reach the ending solvent and reload exactly.
+**Current state:** Initial feature work is active. The roadmap has 42 of 52 acceptance steps checked, with ten later human, QA and release gates listed in the [project status](docs/STATUS.md#implementation-progress). The bundled 2014–2017 campaign is playable through the Office, Lab, Operations, Civic, World, Institutions and Inbox: name the company and founder, choose a world seed, headquarters, founder background, organizational charter and difficulty, license data, research, train, evaluate, qualify a service, compare contracts and respond to events/rivals. The guide can be hidden and reopened. Full keyboard runs at 100% and 200% text reach the ending solvent and reload exactly.
 
 Four founder backgrounds now supply different opening cash, staff, independent compute and timed contact offers, with every change previewed before starting. Three organizational charters set board voting priorities and funded monthly employee programs. Review and amend the charter in Office → Board and people; prior votes and costs remain in the save.
 
@@ -31,6 +31,8 @@ Office → Services also lets you publish compatibility commitments and retireme
 Use **Customer enrollment** in the same view to limit or pause new admissions, see waiting groups, and reopen ordinary enrollment when capacity is available.
 
 Open-weight launches in **Lab → Deploy** review the frozen checkpoint, hardware requirements, and distribution grant. Buyers with copies can keep running them after company support ends.
+
+Agent launches in **Lab → Deploy** choose tool permissions and human oversight. The quote shows how many attempts the team can handle and what a failed write costs. **Office → Services** shows completed work, caught failures and repairs after settlement.
 
 M3-03 adds bounded evaluation/lease-renewal policies, configurable pauses, real deadline/milestone stops, a recoverable supplier setback, paid hiring, fixed financing and transparent slice scores. The efficient document-specialist route is profitable through the ending without new financing. **Human playtests and author studies are deferred until all components are in place and the user is ready for v1 work.** They do not block implementation. Century scenarios now include conditional research, funded succession, and six objectives with preserved postmortems and continuation. Century endurance and release qualification remain later steps. The separate Content Studio now has a [typed node canvas](src/studio/CANVAS.md), shared forms/outline, runtime inspection and [graphical internal snapshot review/finalization](src/studio/SNAPSHOTS.md).
 

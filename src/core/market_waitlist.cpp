@@ -155,9 +155,8 @@ void market_detail::settle_waitlists(const MarketState& state,MarketDay& day,con
         const auto& result=find(allocation.segments,segment.id);
         for (const auto& edge:segment.edges) {
             if (!edge.waitlist_interest_limit) continue;
-            const auto sale=std::ranges::find(result.deliveries,edge.product_id,&AllocationDelivery::product_id);
             const auto interest=std::ranges::find(result.waitlist_interest,edge.product_id,&AllocationInterest::product_id);
-            const auto delivered=sale==result.deliveries.end()?0:sale->tasks;
+            const auto delivered=sold(&day,{edge.product_id,segment.id});
             const auto admitted=excess(delivered,edge.retained_tasks);
             const auto waiting=interest==result.waitlist_interest.end()?0:excess(interest->tasks,std::max(edge.retained_tasks,delivered));
             if (admitted==0 && waiting==0) continue;

@@ -1,16 +1,26 @@
 # Project status and next handoff
 
-Updated 2026-11-06 · Implementation started against planning baseline 1.2
+Updated 2026-11-07 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**42 of 52 roadmap items are checked. Initial feature completion is the current priority.** Completed work includes
+**Initial feature work is active. 42 of 52 roadmap acceptance steps are checked.** Completed batches include
 M0-01/02/03/05, M1-01 through M1-07, M2-01 through M2-04, M3-01/M3-02/M3-03/M3-05, E1A-01 through E1A-05, E1B-01/02, M4-01 through M4-03, M5-01 through M5-03, E2-01 through E2-03, M6-01 through M6-03 M7-01 through M7-03 and M8-01.
 **Per the 2026-11-05 user instruction, human testing waits until all components
 are in place and the user is ready for v1 work.** M3-04 and E1B-03 remain open
 and do not block later component implementation. The local session kit is
 prepared for that later phase; no testers are being arranged and no human
 sessions have been conducted.
+
+The remaining ten checkboxes measure later acceptance work. The
+[initial feature coverage notes](#initial-feature-coverage) track playable
+changes within the earlier milestones.
+
+| Remaining work | Steps | When it advances |
+| --- | --- | --- |
+| Player and editor author sessions | M3-04, E1B-03 | When the components are in place and the v1 feedback phase begins |
+| Balance, endurance, performance and offline audit | M8-02, M8-03 | After feedback and event expansion |
+| Native and editor packages, clean-device checks, itch and Snap | M0-04, E2-04, M9-01 through M9-03, M10-01 | During explicit release preparation and publication |
 
 On 2026-11-05, core/runtime/session daily validation and state-copy bottlenecks were
 eliminated, reducing the three-year business scenario test (`session.business-scenario`)
@@ -536,7 +546,7 @@ native packages, human usability and balance remain later gates. M2-03 now
 implements the bounded allocation policy described in its local evidence; it
 does not claim an optimal-utility solver or a viable three-year strategy.
 
-## Next task
+## Initial feature coverage
 
 **Next implementation closes initial feature gaps against the game design.**
 The 2026-11-06 user instruction sets the order as initial features, expansion
@@ -683,10 +693,17 @@ version changes or retires. They can run the retained checkpoint on compatible
 hardware through the same regional demand pool. Office Services shows retained
 buyers and actual local work. The optimized Mac build and 11 focused checks pass.
 
-Next are tool permissions, oversight, and consequences for agent services.
-The roadmap remains 42/52 checked while design coverage is completed.
-M8-02 stays deferred. Human work waits until the user is ready, and E2-04 editor
-downloads stay with deferred release preparation.
+Agent services now offer draft-only, internal, and external permissions with
+individual approval or batch review. Lab Deploy previews attempt capacity and
+repair exposure. Office Services shows actual successes, caught failures,
+executed failed writes, and repair payables. Staging, promotion, rollback and
+compatibility terms retain their control settings.
+
+The next Lab design gap is capability coverage. Qualified releases still use
+the introductory document and scanned-table axes. The game design also calls
+for coding, scientific/industrial, social and autonomous work. Extend authored
+training, held-out evaluations and product fit together so new axes affect
+player decisions. [Model design](GAME_DESIGN.md#model-design).
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

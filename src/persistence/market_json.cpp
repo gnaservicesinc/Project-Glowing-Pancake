@@ -1,4 +1,5 @@
 #include "market_json.hpp"
+#include "agent_service_json.hpp"
 #include "history_blocks.hpp"
 
 #include <algorithm>
@@ -89,7 +90,7 @@ Json market_json(const core::MarketState& state, bool packed) {
     for (const auto& closed:state.days) {
         if (packed && prior && prior->contracts == closed.contracts && prior->discretionary == closed.discretionary &&
             prior->segments == closed.segments && prior->allocation_rounds == closed.allocation_rounds &&
-            prior->total_demand == closed.total_demand && prior->waitlists == closed.waitlists) {
+            prior->total_demand == closed.total_demand && prior->waitlists == closed.waitlists && prior->agent_results == closed.agent_results) {
             days.repeat();
             continue;
         }
@@ -118,6 +119,11 @@ Json market_json(const core::MarketState& state, bool packed) {
             {"allocation_rounds",closed.allocation_rounds}};
         if (!packed) daily["day"] = closed.day.value();
         if (closed.total_demand) daily["total_demand"] = *closed.total_demand;
+        if (!closed.agent_results.empty()) {
+            auto& rows=daily["agent_results"]=Json::array();
+            for (const auto& row:closed.agent_results) rows.push_back({{"product",row.product_id},{"segment",row.segment_id},
+                {"production",agent_failures_json(row.production)},{"trial",agent_failures_json(row.trial)}});
+        }
         if (!closed.waitlists.empty()) {
             auto& rows=daily["waitlists"]=Json::array();
             for (const auto& row:closed.waitlists) rows.push_back({{"product",row.product_id},{"segment",row.segment_id},
@@ -136,6 +142,7 @@ Json market_json(const core::MarketState& state, bool packed) {
     for (const auto& row:state.capacity_bindings) {
         bindings.push_back({{"product",row.product_id},{"project",row.project_id},{"starts",row.starts_on.value()}});
         if (!row.weight_audience.empty()) bindings.back()["weight_audience"]=row.weight_audience;
+        if (row.agent_plan) bindings.back()["agent_plan"]=agent_plan_json(*row.agent_plan);
     }
     Json changes=Json::array();
     for (const auto& row:state.demand_changes) changes.push_back({{"id",row.id},{"segment_id",row.segment_id},
@@ -158,6 +165,7 @@ Json market_json(const core::MarketState& state, bool packed) {
             result["service_trials"].push_back({{"product",trial.product_id},{"project",trial.project_id},{"starts",trial.starts_on.value()},
                 {"ends",trial.ends_before.value()},{"share_bp",trial.share.value()},{"stopped_on",optional_day(trial.stopped_on)}});
             if (!trial.weight_audience.empty()) result["service_trials"].back()["weight_audience"]=trial.weight_audience;
+            if (trial.agent_plan) result["service_trials"].back()["agent_plan"]=agent_plan_json(*trial.agent_plan);
         }
     }
     if (!state.compatibility.empty()) {
@@ -194,19 +202,19 @@ core::MarketState parse_market(const Json& value, bool packed) {
     if (value.contains("capacity_bindings")) {
         array(value.at("capacity_bindings"),"market/bindings",4096);
         for (const auto& row:value.at("capacity_bindings")) {
-            fields(row,"market/binding",{"product","project","starts"},{"weight_audience"});
+            fields(row,"market/binding",{"product","project","starts"},{"weight_audience","agent_plan"});
             result.capacity_bindings.push_back({label(row.at("product")),label(row.at("project")),day(row.at("starts")),
-                row.contains("weight_audience")?label(row.at("weight_audience")):std::string{}});
+                row.contains("weight_audience")?label(row.at("weight_audience")):std::string{},optional_agent_plan(row)});
         }
     }
     if (value.contains("service_trials")) {
         const auto& trials=value.at("service_trials");
         array(trials,"market/service_trials",core::service_trial_limit);
         for (const auto& trial:trials) {
-            fields(trial,"market/service_trial",{"product","project","starts","ends","share_bp","stopped_on"},{"weight_audience"});
+            fields(trial,"market/service_trial",{"product","project","starts","ends","share_bp","stopped_on"},{"weight_audience","agent_plan"});
             result.trials.push_back({label(trial.at("product")),label(trial.at("project")),day(trial.at("starts")),
                 day(trial.at("ends")),core::BasisPoints{i64(trial.at("share_bp"),"market/service_trial/share")},
-                parse_optional_day(trial.at("stopped_on")),trial.contains("weight_audience")?label(trial.at("weight_audience")):std::string{}});
+                parse_optional_day(trial.at("stopped_on")),trial.contains("weight_audience")?label(trial.at("weight_audience")):std::string{},optional_agent_plan(trial)});
         }
     }
     if (value.contains("compatibility")) {
@@ -310,13 +318,22 @@ core::MarketState parse_market(const Json& value, bool packed) {
             result.days.push_back(std::move(row));
             return;
         }
-        if (packed) fields(closed,"market/day",{"contracts","discretionary","segments","allocation_rounds"},{"total_demand","waitlists"});
-        else fields(closed,"market/day",{"day","contracts","discretionary","segments","allocation_rounds"},{"total_demand","waitlists"});
+        if (packed) fields(closed,"market/day",{"contracts","discretionary","segments","allocation_rounds"},{"total_demand","waitlists","agent_results"});
+        else fields(closed,"market/day",{"day","contracts","discretionary","segments","allocation_rounds"},{"total_demand","waitlists","agent_results"});
         core::MarketDay row;
         row.day = closed_day;
         row.allocation_rounds=u64(closed.at("allocation_rounds"),"market/allocation_rounds");
         if (closed.contains("total_demand"))
             row.total_demand = u64(closed.at("total_demand"),"market/total_demand",core::market_segment_limit*core::market_task_limit);
+        if (closed.contains("agent_results")) {
+            const auto& rows=closed.at("agent_results");
+            array(rows,"market/day/agent_results",core::market_segment_limit*core::market_product_limit);
+            for (const auto& entry:rows) {
+                fields(entry,"market/day/agent_result",{"product","segment","production","trial"});
+                row.agent_results.push_back({label(entry.at("product")),label(entry.at("segment")),
+                    parse_agent_failures(entry.at("production")),parse_agent_failures(entry.at("trial"))});
+            }
+        }
         if (closed.contains("waitlists")) {
             const auto& activity=closed.at("waitlists");
             array(activity,"market/day/waitlists",core::market_segment_limit*core::market_product_limit);
