@@ -10,7 +10,8 @@
 namespace pgp::core {
 
 inline constexpr std::size_t allocation_segment_limit = 64;
-inline constexpr std::size_t allocation_product_limit = 512;
+// Each supported offer may also have one independently metered local route.
+inline constexpr std::size_t allocation_product_limit = 1024;
 inline constexpr std::size_t allocation_edge_limit = 8192;
 inline constexpr std::uint64_t allocation_task_limit = 1'000'000'000;
 inline constexpr std::int64_t allocation_price_limit = 100'000'000;
@@ -43,6 +44,7 @@ struct AllocationEdge {
     std::uint64_t retained_tasks = 0;
     // The regular market ceiling before a waitlist limits new admissions.
     std::optional<std::uint64_t> waitlist_interest_limit{};
+    std::optional<MilliCU> local_compute_per_task{};
 };
 struct AllocationSegment {
     std::string id;

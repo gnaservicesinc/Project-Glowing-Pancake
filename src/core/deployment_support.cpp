@@ -29,7 +29,7 @@ OrdinalDay support_end(const SimulationState& state,Days days) {
     return end;
 }
 CompatibilityProfile profile(const ServiceDefinition& service,const LabState& lab,std::string_view evidence,
-                             bool review,const CapacityProject& work) {
+                             bool review,const CapacityProject& work,std::string_view audience) {
     CompatibilityProfile result;
     const auto& report=named(lab.evaluations,evidence);
     for (std::size_t i=0;i<lab_domain_count;++i) if (service.required[i].value()>0) {
@@ -38,6 +38,7 @@ CompatibilityProfile profile(const ServiceDefinition& service,const LabState& la
     }
     result.human_review=review;
     result.tasks_per_day=work.tasks_per_day;
+    result.weight_audience=audience;
     if (work.customer_inference) {
         result.customer_memory_mib=work.minimum_memory_mib;
         result.customer_interconnect=work.interconnect;
@@ -46,6 +47,8 @@ CompatibilityProfile profile(const ServiceDefinition& service,const LabState& la
     return result;
 }
 const char* incompatibility(const CompatibilityProfile& promise,const CompatibilityProfile& candidate) {
+    if (!candidate.weight_audience.empty() && candidate.weight_audience!=promise.weight_audience)
+        return "retain the promised publication audience";
     if (promise.human_review && !candidate.human_review) return "retain paid human review";
     if (candidate.tasks_per_day<promise.tasks_per_day) return "keep the promised daily task capacity";
     for (std::size_t i=0;i<lab_domain_count;++i)
@@ -64,7 +67,7 @@ auto release_for(const DeploymentState& deployments,std::string_view project) {
 CompatibilityProfile profile(const DeploymentState& deployments,const LabState& lab,const CapacityState& capacity,
                              const DeploymentRecord& release) {
     return profile(deployment_detail::service(deployments,release.service_id),lab,release.evidence_id,
-                   release.human_review,named(capacity.projects,release.project_id));
+                   release.human_review,named(capacity.projects,release.project_id),release.weight_audience);
 }
 // Reconcile adjacent production bindings, including any changes made on the
 // same morning. A cancelled project is a gap unless another binding starts then.
@@ -146,7 +149,7 @@ void deployment_detail::require_compatible(const DeploymentState& state,const La
     const auto* term=market_compatibility(market,request.service_id,day);
     if (!term) return;
     const auto promise=profile(state,lab,capacity,*release_for(state,term->project_id));
-    const auto candidate=profile(service(state,request.service_id),lab,request.evidence_id,request.human_review,work);
+    const auto candidate=profile(service(state,request.service_id),lab,request.evidence_id,request.human_review,work,request.weight_audience);
     if (const auto* conflict=incompatibility(promise,candidate))
         throw std::invalid_argument("The compatibility commitment requires this release to "+std::string(conflict)+
             " until "+iso_date(term->ends_before)+".");

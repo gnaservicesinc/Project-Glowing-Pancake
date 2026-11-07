@@ -31,7 +31,7 @@ RecentCustomers established(const MarketState& state,std::string_view product,Or
     for (auto i=available;i>first;--i) {
         const auto& record=state.days[static_cast<std::size_t>(i-1)];
         std::uint64_t total=0;
-        for (const auto& sale:record.discretionary) if (sale.product_id==product) total+=sale.tasks;
+        for (const auto& sale:record.discretionary) if (sale.product_id==product && sale.local_copy_project.empty()) total+=sale.tasks;
         if (total>peak.total) peak={&record,total};
     }
     return peak;
@@ -39,7 +39,7 @@ RecentCustomers established(const MarketState& state,std::string_view product,Or
 std::uint64_t sold(const MarketDay* day,CustomerKey customer) {
     if (!day) return 0;
     const auto row=std::ranges::find_if(day->discretionary,[&](const auto& sale) {
-        return sale.product_id==customer.first && sale.segment_id==customer.second;
+        return sale.product_id==customer.first && sale.segment_id==customer.second && sale.local_copy_project.empty();
     });
     return row==day->discretionary.end()?0:row->tasks;
 }
@@ -208,6 +208,7 @@ void market_detail::validate_waitlist_history(const MarketState& state) {
             return row;
         };
         for (const auto& sale:day.discretionary) {
+            if (!sale.local_copy_project.empty()) continue;
             const auto& product=find(state.products,sale.product_id);
             const auto& service=prepare(product);
             if (!service.limit) continue;

@@ -210,6 +210,16 @@ void customer_hardware_and_incumbents() {
         "An unavailable incumbent must release its work to eligible alternatives");
     conserved(products,segments,result);
 }
+void copy_routes_use_each_buyers_checkpoint() {
+    const std::vector<AllocationProduct> products{{"copies",Cents{0},10}};
+    const std::vector<AllocationSegment> groups{
+        {"a",10,Cents{0},0,{{"copies",1,10,0,{},MilliCU{5}}},MilliCUPerDay{20}},
+        {"b",10,Cents{0},0,{{"copies",1,10,0,{},MilliCU{20}}},MilliCUPerDay{20}}
+    };
+    const auto result=allocate_demand(products,groups);
+    check(delivered(result,"a","copies")==4 && delivered(result,"b","copies")==1,
+          "Local weight routes used one buyer's checkpoint cost for the other buyer");
+}
 void small_constrained_cases() {
     // Small independently varied budgets, free prices, edge limits and shared
     // supplies exercise conservation and the catalog-sized progress argument.
@@ -243,6 +253,7 @@ int main() {
         edge_limits_and_empty_outcomes();
         bounds_and_apportionment();
         customer_hardware_and_incumbents();
+        copy_routes_use_each_buyers_checkpoint();
         small_constrained_cases();
         std::cout << checks << " allocation checks passed\n";
         return 0;

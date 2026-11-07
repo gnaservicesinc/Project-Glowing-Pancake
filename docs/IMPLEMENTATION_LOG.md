@@ -1952,3 +1952,17 @@ The optimized Mac build and 10 focused CTests pass. The fixtures cover FIFO
 groups, a capacity drop, rival sales, exact invoices, and a rehashed false
 admission. Short offscreen keyboard checks at 100% and 200% cover pause, a
 settled queue, capped admission, reopening, and exact plain and compact saves.
+
+### Open-weight publication and installed copies
+
+Lab Deploy shows the frozen checkpoint, public reuse or named-group local-use
+grant, buyer hardware and support commitment. Actual supported deliveries
+establish installations. A narrower replacement, stopped support or retirement
+preserves earlier recipients' compatible local work within the same market and
+buyer compute budget. The daily record identifies the original publication.
+
+The optimized Mac build and 11 focused CTests pass, including staged audience
+limits, compatibility, a scoped replacement, retirement, buyer compute and a
+forged installed release. Offscreen keyboard checks at 100% and 200% verify
+both grant previews, a scoped publication, stopping support, local work and
+exact plain and compact saves.

@@ -1,6 +1,7 @@
 #include <pgp/core/market.hpp>
 #include <pgp/core/allocation.hpp>
 #include "market_waitlist.hpp"
+#include "market_open_weights.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -342,7 +343,7 @@ void validate_market(const MarketState& state) {
         text_valid(product.id); text_valid(product.capacity_project_id);
         (void)channel_key(product.channel);
         if (!product.region_id.empty()) text_valid(product.region_id, 64);
-        if (product.id == "outside" || !ids.insert(product.id).second || !projects.insert(product.capacity_project_id).second ||
+        if (product.id == "outside" || market_detail::copy_offer(product.id) || !ids.insert(product.id).second || !projects.insert(product.capacity_project_id).second ||
             product.price_per_task.value() < 0 || product.price_per_task.value() > market_price_limit ||
             (product.channel == ProductChannel::open_weights && product.price_per_task.value()!=0))
             invalid("Product has duplicate identity/source or an invalid task price");
@@ -566,16 +567,18 @@ void validate_market(const MarketState& state) {
             const std::pair<std::string_view, std::string_view> key{delivery.segment_id, delivery.product_id};
             const bool duplicate = std::find(delivery_ids.begin(), delivery_ids.end(), key) != delivery_ids.end();
             delivery_ids.push_back(key);
-            if (duplicate || delivery.tasks == 0 ||
+            const bool retained=!delivery.local_copy_project.empty();
+            if (duplicate || delivery.tasks == 0 || (retained && (product_row.channel!=ProductChannel::open_weights || delivery.trial_tasks!=0)) ||
                 delivery.tasks > market_task_limit || delivery.charged != multiplied(market_price_on(state,product_row.id,day.day), delivery.tasks) ||
                 !pref || !pref->eligible || !market_access(product_row, segment) ||
-                (product_row.retirement && day.day>=product_row.retirement->retires_on) ||
+                (!retained && product_row.retirement && day.day>=product_row.retirement->retires_on) ||
                 customer_hosted(product_row.channel) != (delivery.customer_compute.value() > 0) ||
                 market_price_on(state,product_row.id,day.day) > pref->willingness_to_pay)
                 invalid("Discretionary delivery has invalid eligibility, identity, tasks or price");
             if (delivery.trial_tasks>0) {
                 const auto* trial=market_trial(state,delivery.product_id,day.day);
-                if (!trial || delivery.trial_tasks>mul_div_floor(delivery.tasks,static_cast<std::uint64_t>(trial->share.value()),10000).quotient)
+                if (!trial || (!trial->weight_audience.empty() && trial->weight_audience!=delivery.segment_id) ||
+                    delivery.trial_tasks>mul_div_floor(delivery.tasks,static_cast<std::uint64_t>(trial->share.value()),10000).quotient)
                     invalid("Discretionary work exceeded the staged release's dated traffic share");
             }
             if (delivery.customer_compute.value() > 0) {
@@ -650,6 +653,7 @@ void validate_market(const MarketState& state) {
     for (const auto& day : state.days) if (month_end(day.day)) append_monthly_adoption(state, reviewed_adoptions, day.day);
     if (reviewed_adoptions != state.adoptions) invalid("Installed monthly shares differ from committed useful-work history");
     market_detail::validate_waitlist_history(state);
+    market_detail::validate_weight_installations(state);
     (void)market_report(state);
 }
 
@@ -667,7 +671,10 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
     std::map<std::string,std::pair<OrdinalDay,std::string>> last_binding;
     std::set<std::string> bound_projects;
     for (const auto& binding:state.capacity_bindings) {
-        (void)find_id(state.products,binding.product_id);
+        const auto& product_row=find_id(state.products,binding.product_id);
+        if (!binding.weight_audience.empty() && (product_row.channel!=ProductChannel::open_weights ||
+            !market_access(product_row,find_id(state.segments,binding.weight_audience))))
+            invalid("Published weight audience is outside its service territory");
         const auto& work=find_id(capacity.projects,binding.project_id);
         const auto previous=last_binding.find(binding.product_id);
         if (work.kind!=ProjectKind::serving || work.starts_on!=binding.starts_on || binding.starts_on>current_day(state) ||
@@ -754,7 +761,14 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
                 expect("market.penalty/" + contract.id + "/" + date_text, InvoiceKind::payable, result.penalty, day.day);
         }
         for (const auto& result : day.discretionary) {
-            delivered[result.product_id] += result.tasks-result.trial_tasks;
+            if (result.local_copy_project.empty()) delivered[result.product_id] += result.tasks-result.trial_tasks;
+            else {
+                const auto& copy=find_id(capacity.projects,result.local_copy_project);
+                const auto& buyer=find_id(state.segments,result.segment_id);
+                if (!copy.customer_inference || !market_detail::local_hardware_fits(copy,buyer) ||
+                    result.customer_compute!=required_inference(result.tasks,copy.inference_milli_CU_per_task))
+                    invalid("Retained weights bypassed the buyer hardware or the published checkpoint's compute cost");
+            }
             if (result.trial_tasks>0) trial_work[{day.day,result.product_id}]+=result.trial_tasks;
             if (!day.total_demand && result.charged.value() > 0)
                 expect("market.sale/" + result.segment_id + "/" + result.product_id + "/" + date_text,
@@ -792,7 +806,7 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
                 if (profile.customer_inference != customer_hosted(product_row.channel))
                     invalid("Product changed who performs its inference");
                 if (profile.customer_inference) for (const auto& sale : day.discretionary) {
-                    if (sale.product_id != product_row.id) continue;
+                    if (sale.product_id != product_row.id || !sale.local_copy_project.empty()) continue;
                     const auto& customer = find_id(state.segments, sale.segment_id);
                     if (sale.customer_compute != required_inference(sale.tasks, profile.inference_milli_CU_per_task) ||
                         profile.minimum_memory_mib > customer.customer_memory_mib ||
@@ -840,17 +854,17 @@ void validate_market_links(const MarketState& state, const AccountsState& accoun
     }
     if (!expected.empty()) invalid("Market work is missing a recognized invoice");
 }
-void add_market_product(MarketState& state, const CapacityState& capacity, MarketProduct row) {
+void add_market_product(MarketState& state, const CapacityState& capacity, MarketProduct row,std::string weight_audience) {
     if (row.retirement) invalid("Publish a retirement notice after launching the service");
     mutate(state, [&](auto& next) {
         (void)project(capacity, row);
-        next.capacity_bindings.push_back({row.id,row.capacity_project_id,project(capacity,row).starts_on});
+        next.capacity_bindings.push_back({row.id,row.capacity_project_id,project(capacity,row).starts_on,std::move(weight_audience)});
         next.products.push_back(std::move(row));
         std::sort(next.products.begin(), next.products.end(), [](const auto& a, const auto& b) { return a.id < b.id; });
     });
 }
 void replace_product_capacity(MarketState& state, const CapacityState& capacity, OrdinalDay day,
-                              std::string_view product_id, std::string project_id) {
+                              std::string_view product_id, std::string project_id,std::string weight_audience) {
     require_day(state, day);
     const auto found=std::find_if(state.products.begin(),state.products.end(),[&](const auto& row){return row.id==product_id;});
     if (found==state.products.end()) invalid("Replacement service product does not exist");
@@ -860,7 +874,7 @@ void replace_product_capacity(MarketState& state, const CapacityState& capacity,
         state.capacity_bindings.push_back({product_row.id,product_row.capacity_project_id,project(capacity,product_row).starts_on});
     product_row.capacity_project_id=std::move(project_id);
     (void)project(capacity,product_row);
-    state.capacity_bindings.push_back({product_row.id,product_row.capacity_project_id,day});
+    state.capacity_bindings.push_back({product_row.id,product_row.capacity_project_id,day,std::move(weight_audience)});
 }
 void add_market_segment(MarketState& state, MarketSegment row) {
     mutate(state, [&](auto& next) {
@@ -982,6 +996,7 @@ void cancel_contract(MarketState& state, AccountsState& accounts, OrdinalDay day
 }
 namespace {
 using TrialEdge=std::pair<std::string_view,std::string_view>; // product, customer segment
+using CopyEdge=std::pair<std::string,std::string_view>; // internal route, customer segment
 struct TrialSupply {
     const MarketTrial* trial;
     std::uint64_t tasks=0;
@@ -994,6 +1009,7 @@ struct MarketClosePlan {
     std::vector<AllocationSegment> segments;
     std::vector<TrialSupply> trials;
     std::set<TrialEdge> blocked_trial_edges;
+    std::map<CopyEdge,const WeightInstallation*> copies;
 };
 MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool,OrdinalDay day,bool validate_io,
     const std::vector<MarketAdoption>* industry_adoptions = nullptr, const MarketInfluences& influences = {}) {
@@ -1064,7 +1080,7 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
             const auto* pref=preference(segment,row.id);
             const auto* rule=context(row.id,segment.id);
             return pref && pref->eligible && market_access(row,segment) && row.price_per_task<=pref->willingness_to_pay &&
-                (!rule || (rule->eligible && rule->trial_eligible));
+                (!rule || (rule->eligible && rule->trial_eligible)) && (trial->weight_audience.empty() || trial->weight_audience==segment.id);
         })) {
             const auto& candidate=find_id(pool.projects,trial->project_id);
             full_requests.push_back({candidate.id,0,candidate.tasks_per_day});
@@ -1103,6 +1119,12 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
                             profile.customer_inference ? profile.inference_milli_CU_per_task : MilliCU{0}});
     }
     std::vector<AllocationSegment> segments;
+    std::map<std::string_view,std::string_view> audiences;
+    for (const auto& row:next.products) if (row.channel==ProductChannel::open_weights)
+        if (const auto* release=market_binding(next,row.id,day);release && !release->weight_audience.empty())
+            audiences.emplace(row.id,release->weight_audience);
+    std::map<std::string_view,std::size_t> copy_offers;
+    std::map<CopyEdge,const WeightInstallation*> copies;
     for (const auto& row : next.segments) {
         const auto reserved = segment_reserved[row.id];
         const auto charged = segment_charged.contains(row.id) ? segment_charged.at(row.id) : Cents{0};
@@ -1123,12 +1145,13 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
         for (const auto& pref : row.preferences) {
             const auto& product_row = find_id(next.products, pref.product_id);
             const auto* rule = context(product_row.id,row.id);
-            if (rule && !rule->eligible) continue;
-            if (!pref.eligible || !market_access(product_row, row) || !available(product_row, pool) ||
-                product_row.price_per_task > pref.willingness_to_pay) continue;
+            if (!pref.eligible || !market_access(product_row, row) || product_row.price_per_task > pref.willingness_to_pay) continue;
             const auto& profile = project(pool, product_row);
-            if (profile.customer_inference && (profile.minimum_memory_mib > row.customer_memory_mib ||
-                profile.interconnect != row.customer_interconnect)) continue;
+            const auto audience=audiences.find(product_row.id);
+            const bool primary=(!rule || rule->eligible) && available(product_row,pool) && market_detail::local_hardware_fits(profile,row) &&
+                (audience==audiences.end() || audience->second==row.id);
+            const auto* copy=primary?nullptr:market_detail::retained_installation(next,pool,product_row,row,rule);
+            if (!primary && !copy) continue;
             const auto old_share = share(product_row.id);
             const auto other_installed = 10000 - outside_share - old_share;
             const auto switching = mul_div_round_half_up(pref.switching_cost, other_installed, 10000);
@@ -1140,7 +1163,20 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
             const auto known = std::min(market_utility_limit, mul_div_round_half_up(pref.utility, 10000 + awareness, 10000)+continuity);
             const auto utility = known > switching ? known - switching : 0;
             const auto migration = static_cast<std::uint64_t>(market_migration(product_row, row).value());
-            const auto adoption_cap = product_row.retirement?old_share:std::min<std::uint64_t>(10000, old_share + migration);
+            const auto normal_cap=std::min<std::uint64_t>(10000,old_share+migration);
+            if (copy) {
+                const auto limit=std::min(copy->tasks_per_day,mul_div_floor(demand,normal_cap,10000).quotient);
+                if (limit==0) continue;
+                const auto [offer,created]=copy_offers.try_emplace(product_row.id,products.size());
+                if (created) products.push_back({"local.copy/"+std::to_string(offer->second),Cents{0},0});
+                auto& supply=products[offer->second];
+                supply.capacity=std::min(market_task_limit,supply.capacity+limit);
+                segment.edges.push_back({supply.id,weight(utility,row.reservation_threshold),limit,limit,{},
+                    find_id(pool.projects,copy->project_id).inference_milli_CU_per_task});
+                copies.emplace(CopyEdge{supply.id,row.id},copy);
+                continue;
+            }
+            const auto adoption_cap = product_row.retirement?old_share:normal_cap;
             const auto limit = mul_div_floor(demand, adoption_cap, 10000).quotient;
             const auto retained = !product_row.retirement && product_row.channel != ProductChannel::legacy && old_share > migration
                 ? mul_div_floor(demand, old_share - migration, 10000).quotient : 0;
@@ -1150,7 +1186,7 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
     }
     market_detail::apply_waitlist_limits(next,day,products,segments);
     return {std::move(record),std::move(product_contract_delivered),std::move(segment_reserved),std::move(segment_contract_delivered),
-        std::move(segment_charged),std::move(products),std::move(segments),std::move(trials),std::move(blocked_trial_edges)};
+        std::move(segment_charged),std::move(products),std::move(segments),std::move(trials),std::move(blocked_trial_edges),std::move(copies)};
 }
 void validate_assigned(const MarketClosePlan& plan,const AllocationResult& assigned) {
     if (assigned.segments.size()!=plan.segments.size() || assigned.rounds>allocation_edge_limit+allocation_product_limit+allocation_segment_limit)
@@ -1169,8 +1205,8 @@ void validate_assigned(const MarketClosePlan& plan,const AllocationResult& assig
                 edge->weight==0 || (edge->task_limit && row.tasks>*edge->task_limit) || row.cost!=multiplied(product_row.price,row.tasks))
                 invalid("Industry allocation bypassed eligibility, migration or actual price");
             delivered+=row.tasks;totals[row.product_id]+=row.tasks;charged=checked_unit_add(charged,row.cost);
-            if (product_row.customer_compute_per_task.value() > 0)
-                local_used = checked_unit_add(local_used, required_inference(row.tasks, product_row.customer_compute_per_task));
+            const auto per_task=edge->local_compute_per_task.value_or(product_row.customer_compute_per_task);
+            if (per_task.value()>0) local_used=checked_unit_add(local_used,required_inference(row.tasks,per_task));
         }
         if (delivered>input.tasks || result.outside_tasks!=input.tasks-delivered || charged>input.budget ||
             result.remaining_budget!=checked_unit_subtract(input.budget,charged) || local_used.value()>input.customer_compute.value())
@@ -1213,7 +1249,7 @@ ServingSettlement actual_serving_requests(const MarketState& market, const Capac
         std::vector<WeightedQuota> claims;
         std::uint64_t wanted=0;
         for (const auto& segment:allocation.segments) {
-            if (plan.blocked_trial_edges.contains({trial.product_id,segment.id})) continue;
+            if (plan.blocked_trial_edges.contains({trial.product_id,segment.id}) || (!trial.weight_audience.empty() && trial.weight_audience!=segment.id)) continue;
             const auto sale=std::ranges::find(segment.deliveries,trial.product_id,&AllocationDelivery::product_id);
             if (sale==segment.deliveries.end()) continue;
             const auto tasks=mul_div_floor(sale->tasks,static_cast<std::uint64_t>(trial.share.value()),10000).quotient;
@@ -1306,11 +1342,14 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
         std::uint64_t delivered = 0;
         Cents charged = segment_charged.contains(result.id) ? segment_charged.at(result.id) : Cents{0};
         for (const auto& work : result.deliveries) {
-            const auto per_task = find_id(prepared.products, work.product_id).customer_compute_per_task;
+            const auto* copy=market_detail::copy_offer(work.product_id)?prepared.copies.at({work.product_id,result.id}):nullptr;
+            const auto& product_id=copy?copy->product_id:work.product_id;
+            const auto per_task=copy?find_id(pool.projects,copy->project_id).inference_milli_CU_per_task:
+                find_id(prepared.products,work.product_id).customer_compute_per_task;
             const auto local_work = per_task.value() > 0 ? required_inference(work.tasks, per_task) : MilliCU{0};
             const auto trial=serving.trial_tasks.find({work.product_id,result.id});
-            record.discretionary.push_back({result.id, work.product_id, work.tasks, work.cost, local_work,
-                trial==serving.trial_tasks.end()?0:trial->second});
+            record.discretionary.push_back({result.id,product_id,work.tasks,work.cost,local_work,
+                trial==serving.trial_tasks.end()?0:trial->second,copy?copy->project_id:std::string{}});
             delivered += work.tasks;
             charged = checked_unit_add(charged, work.cost);
             if (regional) combined_sales = checked_unit_add(combined_sales, work.cost);
@@ -1349,6 +1388,7 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
     record.discretionary.sort([](const auto& a, const auto& b) {
         return std::tie(a.segment_id, a.product_id) < std::tie(b.segment_id, b.product_id);
     });
+    market_detail::record_weight_installations(next,record);
     if (!next.days.empty()) record.share_unchanged(next.days.back());
     next.days.push_back(std::move(record)); next.closed_through = day;
     if (month_end(day)) review_adoption(next, day);

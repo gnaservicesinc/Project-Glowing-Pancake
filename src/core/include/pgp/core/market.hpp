@@ -106,6 +106,7 @@ struct MarketDelivery {
     Cents charged{0};
     MilliCU customer_compute{0};
     std::uint64_t trial_tasks=0;
+    std::string local_copy_project{};
     auto operator<=>(const MarketDelivery&) const = default;
 };
 struct MarketSegmentDay {
@@ -169,6 +170,8 @@ struct MarketDemandChange {
 struct ProductCapacityBinding {
     std::string product_id, project_id;
     OrdinalDay starts_on{0};
+    // Empty is the public reuse grant. A named group receives local-use terms.
+    std::string weight_audience{};
     auto operator<=>(const ProductCapacityBinding&) const = default;
 };
 inline constexpr std::size_t service_trial_limit=256;
@@ -179,6 +182,7 @@ struct MarketTrial {
     OrdinalDay starts_on{0}, ends_before{0};
     BasisPoints share{0};
     std::optional<OrdinalDay> stopped_on{};
+    std::string weight_audience{};
     auto operator<=>(const MarketTrial&) const = default;
 };
 inline constexpr std::uint32_t service_term_min_days=30;
@@ -197,6 +201,12 @@ struct MarketWaitlistChange {
     // A zero limit pauses admissions. An absent limit reopens enrollment.
     std::optional<std::uint64_t> new_tasks_per_day{};
     auto operator<=>(const MarketWaitlistChange&) const = default;
+};
+struct WeightInstallation {
+    std::string product_id, segment_id, project_id;
+    OrdinalDay received_on{0};
+    std::uint64_t tasks_per_day=0;
+    auto operator<=>(const WeightInstallation&) const = default;
 };
 struct MarketPriceChange {
     std::string product_id;
@@ -228,6 +238,8 @@ struct MarketState {
     std::vector<MarketTrial> trials{};
     std::vector<ServiceCompatibility> compatibility{};
     std::vector<MarketWaitlistChange> waitlist_changes{};
+    // Derived from settled supported work, with no second grant in the save.
+    DayRows<WeightInstallation> weight_installations{};
     auto operator<=>(const MarketState&) const = default;
 };
 struct MarketReport {
@@ -244,6 +256,8 @@ struct MarketInfluence {
     BasisPoints awareness{0};
     bool eligible = true;
     bool trial_eligible = true;
+    // Absent means retained copies inherit the ordinary edge restriction.
+    std::optional<std::vector<std::string>> blocked_weight_projects{};
     auto operator<=>(const MarketInfluence&) const = default;
 };
 using MarketInfluences = std::vector<MarketInfluence>;
@@ -260,13 +274,15 @@ void set_market_waitlist(MarketState&,const CapacityState&,OrdinalDay,std::strin
 [[nodiscard]] ContractDayResult contract_delivery(const MarketContract&,OrdinalDay,std::uint64_t delivered_tasks);
 [[nodiscard]] bool regional_market(const MarketState& state);
 [[nodiscard]] bool market_access(const MarketProduct& product, const MarketSegment& segment);
+[[nodiscard]] const ProductCapacityBinding* market_binding(const MarketState&,std::string_view product,OrdinalDay);
+void rebuild_weight_installations(MarketState&);
 [[nodiscard]] BasisPoints market_migration(const MarketProduct& product, const MarketSegment& segment);
 void validate_market(const MarketState& state);
 void validate_market_links(const MarketState& state, const AccountsState& accounts,
                            const CapacityState& capacity);
-void add_market_product(MarketState& state, const CapacityState& capacity, MarketProduct product);
+void add_market_product(MarketState& state, const CapacityState& capacity, MarketProduct product,std::string weight_audience={});
 void replace_product_capacity(MarketState& state, const CapacityState& capacity, OrdinalDay day,
-                              std::string_view product_id, std::string project_id);
+                              std::string_view product_id, std::string project_id,std::string weight_audience={});
 void add_market_segment(MarketState& state, MarketSegment segment);
 void add_market_preference(MarketState& state,std::string_view segment_id,MarketPreference preference);
 void set_product_available(MarketState& state, std::string_view product_id, bool available);

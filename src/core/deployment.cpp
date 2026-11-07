@@ -1,4 +1,5 @@
 #include <pgp/core/deployment.hpp>
+#include <pgp/core/simulation.hpp>
 #include "deployment_internal.hpp"
 #include <algorithm>
 #include <set>
@@ -86,6 +87,22 @@ CapacityProject qualified_project(const ServiceDefinition& definition,const LabS
     project.interconnect=recipe.interconnect;
     return project;
 }
+void require_publication_audience(const ServiceDefinition& definition,const MarketState& market,std::string_view region,
+                                  std::string_view audience,const CapacityProject& work) {
+    auto product=definition.product;
+    product.region_id=region;
+    if (!audience.empty() && product.channel!=ProductChannel::open_weights)
+        invalid("Only an open-weight release can name a weight audience");
+    const auto can_serve=[&](const ServicePreference& pref) {
+        if (!audience.empty() && pref.segment_id!=audience) return false;
+        const auto& segment=find(market.segments,pref.segment_id);
+        return pref.preference.eligible && market_access(product,segment) &&
+            (!work.customer_inference || (work.minimum_memory_mib<=segment.customer_memory_mib &&
+                work.interconnect==segment.customer_interconnect && work.inference_milli_CU_per_task.value()<=segment.customer_compute.value()));
+    };
+    if ((product.channel!=ProductChannel::legacy || !region.empty()) && std::ranges::none_of(definition.preferences,can_serve))
+        invalid("The release has no eligible buyers in its audience and territory with compatible hardware");
+}
 }
 using namespace deployment_detail;
 void validate_service_catalog(const std::vector<ServiceDefinition>& catalog) {
@@ -114,6 +131,25 @@ void validate_service_catalog(const std::vector<ServiceDefinition>& catalog) {
                 invalid("Service preferences must name their offered product and unique customer segments");
     }
 }
+CapacityProject preview_publication(const SimulationState& state,const DeployModel& request) {
+    if (!state.deployments || !state.lab || !state.capacity || !state.market)
+        invalid("This company has no qualified release catalog");
+    const auto& deployments=*state.deployments;
+    const auto& definition=service(deployments,request.service_id);
+    if (definition.product.channel!=ProductChannel::open_weights) invalid("Choose an open-weight service");
+    if (deployments.records.size()>=lab_record_limit || pending_rollout(deployments,request.service_id))
+        invalid("Resolve the pending trial and check the release history before publishing");
+    const auto product=std::ranges::find(state.market->products,request.service_id,&MarketProduct::id);
+    const auto region=product==state.market->products.end()?request.region_id:product->region_id;
+    if (product!=state.market->products.end() && ((product->retirement && product->retirement->retires_on<=state.date) ||
+        (!request.region_id.empty() && request.region_id!=region))) invalid("Publication must use the live service's territory and retirement terms");
+    if (const auto blocked=civic_launch_block(state.civic?&*state.civic:nullptr,state,request,state.date);!blocked.empty())
+        throw std::invalid_argument(blocked);
+    auto work=qualified_project(definition,*state.lab,*state.capacity,request,state.date,definition.serving.id);
+    require_publication_audience(definition,*state.market,region,request.weight_audience,work);
+    require_compatible(deployments,*state.lab,*state.capacity,*state.market,request,work,state.date);
+    return work;
+}
 void deploy_model(DeploymentState& state,const LabState& lab,AccountsState& accounts,CapacityState& capacity,
                   MarketState& market,OrdinalDay day,const DeployModel& request) {
     if (state.records.size()>=lab_record_limit) invalid("Deployment history is full");
@@ -132,16 +168,7 @@ void deploy_model(DeploymentState& state,const LabState& lab,AccountsState& acco
     require_compatible(state,lab,capacity,market,request,work,day);
     auto product = definition.product;
     product.region_id = region;
-    const auto can_serve = [&](const ServicePreference& preference) {
-        const auto& segment = find(market.segments, preference.segment_id);
-        return preference.preference.eligible && market_access(product, segment) &&
-            (!work.customer_inference || (work.minimum_memory_mib <= segment.customer_memory_mib &&
-                work.interconnect == segment.customer_interconnect &&
-                work.inference_milli_CU_per_task.value() <= segment.customer_compute.value()));
-    };
-    if ((definition.product.channel != ProductChannel::legacy || !region.empty()) &&
-        std::none_of(definition.preferences.begin(), definition.preferences.end(), can_serve))
-        invalid("The service has no eligible customer territory or compatible local hardware");
+    require_publication_audience(definition,market,region,request.weight_audience,work);
     std::uint64_t promised=0;
     for (const auto& contract:market.contracts)
         if (contract.product_id==request.service_id && (contract.status==ContractStatus::active || contract.status==ContractStatus::pending))
@@ -160,13 +187,13 @@ void deploy_model(DeploymentState& state,const LabState& lab,AccountsState& acco
             retirement?std::optional{retirement->retires_on}:std::nullopt,"Serving support: "+work.id});
     if (existing==market.products.end()) {
         product.capacity_project_id=work.id;
-        add_market_product(market,capacity,std::move(product));
+        add_market_product(market,capacity,std::move(product),request.weight_audience);
         for (const auto& preference:definition.preferences) add_market_preference(market,preference.segment_id,preference.preference);
     } else {
-        replace_product_capacity(market,capacity,day,request.service_id,work.id);
+        replace_product_capacity(market,capacity,day,request.service_id,work.id,request.weight_audience);
         set_product_available(market,request.service_id,true);
     }
-    state.records.push_back({request.service_id,request.model_id,request.evidence_id,work.id,request.human_review,day,region});
+    state.records.push_back({request.service_id,request.model_id,request.evidence_id,work.id,request.human_review,day,region,0,request.weight_audience});
 }
 void validate_deployments(const DeploymentState& state,const LabState& lab,const CapacityState& capacity,const MarketState& market) {
     validate_service_catalog(state.catalog);
@@ -180,15 +207,17 @@ void validate_deployments(const DeploymentState& state,const LabState& lab,const
             product.region_id!=row.region_id)
             invalid("The saved service changed its authored channel or launch territory");
         const auto expected=qualified_project(definition,lab,capacity,
-            {row.service_id,row.model_id,row.evidence_id,work.source_id,row.human_review,row.region_id},row.deployed_on,row.project_id);
+            {row.service_id,row.model_id,row.evidence_id,work.source_id,row.human_review,row.region_id,row.weight_audience},row.deployed_on,row.project_id);
+        require_publication_audience(definition,market,row.region_id,row.weight_audience,expected);
         auto comparable=work; comparable.status=ProjectStatus::active; comparable.stopped_on.reset(); comparable.useful_tasks=0; comparable.completed_work=MilliCU{0};
-        if (comparable!=expected || market.capacity_bindings[i]!=ProductCapacityBinding{row.service_id,row.project_id,row.deployed_on})
+        if (comparable!=expected || market.capacity_bindings[i]!=ProductCapacityBinding{row.service_id,row.project_id,row.deployed_on,row.weight_audience})
             invalid("Deployment differs from its qualified evidence, review costs or actual serving work");
         if (row.restored_release>0) {
             if (row.restored_release>i) invalid("Rollback must restore an earlier production release");
             const auto& prior=state.records[static_cast<std::size_t>(row.restored_release-1)];
             if (prior.service_id!=row.service_id || prior.model_id!=row.model_id || prior.evidence_id!=row.evidence_id ||
                 prior.human_review!=row.human_review || prior.region_id!=row.region_id ||
+                prior.weight_audience!=row.weight_audience ||
                 find(capacity.projects,prior.project_id).source_id!=work.source_id)
                 invalid("Rollback differs from the retained qualified release");
         }

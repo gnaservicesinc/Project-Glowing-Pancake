@@ -41,6 +41,23 @@ can serve the same buyers through the ordinary shared allocation. The service
 view shows the settled groups, dates and admissions. Reopening enrollment or
 publishing a retirement notice ends the waitlist while retaining its history.
 
+### Open-weight publications
+
+Lab Deploy reviews the frozen checkpoint, inference requirements and grant.
+Public reuse permits use, adaptation and redistribution by eligible buyers.
+A named buyer group instead receives a grant for local use. Supported work
+establishes copies for the buyer group up to the highest daily volume it ran
+on the release. Staged candidate access lasts for the trial. Promotion publishes
+the candidate under the reviewed grant.
+
+Each group uses one checkpoint per service per day. Buyers normally use the
+supported release when it fits their hardware and grant. When it is unavailable
+or ineligible, the group can use a compatible copy it already received, subject
+to current regional rules. Retained work uses buyer compute and a single shared
+demand allocation. It earns no task fees and consumes no vendor staff. Retirement
+ends new supported distribution and support bills. Copies keep their original
+grant. Saves rebuild the installations from dated distribution and use records.
+
 ## Wholesale reservations
 
 **Operations → Wholesale** is available in the planned-roster presets.

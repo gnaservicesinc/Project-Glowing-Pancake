@@ -676,7 +676,14 @@ new slots first. The waitlist records interest and actual admissions. The
 market and ledger recognize only settled deliveries. The optimized Mac build
 and 10 focused checks pass.
 
-Next is publication policy and retained access for open-weight releases.
+Lab Deploy now reviews public reuse or a local-use grant for one eligible
+buyer group. Qualified publication shares the frozen weights and hardware
+requirements. Previously served groups keep their copies when the supported
+version changes or retires. They can run the retained checkpoint on compatible
+hardware through the same regional demand pool. Office Services shows retained
+buyers and actual local work. The optimized Mac build and 11 focused checks pass.
+
+Next are tool permissions, oversight, and consequences for agent services.
 The roadmap remains 42/52 checked while design coverage is completed.
 M8-02 stays deferred. Human work waits until the user is ready, and E2-04 editor
 downloads stay with deferred release preparation.

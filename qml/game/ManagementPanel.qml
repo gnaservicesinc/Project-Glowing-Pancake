@@ -295,6 +295,20 @@ ColumnLayout {
             options: manager.launchRegions
             visible: options.length > 0 && deploymentService.selectedOption.existing !== true
         }
+        Choice {
+            id: weightAudience
+            objectName: "weightAudienceChoice"
+            label: qsTr("Weight release audience and grant")
+            visible: deploymentService.selectedOption.openWeights === true
+            options: visible ? manager.weightAudiences(deploymentService.value, deploymentRegion.visible ? deploymentRegion.value : "") : []
+            readonly property string publishedAudience: deploymentService.selectedOption.weightAudience || ""
+            onPublishedAudienceChanged: value = publishedAudience
+            onOptionsChanged: if (!options.some(o => o.id === value)) value = ""
+        }
+        Connections {
+            target: deploymentService
+            function onValueChanged() { weightAudience.value = weightAudience.publishedAudience }
+        }
         Copy { visible: manager.launchRegions.length > 0; text: qsTr("A service keeps its launch territory when you replace its model.") }
         Copy { visible: deploymentService.selectedOption.reviewRequired === true; text: qsTr("This agent requires paid human review.") }
         CheckBox {
@@ -311,12 +325,17 @@ ColumnLayout {
         Copy { text: manager.servicePreview(deploymentService.value, deploymentModel.value, humanReview.checked || deploymentService.selectedOption.reviewRequired === true) }
         Action {
             objectName: "deployButton"
-            text: qsTr("Qualify and deploy / replace service")
+            text: weightAudience.visible ? qsTr("Review weight publication…") : qsTr("Qualify and deploy / replace service")
             enabled: panel.editable && deploymentModel.value.length > 0 && deploymentEvidence.value.length > 0 && deploymentService.selectedOption.trialPending !== true && deploymentService.selectedOption.retired !== true
-            onClicked: manager.deploy(deploymentService.value, deploymentModel.value, deploymentEvidence.value,
-                                      deploymentSource.visible ? deploymentSource.value : "",
-                                      humanReview.checked || deploymentService.selectedOption.reviewRequired === true,
-                                      deploymentRegion.visible ? deploymentRegion.value : "")
+            onClicked: {
+                const request = [deploymentService.value, deploymentModel.value, deploymentEvidence.value,
+                    deploymentSource.visible ? deploymentSource.value : "", humanReview.checked || deploymentService.selectedOption.reviewRequired === true,
+                    deploymentRegion.visible ? deploymentRegion.value : "", weightAudience.visible ? weightAudience.value : ""]
+                if (weightAudience.visible) {
+                    const quote = manager.publicationQuote(...request)
+                    releaseDialog.review("publishWeights", request[0], qsTr("Review open-weight publication"), quote.detail || "", quote.ready === true, request)
+                } else manager.deploy(...request)
+            }
         }
         ColumnLayout {
             Layout.fillWidth: true
@@ -331,7 +350,8 @@ ColumnLayout {
                 onClicked: {
                     const request = [deploymentService.value, deploymentModel.value, deploymentEvidence.value,
                         deploymentSource.visible ? deploymentSource.value : "",
-                        humanReview.checked || deploymentService.selectedOption.reviewRequired === true, trialShare.value, trialDays.value]
+                        humanReview.checked || deploymentService.selectedOption.reviewRequired === true, trialShare.value, trialDays.value,
+                        weightAudience.visible ? weightAudience.value : ""]
                     const quote = manager.rolloutPreview(...request)
                     releaseDialog.review("stage", deploymentService.value, qsTr("Review staged rollout"), quote.detail || "", quote.ready === true, request)
                 }
@@ -427,8 +447,12 @@ ColumnLayout {
             text: qsTr("Review promotion…")
             visible: serviceOffice.selected.trialPending === true
             enabled: panel.editable && serviceOffice.selected.trialCanPromote === true
-            onClicked: releaseDialog.review("promote", manager.products.selectedId, qsTr("Promote this staged release?"),
-                qsTr("Make %1 the production checkpoint, including for signed contracts. Promotion rechecks current rules and the full serving commitment. The prior release remains in history.").arg(serviceOffice.selected.trialCheckpoint), true, [])
+            onClicked: {
+                let terms = qsTr("Make %1 the production checkpoint, including for signed contracts. Promotion rechecks current rules and the full serving commitment. The prior release remains in history.").arg(serviceOffice.selected.trialCheckpoint)
+                if (serviceOffice.selected.trialWeightGrant)
+                    terms += "\n\n" + qsTr("Publish the frozen weights. %1 Buyers retain copies they receive.").arg(serviceOffice.selected.trialWeightGrant)
+                releaseDialog.review("promote", manager.products.selectedId, qsTr("Promote this staged release?"), terms, true, [])
+            }
         }
         Action {
             objectName: "discardRolloutButton"
@@ -472,7 +496,7 @@ ColumnLayout {
         }
         Action {
             objectName: "stopSelectedServiceButton"
-            text: qsTr("Stop selected service")
+            text: serviceOffice.selected.freeWeights === true ? qsTr("Stop supporting selected weights") : qsTr("Stop selected service")
             visible: serviceOffice.selected.live === true
             enabled: panel.editable && serviceOffice.selected.trialPending !== true && serviceOffice.selected.compatibilityActive !== true && serviceOffice.selected.retirementAnnounced !== true
             onClicked: campaign.projectCancel(serviceOffice.selected.projectId)
@@ -843,6 +867,7 @@ ColumnLayout {
         onAccepted: {
             if (!confirmable) return
             if (kind === "stage") manager.stageRollout(...request)
+            else if (kind === "publishWeights") manager.deploy(...request)
             else if (kind === "rollback") manager.rollbackService(serviceId)
             else if (kind === "compatibility") manager.commitCompatibility(...request)
             else if (kind === "retirement") manager.announceRetirement(...request)

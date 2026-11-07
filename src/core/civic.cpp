@@ -201,7 +201,7 @@ std::string civic_launch_block(const CivicState* civic, const SimulationState& s
     if (!product.region_id.empty() && product.region_id != "region.us") return {};
     const auto domestic = std::any_of(service->preferences.begin(), service->preferences.end(), [&](const auto& preference) {
         const auto* segment = row_named(state.market->segments, preference.segment_id);
-        return preference.preference.eligible && segment &&
+        return preference.preference.eligible && segment && (request.weight_audience.empty() || request.weight_audience==segment->id) &&
             (segment->region_id.empty() || segment->region_id == "region.us") && market_access(product, *segment);
     });
     if (!domestic) return {};
@@ -238,7 +238,7 @@ void validate_civic_deployments(const CivicState& civic, const SimulationState& 
     if (!state.deployments) return;
     const auto verify=[&](const DeploymentRecord& deployment) {
         const DeployModel request{deployment.service_id, deployment.model_id, deployment.evidence_id, {},
-            deployment.human_review, deployment.region_id};
+            deployment.human_review, deployment.region_id,deployment.weight_audience};
         if (const auto blocked = civic_launch_block(&civic, state, request, deployment.deployed_on); !blocked.empty())
             invalid("Saved deployment lacks the evidence required on its launch date. " + blocked);
     };

@@ -52,8 +52,10 @@ prior qualified version. Published compatibility terms protect serving capacity,
 measured quality, review controls and buyer hardware. Retirement notices protect
 existing terms and retire service automatically at the published date. Office
 Services also supports a customer waitlist with a daily intake limit, priority
-for established demand, and dated activity by buyer group. Next is publication
-policy and retained access for open-weight releases.
+for established demand, and dated activity by buyer group. Open-weight releases
+now have explicit public-reuse or local-use grants and keep compatible buyer-side
+work available after replacement or retirement. Next are tool permissions,
+oversight, and consequences for agent services.
 
 ## M0 — Toolchain and platform proof
 

@@ -49,6 +49,66 @@ std::string exact(const runtime::CompiledProgram& program,const runtime::Runtime
     return bytes;
 }
 
+void published_weights(const runtime::CompiledProgram& program,runtime::Runtime game) {
+    const std::string product_id="product.education_model";
+    const std::string group="segment.europe.science";
+    const auto original=find(state(game).market->products,product_id).capacity_project_id;
+    check(std::ranges::any_of(state(game).market->weight_installations,[&](const auto& copy) {
+        return copy.project_id==original && copy.segment_id!=group;
+    }),"Published weight work did not establish copies for earlier recipients");
+    (void)exact(program,game); // A public grant uses the original save representation before retained work.
+    apply(game,CloneModel{"model.open","weights.candidate"});
+    apply(game,StartEvaluation{"weights.report","weights.candidate","evaluation.held_out",{"lease.initial",MilliCUPerDay{20000},1}});
+    advance(game,advance_days(state(game).date,Days{4}));
+    const DeployModel candidate{product_id,"weights.candidate","weights.report","",false,"region.europe",group};
+    auto outside=candidate;
+    outside.weight_audience="segment.us.science";
+    refuse(game,outside);
+    auto committed=game;
+    apply(committed,CommitServiceCompatibility{product_id,Days{30}});
+    refuse(committed,candidate);
+    apply(game,StageServiceRollout{candidate,BasisPoints{2000},Days{2}});
+    const auto trial=state(game).market->trials.back().project_id;
+    advance(game,advance_days(state(game).date,Days{1}));
+    check(std::ranges::any_of(state(game).market->days.back().discretionary,[&](const auto& sale){return sale.segment_id==group && sale.trial_tasks>0;}) &&
+          std::ranges::none_of(state(game).market->days.back().discretionary,[&](const auto& sale){return sale.segment_id!=group && sale.trial_tasks>0;}) &&
+          std::ranges::none_of(state(game).market->weight_installations,[&](const auto& copy){return copy.project_id==trial;}),
+          "A staged candidate escaped its audience or granted a permanent copy");
+    (void)exact(program,game);
+    apply(game,FinishServiceRollout{product_id,true});
+    const auto publication=find(state(game).market->products,product_id).capacity_project_id;
+    advance(game,advance_days(state(game).date,Days{1}));
+    const auto& last=state(game).market->days.back();
+    check(state(game).deployments->records.back().weight_audience==group &&
+          std::ranges::any_of(last.discretionary,[&](const auto& sale){return sale.product_id==product_id && sale.segment_id==group && sale.local_copy_project.empty();}) &&
+          std::ranges::any_of(last.discretionary,[&](const auto& sale){return sale.segment_id!=group && sale.local_copy_project==original;}),
+          "A scoped replacement revoked prior grants or failed to serve its new audience");
+    auto forged=Json::parse(exact(program,game));
+    auto& saved=forged["checkpoint"]["world"]["simulation"]["market"]["days"].back()["discretionary"];
+    for (auto& sale:saved) if (sale.contains("local_copy_project")) sale["local_copy_project"]=publication;
+    forged.erase("sha256");forged["sha256"]=persistence::sha256(forged.dump());
+    bool rejected=false;
+    try { (void)persistence::decode_save(program,forged.dump()); } catch(const persistence::PersistenceError&) { rejected=true; }
+    check(rejected,"An audience's installed copy could be replaced by a release it never received");
+    const auto retires=advance_days(state(game).date,Days{30});
+    apply(game,AnnounceServiceRetirement{product_id,Days{30}});
+    advance(game,advance_days(retires,Days{1}));
+    const auto& after=state(game);
+    const auto& copy_day=after.market->days.back();
+    check(!find(after.market->products,product_id).available && find(after.capacity->projects,publication).stopped_on==retires &&
+        std::ranges::none_of(after.capacity->days.back().projects,[&](const auto& work){return work.project_id==publication || work.project_id==original;}) &&
+        find(after.accounts->recurring,"support/"+publication).ends_before==retires,
+        "Retirement kept company staff or support attached to buyer copies");
+    std::uint64_t independent=0;
+    for (const auto& sale:copy_day.discretionary) if (sale.product_id==product_id) {
+        check((sale.local_copy_project==original || sale.local_copy_project==publication) && sale.charged==Cents{0} &&
+              sale.customer_compute==required_inference(sale.tasks,MilliCU{20}),"Retained work ignored the published model or metering");
+        independent+=sale.tasks;
+    }
+    check(independent>0,"Retiring support disabled the installed copies");
+    (void)exact(program,game);
+}
+
 void local_launches(const runtime::CompiledProgram& program) {
     auto game=begin(program,"scenario.first_playable");
     const auto& simulation=state(game);
@@ -88,6 +148,7 @@ void local_launches(const runtime::CompiledProgram& program) {
         "Open and licensed work did not reach real customers using only their hardware");
     check(std::any_of(settled.discretionary.begin(),settled.discretionary.end(),[](const auto& row){return row.segment_id=="segment.europe.public_services";}),
         "Locally required public customers did not receive eligible useful work");
+    published_weights(program,game);
     advance(game,to_ordinal({2014,6,1}));
     const auto opportunity=market_opportunity(*state(game).market,*state(game).capacity,state(game).date);
     const auto& customers=find(opportunity.segments,"segment.europe.enterprise");

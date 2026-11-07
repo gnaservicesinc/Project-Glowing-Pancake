@@ -67,6 +67,7 @@ SalesSample recent_sales(const SimulationState& state) {
     for (auto i=market.days.size()-sample.days;i<market.days.size();++i) {
         const auto& day=market.days[i];
         for (const auto& sale:day.discretionary) {
+            if (!sale.local_copy_project.empty()) continue;
             const auto product=sample.products.find(sale.product_id);
             if (product!=sample.products.end()) product->second.observed+=sale.tasks;
         }

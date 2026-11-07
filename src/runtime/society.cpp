@@ -132,6 +132,13 @@ std::array<RegionOutcomes,society_regions> observations(const WorldState& world,
         auto it=std::lower_bound(market.days.begin(),market.days.end(),first,[](const auto& row,OrdinalDay date){return row.day<date;});
         for(;it!=market.days.end() && it->day<=month_end;++it) {
             for(const auto& row:it->discretionary) {
+                if (!row.local_copy_project.empty()) {
+                    if (!source->deployments) invalid("An installed copy has no qualified weight release");
+                    const auto version=std::ranges::find(source->deployments->records,row.local_copy_project,&DeploymentRecord::project_id);
+                    if (version==source->deployments->records.end()) invalid("An installed copy lost its published checkpoint");
+                    delivery(row.segment_id,row.product_id,row.tasks,0,0,it->day,&*version);
+                    continue;
+                }
                 delivery(row.segment_id,row.product_id,row.tasks-row.trial_tasks,0,0,it->day);
                 if (row.trial_tasks>0) {
                     const auto* trial=market_trial(market,row.product_id,it->day);
@@ -186,7 +193,7 @@ std::string society_launch_block(const core::SocietyState* society,const core::S
     auto territory=request.region_id;
     if(territory.empty()) if(const auto* existing=named(state.market->products,request.service_id)) territory=existing->region_id;
     for(const auto& preference:service->preferences) {
-        if(!preference.preference.eligible) continue;
+        if(!preference.preference.eligible || (!request.weight_audience.empty() && request.weight_audience!=preference.segment_id)) continue;
         const auto* segment=named(state.market->segments,preference.segment_id);
         if(segment && !segment->region_id.empty() && (territory.empty() || territory==segment->region_id) &&
             forum_enforced(*society,segment->region_id,day))
@@ -278,7 +285,7 @@ void validate_society_world(const WorldState& world) {
     if(!payments.empty()) invalid("The company has an orphaned regional media or forum payment.");
     for(const auto* source:sellers(world)) if(source->deployments) {
         const auto verify=[&](const DeploymentRecord& row) {
-            if(!society_launch_block(&society,*source,{row.service_id,row.model_id,row.evidence_id,{},row.human_review,row.region_id},row.deployed_on).empty())
+            if(!society_launch_block(&society,*source,{row.service_id,row.model_id,row.evidence_id,{},row.human_review,row.region_id,row.weight_audience},row.deployed_on).empty())
                 invalid("A saved release bypassed its region's effective standards rule.");
         };
         for (const auto& row:source->deployments->records) verify(row);

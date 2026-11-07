@@ -27,6 +27,7 @@ struct DeploymentRecord {
     OrdinalDay deployed_on{0};
     std::string region_id{};
     std::uint64_t restored_release=0;
+    std::string weight_audience{};
     auto operator<=>(const DeploymentRecord&) const = default;
 };
 struct ServiceRollout {
@@ -46,6 +47,7 @@ struct DeployModel {
     std::string service_id, model_id, evidence_id, source_id;
     bool human_review = false;
     std::string region_id{};
+    std::string weight_audience{};
 };
 struct StageServiceRollout {
     DeployModel candidate;
@@ -63,9 +65,11 @@ struct CompatibilityProfile {
     std::uint64_t customer_memory_mib=0;
     std::string customer_interconnect;
     MilliCU customer_compute_per_task{0};
+    std::string weight_audience;
 };
 struct SimulationState;
 
+[[nodiscard]] CapacityProject preview_publication(const SimulationState&,const DeployModel&);
 [[nodiscard]] ServiceCompatibility preview_compatibility(const SimulationState&,const CommitServiceCompatibility&);
 [[nodiscard]] CompatibilityProfile compatibility_profile(const SimulationState&,const ServiceCompatibility&);
 [[nodiscard]] ProductRetirement preview_retirement(const SimulationState&,const AnnounceServiceRetirement&);

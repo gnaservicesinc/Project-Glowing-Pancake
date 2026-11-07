@@ -45,6 +45,7 @@ struct Segment {
     std::uint64_t outside_weight = 0;
     std::vector<Edge> edges;
     std::vector<std::uint64_t> delivered;
+    std::vector<std::uint64_t> local_rates;
     std::map<AllocationOutsideReason, std::uint64_t> outside;
     std::vector<AllocationInterest> waitlist_interest{};
 };
@@ -52,7 +53,7 @@ bool eligible(const Segment& segment, const Edge& edge, const std::vector<Produc
     const auto& product = products[edge.product];
     return edge.weight != 0 && edge.remaining != 0 && product.remaining != 0 &&
            static_cast<std::uint64_t>(product.price.value()) <= segment.budget &&
-           product.local_rate <= segment.local_compute;
+           segment.local_rates[edge.product] <= segment.local_compute;
 }
 AllocationOutsideReason refusal_reason(const Segment& segment, const std::vector<Product>& products) {
     bool positive_weight = false, available_product = false, available_edge = false, affordable = false;
@@ -82,14 +83,14 @@ template<class Rate>
 void constrain_claims(std::vector<std::uint64_t>& claims, const std::vector<Product>& products,
                       std::uint64_t budget, Rate rate, bool keep_free) {
     std::uint64_t total = 0;
-    for (std::size_t p = 0; p < products.size(); ++p) total = add(total, cost(claims[p], rate(products[p])));
+    for (std::size_t p = 0; p < products.size(); ++p) total = add(total, cost(claims[p], rate(p)));
     if (total <= budget) return;
 
     struct Remainder { std::size_t product; std::uint64_t fraction; std::uint64_t maximum; };
     std::vector<Remainder> remainders;
     std::uint64_t spent = 0;
     for (std::size_t p = 0; p < products.size(); ++p) {
-        const auto unit = rate(products[p]);
+        const auto unit = rate(p);
         if (keep_free && unit == 0) continue;
         const auto maximum = claims[p];
         const auto scaled = mul_div_floor(maximum, budget, total);
@@ -103,7 +104,7 @@ void constrain_claims(std::vector<std::uint64_t>& claims, const std::vector<Prod
     });
     for (const auto& remainder : remainders) {
         const auto p = remainder.product;
-        const auto unit = rate(products[p]);
+        const auto unit = rate(p);
         if (claims[p] < remainder.maximum && unit <= budget - spent) {
             ++claims[p];
             spent = add(spent, unit);
@@ -111,9 +112,9 @@ void constrain_claims(std::vector<std::uint64_t>& claims, const std::vector<Prod
     }
 }
 void conserve_segment(std::vector<std::uint64_t>& claims, const Segment& segment, const std::vector<Product>& products) {
-    constrain_claims(claims, products, segment.local_compute, [](const auto& product) { return product.local_rate; }, true);
-    constrain_claims(claims, products, segment.budget, [](const auto& product) {
-        return static_cast<std::uint64_t>(product.price.value());
+    constrain_claims(claims, products, segment.local_compute, [&](std::size_t p) { return segment.local_rates[p]; }, true);
+    constrain_claims(claims, products, segment.budget, [&](std::size_t p) {
+        return static_cast<std::uint64_t>(products[p].price.value());
     }, false);
 }
 void record_waitlist_interest(Segment& segment,const std::vector<Product>& products,
@@ -123,7 +124,7 @@ void record_waitlist_interest(Segment& segment,const std::vector<Product>& produ
     for (const auto& edge:segment.edges) {
         const auto& product=products[edge.product];
         const bool accepting_interest=edge.interest_limit.value_or(0)>0 && edge.weight>0 &&
-            product.local_rate<=segment.local_compute && static_cast<std::uint64_t>(product.price.value())<=segment.budget;
+            segment.local_rates[edge.product]<=segment.local_compute && static_cast<std::uint64_t>(product.price.value())<=segment.budget;
         if (accepting_interest || eligible(segment,edge,products)) weights.push_back({product.id,edge.weight});
     }
     if (weights.empty()) return;
@@ -163,7 +164,7 @@ void commit_claims(Claims& claims, std::vector<Segment>& segments, std::vector<P
             const auto p = edge.product;
             const auto delivered = claims[s][p];
             const auto charged = cost(delivered, static_cast<std::uint64_t>(products[p].price.value()));
-            const auto used = cost(delivered, products[p].local_rate);
+            const auto used = cost(delivered, segment.local_rates[p]);
             if (delivered > segment.remaining || delivered > edge.remaining || delivered > products[p].remaining ||
                 charged > segment.budget || used > segment.local_compute)
                 invalid("Allocation exceeded demand, budget, buyer compute or product supply");
@@ -238,17 +239,20 @@ AllocationResult allocate_demand(std::span<const AllocationProduct> input_produc
         if (edge_count > allocation_edge_limit) invalid("Allocation edge count exceeds its bound");
         Segment row{segment.id, segment.tasks, static_cast<std::uint64_t>(segment.budget.value()),
                     static_cast<std::uint64_t>(segment.customer_compute.value()),
-                    segment.outside_weight, {}, std::vector<std::uint64_t>(products.size(), 0), {}};
+                    segment.outside_weight, {}, std::vector<std::uint64_t>(products.size(), 0),
+                    std::vector<std::uint64_t>(products.size(), 0), {}};
         std::set<std::string> edge_ids;
         for (const auto& edge : segment.edges) {
             const auto found = product_indices.find(edge.product_id);
             if (found == product_indices.end() || !edge_ids.insert(edge.product_id).second || edge.weight > allocation_weight_limit ||
                 (edge.task_limit && *edge.task_limit > allocation_task_limit) || edge.retained_tasks > allocation_task_limit ||
+                (edge.local_compute_per_task && (edge.local_compute_per_task->value()==0 || edge.local_compute_per_task->value()>1'000'000'000)) ||
                 (edge.waitlist_interest_limit && (!edge.task_limit || *edge.waitlist_interest_limit<*edge.task_limit ||
                     *edge.waitlist_interest_limit>allocation_task_limit)))
                 invalid("Allocation edge has an unknown/duplicate product, excessive weight or task limit");
             const auto limit = edge.task_limit.value_or(allocation_task_limit);
             has_waitlists=has_waitlists || edge.waitlist_interest_limit.has_value();
+            row.local_rates[found->second]=edge.local_compute_per_task?static_cast<std::uint64_t>(edge.local_compute_per_task->value()):products[found->second].local_rate;
             row.edges.push_back({found->second, edge.weight, limit, std::min(edge.retained_tasks, limit),edge.waitlist_interest_limit});
         }
         std::sort(row.edges.begin(), row.edges.end(), [](const auto& left, const auto& right) { return left.product < right.product; });

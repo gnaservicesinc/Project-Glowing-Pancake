@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <limits>
 #include <map>
+#include <set>
 #include <stdexcept>
 
 namespace pgp::bridge {
@@ -133,8 +134,8 @@ std::vector<CampaignRow> regional_rows(const runtime::WorldState& world,const co
 }
 using namespace lab_inputs;
 core::StageServiceRollout rollout_request(const QString& service,const QString& model,const QString& evidence,
-    const QString& source,bool review,const QString& share,const QString& days) {
-    return {{service.toStdString(),model.toStdString(),evidence.toStdString(),source.toStdString(),review},
+    const QString& source,bool review,const QString& share,const QString& days,const QString& audience) {
+    return {{service.toStdString(),model.toStdString(),evidence.toStdString(),source.toStdString(),review,{},audience.toStdString()},
         core::BasisPoints{integer(share,core::service_trial_share_limit/100)*100},
         core::Days{integer(days,core::service_trial_days_limit)}};
 }
@@ -142,6 +143,30 @@ core::Days service_term(const QString& days) { return core::Days{integer(days,co
 core::SetServiceWaitlist waitlist_request(const QString& service,const QString& tasks,bool enabled) {
     const auto rate=enabled?std::optional{static_cast<std::uint64_t>(tasks==QStringLiteral("0")?0:integer(tasks,core::market_task_limit))}:std::nullopt;
     return {service.toStdString(),rate};
+}
+QString weight_group(const core::MarketState& market,std::string_view id) {
+    const auto* group=find(market.segments,id);
+    return group && !group->region_id.empty()?QObject::tr("%1 · %2").arg(readable(id),readable(group->region_id)):readable(id);
+}
+QString weight_grant(const core::MarketState& market,std::string_view audience) {
+    return audience.empty()?QObject::tr("Eligible buyers can use the weights for any purpose, adapt them and redistribute them."):
+        QObject::tr("%1 receives a local-use grant with no redistribution rights.").arg(weight_group(market,audience));
+}
+void add_weight_details(CampaignRow& row,const core::SimulationState& state,const core::MarketProduct& product,
+                        const core::DeploymentRecord& deployment) {
+    if (product.channel!=core::ProductChannel::open_weights) return;
+    const auto& market=*state.market;
+    row.detail+=QObject::tr("\nWeight grant for %1. %2").arg(text(deployment.model_id),weight_grant(market,deployment.weight_audience));
+    std::set<std::string_view> groups;
+    for (const auto& copy:market.weight_installations) if (copy.product_id==product.id) groups.insert(copy.segment_id);
+    row.detail+=QObject::tr("\n%1 buyer groups retain published copies.").arg(number(groups.size()));
+    if (!market.days.empty()) {
+        std::uint64_t independent=0;
+        const auto& latest=market.days.back();
+        for (const auto& sale:latest.discretionary) if (sale.product_id==product.id && !sale.local_copy_project.empty()) independent+=sale.tasks;
+        if (independent>0) row.detail+=QObject::tr(" %1 tasks ran on retained copies on %2.")
+            .arg(number(independent),text(core::iso_date(latest.day)));
+    }
 }
 void add_waitlist_details(CampaignRow& row,const core::SimulationState& state,const core::MarketProduct& product,
                           const content::RegionalMarkets* regions) {
@@ -221,8 +246,9 @@ void add_release_details(CampaignRow& row,const core::SimulationState& state,con
         row.detail+=QObject::tr("\nRestored release %1.").arg(number(current->restored_release));
     if (const auto prior=core::rollback_release(releases,*state.market,product.id); prior>0) {
         const auto& previous=releases.records[static_cast<std::size_t>(prior-1)];
-        row.fields.insert(QStringLiteral("rollbackTarget"),QObject::tr("Release %1 · %2 · report %3")
-            .arg(number(prior),text(previous.model_id),text(previous.evidence_id)));
+        auto target=QObject::tr("Release %1 · %2 · report %3").arg(number(prior),text(previous.model_id),text(previous.evidence_id));
+        if (product.channel==core::ProductChannel::open_weights) target+=QLatin1Char('\n')+weight_grant(*state.market,previous.weight_audience);
+        row.fields.insert(QStringLiteral("rollbackTarget"),std::move(target));
     }
     const auto latest=std::find_if(releases.rollouts.rbegin(),releases.rollouts.rend(),[&](const auto& rollout) {
         return rollout.candidate.service_id==product.id;
@@ -242,6 +268,8 @@ void add_release_details(CampaignRow& row,const core::SimulationState& state,con
     row.fields.insert(QStringLiteral("trialPending"),true);
     row.fields.insert(QStringLiteral("trialCanPromote"),work->useful_tasks>0);
     row.fields.insert(QStringLiteral("trialCheckpoint"),text(latest->candidate.model_id));
+    if (product.channel==core::ProductChannel::open_weights)
+        row.fields.insert(QStringLiteral("trialWeightGrant"),weight_grant(*state.market,latest->candidate.weight_audience));
     if (route.stopped_on) row.detail+=QObject::tr(" Trial ended on %1 and released its staff and compute. Choose whether to promote or discard it.")
         .arg(text(core::iso_date(*route.stopped_on)));
     else row.detail+=QObject::tr(" Up to %1 of discretionary orders through the day before %2. Production serves signed contracts.")
@@ -464,6 +492,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             if (deployment) {
                 add_release_details(products.back(),s,row);
                 add_service_support(products.back(),s,row,live);
+                add_weight_details(products.back(),s,row,*deployment);
                 if (live) add_waitlist_details(products.back(),s,row,regions);
             }
         }
@@ -639,9 +668,14 @@ QVariantList ManagementController::services() const {
         item.insert(QStringLiteral("reviewAllowed"),row.review_staff>0);
         item.insert(QStringLiteral("reviewRequired"),channel==core::ProductChannel::agent);
         item.insert(QStringLiteral("customerHardware"),core::customer_hosted(channel));
+        item.insert(QStringLiteral("openWeights"),channel==core::ProductChannel::open_weights);
         const auto* current=find(state().market->products,row.product.id);
         const auto* work=current?find(state().capacity->projects,current->capacity_project_id):nullptr;
         item.insert(QStringLiteral("existing"),current!=nullptr);
+        if (current && channel==core::ProductChannel::open_weights) {
+            const auto* publication=core::market_binding(*state().market,row.product.id,state().date);
+            if (publication) item.insert(QStringLiteral("weightAudience"),text(publication->weight_audience));
+        }
         item.insert(QStringLiteral("live"),current && current->available && work && work->status==core::ProjectStatus::active);
         item.insert(QStringLiteral("trialPending"),core::pending_rollout(*state().deployments,row.product.id)!=nullptr);
         item.insert(QStringLiteral("retirementAnnounced"),current && current->retirement.has_value());
@@ -1049,19 +1083,59 @@ QString ManagementController::servicePreview(QString id,QString model,bool revie
     }
     return {};
 }
-QVariantMap ManagementController::rolloutPreview(QString service,QString model,QString evidence,QString source,
-    bool review,QString share,QString days) const {
+QVariantList ManagementController::weightAudiences(QString service,QString region) const {
+    if (!available()) return {};
+    const auto id=service.toStdString();
+    const auto& market=*state().market;
+    const auto& catalog=state().deployments->catalog;
+    const auto definition=std::ranges::find_if(catalog,[&](const auto& row){return row.product.id==id;});
+    if (definition==catalog.end() || definition->product.channel!=core::ProductChannel::open_weights) return {};
+    auto product=definition->product;
+    const auto* existing=find(market.products,id);
+    product.region_id=existing?existing->region_id:region.toStdString();
+    QVariantList options{option("",tr("Eligible buyers · public reuse"))};
+    for (const auto& pref:definition->preferences) {
+        const auto* group=find(market.segments,pref.segment_id);
+        if (pref.preference.eligible && group && core::market_access(product,*group))
+            options.push_back(option(group->id,tr("%1 · local use").arg(weight_group(market,group->id))));
+    }
+    return options;
+}
+QVariantMap ManagementController::publicationQuote(QString service,QString model,QString evidence,QString source,
+    bool review,QString region,QString audience) const {
     if (!available()) return {};
     try {
-        const auto request=rollout_request(service,model,evidence,source,review,share,days);
+        const core::DeployModel request{service.toStdString(),model.toStdString(),evidence.toStdString(),source.toStdString(),
+            review,region.toStdString(),audience.toStdString()};
+        const auto& s=state();
+        const auto work=core::preview_publication(s,request);
+        const auto& society=snapshot_->checkpoint.world.society;
+        const auto blocked=runtime::society_launch_block(society?&*society:nullptr,s,request,s.date);
+        if (!blocked.empty()) return {{QStringLiteral("detail"),text(blocked)}};
+        const auto detail=tr("Publish the frozen weights for %1. %2\n\n"
+            "$0/task on buyer hardware. Recipients keep their copies after support ends. Minimum %3 MiB, %4 interconnect and %5 CU/task. Support uses %6 staff and costs %7/month.")
+            .arg(model,weight_grant(*s.market,request.weight_audience),number(work.minimum_memory_mib),text(work.interconnect),
+                 cu(work.inference_milli_CU_per_task.value()),number(work.staff),money(work.monthly_support_cost));
+        return {{QStringLiteral("ready"),true},{QStringLiteral("detail"),detail}};
+    } catch (const std::exception& error) {return {{QStringLiteral("detail"),QString::fromUtf8(error.what())}};}
+}
+QVariantMap ManagementController::rolloutPreview(QString service,QString model,QString evidence,QString source,
+    bool review,QString share,QString days,QString audience) const {
+    if (!available()) return {};
+    try {
+        const auto request=rollout_request(service,model,evidence,source,review,share,days,audience);
         const auto work=core::preview_rollout(state(),request);
         const auto& society=snapshot_->checkpoint.world.society;
         const auto blocked=runtime::society_launch_block(society?&*society:nullptr,state(),request.candidate,state().date);
         if (!blocked.empty()) return {{QStringLiteral("detail"),text(blocked)}};
         const auto resources=work.customer_inference?tr("Buyer hardware"):tr("%1 CU/day on %2").arg(cu(work.requested.value()),source);
-        const auto detail=tr("Try %1 with report %2 for %3 days. The candidate serves up to %4 of eligible discretionary orders and at most %5 tasks per day. The production release serves all signed contracts.\n\n"
+        auto detail=tr("Try %1 with report %2 for %3 days. The candidate serves up to %4 of eligible discretionary orders and at most %5 tasks per day. The production release serves all signed contracts.\n\n"
             "%6 · %7 staff · %8 monthly support rate while active. Starting the trial rechecks available resources. Decide whether to promote or discard it in Office → Services.")
             .arg(model,evidence,days,percent(request.share),number(work.tasks_per_day),resources,QString::number(work.staff),money(work.monthly_support_cost));
+        const auto* product=find(state().market->products,request.candidate.service_id);
+        if (product && product->channel==core::ProductChannel::open_weights)
+            detail+=tr("\n\nCandidate access is temporary during the trial. Promotion publishes the frozen weights. %1")
+                .arg(weight_grant(*state().market,request.candidate.weight_audience));
         return {{QStringLiteral("ready"),true},{QStringLiteral("detail"),detail}};
     } catch (const std::exception& error) {
         return {{QStringLiteral("detail"),QString::fromUtf8(error.what())}};
@@ -1080,8 +1154,11 @@ QVariantMap ManagementController::retirementQuote(QString service,QString days) 
     if (!available()) return {};
     try {
         const auto notice=core::preview_retirement(state(),{service.toStdString(),service_term(days)});
-        const auto detail=tr("Publish an end date of %1 for %2. Discretionary adoption is limited to the latest installed share from today. Signed work stays protected, and new deals must end by this date.\n\nOn that morning the service stops, releasing its staff, compute and support costs. The retirement date is binding, and the release and customer history stay available.")
+        auto detail=tr("Publish an end date of %1 for %2. Discretionary adoption is limited to the latest installed share from today. Signed work stays protected, and new deals must end by this date.\n\nOn that morning the service stops, releasing its staff, compute and support costs. The retirement date is binding, and the release and customer history stay available.")
             .arg(text(core::iso_date(notice.retires_on)),readable(service.toStdString()));
+        const auto* product=find(state().market->products,service.toStdString());
+        if (product && product->channel==core::ProductChannel::open_weights)
+            detail+=tr(" Buyers with copies can keep using their published checkpoint on compatible hardware.");
         return {{QStringLiteral("ready"),true},{QStringLiteral("detail"),detail}};
     } catch (const std::exception& error) { return {{QStringLiteral("detail"),QString::fromUtf8(error.what())}}; }
 }
@@ -1144,12 +1221,12 @@ void ManagementController::clone(QString id) { if (editable()) emit actionReques
 void ManagementController::evaluate(QString model,QString plan,QString source,QString rate,QString staff) {
     if (!editable()) return; try { emit actionRequested(core::StartEvaluation{nextId(QStringLiteral("evaluation.")).toStdString(),model.toStdString(),plan.toStdString(),allocation(source,rate,staff)}); } catch (const std::exception& e) { emit noticeRaised(QString::fromUtf8(e.what())); }
 }
-void ManagementController::deploy(QString service,QString model,QString evidence,QString source,bool review,QString region) {
-    if (editable()) emit actionRequested(core::DeployModel{service.toStdString(),model.toStdString(),evidence.toStdString(),source.toStdString(),review,region.toStdString()});
+void ManagementController::deploy(QString service,QString model,QString evidence,QString source,bool review,QString region,QString audience) {
+    if (editable()) emit actionRequested(core::DeployModel{service.toStdString(),model.toStdString(),evidence.toStdString(),source.toStdString(),review,region.toStdString(),audience.toStdString()});
 }
-void ManagementController::stageRollout(QString service,QString model,QString evidence,QString source,bool review,QString share,QString days) {
+void ManagementController::stageRollout(QString service,QString model,QString evidence,QString source,bool review,QString share,QString days,QString audience) {
     if (!editable()) return;
-    try { emit actionRequested(rollout_request(service,model,evidence,source,review,share,days)); }
+    try { emit actionRequested(rollout_request(service,model,evidence,source,review,share,days,audience)); }
     catch (const std::exception& error) {emit noticeRaised(QString::fromUtf8(error.what()));}
 }
 void ManagementController::finishRollout(QString service,bool promote) {

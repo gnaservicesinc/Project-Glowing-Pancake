@@ -24,6 +24,7 @@ bool public_service_scope(const WorldState& w,const DeploymentRecord& deployment
     return std::any_of(market.segments.begin(),market.segments.end(),[&](const auto& segment){
         return segment.region_id==region &&
             market_access(*product,segment) &&
+            (deployment.weight_audience.empty() || deployment.weight_audience==segment.id) &&
             (!work->customer_inference || (work->minimum_memory_mib<=segment.customer_memory_mib &&
                 work->interconnect==segment.customer_interconnect &&
                 work->inference_milli_CU_per_task.value()<=segment.customer_compute.value())) &&
@@ -265,25 +266,40 @@ MarketInfluences regional_market_conditions(const WorldState& w,const Simulation
         if (!candidate || !offer) invalid("A staged release lost its product or evidence");
         trials.emplace_back(offer,candidate);
     }
-    if (!authority && trials.empty()) return result;
-    const auto restrict=[&](const std::string& product,const std::string& segment,bool trial_only) {
+    const bool weight_forum=w.society && w.society->catalog.forum.channel==ProductChannel::open_weights;
+    std::map<std::string_view,std::vector<const WeightInstallation*>> installations;
+    if (seller.deployments && (authority || weight_forum)) for (const auto& copy:seller.market->weight_installations)
+        installations[copy.segment_id].push_back(&copy);
+    if (!authority && trials.empty() && installations.empty()) return result;
+    const auto edge=[&](const std::string& product,const std::string& segment) -> MarketInfluence& {
         auto it=std::find_if(result.begin(),result.end(),[&](const auto& row){return row.product_id==product && row.segment_id==segment;});
         if (it==result.end()) {
             result.push_back({product,segment,BasisPoints{0},true,true});
             it=std::prev(result.end());
         }
-        if (trial_only) it->trial_eligible=false;
-        else it->eligible=false;
+        return *it;
     };
     for(const auto& segment:seller.market->segments) {
         const auto rule=authority?regional_delivery_rule(w,seller,segment,day):DeliveryRule{};
         // A signed contract can name a service outside discretionary preferences.
         if (rule.sanction || rule.procurement) for(const auto& product:seller.market->products)
-            if(!delivery_allowed(w.authority->catalog,seller,product.id,day,rule)) restrict(product.id,segment.id,false);
+            if(!delivery_allowed(w.authority->catalog,seller,product.id,day,rule)) edge(product.id,segment.id).eligible=false;
         for (const auto& [product,candidate]:trials) {
             if (!forum_allows_release(w.society?&*w.society:nullptr,seller,*product,segment,candidate,day) ||
                 (authority && !delivery_allowed(w.authority->catalog,seller,product->id,day,rule,candidate)))
-                restrict(product->id,segment.id,true);
+                edge(product->id,segment.id).trial_eligible=false;
+        }
+        const auto copies=installations.find(segment.id);
+        if (copies==installations.end() || (!weight_forum && !rule.sanction && !rule.procurement)) continue;
+        for (const auto* copy:copies->second) {
+            const auto* product=named(seller.market->products,copy->product_id);
+            const auto version=std::ranges::find(seller.deployments->records,copy->project_id,&DeploymentRecord::project_id);
+            if (!product || version==seller.deployments->records.end()) invalid("A retained installation lost its qualified publication");
+            auto& restrictions=edge(product->id,segment.id).blocked_weight_projects;
+            if (!restrictions) restrictions.emplace();
+            if (!forum_allows_release(w.society?&*w.society:nullptr,seller,*product,segment,&*version,day) ||
+                (authority && !delivery_allowed(w.authority->catalog,seller,product->id,day,rule,&*version)))
+                restrictions->push_back(copy->project_id);
         }
     }
     return result;
