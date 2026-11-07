@@ -2,6 +2,7 @@
 """Validate a local game bundle's structure and actual dynamic-library closure."""
 from pathlib import Path
 import plistlib
+import configparser
 import subprocess
 import sys
 
@@ -15,6 +16,13 @@ executable = contents / "MacOS" / info["CFBundleExecutable"]
 for file in (executable, contents / "Resources/Pancake.icns", contents / "Resources/Menu/horizon.mp4",
              contents / "Resources/qt.conf", contents / "PlugIns/platforms/libqcocoa.dylib"):
     assert file.is_file(), f"Missing bundle resource: {file}"
+paths = configparser.ConfigParser()
+paths.read(contents / "Resources/qt.conf")
+# Qt resolves Prefix relative to Contents on macOS, rather than MacOS/.
+prefix = (contents / paths.get("Paths", "Prefix", fallback=".")).resolve()
+assert prefix == contents, "Qt's bundle prefix must resolve to Contents"
+assert (prefix / paths.get("Paths", "QmlImports")).is_dir(), "Bundled QML imports are unavailable"
+assert (prefix / paths.get("Paths", "Plugins")).is_dir(), "Bundled Qt plugins are unavailable"
 magic = {b"\xcf\xfa\xed\xfe", b"\xce\xfa\xed\xfe", b"\xca\xfe\xba\xbe", b"\xca\xfe\xba\xbf"}
 errors = []
 count = 0

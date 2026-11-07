@@ -42,7 +42,7 @@ cp "$project_root/third_party/audio/stb/LICENSE" "$staged_bundle/Contents/Resour
 cp "$project_root/assets/maps/CENSUS_TERMS.txt" "$staged_bundle/Contents/Resources/Licenses/Census.txt"
 cat > "$staged_bundle/Contents/Resources/qt.conf" <<'CONF'
 [Paths]
-Prefix = ..
+Prefix = .
 Plugins = PlugIns
 QmlImports = Resources/qml
 CONF
