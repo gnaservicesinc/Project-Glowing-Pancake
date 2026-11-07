@@ -28,6 +28,7 @@ struct DeploymentRecord {
     std::string region_id{};
     std::uint64_t restored_release=0;
     std::string weight_audience{};
+    std::optional<AgentControls> agent_controls{};
     auto operator<=>(const DeploymentRecord&) const = default;
 };
 struct ServiceRollout {
@@ -48,6 +49,7 @@ struct DeployModel {
     bool human_review = false;
     std::string region_id{};
     std::string weight_audience{};
+    std::optional<AgentControls> agent_controls{};
 };
 struct StageServiceRollout {
     DeployModel candidate;
@@ -66,10 +68,12 @@ struct CompatibilityProfile {
     std::string customer_interconnect;
     MilliCU customer_compute_per_task{0};
     std::string weight_audience;
+    std::optional<AgentControls> agent_controls{};
 };
 struct SimulationState;
 
 [[nodiscard]] CapacityProject preview_publication(const SimulationState&,const DeployModel&);
+[[nodiscard]] CapacityProject preview_agent_release(const SimulationState&,const DeployModel&);
 [[nodiscard]] ServiceCompatibility preview_compatibility(const SimulationState&,const CommitServiceCompatibility&);
 [[nodiscard]] CompatibilityProfile compatibility_profile(const SimulationState&,const ServiceCompatibility&);
 [[nodiscard]] ProductRetirement preview_retirement(const SimulationState&,const AnnounceServiceRetirement&);

@@ -209,7 +209,7 @@ void validate_capacity(const CapacityState& state) {
             if (row.tasks_per_day == 0 || row.inference_milli_CU_per_task.value() <= 0 || row.total_work.value() != 0 ||
                 (!row.customer_inference &&
                     (required_inference(row.tasks_per_day, row.inference_milli_CU_per_task).value() != row.requested.value() ||
-                     required_inference(row.useful_tasks, row.inference_milli_CU_per_task) != row.completed_work)) ||
+                     required_inference(row.useful_tasks, row.inference_milli_CU_per_task) > row.completed_work)) ||
                 row.status == ProjectStatus::completed)
                 invalid("Serving project has an invalid checked useful-task profile");
             break;
@@ -302,10 +302,12 @@ void validate_capacity(const CapacityState& state) {
             total.tasks += used.useful_tasks;
             if (row.kind == ProjectKind::serving) {
                 if (used.useful_tasks > row.tasks_per_day || used.protected_tasks > used.useful_tasks ||
-                    (!row.customer_inference && required_inference(used.useful_tasks, row.inference_milli_CU_per_task) != used.work))
+                    used.failed_tasks>row.tasks_per_day-used.useful_tasks || (row.customer_inference && used.failed_tasks>0) ||
+                    (!row.customer_inference && required_inference(used.useful_tasks+used.failed_tasks, row.inference_milli_CU_per_task) != used.work))
                     invalid("Serving history credits work without its exact inference cost");
             } else {
-                if (used.useful_tasks != 0 || used.protected_tasks != 0 || (row.kind!=ProjectKind::replication && total.work > row.total_work))
+                if (used.useful_tasks != 0 || used.protected_tasks != 0 || used.failed_tasks!=0 ||
+                    (row.kind!=ProjectKind::replication && total.work > row.total_work))
                     invalid("Finite work history exceeds its goal or invents useful serving tasks");
                 if (row.kind!=ProjectKind::replication && total.work == row.total_work && (row.status != ProjectStatus::completed || !row.stopped_on || *row.stopped_on != day.day))
                     invalid("Finite work must complete on the exact day its goal is reached");
@@ -466,6 +468,7 @@ CapacityDay preview_capacity_day_unchecked(const CapacityState& state, OrdinalDa
         if (found == state.projects.end() || found->kind != ProjectKind::serving || found->status != ProjectStatus::active ||
             request.protected_tasks > found->tasks_per_day ||
             request.additional_tasks > found->tasks_per_day - request.protected_tasks ||
+            request.failed_tasks>request.additional_tasks || (found->customer_inference && request.failed_tasks>0) ||
             !requests.emplace(request.project_id, request).second)
             invalid("Daily serving request has an invalid project, task count or duplicate identity");
     }
@@ -512,7 +515,11 @@ CapacityDay preview_capacity_day_unchecked(const CapacityState& state, OrdinalDa
         const bool serves = row.kind == ProjectKind::serving;
         const auto tasks = serves ? maximum_tasks(MilliCU{allocations[i]}, row.inference_milli_CU_per_task) : 0;
         const auto priority = serves ? maximum_tasks(MilliCU{protected_work[i]}, row.inference_milli_CU_per_task) : 0;
-        record.projects.push_back({row.id, MilliCU{allocations[i]}, tasks, row.staff, priority});
+        const auto request=serves?requests.find(row.id):requests.end();
+        const auto failed=request==requests.end()?0:request->second.failed_tasks;
+        if (failed>0 && tasks-priority!=request->second.additional_tasks)
+            invalid("Failed actions require their actual planned inference work");
+        record.projects.push_back({row.id, MilliCU{allocations[i]}, tasks-failed, row.staff, priority,failed});
     }
     record.sources.sort([](const auto& a, const auto& b) { return a.source_id < b.source_id; });
     record.projects.sort([](const auto& a, const auto& b) { return a.project_id < b.project_id; });

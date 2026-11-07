@@ -4,6 +4,8 @@
 
 namespace pgp::core::deployment_detail {
 [[nodiscard]] const ServiceDefinition& service(const DeploymentState&,std::string_view id);
+[[nodiscard]] DeployModel with_agent_controls(const ServiceDefinition&,DeployModel);
+[[nodiscard]] std::optional<AgentPlan> agent_plan(const ServiceDefinition&,const LabState&,const DeployModel&);
 [[nodiscard]] CapacityProject qualified_project(const ServiceDefinition&,const LabState&,const CapacityState&,
     const DeployModel&,OrdinalDay,std::string project_id);
 void require_publication_audience(const ServiceDefinition&,const MarketState&,std::string_view region,

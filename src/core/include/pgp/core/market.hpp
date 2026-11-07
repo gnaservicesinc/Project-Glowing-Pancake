@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pgp/core/accounts.hpp>
+#include <pgp/core/agent_service.hpp>
 #include <pgp/core/capacity.hpp>
 #include <pgp/core/allocation.hpp>
 #include <functional>
@@ -127,6 +128,11 @@ struct MarketWaitlistDay {
     std::optional<OrdinalDay> waiting_since{};
     auto operator<=>(const MarketWaitlistDay&) const = default;
 };
+struct AgentDayResult {
+    std::string product_id, segment_id;
+    AgentFailures production, trial;
+    auto operator<=>(const AgentDayResult&) const = default;
+};
 struct MarketDay {
     OrdinalDay day{0};
     DayRows<ContractDayResult> contracts;
@@ -135,17 +141,20 @@ struct MarketDay {
     std::uint64_t allocation_rounds = 0;
     std::optional<std::uint64_t> total_demand{};
     DayRows<MarketWaitlistDay> waitlists{};
+    DayRows<AgentDayResult> agent_results{};
     void share_unchanged(const MarketDay& previous) {
         contracts.reuse_equal(previous.contracts);
         discretionary.reuse_equal(previous.discretionary);
         segments.reuse_equal(previous.segments);
         waitlists.reuse_equal(previous.waitlists);
+        agent_results.reuse_equal(previous.agent_results);
     }
     auto operator<=>(const MarketDay&) const = default;
 };
 struct MarketHistoryCount {
     std::size_t rows = 0;
     std::size_t waitlist_rows = 0;
+    std::size_t agent_rows = 0;
     void add(const MarketDay& day);
 };
 struct InstalledShare {
@@ -172,6 +181,7 @@ struct ProductCapacityBinding {
     OrdinalDay starts_on{0};
     // Empty is the public reuse grant. A named group receives local-use terms.
     std::string weight_audience{};
+    std::optional<AgentPlan> agent_plan{};
     auto operator<=>(const ProductCapacityBinding&) const = default;
 };
 inline constexpr std::size_t service_trial_limit=256;
@@ -183,6 +193,7 @@ struct MarketTrial {
     BasisPoints share{0};
     std::optional<OrdinalDay> stopped_on{};
     std::string weight_audience{};
+    std::optional<AgentPlan> agent_plan{};
     auto operator<=>(const MarketTrial&) const = default;
 };
 inline constexpr std::uint32_t service_term_min_days=30;
@@ -280,9 +291,10 @@ void rebuild_weight_installations(MarketState&);
 void validate_market(const MarketState& state);
 void validate_market_links(const MarketState& state, const AccountsState& accounts,
                            const CapacityState& capacity);
-void add_market_product(MarketState& state, const CapacityState& capacity, MarketProduct product,std::string weight_audience={});
+void add_market_product(MarketState& state, const CapacityState& capacity, MarketProduct product,std::string weight_audience={},
+                        std::optional<AgentPlan> agent_plan={});
 void replace_product_capacity(MarketState& state, const CapacityState& capacity, OrdinalDay day,
-                              std::string_view product_id, std::string project_id,std::string weight_audience={});
+                              std::string_view product_id, std::string project_id,std::string weight_audience={},std::optional<AgentPlan> agent_plan={});
 void add_market_segment(MarketState& state, MarketSegment segment);
 void add_market_preference(MarketState& state,std::string_view segment_id,MarketPreference preference);
 void set_product_available(MarketState& state, std::string_view product_id, bool available);

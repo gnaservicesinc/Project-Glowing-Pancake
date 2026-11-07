@@ -76,6 +76,7 @@ struct ProjectDayWork {
     std::uint64_t useful_tasks = 0;
     std::uint32_t assigned_staff = 0;
     std::uint64_t protected_tasks = 0;
+    std::uint64_t failed_tasks = 0;
     auto operator<=>(const ProjectDayWork&) const = default;
 };
 struct CapacityDay {
@@ -153,6 +154,7 @@ struct ServingRequest {
     std::string project_id;
     std::uint64_t protected_tasks = 0;
     std::uint64_t additional_tasks = 0;
+    std::uint64_t failed_tasks = 0;
 };
 [[nodiscard]] CapacityDay preview_capacity_day(const CapacityState& state, OrdinalDay day,
                                                const std::vector<ServingRequest>& serving,bool validate_input=true);
