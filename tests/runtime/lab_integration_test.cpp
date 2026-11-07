@@ -698,6 +698,78 @@ void research_setbacks(const runtime::CompiledProgram& program) {
     malformed_save(program,std::move(forged));
 }
 
+void specialist_assignment(const runtime::CompiledProgram& program) {
+    using namespace core;
+    constexpr auto specialist="specialist/specialist.evaluation";
+    auto game=engine(program);
+    apply(game,HireSpecialist{"specialist.evaluation"});
+    apply(game,BuyData{"data.open_documents"});
+    apply(game,StartResearch{"research.held_out_evaluation",{"lease.initial",MilliCUPerDay{20000},2}});
+    auto request=training("specialist_candidate",{"data.open_documents"});
+    request.work=MilliCU{60000};request.staff=2;
+    apply(game,StartTraining{request});
+    days(game,1);
+    refuse(game,StartEvaluation{"early","specialist_candidate","evaluation.headline",
+        {"lease.initial",MilliCUPerDay{10000},2},specialist});
+    days(game,7);
+    const auto initial_model=lab(game).models.front();
+    auto general=game;
+    const auto experiment=[&](std::string id,std::string assignee) {
+        return StartEvaluation{std::move(id),"specialist_candidate","evaluation.held_out",
+            {"lease.initial",MilliCUPerDay{10000},2},std::move(assignee)};
+    };
+    apply(game,experiment("skilled",specialist));
+    apply(general,experiment("general",""));
+    const auto work=[&](const auto& active,std::string_view id) -> const CapacityProject& {
+        return *std::ranges::find(active.current_state().world.simulation.capacity->projects,id,&CapacityProject::id);
+    };
+    constexpr auto skilled_project="lab/evaluate/skilled";
+    check(work(game,skilled_project).total_work==MilliCU{45000} &&
+        work(general,"lab/evaluate/general").total_work==MilliCU{60000} &&
+        game.current_state().world.simulation.cash==general.current_state().world.simulation.cash &&
+        capacity_report(*game.current_state().world.simulation.capacity).assigned_staff==2,
+        "Expertise must reduce work while retaining the fee and counting its specialist within the team");
+    refuse(game,experiment("duplicate",specialist));
+    apply(game,PauseProject{skilled_project});
+    refuse(game,experiment("paused_duplicate",specialist));
+    const auto paused=game.checkpoint();
+    runtime::Runtime resumed{program,persistence::decode_save(program,persistence::encode_save(program,paused)).checkpoint};
+    for(auto* current:{&game,&resumed}) {days(*current,1);apply(*current,ResumeProject{skilled_project});days(*current,5);}
+    days(general,6);
+    check(game.checkpoint()==resumed.checkpoint() && lab(game).evaluations.front().completed &&
+        lab(game).evaluations.front().measured==lab(general).evaluations.front().measured &&
+        lab(game).evaluations.front().lower==lab(general).evaluations.front().lower &&
+        lab(game).evaluations.front().upper==lab(general).evaluations.front().upper &&
+        game.current_state().world.simulation.random==general.current_state().world.simulation.random &&
+        lab(game).models.front()==initial_model,
+        "Specialized evaluation altered capability or measurement, or changed its saved continuation");
+    apply(game,experiment("reused",specialist));
+    days(game,1);
+    apply(game,PauseProject{"lab/evaluate/reused"});
+    auto withdrawn=game;
+    const auto cash=withdrawn.current_state().world.simulation.cash;
+    apply(withdrawn,WithdrawOperations{});
+    check(work(withdrawn,"lab/evaluate/reused").status==ProjectStatus::cancelled &&
+        work(withdrawn,"lab/evaluate/reused").completed_work==MilliCU{10000} &&
+        withdrawn.current_state().world.simulation.cash==cash,
+        "Operations withdrawal did not stop paused specialist work or erased consumed resources");
+    check(persistence::decode_save(program,persistence::encode_save(program,withdrawn.checkpoint())).checkpoint==withdrawn.checkpoint(),
+        "A specialist's withdrawal with paused evaluation did not persist");
+    apply(game,CancelProject{"lab/evaluate/reused"});
+    apply(game,experiment("replacement",specialist));
+    apply(game,experiment("parallel_general",""));
+    const auto encoded=persistence::encode_save(program,game.checkpoint());
+    auto forged=Json::parse(encoded);
+    auto& projects=forged["checkpoint"]["world"]["simulation"]["capacity"]["projects"];
+    for(auto& row:projects) if(row["id"]=="lab/evaluate/parallel_general") {
+        row["specialist_id"]=specialist;row["total_work_milli_CU"]=45000;
+    }
+    malformed_save(program,std::move(forged));
+    forged=Json::parse(encoded);
+    forged["checkpoint"]["world"]["simulation"]["capacity"]["staff_additions"][0]["evaluation_credit_bp"]=2000;
+    malformed_save(program,std::move(forged));
+}
+
 }
 int main() {
     try {
@@ -709,6 +781,7 @@ int main() {
         acquired_data(program);
         staff_health(source);
         research_setbacks(program);
+        specialist_assignment(program);
         std::cout << checks << " lab content, resource, lineage, evidence and reload checks passed\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

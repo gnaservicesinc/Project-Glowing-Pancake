@@ -72,6 +72,7 @@ Json capacity_json(const core::CapacityState& state, bool packed) {
             for (const auto& disruption:project.disruptions) projects.back()["disruptions"].push_back({{"starts_on",disruption.starts_on.value()},{"ends_before",optional_day(disruption.ends_before)}});
         }
         if (project.customer_inference) projects.back()["customer_inference"] = true;
+        if (!project.specialist_id.empty()) projects.back()["specialist_id"]=project.specialist_id;
     }
     const core::CapacityDay* prior = nullptr;
     for (const auto& closed:state.days) {
@@ -102,7 +103,10 @@ Json capacity_json(const core::CapacityState& state, bool packed) {
         days.push(std::move(daily));
     }
     Json staff_additions=Json::array(),staff_departures=Json::array();
-    for (const auto& row:state.staff_additions) staff_additions.push_back({{"id",row.id},{"day",row.day.value()},{"people",row.people}});
+    for (const auto& row:state.staff_additions) {
+        staff_additions.push_back({{"id",row.id},{"day",row.day.value()},{"people",row.people}});
+        if (row.evaluation_credit.value()>0) staff_additions.back()["evaluation_credit_bp"]=row.evaluation_credit.value();
+    }
     for (const auto& row:state.staff_departures) staff_departures.push_back({{"id",row.id},{"day",row.day.value()},{"people",row.people}});
     Json result{{"staff_additions",std::move(staff_additions)},{"staff_departures",std::move(staff_departures)},{"owner",state.owner},{"starts_on",state.starts_on.value()},
         {"closed_through",optional_day(state.closed_through)},{"available_staff",state.available_staff},
@@ -127,7 +131,11 @@ core::CapacityState parse_capacity(const Json& value, bool packed) {
     }
     if (value.contains("staff_additions")) {
         array(value.at("staff_additions"),"capacity/staff_additions",core::capacity_staff_change_limit);
-        for (const auto& row:value.at("staff_additions")) {fields(row,"capacity/staff_addition",{"id","day","people"});result.staff_additions.push_back({label(row.at("id")),day(row.at("day")),staff(row.at("people"))});}
+        for (const auto& row:value.at("staff_additions")) {
+            fields(row,"capacity/staff_addition",{"id","day","people"},{"evaluation_credit_bp"});
+            result.staff_additions.push_back({label(row.at("id")),day(row.at("day")),staff(row.at("people")),
+                core::BasisPoints{row.contains("evaluation_credit_bp")?i64(row.at("evaluation_credit_bp"),"capacity/staff_addition/evaluation_credit_bp"):0}});
+        }
     }
     result.owner=label(value.at("owner"));
     result.starts_on=day(value.at("starts_on"));
@@ -150,7 +158,7 @@ core::CapacityState parse_capacity(const Json& value, bool packed) {
     for (const auto& project:projects) {
         fields(project,"capacity/project",{"id","source_id","kind","status","starts_on","stopped_on","requested_milli_CU_per_day",
             "staff","minimum_memory_mib","interconnect","total_work_milli_CU","completed_work_milli_CU","tasks_per_day",
-            "inference_milli_CU_per_task","useful_tasks","monthly_support_cost_cents","cause"},{"customer_inference","pauses","disruptions"});
+            "inference_milli_CU_per_task","useful_tasks","monthly_support_cost_cents","cause"},{"customer_inference","pauses","disruptions","specialist_id"});
         result.projects.push_back({label(project.at("id")),text(project.at("source_id"),"capacity/source_id",100,true),
             parse_enum<core::ProjectKind>(project.at("kind"),project_names),
             parse_enum<core::ProjectStatus>(project.at("status"),status_names),day(project.at("starts_on")),
@@ -169,6 +177,7 @@ core::CapacityState parse_capacity(const Json& value, bool packed) {
                 result.projects.back().disruptions.push_back({day(row.at("starts_on")),parse_optional_day(row.at("ends_before"))});
             }
         }
+        if (project.contains("specialist_id")) result.projects.back().specialist_id=label(project.at("specialist_id"));
         if(project.contains("pauses")) {
             array(project.at("pauses"),"capacity/project/pauses",128);
             for(const auto& row:project.at("pauses")) {

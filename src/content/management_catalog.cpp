@@ -101,11 +101,13 @@ core::ManagementCatalog load_management_catalog(std::string_view bytes) {
     for (auto row:j.at("specialists")) {
         const auto lead=row.contains("start_lead_days")?integer(row.at("start_lead_days")):0;
         const auto onboarding=row.contains("onboarding_days")?integer(row.at("onboarding_days")):0;
+        const auto credit=row.contains("evaluation_credit_bp")?integer(row.at("evaluation_credit_bp")):0;
         row.erase("start_lead_days");
         row.erase("onboarding_days");
+        row.erase("evaluation_credit_bp");
         fields(row,{"id","name","signing_cost_cents","monthly_salary_cents"});
         c.specialists.push_back({text(row.at("id")),text(row.at("name")),core::Cents{integer(row.at("signing_cost_cents"))},
-            core::Cents{integer(row.at("monthly_salary_cents"))},core::Days{lead},core::Days{onboarding}});
+            core::Cents{integer(row.at("monthly_salary_cents"))},core::Days{lead},core::Days{onboarding},core::BasisPoints{credit}});
     }
     for (const auto& row:j.at("setbacks")) {
         fields(row,{"id","name","source_id","announced_on","starts_on","ends_before","reduced_milli_CU_per_day"});
@@ -131,6 +133,7 @@ std::string canonical_management_catalog(const core::ManagementCatalog& c) {
         specialists.push_back({{"id",row.id},{"name",row.name},{"signing_cost_cents",row.signing_cost.value()},{"monthly_salary_cents",row.monthly_salary.value()}});
         if (row.start_lead.value()>0) specialists.back()["start_lead_days"]=row.start_lead.value();
         if (row.onboarding.value()>0) specialists.back()["onboarding_days"]=row.onboarding.value();
+        if (row.evaluation_credit.value()>0) specialists.back()["evaluation_credit_bp"]=row.evaluation_credit.value();
     }
     for (const auto& row:c.setbacks) setbacks.push_back({{"id",row.id},{"name",row.name},{"source_id",row.source_id},{"announced_on",core::iso_date(row.announced_on)},
         {"starts_on",core::iso_date(row.starts_on)},{"ends_before",core::iso_date(row.ends_before)},{"reduced_milli_CU_per_day",row.reduced_capacity.value()}});

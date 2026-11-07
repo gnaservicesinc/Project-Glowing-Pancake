@@ -72,6 +72,12 @@ Office → **Funding and team** shows fixed equity and loan terms alongside
 the evaluation specialist. Before signing, compare the fee, the payroll
 start and the work-ready date. The specialist becomes available after five
 days of notice and three paid onboarding days.
+
+Once that specialist is ready, **Lab → Evaluate → Evaluation assignment**
+can reserve them for one test. The person counts within the entered staff
+total. The work budget falls by 25%, and the evidence retains the selected
+plan's measurement rules. The specialist remains assigned during a pause
+and becomes available again after completion or cancellation.
 Equity reduces retained founder ownership; the loan creates interest and a real
 principal deadline. Repay principal in Accounts. The efficient document service
 requires tooling/serving research and a tested efficient model; it can remain a

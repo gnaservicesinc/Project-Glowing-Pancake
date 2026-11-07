@@ -22,6 +22,13 @@ The seeded sample is independent of evaluation draws and cancelled attempts.
 A settled setback retains a finding and a bounded discount on the corrected
 experiment. The retry still pays its fee and meets its staff-day floor.
 
+An evaluation can explicitly reserve one onboarded specialist. Their authored
+expertise reduces required experiment work, while the measurement formula,
+coverage and cash fee retain the selected plan's terms. The specialist counts
+within the entered staff allocation and can support one unfinished evaluation.
+Paused tests keep that named assignment. Completion or cancellation releases
+the specialist for a later test.
+
 Training implements the simulation specification's single-round effective-data
 and complementary saturation formula, in total milli-CU and basis points. A
 model stores actual accumulated work, the recipe and a sorted unique data

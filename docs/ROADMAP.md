@@ -5,8 +5,8 @@ Baseline 1.2 · 2026-11-03 · Gate-driven plan, not a promised calendar
 **Implementation remains active, 2026-11-07.** The original checklist has
 42 of 52 acceptance steps checked. The ten open steps belong to human testing,
 balance, platform and release phases. The [feature coverage pass](STATUS.md#initial-feature-coverage)
-has delivered 24 additional batches within earlier milestones, most recently
-hiring lead times and paid onboarding. Staff specializations are next.
+has delivered 25 additional batches within earlier milestones, most recently
+specialist assignments to evaluations. Working conditions and recovery choices are next.
 Initial features precede feedback, event expansion and balance.
 
 **Current sequencing, 2026-11-05:** finish the components before beginning v1

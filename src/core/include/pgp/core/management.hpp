@@ -20,6 +20,7 @@ struct SpecialistOffer {
     std::string id,name;
     Cents signing_cost{0},monthly_salary{0};
     Days start_lead{0},onboarding{0};
+    BasisPoints evaluation_credit{0};
     auto operator<=>(const SpecialistOffer&) const = default;
 };
 struct SpecialistSchedule {

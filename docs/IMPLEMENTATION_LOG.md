@@ -2199,3 +2199,27 @@ start. Keyboard walkthroughs at 100% and 200% text signed the offer and
 showed the waiting, payroll and ready states. The succession fixture now
 omits 2014 founder contacts from its 2027 opening and removes the listing
 offer when replacing its financing catalog.
+
+### Evaluation specialist assignments
+
+Lab Evaluate can assign the onboarded evaluation specialist to one test.
+The authored specialty reduces required experiment work by 25%. The named
+person counts within the entered team size and stays committed until
+completion or cancellation. Paused tests retain the assignment. The test
+uses the selected plan's fee, coverage and measurement formula.
+
+The shared capacity validator rejects overlapping specialist commitments
+and reconstructs the discounted work from the dated hire. Management
+reconciles the specialty with its authored offer and active payroll.
+Operations withdrawal now ends paused evaluations as well as active work.
+
+The shared writer finalized **0.29.0-dev.1**, generation **29**, after
+verifying all seven scenarios and 21 exact prepared openings. Generation
+28's original hash still verifies.
+
+The optimized Mac build and 18 focused CTests passed. The Lab fixture now
+passes 220 checks, including the reduced work budget, unchanged measurement,
+overlap refusal, saved pause and resume, released assignments and forged
+specialty refusal. Offscreen keyboard walkthroughs at 100% and 200% text
+selected the specialist, completed the 45-CU evaluation, inspected the
+recorded work and reopened the exact save.

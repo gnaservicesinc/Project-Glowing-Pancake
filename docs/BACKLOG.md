@@ -1,9 +1,9 @@
 # Implementation backlog
 
 Baseline 1.2 with 2026-11-04 event clarification · **Initial feature implementation active**.
-The latest batch adds hiring lead times and paid onboarding. Staff
-specializations are next. The original acceptance checklist remains
-**42 of 52** with ten later gates. The coverage pass has delivered 24
+The latest batch adds explicit specialist assignments to evaluations.
+Working conditions and recovery choices are next. The original acceptance
+checklist remains **42 of 52** with ten later gates. The coverage pass has delivered 25
 additional feature batches within the earlier milestones.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Feature dependencies are satisfied by implemented Mac behavior and focused checks. Native platform, packaging and device qualification stay deferred to release work under the user’s current instruction. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
@@ -93,8 +93,12 @@ Office Funding and team now quotes the signing cost, first payroll date and
 work-ready date. Onboarded specialists join the staffing pool on the quoted
 morning. Withdrawing operations stops a pending hire and future payroll.
 
-**Staff specializations are next.** Make assignment fit visible and apply it
-only to the work that uses the specialist.
+Lab Evaluate can assign the evaluation specialist to one unfinished test,
+reducing the required experiment work by 25%. The entered team includes
+that person. A pause retains the assignment until the test ends.
+
+**Working conditions and recovery choices are next.** Give the shared team
+a paid recovery choice with effects tied to actual settled days.
 
 ## M0 — Toolchain and platform proof
 

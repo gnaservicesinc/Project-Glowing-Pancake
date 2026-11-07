@@ -171,7 +171,7 @@ void validate_management_catalog(const ManagementCatalog& c) {
     for (const auto& row:c.specialists)
         if (row.id.empty() || row.id.size()>64 || row.name.empty() || row.name.size()>128 || !ids.insert(row.id).second || row.signing_cost.value()<0 ||
             row.signing_cost.value()>10'000'000 || row.monthly_salary.value()<=0 || row.monthly_salary.value()>10'000'000 ||
-            row.start_lead>Days{90} || row.onboarding>Days{90})
+            row.start_lead>Days{90} || row.onboarding>Days{90} || row.evaluation_credit.value()>2500)
             invalid("Specialist offer needs distinct identity and bounded payroll, lead time and onboarding");
     std::map<std::string,OrdinalDay> last;
     for (const auto& row:c.setbacks) {
@@ -205,7 +205,7 @@ void hire_specialist(SimulationState& s,std::string_view id,Cents protected_cash
     if (schedule.ready_on>=s.end_date) invalid("This specialist would finish onboarding after the last workday");
     if (offer.signing_cost.value()>0) record_cash(*s.accounts,s.date,Cents{-offer.signing_cost.value()},Account::expenses,"Specialist signing: "+offer.name,"specialist/"+offer.id);
     add_recurring(*s.accounts,{"specialist/"+offer.id,offer.monthly_salary,schedule.starts_on,std::nullopt,"Specialist salary: "+offer.name});
-    if (schedule.ready_on==s.date) add_staff_capacity(*s.capacity,s.date,"specialist/"+offer.id,1);
+    if (schedule.ready_on==s.date) add_staff_capacity(*s.capacity,s.date,"specialist/"+offer.id,1,offer.evaluation_credit);
     m.specialists.push_back({offer.id,s.date});s.cash=accounts_report(*s.accounts).cash;
 }
 void withdraw_pending_specialists(SimulationState& s) {
@@ -366,10 +366,11 @@ void prepare_management(SimulationState& s) {
     if (!s.management) return;
     auto& m=*s.management;
     for (const auto& hire:m.specialists) {
-        if (hire.withdrawn_on || specialist_schedule(find(m.catalog.specialists,hire.offer_id),hire.day).ready_on!=s.date) continue;
+        const auto& offer=find(m.catalog.specialists,hire.offer_id);
+        if (hire.withdrawn_on || specialist_schedule(offer,hire.day).ready_on!=s.date) continue;
         const auto id="specialist/"+hire.offer_id;
         if (std::ranges::find(s.capacity->staff_additions,id,&StaffAddition::id)==s.capacity->staff_additions.end())
-            add_staff_capacity(*s.capacity,s.date,id,1);
+            add_staff_capacity(*s.capacity,s.date,id,1,offer.evaluation_credit);
     }
     for (const auto& setback:m.catalog.setbacks) {
         const auto& source=find(s.capacity->sources,setback.source_id);
@@ -482,7 +483,8 @@ void validate_management(const SimulationState& s,bool deep) {
         const bool ready=!row.withdrawn_on && schedule.ready_on<=s.date;
         if (ready) ++ready_specialists;
         if (schedule.ready_on>=s.end_date || ready!=(added!=s.capacity->staff_additions.end()) ||
-            (ready && (added->day!=schedule.ready_on || added->people!=1)) || salary.starts_on!=schedule.starts_on ||
+            (ready && (added->day!=schedule.ready_on || added->people!=1 || added->evaluation_credit!=offer.evaluation_credit)) ||
+            salary.starts_on!=schedule.starts_on ||
             salary.monthly_amount!=offer.monthly_salary ||
             (offer.signing_cost.value()>0 && !paid(id,row.day,offer.signing_cost,Account::expenses,Account::cash)))
             invalid("Specialist staffing and payroll differ from the signed hiring schedule");
@@ -496,6 +498,10 @@ void validate_management(const SimulationState& s,bool deep) {
             (!ready || std::ranges::none_of(s.capacity->staff_departures,[&](const auto& departure) {
                 return departure.day==*salary.ends_before && departure.day>=schedule.ready_on;
             }))) invalid("Specialist payroll ended without a dated staff departure");
+        if (salary.ends_before) for (const auto& work:s.capacity->projects)
+            if (work.specialist_id==id && (!work.stopped_on || *work.stopped_on>*salary.ends_before ||
+                (work.status==ProjectStatus::completed && *work.stopped_on==*salary.ends_before)))
+                invalid("An evaluation retained specialist expertise after the paid appointment ended");
     }
     const auto management_hires=std::ranges::count_if(s.capacity->staff_additions,
         [](const auto& row){return !row.id.starts_with(authority_hire_prefix);});

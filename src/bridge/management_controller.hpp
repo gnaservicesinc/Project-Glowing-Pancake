@@ -36,6 +36,7 @@ class ManagementController final : public QObject {
     Q_PROPERTY(QString decisionPageLabel READ decisionPageLabel NOTIFY changed)
     Q_PROPERTY(QVariantList recipes READ recipes NOTIFY changed)
     Q_PROPERTY(QVariantList evaluations READ evaluations NOTIFY changed)
+    Q_PROPERTY(QVariantList evaluationSpecialists READ evaluationSpecialists NOTIFY changed)
     Q_PROPERTY(QVariantList synthesisRecipes READ synthesisRecipes NOTIFY changed)
     Q_PROPERTY(QVariantList collectionOffers READ collectionOffers NOTIFY changed)
     Q_PROPERTY(QVariantList collectionJobs READ collectionJobs NOTIFY changed)
@@ -137,6 +138,7 @@ public:
     Q_INVOKABLE void acknowledgeAlert(QString id);
     QVariantList recipes() const;
     QVariantList evaluations() const;
+    QVariantList evaluationSpecialists() const;
     QVariantList synthesisRecipes() const;
     QVariantList collectionOffers() const;
     QVariantList collectionJobs() const;
@@ -182,7 +184,7 @@ public:
     Q_INVOKABLE void train(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent={});
     Q_INVOKABLE void clone(QString id);
     Q_INVOKABLE void checkpoint(QString id);
-    Q_INVOKABLE void evaluate(QString model,QString plan,QString source,QString rate,QString staff);
+    Q_INVOKABLE void evaluate(QString model,QString plan,QString source,QString rate,QString staff,QString specialist={});
     Q_INVOKABLE void deploy(QString service,QString model,QString evidence,QString source,bool review,QString region,QString audience={},QString tools={},QString oversight={});
     Q_INVOKABLE void stageRollout(QString service,QString model,QString evidence,QString source,bool review,QString share,QString days,QString audience={},QString tools={},QString oversight={});
     Q_INVOKABLE void finishRollout(QString service,bool promote);

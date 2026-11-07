@@ -672,6 +672,10 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
                     tr("Wait for the finite evaluation project to complete."),
                 row.completed?QStringLiteral("Measured"):QStringLiteral("Testing"),row.completed && row.independent,
                 {{QStringLiteral("modelId"),text(row.model_id)},{QStringLiteral("completed"),row.completed},{QStringLiteral("independent"),row.independent}}});
+            const auto* actual=find(s.lab->evaluations,row.id);
+            const auto* work=find(s.capacity->projects,actual->project_id);
+            if (!work->specialist_id.empty()) evidence.back().detail+=tr("\nSpecialist assignment reduced the experiment to %1 CU. This test consumed %2 CU.")
+                .arg(cu(work->total_work.value()),cu(work->completed_work.value()));
         }
     }
     const auto protected_cash=core::checked_unit_subtract(s.cash,core::discretionary_cash(s));
@@ -810,6 +814,8 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
                 .arg(text(core::iso_date(schedule.starts_on)),text(core::iso_date(schedule.ready_on)));
             if (offer.onboarding.value()>0) detail+=tr("\nOnboarding takes %1 paid days before the specialist can take project or serving assignments.")
                 .arg(offer.onboarding.value());
+            if (offer.evaluation_credit.value()>0) detail+=tr("\nAssign this specialist in Lab Evaluate to reduce experiment work by %1. The experiment keeps its fee and measurement coverage.")
+                .arg(percent(offer.evaluation_credit));
             if (signed_offer) detail+=tr("\nSigned %1.").arg(text(core::iso_date(hire->day)));
             if (signed_offer && hire->withdrawn_on) detail+=tr("\nOperations withdrawal stopped this hire on %1. The signing fee stays spent.")
                 .arg(text(core::iso_date(*hire->withdrawn_on)));
@@ -887,6 +893,26 @@ QVariantList ManagementController::evaluations() const {
             .arg(cu(row.work.value()),money(row.cash),lab_profile(row.coverage),
                 prerequisites.isEmpty()?tr("None"):prerequisites.join(QStringLiteral(", "))));
         result.push_back(value);
+    }
+    return result;
+}
+QVariantList ManagementController::evaluationSpecialists() const {
+    QVariantList result{option("",tr("General staff"))};
+    if (!available()) return result;
+    for (const auto& hire:state().capacity->staff_additions) {
+        if (hire.evaluation_credit.value()==0) continue;
+        const auto* salary=find(state().accounts->recurring,hire.id);
+        if (!salary || (salary->ends_before && *salary->ends_before<=state().date)) continue;
+        if (std::ranges::any_of(state().capacity->projects,[&](const auto& work) {
+            return work.specialist_id==hire.id && (work.status==core::ProjectStatus::active || work.status==core::ProjectStatus::paused);
+        })) continue;
+        const auto offer=std::ranges::find_if(state().management->catalog.specialists,[&](const auto& row) {
+            return "specialist/"+row.id==hire.id;
+        });
+        auto value=option(hire.id,tr("%1 · %2 less experiment work")
+            .arg(offer==state().management->catalog.specialists.end()?readable(hire.id):text(offer->name),percent(hire.evaluation_credit)));
+        value["detail"]=tr("Included in the entered staff count. Committed to this test until completion or cancellation, including while paused.");
+        result.push_back(std::move(value));
     }
     return result;
 }
@@ -1752,8 +1778,10 @@ void ManagementController::train(QString recipe,QString source,QStringList data,
 }
 void ManagementController::checkpoint(QString id) {if(editable()) emit actionRequested(core::CheckpointModel{id.toStdString(),nextId(QStringLiteral("checkpoint.")).toStdString()});}
 void ManagementController::clone(QString id) { if (editable()) emit actionRequested(core::CloneModel{id.toStdString(),nextId(QStringLiteral("checkpoint.")).toStdString()}); }
-void ManagementController::evaluate(QString model,QString plan,QString source,QString rate,QString staff) {
-    if (!editable()) return; try { emit actionRequested(core::StartEvaluation{nextId(QStringLiteral("evaluation.")).toStdString(),model.toStdString(),plan.toStdString(),allocation(source,rate,staff)}); } catch (const std::exception& e) { emit noticeRaised(QString::fromUtf8(e.what())); }
+void ManagementController::evaluate(QString model,QString plan,QString source,QString rate,QString staff,QString specialist) {
+    if (!editable()) return; try { emit actionRequested(core::StartEvaluation{nextId(QStringLiteral("evaluation.")).toStdString(),
+        model.toStdString(),plan.toStdString(),allocation(source,rate,staff),specialist.toStdString()}); }
+    catch (const std::exception& e) { emit noticeRaised(QString::fromUtf8(e.what())); }
 }
 void ManagementController::deploy(QString service,QString model,QString evidence,QString source,bool review,QString region,
     QString audience,QString tools,QString oversight) {

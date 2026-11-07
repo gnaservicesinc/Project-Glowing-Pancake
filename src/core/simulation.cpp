@@ -688,7 +688,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 discard_service_rollouts(next);
                 withdraw_pending_specialists(next);
                 std::vector<std::string> projects,recurring,sources;
-                for (const auto& row:next.capacity->projects) if (row.status==ProjectStatus::active) projects.push_back(row.id);
+                for (const auto& row:next.capacity->projects)
+                    if (row.status==ProjectStatus::active || row.status==ProjectStatus::paused) projects.push_back(row.id);
                 for (const auto& row:next.accounts->recurring)
                     if ((!row.ends_before || *row.ends_before>std::max(row.starts_on,next.date)) &&
                         !row.id.starts_with("offer.lease/") && !row.id.starts_with("offer.renew/")) recurring.push_back(row.id);
@@ -836,9 +837,16 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             } else if constexpr (std::is_same_v<Action, StartEvaluation>) {
                 if (action.id.starts_with(frontier_refresh_prefix))
                     refuse(CommandReason::dependent_commitment,"Automated evidence identities belong to their authorized refresh.");
+                if (!action.specialist_id.empty()) {
+                    const auto& terms=accounts(next).recurring;
+                    const auto salary=std::ranges::find(terms,action.specialist_id,&RecurringObligation::id);
+                    if (salary==terms.end() || salary->starts_on>next.date ||
+                        (salary->ends_before && *salary->ends_before<=next.date))
+                        refuse(CommandReason::invalid_argument,"Select a specialist whose paid appointment is active");
+                }
                 const auto before = next.cash;
                 start_evaluation(lab(next), accounts(next), capacity(next), next.date,
-                    action.id, action.model_id, action.plan_id, action.allocation, reserved_cash(next));
+                    action.id, action.model_id, action.plan_id, action.allocation, reserved_cash(next), action.specialist_id);
                 next.cash = accounts_report(*next.accounts).cash;
                 (void)receipt(next, "start_evaluation", 0, checked_unit_subtract(next.cash, before));
             } else if constexpr (std::is_same_v<Action, RegisterFrontierSystem>) {

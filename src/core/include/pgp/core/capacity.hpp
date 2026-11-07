@@ -63,6 +63,7 @@ struct CapacityProject {
     // Incident containment keeps reservations and records zero work, while
     // preserving ordinary cancellation and release history.
     std::vector<ProjectPause> disruptions{};
+    std::string specialist_id{};
     auto operator<=>(const CapacityProject&) const = default;
 };
 struct SourceDayUsage {
@@ -102,6 +103,7 @@ struct StaffAddition {
     std::string id;
     OrdinalDay day{0};
     std::uint32_t people=0;
+    BasisPoints evaluation_credit{0};
     auto operator<=>(const StaffAddition&) const = default;
 };
 struct CapacityState {
@@ -139,7 +141,9 @@ struct CapacityReport {
 [[nodiscard]] bool project_disrupted(const CapacityProject&,OrdinalDay);
 void validate_capacity(const CapacityState& state);
 void reserve_project(CapacityState& state, OrdinalDay day, CapacityProject project);
-void add_staff_capacity(CapacityState& state, OrdinalDay day, std::string id, std::uint32_t people);
+void add_staff_capacity(CapacityState& state, OrdinalDay day, std::string id, std::uint32_t people,
+                        BasisPoints evaluation_credit=BasisPoints{0});
+[[nodiscard]] MilliCU evaluation_work(const CapacityState&,OrdinalDay,MilliCU,std::string_view specialist_id);
 void remove_staff_capacity(CapacityState& state,OrdinalDay day,std::string id,std::uint32_t people);
 [[nodiscard]] std::uint32_t opening_staff_count(const CapacityState& state);
 [[nodiscard]] std::uint32_t available_staff_on(const CapacityState& state, OrdinalDay day);

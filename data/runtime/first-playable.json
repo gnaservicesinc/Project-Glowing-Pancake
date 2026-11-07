@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.28.0-dev.1",
+  "content_version": "0.29.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -24675,6 +24675,7 @@
         ],
         "specialists": [
           {
+            "evaluation_credit_bp": 2500,
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
@@ -24907,7 +24908,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 17,
+      "revision": 18,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -30094,6 +30095,7 @@
         ],
         "specialists": [
           {
+            "evaluation_credit_bp": 2500,
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
@@ -30326,7 +30328,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 17,
+      "revision": 18,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -34229,6 +34231,7 @@
         ],
         "specialists": [
           {
+            "evaluation_credit_bp": 2500,
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
@@ -34310,7 +34313,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 20,
+      "revision": 21,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -37367,6 +37370,7 @@
         ],
         "specialists": [
           {
+            "evaluation_credit_bp": 2500,
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
@@ -37448,7 +37452,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 21,
+      "revision": 22,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -41660,6 +41664,7 @@
         ],
         "specialists": [
           {
+            "evaluation_credit_bp": 2500,
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
@@ -41741,7 +41746,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 21,
+      "revision": 22,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -45953,6 +45958,7 @@
         ],
         "specialists": [
           {
+            "evaluation_credit_bp": 2500,
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
@@ -46034,7 +46040,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 21,
+      "revision": 22,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -50246,6 +50252,7 @@
         ],
         "specialists": [
           {
+            "evaluation_credit_bp": 2500,
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
@@ -50327,7 +50334,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 21,
+      "revision": 22,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,

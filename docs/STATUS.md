@@ -4,12 +4,12 @@ Updated 2026-11-07 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**Initial feature coverage is active.** Office specialist offers now show
-payroll and work-ready dates. Staff specializations are next.
+**Initial feature coverage is active.** Lab Evaluate can now assign the
+onboarded specialist to a test. Working conditions and recovery choices are next.
 
 The original roadmap has **42 of 52 acceptance steps checked**. Its ten open
 steps are deferred human, balance, platform and release gates; they do not
-block current implementation. The coverage pass below has delivered 24
+block current implementation. The coverage pass below has delivered 25
 additional feature batches within earlier milestones. That batch count is
 separate from the 52 acceptance steps and does not imply complete design
 coverage. Completed milestones include
@@ -775,8 +775,16 @@ after three paid onboarding days. Withdrawing operations before readiness
 ends the payroll term and retains incurred costs. Content **0.28.0-dev.1**,
 generation **28**, verifies all seven scenarios and 21 exact prepared openings.
 
-**Staff specializations are next.** Give relevant hires a visible benefit
-when assigning them to suitable work through the shared staffing pool.
+Lab Evaluate now offers the onboarded evaluation specialist for an explicit
+assignment. Expertise reduces experiment work by 25% with the selected plan's
+fee and measured coverage. The specialist counts within the entered team and
+remains committed until completion or cancellation, including while paused.
+The save validator checks the dated appointment, work budget and overlapping
+assignments. Content **0.29.0-dev.1**, generation **29**, verifies seven
+scenarios and 21 exact prepared openings.
+
+**Working conditions and recovery choices are next.** Add a paid choice
+that changes how the shared team recovers through settled workdays.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

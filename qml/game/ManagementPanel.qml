@@ -394,16 +394,24 @@ ColumnLayout {
         Choice { id: evaluationModel; objectName: "evaluationModelChoice"; label: qsTr("Checkpoint to evaluate"); rows: manager.models }
         Choice { id: evaluationPlan; objectName: "evaluationPlanChoice"; label: qsTr("Evaluation plan and cash fee"); options: manager.evaluations }
         Copy { text: evaluationPlan.selectedOption.detail || "" }
-        Choice { id: evaluationSource; label: qsTr("Evaluation compute source"); options: manager.sources }
-        Field { id: evaluationRate; label: qsTr("Evaluation CU per day"); value: manager.recommended.testingRate || "" }
-        Field { id: evaluationStaff; label: qsTr("Evaluation staff"); value: manager.recommended.testingStaff || "" }
+        Choice { id: evaluationSource; objectName: "evaluationSourceChoice"; label: qsTr("Evaluation compute source"); options: manager.sources }
+        Field { id: evaluationRate; objectName: "evaluationRateField"; label: qsTr("Evaluation CU per day"); value: manager.recommended.testingRate || "" }
+        Field { id: evaluationStaff; objectName: "evaluationStaffField"; label: qsTr("Evaluation staff"); value: manager.recommended.testingStaff || "" }
+        Choice {
+            id: evaluationSpecialist
+            objectName: "evaluationSpecialistChoice"
+            label: qsTr("Evaluation assignment")
+            options: manager.evaluationSpecialists
+            onOptionsChanged: if (!options.some(o => o.id === value)) value = ""
+        }
+        Copy { text: evaluationSpecialist.selectedOption.detail || "" }
         Action {
             objectName: "evaluateButton"
             text: qsTr("Pay and start evaluation")
             enabled: panel.editable && evaluationModel.value.length > 0
-            onClicked: manager.evaluate(evaluationModel.value, evaluationPlan.value, evaluationSource.value, evaluationRate.value, evaluationStaff.value)
+            onClicked: manager.evaluate(evaluationModel.value, evaluationPlan.value, evaluationSource.value, evaluationRate.value, evaluationStaff.value, evaluationSpecialist.value)
         }
-        Selection { heading: qsTr("Measured evidence"); rows: manager.evidence }
+        Selection { objectName: "evaluationEvidenceSelection"; heading: qsTr("Measured evidence"); rows: manager.evidence }
     }
     ColumnLayout {
         Layout.fillWidth: true

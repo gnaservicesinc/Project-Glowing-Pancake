@@ -155,13 +155,15 @@ void validate_capacity(const CapacityState& state) {
     std::uint64_t added=0;std::set<std::string> staff_ids;
     const auto staff_today=state.closed_through?advance_days(*state.closed_through,Days{1}):state.starts_on;
     for (const auto& row:state.staff_additions) {
-        if (row.people==0 || row.people>1'000'000 || row.id.empty() || !staff_ids.insert(row.id).second || row.day<state.starts_on || row.day>staff_today)
+        if (row.people==0 || row.people>1'000'000 || row.id.empty() || !staff_ids.insert(row.id).second || row.day<state.starts_on || row.day>staff_today ||
+            row.evaluation_credit.value()>2500 || (row.evaluation_credit.value()>0 && row.people!=1))
             invalid("Staff additions require distinct dated hiring commitments");
         added+=row.people;
     }
     std::uint64_t removed=0;
     for (const auto& row:state.staff_departures) {
-        if (row.people==0 || row.people>1'000'000 || row.id.empty() || !staff_ids.insert(row.id).second || row.day<state.starts_on || row.day>staff_today)
+        if (row.people==0 || row.people>1'000'000 || row.id.empty() || !staff_ids.insert(row.id).second || row.day<state.starts_on || row.day>staff_today ||
+            row.evaluation_credit.value()!=0)
             invalid("Staff departures require distinct dated commitments");
         removed+=row.people;(void)available_staff_on(state,row.day);
     }
@@ -196,8 +198,14 @@ void validate_capacity(const CapacityState& state) {
     std::unordered_map<std::string_view, std::int64_t> source_reservations;
     projects.reserve(state.projects.size());
     source_reservations.reserve(state.sources.size());
+    struct SpecialistUse {std::string_view specialist,id; OrdinalDay start,end;};
+    std::vector<SpecialistUse> specialist_use;
     for (const auto& row : state.projects) {
         text_valid(row.id, 100); text_valid(row.interconnect); text_valid(row.cause, 256);
+        if (!row.specialist_id.empty()) {
+            if (row.kind!=ProjectKind::evaluation) invalid("Evaluation expertise can only be assigned to evaluation work");
+            (void)evaluation_work(state,row.starts_on,row.total_work,row.specialist_id);
+        }
         (void)from_ordinal(row.starts_on);
         if (row.customer_inference) {
             if (row.kind != ProjectKind::serving || !row.source_id.empty() || row.requested.value() != 0 ||
@@ -277,7 +285,19 @@ void validate_capacity(const CapacityState& state) {
         }
         if (row.stopped_on && (*row.stopped_on < row.starts_on || *row.stopped_on > latest))
             invalid("Project stop date is outside its valid lifetime");
+        if (!row.specialist_id.empty()) {
+            const auto end=row.stopped_on ?
+                advance_days(*row.stopped_on,Days{row.status==ProjectStatus::completed?1:0}) :
+                advance_days(latest,Days{1});
+            if (end>row.starts_on) specialist_use.push_back({row.specialist_id,row.id,row.starts_on,end});
+        }
     }
+    std::ranges::sort(specialist_use,[](const auto& a,const auto& b) {
+        return std::tie(a.specialist,a.start,a.id)<std::tie(b.specialist,b.start,b.id);
+    });
+    for (std::size_t i=1;i<specialist_use.size();++i)
+        if (specialist_use[i].specialist==specialist_use[i-1].specialist && specialist_use[i].start<specialist_use[i-1].end)
+            invalid("A specialist is already committed to an unfinished evaluation, including paused work");
     for (const auto& [id, reserved] : source_reservations) {
         const auto& supply = source(state, id);
         if (reserved > checked_unit_subtract(checked_unit_subtract(supply.nominal,supply.wholesale_reserved),supply.replica_reserved).value())
@@ -407,13 +427,24 @@ void remove_staff_capacity(CapacityState& state,OrdinalDay day,std::string id,st
         invalid("Staff departure requires unassigned current staff and a unique dated commitment");
     state.available_staff-=people;state.staff_departures.push_back({std::move(id),day,people});
 }
-void add_staff_capacity(CapacityState& state,OrdinalDay day,std::string id,std::uint32_t people) {
+void add_staff_capacity(CapacityState& state,OrdinalDay day,std::string id,std::uint32_t people,BasisPoints evaluation_credit) {
     if (day!=(state.closed_through?advance_days(*state.closed_through,Days{1}):state.starts_on) || people==0 || people>1'000'000 ||
         state.available_staff>1'000'000-people || state.staff_additions.size()>=capacity_staff_change_limit ||
+        evaluation_credit.value()>2500 || (evaluation_credit.value()>0 && people!=1) ||
         std::any_of(state.staff_additions.begin(),state.staff_additions.end(),[&](const auto& row){return row.id==id;}) ||
         std::any_of(state.staff_departures.begin(),state.staff_departures.end(),[&](const auto& row){return row.id==id;}))
         invalid("Staff addition needs a unique current-day commitment within the team bound");
-    state.available_staff+=people;state.staff_additions.push_back({std::move(id),day,people});
+    state.available_staff+=people;state.staff_additions.push_back({std::move(id),day,people,evaluation_credit});
+}
+MilliCU evaluation_work(const CapacityState& state,OrdinalDay day,MilliCU work,std::string_view specialist_id) {
+    if (specialist_id.empty()) return work;
+    const auto hire=std::ranges::find(state.staff_additions,specialist_id,&StaffAddition::id);
+    if (hire==state.staff_additions.end() || hire->day>day || hire->evaluation_credit.value()==0 ||
+        hire->evaluation_credit.value()>2500 || hire->people!=1)
+        invalid("Choose an onboarded evaluation specialist for this experiment");
+    const auto result=mul_div_floor(static_cast<std::uint64_t>(work.value()),
+        static_cast<std::uint64_t>(10'000-hire->evaluation_credit.value()),10'000);
+    return MilliCU{checked_add(static_cast<std::int64_t>(result.quotient),result.remainder>0?1:0)};
 }
 CapacityState opening_capacity(std::vector<CapacitySource> sources, std::uint32_t staff, OrdinalDay starts_on, std::string owner) {
     CapacityState state;

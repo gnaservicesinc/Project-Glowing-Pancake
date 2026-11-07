@@ -435,14 +435,16 @@ void checkpoint_model(LabState& state,const CapacityState& capacity,OrdinalDay d
 }
 void start_evaluation(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day,
                       std::string id, std::string_view model_id, std::string_view plan_id,
-                      const LabAllocation& allocation, Cents protected_cash) {
+                      const LabAllocation& allocation, Cents protected_cash, std::string specialist_id) {
     require_day(state, day); label(id);
     if (state.evaluations.size() >= lab_record_limit || std::any_of(state.evaluations.begin(), state.evaluations.end(),
         [&](const auto& row) { return row.id == id; })) invalid("Evaluation identity is already used or the record limit was reached");
     const auto& model = find(state.models, model_id); frozen(model, capacity);
     const auto& plan = find(state.catalog.evaluations, plan_id);
     if (!requires_met(state, plan.requires_research)) invalid("Evaluation methodology research is not complete");
-    auto row = project("lab/evaluate/" + id, ProjectKind::evaluation, day, allocation, plan.work);
+    auto row = project("lab/evaluate/" + id, ProjectKind::evaluation, day, allocation,
+        evaluation_work(capacity,day,plan.work,specialist_id));
+    row.specialist_id=std::move(specialist_id);
     reserve_project(capacity, day, row);
     charge(accounts, day, plan.cash, protected_cash, "lab/evaluate/" + id);
     EvaluationEvidence evidence;
@@ -605,7 +607,8 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         const auto& model = find(state.models, evidence.model_id);
         const auto& plan = find(state.catalog.evaluations, evidence.plan_id);
         const auto& work = find(capacity.projects, evidence.project_id);
-        if (work.id != "lab/evaluate/" + evidence.id || work.kind != ProjectKind::evaluation || work.total_work != plan.work ||
+        if (work.id != "lab/evaluate/" + evidence.id || work.kind != ProjectKind::evaluation ||
+            work.total_work != evaluation_work(capacity,work.starts_on,plan.work,work.specialist_id) ||
             !projects.insert(work.id).second || model.consumed_work != evidence.model_work ||
             model.created_on > work.starts_on || model.consumed_work.value() == 0 ||
             evidence.completed != (work.status == ProjectStatus::completed)) invalid("Evaluation differs from its frozen model or work commitment");

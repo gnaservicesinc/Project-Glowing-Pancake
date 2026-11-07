@@ -73,9 +73,12 @@ retain priority, so optional training can finish later. The player can wait,
 stop optional work, change scope or pay for another compatible source.
 The notices retain actual warning, start and restoration dates across reload.
 
-The specialist costs $2,000 to sign and $6,000/month, adding one available
-person from the hire date. Historical daily staffing retains its earlier
-limit. No skill/capability bonus or free compute is invented. The efficient
+The specialist costs $2,000 to sign and $6,000/month. Five days of notice
+and three paid onboarding days precede availability. Assigning that person
+to an evaluation reduces its finite work budget by 25%. The specialist
+counts within the entered team and is committed to the evaluation until
+completion or cancellation, including while paused. Historical daily
+staffing and consumed work retain their actual values. The efficient
 recipe and its research support a separate document-specialist service with
 3,000 tasks/day and a 12-milli-CU inference cost; it still needs independent
 model qualification.

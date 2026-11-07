@@ -284,6 +284,6 @@ void clone_model(LabState& state, const CapacityState& capacity, OrdinalDay day,
                  std::string_view source_id, std::string id);
 void start_evaluation(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day,
                       std::string id, std::string_view model_id, std::string_view plan_id,
-                      const LabAllocation& allocation, Cents protected_cash);
+                      const LabAllocation& allocation, Cents protected_cash, std::string specialist_id={});
 void close_lab_day(LabState& state, const CapacityState& capacity, OrdinalDay day, RandomSnapshot& random);
 } // namespace pgp::core

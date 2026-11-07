@@ -172,7 +172,7 @@ struct AcquireResearchInsight { ResearchInsight insight; };
 struct StartTraining { TrainingRequest request; };
 struct CloneModel { std::string source_id, id; };
 struct CheckpointModel { std::string source_id,id; };
-struct StartEvaluation { std::string id, model_id, plan_id; LabAllocation allocation; };
+struct StartEvaluation { std::string id, model_id, plan_id; LabAllocation allocation; std::string specialist_id{}; };
 struct AcceptBusinessOffer { std::string id; };
 struct AddMarketDemandChange { MarketDemandChange change; };
 using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReservation,
