@@ -211,6 +211,13 @@ content::Scalar read_fact(const WorldState& world, const content::FactMetadata& 
                 return row.project_id==project.id && row.completed && !row.findings.empty();
             });
         }
+        if (metadata.id == "project.has_deployment_incident") {
+            if (!world.simulation.deployments || !world.simulation.deployments->risk) return false;
+            const auto& incidents = world.simulation.deployments->risk->incidents;
+            return std::any_of(incidents.begin(), incidents.end(), [&](const auto& row) {
+                return row.project_id == project.id && row.discovered_on <= world.simulation.date;
+            });
+        }
     }
     if (binding.scope == Scope::contract && market && market->owner == world.company_id) {
         const auto& contract = related_row(market->contracts, binding.id);
@@ -382,6 +389,18 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                                           bool validate_core_simulation) {
     const auto& world = checkpoint.world;
     const auto& state = checkpoint.runtime;
+    const auto validate_risk_seed=[&](const core::SimulationState& simulation,std::uint64_t seed) {
+        const auto initial=core::RandomStreams{seed}.snapshot()[static_cast<std::size_t>(core::RandomStream::risk)];
+        if (simulation.deployments && simulation.deployments->risk) {
+            if (simulation.deployments->risk->stream_origin!=initial)
+                invalid("Deployment risk stream origin differs from the company seed");
+        } else if (simulation.random[static_cast<std::size_t>(core::RandomStream::risk)]!=initial)
+            invalid("A company without deployment risk advanced its unowned stream");
+    };
+    validate_risk_seed(world.simulation,world.root_seed);
+    if (world.competition && !world.competition->setup)
+        for (const auto& rival:world.competition->companies)
+            validate_risk_seed(rival.simulation,rival_definition(program,rival.definition_id).seed);
     if((!world.background.empty() || !world.difficulty.empty()) && world.scenario_id.empty()) invalid("Campaign setup needs its authored source scenario");
     if (world.identity) {
         validate_campaign_identity(*world.identity);

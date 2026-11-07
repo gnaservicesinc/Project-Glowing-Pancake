@@ -150,6 +150,11 @@ core::GenerateDataset synthesis_request(const QString& id,const QString& recipe,
     return {id.toStdString(),recipe.toStdString(),teacher.toStdString(),evidence.toStdString(),verification.toStdString(),
         static_cast<std::uint64_t>(integer(units,1'000'000'000'000)),allocation(source,rate,staff)};
 }
+core::RespondDeploymentIncident deployment_response_request(const QString& incident,const QString& source,
+    const QString& rate,const QString& staff) {
+    const auto assigned=allocation(source,rate,staff);
+    return {incident.toStdString(),assigned.source_id,assigned.daily_compute,assigned.staff};
+}
 std::optional<core::AgentControls> agent_controls(const QString& tools,const QString& oversight) {
     if (tools.isEmpty() && oversight.isEmpty()) return {};
     return core::AgentControls{core::parse_agent_tools(tools.toStdString()),core::parse_agent_oversight(oversight.toStdString())};
@@ -315,6 +320,77 @@ void add_agent_details(CampaignRow& row,const core::SimulationState& state,const
     }
     if (completed+failed>0) row.detail+=QObject::tr("\n%1 · %2 of %3 attempts completed · %4 failures caught · %5 failed writes executed · %6 in remedies.")
         .arg(text(core::iso_date(day.day)),number(completed),number(completed+failed),number(failed-executed),number(executed),money(remedies));
+}
+const core::DeploymentRecord* incident_release(const core::DeploymentState& deployments,std::string_view project) {
+    const auto release=std::ranges::find(deployments.records,project,&core::DeploymentRecord::project_id);
+    if (release!=deployments.records.end()) return &*release;
+    const auto rollout=std::ranges::find_if(deployments.rollouts,[&](const auto& row) { return row.candidate.project_id==project; });
+    return rollout==deployments.rollouts.end()?nullptr:&rollout->candidate;
+}
+QString risk_summary(const core::SimulationState& state,const core::DeploymentRecord& release,bool staged=false) {
+    const auto report=core::deployment_risk_report(state,release,staged);
+    return QObject::tr("%1 · fictional scenario risk band: %2\nExposure · %3\nTask severity · %4\n%5")
+        .arg(staged?QObject::tr("Staged release"):QObject::tr("Production release"),text(report.band),
+            text(report.exposure),text(report.severity),text(report.reasons));
+}
+void add_deployment_incidents(CampaignRow& row,const core::SimulationState& state,const core::MarketProduct& product) {
+    const auto& deployments=*state.deployments;
+    if (!deployments.risk) return;
+    const auto& risk=*deployments.risk;
+    std::map<std::string_view,const core::DeploymentRecord*,std::less<>> releases;
+    std::map<std::string_view,const core::CapacityProject*,std::less<>> projects;
+    std::map<std::string_view,const core::DeploymentIncidentAlert*,std::less<>> alerts;
+    std::map<std::string_view,std::vector<const core::DeploymentIncidentResponse*>,std::less<>> responses;
+    for (const auto& release:deployments.records) releases.emplace(release.project_id,&release);
+    for (const auto& rollout:deployments.rollouts) releases.emplace(rollout.candidate.project_id,&rollout.candidate);
+    for (const auto& project:state.capacity->projects) projects.emplace(project.id,&project);
+    for (const auto& alert:risk.alerts) if (!alert.recovery) alerts.emplace(alert.incident_id,&alert);
+    for (const auto& response:risk.responses) responses[response.incident_id].push_back(&response);
+    const auto definition=std::ranges::find_if(deployments.catalog,[&](const auto& entry) { return entry.product.id==product.id; });
+    const auto* current=incident_release(deployments,product.capacity_project_id);
+    if (definition!=deployments.catalog.end() && definition->incident_risk && current) {
+        auto detail=risk_summary(state,*current);
+        if (const auto* pending=core::pending_rollout(deployments,product.id))
+            detail+=QStringLiteral("\n\n")+risk_summary(state,pending->candidate,true);
+        row.fields.insert(QStringLiteral("deploymentRiskReport"),std::move(detail));
+    }
+    QVariantList incidents;
+    for (auto item=risk.incidents.rbegin();item!=risk.incidents.rend();++item) {
+        const auto& incident=*item;
+        const auto recorded=releases.find(incident.project_id);
+        if (recorded==releases.end() || recorded->second->service_id!=product.id) continue;
+        const auto* release=recorded->second;
+        auto detail=QObject::tr("Affected model %1 · report %2\nRelease project %3 · discovered %4")
+            .arg(text(release->model_id),text(release->evidence_id),text(incident.project_id),text(core::iso_date(incident.discovered_on)));
+        if (const auto alert=alerts.find(incident.id); alert!=alerts.end())
+            detail+=QLatin1Char('\n')+text(core::deployment_incident_description(state,*alert->second));
+        const core::CapacityProject* latest=nullptr;
+        for (const auto* response:responses[incident.id]) {
+            const auto project=projects.find(response->project_id);
+            if (project==projects.end()) continue;
+            const auto* work=project->second;
+            latest=work;
+            const auto status=work->status==core::ProjectStatus::active?QObject::tr("Active"):
+                work->status==core::ProjectStatus::paused?QObject::tr("Paused"):
+                work->status==core::ProjectStatus::completed?QObject::tr("Work completed"):QObject::tr("Cancelled");
+            detail+=QObject::tr("\nResponse %1 · %2 · started %3\n%4 of %5 CU completed · %6 CU/day · %7 staff · source %8")
+                .arg(text(response->project_id),status,text(core::iso_date(response->started_on)),cu(work->completed_work.value()),
+                    cu(work->total_work.value()),cu(work->requested.value()),number(work->staff),readable(work->source_id));
+        }
+        const bool active=latest && latest->status==core::ProjectStatus::active;
+        const bool paused=latest && latest->status==core::ProjectStatus::paused;
+        const bool canRespond=!incident.recovered_on && (!latest || latest->status==core::ProjectStatus::cancelled);
+        const auto status=incident.recovered_on?QObject::tr("Recovered"):
+            active?QObject::tr("Response in progress"):paused?QObject::tr("Response paused"):QObject::tr("Awaiting response");
+        incidents.push_back(QVariantMap{{QStringLiteral("id"),text(incident.id)},
+            {QStringLiteral("label"),text(core::iso_date(incident.discovered_on))+QStringLiteral(" · ")+status+QStringLiteral(" · ")+text(incident.id)},
+            {QStringLiteral("detail"),std::move(detail)},{QStringLiteral("canRespond"),canRespond},
+            {QStringLiteral("responseProjectId"),latest?text(latest->id):QString{}},
+            {QStringLiteral("responseActive"),active},{QStringLiteral("responsePaused"),paused}});
+        if (!incident.recovered_on && incident.project_id==product.capacity_project_id)
+            row.status=QObject::tr("Incident containment");
+    }
+    row.fields.insert(QStringLiteral("deploymentIncidents"),std::move(incidents));
 }
 void add_release_details(CampaignRow& row,const core::SimulationState& state,const core::MarketProduct& product) {
     const auto& releases=*state.deployments;
@@ -595,6 +671,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
                 tr("\nCurrent price is %1 per task. Price changes preserve past invoices and signed contract prices.")).arg(money(row.price_per_task));
             if (deployment) {
                 add_release_details(products.back(),s,row);
+                add_deployment_incidents(products.back(),s,row);
                 add_service_support(products.back(),s,row,live);
                 add_weight_details(products.back(),s,row,*deployment);
                 if (live) add_waitlist_details(products.back(),s,row,regions);
@@ -1411,6 +1488,33 @@ QVariantMap ManagementController::retirementQuote(QString service,QString days) 
         return {{QStringLiteral("ready"),true},{QStringLiteral("detail"),detail}};
     } catch (const std::exception& error) { return {{QStringLiteral("detail"),QString::fromUtf8(error.what())}}; }
 }
+QVariantMap ManagementController::deploymentResponseQuote(QString incident,QString source,QString rate,QString staff) const {
+    if (!available()) return {};
+    try {
+        const auto request=deployment_response_request(incident,source,rate,staff);
+        const auto& s=state();
+        const auto quote=core::preview_deployment_response(s,request);
+        const auto* supply=find(s.capacity->sources,request.source_id);
+        std::int64_t assigned=0;
+        for (const auto& work:s.capacity->projects)
+            if (work.status==core::ProjectStatus::active && work.source_id==request.source_id)
+                assigned=core::checked_add(assigned,work.requested.value());
+        const auto capacity=core::capacity_report(*s.capacity);
+        const bool resources=supply && core::company_capacity(*supply).value()-assigned>=request.daily_compute.value() &&
+            capacity.available_staff-capacity.assigned_staff>=request.staff;
+        const bool funded=core::discretionary_cash(s)>=quote.cash_required;
+        auto detail=tr("Start a paid response to incident %1.\n\nResponse fee %2 · unpaid compensation %3 · total cash required now %4\n"
+            "%5 total CU · %6 CU/day · %7 staff · earliest %8 days\n\n"
+            "Starting pays the response fee and any remaining compensation before its due date. The response reserves staff and compute. "
+            "The affected release stays contained until response work completes. Cancelling preserves the fee, compensation paid and consumed work; another attempt requires a new fee. "
+            "Replacing the release or acknowledging its alert keeps the original claim and recovery obligation.")
+            .arg(incident,money(quote.fee),money(quote.compensation_due),money(quote.cash_required),cu(quote.work.value()),
+                cu(request.daily_compute.value()),number(request.staff),QString::number(quote.minimum_days.value()));
+        if (!resources) detail+=tr("\nFree compute or staff are below the requested allocation.");
+        if (!funded) detail+=tr("\nThe immediate payment exceeds available cash after reserves.");
+        return {{QStringLiteral("ready"),resources && funded},{QStringLiteral("detail"),detail}};
+    } catch (const std::exception& error) { return {{QStringLiteral("ready"),false},{QStringLiteral("detail"),QString::fromUtf8(error.what())}}; }
+}
 QVariantMap ManagementController::waitlistQuote(QString service,QString tasks,bool enabled) const {
     if (!available()) return {};
     try {
@@ -1505,6 +1609,11 @@ void ManagementController::announceRetirement(QString service,QString days) {
     if (!editable()) return;
     try { emit actionRequested(core::AnnounceServiceRetirement{service.toStdString(),service_term(days)}); }
     catch (const std::exception& error) {emit noticeRaised(QString::fromUtf8(error.what()));}
+}
+void ManagementController::respondDeploymentIncident(QString incident,QString source,QString rate,QString staff) {
+    if (!editable()) return;
+    try { emit actionRequested(deployment_response_request(incident,source,rate,staff)); }
+    catch (const std::exception& error) { emit noticeRaised(QString::fromUtf8(error.what())); }
 }
 void ManagementController::setServiceWaitlist(QString service,QString tasks,bool enabled) {
     if (!editable()) return;

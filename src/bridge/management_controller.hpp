@@ -165,6 +165,7 @@ public:
     Q_INVOKABLE QVariantMap compatibilityQuote(QString service,QString days) const;
     Q_INVOKABLE QVariantMap retirementQuote(QString service,QString days) const;
     Q_INVOKABLE QVariantMap waitlistQuote(QString service,QString tasks,bool enabled) const;
+    Q_INVOKABLE QVariantMap deploymentResponseQuote(QString incident,QString source,QString rate,QString staff) const;
     Q_INVOKABLE void buyData(QString id);
     Q_INVOKABLE void research(QString id,QString source,QString rate,QString staff);
     Q_INVOKABLE void publishResearch(QString id);
@@ -181,6 +182,7 @@ public:
     Q_INVOKABLE void commitCompatibility(QString service,QString days);
     Q_INVOKABLE void announceRetirement(QString service,QString days);
     Q_INVOKABLE void setServiceWaitlist(QString service,QString tasks,bool enabled);
+    Q_INVOKABLE void respondDeploymentIncident(QString incident,QString source,QString rate,QString staff);
     Q_INVOKABLE void acceptOffer(QString id);
     Q_INVOKABLE void respondCompetitiveOffer(QString id,bool accept);
     Q_INVOKABLE void cancelContract(QString id);

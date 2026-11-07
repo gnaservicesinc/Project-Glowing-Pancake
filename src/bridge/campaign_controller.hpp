@@ -96,6 +96,7 @@ public:
     void setAutoPauseAlerts(bool value);
     Q_INVOKABLE void advanceTo(QString milestone);
     Q_INVOKABLE void acknowledgeManagement();
+    Q_INVOKABLE void acknowledgeDeploymentIncident();
     Q_INVOKABLE void acknowledgeSiteAlert();
     Q_INVOKABLE void acknowledgeInstitutionalNotice();
     bool showGuide() const { return settings_.show_guide; }

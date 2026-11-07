@@ -1,4 +1,5 @@
 #include <pgp/content/collection.hpp>
+#include <pgp/content/deployment_risk.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -666,7 +667,7 @@ MarketSetup parse_market_setup(const Json& value, const std::string& path, core:
         fields(offer,path,{"id","capacity_project_id","price_cents_per_task","available","tasks_per_day",
             "inference_milli_CU_per_task","staff","minimum_memory_mib","interconnect","monthly_support_cost_cents",
              "required_bp","review_credit_bp","review_staff","review_monthly_cost_cents","review_tasks_per_day","required_recipe",
-             "channel","monthly_migration_bp","required_research","workload_domain"},
+             "channel","monthly_migration_bp","required_research","workload_domain","incident_risk"},
             {"id","capacity_project_id","price_cents_per_task","available","tasks_per_day",
             "inference_milli_CU_per_task","staff","minimum_memory_mib","interconnect","monthly_support_cost_cents"});
         MarketOfferDefinition row;
@@ -710,6 +711,7 @@ MarketSetup parse_market_setup(const Json& value, const std::string& path, core:
             for (const auto& research : offer.at("required_research")) row.required_research.push_back(id(research,path));
         }
         if (offer.contains("workload_domain")) row.workload_domain=text(offer.at("workload_domain"),path,64);
+        if (offer.contains("incident_risk")) row.incident_risk=load_deployment_risk_rules(offer.at("incident_risk").dump());
         result.offers.push_back(std::move(row));
     }
     array(value.at("segments"),child(path,"segments"),core::market_segment_limit);
@@ -776,6 +778,8 @@ MarketSetup parse_market_setup(const Json& value, const std::string& path, core:
 }
 MarketSetup market_setup(const Json& value, const std::string& path, const ScenarioDefinition& scenario, bool templates=false) {
     auto result = parse_market_setup(value, path, scenario.starts_on, scenario.ends_before);
+    if (!templates && std::any_of(result.offers.begin(),result.offers.end(),[](const auto& offer) {return offer.incident_risk.has_value();}))
+        fail("service_catalog",path,"Deployment incident rules require qualified service templates");
     auto ledger = core::opening_accounts(scenario.cash,scenario.starts_on);
     std::vector<core::CapacitySource> sources;
     if (scenario.leased_capacity.value() > 0)

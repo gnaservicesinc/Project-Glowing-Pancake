@@ -1,6 +1,7 @@
 #pragma once
 #include <pgp/core/lab.hpp>
 #include <pgp/core/market.hpp>
+#include <pgp/core/deployment_risk.hpp>
 
 namespace pgp::core {
 struct ServicePreference {
@@ -20,6 +21,7 @@ struct ServiceDefinition {
     std::string required_recipe{};
     std::vector<std::string> required_research{};
     std::string workload_domain{};
+    std::optional<DeploymentRiskRules> incident_risk{};
     auto operator<=>(const ServiceDefinition&) const = default;
 };
 struct DeploymentRecord {
@@ -43,6 +45,7 @@ struct DeploymentState {
     std::vector<ServiceDefinition> catalog;
     std::vector<DeploymentRecord> records;
     std::vector<ServiceRollout> rollouts{};
+    std::optional<DeploymentRiskState> risk{};
     auto operator<=>(const DeploymentState&) const = default;
 };
 struct DeployModel {

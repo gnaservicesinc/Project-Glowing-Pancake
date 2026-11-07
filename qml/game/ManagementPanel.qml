@@ -503,6 +503,66 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "products"
         Selection { objectName: "deployedServices"; heading: qsTr("Deployed services"); rows: manager.products }
+        Copy { visible: !!serviceOffice.selected.deploymentRiskReport; text: qsTr("Deployment risk and controls"); font.bold: true }
+        Copy {
+            objectName: "serviceRiskReport"
+            visible: !!serviceOffice.selected.deploymentRiskReport
+            text: serviceOffice.selected.deploymentRiskReport || ""
+        }
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: (serviceOffice.selected.deploymentIncidents || []).length > 0
+            Copy { text: qsTr("Deployment incidents and recovery"); font.bold: true }
+            Choice {
+                id: deploymentIncident
+                objectName: "deploymentIncidentChoice"
+                label: qsTr("Recorded incident")
+                options: serviceOffice.selected.deploymentIncidents || []
+                onOptionsChanged: {
+                    if (!options.some(option => option.id === value))
+                        value = options.length > 0 ? options[0].id : ""
+                }
+            }
+            Copy { objectName: "deploymentIncidentDetail"; text: deploymentIncident.selectedOption.detail || "" }
+            ColumnLayout {
+                Layout.fillWidth: true
+                visible: deploymentIncident.selectedOption.canRespond === true
+                Copy { text: qsTr("Commission a paid incident response. Acknowledgment records the alert separately from compensation and recovery.") }
+                Choice { id: responseSource; objectName: "deploymentResponseSourceChoice"; label: qsTr("Response compute source"); options: manager.sources }
+                Field { id: responseRate; objectName: "deploymentResponseRateField"; label: qsTr("Response CU/day"); value: "20" }
+                Field { id: responseStaff; objectName: "deploymentResponseStaffField"; label: qsTr("Response staff"); value: "2" }
+                Action {
+                    objectName: "reviewDeploymentResponseButton"
+                    text: qsTr("Review paid incident response…")
+                    enabled: panel.editable && deploymentIncident.value.length > 0 && responseSource.value.length > 0
+                    onClicked: {
+                        const inputs = [deploymentIncident.value, responseSource.value, responseRate.value, responseStaff.value]
+                        const quote = manager.deploymentResponseQuote(...inputs)
+                        releaseDialog.review("incidentResponse", manager.products.selectedId, qsTr("Review incident response and compensation"), quote.detail || "", quote.ready === true, inputs)
+                    }
+                }
+            }
+            Action {
+                objectName: "pauseDeploymentResponseButton"
+                text: qsTr("Pause incident response")
+                visible: deploymentIncident.selectedOption.responseActive === true
+                onClicked: campaign.projectPause(deploymentIncident.selectedOption.responseProjectId)
+            }
+            Action {
+                objectName: "resumeDeploymentResponseButton"
+                text: qsTr("Resume incident response")
+                visible: deploymentIncident.selectedOption.responsePaused === true
+                onClicked: campaign.projectResume(deploymentIncident.selectedOption.responseProjectId)
+            }
+            Action {
+                objectName: "cancelDeploymentResponseButton"
+                text: qsTr("Review cancelling incident response…")
+                visible: deploymentIncident.selectedOption.responseActive === true || deploymentIncident.selectedOption.responsePaused === true
+                onClicked: releaseDialog.review("cancelIncidentResponse", manager.products.selectedId, qsTr("Cancel this response attempt?"),
+                    qsTr("Release the response's remaining staff and compute. The response fee, compensation paid and consumed work stay spent. The incident remains unresolved and the affected release stays contained. Another response attempt requires a new fee."),
+                    true, [deploymentIncident.selectedOption.responseProjectId])
+            }
+        }
         Copy { visible: !!serviceOffice.selected.serviceWorkloadReport; text: qsTr("Customer workload monitoring"); font.bold: true }
         Copy {
             objectName: "serviceWorkloadReport"
@@ -978,6 +1038,8 @@ ColumnLayout {
         onAccepted: {
             if (!confirmable) return
             if (kind === "synthesis") manager.generateData(...request)
+            else if (kind === "incidentResponse") manager.respondDeploymentIncident(...request)
+            else if (kind === "cancelIncidentResponse") campaign.projectCancel(request[0])
             else if (kind === "stage") manager.stageRollout(...request)
             else if (kind === "publishWeights" || kind === "deployAgent") manager.deploy(...request)
             else if (kind === "rollback") manager.rollbackService(serviceId)

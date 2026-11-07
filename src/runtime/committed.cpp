@@ -78,10 +78,12 @@ Subjects pilot_outcomes(const WorldState& world,core::OrdinalDay day) {
     return result;
 }
 struct Provider {
+    enum class Boundary { prior_settlement, opening };
     std::string_view id;
     Scope subject;
     std::string_view result;
     Subjects (*subjects)(const WorldState&, core::OrdinalDay);
+    Boundary boundary = Boundary::prior_settlement;
 };
 Subjects site_outcomes(const WorldState& world,core::OrdinalDay day) {
     Subjects result;
@@ -93,6 +95,26 @@ Subjects site_outcomes(const WorldState& world,core::OrdinalDay day) {
     }
     return result;
 }
+Subjects deployment_incident_outcomes(const WorldState& world, core::OrdinalDay day) {
+    Subjects result;
+    const auto& simulation = world.simulation;
+    if (!simulation.deployments || !simulation.deployments->risk) return result;
+    const auto& risk = *simulation.deployments->risk;
+    std::map<std::string, std::string, std::less<>> causes;
+    for (const auto& alert : risk.alerts) {
+        if (alert.day != day) continue;
+        const auto incident = std::find_if(risk.incidents.begin(), risk.incidents.end(), [&](const auto& row) {
+            return row.id == alert.incident_id;
+        });
+        if (incident == risk.incidents.end()) throw std::invalid_argument("Deployment outcome has no owning incident");
+        auto& cause = causes[incident->project_id];
+        if (!cause.empty()) cause += "\n";
+        cause += core::deployment_incident_description(simulation, alert);
+    }
+    for (auto& [project, cause] : causes)
+        result.push_back({project, std::move(cause), content::Scalar{true}});
+    return result;
+}
 constexpr Provider providers[]{
     {"capacity.project_completed", Scope::project, "project.completed_milli_cu", completed_projects},
     {"market.contract_missed_start", Scope::contract, "contract.missed_start", missed_contracts},
@@ -100,6 +122,7 @@ constexpr Provider providers[]{
     {"lab.evaluation_finding",Scope::project,"project.has_evaluation_finding",evaluation_findings},
     {"market.pilot_outcome",Scope::contract,"contract.outcome_tasks",pilot_outcomes},
     {"infrastructure.site_outcome",Scope::capacity_source,"capacity_source.has_site_outcome",site_outcomes},
+    {"deployment.incident_outcome",Scope::project,"project.has_deployment_incident",deployment_incident_outcomes,Provider::Boundary::opening},
 };
 [[noreturn]] void invalid(const char* explanation) { throw std::invalid_argument(explanation); }
 const Provider& provider_for(const content::Registry& registry, std::string_view id) {
@@ -117,8 +140,10 @@ Sources committed_sources(const WorldState& world, const content::Registry& regi
     const auto& provider = provider_for(registry, fact_id);
     if (owner.scope != Scope::company || owner.id != world.company_id || opening_day > world.simulation.date)
         invalid("Invalid committed fact owner or opening date");
-    if (opening_day <= world.campaign_start) return {};
-    const auto settled = core::OrdinalDay{core::checked_subtract(opening_day.value(), 1)};
+    if (opening_day < world.campaign_start ||
+        (provider.boundary == Provider::Boundary::prior_settlement && opening_day == world.campaign_start)) return {};
+    const auto settled = provider.boundary == Provider::Boundary::opening ? opening_day :
+        core::OrdinalDay{core::checked_subtract(opening_day.value(), 1)};
     auto subjects = provider.subjects(world, settled);
     std::sort(subjects.begin(), subjects.end(), [](const auto& a, const auto& b) { return std::tie(a.id,a.cause)<std::tie(b.id,b.cause); });
     const auto& fact = *registry.fact(provider.result);

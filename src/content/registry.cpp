@@ -196,6 +196,7 @@ Registry foundation_registry() {
     Registry result;
     result.register_system("slice",{"foundation"});
     result.register_system("resilience",{"slice"});
+    result.register_system("deployment_risk",{"slice"});
     result.register_system("civic", {"slice"});
     result.register_system("society", {"slice"});
     result.register_system("authority", {"society","civic"});
@@ -328,6 +329,7 @@ Registry foundation_registry() {
     boolean("contract.missed_start", "Whether this contract missed its start deadline.", Scope::contract);
     boolean("project.lab_research_completed","Whether actual lab research work completed for this project.",Scope::project,"slice");
     boolean("project.has_evaluation_finding","Whether this completed evaluation recorded a concrete covered-subgroup finding.",Scope::project,"slice");
+    boolean("project.has_deployment_incident","Whether this serving project has an actual discovered deployment incident.",Scope::project,"deployment_risk");
     boolean("capacity_source.has_site_outcome","Whether this owned source has an actual site disruption, recovery or insurance outcome.",Scope::capacity_source,"resilience");
     number("contract.outcome_tasks",Scope::contract,Unit::count,0,static_cast<std::int64_t>(core::market_task_limit),
         "Actual useful tasks in the committed contract settlement; failure can deliver zero.","slice");
@@ -351,6 +353,8 @@ Registry foundation_registry() {
         "Actual first service, final service or missed-start settlement and its useful work.","slice"});
     result.register_committed_fact({"infrastructure.site_outcome",Scope::company,Scope::capacity_source,"capacity_source.has_site_outcome",
         "An owned site's recorded disruption, recovery, insurance payment or funded replica transfer.","resilience"});
+    result.register_committed_fact({"deployment.incident_outcome",Scope::company,Scope::project,"project.has_deployment_incident",
+        "An actual deployment incident or completed response discovered on this prepared morning.","deployment_risk"});
     auto effect = [&](std::string id, std::vector<ArgumentMetadata> args, std::string help,std::string provider="foundation") {
         result.register_effect({std::move(id), {Scope::company}, std::move(args), std::move(help),
             {{"target", PortType::scope, Scope::company, Unit::none, false},

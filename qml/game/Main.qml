@@ -325,6 +325,12 @@ ApplicationWindow {
                                 onClicked: campaign.acknowledgeManagement()
                             }
                             Action {
+                                objectName: "acknowledgeDeploymentIncident"; text: qsTr("Acknowledge deployment incident alert")
+                                visible: campaign.requiredKind === "deploymentIncident"
+                                enabled: !campaign.busy
+                                onClicked: campaign.acknowledgeDeploymentIncident()
+                            }
+                            Action {
                                 objectName: "acknowledgeSiteAlert"; text: qsTr("Review site disruption")
                                 visible: campaign.requiredKind === "site"
                                 enabled: !campaign.busy
