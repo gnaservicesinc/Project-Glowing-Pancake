@@ -289,6 +289,9 @@ Json definition_json(const Definition& definition, const std::string& key) {
         result["cash_cents"] = research->cash.value(); result["staff_days"] = research->staff_days.value();
         result["work_milli_CU"] = research->work.value();
         if (research->repeat_limit!=1) result["repeat_limit"] = research->repeat_limit;
+        if (const auto& risk = research->setback)
+            result["setback"] = {{"failure_bp",risk->failure_chance.value()},{"retry_credit_bp",risk->retry_credit.value()},
+                {"safeguard",risk->safeguard},{"finding",risk->finding}};
     } else if (const auto* scenario = std::get_if<ScenarioDefinition>(&definition.data)) {
         shape(scenario->headquarters_choices.size() <= 64 && scenario->monthly_commitments.size() <= 128 &&
                   scenario->ownership.size() <= 128 && scenario->research.size() <= 512 && scenario->flows.size() <= 512,

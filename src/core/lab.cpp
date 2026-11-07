@@ -236,6 +236,14 @@ void validate_lab_catalog(const LabCatalog& catalog) {
             node.repeat_limit<1 || node.repeat_limit>12 ||
             node.experiment_work.value() == 0 || node.experiment_work.value() > 1'000'000'000'000LL)
             invalid("Research requires bounded positive staff-days and experiment work");
+        if (node.setback) {
+            const auto& risk = *node.setback;
+            (void)find(catalog.research, risk.safeguard);
+            label(risk.finding);
+            if (risk.safeguard == node.id || risk.failure_chance.value() == 0 ||
+                risk.retry_credit.value() == 0 || risk.retry_credit.value() > 2500)
+                invalid("A research setback needs another topic as a safeguard and a positive, bounded retry credit");
+        }
         visit(node, 0);
     }
     for (const auto& recipe : catalog.recipes) {
@@ -323,6 +331,25 @@ MilliCU insight_work(MilliCU work,BasisPoints credit) {
     const auto result=mul_div_floor(static_cast<std::uint64_t>(work.value()),static_cast<std::uint64_t>(10000-credit.value()),10000);
     return MilliCU{checked_add(static_cast<std::int64_t>(result.quotient),result.remainder>0?1:0)};
 }
+MilliCU research_work(const LabResearch& node, MilliCUPerDay rate, std::uint32_t staff,
+                      BasisPoints public_credit, BasisPoints retry_credit) {
+    const auto days = node.staff_days.value() / staff + (node.staff_days.value() % staff != 0 ? 1 : 0);
+    const auto staff_floor = integrate(rate, Days{days});
+    if (!node.setback)
+        return insight_work(std::max(node.experiment_work, staff_floor), public_credit);
+    return std::max(staff_floor, insight_work(node.experiment_work, std::max(public_credit, retry_credit)));
+}
+bool experiment_failed(const LabState& state, const CapacityState& capacity, const LabResearch& node,
+                       const CapacityProject& work, bool has_result) {
+    if (work.status != ProjectStatus::completed || !node.setback || has_result ||
+        knowledge_on(state, capacity, node.setback->safeguard, work.starts_on)) return false;
+    // One stable sample for the first settled result of this topic. Cancelled attempts
+    // and evaluations cannot change it. The stream origin is already saved.
+    std::uint64_t key = 14695981039346656037ULL;
+    for (const char byte : node.id) key = (key ^ static_cast<unsigned char>(byte)) * 1099511628211ULL;
+    SplitMix64 draw{state.research_stream_origin ^ key};
+    return draw.bounded(10'000) < static_cast<std::uint64_t>(node.setback->failure_chance.value());
+}
 }
 void start_research(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day,
                     std::string_view research_id, const LabAllocation& allocation, Cents protected_cash,Cents sponsored_fee) {
@@ -334,24 +361,24 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
         invalid("Research prerequisites are not complete");
     std::size_t attempt = 1;
     std::uint32_t completed_runs = 0;
+    bool has_failure = false;
     for (const auto& run : state.research) if (run.research_id == research_id) {
         const auto status = find(capacity.projects,run.project_id).status;
         if (status == ProjectStatus::active || status==ProjectStatus::paused) invalid("This research is already unfinished; resume or cancel its existing run");
-        if (status == ProjectStatus::completed) ++completed_runs;
+        if (run.completed) ++completed_runs;
+        has_failure = has_failure || run.failed;
         ++attempt;
     }
-    if (completed_runs>=node.repeat_limit) invalid("This research has completed its authored number of experiments");
+    if (completed_runs>=node.repeat_limit) invalid("This topic has reached its limit for successful research results");
     if (state.research.size() >= lab_record_limit) invalid("Research run record limit was reached");
     if (allocation.staff == 0) invalid("Research needs assigned staff");
-    const auto days = node.staff_days.value() / allocation.staff + (node.staff_days.value() % allocation.staff != 0 ? 1 : 0);
-    // The experiment budget covers both knowledge work and the authored minimum
-    // experiment. Outages delay the same experiment, never grant free research.
     const auto credit=insight_on(state,research_id,day);
-    const auto work = insight_work(std::max(node.experiment_work, integrate(allocation.daily_compute, Days{days})),credit);
+    const auto retry_credit = node.setback && has_failure && completed_runs == 0 ? node.setback->retry_credit : BasisPoints{0};
+    const auto work = research_work(node, allocation.daily_compute, allocation.staff, credit, retry_credit);
     auto row = project("lab/research/" + node.id + "/" + std::to_string(attempt), ProjectKind::research, day, allocation, work);
     reserve_project(capacity, day, row);
     charge(accounts, day, checked_unit_subtract(node.cash,sponsored_fee), protected_cash, row.id);
-    state.research.push_back({node.id, row.id, false,credit,sponsored_fee});
+    state.research.push_back({node.id, row.id, false,credit,sponsored_fee,false,retry_credit});
 }
 void publish_research(LabState& state,const CapacityState& capacity,OrdinalDay day,std::string_view id) {
     require_day(state,day);
@@ -427,8 +454,16 @@ void close_lab_day(LabState& state, const CapacityState& capacity, OrdinalDay da
     require_day(state, day);
     if (capacity.closed_through != day) invalid("Lab outcomes require settled actual capacity work");
     close_synthetic_data(state,capacity,day);
-    for (auto& run : state.research)
-        run.completed = find(capacity.projects, run.project_id).status == ProjectStatus::completed;
+    for (auto& run : state.research) if (!run.completed && !run.failed) {
+        const auto& work = find(capacity.projects, run.project_id);
+        if (work.status != ProjectStatus::completed) continue;
+        const auto& node = find(state.catalog.research, run.research_id);
+        const bool has_result = node.setback && std::ranges::any_of(state.research, [&](const auto& prior) {
+            return prior.research_id == node.id && (prior.completed || prior.failed);
+        });
+        run.failed = experiment_failed(state, capacity, node, work, has_result);
+        run.completed = !run.failed;
+    }
     for (auto& model : state.models) if (!model.project_id.empty()) {
         model.consumed_work = checked_unit_add(model.inherited_work, find(capacity.projects, model.project_id).completed_work);
         model.capability = model_capability(state.catalog,model,state.generated,state.acquisitions);
@@ -459,7 +494,12 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         if (!publication_ids.insert(row.research_id).second || row.day>today || !knowledge_on(state,capacity,row.research_id,row.day)) invalid("Publication lacks a unique actual completed result");
     identities(state.models, lab_record_limit); identities(state.evaluations, lab_record_limit);
     std::set<std::string_view> licenses, projects, prior_models;
-    std::map<std::string_view, std::size_t> attempts, completed_runs;
+    struct TopicHistory {
+        std::size_t attempts = 0, successes = 0;
+        bool failed = false;
+        const CapacityProject* latest = nullptr;
+    };
+    std::map<std::string_view, TopicHistory> history;
     const auto payment = [&](std::string_view key, Cents cash, OrdinalDay day) {
         if (deep && cash.value() > 0 && std::none_of(accounts.postings.begin(), accounts.postings.end(), [&](const auto& posting) {
             return posting.key == key && posting.day == day && posting.credit == Account::cash &&
@@ -476,34 +516,31 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
     for (const auto& run : state.research) {
         const auto& node = find(state.catalog.research, run.research_id);
         const auto& work = find(capacity.projects, run.project_id);
-        const auto attempt = ++attempts[node.id];
-        auto& prior_completions = completed_runs[node.id];
-        if (prior_completions>=node.repeat_limit) invalid("Research exceeded its authored repetition limit");
-        if (run.completed) ++prior_completions;
+        auto& prior = history[node.id];
+        if (prior.successes >= node.repeat_limit) invalid("Research exceeded its authored repetition limit");
+        if (prior.latest && (!prior.latest->stopped_on || *prior.latest->stopped_on > work.starts_on ||
+            (prior.latest->status == ProjectStatus::completed && *prior.latest->stopped_on == work.starts_on)))
+            invalid("Research retry precedes the settled end of its previous attempt");
+        const auto attempt = ++prior.attempts;
         const auto credit=insight_on(state,node.id,work.starts_on);
-        const auto minimum=insight_work(std::max(node.experiment_work,integrate(work.requested,
-            Days{node.staff_days.value()/std::max(work.staff,1U)+(node.staff_days.value()%std::max(work.staff,1U)!=0?1:0)})),credit);
+        const auto retry = node.setback && prior.failed && prior.successes == 0 ? node.setback->retry_credit : BasisPoints{0};
+        const auto minimum = research_work(node, work.requested, std::max(work.staff, 1U), credit, retry);
+        const bool failed = experiment_failed(state, capacity, node, work, prior.failed || prior.successes != 0);
         if (!projects.insert(work.id).second || work.id != "lab/research/" + node.id + "/" + std::to_string(attempt) ||
-            work.kind != ProjectKind::research || work.staff == 0 || run.completed != (work.status == ProjectStatus::completed) ||
-            run.insight_credit!=credit || work.total_work<minimum || (credit.value()>0 && work.total_work!=minimum))
-            invalid("Research progress differs from its finite staff/experiment commitment");
+            work.kind != ProjectKind::research || work.staff == 0 || run.failed != failed ||
+            run.completed != (work.status == ProjectStatus::completed && !failed) ||
+            run.insight_credit != credit || run.retry_credit != retry || work.total_work < minimum ||
+            ((node.setback || credit.value()>0) && work.total_work != minimum))
+            invalid("Research progress or outcome differs from its settled work and accepted experiment terms");
+        prior.latest = &work;
+        prior.failed = prior.failed || run.failed;
+        if (run.completed) ++prior.successes;
         if (run.sponsored_fee.value()<0 || run.sponsored_fee>node.cash) invalid("Sponsored research exceeds the authored fee");
         const auto cash=checked_unit_subtract(node.cash,run.sponsored_fee);
         payment(work.id,cash,work.starts_on);
         if (deep && cash.value()==0 && run.sponsored_fee.value()>0 &&
             std::ranges::any_of(accounts.postings,[&](const auto& posting){return posting.key==work.id;}))
             invalid("A fully sponsored fee also has a cash posting");
-        if (attempt > 1) {
-            for (const auto& prior : state.research) {
-                if (&prior == &run) break;
-                if (prior.research_id == node.id) {
-                    const auto& previous = find(capacity.projects, prior.project_id);
-                    if (previous.status == ProjectStatus::active || previous.status==ProjectStatus::paused || !previous.stopped_on || *previous.stopped_on > work.starts_on ||
-                        (previous.status==ProjectStatus::completed && *previous.stopped_on==work.starts_on))
-                        invalid("Research retry precedes the settled end of its previous attempt");
-                }
-            }
-        }
         for (const auto& id : node.all_of) {
             if (!knowledge_on(state,capacity,id,work.starts_on))
                 invalid("Research began before its prerequisites completed");

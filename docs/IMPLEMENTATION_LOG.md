@@ -2146,3 +2146,29 @@ The optimized Mac build and 17 focused CTests passed across the initial
 run and the deployment fixture rerun. The Lab suite passed 189 checks.
 The affected deployment fixture now waits for actual training and evaluation
 completion within bounded time.
+
+### Research setbacks and retained evidence
+
+Efficient image features now has an authored 25% first-experiment setback
+chance. Reproducible tooling completed before the attempt prevents the
+setback. The saved research seed and topic determine the result when the
+first experiment settles. Cancellations leave spent work and fees on record
+and do not change that sample or the evaluation stream.
+
+Lab Research reports the dated finding and offers a paid corrected attempt.
+It applies the larger of the retained and public work credits, with the
+full staff-day floor. The failed run stays in the record after a successful
+retry. Successful results drive recipe, prerequisite, publication and
+milestone eligibility.
+
+The shared writer finalized **0.27.0-dev.1**, generation **27**, with seven
+scenarios and 21 exact prepared openings. Generation 26's original hash
+still verifies.
+
+The optimized Mac build and 17 focused CTests passed. The 208 Lab checks
+include the safeguarded result, deterministic setback, cancellation, paid
+retry, full staff floor, exact continuation, and refusal of forged outcomes
+and credits. The base event fixture records a milestone only after the
+successful correction. Offscreen keyboard checks at 100% and 200% text
+showed the pause notice and finding, started the paid retry, and reopened
+the exact saved state before and after success.

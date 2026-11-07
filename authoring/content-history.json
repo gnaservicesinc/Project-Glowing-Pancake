@@ -106419,6 +106419,45 @@
         "prepared_headquarters": 21,
         "scenarios": 7
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "40ca2ed60bfb3fa1ff4e1c25239c04a4f1aae6319b68d7e88432b8278a586044",
+          "before_hash": "2dddb3ff1e1b43d594890909191af5edb174d981f49e7bda373ffafd5a316235",
+          "change": "changed",
+          "id": "research.efficient_image_features",
+          "kind": "research",
+          "old_revision": 2,
+          "revision": 3
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "2d0a8e69da43b1df198cebb06d3a525a1265397ead5d09b38258f5228426f098",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.27.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 27,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.26.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000026.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000027.collection.json",
+      "summary": "Add research setbacks, reproducible safeguards, and retained evidence for paid retries.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 21,
+        "lints": [],
+        "prepared_headquarters": 21,
+        "scenarios": 7
+      }
     }
   ],
   "format": 1

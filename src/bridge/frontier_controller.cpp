@@ -183,9 +183,13 @@ void FrontierController::updateRows(bool replace) {
             QStringList topics;
             for (const auto& id:program.plan.topics) topics<<readable(id);
             auto detail=budget_text(program.plan.budget);
-            for (const auto& run:program.decisions)
+            for (const auto& run:program.decisions) {
                 detail+=QStringLiteral("\n%1 · %2").arg(date(run.day),run.project.empty()?QStringLiteral("Topic already completed"):
                     QStringLiteral("Funded %1").arg(money(run.paid)));
+                if (!run.project.empty() && std::ranges::any_of(s.lab->research, [&](const auto& attempt) {
+                    return attempt.project_id == run.project && attempt.failed;
+                })) detail+=tr(" · Setback. This start used one approved attempt. Review retained evidence in Lab Research.");
+            }
             if (!program.waiting.empty()) detail+=QStringLiteral("\n")+text(program.waiting);
             const auto active=frontier_research_active(program);
             research.push_back({number(program.id),topics.join(QStringLiteral(" → ")),program.plan.standing?QStringLiteral("Standing track"):QStringLiteral("Research queue"),

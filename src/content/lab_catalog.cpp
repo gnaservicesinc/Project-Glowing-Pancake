@@ -124,10 +124,18 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
         const auto repeats = row.contains("repeat_limit") ? integer(row.at("repeat_limit")) : 1;
         if (repeats<1 || repeats>12) invalid("Research repetitions must be finite and within their bound");
         shape.erase("repeat_limit");
+        shape.erase("setback");
         fields(shape, {"id", "all_of", "any_of", "cash_cents", "staff_days", "experiment_milli_CU"});
-        catalog.research.push_back({text(row.at("id")), ids(row.at("all_of")), ids(row.at("any_of")),
+        core::LabResearch topic{text(row.at("id")), ids(row.at("all_of")), ids(row.at("any_of")),
             core::Cents{integer(row.at("cash_cents"))}, core::Days{integer(row.at("staff_days"))},
-            core::MilliCU{integer(row.at("experiment_milli_CU"))},static_cast<std::uint32_t>(repeats)});
+            core::MilliCU{integer(row.at("experiment_milli_CU"))},static_cast<std::uint32_t>(repeats)};
+        if (row.contains("setback")) {
+            const auto& risk = row.at("setback");
+            fields(risk, {"failure_bp", "retry_credit_bp", "safeguard", "finding"});
+            topic.setback = core::ResearchSetback{core::BasisPoints{integer(risk.at("failure_bp"))},
+                core::BasisPoints{integer(risk.at("retry_credit_bp"))}, text(risk.at("safeguard")), text(risk.at("finding"))};
+        }
+        catalog.research.push_back(std::move(topic));
     }
     for (const auto& row : doc.at("recipes")) {
         fields(row, {"id", "name", "requires_research", "baseline_bp", "gain_bp", "ceiling_bp", "fit_bp", "data_scale", "compute_scale_milli_CU",
@@ -191,6 +199,9 @@ std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
         research.push_back({{"id",row->id},{"all_of",row->all_of},{"any_of",row->any_of},
             {"cash_cents",row->cash.value()},{"staff_days",row->staff_days.value()},{"experiment_milli_CU",row->experiment_work.value()}});
         if (row->repeat_limit!=1) research.back()["repeat_limit"]=row->repeat_limit;
+        if (const auto& risk = row->setback)
+            research.back()["setback"] = {{"failure_bp",risk->failure_chance.value()},{"retry_credit_bp",risk->retry_credit.value()},
+                {"safeguard",risk->safeguard},{"finding",risk->finding}};
     }
     for (const auto* row : ordered(catalog.recipes)) recipes.push_back({{"id",row->id},{"name",row->name},{"requires_research",row->requires_research},
         {"baseline_bp",profile_json(row->baseline)},{"gain_bp",profile_json(row->gain)},{"ceiling_bp",profile_json(row->ceiling)},{"fit_bp",profile_json(row->fit)},
@@ -235,7 +246,7 @@ core::LabCatalog scenario_lab_catalog(const Collection& collection, const Scenar
         const auto* definition = collection.find(id);
         if (!definition || !std::holds_alternative<ResearchDefinition>(definition->data)) invalid("Scenario research reference is not a research node");
         const auto& node = std::get<ResearchDefinition>(definition->data);
-        result.research.push_back({id, node.all_of, node.any_of, node.cash, node.staff_days, node.work, node.repeat_limit});
+        result.research.push_back({id, node.all_of, node.any_of, node.cash, node.staff_days, node.work, node.repeat_limit, node.setback});
     }
     // Canonical order is also the saved catalog comparison order.
     result = load_lab_catalog(canonical_lab_catalog(result));

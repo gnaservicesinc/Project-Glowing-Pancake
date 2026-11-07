@@ -135,8 +135,10 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
     }
     for (std::size_t i=0;i<profile.research.size();++i) {
         const auto& node=find(lab.catalog.research,profile.research[i]);
-        const bool in_progress=std::any_of(lab.research.begin(),lab.research.end(),[&](const auto& run){return run.research_id==node.id && find(s.capacity->projects,run.project_id).status!=ProjectStatus::cancelled;});
-        if (can_work && !in_progress && frontier_technology_block(s,FrontierTechnology::research,node.id,s.date).empty() &&
+        const bool committed=std::ranges::any_of(lab.research,[&](const auto& run) {
+            return run.research_id == node.id && !run.failed && find(s.capacity->projects,run.project_id).status != ProjectStatus::cancelled;
+        });
+        if (can_work && !committed && frontier_technology_block(s,FrontierTechnology::research,node.id,s.date).empty() &&
             requires_met(lab,node.all_of) && (node.any_of.empty() || std::any_of(node.any_of.begin(),node.any_of.end(),[&](const auto& id){return completed(lab,id);})) && affordable(node.cash))
             offer(1,"research",node.id,350-static_cast<std::int64_t>(i),StartResearch{node.id,allocation});
         if (profile.publish_results && completed(lab,node.id) && std::none_of(lab.publications.begin(),lab.publications.end(),[&](const auto& row){return row.research_id==node.id;}))

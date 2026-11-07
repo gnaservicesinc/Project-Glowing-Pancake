@@ -16,6 +16,12 @@ authored minimum experiment work and enough allocated experiment time for its
 staff-days. A cancelled research attempt can restart with a new paid attempt.
 Serving retains the capacity system's existing priority during shortages.
 
+An authored first-experiment setback can settle the work without granting the
+research result. The safeguard is checked against knowledge at the start.
+The seeded sample is independent of evaluation draws and cancelled attempts.
+A settled setback retains a finding and a bounded discount on the corrected
+experiment. The retry still pays its fee and meets its staff-day floor.
+
 Training implements the simulation specification's single-round effective-data
 and complementary saturation formula, in total milli-CU and basis points. A
 model stores actual accumulated work, the recipe and a sorted unique data
@@ -51,7 +57,8 @@ training bottleneck and measured interval.
 
 Saves retain all licenses/payments, research attempts, actual work, lineage,
 evidence and RNG. Strict loading reconciles the authored catalog, actual capacity,
-payments, prerequisite timing, model formula and every evaluation draw. Short
+payments, prerequisite timing, setback outcome and retry terms, model formula
+and every evaluation draw. Short
 two-axis profiles retain their encoding and archived content retains its
 identity. Normal save opening still requires the campaign's content generation.
 History/draw replay is confined to load/save validation, not daily advancement.

@@ -1,9 +1,9 @@
 # Implementation backlog
 
 Baseline 1.2 with 2026-11-04 event clarification · **Initial feature implementation active**.
-The latest batch adds staff workload and recovery. Research setbacks and
-retained learning are next. The original acceptance checklist remains
-**42 of 52** with ten later gates. The coverage pass has delivered 22
+The latest batch adds research setbacks and retained learning. Hiring lead
+times and onboarding are next. The original acceptance checklist remains
+**42 of 52** with ten later gates. The coverage pass has delivered 23
 additional feature batches within the earlier milestones.
 See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Feature dependencies are satisfied by implemented Mac behavior and focused checks. Native platform, packaging and device qualification stay deferred to release work under the user’s current instruction. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
 
@@ -85,9 +85,12 @@ Lab progress and serving attempts. Pausing projects or adding staff creates
 headroom. Low-load days restore output gradually. Saves replay strain from
 actual work assignments and staffing dates.
 
-**Next initial feature:** research setbacks and retained learning. Tie failed
-experiment outcomes to authored conditions and settled work. Preserve a
-bounded, visible credit toward a paid retry.
+Lab Research records a first-experiment setback from authored terms, actual
+settled work, and the safeguard known when work starts. Failed experiments
+retain a dated finding and a bounded work credit for a paid corrected retry.
+
+**Hiring lead times and onboarding are next.** Quote a dated
+specialist start and show its effect on available staff and operating costs.
 
 ## M0 — Toolchain and platform proof
 

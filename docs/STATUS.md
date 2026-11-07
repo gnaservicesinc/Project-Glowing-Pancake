@@ -4,12 +4,12 @@ Updated 2026-11-07 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**Initial feature coverage is active.** Office now reports staffing pressure,
-staffed output, and recovery. Research setbacks and retained learning are next.
+**Initial feature coverage is active.** Lab research now records setbacks and
+retains evidence for paid retries. Hiring lead times and onboarding are next.
 
 The original roadmap has **42 of 52 acceptance steps checked**. Its ten open
 steps are deferred human, balance, platform and release gates; they do not
-block current implementation. The coverage pass below has delivered 22
+block current implementation. The coverage pass below has delivered 23
 additional feature batches within earlier milestones. That batch count is
 separate from the 52 acceptance steps and does not imply complete design
 coverage. Completed milestones include
@@ -760,9 +760,17 @@ replays strain from actual assignments and dated headcount. Content
 **0.26.0-dev.1**, generation **26**, verifies all seven scenarios and 21 exact
 prepared openings.
 
-**Next initial feature:** research setbacks and retained learning. Add
-authored experiment failure conditions, explain the observed outcome, and
-let completed failed work reduce a bounded share of later retry work.
+Lab Research now distinguishes settled experiments from successful knowledge.
+Efficient image features can return an inconclusive comparison unless
+reproducible tooling was completed before the start. The failed result retains
+its date, work and finding. A paid corrected attempt reuses up to 25% of the
+experiment budget and still needs the full staff commitment. Only successful
+research unlocks recipes or publication. Content **0.27.0-dev.1**, generation
+**27**, verifies all seven scenarios and 21 exact prepared openings.
+
+**Hiring lead times and onboarding are next.** Show when an
+accepted specialist becomes available and model their initial contribution
+through the existing staff pool and dated commitments.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

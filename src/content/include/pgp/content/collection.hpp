@@ -207,6 +207,7 @@ struct ResearchDefinition {
     pgp::core::Days staff_days;
     pgp::core::MilliCU work;
     std::uint32_t repeat_limit = 1;
+    std::optional<core::ResearchSetback> setback{};
 };
 struct DealDefinition { pgp::core::Cents minimum_payment; pgp::core::Days minimum_duration; };
 using DefinitionData = std::variant<ScenarioDefinition, ResearchDefinition, FlowDefinition, DealDefinition,

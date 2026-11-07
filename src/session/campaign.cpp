@@ -94,11 +94,18 @@ OperationResult Campaign::operate(
          after.world.simulation.liquidity->status == core::LiquidityStatus::closed);
     std::optional<std::string> pause_notice;
     if (after.world.simulation.date!=prior_day && after.world.simulation.capacity) {
+        const auto& lab = after.world.simulation.lab;
         for (const auto& work:after.world.simulation.capacity->projects) {
             if (work.status!=core::ProjectStatus::completed || work.stopped_on!=prior_day) continue;
             if ((work.kind==core::ProjectKind::evaluation && settings_.auto_pause_evaluations) ||
                 (work.kind!=core::ProjectKind::evaluation && work.kind!=core::ProjectKind::serving && settings_.auto_pause_projects)) {
-                pause_notice="Auto-paused: "+work.cause+" completed. Its actual work and costs are retained.";break;
+                if (lab && work.kind == core::ProjectKind::research && std::ranges::any_of(lab->research, [&](const auto& run) {
+                    return run.project_id == work.id && run.failed;
+                })) {
+                    pause_notice="Auto-paused for a research setback. Review the finding and retry terms in Lab → Research.";
+                    break;
+                }
+                if (!pause_notice) pause_notice="Auto-paused: "+work.cause+" completed. Its actual work and costs are retained.";
             }
         }
     }

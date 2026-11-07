@@ -215,7 +215,10 @@ void demand_paths(const Json& source) {
     check(quiet.current_state().world.simulation.market->demand_changes.empty() && quiet.current_state().runtime.presentations.empty(),"No-event world condition changed demand or published news");
 }
 void research_and_finance(const Json& source) {
-    auto research=begin(compile(isolated(source,"slice.research_milestone")));
+    auto milestone=isolated(source,"slice.research_milestone");
+    // Isolate same-day dispatch of four successful results from Lab setback rules.
+    pgp_test::definition(milestone,"research.efficient_image_features").erase("setback");
+    auto research=begin(compile(milestone));
     for (const auto id:{"research.efficient_image_features","research.data_deduplication","research.held_out_evaluation","research.reproducible_tooling"})
         apply(research,core::StartResearch{id,{"lease.initial",core::MilliCUPerDay{10000},1}});
     step(research,6);
@@ -223,6 +226,13 @@ void research_and_finance(const Json& source) {
     check(research.current_state().world.simulation.lab->research.size()==4,"Research news granted duplicate knowledge");
     const auto research_saved=research.checkpoint(); accepted(research.prepare_opening(revision(research)));
     check(research.checkpoint()==research_saved,"Repeating a research bulletin granted or dispatched work twice");
+    const auto risky=isolated(source,"slice.research_milestone");
+    auto correction=begin(compile(risky));
+    const core::StartResearch image{"research.efficient_image_features",{"lease.initial",core::MilliCUPerDay{10000},3}};
+    apply(correction,image); step(correction,6);
+    check(occurrences(correction.checkpoint(),"slice.research_milestone")==0,"A setback announced a research breakthrough");
+    apply(correction,image); step(correction,5);
+    check(occurrences(correction.checkpoint(),"slice.research_milestone")==1,"A corrected experiment did not announce its successful result");
     auto doc=isolated(source,"slice.liquidity_warning");
     pgp_test::scenario_doc(doc)["cash_cents"]=100000;
     pgp_test::scenario_doc(doc).erase("backgrounds");

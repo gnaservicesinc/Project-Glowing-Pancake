@@ -207,6 +207,15 @@ A research definition contains prerequisites (`all_of`, `any_of`), field, requir
 
 Initial six nodes: efficient image features; sequence modeling; data deduplication; held-out evaluation; efficient serving; reproducible experiment tooling. Later groups introduce attention-based architectures, multimodality, preference adaptation, tool use, retrieval, verification, mechanistic analysis, robust deployment, advanced hardware/software co-design, and speculative broad research systems. Nodes create capabilities and constraints for recipes/products. The content team expands the graph only after the slice loop works.
 
+A topic can specify a first-experiment setback, a safeguard topic,
+a finding and a retry credit. The outcome resolves when actual work settles,
+using a deterministic sample keyed by the original research seed and topic
+ID. Only safeguards completed before the attempt count. Cancelling leaves the
+topic's first result unresolved. After a setback the next settled experiment succeeds
+with a bounded compute credit. The larger of the public and retained
+credits applies, subject to the full staff-day floor. A failed result
+cannot satisfy a prerequisite or support publication.
+
 ## 6. Organization and opponents
 
 Teams have skill capacity, salaries, hiring pipeline, workload, morale, and knowledge retention. Effective staff-days are available people-days times task fit and a bounded morale/coordination factor. Adding people has onboarding and coordination costs. Burnout accumulates with sustained workload and recovers through time and working conditions; bonuses alone do not erase it instantly.

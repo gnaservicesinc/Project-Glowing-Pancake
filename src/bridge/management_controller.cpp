@@ -470,16 +470,18 @@ core::PricingBounds pricing_bounds(const QString& floor,const QString& ceiling,c
 }
 QString research_status(const core::LabState& lab,const core::CapacityState& capacity,const core::LabResearch& topic) {
     std::uint32_t completed=0;
-    bool stopped=false;
+    bool stopped=false, failed=false;
     for (const auto& run:lab.research) if (run.research_id==topic.id) {
         if (run.completed) {++completed;continue;}
         const auto* p=find(capacity.projects,run.project_id);
         if (p && p->status==core::ProjectStatus::active) return QStringLiteral("In progress");
         if (p && p->status==core::ProjectStatus::paused) return QStringLiteral("Paused");
+        failed=failed || run.failed;
         stopped=true;
     }
     if (completed>=topic.repeat_limit) return QStringLiteral("Completed");
     if (completed>0) return QStringLiteral("Repeat available · %1 of %2 complete").arg(completed).arg(topic.repeat_limit);
+    if (failed) return QStringLiteral("Setback · paid retry available");
     return stopped?QStringLiteral("Stopped; retry available"):QStringLiteral("Available to research");
 }
 QString offer_terms(const core::BusinessOffer& offer) {
@@ -621,7 +623,26 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             research.push_back({text(row.id),title_for(row.id),money(cash_fee)+QStringLiteral(" · ")+QString::number(row.staff_days.value())+QStringLiteral(" staff-days"),
                 QStringLiteral("%1 CU of finite experiments plus %2 staff-days. Both must complete.\nPrerequisites: %3\nPaid work and staff time are not refunded when stopped.")
                     .arg(cu(row.experiment_work.value()),QString::number(row.staff_days.value()),prerequisites.isEmpty()?QStringLiteral("none"):prerequisites.join(QStringLiteral(", "))),status,
-                status!=QStringLiteral("Completed") && status!=QStringLiteral("In progress"),{{QStringLiteral("completed"),completed},{QStringLiteral("published"),published},{QStringLiteral("canAdopt"),can_adopt}}});
+                status!=QStringLiteral("Completed") && status!=QStringLiteral("In progress") && status!=QStringLiteral("Paused"),
+                {{QStringLiteral("completed"),completed},{QStringLiteral("published"),published},{QStringLiteral("canAdopt"),can_adopt}}});
+            if (const auto& risk = row.setback) {
+                const auto failed = std::ranges::find_if(report.research, [&](const auto& run) {return run.research_id == row.id && run.failed;});
+                const auto safeguard = std::ranges::any_of(report.research, [&](const auto& run) {return run.research_id == risk->safeguard && run.completed;});
+                if (failed != report.research.end()) {
+                    const auto* work = find(s.capacity->projects, failed->project_id);
+                    research.back().fields[QStringLiteral("canRetry")] = !completed;
+                    research.back().detail += tr("\n\nSetback on %1 after %2 CU of settled work. %3")
+                        .arg(text(core::iso_date(*work->stopped_on)),cu(work->completed_work.value()),text(risk->finding));
+                    if (!completed) research.back().detail += tr("\nThe next completed attempt resolves this issue. Retained evidence reduces experiment work by up to %1. Staff-days still apply. The fee above applies to a new attempt.")
+                        .arg(percent(risk->retry_credit));
+                } else if (!completed) {
+                    research.back().detail += tr("\n\nThe first experiment has a %1 setback chance unless %2 is complete before the start. %3")
+                        .arg(percent(risk->failure_chance),title_for(risk->safeguard),
+                            safeguard ? tr("Safeguard ready for a new attempt.") : tr("Safeguard pending."));
+                }
+                if (has_insight && failed != report.research.end())
+                    research.back().detail += tr("\nOnly the larger experiment credit applies.");
+            }
             if (cash_fee<row.cash) research.back().detail+=tr("\nGross fee %1. The grant pays %2 and the company pays %3 if this research starts today.")
                 .arg(money(row.cash),money(core::checked_unit_subtract(row.cash,cash_fee)),money(cash_fee));
             if (const auto description=program.collection.messages.find(row.id+".detail"); description!=program.collection.messages.end())

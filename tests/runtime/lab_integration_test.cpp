@@ -626,6 +626,75 @@ void staff_health(const Json& source) {
     malformed_save(program,std::move(forged));
 }
 
+void research_setbacks(const runtime::CompiledProgram& program) {
+    using namespace core;
+    constexpr auto topic = "research.efficient_image_features";
+    constexpr auto safeguard = "research.reproducible_tooling";
+    const LabAllocation allocation{"lease.initial",MilliCUPerDay{10000},3};
+    auto game = engine(program);
+    auto safe = game;
+    auto uncancelled = game;
+    const auto random = game.checkpoint().world.simulation.random;
+    const auto cash = [](const auto& active) {return active.checkpoint().world.simulation.cash;};
+    const auto work = [](const auto& active) -> const CapacityProject& {
+        const auto& state = active.checkpoint().world.simulation;
+        return *std::ranges::find(state.capacity->projects,lab(active).research.back().project_id,&CapacityProject::id);
+    };
+    apply(game,StartResearch{topic,allocation});
+    days(game,1);
+    apply(game,CancelProject{work(game).id});
+    check(!lab(game).research.back().failed && !lab(game).research.back().completed &&
+        work(game).completed_work == MilliCU{10000}, "Cancellation resolved an outcome or erased actual work");
+    apply(game,StartResearch{topic,allocation});
+    check(lab(game).research.back().retry_credit == BasisPoints{0} && work(game).total_work == MilliCU{60000},
+        "Cancellation gave a free credit");
+    refuse(game,StartResearch{topic,allocation});
+    days(game,5);
+    runtime::Runtime reopened{program,persistence::decode_save(program,persistence::encode_save(program,game.checkpoint())).checkpoint};
+    days(game,1); days(reopened,1);
+    check(game.checkpoint() == reopened.checkpoint() && work(game).status == ProjectStatus::completed &&
+        lab(game).research.back().failed && !lab(game).research.back().completed,
+        "A settled setback must preserve actual work without creating knowledge, including after reload");
+    check(game.checkpoint().world.simulation.random == random, "Experiment outcomes consumed another stream's draw");
+    apply(uncancelled,StartResearch{topic,allocation}); days(uncancelled,6);
+    check(lab(uncancelled).research.back().failed, "Cancelling an attempt changed the seeded outcome");
+    refuse(game,PublishResearch{topic});
+    apply(game,BuyData{"data.open_documents"});
+    auto image = training("image",{"data.open_documents"});
+    image.recipe_id = "recipe.image_features";
+    refuse(game,StartTraining{image});
+    const auto before_retry = cash(game);
+    apply(game,StartResearch{topic,{"lease.initial",MilliCUPerDay{10000},1}});
+    check(cash(game) == checked_unit_subtract(before_retry,Cents{50000}) &&
+        lab(game).research.back().retry_credit == BasisPoints{2500} && work(game).total_work == MilliCU{60000},
+        "A retry must pay the fee and meet the staff floor even when evidence reduces the experiment budget");
+    apply(game,CancelProject{work(game).id});
+    apply(game,StartResearch{topic,allocation});
+    check(work(game).total_work == MilliCU{45000} && lab(game).research.back().retry_credit == BasisPoints{2500},
+        "Retained evidence did not shorten eligible work or grew through cancellation");
+    const auto retry_save = persistence::encode_save(program,game.checkpoint());
+    runtime::Runtime retry{program,persistence::decode_save(program,retry_save).checkpoint};
+    days(game,5); days(retry,5);
+    check(game.checkpoint() == retry.checkpoint() && lab(game).research.back().completed &&
+        !lab(game).research.back().failed, "Paid corrected retry did not produce an exact saved unlock");
+    apply(game,PublishResearch{topic});
+    apply(game,StartTraining{image});
+    refuse(game,StartResearch{topic,allocation});
+
+    apply(safe,StartResearch{safeguard,allocation}); days(safe,6);
+    apply(safe,StartResearch{topic,allocation}); days(safe,6);
+    check(lab(safe).research.back().completed && !lab(safe).research.back().failed,
+        "Completed safeguard did not prevent the first setback");
+    auto forged=Json::parse(retry_save);
+    auto& saved_runs=forged["checkpoint"]["world"]["simulation"]["lab"]["research"];
+    saved_runs[1].erase("failed");
+    saved_runs[1]["completed"]=true;
+    malformed_save(program,forged);
+    forged=Json::parse(retry_save);
+    forged["checkpoint"]["world"]["simulation"]["lab"]["research"].back()["retry_credit"]=1500;
+    malformed_save(program,std::move(forged));
+}
+
 }
 int main() {
     try {
@@ -636,6 +705,7 @@ int main() {
         synthetic_data(program);
         acquired_data(program);
         staff_health(source);
+        research_setbacks(program);
         std::cout << checks << " lab content, resource, lineage, evidence and reload checks passed\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

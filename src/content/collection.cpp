@@ -1117,16 +1117,27 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
     return result;
 }
 ResearchDefinition research(const Json& value, const std::string& path) {
-    fields(value, path, {"id", "kind", "revision", "prerequisites", "cash_cents", "staff_days", "work_milli_CU", "repeat_limit"},
+    fields(value, path, {"id", "kind", "revision", "prerequisites", "cash_cents", "staff_days", "work_milli_CU", "repeat_limit", "setback"},
            {"id", "kind", "revision", "prerequisites", "cash_cents", "staff_days", "work_milli_CU"});
     const auto& prerequisites = value.at("prerequisites");
     fields(prerequisites, child(path, "prerequisites"), {"all_of", "any_of"}, {"all_of", "any_of"});
-    return {identifiers(prerequisites.at("all_of"), child(path, "prerequisites/all_of")),
+    ResearchDefinition result{identifiers(prerequisites.at("all_of"), child(path, "prerequisites/all_of")),
             identifiers(prerequisites.at("any_of"), child(path, "prerequisites/any_of")),
             pgp::core::Cents{integer(value.at("cash_cents"), child(path, "cash_cents"))},
             pgp::core::Days{integer(value.at("staff_days"), child(path, "staff_days"))},
             pgp::core::MilliCU{integer(value.at("work_milli_CU"), child(path, "work_milli_CU"))},
             value.contains("repeat_limit") ? positive(value.at("repeat_limit"),child(path,"repeat_limit"),12) : 1};
+    if (value.contains("setback")) {
+        const auto& risk = value.at("setback");
+        const auto p = child(path, "setback");
+        fields(risk, p, {"failure_bp", "retry_credit_bp", "safeguard", "finding"},
+            {"failure_bp", "retry_credit_bp", "safeguard", "finding"});
+        result.setback = core::ResearchSetback{
+            core::BasisPoints{integer(risk.at("failure_bp"), child(p, "failure_bp"), 1, 10'000)},
+            core::BasisPoints{integer(risk.at("retry_credit_bp"), child(p, "retry_credit_bp"), 1, 2500)},
+            id(risk.at("safeguard"), child(p, "safeguard")), text(risk.at("finding"), child(p, "finding"), 256)};
+    }
+    return result;
 }
 
 void validate_references(const Collection& collection, const Registry& registry) {
@@ -1301,6 +1312,11 @@ void validate_references(const Collection& collection, const Registry& registry)
             links = research_definition->all_of;
             links.insert(links.end(), research_definition->any_of.begin(), research_definition->any_of.end());
             for (const auto& target : links) (void)reference(target, "research", path);
+            if (research_definition->setback) {
+                const auto& safeguard = research_definition->setback->safeguard;
+                if (safeguard == name) fail("research_setback", path, "Choose another research topic as a safeguard");
+                (void)reference(safeguard, "research", child(path, "setback/safeguard"));
+            }
         } else if (const auto* flow_definition = std::get_if<FlowDefinition>(&definition.data)) {
             auto& links = subflow_edges[name];
             std::set<std::string_view> read_only;

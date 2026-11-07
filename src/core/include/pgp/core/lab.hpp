@@ -38,6 +38,11 @@ struct DataOffer {
     bool open_weight_release = false;
     auto operator<=>(const DataOffer&) const = default;
 };
+struct ResearchSetback {
+    BasisPoints failure_chance{0}, retry_credit{0};
+    std::string safeguard, finding;
+    auto operator<=>(const ResearchSetback&) const = default;
+};
 struct LabResearch {
     std::string id;
     std::vector<std::string> all_of, any_of;
@@ -45,6 +50,7 @@ struct LabResearch {
     Days staff_days{0};
     MilliCU experiment_work{0};
     std::uint32_t repeat_limit = 1;
+    std::optional<ResearchSetback> setback{};
     auto operator<=>(const LabResearch&) const = default;
 };
 struct TrainingRecipe {
@@ -114,6 +120,8 @@ struct ResearchRun {
     bool completed = false;
     BasisPoints insight_credit{0};
     Cents sponsored_fee{0};
+    bool failed = false;
+    BasisPoints retry_credit{0};
     auto operator<=>(const ResearchRun&) const = default;
 };
 struct ResearchPublication {

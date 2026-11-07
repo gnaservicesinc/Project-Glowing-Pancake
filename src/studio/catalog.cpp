@@ -62,6 +62,7 @@ std::string reference_family(std::string_view key,std::string_view path,std::str
         if(key=="segment") return "segment";
     }
     if(kind=="frontier_research" && (key=="refresh_research" || key=="research")) return "research";
+    if(array=="setback" && key=="safeguard") return "research";
     if(array=="flows") return "flow";
     if(array=="research" || array=="requires_research" || array=="all_of" || array=="any_of" || key=="publication_node" || key=="publication_research") return "research";
     if(array=="recipes" || key=="recipe_id" || key=="required_recipe") return "recipe";

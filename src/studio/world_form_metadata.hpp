@@ -72,7 +72,10 @@ inline std::string help(std::string_view path) {
     if(key=="branches_after_day") return "Ordinal day since 2014-01-01 when the conditional era starts. Technology still depends on seeded conditions and research.";
     if(key=="asi_route") return "Every seeded path needs a feasible game ASI recipe, evidence and replication route when selected.";
     if(key=="refresh_review_age_days") return "Maximum age of a completed deployment methods experiment at refresh start and rollout.";
-    if(key=="repeat_limit") return "Maximum completed finite experiments for this topic. Each repeat needs actual funding, staff and work.";
+    if(key=="repeat_limit") return "Maximum successful results for this topic. Each attempt needs actual funding, staff and work.";
+    if(key=="failure_bp") return "Setback chance for a first settled result if the safeguard was missing at the start.";
+    if(key=="retry_credit_bp") return "Reusable experiment work after a settled setback. Staff-days still apply.";
+    if(key=="safeguard") return "Optional research result that prevents this setback when completed before the attempt starts.";
     if(key=="founder_birth_year" || key=="first_birth_year") return "Calendar birth year used for the charter's finite careers. Later cohorts are distinct people with separate identities.";
     if(key=="founder_board") return "The founder's existing board rights. The charter changes their personal chair and trust representation after succession.";
     if(key=="maximum_term_years" || key=="executive_retirement_age" || key=="chair_retirement_age") return "Career limit in calendar years. Planning notices precede the actual deadline and the caretaker charter preserves company obligations.";
@@ -99,7 +102,7 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
     if(key=="society") definition_kind="regional_society";
     if(key=="authority") definition_kind="institutional_authority";
     if(key=="frontier") definition_kind="frontier_research";
-    if(key=="refresh_research" || (key=="research" && path.find("/catalog/experiments/")!=path.npos)) definition_kind="research";
+    if(key=="refresh_research" || key=="safeguard" || (key=="research" && path.find("/catalog/experiments/")!=path.npos)) definition_kind="research";
     if(array_key=="flows") definition_kind="flow";
     if(parent.find("/prerequisites/")!=std::string_view::npos) definition_kind="research";
     if(array_key=="headquarters_choices") {add("US-CA","California");add("US-TX","Texas");add("US-WA","Washington");}

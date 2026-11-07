@@ -280,13 +280,14 @@ ColumnLayout {
             text: manager.researchTopics.filterText
             onTextEdited: manager.researchTopics.filterText = text
         }
-        Selection { heading: qsTr("Research topics"); rows: manager.researchTopics }
+        Selection { objectName: "researchTopicSelection"; heading: qsTr("Research topics"); rows: manager.researchTopics }
         Choice { id: researchSource; objectName: "researchSourceChoice"; label: qsTr("Research compute source"); options: manager.sources }
         Field { id: researchRate; objectName: "researchRateField"; label: qsTr("Research CU per day"); value: manager.recommended.testingRate || "" }
         Field { id: researchStaff; objectName: "researchStaffField"; label: qsTr("Research staff"); value: manager.recommended.researchStaff || "" }
         Action {
             objectName: "startResearchButton"
-            text: qsTr("Pay and start research")
+            text: (manager.researchTopics.selectedRow.fields || {}).canRetry === true
+                  ? qsTr("Pay and retry research") : qsTr("Pay and start research")
             enabled: panel.editable && manager.researchTopics.selectedRow.actionable === true
             onClicked: manager.research(manager.researchTopics.selectedId, researchSource.value, researchRate.value, researchStaff.value)
         }

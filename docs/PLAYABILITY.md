@@ -116,6 +116,12 @@ be restored from Settings. Project cancellation keeps consumed work and costs;
 a dependent customer contract must be cancelled before stopping its service.
 Service replacement keeps prior delivery/invoices and current promises.
 
+Efficient image features can encounter a first-experiment setback. Complete
+reproducible experiment tooling before starting to prevent it. After a
+setback, **Lab → Research** shows the dated finding and offers a paid retry.
+Retained evidence saves up to 25% of the experiment compute. Staff-days
+still apply. A successful result unlocks the image-feature recipe.
+
 In the full-roster presets, competitors pay real staff, data, compute and service costs, compete for one customer pool and can close. They see public releases/prices and bounded estimates. **Lab → Research** can publish completed work or adopt a genuine paper after 30 days for one 25% experiment-work credit; prerequisites and cash costs still apply. **Lab → Deploy** exposes the selected service price in constant-2014 cents. A new price preserves past invoices and signed contract prices. **Office → Rivals** shows actual public activity and released quotes.
 
 Office → **Rivals** also explains heavyweight response pressure from public
