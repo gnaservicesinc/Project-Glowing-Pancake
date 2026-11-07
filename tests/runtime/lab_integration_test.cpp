@@ -547,6 +547,85 @@ void acquired_data(const runtime::CompiledProgram& program) {
     malformed_save(program,std::move(forged));
 }
 
+runtime::CompiledProgram workload_fixture(Json source) {
+    auto& scenario=pgp_test::scenario_doc(source);
+    scenario["management"]["staff_workload"]={{"high_load_bp",9500},{"recovery_load_bp",7500},
+        {"daily_strain_bp",2500},{"daily_recovery_bp",1500},{"strain_tolerance_bp",0},{"maximum_output_loss_bp",4000}};
+    for(auto& offer:scenario["business_offers"])
+        if(offer["id"]=="offer.enterprise_service") offer["tasks_per_day"]=1800;
+    return compile(std::move(source));
+}
+runtime::Runtime workload_game(const runtime::CompiledProgram& program) {
+    using namespace core;
+    auto game=engine(program);
+    apply(game,BuyData{"data.licensed_documents"});
+    const LabAllocation assessment{"lease.initial",MilliCUPerDay{20000},2};
+    apply(game,StartResearch{"research.held_out_evaluation",assessment});
+    days(game,3);
+    apply(game,StartTraining{training("workload_teacher")});
+    days(game,60);
+    apply(game,StartEvaluation{"workload_holdout","workload_teacher","evaluation.held_out",assessment});
+    days(game,3);
+    apply(game,DeployModel{"product.documents","workload_teacher","workload_holdout","lease.initial",false});
+    apply(game,AcceptBusinessOffer{"offer.enterprise_service"});
+    auto student=training("workload_student");
+    student.staff=5;
+    apply(game,StartTraining{student});
+    return game;
+}
+void staff_health(const Json& source) {
+    using namespace core;
+    const auto program=workload_fixture(source);
+    auto game=workload_game(program);
+    const auto state=[&]() -> const SimulationState& {return game.current_state().world.simulation;};
+    const auto capacity=[&]() -> const CapacityState& {return *state().capacity;};
+    const std::string student="lab/train/workload_student";
+    const auto work=[&]() -> const CapacityProject& {
+        return *std::ranges::find(capacity().projects,student,&CapacityProject::id);
+    };
+    const auto contract=[&]() -> const ContractDayResult& {return state().market->days.back().contracts.front();};
+    check(capacity().workload && capacity().workload->strain==BasisPoints{0} &&
+        capacity_report(capacity()).assigned_staff==6,
+        "Rested staff began with strain or an uncommitted full allocation");
+    days(game,1);
+    check(work().completed_work==MilliCU{60000} && capacity().workload->strain==BasisPoints{2500} &&
+        contract().delivered_tasks==1800 && staff_output_factor(capacity())==BasisPoints{9000},
+        "Settled load should affect the following day, not work already recorded");
+    days(game,1);
+    check(work().completed_work==MilliCU{114000} && contract().delivered_tasks==1800,
+        "Staff output reduced promised priority before discretionary tasks");
+    days(game,1);
+    check(work().completed_work==MilliCU{162000} && capacity().workload->strain==BasisPoints{7500} &&
+        contract().promised_tasks==1800 && contract().delivered_tasks==1600 && contract().service_credit.value()>0 &&
+        capacity_report(capacity()).assigned_staff==6,
+        "Sustained strain did not reduce actual project work and create the ordinary signed service credit");
+    const auto encoded=persistence::encode_save(program,game.checkpoint());
+    auto loaded=persistence::decode_save(program,encoded);
+    check(loaded.checkpoint==game.checkpoint(),"Staff strain and actual work did not reopen exactly");
+    runtime::Runtime resumed{program,std::move(loaded.checkpoint)};
+    auto hired=game;
+    apply(hired,HireSpecialist{"specialist.evaluation"});
+    days(hired,1);
+    check(hired.current_state().world.simulation.capacity->workload->strain==BasisPoints{7500},
+        "An added hire erased existing strain or made a neutral workload worsen");
+    for(auto* current:{&game,&resumed}) {
+        apply(*current,PauseProject{student});
+        days(*current,5);
+    }
+    check(game.checkpoint()==resumed.checkpoint() && capacity().workload->strain==BasisPoints{0} &&
+        staff_output_factor(capacity())==BasisPoints{10000} && work().completed_work==MilliCU{162000},
+        "Low staffing load must restore output gradually while paused work stays fixed");
+    apply(game,HireSpecialist{"specialist.evaluation"});
+    apply(game,ResumeProject{student});
+    days(game,1);
+    check(work().completed_work==MilliCU{222000} && capacity().workload->strain==BasisPoints{0} &&
+        contract().delivered_tasks==1800 && contract().service_credit==Cents{0},
+        "Recovered staff could not maintain normal production with added headroom");
+    auto forged=Json::parse(encoded);
+    forged["checkpoint"]["world"]["simulation"]["capacity"]["workload"]["strain_bp"]=0;
+    malformed_save(program,std::move(forged));
+}
+
 }
 int main() {
     try {
@@ -556,6 +635,7 @@ int main() {
         specialist_services(program);
         synthetic_data(program);
         acquired_data(program);
+        staff_health(source);
         std::cout << checks << " lab content, resource, lineage, evidence and reload checks passed\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

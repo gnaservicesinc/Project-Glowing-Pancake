@@ -39,6 +39,7 @@ class ManagementController final : public QObject {
     Q_PROPERTY(QVariantList synthesisRecipes READ synthesisRecipes NOTIFY changed)
     Q_PROPERTY(QVariantList collectionOffers READ collectionOffers NOTIFY changed)
     Q_PROPERTY(QVariantList collectionJobs READ collectionJobs NOTIFY changed)
+    Q_PROPERTY(QString staffWorkload READ staffWorkload NOTIFY changed)
     Q_PROPERTY(QVariantList synthesisTeachers READ synthesisTeachers NOTIFY changed)
     Q_PROPERTY(QVariantList synthesisJobs READ synthesisJobs NOTIFY changed)
     Q_PROPERTY(QVariantList sources READ sources NOTIFY changed)
@@ -139,6 +140,7 @@ public:
     QVariantList synthesisRecipes() const;
     QVariantList collectionOffers() const;
     QVariantList collectionJobs() const;
+    QString staffWorkload() const;
     Q_INVOKABLE QVariantMap collectionQuote(QString offer,QString source,QString rate,QString staff) const;
     Q_INVOKABLE void startCollection(QString offer,QString source,QString rate,QString staff);
     QVariantList synthesisTeachers() const;

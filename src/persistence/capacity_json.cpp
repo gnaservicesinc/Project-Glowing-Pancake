@@ -1,4 +1,5 @@
 #include "capacity_json.hpp"
+#include "../content/staff_workload_codec.hpp"
 #include "history_blocks.hpp"
 #include <pgp/core/deployment_risk.hpp>
 
@@ -103,14 +104,23 @@ Json capacity_json(const core::CapacityState& state, bool packed) {
     Json staff_additions=Json::array(),staff_departures=Json::array();
     for (const auto& row:state.staff_additions) staff_additions.push_back({{"id",row.id},{"day",row.day.value()},{"people",row.people}});
     for (const auto& row:state.staff_departures) staff_departures.push_back({{"id",row.id},{"day",row.day.value()},{"people",row.people}});
-    return {{"staff_additions",std::move(staff_additions)},{"staff_departures",std::move(staff_departures)},{"owner",state.owner},{"starts_on",state.starts_on.value()},
+    Json result{{"staff_additions",std::move(staff_additions)},{"staff_departures",std::move(staff_departures)},{"owner",state.owner},{"starts_on",state.starts_on.value()},
         {"closed_through",optional_day(state.closed_through)},{"available_staff",state.available_staff},
         {"sources",std::move(sources)},{"projects",std::move(projects)},{"days",days.finish()}};
+    if(state.workload) result["workload"]={{"rules",content::staff_workload_codec::encode(state.workload->rules)},
+        {"strain_bp",state.workload->strain.value()}};
+    return result;
 }
 
 core::CapacityState parse_capacity(const Json& value, bool packed) {
-    fields(value,"capacity",{"owner","starts_on","closed_through","available_staff","sources","projects","days"},{"staff_additions","staff_departures"});
+    fields(value,"capacity",{"owner","starts_on","closed_through","available_staff","sources","projects","days"},{"staff_additions","staff_departures","workload"});
     core::CapacityState result;
+    if(value.contains("workload")) {
+        const auto& workload=value.at("workload");
+        fields(workload,"capacity/workload",{"rules","strain_bp"});
+        result.workload=core::StaffWorkload{content::staff_workload_codec::decode(workload.at("rules")),
+            core::BasisPoints{i64(workload.at("strain_bp"),"capacity/workload/strain_bp")}};
+    }
     if (value.contains("staff_departures")) {
         array(value.at("staff_departures"),"capacity/staff_departures",core::capacity_staff_change_limit);
         for (const auto& row:value.at("staff_departures")) {fields(row,"capacity/staff_departure",{"id","day","people"});result.staff_departures.push_back({label(row.at("id")),day(row.at("day")),staff(row.at("people"))});}

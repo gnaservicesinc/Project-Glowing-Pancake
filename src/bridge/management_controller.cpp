@@ -1023,6 +1023,33 @@ QVariantMap ManagementController::collectionQuote(QString offer,QString source,Q
         return {{QStringLiteral("ready"),resources && funded},{QStringLiteral("detail"),detail}};
     } catch (const std::exception& error) { return {{QStringLiteral("ready"),false},{QStringLiteral("detail"),QString::fromUtf8(error.what())}}; }
 }
+QString ManagementController::staffWorkload() const {
+    if (!snapshot_ || !state().capacity || !state().capacity->workload) return {};
+    const auto& capacity=*state().capacity;
+    const auto& workload=*capacity.workload;
+    const auto& rules=workload.rules;
+    const auto report=core::capacity_report(capacity);
+    const auto load=core::staff_load(report.assigned_staff,report.available_staff);
+    const auto output=core::staff_output_factor(capacity);
+    auto summary=tr("%1 of %2 staff assigned today (%3) · Team strain %4 · Staffed output %5 of normal")
+        .arg(number(report.assigned_staff),number(report.available_staff),percent(load),percent(workload.strain),percent(output));
+    if (!capacity.days.empty()) {
+        const auto& closed=capacity.days.back();
+        std::uint64_t assigned=0;
+        for(const auto& work:closed.projects) assigned+=work.assigned_staff;
+        summary+=tr("\nLast settled load %1 on %2.")
+            .arg(percent(core::staff_load(assigned,core::available_staff_on(capacity,closed.day))),text(core::iso_date(closed.day)));
+    }
+    summary+=tr("\nStrain rises at %1 load and above. It reduces staffed work above %2 strain and falls when load stays at or below %3.")
+        .arg(percent(rules.high_load),percent(rules.strain_tolerance),percent(rules.recovery_load));
+    if(workload.strain>rules.strain_tolerance && load<=rules.recovery_load) {
+        const auto excess=workload.strain.value()-rules.strain_tolerance.value();
+        const auto days=(excess+rules.daily_recovery.value()-1)/rules.daily_recovery.value();
+        summary+=tr("\nAt this load, normal output returns after %1 settled days.").arg(QString::number(days));
+    }
+    summary+=tr("\nPause finite Lab work or hire a specialist to free staffing headroom. Staffed output limits project progress and serving attempts.");
+    return summary;
+}
 QVariantList ManagementController::sources() const {
     QVariantList result; if (!snapshot_ || !state().capacity) return result;
     for (const auto& row:state().capacity->sources) {
@@ -1450,11 +1477,19 @@ QVariantMap ManagementController::trainingPreview(QString recipe,QString source,
         QStringList bottlenecks;
         for (std::size_t i=0;i<p.bottlenecks.size();++i)
             if (!p.bottlenecks[i].empty()) bottlenecks.push_back(tr("%1 · %2").arg(lab_domain(i),text(p.bottlenecks[i])));
+        QString staffing;
+        const auto productivity=core::staff_output_factor(*state().capacity);
+        if(productivity.value()<10000) {
+            const auto rate_now=core::staffed_output(static_cast<std::uint64_t>(req.daily_compute.value()),productivity);
+            const auto total=static_cast<std::uint64_t>(req.work.value());
+            if(rate_now>0) staffing=tr("\nAt current staff output, this allocation can deliver %1 CU/day. At that pace, this work takes at least %2 days.")
+                .arg(cu(static_cast<std::int64_t>(rate_now)),number(total/rate_now+(total%rate_now>0?1U:0U)));
+        }
         const auto explanation=tr("Earliest %1 days · unlicensed data %2\nEstimated %3\n%4\nBottlenecks · %5\n%6\n%7\n%8")
             .arg(QString::number(p.minimum_days.value()),money(p.unowned_data_cost),interval(p.lower,p.upper),text(p.explanation),bottlenecks.join(QStringLiteral(", ")),
                 p.licensed?QStringLiteral("All selected data licensed"):QStringLiteral("Buy each selected data license before training"),!compatible?QStringLiteral("Select a source with the recipe’s memory and interconnect class"):free?QStringLiteral("Requested compute and staff fit current free resources"):QStringLiteral("Reduce allocation or stop another project to free compute/staff"),
                 QStringLiteral("Available cash after %2 forecast days: %1. Includes existing bills; excludes future customer sales and unpurchased licenses. Forecast capped at 90 days.").arg(money(forecast.available),QString::number(horizon.value())));
-        return {{QStringLiteral("text"),explanation+(frozen_parent?QString{}:QStringLiteral("\nSave an immutable checkpoint of the running or paused parent before continuing."))+(p.prerequisites_met?QString{}:QStringLiteral("\nComplete the selected recipe’s research prerequisites before training."))},{QStringLiteral("ready"),p.licensed && p.prerequisites_met && free && frozen_parent}};
+        return {{QStringLiteral("text"),explanation+staffing+(frozen_parent?QString{}:QStringLiteral("\nSave an immutable checkpoint of the running or paused parent before continuing."))+(p.prerequisites_met?QString{}:QStringLiteral("\nComplete the selected recipe’s research prerequisites before training."))},{QStringLiteral("ready"),p.licensed && p.prerequisites_met && free && frozen_parent}};
     } catch (const std::exception& e) { return {{QStringLiteral("text"),QString::fromUtf8(e.what())},{QStringLiteral("ready"),false}}; }
 }
 QString ManagementController::servicePreview(QString id,QString model,bool review,QString tools,QString oversight) const {

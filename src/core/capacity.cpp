@@ -144,7 +144,12 @@ CapacityReport capacity_report(const CapacityState& state) {
     return report;
 }
 bool project_disrupted(const CapacityProject& row,OrdinalDay day) { return in_interval(row.disruptions,day); }
+BasisPoints staff_output_factor(const CapacityState& state) {
+    return state.workload?staff_output_factor(state.workload->rules,state.workload->strain):BasisPoints{10000};
+}
 void validate_capacity(const CapacityState& state) {
+    if(state.workload) validate_staff_workload(state.workload->rules);
+    BasisPoints strain{0};
     text_valid(state.owner); (void)from_ordinal(state.starts_on);
     if (state.staff_additions.size()>capacity_staff_change_limit || state.staff_departures.size()>capacity_staff_change_limit) invalid("Staff change history exceeds its bound");
     std::uint64_t added=0;std::set<std::string> staff_ids;
@@ -298,6 +303,7 @@ void validate_capacity(const CapacityState& state) {
         source_use.clear();
         std::string_view previous;
         std::uint64_t staff_used = 0;
+        const auto productivity=state.workload?staff_output_factor(state.workload->rules,strain):BasisPoints{10000};
         for (const auto& used : day.projects) {
             if (!previous.empty() && used.project_id <= previous) invalid("Daily project records must have unique sorted identities");
             previous = used.project_id;
@@ -309,7 +315,9 @@ void validate_capacity(const CapacityState& state) {
                 (row.status == ProjectStatus::cancelled && day.day == *row.stopped_on))) ||
                 paused_on(row,day.day) ||
                 (project_disrupted(row,day.day) && (used.work.value()!=0 || used.useful_tasks!=0 || used.failed_tasks!=0)) ||
-                used.assigned_staff != row.staff || used.work.value() > row.requested.value())
+                used.assigned_staff != row.staff || used.work.value()>row.requested.value() ||
+                (row.kind!=ProjectKind::serving && static_cast<std::uint64_t>(used.work.value())>
+                    staffed_output(static_cast<std::uint64_t>(row.requested.value()),productivity)))
                 invalid("Daily work occurs outside its project lifetime, rate or staff assignment");
             total.last_day = day.day; ++total.days;
             total.work = checked_unit_add(total.work, used.work);
@@ -317,8 +325,9 @@ void validate_capacity(const CapacityState& state) {
                 throw std::overflow_error("Project useful task history overflow");
             total.tasks += used.useful_tasks;
             if (row.kind == ProjectKind::serving) {
-                if (used.useful_tasks > row.tasks_per_day || used.protected_tasks > used.useful_tasks ||
-                    used.failed_tasks>row.tasks_per_day-used.useful_tasks || (row.customer_inference && used.failed_tasks>0) ||
+                const auto staffed_tasks=staffed_output(row.tasks_per_day,productivity);
+                if (used.useful_tasks > staffed_tasks || used.protected_tasks > used.useful_tasks ||
+                    used.failed_tasks>staffed_tasks-used.useful_tasks || (row.customer_inference && used.failed_tasks>0) ||
                     (!row.customer_inference && required_inference(used.useful_tasks+used.failed_tasks, row.inference_milli_CU_per_task) != used.work))
                     invalid("Serving history credits work without its exact inference cost");
             } else {
@@ -335,7 +344,9 @@ void validate_capacity(const CapacityState& state) {
             }
             staff_used += used.assigned_staff;
         }
-        if (staff_used > available_staff_on(state,day.day)) invalid("Daily assignments oversubscribe staff available on that day");
+        const auto available=available_staff_on(state,day.day);
+        if(staff_used>available) invalid("Daily assignments oversubscribe staff available on that day");
+        if(state.workload) strain=next_staff_strain(state.workload->rules,strain,staff_load(staff_used,available));
         previous = {};
         for (const auto& used : day.sources) {
             if (!previous.empty() && used.source_id <= previous) invalid("Daily source records must have unique sorted identities");
@@ -351,6 +362,8 @@ void validate_capacity(const CapacityState& state) {
                 invalid("Daily work exceeds effective capacity or differs from source consumption");
         }
     }
+    if(state.workload && state.workload->strain!=strain)
+        invalid("Saved staff strain differs from settled assignments and recovery");
     for (const auto& row : state.projects) {
         const auto found = totals.find(row.id);
         const Totals empty;
@@ -478,6 +491,7 @@ CapacityDay preview_capacity_day_unchecked(const CapacityState& state, OrdinalDa
     if (serving.size() > capacity_project_limit) invalid("Daily serving plan exceeds its record bound");
     std::unordered_map<std::string_view, ServingRequest> requests;
     requests.reserve(serving.size());
+    const auto productivity=staff_output_factor(state);
     for (const auto& request : serving) {
         const auto found = std::find_if(state.projects.begin(), state.projects.end(),
             [&](const auto& row) { return row.id == request.project_id; });
@@ -486,8 +500,15 @@ CapacityDay preview_capacity_day_unchecked(const CapacityState& state, OrdinalDa
             request.protected_tasks > found->tasks_per_day ||
             request.additional_tasks > found->tasks_per_day - request.protected_tasks ||
             request.failed_tasks>request.additional_tasks || (found->customer_inference && request.failed_tasks>0) ||
-            !requests.emplace(request.project_id, request).second)
+            requests.contains(request.project_id))
             invalid("Daily serving request has an invalid project, task count or duplicate identity");
+        const auto cap=staffed_output(found->tasks_per_day,productivity);
+        auto staffed=request;
+        staffed.protected_tasks=std::min(staffed.protected_tasks,cap);
+        staffed.additional_tasks=std::min(staffed.additional_tasks,cap-staffed.protected_tasks);
+        if(staffed.failed_tasks>staffed.additional_tasks)
+            invalid("Failed attempts exceed the staffed discretionary serving plan");
+        requests.emplace(request.project_id,std::move(staffed));
     }
     CapacityDay record; record.day = day;
     std::vector<std::int64_t> allocations(state.projects.size(), 0), protected_work(state.projects.size(), 0);
@@ -496,7 +517,11 @@ CapacityDay preview_capacity_day_unchecked(const CapacityState& state, OrdinalDa
         for (std::size_t i = 0; i < state.projects.size(); ++i) {
             const auto& row = state.projects[i];
             if (row.status != ProjectStatus::active || row.source_id != supply.id) continue;
-            if (row.kind != ProjectKind::serving) { other.push_back({i, demand(row), 1}); continue; }
+            if (row.kind != ProjectKind::serving) {
+                const auto cap=staffed_output(static_cast<std::uint64_t>(row.requested.value()),productivity);
+                other.push_back({i,std::min(demand(row),static_cast<std::int64_t>(cap)),1});
+                continue;
+            }
             const auto found = requests.find(row.id);
             if (found == requests.end()) continue;
             const auto quantum = static_cast<std::uint64_t>(row.inference_milli_CU_per_task.value());
@@ -576,6 +601,12 @@ void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<
             if (row.kind != ProjectKind::serving && row.kind!=ProjectKind::replication && row.completed_work == row.total_work) {
                 row.status = ProjectStatus::completed; row.stopped_on = day;
             }
+        }
+        if(candidate.workload) {
+            std::uint64_t assigned=0;
+            for(const auto& work:record.projects) assigned+=work.assigned_staff;
+            auto& health=*candidate.workload;
+            health.strain=next_staff_strain(health.rules,health.strain,staff_load(assigned,candidate.available_staff));
         }
         if (!candidate.days.empty()) record.share_unchanged(candidate.days.back());
         candidate.days.push_back(std::move(record)); candidate.closed_through = day;

@@ -796,6 +796,8 @@ ColumnLayout {
         Copy { text: qsTr("Compare one-time financing terms and restricted awards. Equity dilutes ownership and loans add interest and a principal deadline. Grants and credits cover eligible expenses. Specialists add paid staff capacity.") }
         Selection { objectName: "fundingOfferSelection"; heading: qsTr("Financing offers"); rows: manager.funding }
         Action { objectName: "takeFinancingButton"; text: qsTr("Accept selected financing terms…"); enabled: panel.editable && manager.funding.selectedRow.actionable === true; onClicked: fundingDialog.open() }
+        Copy { visible: manager.staffWorkload.length > 0; text: qsTr("Staff workload and recovery"); font.bold: true }
+        Copy { objectName: "staffWorkloadReport"; visible: manager.staffWorkload.length > 0; text: manager.staffWorkload }
         Selection { heading: qsTr("Specialists"); rows: manager.specialists }
         Action { objectName: "hireSpecialistButton"; text: qsTr("Hire selected specialist and start payroll"); enabled: panel.editable && manager.specialists.selectedRow.actionable === true; onClicked: manager.hireSpecialist(manager.specialists.selectedId) }
     }

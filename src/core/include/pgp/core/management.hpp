@@ -48,6 +48,7 @@ struct ManagementCatalog {
     std::vector<FundingSupportOffer> support_offers{};
     std::optional<CorporateTaxPolicy> corporate_tax{};
     std::optional<ServiceMonitoringRules> service_monitoring{};
+    std::optional<StaffWorkloadRules> staff_workload{};
     auto operator<=>(const ManagementCatalog&) const = default;
 };
 struct ManagementAcceptance {

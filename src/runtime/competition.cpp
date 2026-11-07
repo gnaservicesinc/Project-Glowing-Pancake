@@ -98,6 +98,8 @@ void initialize_competition(WorldState& world,const CompiledProgram& program,con
         add_recurring(*simulation.accounts,{"compute_lease",definition.monthly_lease,simulation.date,std::nullopt,"Rival compute lease"});
         simulation.capacity=opening_capacity({{"lease.initial","cloud/"+definition.id,definition.id,"supplier.rival",CapacitySourceKind::leased,
             definition.capacity,definition.capacity,0,"general",true}},definition.staff,simulation.date,definition.id);
+        if(world.simulation.capacity->workload)
+            simulation.capacity->workload=StaffWorkload{world.simulation.capacity->workload->rules};
         simulation.liquidity=opening_liquidity(simulation.date,definition.id);
         LabState laboratory; laboratory.owner=definition.id; laboratory.starts_on=simulation.date;
         laboratory.catalog=world.simulation.lab->catalog;
@@ -169,6 +171,10 @@ void validate_competition(const WorldState& world,const CompiledProgram& program
                 source.kind!=CapacitySourceKind::leased || source.memory_mib!=0 || source.interconnect!="general" ||
                 !source.energy_included || source.available_from) invalid("Minimal rival routine invented hardware or favorable lease rights");
         }
+        const auto& company_workload=world.simulation.capacity->workload;
+        if (company_workload.has_value()!=simulation.capacity->workload.has_value() ||
+            (company_workload && simulation.capacity->workload->rules!=company_workload->rules))
+            invalid("Rival staff workload differs from the scenario's staffing rules");
         if (simulation.lab->research_stream_origin!=RandomStreams{definition.seed}.snapshot()[static_cast<std::size_t>(RandomStream::research)])
             invalid("Rival random stream origin differs from its authored seed");
         if (rival.warned_on) {

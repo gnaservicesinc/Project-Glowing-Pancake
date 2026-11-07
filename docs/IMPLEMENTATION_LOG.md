@@ -2117,3 +2117,32 @@ settled deliveries, and used both corpora in a fresh training job.
 The optimized Mac build and 14 focused CTests passed, including the 180
 Lab assertions, deployment and Frontier use, and Studio catalog and
 world-form checks.
+
+### Staff workload and recovery
+
+Office Funding and team now reports the shared staff pool's assigned people,
+last settled load, strain, and current output. The provisional authored rules
+accumulate strain at 95% load and above, maintain strain in the middle band,
+and recover at 75% load or below. The output limit begins above 20% strain.
+The game applies the factor on the next morning to the daily project work
+and serving caps. Staffing reservations, headcount, and existing bills retain
+their ordinary terms. Signed work goes first and shortfalls earn the same
+contract credits. Hiring creates headroom, while recovery takes settled days.
+
+The save validator reconstructs strain in one pass through daily assignments
+and dated headcount. Old content without the optional policy retains its
+previous encoding. Both rival planners use the same authored workload rules.
+Training previews show work at the current staffed rate when it is reduced.
+
+The shared writer finalized **0.26.0-dev.1**, generation **26**, with seven
+scenarios and 21 exact prepared openings. Generation 25's original content
+hash still verifies. The Lab fixture exercises reduced training and signed
+delivery, retained strain after hiring, paused recovery, normal delivery after
+recovery, exact continuation, and rejection of invented strain. Offscreen
+keyboard walkthroughs at 100% and 200% text show a pressured team, pause the
+active training run, and restore output over five settled days.
+
+The optimized Mac build and 17 focused CTests passed across the initial
+run and the deployment fixture rerun. The Lab suite passed 189 checks.
+The affected deployment fixture now waits for actual training and evaluation
+completion within bounded time.

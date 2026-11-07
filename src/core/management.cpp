@@ -141,6 +141,7 @@ void require_operating_reserve(Cents cash_before,const SimulationState& after) {
         invalid("New spending would use the operating reserve. Review the policy in Office or choose a smaller commitment.");
 }
 void validate_management_catalog(const ManagementCatalog& c) {
+    if(c.staff_workload) validate_staff_workload(*c.staff_workload);
     validate_funding_offers(c.support_offers);
     if (c.service_monitoring) validate_service_monitoring(*c.service_monitoring);
     if (c.corporate_tax) validate_corporate_tax_policy(*c.corporate_tax);
@@ -417,6 +418,9 @@ void validate_management(const SimulationState& s,bool deep) {
     }
     if (!s.accounts || !s.capacity || !s.lab || !s.market || !s.deployments) invalid("Management requires the playable company modules");
     const auto& m=*s.management;
+    if(m.catalog.staff_workload.has_value()!=s.capacity->workload.has_value() ||
+        (s.capacity->workload && s.capacity->workload->rules!=*m.catalog.staff_workload))
+        invalid("Staff workload differs from the authored company policy");
     if (m.catalog.corporate_tax.has_value()!=s.accounts->taxes.has_value() ||
         (s.accounts->taxes && s.accounts->taxes->policy!=*m.catalog.corporate_tax))
         invalid("Corporate taxes differ from the authored management policy");

@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.25.0-dev.1",
+  "content_version": "0.26.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -24675,6 +24675,14 @@
             "signing_cost_cents": 200000
           }
         ],
+        "staff_workload": {
+          "daily_recovery_bp": 150,
+          "daily_strain_bp": 80,
+          "high_load_bp": 9500,
+          "maximum_output_loss_bp": 2500,
+          "recovery_load_bp": 7500,
+          "strain_tolerance_bp": 2000
+        },
         "succession": {
           "caretaker_term_years": 5,
           "cash_floor_cents": 10000000,
@@ -24891,7 +24899,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 15,
+      "revision": 16,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -30084,6 +30092,14 @@
             "signing_cost_cents": 200000
           }
         ],
+        "staff_workload": {
+          "daily_recovery_bp": 150,
+          "daily_strain_bp": 80,
+          "high_load_bp": 9500,
+          "maximum_output_loss_bp": 2500,
+          "recovery_load_bp": 7500,
+          "strain_tolerance_bp": 2000
+        },
         "succession": {
           "caretaker_term_years": 5,
           "cash_floor_cents": 10000000,
@@ -30300,7 +30316,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 15,
+      "revision": 16,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -34209,6 +34225,14 @@
             "signing_cost_cents": 200000
           }
         ],
+        "staff_workload": {
+          "daily_recovery_bp": 150,
+          "daily_strain_bp": 80,
+          "high_load_bp": 9500,
+          "maximum_output_loss_bp": 2500,
+          "recovery_load_bp": 7500,
+          "strain_tolerance_bp": 2000
+        },
         "support_offers": [
           {
             "claim_days": 90,
@@ -34274,7 +34298,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 18,
+      "revision": 19,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -37337,6 +37361,14 @@
             "signing_cost_cents": 200000
           }
         ],
+        "staff_workload": {
+          "daily_recovery_bp": 150,
+          "daily_strain_bp": 80,
+          "high_load_bp": 9500,
+          "maximum_output_loss_bp": 2500,
+          "recovery_load_bp": 7500,
+          "strain_tolerance_bp": 2000
+        },
         "support_offers": [
           {
             "claim_days": 90,
@@ -37402,7 +37434,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 19,
+      "revision": 20,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -41620,6 +41652,14 @@
             "signing_cost_cents": 200000
           }
         ],
+        "staff_workload": {
+          "daily_recovery_bp": 150,
+          "daily_strain_bp": 80,
+          "high_load_bp": 9500,
+          "maximum_output_loss_bp": 2500,
+          "recovery_load_bp": 7500,
+          "strain_tolerance_bp": 2000
+        },
         "support_offers": [
           {
             "claim_days": 90,
@@ -41685,7 +41725,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 19,
+      "revision": 20,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -45903,6 +45943,14 @@
             "signing_cost_cents": 200000
           }
         ],
+        "staff_workload": {
+          "daily_recovery_bp": 150,
+          "daily_strain_bp": 80,
+          "high_load_bp": 9500,
+          "maximum_output_loss_bp": 2500,
+          "recovery_load_bp": 7500,
+          "strain_tolerance_bp": 2000
+        },
         "support_offers": [
           {
             "claim_days": 90,
@@ -45968,7 +46016,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 19,
+      "revision": 20,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -50186,6 +50234,14 @@
             "signing_cost_cents": 200000
           }
         ],
+        "staff_workload": {
+          "daily_recovery_bp": 150,
+          "daily_strain_bp": 80,
+          "high_load_bp": 9500,
+          "maximum_output_loss_bp": 2500,
+          "recovery_load_bp": 7500,
+          "strain_tolerance_bp": 2000
+        },
         "support_offers": [
           {
             "claim_days": 90,
@@ -50251,7 +50307,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 19,
+      "revision": 20,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,

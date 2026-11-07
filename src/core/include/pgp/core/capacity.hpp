@@ -4,6 +4,7 @@
 #include <pgp/core/day_rows.hpp>
 
 #include <pgp/core/calendar.hpp>
+#include <pgp/core/staff_workload.hpp>
 
 #include <cstdint>
 #include <optional>
@@ -113,6 +114,7 @@ struct CapacityState {
     PagedHistory<CapacityDay, 8> days;
     std::vector<StaffAddition> staff_additions{};
     std::vector<StaffAddition> staff_departures{};
+    std::optional<StaffWorkload> workload{};
     auto operator<=>(const CapacityState&) const = default;
 };
 struct CapacityReport {
@@ -133,6 +135,7 @@ struct CapacityReport {
                                              std::uint32_t staff, OrdinalDay starts_on = OrdinalDay{0},
                                              std::string owner = "company.player");
 [[nodiscard]] CapacityReport capacity_report(const CapacityState& state);
+[[nodiscard]] BasisPoints staff_output_factor(const CapacityState& state);
 [[nodiscard]] bool project_disrupted(const CapacityProject&,OrdinalDay);
 void validate_capacity(const CapacityState& state);
 void reserve_project(CapacityState& state, OrdinalDay day, CapacityProject project);

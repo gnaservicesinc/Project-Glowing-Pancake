@@ -2,6 +2,7 @@
 #include <pgp/content/governance_catalog.hpp>
 #include <pgp/content/succession_catalog.hpp>
 #include "corporate_tax_codec.hpp"
+#include "staff_workload_codec.hpp"
 #include <nlohmann/json.hpp>
 #include <limits>
 #include <set>
@@ -39,6 +40,10 @@ core::ManagementCatalog load_management_catalog(std::string_view bytes) {
     if (j.contains("corporate_tax")) {
         c.corporate_tax=civic_codec::decode<core::CorporateTaxPolicy>(j.at("corporate_tax"));
         j.erase("corporate_tax");
+    }
+    if (j.contains("staff_workload")) {
+        c.staff_workload=staff_workload_codec::decode(j.at("staff_workload"));
+        j.erase("staff_workload");
     }
     if (j.contains("service_monitoring")) {
         const auto& monitor=j.at("service_monitoring");
@@ -127,6 +132,7 @@ std::string canonical_management_catalog(const core::ManagementCatalog& c) {
     if (c.governance) result["governance"]=Json::parse(canonical_governance_catalog(*c.governance));
     if (c.corporate_tax) result["corporate_tax"]=civic_codec::encode(*c.corporate_tax);
     if (c.succession) result["succession"]=Json::parse(canonical_succession_catalog(*c.succession));
+    if (c.staff_workload) result["staff_workload"]=staff_workload_codec::encode(*c.staff_workload);
     if (const auto& monitor=c.service_monitoring;monitor) result["service_monitoring"]={
         {"window_days",monitor->window.value()},{"minimum_attempts",monitor->minimum_attempts},
         {"warning_drop_bp",monitor->warning_drop.value()}};

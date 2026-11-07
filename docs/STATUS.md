@@ -4,12 +4,12 @@ Updated 2026-11-07 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**Initial feature coverage is active.** Lab Data now supports paid commissions
-and opted-in feedback. Staff workload and recovery are the next core gap.
+**Initial feature coverage is active.** Office now reports staffing pressure,
+staffed output, and recovery. Research setbacks and retained learning are next.
 
 The original roadmap has **42 of 52 acceptance steps checked**. Its ten open
 steps are deferred human, balance, platform and release gates; they do not
-block current implementation. The coverage pass below has delivered 21
+block current implementation. The coverage pass below has delivered 22
 additional feature batches within earlier milestones. That batch count is
 separate from the 52 acceptance steps and does not imply complete design
 coverage. Completed milestones include
@@ -751,9 +751,18 @@ limits the opted-in share and redistribution rights. Completed output becomes
 available for fresh training. Reviewed content **0.25.0-dev.1**, generation
 **25**, validates seven scenarios and 21 exact prepared openings.
 
-**Next initial feature:** staff workload and recovery. Make sustained load
-visible, let the player reduce pressure by changing staffing or commitments,
-and carry the effect on effective staff work across saves.
+Office Funding and team reports the company's shared staff load, accumulated
+strain, and current staffed output. Sustained assignments above the authored
+threshold reduce subsequent Lab progress and serving attempts. Signed work
+keeps priority and earns normal credits for shortfalls. Pause work or add
+headroom and settle low-load days to recover gradually. The save validator
+replays strain from actual assignments and dated headcount. Content
+**0.26.0-dev.1**, generation **26**, verifies all seven scenarios and 21 exact
+prepared openings.
+
+**Next initial feature:** research setbacks and retained learning. Add
+authored experiment failure conditions, explain the observed outcome, and
+let completed failed work reduce a bounded share of later retry work.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

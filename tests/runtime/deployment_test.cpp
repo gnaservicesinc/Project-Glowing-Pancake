@@ -21,6 +21,15 @@ void refused(runtime::Runtime& game,core::CommandAction action) {
     check(game.checkpoint()==before,"Rejected deployment changed evidence, resources, accounts or RNG");
 }
 void days(runtime::Runtime& game,unsigned count) { while(count--) apply(game,core::AdvanceDay{}); }
+void finish_work(runtime::Runtime& game,std::string_view id,unsigned limit) {
+    for(unsigned elapsed=0;elapsed<=limit;++elapsed) {
+        const auto& projects=game.current_state().world.simulation.capacity->projects;
+        const auto work=std::ranges::find(projects,id,&core::CapacityProject::id);
+        if(work!=projects.end() && work->status==core::ProjectStatus::completed) return;
+        if(elapsed<limit) apply(game,core::AdvanceDay{});
+    }
+    throw std::runtime_error("Deployment fixture failed to complete work: "+std::string(id));
+}
 void roundtrip(const runtime::CompiledProgram& program,const runtime::Runtime& game) {
     check(persistence::decode_save(program,persistence::encode_save(program,game.checkpoint())).checkpoint==game.checkpoint(),"Deployment save changed profile history or qualified state");
 }
@@ -246,8 +255,9 @@ void run() {
     roundtrip(program,game);days(game,2);roundtrip(program,game);
     apply(game,core::BuyData{"data.consented_scans"});
     apply(game,core::StartTraining{{"targeted","recipe.document_baseline","",{"data.licensed_documents","data.consented_scans"},"lease.initial",core::MilliCUPerDay{50000},3,core::MilliCU{3600000}}});
-    days(game,72);
-    apply(game,core::StartEvaluation{"targeted_test","targeted","evaluation.held_out",allocation});days(game,3);
+    finish_work(game,"lab/train/targeted",100);
+    apply(game,core::StartEvaluation{"targeted_test","targeted","evaluation.held_out",allocation});
+    finish_work(game,"lab/evaluate/targeted_test",6);
     refused(game,core::DeployModel{"product.documents_tables","targeted","heldout","lease.initial",false});
     auto oversized=game;
     apply(oversized,core::StartTraining{{"busy","recipe.document_baseline","",{"data.licensed_documents"},"lease.initial",core::MilliCUPerDay{50000},3,core::MilliCU{3600000}}});
@@ -261,7 +271,8 @@ void run() {
     bool rejected=false;try { runtime::validate_checkpoint(program,tampered); } catch(const std::exception&) { rejected=true; }
     check(rejected,"Forged historical capacity binding survived full validation");
     apply(game,core::CloneModel{"targeted","clone"});
-    apply(game,core::StartEvaluation{"clone_test","clone","evaluation.held_out",allocation});days(game,3);
+    apply(game,core::StartEvaluation{"clone_test","clone","evaluation.held_out",allocation});
+    finish_work(game,"lab/evaluate/clone_test",6);
     apply(game,core::DeployModel{"product.documents_tables","clone","clone_test","lease.initial",false});
     roundtrip(program,game);
     // Even otherwise usable evidence cannot grant commercial rights.

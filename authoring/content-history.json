@@ -106326,6 +106326,99 @@
         "prepared_headquarters": 21,
         "scenarios": 7
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "b376ce2122507f89fdc0b9dd2832a037245da7d196442e5aeeb5669c29f31950",
+          "before_hash": "206f01a65b2a10616b7a82e3a72b8cffb145080a37150c3e1a125f8f6b27569b",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 15,
+          "revision": 16
+        },
+        {
+          "after_hash": "4a3bfa59bd6598c714d1594c792e248d51630667554882234a8ef36e427c6958",
+          "before_hash": "ce124f827139f919d9ba2b9adb86d22375f8d937b40f99c75284aa9184b56330",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 15,
+          "revision": 16
+        },
+        {
+          "after_hash": "dfec9f7ffff4a2aa367595114b4efd33f27bd83b92bf705c62a27d372255f4af",
+          "before_hash": "b8d99728e9235480bf7595f9a959a1b323094f6c790f45057f49f34be30e4f48",
+          "change": "changed",
+          "id": "scenario.first_playable",
+          "kind": "scenario",
+          "old_revision": 18,
+          "revision": 19
+        },
+        {
+          "after_hash": "5caa00a341cdae5d2c5199029637c52dc1dcce80696b569f1cb2a6148aa9b1a7",
+          "before_hash": "effd7268d877be59122f92bdddaff938a8c8d80e27a6cad1e9ec8cca03bcd3bf",
+          "change": "changed",
+          "id": "scenario.world_competition",
+          "kind": "scenario",
+          "old_revision": 19,
+          "revision": 20
+        },
+        {
+          "after_hash": "00f734e0379e550d01cd328f7b4e2d985fc261c5486297429086495550bd9ba7",
+          "before_hash": "b54f1dfce107ebe69d50b87aa72698e5061a2eda527d0e5e01102deb5608c905",
+          "change": "changed",
+          "id": "scenario.world_expanded",
+          "kind": "scenario",
+          "old_revision": 19,
+          "revision": 20
+        },
+        {
+          "after_hash": "8907203d3a46be7fbc139bf88b9d4a95a8371e4d93e687885700bdc75eec915d",
+          "before_hash": "da283bdc89c072dba12bbbf8e6b170943f09428402f0319807090accbd6565f7",
+          "change": "changed",
+          "id": "scenario.world_forgiving",
+          "kind": "scenario",
+          "old_revision": 19,
+          "revision": 20
+        },
+        {
+          "after_hash": "d8a0ca809d188085d6e9c864892659af5cac04e317c538d1b8ec7f3b71e07610",
+          "before_hash": "893bcda471deb67b9af5d7d909bd4976c84e807eca774f61ddbef68cacf741fa",
+          "change": "changed",
+          "id": "scenario.world_reduced",
+          "kind": "scenario",
+          "old_revision": 19,
+          "revision": 20
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "33b87345129bc549e941294dc56bd2635376ee12ac6fbc795c0ec45fa8b35019",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.26.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 26,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.25.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000025.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000026.collection.json",
+      "summary": "Add sustained staff workload and recovery rules to the seven playable scenarios",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 21,
+        "lints": [],
+        "prepared_headquarters": 21,
+        "scenarios": 7
+      }
     }
   ],
   "format": 1
