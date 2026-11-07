@@ -67,6 +67,11 @@ class CampaignController final : public QObject {
     Q_PROPERTY(bool autosaveEnabled READ autosaveEnabled WRITE setAutosaveEnabled NOTIFY settingsChanged)
     Q_PROPERTY(bool musicEnabled READ musicEnabled WRITE setMusicEnabled NOTIFY settingsChanged)
     Q_PROPERTY(int musicVolume READ musicVolume WRITE setMusicVolume NOTIFY settingsChanged)
+    Q_PROPERTY(bool fullScreen READ fullScreen NOTIFY settingsChanged)
+    Q_PROPERTY(int windowWidth READ windowWidth NOTIFY settingsChanged)
+    Q_PROPERTY(int windowHeight READ windowHeight NOTIFY settingsChanged)
+    Q_PROPERTY(int effectsVolume READ effectsVolume NOTIFY settingsChanged)
+    Q_PROPERTY(bool motionBackground READ motionBackground NOTIFY settingsChanged)
 public:
     CampaignController(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
                        persistence::LocalPaths paths, persistence::Settings initial_settings = {},
@@ -143,6 +148,13 @@ public:
     [[nodiscard]] int musicVolume() const noexcept { return static_cast<int>(settings_.volume_percent); }
     void setMusicEnabled(bool value);
     void setMusicVolume(int value);
+    bool fullScreen() const { return settings_.full_screen; }
+    int windowWidth() const { return static_cast<int>(settings_.window_width); }
+    int windowHeight() const { return static_cast<int>(settings_.window_height); }
+    int effectsVolume() const { return static_cast<int>(settings_.effects_volume_percent); }
+    bool motionBackground() const { return settings_.motion_background; }
+    Q_INVOKABLE void applyPresentationSettings(bool full_screen, int width, int height, bool music,
+        int music_volume, int effects_volume, int text_scale, bool reduced_motion, bool motion_background);
     void setTextScalePercent(int value);
     void setCompactManagement(bool value);
     void setReducedMotion(bool value);

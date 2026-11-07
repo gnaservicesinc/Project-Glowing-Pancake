@@ -22,8 +22,8 @@ phases in the [backlog](docs/BACKLOG.md).
 ## Build and play
 
 ```sh
-./make.sh                     # Release; builds without launching
-build/release/bin/pgp-game     # Explicitly open the bundled campaign
+./make.sh --package --jobs 4   # Release Mac .app with Qt, icon and resources; no launch
+open "dist/Project Glowing Pancake.app"
 ./make.sh --core-only        # Release core/headless; no Qt required
 ./make.sh --editor           # Separate Content Studio
 ctest --test-dir build/core-release -R '^(core.liquidity|runtime.liquidity-integration|session.business-scenario)$' --output-on-failure
@@ -35,8 +35,14 @@ build/core-release/bin/pgp-headless --competition-demo data/runtime/first-playab
 ./make.sh --help
 ```
 
-Builds never launch the application. `pgp-game` opens a headquarters choice
-without requiring content files or developer commands. Use the in-game guide
+Builds never launch the application. On Mac, open **Project Glowing Pancake.app**
+in `dist` from Finder. It opens to a full-screen main menu with New Game,
+Load Game, Settings, Credits and Quit. New Game opens the existing prototype
+setup; that flow and the gameplay interface are awaiting redesign. Escape
+opens an exit confirmation with Cancel and Exit game. The in-game Main Menu
+button pauses and opens the menu; Resume returns to the current session.
+The Codex Run action uses `./script/build_and_run.sh` to explicitly build,
+package and launch. Use the in-game guide
 or [player path](docs/PLAYABILITY.md) for the first loop. The headless executable
 also runs isolated engineering and complete baseline demonstrations. See
 [build instructions](docs/BUILDING.md) for dependencies, Qt/Xcode selection,
@@ -73,7 +79,7 @@ The selected stack is C++20 + Qt 6.12.x/QML with CMake/Ninja. Desktop targets ar
 
 The game needs **no backend, hosted model, player account, analytics, or in-game updater**. Local saves, autosaves, preferences, and campaign history are normal features. Installation and updates are handled outside the game by the chosen distribution platform.
 
-Content Studio builds as a separate target with a checkout library and shared typed canvas/forms/outline. Authors configure triggers, lifecycles, execution nodes and scoped variables, save drafts, inspect real effects and finalize reviewed internal batches through graphical controls. Flow inspection shows trigger truth, actual effects, ledger entries and suspended continuations on isolated fixtures. The game build excludes the Studio target and its resources. [The version manifest](project-versions.json) tracks game, editor and finalized content identities separately. Packaging remains later work.
+Content Studio builds as a separate target with a checkout library and shared typed canvas/forms/outline. Authors configure triggers, lifecycles, execution nodes and scoped variables, save drafts, inspect real effects and finalize reviewed internal batches through graphical controls. Flow inspection shows trigger truth, actual effects, ledger entries and suspended continuations on isolated fixtures. The game build excludes the Studio target and its resources. [The version manifest](project-versions.json) tracks game, editor and finalized content identities separately. Separate Studio packaging and usability acceptance remain later work.
 
 Built-in rules dispatch actual research, evaluation and pilot outcomes, seeded demand incidents, paid supplier/recovery opportunities and competitive notices through one shared runtime. The eight-flow pack is in `data/runtime/first-playable.json`, with localizable English messages and a complete baseline-only headless run. [Event contract](docs/EVENT_SYSTEM.md) · [Implementation and seeds](src/runtime/BASE_EVENTS.md)
 

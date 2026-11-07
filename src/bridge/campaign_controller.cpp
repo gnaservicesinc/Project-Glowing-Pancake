@@ -644,4 +644,22 @@ void CampaignController::setMusicVolume(int value) {
     settings.volume_percent = static_cast<std::uint32_t>(value);
     changeSettings(settings);
 }
+void CampaignController::applyPresentationSettings(bool full_screen,int width,int height,bool music,
+    int music_volume,int effects_volume,int text_scale,bool reduced_motion,bool motion_background) {
+    if (width < 800 || width > 7680 || height < 600 || height > 4320 || music_volume < 0 || music_volume > 100 ||
+        effects_volume < 0 || effects_volume > 100 || text_scale < 100 || text_scale > 200) {
+        setNotice(QStringLiteral("Choose a supported window size, volume and text size.")); return;
+    }
+    auto settings=settings_;
+    settings.full_screen=full_screen;
+    settings.window_width=static_cast<std::uint32_t>(width);
+    settings.window_height=static_cast<std::uint32_t>(height);
+    settings.music_enabled=music;
+    settings.volume_percent=static_cast<std::uint32_t>(music_volume);
+    settings.effects_volume_percent=static_cast<std::uint32_t>(effects_volume);
+    settings.text_scale_percent=static_cast<std::uint32_t>(text_scale);
+    settings.reduced_motion=reduced_motion;
+    settings.motion_background=motion_background;
+    changeSettings(settings);
+}
 }

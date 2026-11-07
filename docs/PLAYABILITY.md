@@ -44,7 +44,19 @@ implemented on Mac; human author qualification remains deferred.
 
 ## Play the current campaign
 
-After an optimized build, explicitly run `build/release/bin/pgp-game`. Choose
+On Mac, build with `./make.sh --package --jobs 4`, then open
+`dist/Project Glowing Pancake.app` from Finder. The game opens full screen to
+New Game, Load Game, Settings, Credits and Quit. Settings persists display mode,
+window resolution, music/effects volume, text size, reduced motion and the
+still/video menu background locally. New installations start music at 40%;
+existing music preferences are preserved. Full screen uses the native display
+resolution. Escape opens an exit confirmation; Cancel keeps the current screen
+and session. The Main Menu button pauses and opens the menu; Resume keeps the
+session. Quit and the window close button use the same exit confirmation.
+
+**New Game currently opens the existing prototype setup.** The starting flow,
+gameplay interface and isometric/3D environment direction are future feedback
+work. Select New Game, then choose
 California, Texas or Washington and whether to include optional story layers.
 Choose the competition preset: the default schedules six domestic startups, six international startups and three heavyweights, with three startups in each group active initially. Reduced schedules seven competitors; expanded schedules twenty. Forgiving discloses one optional $300,000 equity round for 15% ownership per rival. The introductory roster keeps the earlier two-startup/one-heavyweight campaign.
 

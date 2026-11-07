@@ -6,7 +6,7 @@ import QtQuick.Dialogs
 ApplicationWindow {
     id: window
     objectName: "gameWindow"
-    title: campaign.welcome ? qsTr("Project Glowing Pancake") : qsTr("%1 · Project Glowing Pancake").arg(campaign.companyName)
+    title: menuVisible || campaign.welcome ? qsTr("Project Glowing Pancake") : qsTr("%1 · Project Glowing Pancake").arg(campaign.companyName)
     visible: false
     width: 1280
     height: 720
@@ -25,9 +25,84 @@ ApplicationWindow {
 
     property string room: "office"
     property bool settingsOpen: false
+    property bool menuVisible: !prototypeSmoke
+    property bool sessionEntered: prototypeSmoke
+    property bool pendingMenuLoad: false
+    property bool pendingMenuSettings: false
+    property string displayPreference: ""
+    property bool exitConfirmed: false
+    property bool resumeAfterExitCancel: false
+    property bool exitCancelPending: false
     readonly property int textSize: Math.round(14 * campaign.textScalePercent / 100)
     readonly property bool narrow: width < 1030
     font.pixelSize: textSize
+
+    function applyDisplayPreferences() {
+        if (prototypeSmoke) return
+        const preference = campaign.fullScreen + ":" + campaign.windowWidth + ":" + campaign.windowHeight
+        if (preference === displayPreference) return
+        displayPreference = preference
+        if (campaign.fullScreen) showFullScreen()
+        else {
+            showNormal()
+            width = Math.min(campaign.windowWidth, Screen.desktopAvailableWidth)
+            height = Math.min(campaign.windowHeight, Screen.desktopAvailableHeight)
+            x = Math.max(0, (Screen.desktopAvailableWidth - width) / 2)
+            y = Math.max(0, (Screen.desktopAvailableHeight - height) / 2)
+        }
+    }
+    function openMainMenu() {
+        if (!campaign.paused) campaign.togglePaused()
+        menuVisible = true
+        frontMenu.home()
+    }
+    function loadCampaign(file) {
+        pendingMenuLoad = menuVisible
+        campaign.loadFrom(file)
+        if (!campaign.busy) pendingMenuLoad = false
+    }
+    function requestExit() {
+        if (exitDialog.visible) return
+        resumeAfterExitCancel = !menuVisible && !campaign.paused
+        exitCancelPending = false
+        if (!campaign.paused) campaign.togglePaused()
+        exitDialog.open()
+    }
+    function syncOverlayPause() {
+        if (campaign.busy || !campaign.ready) return
+        if ((menuVisible || exitDialog.visible) && !campaign.paused) campaign.togglePaused()
+        else if (exitCancelPending) {
+            exitCancelPending = false
+            if (campaign.paused && campaign.canPlay) campaign.togglePaused()
+        }
+    }
+    onClosing: close => {
+        if (!exitConfirmed) { close.accepted = false; requestExit() }
+    }
+    Shortcut {
+        sequence: "Escape"
+        enabled: !saveDialog.visible && !loadDialog.visible && !restartDialog.visible && !musicCredits.visible && !cancelDialog.visible && !exitDialog.visible
+        onActivated: window.requestExit()
+    }
+    Connections {
+        target: campaign
+        function onStateChanged() { window.syncOverlayPause() }
+        function onSettingsChanged() { window.applyDisplayPreferences() }
+        function onCommandFinished(accepted, explanation) {
+            if (window.pendingMenuSettings) {
+                window.pendingMenuSettings = false
+                frontMenu.message = accepted ? qsTr("Settings saved.") : explanation
+                if (accepted) menuAudio.select()
+            }
+            if (!window.pendingMenuLoad) return
+            window.pendingMenuLoad = false
+            if (accepted) {
+                window.sessionEntered = true
+                window.menuVisible = false
+                window.room = "office"
+            } else frontMenu.message = explanation
+        }
+    }
 
     component Heading: Label {
         Layout.fillWidth: true
@@ -79,6 +154,64 @@ ApplicationWindow {
         background: Rectangle { radius: 8; color: "#192634"; border.color: "#394c5e" }
     }
 
+    Dialog {
+        id: exitDialog
+        objectName: "exitConfirmDialog"
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(560, window.width - 48)
+        title: qsTr("Exit game?")
+        modal: true
+        focus: true
+        padding: 24
+        closePolicy: Popup.CloseOnEscape
+        background: Rectangle { color: "#101e29"; border.color: "#b18e5c"; radius: 8 }
+        header: Label {
+            text: exitDialog.title
+            padding: 24
+            bottomPadding: 0
+            font.family: "Georgia"
+            font.pixelSize: window.textSize * 1.8
+            color: "#f5ecdd"
+        }
+        contentItem: ColumnLayout {
+            spacing: 24
+            Label {
+                Layout.fillWidth: true
+                text: window.sessionEntered && !campaign.welcome
+                    ? qsTr("Any unsaved progress will be lost. Return to the desktop?")
+                    : qsTr("Return to the desktop?")
+                textFormat: Text.PlainText
+                wrapMode: Text.Wrap
+                color: "#e8e4dc"
+                font.pixelSize: window.textSize * 1.1
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 16
+                Action {
+                    id: cancelExitButton
+                    objectName: "exitCancelButton"
+                    text: qsTr("Cancel")
+                    Layout.fillWidth: true
+                    onClicked: exitDialog.reject()
+                }
+                Action {
+                    objectName: "exitConfirmButton"
+                    text: qsTr("Exit game")
+                    Layout.fillWidth: true
+                    onClicked: exitDialog.accept()
+                }
+            }
+        }
+        onOpened: cancelExitButton.forceActiveFocus()
+        onAccepted: { window.exitConfirmed = true; window.close(); Qt.quit() }
+        onRejected: {
+            window.exitCancelPending = window.resumeAfterExitCancel
+            window.resumeAfterExitCancel = false
+            window.syncOverlayPause()
+        }
+    }
+
     FileDialog {
         id: saveDialog
         title: qsTr("Save campaign")
@@ -90,11 +223,13 @@ ApplicationWindow {
     }
     FileDialog {
         id: loadDialog
+        objectName: "campaignLoadDialog"
         title: qsTr("Load campaign")
         fileMode: FileDialog.OpenFile
         nameFilters: [qsTr("Campaign saves (*.pgpsave)")]
         currentFolder: campaign.saveFolder
-        onAccepted: campaign.loadFrom(selectedFile)
+        onAccepted: window.loadCampaign(selectedFile)
+        onRejected: if (window.menuVisible) frontMenu.home()
     }
 
     Dialog {
@@ -105,7 +240,11 @@ ApplicationWindow {
         width: Math.min(580, window.width - 32)
         standardButtons: Dialog.Ok | Dialog.Cancel
         contentItem: Label { text: qsTr("Save first if you want to return to this campaign. Starting a new one replaces the current unsaved session. Existing local save files remain available."); textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: window.textSize }
-        onAccepted: campaign.openWelcome()
+        onAccepted: {
+            campaign.openWelcome()
+            window.menuVisible = false
+            window.sessionEntered = true
+        }
     }
     MusicCredits {
         id: musicCredits
@@ -117,6 +256,8 @@ ApplicationWindow {
         onClosed: musicCreditsButton.forceActiveFocus()
     }
     ColumnLayout {
+        visible: !window.menuVisible
+        enabled: visible
         anchors.fill: parent
         anchors.margins: 12
         spacing: 8
@@ -242,6 +383,10 @@ ApplicationWindow {
                         visible: campaign.management.available && !campaign.welcome
                         enabled: !campaign.busy
                         onClicked: restartDialog.open()
+                    }
+                    Action {
+                        objectName: "mainMenuButton"; text: qsTr("Main Menu")
+                        onClicked: window.openMainMenu()
                     }
                     Action {
                         objectName: "settingsButton"; text: qsTr("Settings")
@@ -852,7 +997,9 @@ ApplicationWindow {
     }
 
     onActiveFocusItemChanged: {
-        if (musicCredits.visible)
+        if (window.menuVisible)
+            frontMenu.reveal(activeFocusItem)
+        else if (musicCredits.visible)
             musicCredits.reveal(activeFocusItem)
         else
             scroll.reveal(activeFocusItem)
@@ -866,5 +1013,26 @@ ApplicationWindow {
         anchors.centerIn: parent
         standardButtons: Dialog.Yes | Dialog.No
         onAccepted: campaign.projectCancel(projectId)
+    }
+    MainMenu {
+        id: frontMenu
+        anchors.fill: parent
+        visible: window.menuVisible
+        enabled: visible
+        focus: visible
+        canResume: window.sessionEntered
+        textSize: Math.round(16 * campaign.textScalePercent / 100)
+        onNewGameRequested: {
+            if (window.sessionEntered && !campaign.welcome) restartDialog.open()
+            else {
+                campaign.openWelcome()
+                window.sessionEntered = true
+                window.menuVisible = false
+            }
+        }
+        onLoadRequested: { campaign.clearNotice(); loadDialog.open() }
+        onResumeRequested: window.menuVisible = false
+        onQuitRequested: window.requestExit()
+        onSettingsSubmitted: window.pendingMenuSettings = true
     }
 }

@@ -252,6 +252,8 @@ void settings_and_ring(const runtime::CompiledProgram& compiled,const runtime::C
     check(!std::filesystem::exists(preferences),"Reading defaults creates no file");
     auto settings=Settings{};settings.text_scale_percent=200;settings.autosave_enabled=false;
     settings.reduced_motion=true;settings.volume_percent=0;settings.compact_management=true;
+    settings.full_screen=false;settings.window_width=1600;settings.window_height=900;
+    settings.effects_volume_percent=35;settings.motion_background=false;
     save_settings(preferences,settings);check(load_settings(preferences)==settings,"Local settings round-trip");
     const auto current=read_bounded(preferences);settings.volume_percent=20;save_settings(preferences,settings);
     auto backup=preferences;backup+=".bak";check(read_bounded(backup)==current,"Settings keep prior valid recovery copy");
@@ -263,6 +265,18 @@ void settings_and_ring(const runtime::CompiledProgram& compiled,const runtime::C
     rejects([&]{(void)decode_settings(floating.dump());},"integer_token");
     auto bad_scale=settings;bad_scale.text_scale_percent=49;
     rejects([&]{(void)encode_settings(bad_scale);},"settings_range");
+    auto legacy=Json::parse(current);
+    for (const auto* key:{"full_screen","window_width","window_height","effects_volume_percent","motion_background"}) legacy.erase(key);
+    const auto upgraded=decode_settings(legacy.dump());
+    check(upgraded.full_screen && upgraded.window_width==1280 && upgraded.window_height==720 &&
+        upgraded.effects_volume_percent==60 && upgraded.motion_background && upgraded.reduced_motion && upgraded.volume_percent==0,
+        "Legacy preferences gain display defaults and preserve existing audio/accessibility choices");
+    auto bad_window=Json::parse(current);bad_window["window_width"]=0;
+    rejects([&]{(void)decode_settings(bad_window.dump());},"settings_range");
+    auto bad_effects=Json::parse(current);bad_effects["effects_volume_percent"]=101;
+    rejects([&]{(void)decode_settings(bad_effects.dump());});
+    auto fractional_window=Json::parse(current);fractional_window["window_height"]=900.0;
+    rejects([&]{(void)decode_settings(fractional_window.dump());},"integer_token");
     const auto portable=local_paths(directory/"portable");
     check(portable.saves_directory==directory/"portable"/"saves" && portable.settings_file==directory/"portable"/"settings.json",
           "Explicit portable root owns both save/settings locations");

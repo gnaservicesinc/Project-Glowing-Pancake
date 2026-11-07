@@ -9,6 +9,7 @@ Usage: ./make.sh [options]
   (no options)      Build the Release desktop skeleton; never launch it
   --core-only      Build core/headless without finding or downloading Qt
   --editor         Build the separate Content Studio
+  --package        Build and stage the Mac game app with Qt, icon and resources
   --debugging      Build Debug with local developer diagnostics (--debug alias)
   --test           Build, then run CTest; failures return a nonzero exit code
   --clean          Remove only the selected, verified wrapper-owned build tree
@@ -21,8 +22,8 @@ Outputs: build/{release,debug,core-release,core-debug} beneath this checkout.
 On macOS, DEVELOPER_DIR (or xcode-select -p) selects one existing Xcode compiler
 and SDK. Global settings are never changed. The known local Qt installation
 is a build-time fallback only. No SDKs or dependencies are downloaded.
-Combined-product and packaging flags remain reserved. This is a development
-build.
+--package stages dist/Project Glowing Pancake.app on macOS. This is a local
+development build, not a notarized release. Builds never launch applications.
 USAGE
 }
 
@@ -30,6 +31,7 @@ project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 configuration=Release
 core_only=OFF
 editor=OFF
+package=0
 run_tests=0
 clean=0
 qt_root="${QT_ROOT:-}"
@@ -41,6 +43,7 @@ while (($#)); do
         --debugging|--debug) configuration=Debug ;;
         --core-only) core_only=ON ;;
         --editor) editor=ON ;;
+        --package) package=1 ;;
         --test) run_tests=1 ;;
         --clean) clean=1 ;;
         --qt-root)
@@ -49,7 +52,7 @@ while (($#)); do
         --jobs)
             (($# >= 2)) && [[ "$2" =~ ^[1-9][0-9]*$ ]] || fail '--jobs needs a positive integer'
             jobs="$2"; shift ;;
-        --all|--package) fail "$1 is not implemented yet; see docs/BACKLOG.md" ;;
+        --all) fail "$1 is not implemented yet; see docs/BACKLOG.md" ;;
         *) fail "unknown option: $1 (use --help)" ;;
     esac
     shift
@@ -57,6 +60,7 @@ done
 [[ "$clean" == 0 || "$run_tests" == 0 ]] || fail '--clean cannot be combined with --test'
 [[ "$editor" == OFF || "$core_only" == OFF ]] || fail '--editor needs desktop Qt'
 [[ "$editor" == OFF || "$clean" == 0 ]] || fail '--clean selects a whole build tree; omit --editor'
+[[ "$package" == 0 || ( "$editor" == OFF && "$core_only" == OFF && "$clean" == 0 && "$(uname -s)" == Darwin ) ]] || fail '--package requires a Mac desktop game build'
 
 preset=release
 [[ "$configuration" != Debug ]] || preset=debug
@@ -158,6 +162,17 @@ if [[ "$editor" == ON ]]; then
 fi
 [[ -z "$jobs" ]] || build_args+=(--parallel "$jobs")
 cmake "${build_args[@]}"
+if [[ "$core_only" == OFF && "$editor" == OFF && "$(uname -s)" == Darwin && -d "$build_dir/bin/Project Glowing Pancake.app" &&
+      -f "$build_dir/bin/pgp-game" && ! -L "$build_dir/bin/pgp-game" ]]; then
+    rm -f -- "$build_dir/bin/pgp-game" # Retire only the wrapper-owned pre-bundle game output.
+fi
+if [[ "$package" == 1 ]]; then
+    package_qt_root="$qt_root"
+    if [[ -z "$package_qt_root" ]]; then
+        package_qt_root="$(sed -n 's/^Qt6_DIR:PATH=//p' "$build_dir/CMakeCache.txt")/../../.."
+    fi
+    bash "$project_root/tools/package-macos.sh" "$build_dir" "$package_qt_root"
+fi
 if [[ "$run_tests" == 1 ]]; then
     test_args=(--preset "$preset")
     [[ "$editor" == OFF ]] || test_args+=(-R '^studio[.]')

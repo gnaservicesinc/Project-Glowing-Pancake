@@ -11,10 +11,12 @@ class MusicController final : public QObject {
     Q_PROPERTY(QVariantList credits READ credits CONSTANT)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
 public:
-    explicit MusicController(QObject* parent = nullptr);
+    explicit MusicController(QObject* parent = nullptr,
+        pgp::audio::DeviceMode mode = pgp::audio::DeviceMode::NativeIfAvailable);
     [[nodiscard]] QVariantList credits() const { return credits_; }
     [[nodiscard]] QString status() const { return status_; }
     [[nodiscard]] bool playing() const { return player_.status().playing; }
+    [[nodiscard]] bool loaded() const { return player_.status().loaded; }
     [[nodiscard]] QString backend() const;
     void configure(bool enabled, int volume_percent, bool urgent);
     Q_INVOKABLE void playExcerpt(int index);

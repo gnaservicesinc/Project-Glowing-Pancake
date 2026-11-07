@@ -14,13 +14,17 @@ qt_add_resources(pgp-probe probe_images
           "${PROJECT_SOURCE_DIR}/assets/probe/images/paper.jpg"
           "${PROJECT_SOURCE_DIR}/assets/probe/audio/tone.wav")
 
-qt_add_executable(pgp-game game_main.cpp game_smoke.cpp game_smoke.hpp music_controller.cpp music_controller.hpp)
+qt_add_executable(pgp-game game_main.cpp game_smoke.cpp game_smoke.hpp music_controller.cpp music_controller.hpp
+    menu_media.cpp menu_media.hpp menu_smoke.cpp menu_smoke.hpp)
 target_link_libraries(pgp-game PRIVATE pgp::bridge pgp::resources pgp::graphics pgp::audio
     Qt6::Quick Qt6::QuickControls2)
 pgp_project_target(pgp-game)
 qt_add_resources(pgp-game game_ui
     PREFIX "/pgp" BASE "${PROJECT_SOURCE_DIR}/qml"
     FILES "${PROJECT_SOURCE_DIR}/qml/game/Main.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/MainMenu.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/MenuButton.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/MenuSettings.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/StableEntityList.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FlowPresentation.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/ManagementPanel.qml"
@@ -36,6 +40,25 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/MusicCredits.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/RoomScene.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/DomesticMap.qml")
+qt_add_resources(pgp-game menu_assets
+    PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+    FILES "${PROJECT_SOURCE_DIR}/assets/menu/horizon.jpg"
+          "${PROJECT_SOURCE_DIR}/assets/menu/icon.png"
+          "${PROJECT_SOURCE_DIR}/assets/menu/select.wav")
+if(APPLE)
+    set(CMAKE_OBJCXX_COMPILER "${CMAKE_CXX_COMPILER}")
+    enable_language(OBJCXX)
+    target_sources(pgp-game PRIVATE menu_video_mac.mm
+        "${PROJECT_SOURCE_DIR}/assets/menu/Pancake.icns"
+        "${PROJECT_SOURCE_DIR}/assets/menu/horizon.mp4")
+    set_source_files_properties(menu_video_mac.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+    set_source_files_properties("${PROJECT_SOURCE_DIR}/assets/menu/Pancake.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    set_source_files_properties("${PROJECT_SOURCE_DIR}/assets/menu/horizon.mp4" PROPERTIES MACOSX_PACKAGE_LOCATION Resources/Menu)
+    target_link_libraries(pgp-game PRIVATE "-framework AVFoundation" "-framework CoreVideo" "-framework QuartzCore")
+    set_target_properties(pgp-game PROPERTIES
+        MACOSX_BUNDLE TRUE OUTPUT_NAME "Project Glowing Pancake" OBJCXX_STANDARD 20
+        MACOSX_BUNDLE_INFO_PLIST "${PROJECT_SOURCE_DIR}/src/app/Info.plist.in")
+endif()
 qt_add_resources(pgp-game domestic_map
     PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
     FILES "${PROJECT_SOURCE_DIR}/assets/maps/us-states-2024.json"

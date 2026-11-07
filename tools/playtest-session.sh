@@ -14,6 +14,10 @@ if [[ ! "$session_id" =~ ^S[0-9]{2}$ ]]; then
 fi
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 game_binary="$project_root/build/release/bin/pgp-game"
+game_bundle="$project_root/build/release/bin/Project Glowing Pancake.app"
+if [[ "$(uname -s)" == Darwin ]]; then
+    game_binary="$game_bundle/Contents/MacOS/Project Glowing Pancake"
+fi
 session_root="$project_root/.work/playtests/$session_id"
 if [[ ! -x "$game_binary" ]]; then
     printf '%s\n' 'Build the optimized game first with ./make.sh --jobs 4.' >&2
@@ -31,4 +35,7 @@ if [[ -f "$project_root/data/runtime/content-manifest.json" ]]; then
 fi
 cp -- "$project_root/docs/playtests/M3-session-report-template.md" "$session_root/session-report.md"
 printf '%s\n' 'No human result has been recorded. Follow docs/playtests/M3-session-guide.md and obtain consent before taking notes.'
+if [[ "$(uname -s)" == Darwin ]]; then
+    exec /usr/bin/open -n "$game_bundle" --args --portable-root "$session_root/local-game"
+fi
 exec "$game_binary" --portable-root "$session_root/local-game"

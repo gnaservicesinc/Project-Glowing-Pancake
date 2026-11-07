@@ -17,8 +17,8 @@ QByteArray local_resource(const QString& path, qsizetype limit) {
 }
 }
 
-MusicController::MusicController(QObject* parent)
-    : QObject(parent), player_({}, pgp::audio::DeviceMode::NativeIfAvailable) {
+MusicController::MusicController(QObject* parent,pgp::audio::DeviceMode mode)
+    : QObject(parent), player_({}, mode) {
     const auto manifest = QJsonDocument::fromJson(
         local_resource(QStringLiteral(":/pgp/assets/audio/CREDITS.json"), 64 * 1024)).object();
     const auto tracks = manifest.value(QStringLiteral("tracks")).toArray();

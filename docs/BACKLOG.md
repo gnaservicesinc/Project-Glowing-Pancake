@@ -9,6 +9,18 @@ that review.
 
 ## Next phase
 
+Selected feedback milestone **F-01 — Mac game app and main menu** is complete:
+full-screen entry, New/Load, settings, credits, image/video background, music
+and effects, and Escape/quit confirmation. New Game deliberately retains the
+existing prototype setup. The game has a local `.app` with an icon and bundled
+dependencies; this does not close the later device/release qualification gates.
+
+The user's Content Studio usability/application feedback and the ground-up
+gameplay interface/opening/environment discussion remain open. Stop the
+current implementation at the menu milestone. The existing forecast-padding
+CTest and full-campaign staffing assertion also need review in a later
+selected core/flow pass.
+
 | Order | Work | Starting condition |
 | --- | --- | --- |
 | 1 | Gather human feedback and review the user's notes | The user is ready to begin feedback |

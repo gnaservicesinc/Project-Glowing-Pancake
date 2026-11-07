@@ -18,6 +18,11 @@ struct Settings {
     std::uint32_t text_scale_percent = 100;
     std::uint32_t volume_percent = 100;
     bool music_enabled = false;
+    bool full_screen = true;
+    std::uint32_t window_width = 1280;
+    std::uint32_t window_height = 720;
+    std::uint32_t effects_volume_percent = 60;
+    bool motion_background = true;
     auto operator<=>(const Settings&) const = default;
 };
 [[nodiscard]] std::string encode_settings(const Settings& settings);

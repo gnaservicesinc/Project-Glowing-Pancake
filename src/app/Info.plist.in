@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+    <key>CFBundleExecutable</key><string>${MACOSX_BUNDLE_EXECUTABLE_NAME}</string>
+    <key>CFBundleName</key><string>Project Glowing Pancake</string>
+    <key>CFBundleDisplayName</key><string>Project Glowing Pancake</string>
+    <key>CFBundleIdentifier</key><string>org.projectglowingpancake.game</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>${PGP_VERSION_GAME_NUMERIC}</string>
+    <key>CFBundleVersion</key><string>${PGP_VERSION_GAME_NUMERIC}</string>
+    <key>CFBundleIconFile</key><string>Pancake.icns</string>
+    <key>LSApplicationCategoryType</key><string>public.app-category.strategy-games</string>
+    <key>LSMinimumSystemVersion</key><string>${CMAKE_OSX_DEPLOYMENT_TARGET}</string>
+    <key>NSPrincipalClass</key><string>NSApplication</string>
+    <key>NSHighResolutionCapable</key><true/>
+    <key>NSSupportsAutomaticGraphicsSwitching</key><true/>
+    <key>NSHumanReadableCopyright</key><string>GPLv3; see bundled licenses and credits.</string>
+</dict></plist>

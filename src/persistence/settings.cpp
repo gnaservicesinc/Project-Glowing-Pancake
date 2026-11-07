@@ -7,6 +7,9 @@ constexpr std::size_t maximum_settings_bytes=16384;
 void validate(const Settings& settings) {
     if (settings.text_scale_percent<50 || settings.text_scale_percent>300 || settings.volume_percent>100)
         throw PersistenceError("settings_range","Text scale must be 50-300 percent and volume 0-100 percent");
+    if (settings.effects_volume_percent > 100 || settings.window_width < 800 || settings.window_width > 7680 ||
+        settings.window_height < 600 || settings.window_height > 4320)
+        throw PersistenceError("settings_range","Window size or sound effects volume is out of range");
 }
 }
 std::string encode_settings(const Settings& settings) {
@@ -15,16 +18,24 @@ std::string encode_settings(const Settings& settings) {
         {"reduced_motion",settings.reduced_motion},{"auto_pause_alerts",settings.auto_pause_alerts},
         {"compact_management",settings.compact_management},{"text_scale_percent",settings.text_scale_percent},
         {"auto_pause_projects",settings.auto_pause_projects},{"auto_pause_evaluations",settings.auto_pause_evaluations},
-        {"volume_percent",settings.volume_percent},{"music_enabled",settings.music_enabled},{"show_guide",settings.show_guide}}.dump()+"\n";
+        {"volume_percent",settings.volume_percent},{"music_enabled",settings.music_enabled},{"show_guide",settings.show_guide},
+        {"full_screen",settings.full_screen},{"window_width",settings.window_width},{"window_height",settings.window_height},
+        {"effects_volume_percent",settings.effects_volume_percent},{"motion_background",settings.motion_background}}.dump()+"\n";
 }
 Settings decode_settings(std::string_view bytes) {
     const auto value=detail::parse(bytes,maximum_settings_bytes);
     detail::fields(value,"settings",{"settings_format","autosave_enabled","reduced_motion","auto_pause_alerts",
                                     "compact_management","text_scale_percent","volume_percent"},
-                                    {"show_guide","auto_pause_projects","auto_pause_evaluations","music_enabled"});
+                                    {"show_guide","auto_pause_projects","auto_pause_evaluations","music_enabled",
+                                     "full_screen","window_width","window_height","effects_volume_percent","motion_background"});
     if (detail::u64(value.at("settings_format"),"settings_format")!=1)
         throw PersistenceError("future_settings","Unsupported settings format; original file was preserved");
     Settings result;
+    if (value.contains("full_screen")) result.full_screen=detail::boolean(value.at("full_screen"),"full_screen");
+    if (value.contains("motion_background")) result.motion_background=detail::boolean(value.at("motion_background"),"motion_background");
+    if (value.contains("window_width")) result.window_width=static_cast<std::uint32_t>(detail::u64(value.at("window_width"),"window_width",7680));
+    if (value.contains("window_height")) result.window_height=static_cast<std::uint32_t>(detail::u64(value.at("window_height"),"window_height",4320));
+    if (value.contains("effects_volume_percent")) result.effects_volume_percent=static_cast<std::uint32_t>(detail::u64(value.at("effects_volume_percent"),"effects_volume_percent",100));
     if (value.contains("music_enabled")) result.music_enabled=detail::boolean(value.at("music_enabled"),"music_enabled");
     if (value.contains("auto_pause_projects")) result.auto_pause_projects=detail::boolean(value.at("auto_pause_projects"),"auto_pause_projects");
     if (value.contains("auto_pause_evaluations")) result.auto_pause_evaluations=detail::boolean(value.at("auto_pause_evaluations"),"auto_pause_evaluations");

@@ -16,6 +16,21 @@ Working-condition programs and other deeper mechanics previously proposed as
 next tasks are candidates for that review. The initial implementation queue
 is closed.
 
+## Selected feedback: Mac application and main menu
+
+The first human review identified missing Mac application packaging, a
+confusing game interface and an unusable Content Studio entry point. The
+selected first milestone supplies **Project Glowing Pancake.app**, its icon,
+bundled resources/Qt, and a separate full-screen main menu: New Game, Load
+Game, Settings, Credits and Quit. Settings saves display mode, window size,
+audio, text size, reduced motion and still/video background choices locally.
+Escape opens an exit confirmation with Cancel and Exit game, including during
+play. The Main Menu button pauses; Resume returns to the same session.
+
+At the user's direction, New Game retains the existing prototype setup.
+The gameplay interface, starting flow, technology direction, isometric/3D
+environments and a usable Mac Content Studio remain subsequent feedback work.
+
 ## Implemented core
 
 | Area | Available starting point |
@@ -34,10 +49,22 @@ focused engineering checks.
 
 ## Current development build
 
-The Mac game and editor targets are built and current. Existing focused
-verification for the latest feature passed 18 CTests and keyboard walkthroughs
-at 100% and 200% text. These are engineering results. Human feedback is the
-next phase.
+The Mac game target produces an application bundle. `./make.sh --package`
+stages a self-contained, ad-hoc signed development app in `dist`; the Codex
+Run action explicitly builds/packages/launches through
+`script/build_and_run.sh`. Builds alone never launch it. Native menu rendering
+was inspected; the completed offscreen keyboard check covers 200% text,
+persisted preferences, audio decoding, the system AVFoundation video loop,
+prototype entry/resume, load/error recovery and confirmed/cancelled exit.
+The basic campaign clock/save/load walkthrough also passes.
+
+Ten of eleven focused CTests passed. The unchanged campaign-difficulty path
+fails its forecast-padding assertion, and the older full-campaign GUI check
+fails its staffing assertion after the current founder setup. Those core/test
+issues are recorded for the next selected refinement, not hidden by the menu
+checks. Native file-picker row selection, VoiceOver and release/device
+qualification remain open. Content Studio usability is not accepted by this
+milestone.
 
 At closure, the shared content check verifies generation 29, and the build
 graph reports no work for the game or editor targets. Game and editor versions

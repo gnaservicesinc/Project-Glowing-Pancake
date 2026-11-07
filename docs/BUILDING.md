@@ -5,8 +5,9 @@ development interface probe, resource guards and optional playback adapter.
 M0-05 validates the shared component versions and embeds configure-time identity.
 The engineering simulation runs headless or in the desktop room shell.
 An opt-in Content Studio target browses/edits local checkout data and builds the
-maintainer snapshot CLI. The bundled campaign is playable; full authoring and
-distributable packages remain later work.
+maintainer snapshot CLI. The bundled campaign remains a playable prototype.
+The game now has a full-screen main menu and a local Mac application bundle;
+editor usability and release qualification remain later feedback work.
 The [implementation log](IMPLEMENTATION_LOG.md) records acceptance evidence.
 
 ## Requirements and commands
@@ -22,6 +23,8 @@ downloads dependencies or launches a program during builds.
 | Command | Implemented behavior |
 | --- | --- |
 | `./make.sh` | Optimized Release campaign shell and interface probe in `build/release`; no launch |
+| `./make.sh --package --jobs 4` | Mac game app with bundled Qt, resources and icon in `dist`; no launch |
+| `./script/build_and_run.sh` | Explicitly build, package and launch the Mac app; also used by the Codex Run action |
 | `./make.sh --test` | Build then run CTest; propagate failures |
 | `./make.sh --debugging` or `--debug` | Debug in `build/debug`, local developer diagnostics enabled |
 | `./make.sh --core-only` | Release in `build/core-release`, no Qt discovery/linkage |
@@ -33,7 +36,10 @@ downloads dependencies or launches a program during builds.
 | `./make.sh --core-only --clean` | Remove only the selected wrapper-owned tree; no rebuild |
 | `./make.sh --help` | Show flags, paths and requirements |
 
-`--all` and `--package` fail explicitly until their milestones exist.
+`--all` remains reserved. On macOS, `--package` stages a relocatable local
+development app in `dist/Project Glowing Pancake.app`, including its icon,
+menu video, Qt frameworks/plugins/QML imports and notices. It is ad-hoc signed;
+notarized distribution and other-platform packages remain later gates.
 Cleaning uses the same configuration flags as building; for example
 `./make.sh --debug --core-only --clean` removes only `build/core-debug`.
 Unknown existing directories, symlinked build paths and owner-marker mismatches
@@ -234,12 +240,16 @@ Build, then explicitly launch the bundled offline 2014–2017 campaign:
 
 ```sh
 ./make.sh --jobs 4
-build/release/bin/pgp-game
+open "build/release/bin/Project Glowing Pancake.app"
+# Self-contained Mac app (no Qt SDK or checkout needed at runtime):
+./make.sh --package --jobs 4
+open "dist/Project Glowing Pancake.app"
 # Optional separate development saves/preferences, with larger text:
-build/release/bin/pgp-game --portable-root "$PWD/build/release/local-campaign" --text-scale 200
+open -n "dist/Project Glowing Pancake.app" --args --portable-root "$PWD/build/release/local-campaign" --text-scale 200
 ```
 
-The welcome screen offers three headquarters and optional story layers. The
+The game opens full screen to the main menu. New Game opens the existing
+prototype setup, which offers three headquarters and optional story layers. The
 in-game guide covers data, research, training, held-out evaluation, qualification
 and customer contracts. Office also supplies bounded policies, fixed financing,
 hiring, alerts and the provisional/final slice score. Clock milestone targets
@@ -266,11 +276,31 @@ including exact save/load and required decisions. With an engineering business
 fixture it retains the smaller room/clock/save/error/preferences check:
 
 ```sh
-build/release/bin/pgp-game --smoke-test --portable-root .work/playable-check
-build/release/bin/pgp-game --smoke-test --text-scale 200 --portable-root .work/playable-check-200
-build/release/bin/pgp-game --content tests/content/fixtures/business.json \
+game_binary='build/release/bin/Project Glowing Pancake.app/Contents/MacOS/Project Glowing Pancake'
+"$game_binary" --menu-smoke --smoke-test --portable-root .work/menu-check --screenshot .work/main-menu.png
+"$game_binary" --smoke-test --portable-root .work/playable-check
+"$game_binary" --smoke-test --text-scale 200 --portable-root .work/playable-check-200
+"$game_binary" --content tests/content/fixtures/business.json \
   --smoke-test --portable-root .work/engineering-check
 ```
+
+On Linux/Windows, use the ordinary `pgp-game` executable. The explicit menu
+check covers startup, keyboard navigation, credits, 200% text, settings
+round-trip, audio, still/video selection, the existing New Game setup, Resume,
+the local picker open/cancel and the save-load handler's success/error paths,
+plus Escape/quit confirmation, cancellation and an actual confirmed exit.
+On Mac it also crosses the bundled ten-second video loop. The explicit
+`QT_QPA_PLATFORM=offscreen` / `--software` path keeps the desktop undisturbed,
+uses silent audio output and activates the system decoder for the loop check.
+Native picker row selection and VoiceOver still need human checks. The older campaign checks
+enter the prototype directly so their simulation paths remain focused.
+
+The background is an embedded image plus a separate silent local-video layer.
+On Mac that layer uses system AVFoundation and pauses when the menu is hidden,
+the app is inactive or reduced motion is selected. Other platforms currently
+use the still image. `assets/menu/PROVENANCE.md` records the original art,
+selection effect and reproducible source scripts. Isometric/3D environments
+and the gameplay interface are outside this menu milestone.
 
 Optional `--screenshot PATH.png` is limited to smoke mode. It captures local
 rendered output; the complete campaign smoke also captures Office, training and
@@ -435,7 +465,7 @@ and [Apple SDK selection before language initialization](https://cmake.org/cmake
 ```sh
 build/release/bin/pgp-headless --competition-demo data/runtime/first-playable.json standard 1096
 ctest --test-dir build/release -R '^runtime.(competition|heavyweights|governance)$' --output-on-failure
-build/release/bin/pgp-game --competition-smoke --smoke-test \
+"$game_binary" --competition-smoke --smoke-test \
   --portable-root "$PWD/.work/competition-smoke-new" --text-scale 200 \
   --screenshot "$PWD/.work/competition-smoke-new.png"
 ```
