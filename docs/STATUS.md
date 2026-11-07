@@ -4,7 +4,29 @@ Updated 2026-11-07 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**Initial feature work is active. Latest delivery: verified synthetic training
+**Paused at the user's request on 2026-11-07.** Last completed, verified
+feature commit: `55f0c24` (synthetic data). Unfinished deployment incident work
+is preserved on `wip/deployment-risk-2026-11-07`; it is not a completed or
+build-verified feature. Resume that branch rather than starting over.
+
+The checkpoint includes the core header/module, optional content/save codecs,
+an appended eighth `risk` stream with legacy seven-stream preservation,
+registry/committed-news integration, bridge/QML controls and a focused test.
+Remaining integration: implement `validate_deployment_risk`, register the core
+sources in CMake, implement serving containment through `CapacityProject.disruptions`
+(zero work while reservations remain), add the `incident_response` finite-kind
+handling, wire commands and daily preparation in `simulation.cpp`, and initialize
+risk in player/rival openings. Rivals need ordinary alert acknowledgment and
+budgeted response behavior. No runtime content has been changed for this batch.
+Author the 48-cell rules and ordinary `deployment.incident_news` committed flow
+through the shared snapshot writer after core integration. Fix mutable discovery
+descriptions before save tests: historical committed causes must not change when
+claims are paid or response work progresses. Bound aggregated same-project/day
+news causes to the persisted 1,024-character contract. Then build incrementally,
+run focused checks and prepare the missing 100%/200% keyboard harness. No build
+or tests were run for this unfinished checkpoint.
+
+**Initial feature coverage. Latest delivery: verified synthetic training
 data in Lab. Next: authored deployment incident risk and response.**
 
 The original roadmap has **42 of 52 acceptance steps checked**. Its ten open
