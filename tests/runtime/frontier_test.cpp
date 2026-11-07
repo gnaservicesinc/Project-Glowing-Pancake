@@ -332,6 +332,7 @@ void automation(const runtime::CompiledProgram& p) {
     const LabAllocation lab{"lease.initial",MilliCUPerDay{40000},2};
     const FrontierBudget queue{lab,Cents{10'000'000},Cents{2'000'000},Days{1},2};
     const auto opening_cash=state(game).cash;
+    apply(game,TakeFinancing{"support.methodology_grant"});
     apply(game,AuthorizeFrontierResearch{{{"research.sequence_modeling","research.reproducible_tooling"},queue,false}});
     advance(game,after(Days{1}));
     check(state(game).lab->research.empty() && future(game).research_programs[0].waiting.find("prerequisites")!=std::string::npos,
@@ -339,10 +340,12 @@ void automation(const runtime::CompiledProgram& p) {
     check(state(game).cash<=opening_cash,"A waiting research policy invented cash.");
     apply(game,CancelFrontierPolicy{1,false});
     refuse(game,CancelFrontierPolicy{1,false});
-    apply(game,AuthorizeFrontierResearch{{{"research.held_out_evaluation","research.reproducible_tooling"},queue,false}});
+    auto funded=queue;
+    funded.limit=Cents{25'000};
+    apply(game,AuthorizeFrontierResearch{{{"research.held_out_evaluation","research.reproducible_tooling"},funded,false}});
     advance(game,after(Days{20}));
     check(future(game).research_programs[0].decisions.empty() && future(game).research_programs[1].decisions.size()==2 &&
-        state(game).lab->research.size()==2 && std::ranges::all_of(state(game).lab->research,[](const auto& row){return row.completed;}),
+        state(game).lab->research.size()==2 && std::ranges::all_of(state(game).lab->research,[](const auto& row){return row.completed && row.sponsored_fee==Cents{37'500};}),
         "Cancelling a queue left pending starts, or the authorized queue failed to use the actual Lab.");
     const FrontierBudget recurring{lab,Cents{3'600'000},Cents{2'000'000},Days{14},2};
     apply(game,AuthorizeFrontierResearch{{{"research.refresh_measurement"},recurring,true}});

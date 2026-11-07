@@ -76,6 +76,7 @@ struct ResearchRun {
     std::string research_id, project_id;
     bool completed = false;
     BasisPoints insight_credit{0};
+    Cents sponsored_fee{0};
     auto operator<=>(const ResearchRun&) const = default;
 };
 struct ResearchPublication {
@@ -177,7 +178,8 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
 // are committed together or the whole command is refused.
 void buy_data(LabState& state, AccountsState& accounts, OrdinalDay day, std::string_view offer_id, Cents protected_cash);
 void start_research(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day,
-                    std::string_view research_id, const LabAllocation& allocation, Cents protected_cash);
+                    std::string_view research_id, const LabAllocation& allocation, Cents protected_cash,
+                    Cents sponsored_fee=Cents{0});
 void publish_research(LabState& state, const CapacityState& capacity, OrdinalDay day, std::string_view research_id);
 void acquire_research_insight(LabState& state, OrdinalDay day, ResearchInsight insight);
 void start_training(LabState& state, CapacityState& capacity, OrdinalDay day, const TrainingRequest& request);

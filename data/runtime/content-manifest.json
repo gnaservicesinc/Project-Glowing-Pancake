@@ -90,13 +90,13 @@
     }
   ],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "e9f510c516ba50faf091c7d8d64b03e00225c614ec2a29956861c9ef83bbf45a",
+  "collection_hash": "038b0771e10d1504c0a0b5269caecfb590fb5af0c8ed33ca19a5385aee3de5a5",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.17.0-dev.1",
+  "content_version": "0.18.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -1127,44 +1127,44 @@
     {
       "id": "scenario.century_frontier",
       "kind": "scenario",
-      "revision": 7,
-      "semantic_hash": "23e26f3c9161b5a1b4136b1928395144d0fb94e01110aa247c64bb040acbd607"
+      "revision": 8,
+      "semantic_hash": "f7961c4e76a138dab3d1b9439235fdcaba7b154c828ea9b1e5acd64486395883"
     },
     {
       "id": "scenario.century_plateau",
       "kind": "scenario",
-      "revision": 7,
-      "semantic_hash": "91cddf4f2269aef47ce9c4fd6185d750bbfd1ac99f649ffbf474620d4d39bcf5"
+      "revision": 8,
+      "semantic_hash": "0978982ecc4a00725e10159fd3bdb50c3958a099dd6ca2ace6fc5a020d7666eb"
     },
     {
       "id": "scenario.first_playable",
       "kind": "scenario",
-      "revision": 10,
-      "semantic_hash": "6c9a5d3a5d1b3220ca78efe474736e1f28aa7cf8ccd3955c5609883cffacc34a"
+      "revision": 11,
+      "semantic_hash": "1e94bc88f33025a06d138c38008454708b4b5c8fb0da1170ac2ef065c3ab3aab"
     },
     {
       "id": "scenario.world_competition",
       "kind": "scenario",
-      "revision": 11,
-      "semantic_hash": "ec5e7bad36ca6e547c44ba16e5d85bd607d44ffe8dd7be88bd8a7a8626d4b3e7"
+      "revision": 12,
+      "semantic_hash": "f2c11ca162ce59a7e1c2d50a28bfafcbdac636740e2603369e00ded67b98384b"
     },
     {
       "id": "scenario.world_expanded",
       "kind": "scenario",
-      "revision": 11,
-      "semantic_hash": "c1682c85b3431480ff1062a8631d85eeb140e0fca1060485bd53b7ced13d0b94"
+      "revision": 12,
+      "semantic_hash": "8fbc6c8506974a1d5701a6a3e7772104db97157ca7b39e5351994d49ccc4b909"
     },
     {
       "id": "scenario.world_forgiving",
       "kind": "scenario",
-      "revision": 11,
-      "semantic_hash": "0a9d93ec35ceeba2d2692f21f48fc1a33d46ea65dca1b3a0728f27369856156a"
+      "revision": 12,
+      "semantic_hash": "7d6e0a712757205199a8fcbd307e7e0373c529553b50a62103f8e8c0a5ae922f"
     },
     {
       "id": "scenario.world_reduced",
       "kind": "scenario",
-      "revision": 11,
-      "semantic_hash": "19153827b658de66345e8f171712927741b34b4f7b55d85a3b97be3f73504376"
+      "revision": 12,
+      "semantic_hash": "2741538505029f7154e560520d77595b6db0eb9d476173e537dd700d2b2a3257"
     },
     {
       "id": "slice.evaluation_finding",
@@ -1276,7 +1276,7 @@
     }
   ],
   "format": 1,
-  "generation": 17,
+  "generation": 18,
   "messages_hash": "76acd56ce7cc4c5f6a169926e56546b6355b34ffd8805cffdac9e96a0fefe9d4",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
@@ -1615,5 +1615,5 @@
       "authority.executive_disclosure"
     ]
   },
-  "source_hash": "4846b238a0a85222e5fb55089762618f6e5c4bd5184350e80c12871d22897866"
+  "source_hash": "e3d87a6419fffa180525d95282b7b99d56b277b8814a683a81c5ec4c5762463b"
 }

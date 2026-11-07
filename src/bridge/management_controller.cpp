@@ -25,6 +25,48 @@ QString money_input(core::Cents value) {
     return QStringLiteral("%1.%2").arg(value.value()/100).arg(value.value()%100,2,10,QLatin1Char('0'));
 }
 QString percent(core::BasisPoints v) { return QStringLiteral("%1.%2%").arg(v.value()/100).arg(v.value()%100,2,10,QLatin1Char('0')); }
+CampaignRow funding_support_row(const core::SimulationState& state,const core::FundingSupportOffer& offer) {
+    const auto status=core::funding_support_status(state,offer);
+    const bool grant=offer.kind==core::FundingSupportKind::research_grant;
+    const auto date=[](core::OrdinalDay day){return text(core::iso_date(day));};
+    QString detail;
+    if (grant) {
+        QStringList topics;
+        for (const auto& target:offer.targets) topics.push_back(readable(target));
+        detail=QObject::tr("Covers up to %1 of each eligible research fee. Eligible topics are %2. "
+                           "The grant pays its share when work starts. Stopping the project keeps the original charges.")
+            .arg(percent(offer.coverage),topics.join(QStringLiteral(", ")));
+    } else {
+        const auto& target=offer.targets.front();
+        const auto bill=target=="compute_lease"?QObject::tr("the opening cloud lease"):
+            target=="founder_compute"?QObject::tr("the founder compute lease"):readable(target.substr(std::string_view{"offer.lease/"}.size()));
+        detail=QObject::tr("Covers up to %1 of the daily bill for %2. The credit lowers the payable before cash settlement. "
+                           "Cash forecasts use the gross lease terms.")
+            .arg(percent(offer.coverage),bill);
+    }
+    detail+=QObject::tr("\nClaim from %1 up to %2. One award starts the morning after you claim it and lasts %3 days. "
+                        "The award is reserved for its eligible expenses and any unused amount expires.")
+        .arg(date(status.opens_on),date(status.claim_before),QString::number(offer.use_days.value()));
+    QString caption;
+    if (status.expires_before) {
+        if (state.date<*status.active_on) caption=QObject::tr("Starts next morning");
+        else if (status.unused.value()==0) caption=QObject::tr("Fully used");
+        else if (state.date>=*status.expires_before) caption=QObject::tr("Expired");
+        else caption=QObject::tr("Active");
+        detail+=QObject::tr("\nActive from %1 up to %2. Applied %3. %4 %5.")
+            .arg(date(*status.active_on),date(*status.expires_before),money(core::checked_unit_subtract(offer.limit,status.unused)),
+                 money(status.unused),state.date>=*status.expires_before?QObject::tr("expired unused"):QObject::tr("remaining"));
+        const auto& uses=state.management->funding_support.uses;
+        const auto latest=std::find_if(uses.rbegin(),uses.rend(),[&](const auto& use){return use.offer_id==offer.id;});
+        if (latest!=uses.rend()) detail+=QObject::tr("\nLatest application %1 on %2 to %3.")
+            .arg(money(latest->amount),date(latest->day),text(latest->target));
+    } else if (status.claimable) caption=QObject::tr("Available to claim");
+    else if (state.date<status.opens_on) caption=QObject::tr("Opens %1").arg(date(status.opens_on));
+    else if (state.date>=status.claim_before) caption=QObject::tr("Claim window closed");
+    else caption=QObject::tr("Unavailable for this campaign or lease");
+    return {text(offer.id),text(offer.name),QObject::tr("%1 in eligible fee support").arg(money(offer.limit)),
+        std::move(detail),std::move(caption),status.claimable,{}};
+}
 QString channel_name(core::ProductChannel channel) {
     using core::ProductChannel;
     switch (channel) {
@@ -228,10 +270,13 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             const bool has_insight=std::any_of(s.lab->insights.begin(),s.lab->insights.end(),[&](const auto& value){return value.research_id==row.id;});
             const bool can_adopt=insight && !has_insight && !completed && status!=QStringLiteral("In progress") &&
                 s.date>=core::advance_days(insight->published_on,snapshot_->checkpoint.world.competition->setup->publication_delay);
-            research.push_back({text(row.id),title_for(row.id),money(row.cash)+QStringLiteral(" · ")+QString::number(row.staff_days.value())+QStringLiteral(" staff-days"),
+            const auto cash_fee=core::research_cash_fee(s,row.id);
+            research.push_back({text(row.id),title_for(row.id),money(cash_fee)+QStringLiteral(" · ")+QString::number(row.staff_days.value())+QStringLiteral(" staff-days"),
                 QStringLiteral("%1 CU of finite experiments plus %2 staff-days. Both must complete.\nPrerequisites: %3\nPaid work and staff time are not refunded when stopped.")
                     .arg(cu(row.experiment_work.value()),QString::number(row.staff_days.value()),prerequisites.isEmpty()?QStringLiteral("none"):prerequisites.join(QStringLiteral(", "))),status,
                 status!=QStringLiteral("Completed") && status!=QStringLiteral("In progress"),{{QStringLiteral("completed"),completed},{QStringLiteral("published"),published},{QStringLiteral("canAdopt"),can_adopt}}});
+            if (cash_fee<row.cash) research.back().detail+=tr("\nGross fee %1. The grant pays %2 and the company pays %3 if this research starts today.")
+                .arg(money(row.cash),money(core::checked_unit_subtract(row.cash,cash_fee)),money(cash_fee));
             if (const auto description=program.collection.messages.find(row.id+".detail"); description!=program.collection.messages.end())
                 research.back().detail=text(description->second)+QStringLiteral("\n\n")+research.back().detail;
             research.back().detail+=published?QStringLiteral("\nPublished: other companies can adopt this result after the disclosed delay."):QStringLiteral("\nThis result remains private until explicitly published.");
@@ -337,6 +382,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
                 QStringLiteral("%1 proceeds · %2 monthly interest · principal due %3 days after drawing. Interest accrues through actual accounts; repay principal explicitly in Accounts. Offered once.").arg(money(offer.proceeds),percent(offer.monthly_interest),QString::number(offer.term.value())),taken?QStringLiteral("Used"):QStringLiteral("Available"),!taken});
             if (offer.public_announcement) funding.back().detail+=tr(" Acceptance publicly announces this financing round; its private spending and balances remain undisclosed.");
         }
+        for (const auto& offer:m.catalog.support_offers) funding.push_back(funding_support_row(s,offer));
         for (const auto& offer:m.catalog.specialists) {
             const bool hired=std::any_of(m.specialists.begin(),m.specialists.end(),[&](const auto& h){return h.offer_id==offer.id;});
             specialists.push_back({text(offer.id),text(offer.name),money(offer.signing_cost)+QStringLiteral(" signing · ")+money(offer.monthly_salary)+QStringLiteral("/month"),

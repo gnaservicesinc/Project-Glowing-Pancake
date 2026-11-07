@@ -103,6 +103,14 @@ OrdinalDay month_end(OrdinalDay day) {
     const auto date = from_ordinal(day);
     return to_ordinal({date.year, date.month, days_in_month(date.year, date.month)});
 }
+Cents prorated_recurring(const RecurringObligation& obligation,OrdinalDay day,OrdinalDay first,unsigned denominator) {
+    if (day<obligation.starts_on || (obligation.ends_before && day>=*obligation.ends_before)) return Cents{0};
+    const auto elapsed=static_cast<std::uint64_t>(day.value()-std::max(first,obligation.starts_on).value());
+    const auto amount=static_cast<std::uint64_t>(obligation.monthly_amount.value());
+    const auto before=mul_div_floor(amount,elapsed,denominator).quotient;
+    const auto after=mul_div_floor(amount,elapsed+1,denominator).quotient;
+    return Cents{after-before};
+}
 void accrue(AccountsState& state, OrdinalDay day, std::string id, Cents amount, std::string cause) {
     if (amount == Cents{0}) return;
     const auto due = month_end(day);
@@ -117,21 +125,32 @@ void accrue(AccountsState& state, OrdinalDay day, std::string id, Cents amount, 
     append_trusted(state, day, Account::expenses, Account::payables, amount, std::move(cause),
                    "accrue/" + id + "/" + iso_date(day), id);
 }
-void close_day(AccountsState& state, OrdinalDay day, Cents protected_cash) {
+void close_day(AccountsState& state, OrdinalDay day, Cents protected_cash,
+               std::span<const RecurringCredit> credits = {}) {
     require_day(state, day);
     auto current_available = available_cash(state, protected_cash);
     const auto civil = from_ordinal(day);
     const auto denominator = days_in_month(civil.year, civil.month);
     const auto first = month_start(day);
+    std::size_t applied_credits=0;
     for (const auto& obligation : state.recurring) {
-        if (day < obligation.starts_on || (obligation.ends_before && day >= *obligation.ends_before)) continue;
-        const auto accrued_start = std::max(first, obligation.starts_on);
-        const auto elapsed = static_cast<std::uint64_t>(day.value() - accrued_start.value());
-        const auto before = mul_div_floor(static_cast<std::uint64_t>(obligation.monthly_amount.value()), elapsed, denominator).quotient;
-        const auto after = mul_div_floor(static_cast<std::uint64_t>(obligation.monthly_amount.value()), elapsed + 1, denominator).quotient;
-        accrue(state, day, "recurring/" + obligation.id + "/" + iso_date(first),
-               Cents{after - before}, obligation.cause);
+        auto uncovered=prorated_recurring(obligation,day,first,denominator);
+        if (uncovered.value()==0) continue;
+        const auto invoice_id="recurring/" + obligation.id + "/" + iso_date(first);
+        accrue(state, day, invoice_id, uncovered, obligation.cause);
+        for (const auto& credit:credits) if (credit.obligation==obligation.id) {
+            if (!credit.key.starts_with(supplier_credit_prefix) || credit.amount.value()<=0 || credit.amount>uncovered)
+                invalid("Supplier credit must cover part of the actual daily obligation");
+            const auto row=*state.invoices.find(invoice_id);
+            const auto& invoice=state.invoices[row];
+            append_trusted(state,day,Account::payables,Account::expenses,credit.amount,"Supplier credit applied to "+obligation.id,
+                           credit.key,invoice_id);
+            state.invoices.set_amounts(row,invoice.amount,checked_unit_add(invoice.settled,credit.amount));
+            uncovered=checked_unit_subtract(uncovered,credit.amount);
+            ++applied_credits;
+        }
     }
+    if (applied_credits!=credits.size()) invalid("Supplier credit lacks its active recurring charge");
     for (auto& debt : state.debts) {
         if (day < debt.drawn_on) continue;
         if (!debt.interest_month || *debt.interest_month != first) {
@@ -198,6 +217,7 @@ void PostingTotals::add(const Posting& posting) {
     auto& credit = balances[index(posting.credit)];
     debit = checked_unit_add(debit, debit_normal(posting.debit) ? posting.amount : Cents{-posting.amount.value()});
     credit = checked_unit_add(credit, debit_normal(posting.credit) ? Cents{-posting.amount.value()} : posting.amount);
+    if (posting.debit==Account::payables && posting.credit==Account::expenses) ++supplier_credits;
 }
 static AccountsReport report(const PostingTotals& totals) {
     const auto& balances = totals.balances;
@@ -349,8 +369,10 @@ void validate_accounts(const AccountsState& state) {
                     invalid("Subledger recognition has an invalid economic offset");
                 totals.recognized = checked_unit_add(totals.recognized, posting.amount);
             } else {
-                if ((debit_normal(account) ? posting.debit : posting.credit) != Account::cash)
-                    invalid("Subledger settlement must move cash exactly once");
+                const bool supplier_credit=account==Account::payables && posting.credit==Account::expenses &&
+                    posting.key.starts_with(supplier_credit_prefix) && posting.document_id.starts_with("recurring/");
+                if ((debit_normal(account) ? posting.debit : posting.credit) != Account::cash && !supplier_credit)
+                    invalid("Subledger settlement must move cash or apply a supplier credit to its bill");
                 totals.settled = checked_unit_add(totals.settled, posting.amount);
                 if (totals.settled > totals.recognized) invalid("Subledger settlement precedes its recognized amount");
             }
@@ -691,11 +713,16 @@ void dispose_owned_asset(AccountsState& state,OrdinalDay day,std::string referen
         if (loss.value()>0) append(candidate,day,Account::expenses,Account::assets,loss,"Owned asset disposal loss",key+"/loss");
     });
 }
-void close_accounts_day(AccountsState& state, OrdinalDay day, Cents protected_cash, bool validate_io) {
+Cents recurring_charge_on(const RecurringObligation& obligation,OrdinalDay day) {
+    const auto date=from_ordinal(day);
+    return prorated_recurring(obligation,day,to_ordinal({date.year,date.month,1}),days_in_month(date.year,date.month));
+}
+void close_accounts_day(AccountsState& state, OrdinalDay day, Cents protected_cash, bool validate_io,
+                        std::span<const RecurringCredit> credits) {
     if (validate_io) {
-        mutate(state, [&](auto& candidate) { close_day(candidate, day, protected_cash); });
+        mutate(state, [&](auto& candidate) { close_day(candidate, day, protected_cash,credits); });
     } else {
-        close_day(state, day, protected_cash);
+        close_day(state, day, protected_cash,credits);
     }
 }
 CashProjection project_cash(const AccountsState& state,OrdinalDay through,Cents protected_cash,const std::vector<MeteredProjection>& metered) {

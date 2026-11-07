@@ -193,5 +193,85 @@ void pause_milestone(const Json& source) {
     const auto maturity=quiet_debt.submit({quiet_debt.checkpoint().world.simulation.revision,core::AdvanceDay{}});
     check(maturity.command.accepted() && maturity.halt_requested && maturity.pause_notice.has_value() && quiet_debt.checkpoint().world.simulation.date.value()==365,"Disabled optional alerts skipped actual debt principal deadline");
 }
+
+void funding_support(Json source) {
+    const std::string grant="support.methodology_grant",credit="support.opening_cloud_credit";
+    auto& offers=pgp_test::scenario_doc(source)["management"]["support_offers"];
+    pgp_test::named_row(offers,grant)["limit_cents"]=50'000;
+    pgp_test::named_row(offers,credit)["use_days"]=3;
+    const auto program=compile(std::move(source),false);
+    auto game=begin(program);
+    auto control=begin(program);
+    const auto cash=state(game).cash;
+    const auto ownership=state(game).accounts->holdings;
+    apply(game,core::TakeFinancing{grant});
+    apply(game,core::TakeFinancing{credit});
+    check(state(game).cash==cash && state(game).accounts->holdings==ownership && state(game).accounts->debts.empty(),
+          "Restricted awards created unrestricted money, shares or debt");
+    refused(game,core::TakeFinancing{grant});
+    refused(game,core::TakeFinancing{credit});
+    check(core::research_cash_fee(state(game),"research.held_out_evaluation")==core::Cents{50'000},
+          "The grant paid a fee before its next-morning activation");
+    days(game,1);days(control,1);
+    check(state(game).accounts->postings.totals().supplier_credits==0,"The supplier credited the claim date");
+    const core::StartResearch research{"research.held_out_evaluation",{"lease.initial",core::MilliCUPerDay{20'000},2}};
+    auto bad=research;
+    bad.allocation.staff=100;
+    refused(game,bad);
+    check(state(game).management->funding_support.uses.empty(),"A refused project consumed the grant");
+    for (auto* engine:{&game,&control}) {
+        apply(*engine,research);
+        const auto project=state(*engine).lab->research.back().project_id;
+        apply(*engine,core::CancelProject{project});
+        apply(*engine,research);
+        apply(*engine,core::BuyData{"data.licensed_documents"});
+    }
+    const auto& funded=state(game).lab->research;
+    check(funded.front().sponsored_fee==core::Cents{37'500} && funded.back().sponsored_fee==core::Cents{12'500} &&
+          state(game).cash==core::checked_unit_add(state(control).cash,core::Cents{50'000}),
+          "Grant cap, eligible cash co-payment or cancellation accounting is wrong");
+    days(game,3);days(control,3);
+    const auto& support=state(game).management->funding_support;
+    const auto* award=&support.awards.back();
+    check(award->offer_id==credit && award->used.value()>0 && award->used.value()<1'500'000 &&
+          state(game).accounts->postings.totals().supplier_credits==3 &&
+          state(game).cash==core::checked_unit_add(state(control).cash,core::Cents{50'000}),
+          "Cloud credit must settle only its active daily charges without moving cash");
+    const auto used=award->used;
+    check(core::accounts_report(*state(control).accounts).payables==
+          core::checked_unit_add(core::accounts_report(*state(game).accounts).payables,used),
+          "Cloud credit did not reduce the actual supplier payable");
+    const auto loaded=persistence::decode_save(program,persistence::encode_save(program,game.checkpoint()));
+    check(loaded.checkpoint==game.checkpoint(),"Claimed awards and their redemptions failed exact reload");
+    runtime::Runtime resumed{program,loaded.checkpoint};
+    while (state(game).date<core::OrdinalDay{31}) {days(game,1);days(control,1);days(resumed,1);}
+    check(game.checkpoint()==resumed.checkpoint() && state(game).management->funding_support.awards.back().used==used &&
+          state(game).cash==core::checked_unit_add(state(control).cash,core::checked_unit_add(core::Cents{50'000},used)),
+          "Expired credit was redeemed again or the month's cash bill ignored the credit");
+    auto tampered=Json::parse(persistence::encode_save(program,game.checkpoint()));
+    tampered["checkpoint"]["world"]["simulation"]["management"].erase("funding_support");
+    tampered.erase("sha256");
+    tampered["sha256"]=persistence::sha256(tampered.dump());
+    bool rejected=false;
+    try {(void)persistence::decode_save(program,tampered.dump());}
+    catch (const persistence::PersistenceError&) {rejected=true;}
+    check(rejected,"Unbacked noncash credits or grants survived restore");
 }
-int main() {try {std::ifstream file{PGP_SLICE_CONTENT_PATH};const auto source=Json::parse(file);for (const auto& [name,run]:std::vector<std::pair<const char*,void(*)(const Json&)>>{{"bounds",bounds},{"policies",policies},{"renewals",renewals},{"recovery_financing",recovery_financing},{"pause_milestone",pause_milestone},{"specialist_ending",specialist_ending}}) {try {run(source);}catch(const std::exception& e){throw std::runtime_error(std::string{name}+": "+e.what());}}std::cout<<checks<<" management integration checks passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+}
+int main(int argc,char** argv) {
+    try {
+        std::ifstream file{PGP_SLICE_CONTENT_PATH};
+        const auto source=Json::parse(file);
+        if (argc>1 && std::string_view{argv[1]}=="--funding-support") {
+            funding_support(source);
+        } else {
+            for (const auto& [name,run]:std::vector<std::pair<const char*,void(*)(const Json&)>>{
+                {"bounds",bounds},{"policies",policies},{"renewals",renewals},{"recovery_financing",recovery_financing},
+                {"pause_milestone",pause_milestone},{"specialist_ending",specialist_ending}}) {
+                try {run(source);} catch (const std::exception& e) {throw std::runtime_error(std::string{name}+": "+e.what());}
+            }
+        }
+        std::cout<<checks<<" management integration checks passed\n";
+        return 0;
+    } catch (const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;}
+}

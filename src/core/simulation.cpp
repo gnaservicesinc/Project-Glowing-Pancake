@@ -170,6 +170,7 @@ void validate(const SimulationState& state,bool deep=true,std::size_t first_rece
         validate_lab(*state.lab, *state.capacity, *state.accounts, state.random, false);
     }
     if (state.management) {validate_management(state,deep);validate_governance(state,deep);}
+    validate_funding_support(state,deep);
     validate_succession(state,deep);
     validate_infrastructure(state,deep);
     validate_resilience(state,deep);
@@ -498,7 +499,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if (next.lab) close_lab_day(*next.lab, *next.capacity, next.date, next.random);
                 close_infrastructure_day(next);
                 if (next.accounts) {
-                    close_accounts_day(*next.accounts, next.date, reserved_cash(next), false);
+                    const auto credits=redeem_cloud_credits(next);
+                    close_accounts_day(*next.accounts, next.date, reserved_cash(next), false, credits);
                     next.cash = accounts_report(*next.accounts).cash;
                     close_public_reporting_day(next);
                 }
@@ -733,8 +735,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             } else if constexpr (std::is_same_v<Action, StartResearch>) {
                 require_technology(FrontierTechnology::research,action.research_id);
                 const auto before = next.cash;
-                start_research(lab(next), accounts(next), capacity(next), next.date, action.research_id, action.allocation, reserved_cash(next));
-                next.cash = accounts_report(*next.accounts).cash;
+                start_funded_research(next,action.research_id,action.allocation,reserved_cash(next));
                 (void)receipt(next, "start_research", 0, checked_unit_subtract(next.cash, before));
             } else if constexpr (std::is_same_v<Action, PublishResearch>) {
                 publish_research(lab(next),capacity(next),next.date,action.research_id);

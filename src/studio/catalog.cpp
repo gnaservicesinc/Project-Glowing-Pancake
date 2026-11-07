@@ -35,6 +35,7 @@ std::string record_family(std::string_view path,std::string_view kind) {
     if(array.ends_with("/governance/board")) return "board";
     if(array.ends_with("/succession/tracks")) return "leadership_track";
     if(array.ends_with("/management/financing")) return "financing";
+    if(array.ends_with("/management/support_offers")) return "funding_support";
     if(array.ends_with("/management/specialists")) return "specialist";
     if(array.ends_with("/management/setbacks")) return "setback";
     if(array.ends_with("/segments")) return "segment";

@@ -395,8 +395,8 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "funding"
-        Copy { text: qsTr("Financing is offered once at fixed terms. Equity dilutes ownership; a loan creates interest and a principal deadline. A specialist adds paid staff capacity. The document-specialist service requires efficient-serving research and an independently tested efficient recipe.") }
-        Selection { heading: qsTr("Financing offers"); rows: manager.funding }
+        Copy { text: qsTr("Compare one-time financing terms and restricted awards. Equity dilutes ownership and loans add interest and a principal deadline. Grants and credits cover eligible expenses. Specialists add paid staff capacity.") }
+        Selection { objectName: "fundingOfferSelection"; heading: qsTr("Financing offers"); rows: manager.funding }
         Action { objectName: "takeFinancingButton"; text: qsTr("Accept selected financing terms…"); enabled: panel.editable && manager.funding.selectedRow.actionable === true; onClicked: fundingDialog.open() }
         Selection { heading: qsTr("Specialists"); rows: manager.specialists }
         Action { objectName: "hireSpecialistButton"; text: qsTr("Hire selected specialist and start payroll"); enabled: panel.editable && manager.specialists.selectedRow.actionable === true; onClicked: manager.hireSpecialist(manager.specialists.selectedId) }

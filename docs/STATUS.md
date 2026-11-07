@@ -617,8 +617,17 @@ enters the existing heavyweight financing observation.
 Internal content 0.17.0-dev.1 finalizes these terms. The optimized build, four
 focused checks and offscreen review, vote and filing checks at 100% and 200% pass.
 
-Next is restricted grant and cloud credit financing. The roadmap remains 42/52
-checked while design coverage is completed.
+All seven scenarios now offer a restricted grant for three research topics and
+an expiring credit for the opening lease. Awards activate the next morning.
+The grant pays part of eligible Lab and delegated research fees within its cap.
+The cloud credit reduces actual lease payables as the daily charges accrue.
+Both keep saved claim and redemption records. Internal content 0.18.0-dev.1
+passes review across all seven scenarios and 21 headquarters openings. The
+optimized build, six focused checks and short QML save/reopen checks at 100%
+and 200% text pass.
+
+Next is ordinary customer prepayment. The roadmap remains 42/52 checked while
+design coverage is completed.
 M8-02 stays deferred. Human work waits until the user is ready, and E2-04 editor
 downloads stay with deferred release preparation.
 

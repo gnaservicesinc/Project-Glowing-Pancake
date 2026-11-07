@@ -19,7 +19,10 @@ std::vector<std::string> strings(const Json& value, std::size_t bound, std::size
 Json lab_json(const core::LabState& state) {
     Json licenses=Json::array(), research=Json::array(), models=Json::array(), evaluations=Json::array();
     for (const auto& row : state.licenses) licenses.push_back({{"offer_id",row.offer_id},{"acquired_on",row.acquired_on.value()}});
-    for (const auto& row : state.research) research.push_back({{"research_id",row.research_id},{"project_id",row.project_id},{"completed",row.completed},{"insight_credit",row.insight_credit.value()}});
+    for (const auto& row : state.research) {
+        research.push_back({{"research_id",row.research_id},{"project_id",row.project_id},{"completed",row.completed},{"insight_credit",row.insight_credit.value()}});
+        if (row.sponsored_fee.value()!=0) research.back()["sponsored_fee"]=row.sponsored_fee.value();
+    }
     for (const auto& row : state.models) {models.push_back({{"id",row.id},{"recipe_id",row.recipe_id},{"parent_id",row.parent_id},{"project_id",row.project_id},
         {"data_ids",row.data_ids},{"created_on",row.created_on.value()},{"inherited_work_milli_CU",row.inherited_work.value()},
         {"consumed_work_milli_CU",row.consumed_work.value()},{"capability_bp",profile(row.capability)}});
@@ -70,9 +73,10 @@ core::LabState parse_lab(const Json& value) {
         state.licenses.push_back({label(row.at("offer_id")),core::OrdinalDay{i64(row.at("acquired_on"),"lab/license/acquired_on")}});
     }
     for (const auto& row : value.at("research")) {
-        fields(row,"lab/research_run",{"research_id","project_id","completed"},{"insight_credit"});
+        fields(row,"lab/research_run",{"research_id","project_id","completed"},{"insight_credit","sponsored_fee"});
         state.research.push_back({label(row.at("research_id")),label(row.at("project_id")),boolean(row.at("completed"),"lab/research_run/completed"),
-            core::BasisPoints{row.contains("insight_credit")?i64(row.at("insight_credit"),"lab/research_run/insight_credit"):0}});
+            core::BasisPoints{row.contains("insight_credit")?i64(row.at("insight_credit"),"lab/research_run/insight_credit"):0},
+            core::Cents{row.contains("sponsored_fee")?i64(row.at("sponsored_fee"),"lab/research_run/sponsored_fee"):0}});
     }
     for (const auto& row : value.at("models")) {
         fields(row,"lab/model",{"id","recipe_id","parent_id","project_id","data_ids","created_on","inherited_work_milli_CU","consumed_work_milli_CU","capability_bp"},{"checkpoint_cursor"});

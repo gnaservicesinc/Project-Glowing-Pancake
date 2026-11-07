@@ -42,13 +42,35 @@ Json management_json(const core::ManagementState& m) {
     Json result{{"catalog",Json::parse(content::canonical_management_catalog(m.catalog))},{"financing",std::move(financing)},{"specialists",std::move(specialists)},
         {"policies",std::move(policies)},{"decisions",std::move(decisions)},{"notices",std::move(notices)},{"reviewed_on",m.reviewed_on?Json(m.reviewed_on->value()):Json(nullptr)}};
     if (m.governance) result["governance"]=governance_json(*m.governance);
+    if (!m.funding_support.awards.empty() || !m.funding_support.uses.empty()) {
+        Json awards=Json::array(),uses=Json::array();
+        for (const auto& award:m.funding_support.awards)
+            awards.push_back({{"offer",award.offer_id},{"day",award.accepted_on.value()},{"used",award.used.value()}});
+        for (const auto& use:m.funding_support.uses)
+            uses.push_back({{"offer",use.offer_id},{"target",use.target},{"day",use.day.value()},{"amount",use.amount.value()}});
+        result["funding_support"]={{"awards",std::move(awards)},{"uses",std::move(uses)}};
+    }
     return result;
 }
 core::ManagementState parse_management(const Json& source) {
     auto j=source;std::optional<core::GovernanceState> governance;
     if (j.contains("governance")) {governance=parse_governance(j.at("governance"));j.erase("governance");}
-    fields(j,"management",{"catalog","financing","specialists","policies","decisions","notices","reviewed_on"});
+    fields(j,"management",{"catalog","financing","specialists","policies","decisions","notices","reviewed_on"},{"funding_support"});
     core::ManagementState m;m.governance=std::move(governance);m.catalog=content::load_management_catalog(j.at("catalog").dump());
+    if (j.contains("funding_support")) {
+        const auto& support=j.at("funding_support");
+        fields(support,"management/funding_support",{"awards","uses"});
+        array(support.at("awards"),"management/funding_awards",core::funding_offer_limit);
+        array(support.at("uses"),"management/funding_uses",core::funding_use_limit);
+        for (const auto& award:support.at("awards")) {
+            fields(award,"management/funding_award",{"offer","day","used"});
+            m.funding_support.awards.push_back({label(award.at("offer")),day(award.at("day")),cents(award.at("used"))});
+        }
+        for (const auto& use:support.at("uses")) {
+            fields(use,"management/funding_use",{"offer","target","day","amount"});
+            m.funding_support.uses.push_back({label(use.at("offer")),label(use.at("target")),day(use.at("day")),cents(use.at("amount"))});
+        }
+    }
     if (!j.at("reviewed_on").is_null()) m.reviewed_on=day(j.at("reviewed_on"));
     array(j.at("financing"),"management/financing",8);array(j.at("specialists"),"management/specialists",8);
     array(j.at("policies"),"management/policies",core::management_policy_limit);array(j.at("decisions"),"management/decisions",core::management_decision_limit);array(j.at("notices"),"management/notices",256);

@@ -282,9 +282,10 @@ MilliCU insight_work(MilliCU work,BasisPoints credit) {
 }
 }
 void start_research(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day,
-                    std::string_view research_id, const LabAllocation& allocation, Cents protected_cash) {
+                    std::string_view research_id, const LabAllocation& allocation, Cents protected_cash,Cents sponsored_fee) {
     require_day(state, day);
     const auto& node = find(state.catalog.research, research_id);
+    if (sponsored_fee.value()<0 || sponsored_fee>node.cash) invalid("A research sponsor cannot pay more than the fee");
     if (!requires_met(state, node.all_of) || (!node.any_of.empty() &&
         std::none_of(node.any_of.begin(), node.any_of.end(), [&](const auto& id) { return completed(state, id); })))
         invalid("Research prerequisites are not complete");
@@ -306,8 +307,8 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
     const auto work = insight_work(std::max(node.experiment_work, integrate(allocation.daily_compute, Days{days})),credit);
     auto row = project("lab/research/" + node.id + "/" + std::to_string(attempt), ProjectKind::research, day, allocation, work);
     reserve_project(capacity, day, row);
-    charge(accounts, day, node.cash, protected_cash, row.id);
-    state.research.push_back({node.id, row.id, false,credit});
+    charge(accounts, day, checked_unit_subtract(node.cash,sponsored_fee), protected_cash, row.id);
+    state.research.push_back({node.id, row.id, false,credit,sponsored_fee});
 }
 void publish_research(LabState& state,const CapacityState& capacity,OrdinalDay day,std::string_view id) {
     require_day(state,day);
@@ -442,7 +443,12 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
             work.kind != ProjectKind::research || work.staff == 0 || run.completed != (work.status == ProjectStatus::completed) ||
             run.insight_credit!=credit || work.total_work<minimum || (credit.value()>0 && work.total_work!=minimum))
             invalid("Research progress differs from its finite staff/experiment commitment");
-        payment(work.id, node.cash, work.starts_on);
+        if (run.sponsored_fee.value()<0 || run.sponsored_fee>node.cash) invalid("Sponsored research exceeds the authored fee");
+        const auto cash=checked_unit_subtract(node.cash,run.sponsored_fee);
+        payment(work.id,cash,work.starts_on);
+        if (deep && cash.value()==0 && run.sponsored_fee.value()>0 &&
+            std::ranges::any_of(accounts.postings,[&](const auto& posting){return posting.key==work.id;}))
+            invalid("A fully sponsored fee also has a cash posting");
         if (attempt > 1) {
             for (const auto& prior : state.research) {
                 if (&prior == &run) break;

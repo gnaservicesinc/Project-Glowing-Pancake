@@ -5,6 +5,7 @@
 
 #include <array>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -67,6 +68,7 @@ inline constexpr std::size_t accounts_terms_limit = 256;
 struct PostingTotals {
     std::array<Cents, 9> balances{
         Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}, Cents{0}};
+    std::size_t supplier_credits=0;
     void add(const Posting& posting);
 };
 
@@ -159,7 +161,14 @@ void dispose_owned_asset(AccountsState&,OrdinalDay,std::string reference,Cents c
 // Accrue exactly the next day, then collect due receivables and pay due
 // obligations in (due,id) order from unreserved cash. Unpaid amounts persist.
 // Principal repayment requires repay_debt; maturity is visible in projections.
-void close_accounts_day(AccountsState& state, OrdinalDay day, Cents protected_cash, bool validate_io = true);
+inline constexpr std::string_view supplier_credit_prefix="supplier.credit/";
+struct RecurringCredit {
+    std::string obligation,key;
+    Cents amount{0};
+};
+[[nodiscard]] Cents recurring_charge_on(const RecurringObligation&,OrdinalDay);
+void close_accounts_day(AccountsState& state, OrdinalDay day, Cents protected_cash, bool validate_io = true,
+                        std::span<const RecurringCredit> credits = {});
 struct CashProjection {
     OrdinalDay through{0};
     Cents cash{0};

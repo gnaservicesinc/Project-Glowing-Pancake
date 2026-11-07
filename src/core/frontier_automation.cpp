@@ -150,7 +150,7 @@ bool run_research(SimulationState& state, std::size_t index, Cents protected_cas
         program.waiting="Waiting for the selected topic's current prerequisites.";
         return false;
     }
-    if (!within_budget(state,plan.budget,research_spent(program),node.cash,protected_cash)) {
+    if (!within_budget(state,plan.budget,research_spent(program),research_cash_fee(state,node.id),protected_cash)) {
         program.waiting="Research would exceed the approved total or protected cash floor.";
         return false;
     }
@@ -160,10 +160,9 @@ bool run_research(SimulationState& state, std::size_t index, Cents protected_cas
     }
     auto candidate=state;
     try {
-        start_research(*candidate.lab,*candidate.accounts,*candidate.capacity,state.date,node.id,plan.budget.allocation,protected_cash);
-        candidate.cash=accounts_report(*candidate.accounts).cash;
+        const auto fee=start_funded_research(candidate,node.id,plan.budget.allocation,protected_cash);
         auto& accepted=candidate.frontier->research_programs[index];
-        accepted.decisions.push_back({state.date,candidate.lab->research.back().project_id,node.cash});
+        accepted.decisions.push_back({state.date,candidate.lab->research.back().project_id,fee});
         accepted.waiting.clear();
     } catch (const std::invalid_argument& error) {
         program.waiting=error.what();
@@ -406,9 +405,11 @@ void validate_policies(const SimulationState& state) {
                     invalid("A skipped research item has no completed underlying topic.");
             } else {
                 const auto& project=require_named(state.capacity->projects,decision.project);
-                if (project.starts_on!=decision.day || decision.paid!=topic.cash || !allocated(project,program.plan.budget.allocation) ||
-                    !research_projects.insert(project.id).second || !paid(project.id,decision.day,decision.paid) ||
-                    std::ranges::none_of(state.lab->research,[&](const auto& row){return row.research_id==topic.id && row.project_id==project.id;}))
+                const auto run=std::ranges::find(state.lab->research,project.id,&ResearchRun::project_id);
+                if (run==state.lab->research.end() || run->research_id!=topic.id ||
+                    project.starts_on!=decision.day || decision.paid!=checked_unit_subtract(topic.cash,run->sponsored_fee) ||
+                    !allocated(project,program.plan.budget.allocation) || !research_projects.insert(project.id).second ||
+                    !paid(project.id,decision.day,decision.paid))
                     invalid("Queued research differs from its real paid experiment.");
                 if (j+1<program.decisions.size() && (!project.stopped_on ||
                     (project.status==ProjectStatus::completed ? *project.stopped_on>=program.decisions[j+1].day : *project.stopped_on>program.decisions[j+1].day)))

@@ -37,8 +37,9 @@ original audit. The Office also supports a company cash reserve and staged
 replacement of a specified obsolete rack under purchase and maintenance ceilings.
 Both century scenarios now support an IPO with settled financial qualification,
 board approval, conserving equity dilution, public filings and a new director.
-Continue the initial financing coverage pass with restricted grants and expiring
-cloud credits.
+Restricted research grants and expiring cloud credits are now claimable in the
+Office. They apply to eligible costs through the Lab and supplier ledger.
+Ordinary customer prepayments are the next financing gap.
 
 ## M0 — Toolchain and platform proof
 

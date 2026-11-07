@@ -1830,3 +1830,20 @@ The optimized build and four focused checks pass. The listing fixture checks
 same-day and deteriorating qualification, conserved ownership, two real
 quarter closes, director ballots and rejection of a forged filing. Short
 offscreen checks at 100% and 200% exercise review, vote, filing and reopening.
+
+### Restricted research grants and cloud credits
+
+All seven scenarios offer a grant that covers 75% of eligible fees for three
+research topics up to $1,000 total. Players can claim it in the first 90 days
+and spend it over 180 days. The Lab and delegated research charge the same
+company share. A separate cloud credit covers half the daily opening lease
+charges up to $15,000, with a 60-day claim window and 45-day term. Both start
+the following morning and expire with any unused balance. The credit reduces
+the payable before monthly settlement. Future lease forecasts use gross terms.
+
+Internal content 0.18.0-dev.1 passes the shared finalizer check for all seven
+scenarios and 21 exact prepared opening saves. The optimized Mac build and six
+focused CTests pass. The financing fixture follows a capped grant and daily
+lease credits through expiry, exact reload and the first cash payment against
+an identical uncredited company. The offscreen QML checks at 100% and 200% text
+exercise claim, Lab payment, the supplier invoice and exact save/reopen.

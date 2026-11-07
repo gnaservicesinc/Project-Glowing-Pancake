@@ -141,6 +141,7 @@ void require_operating_reserve(Cents cash_before,const SimulationState& after) {
         invalid("New spending would use the operating reserve. Review the policy in Office or choose a smaller commitment.");
 }
 void validate_management_catalog(const ManagementCatalog& c) {
+    validate_funding_offers(c.support_offers);
     if(c.succession) {
         validate_succession_catalog(*c.succession);
         if(c.governance && std::ranges::none_of(c.governance->board,[&](const auto& b){return b.id==c.succession->founder_board && b.player;}))
@@ -157,6 +158,7 @@ void validate_management_catalog(const ManagementCatalog& c) {
     std::uint32_t weights=0;for (auto w:c.scoring.weights) {if (w>100) invalid("Slice scoring weight exceeds its bound");weights+=w;}
     if (weights!=100) invalid("Slice score weights must sum to 100");
     std::set<std::string> ids;
+    for (const auto& offer:c.support_offers) ids.insert(offer.id);
     for (const auto& row:c.financing) {
         if (row.id.empty() || row.id.size()>64 || row.name.empty() || row.name.size()>128 || !ids.insert(row.id).second ||
             row.proceeds.value()<=0 || row.proceeds.value()>1'000'000'000 || row.term.value()>1096 ||
@@ -176,7 +178,13 @@ void validate_management_catalog(const ManagementCatalog& c) {
     }
 }
 void take_financing(SimulationState& s,std::string_view id) {
-    auto& m=management(s);const auto& offer=find(m.catalog.financing,id);
+    auto& m=management(s);
+    const auto support=std::ranges::find(m.catalog.support_offers,id,&FundingSupportOffer::id);
+    if (support!=m.catalog.support_offers.end()) {
+        accept_funding_support(s,*support);
+        return;
+    }
+    const auto& offer=find(m.catalog.financing,id);
     if (accepted(m.financing,id)) invalid("This financing offer has already been used; terms cannot be rerolled");
     if (offer.term.value()==0) company_equity(s,"investor/"+offer.id,offer.proceeds,offer.acquired,"financing/"+offer.id);
     else draw_debt(*s.accounts,s.date,{"financing/"+offer.id,offer.proceeds,offer.monthly_interest,s.date,advance_days(s.date,offer.term),0,std::nullopt},"Financing: "+offer.name);

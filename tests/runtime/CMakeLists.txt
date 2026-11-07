@@ -165,6 +165,7 @@ target_include_directories(pgp-management-integration-test SYSTEM PRIVATE "${PRO
 target_compile_definitions(pgp-management-integration-test PRIVATE PGP_SLICE_CONTENT_PATH="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-management-integration-test)
 add_test(NAME runtime.management COMMAND pgp-management-integration-test)
+add_test(NAME runtime.funding-support COMMAND pgp-management-integration-test --funding-support)
 add_executable(pgp-governance-test governance_test.cpp)
 target_link_libraries(pgp-governance-test PRIVATE pgp::session)
 target_include_directories(pgp-governance-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")

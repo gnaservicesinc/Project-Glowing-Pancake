@@ -3,6 +3,7 @@
 #include <pgp/core/market.hpp>
 #include <pgp/core/governance.hpp>
 #include <pgp/core/succession.hpp>
+#include <pgp/core/funding_support.hpp>
 
 namespace pgp::core {
 struct SimulationState;
@@ -43,6 +44,7 @@ struct ManagementCatalog {
     std::uint32_t default_policy_runs=1;
     std::optional<GovernanceCatalog> governance{};
     std::optional<SuccessionCatalog> succession{};
+    std::vector<FundingSupportOffer> support_offers{};
     auto operator<=>(const ManagementCatalog&) const = default;
 };
 struct ManagementAcceptance {
@@ -99,6 +101,7 @@ struct ManagementState {
     std::vector<ManagementNotice> notices;
     std::optional<OrdinalDay> reviewed_on;
     std::optional<GovernanceState> governance{};
+    FundingSupportState funding_support{};
     auto operator<=>(const ManagementState&) const = default;
 };
 struct TakeFinancing { std::string id; };

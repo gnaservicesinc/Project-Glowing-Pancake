@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.17.0-dev.1",
+  "content_version": "0.18.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -22780,7 +22780,35 @@
           "transition_work_milli_CU": 900000,
           "trust_seats": 1,
           "vote_window_days": 14
-        }
+        },
+        "support_offers": [
+          {
+            "claim_days": 90,
+            "coverage_bp": 7500,
+            "id": "support.methodology_grant",
+            "kind": "research_grant",
+            "limit_cents": 100000,
+            "name": "Independent methods research grant",
+            "opens_after_days": 0,
+            "research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling",
+              "research.sequence_modeling"
+            ],
+            "use_days": 180
+          },
+          {
+            "bill": "compute_lease",
+            "claim_days": 60,
+            "coverage_bp": 5000,
+            "id": "support.opening_cloud_credit",
+            "kind": "cloud_credit",
+            "limit_cents": 1500000,
+            "name": "Opening cloud supplier credit",
+            "opens_after_days": 0,
+            "use_days": 45
+          }
+        ]
       },
       "market": {
         "contracts": [],
@@ -22881,7 +22909,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 7,
+      "revision": 8,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -27846,7 +27874,35 @@
           "transition_work_milli_CU": 900000,
           "trust_seats": 1,
           "vote_window_days": 14
-        }
+        },
+        "support_offers": [
+          {
+            "claim_days": 90,
+            "coverage_bp": 7500,
+            "id": "support.methodology_grant",
+            "kind": "research_grant",
+            "limit_cents": 100000,
+            "name": "Independent methods research grant",
+            "opens_after_days": 0,
+            "research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling",
+              "research.sequence_modeling"
+            ],
+            "use_days": 180
+          },
+          {
+            "bill": "compute_lease",
+            "claim_days": 60,
+            "coverage_bp": 5000,
+            "id": "support.opening_cloud_credit",
+            "kind": "cloud_credit",
+            "limit_cents": 1500000,
+            "name": "Opening cloud supplier credit",
+            "opens_after_days": 0,
+            "use_days": 45
+          }
+        ]
       },
       "market": {
         "contracts": [],
@@ -27947,7 +28003,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 7,
+      "revision": 8,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -31540,6 +31596,34 @@
             "name": "Evaluation and service specialist",
             "signing_cost_cents": 200000
           }
+        ],
+        "support_offers": [
+          {
+            "claim_days": 90,
+            "coverage_bp": 7500,
+            "id": "support.methodology_grant",
+            "kind": "research_grant",
+            "limit_cents": 100000,
+            "name": "Independent methods research grant",
+            "opens_after_days": 0,
+            "research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling",
+              "research.sequence_modeling"
+            ],
+            "use_days": 180
+          },
+          {
+            "bill": "compute_lease",
+            "claim_days": 60,
+            "coverage_bp": 5000,
+            "id": "support.opening_cloud_credit",
+            "kind": "cloud_credit",
+            "limit_cents": 1500000,
+            "name": "Opening cloud supplier credit",
+            "opens_after_days": 0,
+            "use_days": 45
+          }
         ]
       },
       "market": {
@@ -31578,7 +31662,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 10,
+      "revision": 11,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -34325,6 +34409,34 @@
             "name": "Evaluation and service specialist",
             "signing_cost_cents": 200000
           }
+        ],
+        "support_offers": [
+          {
+            "claim_days": 90,
+            "coverage_bp": 7500,
+            "id": "support.methodology_grant",
+            "kind": "research_grant",
+            "limit_cents": 100000,
+            "name": "Independent methods research grant",
+            "opens_after_days": 0,
+            "research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling",
+              "research.sequence_modeling"
+            ],
+            "use_days": 180
+          },
+          {
+            "bill": "compute_lease",
+            "claim_days": 60,
+            "coverage_bp": 5000,
+            "id": "support.opening_cloud_credit",
+            "kind": "cloud_credit",
+            "limit_cents": 1500000,
+            "name": "Opening cloud supplier credit",
+            "opens_after_days": 0,
+            "use_days": 45
+          }
         ]
       },
       "market": {
@@ -34363,7 +34475,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 11,
+      "revision": 12,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -38265,6 +38377,34 @@
             "name": "Evaluation and service specialist",
             "signing_cost_cents": 200000
           }
+        ],
+        "support_offers": [
+          {
+            "claim_days": 90,
+            "coverage_bp": 7500,
+            "id": "support.methodology_grant",
+            "kind": "research_grant",
+            "limit_cents": 100000,
+            "name": "Independent methods research grant",
+            "opens_after_days": 0,
+            "research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling",
+              "research.sequence_modeling"
+            ],
+            "use_days": 180
+          },
+          {
+            "bill": "compute_lease",
+            "claim_days": 60,
+            "coverage_bp": 5000,
+            "id": "support.opening_cloud_credit",
+            "kind": "cloud_credit",
+            "limit_cents": 1500000,
+            "name": "Opening cloud supplier credit",
+            "opens_after_days": 0,
+            "use_days": 45
+          }
         ]
       },
       "market": {
@@ -38303,7 +38443,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 11,
+      "revision": 12,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -42205,6 +42345,34 @@
             "name": "Evaluation and service specialist",
             "signing_cost_cents": 200000
           }
+        ],
+        "support_offers": [
+          {
+            "claim_days": 90,
+            "coverage_bp": 7500,
+            "id": "support.methodology_grant",
+            "kind": "research_grant",
+            "limit_cents": 100000,
+            "name": "Independent methods research grant",
+            "opens_after_days": 0,
+            "research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling",
+              "research.sequence_modeling"
+            ],
+            "use_days": 180
+          },
+          {
+            "bill": "compute_lease",
+            "claim_days": 60,
+            "coverage_bp": 5000,
+            "id": "support.opening_cloud_credit",
+            "kind": "cloud_credit",
+            "limit_cents": 1500000,
+            "name": "Opening cloud supplier credit",
+            "opens_after_days": 0,
+            "use_days": 45
+          }
         ]
       },
       "market": {
@@ -42243,7 +42411,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 11,
+      "revision": 12,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -46145,6 +46313,34 @@
             "name": "Evaluation and service specialist",
             "signing_cost_cents": 200000
           }
+        ],
+        "support_offers": [
+          {
+            "claim_days": 90,
+            "coverage_bp": 7500,
+            "id": "support.methodology_grant",
+            "kind": "research_grant",
+            "limit_cents": 100000,
+            "name": "Independent methods research grant",
+            "opens_after_days": 0,
+            "research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling",
+              "research.sequence_modeling"
+            ],
+            "use_days": 180
+          },
+          {
+            "bill": "compute_lease",
+            "claim_days": 60,
+            "coverage_bp": 5000,
+            "id": "support.opening_cloud_credit",
+            "kind": "cloud_credit",
+            "limit_cents": 1500000,
+            "name": "Opening cloud supplier credit",
+            "opens_after_days": 0,
+            "use_days": 45
+          }
         ]
       },
       "market": {
@@ -46183,7 +46379,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 11,
+      "revision": 12,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
