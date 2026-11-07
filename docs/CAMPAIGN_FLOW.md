@@ -1,11 +1,11 @@
 # Campaign flow and founder introduction
 
-Design baseline 1.3 · 2026-11-07 · Selected direction; not implemented by this document
+Design baseline 1.3 · 2026-11-07 · Setup implemented; later stages remain design
 
 This expands the user's campaign/opening feedback. It supersedes the old
-2014–2114 default and four-background setup in the product design. The current
-Mac prototype, its saves and its 2014 scenarios remain as implemented until a
-separate implementation batch replaces them. [Technology design](TECHNOLOGY.md)
+2014–2114 default and four-background setup in the product design. The Mac New Game path implements the introduction and founding setup. Older
+prototype presets remain engineering fixtures. Later gameplay stages and
+ending presentation are future work. [Technology design](TECHNOLOGY.md)
 and the [candidate catalog](TECHNOLOGY_CATALOG.md) supply the research side.
 The main-game layout is the next discussion; this document specifies information
 and atmosphere it must support without selecting a new screen arrangement.
@@ -17,8 +17,11 @@ New Game first offers **Campaign** (recommended) and **Sandbox**.
 | Mode | Opening | Rules and ending |
 | --- | --- | --- |
 | Campaign | California, 1997 birth; playable company at 18 in 2015 | Founder story, founding mission, conditional industry stages, campaign closes at age 118 in 2115 |
-| Sandbox | A form with presets, dropdowns and advanced settings; biography optional | Customize date, founder, money, knowledge, products, staff, investors, charter, rivals, world conditions and optional goals; no mandatory campaign ending |
+| Sandbox | A form with presets, dropdowns and advanced settings; biography optional | Current setup: optional biography, founder, cash/staff, backers, charter, office and mission; no mandatory campaign ending. Broader world controls remain design candidates |
 | Post-game sandbox | Continue the completed campaign's actual world | Retain everything, freeze its campaign result, continue systemic play with no promised new story arc |
+
+Sandbox age policy remains undecided. The following broader customization is
+planning direction beyond the current setup controls.
 
 Sandbox includes a freely configurable custom preset, including no rivals or
 generous resources. Validate coherent relationships and show conflicts, such

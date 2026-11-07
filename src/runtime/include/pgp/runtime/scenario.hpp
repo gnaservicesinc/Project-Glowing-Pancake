@@ -12,6 +12,7 @@ struct ScenarioOptions {
     std::string background;
     std::string charter;
     std::string difficulty;
+    std::optional<content::FoundingSelection> founding{};
 };
 
 // Initialize implemented foundation fields from validated authored data. No

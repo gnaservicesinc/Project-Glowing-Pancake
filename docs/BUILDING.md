@@ -4,8 +4,8 @@ M0-02 implements build entry points and the headless scaffold. M0-03 adds the
 development interface probe, resource guards and optional playback adapter.
 M0-05 validates the shared component versions and embeds configure-time identity.
 The engineering simulation runs headless or in the desktop room shell.
-An opt-in Content Studio target browses/edits local checkout data and builds the
-maintainer snapshot CLI. The bundled campaign remains a playable prototype.
+The separate Content Studio target browses/edits local checkout data. An explicit
+maintainer snapshot CLI target shares its content writer. The bundled campaign remains a playable prototype.
 The game now has a full-screen main menu and a local Mac application bundle;
 editor usability and release qualification remain later feedback work.
 The [implementation log](IMPLEMENTATION_LOG.md) records acceptance evidence.
@@ -16,25 +16,46 @@ Use CMake 3.24+, Ninja, a C++20 compiler, Python 3.10+ (standard library only),
 and Bash for `make.sh`. Python validates metadata at build time; the built core,
 headless executable and probe have no Python runtime dependency. CTest is bundled
 with CMake. The desktop configuration additionally requires Qt **6.12.0** Core,
-Gui, Network, Qml, Quick and QuickControls2. It builds the campaign shell and probe without
-linking Qt into core/headless targets. Qt Multimedia is not required. Nothing
+Gui, Network, Qml, Quick and QuickControls2. It builds the game and editor without linking Qt into core/headless targets.
+The interface probe and GUI test walkthroughs require `--enable-tests`. Qt Multimedia is not required. Nothing
 downloads dependencies or launches a program during builds.
 
 | Command | Implemented behavior |
 | --- | --- |
-| `./make.sh` | Optimized Release campaign shell and interface probe in `build/release`; no launch |
+| `./make.sh` | Both applications in Release, optimized for the local CPU; testing/debugging off; no tests or launch |
 | `./make.sh --package --jobs 4` | Mac game app with bundled Qt, resources and icon in `dist`; no launch |
 | `./script/build_and_run.sh` | Explicitly build, package and launch the Mac app; also used by the Codex Run action |
 | `./make.sh --test` | Build then run CTest; propagate failures |
-| `./make.sh --debugging` or `--debug` | Debug in `build/debug`, local developer diagnostics enabled |
+| `./make.sh --enable-debugging` | Debug in `build/debug`, local developer diagnostics enabled (`--debugging`/`--debug` aliases) |
+| `./make.sh --enable-tests` | Include test targets and GUI checks without running tests |
+| `./make.sh --portable` | Release without local CPU tuning |
+| `./make.sh --game-only` | Build only the game |
 | `./make.sh --core-only` | Release in `build/core-release`, no Qt discovery/linkage |
-| `./make.sh --editor` | Separate Content Studio in `build/release/bin/pgp-editor` |
+| `./make.sh --editor` | Build only Content Studio in `build/release/bin/pgp-editor` |
 | `./make.sh --editor --test` | Build the editor and test its library, draft workflow and typed flow forms |
 | `./make.sh --core-only --debug --test` | Debug core and tests in `build/core-debug` |
 | `./make.sh --qt-root /path/to/Qt/prefix` | Select an installed desktop Qt prefix |
 | `./make.sh --jobs 2` | Bound compilation parallelism |
 | `./make.sh --core-only --clean` | Remove only the selected wrapper-owned tree; no rebuild |
 | `./make.sh --help` | Show flags, paths and requirements |
+
+Normal builds explicitly configure `BUILD_TESTING=OFF`, `PGP_BUILD_EDITOR=ON`
+and `PGP_NATIVE_OPTIMIZATION=ON`, even after a test-enabled cache. Release uses
+`-O3`, `NDEBUG`, and compiler-supported host CPU tuning (`-mcpu=native` on this
+arm64 Mac, `-march=native` on x86). Developer diagnostics and GUI walkthrough
+code are excluded. `--enable-tests` includes checks but does not run them;
+`--test` explicitly builds/runs the suite and may be expensive. Prefer a focused
+target and CTest filter while developing a selected feature. `--portable`
+disables host tuning for a build intended for other CPUs. Caches are retained.
+
+For example, a focused setup check is explicitly opted in:
+
+```sh
+./make.sh --enable-tests
+cmake --build build/release --target pgp-founder-journey-test --parallel 4
+ctest --test-dir build/release -R '^runtime[.]founder-journey$' --output-on-failure
+./make.sh  # Return to both apps with testing/debugging disabled.
+```
 
 `--all` remains reserved. On macOS, `--package` stages a relocatable local
 development app in `dist/Project Glowing Pancake.app`, including its icon,
@@ -82,7 +103,7 @@ commands are engineering workloads for the bundled catalogs.
 ## Browse a checkout in Content Studio
 
 ```sh
-./make.sh --editor --test
+./make.sh --editor
 build/release/bin/pgp-editor --project "$PWD"
 ```
 
@@ -103,8 +124,8 @@ roots. Advance through a chosen date, respond to dialogue, reload the exact
 checkpoint, inspect threshold boundaries, or run synthetic cleanup on a
 separate copy. The report shows predicate truth, matched members, effects,
 ledger entries and the continuation queue. Editing the draft resets its
-previous test state. The regular game
-build disables the editor. An opt-in `ContentStudio` install component defines
+previous test state. `--game-only` excludes the editor build; each application keeps its own resources.
+A separate `ContentStudio` install component defines
 the editor payload for future deployment qualification.
 
 To check loading, filtering and in-memory draft edits without showing a window, run
@@ -121,11 +142,12 @@ it does not conduct a human study or publish content.
 
 ### Validate and finalize internal content
 
-The editor build also provides the Qt-free `pgp-content-tool`, separate from the
+The explicit `pgp-content-tool` target provides a Qt-free maintainer CLI, separate from the
 game payload. Its explicit review/finalize/check/recover operations share the
 runtime validator and journaled batch writer:
 
 ```sh
+cmake --build build/release --target pgp-content-tool --parallel 4
 build/release/bin/pgp-content-tool --help
 build/release/bin/pgp-content-tool check --checkout "$PWD"
 ```
@@ -249,7 +271,7 @@ open -n "dist/Project Glowing Pancake.app" --args --portable-root "$PWD/build/re
 ```
 
 The game opens full screen to the main menu. New Game opens the existing
-prototype setup, which offers three headquarters and optional story layers. The
+founder setup, which offers the biography, mission, funding, office and first researcher. The
 in-game guide covers data, research, training, held-out evaluation, qualification
 and customer contracts. Office also supplies bounded policies, fixed financing,
 hiring, alerts and the provisional/final slice score. Clock milestone targets
@@ -286,7 +308,7 @@ game_binary='build/release/bin/Project Glowing Pancake.app/Contents/MacOS/Projec
 
 On Linux/Windows, use the ordinary `pgp-game` executable. The explicit menu
 check covers startup, keyboard navigation, credits, 200% text, settings
-round-trip, audio, still/video selection, the existing New Game setup, Resume,
+round-trip, audio, still/video selection, the New Game founder setup, Resume,
 the local picker open/cancel and the save-load handler's success/error paths,
 plus Escape/quit confirmation, cancellation and an actual confirmed exit.
 On Mac it also crosses the bundled ten-second video loop. The explicit

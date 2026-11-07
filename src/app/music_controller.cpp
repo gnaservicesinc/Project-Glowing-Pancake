@@ -37,6 +37,10 @@ MusicController::MusicController(QObject* parent,pgp::audio::DeviceMode mode)
         }
     }
     status_ = tr("Music is off.");
+    connect(&gain_,&QVariantAnimation::valueChanged,this,[this](const QVariant& value) {player_.set_volume(value.toFloat());});
+    connect(&gain_,&QVariantAnimation::finished,this,[this] {
+        if(pending_context_ && enabled_) {pending_context_=false;playNext();rampVolume(target_volume_,1800);}
+    });
     timer_.setInterval(350);
     connect(&timer_, &QTimer::timeout, this, [this] {
         const auto state = player_.status();
@@ -44,22 +48,37 @@ MusicController::MusicController(QObject* parent,pgp::audio::DeviceMode mode)
             timer_.stop();
             player_.stop();
             setStatus(tr("Audio output was interrupted. Music is silent."));
-        } else if (!state.playing) playNext();
+        } else if (!state.playing && !pending_context_) playNext();
     });
 }
 
 QString MusicController::backend() const { return QString::fromStdString(player_.backend_name()); }
 
-void MusicController::configure(bool enabled, int volume_percent, bool urgent) {
+void MusicController::rampVolume(float target,int duration) {
+    gain_.stop();gain_.setStartValue(player_.status().volume);gain_.setEndValue(target);
+    gain_.setDuration(duration);gain_.setEasingCurve(QEasingCurve::InOutSine);gain_.start();
+}
+void MusicController::configure(bool enabled, int volume_percent, bool urgent, bool introduction) {
+    const bool context_changed=introduction_!=introduction;
+    introduction_=introduction;
+    if(introduction_) urgent=false;
     if (urgent && !urgent_) tension_pending_ = true;
     if (!urgent) tension_pending_ = false;
     urgent_ = urgent;
-    player_.set_volume(static_cast<float>(volume_percent) / 100.0F);
-    if (enabled_ == enabled) return;
+    const auto target=static_cast<float>(volume_percent)/100.0F*(introduction_?0.6F:1.0F);
+    const bool volume_changed=target_volume_!=target;target_volume_=target;
+    if (enabled_ == enabled) {
+        if(enabled_ && context_changed) {pending_context_=true;rampVolume(0,900);}
+        else if(enabled_ && volume_changed && !pending_context_) rampVolume(target_volume_,1200);
+        return;
+    }
+    gain_.stop();pending_context_=false;
     enabled_ = enabled;
     if (enabled_) {
         tension_pending_ = urgent_;
+        player_.set_volume(0);
         playNext();
+        rampVolume(target_volume_,1800);
     } else {
         timer_.stop();
         player_.stop();
@@ -68,6 +87,10 @@ void MusicController::configure(bool enabled, int volume_percent, bool urgent) {
 }
 
 void MusicController::playNext() {
+    if(introduction_) {
+        const auto id=next_intro_++%2==0?QStringLiteral("music.gedanklichkeit"):QStringLiteral("music.atemubungen");
+        for(qsizetype i=0;i<credits_.size();++i) if(credits_.at(i).toMap().value("id").toString()==id) {playExcerpt(static_cast<int>(i));return;}
+    }
     if (tension_pending_ && !tension_.empty()) {
         tension_pending_ = false;
         playExcerpt(tension_.at(next_tension_));

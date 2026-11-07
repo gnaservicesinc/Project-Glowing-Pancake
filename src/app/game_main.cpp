@@ -3,6 +3,7 @@
 #include "music_controller.hpp"
 #include "menu_media.hpp"
 #include "menu_smoke.hpp"
+#include "founding_smoke.hpp"
 
 #include <pgp/core/build_identity.hpp>
 #include <pgp/graphics/graphics_policy.hpp>
@@ -60,7 +61,13 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("music-smoke"),QStringLiteral("Exercise the bundled credits, keyboard and native music output.")});
     parser.addOption({QStringLiteral("menu-smoke"),QStringLiteral("Exercise the Mac menu, settings, media, prototype entry and recovery.")});
     parser.addOption({QStringLiteral("screenshot"),QStringLiteral("Capture the smoke-test window."),QStringLiteral("file")});
+    parser.addOption({QStringLiteral("founding-smoke"),QStringLiteral("Exercise the actual New Game biography, funding and first morning with an isolated local save.")});
     parser.process(application);
+#if !PGP_TEST_HOOKS
+    if(parser.isSet(QStringLiteral("smoke-test"))) {
+        std::cerr << "GUI checks require an explicit --enable-tests build.\n";return 2;
+    }
+#endif
     if (parser.isSet(QStringLiteral("build-info"))) { core::write_build_identity(std::cout); return 0; }
     const bool civic_smoke = parser.isSet(QStringLiteral("civic-smoke"));
     const bool society_smoke = parser.isSet(QStringLiteral("society-smoke"));
@@ -72,9 +79,10 @@ int main(int argc, char* argv[]) {
     const bool competition_smoke = parser.isSet(QStringLiteral("competition-smoke"));
     const bool music_smoke = parser.isSet(QStringLiteral("music-smoke"));
     const bool menu_smoke = parser.isSet(QStringLiteral("menu-smoke"));
-    const bool prototype_smoke = parser.isSet(QStringLiteral("smoke-test")) && !menu_smoke;
+    const bool founding_smoke = parser.isSet(QStringLiteral("founding-smoke"));
+    const bool prototype_smoke = parser.isSet(QStringLiteral("smoke-test")) && !menu_smoke && !founding_smoke;
     const auto variants = static_cast<int>(society_smoke) + static_cast<int>(institutions_smoke) +
-        static_cast<int>(civic_smoke) + static_cast<int>(infrastructure_smoke) + static_cast<int>(competition_smoke) + static_cast<int>(frontier_smoke) + static_cast<int>(leadership_smoke) + static_cast<int>(objectives_smoke) + static_cast<int>(music_smoke) + static_cast<int>(menu_smoke);
+        static_cast<int>(civic_smoke) + static_cast<int>(infrastructure_smoke) + static_cast<int>(competition_smoke) + static_cast<int>(frontier_smoke) + static_cast<int>(leadership_smoke) + static_cast<int>(objectives_smoke) + static_cast<int>(music_smoke) + static_cast<int>(menu_smoke) + static_cast<int>(founding_smoke);
     if (!parser.positionalArguments().isEmpty() ||
         (parser.isSet(QStringLiteral("screenshot")) && !parser.isSet(QStringLiteral("smoke-test"))) ||
         (variants > 0 && !parser.isSet(QStringLiteral("smoke-test"))) || variants > 1 ||
@@ -115,11 +123,11 @@ int main(int argc, char* argv[]) {
             if (!valid || percent < 100 || percent > 200) throw std::invalid_argument("Text scale must be an integer from 100 to 200");
             settings.text_scale_percent = static_cast<std::uint32_t>(percent);
         }
-        const auto selection = graphics::configure(parser.isSet(QStringLiteral("software")));
+        [[maybe_unused]] const auto selection = graphics::configure(parser.isSet(QStringLiteral("software")));
         QQuickStyle::setStyle(QStringLiteral("Basic"));
         bridge::CampaignController campaign{std::move(program),std::move(initial),paths,settings,nullptr,
-            bundled || competition_smoke || infrastructure_smoke || institutions_smoke};
-        const auto audio_mode=prototype_smoke || (menu_smoke && parser.isSet(QStringLiteral("software")))
+            bundled || competition_smoke || infrastructure_smoke || institutions_smoke || founding_smoke};
+        const auto audio_mode=prototype_smoke || ((menu_smoke || founding_smoke) && parser.isSet(QStringLiteral("software")))
             ? audio::DeviceMode::Silent : audio::DeviceMode::NativeIfAvailable;
         MusicController music{nullptr,music_smoke ? audio::DeviceMode::NativeIfAvailable : audio_mode};
         MenuAudio menu_audio{campaign,audio_mode};
@@ -129,7 +137,7 @@ int main(int argc, char* argv[]) {
             const auto kind = campaign.requiredKind();
             const auto urgent = kind == QStringLiteral("objective") || kind == QStringLiteral("liquidity") ||
                                 kind == QStringLiteral("site") || kind == QStringLiteral("institution");
-            music.configure(campaign.musicEnabled(),campaign.musicVolume(),urgent);
+            music.configure(campaign.musicEnabled(),campaign.musicVolume(),urgent,campaign.welcome() && campaign.founding()->available());
         };
         QObject::connect(&campaign,&bridge::CampaignController::settingsChanged,&music,sync_music);
         QObject::connect(&campaign,&bridge::CampaignController::stateChanged,&music,sync_music);
@@ -168,9 +176,13 @@ int main(int argc, char* argv[]) {
             QObject::connect(window,&QQuickWindow::sceneGraphError,&application,[](QQuickWindow::SceneGraphError,const QString& message) {
                 qCritical().noquote() << "Graphics initialization failed:" << message; QCoreApplication::exit(4);
             });
+
+#if PGP_TEST_HOOKS
             if (parser.isSet(QStringLiteral("smoke-test"))) {
                 window->resize(1280,720);
-                if (menu_smoke)
+                if (founding_smoke)
+                    schedule_founding_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));
+                else if (menu_smoke)
                     schedule_menu_smoke(*window,campaign,music,selection.api,paths,parser.value(QStringLiteral("screenshot")));
                 else if (music_smoke)
                     schedule_music_smoke(*window,campaign,music,selection.api,paths,parser.value(QStringLiteral("screenshot")));
@@ -187,6 +199,7 @@ int main(int argc, char* argv[]) {
                 else if (bundled || competition_smoke) schedule_playable_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")),competition_smoke);
                 else schedule_game_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
             }
+#endif
             if (prototype_smoke) window->show();
             else QMetaObject::invokeMethod(window,"applyDisplayPreferences",Qt::QueuedConnection);
             interface_ready=true;

@@ -263,3 +263,9 @@ target_include_directories(pgp-objectives-test SYSTEM PRIVATE "${PROJECT_SOURCE_
 target_compile_definitions(pgp-objectives-test PRIVATE PGP_OBJECTIVE_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-objectives-test)
 add_test(NAME runtime.objectives COMMAND pgp-objectives-test)
+
+add_executable(pgp-founder-journey-test founder_journey_test.cpp)
+target_link_libraries(pgp-founder-journey-test PRIVATE pgp::session)
+target_compile_definitions(pgp-founder-journey-test PRIVATE PGP_FOUNDING_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-founder-journey-test)
+add_test(NAME runtime.founder-journey COMMAND pgp-founder-journey-test)

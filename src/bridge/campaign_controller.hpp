@@ -11,6 +11,7 @@
 #include "frontier_controller.hpp"
 #include "succession_controller.hpp"
 #include "objectives_controller.hpp"
+#include "founding_controller.hpp"
 
 #include <QThread>
 #include <QUrl>
@@ -27,6 +28,7 @@ class CampaignController final : public QObject {
     Q_PROPERTY(FrontierController* frontier READ frontier CONSTANT)
     Q_PROPERTY(SuccessionController* leadership READ leadership CONSTANT)
     Q_PROPERTY(ObjectivesController* objectives READ objectives CONSTANT)
+    Q_PROPERTY(FoundingController* founding READ founding CONSTANT)
     Q_PROPERTY(int daysPerSecond READ daysPerSecond WRITE setDaysPerSecond NOTIFY stateChanged)
     Q_PROPERTY(bool welcome READ welcome NOTIFY stateChanged)
     Q_PROPERTY(QVariantList headquarters READ headquarters CONSTANT)
@@ -85,6 +87,7 @@ public:
     FrontierController* frontier() const { return frontier_; }
     SuccessionController* leadership() const {return leadership_;}
     ObjectivesController* objectives() const {return objectives_;}
+    FoundingController* founding() const {return founding_;}
     int daysPerSecond() const { return days_per_second_; }
     void setDaysPerSecond(int value);
     bool welcome() const { return welcome_; }
@@ -115,6 +118,7 @@ public:
     Q_INVOKABLE QVariantMap generateCampaignNames() const;
     Q_INVOKABLE QString generateWorldSeed() const;
     Q_INVOKABLE void openWelcome();
+    Q_INVOKABLE void startFounderCampaign();
     [[nodiscard]] QString date() const;
     [[nodiscard]] bool ready() const noexcept { return static_cast<bool>(snapshot_); }
     [[nodiscard]] QString revision() const;
@@ -197,6 +201,7 @@ private:
     FrontierController* frontier_;
     SuccessionController* leadership_;
     ObjectivesController* objectives_;
+    FoundingController* founding_;
     bool welcome_ = false;
     int days_per_second_ = 1;
     QThread thread_;

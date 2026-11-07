@@ -563,6 +563,7 @@ Json world_json(const WorldState& world) {
     if (world.objectives) result["objectives"]=detail::objectives_json(*world.objectives);
     if (!world.difficulty.empty()) result["difficulty"] = world.difficulty;
     if (!world.background.empty()) result["background"] = world.background;
+    if (world.founding) result["founding"]=Json::parse(content::canonical_founding_selection(*world.founding));
     if (world.identity) result["identity"] = {{"company_name",world.identity->company_name},
         {"founder_name",world.identity->founder_name},{"founder_pronouns",world.identity->founder_pronouns}};
     return result;
@@ -573,7 +574,7 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
         if (name!="variables" && name!="competition" && name!="competition_mode" && name!="scenario_id" && name!="society" &&
-            name!="authority" && name!="objectives" && name!="simulation_storage" && name!="identity" && name!="background" && name!="difficulty") prior_shape[name]=nullptr;
+            name!="authority" && name!="objectives" && name!="simulation_storage" && name!="identity" && name!="background" && name!="difficulty" && name!="founding") prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"world",{"simulation","company_id","world_id","state_id","campaign_start","scope_created",
                                    "root_seed","enabled_flows","facts","counterparty_cash_cents","decisions","negotiations"});
@@ -581,6 +582,7 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
         return entry.second.default_value.has_value();
     })) detail::invalid("variables","Registered variables require an explicit value collection");
     WorldState result;
+    if(value.contains("founding")) result.founding=content::load_founding_selection(value.at("founding").dump());
     result.root_seed=detail::u64(value.at("root_seed"),"root_seed");
     if (value.contains("difficulty")) result.difficulty=detail::text(value.at("difficulty"),"world/difficulty",128);
     if (value.contains("background")) result.background=detail::text(value.at("background"),"world/background",128);

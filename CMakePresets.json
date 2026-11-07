@@ -7,7 +7,7 @@
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
-      "cacheVariables": {"BUILD_TESTING": "ON"}
+      "cacheVariables": {"BUILD_TESTING": "OFF"}
     },
     {
       "name": "release",

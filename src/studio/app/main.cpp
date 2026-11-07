@@ -2,14 +2,26 @@
 #include "canvas_controller.hpp"
 #include "snapshot_controller.hpp"
 #include "revision_controller.hpp"
+#if PGP_TEST_HOOKS
 #include "revision_walkthrough.hpp"
+#endif
 #include "world_controller.hpp"
+#if PGP_TEST_HOOKS
 #include "world_walkthrough.hpp"
+#endif
 #include "asset_controller.hpp"
+#if PGP_TEST_HOOKS
 #include "catalog_walkthrough.hpp"
+#endif
+#if PGP_TEST_HOOKS
 #include "walkthrough.hpp"
+#endif
+#if PGP_TEST_HOOKS
 #include "canvas_walkthrough.hpp"
+#endif
+#if PGP_TEST_HOOKS
 #include "snapshot_walkthrough.hpp"
+#endif
 
 #include <pgp/core/build_identity.hpp>
 #include <pgp/graphics/graphics_policy.hpp>
@@ -43,12 +55,14 @@
 namespace {
 using namespace pgp;
 QString text(std::string_view value) { return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size())); }
+#if PGP_TEST_HOOKS
 QQuickItem* view_item(QQuickItem* root, const QString& name) {
     if (root->objectName() == name) return root;
     for (auto* child : root->childItems())
         if (auto* found = view_item(child, name)) return found;
     return nullptr;
 }
+#endif
 QStringList strings(const std::vector<std::string>& values) {
     QStringList result;
     for (const auto& value : values) result.push_back(text(value));
@@ -585,6 +599,9 @@ int main(int argc, char* argv[]) {
             static_cast<int>(finalizer_walkthrough) + static_cast<int>(world_walkthrough) + static_cast<int>(catalog_walkthrough) + static_cast<int>(revision_walkthrough) > 1) ||
         (parser.isSet(QStringLiteral("screenshot")) && !run_walkthrough)) parser.showHelp(2);
     try {
+#if !PGP_TEST_HOOKS
+        if(run_walkthrough || parser.isSet(QStringLiteral("check-view"))) throw std::invalid_argument("Editor checks require an explicit --enable-tests build.");
+#endif
         const auto scale=parser.value(QStringLiteral("text-scale"));
         if(scale!=QStringLiteral("100") && scale!=QStringLiteral("200")) throw std::invalid_argument("Choose editor text scale 100 or 200.");
         auto font=QGuiApplication::font();font.setPointSizeF(font.pointSizeF()*(scale==QStringLiteral("200")?2.0:1.0));QGuiApplication::setFont(font);
@@ -611,6 +628,7 @@ int main(int argc, char* argv[]) {
         if (engine.rootObjects().isEmpty()) return 2;
         auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().first());
         if (!window) return 2;
+#if PGP_TEST_HOOKS
         if (parser.isSet(QStringLiteral("check-view"))) {
             const auto* list = window->findChild<QObject*>(QStringLiteral("studioLibrary"));
             const auto all_rows = browser.rows().size();
@@ -692,6 +710,7 @@ int main(int argc, char* argv[]) {
             std::cout << "Studio library view loaded and filtered " << all_rows << " rows\n";
             return 0;
         }
+#endif
         auto configuration = window->graphicsConfiguration();
         configuration.setAutomaticPipelineCache(false);
         window->setGraphicsConfiguration(configuration);
@@ -702,6 +721,7 @@ int main(int argc, char* argv[]) {
             });
         if (run_walkthrough) window->resize(1280, 720);
         window->show();
+#if PGP_TEST_HOOKS
         if(world_walkthrough || catalog_walkthrough || revision_walkthrough) {
             const auto screenshot=parser.value(QStringLiteral("screenshot"));
             auto report=world_walkthrough?studio::run_world_walkthrough(browser,*window,screenshot):
@@ -755,6 +775,7 @@ int main(int argc, char* argv[]) {
                 << (finalizer_walkthrough ? "; graphical review/finalize/reopen, external conflicts, no-op, journal recovery and explicit game version passed" : "") << '\n';
             return 0;
         }
+#endif
         return application.exec();
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 2; }
 }

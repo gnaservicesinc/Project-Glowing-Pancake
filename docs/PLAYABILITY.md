@@ -54,16 +54,34 @@ resolution. Escape opens an exit confirmation; Cancel keeps the current screen
 and session. The Main Menu button pauses and opens the menu; Resume keeps the
 session. Quit and the window close button use the same exit confirmation.
 
-**New Game currently opens the existing prototype setup.** The starting flow,
-gameplay interface and isometric/3D environment direction are future feedback
-work. Select New Game, then choose
-California, Texas or Washington and whether to include optional story layers.
-Choose the competition preset: the default schedules six domestic startups, six international startups and three heavyweights, with three startups in each group active initially. Reduced schedules seven competitors; expanded schedules twenty. Forgiving discloses one optional $300,000 equity round for 15% ownership per rival. The introductory roster keeps the earlier two-startup/one-heavyweight campaign.
+**New Game opens the founder setup.** Choose Campaign or Sandbox. Campaign
+begins with a California birth in 1997: name, gender/pronouns, temperament,
+family resources and one leg up. Wealthy Elite requires rich parents; Genius,
+Charismatic and Political Elite remain available from every family background.
+Make eight formative choices, then choose a startup entry route, institution
+name, legal form, mission, compatible backers, office and first researcher.
+Only Genius can supply the first research assignment personally. The review
+shows real contributions, paid setup costs, equity and monthly commitments.
+The complete biography is retained in local saves, and the introduction draft
+is saved as you go. Use Back to revise answers without accumulating rewards.
+
+The office opens paused on 2015-01-01 with no finished model or deployment.
+Nonprofit donors supply gifts and trustee rights rather than founder equity;
+recognized mission-serving income is exempt from the modeled corporate tax.
+Sandbox can skip childhood and override starting available cash and research
+staff. It starts unscored without a campaign deadline. Sandbox age policy is
+undecided; this setup does not select that design. The gameplay layout is the
+next discussion. The final first-play tutorial remains deferred until gameplay
+is finalized. Three illustrated backgrounds, slow scene/text fades and quieter
+ambient music provide the first pacing pass. Reduced motion removes the
+transitions; pages always advance at your pace. [Scene choices and music](../assets/founding/README.md).
 
 The base events remain enabled. Time begins paused; saves and preferences stay
 local. Play/Pause, Step day and 1/10/30/60 days per second stay in the header.
 
-For the original small-campaign opening route, select **Introductory roster**:
+For the original small-campaign engineering route, launch explicitly with
+`--content data/runtime/first-playable.json --scenario scenario.first_playable`
+(the standard New Game uses the founder setup):
 
 1. In **Lab → Data**, inspect and license the commercially cleared business documents.
 2. In **Research**, select held-out evaluation and start its finite experiment.

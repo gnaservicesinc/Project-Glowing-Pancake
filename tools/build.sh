@@ -6,11 +6,14 @@ usage() {
     cat <<'USAGE'
 Usage: ./make.sh [options]
 
-  (no options)      Build the Release desktop skeleton; never launch it
+  (no options)      Build both applications in native-CPU optimized Release; no tests/debugging
   --core-only      Build core/headless without finding or downloading Qt
-  --editor         Build the separate Content Studio
+  --editor         Build only Content Studio
+  --game-only      Build only the game
   --package        Build and stage the Mac game app with Qt, icon and resources
-  --debugging      Build Debug with local developer diagnostics (--debug alias)
+  --enable-debugging  Build Debug with developer diagnostics (--debugging/--debug aliases)
+  --enable-tests   Enable test targets and GUI checks, without running tests
+  --portable       Disable native-CPU tuning for a portable build
   --test           Build, then run CTest; failures return a nonzero exit code
   --clean          Remove only the selected, verified wrapper-owned build tree
   --qt-root PATH   Qt 6.12.0 prefix (or set QT_ROOT/CMAKE_PREFIX_PATH)
@@ -30,21 +33,27 @@ USAGE
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 configuration=Release
 core_only=OFF
-editor=OFF
+editor=ON
+build_scope=both
+enable_tests=OFF
+native_cpu=ON
 package=0
 run_tests=0
 clean=0
 qt_root="${QT_ROOT:-}"
-jobs=""
+jobs="${CMAKE_BUILD_PARALLEL_LEVEL:-4}"
 
 while (($#)); do
     case "$1" in
         --help|-h) usage; exit 0 ;;
-        --debugging|--debug) configuration=Debug ;;
+        --enable-debugging|--debugging|--debug) configuration=Debug ;;
         --core-only) core_only=ON ;;
-        --editor) editor=ON ;;
+        --editor) build_scope=editor ;;
+        --game-only) build_scope=game ;;
+        --enable-tests) enable_tests=ON ;;
+        --portable) native_cpu=OFF ;;
         --package) package=1 ;;
-        --test) run_tests=1 ;;
+        --test) run_tests=1; enable_tests=ON ;;
         --clean) clean=1 ;;
         --qt-root)
             (($# >= 2)) && [[ -n "$2" && "$2" != --* ]] || fail '--qt-root needs a directory'
@@ -58,9 +67,11 @@ while (($#)); do
     shift
 done
 [[ "$clean" == 0 || "$run_tests" == 0 ]] || fail '--clean cannot be combined with --test'
-[[ "$editor" == OFF || "$core_only" == OFF ]] || fail '--editor needs desktop Qt'
-[[ "$editor" == OFF || "$clean" == 0 ]] || fail '--clean selects a whole build tree; omit --editor'
-[[ "$package" == 0 || ( "$editor" == OFF && "$core_only" == OFF && "$clean" == 0 && "$(uname -s)" == Darwin ) ]] || fail '--package requires a Mac desktop game build'
+[[ "$build_scope" != editor || "$core_only" == OFF ]] || fail '--editor needs desktop Qt'
+[[ "$build_scope" != editor || "$clean" == 0 ]] || fail '--clean selects a whole build tree; omit --editor'
+[[ "$package" == 0 || ( "$build_scope" != editor && "$core_only" == OFF && "$clean" == 0 && "$(uname -s)" == Darwin ) ]] || fail '--package requires a Mac desktop game build'
+
+[[ "$core_only" == OFF && "$build_scope" != game ]] || editor=OFF
 
 preset=release
 [[ "$configuration" != Debug ]] || preset=debug
@@ -100,7 +111,7 @@ if [[ "$run_tests" == 1 ]]; then
     command -v ctest >/dev/null 2>&1 || fail 'missing required tool: ctest'
 fi
 
-cmake_args=(--preset "$preset" "-DPGP_BUILD_EDITOR=$editor")
+cmake_args=(--preset "$preset" "-DPGP_BUILD_EDITOR=$editor" "-DBUILD_TESTING=$enable_tests" "-DPGP_NATIVE_OPTIMIZATION=$native_cpu")
 developer_dir=""
 compiler=""
 sdk=""
@@ -156,13 +167,21 @@ printf '%s\n' "$signature" > "$signature_file"
 cd -- "$project_root"
 cmake "${cmake_args[@]}"
 build_args=(--build --preset "$preset")
-if [[ "$editor" == ON ]]; then
+if [[ "$run_tests" == 1 ]]; then
+    # Building/running the test suite is an explicit request only.
+    :
+elif [[ "$core_only" == ON ]]; then
+    build_args+=(--target pgp-headless)
+elif [[ "$build_scope" == editor ]]; then
     build_args+=(--target pgp-editor)
-    [[ "$run_tests" == 0 ]] || build_args+=(pgp-studio-library-test)
+elif [[ "$build_scope" == game ]]; then
+    build_args+=(--target pgp-game)
+else
+    build_args+=(--target pgp-game pgp-editor)
 fi
 [[ -z "$jobs" ]] || build_args+=(--parallel "$jobs")
 cmake "${build_args[@]}"
-if [[ "$core_only" == OFF && "$editor" == OFF && "$(uname -s)" == Darwin && -d "$build_dir/bin/Project Glowing Pancake.app" &&
+if [[ "$core_only" == OFF && "$build_scope" != editor && "$(uname -s)" == Darwin && -d "$build_dir/bin/Project Glowing Pancake.app" &&
       -f "$build_dir/bin/pgp-game" && ! -L "$build_dir/bin/pgp-game" ]]; then
     rm -f -- "$build_dir/bin/pgp-game" # Retire only the wrapper-owned pre-bundle game output.
 fi
@@ -175,7 +194,7 @@ if [[ "$package" == 1 ]]; then
 fi
 if [[ "$run_tests" == 1 ]]; then
     test_args=(--preset "$preset")
-    [[ "$editor" == OFF ]] || test_args+=(-R '^studio[.]')
+    [[ "$build_scope" != editor ]] || test_args+=(-R '^studio[.]')
     ctest "${test_args[@]}"
 fi
 printf 'Built %s (%s); no application was launched.\n' "$preset" "$build_dir"

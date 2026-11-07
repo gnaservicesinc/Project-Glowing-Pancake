@@ -136,6 +136,7 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
       frontier_(new FrontierController(this)),
       leadership_(new SuccessionController(this)),
       objectives_(new ObjectivesController(this)),
+      founding_(new FoundingController(program_.collection,paths.saves_directory.parent_path()/"founding-draft.json",this)),
       welcome_(welcome),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
       save_folder_(QUrl::fromLocalFile(QString::fromStdU16String(paths.saves_directory.u16string()))) {
     connect(management_,&ManagementController::actionRequested,this,&CampaignController::submit);
@@ -391,7 +392,28 @@ void CampaignController::startCampaign(QString hq,bool stories,QString scenario,
 void CampaignController::openWelcome() {
     if (!management_->available() || busy_) return;
     if (!paused()) submit(core::SetPaused{true});
+    founding_->setPage(0);
     welcome_=true;emit stateChanged();
+}
+void CampaignController::startFounderCampaign() {
+    try {
+        const auto form=founding_->form();
+        runtime::ScenarioOptions options;
+        options.founding=founding_->selection();
+        const auto& selection=*options.founding;
+        const auto* definition=program_.collection.find("scenario.founder_campaign");
+        if(!definition) throw std::invalid_argument("The campaign introduction is missing from this content collection.");
+        const auto& scenario=std::get<content::ScenarioDefinition>(definition->data);
+        if(!scenario.founding) throw std::invalid_argument("This content collection has no founding choices.");
+        (void)content::founding_terms(*scenario.founding,selection);
+        options.identity=runtime::CampaignIdentity{form.value("company").toString().trimmed().toStdString(),
+            selection.first_name+" "+selection.last_name,form.value("pronouns").toString().trimmed().toStdString()};
+        runtime::validate_campaign_identity(*options.identity);
+        options.seed=runtime::parse_world_seed(form.value("seed").toString().trimmed().toStdString());
+        options.difficulty=form.value("difficulty").toString().toStdString();
+        startCampaign(form.value("headquarters").toString(),true,QStringLiteral("scenario.founder_campaign"),
+            form.value("mission").toString(),{},std::move(options));
+    } catch(const std::exception& e) {setNotice(QString::fromUtf8(e.what()));}
 }
 void CampaignController::setShowGuide(bool value) { auto settings=settings_;settings.show_guide=value;changeSettings(settings); }
 QString CampaignController::date() const { return snapshot_ ? text(core::iso_date(runtime::campaign_day(snapshot_->checkpoint.world))) : QStringLiteral("Preparing campaign…"); }

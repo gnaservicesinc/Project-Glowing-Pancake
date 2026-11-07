@@ -122,6 +122,7 @@ QVariantList ObjectivesController::options() const {return available()?objective
 QString ObjectivesController::overview() const {
     if(!available()) return {};
     const auto& o=objectives();
+    if(o.mode==ObjectiveMode::freeplay) return QStringLiteral("Sandbox · no campaign deadline or scored ending. Your chosen mission is a direction; systemic play continues.");
     const auto mode=o.mode==ObjectiveMode::observer?QStringLiteral("Observer · institution frozen"):
         o.mode==ObjectiveMode::sandbox?QStringLiteral("Sandbox · scores preserved"):
         objective_is_custom(o)?QStringLiteral("Custom campaign"):QStringLiteral("Scored campaign");

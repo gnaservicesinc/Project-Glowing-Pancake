@@ -7,21 +7,22 @@ play at 18 in 2015 and an ending at 118 in 2115, followed by optional sandbox
 continuation. [Campaign flow](docs/CAMPAIGN_FLOW.md),
 [technology design](docs/TECHNOLOGY.md) and the
 [140-candidate technology catalog](docs/TECHNOLOGY_CATALOG.md) describe the new
-direction. This is planning work; the running prototype retains its 2014 start.
+direction. New Game now implements the founder introduction and company setup;
+later stages and the main-game layout await the next discussion.
 
 **Current state.** The initial skeleton phase closed on 2026-11-07. The current
 core is ready for human feedback and the user's selected refinements. The
 [current handoff](docs/STATUS.md) and [feedback backlog](docs/BACKLOG.md)
 replace the initial implementation queue.
 
-The Mac development build includes the playable 2014–2017 campaign and
-century scenarios, local persistence, Lab projects and deployments, business
+The Mac development build starts with Campaign/Sandbox setup and the new
+2015 founder opening, alongside older engineering scenarios, local persistence, Lab projects and deployments, business
 and staffing, rivals, infrastructure, civic and regional systems, succession
 and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.29.0-dev.1**, generation **29**.
+The finalized internal content version is **0.30.0-dev.1**, generation **30**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).
@@ -29,11 +30,11 @@ phases in the [backlog](docs/BACKLOG.md).
 ## Build and play
 
 ```sh
+./make.sh                    # Both apps, Release, local CPU tuning; no tests or launch
 ./make.sh --package --jobs 4   # Release Mac .app with Qt, icon and resources; no launch
 open "dist/Project Glowing Pancake.app"
 ./make.sh --core-only        # Release core/headless; no Qt required
 ./make.sh --editor           # Separate Content Studio
-ctest --test-dir build/core-release -R '^(core.liquidity|runtime.liquidity-integration|session.business-scenario)$' --output-on-failure
 build/core-release/bin/pgp-headless --business-run tests/content/fixtures/business.json expansion
 build/core-release/bin/pgp-headless --lab-demo data/runtime/first-playable.json
 build/core-release/bin/pgp-headless --events-demo data/runtime/first-playable.json
@@ -44,8 +45,9 @@ build/core-release/bin/pgp-headless --competition-demo data/runtime/first-playab
 
 Builds never launch the application. On Mac, open **Project Glowing Pancake.app**
 in `dist` from Finder. It opens to a full-screen main menu with New Game,
-Load Game, Settings, Credits and Quit. New Game opens the existing prototype
-setup; that flow and the gameplay interface are awaiting redesign. Escape
+Load Game, Settings, Credits and Quit. New Game offers Campaign or Sandbox,
+then identity, family/leg up, formative chapters, mission, founding terms,
+backers, office and the first researcher. The first morning begins paused. Escape
 opens an exit confirmation with Cancel and Exit game. The in-game Main Menu
 button pauses and opens the menu; Resume returns to the current session.
 The Codex Run action uses `./script/build_and_run.sh` to explicitly build,
@@ -89,7 +91,8 @@ The selected stack is C++20 + Qt 6.12.x/QML with CMake/Ninja. Desktop targets ar
 
 The game needs **no backend, hosted model, player account, analytics, or in-game updater**. Local saves, autosaves, preferences, and campaign history are normal features. Installation and updates are handled outside the game by the chosen distribution platform.
 
-Content Studio builds as a separate target with a checkout library and shared typed canvas/forms/outline. Authors configure triggers, lifecycles, execution nodes and scoped variables, save drafts, inspect real effects and finalize reviewed internal batches through graphical controls. Flow inspection shows trigger truth, actual effects, ledger entries and suspended continuations on isolated fixtures. The game build excludes the Studio target and its resources. [The version manifest](project-versions.json) tracks game, editor and finalized content identities separately. Separate Studio packaging and usability acceptance remain later work.
+Content Studio builds as a separate target with a checkout library and shared typed canvas/forms/outline. Authors configure triggers, lifecycles, execution nodes and scoped variables, save drafts, inspect real effects and finalize reviewed internal batches through graphical controls. Flow inspection shows trigger truth, actual effects, ledger entries and suspended continuations on isolated fixtures. The game application excludes Studio resources; the default build compiles both
+applications as separate targets. [The version manifest](project-versions.json) tracks game, editor and finalized content identities separately. Separate Studio packaging and usability acceptance remain later work.
 
 Built-in rules dispatch actual research, evaluation and pilot outcomes, seeded demand incidents, paid supplier/recovery opportunities and competitive notices through one shared runtime. The eight-flow pack is in `data/runtime/first-playable.json`, with localizable English messages and a complete baseline-only headless run. [Event contract](docs/EVENT_SYSTEM.md) · [Implementation and seeds](src/runtime/BASE_EVENTS.md)
 

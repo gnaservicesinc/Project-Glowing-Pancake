@@ -12,7 +12,7 @@ template<> struct Extension<runtime::CampaignEndCause> {
 };
 template<> struct Extension<runtime::ObjectiveMode> {
     static constexpr auto key=runtime::objective_mode_key;
-    static constexpr std::size_t count=3;
+    static constexpr std::size_t count=4;
 };
 template<> struct Extension<core::LiquidityCauseKind> {
     static constexpr std::size_t count=2;

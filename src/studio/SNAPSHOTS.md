@@ -109,6 +109,7 @@ Build the opt-in editor configuration once, then retain the optimized tree:
 
 ```sh
 ./make.sh --editor --jobs 4
+cmake --build build/release --target pgp-content-tool --parallel 4
 build/release/bin/pgp-content-tool check --checkout "$PWD"
 ```
 

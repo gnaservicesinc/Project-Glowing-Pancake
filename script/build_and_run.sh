@@ -5,7 +5,7 @@ mode="${1:-run}"
 case "$mode" in run|--debug|--logs|--verify) ;; *) echo "Usage: $0 [--debug|--logs|--verify]" >&2; exit 2 ;; esac
 cd -- "$project_root"
 pkill -x 'Project Glowing Pancake' >/dev/null 2>&1 || true
-./make.sh --package --jobs 4
+./make.sh --game-only --package --jobs 4
 bundle="$project_root/dist/Project Glowing Pancake.app"
 case "$mode" in
     --debug) exec lldb -- "$bundle/Contents/MacOS/Project Glowing Pancake" ;;

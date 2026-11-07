@@ -8,8 +8,8 @@ Updated 2026-11-07
 
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
-checkpoint is `d1f2bd3`, with finalized internal content
-**0.29.0-dev.1**, generation **29**.
+checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
+founder-setup batch advances content to **0.30.0-dev.1**, generation **30**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -27,8 +27,7 @@ audio, text size, reduced motion and still/video background choices locally.
 Escape opens an exit confirmation with Cancel and Exit game, including during
 play. The Main Menu button pauses; Resume returns to the same session.
 
-At the user's direction, New Game retains the existing prototype setup in the
-running build. Its replacement is now described by the selected design below.
+New Game now uses the founder setup described below.
 The gameplay interface/environment and usable Mac Content Studio remain open.
 
 ## Selected feedback: campaign and technology design
@@ -47,11 +46,26 @@ Unfounded safety guarantees, runaway compounding and a mandatory cosmic climax
 were rejected or deferred. [Campaign flow](CAMPAIGN_FLOW.md) ·
 [Technology](TECHNOLOGY.md) · [Candidate catalog](TECHNOLOGY_CATALOG.md).
 
-This is a completed planning revision, with no runtime/content-version change.
-The prototype's 2014 scenarios, original founders, saves and current UI remain
-as implemented. Next is the user's main-game layout discussion, including
-stage-dependent information and atmosphere; implementation follows selected
-feedback. The tutorial is a deferred first-play TODO after gameplay is final.
+The setup portion is implemented in the actual New Game path: mode selection,
+identity/pronouns/traits, family and eligible leg up, eight formative chapters,
+entry route, mission, corporation/nonprofit, backers, office and first research
+assignment. The opening review reconciles real contributions, paid formation
+and signing costs, monthly commitments and ownership. The complete biography
+persists in exact saves and is exposed as event facts for later authored use.
+The company starts paused in 2015 with no finished model or deployment.
+Nonprofits use institutional ownership, gifts/trustees and the modeled
+mission-income exemption, without ordinary VC equity or founder-wealth scoring.
+
+Sandbox supports optional biography and custom cash/staff, and begins unscored
+without a campaign deadline. Its age policy remains undecided. Later stages,
+epilogue/history, technology implementation and main-game layout are outside
+this setup batch. The tutorial remains a deferred first-play TODO after gameplay
+is final.
+
+Setup now has three original illustrated backgrounds, 2.2s scene dissolves,
+a 120ms pause and 900ms text-panel reveal, with immediate reduced-motion
+presentation and player-controlled page changes. Quieter licensed ambient
+excerpts fade between menu/setup/play contexts. [Images and pacing](../assets/founding/README.md).
 
 ## Implemented core
 
@@ -71,26 +85,27 @@ focused engineering checks.
 
 ## Current development build
 
-The Mac game target produces an application bundle. `./make.sh --package`
-stages a self-contained, ad-hoc signed development app in `dist`; the Codex
-Run action explicitly builds/packages/launches through
-`script/build_and_run.sh`. Builds alone never launch it. Native menu rendering
-was inspected; the completed offscreen keyboard check covers 200% text,
-persisted preferences, audio decoding, the system AVFoundation video loop,
-prototype entry/resume, load/error recovery and confirmed/cancelled exit.
-The basic campaign clock/save/load walkthrough also passes.
+Plain `./make.sh` builds both applications in Release with local CPU tuning,
+`BUILD_TESTING=OFF` and developer diagnostics disabled. It runs no tests and
+resets a cache previously configured with tests. `--enable-tests` explicitly
+includes test targets/GUI checks; `--test` also runs tests. `--enable-debugging`
+selects Debug, and `--portable` disables host CPU tuning. Incremental caches
+are retained. The Codex Run action builds/packages/launches only the game via
+`script/build_and_run.sh`; builds alone never launch an application.
 
-Ten of eleven focused CTests passed. The unchanged campaign-difficulty path
-fails its forecast-padding assertion, and the older full-campaign GUI check
-fails its staffing assertion after the current founder setup. Those core/test
-issues are recorded for the next selected refinement, not hidden by the menu
-checks. Native file-picker row selection, VoiceOver and release/device
-qualification remain open. Content Studio usability is not accepted by this
-milestone.
+Focused setup checks cover the real New Game keyboard path, eligibility,
+nonprofit/donor terms, office/first hire, first-day handoff and exact reload at
+100% and 200% text; the same walkthrough also passes on the native Mac
+renderer. Core checks cover alternative founding routes and custom sandbox
+resources. Build-wrapper checks cover both-app defaults and explicit
+opt-ins. No full suite, long campaign or native matrix is part of this batch.
+Native file-picker row selection, VoiceOver and release/device qualification
+remain open. The prior forecast-padding and full-campaign staffing assertions
+remain recorded for later selected work. Content Studio usability is not
+accepted by this milestone.
 
-At closure, the shared content check verifies generation 29, and the build
-graph reports no work for the game or editor targets. Game and editor versions
-remain development placeholders, and release readiness is false.
+Finalized content is generation 30. Game and editor versions remain development
+placeholders, and release readiness is false.
 
 ## Next phase
 

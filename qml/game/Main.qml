@@ -256,7 +256,7 @@ ApplicationWindow {
         onClosed: musicCreditsButton.forceActiveFocus()
     }
     ColumnLayout {
-        visible: !window.menuVisible
+        visible: !window.menuVisible && !(campaign.welcome && campaign.founding.available)
         enabled: visible
         anchors.fill: parent
         anchors.margins: 12
@@ -999,6 +999,8 @@ ApplicationWindow {
     onActiveFocusItemChanged: {
         if (window.menuVisible)
             frontMenu.reveal(activeFocusItem)
+        else if (foundingFlow.visible)
+            foundingFlow.reveal(activeFocusItem)
         else if (musicCredits.visible)
             musicCredits.reveal(activeFocusItem)
         else
@@ -1013,6 +1015,14 @@ ApplicationWindow {
         anchors.centerIn: parent
         standardButtons: Dialog.Yes | Dialog.No
         onAccepted: campaign.projectCancel(projectId)
+    }
+    FoundingFlow {
+        id: foundingFlow
+        anchors.fill: parent
+        visible: !window.menuVisible && campaign.welcome && campaign.founding.available
+        enabled: visible
+        textSize: window.textSize
+        onMenuRequested: window.openMainMenu()
     }
     MainMenu {
         id: frontMenu

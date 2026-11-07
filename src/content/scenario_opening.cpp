@@ -14,12 +14,63 @@ const CampaignDifficulty* scenario_difficulty(const ScenarioDefinition& s,std::s
     if(it==s.difficulties.end()) throw std::invalid_argument("This scenario does not offer that difficulty");
     return &*it;
 }
-std::optional<core::ManagementCatalog> scenario_management(const ScenarioDefinition& s,std::string_view difficulty) {
+std::optional<core::ManagementCatalog> scenario_management(const ScenarioDefinition& s,std::string_view difficulty,const FoundingSelection* founding) {
     auto result=s.management;const auto* d=scenario_difficulty(s,difficulty);
-    if(!result || !d) return result;
-    for(auto& offer:result->financing) offer.proceeds=scaled(offer.proceeds,d->financing_percent);
-    if(result->governance) for(auto& offer:result->governance->financing) offer.proceeds=scaled(offer.proceeds,d->financing_percent);
+    if(!result) return result;
+    if(d) {
+        for(auto& offer:result->financing) offer.proceeds=scaled(offer.proceeds,d->financing_percent);
+        if(result->governance) for(auto& offer:result->governance->financing) offer.proceeds=scaled(offer.proceeds,d->financing_percent);
+    }
+    if(founding) {
+        if(!s.founding) throw std::invalid_argument("This scenario has no founder introduction.");
+        const auto terms=founding_terms(*s.founding,*founding);
+        const auto premium=std::min(s.founding->maximum_finance_bonus_bp,
+            terms.prestige*s.founding->prestige_finance_bp+terms.buzz*s.founding->buzz_finance_bp);
+        const auto reputation_offer=[&](auto& offer) {
+            if(offer.acquired.value()>0) offer.proceeds=core::Cents{core::mul_div_floor(static_cast<std::uint64_t>(offer.proceeds.value()),10000+premium,10000).quotient};
+        };
+        for(auto& offer:result->financing) reputation_offer(offer);
+        if(result->governance) for(auto& offer:result->governance->financing) reputation_offer(offer);
+        result->scoring.opening_founder_share=core::BasisPoints{terms.founder_bp};
+        if(result->succession) {
+            result->succession->founder_birth_year=1997;
+            result->succession->founder_salary=core::Cents{s.founding->founder_salary_cents};
+            result->succession->chair_salary=core::Cents{s.founding->founder_salary_cents/2};
+        }
+        if(result->governance) {
+            auto& board=result->governance->board;
+            board.erase(std::remove_if(board.begin(),board.end(),[&](const auto& b) {
+                return !b.player && b.id!="board.independent" && !(b.id=="board.cofounder" && terms.partner_bp>0);
+            }),board.end());
+            for(const auto& id:founding->backers) {
+                const auto& backer=founding_option(s.founding->backers,id);
+                board.push_back({"board."+id,backer.name,1,false,core::Cents{0},core::BasisPoints{1500}});
+            }
+        }
+        if(terms.nonprofit) {
+            result->corporate_tax.reset();
+            std::erase_if(result->financing,[](const auto& f){return f.term.value()==0;});
+            if(result->governance) {
+                auto& g=*result->governance;
+                std::erase_if(g.financing,[](const auto& f){return f.acquired.value()>0;});
+                g.public_listing.reset();
+                for(auto& e:g.executives) {e.hybrid_grant=core::BasisPoints{0};e.hybrid_salary=e.cash_salary;}
+            }
+        }
+    }
     core::validate_management_catalog(*result);
+    return result;
+}
+std::map<std::string,core::BasisPoints,std::less<>> scenario_ownership(const ScenarioDefinition& s,const FoundingSelection* founding) {
+    if(!founding) return s.ownership;
+    if(!s.founding) throw std::invalid_argument("This scenario has no founding terms.");
+    const auto t=founding_terms(*s.founding,*founding);
+    std::map<std::string,core::BasisPoints,std::less<>> result;
+    result.emplace("founder_trust",core::BasisPoints{t.founder_bp});
+    result.emplace("option_pool",core::BasisPoints{0});
+    if(t.nonprofit) result.emplace("institution_endowment",core::BasisPoints{10000});
+    if(t.partner_bp>0) result.emplace("cofounder",core::BasisPoints{t.partner_bp});
+    for(const auto& [id,shares]:t.backer_shares) if(shares>0) result.emplace(id,core::BasisPoints{shares});
     return result;
 }
 std::optional<CompetitionSetup> scenario_competition(const ScenarioDefinition& s,std::string_view difficulty) {
@@ -27,11 +78,25 @@ std::optional<CompetitionSetup> scenario_competition(const ScenarioDefinition& s
     if(result && d) result->review_interval=d->rival_review_interval;
     return result;
 }
-ScenarioOpening scenario_opening(const ScenarioDefinition& s,std::string_view background,std::string_view owner,std::string_view difficulty) {
+ScenarioOpening scenario_opening(const ScenarioDefinition& s,std::string_view background,std::string_view owner,std::string_view difficulty,const FoundingSelection* founding) {
     const auto* d=scenario_difficulty(s,difficulty);
     ScenarioOpening result{s.cash,s.team_people,s.monthly_commitments,s.business_offers,{}};
     if(s.leased_capacity.value()>0) result.capacity_sources.push_back({"lease.initial","cloud.pool.initial",std::string(owner),
         "supplier.compute.initial",core::CapacitySourceKind::leased,s.leased_capacity,s.leased_capacity,0,"general",s.lease_energy_included});
+    if(founding) {
+        if(!s.founding || !background.empty()) throw std::invalid_argument("Choose the new founding terms without an old background package.");
+        const auto terms=founding_terms(*s.founding,*founding);
+        result.cash=core::Cents{terms.contributed_cents};
+        if(d && !founding->sandbox_cash_cents) result.cash=scaled(result.cash,d->starting_cash_percent);
+        result.setup_cost=core::Cents{terms.paid_setup_cents};
+        if(result.cash<=result.setup_cost) throw std::invalid_argument("These terms cannot pay the founding expenses.");
+        result.team_people=founding->sandbox_staff.value_or(1);
+        result.monthly_commitments.clear();
+        result.monthly_commitments.emplace("office_and_admin",core::Cents{terms.office_cents});
+        result.monthly_commitments.emplace("compute_lease",core::Cents{s.founding->compute_monthly_cents});
+        result.monthly_commitments.emplace("payroll_with_benefits",core::Cents{terms.payroll_cents});
+        return result;
+    }
     if(background.empty()) {if(d) result.cash=scaled(result.cash,d->starting_cash_percent);return result;}
     const auto it=std::find_if(s.backgrounds.begin(),s.backgrounds.end(),[&](const auto& b){return b.id==background;});
     if(it==s.backgrounds.end()) throw std::invalid_argument("This scenario does not offer that founder background");

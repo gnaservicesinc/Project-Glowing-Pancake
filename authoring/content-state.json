@@ -1,14 +1,14 @@
 {
-  "collection_hash": "08f9502af38f53b67c1b37ed40db6eb0c7c2dc4530d0113894bcbc2d47c4f60b",
-  "content_version": "0.29.0-dev.1",
+  "collection_hash": "907e932bb8abcc24d36dd84123c5eb08271a2a17b178a8119ed27862ed382689",
+  "content_version": "0.30.0-dev.1",
   "format": 1,
-  "generation": 29,
-  "history_hash": "6f10104db99ae142f084cbd74187de1beefe633a05b5bb8d57bec96e7f979f64",
+  "generation": 30,
+  "history_hash": "a7648700399c39549a82a2fe7acd37083e80fdb46cc45549513cb7528ee3de5e",
   "required_game_version": "0.1.0-dev.1",
-  "runtime_manifest_hash": "a143a72d43667b66abbd2358b6c927a75b525574ed6f33623876d3742a9c3ed8",
+  "runtime_manifest_hash": "6f6863023835beb3ea9d7f688ff368443e46f6cf2f89936915a5ee0c1abf98c0",
   "save_policy": "reject-prior-content",
-  "snapshot": "authoring/snapshots/000029.collection.json",
-  "snapshot_hash": "b1edff24122adb8f51ed9f4b8c0b1f1a916c2a1f091c81e2c23afb435e6f5200",
+  "snapshot": "authoring/snapshots/000030.collection.json",
+  "snapshot_hash": "ee6a1dc126f235ea9bb2754c804f446fc2d7990a46c5b9d2b9c6263bb51ca464",
   "target": "data/runtime/first-playable.json",
-  "write_sequence": 29
+  "write_sequence": 30
 }

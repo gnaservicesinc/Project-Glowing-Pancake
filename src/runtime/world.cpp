@@ -417,6 +417,11 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
         if (!scenario || scenario->starts_on!=world.campaign_start ||
             (!world.objectives && scenario->ends_before!=world.simulation.end_date))
             invalid("Saved source scenario is absent or has different campaign dates");
+        if(world.founding) {
+            if(!scenario->founding || !world.identity || world.identity->founder_name!=world.founding->first_name+" "+world.founding->last_name)
+                invalid("The saved biography must match the founder and authored campaign.");
+            (void)content::founding_terms(*scenario->founding,*world.founding);
+        }
         (void)content::scenario_difficulty(*scenario,world.difficulty);
         if (validate_core_simulation && (scenario->infrastructure ? (!world.simulation.infrastructure || world.simulation.infrastructure->catalog!=*scenario->infrastructure) : world.simulation.infrastructure.has_value()))
             invalid("Saved owned infrastructure rules differ from the source scenario");
@@ -474,13 +479,20 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             matching_lab_scenario = true;
             if (world.simulation.lab && world.simulation.lab->catalog == content::scenario_lab_catalog(program.collection, *scenario)) {
                 matching_catalog = true;
-                const auto opening=content::scenario_opening(*scenario,world.background,world.company_id,world.difficulty);
-                const auto management=content::scenario_management(*scenario,world.difficulty);
+                const auto founding=world.founding?&*world.founding:nullptr;
+                const auto opening=content::scenario_opening(*scenario,world.background,world.company_id,world.difficulty,founding);
+                const auto management=content::scenario_management(*scenario,world.difficulty,founding);
                 const auto competition=content::scenario_competition(*scenario,world.difficulty);
-                if(!world.background.empty() || !world.difficulty.empty()) {
+                if(world.founding || !world.background.empty() || !world.difficulty.empty()) {
                     const auto& accounts=*world.simulation.accounts;
                     if(opening.cash.value()>0 && (accounts.postings.empty() || accounts.postings.front().key!="opening" || accounts.postings.front().amount!=opening.cash))
                         invalid("Founder opening capital differs from its actual contribution");
+                    if(opening.setup_cost.value()>0) {
+                        const auto expense=std::find_if(accounts.postings.begin(),accounts.postings.end(),[](const auto& p){return p.key=="founding/setup";});
+                        if(expense==accounts.postings.end() || expense->amount!=opening.setup_cost || expense->day!=scenario->starts_on ||
+                            expense->debit!=core::Account::expenses || expense->credit!=core::Account::cash)
+                            invalid("Founding expenses differ from the signed office and researcher terms.");
+                    }
                     for(const auto& [id,monthly]:opening.monthly_commitments) if(monthly.value()>0) {
                         const auto it=std::find_if(accounts.recurring.begin(),accounts.recurring.end(),[&](const auto& r){return r.id==id;});
                         if(it==accounts.recurring.end() || it->monthly_amount!=monthly || it->starts_on!=scenario->starts_on) invalid("Founder opening commitments differ from their authored package");
@@ -505,7 +517,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                     invalid("Saved management rules or opening staff differ from the scenario");
                 if (world.simulation.management && world.simulation.management->governance) {
                     std::vector<core::EquityHolding> initial;
-                    for (const auto& [holder,shares]:scenario->ownership) initial.push_back({holder,shares,holder=="option_pool"});
+                    for (const auto& [holder,shares]:content::scenario_ownership(*scenario,founding)) initial.push_back({holder,shares,holder=="option_pool"});
                     if (world.simulation.management->governance->opening_holdings!=initial) invalid("Corporate opening ownership differs from the scenario");
                 }
                 if (scenario->service_catalog ? (!world.simulation.deployments || world.simulation.deployments->catalog!=content::scenario_services(program.collection,*scenario)) : world.simulation.deployments.has_value())

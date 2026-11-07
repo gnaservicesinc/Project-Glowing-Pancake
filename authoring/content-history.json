@@ -106644,6 +106644,54 @@
         "prepared_headquarters": 21,
         "scenarios": 7
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "68cafc706b56d8eba1438691f693795bee06f8426c440b64cc0427aff0c45701",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "e85642e00256ae8fc0f1ef52d75058374f0e3107e9b2891db4b2b1afd101b9b5",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "society.founder",
+          "kind": "regional_society",
+          "old_revision": null,
+          "revision": 1
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "907e932bb8abcc24d36dd84123c5eb08271a2a17b178a8119ed27862ed382689",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.30.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 30,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.29.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000029.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000030.collection.json",
+      "summary": "Implement the founder introduction, conditional founding terms and paused 2015 opening.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

@@ -1,3 +1,4 @@
+if(BUILD_TESTING)
 qt_add_executable(pgp-probe
     main.cpp probe_controller.cpp probe_controller.hpp probe_smoke.cpp probe_smoke.hpp)
 target_link_libraries(pgp-probe PRIVATE
@@ -14,14 +15,20 @@ qt_add_resources(pgp-probe probe_images
           "${PROJECT_SOURCE_DIR}/assets/probe/images/paper.jpg"
           "${PROJECT_SOURCE_DIR}/assets/probe/audio/tone.wav")
 
-qt_add_executable(pgp-game game_main.cpp game_smoke.cpp game_smoke.hpp music_controller.cpp music_controller.hpp
-    menu_media.cpp menu_media.hpp menu_smoke.cpp menu_smoke.hpp)
+endif()
+
+qt_add_executable(pgp-game game_main.cpp music_controller.cpp music_controller.hpp menu_media.cpp menu_media.hpp)
+if(BUILD_TESTING)
+    target_sources(pgp-game PRIVATE founding_smoke.cpp founding_smoke.hpp game_smoke.cpp game_smoke.hpp menu_smoke.cpp menu_smoke.hpp)
+endif()
+target_compile_definitions(pgp-game PRIVATE PGP_TEST_HOOKS=$<BOOL:${BUILD_TESTING}>)
 target_link_libraries(pgp-game PRIVATE pgp::bridge pgp::resources pgp::graphics pgp::audio
     Qt6::Quick Qt6::QuickControls2)
 pgp_project_target(pgp-game)
 qt_add_resources(pgp-game game_ui
     PREFIX "/pgp" BASE "${PROJECT_SOURCE_DIR}/qml"
     FILES "${PROJECT_SOURCE_DIR}/qml/game/Main.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/FoundingFlow.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MainMenu.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MenuButton.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MenuSettings.qml"
@@ -45,6 +52,11 @@ qt_add_resources(pgp-game menu_assets
     FILES "${PROJECT_SOURCE_DIR}/assets/menu/horizon.jpg"
           "${PROJECT_SOURCE_DIR}/assets/menu/icon.png"
           "${PROJECT_SOURCE_DIR}/assets/menu/select.wav")
+qt_add_resources(pgp-game founding_images
+    PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+    FILES "${PROJECT_SOURCE_DIR}/assets/founding/california-1997.png"
+          "${PROJECT_SOURCE_DIR}/assets/founding/curiosity-2003.png"
+          "${PROJECT_SOURCE_DIR}/assets/founding/threshold-2015.png")
 if(APPLE)
     set(CMAKE_OBJCXX_COMPILER "${CMAKE_CXX_COMPILER}")
     enable_language(OBJCXX)

@@ -156,7 +156,7 @@ void validate_management_catalog(const ManagementCatalog& c) {
     if (c.default_policy_budget.value()<=0 || c.default_reserve_floor.value()<0 || c.default_monthly_ceiling.value()<=0 ||
         c.default_policy_runs==0 || c.default_policy_runs>c.maximum_policy_runs || c.financing.size()>8 || c.specialists.size()>8 || c.setbacks.size()>8 || c.maximum_policy_runs==0 || c.maximum_policy_runs>12 ||
         c.minimum_evaluation_interval.value()<7 || c.minimum_evaluation_interval.value()>365 || c.scoring.task_target==0 ||
-        c.scoring.task_target>market_task_limit*100 || c.scoring.founder.empty() || c.scoring.opening_founder_share.value()==0)
+        c.scoring.task_target>market_task_limit*100 || c.scoring.founder.empty() || c.scoring.opening_founder_share.value()<0)
         invalid("Management catalog has invalid bounds or scoring targets");
     std::uint32_t weights=0;for (auto w:c.scoring.weights) {if (w>100) invalid("Slice scoring weight exceeds its bound");weights+=w;}
     if (weights!=100) invalid("Slice score weights must sum to 100");
@@ -425,7 +425,7 @@ SliceScore slice_score(const SimulationState& s) {
         for (std::size_t i=0;i<covered.size();++i) if (plan.independent && plan.coverage[i].value()>0 && e.lower[i]>=plan.required[i]) covered[i]=true;
     }
     score.points[3]=static_cast<std::uint32_t>(std::count(covered.begin(),covered.end(),true))*rubric.weights[3]/static_cast<std::uint32_t>(covered.size());
-    score.points[4]=static_cast<std::uint32_t>(mul_div_floor(static_cast<std::uint64_t>(std::min(score.founder_share,rubric.opening_founder_share).value()),rubric.weights[4],static_cast<std::uint64_t>(rubric.opening_founder_share.value())).quotient);
+    score.points[4]=rubric.opening_founder_share.value()==0?0:static_cast<std::uint32_t>(mul_div_floor(static_cast<std::uint64_t>(std::min(score.founder_share,rubric.opening_founder_share).value()),rubric.weights[4],static_cast<std::uint64_t>(rubric.opening_founder_share.value())).quotient);
     for (const auto point:score.points) score.total+=point;
     return score;
 }

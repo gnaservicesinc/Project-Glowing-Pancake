@@ -12,6 +12,7 @@
 #include <pgp/content/society_catalog.hpp>
 #include <pgp/content/authority_catalog.hpp>
 #include <pgp/content/frontier_catalog.hpp>
+#include <pgp/content/founding.hpp>
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/objectives.hpp>
 #include <pgp/core/random.hpp>
@@ -187,6 +188,7 @@ struct ScenarioDefinition {
     std::optional<core::ObjectiveCharter> objectives{};
     std::vector<FounderBackground> backgrounds{};
     std::vector<CampaignDifficulty> difficulties{};
+    std::optional<FoundingCatalog> founding{};
 };
 struct ScenarioOpening {
     core::Cents cash{0};
@@ -194,11 +196,13 @@ struct ScenarioOpening {
     std::map<std::string,core::Cents,std::less<>> monthly_commitments;
     std::vector<core::BusinessOffer> business_offers;
     std::vector<core::CapacitySource> capacity_sources;
+    core::Cents setup_cost{0};
 };
 [[nodiscard]] ScenarioOpening scenario_opening(const ScenarioDefinition&, std::string_view background={},
-                                               std::string_view owner="company.player",std::string_view difficulty={});
+                                               std::string_view owner="company.player",std::string_view difficulty={},const FoundingSelection* founding=nullptr);
 [[nodiscard]] const CampaignDifficulty* scenario_difficulty(const ScenarioDefinition&,std::string_view);
-[[nodiscard]] std::optional<core::ManagementCatalog> scenario_management(const ScenarioDefinition&,std::string_view difficulty={});
+[[nodiscard]] std::optional<core::ManagementCatalog> scenario_management(const ScenarioDefinition&,std::string_view difficulty={},const FoundingSelection* founding=nullptr);
+[[nodiscard]] std::map<std::string,core::BasisPoints,std::less<>> scenario_ownership(const ScenarioDefinition&,const FoundingSelection* = nullptr);
 [[nodiscard]] std::optional<CompetitionSetup> scenario_competition(const ScenarioDefinition&,std::string_view difficulty={});
 struct ResearchDefinition {
     std::vector<std::string> all_of;

@@ -870,7 +870,7 @@ RegionalMarkets parse_regional_markets(const Json& value, const std::string& pat
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society", "authority", "frontier", "objectives", "backgrounds", "difficulties"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society", "authority", "frontier", "objectives", "backgrounds", "difficulties", "founding"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -879,6 +879,7 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         boolean(value.at("lease_energy_included"), child(path, "lease_energy_included")),
         positive(value.at("team_people"), child(path, "team_people"), 1'000'000), {}, {}, {},
         identifiers(value.at("research"), child(path, "research")), identifiers(value.at("flows"), child(path, "flows"))};
+    if (value.contains("founding")) result.founding=load_founding_catalog(value.at("founding").dump());
     if (result.ends_before <= result.starts_on) fail("range", path, "Scenario end must follow start");
     const auto& hqs = value.at("headquarters_choices"); array(hqs, child(path, "headquarters_choices"), 64, true);
     std::set<std::string> headquarters;

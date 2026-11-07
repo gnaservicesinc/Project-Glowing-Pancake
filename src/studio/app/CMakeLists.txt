@@ -5,6 +5,7 @@ target_link_libraries(pgp-editor PRIVATE pgp::bridge pgp::studio_library pgp::gr
     Qt6::Quick Qt6::QuickControls2)
 target_include_directories(pgp-editor SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
 pgp_project_target(pgp-editor)
+target_compile_definitions(pgp-editor PRIVATE PGP_TEST_HOOKS=$<BOOL:${BUILD_TESTING}>)
 qt_add_resources(pgp-editor studio_ui
     PREFIX "/pgp/studio" BASE "${PROJECT_SOURCE_DIR}/qml/studio"
     FILES "${PROJECT_SOURCE_DIR}/qml/studio/Main.qml"

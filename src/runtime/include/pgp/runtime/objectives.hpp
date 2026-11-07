@@ -46,7 +46,7 @@ struct CampaignEnd {
     std::uint64_t posting_cursor = 0;
     auto operator<=>(const CampaignEnd&) const = default;
 };
-enum class ObjectiveMode { scored, sandbox, observer };
+enum class ObjectiveMode { scored, sandbox, observer, freeplay };
 struct ObjectivesState {
     core::OrdinalDay deadline{0};
     std::vector<ObjectiveSelectionEvent> selections;
@@ -79,6 +79,7 @@ enum class ObjectiveResult { pending, won, lost, unavailable, unfinished };
 [[nodiscard]] std::string objective_breach_explanation(const WorldState&,core::ObjectiveKind);
 
 void initialize_objectives(WorldState&,const core::ObjectiveCharter&,std::optional<core::ObjectiveSelection> = {});
+void initialize_freeplay(WorldState&);
 void settle_objectives(WorldState&,std::optional<core::OrdinalDay>,const CompiledProgram&);
 void validate_objectives(const WorldState&,const CompiledProgram&,bool deep);
 void select_objectives(WorldState&,const core::ObjectiveSelection&);

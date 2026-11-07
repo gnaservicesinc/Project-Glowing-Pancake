@@ -8,7 +8,7 @@ using namespace core;
 namespace {
 using namespace objective_detail;
 constexpr std::array<std::string_view,7> end_keys{"deadline","asi_race","insolvency","institutional_control","final_order","catastrophe","postmortem"};
-constexpr std::array<std::string_view,3> mode_keys{"scored","sandbox","observer"};
+constexpr std::array<std::string_view,4> mode_keys{"scored","sandbox","observer","freeplay"};
 std::size_t index(ObjectiveKind kind) {
     const auto i=static_cast<std::size_t>(kind);
     if(i>=objective_kinds.size()) throw std::invalid_argument("Unknown campaign objective.");
@@ -81,7 +81,8 @@ bool objective_is_custom(const ObjectivesState& objectives) noexcept {
         }));
 }
 bool objective_time_stopped(const WorldState& world) noexcept {
-    return world.objectives && world.objectives->end && world.objectives->mode==ObjectiveMode::scored;
+    return world.objectives && world.objectives->end &&
+        (world.objectives->mode==ObjectiveMode::scored || world.objectives->mode==ObjectiveMode::freeplay);
 }
 bool observing_world(const WorldState& world) noexcept {
     return world.objectives && world.objectives->mode==ObjectiveMode::observer;
@@ -99,7 +100,7 @@ bool has_asi_objective(const WorldState& world) noexcept {
     return world.simulation.frontier && world.simulation.frontier->catalog.asi_route;
 }
 std::optional<ObjectiveKind> required_objective_review(const WorldState& world) {
-    if(!world.objectives || world.objectives->end) return {};
+    if(!world.objectives || world.objectives->end || world.objectives->mode==ObjectiveMode::freeplay) return {};
     const auto& o=*world.objectives;
     const auto& selection=o.selections.back().selection;
     const auto pending=[&](ObjectiveKind kind){const auto& b=o.breaches[index(kind)];return b.first && !b.acknowledged_on;};
@@ -116,7 +117,7 @@ std::optional<ObjectiveKind> objective_postmortem_candidate(const WorldState& wo
     return {};
 }
 std::optional<OrdinalDay> next_objective_boundary(const WorldState& world) {
-    if(!world.objectives || world.objectives->end) return {};
+    if(!world.objectives || world.objectives->end || world.objectives->mode==ObjectiveMode::freeplay) return {};
     const auto& o=*world.objectives;
     const auto today=world.simulation.date;
     const auto start=objective_window_start(o.deadline,ObjectiveKind::utopia);
@@ -125,8 +126,10 @@ std::optional<OrdinalDay> next_objective_boundary(const WorldState& world) {
     return std::min(o.deadline,advance_days(month_end,Days{1}));
 }
 ObjectiveResult objective_result(const WorldState& world,ObjectiveKind kind) {
+    if(kind==ObjectiveKind::profit && world.founding && world.founding->legal_form=="nonprofit") return ObjectiveResult::unavailable;
     if(!world.objectives || (kind==ObjectiveKind::asi && !has_asi_objective(world))) return ObjectiveResult::unavailable;
     const auto& o=*world.objectives;
+    if(o.mode==ObjectiveMode::freeplay) return o.end?ObjectiveResult::lost:ObjectiveResult::unfinished;
     if(kind==ObjectiveKind::asi && o.race) return lost_race(world,*o.race)?ObjectiveResult::lost:ObjectiveResult::won;
     if(o.breaches[index(kind)].first) return ObjectiveResult::lost;
     if(!o.end) return ObjectiveResult::pending;
@@ -201,6 +204,13 @@ void initialize_objectives(WorldState& world,const ObjectiveCharter& charter,std
     auto& o=world.objectives.emplace();o.deadline=world.simulation.end_date;
     o.selections.push_back({world.campaign_start,std::move(opening)});
 }
+void initialize_freeplay(WorldState& world) {
+    if(!world.objectives || !world.founding || world.founding->mode!="sandbox") invalid("Standalone sandbox needs its explicit founding configuration.");
+    world.objectives->mode=ObjectiveMode::freeplay;
+    const auto installed=industry_adoption_snapshot(world);
+    extend_campaign(world.simulation,sandbox_limit(),&installed);
+    for(auto& actor:world.competition->companies) extend_campaign(actor.simulation,sandbox_limit());
+}
 void objective_detail::finish(WorldState& world,CampaignEndCause cause,std::string source) {
     auto& o=*world.objectives;
     if(o.end) return;
@@ -215,6 +225,12 @@ void objective_detail::finish(WorldState& world,CampaignEndCause cause,std::stri
 void settle_objectives(WorldState& world,std::optional<OrdinalDay> settled,const CompiledProgram& program) {
     if(!world.objectives || world.objectives->end) return;
     auto& o=*world.objectives;auto& state=world.simulation;
+    if(o.mode==ObjectiveMode::freeplay) {
+        if(state.phase==DayPhase::closed) finish(world,CampaignEndCause::insolvency,std::to_string(state.liquidity->workouts.back().id));
+        else if(!retains_control(world)) finish(world,CampaignEndCause::institutional_control);
+        else if(const auto order=final_closure(state,state.date)) finish(world,CampaignEndCause::final_order,*order);
+        return;
+    }
     if(settled && *settled>=objective_window_start(o.deadline,ObjectiveKind::utopia) &&
         *settled<o.deadline && objective_month_end(*settled)) {
         o.months.push_back(month(world,*settled));
@@ -245,6 +261,9 @@ void settle_objectives(WorldState& world,std::optional<OrdinalDay> settled,const
 void select_objectives(WorldState& world,const ObjectiveSelection& selection) {
     if(!world.objectives || world.objectives->end) invalid("Choose objectives during a scored campaign.");
     auto& o=*world.objectives;
+    if(world.founding && world.founding->legal_form=="nonprofit" &&
+        (selection.primary==ObjectiveKind::profit || std::ranges::find(selection.secondary,ObjectiveKind::profit)!=selection.secondary.end()))
+        invalid("Nonprofit assets belong to the institution and cannot be scored as founder wealth.");
     validate_objective_selection(selection,has_asi_objective(world));
     if(selection==o.selections.back().selection) invalid("These are already the current campaign objectives.");
     if(o.selections.size()>=objective_selection_limit) invalid("The objective selection history is full.");
@@ -288,6 +307,21 @@ void validate_objectives(const WorldState& world,const CompiledProgram& program,
         !state.accounts || !state.liquidity || !state.succession || !state.market || !world.society || !world.authority ||
         !world.competition || !world.competition->setup) invalid("Saved objective rules lack their campaign sources.");
     const auto through=o.end?o.end->day:state.date;
+    if(o.mode==ObjectiveMode::freeplay) {
+        if(!world.founding || world.founding->mode!="sandbox" || state.end_date!=sandbox_limit() || o.observer_day ||
+            !o.observer_paused || !o.months.empty() || o.race ||
+            std::ranges::any_of(o.breaches,[](const auto& b){return b.first || b.failed_checks!=0 || b.acknowledged_on;}) ||
+            (o.end && (!actual_failure(o.end->cause) || o.end->day!=state.date || !state.paused)) ||
+            (!o.end && (state.phase==DayPhase::finished || state.phase==DayPhase::closed)))
+            invalid("Standalone sandbox cannot invent a completed campaign or change its clock contract.");
+        for(const auto& row:o.selections) {
+            validate_objective_selection(row.selection,has_asi_objective(world));
+            if(row.day<world.campaign_start || row.day>state.date) invalid("Sandbox mission changes need their actual dates.");
+        }
+        if(o.end && o.end->cause==CampaignEndCause::insolvency && state.phase!=DayPhase::closed)
+            invalid("Sandbox insolvency needs the actual closed workout.");
+        return;
+    }
     const auto first=objective_window_start(o.deadline,ObjectiveKind::utopia);
     const auto month_end_count=[&](OrdinalDay day) {
         if(day<=first) return std::size_t{0};

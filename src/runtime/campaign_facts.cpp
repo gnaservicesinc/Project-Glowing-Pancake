@@ -23,6 +23,19 @@ bool offer_eligible(const core::SimulationState& s, std::string_view offer_id) {
 content::Scalar campaign_fact(const WorldState& world, std::string_view id) {
     using namespace core;
     const auto& s = world.simulation;
+    const auto* founder=world.founding?&*world.founding:nullptr;
+    if(id=="company.founder_genius") return founder && founder->leg=="genius";
+    if(id=="company.founder_outgoing") return founder && founder->sociability=="outgoing";
+    if(id=="company.founder_athletic") return founder && founder->activity=="athletic";
+    if(id=="company.is_nonprofit") return founder && founder->legal_form=="nonprofit";
+    if(id=="company.founder_age") return founder?static_cast<std::int64_t>(std::max(0,from_ordinal(s.date).year-1997)):INT64_C(0);
+    if(id=="company.founder_gender") return founder?founder->gender:std::string("unrecorded");
+    if(id=="company.founder_leg_up") return founder?founder->leg:std::string("unrecorded");
+    if(id=="company.founder_family") return founder?founder->family:std::string("unrecorded");
+    if(id.starts_with("company.childhood_")) {
+        if(founder) if(const auto found=founder->choices.find(id.substr(std::string_view("company.childhood_").size()));found!=founder->choices.end()) return found->second;
+        return std::string("unrecorded");
+    }
     if (id == "company.small_supplier_eligible") return offer_eligible(s, "offer.supplier_small");
     if (id == "company.document_recovery_eligible") return offer_eligible(s, "offer.recovery_pilot");
     if (id == "company.regional_recovery_eligible") return offer_eligible(s, "offer.regional_recovery");

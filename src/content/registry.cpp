@@ -249,6 +249,18 @@ Registry foundation_registry() {
     boolean("company.is_operating", "Whether company operations remain active.");
     number("company.campaign_days",Scope::company,Unit::days,0,maximum,
         "Days elapsed since this campaign opened.", "campaign");
+    boolean("company.founder_genius","The founder selected Actual Genius in the saved introduction.",Scope::company,"campaign");
+    boolean("company.founder_outgoing","The founder's saved sociability tendency is outgoing.",Scope::company,"campaign");
+    boolean("company.founder_athletic","The founder's saved activity tendency is athletic.",Scope::company,"campaign");
+    boolean("company.is_nonprofit","The founding institution has no privately owned founder equity.",Scope::company,"campaign");
+    number("company.founder_age",Scope::company,Unit::count,0,10000,"Founder age from the saved 1997 biography; campaign legacy ends at 118.","campaign");
+    for(const auto name:{"founder_gender","founder_leg_up","founder_family","childhood_arrival","childhood_curiosity",
+        "childhood_setback","childhood_circle","childhood_promise","childhood_ownership","childhood_record","childhood_threshold"}) {
+        result.register_fact({std::string("company.")+name,Scope::company,ValueType::text,Unit::none,0,0,
+            "The player's own saved formative history. Unrecorded for older scenarios; not a source of private rival knowledge.",
+            {{"scope",PortType::scope,Scope::company,Unit::none,false},{"value",PortType::value,Scope::company,Unit::none,true}},
+            Boundary::committed_result,Visibility::player_known,"campaign",{}});
+    }
     number("world.campaign_days",Scope::world,Unit::days,0,maximum,
         "Days elapsed since this campaign opened.", "campaign");
     const std::pair<std::string_view,std::string_view> company_counts[]{

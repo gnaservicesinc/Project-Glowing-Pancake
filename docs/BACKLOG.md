@@ -11,23 +11,30 @@ that review.
 
 Selected feedback milestone **F-01 — Mac game app and main menu** is complete:
 full-screen entry, New/Load, settings, credits, image/video background, music
-and effects, and Escape/quit confirmation. New Game deliberately retains the
-existing prototype setup. The game has a local `.app` with an icon and bundled
+and effects, and Escape/quit confirmation. F-02 below replaces its prototype
+New Game entry. The game has a local `.app` with an icon and bundled
 dependencies; this does not close the later device/release qualification gates.
 
 Selected feedback **F-02 — campaign flow and technology design** is documented
 in [Campaign flow](CAMPAIGN_FLOW.md), [Technology](TECHNOLOGY.md) and the
 [140-candidate catalog](TECHNOLOGY_CATALOG.md). It adopts the 1997 introduction,
 2015–2115 founder campaign, conditional stages, mission/backer/legal-form setup
-and frozen ending with optional sandbox. This completes the design revision,
-not runtime implementation. The PDF proposals remain advisory and reviewed.
+and frozen ending with optional sandbox. The wider flow remains planning direction;
+the setup implementation is described below. The PDF proposals remain advisory and reviewed.
 
-The next discussion is the main-game layout and its changes by stage. Runtime
-implementation of F-02, environment art and the user's Content Studio
-usability/application feedback remain open; no broad implementation starts from
-this documentation task. The existing forecast-padding
-CTest and full-campaign staffing assertion also need review in a later
-selected core/flow pass.
+**F-02 setup implementation is complete:** the actual New Game path now has
+Campaign/Sandbox selection, identity and traits, eight formative choices,
+eligible entry routes, mission/legal form, compatible investors/donors, actual
+capital/ownership/costs, office and first research assignment. It hands off to
+the paused 2015 company and saves the biography exactly. Sandbox age remains
+undecided. The broader stages, ending narrative, expanded technology runtime
+and main-game layout remain design work outside this setup task.
+
+The build wrapper now defaults to both apps in locally optimized Release with
+`BUILD_TESTING=OFF`, diagnostics off and no test execution. Tests and debugging
+require explicit flags; normal builds reset a previous test-enabled cache.
+Content Studio usability/application feedback and the previously recorded
+forecast-padding/staffing assertions remain later selected work.
 
 | Order | Work | Starting condition |
 | --- | --- | --- |

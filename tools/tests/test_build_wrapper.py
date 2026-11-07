@@ -151,13 +151,35 @@ exit "${PGP_TEST_CTEST_STATUS:-0}"
                 self.assertFalse((self.root / "build").exists())
                 self.assertEqual(self.commands(), "")
 
-    def test_editor_enables_only_the_opt_in_targets_and_tests(self):
+    def test_editor_selection_and_explicit_tests(self):
         self.assertEqual(self.run_build("--editor", "--test").returncode, 0)
         self.assertIn("cmake --preset release -DPGP_BUILD_EDITOR=ON", self.commands())
-        self.assertIn("cmake --build --preset release --target pgp-editor pgp-studio-library-test", self.commands())
+        self.assertIn("-DBUILD_TESTING=ON", self.commands())
         self.assertIn("ctest --preset release -R ^studio[.]", self.commands())
         self.assertEqual(self.run_build().returncode, 0)
-        self.assertIn("cmake --preset release -DPGP_BUILD_EDITOR=OFF", self.commands())
+        self.assertIn("cmake --preset release -DPGP_BUILD_EDITOR=ON -DBUILD_TESTING=OFF", self.commands())
+
+    def test_default_builds_both_apps_without_tests_or_debugging(self):
+        result=self.run_build()
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertIn("cmake --preset release -DPGP_BUILD_EDITOR=ON -DBUILD_TESTING=OFF -DPGP_NATIVE_OPTIMIZATION=ON",self.commands())
+        self.assertIn("cmake --build --preset release --target pgp-game pgp-editor --parallel 4",self.commands())
+        self.assertNotIn("ctest",self.commands())
+        self.assertNotIn("--preset debug",self.commands())
+
+    def test_testing_is_opt_in_and_disabled_again_on_normal_build(self):
+        self.assertEqual(self.run_build("--enable-tests").returncode,0)
+        self.assertIn("-DBUILD_TESTING=ON",self.commands())
+        self.assertNotIn("ctest",self.commands())
+        self.assertEqual(self.run_build().returncode,0)
+        self.assertIn("-DBUILD_TESTING=OFF",self.commands())
+
+    def test_debugging_alias_and_portable_build(self):
+        result=self.run_build("--enable-debugging","--portable")
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertIn("cmake --preset debug",self.commands())
+        self.assertIn("-DPGP_NATIVE_OPTIMIZATION=OFF",self.commands())
+        self.assertIn("-DBUILD_TESTING=OFF",self.commands())
 
 
 if __name__ == "__main__":
