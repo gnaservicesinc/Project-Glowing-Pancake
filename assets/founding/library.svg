@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>After school, a library computer</title>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#192a2d"/><stop offset="1" stop-color="#55706a"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#71877a"/><stop offset="1" stop-color="#ccb788"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#wall)" d="M0 0h1440v810H0z"/>
+  <path fill="#29413e" d="M0 70h628v567L0 722z"/>
+  <path fill="#1e3233" d="M0 237l628-53v25L0 270zm0 170l628-61v25L0 440zm0 168l628-69v27L0 611z"/>
+  <path d="M535 75v590m54-603v595" stroke="#324f49" stroke-width="6"/>
+  <path fill="#38534e" d="M636 0h97l-13 619-84 18z"/>
+  <path fill="#243b3a" d="M0 722l637-85h803v173H0z"/>
+  <path fill="#51685e" d="M958 637h344l94 173H601z"/>
+
+  <rect x="815" y="80" width="525" height="391" fill="#213633"/>
+  <rect x="828" y="93" width="499" height="365" fill="url(#glass)"/>
+  <path fill="#87947b" d="M828 379l109-64 76 14 70-48 87 36 84-65 73 21v185H828z"/>
+  <path fill="#506c60" d="M828 406l128-31 99 14 88-40 71 32 113-43v120H828z"/>
+  <path fill="#436059" d="M828 441l166-34 122 26 211-31v56H828z"/>
+  <path fill="#354b46" d="M1271 93h15q-49 81-57 165l26 42-24-13 31 82-44-49-8 83-15-32 12-104-31-74 35 39q15-87 60-139z"/>
+  <path d="M1069 93v365m-241-139h499" stroke="#2d433d" stroke-width="8"/>
+  <path fill="#192f2e" d="M795 460h568v17H795z"/>
+  <path fill="#b5aa7b" d="M904 477h201l-291 333H602z" opacity=".12"/>
+
+  <!-- Desk, CRT, keyboard and a stack of circulating books. -->
+  <path fill="#223535" d="M807 576l519-31 114 48v77l-633 14z"/>
+  <path fill="#776b57" d="M792 570l536-40 112 45v33l-648 26z"/>
+  <path fill="#b0976d" d="M792 571l536-41 112 43-650 42z"/>
+  <path d="M793 615l647-42" stroke="#ded0a0" stroke-width="3" opacity=".5"/>
+  <path fill="#16292a" d="M816 637l28-2-6 142-28 4zm532-32h26l18 169-29-4z"/>
+  <path fill="#4c6159" d="M970 548l219-12 30 16-221 15z"/>
+  <path fill="#b5aa86" d="M971 381q0-19 19-20l159-11q18-1 24 19l29 128-20 48-192 10q-20 0-20-20z"/>
+  <path fill="#8e8f73" d="M1167 366l40 11 44 108-48 37z"/>
+  <path fill="#2a4240" d="M992 391q0-13 12-15l139-8q14-1 16 12l18 107q2 13-12 14l-158 10q-15 0-15-14z"/>
+  <path fill="#638982" d="M1002 395q0-9 11-10l125-8q11-1 13 9l16 95q1 10-9 11l-145 9q-10 0-10-10z"/>
+  <path d="M1021 410l86-6m-85 17l38-3m-37 14l66-4" stroke="#afc6ad" stroke-width="3" opacity=".68"/>
+  <circle cx="1167" cy="518" r="4" fill="#b8d7a1"/>
+  <path fill="#dfcf9e" d="M967 575l186-10 63 11-204 17z"/>
+  <path d="M992 577l158-9m-140 14l168-10m-152 14l170-11" stroke="#8e8b70" stroke-width="2"/>
+  <path fill="#464c45" d="M1264 520l112-8 28 12-108 9zm-5 11l113-7 32 8-111 8z"/>
+  <path fill="#cbab78" d="M1262 516l114-9 28 12-109 9z"/>
+  <path fill="#536f64" d="M1285 503l87-6 26 11-91 7z"/>
+  <path fill="#162729" d="M0 744q291-36 627-28l-39 94H0zm1221 66 130-75 89-3v78z"/>
+</svg>

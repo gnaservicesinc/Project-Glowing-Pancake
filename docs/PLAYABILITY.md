@@ -54,27 +54,24 @@ resolution. Escape opens an exit confirmation; Cancel keeps the current screen
 and session. The Main Menu button pauses and opens the menu; Resume keeps the
 session. Quit and the window close button use the same exit confirmation.
 
-**New Game opens the founder setup.** Choose Campaign or Sandbox. Campaign
-begins with a California birth in 1997: name, gender/pronouns, temperament,
-family resources and one leg up. Wealthy Elite requires rich parents; Genius,
-Charismatic and Political Elite remain available from every family background.
-Make eight formative choices, then choose a startup entry route, institution
-name, legal form, mission, compatible backers, office and first researcher.
-Only Genius can supply the first research assignment personally. The review
-shows real contributions, paid setup costs, equity and monthly commitments.
-The complete biography is retained in local saves, and the introduction draft
-is saved as you go. Use Back to revise answers without accumulating rewards.
+**New Game opens in a California maternity ward in 1997.** Continue after the
+birth narration, then answer one question at a time. Use Enter or Space to
+reveal a beat early, Tab to reach choices, and Back to revisit a decision.
+Resume in the main menu returns to your saved place in the prologue. The canvas
+fits the window as it resizes. Reduced motion shows each beat immediately.
 
-The office opens paused on 2015-01-01 with no finished model or deployment.
-Nonprofit donors supply gifts and trustee rights rather than founder equity;
-recognized mission-serving income is exempt from the modeled corporate tax.
-Sandbox can skip childhood and override starting available cash and research
-staff. It starts unscored without a campaign deadline. Sandbox age policy is
-undecided; this setup does not select that design. The gameplay layout is the
-next discussion. The final first-play tutorial remains deferred until gameplay
-is finalized. Three illustrated backgrounds, slow scene/text fades and quieter
-ambient music provide the first pacing pass. Reduced motion removes the
-transitions; pages always advance at your pace. [Scene choices and music](../assets/founding/README.md).
+Eight formative choices lead to the founding scene at 18. Choose a legal form,
+entry route, company name and mission, then consider each eligible funding
+offer in turn. Choose the headquarters, office, first researcher and campaign
+difficulty. Wealthy Elite requires rich parents. Genius can supply the first
+research assignment personally. The signing review shows contributions, costs,
+cash, ownership and monthly commitments. Select World seed there to edit the
+seed before entering the office.
+
+The office opens paused on 2015-01-01. Nonprofit donors supply gifts and
+trustee rights. The institution owns its assets and mission income is exempt
+from the modeled corporate tax. The first-play tutorial remains a backlog item.
+[Scene choices and music](../assets/founding/README.md).
 
 The base events remain enabled. Time begins paused; saves and preferences stay
 local. Play/Pause, Step day and 1/10/30/60 days per second stay in the header.

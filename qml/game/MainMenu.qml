@@ -19,6 +19,8 @@ FocusScope {
     signal quitRequested()
     signal settingsSubmitted()
 
+    GameInk { id: ink }
+
     function home() { page = "home"; newGameButton.forceActiveFocus() }
     function keepFocusVisible() {
         Qt.callLater(() => menu.reveal(menu.lastFocusItem))
@@ -68,7 +70,7 @@ FocusScope {
     }
     Rectangle {
         anchors.fill: parent
-        color: "#07111b"
+        color: ink.ink
         opacity: menu.page === "home" ? 0.08 : 0.89
     }
     RowLayout {
@@ -121,16 +123,16 @@ FocusScope {
                 text: qsTr("THE FUTURE STARTS WITH AN IDEA")
                 font.pixelSize: 10
                 font.letterSpacing: 3
-                color: "#d1ad78"
+                color: ink.accent
             }
             Label {
                 objectName: "menuTitle"
                 text: qsTr("GLOWING\nPANCAKE")
-                font.family: "Georgia"
+                font.family: ink.displayFace
                 font.pixelSize: Math.min(menu.compact ? 44 : 66, (menu.width - 2 * menu.margin) / 6.5)
                 font.letterSpacing: 1.8
                 lineHeight: 0.96
-                color: "#f5ecdd"
+                color: ink.paper
                 Accessible.name: qsTr("Project Glowing Pancake")
             }
             Item { Layout.preferredHeight: menu.compact ? 0 : 8 }
@@ -193,7 +195,7 @@ FocusScope {
                 text: menu.message || campaign.notice
                 textFormat: Text.PlainText
                 font.pixelSize: menu.textSize
-                color: "#f3cb8d"
+                color: ink.accent
             }
         }
     }
@@ -222,13 +224,13 @@ FocusScope {
                 text: menu.page === "settings" ? qsTr("SETTINGS") : qsTr("CREDITS")
                 font.pixelSize: 11
                 font.letterSpacing: 3
-                color: "#d1ad78"
+                color: ink.accent
             }
             Label {
                 text: menu.page === "settings" ? qsTr("Make it yours.") : qsTr("Made possible by.")
-                font.family: "Georgia"
+                font.family: ink.displayFace
                 font.pixelSize: menu.compact ? 34 : 44
-                color: "#f5ecdd"
+                color: ink.paper
             }
             MenuSettings {
                 id: settings
@@ -249,7 +251,7 @@ FocusScope {
                 text: campaign.notice || menu.message
                 textFormat: Text.PlainText
                 font.pixelSize: menu.textSize
-                color: "#f3cb8d"
+                color: ink.accent
             }
             ColumnLayout {
                 visible: menu.page === "credits"
@@ -261,13 +263,13 @@ FocusScope {
                     textFormat: Text.PlainText
                     wrapMode: Text.Wrap
                     font.pixelSize: menu.textSize * 1.1
-                    color: "#f5ecdd"
+                    color: ink.paper
                 }
                 Label {
                     text: qsTr("MUSIC")
                     font.pixelSize: menu.textSize * 0.8
                     font.letterSpacing: 2
-                    color: "#f3cb8d"
+                    color: ink.accent
                 }
                 Repeater {
                     model: soundtrack.credits
@@ -280,7 +282,7 @@ FocusScope {
                             text: modelData.title + " — " + modelData.creator
                             textFormat: Text.PlainText
                             wrapMode: Text.Wrap
-                            color: "#f5ecdd"
+                            color: ink.paper
                             font.pixelSize: menu.textSize
                         }
                         Label {

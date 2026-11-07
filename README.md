@@ -15,8 +15,8 @@ core is ready for human feedback and the user's selected refinements. The
 [current handoff](docs/STATUS.md) and [feedback backlog](docs/BACKLOG.md)
 replace the initial implementation queue.
 
-The Mac development build starts with Campaign/Sandbox setup and the new
-2015 founder opening, alongside older engineering scenarios, local persistence, Lab projects and deployments, business
+The Mac development build opens with the founder prologue and the 2015 company
+opening. It also includes engineering scenarios, local persistence, Lab projects and deployments, business
 and staffing, rivals, infrastructure, civic and regional systems, succession
 and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
@@ -45,9 +45,9 @@ build/core-release/bin/pgp-headless --competition-demo data/runtime/first-playab
 
 Builds never launch the application. On Mac, open **Project Glowing Pancake.app**
 in `dist` from Finder. It opens to a full-screen main menu with New Game,
-Load Game, Settings, Credits and Quit. New Game offers Campaign or Sandbox,
-then identity, family/leg up, formative chapters, mission, founding terms,
-backers, office and the first researcher. The first morning begins paused. Escape
+Load Game, Settings, Credits and Quit. New Game opens with a hospital scene in
+1997 and presents one decision at a time through childhood and founding.
+The first morning begins paused. Escape
 opens an exit confirmation with Cancel and Exit game. The in-game Main Menu
 button pauses and opens the menu; Resume returns to the current session.
 The Codex Run action uses `./script/build_and_run.sh` to explicitly build,

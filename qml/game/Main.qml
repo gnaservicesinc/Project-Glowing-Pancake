@@ -12,12 +12,12 @@ ApplicationWindow {
     height: 720
     minimumWidth: 650
     minimumHeight: 480
-    color: "#141d28"
-    palette.windowText: "#f2f4f7"
-    palette.text: "#f2f4f7"
-    palette.buttonText: "#f2f4f7"
-    palette.window: "#141d28"
-    palette.base: "#192634"
+    color: gameInk.ink
+    palette.windowText: gameInk.paper
+    palette.text: gameInk.paper
+    palette.buttonText: gameInk.paper
+    palette.window: gameInk.ink
+    palette.base: gameInk.panel
     palette.button: "#25384a"
     palette.mid: "#70869b"
     palette.highlight: "#335c7a"
@@ -36,6 +36,8 @@ ApplicationWindow {
     readonly property int textSize: Math.round(14 * campaign.textScalePercent / 100)
     readonly property bool narrow: width < 1030
     font.pixelSize: textSize
+
+    GameInk { id: gameInk }
 
     function applyDisplayPreferences() {
         if (prototypeSmoke) return
@@ -999,11 +1001,9 @@ ApplicationWindow {
     onActiveFocusItemChanged: {
         if (window.menuVisible)
             frontMenu.reveal(activeFocusItem)
-        else if (foundingFlow.visible)
-            foundingFlow.reveal(activeFocusItem)
         else if (musicCredits.visible)
             musicCredits.reveal(activeFocusItem)
-        else
+        else if (!foundingFlow.visible)
             scroll.reveal(activeFocusItem)
     }
 
@@ -1021,7 +1021,8 @@ ApplicationWindow {
         anchors.fill: parent
         visible: !window.menuVisible && campaign.welcome && campaign.founding.available
         enabled: visible
-        textSize: window.textSize
+        textScale: campaign.textScalePercent / 100
+        onVisibleChanged: soundtrack.setIntroduction(visible)
         onMenuRequested: window.openMainMenu()
     }
     MainMenu {
@@ -1030,7 +1031,7 @@ ApplicationWindow {
         visible: window.menuVisible
         enabled: visible
         focus: visible
-        canResume: window.sessionEntered
+        canResume: window.sessionEntered || (campaign.welcome && campaign.founding.hasDraft)
         textSize: Math.round(16 * campaign.textScalePercent / 100)
         onNewGameRequested: {
             if (window.sessionEntered && !campaign.welcome) restartDialog.open()
@@ -1041,7 +1042,10 @@ ApplicationWindow {
             }
         }
         onLoadRequested: { campaign.clearNotice(); loadDialog.open() }
-        onResumeRequested: window.menuVisible = false
+        onResumeRequested: {
+            window.sessionEntered = true
+            window.menuVisible = false
+        }
         onQuitRequested: window.requestExit()
         onSettingsSubmitted: window.pendingMenuSettings = true
     }

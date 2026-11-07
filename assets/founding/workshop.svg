@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>The borrowed workshop</title>
+  <defs>
+    <linearGradient id="room" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#222532"/><stop offset="1" stop-color="#575062"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#474a63"/><stop offset="1" stop-color="#bd8e79"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#room)" d="M0 0h1440v810H0z"/>
+  <path fill="#303141" d="M0 80l675-61v583L0 742z"/>
+  <path fill="#393b4e" d="M675 19l35 16v567l-35 8z"/>
+  <path fill="#292b39" d="M0 743l711-142h729v209H0z"/>
+  <path fill="#494454" d="M811 600h458l-57 210H578z"/>
+  <rect x="829" y="76" width="514" height="362" fill="#292a39"/>
+  <rect x="842" y="89" width="488" height="336" fill="url(#glass)"/>
+  <path fill="#777180" d="M842 382l87-66 91 23 87-52 97 39 126-53v152H842z"/>
+  <path fill="#4d5269" d="M842 403l114-42 156 25 122-53 96 21v71H842z"/>
+  <path fill="#373c52" d="M842 415l195-22 113 13 180-41v60H842z"/>
+  <path d="M1083 89v336m-241-112h488" stroke="#303244" stroke-width="9"/>
+  <path fill="#232632" d="M805 427h559v15H805z"/>
+  <path d="M864 76h479m-473 17h460m-452 17h452m-439 17h439" stroke="#303345" stroke-width="3" opacity=".58"/>
+
+  <path fill="#242735" d="M800 586l526-48 114 50v47l-640 30z"/>
+  <path fill="#605265" d="M774 564l552-52 114 56v32l-666 37z"/>
+  <path fill="#846e78" d="M774 564l552-52 114 56-666 51z"/>
+  <path fill="#2b303f" d="M806 630l29-4-14 141-29 9zm498-43l29-3 28 164-30-3z"/>
+  <path fill="#282c3a" d="M1111 385l168-12q12 0 12 12v136l-174 16z"/>
+  <path fill="#3f5b67" d="M1124 395l156-12v124l-155 12z"/>
+  <path d="M1145 421l112-8m-112 17l67-5m-66 14l89-7m-89 16l42-4" stroke="#9bb4ab" stroke-width="3" opacity=".62"/>
+  <path fill="#ada2a1" d="M1119 534l175-13 60 22-191 20z"/>
+  <path fill="#646275" d="M1143 536l142-11 26 10-145 13z"/>
+  <path fill="#d2ba9b" d="M932 573l69-13 48 12-71 14z"/>
+  <path d="M946 573l58-11m-47 14l57-11m-45 13l55-9" stroke="#9f8277" stroke-width="2"/>
+
+  <path d="M980 565l-40-130 42-28" stroke="#343243" stroke-width="7" fill="none"/>
+  <circle cx="940" cy="435" r="7" fill="#746170"/>
+  <path fill="#483f50" d="M962 408q11-41 48-31l13 26z"/>
+  <path fill="#d6a97a" d="M963 409l60-6-10 10-45 3z"/>
+  <path fill="#c69b79" d="M967 413l50-4 119 161-272 26z" opacity=".18"/>
+  <ellipse cx="982" cy="564" rx="30" ry="7" fill="#343243"/>
+  <path fill="#222531" d="M0 752l574-53 27 111H0zm1082 58q97-84 245-100l113 48v52z"/>
+</svg>

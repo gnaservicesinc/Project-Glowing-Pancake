@@ -25,9 +25,10 @@ No multiplayer, real model execution, external generative dialogue service, 3D w
 
 ### Default campaign
 
-New Game offers **Campaign** and **Sandbox**. The campaign introduction begins
-with a California birth in **1997**: name, gender/pronouns, temperament, family
-resources and one leg up (Actual Genius, Extremely Charismatic, Wealthy Elite,
+**New Game** opens on a California hospital scene in **1997**. The prologue
+presents one decision at a time as the founder grows up. It establishes a name,
+gender, pronouns, temperament, family resources and one leg up (Actual Genius,
+Extremely Charismatic, Wealthy Elite,
 or Child of Political Elite). Wealthy Elite requires rich parents; the political
 route is available from any class and makes the family wealthy by age 18.
 Original childhood/teenage scenes retain choices for later events and public
@@ -45,8 +46,7 @@ The campaign ends on the founder's 118th birthday, **2115-01-01**, after settlin
 2114-12-31: exactly 100 years of company play. Longevity to this boundary is a
 declared premise. The ending narrates their passing, legacy and world response,
 with statistics and charts. Optional post-game play preserves the frozen result
-and continues the same world as a sandbox. Standalone Sandbox offers customizable
-starting conditions through a form, with presets and no mandatory story/deadline.
+and continues the same world as a sandbox.
 The complete [campaign/opening contract](CAMPAIGN_FLOW.md) owns the sequence.
 
 Charter promises affect governance and expectations; changing the primary scored

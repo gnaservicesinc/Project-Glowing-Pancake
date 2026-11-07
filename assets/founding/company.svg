@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>The founding, a term sheet in the afternoon</title>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#252833"/><stop offset="1" stop-color="#68534b"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#66616d"/><stop offset="1" stop-color="#c29673"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#wall)" d="M0 0h1440v810H0z"/>
+  <path fill="#35313a" d="M0 58l684-34v570L0 715z"/>
+  <path fill="#31303a" d="M0 715l684-121h756v216H0z"/>
+  <path fill="#62504a" d="M743 594h474l223 216H539z"/>
+  <path fill="#282934" d="M815 67h530v400H815z"/>
+  <path fill="url(#glass)" d="M829 81h502v372H829z"/>
+  <circle cx="1167" cy="267" r="88" fill="#e0ae7d" opacity=".88"/>
+  <path fill="#8e7480" d="M829 370l138-50 131 47 104-75 129 39v122H829z"/>
+  <path fill="#626070" d="M829 419l124-44 146 25 133-54 99 28v79H829z"/>
+  <path fill="#42485a" d="M829 434l120-23 174 5 208-32v69H829z"/>
+  <path d="M1090 81v372m-261-124h502" stroke="#393945" stroke-width="9"/>
+  <path fill="#262830" d="M795 455h571v14H795z"/>
+  <path fill="#d9a878" opacity=".22" d="M886 469h445l109 341H643z"/>
+  <path fill="#39343a" d="M1350 78h90v512l-89-18z"/>
+  <path fill="#2e2b33" d="M878 557q-3-50 50-59l102-10q40 2 39 40l-3 103-184 13z"/>
+  <path fill="#575059" d="M889 552q-2-32 44-42l93-10q28 0 27 25l-1 26z"/>
+
+  <path fill="#3c3339" d="M755 671l595-71 90 28v60l-685 109z"/>
+  <path fill="#936d56" d="M743 633l567-88 130 43v42l-697 108z"/>
+  <path fill="#b18767" d="M743 633l567-88 130 43-697 108z"/>
+  <path d="M743 696l697-108" stroke="#d2aa84" stroke-width="3" opacity=".5"/>
+  <path fill="#574547" d="M1033 610l180-34 99 46-184 36z"/>
+  <path fill="#d3b891" d="M1022 596l185-32 105 42-185 37z"/>
+  <path fill="#ebcf9e" d="M1026 590l179-31 99 41-182 33z"/>
+  <path d="M1057 596l144-25m-133 31l146-25m-136 31l79-13m-67 20l136-24m-120 30l142-24" stroke="#a48a72" stroke-width="2" opacity=".74"/>
+  <path fill="#403746" d="M1163 634l110-21 16 3-109 23z"/>
+  <path fill="#f0ca96" d="M1159 637l18-7 4 6z"/>
+  <path fill="#262731" d="M0 758l459-64 306 34-13 82H0zm1280 52 160-87v87z"/>
+</svg>

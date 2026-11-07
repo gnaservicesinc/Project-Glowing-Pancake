@@ -82,15 +82,20 @@ Baseline detectors and story layers share a source occurrence/receipt. Declare w
 
 ## Visual production
 
-Use original QML shapes and prepared geometry for charts, maps, framing, and simple icons. Prefer appropriate existing freely licensed raster art for room scenes; custom project art fills gaps. Generating a bitmap is an option only when it solves a documented asset need and is consistent with the user's preference for existing suitable assets. No art generation is required for planning or M0.
+Use silhouettes and restrained scene colors as the game's visual language.
+Build each scene around a few recognizable shapes with readable foreground,
+middle distance and background. Ground objects in observation or references
+before reducing them to geometry. Carry the same ink, paper and accent roles
+from the prologue into menus and room illustrations. Let meaningful story
+choices change the subject and tone of later art, with text carrying the
+consequence as well.
 
-The game uses seven original room schematics and four contextual illustrations
-for campaign setup, Inbox, Leadership and Objectives. They are static and
-decorative. The adjacent labels, lists and controls carry the game information.
-The procedural art supplies the current Mac scenes. The broader reusable icon
-budget remains a production art target.
-
-Runtime raster images use PNG or JPEG. Vector map data and original QML geometry are data/code, not forbidden image codecs. Preserve editable sources when art is created for the project and include their provenance. No video is needed in 1.0. Avoid HEIC/HEVC, AVIF, JPEG XL/XS, and unreviewed media pipelines; do not make a worldwide patent-freedom promise about any format.
+The prologue uses eight original SVG backgrounds. Its family scenes and
+founding rooms show the selected biography and legal form. The room
+schematics are decorative, with the adjacent labels and controls carrying
+game information. Preserve the editable sources and per-file provenance.
+Runtime raster images use PNG or JPEG. SVG is used for original scene
+geometry and illustrations. [Prologue art and pacing](../assets/founding/README.md).
 
 Technical illustrations clarify modeled relationships rather than pretend to reproduce a real benchmark. Historical hardware uses fictional names/appearance. State/site risk colors have symbols/text alternatives; map claims identify the source year and authored approximations. Natural Earth provides public-domain world boundaries; Census provides simplified domestic cartographic boundaries. The selected release, transformation and resulting geometry must be recorded. [Natural Earth terms](https://www.naturalearthdata.com/about/terms-of-use/), [Census boundaries](https://www.census.gov/geographies/mapping-files/time-series/geo/cartographic-boundary.html).
 

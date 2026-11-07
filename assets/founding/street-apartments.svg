@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>Early years, a row of apartments</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#1d2b3e"/><stop offset=".74" stop-color="#607c8c"/><stop offset="1" stop-color="#95a5a8"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h1440v810H0z"/>
+  <circle cx="1097" cy="284" r="107" fill="#b6c9c7" opacity=".7"/>
+  <path fill="#51697b" d="M0 394l231-55 212 57 196-34 171 49 136-53 140 14 148-47 206 35v450H0z"/>
+  <path fill="#374e61" d="M0 512l237-62 111 30 172-23 166 35 135-51 122 31 159-68 178 37 160-64v433H0z"/>
+  <path fill="#222f41" d="M0 593l434-77 282 53 286-59 438 62v238H0z"/>
+  <path fill="#344556" d="M637 810l274-239 210-23 230 262z"/>
+
+  <path fill="#415d70" d="M856 331l228 43v214l-228-25z"/>
+  <path fill="#2f4558" d="M1084 374l356-93v330l-356-23z"/>
+  <path fill="#5d7686" d="M850 329l231 38 359-97v15l-358 99-232-46z"/>
+  <path d="M861 421l221 34 358-63m-580 99l222 31 358-46m-579 82l221 26 358-10" stroke="#79929d" stroke-width="4" fill="none"/>
+  <path fill="#24374a" d="M883 377l42 7v34l-42-6zm65 11l47 7v35l-47-7zm69 12l43 6v35l-43-6zm-134 51l42 6v33l-42-5zm65 9l47 7v33l-47-6zm69 10l43 6v33l-43-6z"/>
+  <path fill="#6d8a9b" d="M1111 394l58-12v43l-58 11zm87-18l54-12v48l-54 9zm86-18l56-13v51l-56 10zm86-18l70-15v51l-70 13zm-259 142l58-9v42l-58 6zm87-13l54-7v47l-54 5zm86-12l56-8v48l-56 7zm86-13l70-9v51l-70 8z"/>
+  <path fill="#b79a7e" d="M1202 473l45-6v36l-45 4z"/>
+  <path d="M1224 471v35m-22-15l45-6" stroke="#536d7d" stroke-width="3"/>
+  <path d="M1080 583l-52 19-17 16m72-26l-48 19-14 13m55-22l-35 15-10 12" stroke="#748793" stroke-width="3" fill="none"/>
+  <path d="M808 617V385q0-22 23-22h38" stroke="#202e41" stroke-width="6" fill="none"/>
+  <path d="M856 358h20l10 8h-39z" fill="#c9cbbb"/>
+  <path d="M911 615l-89 75m202-101l67 165" stroke="#879caa" stroke-width="3" opacity=".35"/>
+  <path fill="#182535" d="M0 700l491-67 285 31-93 146H0zm1193 110q62-126 247-168v168z"/>
+</svg>

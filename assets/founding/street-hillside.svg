@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>Early years, a house on the ridge</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#303735"/><stop offset=".75" stop-color="#7c835e"/><stop offset="1" stop-color="#b1a47b"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h1440v810H0z"/>
+  <circle cx="1164" cy="258" r="110" fill="#d5bd87" opacity=".9"/>
+  <path fill="#73775d" d="M0 387l267-47 208 62 139-40 201 78 218-88 166 36 148-75 93 30v467H0z"/>
+  <path fill="#555f51" d="M0 492l250-66 230 25 169-46 202 112 177-27 163-70 249-35v425H0z"/>
+  <path fill="#404d44" d="M0 558l368-64 201 68 233 3 138-53 152 4 348-106v400H0z"/>
+  <path fill="#283b34" d="M0 668l557-64 174-79 400-25 309-83v393H0z"/>
+  <path fill="#677058" d="M801 810q12-114 123-190 54-37 165-77l82-8q-197 74-240 123-42 51-53 152z"/>
+
+  <path fill="#5e6d60" d="M863 517V393l577-33v157l-577 43z"/>
+  <path fill="#252f2e" d="M836 396l575-50 29 4v25l-604 46z"/>
+  <path fill="#9da383" d="M871 429l559-41v16l-559 47z"/>
+  <path fill="#354640" d="M947 445l424-32v111l-424 28z"/>
+  <path fill="#bdad7e" d="M957 449l88-7v99l-88 6zm101-8l111-9v100l-111 8zm125-10l91-8v102l-91 6zm104-9l75-6v102l-75 5z"/>
+  <path fill="#a1956e" d="M958 501l403-52v24l-403 62zm103 8l109-18v14l-109 17z" opacity=".6"/>
+  <path d="M1051 443v99m125-110v100m104-108v100" stroke="#657761" stroke-width="5"/>
+  <path fill="#808573" d="M856 562l584-52v14l-584 55z"/>
+  <path fill="#4a5b52" d="M856 578l584-54v38l-570 67z"/>
+  <path d="M897 592l171-17m-159 28l179-20m-165 31l193-23" stroke="#a89d7a" stroke-width="2" opacity=".5"/>
+  <path fill="#1d2a2a" d="M1383 562q-5-140 10-268l-18-50-22-34 24 15-10-37 20 29 12-51 1 51 29-22-12 26 23-13v33l-31 28q-8 136 2 288z"/>
+  <path fill="#1e312c" d="M0 738l505-70 201 29-44 113H0zm1065 72q145-138 375-194v194z"/>
+</svg>

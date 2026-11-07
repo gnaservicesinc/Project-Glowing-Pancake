@@ -203,6 +203,7 @@ private:
     ObjectivesController* objectives_;
     FoundingController* founding_;
     bool welcome_ = false;
+    bool starting_founder_ = false;
     int days_per_second_ = 1;
     QThread thread_;
     CampaignWorker* worker_ = nullptr;

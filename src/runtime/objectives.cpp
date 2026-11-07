@@ -204,13 +204,6 @@ void initialize_objectives(WorldState& world,const ObjectiveCharter& charter,std
     auto& o=world.objectives.emplace();o.deadline=world.simulation.end_date;
     o.selections.push_back({world.campaign_start,std::move(opening)});
 }
-void initialize_freeplay(WorldState& world) {
-    if(!world.objectives || !world.founding || world.founding->mode!="sandbox") invalid("Standalone sandbox needs its explicit founding configuration.");
-    world.objectives->mode=ObjectiveMode::freeplay;
-    const auto installed=industry_adoption_snapshot(world);
-    extend_campaign(world.simulation,sandbox_limit(),&installed);
-    for(auto& actor:world.competition->companies) extend_campaign(actor.simulation,sandbox_limit());
-}
 void objective_detail::finish(WorldState& world,CampaignEndCause cause,std::string source) {
     auto& o=*world.objectives;
     if(o.end) return;

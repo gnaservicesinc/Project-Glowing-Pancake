@@ -6,39 +6,29 @@ Canvas {
     id: scene
     required property string room
     Accessible.ignored: true
+    GameInk {
+        id: ink
+        tone: ({ lab: "jade", operations: "slate", civic: "clay", society: "olive",
+            institutions: "plum", frontier: "slate", inbox: "slate", leadership: "plum" })[scene.room] || "amber"
+    }
     onRoomChanged: requestPaint()
     onWidthChanged: requestPaint()
     onHeightChanged: requestPaint()
 
     onPaint: {
         const ctx = getContext("2d")
-        const colors = ({
-            welcome: ["#254154", "#e2bb85"],
-            office: ["#303849", "#e1b982"],
-            lab: ["#1e4246", "#93d2cc"],
-            operations: ["#27394a", "#93bad5"],
-            civic: ["#383747", "#e2bc90"],
-            society: ["#253d43", "#9dcaaa"],
-            institutions: ["#403443", "#ddb0bb"],
-            frontier: ["#292e4c", "#b5b9ef"],
-            inbox: ["#334150", "#b2c9d8"],
-            leadership: ["#3b3946", "#e1bec7"],
-            objectives: ["#273c3f", "#e2c789"]
-        })[room]
-        if (!colors)
-            return
         ctx.reset()
         ctx.clearRect(0, 0, width, height)
         const backdrop = ctx.createLinearGradient(0, 0, width, height)
-        backdrop.addColorStop(0, "#1a2836")
-        backdrop.addColorStop(1, colors[0])
+        backdrop.addColorStop(0, ink.ink)
+        backdrop.addColorStop(1, ink.stage)
         ctx.fillStyle = backdrop
         ctx.fillRect(0, 0, width, height)
         ctx.save()
         ctx.scale(height / 70, height / 70)
         const unitsWide = width * 70 / height
         ctx.globalAlpha = 0.22
-        ctx.strokeStyle = colors[1]
+        ctx.strokeStyle = ink.accent
         ctx.lineWidth = 0.7
         for (let x = 12; x < unitsWide; x += 20) {
             ctx.beginPath()
@@ -57,7 +47,7 @@ Canvas {
         ctx.lineWidth = 1.3
         ctx.lineCap = "round"
         function outline(x, y, w, h) {
-            ctx.fillStyle = colors[0]
+            ctx.fillStyle = ink.stage
             ctx.fillRect(x, y, w, h)
             ctx.strokeRect(x, y, w, h)
         }

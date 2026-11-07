@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>The founding, a trustee's report at the meeting table</title>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#1b2b31"/><stop offset="1" stop-color="#4d6b61"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#4b696d"/><stop offset="1" stop-color="#a7a781"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#wall)" d="M0 0h1440v810H0z"/>
+  <path fill="#23353b" d="M0 58l687-40v582L0 733z"/>
+  <path fill="#223439" d="M0 733l687-133h753v210H0z"/>
+  <path fill="#3c5651" d="M757 599h516l167 211H566z"/>
+  <path fill="#1f3437" d="M810 70h544v395H810z"/>
+  <path fill="url(#glass)" d="M823 83h518v369H823z"/>
+  <circle cx="1167" cy="265" r="91" fill="#c6bf8b" opacity=".83"/>
+  <path fill="#789182" d="M823 383l129-62 146 42 107-73 136 43v119H823z"/>
+  <path fill="#597870" d="M823 413l125-43 150 25 133-48 110 23v82H823z"/>
+  <path fill="#3e5c58" d="M823 440l134-31 167 8 217-33v68H823z"/>
+  <path d="M1090 83v369m-267-126h518" stroke="#2d4646" stroke-width="9"/>
+  <path fill="#203437" d="M791 454h583v15H791z"/>
+  <path fill="#a4b284" opacity=".18" d="M853 469h468l119 341H621z"/>
+
+  <path fill="#293e41" d="M892 574v-56q0-30 32-36h78q36 0 36 33v50zm181-11v-65q0-28 28-33h72q31 0 31 30v60zm158-6v-62q0-22 26-27h68q33 0 33 28v83z"/>
+  <path d="M907 531v-11q0-17 20-23h70m89 20v-17q0-17 16-21h67m73 39v-20q0-15 16-17h59" stroke="#5e7c71" stroke-width="3" fill="none"/>
+  <path fill="#283b3e" d="M779 693q-3-44 98-82 129-48 329-70l234 60v113l-661 90z"/>
+  <path fill="#668276" d="M777 670q-8-45 100-84 126-45 334-66l229 60v50l-663 122z"/>
+  <path fill="#81947c" d="M777 670q-8-45 100-84 126-45 334-66l229 60-663 122z"/>
+  <path d="M777 702l663-122" stroke="#aaba93" stroke-width="3" opacity=".74"/>
+
+  <path fill="#415d58" d="M1058 600l86-24 144 23-77 34-148-12z"/>
+  <path fill="#e0cda4" d="M1061 589l89-21 58 30-6 32-139-24z"/>
+  <path fill="#c7bd9e" d="M1208 598l70-26 7 26-83 32z"/>
+  <path d="M1084 592l79 14m-65-20l75 13m-66-18l58 10m56 18l52-22m-52 13l50-21" stroke="#8f8c74" stroke-width="2"/>
+  <path fill="#283d3f" d="M0 752l523-74 254 36-32 96H0zm1322 58 118-69v69z"/>
+</svg>

@@ -1,31 +1,74 @@
 {
   "format": 1,
-  "description": "Original AI-generated narrative backgrounds created for this project; no third-party reference images supplied. Distributed with the project's original assets; no human-painted provenance is claimed.",
+  "description": "Original vector illustrations for the campaign prologue. User-supplied Pixabay photos informed ward architecture and equipment proportions. The Suzerain screenshots informed pacing and visual economy.",
+  "reference_use": "Observation only. No reference images, traced artwork, brands, or third-party artwork are bundled.",
   "images": [
     {
-      "path": "assets/founding/california-1997.png",
-      "tool": "Built-in image_gen",
-      "generated_on": "2026-11-07",
-      "ai_generated": true,
-      "prompt": "Use case: illustration-story. Asset type: landscape 16:9 background for the quiet, reflective introduction of an offline narrative strategy game. Create an original hand-painted cinematic illustration of a modest California Bay Area neighborhood in 1997, dawn light through coastal haze, eucalyptus and telephone wires, a simple porch, distant low hills. Environment only; no people, faces, logos, lettering or watermark. Neither poverty nor luxury. Warm muted ochre, dusty sage, slate blue shadows, subtle paper grain, broad painterly shapes, believable period detail. Calm, intimate, hopeful rather than triumphant. Wide composition with the meaningful scenery near the edges and gentle low-detail space across the center for a readable narrative panel. No futuristic city or science-fiction spectacle.",
-      "sha256": "33e86d913d77219e5e254e33879e4cc73579e655e5ba6f816016efdb1912692d"
+      "path": "assets/founding/hospital.svg",
+      "creation": "Original SVG geometry authored with Codex assistance",
+      "created_on": "2026-11-07",
+      "license_id": "GPL-3.0-only",
+      "references": [
+        "corgaasbeek-concern-928653.jpg",
+        "mspark0-hallway-5979689.jpg"
+      ],
+      "sha256": "6708d82449d725caec5a3c3a1e7a51f9f64a958e2030cd4834d2109de130b7a9"
     },
     {
-      "path": "assets/founding/curiosity-2003.png",
-      "tool": "Built-in image_gen",
-      "generated_on": "2026-11-07",
-      "ai_generated": true,
-      "prompt": "Use case: illustration-story. Asset type: landscape 16:9 background for a quiet reflective narrative strategy game introduction. Create an original hand-painted cinematic illustration of a California public library computer corner around 2003: beige CRT computer on a worn wooden desk, a few books and a notebook, large window onto leafy neighborhood trees, empty chair. No people, no faces, no readable lettering, logos or watermark. Late afternoon amber sunlight with muted sage and slate blue shadows, subtle paper grain, broad painterly shapes. Patient curiosity and possibility, ordinary accessible surroundings rather than wealth. Wide composition with the computer vignette toward the right side and gentle low-detail middle space for an overlaid narrative panel. No futuristic hardware.",
-      "sha256": "e8c0999440818ee96838c1ce2a2a3c70b631fe30f78292a8f9572dae20531143"
+      "path": "assets/founding/street.svg",
+      "creation": "Original SVG geometry authored with Codex assistance",
+      "created_on": "2026-11-07",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "a3c1b341a0d5a76c0b65049eedb1c0d0b8539ecd665437a4644859f7e16a0c46"
     },
     {
-      "path": "assets/founding/threshold-2015.png",
-      "tool": "Built-in image_gen",
-      "generated_on": "2026-11-07",
-      "ai_generated": true,
-      "prompt": "Use case: illustration-story. Asset type: landscape 16:9 background for the closing adolescent chapters and founding setup of a quiet narrative strategy game. Create an original hand-painted cinematic illustration of a very small California shared research workspace circa 2012\u20132015 at blue hour: two ordinary desks, an era-appropriate unbranded laptop and monitor, paper notebooks, a simple whiteboard with indistinct unlettered diagram shapes, warm desk lamp, window with distant California hills. No people, faces, readable lettering, logos or watermark. Restrained muted ochre, dusty sage, slate blue and warm ivory, subtle paper grain, broad painterly shapes, continuous atmosphere with a reflective historical life-story illustration. Intimate, hopeful but uncertain, the beginning of work. Spacious low-detail center for a narrative panel, meaningful objects near the edges. No giant server center, holograms or futuristic city.",
-      "sha256": "23e1d88652a9676d010a6c933a40b97e54148dc56fcd459317f44adf974432b0"
+      "path": "assets/founding/street-apartments.svg",
+      "creation": "Original SVG geometry authored with Codex assistance",
+      "created_on": "2026-11-07",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "a54871d6847b3aa8485aeb107c5fa201e68603b346da4abf10cf67606a6b2019"
+    },
+    {
+      "path": "assets/founding/street-hillside.svg",
+      "creation": "Original SVG geometry authored with Codex assistance",
+      "created_on": "2026-11-07",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "30425921beda05a2d46257752a0d43a5523d534e411aeca2b2beaaa89cbbb0f6"
+    },
+    {
+      "path": "assets/founding/library.svg",
+      "creation": "Original SVG geometry authored with Codex assistance",
+      "created_on": "2026-11-07",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "2057f46b00cb2d72abf048fd547043f7588fc473bd45e3e8135645f7485d0114"
+    },
+    {
+      "path": "assets/founding/workshop.svg",
+      "creation": "Original SVG geometry authored with Codex assistance",
+      "created_on": "2026-11-07",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "4d8d4a857a077b83d456877a3466e83f8ab9b30d4aed5546c404bcc44251ffbf"
+    },
+    {
+      "path": "assets/founding/company.svg",
+      "creation": "Original SVG geometry authored with Codex assistance",
+      "created_on": "2026-11-07",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "67891a8e37904001fd6d6b7680c658b4e19b1711984f8dd35c6251cfe950f759"
+    },
+    {
+      "path": "assets/founding/trust.svg",
+      "creation": "Original SVG geometry authored with Codex assistance",
+      "created_on": "2026-11-07",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "39a486df39341848fce2411d18c0a408db48ea05669b1a738ed23e9c9259287a"
     }
-  ],
-  "distribution": "Project original assets: GPL-3.0, where applicable. AI generation is disclosed; no human authorship or third-party source-image rights are claimed."
+  ]
 }

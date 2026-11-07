@@ -22,13 +22,11 @@ in [Campaign flow](CAMPAIGN_FLOW.md), [Technology](TECHNOLOGY.md) and the
 and frozen ending with optional sandbox. The wider flow remains planning direction;
 the setup implementation is described below. The PDF proposals remain advisory and reviewed.
 
-**F-02 setup implementation is complete:** the actual New Game path now has
-Campaign/Sandbox selection, identity and traits, eight formative choices,
-eligible entry routes, mission/legal form, compatible investors/donors, actual
-capital/ownership/costs, office and first research assignment. It hands off to
-the paused 2015 company and saves the biography exactly. Sandbox age remains
-undecided. The broader stages, ending narrative, expanded technology runtime
-and main-game layout remain design work outside this setup task.
+**F-02 setup is ready for another pacing review.** New Game opens on a narrated
+hospital scene and presents one decision at a time on a canvas that scales
+with the window. It leads through the formative chapters and founding terms to
+the paused 2015 office. Standalone sandbox creation was removed. The broader
+stages, ending narrative and main-game layout remain design work.
 
 The build wrapper now defaults to both apps in locally optimized Release with
 `BUILD_TESTING=OFF`, diagnostics off and no test execution. Tests and debugging

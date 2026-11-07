@@ -1,285 +1,542 @@
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
 
-Pane {
+FocusScope {
     id: opening
     objectName: "foundingScreen"
-    required property int textSize
+    required property real textScale
     signal menuRequested()
+
     readonly property var story: campaign.founding
-    readonly property var form: story.form
-    readonly property int count: story.chapters.length
-    readonly property int entryPage: count + 3
-    readonly property var chapter: story.page >= 3 && story.page < entryPage ? story.chapters[story.page - 3] : ({})
-    readonly property url sceneSource: "qrc:/pgp/assets/founding/" + (story.page <= 3 ? "california-1997.png" : story.page <= 6 ? "curiosity-2003.png" : "threshold-2015.png")
-    readonly property bool settling: sceneFade.running || textReveal.running
-    property int lastPage: -1
-    padding: 0
-    background: Item {
-        Rectangle { anchors.fill: parent; color: "#273f42" }
-        Image { id: previousScene; anchors.fill: parent; fillMode: Image.PreserveAspectCrop; source: "qrc:/pgp/assets/founding/california-1997.png" }
-        Image {
-            id: currentScene
-            anchors.fill: parent; fillMode: Image.PreserveAspectCrop; source: opening.sceneSource
-            onSourceChanged: { opacity = campaign.reducedMotion ? 1 : 0; sceneFade.restart() }
-        }
-        Rectangle { anchors.fill: parent; color: "#3522393e" }
+    readonly property bool reducedMotion: campaign.reducedMotion
+    readonly property int beatIndex: Math.max(0, script.beats.findIndex(page => page.id === story.beat))
+    readonly property var beat: script.beats[beatIndex]
+    readonly property string beatId: beat.id
+    readonly property string sceneTone: beat.tone
+    readonly property bool narrative: beat.kind === "narration"
+    readonly property bool settling: textSequence.running
+    readonly property real readWidth: 660 + 170 * Math.max(0, Math.min(textScale, 2) - 1)
+    readonly property real zoom: Math.min(2, textScale)
+
+    property bool initialized: false
+    property real titleProgress: 1
+    property real narrationProgress: 1
+    property real afterwordProgress: 1
+    property real actionsProgress: 1
+    property int choicePage: 0
+    property string actionError: ""
+    property string inputBeat: ""
+    property color sceneAccent: ink.accent
+
+    Behavior on sceneAccent {
+        enabled: !opening.reducedMotion
+        ColorAnimation { duration: 460 }
     }
+
+    GameInk {
+        id: ink
+        tone: opening.sceneTone
+    }
+
+    FoundingStory {
+        id: script
+        story: opening.story
+    }
+
+    function presentBeat() {
+        if (!initialized || !visible) return
+        textSequence.stop()
+        choicePage = 0
+        actionError = ""
+        const source = "qrc:/pgp/assets/founding/" + beat.art + ".svg"
+        if (scene.source.toString() !== source || beatId === "opening") {
+            artFade.stop()
+            previousScene.source = beatId === "opening" ? "" : scene.source
+            scene.opacity = reducedMotion ? 1 : 0
+            scene.source = source
+            if (!reducedMotion) artFade.start()
+        }
+
+        if (beat.kind === "field" && inputBeat !== beatId) editor.text = story.form[beatId] || ""
+        inputBeat = beatId
+        forceActiveFocus()
+        if (reducedMotion) finishReveal()
+        else {
+            titleProgress = 0
+            narrationProgress = 0
+            afterwordProgress = 0
+            actionsProgress = 0
+            textSequence.start()
+        }
+    }
+
+    function finishReveal() {
+        textSequence.stop()
+        titleProgress = 1
+        narrationProgress = 1
+        afterwordProgress = 1
+        actionsProgress = 1
+        Qt.callLater(() => {
+            if (!visible || settling) return
+            if (beat.kind === "field") {
+                editor.forceActiveFocus()
+                editor.selectAll()
+            } else if (continueAction.visible) {
+                continueAction.forceActiveFocus()
+            } else {
+                // Leave the decision unselected until the player reaches a choice.
+                opening.forceActiveFocus()
+            }
+        })
+    }
+
+    function moveTo(id) {
+        campaign.clearNotice()
+        story.beat = id
+    }
+
+    function advance() {
+        if (beat.kind === "review") {
+            campaign.startFounderCampaign()
+            return
+        }
+        if (beat.kind === "field") {
+            actionError = story.answerText(beatId, editor.text)
+            if (actionError.length) {
+                editor.forceActiveFocus()
+                return
+            }
+        }
+        menuAudio.select()
+        moveTo(beatId === "seed" ? "review" : script.beats[beatIndex + 1].id)
+    }
+
+    function answer(id) {
+        if (beat.kind === "chapter") story.choose(beat.chapter, id)
+        else if (beat.kind === "offer") {
+            actionError = story.answerOffer(beat.offer, id === "accept")
+            if (actionError.length) return
+        } else story.setField(beatId, id)
+        advance()
+    }
+
+    function previousBeat() {
+        moveTo(beatId === "seed" ? "review" : script.beats[beatIndex - 1].id)
+    }
+
+    Component.onCompleted: {
+        initialized = true
+        presentBeat()
+    }
+    onVisibleChanged: if (visible) presentBeat()
+    onBeatIdChanged: presentBeat()
+    onReducedMotionChanged: if (visible && reducedMotion) {
+        artFade.stop()
+        scene.opacity = 1
+        finishReveal()
+    }
+
+    Keys.onPressed: event => {
+        if (settling && (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter)) {
+            event.accepted = true
+            if (!event.isAutoRepeat) finishReveal()
+        }
+    }
+
+    Rectangle { anchors.fill: parent; color: ink.ink }
+    Item {
+        anchors.fill: parent
+        clip: true
+        Image {
+            id: previousScene
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+            horizontalAlignment: Image.AlignRight
+        }
+        Image {
+            id: scene
+            objectName: "foundingScene"
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+            horizontalAlignment: Image.AlignRight
+        }
+        Rectangle {
+            anchors.fill: parent
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: "#f0070d16" }
+                GradientStop { position: 0.36; color: "#d7070d16" }
+                GradientStop { position: 0.65; color: "#a3070d16" }
+                GradientStop { position: 1; color: "#16070d16" }
+            }
+        }
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: parent.height * 0.27
+            gradient: Gradient {
+                GradientStop { position: 0; color: "#00090d13" }
+                GradientStop { position: 1; color: "#d9090d13" }
+            }
+        }
+        TapHandler {
+            enabled: opening.settling
+            onTapped: opening.finishReveal()
+        }
+    }
+
     NumberAnimation {
-        id: sceneFade; target: currentScene; property: "opacity"; to: 1
-        duration: campaign.reducedMotion ? 0 : 2200; easing.type: Easing.InOutSine
-        onFinished: previousScene.source = currentScene.source
+        id: artFade
+        target: scene
+        property: "opacity"
+        to: 1
+        duration: 2100
+        easing.type: Easing.InOutSine
+        onFinished: previousScene.source = ""
     }
     SequentialAnimation {
-        id: textReveal
-        PauseAnimation { duration: campaign.reducedMotion ? 0 : 120 }
-        NumberAnimation { target: readingPanel; property: "opacity"; from: 0; to: 1; duration: campaign.reducedMotion ? 0 : 900; easing.type: Easing.OutSine }
-    }
-    palette.text: "#263b42"
-    palette.windowText: "#263b42"
-    palette.buttonText: "#263b42"
-    palette.base: "#fffaf2"
-    palette.button: "#fffaf2"
-    palette.highlight: "#2d6666"
-    palette.highlightedText: "white"
-
-    function selectedName(rows, id) {
-        for (const row of rows) if (row.id === id) return row.name
-        return id
+        id: textSequence
+        PauseAnimation { duration: opening.narrative ? 520 : 150 }
+        NumberAnimation { target: opening; property: "titleProgress"; to: 1; duration: 420; easing.type: Easing.OutSine }
+        NumberAnimation { target: opening; property: "narrationProgress"; to: 1; duration: opening.narrative ? 680 : 330; easing.type: Easing.OutCubic }
+        PauseAnimation { duration: opening.narrative ? 240 : 0 }
+        NumberAnimation { target: opening; property: "afterwordProgress"; to: 1; duration: opening.narrative ? 640 : 0; easing.type: Easing.OutCubic }
+        NumberAnimation { target: opening; property: "actionsProgress"; to: 1; duration: 240; easing.type: Easing.OutSine }
+        onFinished: opening.finishReveal()
     }
 
-    function reveal(item) {
-        if (!item || !body.contentItem) return
-        let ancestor = item
-        while (ancestor && ancestor !== body) ancestor = ancestor.parent
-        if (!ancestor) return
-        const p = item.mapToItem(body.contentItem, 0, 0)
-        if (p.y < body.contentItem.contentY + 12) body.contentItem.contentY = Math.max(0, p.y - 12)
-        else if (p.y + item.height > body.contentItem.contentY + body.height - 12)
-            body.contentItem.contentY = Math.max(0, Math.min(body.contentHeight - body.height, p.y + item.height - body.height + 12))
-    }
-    Connections {
-        target: opening.story
-        function onChanged() {
-            if (opening.lastPage !== opening.story.page) {
-                opening.lastPage = opening.story.page
-                if (campaign.reducedMotion) { textReveal.stop(); readingPanel.opacity = 1 }
-                else { readingPanel.opacity = 0; textReveal.restart() }
-            }
-            Qt.callLater(function() { body.contentItem.contentY = Math.min(body.contentItem.contentY, Math.max(0, body.contentHeight-body.height)) })
-        }
-    }
-    Connections {
-        target: campaign
-        function onSettingsChanged() { if (campaign.reducedMotion) { sceneFade.complete(); textReveal.complete(); readingPanel.opacity = 1 } }
-    }
-    component Copy: Label {
-        Layout.fillWidth: true
-        color: "#344e54"
-        font.pixelSize: opening.textSize
-        wrapMode: Text.Wrap
+    component StoryText: Text {
+        color: ink.paper
         textFormat: Text.PlainText
+        wrapMode: Text.Wrap
+        fontSizeMode: Text.Fit
+        minimumPixelSize: 16
+        elide: Text.ElideRight
+        Accessible.ignored: !visible || opacity === 0
     }
-    component Title: Copy { color: "#183f43"; font.pixelSize: opening.textSize * 1.7; font.bold: true }
-    component Field: TextField {
-        required property string field
-        Layout.fillWidth: true
-        font.pixelSize: opening.textSize
-        color: "#213f44"
-        maximumLength: field === "first_name" || field === "last_name" ? 63 : 64
-        selectByMouse: true
-        text: opening.form[field] || ""
-        Accessible.name: placeholderText
-        onTextEdited: opening.story.setField(field, text)
-    }
-    component Choices: ColumnLayout {
-        required property var rows
-        property string field: ""
-        property string scene: ""
-        property bool multiple: false
-        Layout.fillWidth: true
-        spacing: 9
-        Repeater {
-            model: rows
-            delegate: Button {
-                id: choice
-                required property var modelData
-                Layout.fillWidth: true
-                objectName: "foundingChoice_" + modelData.id
-                readonly property bool chosen: multiple ? (opening.form.backers || []).indexOf(modelData.id) >= 0
-                    : scene.length > 0 ? opening.form.choices[scene] === modelData.id : opening.form[field] === modelData.id
-                enabled: modelData.available !== false || (multiple && chosen)
-                Accessible.name: modelData.name + ". " + modelData.detail + (chosen ? ". Selected." : "")
-                padding: 16
-                contentItem: ColumnLayout {
-                    spacing: 4
-                    Label { Layout.fillWidth: true; text: (choice.chosen ? "●  " : "○  ") + choice.modelData.name; color: "#183f43"; font.bold: true; font.pixelSize: opening.textSize; wrapMode: Text.Wrap }
-                    Label { Layout.fillWidth: true; text: choice.modelData.detail + (choice.modelData.reason ? "\n" + choice.modelData.reason : ""); color: "#425c60"; font.pixelSize: opening.textSize * 0.94; wrapMode: Text.Wrap; textFormat: Text.PlainText }
-                }
-                background: Rectangle { color: choice.chosen ? "#d6e6db" : "#fff9ee"; border.color: choice.activeFocus ? "#ad6b2e" : choice.chosen ? "#467569" : "#c7c1af"; border.width: choice.activeFocus ? 3 : 1; radius: 7; opacity: choice.enabled ? 1 : 0.55 }
-                onClicked: {
-                    if (multiple) opening.story.back(modelData.id, !chosen)
-                    else if (scene.length > 0) opening.story.choose(scene, modelData.id)
-                    else opening.story.setField(field, modelData.id)
-                }
+
+    component StoryAction: Item {
+        id: action
+        required property string caption
+        property string detail: ""
+        property bool indented: false
+        property bool selected: false
+        property bool alignRight: false
+        property real typeSize: 20
+        property real nameHeight: Math.min(42, height * 0.55)
+        readonly property bool lit: pointer.containsMouse || activeFocus
+        signal activated()
+        activeFocusOnTab: true
+        Accessible.role: Accessible.Button
+        Accessible.name: caption
+        Accessible.description: detail
+        Accessible.onPressAction: if (enabled) activated()
+
+        Keys.onPressed: event => {
+            if (event.key === Qt.Key_Space || event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                event.accepted = true
+                if (enabled && !event.isAutoRepeat) activated()
             }
         }
-    }
-    ColumnLayout {
-        anchors.fill: parent
-        spacing: 0
+        Text {
+            visible: action.indented
+            width: 26
+            height: title.height
+            text: action.selected ? "◆" : "›"
+            color: action.lit || action.selected ? opening.sceneAccent : ink.muted
+            font.pixelSize: action.selected ? 11 : 24
+            verticalAlignment: Text.AlignVCenter
+        }
+        StoryText {
+            id: title
+            x: action.indented ? 26 : 0
+            width: parent.width - x
+            height: action.detail.length ? action.nameHeight : parent.height
+            text: action.caption
+            font.pixelSize: Math.round(action.typeSize)
+            color: !action.enabled ? ink.muted : action.lit || action.selected ? opening.sceneAccent : ink.paper
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: action.alignRight ? Text.AlignRight : Text.AlignLeft
+            font.weight: action.lit ? Font.DemiBold : Font.Normal
+            Accessible.ignored: true
+        }
+        StoryText {
+            visible: action.detail.length > 0
+            x: title.x
+            y: title.height - 2
+            width: title.width
+            height: Math.max(0, parent.height - y - 3)
+            text: action.detail
+            font.pixelSize: Math.round(action.typeSize * 0.74)
+            minimumPixelSize: 15
+            color: ink.secondary
+            Accessible.ignored: true
+        }
         Rectangle {
-            Layout.fillWidth: true; Layout.preferredHeight: Math.max(65, opening.textSize * 3.6)
-            color: "#163c42"
-            RowLayout {
-                anchors.fill: parent; anchors.leftMargin: 24; anchors.rightMargin: 24
-                Label { text: qsTr("PROJECT GLOWING PANCAKE"); color: "#ebdfc4"; font.pixelSize: opening.textSize * 0.9; font.letterSpacing: 1.2; Layout.fillWidth: true; wrapMode: Text.Wrap }
-                Button { objectName: "foundingMainMenuButton"; text: qsTr("Main menu"); font.pixelSize: opening.textSize; onClicked: opening.menuRequested() }
+            x: title.x
+            y: parent.height - 1
+            width: title.width
+            height: 1
+            color: Qt.alpha(opening.sceneAccent, action.lit && action.enabled ? 1.0 : 0.23)
+            visible: action.indented || action.lit
+        }
+        MouseArea {
+            id: pointer
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: action.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: action.activated()
+        }
+    }
+
+    // Logical pixels for the prologue. Fit the same stage at every window size.
+    Item {
+        id: stage
+        objectName: "foundingCanvas"
+        anchors.centerIn: parent
+        width: 1120
+        height: 700
+        scale: Math.min(opening.width / width, opening.height / height)
+        readonly property int margin: 76
+
+        StoryText {
+            x: stage.margin
+            y: 52
+            width: 700
+            height: 28
+            text: opening.beat.date
+            font.pixelSize: Math.round(15 * Math.min(opening.zoom, 1.5))
+            font.letterSpacing: 3
+            color: opening.sceneAccent
+            opacity: opening.titleProgress
+        }
+        Rectangle {
+            x: stage.margin
+            y: 88
+            width: 55
+            height: 2
+            color: opening.sceneAccent
+            opacity: opening.titleProgress * 0.8
+        }
+        StoryAction {
+            objectName: "foundingMainMenuButton"
+            x: stage.width - stage.margin - width
+            y: 40
+            width: 174
+            height: 50
+            caption: qsTr("Main menu")
+            typeSize: 18 * Math.min(opening.zoom, 1.55)
+            alignRight: true
+            enabled: !campaign.busy
+            onActivated: opening.menuRequested()
+        }
+        StoryText {
+            objectName: "foundingTitle"
+            x: stage.margin
+            y: (opening.narrative ? 192 : 119) + 10 * (1 - opening.titleProgress)
+            width: opening.readWidth + 60
+            height: 91
+            text: opening.beat.title
+            font.family: ink.displayFace
+            font.pixelSize: Math.round((opening.narrative ? 65 : 49) * opening.zoom)
+            minimumPixelSize: 31
+            verticalAlignment: Text.AlignVCenter
+            color: ink.paper
+            opacity: opening.titleProgress
+        }
+        StoryText {
+            objectName: "foundingNarration"
+            x: stage.margin
+            y: (opening.narrative ? 294 : 219) + 9 * (1 - opening.narrationProgress)
+            width: opening.readWidth
+            height: opening.narrative ? 104 : 101
+            text: opening.beat.narration
+            font.pixelSize: Math.round(26 * opening.zoom)
+            minimumPixelSize: 20
+            opacity: opening.narrationProgress
+        }
+        StoryText {
+            objectName: "foundingAfterword"
+            visible: opening.narrative
+            x: stage.margin
+            y: 408 + 8 * (1 - opening.afterwordProgress)
+            width: opening.readWidth
+            height: 111
+            text: opening.beat.afterword || ""
+            font.pixelSize: Math.round(26 * opening.zoom)
+            minimumPixelSize: 20
+            opacity: opening.afterwordProgress
+        }
+        StoryText {
+            objectName: "foundingQuestion"
+            visible: opening.beat.prompt.length > 0
+            x: stage.margin
+            y: 323
+            width: opening.readWidth
+            height: 56
+            text: opening.beat.prompt
+            font.family: ink.displayFace
+            font.pixelSize: Math.round(29 * opening.zoom)
+            minimumPixelSize: 22
+            opacity: opening.actionsProgress
+            color: opening.sceneAccent
+        }
+        Item {
+            id: answerLine
+            x: stage.margin
+            y: 392
+            width: Math.min(opening.readWidth, 660)
+            height: 62
+            visible: opening.beat.kind === "field"
+            opacity: opening.actionsProgress
+            enabled: !opening.settling
+            TextInput {
+                id: editor
+                objectName: "foundingAnswer"
+                anchors.fill: parent
+                anchors.bottomMargin: 6
+                clip: true
+                activeFocusOnTab: true
+                selectByMouse: true
+                maximumLength: opening.beat.limit || 128
+                font.family: ink.displayFace
+                font.pixelSize: Math.round(34 * Math.min(1.42, opening.zoom))
+                color: ink.paper
+                selectionColor: ink.stage
+                selectedTextColor: ink.paper
+                verticalAlignment: TextInput.AlignVCenter
+                Accessible.name: opening.beat.prompt
+                onAccepted: opening.advance()
+                onTextEdited: opening.actionError = ""
+            }
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: 2
+                color: Qt.alpha(opening.sceneAccent, editor.activeFocus ? 0.85 : 0.4)
             }
         }
-        ScrollView {
-            id: body
-            Layout.fillWidth: true; Layout.fillHeight: true
-            clip: true
-            contentWidth: availableWidth
-            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-            ColumnLayout {
-                width: body.availableWidth
-                spacing: 18
-                Item { Layout.preferredHeight: 4 }
-                Pane {
-                    id: readingPanel
-                    Layout.fillWidth: true
-                    Layout.maximumWidth: 860
-                    Layout.alignment: Qt.AlignHCenter
-                    Layout.leftMargin: 24; Layout.rightMargin: 24
-                    padding: 24
-                    background: Rectangle { color: "#edf7f0e2"; radius: 8; border.color: "#b9c5bca9" }
-                    contentItem: ColumnLayout {
-                    spacing: 15
-                    Copy { text: story.page === 0 ? qsTr("A COMPANY. A LIFETIME. A CHANGING WORLD.") : story.page < opening.entryPage ? qsTr("BEFORE THE COMPANY · %1").arg(opening.chapter.date || "1997") : qsTr("THE FOUNDING · CALIFORNIA, 2015"); color: "#8d5a32"; font.letterSpacing: 1.5; font.pixelSize: opening.textSize * 0.85 }
-                    ColumnLayout {
-                        visible: story.page === 0
-                        Layout.fillWidth: true; spacing: 16
-                        Title { text: qsTr("Where does your story begin?") }
-                        Copy { text: qsTr("A child born in California in 1997 will one day help shape the AI age. Begin a century-long campaign, or choose the world you want to play in.") }
-                        Choices { field: "mode"; rows: [
-                            {id:"campaign",name:qsTr("Play the campaign"),detail:qsTr("Live the formative years, found an institution at 18, and follow its story until age 118. Continue afterward if you want more.")},
-                            {id:"sandbox",name:qsTr("Create a sandbox"),detail:qsTr("Choose founding conditions, resources, people and goals. The biography is optional, and the campaign deadline does not end play.")}
-                        ] }
-                        Button { visible: Object.keys(opening.form.choices || {}).length > 0; text: qsTr("Continue your saved introduction"); font.pixelSize: opening.textSize; onClicked: { let p=3; while(p<opening.entryPage && opening.form.choices[story.chapters[p-3].id]) ++p; story.page=p } }
-                    }
-                    ColumnLayout {
-                        visible: story.page === 1
-                        Layout.fillWidth: true; spacing: 12
-                        Title { text: qsTr("California, 1997. A new beginning.") }
-                        Copy { text: qsTr("What is the baby's name? These are details of your fictional character, saved only on this computer.") }
-                        Field { objectName: "foundingFirstName"; field: "first_name"; placeholderText: qsTr("First name") }
-                        Field { objectName: "foundingLastName"; field: "last_name"; placeholderText: qsTr("Last name") }
-                        Copy { text: qsTr("Gender and pronouns are independent. They shape how the character is addressed, not their ability or opportunities.") }
-                        Field { field: "gender"; placeholderText: qsTr("Gender") }
-                        Field { field: "pronouns"; placeholderText: qsTr("Pronouns, for example she/her, he/him or they/them") }
-                        Choices { field: "sociability"; rows: [{id:"outgoing",name:qsTr("Outgoing"),detail:qsTr("Drawn to people and conversation.")},{id:"introverted",name:qsTr("Introverted"),detail:qsTr("Drawn to reflection and quieter company.")}] }
-                        Choices { field: "activity"; rows: [{id:"athletic",name:qsTr("Athletic"),detail:qsTr("Enjoys movement and physical practice.")},{id:"sedentary",name:qsTr("Sedentary"),detail:qsTr("Prefers less physically active pursuits.")}] }
-                        Choices { field: "disposition"; rows: [{id:"deliberate",name:qsTr("Deliberate"),detail:qsTr("Likes time to weigh a decision.")},{id:"impulsive",name:qsTr("Impulsive"),detail:qsTr("Often follows an immediate idea.")}] }
-                    }
-                    ColumnLayout {
-                        visible: story.page === 2
-                        Layout.fillWidth: true; spacing: 14
-                        Title { text: qsTr("Family, circumstance, and a leg up") }
-                        Copy { text: qsTr("Choose your parents' circumstances, then one exceptional advantage. Neither poverty nor introversion limits your inherent talent.") }
-                        Choices { field: "family"; rows: story.families }
-                        Copy { text: qsTr("Choose exactly one leg up"); font.bold: true }
-                        Choices { field: "leg"; rows: story.legs }
-                        Button { visible: opening.form.mode === "sandbox"; text: qsTr("Skip childhood and customize the company"); onClicked: story.page = opening.entryPage }
-                    }
-                    ColumnLayout {
-                        visible: story.page >= 3 && story.page < opening.entryPage
-                        Layout.fillWidth: true; spacing: 16
-                        Title { text: opening.chapter.title || "" }
-                        Copy { text: opening.chapter.text || ""; font.pixelSize: opening.textSize * 1.12 }
-                        Choices { scene: opening.chapter.id || ""; rows: opening.chapter.choices || [] }
-                        Copy { text: qsTr("These choices become part of your history. Later people and events can remember them."); color: "#6d7770" }
-                    }
-                    ColumnLayout {
-                        visible: story.page === opening.entryPage
-                        Layout.fillWidth: true; spacing: 14
-                        Title { text: qsTr("Eighteen, and a door opens") }
-                        Copy { text: qsTr("There is no finished general-purpose chatbot waiting for you. Choose how you enter the startup, then decide what kind of institution it will be.") }
-                        Field { objectName: "foundingCompanyName"; field: "company"; placeholderText: qsTr("Company or institution name") }
-                        Choices { field: "legal_form"; rows: [{id:"corporation",name:qsTr("For-profit corporation"),detail:qsTr("Can sell equity and distribute earned profits. Applicable corporate taxes and negotiated board rights apply.")},{id:"nonprofit",name:qsTr("Nonprofit research institution"),detail:qsTr("A recognized mission-serving institution with trustees and donors. No founder-owned equity, dividends or ordinary VC equity rounds.")}] }
-                        Choices { field: "route"; rows: story.routes }
-                    }
-                    ColumnLayout {
-                        visible: story.page === opening.entryPage + 1
-                        Layout.fillWidth: true; spacing: 14
-                        Title { text: qsTr("Why are you building this?") }
-                        Copy { text: qsTr("Your founding mission selects the campaign's victory condition. Its exact progress and sustained conditions remain visible in Objectives.") }
-                        Choices { field: "mission"; rows: [
-                            {id:"survival",name:qsTr("Build a lab that lasts"),detail:qsTr("Simple Survival: keep a real, solvent operating institution through 2115.")},
-                            {id:"utopia",name:qsTr("Improve life broadly"),detail:qsTr("World Utopia: sustain the published global and regional welfare conditions for the final ten years.")},
-                            {id:"monopoly",name:qsTr("Build the leading AI platform"),detail:qsTr("World Monopoly: dominate actual useful delivered work across the final five years.")},
-                            {id:"domination",name:qsTr("Steer the AI age"),detail:qsTr("World Domination: obtain durable institutional authority, beyond ordinary market share.")},
-                            {id:"asi",name:qsTr("Be first to demonstrate ASI"),detail:qsTr("ASI Race: independently validate the game's advanced research thresholds before your rivals.")},
-                            {id:"profit",name:qsTr("Create a financial legacy"),detail:qsTr("Profit: highest founder-legacy net wealth at the deadline. Nonprofit assets do not count as personal wealth."),available:opening.form.legal_form!=="nonprofit",reason:opening.form.legal_form==="nonprofit"?qsTr("Choose a mission compatible with nonprofit ownership."):""}
-                        ] }
-                    }
-                    ColumnLayout {
-                        visible: story.page === opening.entryPage + 2
-                        Layout.fillWidth: true; spacing: 14
-                        Title { text: opening.form.legal_form === "nonprofit" ? qsTr("Who supports the mission?") : qsTr("Who backs the company?") }
-                        Copy { text: qsTr("Select any compatible backers whose terms you want to accept, or proceed with your founding package alone. Their money and rights become real company terms.") }
-                        Choices { multiple: true; rows: story.backers }
-                        Copy { text: story.preview }
-                    }
-                    ColumnLayout {
-                        visible: story.page === opening.entryPage + 3
-                        Layout.fillWidth: true; spacing: 14
-                        Title { text: qsTr("An office, and the first researcher") }
-                        Choices { field: "office"; rows: story.offices }
-                        Choices { field: "researcher"; rows: story.researchers }
-                        Copy { text: story.preview }
-                    }
-                    ColumnLayout {
-                        visible: story.page === opening.entryPage + 4
-                        Layout.fillWidth: true; spacing: 14
-                        Title { text: qsTr("The first morning") }
-                        Copy { text: opening.form.mode === "sandbox" ? qsTr("Review the starting conditions for %1, then enter your office.").arg(opening.form.company) : qsTr("%1 %2, age 18. %3 begins in 2015. You will live until the campaign closes at 118 in 2115; what your institution becomes is still unwritten.").arg(opening.form.first_name).arg(opening.form.last_name).arg(opening.form.company) }
-                        Copy { text: qsTr("%1 · %2\n%3\n%4 · %5").arg(opening.selectedName(story.families,form.family)).arg(opening.selectedName(story.legs,form.leg)).arg(opening.selectedName(story.routes,form.route)).arg(opening.selectedName(story.offices,form.office)).arg(opening.selectedName(story.researchers,form.researcher)) }
-                        Copy { text: story.preview; font.bold: true }
-                        Copy { text: qsTr("The game starts paused in your office. Research, data, compute and future hires use real resources. There is no finished commercial product at the start.") }
-                        Copy { text: qsTr("World seed") }
-                        Field { field: "seed"; placeholderText: qsTr("Whole-number world seed") }
-                        ComboBox { Layout.fillWidth: true; font.pixelSize: opening.textSize; model: [qsTr("California"),qsTr("Texas"),qsTr("Washington")]; Accessible.name: qsTr("Headquarters"); currentIndex: ["US-CA","US-TX","US-WA"].indexOf(opening.form.headquarters); onActivated: story.setField("headquarters",["US-CA","US-TX","US-WA"][currentIndex]) }
-                        ComboBox { Layout.fillWidth: true; font.pixelSize: opening.textSize; model: [qsTr("Forgiving"),qsTr("Standard"),qsTr("Demanding")]; Accessible.name: qsTr("Difficulty"); currentIndex: ["difficulty.forgiving","difficulty.standard","difficulty.demanding"].indexOf(opening.form.difficulty); onActivated: story.setField("difficulty",["difficulty.forgiving","difficulty.standard","difficulty.demanding"][currentIndex]) }
-                        ColumnLayout {
-                            visible: opening.form.mode === "sandbox"
-                            Layout.fillWidth: true
-                            Copy { text: qsTr("Custom sandbox resources (optional)") }
-                            Field { field: "sandbox_cash"; placeholderText: qsTr("Available starting dollars, up to 1,000,000,000") }
-                            Field { field: "sandbox_staff"; placeholderText: qsTr("Research staff, from 1 to 10,000") }
-                        }
-                        Button { objectName: "foundingStartButton"; text: qsTr("Enter your office"); font.pixelSize: opening.textSize * 1.1; enabled: campaign.ready && !campaign.busy; onClicked: campaign.startFounderCampaign() }
-                    }
-                    Copy { visible: campaign.notice.length > 0 || story.error.length > 0; text: campaign.notice || story.error; color: "#8e3e27"; Accessible.role: Accessible.AlertMessage }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Button { objectName: "foundingBackButton"; visible: story.page > 0; text: qsTr("Back"); font.pixelSize: opening.textSize; onClicked: { story.page--; body.contentItem.contentY=0; campaign.clearNotice() } }
-                        Item { Layout.fillWidth: true }
-                        Button {
-                            objectName: "foundingNextButton"
-                            visible: story.page < opening.entryPage + 4
-                            enabled: story.page < 3 || story.page >= opening.entryPage || !!opening.form.choices[opening.chapter.id]
-                            text: story.page === 0 ? qsTr("Begin") : qsTr("Continue")
-                            font.pixelSize: opening.textSize
-                            onClicked: { story.page++; body.contentItem.contentY=0; campaign.clearNotice() }
-                        }
-                    }
-                    Copy { text: qsTr("Your introduction draft is saved locally as you go. The gameplay tutorial will be added once gameplay is finalized."); font.pixelSize: opening.textSize * 0.85; color: "#6d7770" }
+
+        Item {
+            id: decisions
+            readonly property var rows: opening.beat.choices || []
+            readonly property int pageSize: 6
+            readonly property var shown: rows.slice(opening.choicePage * pageSize, (opening.choicePage + 1) * pageSize)
+            x: stage.margin
+            y: 381 + 7 * (1 - opening.actionsProgress)
+            width: opening.readWidth
+            height: 221
+            opacity: opening.actionsProgress
+            visible: rows.length > 0
+            enabled: !opening.settling
+            Grid {
+                id: options
+                readonly property int rowCount: Math.max(1, Math.ceil(decisions.shown.length / columns))
+                columns: decisions.shown.length > 4 || (decisions.shown.length === 4 && opening.zoom >= 1.5) ? 2 : 1
+                spacing: 7
+                Repeater {
+                    model: decisions.shown
+                    delegate: StoryAction {
+                        required property var modelData
+                        objectName: "foundingChoice_" + modelData.id
+                        width: (decisions.width - (options.columns - 1) * options.spacing) / options.columns
+                        height: Math.min(92, (decisions.height - (options.rowCount - 1) * options.spacing) / options.rowCount)
+                        nameHeight: options.columns > 1 && options.rowCount > 2 ? 29 : Math.min(42, height * 0.55)
+                        caption: modelData.name
+                        detail: modelData.available === false ? modelData.reason : modelData.detail || ""
+                        typeSize: 21 * opening.zoom
+                        indented: true
+                        selected: opening.beat.kind === "chapter"
+                            ? opening.story.form.choices[opening.beat.chapter] === modelData.id
+                            : opening.beat.kind === "offer"
+                                ? modelData.id === "accept" && opening.story.form.backers.includes(opening.beat.offer)
+                                : opening.story.form[opening.beatId] === modelData.id
+                        enabled: modelData.available !== false && decisions.enabled
+                        onActivated: opening.answer(modelData.id)
                     }
                 }
-                Item { Layout.preferredHeight: 24 }
+            }
+        }
+        StoryText {
+            objectName: "foundingTerms"
+            visible: opening.beat.kind === "review"
+            x: stage.margin
+            y: 334
+            width: opening.readWidth
+            height: 259
+            text: visible ? opening.story.preview : ""
+            font.pixelSize: Math.round(23 * opening.zoom)
+            lineHeight: 1.2
+            opacity: opening.actionsProgress
+        }
+        StoryText {
+            objectName: "foundingError"
+            x: stage.margin
+            y: 607
+            width: stage.width - 2 * stage.margin
+            height: 37
+            text: opening.actionError || campaign.notice || opening.story.error
+            visible: text.length > 0
+            color: "#f4bc98"
+            font.pixelSize: Math.round(18 * opening.zoom)
+            Accessible.role: Accessible.AlertMessage
+        }
+        Item {
+            x: stage.margin
+            y: 646
+            width: stage.width - 2 * stage.margin
+            height: 44
+            opacity: opening.actionsProgress
+            enabled: !opening.settling && !campaign.busy
+
+            StoryAction {
+                objectName: "foundingBackButton"
+                visible: opening.beatIndex > 0
+                width: 140
+                height: parent.height
+                caption: qsTr("‹  Back")
+                typeSize: 20 * opening.zoom
+                onActivated: opening.previousBeat()
+            }
+            StoryAction {
+                visible: opening.choicePage > 0
+                x: 160
+                width: 180
+                height: parent.height
+                caption: qsTr("‹  More choices")
+                onActivated: opening.choicePage--
+            }
+            StoryAction {
+                visible: (opening.choicePage + 1) * decisions.pageSize < decisions.rows.length
+                x: parent.width - width
+                width: 180
+                height: parent.height
+                caption: qsTr("More choices  ›")
+                alignRight: true
+                onActivated: opening.choicePage++
+            }
+            StoryAction {
+                objectName: "foundingSeedButton"
+                visible: opening.beat.kind === "review"
+                x: 180
+                width: 196
+                height: parent.height
+                caption: qsTr("World seed")
+                typeSize: 17 * opening.zoom
+                onActivated: opening.moveTo("seed")
+            }
+            StoryAction {
+                id: continueAction
+                objectName: opening.beat.kind === "review" ? "foundingStartButton" : "foundingNextButton"
+                visible: opening.narrative || opening.beat.kind === "field" || opening.beat.kind === "review"
+                x: Math.min(opening.readWidth - width, parent.width - width)
+                width: 280
+                height: parent.height
+                caption: opening.beat.kind === "review" ? qsTr("Enter the office  →") : qsTr("Continue  →")
+                typeSize: 22 * opening.zoom
+                alignRight: true
+                enabled: campaign.ready && parent.enabled
+                onActivated: opening.advance()
             }
         }
     }

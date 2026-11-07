@@ -29,6 +29,8 @@ qt_add_resources(pgp-game game_ui
     PREFIX "/pgp" BASE "${PROJECT_SOURCE_DIR}/qml"
     FILES "${PROJECT_SOURCE_DIR}/qml/game/Main.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FoundingFlow.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/FoundingStory.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/GameInk.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MainMenu.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MenuButton.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MenuSettings.qml"
@@ -54,9 +56,14 @@ qt_add_resources(pgp-game menu_assets
           "${PROJECT_SOURCE_DIR}/assets/menu/select.wav")
 qt_add_resources(pgp-game founding_images
     PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
-    FILES "${PROJECT_SOURCE_DIR}/assets/founding/california-1997.png"
-          "${PROJECT_SOURCE_DIR}/assets/founding/curiosity-2003.png"
-          "${PROJECT_SOURCE_DIR}/assets/founding/threshold-2015.png")
+    FILES "${PROJECT_SOURCE_DIR}/assets/founding/hospital.svg"
+          "${PROJECT_SOURCE_DIR}/assets/founding/street.svg"
+          "${PROJECT_SOURCE_DIR}/assets/founding/street-apartments.svg"
+          "${PROJECT_SOURCE_DIR}/assets/founding/street-hillside.svg"
+          "${PROJECT_SOURCE_DIR}/assets/founding/library.svg"
+          "${PROJECT_SOURCE_DIR}/assets/founding/workshop.svg"
+          "${PROJECT_SOURCE_DIR}/assets/founding/company.svg"
+          "${PROJECT_SOURCE_DIR}/assets/founding/trust.svg")
 if(APPLE)
     set(CMAKE_OBJCXX_COMPILER "${CMAKE_CXX_COMPILER}")
     enable_language(OBJCXX)

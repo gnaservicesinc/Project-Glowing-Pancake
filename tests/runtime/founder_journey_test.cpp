@@ -56,17 +56,7 @@ int main() {
         const auto political=make(selected);
         require(political.world.simulation.cash>hired.world.simulation.cash,"Political-family rise must change accessible capital at 18.");
         selected.mode="sandbox";selected.choices.clear();selected.sandbox_cash_cents=1234500;selected.sandbox_staff=7;
-        const auto sandbox=make(selected);
-        require(sandbox.world.simulation.cash.value()==1234500 && core::opening_staff_count(*sandbox.world.simulation.capacity)==7,"Custom sandbox resources must affect real state.");
-        require(sandbox.world.objectives->mode==runtime::ObjectiveMode::freeplay && !sandbox.world.objectives->end &&
-            core::iso_date(sandbox.world.simulation.end_date)=="9999-01-01","Standalone sandbox must not invent a completed campaign or stop at 118.");
-        require(persistence::decode_save(program,persistence::encode_save(program,sandbox)).checkpoint==sandbox,"Standalone sandbox must reload without a fabricated campaign result.");
-        selected.leg="genius";selected.researcher="founder";
-        const auto staffed_genius=make(selected);
-        const auto staffed_terms=content::founding_terms(catalog,selected);
-        require(staffed_terms.payroll_cents==6*content::founding_option(catalog.researchers,"first_hire").monthly_cents,
-            "A genius supplies one assignment; additional sandbox researchers must be paid.");
-        require(staffed_genius.world.simulation.cash.value()==1234500,"Custom available cash must include all signing costs in its opening ledger.");
+        refuses([&]{ (void)make(selected); });
         std::cout<<"Founder biography, calendar, costs, eligibility, nonprofit ownership and exact reload passed\n";
     } catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;}
 }

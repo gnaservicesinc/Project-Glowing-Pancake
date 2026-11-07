@@ -19,7 +19,8 @@ public:
     [[nodiscard]] bool playing() const { return player_.status().playing; }
     [[nodiscard]] bool loaded() const { return player_.status().loaded; }
     [[nodiscard]] QString backend() const;
-    void configure(bool enabled, int volume_percent, bool urgent, bool introduction = false);
+    void configure(bool enabled, int volume_percent, bool urgent);
+    Q_INVOKABLE void setIntroduction(bool active);
     Q_INVOKABLE void playExcerpt(int index);
     Q_INVOKABLE void openTrackSource(int index) const;
     Q_INVOKABLE QString licenseText(int index) const;
@@ -39,5 +40,6 @@ private:
     bool enabled_ = false, urgent_ = false, tension_pending_ = false;
     bool introduction_ = false, pending_context_ = false;
     qsizetype next_intro_ = 0;
+    int volume_percent_ = 40;
     float target_volume_ = 0.4F;
 };

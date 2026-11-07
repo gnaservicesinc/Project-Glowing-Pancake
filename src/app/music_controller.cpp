@@ -58,24 +58,31 @@ void MusicController::rampVolume(float target,int duration) {
     gain_.stop();gain_.setStartValue(player_.status().volume);gain_.setEndValue(target);
     gain_.setDuration(duration);gain_.setEasingCurve(QEasingCurve::InOutSine);gain_.start();
 }
-void MusicController::configure(bool enabled, int volume_percent, bool urgent, bool introduction) {
-    const bool context_changed=introduction_!=introduction;
-    introduction_=introduction;
-    if(introduction_) urgent=false;
-    if (urgent && !urgent_) tension_pending_ = true;
-    if (!urgent) tension_pending_ = false;
+void MusicController::setIntroduction(bool active) {
+    if (active == introduction_) return;
+    introduction_ = active;
+    target_volume_ = static_cast<float>(volume_percent_) / 100.0F * (active ? 0.6F : 1.0F);
+    tension_pending_ = urgent_ && !introduction_;
+    if (enabled_) {
+        pending_context_ = true;
+        rampVolume(0, 900);
+    }
+}
+void MusicController::configure(bool enabled, int volume_percent, bool urgent) {
+    if (urgent && !urgent_ && !introduction_) tension_pending_ = true;
+    if (!urgent || introduction_) tension_pending_ = false;
     urgent_ = urgent;
-    const auto target=static_cast<float>(volume_percent)/100.0F*(introduction_?0.6F:1.0F);
+    volume_percent_ = volume_percent;
+    const auto target=static_cast<float>(volume_percent_)/100.0F*(introduction_?0.6F:1.0F);
     const bool volume_changed=target_volume_!=target;target_volume_=target;
     if (enabled_ == enabled) {
-        if(enabled_ && context_changed) {pending_context_=true;rampVolume(0,900);}
-        else if(enabled_ && volume_changed && !pending_context_) rampVolume(target_volume_,1200);
+        if(enabled_ && volume_changed && !pending_context_) rampVolume(target_volume_,1200);
         return;
     }
     gain_.stop();pending_context_=false;
     enabled_ = enabled;
     if (enabled_) {
-        tension_pending_ = urgent_;
+        tension_pending_ = urgent_ && !introduction_;
         player_.set_volume(0);
         playNext();
         rampVolume(target_volume_,1800);

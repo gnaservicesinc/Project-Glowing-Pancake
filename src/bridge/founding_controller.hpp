@@ -17,7 +17,10 @@ class FoundingController final : public QObject {
     Q_PROPERTY(QVariantList backers READ backers NOTIFY changed)
     Q_PROPERTY(QVariantList offices READ offices NOTIFY changed)
     Q_PROPERTY(QVariantList researchers READ researchers NOTIFY changed)
-    Q_PROPERTY(int page READ page WRITE setPage NOTIFY changed)
+    Q_PROPERTY(QVariantList difficulties READ difficulties CONSTANT)
+    Q_PROPERTY(QVariantList headquarters READ headquarters CONSTANT)
+    Q_PROPERTY(QString beat READ beat WRITE setBeat NOTIFY beatChanged)
+    Q_PROPERTY(bool hasDraft READ hasDraft NOTIFY beatChanged)
     Q_PROPERTY(QString preview READ preview NOTIFY changed)
     Q_PROPERTY(QString error READ error NOTIFY changed)
 public:
@@ -31,25 +34,31 @@ public:
     QVariantList backers() const;
     QVariantList offices() const;
     QVariantList researchers() const;
-    int page() const {return page_;}
-    void setPage(int);
+    QVariantList difficulties() const;
+    QVariantList headquarters() const;
+    QString beat() const { return beat_; }
+    bool hasDraft() const { return available() && beat_ != QStringLiteral("opening"); }
+    void setBeat(QString);
     QString preview() const;
     QString error() const {return error_;}
     Q_INVOKABLE void setField(QString,QVariant);
+    Q_INVOKABLE QString answerText(QString field, QString value);
     Q_INVOKABLE void choose(QString,QString);
-    Q_INVOKABLE void back(QString,bool);
-    Q_INVOKABLE void reset();
+    Q_INVOKABLE QString answerOffer(QString id, bool accept);
+    void reset();
     [[nodiscard]] content::FoundingSelection selection() const;
 signals:
     void changed();
+    void beatChanged();
 private:
     QVariantList options(const std::vector<content::FoundingOption>&) const;
     void saveDraft();
     std::optional<content::FoundingCatalog> catalog_;
     std::vector<content::CampaignDifficulty> difficulties_;
+    std::vector<std::string> headquarters_;
     std::filesystem::path draft_path_;
     QVariantMap form_;
-    int page_=0;
+    QString beat_ = QStringLiteral("opening");
     QString error_;
 };
 }

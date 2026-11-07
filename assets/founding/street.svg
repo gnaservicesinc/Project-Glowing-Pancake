@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>California, a bungalow street after the rain</title>
+  <defs>
+    <linearGradient id="dawn" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#262c39"/><stop offset=".71" stop-color="#94695c"/><stop offset="1" stop-color="#cda582"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#dawn)" d="M0 0h1440v810H0z"/>
+  <circle cx="1103" cy="272" r="118" fill="#dda879" opacity=".82"/>
+  <path fill="#746474" d="M0 369l201-46 111 37 125-11 188 62 137-41 104 10 122-58 136 18 156-67 160 32v505H0z"/>
+  <path fill="#515164" d="M0 456l224-48 167 21 107-38 201 68 180-34 143 19 115-52 154 37 149-36v417H0z"/>
+  <path fill="#323b4a" d="M0 539l302-33 211 46 166-34 218 14 124-44 151 32 268-65v355H0z"/>
+  <path fill="#222e3d" d="M0 587l336-36 360 39 326-37 418 24v233H0z"/>
+  <path fill="#414a55" d="M789 810l194-232 113-9 87 241z"/>
+  <path fill="#778084" opacity=".42" d="M781 810l200-234h6L802 810zm297-241h5l113 241h-15z"/>
+
+  <path fill="#263345" d="M780 537v-54l72-28 80 25v53l-152 25z"/>
+  <path fill="#202936" d="M775 485l77-35 89 27-8 8-81-24-74 31z"/>
+  <path fill="#c58f68" d="M816 492h17v18h-17zm34-5h17v18h-17z"/>
+  <path fill="#364352" d="M1108 558v-126l124-48 148 45v158l-272-4z"/>
+  <path fill="#212b39" d="M1090 434l141-64 161 51v14l-160-48-137 60z"/>
+  <path fill="#444958" d="M1114 447l114-39v156l-114-4z"/>
+  <path fill="#252e3a" d="M1231 410l147 33v137l-147-12z"/>
+  <path fill="#d9a677" d="M1143 468l55-13v45l-55 7z"/>
+  <path d="M1171 462v42m-29-18l56-10" stroke="#765e5e" stroke-width="3"/>
+  <path fill="#816f69" d="M1256 479l43 9v87l-43-5z"/>
+  <path fill="#d8a477" d="M1327 485l28 5v35l-28-2z"/>
+  <path d="M1121 567h113m-112 9h135m-133 10h151" stroke="#8a726b" stroke-width="2" opacity=".65"/>
+  <path d="M936 354v187m-26-164h53m-44 10h37M935 378Q1146 400 1440 235M935 387q220 26 505-124" fill="none" stroke="#263243" stroke-width="4"/>
+  <path fill="#171f2c" d="M1366 556q-4-105-29-211l-11-29-13-8 13 1-8-24 13 13 12-27-4 30 35-18-19 22 37 1-30 7 22 24-30-12 11 34-25-32 21 228zm-3 44q25-42 77-51v261h-193q18-95 116-210z"/>
+  <path fill="#141e2b" d="M0 713q280-57 646-38l-35 135H0z"/>
+  <path fill="#8d7d78" opacity=".22" d="M967 616l18-3 8 5-33 5zm-38 48l51-7 8 5-68 8zm-39 59l54-10 10 5-72 12z"/>
+</svg>

@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("leadership-smoke"),QStringLiteral("Exercise succession, board review and the retained founder trust with an explicit local fixture.")});
     parser.addOption({QStringLiteral("objectives-smoke"),QStringLiteral("Exercise a settled objective breach, postmortem and sandbox with an explicit local fixture.")});
     parser.addOption({QStringLiteral("music-smoke"),QStringLiteral("Exercise the bundled credits, keyboard and native music output.")});
-    parser.addOption({QStringLiteral("menu-smoke"),QStringLiteral("Exercise the Mac menu, settings, media, prototype entry and recovery.")});
+    parser.addOption({QStringLiteral("menu-smoke"),QStringLiteral("Exercise the Mac menu, settings, media, New Game entry and recovery.")});
     parser.addOption({QStringLiteral("screenshot"),QStringLiteral("Capture the smoke-test window."),QStringLiteral("file")});
     parser.addOption({QStringLiteral("founding-smoke"),QStringLiteral("Exercise the actual New Game biography, funding and first morning with an isolated local save.")});
     parser.process(application);
@@ -137,7 +137,7 @@ int main(int argc, char* argv[]) {
             const auto kind = campaign.requiredKind();
             const auto urgent = kind == QStringLiteral("objective") || kind == QStringLiteral("liquidity") ||
                                 kind == QStringLiteral("site") || kind == QStringLiteral("institution");
-            music.configure(campaign.musicEnabled(),campaign.musicVolume(),urgent,campaign.welcome() && campaign.founding()->available());
+            music.configure(campaign.musicEnabled(),campaign.musicVolume(),urgent);
         };
         QObject::connect(&campaign,&bridge::CampaignController::settingsChanged,&music,sync_music);
         QObject::connect(&campaign,&bridge::CampaignController::stateChanged,&music,sync_music);
@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
                 else schedule_game_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
             }
 #endif
-            if (prototype_smoke) window->show();
+            if (prototype_smoke || founding_smoke) window->show();
             else QMetaObject::invokeMethod(window,"applyDisplayPreferences",Qt::QueuedConnection);
             interface_ready=true;
             sync_music();

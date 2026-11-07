@@ -94,12 +94,15 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
             if (!press("menuBackButton") || !press("menuNewGameButton")) { fail("new game entry"); return; }
             ++state->phase; break;
         }
-        case 4:
-            if (menu->isVisible() || !campaign.welcome() || !item("statusLine")->isVisible()) { fail("existing prototype setup"); return; }
+        case 4: {
+            const bool has_prologue = campaign.founding()->available();
+            if (menu->isVisible() || !campaign.welcome() || item("foundingScreen")->isVisible() != has_prologue ||
+                item("statusLine")->isVisible() == has_prologue) { fail("New Game entry"); return; }
             campaign.saveTo(QUrl::fromLocalFile(QString::fromStdU16String((paths.saves_directory/"menu-check.pgpsave").u16string())));
             state->revision=campaign.revision(); ++state->phase; break;
+        }
         case 5:
-            if (!press("mainMenuButton")) { fail("main menu from prototype"); return; }
+            if (!press(campaign.founding()->available() ? "foundingMainMenuButton" : "mainMenuButton")) { fail("main menu from setup"); return; }
             ++state->phase; break;
         case 6:
             if (!menu->isVisible() || !campaign.paused() || !press("menuResumeButton")) { fail("resume entry"); return; }
@@ -183,7 +186,7 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
             window.setProperty("menuSmokePassed",true);
             std::cout << "Main menu check passed, including the confirmed exit." << std::endl;
             qInfo() << "Main menu smoke passed: launch, keyboard, credits, 200% settings, persistence, music, video loop,"
-                       " prototype, resume, load/error recovery and Escape/quit confirmation with cancel and actual exit.";
+                       " setup, resume, load/error recovery and Escape/quit confirmation with cancel and actual exit.";
             timer->stop(); break;
         }
     });

@@ -14,6 +14,8 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     if (options.identity) validate_campaign_identity(*options.identity);
     const auto seed = options.seed.value_or(scenario->seed);
     const auto founding=options.founding?&*options.founding:nullptr;
+    if (founding && founding->mode != "campaign")
+        throw std::invalid_argument("New games start with the founder campaign.");
     const auto opening=content::scenario_opening(*scenario,options.background,"company.player",options.difficulty,founding);
     const auto management=content::scenario_management(*scenario,options.difficulty,founding);
     if(founding && founding->legal_form=="nonprofit" && objectives &&
@@ -116,7 +118,6 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     initialize_competition(world,program,scenario->rivals,competition);
     if(scenario->objectives) initialize_objectives(world,*scenario->objectives,std::move(objectives));
     else if(objectives) throw std::invalid_argument("This scenario uses its own introductory ending.");
-    if(world.founding && world.founding->mode=="sandbox") initialize_freeplay(world);
     validate_checkpoint(program, checkpoint);
     return checkpoint;
 }

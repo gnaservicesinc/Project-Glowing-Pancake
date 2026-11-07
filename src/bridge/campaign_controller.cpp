@@ -186,6 +186,8 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
     connect(worker_,&CampaignWorker::noticeRaised,this,&CampaignController::setNotice);
     connect(worker_,&CampaignWorker::operationCompleted,this,[this](qulonglong token,bool accepted,QString explanation) {
         if (token != static_cast<qulonglong>(token_)) return;
+        if (accepted && starting_founder_) founding_->reset();
+        starting_founder_ = false;
         busy_ = false; emit stateChanged();
         if (!accepted || !explanation.isEmpty()) setNotice(explanation);
         emit commandFinished(accepted,explanation);
@@ -385,6 +387,7 @@ void CampaignController::startCampaign(QString hq,bool stories,QString scenario,
         if(!primary.isEmpty()) selection=parseObjectiveSelection(primary,secondary);
     } catch(const std::exception& error) {setNotice(QString::fromUtf8(error.what()));return;}
     if (!beginOperation()) return;
+    starting_founder_ = options.founding.has_value();
     QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,hq=hq.toStdString(),stories,scenario=scenario.toStdString(),selection,options=std::move(options)]{
         worker->newCampaign(token,hq,stories,scenario,selection,options);
     },Qt::QueuedConnection);
@@ -392,7 +395,8 @@ void CampaignController::startCampaign(QString hq,bool stories,QString scenario,
 void CampaignController::openWelcome() {
     if (!management_->available() || busy_) return;
     if (!paused()) submit(core::SetPaused{true});
-    founding_->setPage(0);
+    clearNotice();
+    founding_->reset();
     welcome_=true;emit stateChanged();
 }
 void CampaignController::startFounderCampaign() {

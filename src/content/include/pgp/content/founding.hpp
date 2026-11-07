@@ -29,6 +29,7 @@ struct FoundingCatalog {
     auto operator<=>(const FoundingCatalog&) const = default;
 };
 struct FoundingSelection {
+    // Legacy standalone sandbox fields remain in the exact save format.
     std::string mode="campaign", first_name="Alex", last_name="Vale", gender="nonbinary";
     std::string sociability="introverted", activity="sedentary", disposition="deliberate";
     std::string family="middle", leg="genius", route="partnership", legal_form="corporation";

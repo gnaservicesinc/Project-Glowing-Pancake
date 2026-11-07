@@ -10,25 +10,12 @@ and the [candidate catalog](TECHNOLOGY_CATALOG.md) supply the research side.
 The main-game layout is the next discussion; this document specifies information
 and atmosphere it must support without selecting a new screen arrangement.
 
-## Modes and the player's role
+## The player's role
 
-New Game first offers **Campaign** (recommended) and **Sandbox**.
-
-| Mode | Opening | Rules and ending |
-| --- | --- | --- |
-| Campaign | California, 1997 birth; playable company at 18 in 2015 | Founder story, founding mission, conditional industry stages, campaign closes at age 118 in 2115 |
-| Sandbox | A form with presets, dropdowns and advanced settings; biography optional | Current setup: optional biography, founder, cash/staff, backers, charter, office and mission; no mandatory campaign ending. Broader world controls remain design candidates |
-| Post-game sandbox | Continue the completed campaign's actual world | Retain everything, freeze its campaign result, continue systemic play with no promised new story arc |
-
-Sandbox age policy remains undecided. The following broader customization is
-planning direction beyond the current setup controls.
-
-Sandbox includes a freely configurable custom preset, including no rivals or
-generous resources. Validate coherent relationships and show conflicts, such
-as selling nonprofit equity or assigning unsupported hardware. An explicit
-rules override is labeled custom and cannot earn a standard campaign result.
-Never silently clamp a requested setting. Offer sensible defaults so the form
-does not require understanding every system.
+**New Game** starts the founder campaign with a California birth in 1997.
+The first playable company day is in 2015, when the founder turns 18.
+Standalone sandbox creation was removed from setup. Post-game continuation
+is an option from the campaign's completed review.
 
 The player remains connected to the founding character throughout the campaign,
 even if another person becomes CEO. Delegation, retirement, chairmanship and
@@ -62,12 +49,11 @@ the completed campaign's ending.
 
 ```mermaid
 flowchart TD
-    Mode[New Game: Campaign or Sandbox] --> Intro[1997: birth and identity]
-    Mode --> Custom[Sandbox settings and preview]
+    Start[New Game] --> Intro[1997 hospital scene and name]
     Intro --> Family[Family resources and one leg up]
     Family --> Youth[Childhood and teenage choices]
-    Youth --> Entry[2015: startup entry route]
-    Entry --> Charter[Name, mission and legal form]
+    Youth --> Entry[2015: The door is open]
+    Entry --> Charter[Legal form, entry route, name and mission]
     Charter --> Funding[Founders, investors or donors and terms]
     Funding --> Budget[Capital and obligations preview]
     Budget --> Office[First office and researcher or founder assignment]
@@ -78,20 +64,18 @@ flowchart TD
 
 ### Identity and temperament
 
-Open with a short original illustrated scene: California, 1997, a new baby.
-Ask first and last name, gender, pronouns and a few basic traits. Names refer
-to a fictional character, and locally generated names are available. Pronouns
-are independently editable; gender never infers competence, unlocks or funding.
-Support a custom display identity and grammatical forms without requiring a
-real-world identity. Store name parts, display name and localization-aware
-pronoun/agreement fields; do not implement substitution by replacing “he” in text.
+Open on the illustrated maternity ward in California in January 1997. Let
+the birth narration settle before asking for the first name. Ask for each
+answer on its own beat. Childhood choices express sociability, activity and
+decision-making through scenes. Gender and pronouns have separate beats when
+the founder prepares for a public demonstration.
 
-Present temperament as tendencies: outgoing/introverted, athletic/sedentary,
-deliberate/impulsive and collaborative/independent. Show a short effect preview.
-They influence some situations, reactions and options, with later opportunities
-to change. Introversion does not prohibit charisma, and athleticism neither
-buys longevity nor prevents disability-related characterization. Avoid a single
-“best personality” and permanent talent ceilings.
+Use a fitted canvas with silhouette art behind the text. Family background and
+legal form set the art and accent on later beats. Keep every visible action
+within the canvas, with no scrolling. Animate the heading, narration and
+decisions in sequence. Let the player reveal a beat immediately or use reduced
+motion. Use the main menu's Resume action for a saved place in the prologue.
+The world seed can be edited from the signing review.
 
 ### Family and one leg up
 

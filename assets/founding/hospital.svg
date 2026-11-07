@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>First breath, a maternity ward at night</title>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#151c27"/><stop offset="1" stop-color="#49586a"/>
+    </linearGradient>
+    <linearGradient id="window" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#283546"/><stop offset="1" stop-color="#9a7768"/>
+    </linearGradient>
+    <linearGradient id="light" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#dfa77d" stop-opacity=".27"/><stop offset="1" stop-color="#dfa77d" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#wall)" d="M0 0h1440v810H0z"/>
+  <path fill="#1f2936" d="M0 0h708v555L0 694z"/>
+  <path fill="#394757" d="M0 516l709-60h731v116H710L0 696z"/>
+  <path fill="#121b26" d="M0 697l709-125h731v238H0z"/>
+  <path fill="#253240" d="M709 572h662l-209 238H458z"/>
+
+  <rect x="840" y="81" width="477" height="342" fill="#202a37"/>
+  <rect x="853" y="94" width="451" height="315" fill="url(#window)"/>
+  <path fill="#596172" d="M853 361l88-27 51 6 72-23 84 13 74-30 82 21v88H853z"/>
+  <path fill="#353f50" d="M853 379l99-23 89 11 107-27 85 21 71-18v66H853z"/>
+  <path fill="#1f2836" d="M853 389h91v-20h43v20h104v-13h28v13h65v-20h57v20h63v20H853z"/>
+  <path d="M1083 94v315M853 290h451" stroke="#263240" stroke-width="10"/>
+  <path d="M905 114l-9 44m60 5l-11 55m52-102l-7 34m38 78l-9 46m109-163l-9 48m59 1l-11 63m71-109l-8 46m38 55l-8 39m-321 48l-7 34m267-45l-7 34" stroke="#dbc4a0" stroke-width="2" opacity=".24"/>
+  <path fill="#101823" d="M823 416h510v13H823z"/>
+  <path d="M1155 390v-37h18m80 38v-31h17" stroke="#222c38" stroke-width="4" fill="none"/>
+  <circle cx="1174" cy="354" r="4" fill="#ebc092"/>
+  <circle cx="1270" cy="362" r="3" fill="#ebc092"/>
+
+  <path d="M702 0v71h658" fill="none" stroke="#181f2b" stroke-width="5"/>
+  <path fill="#303c4c" d="M708 74h148l-12 401-23 11-23-12-24 13-23-9-25 13-21-9z"/>
+  <path fill="#3b4a5c" d="M725 74h17l-1 404-15 13-7-4zm45 0h17l-8 409-5 4-14-6zm42 0h18l-9 412-10-5z"/>
+  <path d="M709 458h731" stroke="#667689" stroke-width="4" opacity=".36"/>
+  <rect x="1354" y="92" width="86" height="476" fill="#25303e"/>
+  <path fill="url(#light)" d="M1088 429h217l75 330H923z"/>
+
+  <!-- Bassinet in side profile. The infant and mattress sit within one clear tub. -->
+  <ellipse cx="1138" cy="708" rx="226" ry="24" fill="#101722"/>
+  <path fill="#293846" stroke="#8194a0" stroke-width="3" d="M974 504h352l-16 80q-5 18-30 18h-260q-22 0-26-18z"/>
+  <path fill="#91a1a5" opacity=".27" d="M977 509h346l-17 75q-5 15-25 15h-263q-18 0-23-15z"/>
+  <path fill="#c2b196" d="M1004 574q23-18 58-17l209 1q24 0 32 18l-4 10h-287z"/>
+  <path fill="#9f7464" d="M1241 530q16-21 40-13 21 7 19 28-2 14-19 17l-45-3z"/>
+  <path fill="#d7a887" d="M1245 537q7-18 24-17 16 1 20 15-5 8-6 17h-38z"/>
+  <path fill="#e0c5a2" d="M1249 538q14 7 9 21-34 23-161 20-33-1-55-12 11-13 38-19 69-18 169-10z"/>
+  <path fill="#bd947b" d="M1103 543q20 15 25 36h17q-3-20-24-40zm72-6q17 11 26 38l15-2q-4-18-20-36z"/>
+  <path fill="#577083" opacity=".36" d="M981 515h337l-13 65q-4 15-23 16h-264q-17-1-22-15z"/>
+  <path d="M974 504h352m-313 96h272" stroke="#a3adb0" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M1028 604l-8 81h241l-3-81m-231 46h235" fill="none" stroke="#5d7486" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M1019 686h246" stroke="#7f94a1" stroke-width="4"/>
+  <circle cx="1020" cy="699" r="12" fill="#111b27"/><circle cx="1020" cy="699" r="4" fill="#688092"/>
+  <circle cx="1263" cy="699" r="12" fill="#111b27"/><circle cx="1263" cy="699" r="4" fill="#688092"/>
+  <path d="M992 538h24v28h-19z" fill="#e8ceae" opacity=".85"/>
+</svg>

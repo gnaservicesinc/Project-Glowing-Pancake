@@ -36,7 +36,7 @@ F-02 documents a new campaign direction: a California birth in 1997, formative
 choices and four leg ups, founding at 18 in 2015, company/industry stages,
 mission-linked objectives, distinct investor/donor/nonprofit terms, and an
 age-118 ending in 2115. The completed history/result stays frozen if the player
-continues in a post-game sandbox. Standalone Sandbox offers configurable setup.
+continues in a post-game sandbox.
 
 Both supplied technology PDFs were reviewed as advisory sources. The new plan
 separates knowledge, implementation, rights and evidence; covers research
@@ -46,26 +46,17 @@ Unfounded safety guarantees, runaway compounding and a mandatory cosmic climax
 were rejected or deferred. [Campaign flow](CAMPAIGN_FLOW.md) ·
 [Technology](TECHNOLOGY.md) · [Candidate catalog](TECHNOLOGY_CATALOG.md).
 
-The setup portion is implemented in the actual New Game path: mode selection,
-identity/pronouns/traits, family and eligible leg up, eight formative chapters,
-entry route, mission, corporation/nonprofit, backers, office and first research
-assignment. The opening review reconciles real contributions, paid formation
-and signing costs, monthly commitments and ownership. The complete biography
-persists in exact saves and is exposed as event facts for later authored use.
-The company starts paused in 2015 with no finished model or deployment.
-Nonprofits use institutional ownership, gifts/trustees and the modeled
-mission-income exemption, without ordinary VC equity or founder-wealth scoring.
+New Game opens on the hospital prologue. Each beat uses original silhouette art,
+staged narration and one decision on a proportional canvas. Family background
+and legal form change later illustrations and accents. Identity, traits and eight
+formative choices lead into the entry route, legal form, mission, funding
+offers, office and first research assignment. The signing review reconciles
+contributions, costs, monthly commitments and ownership. The complete biography
+persists in campaign saves. The company starts paused in 2015.
 
-Sandbox supports optional biography and custom cash/staff, and begins unscored
-without a campaign deadline. Its age policy remains undecided. Later stages,
-epilogue/history, technology implementation and main-game layout are outside
-this setup batch. The tutorial remains a deferred first-play TODO after gameplay
-is final.
-
-Setup now has three original illustrated backgrounds, 2.2s scene dissolves,
-a 120ms pause and 900ms text-panel reveal, with immediate reduced-motion
-presentation and player-controlled page changes. Quieter licensed ambient
-excerpts fade between menu/setup/play contexts. [Images and pacing](../assets/founding/README.md).
+Standalone sandbox creation was removed. The save reader still supports prior
+saves. Later stages, ending presentation and the first-play tutorial remain
+in the backlog. [Images and pacing](../assets/founding/README.md).
 
 ## Implemented core
 
@@ -93,11 +84,12 @@ selects Debug, and `--portable` disables host CPU tuning. Incremental caches
 are retained. The Codex Run action builds/packages/launches only the game via
 `script/build_and_run.sh`; builds alone never launch an application.
 
-Focused setup checks cover the real New Game keyboard path, eligibility,
-nonprofit/donor terms, office/first hire, first-day handoff and exact reload at
-100% and 200% text; the same walkthrough also passes on the native Mac
-renderer. Core checks cover alternative founding routes and custom sandbox
-resources. Build-wrapper checks cover both-app defaults and explicit
+Focused setup checks cover New Game, one question at a time, resizing to
+650×480 at 100% and 200% text, family and legal-form artwork, funding
+eligibility, the paused first day and exact reload. The native Mac prologue
+walkthrough and offscreen main menu check pass. The separate native menu
+check ended during its full-screen restore. Core checks cover alternative
+founding routes and prior save compatibility. Build-wrapper checks cover both-app defaults and explicit
 opt-ins. No full suite, long campaign or native matrix is part of this batch.
 Native file-picker row selection, VoiceOver and release/device qualification
 remain open. The prior forecast-padding and full-campaign staffing assertions
