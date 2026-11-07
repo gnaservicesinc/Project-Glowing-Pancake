@@ -119,6 +119,7 @@ core::TrainingPreview preview_campaign_training(const CompiledProgram& program,c
     auto result=core::preview_training(*world.simulation.lab,request);
     if(const auto* d=difficulty(program,world)) {
         for(std::size_t i=0;i<core::lab_domain_count;++i) {
+            if (result.bottlenecks[i].empty()) continue;
             result.lower[i]=core::BasisPoints{std::max(INT64_C(0),result.lower[i].value()-d->forecast_padding.value())};
             result.upper[i]=core::BasisPoints{std::min(INT64_C(10000),result.upper[i].value()+d->forecast_padding.value())};
         }

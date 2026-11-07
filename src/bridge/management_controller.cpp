@@ -85,8 +85,19 @@ QString channel_name(core::ProductChannel channel) {
     }
     return {};
 }
-QString interval(const core::LabProfile& lower,const core::LabProfile& upper) {
-    return QStringLiteral("Documents %1–%2 · scanned tables %3–%4").arg(percent(lower[0]),percent(upper[0]),percent(lower[1]),percent(upper[1]));
+QString lab_domain(std::size_t axis) { return text(core::lab_domain_labels[axis]).toLower(); }
+QString lab_profile(const core::LabProfile& values,QStringView separator=QStringLiteral(" ")) {
+    QStringList domains;
+    for (std::size_t i=0;i<values.size();++i)
+        if (values[i].value()>0) domains.push_back(lab_domain(i)+separator.toString()+percent(values[i]));
+    return domains.isEmpty()?QObject::tr("None"):domains.join(QStringLiteral(" · "));
+}
+QString interval(const core::LabProfile& lower,const core::LabProfile& upper,const core::LabProfile* coverage=nullptr) {
+    QStringList domains;
+    for (std::size_t i=0;i<lower.size();++i)
+        if (coverage?(*coverage)[i].value()>0:upper[i].value()>0)
+            domains.push_back(QStringLiteral("%1 %2–%3").arg(lab_domain(i),percent(lower[i]),percent(upper[i])));
+    return domains.join(QStringLiteral(" · "));
 }
 template<class Rows> const auto* find(const Rows& rows,std::string_view id) {
     const auto it=std::find_if(rows.begin(),rows.end(),[&](const auto& row){return row.id==id;});
@@ -228,11 +239,8 @@ void add_waitlist_details(CampaignRow& row,const core::SimulationState& state,co
     row.fields.insert(QStringLiteral("waitlistDetail"),std::move(detail));
 }
 QString compatibility_terms(const core::CompatibilityProfile& profile) {
-    QStringList floors;
-    if (profile.quality[0].value()>0) floors.push_back(QObject::tr("documents ≥ %1").arg(percent(profile.quality[0])));
-    if (profile.quality[1].value()>0) floors.push_back(QObject::tr("scanned tables ≥ %1").arg(percent(profile.quality[1])));
     auto detail=QObject::tr("Keep at least %1 tasks/day of serving capacity and these measured quality floors · %2.")
-        .arg(number(profile.tasks_per_day),floors.join(QStringLiteral(" · ")));
+        .arg(number(profile.tasks_per_day),lab_profile(profile.quality,QStringLiteral(" ≥ ")));
     if (profile.human_review) detail+=QObject::tr(" Keep paid human review.");
     if (profile.agent_controls) detail+=QStringLiteral(" ")+agent_terms(*profile.agent_controls)+QLatin1Char('.');
     if (profile.customer_compute_per_task.value()>0) detail+=QObject::tr(" Buyer hardware stays within %1 MiB, %2 interconnect and %3 CU per task.")
@@ -449,8 +457,9 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
         for (const auto& row:report.data_offers) {
             const bool owned=std::any_of(report.licenses.begin(),report.licenses.end(),[&](const auto& l){return l.offer_id==row.id;});
             data.push_back({text(row.id),text(row.name),money(row.price)+QStringLiteral(" · ")+number(row.unique_units)+QStringLiteral(" unique records"),
-                QStringLiteral("%1\nRights: %2\nQuality %3 · contamination %4\nCoverage: documents %5 · scanned tables %6\nCommercial deployment: %7. Buying a license does not train an existing model.")
-                .arg(text(row.provenance),text(row.rights),percent(row.quality),percent(row.contamination),percent(row.coverage[0]),percent(row.coverage[1]),row.commercial_use?QStringLiteral("permitted"):QStringLiteral("prohibited")),
+                tr("%1\n%2\nQuality %3 · contamination %4\nCoverage · %5\nDomain fit · %6\nCommercial use · %7")
+                .arg(text(row.provenance),text(row.rights),percent(row.quality),percent(row.contamination),
+                    lab_profile(row.coverage),lab_profile(row.relevance),row.commercial_use?tr("Permitted"):tr("Prohibited")),
                 owned?QStringLiteral("Licensed"):QStringLiteral("Unlicensed"),!owned,{{QStringLiteral("owned"),owned}}});
         }
         const auto title_for=[&](const std::string& id) {
@@ -495,9 +504,12 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
         }
         for (const auto& row:report.evidence) {
             QStringList findings; for (const auto& finding:row.findings) findings.push_back(text(finding));
-            evidence.push_back({text(row.id),text(row.model_id)+QStringLiteral(" · ")+readable(row.plan_id),row.completed?interval(row.lower,row.upper):QStringLiteral("Measurement in progress"),
-                row.completed?QStringLiteral("%1\nCoverage: documents %2 · scanned tables %3\n%4\n%5\nResponses: add consented scans and train a fresh model; add paid human review; or promise document-only work.")
-                    .arg(interval(row.lower,row.upper),percent(row.coverage[0]),percent(row.coverage[1]),row.independent?QStringLiteral("Independent held-out evidence"):QStringLiteral("Headline test: not independent qualification"),findings.isEmpty()?QStringLiteral("No measured subgroup finding in this test."):findings.join(QStringLiteral("\n"))):QStringLiteral("Wait for the finite evaluation project to complete."),
+            const auto result=interval(row.lower,row.upper,&row.coverage);
+            evidence.push_back({text(row.id),text(row.model_id)+QStringLiteral(" · ")+readable(row.plan_id),row.completed?result:tr("Measurement in progress"),
+                row.completed?tr("%1\nCoverage · %2\n%3\n%4")
+                    .arg(result,lab_profile(row.coverage),row.independent?tr("Independent held-out evidence"):tr("Headline benchmark · training overlap possible"),
+                        findings.isEmpty()?tr("No measured subgroup finding in this test."):findings.join(QLatin1Char('\n'))):
+                    tr("Wait for the finite evaluation project to complete."),
                 row.completed?QStringLiteral("Measured"):QStringLiteral("Testing"),row.completed && row.independent,
                 {{QStringLiteral("modelId"),text(row.model_id)},{QStringLiteral("completed"),row.completed},{QStringLiteral("independent"),row.independent}}});
         }
@@ -690,7 +702,9 @@ QVariantList ManagementController::evaluations() const {
     for (const bool independent:{true,false}) for (const auto& row:ordered) if (row.independent==independent) {
         auto value=option(row.id,text(row.name)+QStringLiteral(" · ")+money(row.cash));
         QStringList prerequisites;for (const auto& id:row.requires_research) prerequisites.push_back(readable(id));
-        value.insert(QStringLiteral("detail"),QStringLiteral("%1 CU of finite work · %2 fee\nCoverage documents %3 · scanned tables %4\nRequires %5").arg(cu(row.work.value()),money(row.cash),percent(row.coverage[0]),percent(row.coverage[1]),prerequisites.join(QStringLiteral(", "))));
+        value.insert(QStringLiteral("detail"),tr("%1 CU of finite work · %2 fee\nCoverage · %3\nResearch · %4")
+            .arg(cu(row.work.value()),money(row.cash),lab_profile(row.coverage),
+                prerequisites.isEmpty()?tr("None"):prerequisites.join(QStringLiteral(", "))));
         result.push_back(value);
     }
     return result;
@@ -1113,8 +1127,11 @@ QVariantMap ManagementController::trainingPreview(QString recipe,QString source,
         const auto* parent_model=parent.isEmpty()?nullptr:find(state().lab->models,req.parent_id);
         const auto* parent_work=parent_model && !parent_model->project_id.empty()?find(state().capacity->projects,parent_model->project_id):nullptr;
         const bool frozen_parent=parent.isEmpty() || (parent_model && parent_model->consumed_work.value()>0 && (!parent_work || parent_work->status==core::ProjectStatus::completed || parent_work->status==core::ProjectStatus::cancelled));
-        const auto explanation=QStringLiteral("Earliest %1 days · unlicensed data %2\nEstimated %3\n%4\nBottlenecks: documents %5; scanned tables %6\n%7\n%8\n%9")
-            .arg(QString::number(p.minimum_days.value()),money(p.unowned_data_cost),interval(p.lower,p.upper),text(p.explanation),text(p.bottlenecks[0]),text(p.bottlenecks[1]),
+        QStringList bottlenecks;
+        for (std::size_t i=0;i<p.bottlenecks.size();++i)
+            if (!p.bottlenecks[i].empty()) bottlenecks.push_back(tr("%1 · %2").arg(lab_domain(i),text(p.bottlenecks[i])));
+        const auto explanation=tr("Earliest %1 days · unlicensed data %2\nEstimated %3\n%4\nBottlenecks · %5\n%6\n%7\n%8")
+            .arg(QString::number(p.minimum_days.value()),money(p.unowned_data_cost),interval(p.lower,p.upper),text(p.explanation),bottlenecks.join(QStringLiteral(", ")),
                 p.licensed?QStringLiteral("All selected data licensed"):QStringLiteral("Buy each selected data license before training"),!compatible?QStringLiteral("Select a source with the recipe’s memory and interconnect class"):free?QStringLiteral("Requested compute and staff fit current free resources"):QStringLiteral("Reduce allocation or stop another project to free compute/staff"),
                 QStringLiteral("Available cash after %2 forecast days: %1. Includes existing bills; excludes future customer sales and unpurchased licenses. Forecast capped at 90 days.").arg(money(forecast.available),QString::number(horizon.value())));
         return {{QStringLiteral("text"),explanation+(frozen_parent?QString{}:QStringLiteral("\nSave an immutable checkpoint of the running or paused parent before continuing."))+(p.prerequisites_met?QString{}:QStringLiteral("\nComplete the selected recipe’s research prerequisites before training."))},{QStringLiteral("ready"),p.licensed && p.prerequisites_met && free && frozen_parent}};
@@ -1137,11 +1154,12 @@ QString ManagementController::servicePreview(QString id,QString model,bool revie
         }
         const auto hardware=core::customer_hosted(row.product.channel)?QStringLiteral("Uses the customer's shared local hardware."):QStringLiteral("Reserves serving capacity on the selected source.");
         const auto rights=row.product.channel==core::ProductChannel::open_weights?QStringLiteral("\nWeight release is free and requires redistribution rights across the training lineage."):QString{};
-        return QStringLiteral("Model lower bounds · documents ≥ %1 · scanned tables ≥ %2\n%3 tasks/day · %4 staff · %5 support/month\n%6\n%7\n%8%9%10")
-            .arg(percent(row.required[0]),percent(row.required[1]),number(tasks),QString::number(row.serving.staff+(review?row.review_staff:0)),
+        return tr("Required lower bounds · %1\n%2 tasks/day · %3 staff · %4 support/month\n%5\n%6\n%7%8%9")
+            .arg(lab_profile(row.required,QStringLiteral(" ≥ ")),number(tasks),QString::number(row.serving.staff+(review?row.review_staff:0)),
                 money(core::checked_unit_add(row.serving.monthly_support_cost,review?row.review_monthly_cost:core::Cents{0})),
                 recipe?cu(core::required_inference(tasks,recipe->inference_per_task).value())+QStringLiteral(" CU/day using this checkpoint"):QStringLiteral("Choose a checkpoint to see serving compute"),
-                QStringLiteral("Discretionary price %1/task · review credits %2 documents and %3 scanned tables.").arg(money(row.product.price_per_task),percent(review?row.review_credit[0]:core::BasisPoints{0}),percent(review?row.review_credit[1]:core::BasisPoints{0})),
+                tr("Discretionary price %1/task. Review credits · %2.")
+                    .arg(money(row.product.price_per_task),lab_profile(review?row.review_credit:core::empty_lab_profile)),
                 hardware,prerequisites.isEmpty()?QString{}:QStringLiteral("\nRequired research · %1.").arg(prerequisites.join(QStringLiteral(", "))),rights);
     }
     return {};

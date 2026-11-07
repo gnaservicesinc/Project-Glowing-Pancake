@@ -80,8 +80,12 @@ CapacityProject qualified_project(const ServiceDefinition& definition,const LabS
     for (std::size_t i=0;i<lab_domain_count;++i) {
         if (definition.required[i].value()==0) continue;
         const auto credit=request.human_review?definition.review_credit[i].value():0;
-        if (plan.coverage[i].value()==0 || evidence.lower[i].value()+credit<definition.required[i].value())
-            invalid("The measured lower bound does not qualify this task promise; retrain with targeted data, use an offered review control, or narrow the scope");
+        const auto domain=lab_domain_labels[i];
+        if (plan.coverage[i].value()==0)
+            throw std::invalid_argument("Choose an independent report that covers "+std::string(domain));
+        if (evidence.lower[i].value()+credit<definition.required[i].value())
+            throw std::invalid_argument(std::string(domain)+" falls short of the required lower bound of "+
+                std::to_string(definition.required[i].value())+" bp after review credit");
     }
     auto project=definition.serving;
     const auto& recipe=find(lab.catalog.recipes,model.recipe_id);

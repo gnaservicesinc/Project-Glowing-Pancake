@@ -65,7 +65,7 @@ inline std::string help(std::string_view path) {
     if(key=="grid_lead_days") return "Delay from ordering a site until the grid connection is available. Construction, hardware, operators and inspection have separate readiness dates.";
     if(key=="first_agenda_day") return "Date this public docket opens. Committee, chamber, executive, review and agency dates follow the authored terms.";
     if(key=="permit_watts") return "Limit on newly authorized site reservations in this state while the rule is effective.";
-    if(key=="evidence_axis") return "Independent evaluation domain index. 0 is documents and 1 is scanned tables.";
+    if(key=="evidence_axis") return "Independent evaluation domain index, from 0 to 5 in Lab profile order.";
     if(key=="rights") return "Describe the actual regional procurement rights and operating obligations granted by this role.";
     if(key=="public_work") return "Public tasks required in the last settled regional month. Reviews prorate the same obligation to their actual interval.";
     if(key=="points_bp") return "Maximum authority from a fully operating role. Hard authority is reduced by regional resistance.";

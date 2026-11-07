@@ -266,9 +266,16 @@ void run() {
     roundtrip(program,game);
     // Even otherwise usable evidence cannot grant commercial rights.
     auto uncleared=doc;
-    pgp_test::scenario_doc(uncleared)["lab"]["data"][1]["commercial_use"]=false;
+    auto& data=pgp_test::scenario_doc(uncleared)["lab"]["data"];
+    const auto offer=std::ranges::find_if(data,[](const auto& row) { return row["id"]=="data.licensed_documents"; });
+    check(offer!=data.end(),"The commercial-rights fixture lost its training dataset");
+    (*offer)["commercial_use"]=false;
     const auto restricted_program=runtime::compile_collection(content::load_collection(uncleared.dump(),registry),registry);
-    auto restricted=qualified;restricted.world.simulation.lab->catalog.data[1].commercial_use=false;
+    auto restricted=qualified;
+    auto& catalog=restricted.world.simulation.lab->catalog.data;
+    const auto license=std::ranges::find(catalog,"data.licensed_documents",&core::DataOffer::id);
+    check(license!=catalog.end(),"The qualified model lost its dataset license");
+    license->commercial_use=false;
     runtime::Runtime restricted_game{restricted_program,std::move(restricted)};
     refused(restricted_game,core::DeployModel{"product.documents","baseline","heldout","lease.initial",false});
 }

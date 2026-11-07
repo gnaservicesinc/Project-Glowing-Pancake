@@ -395,12 +395,12 @@ SliceScore slice_score(const SimulationState& s) {
     score.points[0]=s.phase==DayPhase::finished?rubric.weights[0]:0;
     score.points[1]=static_cast<std::uint32_t>(mul_div_floor(std::min(score.delivered_tasks,rubric.task_target),rubric.weights[1],rubric.task_target).quotient);
     score.points[2]=score.profit.value()>0?rubric.weights[2]:0;
-    std::array<bool,lab_domain_count> covered{};
+    std::array<bool,introductory_lab_domains> covered{};
     if (s.deployments) for (const auto& d:s.deployments->records) {
         const auto& e=find(s.lab->evaluations,d.evidence_id);const auto& plan=find(s.lab->catalog.evaluations,e.plan_id);
-        for (std::size_t i=0;i<lab_domain_count;++i) if (plan.independent && plan.coverage[i].value()>0 && e.lower[i]>=plan.required[i]) covered[i]=true;
+        for (std::size_t i=0;i<covered.size();++i) if (plan.independent && plan.coverage[i].value()>0 && e.lower[i]>=plan.required[i]) covered[i]=true;
     }
-    score.points[3]=static_cast<std::uint32_t>(std::count(covered.begin(),covered.end(),true))*rubric.weights[3]/static_cast<std::uint32_t>(lab_domain_count);
+    score.points[3]=static_cast<std::uint32_t>(std::count(covered.begin(),covered.end(),true))*rubric.weights[3]/static_cast<std::uint32_t>(covered.size());
     score.points[4]=static_cast<std::uint32_t>(mul_div_floor(static_cast<std::uint64_t>(std::min(score.founder_share,rubric.opening_founder_share).value()),rubric.weights[4],static_cast<std::uint64_t>(rubric.opening_founder_share.value())).quotient);
     for (const auto point:score.points) score.total+=point;
     return score;

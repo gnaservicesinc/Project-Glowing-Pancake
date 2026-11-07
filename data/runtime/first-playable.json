@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.20.0-dev.1",
+  "content_version": "0.21.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -7934,7 +7934,8 @@
             "price_cents_per_task": 83,
             "required_bp": [
               6000,
-              0
+              0,
+              5800
             ],
             "required_recipe": "recipe.sequence",
             "required_research": [
@@ -8322,7 +8323,9 @@
             "price_cents_per_task": 0,
             "required_bp": [
               5300,
-              0
+              0,
+              0,
+              5650
             ],
             "required_research": [
               "research.reproducible_tooling"
@@ -8378,7 +8381,11 @@
             "price_cents_per_task": 210,
             "required_bp": [
               0,
-              6900
+              6900,
+              0,
+              0,
+              0,
+              6100
             ],
             "required_recipe": "recipe.image_features",
             "required_research": [
@@ -8387,7 +8394,11 @@
             ],
             "review_credit_bp": [
               650,
-              1300
+              1300,
+              0,
+              0,
+              0,
+              550
             ],
             "review_monthly_cost_cents": 1200000,
             "review_staff": 1,
@@ -8408,7 +8419,10 @@
             "price_cents_per_task": 43,
             "required_bp": [
               5300,
-              0
+              0,
+              0,
+              0,
+              5600
             ],
             "required_recipe": "recipe.sequence",
             "required_research": [
@@ -10760,7 +10774,7 @@
           "name": "Africa and Middle East"
         }
       ],
-      "revision": 1,
+      "revision": 2,
       "wholesale": [
         {
           "availability_bp": 9500,
@@ -10805,7 +10819,8 @@
             "price_cents_per_task": 83,
             "required_bp": [
               6000,
-              0
+              0,
+              5800
             ],
             "required_recipe": "recipe.sequence",
             "required_research": [
@@ -10969,7 +10984,9 @@
             "price_cents_per_task": 0,
             "required_bp": [
               5300,
-              0
+              0,
+              0,
+              5650
             ],
             "required_research": [
               "research.reproducible_tooling"
@@ -11025,7 +11042,11 @@
             "price_cents_per_task": 210,
             "required_bp": [
               0,
-              6900
+              6900,
+              0,
+              0,
+              0,
+              6100
             ],
             "required_recipe": "recipe.image_features",
             "required_research": [
@@ -11034,7 +11055,11 @@
             ],
             "review_credit_bp": [
               650,
-              1300
+              1300,
+              0,
+              0,
+              0,
+              550
             ],
             "review_monthly_cost_cents": 1200000,
             "review_staff": 1,
@@ -11055,7 +11080,10 @@
             "price_cents_per_task": 43,
             "required_bp": [
               5300,
-              0
+              0,
+              0,
+              0,
+              5600
             ],
             "required_recipe": "recipe.sequence",
             "required_research": [
@@ -13239,7 +13267,7 @@
           "name": "Africa and Middle East"
         }
       ],
-      "revision": 1,
+      "revision": 2,
       "wholesale": [
         {
           "availability_bp": 9500,
@@ -21338,6 +21366,27 @@
             "commercial_use": true,
             "contamination_bp": 0,
             "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "id": "data.consented_dialogues",
+            "name": "Consented dialogue studies",
+            "price_cents": 440000,
+            "provenance": "Fictional participant-approved conversations with escalation and support examples.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
               "documents": 6000,
               "scanned_tables": 10000
             },
@@ -21667,6 +21716,49 @@
             "commercial_use": true,
             "contamination_bp": 0,
             "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.robotics_rollouts",
+            "name": "Supervised robotics trajectories",
+            "price_cents": 760000,
+            "provenance": "Fictional supervised tool and sensor traces with recovery and stop conditions.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "id": "data.science_problems",
+            "name": "Open experiments and simulations",
+            "open_weight_release": true,
+            "price_cents": 620000,
+            "provenance": "Fictional open lab records and industrial simulations with verified outcomes.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
               "documents": 9800,
               "scanned_tables": 9990
             },
@@ -21700,6 +21792,28 @@
             },
             "rights": "Commercial training and hosted service. Open-weight redistribution excluded.",
             "unique_units": 980000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "id": "data.software_tasks",
+            "name": "Open software tasks",
+            "open_weight_release": true,
+            "price_cents": 520000,
+            "provenance": "Fictional permissive code exercises, failing tests and human-reviewed repairs.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
           },
           {
             "commercial_use": false,
@@ -21778,6 +21892,34 @@
               "research.reproducible_tooling"
             ],
             "uncertainty_bp": 60,
+            "work_milli_CU": 120000
+          },
+          {
+            "cash_cents": 500000,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 10000,
+              "scanned_tables": 10000,
+              "science_industry": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
+            },
+            "id": "evaluation.capability_suite",
+            "independent": true,
+            "name": "Independent capability suite",
+            "required_bp": {
+              "autonomous_workflows": 6100,
+              "documents": 6000,
+              "scanned_tables": 5500,
+              "science_industry": 5650,
+              "social_interaction": 5600,
+              "software_reasoning": 5800
+            },
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "uncertainty_bp": 100,
             "work_milli_CU": 120000
           },
           {
@@ -21944,24 +22086,29 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "science_industry": 1200
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "science_industry": 9300
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "science_industry": 210000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "science_industry": 10000
             },
             "gain_bp": {
               "documents": 6000,
-              "scanned_tables": 6500
+              "scanned_tables": 6500,
+              "science_industry": 8500
             },
             "id": "recipe.efficient",
             "inference_milli_CU_per_task": 12,
@@ -21969,7 +22116,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Reproducible efficient service",
+            "name": "Efficient documents and science model",
             "preview_uncertainty_bp": 300,
             "requires_research": [
               "research.efficient_serving",
@@ -22046,23 +22193,28 @@
           },
           {
             "baseline_bp": {
+              "autonomous_workflows": 900,
               "documents": 2700,
               "scanned_tables": 2200
             },
             "ceiling_bp": {
+              "autonomous_workflows": 8900,
               "documents": 9200,
               "scanned_tables": 9000
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
+              "autonomous_workflows": 220000,
               "documents": 300000,
               "scanned_tables": 120000
             },
             "fit_bp": {
+              "autonomous_workflows": 10000,
               "documents": 9000,
               "scanned_tables": 10000
             },
             "gain_bp": {
+              "autonomous_workflows": 8600,
               "documents": 6000,
               "scanned_tables": 6500
             },
@@ -22072,7 +22224,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Scanned-image feature recipe",
+            "name": "Image features and supervised robotics",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.efficient_image_features"
@@ -22251,24 +22403,34 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "social_interaction": 2000,
+              "software_reasoning": 1800
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "social_interaction": 8700,
+              "software_reasoning": 9100
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "social_interaction": 200000,
+              "software_reasoning": 190000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
             },
             "gain_bp": {
               "documents": 6500,
-              "scanned_tables": 6800
+              "scanned_tables": 6800,
+              "social_interaction": 7000,
+              "software_reasoning": 7900
             },
             "id": "recipe.sequence",
             "inference_milli_CU_per_task": 20,
@@ -22276,7 +22438,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Sequence document model",
+            "name": "Sequence model for documents, code and dialogue",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.sequence_modeling"
@@ -22920,7 +23082,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 10,
+      "revision": 11,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -26443,6 +26605,27 @@
             "commercial_use": true,
             "contamination_bp": 0,
             "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "id": "data.consented_dialogues",
+            "name": "Consented dialogue studies",
+            "price_cents": 440000,
+            "provenance": "Fictional participant-approved conversations with escalation and support examples.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
               "documents": 6000,
               "scanned_tables": 10000
             },
@@ -26772,6 +26955,49 @@
             "commercial_use": true,
             "contamination_bp": 0,
             "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.robotics_rollouts",
+            "name": "Supervised robotics trajectories",
+            "price_cents": 760000,
+            "provenance": "Fictional supervised tool and sensor traces with recovery and stop conditions.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "id": "data.science_problems",
+            "name": "Open experiments and simulations",
+            "open_weight_release": true,
+            "price_cents": 620000,
+            "provenance": "Fictional open lab records and industrial simulations with verified outcomes.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
               "documents": 9800,
               "scanned_tables": 9990
             },
@@ -26805,6 +27031,28 @@
             },
             "rights": "Commercial training and hosted service. Open-weight redistribution excluded.",
             "unique_units": 980000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "id": "data.software_tasks",
+            "name": "Open software tasks",
+            "open_weight_release": true,
+            "price_cents": 520000,
+            "provenance": "Fictional permissive code exercises, failing tests and human-reviewed repairs.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
           },
           {
             "commercial_use": false,
@@ -26883,6 +27131,34 @@
               "research.reproducible_tooling"
             ],
             "uncertainty_bp": 60,
+            "work_milli_CU": 120000
+          },
+          {
+            "cash_cents": 500000,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 10000,
+              "scanned_tables": 10000,
+              "science_industry": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
+            },
+            "id": "evaluation.capability_suite",
+            "independent": true,
+            "name": "Independent capability suite",
+            "required_bp": {
+              "autonomous_workflows": 6100,
+              "documents": 6000,
+              "scanned_tables": 5500,
+              "science_industry": 5650,
+              "social_interaction": 5600,
+              "software_reasoning": 5800
+            },
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "uncertainty_bp": 100,
             "work_milli_CU": 120000
           },
           {
@@ -27049,24 +27325,29 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "science_industry": 1200
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "science_industry": 9300
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "science_industry": 210000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "science_industry": 10000
             },
             "gain_bp": {
               "documents": 6000,
-              "scanned_tables": 6500
+              "scanned_tables": 6500,
+              "science_industry": 8500
             },
             "id": "recipe.efficient",
             "inference_milli_CU_per_task": 12,
@@ -27074,7 +27355,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Reproducible efficient service",
+            "name": "Efficient documents and science model",
             "preview_uncertainty_bp": 300,
             "requires_research": [
               "research.efficient_serving",
@@ -27151,23 +27432,28 @@
           },
           {
             "baseline_bp": {
+              "autonomous_workflows": 900,
               "documents": 2700,
               "scanned_tables": 2200
             },
             "ceiling_bp": {
+              "autonomous_workflows": 8900,
               "documents": 9200,
               "scanned_tables": 9000
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
+              "autonomous_workflows": 220000,
               "documents": 300000,
               "scanned_tables": 120000
             },
             "fit_bp": {
+              "autonomous_workflows": 10000,
               "documents": 9000,
               "scanned_tables": 10000
             },
             "gain_bp": {
+              "autonomous_workflows": 8600,
               "documents": 6000,
               "scanned_tables": 6500
             },
@@ -27177,7 +27463,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Scanned-image feature recipe",
+            "name": "Image features and supervised robotics",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.efficient_image_features"
@@ -27356,24 +27642,34 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "social_interaction": 2000,
+              "software_reasoning": 1800
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "social_interaction": 8700,
+              "software_reasoning": 9100
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "social_interaction": 200000,
+              "software_reasoning": 190000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
             },
             "gain_bp": {
               "documents": 6500,
-              "scanned_tables": 6800
+              "scanned_tables": 6800,
+              "social_interaction": 7000,
+              "software_reasoning": 7900
             },
             "id": "recipe.sequence",
             "inference_milli_CU_per_task": 20,
@@ -27381,7 +27677,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Sequence document model",
+            "name": "Sequence model for documents, code and dialogue",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.sequence_modeling"
@@ -28025,7 +28321,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 10,
+      "revision": 11,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -31048,6 +31344,27 @@
             "commercial_use": true,
             "contamination_bp": 0,
             "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "id": "data.consented_dialogues",
+            "name": "Consented dialogue studies",
+            "price_cents": 440000,
+            "provenance": "Fictional participant-approved conversations with escalation and support examples.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
               "documents": 6000,
               "scanned_tables": 10000
             },
@@ -31103,6 +31420,71 @@
             "unique_units": 800000
           },
           {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.robotics_rollouts",
+            "name": "Supervised robotics trajectories",
+            "price_cents": 760000,
+            "provenance": "Fictional supervised tool and sensor traces with recovery and stop conditions.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "id": "data.science_problems",
+            "name": "Open experiments and simulations",
+            "open_weight_release": true,
+            "price_cents": 620000,
+            "provenance": "Fictional open lab records and industrial simulations with verified outcomes.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "id": "data.software_tasks",
+            "name": "Open software tasks",
+            "open_weight_release": true,
+            "price_cents": 520000,
+            "provenance": "Fictional permissive code exercises, failing tests and human-reviewed repairs.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
+          },
+          {
             "commercial_use": false,
             "contamination_bp": 1800,
             "coverage_bp": {
@@ -31141,6 +31523,34 @@
               "research.reproducible_tooling"
             ],
             "uncertainty_bp": 60,
+            "work_milli_CU": 120000
+          },
+          {
+            "cash_cents": 500000,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 10000,
+              "scanned_tables": 10000,
+              "science_industry": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
+            },
+            "id": "evaluation.capability_suite",
+            "independent": true,
+            "name": "Independent capability suite",
+            "required_bp": {
+              "autonomous_workflows": 6100,
+              "documents": 6000,
+              "scanned_tables": 5500,
+              "science_industry": 5650,
+              "social_interaction": 5600,
+              "software_reasoning": 5800
+            },
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "uncertainty_bp": 100,
             "work_milli_CU": 120000
           },
           {
@@ -31250,24 +31660,29 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "science_industry": 1200
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "science_industry": 9300
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "science_industry": 210000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "science_industry": 10000
             },
             "gain_bp": {
               "documents": 6000,
-              "scanned_tables": 6500
+              "scanned_tables": 6500,
+              "science_industry": 8500
             },
             "id": "recipe.efficient",
             "inference_milli_CU_per_task": 12,
@@ -31275,7 +31690,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Reproducible efficient service",
+            "name": "Efficient documents and science model",
             "preview_uncertainty_bp": 300,
             "requires_research": [
               "research.efficient_serving",
@@ -31284,23 +31699,28 @@
           },
           {
             "baseline_bp": {
+              "autonomous_workflows": 900,
               "documents": 2700,
               "scanned_tables": 2200
             },
             "ceiling_bp": {
+              "autonomous_workflows": 8900,
               "documents": 9200,
               "scanned_tables": 9000
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
+              "autonomous_workflows": 220000,
               "documents": 300000,
               "scanned_tables": 120000
             },
             "fit_bp": {
+              "autonomous_workflows": 10000,
               "documents": 9000,
               "scanned_tables": 10000
             },
             "gain_bp": {
+              "autonomous_workflows": 8600,
               "documents": 6000,
               "scanned_tables": 6500
             },
@@ -31310,7 +31730,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Scanned-image feature recipe",
+            "name": "Image features and supervised robotics",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.efficient_image_features"
@@ -31319,24 +31739,34 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "social_interaction": 2000,
+              "software_reasoning": 1800
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "social_interaction": 8700,
+              "software_reasoning": 9100
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "social_interaction": 200000,
+              "software_reasoning": 190000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
             },
             "gain_bp": {
               "documents": 6500,
-              "scanned_tables": 6800
+              "scanned_tables": 6800,
+              "social_interaction": 7000,
+              "software_reasoning": 7900
             },
             "id": "recipe.sequence",
             "inference_milli_CU_per_task": 20,
@@ -31344,7 +31774,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Sequence document model",
+            "name": "Sequence model for documents, code and dialogue",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.sequence_modeling"
@@ -31695,7 +32125,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 13,
+      "revision": 14,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -33870,6 +34300,27 @@
             "commercial_use": true,
             "contamination_bp": 0,
             "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "id": "data.consented_dialogues",
+            "name": "Consented dialogue studies",
+            "price_cents": 440000,
+            "provenance": "Fictional participant-approved conversations with escalation and support examples.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
               "documents": 6000,
               "scanned_tables": 10000
             },
@@ -33925,6 +34376,71 @@
             "unique_units": 800000
           },
           {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.robotics_rollouts",
+            "name": "Supervised robotics trajectories",
+            "price_cents": 760000,
+            "provenance": "Fictional supervised tool and sensor traces with recovery and stop conditions.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "id": "data.science_problems",
+            "name": "Open experiments and simulations",
+            "open_weight_release": true,
+            "price_cents": 620000,
+            "provenance": "Fictional open lab records and industrial simulations with verified outcomes.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "id": "data.software_tasks",
+            "name": "Open software tasks",
+            "open_weight_release": true,
+            "price_cents": 520000,
+            "provenance": "Fictional permissive code exercises, failing tests and human-reviewed repairs.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
+          },
+          {
             "commercial_use": false,
             "contamination_bp": 1800,
             "coverage_bp": {
@@ -33963,6 +34479,34 @@
               "research.reproducible_tooling"
             ],
             "uncertainty_bp": 60,
+            "work_milli_CU": 120000
+          },
+          {
+            "cash_cents": 500000,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 10000,
+              "scanned_tables": 10000,
+              "science_industry": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
+            },
+            "id": "evaluation.capability_suite",
+            "independent": true,
+            "name": "Independent capability suite",
+            "required_bp": {
+              "autonomous_workflows": 6100,
+              "documents": 6000,
+              "scanned_tables": 5500,
+              "science_industry": 5650,
+              "social_interaction": 5600,
+              "software_reasoning": 5800
+            },
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "uncertainty_bp": 100,
             "work_milli_CU": 120000
           },
           {
@@ -34072,24 +34616,29 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "science_industry": 1200
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "science_industry": 9300
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "science_industry": 210000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "science_industry": 10000
             },
             "gain_bp": {
               "documents": 6000,
-              "scanned_tables": 6500
+              "scanned_tables": 6500,
+              "science_industry": 8500
             },
             "id": "recipe.efficient",
             "inference_milli_CU_per_task": 12,
@@ -34097,7 +34646,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Reproducible efficient service",
+            "name": "Efficient documents and science model",
             "preview_uncertainty_bp": 300,
             "requires_research": [
               "research.efficient_serving",
@@ -34106,23 +34655,28 @@
           },
           {
             "baseline_bp": {
+              "autonomous_workflows": 900,
               "documents": 2700,
               "scanned_tables": 2200
             },
             "ceiling_bp": {
+              "autonomous_workflows": 8900,
               "documents": 9200,
               "scanned_tables": 9000
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
+              "autonomous_workflows": 220000,
               "documents": 300000,
               "scanned_tables": 120000
             },
             "fit_bp": {
+              "autonomous_workflows": 10000,
               "documents": 9000,
               "scanned_tables": 10000
             },
             "gain_bp": {
+              "autonomous_workflows": 8600,
               "documents": 6000,
               "scanned_tables": 6500
             },
@@ -34132,7 +34686,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Scanned-image feature recipe",
+            "name": "Image features and supervised robotics",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.efficient_image_features"
@@ -34141,24 +34695,34 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "social_interaction": 2000,
+              "software_reasoning": 1800
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "social_interaction": 8700,
+              "software_reasoning": 9100
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "social_interaction": 200000,
+              "software_reasoning": 190000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
             },
             "gain_bp": {
               "documents": 6500,
-              "scanned_tables": 6800
+              "scanned_tables": 6800,
+              "social_interaction": 7000,
+              "software_reasoning": 7900
             },
             "id": "recipe.sequence",
             "inference_milli_CU_per_task": 20,
@@ -34166,7 +34730,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Sequence document model",
+            "name": "Sequence model for documents, code and dialogue",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.sequence_modeling"
@@ -34519,7 +35083,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 14,
+      "revision": 15,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -37849,6 +38413,27 @@
             "commercial_use": true,
             "contamination_bp": 0,
             "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "id": "data.consented_dialogues",
+            "name": "Consented dialogue studies",
+            "price_cents": 440000,
+            "provenance": "Fictional participant-approved conversations with escalation and support examples.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
               "documents": 6000,
               "scanned_tables": 10000
             },
@@ -37904,6 +38489,71 @@
             "unique_units": 800000
           },
           {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.robotics_rollouts",
+            "name": "Supervised robotics trajectories",
+            "price_cents": 760000,
+            "provenance": "Fictional supervised tool and sensor traces with recovery and stop conditions.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "id": "data.science_problems",
+            "name": "Open experiments and simulations",
+            "open_weight_release": true,
+            "price_cents": 620000,
+            "provenance": "Fictional open lab records and industrial simulations with verified outcomes.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "id": "data.software_tasks",
+            "name": "Open software tasks",
+            "open_weight_release": true,
+            "price_cents": 520000,
+            "provenance": "Fictional permissive code exercises, failing tests and human-reviewed repairs.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
+          },
+          {
             "commercial_use": false,
             "contamination_bp": 1800,
             "coverage_bp": {
@@ -37942,6 +38592,34 @@
               "research.reproducible_tooling"
             ],
             "uncertainty_bp": 60,
+            "work_milli_CU": 120000
+          },
+          {
+            "cash_cents": 500000,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 10000,
+              "scanned_tables": 10000,
+              "science_industry": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
+            },
+            "id": "evaluation.capability_suite",
+            "independent": true,
+            "name": "Independent capability suite",
+            "required_bp": {
+              "autonomous_workflows": 6100,
+              "documents": 6000,
+              "scanned_tables": 5500,
+              "science_industry": 5650,
+              "social_interaction": 5600,
+              "software_reasoning": 5800
+            },
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "uncertainty_bp": 100,
             "work_milli_CU": 120000
           },
           {
@@ -38051,24 +38729,29 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "science_industry": 1200
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "science_industry": 9300
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "science_industry": 210000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "science_industry": 10000
             },
             "gain_bp": {
               "documents": 6000,
-              "scanned_tables": 6500
+              "scanned_tables": 6500,
+              "science_industry": 8500
             },
             "id": "recipe.efficient",
             "inference_milli_CU_per_task": 12,
@@ -38076,7 +38759,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Reproducible efficient service",
+            "name": "Efficient documents and science model",
             "preview_uncertainty_bp": 300,
             "requires_research": [
               "research.efficient_serving",
@@ -38085,23 +38768,28 @@
           },
           {
             "baseline_bp": {
+              "autonomous_workflows": 900,
               "documents": 2700,
               "scanned_tables": 2200
             },
             "ceiling_bp": {
+              "autonomous_workflows": 8900,
               "documents": 9200,
               "scanned_tables": 9000
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
+              "autonomous_workflows": 220000,
               "documents": 300000,
               "scanned_tables": 120000
             },
             "fit_bp": {
+              "autonomous_workflows": 10000,
               "documents": 9000,
               "scanned_tables": 10000
             },
             "gain_bp": {
+              "autonomous_workflows": 8600,
               "documents": 6000,
               "scanned_tables": 6500
             },
@@ -38111,7 +38799,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Scanned-image feature recipe",
+            "name": "Image features and supervised robotics",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.efficient_image_features"
@@ -38120,24 +38808,34 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "social_interaction": 2000,
+              "software_reasoning": 1800
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "social_interaction": 8700,
+              "software_reasoning": 9100
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "social_interaction": 200000,
+              "software_reasoning": 190000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
             },
             "gain_bp": {
               "documents": 6500,
-              "scanned_tables": 6800
+              "scanned_tables": 6800,
+              "social_interaction": 7000,
+              "software_reasoning": 7900
             },
             "id": "recipe.sequence",
             "inference_milli_CU_per_task": 20,
@@ -38145,7 +38843,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Sequence document model",
+            "name": "Sequence model for documents, code and dialogue",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.sequence_modeling"
@@ -38498,7 +39196,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 14,
+      "revision": 15,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -41828,6 +42526,27 @@
             "commercial_use": true,
             "contamination_bp": 0,
             "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "id": "data.consented_dialogues",
+            "name": "Consented dialogue studies",
+            "price_cents": 440000,
+            "provenance": "Fictional participant-approved conversations with escalation and support examples.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
               "documents": 6000,
               "scanned_tables": 10000
             },
@@ -41883,6 +42602,71 @@
             "unique_units": 800000
           },
           {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.robotics_rollouts",
+            "name": "Supervised robotics trajectories",
+            "price_cents": 760000,
+            "provenance": "Fictional supervised tool and sensor traces with recovery and stop conditions.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "id": "data.science_problems",
+            "name": "Open experiments and simulations",
+            "open_weight_release": true,
+            "price_cents": 620000,
+            "provenance": "Fictional open lab records and industrial simulations with verified outcomes.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "id": "data.software_tasks",
+            "name": "Open software tasks",
+            "open_weight_release": true,
+            "price_cents": 520000,
+            "provenance": "Fictional permissive code exercises, failing tests and human-reviewed repairs.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
+          },
+          {
             "commercial_use": false,
             "contamination_bp": 1800,
             "coverage_bp": {
@@ -41921,6 +42705,34 @@
               "research.reproducible_tooling"
             ],
             "uncertainty_bp": 60,
+            "work_milli_CU": 120000
+          },
+          {
+            "cash_cents": 500000,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 10000,
+              "scanned_tables": 10000,
+              "science_industry": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
+            },
+            "id": "evaluation.capability_suite",
+            "independent": true,
+            "name": "Independent capability suite",
+            "required_bp": {
+              "autonomous_workflows": 6100,
+              "documents": 6000,
+              "scanned_tables": 5500,
+              "science_industry": 5650,
+              "social_interaction": 5600,
+              "software_reasoning": 5800
+            },
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "uncertainty_bp": 100,
             "work_milli_CU": 120000
           },
           {
@@ -42030,24 +42842,29 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "science_industry": 1200
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "science_industry": 9300
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "science_industry": 210000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "science_industry": 10000
             },
             "gain_bp": {
               "documents": 6000,
-              "scanned_tables": 6500
+              "scanned_tables": 6500,
+              "science_industry": 8500
             },
             "id": "recipe.efficient",
             "inference_milli_CU_per_task": 12,
@@ -42055,7 +42872,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Reproducible efficient service",
+            "name": "Efficient documents and science model",
             "preview_uncertainty_bp": 300,
             "requires_research": [
               "research.efficient_serving",
@@ -42064,23 +42881,28 @@
           },
           {
             "baseline_bp": {
+              "autonomous_workflows": 900,
               "documents": 2700,
               "scanned_tables": 2200
             },
             "ceiling_bp": {
+              "autonomous_workflows": 8900,
               "documents": 9200,
               "scanned_tables": 9000
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
+              "autonomous_workflows": 220000,
               "documents": 300000,
               "scanned_tables": 120000
             },
             "fit_bp": {
+              "autonomous_workflows": 10000,
               "documents": 9000,
               "scanned_tables": 10000
             },
             "gain_bp": {
+              "autonomous_workflows": 8600,
               "documents": 6000,
               "scanned_tables": 6500
             },
@@ -42090,7 +42912,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Scanned-image feature recipe",
+            "name": "Image features and supervised robotics",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.efficient_image_features"
@@ -42099,24 +42921,34 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "social_interaction": 2000,
+              "software_reasoning": 1800
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "social_interaction": 8700,
+              "software_reasoning": 9100
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "social_interaction": 200000,
+              "software_reasoning": 190000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
             },
             "gain_bp": {
               "documents": 6500,
-              "scanned_tables": 6800
+              "scanned_tables": 6800,
+              "social_interaction": 7000,
+              "software_reasoning": 7900
             },
             "id": "recipe.sequence",
             "inference_milli_CU_per_task": 20,
@@ -42124,7 +42956,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Sequence document model",
+            "name": "Sequence model for documents, code and dialogue",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.sequence_modeling"
@@ -42477,7 +43309,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 14,
+      "revision": 15,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -45807,6 +46639,27 @@
             "commercial_use": true,
             "contamination_bp": 0,
             "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "id": "data.consented_dialogues",
+            "name": "Consented dialogue studies",
+            "price_cents": 440000,
+            "provenance": "Fictional participant-approved conversations with escalation and support examples.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "social_interaction": 10000
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
               "documents": 6000,
               "scanned_tables": 10000
             },
@@ -45862,6 +46715,71 @@
             "unique_units": 800000
           },
           {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "id": "data.robotics_rollouts",
+            "name": "Supervised robotics trajectories",
+            "price_cents": 760000,
+            "provenance": "Fictional supervised tool and sensor traces with recovery and stop conditions.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 0,
+              "scanned_tables": 0
+            },
+            "rights": "Consented commercial training and hosted deployment",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "id": "data.science_problems",
+            "name": "Open experiments and simulations",
+            "open_weight_release": true,
+            "price_cents": 620000,
+            "provenance": "Fictional open lab records and industrial simulations with verified outcomes.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "science_industry": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
+          },
+          {
+            "commercial_use": true,
+            "contamination_bp": 0,
+            "coverage_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "id": "data.software_tasks",
+            "name": "Open software tasks",
+            "open_weight_release": true,
+            "price_cents": 520000,
+            "provenance": "Fictional permissive code exercises, failing tests and human-reviewed repairs.",
+            "quality_bp": 9200,
+            "relevance_bp": {
+              "documents": 0,
+              "scanned_tables": 0,
+              "software_reasoning": 10000
+            },
+            "rights": "Commercial training and weight redistribution with attribution",
+            "unique_units": 820000
+          },
+          {
             "commercial_use": false,
             "contamination_bp": 1800,
             "coverage_bp": {
@@ -45900,6 +46818,34 @@
               "research.reproducible_tooling"
             ],
             "uncertainty_bp": 60,
+            "work_milli_CU": 120000
+          },
+          {
+            "cash_cents": 500000,
+            "coverage_bp": {
+              "autonomous_workflows": 10000,
+              "documents": 10000,
+              "scanned_tables": 10000,
+              "science_industry": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
+            },
+            "id": "evaluation.capability_suite",
+            "independent": true,
+            "name": "Independent capability suite",
+            "required_bp": {
+              "autonomous_workflows": 6100,
+              "documents": 6000,
+              "scanned_tables": 5500,
+              "science_industry": 5650,
+              "social_interaction": 5600,
+              "software_reasoning": 5800
+            },
+            "requires_research": [
+              "research.held_out_evaluation",
+              "research.reproducible_tooling"
+            ],
+            "uncertainty_bp": 100,
             "work_milli_CU": 120000
           },
           {
@@ -46009,24 +46955,29 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "science_industry": 1200
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "science_industry": 9300
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "science_industry": 210000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "science_industry": 10000
             },
             "gain_bp": {
               "documents": 6000,
-              "scanned_tables": 6500
+              "scanned_tables": 6500,
+              "science_industry": 8500
             },
             "id": "recipe.efficient",
             "inference_milli_CU_per_task": 12,
@@ -46034,7 +46985,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Reproducible efficient service",
+            "name": "Efficient documents and science model",
             "preview_uncertainty_bp": 300,
             "requires_research": [
               "research.efficient_serving",
@@ -46043,23 +46994,28 @@
           },
           {
             "baseline_bp": {
+              "autonomous_workflows": 900,
               "documents": 2700,
               "scanned_tables": 2200
             },
             "ceiling_bp": {
+              "autonomous_workflows": 8900,
               "documents": 9200,
               "scanned_tables": 9000
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
+              "autonomous_workflows": 220000,
               "documents": 300000,
               "scanned_tables": 120000
             },
             "fit_bp": {
+              "autonomous_workflows": 10000,
               "documents": 9000,
               "scanned_tables": 10000
             },
             "gain_bp": {
+              "autonomous_workflows": 8600,
               "documents": 6000,
               "scanned_tables": 6500
             },
@@ -46069,7 +47025,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Scanned-image feature recipe",
+            "name": "Image features and supervised robotics",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.efficient_image_features"
@@ -46078,24 +47034,34 @@
           {
             "baseline_bp": {
               "documents": 3000,
-              "scanned_tables": 1500
+              "scanned_tables": 1500,
+              "social_interaction": 2000,
+              "software_reasoning": 1800
             },
             "ceiling_bp": {
               "documents": 9200,
-              "scanned_tables": 9000
+              "scanned_tables": 9000,
+              "social_interaction": 8700,
+              "software_reasoning": 9100
             },
             "compute_scale_milli_CU": 1800000,
             "data_scale": {
               "documents": 300000,
-              "scanned_tables": 120000
+              "scanned_tables": 120000,
+              "social_interaction": 200000,
+              "software_reasoning": 190000
             },
             "fit_bp": {
               "documents": 10000,
-              "scanned_tables": 10000
+              "scanned_tables": 10000,
+              "social_interaction": 10000,
+              "software_reasoning": 10000
             },
             "gain_bp": {
               "documents": 6500,
-              "scanned_tables": 6800
+              "scanned_tables": 6800,
+              "social_interaction": 7000,
+              "software_reasoning": 7900
             },
             "id": "recipe.sequence",
             "inference_milli_CU_per_task": 20,
@@ -46103,7 +47069,7 @@
             "maximum_work_milli_CU": 14400000,
             "minimum_memory_mib": 0,
             "minimum_work_milli_CU": 60000,
-            "name": "Sequence document model",
+            "name": "Sequence model for documents, code and dialogue",
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.sequence_modeling"
@@ -46456,7 +47422,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 14,
+      "revision": 15,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,

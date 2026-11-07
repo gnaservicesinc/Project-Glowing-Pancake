@@ -7,11 +7,21 @@
 #include <array>
 
 namespace pgp::core {
-// The slice has one customer task and a deliberately separate weak subgroup.
-inline constexpr std::size_t lab_domain_count = 2;
-inline constexpr std::array<std::string_view, lab_domain_count> lab_domain_names{"documents", "scanned_tables"};
+// Keep the introductory axes first in authored profiles, saves and old evidence streams.
+inline constexpr std::size_t introductory_lab_domains = 2;
+inline constexpr std::array<std::string_view,6> lab_domain_names{
+    "documents", "scanned_tables", "software_reasoning", "science_industry", "social_interaction", "autonomous_workflows"};
+inline constexpr std::size_t lab_domain_count = lab_domain_names.size();
+inline constexpr std::array<std::string_view,lab_domain_count> lab_domain_labels{
+    "Documents", "Scanned tables", "Software and reasoning", "Science and industry", "Social interaction", "Autonomous workflows"};
 using LabProfile = std::array<BasisPoints, lab_domain_count>;
-inline constexpr LabProfile empty_lab_profile{BasisPoints{0}, BasisPoints{0}};
+inline constexpr LabProfile empty_lab_profile{
+    BasisPoints{0}, BasisPoints{0}, BasisPoints{0}, BasisPoints{0}, BasisPoints{0}, BasisPoints{0}};
+[[nodiscard]] constexpr std::size_t stored_lab_domains(const LabProfile& profile) {
+    auto count=profile.size();
+    while (count>introductory_lab_domains && profile[count-1].value()==0) --count;
+    return count;
+}
 inline constexpr std::size_t lab_catalog_limit = 64;
 inline constexpr std::size_t lab_record_limit = 1024;
 

@@ -50,7 +50,7 @@ void malformed_save(const runtime::CompiledProgram& program, Json doc) {
     check(rejected,"Rehashed inconsistent lab save was accepted");
 }
 void content_boundaries(const Json& source, const runtime::CompiledProgram& program) {
-    for (unsigned mutation = 0; mutation < 7; ++mutation) {
+    for (unsigned mutation = 0; mutation < 9; ++mutation) {
         auto doc = source;
         auto& catalog = pgp_test::scenario_doc(doc)["lab"];
         if (mutation == 0) catalog["data"][0]["unique_units"] = 1.0;
@@ -60,6 +60,9 @@ void content_boundaries(const Json& source, const runtime::CompiledProgram& prog
         if (mutation == 4) catalog["data"][0]["unknown"] = true;
         if (mutation == 5) catalog["evaluations"][0]["uncertainty_bp"] = 10001;
         if (mutation == 6) pgp_test::definition(doc,"research.efficient_image_features")["prerequisites"]["all_of"] = Json::array({pgp_test::definition(doc,"research.efficient_image_features")["id"]});
+        if (mutation == 7) catalog["data"][0]["coverage_bp"]["unknown_domain"] = 5000;
+        if (mutation == 8) for (auto& recipe:catalog["recipes"])
+            if (recipe["id"]=="recipe.sequence") recipe["data_scale"].erase("software_reasoning");
         bool rejected = false;
         try { (void)compile(doc); } catch (const std::exception&) { rejected = true; }
         check(rejected,"Malformed authored lab data was accepted");
@@ -73,12 +76,12 @@ void arithmetic_case(const runtime::CompiledProgram& program) {
     auto catalog = std::get<content::ScenarioDefinition>(program.collection.definitions.at("scenario.first_playable").data).lab.value();
     catalog.data.resize(1); auto& data = catalog.data.front();
     data.unique_units = 10; data.quality = core::BasisPoints{5000};
-    data.relevance = data.coverage = {core::BasisPoints{5000},core::BasisPoints{5000}};
+    data.relevance[0]=data.relevance[1]=data.coverage[0]=data.coverage[1]=core::BasisPoints{5000};
     auto& recipe = catalog.recipes.front();
     recipe.compute_scale = core::MilliCU{100}; recipe.data_scale = {1,1};
-    recipe.baseline = {core::BasisPoints{1000},core::BasisPoints{1000}};
-    recipe.gain = {core::BasisPoints{6000},core::BasisPoints{6000}};
-    recipe.fit = {core::BasisPoints{5000},core::BasisPoints{5000}};
+    recipe.baseline[0]=recipe.baseline[1]=core::BasisPoints{1000};
+    recipe.gain[0]=recipe.gain[1]=core::BasisPoints{6000};
+    recipe.fit[0]=recipe.fit[1]=core::BasisPoints{5000};
     core::LabModel model; model.recipe_id = recipe.id; model.data_ids = {data.id}; model.consumed_work = core::MilliCU{100};
     const auto value = core::model_capability(catalog,model);
     check(value[0].value() == 2500 && value[1].value() == 2500,
@@ -88,7 +91,8 @@ void arithmetic_case(const runtime::CompiledProgram& program) {
 }
 void complete_loop(const runtime::CompiledProgram& program) {
     auto game = engine(program);
-    check(lab(game).catalog.data.size() == 4 && lab(game).catalog.research.size() == 6,"Slice lacks its four offers or six research nodes");
+    check(lab(game).catalog.data.size() == 8 && lab(game).catalog.research.size() == 6,
+        "Slice lacks introductory and specialist offers or the six research nodes");
     const auto initial_random = game.checkpoint().world.simulation.random;
     const auto preview_state = game.checkpoint();
     const auto preview = core::preview_training(lab(game), training("preview"));
@@ -211,12 +215,78 @@ void unlocks_and_controls(const runtime::CompiledProgram& program) {
     apply(game,core::SetEffectiveCapacity{"lease.initial",core::MilliCUPerDay{100000}}); days(game,2);
     check(lab(game).models.back().consumed_work.value() == 120000,"Restored source failed to resume the same experiment");
 }
+
+void specialist_services(const runtime::CompiledProgram& program) {
+    using namespace core;
+    auto opening=engine(program);
+    const LabAllocation research{"lease.initial",MilliCUPerDay{20000},2};
+    for (const auto id:{"research.held_out_evaluation","research.reproducible_tooling","research.efficient_image_features",
+                        "research.sequence_modeling","research.efficient_serving"}) {
+        apply(opening,StartResearch{id,research});
+        days(opening,3);
+    }
+    apply(opening,BuyData{"data.open_documents"});
+    const auto train_and_measure=[&](std::string recipe,std::vector<std::string> mixture,std::size_t target) {
+        auto game=opening;
+        auto request=training("specialist",std::move(mixture));
+        request.recipe_id=std::move(recipe);
+        const auto forecast=preview_training(lab(game),request);
+        auto general=request;
+        general.data_ids={"data.open_documents"};
+        const auto without_specialist_data=preview_training(lab(game),general);
+        check(forecast.lower[target]>without_specialist_data.upper[target] &&
+              forecast.lower[0]==without_specialist_data.lower[0],
+            "Specialist data failed to improve the intended capability independently");
+        for (const auto& id:request.data_ids) if (id!="data.open_documents") apply(game,BuyData{id});
+        apply(game,StartTraining{request});
+        days(game,60);
+        const LabAllocation evaluation{"lease.initial",MilliCUPerDay{20000},1};
+        apply(game,StartEvaluation{"intro","specialist","evaluation.held_out",evaluation});
+        apply(game,StartEvaluation{"suite","specialist","evaluation.capability_suite",evaluation});
+        days(game,6);
+        check(lab(game).evaluations.front().upper[target]==BasisPoints{0} &&
+            lab(game).evaluations.back().lower[target]>=forecast.lower[target],
+            "The authored capability suite failed to measure the new domain");
+        return game;
+    };
+    const auto launch=[&](runtime::Runtime game,std::string product,std::size_t axis,bool local,bool review) {
+        DeployModel request{product,"specialist","intro",local?"":"lease.initial",review,"region.europe"};
+        const auto before=game.checkpoint();
+        const auto refused=game.submit({before.world.simulation.revision,request});
+        check(!refused.accepted() && refused.explanation.find(lab_domain_labels[axis])!=std::string::npos &&
+              game.checkpoint()==before,"An introductory report qualified unmeasured specialist work");
+        request.evidence_id="suite";
+        apply(game,request);
+        days(game,1);
+        const auto& market=*game.checkpoint().world.simulation.market;
+        check(std::ranges::any_of(market.days.back().discretionary,[&](const auto& sale) {
+            return sale.product_id==product && sale.tasks>0;
+        }),"Qualified specialist service failed to serve its regional customers");
+        const auto bytes=persistence::encode_save(program,game.checkpoint());
+        check(persistence::decode_save(program,bytes).checkpoint==game.checkpoint(),
+            "The expanded capability evidence and production release did not reload exactly");
+        if (axis==5) {
+            auto corrupt=Json::parse(bytes);
+            auto& evidence=corrupt["checkpoint"]["world"]["simulation"]["lab"]["evaluations"];
+            evidence[1]["lower_bp"][axis]=10000;
+            malformed_save(program,std::move(corrupt));
+        }
+    };
+    const auto sequence=train_and_measure("recipe.sequence",{"data.open_documents","data.software_tasks","data.consented_dialogues"},2);
+    launch(sequence,"product.coding_api",2,false,false);
+    launch(sequence,"product.social_companion",4,false,false);
+    launch(train_and_measure("recipe.efficient",{"data.open_documents","data.science_problems"},3),
+        "product.research_toolkit",3,true,false);
+    launch(train_and_measure("recipe.image_features",{"data.open_documents","data.consented_scans","data.robotics_rollouts"},5),
+        "product.robotics_agent",5,false,true);
+}
 }
 int main() {
     try {
         std::ifstream input(PGP_LAB_FIXTURE_PATH); const std::string bytes{std::istreambuf_iterator<char>{input},std::istreambuf_iterator<char>{}};
         const auto source = Json::parse(bytes); const auto program = compile(source);
         content_boundaries(source,program); arithmetic_case(program); complete_loop(program); unlocks_and_controls(program);
+        specialist_services(program);
         std::cout << checks << " lab content, resource, lineage, evidence and reload checks passed\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

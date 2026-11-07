@@ -166,6 +166,8 @@ void recovery_walkthrough(Json source) {
         row["starts_on"] = "2017-01-01";
         row["society"] = "society.coverage_fixture";
         row["management"]["setbacks"] = Json::array();
+        // The fixture starts three years after the original founder contacts.
+        row.erase("backgrounds");
         for (auto& offer : row["business_offers"]) {
             if (offer["available_from"] < "2017-01-01") offer["available_from"] = "2017-01-01";
             if (offer["available_before"] <= "2017-01-01") offer["available_before"] = "2017-01-02";

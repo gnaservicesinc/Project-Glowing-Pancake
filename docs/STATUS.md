@@ -699,11 +699,17 @@ repair exposure. Office Services shows actual successes, caught failures,
 executed failed writes, and repair payables. Staging, promotion, rollback and
 compatibility terms retain their control settings.
 
-The next Lab design gap is capability coverage. Qualified releases still use
-the introductory document and scanned-table axes. The game design also calls
-for coding, scientific/industrial, social and autonomous work. Extend authored
-training, held-out evaluations and product fit together so new axes affect
-player decisions. [Model design](GAME_DESIGN.md#model-design).
+The Lab now trains and measures six capability axes. Four new datasets target
+software and reasoning, science and industry, social interaction, and
+autonomous workflows. The independent capability suite qualifies these domains
+for coding APIs, research toolkits, social companions and robotics agents.
+The introductory document and scanned-table tests retain their scope. Reviewed
+content **0.21.0-dev.1**, generation **21**, passes all 21 opening round trips.
+[Lab capabilities and deployment](../src/core/LAB.md).
+
+The next coverage gap is monitoring deployed work. Give players a way to see
+where actual reliability deteriorates, connect the change to customer workload
+and evidence, and respond through the existing Lab and Office controls.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

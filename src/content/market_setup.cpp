@@ -84,8 +84,13 @@ std::string canonical_market_setup_bytes(const MarketSetup& setup, core::Ordinal
         if (!offer->required_research.empty()) offers.back()["required_research"] = offer->required_research;
         if (std::any_of(offer->required.begin(),offer->required.end(),[](auto value){return value.value()>0;})) {
             auto& encoded=offers.back();
-            encoded["required_bp"]={offer->required[0].value(),offer->required[1].value()};
-            encoded["review_credit_bp"]={offer->review_credit[0].value(),offer->review_credit[1].value()};
+            const auto profile=[](const core::LabProfile& values) {
+                auto result=Json::array();
+                for (std::size_t i=0;i<core::stored_lab_domains(values);++i) result.push_back(values[i].value());
+                return result;
+            };
+            encoded["required_bp"]=profile(offer->required);
+            encoded["review_credit_bp"]=profile(offer->review_credit);
             encoded["review_staff"]=offer->review_staff;
             encoded["review_monthly_cost_cents"]=offer->review_monthly_cost.value();
             encoded["review_tasks_per_day"]=offer->review_tasks_per_day;

@@ -2,10 +2,10 @@
 
 `lab.hpp` owns delivered data licenses, research attempts, checkpoint lineage and
 evaluation evidence. Scenarios supply a validated catalog; the shared compiler
-hash includes every numeric input. The first-playable catalog is
-`data/runtime/first-playable.json`: four fictional data offers, six research
-nodes, five recipes and three evaluation plans. No real dataset or ML execution
-is included. Fictional use rights have no bearing on the game's asset licenses.
+hash includes every numeric input. The first-playable catalog in
+`data/runtime/first-playable.json` has eight fictional data offers, six research
+nodes, six recipes and four evaluation plans. The data licenses apply to game
+models. The game simulates training and evaluation offline.
 
 All mutations use revision-checked `Simulation` commands and the existing
 accounts/capacity transaction. Data and methodology costs are paid once per
@@ -21,8 +21,15 @@ model stores actual accumulated work, the recipe and a sorted unique data
 mixture. Cloning a stopped checkpoint preserves exactly those resources and
 capability. Continuing adds only new actual work. Continuation retains its
 recipe/mixture; using new data requires a fresh candidate in this slice, so old
-compute cannot instantly learn newly purchased data. Cross-recipe transfer,
-synthetic data and broader capability domains remain later work.
+compute cannot instantly learn newly purchased data.
+
+The Lab uses six axes in this order: documents, scanned tables, software and
+reasoning, science and industry, social interaction, and autonomous
+workflows. Recipes can support a subset. The sequence model uses specialized
+code or dialogue data. The efficient recipe uses experiment and simulation
+data. The image-feature recipe can learn from supervised robotics traces.
+The introductory recipes and two-domain tests retain their original scopes
+and the introductory campaign rubric scores those two domains.
 
 Previews return time, license cost, bottlenecks and uncertain intervals, without
 reading/drawing RNG. They assume full requested capacity; real outages delay
@@ -34,10 +41,18 @@ overlapping headline tests can be biased by contamination. Neither raises true
 capability. Findings name only covered subgroups and suggest targeted retraining,
 human review or narrower promises. M3-02 now wires those responses into authoritative deployment and the player interface.
 
+Choose the independent capability suite in Lab Evaluate to qualify the
+specialist products. The coding API requires software evidence, the research
+toolkit requires science evidence, the social companion requires interaction
+evidence, and the robotics agent requires workflow evidence. The release
+preview lists each threshold. Each additional axis keeps its own data fit,
+training bottleneck and measured interval.
+
 Saves retain all licenses/payments, research attempts, actual work, lineage,
 evidence and RNG. Strict loading reconciles the authored catalog, actual capacity,
-payments, prerequisite timing, model formula and every evaluation draw. Older
-engineering saves retain an absent lab; a lab scenario cannot silently drop it.
+payments, prerequisite timing, model formula and every evaluation draw. Short
+two-axis profiles retain their encoding and archived content retains its
+identity. Normal save opening still requires the campaign's content generation.
 History/draw replay is confined to load/save validation, not daily advancement.
 
 Run `build/release/bin/pgp-headless --lab-demo data/runtime/first-playable.json`

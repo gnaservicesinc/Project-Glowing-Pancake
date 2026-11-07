@@ -43,12 +43,34 @@ std::vector<std::string> ids(const Json& value) {
     }
     return result;
 }
+template<class Profile, class Convert> Profile named_profile(const Json& value, Profile result, Convert convert) {
+    if (!value.is_object()) invalid("Lab profiles use named task domains");
+    for (std::size_t i=0;i<core::introductory_lab_domains;++i)
+        if (!value.contains(core::lab_domain_names[i])) invalid("Lab profiles need the two introductory task domains");
+    for (const auto& [key,entry]:value.items()) {
+        const auto domain=std::ranges::find(core::lab_domain_names,key);
+        if (domain==core::lab_domain_names.end()) invalid("Unsupported Lab task domain");
+        result[static_cast<std::size_t>(domain-core::lab_domain_names.begin())]=convert(integer(entry));
+    }
+    return result;
+}
 core::LabProfile profile(const Json& value) {
-    fields(value, {"documents", "scanned_tables"});
-    return {core::BasisPoints{integer(value.at("documents"))}, core::BasisPoints{integer(value.at("scanned_tables"))}};
+    return named_profile(value,core::empty_lab_profile,[](auto bp) { return core::BasisPoints{bp}; });
+}
+auto data_scale(const Json& value) {
+    return named_profile(value,std::array<std::uint64_t,core::lab_domain_count>{},[](auto units) { return units; });
 }
 Json profile_json(const core::LabProfile& value) {
-    return {{"documents", value[0].value()}, {"scanned_tables", value[1].value()}};
+    auto result=Json::object();
+    for (std::size_t i=0;i<value.size();++i)
+        if (i<core::introductory_lab_domains || value[i].value()>0) result[core::lab_domain_names[i]]=value[i].value();
+    return result;
+}
+Json data_scale_json(const std::array<std::uint64_t,core::lab_domain_count>& value) {
+    auto result=Json::object();
+    for (std::size_t i=0;i<value.size();++i)
+        if (i<core::introductory_lab_domains || value[i]>0) result[core::lab_domain_names[i]]=value[i];
+    return result;
 }
 template<class Rows> auto ordered(const Rows& rows) {
     std::vector<const typename Rows::value_type*> result;
@@ -97,10 +119,9 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
     for (const auto& row : doc.at("recipes")) {
         fields(row, {"id", "name", "requires_research", "baseline_bp", "gain_bp", "ceiling_bp", "fit_bp", "data_scale", "compute_scale_milli_CU",
             "minimum_work_milli_CU", "maximum_work_milli_CU", "preview_uncertainty_bp", "inference_milli_CU_per_task", "minimum_memory_mib", "interconnect"});
-        fields(row.at("data_scale"), {"documents", "scanned_tables"});
         catalog.recipes.push_back({text(row.at("id")), text(row.at("name")), ids(row.at("requires_research")),
             profile(row.at("baseline_bp")), profile(row.at("gain_bp")), profile(row.at("ceiling_bp")), profile(row.at("fit_bp")),
-            {integer(row.at("data_scale").at("documents")), integer(row.at("data_scale").at("scanned_tables"))},
+            data_scale(row.at("data_scale")),
             core::MilliCU{integer(row.at("compute_scale_milli_CU"))}, core::MilliCU{integer(row.at("minimum_work_milli_CU"))},
             core::MilliCU{integer(row.at("maximum_work_milli_CU"))}, core::BasisPoints{integer(row.at("preview_uncertainty_bp"))},
             core::MilliCU{integer(row.at("inference_milli_CU_per_task"))}, integer(row.at("minimum_memory_mib")), text(row.at("interconnect"))});
@@ -129,7 +150,7 @@ std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
     }
     for (const auto* row : ordered(catalog.recipes)) recipes.push_back({{"id",row->id},{"name",row->name},{"requires_research",row->requires_research},
         {"baseline_bp",profile_json(row->baseline)},{"gain_bp",profile_json(row->gain)},{"ceiling_bp",profile_json(row->ceiling)},{"fit_bp",profile_json(row->fit)},
-        {"data_scale",{{"documents",row->data_scale[0]},{"scanned_tables",row->data_scale[1]}}},{"compute_scale_milli_CU",row->compute_scale.value()},
+        {"data_scale",data_scale_json(row->data_scale)},{"compute_scale_milli_CU",row->compute_scale.value()},
         {"minimum_work_milli_CU",row->minimum_work.value()},{"maximum_work_milli_CU",row->maximum_work.value()},
         {"preview_uncertainty_bp",row->preview_uncertainty.value()},{"inference_milli_CU_per_task",row->inference_per_task.value()},
         {"minimum_memory_mib",row->minimum_memory_mib},{"interconnect",row->interconnect}});

@@ -151,9 +151,21 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
         const auto preview=preview_training(lab,request);
         if (preview.licensed && preview.prerequisites_met) offer(2,"train",recipe.id,400-static_cast<std::int64_t>(i),StartTraining{std::move(request)});
     }
+    const auto useful_assessment=[&](const EvaluationPlan& plan,const LabModel& model) {
+        const auto axes=stored_lab_domains(plan.coverage);
+        if (axes==introductory_lab_domains) return true;
+        return std::ranges::any_of(s.deployments->catalog,[&](const auto& service) {
+            if ((!service.required_recipe.empty() && service.required_recipe!=model.recipe_id) ||
+                std::ranges::find(profile.services,service.product.id)==profile.services.end()) return false;
+            for (std::size_t axis=introductory_lab_domains;axis<axes;++axis)
+                if (service.required[axis].value()>0 && plan.coverage[axis].value()>0) return true;
+            return false;
+        });
+    };
     for (const auto& model:lab.models) {
         const auto& work=find(s.capacity->projects,model.project_id);if (work.status!=ProjectStatus::completed) continue;
-        for (const auto& plan:lab.catalog.evaluations) if (can_work && requires_met(lab,plan.requires_research) && affordable(plan.cash) &&
+        for (const auto& plan:lab.catalog.evaluations) if (can_work && useful_assessment(plan,model) &&
+            requires_met(lab,plan.requires_research) && affordable(plan.cash) &&
             std::none_of(lab.evaluations.begin(),lab.evaluations.end(),[&](const auto& row){return row.model_id==model.id && row.plan_id==plan.id;}))
             offer(3,"evaluate",model.id,500,StartEvaluation{"evidence."+model.recipe_id+"."+plan.id,model.id,plan.id,allocation});
         for (const auto& evidence:lab.evaluations) if (evidence.completed && evidence.model_id==model.id) for (const auto& id:profile.services) {

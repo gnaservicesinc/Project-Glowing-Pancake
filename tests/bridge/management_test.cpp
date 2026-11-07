@@ -18,9 +18,11 @@ void run() {
     auto snapshot=std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,initial,{},true});
     management.update(snapshot,program,true);
     check(management.funding()->rowCount()==4 && management.specialists()->rowCount()==1 && management.policyDefaults().value(QStringLiteral("budget")).toString()==QStringLiteral("100000.00"),"Player funding/team/policy defaults differ from content");
-    check(management.available() && management.dataOffers()->rowCount()==4 && management.researchTopics()->rowCount()==6,"Player catalog missing authored options");
+    check(management.available() && management.dataOffers()->rowCount()==8 && management.researchTopics()->rowCount()==6,"Player catalog missing authored options");
     check(management.recipes().front().toMap().value(QStringLiteral("id")).toString()==QStringLiteral("recipe.document_baseline"),"Opening recipe starts on a locked research branch");
     check(management.evaluations().front().toMap().value(QStringLiteral("id")).toString()==QStringLiteral("evaluation.held_out"),"Default evaluation cannot qualify the opening service");
+    check(management.servicePreview(QStringLiteral("product.coding_api"),{},false).contains(QStringLiteral("software and reasoning ≥ 58.00%")),
+        "Specialist service did not disclose its additional qualification requirement");
     const auto preview=management.trainingPreview(QStringLiteral("recipe.document_baseline"),QStringLiteral("lease.initial"),{QStringLiteral("data.licensed_documents")},QStringLiteral("60"),QStringLiteral("4"),QStringLiteral("3600"));
     check(!preview.value(QStringLiteral("ready")).toBool() && preview.value(QStringLiteral("text")).toString().contains(QStringLiteral("$12,000.00")),"Unlicensed preview omitted cost or permitted training");
     for (const auto& bad:{QStringLiteral("1e6"),QStringLiteral("-1"),QStringLiteral("0.0001"),QStringLiteral("99999999999999999")}) {

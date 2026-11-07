@@ -1,14 +1,9 @@
 #include "lab_json.hpp"
+#include "lab_profile_json.hpp"
 #include <pgp/content/lab_catalog.hpp>
 
 namespace pgp::persistence::detail {
 namespace {
-Json profile(const core::LabProfile& value) { return Json::array({value[0].value(), value[1].value()}); }
-core::LabProfile parse_profile(const Json& value) {
-    array(value,"lab/profile",core::lab_domain_count);
-    if (value.size() != core::lab_domain_count) invalid("lab/profile","Wrong domain count");
-    return {core::BasisPoints{i64(value.at(0),"lab/profile")}, core::BasisPoints{i64(value.at(1),"lab/profile")}};
-}
 std::string label(const Json& value, bool empty = false) { return text(value,"lab/text",256,empty); }
 std::vector<std::string> strings(const Json& value, std::size_t bound, std::size_t length = 256) {
     array(value,"lab/strings",bound); std::vector<std::string> result;
@@ -25,12 +20,12 @@ Json lab_json(const core::LabState& state) {
     }
     for (const auto& row : state.models) {models.push_back({{"id",row.id},{"recipe_id",row.recipe_id},{"parent_id",row.parent_id},{"project_id",row.project_id},
         {"data_ids",row.data_ids},{"created_on",row.created_on.value()},{"inherited_work_milli_CU",row.inherited_work.value()},
-        {"consumed_work_milli_CU",row.consumed_work.value()},{"capability_bp",profile(row.capability)}});
+        {"consumed_work_milli_CU",row.consumed_work.value()},{"capability_bp",lab_profile_json(row.capability)}});
         if(row.checkpoint_cursor) models.back()["checkpoint_cursor"]=*row.checkpoint_cursor;
     }
     for (const auto& row : state.evaluations) evaluations.push_back({{"id",row.id},{"model_id",row.model_id},{"plan_id",row.plan_id},{"project_id",row.project_id},
-        {"model_work_milli_CU",row.model_work.value()},{"completed",row.completed},{"measured_bp",profile(row.measured)},
-        {"lower_bp",profile(row.lower)},{"upper_bp",profile(row.upper)},{"findings",row.findings},
+        {"model_work_milli_CU",row.model_work.value()},{"completed",row.completed},{"measured_bp",lab_profile_json(row.measured)},
+        {"lower_bp",lab_profile_json(row.lower)},{"upper_bp",lab_profile_json(row.upper)},{"findings",row.findings},
         {"stream_before",row.stream_before},{"stream_after",row.stream_after}});
     Json publications=Json::array(),insights=Json::array();
     for (const auto& row:state.publications) publications.push_back({{"research",row.research_id},{"day",row.day.value()}});
@@ -83,14 +78,14 @@ core::LabState parse_lab(const Json& value) {
         state.models.push_back({label(row.at("id")),label(row.at("recipe_id")),label(row.at("parent_id"),true),label(row.at("project_id"),true),
             strings(row.at("data_ids"),core::lab_catalog_limit),core::OrdinalDay{i64(row.at("created_on"),"lab/model/created_on")},
             core::MilliCU{i64(row.at("inherited_work_milli_CU"),"lab/model/inherited_work")},
-            core::MilliCU{i64(row.at("consumed_work_milli_CU"),"lab/model/consumed_work")},parse_profile(row.at("capability_bp"))});
+            core::MilliCU{i64(row.at("consumed_work_milli_CU"),"lab/model/consumed_work")},parse_lab_profile(row.at("capability_bp"))});
         if(row.contains("checkpoint_cursor")) state.models.back().checkpoint_cursor=u64(row.at("checkpoint_cursor"),"lab/model/checkpoint_cursor",core::capacity_day_limit);
     }
     for (const auto& row : value.at("evaluations")) {
         fields(row,"lab/evidence",{"id","model_id","plan_id","project_id","model_work_milli_CU","completed","measured_bp","lower_bp","upper_bp","findings","stream_before","stream_after"});
         state.evaluations.push_back({label(row.at("id")),label(row.at("model_id")),label(row.at("plan_id")),label(row.at("project_id")),
             core::MilliCU{i64(row.at("model_work_milli_CU"),"lab/evidence/model_work")},boolean(row.at("completed"),"lab/evidence/completed"),
-            parse_profile(row.at("measured_bp")),parse_profile(row.at("lower_bp")),parse_profile(row.at("upper_bp")),
+            parse_lab_profile(row.at("measured_bp")),parse_lab_profile(row.at("lower_bp")),parse_lab_profile(row.at("upper_bp")),
             strings(row.at("findings"),core::lab_domain_count,512),u64(row.at("stream_before"),"lab/stream_before"),u64(row.at("stream_after"),"lab/stream_after")});
     }
     return state;

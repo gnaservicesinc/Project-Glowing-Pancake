@@ -132,7 +132,7 @@ std::string index_label(std::string_view path,std::size_t index,std::size_t coun
         return std::string(core::future_condition_names[index]);
     if (count==core::frontier_extra_count &&
         (path.ends_with("/baseline_bp") || path.ends_with("/gain_bp") || path.ends_with("/ceiling_bp") || path.ends_with("/coverage_bp")))
-        return std::string(core::frontier_metric_names[index+core::lab_domain_count]);
+        return std::string(core::frontier_metric_names[index+core::introductory_lab_domains]);
     if(count==7 && path.ends_with("/identity_effects_bp")) {
         constexpr std::array<const char*,7> events{"Independent testimony","Fulfilled commitment","Broken commitment",
             "Executive disclosure","Coercive application","Resistance disclosure","Revoked agreement"};
@@ -156,10 +156,9 @@ std::string index_label(std::string_view path,std::size_t index,std::size_t coun
         constexpr const char* names[]{"January","February","March","April","May","June","July","August","September","October","November","December"};
         return names[index];
     }
-    if(count==core::lab_domain_count && (path.ends_with("/baseline_bp") || path.ends_with("/gain_bp") || path.ends_with("/ceiling_bp") ||
-        path.ends_with("/relevance_bp") || path.ends_with("/coverage_bp") || path.ends_with("/required_bp") ||
-        path.ends_with("/fit_bp") || path.ends_with("/data_scale")))
-        return label(std::string(core::lab_domain_names[index]));
+    if(count>=core::introductory_lab_domains && count<=core::lab_domain_count &&
+        (path.ends_with("/required_bp") || path.ends_with("/review_credit_bp")))
+        return std::string(core::lab_domain_labels[index]);
     return "Entry "+std::to_string(index+1);
 }
 }

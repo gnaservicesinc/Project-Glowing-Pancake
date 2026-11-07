@@ -58,7 +58,10 @@ now have explicit public-reuse or local-use grants and keep compatible buyer-sid
 work available after replacement or retirement. Agent-service releases now
 choose tool permissions and review cadence. Actual attempts consume compute,
 successful work earns fees, and executed failures book repair payables.
-The next coverage gap is the Lab's authored capability and evaluation axes.
+The Lab now supports all six capability axes through targeted data, independent
+measurements and distinct qualification floors for four specialist services.
+Next is deployment monitoring for deteriorating reliability and changing
+customer workloads.
 
 ## M0 — Toolchain and platform proof
 

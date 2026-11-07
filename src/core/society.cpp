@@ -1,4 +1,5 @@
 #include <pgp/core/society.hpp>
+#include <pgp/core/lab.hpp>
 
 #include <algorithm>
 #include <numeric>
@@ -158,7 +159,7 @@ void validate_society_catalog(const SocietyCatalog& catalog) {
         from_ordinal(forum.first_agenda).year<2014 || from_ordinal(forum.first_agenda).year>9980 ||
         forum.repeat_years<4 || forum.repeat_years>16 || forum.quorum<1 || forum.quorum>society_regions ||
         forum.hearing.value()<1 || forum.hearing.value()>180 || forum.term.value()<361 || forum.term.value()>1461 ||
-        forum.channel==ProductChannel::legacy || forum.evidence_axis>=2 || forum.evidence_floor.value()==0 ||
+        forum.channel==ProductChannel::legacy || forum.evidence_axis>=lab_domain_count || forum.evidence_floor.value()==0 ||
         forum.endorsement_fee.value()<1 || forum.endorsement_fee.value()>100000000 || forum.endorsement_shift.value()>1500)
         invalid("The standards forum requires a bounded local implementation and evidence contract.");
 }

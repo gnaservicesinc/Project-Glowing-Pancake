@@ -689,8 +689,10 @@ MarketSetup parse_market_setup(const Json& value, const std::string& path, core:
         if (offer.contains("required_bp")) {
             const auto parse_profile=[&](const Json& input) {
                 array(input,path,core::lab_domain_count);
-                if (input.size()!=core::lab_domain_count) fail("service_catalog",path,"Expected one requirement per task domain");
-                return core::LabProfile{core::BasisPoints{integer(input[0],path,0,10000)},core::BasisPoints{integer(input[1],path,0,10000)}};
+                if (input.size()<core::introductory_lab_domains) fail("service_catalog",path,"Expected at least the two introductory task domains");
+                auto result=core::empty_lab_profile;
+                for (std::size_t i=0;i<input.size();++i) result[i]=core::BasisPoints{integer(input[i],path,0,10000)};
+                return result;
             };
             row.required=parse_profile(offer.at("required_bp"));
             if (offer.contains("review_credit_bp")) row.review_credit=parse_profile(offer.at("review_credit_bp"));

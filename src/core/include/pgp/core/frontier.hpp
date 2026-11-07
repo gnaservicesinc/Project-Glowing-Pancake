@@ -17,7 +17,9 @@ inline constexpr std::size_t frontier_metric_count = 11;
 inline constexpr std::array<std::string_view, frontier_metric_count> frontier_metric_names{
     "Documents", "Structured data", "Perception", "Software", "Reasoning", "Science",
     "Held-out transfer", "Reliability", "Autonomous workflows", "Novel science and engineering", "Control"};
-inline constexpr std::size_t frontier_extra_count = frontier_metric_count - lab_domain_count;
+// Independent Frontier qualification uses the two introductory task scores
+// alongside its separately authored transfer, breadth and control metrics.
+inline constexpr std::size_t frontier_extra_count = frontier_metric_count - introductory_lab_domains;
 using FrontierScores = std::array<std::uint32_t, frontier_metric_count>;
 using FrontierExtraScores = std::array<std::uint32_t, frontier_extra_count>;
 inline constexpr std::size_t frontier_system_limit = 64;

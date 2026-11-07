@@ -105775,6 +105775,117 @@
         "prepared_headquarters": 21,
         "scenarios": 7
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "c5500dab64775b93887d730941b0e8fd725392d4629e6dd81e52f0fcc7debf04",
+          "before_hash": "2e08e4e507d6bdbc828c2ddc3388151ca9db53b372908186c8b3ab79176683fc",
+          "change": "changed",
+          "id": "market.century",
+          "kind": "regional_markets",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "65146e54ffec0c53958341909c01f145d363f62b8d1a85ee771d73e13fe50617",
+          "before_hash": "690fbf8520e1bd5a1691136f97263b7ef40962d6153f470924bb0351347e47b6",
+          "change": "changed",
+          "id": "market.global_launch",
+          "kind": "regional_markets",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "2f6ed9f5149eea4ecf0b0450b19f08ab7a2f7a0da74673bc5a2b06fbcb725071",
+          "before_hash": "86c3c86ee73de6510e69080bb78a450f5e7713a5fd1700331a2dadf808492c10",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 10,
+          "revision": 11
+        },
+        {
+          "after_hash": "2ba13e93e1238f812f7128bc4fe5543e1fcee1f2c99e8afbdaa0a678e7ddbff4",
+          "before_hash": "16d5c26a20e6649fbf364142681a0ffa44cc93bcda61ad9347033ff498a0ee6e",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 10,
+          "revision": 11
+        },
+        {
+          "after_hash": "4fc5e91db9436a75bd6efa6c39908709fe8e6fc32469fabdbd1eec18e4171441",
+          "before_hash": "d2dafd039e11b12a7592015f09d2063c519d5b37f6fa4fef2fcdc2a553c69248",
+          "change": "changed",
+          "id": "scenario.first_playable",
+          "kind": "scenario",
+          "old_revision": 13,
+          "revision": 14
+        },
+        {
+          "after_hash": "c486d0ee541a724026c5ccf33df7c81e9c5bba9404e3abee705f02e2a9dc1988",
+          "before_hash": "313f79789d4f256a8b6f24fe75daad49d458ad054a0a7a8768035d5d0fbb30dd",
+          "change": "changed",
+          "id": "scenario.world_competition",
+          "kind": "scenario",
+          "old_revision": 14,
+          "revision": 15
+        },
+        {
+          "after_hash": "7ed256c24ad3d0e5430348dbd186602fd16d4a9407ae9b30292573c81b8bd0d3",
+          "before_hash": "4829409e87f9999777a85d6027a7a1226a29d270403d8c6d19802b9685468bb9",
+          "change": "changed",
+          "id": "scenario.world_expanded",
+          "kind": "scenario",
+          "old_revision": 14,
+          "revision": 15
+        },
+        {
+          "after_hash": "30fc738218715355064f94dbc7e72a1d9b16e6be455f87a25551bf298657ee7c",
+          "before_hash": "875528bc0cd86a7fc982d31b530d7f0f3158e134258d05a1809019887a5dd9ba",
+          "change": "changed",
+          "id": "scenario.world_forgiving",
+          "kind": "scenario",
+          "old_revision": 14,
+          "revision": 15
+        },
+        {
+          "after_hash": "67410d39e8f3ae0083be9855e9c3f8fbb3d53eb8cbb7adaadae4d5c4f80b4293",
+          "before_hash": "483f9e154712fa3dd17acf1fdf071e2eee10e3c6c6f719425064be05d95e330b",
+          "change": "changed",
+          "id": "scenario.world_reduced",
+          "kind": "scenario",
+          "old_revision": 14,
+          "revision": 15
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "90a83c376bf4a8fe156c6e9f2062b98c3dd082029a1bf31097fdf93f565e90fc",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.21.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 21,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.20.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000020.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000021.collection.json",
+      "summary": "Add specialist datasets, independent capability measurements and service qualification across the Lab.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 21,
+        "lints": [],
+        "prepared_headquarters": 21,
+        "scenarios": 7
+      }
     }
   ],
   "format": 1

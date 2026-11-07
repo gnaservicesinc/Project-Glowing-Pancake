@@ -208,9 +208,13 @@ void validate_lab_catalog(const LabCatalog& catalog) {
             recipe.minimum_work.value() == 0 || recipe.maximum_work < recipe.minimum_work ||
             recipe.maximum_work.value() > 1'000'000'000'000LL || recipe.inference_per_task.value() == 0)
             invalid("Recipe has an invalid finite compute or inference bound");
-        for (std::size_t j = 0; j < lab_domain_count; ++j)
-            if (recipe.data_scale[j] == 0 || recipe.data_scale[j] > 1'000'000'000'000ULL || recipe.ceiling[j] < recipe.baseline[j])
+        for (std::size_t j = 0; j < lab_domain_count; ++j) {
+            if (j>=introductory_lab_domains && recipe.data_scale[j]==0 && recipe.baseline[j].value()==0 &&
+                recipe.gain[j].value()==0 && recipe.ceiling[j].value()==0 && recipe.fit[j].value()==0) continue;
+            if (recipe.data_scale[j]==0 || recipe.data_scale[j]>1'000'000'000'000ULL ||
+                recipe.ceiling[j]<recipe.baseline[j] || (j>=introductory_lab_domains && recipe.ceiling[j].value()==0))
                 invalid("Recipe data scales and capability ceilings are invalid");
+        }
     }
     for (const auto& plan : catalog.evaluations) {
         label(plan.name); references(plan.requires_research);
@@ -227,6 +231,7 @@ LabProfile model_capability(const LabCatalog& catalog, const LabModel& model) {
                                     static_cast<std::uint64_t>(recipe.compute_scale.value()));
     LabProfile result = empty_lab_profile;
     for (std::size_t j = 0; j < lab_domain_count; ++j) {
+        if (recipe.data_scale[j]==0) continue;
         const auto bottleneck = std::min(compute, saturation(units[j], recipe.data_scale[j]));
         const std::uint64_t factors[]{static_cast<std::uint64_t>(recipe.gain[j].value()), bottleneck,
                                       static_cast<std::uint64_t>(recipe.fit[j].value())};
@@ -256,6 +261,7 @@ TrainingPreview preview_training(const LabState& state, const TrainingRequest& r
     const auto units = effective_data(state.catalog, model);
     const auto compute = saturation(static_cast<std::uint64_t>(model.consumed_work.value()), static_cast<std::uint64_t>(recipe.compute_scale.value()));
     for (std::size_t j = 0; j < lab_domain_count; ++j) {
+        if (recipe.data_scale[j]==0) continue;
         result.lower[j] = BasisPoints{std::max(INT64_C(0), profile[j].value() - recipe.preview_uncertainty.value())};
         result.upper[j] = BasisPoints{std::min(INT64_C(10000), profile[j].value() + recipe.preview_uncertainty.value())};
         result.bottlenecks[j] = saturation(units[j], recipe.data_scale[j]) < compute ? "data coverage" : "training compute";

@@ -1983,3 +1983,24 @@ altered outcome and verifies promotion, rollback and exact save reopening.
 Offscreen keyboard checks at 100% and 200% text cover both launch quotes,
 confirmation, settlement, the Office results, and exact plain and compact
 market histories.
+
+### Specialist training, held-out evidence and customer fit
+
+The Lab's two introductory domains now sit alongside software and reasoning,
+science and industry, social interaction, and autonomous workflows. Four
+targeted licenses and three recipes train distinct capability profiles.
+The independent capability suite reports scope, coverage and intervals.
+Coding APIs, research toolkits, social companions and robotics agents require
+their own additional lower bounds. The saved report controls launch and
+continues to qualify the exact checkpoint after reopening.
+
+Generation **21** of reviewed content, **0.21.0-dev.1**, revises seven scenarios
+and two regional catalogs. The writer validates all 21 prepared openings and
+their exact saves. The updated compiler verifies the original generation-20
+collection hash. Save opening uses the matching content generation.
+
+The optimized Mac build and 14 focused CTests pass. The Lab fixture exercises all four paid
+training and evaluation routes, rejects an introductory report for each,
+settles qualified customer work and checks exact reopening. Offscreen
+keyboard checks at 100% and 200% text start the capability suite, inspect
+the expanded report, launch the coding API, and reopen the settled save.

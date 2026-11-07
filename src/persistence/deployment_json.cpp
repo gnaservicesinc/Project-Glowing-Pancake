@@ -1,13 +1,8 @@
 #include "deployment_json.hpp"
+#include "lab_profile_json.hpp"
 #include "agent_service_json.hpp"
 namespace pgp::persistence::detail {
 namespace {
-Json profile(const core::LabProfile& p) { return {p[0].value(),p[1].value()}; }
-core::LabProfile parse_profile(const Json& j) {
-    array(j,"deployment/profile",2);
-    if (j.size()!=2) invalid("deployment/profile","Expected two task domains");
-    return {core::BasisPoints{i64(j[0],"deployment/profile")},core::BasisPoints{i64(j[1],"deployment/profile")}};
-}
 std::string label(const Json& j) { return text(j,"deployment/text",256); }
 core::Cents cents(const Json& j) { return core::Cents{i64(j,"deployment/cents")}; }
 Json release(const core::DeploymentRecord& row) {
@@ -40,7 +35,7 @@ Json deployment_json(const core::DeploymentState& state) {
         catalog.push_back({{"id",p.id},{"project",p.capacity_project_id},{"price",p.price_per_task.value()},{"available",p.available},
             {"source",w.source_id},{"starts",w.starts_on.value()},{"tasks",w.tasks_per_day},{"inference",w.inference_milli_CU_per_task.value()},
             {"staff",w.staff},{"memory",w.minimum_memory_mib},{"interconnect",w.interconnect},{"support",w.monthly_support_cost.value()},
-            {"cause",w.cause},{"required",profile(row.required)},{"review_credit",profile(row.review_credit)},{"review_staff",row.review_staff},
+            {"cause",w.cause},{"required",lab_profile_json(row.required)},{"review_credit",lab_profile_json(row.review_credit)},{"review_staff",row.review_staff},
             {"review_cost",row.review_monthly_cost.value()},{"review_tasks",row.review_tasks_per_day},{"preferences",std::move(preferences)},{"required_recipe",row.required_recipe}});
         if (p.channel != core::ProductChannel::legacy) catalog.back()["channel"] = core::channel_key(p.channel);
         if (p.monthly_migration.value() != 10000) catalog.back()["migration"] = p.monthly_migration.value();
@@ -82,7 +77,7 @@ core::DeploymentState parse_deployment(const Json& j) {
         w.staff=static_cast<std::uint32_t>(u64(row.at("staff"),"deployment/staff",1'000'000));
         w.minimum_memory_mib=u64(row.at("memory"),"deployment/memory"); w.interconnect=label(row.at("interconnect"));
         w.monthly_support_cost=cents(row.at("support")); w.cause=label(row.at("cause"));
-        value.required=parse_profile(row.at("required")); value.review_credit=parse_profile(row.at("review_credit"));
+        value.required=parse_lab_profile(row.at("required")); value.review_credit=parse_lab_profile(row.at("review_credit"));
         value.review_staff=static_cast<std::uint32_t>(u64(row.at("review_staff"),"deployment/review_staff",1'000'000));
         value.review_monthly_cost=cents(row.at("review_cost")); value.review_tasks_per_day=u64(row.at("review_tasks"),"deployment/review_tasks",core::market_task_limit);
         array(row.at("preferences"),"deployment/preferences",core::market_segment_limit);

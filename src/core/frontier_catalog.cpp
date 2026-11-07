@@ -28,7 +28,7 @@ FrontierScores model_scores(const FrontierCatalog& catalog, const FuturePath& pa
     FrontierScores result{};
     const auto branch_ceiling = static_cast<std::uint32_t>(path.ceiling.value());
     const auto task_capability = model_capability(lab, model);
-    for (std::size_t i = 0; i < lab_domain_count; ++i)
+    for (std::size_t i = 0; i < introductory_lab_domains; ++i)
         result[i] = std::min(branch_ceiling, static_cast<std::uint32_t>(task_capability[i].value()));
     const auto* profile = named(catalog.recipes, model.recipe_id);
     if (!profile) return result;
@@ -47,7 +47,7 @@ FrontierScores model_scores(const FrontierCatalog& catalog, const FuturePath& pa
         if (effective[i] == 0) continue;
         const auto data = mul_div_floor(effective[i], 10000, effective[i] + profile->data_scale).quotient;
         const auto gain = static_cast<std::uint32_t>(mul_div_floor(profile->gain[i], std::min(compute, data), 10000).quotient);
-        result[i + lab_domain_count] = std::min({branch_ceiling, profile->ceiling[i], profile->baseline[i] + gain});
+        result[i + introductory_lab_domains] = std::min({branch_ceiling, profile->ceiling[i], profile->baseline[i] + gain});
     }
     return result;
 }
