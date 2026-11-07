@@ -4,6 +4,7 @@
 #include <pgp/core/governance.hpp>
 #include <pgp/core/succession.hpp>
 #include <pgp/core/funding_support.hpp>
+#include <pgp/core/service_monitoring.hpp>
 
 namespace pgp::core {
 struct SimulationState;
@@ -46,6 +47,7 @@ struct ManagementCatalog {
     std::optional<SuccessionCatalog> succession{};
     std::vector<FundingSupportOffer> support_offers{};
     std::optional<CorporateTaxPolicy> corporate_tax{};
+    std::optional<ServiceMonitoringRules> service_monitoring{};
     auto operator<=>(const ManagementCatalog&) const = default;
 };
 struct ManagementAcceptance {

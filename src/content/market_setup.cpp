@@ -77,6 +77,7 @@ std::string canonical_market_setup_bytes(const MarketSetup& setup, core::Ordinal
             {"staff",row.staff},{"minimum_memory_mib",row.minimum_memory_mib},{"interconnect",row.interconnect},
             {"monthly_support_cost_cents",row.monthly_support_cost.value()}});
         if (!offer->required_recipe.empty()) offers.back()["required_recipe"]=offer->required_recipe;
+        if (!offer->workload_domain.empty()) offers.back()["workload_domain"]=offer->workload_domain;
         if (offer->product.channel != core::ProductChannel::legacy) {
             offers.back()["channel"] = core::channel_key(offer->product.channel);
             offers.back()["monthly_migration_bp"] = offer->product.monthly_migration.value();

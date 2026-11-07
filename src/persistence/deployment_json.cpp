@@ -40,6 +40,7 @@ Json deployment_json(const core::DeploymentState& state) {
         if (p.channel != core::ProductChannel::legacy) catalog.back()["channel"] = core::channel_key(p.channel);
         if (p.monthly_migration.value() != 10000) catalog.back()["migration"] = p.monthly_migration.value();
         if (!row.required_research.empty()) catalog.back()["research"] = row.required_research;
+        if (!row.workload_domain.empty()) catalog.back()["workload_domain"]=row.workload_domain;
     }
     for (const auto& row:state.records) records.push_back(release(row));
     Json result{{"catalog",std::move(catalog)},{"records",std::move(records)}};
@@ -59,10 +60,11 @@ core::DeploymentState parse_deployment(const Json& j) {
     for (const auto& row:j.at("catalog")) {
         fields(row,"deployment/service",{"id","project","price","available","source","starts","tasks","inference","staff","memory",
             "interconnect","support","cause","required","review_credit","review_staff","review_cost","review_tasks","preferences"},
-            {"required_recipe","channel","migration","research"});
+            {"required_recipe","channel","migration","research","workload_domain"});
         core::ServiceDefinition value;
         value.product={label(row.at("id")),label(row.at("project")),cents(row.at("price")),boolean(row.at("available"),"deployment/available")};
         if (row.contains("required_recipe")) value.required_recipe=text(row.at("required_recipe"),"deployment/required_recipe",64,true);
+        if (row.contains("workload_domain")) value.workload_domain=text(row.at("workload_domain"),"deployment/workload_domain",64);
         if (row.contains("channel")) value.product.channel = core::parse_channel(label(row.at("channel")));
         if (row.contains("migration")) value.product.monthly_migration = core::BasisPoints{i64(row.at("migration"),"deployment/migration")};
         if (row.contains("research")) {

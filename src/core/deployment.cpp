@@ -32,7 +32,15 @@ std::optional<AgentPlan> agent_plan(const ServiceDefinition& definition,const La
     auto fit=INT64_C(10000);
     for (std::size_t i=0;i<lab_domain_count;++i)
         if (definition.required[i].value()>0) fit=std::min(fit,model.capability[i].value());
-    return AgentPlan{*request.agent_controls,BasisPoints{10000-fit},agent_remedy_rate(*request.agent_controls,definition.product.price_per_task)};
+    AgentPlan plan{*request.agent_controls,BasisPoints{10000-fit},
+        agent_remedy_rate(*request.agent_controls,definition.product.price_per_task)};
+    if (!definition.workload_domain.empty()) {
+        const auto axis=std::ranges::find(lab_domain_names,definition.workload_domain);
+        if (axis==lab_domain_names.end()) invalid("Unsupported agent workload domain");
+        const auto index=static_cast<std::size_t>(axis-lab_domain_names.begin());
+        plan.shifted_failure_rate=BasisPoints{10000-std::min(fit,model.capability[index].value())};
+    }
+    return plan;
 }
 CapacityProject qualified_project(const ServiceDefinition& definition,const LabState& lab,const CapacityState& capacity,
                                  const DeployModel& request,OrdinalDay day,std::string id) {
@@ -146,6 +154,9 @@ void validate_service_catalog(const std::vector<ServiceDefinition>& catalog) {
             if (research.empty() || !prerequisites.insert(research).second)
                 invalid("Service research prerequisites must be distinct");
         }
+        if (!row.workload_domain.empty() && (row.product.channel!=ProductChannel::agent ||
+            std::ranges::find(lab_domain_names,row.workload_domain)==lab_domain_names.end()))
+            invalid("A changed workload needs a supported agent task domain");
         std::set<std::string> segments;
         for (const auto& pref:row.preferences)
             if (pref.preference.product_id!=row.product.id || !segments.insert(pref.segment_id).second)

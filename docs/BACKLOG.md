@@ -60,8 +60,10 @@ choose tool permissions and review cadence. Actual attempts consume compute,
 successful work earns fees, and executed failures book repair payables.
 The Lab now supports all six capability axes through targeted data, independent
 measurements and distinct qualification floors for four specialist services.
-Next is deployment monitoring for deteriorating reliability and changing
-customer workloads.
+Office Services now monitors workload changes using actual release-specific
+completion rates. Material declines pause the morning and show the prior
+evidence and separate trial results. Next is paid synthetic-data generation
+through a teacher checkpoint and verified, resource-limited Lab work.
 
 ## M0 — Toolchain and platform proof
 

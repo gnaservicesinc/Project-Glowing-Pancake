@@ -145,8 +145,11 @@ Json market_json(const core::MarketState& state, bool packed) {
         if (row.agent_plan) bindings.back()["agent_plan"]=agent_plan_json(*row.agent_plan);
     }
     Json changes=Json::array();
-    for (const auto& row:state.demand_changes) changes.push_back({{"id",row.id},{"segment_id",row.segment_id},
-        {"starts_on",row.starts_on.value()},{"expires_before",row.expires_before.value()},{"delta_bp",row.delta.value()}});
+    for (const auto& row:state.demand_changes) {
+        changes.push_back({{"id",row.id},{"segment_id",row.segment_id},
+            {"starts_on",row.starts_on.value()},{"expires_before",row.expires_before.value()},{"delta_bp",row.delta.value()}});
+        if (row.shifted_share.value()>0) changes.back()["shifted_share_bp"]=row.shifted_share.value();
+    }
     Json prices=Json::array();
     for (const auto& row:state.prices) prices.push_back({{"product",row.product_id},{"starts",row.starts_on.value()},{"price",row.price.value()}});
     Json result{{"owner",state.owner},{"starts_on",state.starts_on.value()},
@@ -241,9 +244,10 @@ core::MarketState parse_market(const Json& value, bool packed) {
     if (value.contains("demand_changes")) {
         array(value.at("demand_changes"),"market/demand_changes",64);
         for (const auto& row:value.at("demand_changes")) {
-            fields(row,"market/demand_change",{"id","segment_id","starts_on","expires_before","delta_bp"});
+            fields(row,"market/demand_change",{"id","segment_id","starts_on","expires_before","delta_bp"},{"shifted_share_bp"});
             result.demand_changes.push_back({label(row.at("id")),label(row.at("segment_id")),day(row.at("starts_on")),
-                day(row.at("expires_before")),core::BasisPointDelta{i64(row.at("delta_bp"),"market/demand_change/delta_bp")}});
+                day(row.at("expires_before")),core::BasisPointDelta{i64(row.at("delta_bp"),"market/demand_change/delta_bp")},
+                core::BasisPoints{row.contains("shifted_share_bp")?i64(row.at("shifted_share_bp"),"market/demand_change/shifted_share_bp"):0}});
         }
     }
     const auto& products=value.at("products");array(products,"market/products",core::market_product_limit);

@@ -12,8 +12,9 @@ APIs, consumer applications, on-premise licensing, open weights and agent
 services. It retains the introductory document services. A template defines
 its evidence, research, support, throughput, customer fit and migration limits.
 Agents require a paid review team. Open weights require redistribution rights
-for the full training lineage and carry a zero task price. The current Lab
-uses document and scanned-table evidence for the template qualification rules.
+for the full training lineage and carry a zero task price. The Lab measures
+six capability domains, with specialist products requiring evidence for their
+software, science, social or autonomous tasks.
 
 Hosted channels draw from the vendor's serving capacity. Licensed and open
 channels still need support staff and compatible hardware, supplied by their
@@ -74,6 +75,23 @@ caught failures, executed failures and the repair payable. Staged candidates
 keep their own permissions and review mode. Their traffic cap applies to
 attempts and promotion requires completed trial work. Rollback restores the
 retained controls and compatibility terms can bind them.
+
+### Changed workloads and monitoring
+
+Two regional demand incidents can temporarily introduce revised multi-step
+agent work. Their news states the share and expiry. Each workflow service
+keeps the checkpoint's ordinary and changed-task competence separate. Failures
+still consume compute and apply the reviewed permissions and repair terms.
+
+Office Services compares the same production release and buyer group over up
+to seven settled days before and during the change. Each window needs 100
+attempts. A completion drop of at least five percentage points creates one
+required morning alert. The report shows scope and coverage from the actual
+launch evidence and keeps any staged candidate's results separate. Replacing
+production starts its own comparison. Acknowledging the warning permits time
+to resume, with the recorded outcomes available for evaluation and rollout
+decisions. At the retained alert limit, the game discloses that automatic
+warnings have paused and keeps the Office results available.
 
 ## Wholesale reservations
 

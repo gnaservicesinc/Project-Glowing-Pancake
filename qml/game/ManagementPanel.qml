@@ -430,6 +430,12 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "products"
         Selection { objectName: "deployedServices"; heading: qsTr("Deployed services"); rows: manager.products }
+        Copy { visible: !!serviceOffice.selected.serviceWorkloadReport; text: qsTr("Customer workload monitoring"); font.bold: true }
+        Copy {
+            objectName: "serviceWorkloadReport"
+            visible: !!serviceOffice.selected.serviceWorkloadReport
+            text: serviceOffice.selected.serviceWorkloadReport || ""
+        }
         Copy { visible: !!serviceOffice.selected.trialAgentTerms; text: serviceOffice.selected.trialAgentTerms || "" }
         ColumnLayout {
             Layout.fillWidth: true

@@ -19,6 +19,7 @@ struct ServiceDefinition {
     std::vector<ServicePreference> preferences;
     std::string required_recipe{};
     std::vector<std::string> required_research{};
+    std::string workload_domain{};
     auto operator<=>(const ServiceDefinition&) const = default;
 };
 struct DeploymentRecord {

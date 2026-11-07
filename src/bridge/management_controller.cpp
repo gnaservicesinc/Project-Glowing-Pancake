@@ -270,6 +270,28 @@ void add_service_support(CampaignRow& row,const core::SimulationState& state,con
             QObject::tr("\nRetirement announced on %1. Serving ends on %2. Discretionary adoption is limited to existing share. Signed work continues through its term.").arg(announced,date);
     }
 }
+QString workload_sample(const core::ServiceWorkSample& sample) {
+    const auto completion=sample.completion();
+    return completion?QObject::tr("%1 completed · %2 of %3 attempts")
+        .arg(percent(*completion),number(sample.completed),number(sample.attempts())):QObject::tr("Awaiting settled work");
+}
+QString workload_summary(const core::MarketState& market,const core::ServiceWorkloadReview& review) {
+    return QObject::tr("%1 · %2 revised tasks through the day before %3\nBefore shift · %4\nDuring shift · %5")
+        .arg(weight_group(market,review.change->segment_id),percent(review.change->shifted_share),
+            text(core::iso_date(review.change->expires_before)),workload_sample(review.prior),workload_sample(review.shifted));
+}
+QString workload_evidence(const core::SimulationState& state,const core::ServiceWorkloadReview& review) {
+    const auto& catalog=state.deployments->catalog;
+    const auto definition=std::ranges::find_if(catalog,[&](const auto& row) { return row.product.id==review.production->product_id; });
+    const auto axis=std::ranges::find(core::lab_domain_names,definition->workload_domain);
+    const auto index=static_cast<std::size_t>(axis-core::lab_domain_names.begin());
+    const auto release=std::ranges::find(state.deployments->records,review.production->project_id,&core::DeploymentRecord::project_id);
+    const auto* evidence=find(state.lab->evaluations,release->evidence_id);
+    const auto* plan=find(state.lab->catalog.evaluations,evidence->plan_id);
+    return plan->coverage[index].value()>0?
+        QObject::tr("Release report %1 measured %2 with a lower bound of %3.").arg(text(evidence->id),lab_domain(index),percent(evidence->lower[index])):
+        QObject::tr("Release report %1 left %2 unmeasured.").arg(text(evidence->id),lab_domain(index));
+}
 void add_agent_details(CampaignRow& row,const core::SimulationState& state,const core::DeploymentRecord& release) {
     if (!release.agent_controls) return;
     row.detail+=QLatin1Char('\n')+agent_costs(state,release.service_id,*release.agent_controls);
@@ -296,6 +318,16 @@ void add_release_details(CampaignRow& row,const core::SimulationState& state,con
     if (current->restored_release>0)
         row.detail+=QObject::tr("\nRestored release %1.").arg(number(current->restored_release));
     add_agent_details(row,state,*current);
+    QStringList workload;
+    if (product.channel==core::ProductChannel::agent && core::service_monitoring_suspended(state))
+        workload.push_back(QObject::tr("Automatic reliability warnings are paused because monitoring reached its retained alert limit. Review settled work in this service report."));
+    for (const auto& review:core::service_workload_reviews(state,product.id)) {
+        auto detail=workload_summary(*state.market,review)+QLatin1Char('\n')+workload_evidence(state,review);
+        if (!review.completion_drop) detail+=QObject::tr("\nCollect comparable settled work from this release and buyer group.");
+        if (review.candidate.attempts()>0) detail+=QObject::tr("\nStaged release during shift · %1").arg(workload_sample(review.candidate));
+        workload.push_back(std::move(detail));
+    }
+    if (!workload.isEmpty()) row.fields.insert(QStringLiteral("serviceWorkloadReport"),workload.join(QStringLiteral("\n\n")));
     if (const auto prior=core::rollback_release(releases,*state.market,product.id); prior>0) {
         const auto& previous=releases.records[static_cast<std::size_t>(prior-1)];
         auto target=QObject::tr("Release %1 · %2 · report %3").arg(number(prior),text(previous.model_id),text(previous.evidence_id));
@@ -1092,6 +1124,12 @@ void ManagementController::authorizePricing(QString product,QString floor,QStrin
 }
 QString ManagementController::alertDetail(const core::ManagementNotice& n) const {
     if (!snapshot_ || !state().management) return {};
+    if (n.kind==core::service_monitoring_limit_notice)
+        return tr("Automatic reliability warnings are paused because monitoring reached its retained alert limit. Review completed work, failures and trial results in Office → Services. This limit preserves room for financing, lease and capacity deadlines.");
+    if (const auto review=core::service_workload_alert(state(),n)) {
+        return tr("%1\n%2\n%3\n\nIn Office → Services, compare a staged release, restore a tested release, or stop the service. The Lab can evaluate the changed task domain.")
+            .arg(readable(review->production->product_id),workload_summary(*state().market,*review),workload_evidence(state(),*review));
+    }
     for (const auto& setback:state().management->catalog.setbacks) if (setback.id==n.subject) {
         return QStringLiteral("%1\nSource %2: reduced to %3 CU/day from %4 through %5 (exclusive), then nominal capacity returns.\nServing promises get priority; finite work may finish later. Pause/stop optional projects, choose narrower service scope, move a compatible service to another paid source, or wait for restoration. Acknowledging does not repair capacity or refund costs.")
             .arg(text(setback.name),readable(setback.source_id),cu(setback.reduced_capacity.value()),text(core::iso_date(setback.starts_on)),text(core::iso_date(setback.ends_before)));

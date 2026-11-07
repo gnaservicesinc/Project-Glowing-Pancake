@@ -43,7 +43,8 @@ Cents agent_remedy_rate(AgentControls controls,Cents authored_task_price) {
     const auto base=std::max<std::int64_t>(1,authored_task_price.value());
     return Cents{controls.tools==AgentTools::external?checked_add(base,base):base};
 }
-AgentFailures agent_failures(const AgentPlan* plan,OrdinalDay day,std::string_view service,std::string_view group,std::uint64_t attempts) {
+AgentFailures agent_failures(const AgentPlan* plan,OrdinalDay day,std::string_view service,std::string_view group,std::uint64_t attempts,
+    BasisPoints shifted_share) {
     if (!plan || attempts==0) return {};
     // Round sub-task expectations with a keyed daily draw. It consumes no
     // campaign stream and stays stable across save/load and retries.
@@ -53,8 +54,13 @@ AgentFailures agent_failures(const AgentPlan* plan,OrdinalDay day,std::string_vi
         key=(key^UINT64_C(255))*UINT64_C(1099511628211);
     }
     SplitMix64 draw{key};
-    const auto expected=mul_div_floor(attempts,static_cast<std::uint64_t>(plan->failure_rate.value()),10000);
-    const auto failed=expected.quotient+(draw.bounded(10000)<expected.remainder?1U:0U);
+    const auto routine=static_cast<std::uint64_t>(plan->failure_rate.value());
+    const auto shifted=static_cast<std::uint64_t>(plan->shifted_failure_rate.value_or(plan->failure_rate).value());
+    const auto mix=plan->shifted_failure_rate?static_cast<std::uint64_t>(shifted_share.value()):0;
+    const auto denominator=mix>0?UINT64_C(100'000'000):UINT64_C(10000);
+    const auto rate=mix>0?routine*(10000-mix)+shifted*mix:routine;
+    const auto expected=mul_div_floor(attempts,rate,denominator);
+    const auto failed=expected.quotient+(draw.bounded(denominator)<expected.remainder?1U:0U);
     const auto executed=plan->controls.tools!=AgentTools::draft && plan->controls.oversight==AgentOversight::batch?failed:0;
     return {failed,executed,Cents{mul_div_floor(executed,static_cast<std::uint64_t>(plan->remedy_per_action.value()),1).quotient}};
 }

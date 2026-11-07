@@ -105886,6 +105886,138 @@
         "prepared_headquarters": 21,
         "scenarios": 7
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "b02f4cf5033425fb4c1a95a54b7e2e510eeada8511377f3c482c3900fac6a3a3",
+          "before_hash": "0935e55d2b1848cc30f28b0d637212026c4c2ca01a347de295cdab2fc6d1e359",
+          "change": "changed",
+          "id": "century.product_customer.cedar_quarter",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "b6c34e7d2e629a20f1acc2f0f8ad99f980c0e3cc1ce29ec5739c5818518fdcf5",
+          "before_hash": "8438d8a05219880437bfbbfa608572064d3ecd0ae47fec9344b0583abbce9cf3",
+          "change": "changed",
+          "id": "century.product_customer.harbormark_cycle",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "a493ca443b690df1857849776d02bcd4f52cd1bbb5c8a5142f1bf0fa0b4940b2",
+          "before_hash": "c5500dab64775b93887d730941b0e8fd725392d4629e6dd81e52f0fcc7debf04",
+          "change": "changed",
+          "id": "market.century",
+          "kind": "regional_markets",
+          "old_revision": 2,
+          "revision": 3
+        },
+        {
+          "after_hash": "ba23d0052ccb81df3cebe55bf8f998f5977046f41acd7fedddc39973ab099951",
+          "before_hash": "65146e54ffec0c53958341909c01f145d363f62b8d1a85ee771d73e13fe50617",
+          "change": "changed",
+          "id": "market.global_launch",
+          "kind": "regional_markets",
+          "old_revision": 2,
+          "revision": 3
+        },
+        {
+          "after_hash": "1a977e3f6b9e40586e0cd3ca76adb21e5848f91323f6f13a07a39374801fc17b",
+          "before_hash": "2f6ed9f5149eea4ecf0b0450b19f08ab7a2f7a0da74673bc5a2b06fbcb725071",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 11,
+          "revision": 12
+        },
+        {
+          "after_hash": "9e023be68e2afa9d272efcc31fef54d3471529301e937c0681b588ce83d042fd",
+          "before_hash": "2ba13e93e1238f812f7128bc4fe5543e1fcee1f2c99e8afbdaa0a678e7ddbff4",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 11,
+          "revision": 12
+        },
+        {
+          "after_hash": "b6465a97d952831f7b32aa8e001180c4b02b577a24ec0baa18c8c6f145ba7b95",
+          "before_hash": "4fc5e91db9436a75bd6efa6c39908709fe8e6fc32469fabdbd1eec18e4171441",
+          "change": "changed",
+          "id": "scenario.first_playable",
+          "kind": "scenario",
+          "old_revision": 14,
+          "revision": 15
+        },
+        {
+          "after_hash": "b737c2f8a17e109b3ac814b6356289efe43491b86c5ef3736b98178974b687b7",
+          "before_hash": "c486d0ee541a724026c5ccf33df7c81e9c5bba9404e3abee705f02e2a9dc1988",
+          "change": "changed",
+          "id": "scenario.world_competition",
+          "kind": "scenario",
+          "old_revision": 15,
+          "revision": 16
+        },
+        {
+          "after_hash": "f199b7c137a7a737213d4ad9b00b9b4d8f55085c4471064b0aacf9220e3a8dd5",
+          "before_hash": "7ed256c24ad3d0e5430348dbd186602fd16d4a9407ae9b30292573c81b8bd0d3",
+          "change": "changed",
+          "id": "scenario.world_expanded",
+          "kind": "scenario",
+          "old_revision": 15,
+          "revision": 16
+        },
+        {
+          "after_hash": "f1895f41df72f4f792c50b0463e710cc259554f8f33f9464401c73adddee771e",
+          "before_hash": "30fc738218715355064f94dbc7e72a1d9b16e6be455f87a25551bf298657ee7c",
+          "change": "changed",
+          "id": "scenario.world_forgiving",
+          "kind": "scenario",
+          "old_revision": 15,
+          "revision": 16
+        },
+        {
+          "after_hash": "02749079b1a47aa6a632ceff699565503b76ba3c0f724365bbb06552f5ee15b9",
+          "before_hash": "67410d39e8f3ae0083be9855e9c3f8fbb3d53eb8cbb7adaadae4d5c4f80b4293",
+          "change": "changed",
+          "id": "scenario.world_reduced",
+          "kind": "scenario",
+          "old_revision": 15,
+          "revision": 16
+        }
+      ],
+      "changed_text_keys": [
+        "century.product_customer.cedar_quarter.rise",
+        "century.product_customer.harbormark_cycle.rise"
+      ],
+      "collection_hash": "5acf3cae95740c580edf9621d0775024ff6710496bf338ed9d7b3e2f3be59494",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.22.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 22,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.21.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000021.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000022.collection.json",
+      "summary": "Model changed agent workloads in two regional incidents and surface settled service reliability alerts.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 21,
+        "lints": [],
+        "prepared_headquarters": 21,
+        "scenarios": 7
+      }
     }
   ],
   "format": 1

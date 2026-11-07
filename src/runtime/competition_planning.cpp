@@ -366,6 +366,12 @@ void prepare_rival_morning(WorldState& world,const CompiledProgram& program,Riva
     if (!rival.planning->entered_on || !active(rival.simulation) || (rival.response && rival.response->retired_on)) return;
     const auto day=campaign_day(world);
     acknowledge_leadership(rival);
+    std::vector<std::string> workload_alerts;
+    for (const auto& row:rival.simulation.management->notices)
+        if ((row.kind==service_workload_notice || row.kind==service_monitoring_limit_notice) &&
+            row.required && !row.acknowledged) workload_alerts.push_back(row.id);
+    for (const auto& id:workload_alerts)
+        if (!submit(rival,AcknowledgeManagementNotice{id})) invalid("Rival service warning was not acknowledged");
     if (const auto warning=liquidity_report(*rival.simulation.liquidity).pending_warning) if (!submit(rival,AcknowledgeLiquidityWarning{*warning})) invalid("Rival liquidity warning was not acknowledged");
     std::vector<std::string> accepted_ids;
     if (rival.simulation.business_offers) for (const auto& row:rival.simulation.business_offers->accepted) accepted_ids.push_back(row.offer_id);

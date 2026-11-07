@@ -174,6 +174,7 @@ struct MarketDemandChange {
     std::string id, segment_id;
     OrdinalDay starts_on{0}, expires_before{0};
     BasisPointDelta delta{0};
+    BasisPoints shifted_share{0};
     auto operator<=>(const MarketDemandChange&) const = default;
 };
 struct ProductCapacityBinding {
@@ -301,6 +302,8 @@ void set_product_available(MarketState& state, std::string_view product_id, bool
 [[nodiscard]] Cents market_price_on(const MarketState& state, std::string_view product_id, OrdinalDay day);
 void set_market_price(MarketState& state, OrdinalDay day, std::string_view product_id, Cents price,std::string actor={});
 [[nodiscard]] std::uint64_t effective_market_demand(const MarketState& state, const MarketSegment& segment, OrdinalDay day);
+inline constexpr std::int64_t market_shift_share_limit=5000;
+[[nodiscard]] const MarketDemandChange* market_workload_shift(const MarketState&,std::string_view segment,OrdinalDay day);
 [[nodiscard]] std::uint64_t public_market_demand(const MarketState& state, const MarketSegment& segment, OrdinalDay day);
 [[nodiscard]] std::uint64_t maximum_daily_demand(const MarketSegment& segment);
 void add_market_demand_change(MarketState& state, OrdinalDay day, MarketDemandChange change);

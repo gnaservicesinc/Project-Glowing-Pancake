@@ -40,6 +40,14 @@ core::ManagementCatalog load_management_catalog(std::string_view bytes) {
         c.corporate_tax=civic_codec::decode<core::CorporateTaxPolicy>(j.at("corporate_tax"));
         j.erase("corporate_tax");
     }
+    if (j.contains("service_monitoring")) {
+        const auto& monitor=j.at("service_monitoring");
+        fields(monitor,{"window_days","minimum_attempts","warning_drop_bp"});
+        c.service_monitoring=core::ServiceMonitoringRules{core::Days{integer(monitor.at("window_days"))},
+            count(monitor.at("minimum_attempts"),static_cast<std::uint32_t>(core::market_task_limit)),
+            core::BasisPoints{integer(monitor.at("warning_drop_bp"))}};
+        j.erase("service_monitoring");
+    }
     if (j.contains("support_offers")) {
         array(j.at("support_offers"),core::funding_offer_limit);
         for (auto row:j.at("support_offers")) {
@@ -119,6 +127,9 @@ std::string canonical_management_catalog(const core::ManagementCatalog& c) {
     if (c.governance) result["governance"]=Json::parse(canonical_governance_catalog(*c.governance));
     if (c.corporate_tax) result["corporate_tax"]=civic_codec::encode(*c.corporate_tax);
     if (c.succession) result["succession"]=Json::parse(canonical_succession_catalog(*c.succession));
+    if (const auto& monitor=c.service_monitoring;monitor) result["service_monitoring"]={
+        {"window_days",monitor->window.value()},{"minimum_attempts",monitor->minimum_attempts},
+        {"warning_drop_bp",monitor->warning_drop.value()}};
     if (!c.support_offers.empty()) {
         result["support_offers"]=Json::array();
         for (const auto& offer:c.support_offers) {

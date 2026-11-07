@@ -171,7 +171,10 @@ void supplier_paths(const Json& source) {
     accepted(constrained.choose(revision(constrained),choice,"decline"));
     auto quiet_doc=doc; pgp_test::scenario_doc(quiet_doc)["seed"]=seed_for(2,0,1); auto quiet=begin(compile(quiet_doc)); step(quiet,14);
     check(quiet.current_state().runtime.presentations.empty() && quiet.current_state().world.simulation.business_offers->accepted.empty(),"Quiet supplier outcome was not quiet");
-    auto poor_doc=doc; pgp_test::scenario_doc(poor_doc)["cash_cents"]=50000; auto poor=begin(compile(poor_doc)); step(poor,14);
+    auto poor_doc=doc;
+    pgp_test::scenario_doc(poor_doc)["cash_cents"]=50000;
+    pgp_test::scenario_doc(poor_doc).erase("backgrounds");
+    auto poor=begin(compile(poor_doc)); step(poor,14);
     check(poor.current_state().runtime.activations.empty(),"An unaffordable supplier offer was presented");
 }
 void demand_paths(const Json& source) {
@@ -220,7 +223,9 @@ void research_and_finance(const Json& source) {
     check(research.current_state().world.simulation.lab->research.size()==4,"Research news granted duplicate knowledge");
     const auto research_saved=research.checkpoint(); accepted(research.prepare_opening(revision(research)));
     check(research.checkpoint()==research_saved,"Repeating a research bulletin granted or dispatched work twice");
-    auto doc=isolated(source,"slice.liquidity_warning"); pgp_test::scenario_doc(doc)["cash_cents"]=100000;
+    auto doc=isolated(source,"slice.liquidity_warning");
+    pgp_test::scenario_doc(doc)["cash_cents"]=100000;
+    pgp_test::scenario_doc(doc).erase("backgrounds");
     const auto program=compile(doc); auto finance=begin(program); step(finance,31);
     check(occurrences(finance.checkpoint(),"slice.liquidity_warning")==1,"Real liquidity warning did not start its finance alert");
     const auto deadline=core::liquidity_report(*finance.current_state().world.simulation.liquidity).deadline;

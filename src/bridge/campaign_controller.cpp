@@ -447,7 +447,12 @@ QString CampaignController::requiredTitle() const {
     if (kind == QStringLiteral("core")) return QStringLiteral("Delivery decision");
     if (kind == QStringLiteral("content")) return presentation_heading(*waitingPresentation(),program_.collection);
     if (kind == QStringLiteral("liquidity")) return QStringLiteral("Unpaid obligations need a response");
-    if (kind == QStringLiteral("management")) return QStringLiteral("Temporary compute setback");
+    if (kind == QStringLiteral("management")) {
+        const auto& notices=snapshot_->checkpoint.world.simulation.management->notices;
+        const auto next=std::ranges::find_if(notices,[](const auto& row) { return row.required && !row.acknowledged; });
+        if (next->kind==core::service_monitoring_limit_notice) return tr("Automatic service warnings paused");
+        return next->kind==core::service_workload_notice?tr("Agent service reliability dropped"):tr("Temporary compute setback");
+    }
     if (kind==QStringLiteral("site")) return QStringLiteral("Owned site disruption");
     if (kind==QStringLiteral("institution")) return QStringLiteral("Public case needs attention");
     if (kind==QStringLiteral("executive") || kind==QStringLiteral("governance")) return QStringLiteral("Corporate response needs attention");

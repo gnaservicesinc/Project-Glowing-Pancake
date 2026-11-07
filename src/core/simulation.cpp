@@ -499,7 +499,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 if ((!action.industry_adoptions.empty() && !action.market_allocation) ||
                     (!next.market && (action.market_allocation || !action.industry_adoptions.empty())))
                     refuse(CommandReason::invalid_argument,"Shared industry context requires an actual market and allocation.");
-                if (required_management_notice(next)) refuse(CommandReason::morning_not_ready,"Acknowledge the capacity setback and its recovery date before advancing.");
+                if (required_management_notice(next)) refuse(CommandReason::morning_not_ready,"Review the required management alert before advancing.");
                 if (required_site_alert(next)) refuse(CommandReason::morning_not_ready,"Review the site disruption before advancing work.");
                 if (required_governance_notice(next)) refuse(CommandReason::morning_not_ready,"Review the corporate concern, deadline or outcome before advancing.");
                 if (required_succession_notice(next)) refuse(CommandReason::morning_not_ready,"Review the leadership deadline or handover before advancing.");

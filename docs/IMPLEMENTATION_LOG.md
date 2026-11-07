@@ -2004,3 +2004,28 @@ training and evaluation routes, rejects an introductory report for each,
 settles qualified customer work and checks exact reopening. Offscreen
 keyboard checks at 100% and 200% text start the capability suite, inspect
 the expanded report, launch the coding API, and reopen the settled save.
+
+### Agent workloads, monitoring and response
+
+Two existing regional incidents now introduce a disclosed share of revised
+agent tasks through the shared occurrence effect and expiry. The immutable
+checkpoint determines changed-task performance. Failed attempts consume
+inference, earn no customer fee and apply the selected write permissions.
+
+Office Services compares settled production work by release and buyer group
+before and during the shift. It shows the report's measured coverage, trial
+outcomes separately, and a required morning warning for a material decline.
+The same event raises one warning and acknowledgement persists. A disclosed
+retained alert limit reserves space for finance and capacity deadlines.
+
+The shared content writer finalized generation **22**, **0.22.0-dev.1**, after
+checking all seven scenarios and 21 exact prepared saves. Generation 21's
+original content hash still verifies. Normal save opening requires matching
+content. The focused regional fixture checks source ownership, rounding,
+separate trial evidence, warning reload and forged-warning rejection,
+replacement samples, acknowledgement and expiry.
+
+The optimized Mac build and 13 focused CTests pass across the initial run and
+corrected fixture checks. Offscreen keyboard checks at 100% and 200% text
+open the saved reliability warning, acknowledge it, compare the Office's
+production and trial samples, resume work and reopen the exact save.

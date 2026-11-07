@@ -49,6 +49,125 @@ std::string exact(const runtime::CompiledProgram& program,const runtime::Runtime
     return bytes;
 }
 
+void workload_monitoring(Json document,const content::Registry& registry) {
+    const AgentPlan precision{AgentControls{},BasisPoints{0},Cents{1},BasisPoints{1}};
+    check(agent_failures(&precision,OrdinalDay{0},"tiny.rate","group",1'000'000,BasisPoints{5000}).failed==50,
+        "Task mixing rounded away failures before converting the actual attempts");
+    auto unaffected=precision;
+    unaffected.failure_rate=BasisPoints{1234};
+    unaffected.shifted_failure_rate.reset();
+    check(agent_failures(&unaffected,OrdinalDay{0},"service","group",317,BasisPoints{5000})==
+        agent_failures(&unaffected,OrdinalDay{0},"service","group",317),
+        "A release without changed-workload terms changed its rounding behavior");
+    const std::string flow="century.product_customer.cedar_quarter";
+    const std::string product="product.workflow_agent";
+    const std::string buyer="segment.canada.enterprise";
+    const Days review_day{100};
+    std::uint64_t seed=0;
+    for (;;) {
+        RandomStreams random{seed};
+        const auto draw=random.stream(RandomStream::markets).bounded(10);
+        if (draw>=6 && draw<8) break;
+        ++seed;
+    }
+    for (auto& row:document["definitions"]) {
+        if (row["id"]==flow) {
+            row["trigger"]["all_of"][0]["value"]=review_day.value();
+            row["lifecycle"]["anchor"]["offset"]["value"]=review_day.value();
+        }
+        if (row["id"]=="scenario.first_playable") {
+            row["flows"]=Json::array({flow});
+            row["seed"]=seed;
+        }
+    }
+    const auto program=runtime::compile_collection(content::load_collection(document.dump(),registry),registry);
+    auto game=begin(program,"scenario.first_playable");
+    const auto shift_day=advance_days(state(game).date,review_day);
+    const LabAllocation research{"lease.initial",MilliCUPerDay{20000},2};
+    for (const auto id:{"research.held_out_evaluation","research.reproducible_tooling","research.efficient_image_features"}) {
+        apply(game,StartResearch{id,research});
+        advance(game,advance_days(state(game).date,Days{3}));
+    }
+    apply(game,BuyData{"data.open_documents"});
+    apply(game,BuyData{"data.robotics_rollouts"});
+    apply(game,StartTraining{{"model.normal","recipe.document_baseline","",{"data.open_documents"},"lease.initial",
+        MilliCUPerDay{50000},2,MilliCU{3600000}}});
+    apply(game,StartTraining{{"model.robust","recipe.image_features","",{"data.open_documents","data.robotics_rollouts"},"lease.initial",
+        MilliCUPerDay{50000},2,MilliCU{3600000}}});
+    advance(game,advance_days(state(game).date,Days{72}));
+    const LabAllocation test{"lease.initial",MilliCUPerDay{20000},1};
+    apply(game,StartEvaluation{"evidence.normal","model.normal","evaluation.held_out",test});
+    apply(game,StartEvaluation{"evidence.robust","model.robust","evaluation.capability_suite",test});
+    advance(game,advance_days(state(game).date,Days{6}));
+    const AgentControls controls{AgentTools::external,AgentOversight::batch};
+    const DeployModel normal{product,"model.normal","evidence.normal","lease.initial",true,"region.canada",{},controls};
+    const DeployModel robust{product,"model.robust","evidence.robust","lease.initial",true,"region.canada",{},controls};
+    apply(game,normal);
+    apply(game,SetMarketPrice{product,Cents{100}});
+    refuse(game,AddMarketDemandChange{{"invented.shift",buyer,state(game).date,advance_days(state(game).date,Days{1}),
+        BasisPointDelta{0},BasisPoints{4000}}});
+    advance(game,shift_day);
+    const auto* change=market_workload_shift(*state(game).market,buyer,shift_day);
+    check(change && change->shifted_share==BasisPoints{4000} && !required_management_notice(state(game)),
+        "An authored shift was missing or warned before an affected attempt settled");
+    const auto expiry=change->expires_before;
+    apply(game,StageServiceRollout{robust,BasisPoints{5000},Days{8}});
+    apply(game,SetPaused{false});
+    for (int day=0;day<3 && !required_management_notice(state(game));++day) apply(game,AdvanceDay{});
+    const auto& notices=state(game).management->notices;
+    const auto alert=std::ranges::find(notices,service_workload_notice,&ManagementNotice::kind);
+    check(state(game).paused && alert!=notices.end() && !alert->acknowledged,
+        "A material settled workload drop did not pause the next morning");
+    const auto id=alert->id;
+    const auto measured=service_workload_alert(state(game),*alert);
+    check(measured && measured->change->segment_id==buyer && measured->completion_drop &&
+        measured->completion_drop->value()>1500 && measured->candidate.completion() && measured->shifted.completion() &&
+        *measured->candidate.completion()>*measured->shifted.completion(),
+        "Monitoring confused buyer groups or combined the production release with the better staged candidate");
+    refuse(game,AdvanceDay{});
+    const auto bytes=exact(program,game);
+    auto bounded=state(game);
+    while (bounded.management->notices.size()<service_monitoring_notice_limit) {
+        const auto index=bounded.management->notices.size();
+        bounded.management->notices.push_back({"fixture."+std::to_string(index),"fixture","",bounded.date,{},false,true});
+    }
+    prepare_service_monitoring(bounded);
+    check(service_monitoring_suspended(bounded) && bounded.management->notices.back().required &&
+        bounded.management->notices.back().kind==service_monitoring_limit_notice,
+        "Monitoring exhausted shared notice capacity without a visible required status");
+    const auto bounded_count=bounded.management->notices.size();
+    acknowledge_management_notice(bounded,service_monitoring_limit_id);
+    prepare_service_monitoring(bounded);
+    check(bounded.management->notices.size()==bounded_count && service_monitoring_suspended(bounded),
+        "The monitoring limit repeated its pause after acknowledgement");
+    auto forged=Json::parse(bytes);
+    auto& rows=forged["checkpoint"]["world"]["simulation"]["management"]["notices"];
+    const auto forged_alert=std::ranges::find_if(rows,[&](const auto& row) {return row["id"]==id;});
+    (*forged_alert)["subject"]="serving.invented";
+    forged.erase("sha256");
+    forged["sha256"]=persistence::sha256(forged.dump());
+    bool rejected=false;
+    try { (void)persistence::decode_save(program,forged.dump()); }
+    catch (const persistence::PersistenceError&) { rejected=true; }
+    check(rejected,"A rehashed warning without its release and settled evidence survived restore");
+
+    auto resumed=runtime::Runtime{program,persistence::decode_save(program,bytes).checkpoint};
+    apply(resumed,AcknowledgeManagementNotice{id});
+    apply(game,AcknowledgeManagementNotice{id});
+    advance(resumed,advance_days(expiry,Days{1}));
+    check(!market_workload_shift(*state(resumed).market,buyer,expiry) &&
+        std::ranges::count(state(resumed).management->notices,service_workload_notice,&ManagementNotice::kind)==1,
+        "The workload shift did not expire or repeated the acknowledged warning");
+    apply(game,FinishServiceRollout{product,true});
+    advance(game,advance_days(state(game).date,Days{1}));
+    const auto reviewed=service_workload_reviews(state(game),product);
+    check(reviewed.size()==1 && !reviewed.front().completion_drop && reviewed.front().prior.attempts()==0 &&
+        reviewed.front().shifted.attempts()>0,
+        "A replacement inherited the prior release's pre-shift sample");
+    (void)exact(program,game);
+    (void)exact(program,resumed);
+}
+
 void published_weights(const runtime::CompiledProgram& program,runtime::Runtime game) {
     const std::string product_id="product.education_model";
     const std::string group="segment.europe.science";
@@ -330,6 +449,7 @@ int main(int argc,char** argv) {
         const auto program=runtime::compile_collection(content::load_collection(document.dump(),registry),registry,runtime::supported_effects());
         local_launches(program);
         provider_route(program);
+        workload_monitoring(document,registry);
         std::cout<<checks<<" regional and wholesale checks passed\n";
         return 0;
     } catch (const std::exception& error) {

@@ -13,15 +13,18 @@ inline core::AgentControls parse_agent_controls(const Json& value) {
         core::parse_agent_oversight(text(value.at("oversight"),"agent_controls/oversight",16))};
 }
 inline Json agent_plan_json(const core::AgentPlan& plan) {
-    return {{"controls",agent_controls_json(plan.controls)},{"failure_bp",plan.failure_rate.value()},
+    Json result{{"controls",agent_controls_json(plan.controls)},{"failure_bp",plan.failure_rate.value()},
         {"remedy_per_action",plan.remedy_per_action.value()}};
+    if (plan.shifted_failure_rate) result["shifted_failure_bp"]=plan.shifted_failure_rate->value();
+    return result;
 }
 inline std::optional<core::AgentPlan> optional_agent_plan(const Json& row) {
     if (!row.contains("agent_plan")) return {};
     const auto& value=row.at("agent_plan");
-    fields(value,"agent_plan",{"controls","failure_bp","remedy_per_action"});
+    fields(value,"agent_plan",{"controls","failure_bp","remedy_per_action"},{"shifted_failure_bp"});
     return core::AgentPlan{parse_agent_controls(value.at("controls")),core::BasisPoints{i64(value.at("failure_bp"),"agent_plan/failure_bp")},
-        core::Cents{i64(value.at("remedy_per_action"),"agent_plan/remedy_per_action")}};
+        core::Cents{i64(value.at("remedy_per_action"),"agent_plan/remedy_per_action")},
+        value.contains("shifted_failure_bp")?std::optional{core::BasisPoints{i64(value.at("shifted_failure_bp"),"agent_plan/shifted_failure_bp")}}:std::nullopt};
 }
 inline Json agent_failures_json(const core::AgentFailures& outcome) {
     return {{"failed",outcome.failed},{"executed",outcome.executed},{"remedy",outcome.remedy.value()}};

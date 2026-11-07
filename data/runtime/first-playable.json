@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.21.0-dev.1",
+  "content_version": "0.22.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -3675,6 +3675,7 @@
               "duration_days": 30,
               "op": "temporary_demand_change",
               "segment_id": "segment.canada.enterprise",
+              "shifted_share_bp": 4000,
               "target": "self"
             }
           ],
@@ -3713,7 +3714,7 @@
           "next": "expiry"
         }
       },
-      "revision": 1,
+      "revision": 2,
       "scope": "company",
       "tags": [
         "base_event",
@@ -4413,6 +4414,7 @@
               "duration_days": 30,
               "op": "temporary_demand_change",
               "segment_id": "segment.asia_pacific.industrial",
+              "shifted_share_bp": 3500,
               "target": "self"
             }
           ],
@@ -4451,7 +4453,7 @@
           "next": "expiry"
         }
       },
-      "revision": 1,
+      "revision": 2,
       "scope": "company",
       "tags": [
         "base_event",
@@ -8494,7 +8496,8 @@
             "review_staff": 1,
             "review_tasks_per_day": 700,
             "staff": 1,
-            "tasks_per_day": 1800
+            "tasks_per_day": 1800,
+            "workload_domain": "autonomous_workflows"
           }
         ],
         "segments": [
@@ -10774,7 +10777,7 @@
           "name": "Africa and Middle East"
         }
       ],
-      "revision": 2,
+      "revision": 3,
       "wholesale": [
         {
           "availability_bp": 9500,
@@ -11155,7 +11158,8 @@
             "review_staff": 1,
             "review_tasks_per_day": 700,
             "staff": 1,
-            "tasks_per_day": 1800
+            "tasks_per_day": 1800,
+            "workload_domain": "autonomous_workflows"
           }
         ],
         "segments": [
@@ -13267,7 +13271,7 @@
           "name": "Africa and Middle East"
         }
       ],
-      "revision": 2,
+      "revision": 3,
       "wholesale": [
         {
           "availability_bp": 9500,
@@ -22847,6 +22851,11 @@
             10
           ]
         },
+        "service_monitoring": {
+          "minimum_attempts": 100,
+          "warning_drop_bp": 500,
+          "window_days": 7
+        },
         "setbacks": [
           {
             "announced_on": "2014-04-17",
@@ -23082,7 +23091,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 11,
+      "revision": 12,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -28086,6 +28095,11 @@
             10
           ]
         },
+        "service_monitoring": {
+          "minimum_attempts": 100,
+          "warning_drop_bp": 500,
+          "window_days": 7
+        },
         "setbacks": [
           {
             "announced_on": "2014-04-17",
@@ -28321,7 +28335,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 11,
+      "revision": 12,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -32041,6 +32055,11 @@
             10
           ]
         },
+        "service_monitoring": {
+          "minimum_attempts": 100,
+          "warning_drop_bp": 500,
+          "window_days": 7
+        },
         "setbacks": [
           {
             "announced_on": "2014-04-17",
@@ -32125,7 +32144,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 14,
+      "revision": 15,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -34999,6 +35018,11 @@
             10
           ]
         },
+        "service_monitoring": {
+          "minimum_attempts": 100,
+          "warning_drop_bp": 500,
+          "window_days": 7
+        },
         "setbacks": [
           {
             "announced_on": "2014-04-17",
@@ -35083,7 +35107,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 15,
+      "revision": 16,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -39112,6 +39136,11 @@
             10
           ]
         },
+        "service_monitoring": {
+          "minimum_attempts": 100,
+          "warning_drop_bp": 500,
+          "window_days": 7
+        },
         "setbacks": [
           {
             "announced_on": "2014-04-17",
@@ -39196,7 +39225,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 15,
+      "revision": 16,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -43225,6 +43254,11 @@
             10
           ]
         },
+        "service_monitoring": {
+          "minimum_attempts": 100,
+          "warning_drop_bp": 500,
+          "window_days": 7
+        },
         "setbacks": [
           {
             "announced_on": "2014-04-17",
@@ -43309,7 +43343,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 15,
+      "revision": 16,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -47338,6 +47372,11 @@
             10
           ]
         },
+        "service_monitoring": {
+          "minimum_attempts": 100,
+          "warning_drop_bp": 500,
+          "window_days": 7
+        },
         "setbacks": [
           {
             "announced_on": "2014-04-17",
@@ -47422,7 +47461,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 15,
+      "revision": 16,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -50409,7 +50448,7 @@
     "century.product_customer.buyer_hardware.body": "A release can run on customer hardware\nAt least one live service uses customer compute. Track its region’s remaining capacity and qualification instead of forecasting every license as a hosted subscription.",
     "century.product_customer.cedar_quarter.expiry": "The dated demand adjustment has expired. Compare new settlements with the original terms before updating next month’s plan.",
     "century.product_customer.cedar_quarter.fall": "Cedar procurement deferred part of its intake. The modeled Canadian enterprise demand baseline falls 8% for 30 days. Signed task promises retain their terms.",
-    "century.product_customer.cedar_quarter.rise": "Cedar procurement expanded its intake. The modeled Canadian enterprise demand baseline rises 12% for 30 days. Check actual orders before adding capacity.",
+    "century.product_customer.cedar_quarter.rise": "Cedar procurement expanded its intake. The modeled Canadian enterprise demand baseline rises 12% for 30 days. Check actual orders before adding capacity. During that window, 40% of agent tasks require revised multi-step workflows.",
     "century.product_customer.cedar_recovery.accept": "Sign the 60-day pilot",
     "century.product_customer.cedar_recovery.body": "A signed start was missed earlier in the campaign. Cedar Desk can now buy 300 document tasks a day for 60 days at $6,500 per calendar month, prorated. The signed delivery terms apply once you accept. Review capacity before committing.",
     "century.product_customer.cedar_recovery.decline": "Decline the offer",
@@ -50428,7 +50467,7 @@
     "century.product_customer.first_release.body": "The first deployment can earn demand\nA deployment is recorded. Use Markets to see the actual segment, price and serving capacity. A launch creates an option for customers; settled work creates the receipt.",
     "century.product_customer.harbormark_cycle.expiry": "The dated demand adjustment has expired. Compare new settlements with the original terms before updating next month’s plan.",
     "century.product_customer.harbormark_cycle.fall": "Harbormark delayed an industrial service cycle. Industrial demand in Asia-Pacific falls 12% for 30 days. Signed commitments and their required delivery still apply.",
-    "century.product_customer.harbormark_cycle.rise": "Harbormark’s service cycle increased orders. Industrial demand in Asia-Pacific rises 10% for 30 days. Check each product’s actual serving and customer capacity.",
+    "century.product_customer.harbormark_cycle.rise": "Harbormark’s service cycle increased orders. Industrial demand in Asia-Pacific rises 10% for 30 days. Check each product’s actual serving and customer capacity. During that window, 35% of agent tasks require revised multi-step workflows.",
     "century.product_customer.hosted_spread.body": "Several local distributions are competing for compute\nAt least three customer-hosted services are active. Compare the market’s customer compute limits across regions. A larger installed base can still queue behind local capacity.",
     "century.product_customer.missed_start.body": "A missed start frees a planning decision\nA signed start deadline was missed. Review its outstanding costs, keep viable serving work funded, then check the smaller recovery offers for current eligibility.",
     "century.product_customer.multi_channel.body": "Three products share the same budgets\nAt least three services are available. Compare one fully funded pilot with the cost and demand of each additional channel before reserving more staff.",

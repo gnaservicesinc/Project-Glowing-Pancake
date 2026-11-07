@@ -57,16 +57,21 @@ void validate_agent_plan(const MarketProduct& product,const std::optional<AgentP
     (void)agent_tools_key(plan->controls.tools);
     (void)agent_oversight_key(plan->controls.oversight);
     if (product.channel!=ProductChannel::agent || plan->remedy_per_action.value()<0 ||
-        plan->remedy_per_action.value()>2*market_price_limit)
+        plan->remedy_per_action.value()>2*market_price_limit ||
+        (plan->shifted_failure_rate && *plan->shifted_failure_rate<plan->failure_rate))
         invalid("Agent controls require an agent service and bounded remedy terms");
 }
 AgentDayResult agent_outcome(const MarketState& market,OrdinalDay day,std::string_view product,std::string_view segment,
                             std::uint64_t production,std::uint64_t trial_tasks) {
     const auto* binding=market_binding(market,product,day);
     const auto* trial=trial_tasks>0?market_trial(market,product,day):nullptr;
-    return {std::string(product),std::string(segment),
-        agent_failures(binding && binding->agent_plan?&*binding->agent_plan:nullptr,day,product,segment,production),
-        agent_failures(trial && trial->agent_plan?&*trial->agent_plan:nullptr,day,product,segment,trial_tasks)};
+    const auto* current=binding && binding->agent_plan?&*binding->agent_plan:nullptr;
+    const auto* candidate=trial && trial->agent_plan?&*trial->agent_plan:nullptr;
+    const auto* shift=(current && current->shifted_failure_rate) || (candidate && candidate->shifted_failure_rate)
+        ?market_workload_shift(market,segment,day):nullptr;
+    const auto share=shift?shift->shifted_share:BasisPoints{0};
+    return {std::string(product),std::string(segment),agent_failures(current,day,product,segment,production,share),
+        agent_failures(candidate,day,product,segment,trial_tasks,share)};
 }
 void validate_trial_attempts(const MarketState& market,OrdinalDay day,std::string_view product,std::string_view segment,
                              std::uint64_t attempts,std::uint64_t trial_attempts) {
@@ -245,6 +250,12 @@ Cents market_price_on(const MarketState& state, std::string_view id, OrdinalDay 
     }
     return find_id(state.products,id).price_per_task;
 }
+const MarketDemandChange* market_workload_shift(const MarketState& state,std::string_view segment,OrdinalDay day) {
+    const auto change=std::ranges::find_if(state.demand_changes,[&](const auto& row) {
+        return row.segment_id==segment && row.starts_on<=day && day<row.expires_before && row.shifted_share.value()>0;
+    });
+    return change==state.demand_changes.end()?nullptr:&*change;
+}
 std::uint64_t public_market_demand(const MarketState& state, const MarketSegment& segment, OrdinalDay day) {
     std::int64_t delta=0;
     for (const auto& change:state.demand_changes)
@@ -358,7 +369,8 @@ void validate_market(const MarketState& state) {
         text_valid(change.id); (void)find_id(state.segments,change.segment_id);
         if (!change_ids.insert(change.id).second || change.starts_on<state.starts_on || change.starts_on>latest ||
             change.expires_before<=change.starts_on || change.expires_before.value()-change.starts_on.value()>90 ||
-            change.delta.value()<-2500 || change.delta.value()>2500 || change.delta.value()==0)
+            change.delta.value()<-2500 || change.delta.value()>2500 || change.shifted_share.value()>market_shift_share_limit ||
+            (change.delta.value()==0 && change.shifted_share.value()==0))
             invalid("External demand incident has invalid identity, duration or magnitude");
     }
     std::vector<const MarketDemandChange*> ordered_changes;

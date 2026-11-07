@@ -202,8 +202,10 @@ void apply_effect(Checkpoint& checkpoint, Activation& activation, const content:
         const auto customer=*segment;
         const auto before=core::effective_market_demand(*simulation.market,customer,simulation.date);
         const auto duration=std::get<std::int64_t>(effect.arguments.at("duration_days"));
+        const auto shifted=effect.arguments.find("shifted_share_bp");
+        const core::BasisPoints share{shifted==effect.arguments.end()?0:std::get<std::int64_t>(shifted->second)};
         core::add_market_demand_change(*simulation.market,simulation.date,{"occurrence."+std::to_string(activation.id)+"."+std::to_string(index),segment_id,
-            simulation.date,core::advance_days(simulation.date,core::Days{duration}),core::BasisPointDelta{std::get<std::int64_t>(effect.arguments.at("delta_bp"))}});
+            simulation.date,core::advance_days(simulation.date,core::Days{duration}),core::BasisPointDelta{std::get<std::int64_t>(effect.arguments.at("delta_bp"))},share});
         add_receipt(checkpoint,activation,index,effect.operation,static_cast<std::int64_t>(before),
             static_cast<std::int64_t>(core::effective_market_demand(*simulation.market,customer,simulation.date)));
     } else if (effect.operation == "record_decision") {
@@ -807,6 +809,8 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             core::require_operating_reserve(before,next.world.simulation);
             return;
         }
+        if (const auto* demand=std::get_if<core::AddMarketDemandChange>(&action); demand && demand->change.shifted_share.value()>0)
+            fail(RuntimeReason::effect_rejected,"Customer workload changes require an authored occurrence.");
         if(next.world.objectives && (std::holds_alternative<core::AddMarketSegment>(action) || std::holds_alternative<core::EnableMarket>(action)))
             fail(RuntimeReason::effect_rejected,"Century scoring uses the authored regional customer roster.");
         if(const auto* media=std::get_if<core::BuyMediaCampaign>(&command.action)) {

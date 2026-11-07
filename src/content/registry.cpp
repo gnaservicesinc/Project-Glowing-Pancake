@@ -370,6 +370,8 @@ Registry foundation_registry() {
     effect("temporary_demand_change",{
         {"segment_id",ValueType::reference,Unit::none,0,0,true,"market_segment","Existing customer segment ID.",{}},
         {"delta_bp",ValueType::integer,Unit::basis_point_delta,-2500,2500,true,"","Temporary external demand change, with existing contract promises protected.",{}},
+        {"shifted_share_bp",ValueType::integer,Unit::basis_points,0,core::market_shift_share_limit,false,"",
+            "Share of agent tasks using the changed workload until the exclusive expiry.",{}},
         {"duration_days",ValueType::integer,Unit::days,1,90,true,"","Exclusive expiry after this many days.",{}}},
         "Commit one bounded dated demand modifier owned by this occurrence; it never changes settled work.","slice");
     effect("register_owned_modifier", {

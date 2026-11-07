@@ -319,7 +319,7 @@ ApplicationWindow {
                                 onClicked: campaign.resolveCoreChoice(false)
                             }
                             Action {
-                                objectName: "acknowledgeManagement"; text: qsTr("Acknowledge capacity setback")
+                                objectName: "acknowledgeManagement"; text: qsTr("Acknowledge management alert")
                                 visible: campaign.requiredKind === "management"
                                 enabled: !campaign.busy
                                 onClicked: campaign.acknowledgeManagement()

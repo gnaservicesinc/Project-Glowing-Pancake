@@ -142,6 +142,7 @@ void require_operating_reserve(Cents cash_before,const SimulationState& after) {
 }
 void validate_management_catalog(const ManagementCatalog& c) {
     validate_funding_offers(c.support_offers);
+    if (c.service_monitoring) validate_service_monitoring(*c.service_monitoring);
     if (c.corporate_tax) validate_corporate_tax_policy(*c.corporate_tax);
     if(c.succession) {
         validate_succession_catalog(*c.succession);
@@ -361,6 +362,7 @@ void prepare_management(SimulationState& s) {
             notice(m,"setback.ended/"+setback.id,"setback_ended",setback.id,s.date);
         }
     }
+    prepare_service_monitoring(s);
     if (required_management_notice(s)) s.paused=true;
     for (const auto& hired:m.financing) {
         const auto& offer=find(m.catalog.financing,hired.offer_id);
@@ -570,6 +572,16 @@ void validate_management(const SimulationState& s,bool deep) {
             const auto expected_day=n.kind=="setback_announced"?setback.announced_on:n.kind=="setback_started"?setback.starts_on:setback.ends_before;
             const auto expected_deadline=n.kind=="setback_announced"?std::optional{setback.starts_on}:n.kind=="setback_started"?std::optional{setback.ends_before}:std::nullopt;
             if (n.day!=expected_day || n.deadline!=expected_deadline || n.required!=(n.kind=="setback_started")) invalid("Setback notice differs from its actual warning/work/recovery dates");
+        } else if (n.kind==service_workload_notice) {
+            if (!service_workload_alert(s,n)) invalid("Service warning lacks a settled same-release performance decline");
+        } else if (n.kind==service_monitoring_limit_notice) {
+            const auto prior_count=static_cast<std::size_t>(&n-m.notices.data());
+            if (!m.catalog.service_monitoring || n.id!=service_monitoring_limit_id ||
+                n.subject!=service_monitoring_limit_subject || !n.required || n.deadline ||
+                prior_count<service_monitoring_notice_limit ||
+                std::any_of(m.notices.begin(),m.notices.begin()+static_cast<std::ptrdiff_t>(prior_count),
+                    [&](const auto& prior) { return prior.day>n.day; }))
+                invalid("Monitoring suspension lacks an actual notice-history limit");
         } else if (n.kind=="policy_blocked") {
             (void)find(m.policies,n.subject);
             if (n.required || n.deadline || std::none_of(m.decisions.begin(),m.decisions.end(),[&](const auto& d){return d.policy_id==n.subject && d.day==n.day && !d.accepted;}))

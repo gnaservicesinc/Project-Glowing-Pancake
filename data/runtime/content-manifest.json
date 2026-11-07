@@ -90,13 +90,13 @@
     }
   ],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "90a83c376bf4a8fe156c6e9f2062b98c3dd082029a1bf31097fdf93f565e90fc",
+  "collection_hash": "5acf3cae95740c580edf9621d0775024ff6710496bf338ed9d7b3e2f3be59494",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.21.0-dev.1",
+  "content_version": "0.22.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -497,8 +497,8 @@
     {
       "id": "century.product_customer.cedar_quarter",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "a7fbb88ce429a0efbc7877cf595bf1e6dc8c29d8727cbf8d351f1aa4892dd23e"
+      "revision": 2,
+      "semantic_hash": "a43c05002a100a8f39ad951fccbfa7ad80b623a90c52dcafbf707665672376e4"
     },
     {
       "id": "century.product_customer.cedar_recovery",
@@ -563,8 +563,8 @@
     {
       "id": "century.product_customer.harbormark_cycle",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "5e14a2ba784602d820b8b2113df98eb513b3724b7b20cb7e9e65ebcb4569b3c3"
+      "revision": 2,
+      "semantic_hash": "ffc4a3b239b29170b3e955a86258d56f556150623bc19ba60af7a21b5eb7bb1a"
     },
     {
       "id": "century.product_customer.hosted_spread",
@@ -743,14 +743,14 @@
     {
       "id": "market.century",
       "kind": "regional_markets",
-      "revision": 2,
-      "semantic_hash": "eaf61038f81c7e065f776c81f165bb89dbb73cc8b1a2b54d734a186499df2213"
+      "revision": 3,
+      "semantic_hash": "d2eeb1d88918b8b53863d5532ee688a8ce5ce88496837477b39343814acf6ffd"
     },
     {
       "id": "market.global_launch",
       "kind": "regional_markets",
-      "revision": 2,
-      "semantic_hash": "3b3e2c9acc2771a69b34d753aafc32fa4d085ca73a9e0c868fd22e1bf74f6697"
+      "revision": 3,
+      "semantic_hash": "efb0db00dc119c8df422b868c4df3e9d03a48cc14f0586b4b0c10db18bfc8796"
     },
     {
       "id": "operations.site_outcome",
@@ -1127,44 +1127,44 @@
     {
       "id": "scenario.century_frontier",
       "kind": "scenario",
-      "revision": 11,
-      "semantic_hash": "527171cb4c8c0fa9cd1770d252aced38fcc343eebd04ff1c852268ee7f7f7a50"
+      "revision": 12,
+      "semantic_hash": "1e6862dae2f0e785a06c1f7f76b2358b9a98dc19d1d07d427c34413de13aeb0e"
     },
     {
       "id": "scenario.century_plateau",
       "kind": "scenario",
-      "revision": 11,
-      "semantic_hash": "86a846db98040656c7ce8d7554ffade6422ee3c7d173549247fafd0bb29eb04a"
+      "revision": 12,
+      "semantic_hash": "3436bb0b96a0b11a96f099b37b3f93bbde3452dfbca69a38483d4903f79a97ab"
     },
     {
       "id": "scenario.first_playable",
       "kind": "scenario",
-      "revision": 14,
-      "semantic_hash": "23de3ae62458b8b64a6857defc9c0750bac32982a39803daa634357dd9681b69"
+      "revision": 15,
+      "semantic_hash": "c67a60c392544e587a5714646101005a7ae6b81486888617735e1b1a42233a11"
     },
     {
       "id": "scenario.world_competition",
       "kind": "scenario",
-      "revision": 15,
-      "semantic_hash": "59abb8c0c5818c3815b88969403f2f175059c81b4f67285e78c733840208841d"
+      "revision": 16,
+      "semantic_hash": "12e418c4eee3e915bdc109cd8de20b704cadf11774fd652d355cd57a8243f4db"
     },
     {
       "id": "scenario.world_expanded",
       "kind": "scenario",
-      "revision": 15,
-      "semantic_hash": "1fe16f63e55859c1a88482b7e130f0c736bc33379491c9c0baa7db20b64b2f06"
+      "revision": 16,
+      "semantic_hash": "e19230414d7bae71c24a3704b36896a0c144290f666b1a637edc09f1f9467eb1"
     },
     {
       "id": "scenario.world_forgiving",
       "kind": "scenario",
-      "revision": 15,
-      "semantic_hash": "78a21e25ab398197c090f559f611c82b89d12f7254dfbe75a99d15e41397d378"
+      "revision": 16,
+      "semantic_hash": "2ee20a713c226d9ddab922d024cdf3ce74e27cdeec8efb6c9fe669169a435327"
     },
     {
       "id": "scenario.world_reduced",
       "kind": "scenario",
-      "revision": 15,
-      "semantic_hash": "bb892e9e16632750bd07fe604fe0ad2190998e83712e77d3f5e340a775647880"
+      "revision": 16,
+      "semantic_hash": "90ed29be7f8d5841cef2e5213c813fd46d5d8dd0ad1fd8452ca8824053b8ee68"
     },
     {
       "id": "slice.evaluation_finding",
@@ -1276,8 +1276,8 @@
     }
   ],
   "format": 1,
-  "generation": 21,
-  "messages_hash": "76acd56ce7cc4c5f6a169926e56546b6355b34ffd8805cffdac9e96a0fefe9d4",
+  "generation": 22,
+  "messages_hash": "360ebaba734be6c5ec4bdb3fcabf30ebde03e7cc30c0ead5787f2603bc82cbd3",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
     "scenario.century_frontier": [
@@ -1615,5 +1615,5 @@
       "authority.executive_disclosure"
     ]
   },
-  "source_hash": "ee0f1384006c2331611740837800109f0733d5541a3cfc5b79aa8bb995b7353a"
+  "source_hash": "50cc25f8d3423913961049f99f3c6bca402acf5a893242073ba90fedcffa58ae"
 }

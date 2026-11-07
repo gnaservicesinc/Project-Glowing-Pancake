@@ -707,9 +707,17 @@ The introductory document and scanned-table tests retain their scope. Reviewed
 content **0.21.0-dev.1**, generation **21**, passes all 21 opening round trips.
 [Lab capabilities and deployment](../src/core/LAB.md).
 
-The next coverage gap is monitoring deployed work. Give players a way to see
-where actual reliability deteriorates, connect the change to customer workload
-and evidence, and respond through the existing Lab and Office controls.
+Office Services now compares settled work for the same release and buyer
+before and during an authored workload change. A material completion drop
+pauses the next morning and links the release report's measured coverage.
+Staged candidates keep separate results. Two regional demand incidents also
+change the mix of agent tasks until their expiry. Generation **22** of reviewed
+content is **0.22.0-dev.1** and passes all 21 prepared opening round trips.
+
+The next Lab gap is paid synthetic-data generation. Add a bounded job using
+an immutable teacher checkpoint, real staff and compute, and verification
+before the generated data becomes a training input. Retain teacher lineage,
+rights, and the limits of its measured coverage.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

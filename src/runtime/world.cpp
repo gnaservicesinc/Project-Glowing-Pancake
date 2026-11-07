@@ -832,6 +832,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     using ModifierKey = std::tuple<std::uint64_t, ScopeBinding, std::string>;
     std::map<ModifierKey, OwnedModifier> recorded_modifiers;
     std::size_t catastrophe_count=0;
+    std::set<std::string_view> workload_receipts;
     for (const auto& receipt : state.receipts) {
         if (quiet_incidents.contains(receipt.activation_id)) invalid("Quiet incident has an effect receipt");
         const auto& activation = by_id(state.activations, receipt.activation_id);
@@ -897,12 +898,16 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                 const auto& changes=world.simulation.market->demand_changes;
                 const auto change=std::find_if(changes.begin(),changes.end(),[&](const auto& row){return row.id==identity;});
                 const auto after=std::get<std::int64_t>(receipt.after);
+                const auto shifted=arguments.find("shifted_share_bp");
+                const auto share=shifted==arguments.end()?0:std::get<std::int64_t>(shifted->second);
                 if (*before<0 || after<0 || static_cast<std::uint64_t>(*before)>core::market_task_limit || static_cast<std::uint64_t>(after)>core::market_task_limit ||
                     change==changes.end() || change->starts_on!=receipt.day || change->segment_id!=std::get<std::string>(arguments.at("segment_id")) ||
-                    change->delta.value()!=std::get<std::int64_t>(arguments.at("delta_bp")) ||
+                    change->delta.value()!=std::get<std::int64_t>(arguments.at("delta_bp")) || change->shifted_share.value()!=share ||
                     (change->delta.value()>0 && after<*before) || (change->delta.value()<0 && after>*before) ||
                     change->expires_before!=core::advance_days(receipt.day,core::Days{std::get<std::int64_t>(arguments.at("duration_days"))}))
                     invalid("Demand receipt differs from its actual owned modifier or expiry");
+                if (share>0 && !workload_receipts.insert(change->id).second)
+                    invalid("Customer workload change has duplicate effect receipts");
             } else if (receipt.operation == "record_decision" || receipt.operation == "open_negotiation") {
                 const auto* after = std::get_if<std::string>(&receipt.after);
                 const auto argument = receipt.operation == "record_decision" ? "value" : "template_id";
@@ -946,6 +951,9 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             } else invalid("Effect receipt has an unavailable operation");
         }
     }
+    if (world.simulation.market && workload_receipts.size()!=static_cast<std::size_t>(
+        std::ranges::count_if(world.simulation.market->demand_changes,[](const auto& row) { return row.shifted_share.value()>0; })))
+        invalid("Customer workload change lacks a committed occurrence");
     if (recorded_modifiers.size() != state.modifiers.size()) invalid("Saved modifiers differ from committed effect ownership");
     for (const auto& modifier : state.modifiers) {
         const auto found = recorded_modifiers.find({modifier.activation_id, modifier.binding, modifier.key});
