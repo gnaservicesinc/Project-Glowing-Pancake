@@ -68,7 +68,10 @@ actual deliveries before promoting it or discarding it. An expired trial release
 its resources and waits for your decision. After replacement, **Review rollback**
 shows the previous distinct release and rechecks it before restoring production.
 
-Office → **Funding and team** shows fixed equity/loan terms and a paid specialist.
+Office → **Funding and team** shows fixed equity and loan terms alongside
+the evaluation specialist. Before signing, compare the fee, the payroll
+start and the work-ready date. The specialist becomes available after five
+days of notice and three paid onboarding days.
 Equity reduces retained founder ownership; the loan creates interest and a real
 principal deadline. Repay principal in Accounts. The efficient document service
 requires tooling/serving research and a tested efficient model; it can remain a

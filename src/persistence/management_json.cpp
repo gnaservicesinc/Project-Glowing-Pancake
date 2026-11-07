@@ -21,7 +21,10 @@ core::DelegationKind policy_kind(const Json& value) {
 Json management_json(const core::ManagementState& m) {
     Json financing=Json::array(),specialists=Json::array(),policies=Json::array(),decisions=Json::array(),notices=Json::array();
     for (const auto& row:m.financing) financing.push_back({{"offer",row.offer_id},{"day",row.day.value()}});
-    for (const auto& row:m.specialists) specialists.push_back({{"offer",row.offer_id},{"day",row.day.value()}});
+    for (const auto& row:m.specialists) {
+        specialists.push_back({{"offer",row.offer_id},{"day",row.day.value()}});
+        if (row.withdrawn_on) specialists.back()["withdrawn_on"]=row.withdrawn_on->value();
+    }
     for (const auto& p:m.policies) {
         Json row{{"id",p.id},{"target",p.target_id},{"plan",p.plan_id},{"kind",policy_kinds.at(static_cast<std::size_t>(p.kind))},
         {"source",p.allocation.source_id},{"daily_compute",p.allocation.daily_compute.value()},{"staff",p.allocation.staff},
@@ -75,7 +78,11 @@ core::ManagementState parse_management(const Json& source) {
     array(j.at("financing"),"management/financing",8);array(j.at("specialists"),"management/specialists",8);
     array(j.at("policies"),"management/policies",core::management_policy_limit);array(j.at("decisions"),"management/decisions",core::management_decision_limit);array(j.at("notices"),"management/notices",256);
     for (const auto& r:j.at("financing")) {fields(r,"management/acceptance",{"offer","day"});m.financing.push_back({label(r.at("offer")),day(r.at("day"))});}
-    for (const auto& r:j.at("specialists")) {fields(r,"management/acceptance",{"offer","day"});m.specialists.push_back({label(r.at("offer")),day(r.at("day"))});}
+    for (const auto& r:j.at("specialists")) {
+        fields(r,"management/acceptance",{"offer","day"},{"withdrawn_on"});
+        m.specialists.push_back({label(r.at("offer")),day(r.at("day")),
+            r.contains("withdrawn_on")?std::optional{day(r.at("withdrawn_on"))}:std::nullopt});
+    }
     for (const auto& p:j.at("policies")) {
         fields(p,"management/policy",{"id","target","plan","kind","source","daily_compute","staff","budget","reserve","monthly_ceiling","interval","maximum_runs","enabled","created_on","next_review","runs","committed","blocked"},{"pricing"});
         core::DelegationPolicy value;value.id=label(p.at("id"));value.target_id=label(p.at("target"),true);value.plan_id=label(p.at("plan"),true);

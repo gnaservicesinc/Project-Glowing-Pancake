@@ -57,7 +57,7 @@ runtime::CompiledProgram fixture(Json source,bool rivals=false) {
         row["management"]["setbacks"]=Json::array();
         row["management"]["succession"]["founder_birth_year"]=1958;
         row["management"]["succession"]["chair_retirement_age"]=70;
-        for(const auto key:{"authority","society","civic","resilience","objectives"}) row.erase(key);
+        for(const auto key:{"authority","society","civic","resilience","objectives","backgrounds"}) row.erase(key);
         if(rivals) {
             auto& roster=row["rivals"];
             roster.erase(std::remove_if(roster.begin(),roster.end(),[](const auto& company) {
@@ -231,6 +231,7 @@ void maximum_board(Json source) {
         for(unsigned i=0;i<4;++i) catalog["board"].push_back({{"id","board.additional."+std::to_string(i)},
             {"name","Additional director "+std::to_string(i)},{"seats",1},{"player",false},{"cash_floor_cents",0},{"maximum_dilution_bp",1000}});
         catalog["financing"]=Json::array();
+        catalog.erase("public_listing");
         for(unsigned i=0;i<8;++i) {
             const auto id="wide.round."+std::to_string(i);
             catalog["financing"].push_back({{"id",id},{"name","Reviewed round "+std::to_string(i)},{"negotiation",id},

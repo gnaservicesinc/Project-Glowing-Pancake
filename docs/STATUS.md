@@ -4,12 +4,12 @@ Updated 2026-11-07 · Implementation started against planning baseline 1.2
 
 ## Implementation progress
 
-**Initial feature coverage is active.** Lab research now records setbacks and
-retains evidence for paid retries. Hiring lead times and onboarding are next.
+**Initial feature coverage is active.** Office specialist offers now show
+payroll and work-ready dates. Staff specializations are next.
 
 The original roadmap has **42 of 52 acceptance steps checked**. Its ten open
 steps are deferred human, balance, platform and release gates; they do not
-block current implementation. The coverage pass below has delivered 23
+block current implementation. The coverage pass below has delivered 24
 additional feature batches within earlier milestones. That batch count is
 separate from the 52 acceptance steps and does not imply complete design
 coverage. Completed milestones include
@@ -768,9 +768,15 @@ experiment budget and still needs the full staff commitment. Only successful
 research unlocks recipes or publication. Content **0.27.0-dev.1**, generation
 **27**, verifies all seven scenarios and 21 exact prepared openings.
 
-**Hiring lead times and onboarding are next.** Show when an
-accepted specialist becomes available and model their initial contribution
-through the existing staff pool and dated commitments.
+Office Funding and team now shows signed offers awaiting start, paid
+onboarding, and specialists ready for assignments. The evaluation
+specialist joins five days after signing and adds one available staff member
+after three paid onboarding days. Withdrawing operations before readiness
+ends the payroll term and retains incurred costs. Content **0.28.0-dev.1**,
+generation **28**, verifies all seven scenarios and 21 exact prepared openings.
+
+**Staff specializations are next.** Give relevant hires a visible benefit
+when assigning them to suitable work through the shared staffing pool.
 
 **Deferred until v1 preparation:** M3-04's five independent human sessions
 (including two non-ML players and three unaided completions) and E1B-03's

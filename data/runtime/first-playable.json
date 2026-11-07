@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.27.0-dev.1",
+  "content_version": "0.28.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -24678,7 +24678,9 @@
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
-            "signing_cost_cents": 200000
+            "onboarding_days": 3,
+            "signing_cost_cents": 200000,
+            "start_lead_days": 5
           }
         ],
         "staff_workload": {
@@ -24905,7 +24907,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 16,
+      "revision": 17,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -30095,7 +30097,9 @@
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
-            "signing_cost_cents": 200000
+            "onboarding_days": 3,
+            "signing_cost_cents": 200000,
+            "start_lead_days": 5
           }
         ],
         "staff_workload": {
@@ -30322,7 +30326,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 16,
+      "revision": 17,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -34228,7 +34232,9 @@
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
-            "signing_cost_cents": 200000
+            "onboarding_days": 3,
+            "signing_cost_cents": 200000,
+            "start_lead_days": 5
           }
         ],
         "staff_workload": {
@@ -34304,7 +34310,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 19,
+      "revision": 20,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -37364,7 +37370,9 @@
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
-            "signing_cost_cents": 200000
+            "onboarding_days": 3,
+            "signing_cost_cents": 200000,
+            "start_lead_days": 5
           }
         ],
         "staff_workload": {
@@ -37440,7 +37448,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 20,
+      "revision": 21,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -41655,7 +41663,9 @@
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
-            "signing_cost_cents": 200000
+            "onboarding_days": 3,
+            "signing_cost_cents": 200000,
+            "start_lead_days": 5
           }
         ],
         "staff_workload": {
@@ -41731,7 +41741,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 20,
+      "revision": 21,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -45946,7 +45956,9 @@
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
-            "signing_cost_cents": 200000
+            "onboarding_days": 3,
+            "signing_cost_cents": 200000,
+            "start_lead_days": 5
           }
         ],
         "staff_workload": {
@@ -46022,7 +46034,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 20,
+      "revision": 21,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -50237,7 +50249,9 @@
             "id": "specialist.evaluation",
             "monthly_salary_cents": 600000,
             "name": "Evaluation and service specialist",
-            "signing_cost_cents": 200000
+            "onboarding_days": 3,
+            "signing_cost_cents": 200000,
+            "start_lead_days": 5
           }
         ],
         "staff_workload": {
@@ -50313,7 +50327,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 20,
+      "revision": 21,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,

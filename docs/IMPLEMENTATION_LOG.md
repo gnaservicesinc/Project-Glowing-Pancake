@@ -2172,3 +2172,30 @@ and credits. The base event fixture records a milestone only after the
 successful correction. Offscreen keyboard checks at 100% and 200% text
 showed the pause notice and finding, started the paid retry, and reopened
 the exact saved state before and after success.
+
+### Specialist lead time and paid onboarding
+
+Signing the evaluation specialist pays the fee immediately. The dated
+payroll term begins after five calendar days and the specialist spends
+three paid days onboarding. One person enters the shared staffing pool
+on the next prepared morning. Earlier project assignments and workload
+keep their historical headcount.
+
+Office Funding and team shows the quote, waiting and onboarding states,
+and work-ready date. Withdrawing operations before readiness ends the
+future obligation and records the withdrawal. Accrued payroll and signing
+costs stay in the ledger. Legacy offers with zero days retain immediate
+availability and their existing save encoding.
+
+The shared writer finalized content **0.28.0-dev.1**, generation **28**,
+with seven scenarios and 21 exact prepared openings. Generation 27's
+original hash still verifies.
+
+The optimized Mac build and 17 focused CTests passed across the initial
+run and succession fixture rerun. The management fixture passed 375 checks,
+including pay during onboarding, once-only availability, exact reopening,
+withdrawal before and after joining, and rejection of an invented earlier
+start. Keyboard walkthroughs at 100% and 200% text signed the offer and
+showed the waiting, payroll and ready states. The succession fixture now
+omits 2014 founder contacts from its 2027 opening and removes the listing
+offer when replacing its financing catalog.

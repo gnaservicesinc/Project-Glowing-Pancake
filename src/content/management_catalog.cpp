@@ -98,9 +98,14 @@ core::ManagementCatalog load_management_catalog(std::string_view bytes) {
         c.financing.push_back({text(row.at("id")),text(row.at("name")),core::Cents{integer(row.at("proceeds_cents"))},core::BasisPoints{integer(row.at("acquired_bp"))},
             core::BasisPoints{integer(row.at("monthly_interest_bp"))},core::Days{integer(row.at("term_days"))},announced});
     }
-    for (const auto& row:j.at("specialists")) {
+    for (auto row:j.at("specialists")) {
+        const auto lead=row.contains("start_lead_days")?integer(row.at("start_lead_days")):0;
+        const auto onboarding=row.contains("onboarding_days")?integer(row.at("onboarding_days")):0;
+        row.erase("start_lead_days");
+        row.erase("onboarding_days");
         fields(row,{"id","name","signing_cost_cents","monthly_salary_cents"});
-        c.specialists.push_back({text(row.at("id")),text(row.at("name")),core::Cents{integer(row.at("signing_cost_cents"))},core::Cents{integer(row.at("monthly_salary_cents"))}});
+        c.specialists.push_back({text(row.at("id")),text(row.at("name")),core::Cents{integer(row.at("signing_cost_cents"))},
+            core::Cents{integer(row.at("monthly_salary_cents"))},core::Days{lead},core::Days{onboarding}});
     }
     for (const auto& row:j.at("setbacks")) {
         fields(row,{"id","name","source_id","announced_on","starts_on","ends_before","reduced_milli_CU_per_day"});
@@ -122,7 +127,11 @@ std::string canonical_management_catalog(const core::ManagementCatalog& c) {
     for (const auto& row:c.financing) financing.push_back({{"id",row.id},{"name",row.name},{"proceeds_cents",row.proceeds.value()},
         {"acquired_bp",row.acquired.value()},{"monthly_interest_bp",row.monthly_interest.value()},{"term_days",row.term.value()}});
     for (std::size_t i=0;i<c.financing.size();++i) if (c.financing[i].public_announcement) financing[i]["public_announcement"]=true;
-    for (const auto& row:c.specialists) specialists.push_back({{"id",row.id},{"name",row.name},{"signing_cost_cents",row.signing_cost.value()},{"monthly_salary_cents",row.monthly_salary.value()}});
+    for (const auto& row:c.specialists) {
+        specialists.push_back({{"id",row.id},{"name",row.name},{"signing_cost_cents",row.signing_cost.value()},{"monthly_salary_cents",row.monthly_salary.value()}});
+        if (row.start_lead.value()>0) specialists.back()["start_lead_days"]=row.start_lead.value();
+        if (row.onboarding.value()>0) specialists.back()["onboarding_days"]=row.onboarding.value();
+    }
     for (const auto& row:c.setbacks) setbacks.push_back({{"id",row.id},{"name",row.name},{"source_id",row.source_id},{"announced_on",core::iso_date(row.announced_on)},
         {"starts_on",core::iso_date(row.starts_on)},{"ends_before",core::iso_date(row.ends_before)},{"reduced_milli_CU_per_day",row.reduced_capacity.value()}});
     Json result{{"financing",std::move(financing)},{"specialists",std::move(specialists)},{"setbacks",std::move(setbacks)},

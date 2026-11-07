@@ -549,6 +549,9 @@ void acquired_data(const runtime::CompiledProgram& program) {
 
 runtime::CompiledProgram workload_fixture(Json source) {
     auto& scenario=pgp_test::scenario_doc(source);
+    auto& hire=pgp_test::named_row(scenario["management"]["specialists"],"specialist.evaluation");
+    hire.erase("start_lead_days");
+    hire.erase("onboarding_days");
     scenario["management"]["staff_workload"]={{"high_load_bp",9500},{"recovery_load_bp",7500},
         {"daily_strain_bp",2500},{"daily_recovery_bp",1500},{"strain_tolerance_bp",0},{"maximum_output_loss_bp",4000}};
     for(auto& offer:scenario["business_offers"])

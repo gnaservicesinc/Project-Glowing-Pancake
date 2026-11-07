@@ -48,7 +48,7 @@ void training(runtime::Runtime& engine) {
     apply(engine,core::StartTraining{{"baseline","recipe.document_baseline","",{"data.licensed_documents"},"lease.initial",core::MilliCUPerDay{60000},4,core::MilliCU{3600000}}});
 }
 void bounds(const Json& source) {
-    for (int i=0;i<8;++i) {
+    for (int i=0;i<10;++i) {
         auto doc=source;auto& c=pgp_test::scenario_doc(doc)["management"];
         if (i==0) c["scoring"]["weights"][0]=99;
         if (i==1) c["maximum_policy_runs"]=100000;
@@ -58,6 +58,8 @@ void bounds(const Json& source) {
         if (i==5) c["setbacks"][0]["announced_on"]="2014-05-01";
         if (i==6) c["unknown"]=true;
         if (i==7) c["scoring"]["task_target"]=1.5;
+        if (i==8) c["specialists"][0]["start_lead_days"]=91;
+        if (i==9) c["specialists"][0]["onboarding_days"]=1.5;
         bool rejected=false;try {(void)compile(doc);}catch(const std::exception&){rejected=true;}check(rejected,"Malformed management content accepted");
     }
 }
@@ -107,7 +109,8 @@ void recovery_financing(const Json& source) {
     const auto program=compile(source);auto engine=begin(program);
     days(engine,14);const auto earlier=state(engine).capacity->days;
     apply(engine,core::HireSpecialist{"specialist.evaluation"});
-    check(state(engine).capacity->available_staff==7 && state(engine).capacity->days==earlier && core::available_staff_on(*state(engine).capacity,core::OrdinalDay{0})==6,"Specialist rewrote historical staff or omitted paid capacity");
+    check(state(engine).capacity->available_staff==6 && state(engine).capacity->days==earlier &&
+        core::available_staff_on(*state(engine).capacity,core::OrdinalDay{0})==6,"Signing a delayed hire rewrote staffing");
     refused(engine,core::HireSpecialist{"specialist.evaluation"});
     const auto profit=core::accounts_report(*state(engine).accounts).profit;
     apply(engine,core::TakeFinancing{"finance.bridge_equity"});
@@ -137,6 +140,83 @@ void recovery_financing(const Json& source) {
     apply(resumed,core::AcknowledgeManagementNotice{id});days(resumed,14);check(resumed.checkpoint()==engine.checkpoint(),"Recovery acknowledgement/restoration diverged after save");
     const auto debt=state(engine).accounts->debts.front();apply(engine,core::RepayDebt{debt.id,debt.principal,"test.repay"});
     check(state(engine).accounts->debts.front().principal.value()==0,"Principal repayment did not clear the loan");exact(program,engine);
+}
+void hiring_pipeline(const Json& source) {
+    using namespace core;
+    const auto program=compile(source,false);
+    auto game=begin(program);
+    constexpr auto specialist="specialist.evaluation";
+    constexpr auto salary_id="specialist/specialist.evaluation";
+    constexpr auto invoice_id="recurring/specialist/specialist.evaluation/2014-01-01";
+    const StartResearch work{"research.held_out_evaluation",{"lease.initial",MilliCUPerDay{10000},7}};
+    const auto salary=[&](const auto& engine) -> const RecurringObligation& {
+        return *std::ranges::find(state(engine).accounts->recurring,salary_id,&RecurringObligation::id);
+    };
+    const auto accrued=[&](const auto& engine) {
+        const auto& ledger=*state(engine).accounts;
+        const auto bill=ledger.invoices.find(invoice_id);
+        return bill?ledger.invoices[*bill].amount:Cents{0};
+    };
+    const auto opening_cash=state(game).cash;
+    const auto initial_random=state(game).random;
+    apply(game,HireSpecialist{specialist});
+    check(state(game).cash==checked_unit_subtract(opening_cash,Cents{200000}) &&
+        salary(game).starts_on==OrdinalDay{5} && state(game).capacity->available_staff==6,
+        "Signing must pay the fee and schedule payroll without lending future capacity");
+    refused(game,HireSpecialist{specialist});
+    refused(game,work);
+    auto cancelled=game;
+    days(cancelled,2);
+    apply(cancelled,WithdrawOperations{});
+    check(state(cancelled).management->specialists.front().withdrawn_on==OrdinalDay{2} &&
+        salary(cancelled).ends_before==salary(cancelled).starts_on,
+        "Withdrawal during lead time did not end the unstarted payroll term");
+    exact(program,cancelled);
+    days(cancelled,9);
+    check(accrued(cancelled)==Cents{0} && state(cancelled).capacity->available_staff==0 &&
+        state(cancelled).capacity->staff_additions.empty(),"Withdrawn specialist appeared at a later opening");
+
+    runtime::Runtime reopened{program,persistence::decode_save(program,persistence::encode_save(program,game.checkpoint())).checkpoint};
+    days(game,5);days(reopened,5);
+    check(game.checkpoint()==reopened.checkpoint() && accrued(game)==Cents{0} &&
+        state(game).capacity->available_staff==6,"Staff or payroll arrived before its signed date");
+    days(game,2);days(reopened,2);
+    check(game.checkpoint()==reopened.checkpoint() && accrued(game)==Cents{38709} &&
+        state(game).capacity->available_staff==6,"Onboarding must accrue pay without increasing usable staffing");
+    refused(game,work);
+    auto interrupted=game;
+    apply(interrupted,WithdrawOperations{});
+    days(interrupted,3);
+    check(accrued(interrupted)==Cents{38709} && state(interrupted).capacity->staff_additions.empty(),
+        "Operations withdrawal during paid onboarding omitted incurred payroll or activated the hire");
+    exact(program,interrupted);
+
+    auto onboarding_save=persistence::encode_save(program,game.checkpoint());
+    runtime::Runtime ready_from_save{program,persistence::decode_save(program,onboarding_save).checkpoint};
+    days(game,1);days(ready_from_save,1);
+    const auto& capacity=*state(game).capacity;
+    check(game.checkpoint()==ready_from_save.checkpoint() && capacity.available_staff==7 &&
+        available_staff_on(capacity,OrdinalDay{7})==6 && capacity.staff_additions.size()==1 &&
+        capacity.staff_additions.front().day==OrdinalDay{8} && state(game).random==initial_random,
+        "The ready morning did not add exactly one staff member at the signed date");
+    exact(program,game);
+    auto departed=game;
+    apply(departed,WithdrawOperations{});
+    check(state(departed).capacity->staff_additions.size()==1 && state(departed).capacity->available_staff==0 &&
+        !state(departed).management->specialists.front().withdrawn_on,
+        "Same-morning departure erased the hire's actual staff addition");
+    exact(program,departed);
+    auto forged=Json::parse(persistence::encode_save(program,game.checkpoint()));
+    forged["checkpoint"]["world"]["simulation"]["capacity"]["staff_additions"][0]["day"]=7;
+    forged.erase("sha256");forged["sha256"]=persistence::sha256(forged.dump());
+    bool rejected=false;
+    try {(void)persistence::decode_save(program,forged.dump());}
+    catch (const persistence::PersistenceError&) {rejected=true;}
+    check(rejected,"A checksum-valid save fabricated early specialist availability");
+    apply(game,work);
+    days(game,23);
+    check(accrued(game)==Cents{503225},"First month salary did not prorate from the joining date");
+    exact(program,game);
 }
 void specialist_ending(const Json& source) {
     const auto registry=content::foundation_registry();
@@ -308,7 +388,7 @@ int main(int argc,char** argv) {
         } else {
             for (const auto& [name,run]:std::vector<std::pair<const char*,void(*)(const Json&)>>{
                 {"bounds",bounds},{"policies",policies},{"renewals",renewals},{"recovery_financing",recovery_financing},
-                {"pause_milestone",pause_milestone},{"specialist_ending",specialist_ending}}) {
+                {"pause_milestone",pause_milestone},{"specialist_ending",specialist_ending},{"hiring_pipeline",hiring_pipeline}}) {
                 try {run(source);} catch (const std::exception& e) {throw std::runtime_error(std::string{name}+": "+e.what());}
             }
         }

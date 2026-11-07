@@ -793,9 +793,29 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
         }
         for (const auto& offer:m.catalog.support_offers) funding.push_back(funding_support_row(s,offer));
         for (const auto& offer:m.catalog.specialists) {
-            const bool hired=std::any_of(m.specialists.begin(),m.specialists.end(),[&](const auto& h){return h.offer_id==offer.id;});
+            const auto hire=std::ranges::find(m.specialists,offer.id,&core::SpecialistHire::offer_id);
+            const bool signed_offer=hire!=m.specialists.end();
+            const auto schedule=core::specialist_schedule(offer,signed_offer?hire->day:s.date);
+            const auto salary=find(s.accounts->recurring,"specialist/"+offer.id);
+            const bool can_finish=schedule.ready_on<s.end_date;
+            auto status=tr("Available");
+            if (signed_offer) {
+                if (hire->withdrawn_on) status=tr("Withdrawn");
+                else if (s.date<schedule.starts_on) status=tr("Signed · awaiting start");
+                else if (s.date<schedule.ready_on) status=tr("Onboarding · on payroll");
+                else if (salary && salary->ends_before && *salary->ends_before<=s.date) status=tr("Departed");
+                else status=tr("Ready for work");
+            } else if (!can_finish) status=tr("Campaign ending");
+            auto detail=tr("Pay the signing fee when accepted. Payroll begins %1. One staff member becomes available for assignments on %2.")
+                .arg(text(core::iso_date(schedule.starts_on)),text(core::iso_date(schedule.ready_on)));
+            if (offer.onboarding.value()>0) detail+=tr("\nOnboarding takes %1 paid days before the specialist can take project or serving assignments.")
+                .arg(offer.onboarding.value());
+            if (signed_offer) detail+=tr("\nSigned %1.").arg(text(core::iso_date(hire->day)));
+            if (signed_offer && hire->withdrawn_on) detail+=tr("\nOperations withdrawal stopped this hire on %1. The signing fee stays spent.")
+                .arg(text(core::iso_date(*hire->withdrawn_on)));
+            if (!signed_offer && !can_finish) detail+=tr("\nThe quoted work-ready date falls beyond the playable workdays.");
             specialists.push_back({text(offer.id),text(offer.name),money(offer.signing_cost)+QStringLiteral(" signing · ")+money(offer.monthly_salary)+QStringLiteral("/month"),
-                QStringLiteral("Adds one available staff member today and a recurring salary. Past work keeps its actual staffing. Extra staff does not create compute or improve model capability for free."),hired?QStringLiteral("Hired"):QStringLiteral("Available"),!hired});
+                std::move(detail),std::move(status),!signed_offer && can_finish});
         }
         for (const auto& p:m.policies) {
             if (p.kind==core::DelegationKind::operating_reserve) {
@@ -1068,7 +1088,7 @@ QString ManagementController::staffWorkload() const {
         const auto days=(excess+rules.daily_recovery.value()-1)/rules.daily_recovery.value();
         summary+=tr("\nAt this load, normal output returns after %1 settled days.").arg(QString::number(days));
     }
-    summary+=tr("\nPause finite Lab work or hire a specialist to free staffing headroom. Staffed output limits project progress and serving attempts.");
+    summary+=tr("\nPausing Lab work frees staff immediately. New hires add staff after onboarding. Staffed output limits project progress and serving attempts.");
     return summary;
 }
 QVariantList ManagementController::sources() const {

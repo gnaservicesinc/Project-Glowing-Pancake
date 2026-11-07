@@ -19,7 +19,17 @@ struct FinancingOffer {
 struct SpecialistOffer {
     std::string id,name;
     Cents signing_cost{0},monthly_salary{0};
+    Days start_lead{0},onboarding{0};
     auto operator<=>(const SpecialistOffer&) const = default;
+};
+struct SpecialistSchedule {
+    OrdinalDay starts_on, ready_on;
+};
+struct SpecialistHire {
+    std::string offer_id;
+    OrdinalDay day{0};
+    std::optional<OrdinalDay> withdrawn_on{};
+    auto operator<=>(const SpecialistHire&) const = default;
 };
 struct CapacitySetback {
     std::string id,name,source_id;
@@ -99,7 +109,8 @@ struct ManagementNotice {
 };
 struct ManagementState {
     ManagementCatalog catalog;
-    std::vector<ManagementAcceptance> financing,specialists;
+    std::vector<ManagementAcceptance> financing;
+    std::vector<SpecialistHire> specialists;
     std::vector<DelegationPolicy> policies;
     PagedHistory<DelegationDecision,64> decisions;
     std::vector<ManagementNotice> notices;
@@ -125,7 +136,9 @@ struct SliceScore {
 void validate_management_catalog(const ManagementCatalog& catalog);
 void validate_management(const SimulationState& state,bool deep=true);
 void take_financing(SimulationState& state,std::string_view id);
+[[nodiscard]] SpecialistSchedule specialist_schedule(const SpecialistOffer&,OrdinalDay signed_on);
 void hire_specialist(SimulationState& state,std::string_view id,Cents protected_cash);
+void withdraw_pending_specialists(SimulationState& state);
 void add_delegation_policy(SimulationState& state,DelegationPolicy policy);
 void set_delegation_enabled(SimulationState& state,std::string_view id,bool enabled);
 void suspend_pricing_policies(SimulationState& state,std::string_view product);

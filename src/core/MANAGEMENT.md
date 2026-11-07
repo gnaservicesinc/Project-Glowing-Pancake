@@ -5,6 +5,12 @@ catalog supplies fixed financing, one hireable specialist, a warned capacity
 setback and the slice scoring rubric. Core commands own all consequences;
 the Qt adapters format reports and queue the same commands.
 
+Signing a specialist offer pays its fee immediately and creates a dated
+payroll term. The shared allocator gains one person on the work-ready
+morning, once any notice and paid onboarding days have elapsed. A pending
+hire stays tied to its original signing date through save and reopen.
+Operations withdrawal ends pending hires and their remaining payroll.
+
 ## Finite standing policies
 
 `AddDelegationPolicy` authorizes independent evaluation, paid compute lease

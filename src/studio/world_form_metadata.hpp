@@ -76,6 +76,8 @@ inline std::string help(std::string_view path) {
     if(key=="failure_bp") return "Setback chance for a first settled result if the safeguard was missing at the start.";
     if(key=="retry_credit_bp") return "Reusable experiment work after a settled setback. Staff-days still apply.";
     if(key=="safeguard") return "Optional research result that prevents this setback when completed before the attempt starts.";
+    if(key=="start_lead_days") return "Days after signing until specialist payroll begins.";
+    if(key=="onboarding_days") return "Paid days after joining before this specialist can take assignments.";
     if(key=="founder_birth_year" || key=="first_birth_year") return "Calendar birth year used for the charter's finite careers. Later cohorts are distinct people with separate identities.";
     if(key=="founder_board") return "The founder's existing board rights. The charter changes their personal chair and trust representation after succession.";
     if(key=="maximum_term_years" || key=="executive_retirement_age" || key=="chair_retirement_age") return "Career limit in calendar years. Planning notices precede the actual deadline and the caretaker charter preserves company obligations.";

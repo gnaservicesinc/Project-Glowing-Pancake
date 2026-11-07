@@ -686,13 +686,18 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     if ((product.retirement && next.date<product.retirement->retires_on) || market_compatibility(*next.market,product.id,next.date))
                         refuse(CommandReason::dependent_commitment,"Wait until the published service commitments end before withdrawing operations.");
                 discard_service_rollouts(next);
+                withdraw_pending_specialists(next);
                 std::vector<std::string> projects,recurring,sources;
                 for (const auto& row:next.capacity->projects) if (row.status==ProjectStatus::active) projects.push_back(row.id);
                 for (const auto& row:next.accounts->recurring)
-                    if ((!row.ends_before || *row.ends_before>next.date) && !row.id.starts_with("offer.lease/") && !row.id.starts_with("offer.renew/")) recurring.push_back(row.id);
+                    if ((!row.ends_before || *row.ends_before>std::max(row.starts_on,next.date)) &&
+                        !row.id.starts_with("offer.lease/") && !row.id.starts_with("offer.renew/")) recurring.push_back(row.id);
                 for (const auto& row:next.capacity->sources) sources.push_back(row.id);
                 for (const auto& id:projects) cancel_project(*next.capacity,next.date,id);
-                for (const auto& id:recurring) end_recurring(*next.accounts,id,next.date);
+                for (const auto& id:recurring) {
+                    const auto term=std::ranges::find(next.accounts->recurring,id,&RecurringObligation::id);
+                    schedule_recurring_end(*next.accounts,next.date,id,std::max(term->starts_on,next.date));
+                }
                 if (next.capacity->available_staff>0) remove_staff_capacity(*next.capacity,next.date,"withdrawal/"+std::to_string(next.revision),next.capacity->available_staff);
                 for (const auto& id:sources) update_effective_capacity(*next.capacity,next.date,id,MilliCUPerDay{0});
                 if (next.management) for (auto& policy:next.management->policies) policy.enabled=false;

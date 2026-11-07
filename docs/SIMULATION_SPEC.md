@@ -220,6 +220,12 @@ cannot satisfy a prerequisite or support publication.
 
 Teams have skill capacity, salaries, hiring pipeline, workload, morale, and knowledge retention. Effective staff-days are available people-days times task fit and a bounded morale/coordination factor. Adding people has onboarding and coordination costs. Burnout accumulates with sustained workload and recovers through time and working conditions; bonuses alone do not erase it instantly.
 
+Specialist offers can specify calendar days to payroll start and paid days
+of onboarding. Signing posts the fee and records a dated salary commitment.
+The prepared morning after onboarding adds one available staff member.
+Withdrawing operations before readiness ends the commitment and preserves
+signing costs and salary already accrued.
+
 The current executive's base, appointments, travel days and delegated authority are explicit calendar state. Trips reserve executive availability and expense without disabling remote company management. On-site inspection improves only the evidence actually observable there; a meeting can affect a relationship without guaranteeing a deal. Scheduling must detect overlapping commitments and allow a remote/delegated alternative where the appointment permits it.
 
 Executive confidence is a weighted record of delivered results, compensation, autonomy, values, and promises. A major dispute is a state machine: concern → formal recommendation → negotiation/deadline → resolved, departure, board motion, or disclosure. A disclosure requires knowledge of a concrete issue and a failed response path; it is not simply a personality die roll. Promised appointments, publication rights, and safety commitments are tracked obligations.
