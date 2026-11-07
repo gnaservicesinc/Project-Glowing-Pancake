@@ -45,6 +45,7 @@ struct ManagementCatalog {
     std::optional<GovernanceCatalog> governance{};
     std::optional<SuccessionCatalog> succession{};
     std::vector<FundingSupportOffer> support_offers{};
+    std::optional<CorporateTaxPolicy> corporate_tax{};
     auto operator<=>(const ManagementCatalog&) const = default;
 };
 struct ManagementAcceptance {

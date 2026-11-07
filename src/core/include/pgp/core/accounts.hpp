@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pgp/core/calendar.hpp>
+#include <pgp/core/corporate_tax.hpp>
 #include <pgp/core/paged_history.hpp>
 
 #include <array>
@@ -109,6 +110,7 @@ struct AccountsState {
     std::vector<RecurringObligation> recurring;
     std::vector<Debt> debts;
     std::vector<EquityHolding> holdings;
+    std::optional<CorporateTaxes> taxes{};
     auto operator<=>(const AccountsState&) const = default;
 };
 // All balances use their normal accounting sign; expenses are debit-positive,
@@ -184,6 +186,7 @@ struct CashProjection {
     Cents available{0};
     Cents overdue_payables{0};
     Cents due_principal{0};
+    Cents corporate_tax_paid{0};
     auto operator<=>(const CashProjection&) const = default;
 };
 struct MeteredProjection {
@@ -194,6 +197,8 @@ struct MeteredProjection {
 struct ProjectedCashDay {
     Cents receipts{0};
     Cents bills_due{0};
+    Cents advance_earned{0};
+    Cents refunds_due{0};
 };
 struct CashOutlook {
     CashProjection near_term;

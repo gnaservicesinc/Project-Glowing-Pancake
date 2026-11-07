@@ -105682,6 +105682,99 @@
         "prepared_headquarters": 21,
         "scenarios": 7
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "86c3c86ee73de6510e69080bb78a450f5e7713a5fd1700331a2dadf808492c10",
+          "before_hash": "f9a8d0c830564a01690f7406b4b64353e310d333a2e308653bd485a9c5132989",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 9,
+          "revision": 10
+        },
+        {
+          "after_hash": "16d5c26a20e6649fbf364142681a0ffa44cc93bcda61ad9347033ff498a0ee6e",
+          "before_hash": "be21263c85edf6e54a9e3eefe38c6354995e01b5590df4c8f55cbb558e349996",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 9,
+          "revision": 10
+        },
+        {
+          "after_hash": "d2dafd039e11b12a7592015f09d2063c519d5b37f6fa4fef2fcdc2a553c69248",
+          "before_hash": "e42ecb2c4f50fae7008ec6b328e48be7389970b877a2e7d61966fe873cc2fffd",
+          "change": "changed",
+          "id": "scenario.first_playable",
+          "kind": "scenario",
+          "old_revision": 12,
+          "revision": 13
+        },
+        {
+          "after_hash": "313f79789d4f256a8b6f24fe75daad49d458ad054a0a7a8768035d5d0fbb30dd",
+          "before_hash": "0a5b73b507420a7e0ee79916e2968d07d4eea7bdeb2cd749582b41d774e4d74e",
+          "change": "changed",
+          "id": "scenario.world_competition",
+          "kind": "scenario",
+          "old_revision": 13,
+          "revision": 14
+        },
+        {
+          "after_hash": "4829409e87f9999777a85d6027a7a1226a29d270403d8c6d19802b9685468bb9",
+          "before_hash": "b9e0f15c119dbc84d455c7fdcc2b0170cf80c779cfa3873cf1066b1feeec0ecb",
+          "change": "changed",
+          "id": "scenario.world_expanded",
+          "kind": "scenario",
+          "old_revision": 13,
+          "revision": 14
+        },
+        {
+          "after_hash": "875528bc0cd86a7fc982d31b530d7f0f3158e134258d05a1809019887a5dd9ba",
+          "before_hash": "dda34c22b5240825019cf846f50f2f82057a038537e1051ba83905986bc213a7",
+          "change": "changed",
+          "id": "scenario.world_forgiving",
+          "kind": "scenario",
+          "old_revision": 13,
+          "revision": 14
+        },
+        {
+          "after_hash": "483f9e154712fa3dd17acf1fdf071e2eee10e3c6c6f719425064be05d95e330b",
+          "before_hash": "cce50f041f637585d8364e6254bf543d43999d6798297e47c46ede0aea1bf7c2",
+          "change": "changed",
+          "id": "scenario.world_reduced",
+          "kind": "scenario",
+          "old_revision": 13,
+          "revision": 14
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "34b7027e7e9733e282d32b5f6ef1204583665ec634ab9c238bb9a496be1bd3a6",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.20.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 20,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.19.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000019.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000020.collection.json",
+      "summary": "Add fictional corporate tax and bounded relief",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 21,
+        "lints": [],
+        "prepared_headquarters": 21,
+        "scenarios": 7
+      }
     }
   ],
   "format": 1

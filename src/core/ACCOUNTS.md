@@ -72,6 +72,16 @@ principal uses cash after bill payments. Reservations stay protected. Owned
 site costs use a conservative ceiling and lease forecasts use gross charges.
 Both the settled period and the forecast avoid replaying earlier journal days.
 
+The optional scenario tax policy assesses calendar quarters after ordinary
+accruals. The base uses earned income and net booked expenses. Subsidiary
+dividends are exempt. Ordinary costs, depreciation and interest are deductible.
+Tax recognition creates a payable and enters the quarter's reported expense.
+Loss carry uses the oldest eligible balance first, within the authored cap,
+offset fraction and expiration. Research relief uses net paid Lab research
+fees and can reduce the assessment to zero within its rate, cap and term.
+Forecasts start from the current quarter's books and run the same rules on
+projected earnings, including advance-funded delivery and customer refunds.
+
 Reload validation checks canonical posting chronology and individual invoice and
 debt reconciliation, then reconstructs fixed-obligation accruals and monthly debt
 interest residues through the saved close cursor. Changing terms or resetting an

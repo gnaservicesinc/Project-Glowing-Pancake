@@ -550,8 +550,10 @@ QVariantMap ManagementController::financialStatements() const {
     if (!period) return result;
     result.insert(QStringLiteral("period"),tr("%1 through %2")
         .arg(text(iso_date(period->first)),text(iso_date(period->last))));
-    result.insert(QStringLiteral("profit"),tr("Revenue %1\nExpenses %2\nProfit or loss %3")
-        .arg(money(period->revenue),money(period->expenses),money(checked_unit_subtract(period->revenue,period->expenses))));
+    auto profit=tr("Revenue %1\nExpenses %2\nProfit or loss %3")
+        .arg(money(period->revenue),money(period->expenses),money(checked_unit_subtract(period->revenue,period->expenses)));
+    if (s.accounts->taxes) profit+=tr("\nCorporate tax included in expenses %1").arg(money(period->corporate_tax_expense));
+    result.insert(QStringLiteral("profit"),profit);
     const auto flow=[&](const CashMovement& movement) {
         return tr("%1 in · %2 out · %3 net").arg(money(movement.received),money(movement.paid),money(movement.net()));
     };
@@ -576,6 +578,43 @@ QVariantMap ManagementController::financialStatements() const {
     result.insert(QStringLiteral("units"),units);
     return result;
 }
+bool ManagementController::corporateTaxAvailable() const {
+    return snapshot_ && state().accounts && state().accounts->taxes.has_value();
+}
+QVariantMap ManagementController::corporateTax() const {
+    using namespace core;
+    if (!corporateTaxAvailable()) return {};
+    const auto& accounts=*state().accounts;
+    const auto& tax=*accounts.taxes;
+    const auto& policy=tax.policy;
+    auto terms=tr("Fictional corporate tax · %1\nEarned revenue enters the base. Ordinary booked costs, depreciation and interest are deductible. "
+        "Subsidiary dividends are exempt. A bill comes due %2 days after quarter end.")
+        .arg(percent(policy.rate)).arg(policy.payment_delay.value());
+    if (policy.loss_carry_quarters>0)
+        terms+=tr("\nLosses carry for up to %1 following quarters, up to %2 in total. They can offset up to %3 of a profitable quarter’s earnings.")
+            .arg(policy.loss_carry_quarters).arg(money(policy.loss_carry_cap),percent(policy.loss_offset));
+    if (const auto until=last_research_credit_day(tax))
+        terms+=tr("\nThrough %1, the tax credit covers %2 of net Lab research fees, up to %3 each quarter. The credit can reduce the bill to zero.")
+            .arg(text(iso_date(*until)),percent(policy.research_credit),money(policy.research_credit_cap));
+    const auto current=open_tax_base(accounts);
+    const auto balance=tr("Taxable income before deductions %1\nBooked deductions %2\nQualifying research fees %3\nUnused loss carry %4")
+        .arg(money(current.income),money(current.deductions),money(current.research_fees),money(tax_loss_balance(tax)));
+    QVariantMap result{{QStringLiteral("terms"),terms},{QStringLiteral("current"),balance}};
+    if (tax.assessments.empty()) return result;
+    const auto& last=tax.assessments.back();
+    auto assessment=tr("%1 through %2\nIncome %3 · deductions %4\nLosses used %5 · added %6 · expired %7\nTaxable earnings %8")
+        .arg(text(iso_date(last.first)),text(iso_date(last.through)),money(last.base.income),money(last.base.deductions),
+            money(last.loss_used),money(last.loss_added),money(last.loss_expired),money(last.taxable));
+    assessment+=tr("\nTax before credit %1 · research credit %2 · assessed tax %3")
+        .arg(money(last.gross_tax),money(last.credit),money(last.bill));
+    if (const auto row=accounts.invoices.find(tax_bill_id(last.through))) {
+        const auto& invoice=accounts.invoices[*row];
+        assessment+=tr("\nDue %1 · paid %2 · outstanding %3").arg(text(iso_date(invoice.due)),money(invoice.settled),
+            money(checked_unit_subtract(invoice.amount,invoice.settled)));
+    }
+    result.insert(QStringLiteral("latest"),assessment);
+    return result;
+}
 QVariantMap ManagementController::cashScenarios() const {
     using namespace core;
     if (!snapshot_ || !state().accounts) return {};
@@ -586,9 +625,11 @@ QVariantMap ManagementController::cashScenarios() const {
         const auto wholesale=runtime::forecast_wholesale_cash(snapshot_->checkpoint.world);
         const auto forecast=forecast_company_finances(s,wholesale);
         const auto point=[&](const CashProjection& value) {
-            return tr("Through %1\nCash %2 · unreserved %3\nOverdue bills %4 · due principal unpaid %5")
+            auto line=tr("Through %1\nCash %2 · unreserved %3\nOverdue bills %4 · due principal unpaid %5")
                 .arg(text(iso_date(value.through)),money(value.cash),money(value.available),
                      money(value.overdue_payables),money(value.due_principal));
+            if (s.accounts->taxes) line+=tr("\nProjected corporate tax paid %1").arg(money(value.corporate_tax_paid));
+            return line;
         };
         const std::array<QString,3> labels{tr("Weak demand"),tr("Recent demand"),tr("Strong demand")};
         QVariantList cases;
@@ -607,10 +648,11 @@ QVariantMap ManagementController::cashScenarios() const {
         }
         const auto basis=forecast.sample_days==0?tr("Discretionary sales enter the scenarios after the first settled market day."):
             tr("Discretionary sales use %1 settled market days and fit today’s serving capacity.").arg(forecast.sample_days);
-        const auto assumptions=basis+tr("\nSigned contracts use recent delivery capped at today’s capacity. New contracts use today’s capacity. "
+        auto assumptions=basis+tr("\nSigned contracts use recent delivery capped at today’s capacity. New contracts use today’s capacity. "
             "Earned charges first use any advance, and an unused balance is refunded at term end. Wholesale uses recent receipts through signed terms.\n"
             "Existing bills, gross lease terms and the owned-site cost ceiling apply. %1 in reservations stays held. Due principal uses remaining cash after bills. "
             "New purchases, renewals, and unexpected changes are outside these scenarios.").arg(money(forecast.reserved_cash));
+        if (s.accounts->taxes) assumptions+=tr("\nCorporate tax uses projected earned income and the current quarterly policy.");
         return {{QStringLiteral("date"),text(iso_date(s.date))},{QStringLiteral("assumptions"),assumptions},
                 {QStringLiteral("cases"),cases}};
     } catch (const std::exception& error) {

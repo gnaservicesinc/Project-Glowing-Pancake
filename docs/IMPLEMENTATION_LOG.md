@@ -1890,3 +1890,22 @@ cash reconciliation, calendar dates, capacity limits, customer prepayments,
 refunds, overdue bills, scheduled principal and actual wholesale receipts.
 Short offscreen keyboard checks at 100% and 200% reach all three Accounts
 views and verify that advancing one day clears the old forecast.
+
+### Fictional corporate tax
+
+All seven scenarios use a provisional 15% tax at calendar-quarter close.
+Earned income and ordinary booked deductions determine taxable earnings.
+Subsidiary dividends are exempt. Up to $1 million in losses can carry for
+eight following quarters and offset half of a profitable quarter's earnings.
+A credit of 10% of net Lab research fees can reduce each of the first 20
+assessments by up to $2,500. Bills use the ordinary ledger and come due
+30 days after quarter end.
+
+Office Accounts shows the taxable base, relief, assessment and payment.
+Tax expense enters the quarter's profit and loss. Cash scenarios apply the
+same tax rules to modeled earned income and show the payments. Reviewed
+content 0.20.0-dev.1 passes all seven scenarios and 21 opening round trips.
+The optimized Mac build and 12 focused CTests pass, including a dated
+payment after exact reload and rejection of a forged credit. Keyboard
+checks at 100% and 200% show the real assessment and payment. Compact taxed
+accounts and a prior save with matching content both round-trip exactly.

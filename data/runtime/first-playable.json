@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.19.0-dev.1",
+  "content_version": "0.20.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -22355,6 +22355,16 @@
       },
       "lease_energy_included": true,
       "management": {
+        "corporate_tax": {
+          "loss_carry_cap_cents": 100000000,
+          "loss_carry_quarters": 8,
+          "loss_offset_bp": 5000,
+          "payment_delay_days": 30,
+          "rate_bp": 1500,
+          "research_credit_bp": 1000,
+          "research_credit_cap_cents": 250000,
+          "research_credit_quarters": 20
+        },
         "default_monthly_ceiling_cents": 400000,
         "default_policy_budget_cents": 10000000,
         "default_policy_runs": 3,
@@ -22910,7 +22920,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 9,
+      "revision": 10,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -27450,6 +27460,16 @@
       },
       "lease_energy_included": true,
       "management": {
+        "corporate_tax": {
+          "loss_carry_cap_cents": 100000000,
+          "loss_carry_quarters": 8,
+          "loss_offset_bp": 5000,
+          "payment_delay_days": 30,
+          "rate_bp": 1500,
+          "research_credit_bp": 1000,
+          "research_credit_cap_cents": 250000,
+          "research_credit_quarters": 20
+        },
         "default_monthly_ceiling_cents": 400000,
         "default_policy_budget_cents": 10000000,
         "default_policy_runs": 3,
@@ -28005,7 +28025,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 9,
+      "revision": 10,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -31369,6 +31389,16 @@
       },
       "lease_energy_included": true,
       "management": {
+        "corporate_tax": {
+          "loss_carry_cap_cents": 100000000,
+          "loss_carry_quarters": 8,
+          "loss_offset_bp": 5000,
+          "payment_delay_days": 30,
+          "rate_bp": 1500,
+          "research_credit_bp": 1000,
+          "research_credit_cap_cents": 250000,
+          "research_credit_quarters": 20
+        },
         "default_monthly_ceiling_cents": 400000,
         "default_policy_budget_cents": 10000000,
         "default_policy_runs": 3,
@@ -31665,7 +31695,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 12,
+      "revision": 13,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 60000,
@@ -34181,6 +34211,16 @@
       },
       "lease_energy_included": true,
       "management": {
+        "corporate_tax": {
+          "loss_carry_cap_cents": 100000000,
+          "loss_carry_quarters": 8,
+          "loss_offset_bp": 5000,
+          "payment_delay_days": 30,
+          "rate_bp": 1500,
+          "research_credit_bp": 1000,
+          "research_credit_cap_cents": 250000,
+          "research_credit_quarters": 20
+        },
         "default_monthly_ceiling_cents": 400000,
         "default_policy_budget_cents": 10000000,
         "default_policy_runs": 3,
@@ -34479,7 +34519,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 13,
+      "revision": 14,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -38150,6 +38190,16 @@
       },
       "lease_energy_included": true,
       "management": {
+        "corporate_tax": {
+          "loss_carry_cap_cents": 100000000,
+          "loss_carry_quarters": 8,
+          "loss_offset_bp": 5000,
+          "payment_delay_days": 30,
+          "rate_bp": 1500,
+          "research_credit_bp": 1000,
+          "research_credit_cap_cents": 250000,
+          "research_credit_quarters": 20
+        },
         "default_monthly_ceiling_cents": 400000,
         "default_policy_budget_cents": 10000000,
         "default_policy_runs": 3,
@@ -38448,7 +38498,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 13,
+      "revision": 14,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -42119,6 +42169,16 @@
       },
       "lease_energy_included": true,
       "management": {
+        "corporate_tax": {
+          "loss_carry_cap_cents": 100000000,
+          "loss_carry_quarters": 8,
+          "loss_offset_bp": 5000,
+          "payment_delay_days": 30,
+          "rate_bp": 1500,
+          "research_credit_bp": 1000,
+          "research_credit_cap_cents": 250000,
+          "research_credit_quarters": 20
+        },
         "default_monthly_ceiling_cents": 400000,
         "default_policy_budget_cents": 10000000,
         "default_policy_runs": 3,
@@ -42417,7 +42477,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 13,
+      "revision": 14,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,
@@ -46088,6 +46148,16 @@
       },
       "lease_energy_included": true,
       "management": {
+        "corporate_tax": {
+          "loss_carry_cap_cents": 100000000,
+          "loss_carry_quarters": 8,
+          "loss_offset_bp": 5000,
+          "payment_delay_days": 30,
+          "rate_bp": 1500,
+          "research_credit_bp": 1000,
+          "research_credit_cap_cents": 250000,
+          "research_credit_quarters": 20
+        },
         "default_monthly_ceiling_cents": 400000,
         "default_policy_budget_cents": 10000000,
         "default_policy_runs": 3,
@@ -46386,7 +46456,7 @@
         "research.reproducible_tooling"
       ],
       "resilience": "resilience.domestic",
-      "revision": 13,
+      "revision": 14,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 80000,

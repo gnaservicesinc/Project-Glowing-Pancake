@@ -288,6 +288,7 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
     if (world.simulation.frontier)
         state.frontier=opening_frontier(world.simulation.frontier->catalog,world.simulation.frontier->seed);
     state.management=ManagementState{*authored.management,{},{},{},{},{},{}};state.management->catalog.setbacks.clear();
+    if (authored.management->corporate_tax) state.accounts->taxes=CorporateTaxes{*authored.management->corporate_tax,day};
     state.management->catalog.governance.reset();
     state.management->catalog.scoring.founder="founder";
     if(state.management->catalog.succession) state.management->catalog.succession->founder_name=definition.planning->leader;

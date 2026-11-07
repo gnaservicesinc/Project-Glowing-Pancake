@@ -42,6 +42,8 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         if (monthly.value() > 0)
             core::add_recurring(accounts, {id, monthly, scenario->starts_on, std::nullopt, id});
     }
+    if (management && management->corporate_tax)
+        accounts.taxes=core::CorporateTaxes{*management->corporate_tax,accounts.starts_on};
     core::validate_accounts(accounts);
     world.simulation.accounts = std::move(accounts);
     world.simulation.liquidity = core::opening_liquidity(scenario->starts_on,world.company_id);

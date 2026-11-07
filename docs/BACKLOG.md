@@ -44,8 +44,9 @@ delivery applies the balance to its own invoices, and unused cash becomes a
 refund payable when the commitment ends. Office Accounts now shows the balance
 sheet, 30 settled days of cash flow and profit and loss, and actual unit
 economics. Three 3- and 12-month cash scenarios apply recorded commitments and
-vary recent discretionary demand. Next is a fictional corporate tax policy
-with a disclosed taxable base, dated bills and visible payments.
+vary recent discretionary demand. All seven scenarios now use fictional
+quarterly corporate tax with capped relief, a dated bill and visible payment.
+Next is the product lifecycle, beginning with staged rollouts and rollback.
 
 ## M0 — Toolchain and platform proof
 

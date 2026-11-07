@@ -43,6 +43,8 @@ class ManagementController final : public QObject {
     Q_PROPERTY(QVariantMap recommended READ recommended NOTIFY changed)
     Q_PROPERTY(QString briefing READ briefing NOTIFY changed)
     Q_PROPERTY(QVariantMap financialStatements READ financialStatements NOTIFY changed)
+    Q_PROPERTY(bool corporateTaxAvailable READ corporateTaxAvailable NOTIFY changed)
+    Q_PROPERTY(QVariantMap corporateTax READ corporateTax NOTIFY changed)
     Q_PROPERTY(QString guide READ guide NOTIFY changed)
     Q_PROPERTY(QString ending READ ending NOTIFY changed)
     Q_PROPERTY(bool plannedCompetition READ plannedCompetition NOTIFY changed)
@@ -134,6 +136,8 @@ public:
     QVariantMap recommended() const;
     QString briefing() const;
     QVariantMap financialStatements() const;
+    bool corporateTaxAvailable() const;
+    QVariantMap corporateTax() const;
     Q_INVOKABLE QVariantMap cashScenarios() const;
     QString guide() const;
     QString ending() const;

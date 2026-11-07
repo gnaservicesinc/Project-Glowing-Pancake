@@ -10,6 +10,7 @@ ColumnLayout {
     property string section: "statements"
     property var forecast: ({})
     readonly property var statements: visible && section === "statements" ? manager.financialStatements : ({})
+    readonly property var tax: visible && section === "tax" ? manager.corporateTax : ({})
     spacing: 9
 
     component Line: Label {
@@ -31,12 +32,14 @@ ColumnLayout {
             model: [
                 { id: "statements", label: qsTr("Statements") },
                 { id: "scenarios", label: qsTr("Cash scenarios") },
+                { id: "tax", label: qsTr("Corporate tax") },
                 { id: "bills", label: qsTr("Bills and debt") }
             ]
             Button {
                 required property var modelData
                 objectName: "accounts_" + modelData.id
                 text: modelData.label
+                visible: modelData.id !== "tax" || panel.manager.corporateTaxAvailable
                 font.pixelSize: panel.textSize
                 checked: panel.section === modelData.id
                 Accessible.name: text
@@ -45,6 +48,16 @@ ColumnLayout {
         }
     }
     Line { text: qsTr("Company accounts · USD in 2014 purchasing power") }
+    ColumnLayout {
+        visible: panel.section === "tax"
+        Layout.fillWidth: true
+        Heading { text: qsTr("Corporate tax terms") }
+        Line { objectName: "corporateTaxTerms"; text: panel.tax.terms || "" }
+        Heading { text: qsTr("Current quarter") }
+        Line { objectName: "corporateTaxCurrent"; text: panel.tax.current || "" }
+        Heading { text: qsTr("Latest assessment") }
+        Line { objectName: "corporateTaxAssessment"; text: panel.tax.latest || qsTr("The first assessment is filed at quarter close.") }
+    }
     ColumnLayout {
         visible: panel.section === "statements"
         Layout.fillWidth: true
@@ -99,6 +112,10 @@ ColumnLayout {
     }
     Connections {
         target: panel.manager
-        function onChanged() { panel.forecast = ({}) }
+        function onChanged() {
+            panel.forecast = ({})
+            if (panel.section === "tax" && !panel.manager.corporateTaxAvailable)
+                panel.section = "statements"
+        }
     }
 }

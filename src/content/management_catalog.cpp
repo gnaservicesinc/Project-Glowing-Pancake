@@ -1,6 +1,7 @@
 #include <pgp/content/management_catalog.hpp>
 #include <pgp/content/governance_catalog.hpp>
 #include <pgp/content/succession_catalog.hpp>
+#include "corporate_tax_codec.hpp"
 #include <nlohmann/json.hpp>
 #include <limits>
 #include <set>
@@ -35,6 +36,10 @@ core::ManagementCatalog load_management_catalog(std::string_view bytes) {
     if(j.contains("succession")) {succession=load_succession_catalog(j.at("succession").dump());j.erase("succession");}
     if (j.contains("governance")) {governance=load_governance_catalog(j.at("governance").dump());j.erase("governance");}
     core::ManagementCatalog c;c.governance=std::move(governance);c.succession=std::move(succession);
+    if (j.contains("corporate_tax")) {
+        c.corporate_tax=civic_codec::decode<core::CorporateTaxPolicy>(j.at("corporate_tax"));
+        j.erase("corporate_tax");
+    }
     if (j.contains("support_offers")) {
         array(j.at("support_offers"),core::funding_offer_limit);
         for (auto row:j.at("support_offers")) {
@@ -112,6 +117,7 @@ std::string canonical_management_catalog(const core::ManagementCatalog& c) {
         {"minimum_evaluation_interval_days",c.minimum_evaluation_interval.value()},{"maximum_policy_runs",c.maximum_policy_runs},{"default_policy_budget_cents",c.default_policy_budget.value()},
         {"default_reserve_floor_cents",c.default_reserve_floor.value()},{"default_monthly_ceiling_cents",c.default_monthly_ceiling.value()},{"default_policy_runs",c.default_policy_runs}};
     if (c.governance) result["governance"]=Json::parse(canonical_governance_catalog(*c.governance));
+    if (c.corporate_tax) result["corporate_tax"]=civic_codec::encode(*c.corporate_tax);
     if (c.succession) result["succession"]=Json::parse(canonical_succession_catalog(*c.succession));
     if (!c.support_offers.empty()) {
         result["support_offers"]=Json::array();

@@ -1,5 +1,6 @@
 #include "accounts_json.hpp"
 #include "history_blocks.hpp"
+#include "../content/corporate_tax_codec.hpp"
 
 #include <algorithm>
 #include <array>
@@ -279,12 +280,18 @@ Json accounts_json(const core::AccountsState& state, bool packed) {
         result["posting_patterns"] = std::move(patterns.rows);
         result["invoice_patterns"] = std::move(invoice_patterns.rows);
     }
+    if (state.taxes) {
+        using content::civic_codec::encode;
+        const auto& tax=*state.taxes;
+        result["corporate_taxes"]={{"policy",encode(tax.policy)},{"starts_on",encode(tax.starts_on)},
+            {"losses",encode(tax.losses)},{"assessments",encode(tax.assessments)}};
+    }
     return result;
 }
 
 core::AccountsState parse_accounts(const Json& value, bool packed) {
     fields(value,"accounts",{"owner","starts_on","closed_through","next_posting_id",
-        "postings","invoices","recurring","debts","holdings"},{"posting_patterns","invoice_patterns"});
+        "postings","invoices","recurring","debts","holdings"},{"posting_patterns","invoice_patterns","corporate_taxes"});
     if (value.contains("posting_patterns") != packed || (!packed && value.contains("invoice_patterns")))
         invalid("accounts/posting_patterns", "Posting patterns must match the accounts storage format");
     core::AccountsState result;
@@ -343,6 +350,17 @@ core::AccountsState parse_accounts(const Json& value, bool packed) {
         result.holdings.push_back({label(holding.at("holder")),
             core::BasisPoints{i64(holding.at("shares_basis_points"),"accounts/holding/shares_basis_points")},
             boolean(holding.at("reserved_pool"),"accounts/holding/reserved_pool")});
+    }
+    if (value.contains("corporate_taxes")) {
+        using content::civic_codec::decode;
+        const auto& tax=value.at("corporate_taxes");
+        fields(tax,"accounts/corporate_taxes",{"policy","starts_on","losses","assessments"});
+        core::CorporateTaxes book{decode<core::CorporateTaxPolicy>(tax.at("policy")),day(tax.at("starts_on"))};
+        book.losses=decode<std::vector<core::TaxLoss>>(tax.at("losses"));
+        const auto& returns=tax.at("assessments");
+        array(returns,"accounts/corporate_taxes/assessments",core::tax_return_limit);
+        for (const auto& row:returns) book.assessments.push_back(decode<core::TaxAssessment>(row));
+        result.taxes=std::move(book);
     }
     return result;
 }

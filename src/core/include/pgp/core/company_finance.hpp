@@ -16,6 +16,7 @@ struct CompanyPeriod {
     Cents opening_cash{0}, closing_cash{0};
     CashMovement operations, investing, financing;
     Cents revenue{0}, expenses{0}, product_revenue{0}, service_cost{0};
+    Cents corporate_tax_expense{0};
     std::uint64_t delivered_tasks=0;
 };
 // Reports use only settled days. Same-morning transactions are reflected in

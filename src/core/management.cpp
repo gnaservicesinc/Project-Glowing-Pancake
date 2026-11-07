@@ -142,6 +142,7 @@ void require_operating_reserve(Cents cash_before,const SimulationState& after) {
 }
 void validate_management_catalog(const ManagementCatalog& c) {
     validate_funding_offers(c.support_offers);
+    if (c.corporate_tax) validate_corporate_tax_policy(*c.corporate_tax);
     if(c.succession) {
         validate_succession_catalog(*c.succession);
         if(c.governance && std::ranges::none_of(c.governance->board,[&](const auto& b){return b.id==c.succession->founder_board && b.player;}))
@@ -407,12 +408,16 @@ SliceScore slice_score(const SimulationState& s) {
 
 void validate_management(const SimulationState& s,bool deep) {
     if (!s.management) {
+        if (s.accounts && s.accounts->taxes) invalid("Corporate taxes require the scenario's management policy");
         if (s.market && std::any_of(s.market->price_events.begin(),s.market->price_events.end(),[](const auto& e){return !e.actor.empty();}))
             invalid("A delegated price event needs its management authorization");
         return;
     }
     if (!s.accounts || !s.capacity || !s.lab || !s.market || !s.deployments) invalid("Management requires the playable company modules");
     const auto& m=*s.management;
+    if (m.catalog.corporate_tax.has_value()!=s.accounts->taxes.has_value() ||
+        (s.accounts->taxes && s.accounts->taxes->policy!=*m.catalog.corporate_tax))
+        invalid("Corporate taxes differ from the authored management policy");
     if (m.financing.size()>m.catalog.financing.size() || m.specialists.size()>m.catalog.specialists.size() || m.policies.size()>management_policy_limit ||
         m.decisions.size()>management_decision_limit || m.notices.size()>256 || (m.reviewed_on && (*m.reviewed_on<s.accounts->starts_on || *m.reviewed_on>s.date)))
         invalid("Management history exceeds its bounds or daily cursor");

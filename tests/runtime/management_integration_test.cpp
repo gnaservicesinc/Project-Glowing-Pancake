@@ -1,4 +1,5 @@
 #include "../content/slice_fixture.hpp"
+#include <pgp/core/company_finance.hpp>
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/runtime/scenario.hpp>
@@ -257,6 +258,44 @@ void funding_support(Json source) {
     catch (const persistence::PersistenceError&) {rejected=true;}
     check(rejected,"Unbacked noncash credits or grants survived restore");
 }
+void corporate_tax(Json source) {
+    using namespace core;
+    auto& opening=pgp_test::scenario_doc(source);
+    opening.erase("backgrounds");
+    for (auto& charge:opening["monthly_commitments_cents"]) charge=10000;
+    const auto program=compile(std::move(source),false);
+    auto checkpoint=session::run_slice_baseline(program,parse_iso_date("2014-04-01")).checkpoint;
+    runtime::Runtime game{program,std::move(checkpoint)};
+    const auto& accounts=*state(game).accounts;
+    check(accounts.taxes && accounts.taxes->assessments.size()==1,"Playable opening missed its first quarterly return");
+    const auto assessment=accounts.taxes->assessments.back();
+    const auto id=tax_bill_id(assessment.through);
+    const auto invoice=accounts.invoices.find(id);
+    check(assessment.through==parse_iso_date("2014-03-31") && assessment.due==parse_iso_date("2014-04-30") &&
+          assessment.bill.value()>0 && invoice && accounts.invoices[*invoice].settled==Cents{0},
+          "A profitable service did not create an unpaid bill at its authored date");
+    const auto actual=recent_company_period(state(game));
+    check(actual && actual->corporate_tax_expense==assessment.bill,"Statements omitted the actual quarter-end tax expense");
+    const auto projection=forecast_company_finances(state(game));
+    check(projection.cases[1].cash.near_term.corporate_tax_paid>=assessment.bill,"The cash scenario lost the already assessed bill");
+    const auto bytes=persistence::encode_save(program,game.checkpoint());
+    runtime::Runtime resumed{program,persistence::decode_save(program,bytes).checkpoint};
+    check(resumed.checkpoint()==game.checkpoint(),"Reload changed the tax liability or relief history");
+    auto forged=Json::parse(bytes);
+    forged["checkpoint"]["world"]["simulation"]["accounts"]["corporate_taxes"]["assessments"][0]["credit_cents"]=
+        checked_add(assessment.credit.value(),1);
+    forged.erase("sha256");
+    forged["sha256"]=persistence::sha256(forged.dump());
+    bool refused=false;
+    try {(void)persistence::decode_save(program,forged.dump());}
+    catch (const persistence::PersistenceError&) {refused=true;}
+    check(refused,"A checksum-valid forged tax credit survived restore");
+    days(game,30);days(resumed,30);
+    const auto& paid=*state(game).accounts;
+    const auto settled=paid.invoices.find(id);
+    check(game.checkpoint()==resumed.checkpoint() && settled && paid.invoices[*settled].settled==assessment.bill,
+          "Tax did not settle once after reopening");
+}
 }
 int main(int argc,char** argv) {
     try {
@@ -264,6 +303,8 @@ int main(int argc,char** argv) {
         const auto source=Json::parse(file);
         if (argc>1 && std::string_view{argv[1]}=="--funding-support") {
             funding_support(source);
+        } else if (argc>1 && std::string_view{argv[1]}=="--corporate-tax") {
+            corporate_tax(source);
         } else {
             for (const auto& [name,run]:std::vector<std::pair<const char*,void(*)(const Json&)>>{
                 {"bounds",bounds},{"policies",policies},{"renewals",renewals},{"recovery_financing",recovery_financing},

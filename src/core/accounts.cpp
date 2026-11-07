@@ -22,7 +22,7 @@ void text_valid(std::string_view text, std::size_t maximum = 256) {
 void user_key_valid(std::string_view key) {
     text_valid(key, 512);
     for (const std::string_view prefix : {"opening", "debt/", "invoice/", "accrue/", "settle/", "wholesale/",
-                                          "customer.advance/", "customer.apply/"})
+                                          "customer.advance/", "customer.apply/", "tax.corporate/"})
         if (key.starts_with(prefix)) invalid("This transaction key namespace belongs to an owning accounts system");
 }
 std::size_t index(Account account) {
@@ -127,7 +127,7 @@ void accrue(AccountsState& state, OrdinalDay day, std::string id, Cents amount, 
                    "accrue/" + id + "/" + iso_date(day), id);
 }
 void close_day(AccountsState& state, OrdinalDay day, Cents protected_cash,
-               std::span<const RecurringCredit> credits = {}) {
+               std::span<const RecurringCredit> credits = {},const TaxBase& carried_base = {}) {
     require_day(state, day);
     auto current_available = available_cash(state, protected_cash);
     const auto civil = from_ordinal(day);
@@ -165,6 +165,15 @@ void close_day(AccountsState& state, OrdinalDay day, Cents protected_cash,
         const auto interest = Cents{portion.quotient + residues / interest_denominator};
         debt.interest_remainder = residues % interest_denominator;
         accrue(state, day, "interest/" + debt.id + "/" + iso_date(first), interest, "Debt interest: " + debt.id);
+    }
+    if (state.taxes && civil.month%3==0 && civil.day==denominator) {
+        const auto* tax=close_corporate_tax(state,day,carried_base);
+        if (tax && tax->bill.value()>0) {
+            const auto id=tax_bill_id(day);
+            const auto cause="Corporate tax for quarter ending "+iso_date(day);
+            append_trusted(state,day,Account::expenses,Account::payables,tax->bill,cause,"invoice/"+id,id);
+            state.invoices.push_back({id,InvoiceKind::payable,tax->due,tax->bill,Cents{0},cause},state.closed_through);
+        }
     }
     // Collection precedes payment. A due receivable represents an agreed,
     // collectible amount; uncertain/late customers will supply explicit terms.
@@ -428,6 +437,8 @@ void validate_accounts(const AccountsState& state) {
         if (!keys.insert(invoice.id) || invoice.amount.value() <= 0 || invoice.settled.value() < 0 || invoice.settled > invoice.amount ||
             invoice.due < state.starts_on || (invoice.kind != InvoiceKind::receivable && invoice.kind != InvoiceKind::payable))
             invalid("Invoice identity, units, due date or kind is invalid");
+        if (invoice.id.starts_with(tax_bill_prefix) && (!state.taxes || invoice.kind!=InvoiceKind::payable))
+            invalid("Corporate tax payable has no owning tax policy");
         const auto& documents = invoice.kind == InvoiceKind::receivable ? receivable_documents : payable_documents;
         const auto* source = documents.find(invoice.id);
         if (!source || source->recognized != invoice.amount || source->settled != invoice.settled)
@@ -447,6 +458,7 @@ void validate_accounts(const AccountsState& state) {
         invalid("Ledger links an unknown invoice identity");
     if (receivables != report.receivables || payables != report.payables)
         invalid("Invoice subledgers do not reconcile with receivables and payables");
+    validate_corporate_taxes(state);
     keys.reset(state.recurring.size());
     for (const auto& obligation : state.recurring) {
         text_valid(obligation.id, 128); text_valid(obligation.cause);
@@ -606,7 +618,7 @@ void issue_invoice(AccountsState& state, OrdinalDay day, Invoice invoice) {
         require_day(candidate, day);
         if (invoice.amount.value() <= 0 || invoice.settled != Cents{0} || invoice.due < day)
             invalid("New invoice requires an unconsumed positive amount and a current or future due date");
-        if (invoice.id.starts_with("recurring/") || invoice.id.starts_with("interest/"))
+        if (invoice.id.starts_with("recurring/") || invoice.id.starts_with("interest/") || invoice.id.starts_with(tax_bill_prefix))
             invalid("Invoice identity is reserved for an owning obligation system");
         if (invoice.kind == InvoiceKind::receivable)
             append(candidate, day, Account::receivables, Account::revenue, invoice.amount, invoice.cause, "invoice/" + invoice.id, invoice.id);
@@ -629,6 +641,7 @@ void issue_market_invoice(AccountsState& state, OrdinalDay day, Invoice invoice,
         invalid("Market invoice must have a positive unsettled amount due today");
     if (invoice.kind != InvoiceKind::receivable && invoice.kind != InvoiceKind::payable)
         invalid("Unknown market invoice kind");
+    if (invoice.id.starts_with(tax_bill_prefix)) invalid("Market invoices cannot create a corporate tax bill");
     const auto receivable = invoice.kind == InvoiceKind::receivable;
     if (prepaid.value()<0 || prepaid>invoice.amount || prepaid>balance(state, Account::customer_advances) ||
         (prepaid.value()>0 && (!receivable || !invoice.id.starts_with("market.contract/"))))
@@ -802,6 +815,15 @@ CashProjection projection_point(const AccountsState& ledger,OrdinalDay through,C
         if (debt.due <= through) result.due_principal = checked_unit_add(result.due_principal, debt.principal);
     return result;
 }
+Cents projected_tax_paid(const AccountsState& ledger,std::size_t first) {
+    Cents total{0};
+    if (ledger.taxes) for (auto i=first;i<ledger.postings.size();++i) {
+        const auto& row=ledger.postings[i];
+        if (row.debit==Account::payables && row.credit==Account::cash && row.document_id.starts_with(tax_bill_prefix))
+            total=checked_unit_add(total,row.amount);
+    }
+    return total;
+}
 }
 CashProjection project_cash(const AccountsState& state,OrdinalDay through,Cents protected_cash,const std::vector<MeteredProjection>& metered) {
     validate_accounts(state); (void)from_ordinal(through);
@@ -816,7 +838,9 @@ CashProjection project_cash(const AccountsState& state,OrdinalDay through,Cents 
         if (day==through) break;
     }
     validate_accounts(candidate);
-    return projection_point(candidate,through,protected_cash);
+    auto result=projection_point(candidate,through,protected_cash);
+    result.corporate_tax_paid=projected_tax_paid(candidate,state.postings.size());
+    return result;
 }
 CashOutlook project_cash_outlook(const AccountsState& state,OrdinalDay near_through,Cents protected_cash,
                                  const std::vector<MeteredProjection>& metered,std::span<const ProjectedCashDay> days) {
@@ -829,8 +853,15 @@ CashOutlook project_cash_outlook(const AccountsState& state,OrdinalDay near_thro
     auto ledger=opening_accounts(balance(state,Account::cash),first,state.owner);
     ledger.recurring=state.recurring;
     ledger.debts=state.debts;
+    ledger.taxes=state.taxes;
+    auto carried_base=open_tax_base(state);
+    const auto advances=balance(state,Account::customer_advances);
+    if (advances.value()>0)
+        append_trusted(ledger,first,Account::equity,Account::customer_advances,advances,
+                       "Projected opening customer advances","projection.opening_advances");
     for (const auto row:state.invoices.live_rows())
         ledger.invoices.push_back(state.invoices[row],state.closed_through);
+    const auto first_posting=ledger.postings.size();
     std::sort(ledger.debts.begin(),ledger.debts.end(),[](const auto& a,const auto& b) {
         return std::tie(a.due,a.id)<std::tie(b.due,b.id);
     });
@@ -838,14 +869,24 @@ CashOutlook project_cash_outlook(const AccountsState& state,OrdinalDay near_thro
     for (std::size_t i=0;i<days.size();++i) {
         const auto day=advance_days(first,Days{i});
         const auto& flow=days[i];
-        if (flow.receipts.value()<0 || flow.bills_due.value()<0) invalid("Forecast receipts and bills must be nonnegative");
+        if (flow.receipts.value()<0 || flow.bills_due.value()<0 || flow.advance_earned.value()<0 || flow.refunds_due.value()<0 ||
+            checked_unit_add(flow.advance_earned,flow.refunds_due)>balance(ledger,Account::customer_advances))
+            invalid("Forecast receipts and bills must be nonnegative and use only available advances");
         const auto stamp=iso_date(day);
         if (flow.receipts.value()>0)
             append_trusted(ledger,day,Account::cash,Account::revenue,flow.receipts,"Projected customer cash","projection.sale/"+stamp);
         if (flow.bills_due.value()>0)
             issue_market_invoice(ledger,day,{"projection.bill/"+stamp,InvoiceKind::payable,day,flow.bills_due,Cents{0},"Projected contract costs"});
+        if (flow.advance_earned.value()>0)
+            append_trusted(ledger,day,Account::customer_advances,Account::revenue,flow.advance_earned,
+                           "Projected earned advance","projection.earned/"+stamp);
+        if (flow.refunds_due.value()>0)
+            issue_customer_refund(ledger,day,{"market.refund/projection/"+stamp,InvoiceKind::payable,day,
+                flow.refunds_due,Cents{0},"Projected customer refund"});
         accrue_metered_projection(ledger,day,metered);
-        close_day(ledger,day,protected_cash);
+        close_day(ledger,day,protected_cash,{},carried_base);
+        if (ledger.taxes && !ledger.taxes->assessments.empty() && ledger.taxes->assessments.back().through==day)
+            carried_base={};
         for (auto& debt:ledger.debts) {
             if (debt.due>day) break;
             const auto payment=std::min(debt.principal,available_cash(ledger,protected_cash));
@@ -853,11 +894,13 @@ CashOutlook project_cash_outlook(const AccountsState& state,OrdinalDay near_thro
             append_trusted(ledger,day,Account::debt,Account::cash,payment,"Projected principal","projection.debt/"+debt.id+"/"+stamp,debt.id);
             debt.principal=checked_unit_subtract(debt.principal,payment);
         }
-        const auto point=projection_point(ledger,day,protected_cash);
+        auto point=projection_point(ledger,day,protected_cash);
         if (!result.first_shortfall && (point.overdue_payables.value()>0 || point.due_principal.value()>0))
             result.first_shortfall=day;
+        if (day==near_through || i+1==days.size())
+            point.corporate_tax_paid=projected_tax_paid(ledger,first_posting);
         if (day==near_through) result.near_term=point;
-        result.year=point;
+        if (i+1==days.size()) result.year=point;
     }
     return result;
 }

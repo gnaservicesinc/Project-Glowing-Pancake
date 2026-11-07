@@ -115,6 +115,65 @@ void cash_outlook_settlement() {
           outlook.year.overdue_payables==Cents{0} && outlook.year.due_principal==Cents{0},
           "Later receipts failed to clear arrears, recurring costs, site ceiling and then principal");
 }
+void corporate_taxes_and_outlook() {
+    const auto march=to_ordinal({2014,3,31});
+    const auto april=advance_days(march,Days{1});
+    const auto june=to_ordinal({2014,6,30});
+    const auto due=to_ordinal({2014,7,30});
+    auto ledger=opening_accounts(Cents{100000},march);
+    ledger.taxes=CorporateTaxes{{BasisPoints{2000},Days{30},1,Cents{10000},BasisPoints{5000},
+                                 BasisPoints{4000},Cents{500},2},march};
+    record_cash(ledger,march,Cents{-15000},Account::expenses,"Opening costs","early.cost");
+    close_accounts_day(ledger,march,Cents{0});
+    const auto& loss=ledger.taxes->assessments.back();
+    check(loss.bill==Cents{0} && loss.loss_added==Cents{10000} && tax_loss_balance(*ledger.taxes)==Cents{10000},
+          "Loss carry exceeded its cap or produced a cash award");
+    record_cash(ledger,april,Cents{17500},Account::revenue,"Earned sales","sales");
+    record_cash(ledger,april,Cents{3500},Account::revenue,"Subsidiary dividend","group.dividend/child/1");
+    record_cash(ledger,april,Cents{5000},Account::equity,"Contributed capital","investment");
+    record_cash(ledger,april,Cents{-2500},Account::expenses,"Net research fee","lab/research/first/1");
+    receive_customer_advance(ledger,april,"pilot/prepaid",Cents{1000});
+    for (auto day=april;day<june;day=advance_days(day,Days{1})) close_accounts_day(ledger,day,Cents{0},false);
+    const auto cash=accounts_report(ledger).cash;
+    const auto before=ledger;
+    std::array<ProjectedCashDay,31> path{};
+    path.front().advance_earned=Cents{1000};
+    const auto forecast=project_cash_outlook(ledger,june,Cents{0},{},path);
+    check(ledger==before && forecast.near_term.corporate_tax_paid==Cents{0} &&
+          forecast.year.corporate_tax_paid==Cents{1100} && forecast.year.cash==checked_unit_subtract(cash,Cents{1100}),
+          "Tax forecast lost the booked quarter, earned advance, relief or actual due date");
+    path.front().advance_earned=Cents{0};
+    path.front().refunds_due=Cents{1000};
+    const auto refund=project_cash_outlook(ledger,june,Cents{0},{},path);
+    check(refund.year.corporate_tax_paid==Cents{1000} && refund.year.cash==checked_unit_subtract(cash,Cents{2000}),
+          "Tax forecast deducted a refund of an unearned advance");
+    issue_market_invoice(ledger,june,{"market.contract/pilot/prepaid/2014-06-30",InvoiceKind::receivable,june,
+        Cents{1000},Cents{0},"Delivered contract"},Cents{1000});
+    close_accounts_day(ledger,june,Cents{0});
+    const auto q2=ledger.taxes->assessments.back();
+    check(q2.base==TaxBase{Cents{18500},Cents{2500},Cents{2500}} && q2.loss_used==Cents{8000} &&
+          q2.taxable==Cents{8000} && q2.gross_tax==Cents{1600} && q2.credit==Cents{500} && q2.bill==Cents{1100} &&
+          q2.due==due && accounts_report(ledger).cash==cash && accounts_report(ledger).payables==q2.bill,
+          "Quarter close counted financing as earnings or failed to create the exact tax payable");
+    close_through(ledger,due);
+    const auto invoice=ledger.invoices.find(tax_bill_id(june));
+    check(invoice && ledger.invoices[*invoice].settled==q2.bill && accounts_report(ledger).cash==forecast.year.cash,
+          "Tax did not settle once on its disclosed date");
+    const auto july=advance_days(due,Days{1});
+    const auto september=to_ordinal({2014,9,30});
+    record_cash(ledger,july,Cents{12500},Account::revenue,"Earned sales","sales.q3");
+    record_cash(ledger,july,Cents{-2500},Account::expenses,"Net research fee","lab/research/second/1");
+    for (auto day=july;day<september;day=advance_days(day,Days{1})) close_accounts_day(ledger,day,Cents{0},false);
+    close_accounts_day(ledger,september,Cents{0});
+    const auto& q3=ledger.taxes->assessments.back();
+    check(q3.loss_expired==Cents{2000} && q3.loss_used==Cents{0} && q3.credit==Cents{0} && q3.bill==Cents{2000},
+          "Expired loss carry or research relief reduced a later assessment");
+    auto forged=ledger;
+    auto forged_return=forged.taxes->assessments.back();
+    forged_return.bill=Cents{1};
+    forged.taxes->assessments.replace(2,forged_return);
+    refuses_unchanged(forged,[&] {validate_accounts(forged);});
+}
 void invoices_and_protected_cash() {
     auto state = opening_accounts(Cents{1000});
     issue_invoice(state, OrdinalDay{0}, {"bill", InvoiceKind::payable, OrdinalDay{30},
@@ -259,6 +318,7 @@ int main() {
         opening_and_calendar_months();
         opening_costs_and_projection();
         cash_outlook_settlement();
+        corporate_taxes_and_outlook();
         invoices_and_protected_cash();
         financing_and_rejections();
         identity_and_history_validation();

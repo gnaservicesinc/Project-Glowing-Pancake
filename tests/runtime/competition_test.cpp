@@ -108,6 +108,9 @@ void roster_and_entry() {
     step(game,1);step(restored,1);check(game.checkpoint()==restored.checkpoint(),"A saved pending entry duplicated actions or diverged after reload");
     const auto& entrant=game.current_state().world.competition->companies.at(1);
     check(entrant.planning->entered_on==core::OrdinalDay{14} && entrant.simulation.accounts->starts_on==core::OrdinalDay{14} && entrant.planning->decisions.size()==1,"A staged entrant accrued costs before opening or skipped its first weekly review");
+    check(entrant.simulation.accounts->taxes && entrant.simulation.accounts->taxes->starts_on==*entrant.planning->entered_on &&
+          entrant.simulation.accounts->taxes->policy==*game.current_state().world.simulation.management->catalog.corporate_tax &&
+          entrant.simulation.accounts->taxes->assessments.empty(),"The entering rival did not adopt the shared tax policy from its own opening");
     auto corrupt=Json::parse(pending);corrupt["checkpoint"]["world"]["competition"]["companies"][1]["simulation"]["cash_cents"]=1;invalid_save(small,corrupt);
     corrupt=Json::parse(pending);corrupt["checkpoint"]["world"]["competition"]["setup"]["catchup_cash_cents"]=1000;invalid_save(small,corrupt);
 }

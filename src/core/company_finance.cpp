@@ -107,7 +107,8 @@ void add_contract_payments(std::vector<ProjectedCashDay>& path,const MarketState
         auto unearned=contract.unearned_advance();
         if (contract.status==ContractStatus::pending && contract.start_by>=first && contract.start_by<=last) {
             auto& point=path[static_cast<std::size_t>(contract.start_by.value()-first.value())];
-            add(point.bills_due,checked_unit_add(contract.missed_start_penalty,unearned));
+            add(point.bills_due,contract.missed_start_penalty);
+            add(point.refunds_due,unearned);
         }
         if (contract.status!=ContractStatus::active) continue;
         const auto observed=sample.contract_delivery.find(contract.id);
@@ -120,8 +121,9 @@ void add_contract_payments(std::vector<ProjectedCashDay>& path,const MarketState
             const auto prepaid=std::min(unearned,charge);
             unearned=checked_unit_subtract(unearned,prepaid);
             add(path[i].receipts,checked_unit_subtract(charge,prepaid));
+            add(path[i].advance_earned,prepaid);
             add(path[i].bills_due,work.penalty);
-            if (day.value()+1==contract.ends_before.value()) add(path[i].bills_due,unearned);
+            if (day.value()+1==contract.ends_before.value()) add(path[i].refunds_due,unearned);
         }
     }
 }
@@ -148,6 +150,7 @@ std::optional<CompanyPeriod> recent_company_period(const SimulationState& state)
         add(period.revenue,Cents{-posted_to(*posting,Account::revenue).value()});
         const auto expense=posted_to(*posting,Account::expenses);
         add(period.expenses,expense);
+        if (posting->document_id.starts_with(tax_bill_prefix)) add(period.corporate_tax_expense,expense);
         if (directly_attributed_service_cost(posting->document_id)) add(period.service_cost,expense);
         if (cash.value()>0) {
             add(cash_category(period,*posting,posting->credit).received,cash);

@@ -643,9 +643,17 @@ terms, advance balances, recurring and owned-site costs, and debt payments
 and show the first projected unpaid obligation. The optimized Mac build,
 eight focused checks and short keyboard checks at 100% and 200% text pass.
 
-Next is fictional corporate tax policy with a disclosed taxable base, dated
-bills and visible payments. The roadmap remains 42/52 checked while design
-coverage is completed.
+All seven scenarios now use a fictional 15% quarterly corporate tax. Booked
+income and deductions determine the base. A limited loss carry and a credit
+on net research fees can reduce the bill. Quarter-end assessments create
+payables due 30 days later. The same rules apply to planned rivals from
+entry, and the Office shows the terms, current base and actual settlement.
+Internal content 0.20.0-dev.1 passed review for all 21 headquarters openings.
+The optimized build, 12 focused checks and short keyboard checks at 100%
+and 200% text pass.
+
+Next is the product lifecycle, beginning with staged rollouts and rollback.
+The roadmap remains 42/52 checked while design coverage is completed.
 M8-02 stays deferred. Human work waits until the user is ready, and E2-04 editor
 downloads stay with deferred release preparation.
 
