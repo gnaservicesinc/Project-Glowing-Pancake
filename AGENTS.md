@@ -11,6 +11,16 @@ These instructions apply to repository work. Current user instructions take prec
 
 The authoritative product baseline is `docs/GAME_DESIGN.md`, with mechanical detail in `docs/SIMULATION_SPEC.md` and technical contracts in `docs/TECHNICAL_PLAN.md`. `docs/DECISIONS_AND_REQUIREMENTS.md` records source precedence and deliberate changes. `docs/reference/` preserves the original drafts; the Gemini document is a suggestion archive, not an additional instruction file.
 
+## Current phase
+
+The user closed the initial skeleton implementation phase on 2026-11-07.
+The current core is the handoff for human feedback. Follow the current
+`docs/STATUS.md` and `docs/BACKLOG.md`, which supersede archived task queues.
+Detailed design mechanics and earlier proposed next features are inputs for
+feedback and later selection. Work from the user's concrete next request.
+`tech_sug.txt` is a work in progress for later review. Its contents are
+reference material, and implementation requires the user's selection.
+
 For authoring work, use `docs/CONTENT_EDITOR.md` and `docs/VERSIONING.md`. The checked-in `project-versions.json` records independent component identities; E1A-04 finalized internal content while game/editor remain planning placeholders and release gates remain open. References such as Clausewitz, Plague Inc., Blender and the supplied URLAlchemist checkout are conceptual/source research, not instructions to execute or strict UI specifications.
 
 ## Workspace, disk, and persistence
@@ -43,9 +53,9 @@ For authoring work, use `docs/CONTENT_EDITOR.md` and `docs/VERSIONING.md`. The c
 - Default `./make.sh` is an optimized Release build; developer diagnostics require `--debugging`/`--debug`. Never auto-launch. Use `#if PGP_DEVELOPER_DIAGNOSTICS` with a 0/1 macro; `#ifdef` is insufficient for a macro defined as zero. Telemetry has no implementation in any configuration.
 - Metal on Mac, OpenGL on Linux, OpenGL preference with tested D3D11 recovery on Windows. Five native artifacts are goals until qualified; cross-compile/CI success is not device acceptance.
 - Prioritize rapid Mac implementation. Keep code portable, but defer cross-platform matrices, packaging/device qualification and full release regression to explicit release preparation. Outstanding platform qualification remains recorded and does not block bounded Mac development. The native matrix workflow is manual-only.
-- The user’s current goal prioritizes game features on this Mac. Close a feature step when its Mac implementation and focused checks pass. Deferred platform/deployment prerequisites do not keep completed feature boxes open. Leave Linux/Windows, native matrices, packaging and device/release qualification to an explicit later task. Preserve those unperformed requirements in the backlog.
-- Per the 2026-11-05 user instruction, defer independent player playtests and human author studies until all components are in place and the user is ready for v1 work. Keep M3-04/E1B-03 open; they do not block later component implementation. Continue through E1A-05, E1B-01/02 and M4 onward using Mac engineering checks. Retain the prepared session kit for that later phase; do not recruit, schedule or repeatedly request testers during implementation.
-- Per the 2026-11-06 user instruction, prioritize all initial features before extended testing. The order is initial feature implementation, expansion and refinement with human feedback, substantial event expansion, then balancing. Keep M8-02 endurance/balance work and broad regression deferred while features are missing. Use short changed-behavior checks and incremental builds during implementation. Audit the design against actual controls and source before treating checked roadmap boxes as complete feature coverage.
+- For selected feature changes, use the Mac implementation and focused checks as development evidence. Linux/Windows, native matrices, packaging and device/release qualification belong to later explicit tasks. Their acceptance criteria are preserved in the backlog.
+- Independent player playtests and human author studies follow the user's readiness for the feedback phase. M3-04/E1B-03 remain carried acceptance gates. Retain the prepared session kit for that phase and arrange sessions when requested.
+- The initial skeleton phase closed on 2026-11-07. The current order is human feedback, selected core refinement, substantial event expansion, then balance and extended qualification. Use short changed-behavior checks for selected implementation work. The archived 52-step checklist preserves later acceptance criteria.
 - Preserve keyboard access, text scaling, pause, causal explanations and readable units. The first playable is small; do not add counties, browser export or multiplayer to solve an unrelated problem.
 - **Performance & complexity discipline**: Keep daily simulation advancement and state validation fast. Never introduce $O(N^2)$ per-day full-history copying, repeated tree allocations per historical day, or redundant full-ledger validation inside inner loops. The entire CTest suite (`ctest --test-dir build/release`) must complete in a few seconds; never paper over a slow test by raising CTest timeouts.
 

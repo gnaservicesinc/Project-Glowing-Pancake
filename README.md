@@ -2,53 +2,22 @@
 
 A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
 
-**Current state:** Initial feature work is active. The latest batch adds specialist assignments to evaluations. Working conditions and recovery choices are next. The original roadmap has 42 of 52 acceptance steps checked, with all ten open gates deferred to later human, QA and release work. The [project status](docs/STATUS.md#implementation-progress) tracks active feature coverage separately. The bundled 2014–2017 campaign is playable through the Office, Lab, Operations, Civic, World, Institutions and Inbox: name the company and founder, choose a world seed, headquarters, founder background, organizational charter and difficulty, license data, research, train, evaluate, qualify a service, compare contracts and respond to events/rivals. The guide can be hidden and reopened. Full keyboard runs at 100% and 200% text reach the ending solvent and reload exactly.
+**Current state.** The initial skeleton phase closed on 2026-11-07. The current
+core is ready for human feedback and the user's selected refinements. The
+[current handoff](docs/STATUS.md) and [feedback backlog](docs/BACKLOG.md)
+replace the initial implementation queue.
 
-Four founder backgrounds now supply different opening cash, staff, independent compute and timed contact offers, with every change previewed before starting. Three organizational charters set board voting priorities and funded monthly employee programs. Review and amend the charter in Office → Board and people; prior votes and costs remain in the save.
+The Mac development build includes the playable 2014–2017 campaign and
+century scenarios, local persistence, Lab projects and deployments, business
+and staffing, rivals, infrastructure, civic and regional systems, succession
+and objectives. The separate Content Studio shares the typed event runtime
+and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
+describes the controls and starting paths.
 
-Forgiving, Standard and Demanding difficulty choices preview opening capital, player financing, rival reactions and training forecast precision. Their authored values remain provisional. Difficulty does not change model/evaluation rules or give rivals private player information.
-
-Office → Funding and team shows assigned staff, strain, and staffed output. Sustained heavy load slows projects and reduces serving attempts. Pause Lab work or add staffing headroom to let the team recover over settled days.
-
-Lab → Checkpoints now pauses and resumes training and saves an immutable snapshot while the source keeps running. Pausing releases compute/staff and retains spent work and existing bills. Evaluate or continue the snapshot independently; a resume rechecks that the original allocation is free.
-
-Office → Policies and alerts now delegates product pricing within a chosen range and step, with utilization thresholds, a review interval and a finite review limit. It uses recent settled deliveries, preserves fixed contract terms and logs every adjustment or hold. Manual price changes suspend the policy; its counters and original decisions remain available after saving and reopening.
-
-The same Office panel can protect an operating cash reserve and schedule replacement of obsolete owned hardware. Bills can draw down the reserve, and new receipts refill it before freeing cash for purchases. Hardware replacement pays for one compatible rack within the authorized ceilings and waits for delivery, commissioning and existing commitments to clear before retiring the old rack.
-
-In either century campaign, an established profitable company can review and propose an IPO in Office → Board and people → Negotiate financing. Board approval raises equity capital and adds a public shareholder director. Quarterly filings disclose the company's settled results, and a reported loss changes the director's vote on acquisitions and pool expansion.
-
-Office → Funding and team offers a restricted research grant and a credit for the opening cloud lease. Both start the morning after claim. The Lab shows the grant co-payment on eligible fees, and supplier credits reduce the lease payable as charges accrue. The Office shows the balance, scope and expiry of each award.
-
-Office → Compare offers shows the opening enterprise customer's $20,000 advance. A qualified service can accept the contract and receive the cash immediately. Delivered work draws down the advance before the customer pays any remainder. Review the unused balance and any refund in Office → Contracts.
-
-Office → Accounts shows the current balance sheet and the last 30 settled days of profit and loss, cash flow, and unit economics. Pause to compare three demand cases over 3 and 12 months. Each case shows its assumptions, cash after scheduled payments and the first projected missed obligation.
-
-Office → Accounts → Corporate tax shows the fictional quarterly rate, taxable earnings, loss carry and research relief. Each assessment enters profit and loss at quarter close. Bills settle on their disclosed dates, and both cash scenario horizons show projected tax payments.
-
-Lab → Deploy lets you stage a qualified checkpoint on a limited share of a live service's discretionary orders. Production keeps signed work. Office → Services shows trial deliveries and lets you promote, discard or restore the prior qualified release.
-
-Office → Services also lets you publish compatibility commitments and retirement notices. Review the measured terms, contract deadlines, and when serving costs end before confirming.
-
-Use **Customer enrollment** in the same view to limit or pause new admissions, see waiting groups, and reopen ordinary enrollment when capacity is available.
-
-Open-weight launches in **Lab → Deploy** review the frozen checkpoint, hardware requirements, and distribution grant. Buyers with copies can keep running them after company support ends.
-
-Agent launches in **Lab → Deploy** choose tool permissions and human oversight. The quote shows how many attempts the team can handle and what a failed write costs. **Office → Services** shows completed work, caught failures and repairs after settlement.
-
-The Lab has specialized training data and an independent capability suite for code, science and industry, social interaction, and autonomous workflows. Each specialist service requires measured evidence for its own work.
-
-**Office → Services** monitors agent completion when regional customers change their workload. A material observed decline pauses the next morning and shows the affected buyers, launch evidence, and separate results from a staged replacement.
-
-**Office → Services** also shows fictional deployment risk for workflow and robotics agents. A discovered incident pauses time and contains the affected release. Review the customer compensation bill and fund a response with staff and compute to restore service.
-
-**Lab → Data** offers paid commissions for consented table transcriptions and university records. You can also collect opted-in enterprise feedback from settled deliveries within a fixed consent window. Completed corpora carry their source and rights into fresh training.
-
-**Lab → Data** can generate document or workflow examples with a frozen teacher, independent report and licensed verification source. Review the fee, staff, compute, retained-yield estimate and rights before starting. Pause, resume or cancel the job; completed verified output becomes available for fresh training. Saved lineage and shared diversity limits bound reuse.
-
-M3-03 adds bounded evaluation/lease-renewal policies, configurable pauses, real deadline/milestone stops, a recoverable supplier setback, paid hiring, fixed financing and transparent slice scores. The efficient document-specialist route is profitable through the ending without new financing. **Human playtests and author studies are deferred until all components are in place and the user is ready for v1 work.** They do not block implementation. Century scenarios now include conditional research, funded succession, and six objectives with preserved postmortems and continuation. Century endurance and release qualification remain later steps. The separate Content Studio now has a [typed node canvas](src/studio/CANVAS.md), shared forms/outline, runtime inspection and [graphical internal snapshot review/finalization](src/studio/SNAPSHOTS.md).
-
-Both century scenarios now include 120 event flows, 60 research topics, a staged 15-company roster and optional story layers. Music and offline credits are available in Settings. Platform and release checks remain separately deferred. The finalized internal content version is 0.26.0-dev.1. Game and editor versions remain planning placeholders. The [engineering authoring walkthrough](src/studio/WALKTHROUGH.md) passes through real QML forms, draft saving/reopening and isolated snapshot validation; its extensions verify pointer ports, layout saves, exact waits, graphical finalization and interrupted-write recovery. M4-01 adds the default 15-company roster, staged entry, budgeted weekly strategies, one shared customer pool, editable service prices and delayed public research adoption. Reduced, expanded and disclosed finite catch-up presets are selectable at campaign creation. M4-02 adds visible heavyweight pressure/warnings, finite paid mobilization, withdrawal and funded publication/pilot agreements. M4-03 adds negotiated financing, executives, conserved vesting, board votes/covenants and acquisitions that retain subsidiary obligations. Paid group funding and earned dividends conserve cash and group profit. M5-01 adds [owned compute and an offline domestic map](src/runtime/INFRASTRUCTURE.md): compare all 50 states and DC, reserve grid power, buy and staff hardware, book inspections, and meter actual work. M5-02 adds [regional product channels and wholesale compute](src/runtime/REGIONAL_MARKETS.md). M5-03 adds [site hazards, paid protection, geographic replication and insurance](src/core/RESILIENCE.md). E2-01 adds [scenario/world/policy authoring](src/studio/WORLD.md), staged changes, a state map/list and actual opening previews. E2-02 adds searchable catalogs, reviewed refactoring, localized text, asset credits and typed reusable flows. [Catalog and reuse workflow](src/studio/CATALOGS.md). E2-03 adds finalized revision comparisons, matched fixtures and reviewed save copies. [Revision review](src/studio/SNAPSHOTS.md#compare-finalized-revisions-and-review-a-campaign-copy). M6-01 adds US elections, policy hearings, paid disclosures and dated launch and permit rules. [Civic room](src/core/CIVIC.md). M6-02 adds [World](src/runtime/SOCIETY.md): actual regional delivery reaches five welfare indices after a saved lag; separate member dates govern standards, and paid media changes audience awareness. M6-03 adds public commitments, executive disputes and regional agreements in the [Institutions room](src/runtime/AUTHORITY.md). M7-01 adds seeded century scenarios, paid independent game AGI/ASI protocols, bounded research and evaluated product refresh in the [Frontier room](src/core/FRONTIER.md). M7-02 adds finite careers, board-approved handovers, caretaker continuity and retained beneficial wealth in [Leadership](src/core/SUCCESSION.md). M7-03 adds exact scoring, early breach reviews, postmortems and continued play in [Objectives](src/runtime/OBJECTIVES.md). Follow [playability checkpoints](docs/PLAYABILITY.md), [status](docs/STATUS.md), [implementation checks](docs/IMPLEMENTATION_LOG.md) and the ordered [backlog](docs/BACKLOG.md).
+The finalized internal content version is **0.29.0-dev.1**, generation **29**.
+Game and editor versions remain development placeholders. Human validation,
+extended QA, native packaging and release gates are carried into later
+phases in the [backlog](docs/BACKLOG.md).
 
 ## Build and play
 
@@ -81,8 +50,8 @@ dependencies are downloaded by the build.
 | [Game design](docs/GAME_DESIGN.md) | The full game's experience, systems, scope, and six objectives |
 | [Simulation specification](docs/SIMULATION_SPEC.md) | Mechanics, units, update order, balance baseline, and victory accounting |
 | [Technical plan](docs/TECHNICAL_PLAN.md) | C++20/Qt Quick architecture, platforms, saves, build and packaging contract |
-| [Roadmap](docs/ROADMAP.md) | Milestones, dependencies, acceptance gates, and effort ranges |
-| [Task backlog](docs/BACKLOG.md) | Ordered, assignable work with prerequisites and completion evidence |
+| [Roadmap](docs/ROADMAP.md) | Closed skeleton phase and the feedback, refinement, events, balance and release sequence |
+| [Task backlog](docs/BACKLOG.md) | Feedback-phase entry and carried acceptance gates |
 | [Needs and access](docs/NEEDS_AND_ACCESS.md) | What is available, what is needed later, and what requires no service |
 | [Decisions and requirements](docs/DECISIONS_AND_REQUIREMENTS.md) | Original intent, AI suggestions, selected defaults, and deliberate changes |
 | [Content and assets](docs/CONTENT_AND_ASSETS.md) | Writing/art/audio direction, content counts, provenance, and licensing workflow |
@@ -108,6 +77,6 @@ Content Studio builds as a separate target with a checkout library and shared ty
 
 Built-in rules dispatch actual research, evaluation and pilot outcomes, seeded demand incidents, paid supplier/recovery opportunities and competitive notices through one shared runtime. The eight-flow pack is in `data/runtime/first-playable.json`, with localizable English messages and a complete baseline-only headless run. [Event contract](docs/EVENT_SYSTEM.md) · [Implementation and seeds](src/runtime/BASE_EVENTS.md)
 
-E1a forms/inspection and the internal snapshot writer share the runtime. E1b completes the required node canvas and graphical finalizer before M4 component work; its three-author study waits for v1 preparation. Human validation, century endurance and the six final objectives retain their later acceptance gates. [Rival planning and shared-market contract](src/runtime/COMPETITION.md) · [Heavyweight responses and agreements](src/runtime/HEAVYWEIGHTS.md) · [Corporate governance and acquisitions](src/runtime/CORPORATE.md).
+Content Studio includes shared forms and inspection, a node canvas and graphical snapshot finalization. Human author validation, century endurance and native qualification carry into the later phases. [Rival planning and shared-market contract](src/runtime/COMPETITION.md) · [Heavyweight responses and agreements](src/runtime/HEAVYWEIGHTS.md) · [Corporate governance and acquisitions](src/runtime/CORPORATE.md).
 
 Project code is licensed under [GNU GPLv3](LICENSE). Third-party assets/dependencies retain their own recorded licenses and credits. The original drafts are preserved unchanged in [the reference archive](docs/reference/README.md); the active plan above supersedes their suggestions.

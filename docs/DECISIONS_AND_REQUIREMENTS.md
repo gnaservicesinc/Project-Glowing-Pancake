@@ -4,6 +4,19 @@ Baseline 1.2 · 2026-11-03
 
 ## Source authority
 
+The 2026-11-07 user instruction closes the initial skeleton implementation
+phase at the current core. The next phase gathers human feedback and selects
+refinements, followed by substantial event expansion and balance. Earlier
+proposed next features and the full specification become inputs to that
+review. The original 52-step tracker is archived with its 42 recorded
+implementation acceptances and ten deferred human, QA, packaging and release
+gates. Those later criteria retain their original status.
+
+The user's `tech_sug.txt` is a work in progress for later review. Reading it
+provides context for likely changes. Its proposals have not been adopted
+for implementation. This handoff closes the initial implementation task
+and establishes the current [status](STATUS.md) and [backlog](BACKLOG.md).
+
 The original planning request was to expand/finalize the design, draft a roadmap, create agent instructions, and list resources/access needed. The subsequent Gemini4 review applied useful changes to that plan. The 2026-11-03 implementation request authorizes beginning the ordered backlog and tracking progress, with code structured for later features. Work begins with M0-01/M0-02. It does not authorize purchases, account registration, running a server or publishing a release.
 
 The follow-up request adopts a human-oriented graphical repository-content editor: triggers connected to effects/events; news, branching dialogues/results and hidden logic; flexible lifecycles; browsing/managing current content; separate downloads/source; version controls and future Snap linkage. The user clarified that Clausewitz/Plague Inc. are conceptual references, and suggested URLAlchemist/Blender-style nodes. Trigger-impact visualization should help catch mixed references, reversed effects and misunderstood conditions. This follow-up updates planning/tracking metadata, not an instruction to implement/publish the editor now.

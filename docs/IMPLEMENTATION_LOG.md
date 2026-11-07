@@ -2223,3 +2223,23 @@ overlap refusal, saved pause and resume, released assignments and forged
 specialty refusal. Offscreen keyboard walkthroughs at 100% and 200% text
 selected the specialist, completed the 45-CU evaluation, inspected the
 recorded work and reopened the exact save.
+
+### Initial skeleton handoff closed
+
+On 2026-11-07 the user directed the initial implementation phase to wrap up
+at the current core and prepare for human feedback. Gameplay checkpoint
+`d1f2bd3` and internal content **0.29.0-dev.1**, generation **29**, form
+that handoff.
+
+The original status, roadmap and 52-step checklist were archived. Their
+42 recorded implementation acceptances and ten deferred human, QA,
+packaging and publication gates retain their status. The current tracking
+documents now describe the feedback, selected refinement, event expansion,
+balance and qualification sequence. Repository guidance follows that phase.
+The previously proposed working-condition feature awaits feedback review.
+
+The shared content check passed at closure, and the build graph reports
+the Mac game and editor targets current. Existing feature verification
+passed 18 focused CTests and keyboard walkthroughs at 100% and 200% text.
+The user's `tech_sug.txt` was read for context and retains its original
+bytes. Its proposals have not been implemented.

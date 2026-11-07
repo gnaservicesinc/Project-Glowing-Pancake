@@ -16,16 +16,20 @@ This directory contains reusable role briefs for human-directed or agent-assiste
 
 One agent can use multiple briefs where a task crosses boundaries. Parallel agents are optional only when explicitly authorized; if used, assign non-overlapping file ownership and integrate through shared contracts. A role brief does not lower repository privacy/content/authorization rules.
 
-## Ready-to-use starting assignment
+## Current phase
 
-> Complete the M3 First Playable slice (`M3-01`, `M3-05`, `M3-02`, `M3-03`) in `docs/BACKLOG.md` following `AGENTS.md`. Prioritize shipping a complete, playable 2012–2020 base game loop on macOS (`M3-01` data/research/training/evaluation loop -> `M3-05` eight base events and bounded rivals -> `M3-02` playable Office/Lab UI panels, HQ choice, training preview, contract comparison, and tutorial -> `M3-03` delegation, warnings, recovery, and end-of-slice scoring). Do not block `M3` gameplay implementation on Content Studio tooling (`E1A-04`, `E1A-05`, `E1b`) or cross-platform native qualification (`M0-03`, `M0-04`). Implement full backlog items per commit without micro-slicing or writing redundant `docs/evidence/*.md` files.
+The initial skeleton implementation phase closed on 2026-11-07. Begin with
+the [current handoff](../docs/STATUS.md) and [feedback backlog](../docs/BACKLOG.md),
+then work from the user's selected changes. The old 52-step implementation
+tracker is archived with its later acceptance gates preserved.
 
-`M1` (`M1-01` through `M1-07`) and `M2` (`M2-01` through `M2-04`) are complete on Mac, along with `E1A-01` through `E1A-03`. The shared content compiler (`pgp_content` / `pgp_runtime`) already validates and compiles all authored definitions directly from JSON; `M3` gameplay and content do not require `E1A-04` or `E1A-05` to be completed first. Keep `E1A-04`, `E1A-05`, and `E1b` queued after the `M3` playable slice works end-to-end.
+The user's work-in-progress notes are reference material for later review.
+Their contents become tasks when the user selects them for implementation.
 
-## AI event assignments
+## Existing event baseline
 
-AI-assisted development is responsible for a playable built-in event baseline;
-human authors enrich it with distinctive stories. M1-07 implements modular
+AI-assisted development supplied the playable built-in event baseline.
+Human authors can enrich it with distinctive stories. M1-07 implements modular
 major-event detection, scheduled/seeded world occurrences and news dispatch.
 M3-05 creates and validates the slice's eight base definitions, covering
 technology developments, opportunities, disruptions, competition and recovery.

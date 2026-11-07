@@ -1,6 +1,7 @@
 # Playability and evaluation checkpoints
 
-Updated 2026-11-05. The bundled 2014–2017 Mac development campaign can be
+Updated 2026-11-07. The initial skeleton phase is closed for human feedback.
+The bundled 2014–2017 Mac development campaign can be
 played from headquarters selection to its ending through the Office, Lab,
 Operations and Inbox. The [backlog](BACKLOG.md) records remaining acceptance gates and the
 [implementation log](IMPLEMENTATION_LOG.md) records checks. Delegation, recovery, milestone controls and slice scoring are implemented;

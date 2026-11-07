@@ -1,302 +1,50 @@
-# Implementation backlog
+# Feedback and later-phase backlog
 
-Baseline 1.2 with 2026-11-04 event clarification · **Initial feature implementation active**.
-The latest batch adds explicit specialist assignments to evaluations.
-Working conditions and recovery choices are next. The original acceptance
-checklist remains **42 of 52** with ten later gates. The coverage pass has delivered 25
-additional feature batches within the earlier milestones.
-See [implementation evidence](IMPLEMENTATION_LOG.md). Role names refer to [agent briefs](../agents/README.md), not automatically running agents. Feature dependencies are satisfied by implemented Mac behavior and focused checks. Native platform, packaging and device qualification stay deferred to release work under the user’s current instruction. Milestone gates in [the roadmap](ROADMAP.md), including E1a/E1b/E2 authoring gates, apply in addition to task dependencies. Update this file and [status](STATUS.md) when work actually advances. The E1 task split and review dispositions are recorded in [the recommendation review](RECOMMENDATION_REVIEW.md).
+Updated 2026-11-07
 
-The dated batch notes below retain the earlier acceptance count and prerequisite
-status as implementation history. The current Mac feature scope above supersedes
-those status statements. M0-04 and later platform/release tasks remain deferred.
+**The initial skeleton implementation queue is closed.** The current core is
+the starting point for human feedback. Work now follows the user's selected
+feedback changes. Proposed deeper mechanics from the initial pass await
+that review.
 
-**2026-11-05 sequencing instruction:** all components come before v1 human
-testing. M3-04 and E1B-03 remain open and are deferred until the user is ready
-for v1 work. Their human studies do not block M4 or later component implementation.
-Engineering checks continue during development. The [prepared session kit](playtests/M3-session-guide.md)
-is held for that later phase; no recruitment or sessions are underway.
+## Next phase
 
-**2026-11-06 sequencing instruction:** implement all initial features first,
-then expand and refine with human feedback, then add substantial event content,
-then balance. Extended endurance runs and broad regression are deferred during
-feature implementation. Short checks for changed behavior continue. Track the
-initial feature coverage separately from the
-[ten deferred acceptance steps](STATUS.md#implementation-progress). A coverage
-pass against the design precedes feedback, event expansion and M8-02.
+| Order | Work | Starting condition |
+| --- | --- | --- |
+| 1 | Gather human feedback and review the user's notes | The user is ready to begin feedback |
+| 2 | Refine and extend the core | Concrete feedback changes have been selected |
+| 3 | Substantial event expansion | The feedback changes establish the direction |
+| 4 | Balance and extended testing | Core refinements and event expansion are in place |
+| 5 | Native qualification and release | A separate release preparation request and required access |
 
-The setup coverage pass now implements company/founder identity, editable
-64-bit seeds, four founder opening packages and three board-amendable charters.
-Resource and recurring-cost previews use the same terms as initialization.
-Explicit difficulty selection now changes actual starting capital, financing,
-rival review/reaction timing and player training forecast precision. The 42
-checked batches remain the roadmap count while this pass closes design
-requirements inside those batches.
+`tech_sug.txt` remains a work in progress. Review and selection come before
+implementation of its proposals.
 
-The Lab lifecycle pass adds project pause/resume and immutable checkpoints of
-running models, including retained work, released/rechecked allocations and
-exact saved pause history. Bounded price delegation now joins evaluation and
-lease-renewal policies, with player-selected ranges, steps, utilization thresholds,
-cadence and finite review counts. Manual overrides suspend it and retain the
-original audit. The Office also supports a company cash reserve and staged
-replacement of a specified obsolete rack under purchase and maintenance ceilings.
-Both century scenarios now support an IPO with settled financial qualification,
-board approval, conserving equity dilution, public filings and a new director.
-Restricted research grants and expiring cloud credits are now claimable in the
-Office. They apply to eligible costs through the Lab and supplier ledger.
-The opening enterprise offer now pays a refundable customer advance. Actual
-delivery applies the balance to its own invoices, and unused cash becomes a
-refund payable when the commitment ends. Office Accounts now shows the balance
-sheet, 30 settled days of cash flow and profit and loss, and actual unit
-economics. Three 3- and 12-month cash scenarios apply recorded commitments and
-vary recent discretionary demand. All seven scenarios now use fictional
-quarterly corporate tax with capped relief, a dated bill and visible payment.
-The Lab can stage a qualified candidate on discretionary orders. Office Services
-shows actual trial deliveries and supports promotion, discard and rollback to the
-prior qualified version. Published compatibility terms protect serving capacity,
-measured quality, review controls and buyer hardware. Retirement notices protect
-existing terms and retire service automatically at the published date. Office
-Services also supports a customer waitlist with a daily intake limit, priority
-for established demand, and dated activity by buyer group. Open-weight releases
-now have explicit public-reuse or local-use grants and keep compatible buyer-side
-work available after replacement or retirement. Agent-service releases now
-choose tool permissions and review cadence. Actual attempts consume compute,
-successful work earns fees, and executed failures book repair payables.
-The Lab now supports all six capability axes through targeted data, independent
-measurements and distinct qualification floors for four specialist services.
-Office Services now monitors workload changes using actual release-specific
-completion rates. Material declines pause the morning and show the prior
-evidence and separate trial results. Lab Data now generates verified document
-and workflow examples through a frozen teacher, independent report and
-external verification source. Paid compute/staff, retained fees, pause/resume,
-immutable output and shared diversity limits survive exact saves.
+## Carried acceptance gates
 
-Office Services now reports authored deployment risk and shows discovered
-incidents. Monthly draws use settled work. Containment stops the affected
-release, compensation is booked as a payable, and paid investigation work
-restores service. Discovery and recovery use the shared news runtime.
+The original criteria remain in the [archived 52-step checklist](archive/initial-implementation-backlog.md).
+These ten gates belong to the phases above.
 
-Lab Data now delivers commissioned corpora and collects opted-in feedback
-from actual work by the named customer group and service. Each job has a
-finite work requirement, an upfront fee, and recorded training rights.
+| Original ID | Remaining acceptance | Phase |
+| --- | --- | --- |
+| M3-04 | Independent player sessions | Human feedback when ready |
+| E1B-03 | Human author usability study and associated acceptance | Human feedback when ready |
+| M8-02 | Balance, full campaigns and endurance | After feedback and event expansion |
+| M8-03 | Performance, privacy and dependency audit | Extended qualification |
+| M0-04 | Five native CI package probes | Release preparation |
+| E2-04 | Separate editor downloads and qualification | Release preparation |
+| M9-01 | Five clean-device artifacts | Release qualification |
+| M9-02 | Reviewable itch release package | Release preparation |
+| M9-03 | Publish the approved primary release | Explicit publication task |
+| M10-01 | Snap packages, refresh and confinement qualification | After the primary release, under an explicit task |
 
-Office Funding and team now shows pooled staffing pressure and its effect on
-Lab progress and serving attempts. Pausing projects or adding staff creates
-headroom. Low-load days restore output gradually. Saves replay strain from
-actual work assignments and staffing dates.
+## Completed initial phase
 
-Lab Research records a first-experiment setback from authored terms, actual
-settled work, and the safeguard known when work starts. Failed experiments
-retain a dated finding and a bounded work credit for a paid corrected retry.
+The original checklist records 42 implementation acceptances. A subsequent
+coverage pass delivered 25 core feature batches through gameplay commit
+`d1f2bd3`. Those batch notes are historical implementation records.
 
-Office Funding and team now quotes the signing cost, first payroll date and
-work-ready date. Onboarded specialists join the staffing pool on the quoted
-morning. Withdrawing operations stops a pending hire and future payroll.
-
-Lab Evaluate can assign the evaluation specialist to one unfinished test,
-reducing the required experiment work by 25%. The entered team includes
-that person. A pause retains the assignment until the test ends.
-
-**Working conditions and recovery choices are next.** Give the shared team
-a paid recovery choice with effects tied to actual settled days.
-
-## M0 — Toolchain and platform proof
-
-M0-03 is complete for the current Mac feature-development scope. Its
-native Windows/Linux and deployed-closure checks remain deferred. See
-[local evidence](evidence/M0-03-local-probe.md) and
-[audio evidence](evidence/M0-03-audio.md). No platform support gate is inferred
-from the pure renderer-selection tests.
-
-- [x] **M0-01 — Record toolchain and platform feasibility.** Role: build-release. Depends: planning. Inspect installed tools and coherent Xcode compiler/SDK selection, actual Qt modules, SBOM/license alternatives, runner availability, disk budget and native test access. Query exact Qt archives/modules/ABI/acquisition paths for all five targets before writing workflows; keep 6.12.x unless an evidenced decision changes it. Record optional audio candidates and dependencies. Produce a reproducible inventory without large local installs; reconcile SDK SBOMs against intended deployed modules. Review-time spot checks do not close this task. **Completed 2026-11-03:** [inventory and CLI linkage evidence](evidence/M0-01-toolchain.md), reproducible inventory tools and five-target metadata/checksum observations. Runtime deployment/device gaps remain explicit.
-- [x] **M0-02 — Create Release-default build entry points.** Role: build-release. Depends: M0-01. Add CMake/Ninja configuration, `make.sh` and documented flags, a minimal core/headless executable, and ignored out-of-source outputs. Resolve macOS Qt compiler/SDK from one selected Xcode installation before first configure and reject mismatched cached toolchains. No-argument build is Release; core-only requires no Qt; audio has a silent fallback without required Qt Multimedia. Clean removes only owned outputs, tests propagate failure, and no build auto-launches. **Completed 2026-11-03:** [build instructions](BUILDING.md) and [verification record](IMPLEMENTATION_LOG.md). Four configurations build/test, Qt-free headless linkage, wrapper cleanup/failure tests, no audio dependency. Actual playback/silent adapter is M0-03.
-- [x] **M0-03 — Prove QML, graphics, and local audio deployment.** Role: UI with build-release brief. Depends: M0-02. Create a small original UI probe; use Metal on Mac, OpenGL on Linux, and test OpenGL/D3D11 recovery on Windows. Load local PNG/JPEG and an accessible button. Install URL/resource and denying QML network-manager guards before engine loading; test blocked remote loads/requests, file escapes and working local paths. Probe pinned playback-only audio (miniaudio/stb_vorbis first candidate), restricted PCM WAV/Ogg inputs, unneeded decoders disabled, mute/device loss and silent fallback. Record dependency/license/renderer/backend evidence; no automatic Qt Multimedia/FFmpeg download or claim that QML guards block arbitrary native sockets.
-- [ ] **M0-04 — Establish five native CI package probes.** Role: build-release. Depends: M0-03. Build arm64 Mac, amd64/arm64 Linux, amd64/arm64 Windows artifacts from pinned inputs. Inspect runtime paths and licenses. Test without the developer Qt installation; mark physical graphics/audio gaps rather than equating compile and support.
-- [x] **M0-05 — Implement shared version identity.** Role: build-release. Depends: M0-02. Read and validate `project-versions.json`; expose game/editor/content and compatibility versions to build metadata, filenames and diagnostics; distinguish planning placeholders from release candidates. Test numeric CMake version handling, semantic version comparison, independent product tags and release-readiness checks. Snap integration remains M10; no publication is performed. **Completed 2026-11-04:** shared offline reader, generated C++ identity, headless/probe diagnostics and prospective product artifact stems; [verification and limits](IMPLEMENTATION_LOG.md#m0-05-shared-version-identity--2026-11-04). Core Release/Debug each pass 7 CTests, desktop Release passes 13, and 21 identity/11 wrapper checks pass. Actual content/migration/package release gates remain open and release readiness fails closed.
-
-## M1 — Foundation
-
-M1-01 passes locally and in all six native compiler jobs across five targets. See
-[primitive evidence](evidence/M1-01-primitives.md).
-
-- [x] **M1-01 — Deterministic state primitives.** Role: simulation. Depends: M0-02. Implement typed IDs and distinct money/work/capacity/rate/day types, constant-2014 cents, checked wide multiply/divide with one rounding and portable ARM64/MSVC coverage, Gregorian stepping, named PRNG streams and total-order iteration/sorts. Sequence RNG draws in separate statements and reject floating-point authoritative JSON. Test leap years, near-limit products with representable quotients, final overflow/invalid denominators, small multi-factor values and constrained residues. A fixed 1,000-day scripted fixture must match exact canonical hashes across Clang/GCC/MSVC and all five architecture jobs, using a minimal primitive-only state before later systems exist. **Completed 2026-11-04:** implementation `56bf6db`, CI correction `8dcf6e5`; all six native jobs pass 13 CTests and the independent golden, including native MSVC ARM64. Local core Release/Debug pass 13 each and desktop Release passes 19. [Evidence, algorithms and limits](evidence/M1-01-primitives.md) distinguish primitives from later gameplay/content/persistence/allocation.
-- [x] **M1-02 — Content registry and validation.** Role: simulation/content. Depends: M1-01. Define versioned schemas, definition revisions and typed loaders, with fact/effect scope/unit/help/port metadata shared by editor/runtime. Reject duplicate/dangling IDs, unit/range errors, prerequisite cycles, immediate/unbounded flow cycles, invalid ownership totals and executable/remote content. Examples become fixtures only after validation exists. **Completed 2026-11-04:** Qt-free typed collection/registry, pinned offline JSON dependency, normalized 11-definition engineering fixture and bounded validation. [Schema](../src/content/README.md), [evidence and limits](evidence/M1-02-content.md), [integration checks](IMPLEMENTATION_LOG.md). Unimplemented catalog families fail explicitly; validation does not execute flows or finalize content.
-- [x] **M1-03 — Commands, transactions, and snapshots.** Role: simulation. Depends: M1-01, M0-03. Commands revalidate against state revision, reserve atomically, and return stable rejection reasons. Persist morning/work phase cursors; show due opening work before paused decisions and never replay it on resume. Allow cancellation of unconsumed reversible reservations, preserving irreversible license/contract terms. UI receives immutable worker snapshots diffed into persistent GUI-thread models by entity ID. Stale commands cannot overspend/partially apply, and cancellation cannot reveal free information. **Local implementation 2026-11-04:** core atomic commands, protected dependent commitments, copied phase/choice continuation, immutable worker snapshots and stable GUI model diffs pass local tests. [Evidence](evidence/M1-03-commands.md) and [integration](IMPLEMENTATION_LOG.md). Checkbox remains open for prerequisite M0-03 native/deployment acceptance; actual room-view focus/scroll/scaling qualification belongs to M1-05. File persistence remains M1-04.
-- [x] **M1-04 — Local persistence and settings.** Role: simulation with UI brief. Depends: M1-02, M1-03, M1-06. Add versioned saves, atomic replacement, recoverable prior save, three-slot autosave ring, preferences, and export. Reload preserves RNG, daily phase cursor, obligations, flow/node/continuation-stack/context/choice state, effect receipts, cooldowns, active modifiers and next-step hashes; corrupt/oversized/future saves fail without losing current state. Test nested sequence delay/dialogue resumes and opening choices without duplicate work. Reserve serialization for installed shares/objective feasibility as those systems arrive. No network path.
-- [x] **M1-05 — Accessible room shell.** Role: UI. Depends: M1-03. Office/Lab navigation, shared status/time controls, inbox, inspector, compact management view, keyboard focus, text scaling, pause/step controls, and local settings. Verify at 1280×720 and 200% scaling without blocking core actions. At running snapshot rates, test sorted rows, insert/remove/move, scroll anchors, selection and keyboard/edit focus without routine model resets. **Local implementation 2026-11-04:** campaign shell, decisions, warnings, clock, preferences and manual saves are wired. [Mac evidence](evidence/M1-05-room-shell.md) records the live smoke and model stress checks. The M1-03 prerequisite and broader interactive qualification remain open.
-- [x] **M1-06 — Shared trigger/flow compiler and runtime.** Role: simulation with content-editor brief. Depends: M1-02, M1-03. Implement typed triggers, explicit per-effect targets, relative/fixed interval anchors, news/dialogue/hidden nodes, five lifecycles and owned modifiers. Ordered sequences/subflows use a persistable continuation stack bounded initially to eight frames; reject excess nesting and lint early-branch delays. Expose clause/path/target/delta traces and natural continuous entry/tick/exit plus separately labeled synthetic cleanup probes. Verify nested waits/choices, timing, receipts, budgets and concurrent-modifier cleanup; M1-04 adds reload parity.
-- [x] **M1-07 — Detect and dispatch built-in world events.** Role: simulation/content; AI implementation task. Depends: M1-06, M1-04. Implement the [base-event contract](EVENT_SYSTEM.md): typed committed facts detect major milestones; scheduled and seeded occurrence rules supply world incidents and technology developments; localized news summarizes actual outcomes. Use the shared registry/flow runtime and validated effects, with stable occurrence identities, scoped deduplication/cooldowns, bounded queues and saved stream state. Test replay/reload without duplicate consequences or rerolls, preview isolation, quiet-period pacing and adding a registered event family without editing UI logic. Human-authored stories may extend the same occurrences; they are not required for ordinary world activity.
-
-**M1-04/06 implementation batch, 2026-11-04:** schema-1 compilation, all five
-lifecycles, nested sequence/subflow waits/choices, modifier ownership, traces,
-bounded execution, exact file reload, recovery/autosave/settings/export and
-application persistence policy are implemented. [Runtime evidence](evidence/M1-06-runtime.md),
-[save evidence](evidence/M1-04-persistence.md) and [integration log](IMPLEMENTATION_LOG.md)
-record the original tested behavior. Both tasks remain unchecked pending
-prerequisite acceptance. Later batches below extend the runtime and exercise
-the exact save boundary. UI save/room discovery is implemented in M1-05.
-
-**M1-06 weighted-branch slice, 2026-11-04:** explicit narrative-stream weighted
-branches now validate, execute, trace and save their selected outcomes. Delays,
-choices and nested calls resume without rerolls; downstream failures roll back
-the draw and all candidate consequences. [Evidence](evidence/M1-06-weighted-branches.md)
-records the bounds, history validation and tests. The accepted count stays 5/52.
-
-**M1-06 duration slice, 2026-11-04:** daily elapsed-duration predicates now
-validate, sample, trace and persist their starts/resets. A shared morning
-snapshot, saved sample cursor, nested postorder evaluation and complete enabled
-root histories preserve exact thresholds through choices/reload. [Evidence](evidence/M1-06-duration.md)
-records scope-history exit semantics and remaining work. Accepted count: 5/52.
-
-**M1-06 selector slice, 2026-11-04:** related compute sources, projects and
-contracts now validate and execute with bounded any/all/count semantics.
-The opening timer over completed project work reloads exactly, with the same
-effect and RNG state. [Mac evidence](evidence/M1-06-selectors.md) records the
-stable ordering, privacy rules and verification. The M1-03 gate keeps M1-06
-open. Next Mac batch is M1-07.
-
-**M1-07 committed-fact slice, 2026-11-04:** project completions and missed
-contract starts now supply owned settlement causes to subscribed roots.
-Choices can suspend dispatch without losing the remaining source records.
-News and required dialogue share the source identity. [Mac evidence](evidence/M1-07-committed-facts.md)
-records exact continuation, suppression and rollback checks.
-
-**M1-07 seeded occurrence and digest slice, 2026-11-04:** scheduled and interval
-roots sample the saved markets or hazards stream with explicit quiet outcomes.
-The Inbox groups routine headlines by campaign week while choices and live
-liquidity deadlines stay separate. [Mac evidence](evidence/M1-07-seeded-digest.md)
-records exact continuation, quiet windows, history validation and model
-priority. Formal acceptance retains M1-06/M1-04's open prerequisite chain.
-
-**Mac-first batch, 2026-11-04:** scoped variables/flags, checked expressions and
-transactional `set_variable` assignments now extend that shared runtime and save
-boundary. The user deferred full native/release qualification; those gates stay
-recorded and no longer block bounded Mac development. Next gameplay work is
-M2-01; related-entity authoring grows with actual business state. See the
-[implementation log](IMPLEMENTATION_LOG.md) and [development check policy](QA_AND_RELEASE.md).
-
-## M2 — Headless business loop
-
-- [x] **M2-01 — Accounts, obligations, and financing primitives.** Role: simulation. Depends: M1-02, M1-03. Balanced postings, reservations, month settlements, receivables/payables, debt, equity conservation, and cash projections. Income, credit, equity, and cash are distinct; costs cannot be silently duplicated.
-- [x] **M2-02 — Shared capacity and project commitments.** Role: simulation. Depends: M2-01. Lease allocation, staff assignments, project reservations, actual work, and serving protection. Define checked compute-per-task inference profiles and separate non-compute support costs; demonstrate the slice's 20 CU/day serving reservation alongside 60 CU/day training. Daily assigned CU never exceed effective CU; lease power/support is not billed twice; cancellation releases only unconsumed reversible commitments. Prepare capacity ownership/compatibility contracts for later wholesale leasing without adding it to the slice.
-- [x] **M2-03 — Contracts and demand allocation.** Role: simulation. Depends: M2-02. One enterprise segment, outside option, eligibility, price, useful-work demand, finite inference, refunds and deadlines. Freeze the common-snapshot task/budget/capacity allocation procedure and a justified deterministic work bound. Hand-work unequal prices, rational budget scaling, zero-price work, capacity contention and rounding residues before coding; never truncate a budget ratio to zero or silently lose refused tasks. Persist monthly installed shares and make switching costs depend on incumbency. Contract fees/usage cannot spend a segment budget twice. No entity-order advantage; M5 expands regions/channels.
-- [x] **M2-04 — Three-year scenario and liquidity recovery.** Role: QA/simulation. Depends: M2-03, M1-04. Exercise the opening balance, settlements, scenario runner, 30-day workout, rescue and closure paths. Reports reconcile; saved continuation matches uninterrupted play; a solvent strategy is demonstrable.
-
-**M2-01 Mac implementation, 2026-11-04:** balanced causal postings, reservations
-versus recognized costs, actual-calendar-month accrual/settlement, partial
-receivables/payables, debt/interest/principal, equity conservation and pure
-projections are implemented through scenario/commands/saves. The optimized Mac
-build and eight focused CTests pass; the two-month opening example reconciles to
-$972,000 and resumes exactly from before settlement. See
-[evidence](evidence/M2-01-accounts.md). Formal acceptance retains M1-03's open
-prerequisite; this batch does not claim a viable three-year strategy. Next:
-M2-02 shared capacity and commitments.
-
-**M2-02 Mac implementation, 2026-11-04:** shared leased/owned-source identity,
-staff and compatibility checks, finite project work, protected serving,
-proportional outage allocation, cancellation and separate non-compute support
-are implemented through commands and exact saves. The 60-day example combines
-20 CU/day serving with 60 CU/day training on one 100 CU/day lease. An optimized
-Mac build and seven focused CTests pass; [evidence](evidence/M2-02-capacity.md)
-records the remaining catalog/contract/history limits. Formal acceptance retains
-M2-01's open prerequisite. Next: M2-03 contracts/demand with a frozen finite
-allocation procedure before implementation.
-
-**M2-03 design preparation, 2026-11-04:** the
-[selected allocation kernel](evidence/M2-03-allocation-design.md) records rational
-budget scaling, explicit residual/outside accounting, shared capacity rounding,
-a `P+E+1` round proof and hand-worked unequal/free-price/contention cases. This is
-design evidence only; contracts, resource priority, installed shares and runtime
-implementation remain open.
-
-**M2-03 Mac implementation, 2026-11-04:** the selected finite allocation kernel,
-protected contract supply, actual fees/usage/credits/penalties, deadlines,
-installed shares and incumbent-based switching are now implemented. Typed
-scenario data defines the business setup, and exact saves reconcile budgets,
-invoices and actual serving. An optimized Mac build and eight focused CTests pass;
-[evidence](evidence/M2-03-market.md) records tests and limits. Formal acceptance
-retains M2-02's prerequisite gate. Next: M2-04's three-year solvent/recovery paths.
-
-**M2-04 Mac implementation & performance fix, 2026-11-05:** saved causal liquidity warnings,
-30-day workouts, actual-payment rescues, closure/postmortem autosaves and a typed
-three-year command-line policy runner are implemented. Eliminated redundant per-day
-full-history validation and heap allocations in `pgp_core`/`pgp_runtime`/`pgp_session`,
-reducing `session.business-scenario` from 174.34s to 5.38s (~32x speedup) and
-`session.business-recovery` from 8.09s to 0.36s. Next priority is completing the
-playable `M3` vertical slice (`M3-01` -> `M3-05` -> `M3-02` -> `M3-03`) directly
-before returning to `E1A-04`/`E1A-05`/`E1b`.
-
-## M3 — First playable (Active Priority)
-
-- [x] **M3-01 — Data/research/train/evaluate loop.** Role: simulation. Depends: M2-04. Four data offers, six research nodes, model lineage, finite training and held-out evaluation. Expose uncertainty and bottlenecks; checkpoint cloning cannot add free capability; estimates do not alter RNG. **Completed 2026-11-05:** data-defined lab commands, paid research unlocks/retries, actual shared-capacity work, lineage, subgroup evidence and strict exact saves. The headless demonstration discovers weak scanned tables and verifies targeted-data recovery; 88 focused assertions and all 54 optimized Mac CTests pass. [Module contract](../src/core/LAB.md). Player-facing deployment/controls follow in M3-02.
-- [x] **M3-05 — Create the AI-assisted playable base-event pack.** Role: content/simulation; AI implementation task. Depends: M3-01, M1-07. Build and validate the [eight-family coverage matrix](EVENT_SYSTEM.md) for 2014–2017: milestone/contract news, technology/research developments, data opportunities, supplier/world disruptions, rival activity and recovery. Supply the slice's two bounded rival routines and heavyweight warning fact producers through shared commands, before pack validation; full budgeted rival planning remains M4. Include firing/non-firing boundaries, trigger-to-effect causal evidence, matched-seed reload tests, digest/required-choice behavior and a baseline-only scenario run. Human stories augment this playable baseline. These eight definitions are the slice budget, not eight additional manually written stories; no live news service or runtime AI. **Completed 2026-11-05:** eight validated/localizable flows, actual lab/pilot sources, paid supplier/recovery terms, dated demand changes and financed rival routines. The baseline finishes all three years solvent without financing; saved mobilization resumes identically. All 55 optimized Mac CTests pass, including 188 event/Studio/scenario checks. [Owning contract and seeds](../src/runtime/BASE_EVENTS.md). Player presentation and internal content finalization retain their M3-02/E1A gates.
-- [x] **M3-02 — Playable scenario presentation and tutorial.** Role: UI/content. Depends: M3-01, M3-05, M1-05. Office/Lab panels, three headquarters choices, training preview, contract comparison, eight validated base-event flows with optional authored story layers, and presentation of M3-05's two bounded rivals/heavyweight warning. Make a concrete task/subgroup evaluation finding understandable, with data/retraining, control and scope responses. News/choices/results use the shared runtime and tiered inbox. Start to ending is playable without developer intervention; full node-canvas qualification is E1b before M4. **Completed 2026-11-05:** bundled no-argument campaign, three headquarters, optional story layers, persistent Office/Lab models, deterministic training/budget previews, paid evaluation, qualified deployment/replacement, human-review and narrower-scope responses, contract comparison, public rivals and skippable local guide. Metal keyboard runs at 1280×720 with 100%/200% text reach a solvent 2017 ending and resume an exact save. All 57 optimized Mac CTests pass, including 29 deployment and 16 management assertions. Delegation/scoring and human study remain M3-03/04.
-- [x] **M3-03 — Delegation, warnings, recovery, and slice scoring.** Role: UI/simulation. Depends: M3-02. Add budget-bounded renewal/evaluation policies, configurable auto-pause, a recoverable setback, and specialist/financing paths. Fast-forward cannot skip a required decision or deadline. **Completed 2026-11-05:** saved finite evaluation/lease-renewal policies with cash/resource ceilings and decision logs; independent completion/alert pause settings; actual deadline and milestone stops; warned supplier reduction/restoration; paid specialist, efficient document service, fixed equity/loan recovery and transparent slice scoring. All 58 optimized Mac CTests pass (352 management integration checks); complete Metal keyboard/form runs at 100%/200% text include funding, hiring, delegation, exact reload and a scored solvent ending. The efficient specialist finishes profitable without new financing. [Owning contract](../src/core/MANAGEMENT.md).
-- [ ] **M3-04 — Validate the slice with people.** Role: QA. Depends: M3-03; scheduled for v1 preparation after all components are in place and the user is ready. At least five independent 30–45-minute sessions, including two players without an ML background; three complete without facilitator help; record consented, manually summarized feedback without game analytics. Players can explain cash burn, model evaluation, and why their contract succeeded/failed. Fix material comprehension blockers before release acceptance. **Deferred by user, 2026-11-05:** kit prepared; zero human sessions; later implementation continues.
-
-## E1a — Slice authoring through forms and inspection
-
-- [x] **E1A-01 — Separate editor and current-content library.** Role: content-editor. Depends: M2-04, M1-05, M0-05. Add a separate target/resources/package profile opening an explicitly selected checkout. Browse/search/filter current and draft slice content; support undo/redo, IDs/uses/used-by and conflict-aware writes. Unknown schemas are read-only; installed game folders and paths outside the selected project are not edited.
-- [x] **E1A-02 — Complete typed outline/forms authoring.** Role: content-editor with simulation brief. Depends: E1A-01, M1-06. Author triggers, nested conditions, numbered effects/events, explicit targets, sequences/continuations, delays, dialogue/results and all five lifecycles through one document model. Shared registry supplies units/choices/tooltips and refuses invalid bindings/coercions. Save/reopen and refactor referenced IDs without raw scripting. Keep the model canvas-ready; no second logic representation.
-- [x] **E1A-03 — Trigger-impact and lifecycle inspection.** Role: content-editor/QA. Depends: E1A-02. Show clause values/truth, matched scopes, ordered outline paths, resolved targets, before/after deltas/ledger entries and delayed queues on copied real state/RNG. Test boundaries and natural entry/active/exit plus a separately labeled synthetic cleanup probe. Catch inverted effects, wrong scope and mistaken references. Reuse game dialogue/results; reload nested waits/choices without duplicate effects/rerolls or live-campaign mutation.
-- [x] **E1A-04 — Safe internal content snapshots.** Role: content-editor/build-release. Depends: E1A-03, M0-05 (scheduled after M3-03). Save drafts separately; provide a small explicit repository validation/version tool for reviewed internal slice batches before the full graphical finalizer. Record definition revisions, content version/hash/change summary and required game-version changes under the existing contract. Preserve staged writes, conflict detection, recovery and game/editor package separation. A maintainer runs this tool for reviewed internal content; ordinary authors still edit through forms. No raw-data editing, fake release, Git/store publication or version-check bypass. **Completed 2026-11-05:** shared Qt-free review/finalize/check/recover writer, immutable baselines, journaled batch recovery, stale-write refusal and version/hash metadata. First internal snapshot is content 0.1.0-dev.1; its game-version requirement remains explicitly unresolved. All 59 optimized Mac CTests pass, including 76 snapshot assertions; a complete 200% Metal campaign run uses the finalized hash. [Commands, artifacts and limits](../src/studio/SNAPSHOTS.md).
-- [x] **E1A-05 — Demonstrate the narrow authoring path.** Role: QA/content-editor. Depends: E1A-04 (scheduled after M3-03). Demonstrate browsing, building a branching flow, catching planted sign/scope errors and reopening all lifecycle examples through forms/inspection. Produce a runnable internal editor and validated slice snapshot; verify no editor payload enters the game. This reproducible engineering walkthrough is not the three-author human study. **Completed 2026-11-05:** explicit Metal walkthrough drives 36 QML form submissions, keyboard outline, cash sign/scope inspection, five lifecycle reopens and exact delayed dialogue/hidden consequences on an isolated checkout. It fixes a real Save as draft QML string-method bug. The saved batch passes shared snapshot validation/finalization for all three headquarters; generated game/editor resource lists stay separate. Focused Studio CTests and the existing offscreen view check pass. [Reproduce the walkthrough](../src/studio/WALKTHROUGH.md). Human studies remain deferred to v1 preparation.
-
-**E1a/E1b Mac implementation, 2026-11-04/05:** Content Studio opens an explicitly selected checkout, browses current/draft collections, edits triggers/lifecycles/nodes/effects with shared canvas/forms/outline and undo/redo, and inspects actual runtime truth/scopes/paths/effects. E1A-04/05 supply validated internal snapshots and the reproducible authoring walkthrough; E1B-02 adds graphical batch review/finalization and recovery. M4-01/02/03 and M5-01/02 are implemented. Human studies stay deferred.
-
-## E1b — Required node canvas and author qualification
-
-- [x] **E1B-01 — Add the typed node-box canvas.** Role: content-editor/UI. Depends: E1A-05. Link triggers, effects/events, sequence ports and choices on the same document as forms/outline. Add keyboard equivalents, pan/zoom, useful layout and trace highlighting; graph/form edits must round-trip without semantic change. Commit integer node positions only on edits; keep viewport/selection local. Refuse invalid links and show waiting sibling continuations. Elaborate routing/styling is optional. **Completed 2026-11-05:** typed execution/predicate/value/entity ports, contextual searchable palette, synchronized forms/outline, shared undo, bounded layout and separate integer layout saves with conflicts/recovery copies. Actual trace overlays show truth, receipts, selected outcomes and saved sibling/subflow waits. Metal pointer/keyboard runs at 1280×720 verify drag-release, save/reopen, 900-pixel pane navigation and 200% canvas zoom; all 60 optimized Mac CTests pass in 12.18s, including 84 canvas assertions. [Canvas controls, storage and checks](../src/studio/CANVAS.md). Human qualification stays deferred to v1 preparation.
-- [x] **E1B-02 — Graphical batch finalization.** Role: content-editor/build-release. Depends: E1B-01, E1A-04. Wrap the existing validation/version writer in the graphical review/finalize workflow. Test external-edit conflicts, journaled multi-file recovery, definition increments once per batch, pending release requirements, no-op/layout exclusion and no automatic Git/store publication. Human authors finalize without a command or text editor. **Completed 2026-11-05:** graphical saved-source/version/summary selection, exact before/after definition/text differences, validation/notices, proposed files, explicit finalization and clean runtime reopen, plus journal recovery through the existing writer. Metal QML keyboard checks finalize six definitions in one batch, refuse a stale external edit, preserve drafts, recover an interrupted multi-file write and resolve an explicitly selected game-version requirement. All 61 optimized Mac CTests pass, including 51 graphical-controller checks. Primary runtime/content versions stay unchanged; no publication or human qualification is claimed. [Workflow, commands and limits](../src/studio/SNAPSHOTS.md).
-- [ ] **E1B-03 — Prove author usability and packaging.** Role: QA/content-editor. Depends: E1B-02; human sessions scheduled for v1 preparation after all components are in place and the user is ready. Three authors browse existing content, build trigger→multiple effects/events and a branching dialogue, catch planted sign/scope mistakes, test/finalize/reopen without scripting. Exercise lifecycle, keyboard/tooltips, graph/forms parity and package exclusion. Arrange humans only through explicit authorized contact. **Deferred by user, 2026-11-05:** this human gate and M3-04 remain required before release acceptance and do not block M4 or later component implementation.
-
-## M4 — Competitors and governance
-
-- [x] **M4-01 — Full rival planning and staged entry.** Role: simulation. Depends: M3-03, E1B-02 for component implementation; M3-04/E1B-03 are deferred v1 human-validation gates. Schedule the default roster and implement budgeted strategies through shared commands. Test imperfect information, insolvency, research prerequisites, bounded catch-up settings and publication diffusion. Measure late-century rivalry/entry/consolidation in M8 before adding new spin-off mechanics or subsidized replacement opponents. **Completed 2026-11-05:** standard 6+6+3 scheduled roster (six initially active), 7/20-company alternatives and disclosed finite equity catch-up; weekly private seeded strategies through core research/work/management/price commands, one conserved industry customer pool, staged entries, real closures and delayed public research credits. All 62 optimized Mac CTests pass, including 51 focused competition assertions. Standard/expanded three-year routes reload exactly below the unchanged 25 MiB cap; the bundled 200% Metal path exercises setup/publication/adoption/pricing and a solvent 2017 ending with an exact complete-roster save. Content 0.2.0-dev.1 is finalized through the shared writer; game/editor stay planning placeholders. Heavyweight response/deals and century qualification remain M4-02/M8. [Contract and checks](../src/runtime/COMPETITION.md).
-- [x] **M4-02 — Heavyweight mobilization and deals.** Role: simulation/content. Depends: M4-01. Watch/mobilize/compete/consolidate, visible 90-day warning, finite spending/lead times, offers, hysteresis and exit. A player can anticipate and answer a response; success does not cause instant omnipotent retaliation. **Completed 2026-11-05:** public-evidence pressure and two-review hysteresis; at least 90 days' warning; one finite capital allocation, actual paid staffing/compute and delivery leads; withdrawal retaining fixed-term bills; optional escrowed publication/pilot fees paid only on real milestones. Office briefings and keyboard-reviewed terms use the shared worker/transaction/autosave path. All 63 optimized Mac CTests pass, including 50 heavyweight assertions. Standard/expanded three-year saves reload exactly below 25 MiB; the bundled 200% Metal run declines a publication offer, accepts/completes a pilot and reaches the ending solvent. The shared writer finalizes content 0.3.0-dev.1; ownership/mergers remain M4-03. [Contract and checks](../src/runtime/HEAVYWEIGHTS.md).
-- [x] **M4-03 — Funding, executives, negotiation, and board.** Role: simulation/UI. Depends: M4-01, M2-01. Equity rounds, debt/covenants, strategic deals, board seats, key roles, promises and straightforward mergers. Add negotiated cash/equity grants from the existing pool, cumulative vesting, departure treatment and approved pool-expansion dilution. Test repeat-grant/rehire exploits and conserved fully diluted ownership/obligations. Disputes have causes and response windows; no real option-tax/derivative simulator. **Completed 2026-11-05:** finite alternative financing counteroffers, actual seat-based votes, cash covenants/paid waivers, named paid key roles and publication commitments. Existing-pool grants vest cumulatively, dilute once and retain earned ownership on warned departure; pool expansion needs an explicit approved dilution. Cash/equity acquisitions preserve the operating subsidiary and all obligations; paid owner funding and earned-profit dividends reconcile both ledgers and eliminate internal group gains. All 64 optimized Mac CTests pass, including 77 corporate checks. The bundled 200% Metal route exercises these controls, full vesting and a solvent 2017 ending with exact reload. Content 0.4.0-dev.1 is finalized through the shared writer. [Corporate contract and bounds](../src/runtime/CORPORATE.md).
-
-## M5 — Geography and global markets
-
-- [x] **M5-01 — Offline domestic map and owned infrastructure.** Role: UI/simulation/content. Depends: M4-03. Prepared 50-state/DC geometry with list alternative; licensed source evidence; power, cooling, grid queues, hardware delivery, staff, maintenance and optional executive travel/appointments. Use one fixed CU reference and data-defined memory/interconnect compatibility, with bounded catalog ranges. State/site choice measurably changes a feasible plan; travel never disables basic management. **Completed 2026-11-05:** locally prepared and credited Census map with all 51 jurisdictions, pointer and keyboard controls, authored state terms, finite grid queues and paid commissioning. Shared physical work drives metered utilities and conserved asset accounting; the player can schedule remote, delegated or on-site inspections and manage normally during trips. All 67 optimized Mac CTests pass. The bundled 200% Metal check completes the owned work, lease notice and exact reload route. Shared writer: content 0.5.0-dev.1, generation 5. [Controls, equations and checks](../src/runtime/INFRASTRUCTURE.md).
-- [x] **M5-02 — International profiles and product channels.** Role: simulation/UI. Depends: M5-01, M4-01. Eight regions, six model channels, twelve product templates, local eligibility, open/on-premise attribution and regional useful-work accounting. Add wholesale owned-capacity contracts with term/compatibility/energy/uptime/refund rules, balanced buyer/seller postings and one capacity owner per reserved slice. Test cross-segment demand and stateful churn, overselling/circular resale, supplier failure and no host task-share double count. The infrastructure path must earn feasible revenue without a trained product. **Completed 2026-11-05.** All 68 optimized Mac CTests pass. The bundled 200% Metal check signs, settles and reloads a paid capacity agreement. Two racks and four contracts earn $12,499.28 in operating profit over 47 days without a model. Reviewed content 0.6.0-dev.1, generation 6. [Player controls and verification](../src/runtime/REGIONAL_MARKETS.md).
-- [x] **M5-03 — Hazards, resilience, and insurance.** Role: simulation/content. Depends: M5-01. Seasonally appropriate exposure, backup/replication, outage consequences and financial insurance. Mitigations affect their stated mechanisms; insurance does not magically restore hardware availability. **Completed 2026-11-05.** Fictional monthly profiles for all 51 jurisdictions, six physical hazards, five distinct paid protections, resource-backed geographic replication and finite insurance settlements share the existing capacity, finance, news and exact-save paths. All 69 optimized Mac CTests pass, including 45 resilience checks. The bundled 200% Metal check purchases a generator/policy and reloads its exact 868,111-byte save. Shared writer: content 0.7.0-dev.1, generation 7, with all 15 headquarters save checks. [Controls and contract](../src/core/RESILIENCE.md).
-
-## E2 — Expanded Studio and editor qualification
-
-- [x] **E2-01 — Scenario/world/policy authoring.** Role: content-editor/content. Depends: M5-02, E1B-02 for component implementation; E1B-03 is deferred to v1 preparation. Add organized scenario settings, objectives, starting companies/resources, regions/sites, policy forms and map/list views. Expose available simulation fields and trigger target impacts through the shared schemas; no hidden manual-edit path is required for ordinary authoring. **Completed 2026-11-05.** Structured forms cover the implemented scenario/world schemas, including slice scoring, opening resources, rivals, policies and linked regional/resilience rules. Revision-bound sections and cross-section batches share compiler validation, undo and the snapshot writer; real opening previews show facts, trigger/target impacts and exact saves. All 70 optimized Mac CTests pass, including 68 authoring checks. Actual Metal QML runs at 100%/200% text test coupled ownership/scoring, stale/decimal refusal, all 51 state profiles, keyboard/pointer map selection, a 900-pixel workspace and exact draft reopen. Century objectives arrive with M7's schemas; the Lab retains real model/evidence qualification. [Workflow and limits](../src/studio/WORLD.md).
-- [x] **E2-02 — Research/catalog/asset and reusable-flow tools.** Role: content-editor/content. Depends: E2-01. Edit research prerequisites, model/data/hardware/product/people catalogs, localization and asset/credit records. Add typed reusable groups, safe reference refactoring and impact search. Preserve human-readable IDs, disabled/deprecated content, provenance and deterministic layout-independent hashes. **Completed 2026-11-05.** Searchable catalog records use the shared draft and compiler, with reviewed typed renames, transitive impact, and retained disabled/deprecated definitions. Localized messages use locale, language and English fallback. The asset register verifies copied files and provenance, and the snapshot writer checks pinned file, evidence and credit identity. Named group inputs and outputs use the existing saved call stack and record actual bound output targets. All 71 optimized Mac CTests passed, including 69 catalog checks. The 200% Metal walkthrough saved credit changes and reopened the 788,839-byte catalog draft. [Author workflow](../src/studio/CATALOGS.md).
-- [x] **E2-03 — Cross-revision content and save review.** Role: content-editor/QA. Depends: E2-02. Compare finalized revisions, preview changed reach/effects on matched fixtures, validate node/ID migrations and pending chains, preserve old saves and prevent stale-schema writes. Test unknown fields, broken references, large graphs and continuous-modifier cleanup. **Completed 2026-11-05.** Studio verifies archived hashes, compares typed fields, runs paired real fixtures, and exports an explicit save copy and review receipt. Migration retains nested waits, choices, resolved RNG, effect history and modifiers under compatible flow behavior. All 72 optimized Mac CTests passed, including 46 revision checks and a 512-node graph. The 200% text Metal walkthrough reviewed a mapping, preserved the original bytes and reloaded the exported copy. [Revision review workflow](../src/studio/SNAPSHOTS.md#compare-finalized-revisions-and-review-a-campaign-copy).
-- [ ] **E2-04 — Qualify separate editor downloads.** Role: build-release/QA. Depends: E2-03, M7-03. Build/qualify five editor artifacts against the current runtime and version reader, repository writes, node UI/help/accessibility and offline operation. Product-specific tags/source/licenses/credits identify editor compatibility. Prepare independent reviewable downloads; publish only under an explicit editor-release task. Recheck game package exclusion.
-
-## M6 — Politics and society
-
-- [x] **M6-01 — US institutions, policy, and election calendar.** Role: simulation/content. Depends: M5-02, M4-03. Seat blocs, proposals, votes, executive/agency implementation and state policies. Show effective dates, eligibility, evidence and influence costs. Elections and delayed rules survive save/load. **Completed 2026-11-05.** The Civic room covers all 51 jurisdictions, the staggered election calendar, state and federal dockets, disclosed advocacy and independent evidence. Effective rules govern new site permits and US service launches. The 39 focused checks cover agency and election replay, jurisdiction, the paid disclosure ledger and independent evidence. A 200% text Metal walkthrough reopens the exact paid-docket checkpoint. Reviewed content 0.8.0-dev.1, generation 8. [Controls and rules](../src/core/CIVIC.md).
-- [x] **M6-02 — Macro response, global coordination, and media.** Role: simulation/content. Depends: M6-01. Adoption-to-world-effects lags, five welfare indices, standards forum, access restrictions, advertising and audience reputation. Company spend affects delivered capacity/outcomes before welfare changes; no single world-law toggle. **Completed 2026-11-05.** World shows all eight regions, published component weights, global values and minima. Actual settled work drives delayed welfare and six audience reputations. A quorum and individual member dates govern access; live delivery, credits and penalties use the same conditions as player/rival/wholesale allocation. Finite paid campaigns change awareness with diminishing returns. All 74 optimized Mac CTests passed, including 61 society checks and source-reconciled forged-save refusals. The 100%/200% text Metal walkthrough confirms both paid actions and reopens the exact 562,154-byte checkpoint. Reviewed content 0.9.0-dev.1, generation 9. [World controls and rules](../src/runtime/SOCIETY.md).
-- [x] **M6-03 — Executive/public conflicts and authority paths.** Role: simulation/UI/content. Depends: M6-02. Multi-stage disputes, testimony, commitments, audience-specific identity, institutional authority, abstract coercive control and resistance. Advertising/market share alone cannot satisfy domination. **Completed 2026-11-06.** Institutions exposes named agreements with paid teams, independent evidence, real service duties, decisions and expiry. Prepared mornings surface public and executive concerns, formal responses and disclosures. Procurement, resistance, sanctions and regional coverage reconcile to actual work and saved records. The 67 focused checks and bundled Metal walkthroughs at 100%/200% text passed. Content 0.10.0-dev.1 passed all 15 headquarters openings and exact saves. [Institutions controls](../src/runtime/AUTHORITY.md).
-
-## M7 — Century and endings
-
-- [x] **M7-01 — Conditional future and game AGI/ASI.** Role: simulation/content. Depends: M6-02, M5-02. Scenario progress branches, advanced recipes/hardware, independent assessment windows and plateau behavior. Add bounded research queues/standing tracks and mature-product refresh with cash/staff/spare-compute limits, licensed data, evaluation and rollout gates. Test stale prerequisites, policy cancellation and serving protection. No fixed future arrival date or infinite feedback loop; ASI objective scenarios have a feasible route. **Completed 2026-11-06.** Two century scenarios expose seeded conditions, advanced technologies and paid independent protocols. The 188 focused checks include player ASI on both feasible branches, plateau AGI, rival ASI, exact 90/180-day boundaries, cooperating systems and bounded research/refresh safeguards. All 76 optimized Mac CTests pass across the suite and focused Studio rerun, including 85 authoring checks. Late-era Metal walkthroughs at 100%/200% text register a deployed system, fund actual assessment, review/cancel policies and reload the exact 473,735-byte save. The bundled opening campaign still reaches a solvent 2017 ending. Content 0.11.0-dev.1, generation 11, passes all seven scenarios and 21 headquarters saves. Century endurance and full objective endings retain their M7/M8 gates. [Frontier controls and rules](../src/core/FRONTIER.md).
-- [x] **M7-02 — Succession and founder legacy.** Role: simulation/content. Depends: M4-03, M7-01. Plan a successor, change executive/chair relationships, preserve company obligations and founder trust. Century play does not assume one immortal executive or create duplicate wealth. **Completed 2026-11-06.** Leadership exposes named cohorts, reviewed dates, actual board votes, paid transition exercises, finite executive careers, caretaker continuity and founder-chair retirement. The original trust retains actual ownership and paid cash; acquisition consideration remains a beneficial claim and follows later dilution. All 77 optimized Mac CTests pass, including 77 succession/legacy checks and 90 Studio checks. Metal walkthroughs at 100%/200% text use a near-retirement fixture, fund and reach the real handover, retire the chair, cancel another plan and reload the exact 536,905-byte save. The bundled 200% opening run still reaches its solvent 2017 ending. Reviewed content 0.12.0-dev.1, generation 12, passes all 21 headquarters saves. Terminal objective prices and century endurance follow in M7-03/M8. [Leadership rules and legacy reports](../src/core/SUCCESSION.md).
-- [x] **M7-03 — Six objectives and postmortems.** Role: simulation/QA/UI. Depends: M7-01, M7-02, M6-03. Implement exact month-end windows, aggregate Monopoly sums, every-check Domination/Utopia, ties, objective changes and sandbox continuation. On an irreversible window breach, explain/auto-pause immediately and offer postmortem or continued play without forcing the final years; preserve alert state on reload. A weak Monopoly month is not itself a failed aggregate objective. Each objective has a reachable win, near miss, breach and save-boundary fixture; no implicit grace-month/early-victory rule change. **Completed 2026-11-06.** Select goals at setup and review exact settled scores, irreversible breaches and the dated alternatives. Continue scoring other distinctions, finish at a postmortem, or preserve the outcome in sandbox or observer mode. The final-decade fixture earns all five deadline objectives, loses Domination on one final-day branch, and reopens the exact 10,839,777-byte save. Independent player and tied rival ASI runs pass. All 78 optimized Mac CTests pass, and Metal at 100%/200% text reopens the 293,153-byte breach. Reviewed content 0.13.0-dev.1, generation 13, passes seven scenarios and 21 headquarters saves. [Objectives, valuation and continuation](../src/runtime/OBJECTIVES.md).
-
-## M8 — Content and endurance
-
-- [x] **M8-01 — Complete useful content and asset coverage.** Role: content/UI. Depends: M7-03, E2-04. Expand the AI-assisted built-in event baseline and human-authored story layers through Studio toward the shared scope budgets, filling all six strategic paths and technology/world eras. Verify ordinary activity and recovery still work with optional story layers disabled. Replace unclear placeholders, integrate selected licensed music, and finish offline credits. Finalize traced/versioned content batches; no unverified asset or empty moral-choice filler. Audit keyboard/text/motion alternatives. **Completed 2026-11-06:** both century scenarios have 120 flows, including six editable optional stories, and a staged 15-company roster. A real narrower pilot recovers from a missed start with stories disabled. The paid story lease and three seeded incidents reload and expire exactly. The century catalogs now contain 60 research topics, 24 data offers and 18 rack families. The game includes 11 room illustrations and seven licensed music excerpts with local credits. Generation 14 validates seven scenarios and 21 headquarters saves. All 79 optimized Mac tests pass. Native Metal and Core Audio controls pass at 100% and 200% text. [Content and assets](CONTENT_AND_ASSETS.md).
-- [ ] **M8-02 — Balance and long-run validation.** Role: QA/simulation. Depends: M8-01. Matched-seed specialist/open/frontier policy runs plus an infrastructure-provider path, exploit cases, 100-year batches, a human full campaign and 500-year sandbox checks. Measure late-era rival attrition/concentration, click/notification burden and refresh/research policy limits. Check numeric bounds without compounding nominal inflation, catalog progression and objective feasibility alerts. No unreconciled ledgers, growing queues or opaque unrecoverable failures; document balance changes/playtime before proposing spin-off or victory-rule expansions.
-- [ ] **M8-03 — Performance, privacy, and dependency audit.** Role: QA/build-release. Depends: M8-02, M0-04. Measure named-device response/memory/save/fast-forward costs; inspect release logging, resource URLs, sockets, fonts, codecs, licenses and credits. Play with denied network and observe connection attempts; no runtime collection/transmission/updater.
-
-## M9 — Primary release
-
-- [ ] **M9-01 — Qualify all five clean-device artifacts.** Role: build-release/QA. Depends: M8-03 and the deferred M3-04/E1B-03 human-validation gates. Download candidates onto clean native systems, test graphics/audio/UI/save paths and source/license bundles, verify architecture and no developer paths. Publish only the platforms actually qualified; full 1.0 gate requires all five.
-- [ ] **M9-02 — Prepare a reviewable itch release.** Role: build-release/content. Depends: M9-01, M0-05. Derive game version/tag/artifacts/content identity from the shared manifest; refuse stale versions or unresolved content bump/migration requirements. Prepare matching source/checksums, screenshots, title/description, privacy/platform/install/accessibility notes. Verify Apple's per-app Privacy & Security/Open Anyway flow on downloaded ad-hoc bundles; do not promise an itch client bypass or use global-security-disabling guidance. Editor downloads are separate; no automatic public upload is implied.
-- [ ] **M9-03 — Publish the approved primary release.** Role: build-release. Depends: M9-02 and explicit release task. Use authorized account/credentials, upload intended channels once, verify downloaded artifacts, record URLs/version, and clean generated staging files. Never fabricate publication success.
-
-## M10 — Secondary distribution
-
-- [ ] **M10-01 — Package and qualify Snap.** Role: build-release/QA. Depends: M9-03, M0-05 and an explicit Snap task. Use Ubuntu amd64/arm64 game builds; pass the manifest's game version through the existing reader and Snapcraft adopt-info/craftctl metadata. Distinguish store revision/channel from component versions; test refresh with pending flows/saves, interfaces, audio/graphics, notices and source. Exclude the editor; no micro-HTTP server, game updater or automatic submission.
-
-## Task completion record
-
-For each completed item, record commit, build/test or playtest evidence, remaining limits, and next item in the task handoff. A checked box means the acceptance criteria passed. Starting a task, creating stubs, or obtaining a passing compiler exit alone does not close it. Do not create external issue spam or contact testers unless the user asks.
+- [Closed-phase status and coverage](archive/initial-implementation-status.md)
+- [Original checklist and acceptance criteria](archive/initial-implementation-backlog.md)
+- [Implementation evidence](IMPLEMENTATION_LOG.md)
+- [Current handoff](STATUS.md)

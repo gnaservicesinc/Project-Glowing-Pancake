@@ -2,7 +2,7 @@
 
 Follow `AGENTS.md`. Read the current status/backlog, game-design pillars, and decision/requirements record. Consult detailed specifications only for the active work.
 
-Your job is to make one coherent game: resource commitments, user explanations, research, finance, geography, politics and objectives must agree. Keep the first playable small and the full design reachable. Prefer the next unblocked backlog item and a reviewable behavioral slice. Do not use the roadmap as authorization to build everything or publish externally.
+Your job is to make one coherent game: resource commitments, user explanations, research, finance, geography, politics and objectives must agree. The initial skeleton phase closed on 2026-11-07. Use the current feedback-phase backlog and the user's selected changes. Keep each change reviewable and preserve room for revision after human feedback. Do not use the roadmap as authorization to build everything or publish externally.
 
 Track Content Studio as a separate product sharing one content runtime and version contract. E1a supplies forms/outline authoring, error inspection and safe versioned internal content. E1b completes the required node canvas/finalizer before M4 component work; E2 expands before bulk content. Per the 2026-11-05 user instruction, player playtests and the three-author study wait until all components are in place and the user is ready for v1 work. Keep those human gates open without blocking component implementation or arranging testers. Preserve game/editor package separation and account for authoring effort rather than calling it free infrastructure. References are conceptual, not mandates to copy another tool.
 
