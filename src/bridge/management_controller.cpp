@@ -5,6 +5,8 @@
 #include "governance_presentation.hpp"
 #include <pgp/core/company_finance.hpp>
 #include <pgp/core/integer_codec.hpp>
+#include <pgp/runtime/authority.hpp>
+#include <pgp/runtime/competition.hpp>
 #include <pgp/runtime/scenario.hpp>
 #include <pgp/runtime/society.hpp>
 #include <QRegularExpression>
@@ -137,6 +139,45 @@ core::StageServiceRollout rollout_request(const QString& service,const QString& 
         core::Days{integer(days,core::service_trial_days_limit)}};
 }
 core::Days service_term(const QString& days) { return core::Days{integer(days,core::service_term_max_days)}; }
+core::SetServiceWaitlist waitlist_request(const QString& service,const QString& tasks,bool enabled) {
+    const auto rate=enabled?std::optional{static_cast<std::uint64_t>(tasks==QStringLiteral("0")?0:integer(tasks,core::market_task_limit))}:std::nullopt;
+    return {service.toStdString(),rate};
+}
+void add_waitlist_details(CampaignRow& row,const core::SimulationState& state,const core::MarketProduct& product,
+                          const content::RegionalMarkets* regions) {
+    const auto& market=*state.market;
+    const auto limit=core::market_waitlist_limit(market,product,state.date);
+    if (!limit) return;
+    row.fields.insert(QStringLiteral("waitlistLimit"),number(*limit));
+    row.fields.insert(QStringLiteral("waitlistActive"),true);
+    auto detail=*limit==0?QObject::tr("Waitlist active. New admissions are paused."):
+        QObject::tr("Waitlist active. Up to %1 new tasks/day.").arg(number(*limit));
+    const auto* latest=market.days.empty()?nullptr:&market.days.back();
+    if (latest && core::market_waitlist_limit(market,product,latest->day)) {
+        std::uint64_t admitted=0,waiting=0;
+        std::vector<const core::MarketWaitlistDay*> groups;
+        for (const auto& item:latest->waitlists) if (item.product_id==product.id) {
+            admitted+=item.admitted_tasks;
+            waiting+=item.waiting_tasks;
+            if (item.waiting_since) groups.push_back(&item);
+        }
+        detail+=QObject::tr("\n%1 · %2 new tasks served · %3 daily tasks waiting").arg(text(core::iso_date(latest->day)),number(admitted),number(waiting));
+        std::sort(groups.begin(),groups.end(),[](const auto* a,const auto* b) {
+            if (a->waiting_since!=b->waiting_since) return a->waiting_since<b->waiting_since;
+            return a->segment_id<b->segment_id;
+        });
+        QStringList waiting_groups;
+        for (const auto* group:groups) {
+            const auto* segment=find(market.segments,group->segment_id);
+            const auto* region=segment && regions?find(regions->regions,segment->region_id):nullptr;
+            const auto customer=region?QObject::tr("%1 · %2").arg(readable(group->segment_id),text(region->name)):readable(group->segment_id);
+            waiting_groups.push_back(QObject::tr("%1 · %2 tasks/day waiting since %3")
+                .arg(customer,number(group->waiting_tasks),text(core::iso_date(*group->waiting_since))));
+        }
+        row.fields.insert(QStringLiteral("waitlistGroups"),waiting_groups.join(QLatin1Char('\n')));
+    } else detail+=QObject::tr("\nThe first waitlist result posts after a day of customer work settles.");
+    row.fields.insert(QStringLiteral("waitlistDetail"),std::move(detail));
+}
 QString compatibility_terms(const core::CompatibilityProfile& profile) {
     QStringList floors;
     if (profile.quality[0].value()>0) floors.push_back(QObject::tr("documents ≥ %1").arg(percent(profile.quality[0])));
@@ -423,6 +464,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             if (deployment) {
                 add_release_details(products.back(),s,row);
                 add_service_support(products.back(),s,row,live);
+                if (live) add_waitlist_details(products.back(),s,row,regions);
             }
         }
         for (const auto& row:s.market->contracts) {
@@ -755,6 +797,9 @@ QVariantMap ManagementController::cashScenarios() const {
         if (s.market && std::ranges::any_of(s.market->products,[&](const auto& product) {
             return product.retirement && product.retirement->retires_on>s.date;
         })) assumptions+=tr("\nScheduled service retirements end projected discretionary sales and serving support on their published dates.");
+        if (s.market && std::ranges::any_of(s.market->products,[&](const auto& product) {
+            return core::market_waitlist_limit(*s.market,product,s.date).has_value();
+        })) assumptions+=tr("\nWaitlisted services use recent established work and the current daily intake ceiling.");
         return {{QStringLiteral("date"),text(iso_date(s.date))},{QStringLiteral("assumptions"),assumptions},
                 {QStringLiteral("cases"),cases}};
     } catch (const std::exception& error) {
@@ -1040,6 +1085,36 @@ QVariantMap ManagementController::retirementQuote(QString service,QString days) 
         return {{QStringLiteral("ready"),true},{QStringLiteral("detail"),detail}};
     } catch (const std::exception& error) { return {{QStringLiteral("detail"),QString::fromUtf8(error.what())}}; }
 }
+QVariantMap ManagementController::waitlistQuote(QString service,QString tasks,bool enabled) const {
+    if (!available()) return {};
+    try {
+        const auto request=waitlist_request(service,tasks,enabled);
+        const auto& s=state();
+        core::validate_waitlist_change(*s.market,*s.capacity,s.date,request.id,request.new_tasks_per_day);
+        const auto name=readable(request.id);
+        QString detail;
+        if (const auto limit=request.new_tasks_per_day; limit) {
+            const auto established=core::waitlist_established_tasks(*s.market,request.id,s.date);
+            detail=*limit==0?tr("Pause new admissions for %1.").arg(name):
+                tr("Admit up to %1 new tasks/day for %2. The longest-waiting eligible groups go first.").arg(number(*limit),name);
+            if (*limit>0) {
+                auto proposed=*s.market;
+                core::set_market_waitlist(proposed,*s.capacity,s.date,request.id,limit);
+                const auto& world=snapshot_->checkpoint.world;
+                const auto adoption=runtime::industry_adoption_snapshot(world);
+                const auto plan=core::market_opportunity(proposed,*s.capacity,s.date,
+                    world.competition && world.competition->setup?&adoption:nullptr,runtime::regional_market_conditions(world,s,s.date));
+                std::uint64_t intake_slots=0;
+                for (const auto& segment:plan.segments) for (const auto& edge:segment.edges)
+                    if (edge.product_id==request.id && edge.waitlist_interest_limit) intake_slots+=*edge.task_limit-edge.retained_tasks;
+                detail+=tr(" Today’s plan has %1 new task slots.").arg(number(intake_slots));
+            }
+            detail+=tr("\n\nSigned contracts keep priority. Established demand follows (%1 tasks on the busiest of the last %2 settled days). Waiting buyers can go elsewhere.")
+                .arg(number(established)).arg(core::waitlist_lookback_days);
+        } else detail=tr("Reopen enrollment for %1. New buyers will use the ordinary market rules and available serving capacity. Signed contracts keep priority, and past waitlist results stay in the campaign.").arg(name);
+        return {{QStringLiteral("ready"),true},{QStringLiteral("detail"),detail}};
+    } catch (const std::exception& error) {return {{QStringLiteral("detail"),QString::fromUtf8(error.what())}};}
+}
 bool ManagementController::editable() {
     if (!available()) return false;
     if (state().phase==core::DayPhase::finished || state().phase==core::DayPhase::closed) { emit noticeRaised(QStringLiteral("This campaign has ended."));return false; }
@@ -1091,6 +1166,11 @@ void ManagementController::commitCompatibility(QString service,QString days) {
 void ManagementController::announceRetirement(QString service,QString days) {
     if (!editable()) return;
     try { emit actionRequested(core::AnnounceServiceRetirement{service.toStdString(),service_term(days)}); }
+    catch (const std::exception& error) {emit noticeRaised(QString::fromUtf8(error.what()));}
+}
+void ManagementController::setServiceWaitlist(QString service,QString tasks,bool enabled) {
+    if (!editable()) return;
+    try {emit actionRequested(waitlist_request(service,tasks,enabled));}
     catch (const std::exception& error) {emit noticeRaised(QString::fromUtf8(error.what()));}
 }
 void ManagementController::acceptOffer(QString id) { if (editable()) emit actionRequested(core::AcceptBusinessOffer{id.toStdString()}); }

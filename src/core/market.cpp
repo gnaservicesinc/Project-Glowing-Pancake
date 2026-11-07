@@ -1,5 +1,6 @@
 #include <pgp/core/market.hpp>
 #include <pgp/core/allocation.hpp>
+#include "market_waitlist.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -245,6 +246,8 @@ void MarketHistoryCount::add(const MarketDay& day) {
     const auto added = day.contracts.size() + day.discretionary.size() + day.segments.size();
     if (added > market_settlement_limit - rows) invalid("Market settlement history reached its retained row bound");
     rows += added;
+    if (day.waitlists.size()>market_settlement_limit-waitlist_rows) invalid("Waitlist settlement history reached its retained row bound");
+    waitlist_rows+=day.waitlists.size();
 }
 MarketReport market_report(const MarketState& state) {
     MarketReport report;
@@ -646,6 +649,7 @@ void validate_market(const MarketState& state) {
     MarketAdoptionHistory reviewed_adoptions;
     for (const auto& day : state.days) if (month_end(day.day)) append_monthly_adoption(state, reviewed_adoptions, day.day);
     if (reviewed_adoptions != state.adoptions) invalid("Installed monthly shares differ from committed useful-work history");
+    market_detail::validate_waitlist_history(state);
     (void)market_report(state);
 }
 
@@ -1144,6 +1148,7 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
         }
         segments.push_back(std::move(segment));
     }
+    market_detail::apply_waitlist_limits(next,day,products,segments);
     return {std::move(record),std::move(product_contract_delivered),std::move(segment_reserved),std::move(segment_contract_delivered),
         std::move(segment_charged),std::move(products),std::move(segments),std::move(trials),std::move(blocked_trial_edges)};
 }
@@ -1170,6 +1175,25 @@ void validate_assigned(const MarketClosePlan& plan,const AllocationResult& assig
         if (delivered>input.tasks || result.outside_tasks!=input.tasks-delivered || charged>input.budget ||
             result.remaining_budget!=checked_unit_subtract(input.budget,charged) || local_used.value()>input.customer_compute.value())
             invalid("Industry allocation exceeds this company's task, money or customer hardware projection");
+        if (!result.waitlist_interest.empty()) {
+            std::uint64_t tasks=0;
+            Cents cost{0};
+            MilliCU work{0};
+            products.clear();
+            for (const auto& interest:result.waitlist_interest) {
+                const auto& product=find_id(plan.products,interest.product_id);
+                const auto edge=std::ranges::find(input.edges,interest.product_id,&AllocationEdge::product_id);
+                if (!products.insert(product.id).second || interest.tasks==0 || edge==input.edges.end() ||
+                    edge->weight==0 || interest.tasks>edge->waitlist_interest_limit.value_or(0))
+                    invalid("Industry waitlist interest bypassed the product's dated eligibility");
+                tasks+=interest.tasks;
+                cost=checked_unit_add(cost,multiplied(product.price,interest.tasks));
+                if (product.customer_compute_per_task.value()>0)
+                    work=checked_unit_add(work,required_inference(interest.tasks,product.customer_compute_per_task));
+            }
+            if (tasks>input.tasks || cost>input.budget || work.value()>input.customer_compute.value())
+                invalid("Industry waitlist interest exceeds the customer snapshot");
+        }
     }
     for (const auto& row:plan.products) if (totals[row.id]>row.capacity) invalid("Industry allocation exceeds actual serving capacity");
 }
@@ -1269,6 +1293,7 @@ void close_market_day(MarketState& state, AccountsState& accounts, CapacityState
     AllocationResult stand_alone;
     if (!assigned) stand_alone = allocate_demand(prepared.products, prepared.segments);
     const auto& allocation = assigned ? *assigned : stand_alone;
+    market_detail::settle_waitlists(next,record,prepared.segments,allocation);
     const auto serving=actual_serving_requests(next,pool,prepared,allocation);
     record.allocation_rounds = allocation.rounds;
     const bool regional = regional_market(next);

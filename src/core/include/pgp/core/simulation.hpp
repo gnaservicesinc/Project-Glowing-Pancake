@@ -160,6 +160,7 @@ struct AddMarketSegment { MarketSegment segment; };
 struct AddMarketPreference { std::string segment_id; MarketPreference preference; };
 struct SetMarketProductAvailable { std::string id; bool available; };
 struct SetMarketPrice { std::string id; Cents price; };
+struct SetServiceWaitlist { std::string id; std::optional<std::uint64_t> new_tasks_per_day; };
 struct AcceptContract { MarketContract contract; };
 struct StartContract { std::string id; };
 struct CancelContract { std::string id; };
@@ -180,7 +181,7 @@ using CommandAction = std::variant<ReserveFunds, ConsumeReservation, CancelReser
                                    DrawDebt, RepayDebt, InvestEquity,
                                    ReserveProject, CancelProject, PauseProject, ResumeProject, WithdrawOperations, SetEffectiveCapacity,
                                    EnableMarket, AddMarketProduct, AddMarketSegment, AddMarketPreference,
-                                   SetMarketProductAvailable, SetMarketPrice, AcceptContract, StartContract, CancelContract,
+                                   SetMarketProductAvailable, SetMarketPrice, SetServiceWaitlist, AcceptContract, StartContract, CancelContract,
                                    AcknowledgeLiquidityWarning, BuyData, StartResearch, PublishResearch, AcquireResearchInsight, StartTraining, CloneModel, CheckpointModel, StartEvaluation,
                                    AcceptBusinessOffer, AddMarketDemandChange, DeployModel, StageServiceRollout, FinishServiceRollout, RollbackService,
                                    CommitServiceCompatibility, AnnounceServiceRetirement,

@@ -140,6 +140,10 @@ IndustryAllocations prepare_competition_day(WorldState& world,const CompiledProg
                 delivery.product_id.erase(0,prefix.size());segment.outside_tasks-=delivery.tasks;
                 segment.remaining_budget=checked_unit_subtract(segment.remaining_budget,delivery.cost);segment.deliveries.push_back(std::move(delivery));
             }
+            for (auto interest:total.waitlist_interest) if (interest.product_id.starts_with(prefix)) {
+                interest.product_id.erase(0,prefix.size());
+                segment.waitlist_interest.push_back(std::move(interest));
+            }
             if (segment.outside_tasks>0) segment.outside.push_back({AllocationOutsideReason::preference,segment.outside_tasks});
             assigned.segments.push_back(std::move(segment));
         }
@@ -209,6 +213,7 @@ void validate_industry(const WorldState& world,bool deep) {
     struct DayTotals {
         std::uint64_t delivered = 0;
         std::uint64_t promised = 0;
+        std::uint64_t waiting = 0;
         Cents charged{0};
         MilliCU local_work{0};
     };
@@ -227,6 +232,7 @@ void validate_industry(const WorldState& world,bool deep) {
             }
             for (const auto& row : day->contracts)
                 totals[indices.at(find(seller->market->contracts,row.contract_id).segment_id)].promised += row.promised_tasks;
+            for (const auto& row:day->waitlists) totals[indices.at(row.segment_id)].waiting+=row.waiting_tasks;
             for (const auto& sale : day->discretionary) {
                 const auto index = indices.at(sale.segment_id);
                 const auto& segment = market.segments[index];
@@ -243,10 +249,10 @@ void validate_industry(const WorldState& world,bool deep) {
         }
         for (std::size_t i = 0; i < totals.size(); ++i) {
             const auto& total = totals[i];
-            if (total.delivered == 0 && total.promised == 0 && total.charged.value() == 0) continue;
+            if (total.delivered == 0 && total.promised == 0 && total.waiting == 0 && total.charged.value() == 0) continue;
             const auto& segment = market.segments[i];
             const auto demand = effective_market_demand(market, segment, day_date);
-            if (total.delivered > demand || total.promised > demand || total.charged > segment.daily_budget ||
+            if (total.delivered > demand || total.promised > demand || total.waiting>demand-total.promised || total.charged > segment.daily_budget ||
                 total.local_work.value() > segment.customer_compute.value())
                 invalid("Industry history duplicates useful work, buyer hardware or customer budget");
         }

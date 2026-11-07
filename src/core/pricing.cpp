@@ -29,6 +29,8 @@ PricingReview pricing_review(const SimulationState& s,const DelegationPolicy& po
         const auto ci=static_cast<std::size_t>(date-capacity.starts_on.value());
         if (mi>=market.days.size() || ci>=capacity.days.size()) continue;
         const auto& settled=market.days[mi];const auto& usage=capacity.days[ci];
+        if (market_waitlist_limit(market,*product,settled.day))
+            return {before,"Hold: recent settled work was subject to a customer waitlist."};
         if (binding(market,*product,OrdinalDay{date})!=profile) return {before,"Hold: the serving allocation changed within the seven-day observation window."};
         const auto* project=lookup(capacity.projects,profile);
         const auto work=std::find_if(usage.projects.begin(),usage.projects.end(),[&](const auto& row){return row.project_id==profile;});

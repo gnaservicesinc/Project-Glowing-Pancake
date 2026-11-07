@@ -747,6 +747,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 set_market_price(market(next), next.date, action.id, action.price);
                 suspend_pricing_policies(next,action.id);
                 (void)receipt(next, "market_price_change");
+            } else if constexpr (std::is_same_v<Action, SetServiceWaitlist>) {
+                set_market_waitlist(market(next),capacity(next),next.date,action.id,action.new_tasks_per_day);
+                (void)receipt(next,action.new_tasks_per_day?"set_service_waitlist":"reopen_service_enrollment");
             } else if constexpr (std::is_same_v<Action, AcceptContract>) {
                 if (action.contract.customer_advance!=Cents{0})
                     refuse(CommandReason::invalid_argument,"Customer advances require an authored offer.");

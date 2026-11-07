@@ -71,6 +71,19 @@ void single_customer() {
     validate_simulation(player.checkpoint());check(player.checkpoint().market->days.front()==old_day && market_price_on(*player.checkpoint().market,"product",OrdinalDay{0})==Cents{10},"Repricing rewrote past work or actual invoices");
     auto invalid=assignments.at(world.company_id);invalid.segments.front().deliveries.front().tasks=100;
     const auto stable=player.checkpoint();check(!player.submit({stable.revision,AdvanceDay{invalid}}).accepted() && player.checkpoint()==stable,"An infeasible assigned market result partially committed");
+
+    set_market_waitlist(*world.simulation.market,*world.simulation.capacity,OrdinalDay{0},"product",0);
+    const auto waiting=runtime::prepare_competition_day(world,program);
+    const auto& own=waiting.at(world.company_id).segments.front();
+    const auto& rival_sales=waiting.at(rival.definition_id).segments.front().deliveries;
+    check(own.deliveries.empty() && own.waitlist_interest.size()==1 && own.waitlist_interest.front().tasks>0 &&
+          rival_sales.size()==1 && rival_sales.front().tasks==4,
+          "A waitlisted order was reserved for the player instead of leaving the rival free to sell");
+    Simulation queued{world.simulation};
+    check(queued.submit({queued.checkpoint().revision,AdvanceDay{waiting.at(world.company_id)}}).accepted() &&
+          queued.checkpoint().market->days.front().waitlists.front().waiting_tasks==own.waitlist_interest.front().tasks &&
+          queued.checkpoint().market->days.front().contracts.front().delivered_tasks==2 && queued.checkpoint().cash==Cents{100020},
+          "The shared allocation lost projected interest or recognized it as a sale");
 }
 void industry_rounding_context() {
     using namespace core;auto state=seller("company.a");

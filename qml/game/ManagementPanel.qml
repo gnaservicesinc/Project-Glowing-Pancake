@@ -377,9 +377,51 @@ ColumnLayout {
     ColumnLayout {
         id: serviceOffice
         readonly property var selected: manager.products.selectedRow.fields || ({})
+        property bool showWaitingGroups: false
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "products"
         Selection { heading: qsTr("Deployed services"); rows: manager.products }
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: serviceOffice.selected.live === true && serviceOffice.selected.retirementAnnounced !== true
+            Copy { text: qsTr("Customer enrollment"); font.bold: true; color: "#ffd897" }
+            Copy {
+                objectName: "serviceWaitlistDetails"
+                text: serviceOffice.selected.waitlistDetail || qsTr("Open enrollment. Use a waitlist to protect existing work while limiting new demand.")
+            }
+            Field { id: intakeLimit; objectName: "waitlistIntakeField"; label: qsTr("Maximum new tasks/day · 0 pauses admissions"); value: serviceOffice.selected.waitlistLimit || "0" }
+            Action {
+                objectName: "reviewWaitlistButton"
+                text: qsTr("Review waitlist limit…")
+                onClicked: {
+                    const inputs = [manager.products.selectedId, intakeLimit.value, true]
+                    const quote = manager.waitlistQuote(...inputs)
+                    releaseDialog.review("waitlist", inputs[0], qsTr("Review customer waitlist"), quote.detail || "", quote.ready === true, inputs)
+                }
+            }
+            Action {
+                objectName: "reopenEnrollmentButton"
+                text: qsTr("Review reopening enrollment…")
+                visible: serviceOffice.selected.waitlistActive === true
+                onClicked: {
+                    const inputs = [manager.products.selectedId, "", false]
+                    const quote = manager.waitlistQuote(...inputs)
+                    releaseDialog.review("waitlist", inputs[0], qsTr("Reopen customer enrollment?"), quote.detail || "", quote.ready === true, inputs)
+                }
+            }
+            Action {
+                objectName: "toggleWaitlistGroupsButton"
+                text: serviceOffice.showWaitingGroups ? qsTr("Hide waiting customer groups") : qsTr("Show waiting customer groups")
+                visible: !!serviceOffice.selected.waitlistGroups
+                enabled: true
+                onClicked: serviceOffice.showWaitingGroups = !serviceOffice.showWaitingGroups
+            }
+            Copy {
+                objectName: "waitingCustomerGroups"
+                visible: serviceOffice.showWaitingGroups && !!serviceOffice.selected.waitlistGroups
+                text: serviceOffice.selected.waitlistGroups || ""
+            }
+        }
         Action {
             objectName: "promoteRolloutButton"
             text: qsTr("Review promotion…")
@@ -804,6 +846,7 @@ ColumnLayout {
             else if (kind === "rollback") manager.rollbackService(serviceId)
             else if (kind === "compatibility") manager.commitCompatibility(...request)
             else if (kind === "retirement") manager.announceRetirement(...request)
+            else if (kind === "waitlist") manager.setServiceWaitlist(...request)
             else manager.finishRollout(serviceId, kind === "promote")
         }
     }

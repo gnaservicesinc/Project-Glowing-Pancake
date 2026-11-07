@@ -1938,3 +1938,17 @@ incompatible replacement, trial and rollback refusals, signed term conflicts,
 support expiry, final contracted work, and exact reload before and after retirement.
 Short offscreen keyboard checks at 100% and 200% text cover publication, a blocked
 short notice, actual retirement, and exact saves.
+
+### Customer waitlist and controlled enrollment
+
+Office Services previews and saves a daily limit on new discretionary work.
+Signed work stays protected. The busiest of the last seven settled days
+estimates established demand, and spare new slots go to the oldest eligible
+waiting groups first. A shared demand pass records interested groups without
+charging or reserving their orders. Cash scenarios apply the intake ceiling.
+Reopening restores ordinary allocation and retains the dated queue history.
+
+The optimized Mac build and 10 focused CTests pass. The fixtures cover FIFO
+groups, a capacity drop, rival sales, exact invoices, and a rehashed false
+admission. Short offscreen keyboard checks at 100% and 200% cover pause, a
+settled queue, capped admission, reopening, and exact plain and compact saves.

@@ -669,7 +669,14 @@ adoption and new contracts must end by retirement. The deadline ends serving
 and support costs after the final contracted day. Cash scenarios apply the
 published end date. The optimized Mac build and 11 focused checks pass.
 
-Next is the customer waitlist and controlled onboarding.
+Office Services can now set a daily waitlist limit, pause admissions, or
+reopen enrollment. Signed work goes first and recent customers get priority
+within discretionary capacity. The longest-waiting eligible groups receive
+new slots first. The waitlist records interest and actual admissions. The
+market and ledger recognize only settled deliveries. The optimized Mac build
+and 10 focused checks pass.
+
+Next is publication policy and retained access for open-weight releases.
 The roadmap remains 42/52 checked while design coverage is completed.
 M8-02 stays deferred. Human work waits until the user is ready, and E2-04 editor
 downloads stay with deferred release preparation.

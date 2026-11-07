@@ -35,6 +35,7 @@ struct Edge {
     std::uint64_t weight = 0;
     std::uint64_t remaining = 0;
     std::uint64_t retained = 0;
+    std::optional<std::uint64_t> interest_limit{};
 };
 struct Segment {
     std::string id;
@@ -45,6 +46,7 @@ struct Segment {
     std::vector<Edge> edges;
     std::vector<std::uint64_t> delivered;
     std::map<AllocationOutsideReason, std::uint64_t> outside;
+    std::vector<AllocationInterest> waitlist_interest{};
 };
 bool eligible(const Segment& segment, const Edge& edge, const std::vector<Product>& products) {
     const auto& product = products[edge.product];
@@ -108,11 +110,37 @@ void constrain_claims(std::vector<std::uint64_t>& claims, const std::vector<Prod
         }
     }
 }
-void conserve_segment(Claims& claims, std::size_t index, const Segment& segment, const std::vector<Product>& products) {
-    constrain_claims(claims[index], products, segment.local_compute, [](const auto& product) { return product.local_rate; }, true);
-    constrain_claims(claims[index], products, segment.budget, [](const auto& product) {
+void conserve_segment(std::vector<std::uint64_t>& claims, const Segment& segment, const std::vector<Product>& products) {
+    constrain_claims(claims, products, segment.local_compute, [](const auto& product) { return product.local_rate; }, true);
+    constrain_claims(claims, products, segment.budget, [](const auto& product) {
         return static_cast<std::uint64_t>(product.price.value());
     }, false);
+}
+void record_waitlist_interest(Segment& segment,const std::vector<Product>& products,
+                              const std::map<std::string,std::size_t,std::less<>>& product_indices) {
+    if (segment.remaining==0 || std::ranges::none_of(segment.edges,[](const auto& edge){return edge.interest_limit.has_value();})) return;
+    std::vector<WeightedQuota> weights;
+    for (const auto& edge:segment.edges) {
+        const auto& product=products[edge.product];
+        const bool accepting_interest=edge.interest_limit.value_or(0)>0 && edge.weight>0 &&
+            product.local_rate<=segment.local_compute && static_cast<std::uint64_t>(product.price.value())<=segment.budget;
+        if (accepting_interest || eligible(segment,edge,products)) weights.push_back({product.id,edge.weight});
+    }
+    if (weights.empty()) return;
+    weights.push_back({std::string(outside_id),segment.outside_weight});
+    std::vector<std::uint64_t> claims(products.size(),0);
+    // A bounded first-choice pass shares each buyer's task, money and hardware
+    // budget. These are expressions of interest and commit no allocation.
+    for (const auto& choice:apportion_units(segment.remaining,weights)) {
+        if (choice.id==outside_id) continue;
+        const auto index=product_indices.at(choice.id);
+        const auto edge=std::ranges::find(segment.edges,index,&Edge::product);
+        claims[index]=std::min(choice.units,edge->interest_limit.value_or(edge->remaining));
+    }
+    conserve_segment(claims,segment,products);
+    for (const auto& edge:segment.edges)
+        if (edge.interest_limit && claims[edge.product]>0)
+            segment.waitlist_interest.push_back({products[edge.product].id,claims[edge.product]});
 }
 void commit_claims(Claims& claims, std::vector<Segment>& segments, std::vector<Product>& products) {
     for (std::size_t p = 0; p < products.size(); ++p) {
@@ -200,6 +228,7 @@ AllocationResult allocate_demand(std::span<const AllocationProduct> input_produc
     for (std::size_t i = 0; i < products.size(); ++i)
         if (!product_indices.emplace(products[i].id, i).second) invalid("Duplicate allocation product identity");
     std::size_t edge_count = 0;
+    bool has_waitlists = false;
     for (const auto& segment : input_segments) {
         text_valid(segment.id);
         if (segment.tasks > allocation_task_limit || segment.budget.value() < 0 ||
@@ -214,10 +243,13 @@ AllocationResult allocate_demand(std::span<const AllocationProduct> input_produc
         for (const auto& edge : segment.edges) {
             const auto found = product_indices.find(edge.product_id);
             if (found == product_indices.end() || !edge_ids.insert(edge.product_id).second || edge.weight > allocation_weight_limit ||
-                (edge.task_limit && *edge.task_limit > allocation_task_limit) || edge.retained_tasks > allocation_task_limit)
+                (edge.task_limit && *edge.task_limit > allocation_task_limit) || edge.retained_tasks > allocation_task_limit ||
+                (edge.waitlist_interest_limit && (!edge.task_limit || *edge.waitlist_interest_limit<*edge.task_limit ||
+                    *edge.waitlist_interest_limit>allocation_task_limit)))
                 invalid("Allocation edge has an unknown/duplicate product, excessive weight or task limit");
             const auto limit = edge.task_limit.value_or(allocation_task_limit);
-            row.edges.push_back({found->second, edge.weight, limit, std::min(edge.retained_tasks, limit)});
+            has_waitlists=has_waitlists || edge.waitlist_interest_limit.has_value();
+            row.edges.push_back({found->second, edge.weight, limit, std::min(edge.retained_tasks, limit),edge.waitlist_interest_limit});
         }
         std::sort(row.edges.begin(), row.edges.end(), [](const auto& left, const auto& right) { return left.product < right.product; });
         segments.push_back(std::move(row));
@@ -228,6 +260,7 @@ AllocationResult allocate_demand(std::span<const AllocationProduct> input_produc
 
     AllocationResult result;
     result.round_bound = products.size() + edge_count + 1;
+    if (has_waitlists) for (auto& segment:segments) record_waitlist_interest(segment,products,product_indices);
     const bool has_retention = std::any_of(segments.begin(), segments.end(), [&](const auto& segment) {
         return std::any_of(segment.edges.begin(), segment.edges.end(), [&](const auto& edge) {
             return edge.retained != 0 && eligible(segment, edge, products);
@@ -245,7 +278,7 @@ AllocationResult allocate_demand(std::span<const AllocationProduct> input_produc
             }
             for (const auto& quota : apportion_units(std::min(retained, segment.remaining), incumbents))
                 claims[s][product_indices.at(quota.id)] = quota.units;
-            conserve_segment(claims, s, segment, products);
+            conserve_segment(claims[s], segment, products);
         }
         commit_claims(claims, segments, products);
     }
@@ -275,7 +308,7 @@ AllocationResult allocate_demand(std::span<const AllocationProduct> input_produc
                     claims[s][p] = std::min(quota.units, edge->remaining);
                 }
             }
-            conserve_segment(claims, s, segment, products);
+            conserve_segment(claims[s], segment, products);
         }
         commit_claims(claims, segments, products);
         if (std::any_of(segments.begin(), segments.end(), [](const auto& segment) { return segment.remaining != 0; })) {
@@ -288,10 +321,11 @@ AllocationResult allocate_demand(std::span<const AllocationProduct> input_produc
             if (!progress) invalid("Allocation did not exhaust a supply/edge or finish residual demand");
         }
     }
-    for (const auto& segment : segments) {
+    for (auto& segment : segments) {
         AllocationSegmentResult row;
         row.id = segment.id;
         row.remaining_budget = Cents{segment.budget};
+        row.waitlist_interest=std::move(segment.waitlist_interest);
         for (std::size_t p = 0; p < products.size(); ++p)
             if (segment.delivered[p] != 0) row.deliveries.push_back({products[p].id, segment.delivered[p], Cents{cost(segment.delivered[p], static_cast<std::uint64_t>(products[p].price.value()))}});
         for (const auto& [reason, tasks] : segment.outside) {

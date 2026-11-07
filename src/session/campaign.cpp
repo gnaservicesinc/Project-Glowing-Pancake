@@ -188,6 +188,7 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::RollbackService>(command.action) ||
         std::holds_alternative<core::CommitServiceCompatibility>(command.action) ||
         std::holds_alternative<core::AnnounceServiceRetirement>(command.action) ||
+        std::holds_alternative<core::SetServiceWaitlist>(command.action) ||
         std::holds_alternative<core::FundPolicyAdvocacy>(command.action) ||
         std::holds_alternative<core::SubmitPolicyEvidence>(command.action) ||
         std::holds_alternative<core::BuyMediaCampaign>(command.action) ||

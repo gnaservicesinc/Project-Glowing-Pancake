@@ -24,6 +24,23 @@ first and remaining work is allocated by utility. The same money, compute and
 product limits apply to both passes. Price, compatibility and capacity can
 force departure. A delivery belongs to its product vendor.
 
+### Controlled enrollment
+
+Office Services can publish a waitlist on a live service. A zero limit pauses
+new discretionary admissions. Signed work keeps priority. The busiest of the
+last seven settled discretionary days represents existing demand, with ties
+using the most recent day. Feasible established orders use the incumbent pass
+of the allocator. New slots use spare serving capacity and the chosen daily
+cap. They go first to eligible groups with the oldest continuous wait, then
+to other eligible groups in proportion to remaining demand.
+
+Waiting interest comes from a shared first-choice estimate within each buyer's
+remaining money, hardware and demand. The queue groups daily task interest by
+customer segment and never commits purchases or earns revenue. Other providers
+can serve the same buyers through the ordinary shared allocation. The service
+view shows the settled groups, dates and admissions. Reopening enrollment or
+publishing a retirement notice ends the waitlist while retaining its history.
+
 ## Wholesale reservations
 
 **Operations → Wholesale** is available in the planned-roster presets.

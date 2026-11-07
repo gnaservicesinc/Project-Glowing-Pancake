@@ -368,13 +368,82 @@ void installed_incumbency_and_legacy(const runtime::CompiledProgram& program) {
     old["checkpoint"]["world"]["simulation"].erase("market_mode");
     check(persistence::decode_save(program,rehash(old)).checkpoint==engineering,"Original capacity fixture compatibility changed");
 }
+void staged_customer_intake(const runtime::CompiledProgram& program) {
+    using namespace core;
+    auto engine=setup(program,false,Cents{500000},300);
+    const auto state=[&]() -> const SimulationState& {return engine.current_state().world.simulation;};
+    const auto last=[&]() -> const MarketDay& {return state().market->days.back();};
+    const auto queued=[&](std::string_view group) -> const MarketWaitlistDay& {
+        const auto row=std::ranges::find(last().waitlists,group,&MarketWaitlistDay::segment_id);
+        if (row==last().waitlists.end()) throw std::runtime_error("Expected a saved waitlist group");
+        return *row;
+    };
+    auto terms=contract();
+    terms.tasks_per_day=200;
+    terms.monthly_fee=Cents{28000};
+    apply(engine,AcceptContract{terms});
+    apply(engine,StartContract{terms.id});
+    integration_fixture::step(engine);
+    const auto opening=last();
+    check(opening.discretionary.front().tasks==100,"Waitlist fixture lacks actual incumbent work");
+    refused_unchanged(engine,SetServiceWaitlist{"product.docs",1001});
+    apply(engine,SetServiceWaitlist{"product.docs",0});
+    auto later=segment(500);later.id="z.early";
+    apply(engine,AddMarketSegment{later});
+    const auto first_in_line=state().date;
+    integration_fixture::step(engine);
+    check(last().contracts.front().delivered_tasks==200 && last().discretionary.size()==1 &&
+        last().discretionary.front().tasks==100 && queued("z.early").waiting_tasks==500 &&
+        queued("z.early").waiting_since==first_in_line,"A pause admitted new orders or cut established and signed work");
+    later.id="a.late";
+    apply(engine,AddMarketSegment{later});
+    integration_fixture::step(engine);
+    check(queued("z.early").waiting_since==first_in_line && queued("a.late").waiting_since>first_in_line,
+          "Waitlist age was reset or not attributed to the new group");
+    const auto saved=engine.checkpoint();
+    const auto bytes=persistence::encode_save(program,saved);
+    const auto reloaded=persistence::decode_save(program,bytes).checkpoint;
+    check(reloaded==saved,"Waitlist policy, groups or queue age failed exact save reload");
+    engine=runtime::Runtime{program,reloaded};
+    apply(engine,SetServiceWaitlist{"product.docs",125});
+    const auto admitted_on=state().date;
+    integration_fixture::step(engine);
+    check(queued("z.early").admitted_tasks==125 && queued("z.early").waiting_tasks==375 &&
+          queued("a.late").admitted_tasks==0 && queued("a.late").waiting_tasks==500 &&
+          last().contracts.front().delivered_tasks==200,"The new-task budget skipped older waiting customers or affected signed work");
+    const auto& work=state().capacity->days.back().projects.front();
+    check(work.useful_tasks==425 && work.protected_tasks==200 && work.work==MilliCU{8500} &&
+          state().accounts->invoices.find("market.sale/z.early/product.docs/"+iso_date(admitted_on)) &&
+          !state().accounts->invoices.find("market.sale/a.late/product.docs/"+iso_date(admitted_on)),
+          "Queue interest booked money or work without real delivered tasks");
+    auto forged=Json::parse(persistence::encode_save(program,engine.checkpoint()));
+    auto& queue=forged["checkpoint"]["world"]["simulation"]["market"]["days"].back()["waitlists"];
+    for (auto& row:queue) if (row.at("segment")=="z.early") row["admitted"]=126;
+    invalid_save(program,forged);
+    apply(engine,SetEffectiveCapacity{"lease.initial",MilliCUPerDay{5000}});
+    integration_fixture::step(engine);
+    check(last().contracts.front().delivered_tasks==200 && state().capacity->days.back().projects.front().useful_tasks==250 &&
+          std::ranges::none_of(last().waitlists,[](const auto& row){return row.admitted_tasks>0;}),
+          "A reduced source admitted newcomers before established demand and signed work");
+    apply(engine,SetEffectiveCapacity{"lease.initial",MilliCUPerDay{100000}});
+    apply(engine,SetServiceWaitlist{"product.docs",0});
+    integration_fixture::step(engine);
+    check(state().capacity->days.back().projects.front().useful_tasks==425,"A short outage erased recently served buyers");
+    apply(engine,SetServiceWaitlist{"product.docs",std::nullopt});
+    integration_fixture::step(engine);
+    check(last().waitlists.empty() && state().capacity->days.back().projects.front().useful_tasks==1000 &&
+          state().market->days[0]==opening && last().contracts.front().delivered_tasks==200,
+          "Reopening did not restore normal allocation or rewrote settled work");
+    check(persistence::decode_save(program,persistence::encode_save(program,engine.checkpoint())).checkpoint==engine.checkpoint(),
+          "Reopening lost the retained queue or policy history");
+}
 }
 int main() {
     try {
         const auto program=integration_fixture::program(PGP_RUNTIME_FIXTURE_PATH,false);
         two_months_and_reload(program);fee_usage_budget_and_actual_work(program);
         contract_priority_credits_and_deadline(program);customer_prepayment(program);
-        accounts_statements_and_demand(program);installed_incumbency_and_legacy(program);
+        accounts_statements_and_demand(program);installed_incumbency_and_legacy(program);staged_customer_intake(program);
         std::cout << checks << " market command/save integration checks passed\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << error.what() << '\n';return 1; }

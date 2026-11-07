@@ -92,6 +92,8 @@ SalesSample recent_sales(const SimulationState& state) {
         });
         if (work==plan.projects.end()) continue;
         product.extra_capacity=work->useful_tasks-work->protected_tasks;
+        if (const auto limit=market_waitlist_limit(market,*product.product,state.date))
+            product.extra_capacity=std::min(product.extra_capacity,*limit+waitlist_established_tasks(market,product.product->id,state.date));
         for (const auto& allotment:apportion_units(work->protected_tasks,product.contracts)) {
             const auto measured=fulfilled.find(allotment.id);
             const auto assumed=measured==fulfilled.end()?allotment.units:measured->second.tasks/measured->second.days;

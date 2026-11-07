@@ -50,8 +50,10 @@ The Lab can stage a qualified candidate on discretionary orders. Office Services
 shows actual trial deliveries and supports promotion, discard and rollback to the
 prior qualified version. Published compatibility terms protect serving capacity,
 measured quality, review controls and buyer hardware. Retirement notices protect
-existing terms and retire service automatically at the published date. Next is
-the customer waitlist and controlled onboarding.
+existing terms and retire service automatically at the published date. Office
+Services also supports a customer waitlist with a daily intake limit, priority
+for established demand, and dated activity by buyer group. Next is publication
+policy and retained access for open-weight releases.
 
 ## M0 — Toolchain and platform proof
 

@@ -41,6 +41,8 @@ struct AllocationEdge {
     std::uint64_t weight = 0;
     std::optional<std::uint64_t> task_limit;
     std::uint64_t retained_tasks = 0;
+    // The regular market ceiling before a waitlist limits new admissions.
+    std::optional<std::uint64_t> waitlist_interest_limit{};
 };
 struct AllocationSegment {
     std::string id;
@@ -64,12 +66,18 @@ struct AllocationOutside {
     std::uint64_t tasks = 0;
     auto operator<=>(const AllocationOutside&) const = default;
 };
+struct AllocationInterest {
+    std::string product_id;
+    std::uint64_t tasks = 0;
+    auto operator<=>(const AllocationInterest&) const = default;
+};
 struct AllocationSegmentResult {
     std::string id;
     std::vector<AllocationDelivery> deliveries;
     std::uint64_t outside_tasks = 0;
     Cents remaining_budget{0};
     std::vector<AllocationOutside> outside;
+    std::vector<AllocationInterest> waitlist_interest{};
     auto operator<=>(const AllocationSegmentResult&) const = default;
 };
 struct AllocationResult {

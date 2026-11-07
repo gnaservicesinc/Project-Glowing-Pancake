@@ -120,6 +120,12 @@ struct MarketSegmentDay {
     std::string outside_reason;
     auto operator<=>(const MarketSegmentDay&) const = default;
 };
+struct MarketWaitlistDay {
+    std::string product_id, segment_id;
+    std::uint64_t admitted_tasks = 0, waiting_tasks = 0;
+    std::optional<OrdinalDay> waiting_since{};
+    auto operator<=>(const MarketWaitlistDay&) const = default;
+};
 struct MarketDay {
     OrdinalDay day{0};
     DayRows<ContractDayResult> contracts;
@@ -127,15 +133,18 @@ struct MarketDay {
     DayRows<MarketSegmentDay> segments;
     std::uint64_t allocation_rounds = 0;
     std::optional<std::uint64_t> total_demand{};
+    DayRows<MarketWaitlistDay> waitlists{};
     void share_unchanged(const MarketDay& previous) {
         contracts.reuse_equal(previous.contracts);
         discretionary.reuse_equal(previous.discretionary);
         segments.reuse_equal(previous.segments);
+        waitlists.reuse_equal(previous.waitlists);
     }
     auto operator<=>(const MarketDay&) const = default;
 };
 struct MarketHistoryCount {
     std::size_t rows = 0;
+    std::size_t waitlist_rows = 0;
     void add(const MarketDay& day);
 };
 struct InstalledShare {
@@ -180,6 +189,15 @@ struct ServiceCompatibility {
     OrdinalDay starts_on{0}, ends_before{0};
     auto operator<=>(const ServiceCompatibility&) const = default;
 };
+inline constexpr std::size_t market_waitlist_change_limit = 4096;
+inline constexpr std::uint32_t waitlist_lookback_days = 7;
+struct MarketWaitlistChange {
+    std::string product_id;
+    OrdinalDay starts_on{0};
+    // A zero limit pauses admissions. An absent limit reopens enrollment.
+    std::optional<std::uint64_t> new_tasks_per_day{};
+    auto operator<=>(const MarketWaitlistChange&) const = default;
+};
 struct MarketPriceChange {
     std::string product_id;
     OrdinalDay starts_on{0};
@@ -209,6 +227,7 @@ struct MarketState {
     PagedHistory<MarketPriceEvent,64> price_events{};
     std::vector<MarketTrial> trials{};
     std::vector<ServiceCompatibility> compatibility{};
+    std::vector<MarketWaitlistChange> waitlist_changes{};
     auto operator<=>(const MarketState&) const = default;
 };
 struct MarketReport {
@@ -233,6 +252,11 @@ using MarketInfluences = std::vector<MarketInfluence>;
 [[nodiscard]] MarketReport market_report(const MarketState& state);
 [[nodiscard]] const MarketTrial* market_trial(const MarketState&,std::string_view product,OrdinalDay);
 [[nodiscard]] const ServiceCompatibility* market_compatibility(const MarketState&,std::string_view product,OrdinalDay);
+[[nodiscard]] std::optional<std::uint64_t> market_waitlist_limit(const MarketState&,const MarketProduct&,OrdinalDay);
+[[nodiscard]] std::uint64_t waitlist_established_tasks(const MarketState&,std::string_view product,OrdinalDay);
+void validate_waitlist_change(const MarketState&,const CapacityState&,OrdinalDay,std::string_view product,
+                              std::optional<std::uint64_t> limit);
+void set_market_waitlist(MarketState&,const CapacityState&,OrdinalDay,std::string_view product,std::optional<std::uint64_t> limit);
 [[nodiscard]] ContractDayResult contract_delivery(const MarketContract&,OrdinalDay,std::uint64_t delivered_tasks);
 [[nodiscard]] bool regional_market(const MarketState& state);
 [[nodiscard]] bool market_access(const MarketProduct& product, const MarketSegment& segment);

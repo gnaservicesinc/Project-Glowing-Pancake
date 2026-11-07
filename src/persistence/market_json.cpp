@@ -89,7 +89,7 @@ Json market_json(const core::MarketState& state, bool packed) {
     for (const auto& closed:state.days) {
         if (packed && prior && prior->contracts == closed.contracts && prior->discretionary == closed.discretionary &&
             prior->segments == closed.segments && prior->allocation_rounds == closed.allocation_rounds &&
-            prior->total_demand == closed.total_demand) {
+            prior->total_demand == closed.total_demand && prior->waitlists == closed.waitlists) {
             days.repeat();
             continue;
         }
@@ -117,6 +117,11 @@ Json market_json(const core::MarketState& state, bool packed) {
             {"allocation_rounds",closed.allocation_rounds}};
         if (!packed) daily["day"] = closed.day.value();
         if (closed.total_demand) daily["total_demand"] = *closed.total_demand;
+        if (!closed.waitlists.empty()) {
+            auto& rows=daily["waitlists"]=Json::array();
+            for (const auto& row:closed.waitlists) rows.push_back({{"product",row.product_id},{"segment",row.segment_id},
+                {"admitted",row.admitted_tasks},{"waiting",row.waiting_tasks},{"since",optional_day(row.waiting_since)}});
+        }
         days.push(std::move(daily));
     }
     for (const auto& adoption:state.adoptions) {
@@ -154,12 +159,17 @@ Json market_json(const core::MarketState& state, bool packed) {
         for (const auto& term:state.compatibility) result["compatibility"].push_back({
             {"product",term.product_id},{"project",term.project_id},{"starts",term.starts_on.value()},{"ends",term.ends_before.value()}});
     }
+    if (!state.waitlist_changes.empty()) {
+        auto& rows=result["waitlist_changes"]=Json::array();
+        for (const auto& row:state.waitlist_changes) rows.push_back({{"product",row.product_id},{"starts",row.starts_on.value()},
+            {"limit",row.new_tasks_per_day?Json(*row.new_tasks_per_day):Json(nullptr)}});
+    }
     return result;
 }
 
 core::MarketState parse_market(const Json& value, bool packed) {
     fields(value,"market",{"owner","starts_on","closed_through","products","segments","contracts","days","adoptions"},
-        {"demand_changes","capacity_bindings","prices","price_events","service_trials","compatibility"});
+        {"demand_changes","capacity_bindings","prices","price_events","service_trials","compatibility","waitlist_changes"});
     core::MarketState result;
     if (value.contains("prices")) {
         array(value.at("prices"),"market/prices",core::market_price_history_limit);
@@ -198,6 +208,16 @@ core::MarketState parse_market(const Json& value, bool packed) {
         for (const auto& term:terms) {
             fields(term,"market/compatibility",{"product","project","starts","ends"});
             result.compatibility.push_back({label(term.at("product")),label(term.at("project")),day(term.at("starts")),day(term.at("ends"))});
+        }
+    }
+    if (value.contains("waitlist_changes")) {
+        const auto& rows=value.at("waitlist_changes");
+        array(rows,"market/waitlist_changes",core::market_waitlist_change_limit);
+        for (const auto& row:rows) {
+            fields(row,"market/waitlist_change",{"product","starts","limit"});
+            const auto& limit=row.at("limit");
+            result.waitlist_changes.push_back({label(row.at("product")),day(row.at("starts")),
+                limit.is_null()?std::nullopt:std::optional{tasks(limit)}});
         }
     }
     result.owner=label(value.at("owner"));
@@ -283,13 +303,22 @@ core::MarketState parse_market(const Json& value, bool packed) {
             result.days.push_back(std::move(row));
             return;
         }
-        if (packed) fields(closed,"market/day",{"contracts","discretionary","segments","allocation_rounds"},{"total_demand"});
-        else fields(closed,"market/day",{"day","contracts","discretionary","segments","allocation_rounds"},{"total_demand"});
+        if (packed) fields(closed,"market/day",{"contracts","discretionary","segments","allocation_rounds"},{"total_demand","waitlists"});
+        else fields(closed,"market/day",{"day","contracts","discretionary","segments","allocation_rounds"},{"total_demand","waitlists"});
         core::MarketDay row;
         row.day = closed_day;
         row.allocation_rounds=u64(closed.at("allocation_rounds"),"market/allocation_rounds");
         if (closed.contains("total_demand"))
             row.total_demand = u64(closed.at("total_demand"),"market/total_demand",core::market_segment_limit*core::market_task_limit);
+        if (closed.contains("waitlists")) {
+            const auto& activity=closed.at("waitlists");
+            array(activity,"market/day/waitlists",core::market_segment_limit*core::market_product_limit);
+            for (const auto& entry:activity) {
+                fields(entry,"market/day/waitlist",{"product","segment","admitted","waiting","since"});
+                row.waitlists.push_back({label(entry.at("product")),label(entry.at("segment")),tasks(entry.at("admitted")),
+                    tasks(entry.at("waiting")),parse_optional_day(entry.at("since"))});
+            }
+        }
         const auto& contract_results=closed.at("contracts");array(contract_results,"market/day/contracts",core::market_contract_limit);
         count_records(records,contract_results.size());
         for (const auto& contract:contract_results) {
