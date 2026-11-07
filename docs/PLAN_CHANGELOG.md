@@ -1,5 +1,37 @@
 # Planning history
 
+## Baseline 1.3 — campaign and technology feedback — 2026-11-07
+
+Expand the user's selected game flow into [Campaign flow](CAMPAIGN_FLOW.md):
+Campaign/Sandbox choice, 1997 California biography, family and four leg ups,
+original age-appropriate childhood choices and callbacks, startup entry at 18,
+mission/objective, charter, backers, capital, office and first researcher.
+The user clarified the campaign lasts until 118: new default 2015–2115,
+guaranteed founder longevity, retained early ASI-race result, final review and
+optional sandbox continuation with the campaign result frozen. Derive strict
+objective windows from the new deadline; preserve historic scenarios/saves.
+
+Separate observed industry stages from company maturity and EEY technology
+bands. A real service/adoption threshold can trigger a rival-led boom; control
+evidence and market conditions support maturation. Profitability/nonprofit
+crises are preventable overlays; specialist/plateau histories still finish.
+Clarify nonprofit donors/restricted funds, exemption recognition, eligible
+goodwill and incompatibility with founder-wealth scoring.
+
+Review both supplied technology PDFs as advisory references, preserve originals
+and record fingerprints/page-level dispositions. Add [Technology](TECHNOLOGY.md)
+and a [140-candidate catalog](TECHNOLOGY_CATALOG.md): ten domains, separate
+knowledge/implementation/rights/evidence, variant choices, adoption/licensing,
+publication credit, partnership/procurement alternatives and bounded lineage/
+refinement. Correct automatic safety/legal guarantees, universal empirical
+bonuses, cycle/compounding traps and forced cosmic progression. Verify selected
+historical anchors and nonprofit distinctions against primary sources.
+
+Keep the main-game layout for the user's next discussion. Add the requested
+deferred TODO to create/offer a skippable, replayable tutorial after gameplay
+is finalized. This revision changes plans only: no new runtime content,
+component versions, save migrations, builds or feature acceptances are claimed.
+
 ## Components before v1 human testing — 2026-11-05
 
 The user clarified that no testers are available and human testing will not

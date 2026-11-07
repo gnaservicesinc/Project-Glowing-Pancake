@@ -27,9 +27,31 @@ audio, text size, reduced motion and still/video background choices locally.
 Escape opens an exit confirmation with Cancel and Exit game, including during
 play. The Main Menu button pauses; Resume returns to the same session.
 
-At the user's direction, New Game retains the existing prototype setup.
-The gameplay interface, starting flow, technology direction, isometric/3D
-environments and a usable Mac Content Studio remain subsequent feedback work.
+At the user's direction, New Game retains the existing prototype setup in the
+running build. Its replacement is now described by the selected design below.
+The gameplay interface/environment and usable Mac Content Studio remain open.
+
+## Selected feedback: campaign and technology design
+
+F-02 documents a new campaign direction: a California birth in 1997, formative
+choices and four leg ups, founding at 18 in 2015, company/industry stages,
+mission-linked objectives, distinct investor/donor/nonprofit terms, and an
+age-118 ending in 2115. The completed history/result stays frozen if the player
+continues in a post-game sandbox. Standalone Sandbox offers configurable setup.
+
+Both supplied technology PDFs were reviewed as advisory sources. The new plan
+separates knowledge, implementation, rights and evidence; covers research
+variants, publication/prestige, licensing and partnerships; and provides 140
+candidate entries across ten domains plus ten bounded refinement families.
+Unfounded safety guarantees, runaway compounding and a mandatory cosmic climax
+were rejected or deferred. [Campaign flow](CAMPAIGN_FLOW.md) ·
+[Technology](TECHNOLOGY.md) · [Candidate catalog](TECHNOLOGY_CATALOG.md).
+
+This is a completed planning revision, with no runtime/content-version change.
+The prototype's 2014 scenarios, original founders, saves and current UI remain
+as implemented. Next is the user's main-game layout discussion, including
+stage-dependent information and atmosphere; implementation follows selected
+feedback. The tutorial is a deferred first-play TODO after gameplay is final.
 
 ## Implemented core
 
@@ -77,8 +99,9 @@ remain development placeholders, and release readiness is false.
 3. Expand events after those changes establish the direction.
 4. Balance and undertake extended qualification afterward.
 
-`tech_sug.txt` is a work-in-progress reference for later review. Its ideas
-have not been adopted as implementation requirements.
+`tech_sug.txt` remains an unchanged work-in-progress reference. The selected
+technology design above records what is now adopted as planning direction;
+other ideas still need review/selection before implementation.
 
 The [backlog](BACKLOG.md) carries the deferred human, QA, packaging and
 publication gates with their original IDs. Their scheduling follows the

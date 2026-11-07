@@ -15,9 +15,17 @@ and effects, and Escape/quit confirmation. New Game deliberately retains the
 existing prototype setup. The game has a local `.app` with an icon and bundled
 dependencies; this does not close the later device/release qualification gates.
 
-The user's Content Studio usability/application feedback and the ground-up
-gameplay interface/opening/environment discussion remain open. Stop the
-current implementation at the menu milestone. The existing forecast-padding
+Selected feedback **F-02 — campaign flow and technology design** is documented
+in [Campaign flow](CAMPAIGN_FLOW.md), [Technology](TECHNOLOGY.md) and the
+[140-candidate catalog](TECHNOLOGY_CATALOG.md). It adopts the 1997 introduction,
+2015–2115 founder campaign, conditional stages, mission/backer/legal-form setup
+and frozen ending with optional sandbox. This completes the design revision,
+not runtime implementation. The PDF proposals remain advisory and reviewed.
+
+The next discussion is the main-game layout and its changes by stage. Runtime
+implementation of F-02, environment art and the user's Content Studio
+usability/application feedback remain open; no broad implementation starts from
+this documentation task. The existing forecast-padding
 CTest and full-campaign staffing assertion also need review in a later
 selected core/flow pass.
 
@@ -29,8 +37,12 @@ selected core/flow pass.
 | 4 | Balance and extended testing | Core refinements and event expansion are in place |
 | 5 | Native qualification and release | A separate release preparation request and required access |
 
-`tech_sug.txt` remains a work in progress. Review and selection come before
-implementation of its proposals.
+The reviewed technology direction supersedes the earlier blanket deferral of
+that topic. `tech_sug.txt` remains an unchanged work-in-progress reference;
+unselected details do not become implementation tasks automatically.
+
+**Deferred TODO:** when gameplay/layout are finalized, create the final tutorial,
+offer it on first play, allow Skip/replay and verify the actual founding routes.
 
 ## Carried acceptance gates
 

@@ -1,6 +1,13 @@
 # Project Glowing Pancake
 
-A free, offline strategy game about founding an AI company in 2014 and guiding it through a century of research, products, competition, politics, and consequences.
+A free, offline strategy game about founding an AI company and guiding it through a century of research, products, competition, politics, and consequences.
+
+The selected campaign redesign starts with a California birth in 1997, company
+play at 18 in 2015 and an ending at 118 in 2115, followed by optional sandbox
+continuation. [Campaign flow](docs/CAMPAIGN_FLOW.md),
+[technology design](docs/TECHNOLOGY.md) and the
+[140-candidate technology catalog](docs/TECHNOLOGY_CATALOG.md) describe the new
+direction. This is planning work; the running prototype retains its 2014 start.
 
 **Current state.** The initial skeleton phase closed on 2026-11-07. The current
 core is ready for human feedback and the user's selected refinements. The
@@ -54,6 +61,9 @@ dependencies are downloaded by the build.
 | Document | Purpose |
 | --- | --- |
 | [Game design](docs/GAME_DESIGN.md) | The full game's experience, systems, scope, and six objectives |
+| [Campaign flow](docs/CAMPAIGN_FLOW.md) | Founder introduction, founding terms, stages, age-118 ending and sandbox continuation |
+| [Technology design](docs/TECHNOLOGY.md) | Review of the supplied proposals, research variants, IP, progression and integration |
+| [Technology candidates](docs/TECHNOLOGY_CATALOG.md) | 140 reviewed candidates across ten domains, plus bounded refinement families |
 | [Simulation specification](docs/SIMULATION_SPEC.md) | Mechanics, units, update order, balance baseline, and victory accounting |
 | [Technical plan](docs/TECHNICAL_PLAN.md) | C++20/Qt Quick architecture, platforms, saves, build and packaging contract |
 | [Roadmap](docs/ROADMAP.md) | Closed skeleton phase and the feedback, refinement, events, balance and release sequence |

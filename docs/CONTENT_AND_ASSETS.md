@@ -2,6 +2,16 @@
 
 Baseline 1.2 · Reviewed Mac campaign content 0.14.0-dev.1
 
+**Planning update, baseline 1.3 (2026-11-07):** the new
+[campaign flow](CAMPAIGN_FLOW.md) adds an original formative-life introduction,
+conditional stage transitions, founding/backer scenes and an age-118 review.
+The [technology candidate catalog](TECHNOLOGY_CATALOG.md) is a 140-entry design
+pool across ten domains, not a promise to ship 140 research chores or a change
+to finalized content. The 60-topic/seven-track figures below describe the
+earlier prototype/budget. New final counts depend on selected mechanics and
+balance. Main-game layout and its stage-dependent art are still to be discussed;
+the final first-play tutorial is deferred until gameplay/layout are finalized.
+
 ## Writing direction
 
 Write a management game with human stakes and occasional dry humor. Executives have specific goals and incomplete information; neither safety-focused staff nor ambitious researchers are caricatures. Consequences follow actions and context. Avoid a narrator announcing the correct moral answer or turning every choice into profit versus goodness.

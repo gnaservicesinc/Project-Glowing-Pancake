@@ -1,12 +1,12 @@
-# Project Glowing Pancake — final game design
+# Project Glowing Pancake — game design
 
-Design baseline 1.2 · 2026-11-03 · Working title · M0 implementation started; gameplay remains planned
+Design baseline 1.3 · 2026-11-07 · Working title · Campaign/technology revision selected; prototype retains earlier rules
 
 This is the product design for the full 1.0 game. Numeric balance targets are starting values to test, not claims about the real world. [Decisions and requirements](DECISIONS_AND_REQUIREMENTS.md) explains the relationship to the two drafts. [The roadmap](ROADMAP.md) separates the complete design from the first playable release.
 
 ## 1. The game in one paragraph
 
-You found an AI company in 2014 and guide the institution through a century of technical, commercial, and political change. Design models, acquire data and compute, recruit people, find customers, build infrastructure, negotiate power, and live with what your products change. A small specialist business, an open research institution, a profitable platform, and an ambitious frontier lab are all credible strategies. The player learns through decisions, forecasts, experiments, and consequences. The game never requires real AI training, an online account, or a connection to a model provider.
+Born in California in 1997, you make formative choices before taking charge of an AI startup at 18 in 2015. Guide the founder and institution through a century of technical, commercial, and political change, ending at age 118 in 2115. Design models, acquire data and compute, recruit people, find customers, build infrastructure, negotiate power, and live with what your products change. A small specialist business, an open research institution, a profitable platform, and an ambitious frontier lab are all credible strategies. Review the founder's legacy and world response, then optionally continue in a post-game sandbox. The game never requires real AI training, an online account, or a connection to a model provider.
 
 **Genre:** single-player, pauseable business and political strategy simulation. **View:** clickable first-person location sets with management overlays and maps. **Audience:** players of management and grand-strategy games; no machine-learning knowledge required. **Price/license:** free; GPLv3 code, with separately credited compatible asset licenses. **Primary release:** downloadable desktop game on itch.io.
 
@@ -25,18 +25,35 @@ No multiplayer, real model execution, external generative dialogue service, 3D w
 
 ### Default campaign
 
-The company starts in the United States on **2014-01-01**. The campaign simulates the interval up to **2114-01-01**, when final objectives are evaluated. The end date therefore represents exactly 100 years; the last playable day is 2113-12-31. Endless sandbox removes the objective deadline and supports continuing the same institution.
+New Game offers **Campaign** and **Sandbox**. The campaign introduction begins
+with a California birth in **1997**: name, gender/pronouns, temperament, family
+resources and one leg up (Actual Genius, Extremely Charismatic, Wealthy Elite,
+or Child of Political Elite). Wealthy Elite requires rich parents; the political
+route is available from any class and makes the family wealthy by age 18.
+Original childhood/teenage scenes retain choices for later events and public
+identity. They shape opportunities rather than permanent talent ceilings.
 
-Setup selects a company name, founder name/pronouns, headquarters state, one founder background, an organizational charter, difficulty, world seed, and primary objective. All names can be generated locally. No real player identity is requested. A preview explains each starting modifier.
+Company play begins at 18 on **2015-01-01**, with little or no functional product.
+Choose an entry route, company name, founding mission/objective, legal form,
+investors or donors, first office and first researcher or qualified founder
+assignment. Capital, ownership, restrictions and runway follow actual terms.
+A nonprofit has donors/trustees, mission constraints, recognized exemption
+where eligible and a bounded mission-related goodwill advantage; it cannot sell
+ordinary founder equity. Difficulty, seed and founding terms are disclosed.
 
-| Background | Opening advantage | Opening limitation |
-| --- | --- | --- |
-| Researcher | Research execution and academic contacts | Fewer commercial contacts |
-| Product builder | Customer discovery and deployment speed | Smaller research network |
-| Infrastructure operator | Procurement and uptime | Less initial model expertise |
-| Community organizer | Hiring network and partnerships | Smaller initial funding offer |
+The campaign ends on the founder's 118th birthday, **2115-01-01**, after settling
+2114-12-31: exactly 100 years of company play. Longevity to this boundary is a
+declared premise. The ending narrates their passing, legacy and world response,
+with statistics and charts. Optional post-game play preserves the frozen result
+and continues the same world as a sandbox. Standalone Sandbox offers customizable
+starting conditions through a form, with presets and no mandatory story/deadline.
+The complete [campaign/opening contract](CAMPAIGN_FLOW.md) owns the sequence.
 
-Backgrounds change the opening, not permanent ceilings. The charter sets initial board priorities and employee expectations; it can be amended through the board. Difficulty changes starting runway, rival competence, financing terms, and forecast precision; it never secretly changes outcome rules or makes opponents omniscient.
+Charter promises affect governance and expectations; changing the primary scored
+mission marks a run custom. Difficulty changes resources, competence, terms and
+forecast precision, never secret outcome rules or omniscient opponents. Fictional
+identities stay local. Existing 2014 prototype scenarios/saves retain their original
+rules until the new flow is implemented.
 
 ### Pace and delegation
 
@@ -50,15 +67,29 @@ Later delegation adds a short bounded research queue/standing track policy and m
 
 The first 3-year scenario should take 30–45 minutes. A full campaign targets 12–20 hours with delegation and fast-forward. These are playtest targets. When an early year and a mature year demand the same repeated work, improve delegation before adding content.
 
-### A century without an immortal CEO
+### Founder life, leadership and stages
 
-The player guides the founding institution. Founder succession is introduced before it becomes relevant: appoint a successor, move to the chair, and establish governance rules. Retirement changes relationships, public persona, compensation, and board leverage; it does not reset the company or end the run. Succession events offer planning time. The interface distinguishes founder legacy wealth from the current executive's salary. No age-related death descriptions are needed.
+The founder remains alive and narratively relevant until 118. They can appoint
+a successor, become chair or establish institutional representation; retirement
+changes responsibility, compensation and influence without replacing the biography
+or resetting the company. Founder-legacy wealth and the current executive's
+salary remain separate. Prototype age-70/80 role limits need scenario adaptation.
+
+Broad flow is **Setup → Early game → Boomtown → Maturing → Midgame → Late game
+→ Post-game review → optional infinite-era sandbox**, with a preventable
+profitability/nonprofit crisis overlay. Track industry conditions separately
+from company maturity. Boomtown requires a useful commercial chatbot and sustained
+actual adoption; a rival may trigger it. Maturing includes measured improvements
+in relevant safety controls and a more established market. Plateau/specialist
+worlds can skip a boom and still finish. See [stage gates](CAMPAIGN_FLOW.md#broad-gameplay-stages).
 
 ## 4. The loop and the first session
 
 **Observe → make a plan → allocate resources → develop/test → deploy → see consequences → adapt.** A decision often creates opportunities in another system: publishing attracts applicants but also speeds competitors; a cheap compute deal consumes scarce cash or gives a supplier board influence; a reliable small model can beat a prestigious large model on a customer's actual task.
 
-The first 30 minutes introduce the loop through work:
+The following prototype loop illustrates mechanics; the new campaign first
+establishes the biography, founding terms, office and research burn. A later
+first-product path can introduce:
 
 1. A prospective customer asks for document classification, showing task requirements and an affordable contract.
 2. Compare two data packages, each with quality, coverage, provenance, rights, and cost information.
@@ -69,7 +100,10 @@ The first 30 minutes introduce the loop through work:
 7. Negotiate the contract and see actual usage, margin, customer feedback, and staff reaction.
 8. Choose whether to publish a method, retain an advantage, or offer a limited partnership.
 
-The tutorial can be skipped and its guidance reopened. It uses the same mechanics as the campaign. Tooltips introduce concepts at the moment they affect a decision; an optional reference desk offers more depth and sources.
+**Deferred TODO:** after gameplay and the main-game layout are finalized,
+create a tutorial, offer it on first play, allow Skip and reopening from
+Help/Settings, and check founding routes/accessibility. The prototype guide is
+temporary. The narrative introduction is not the finished gameplay tutorial.
 
 ## 5. Company, products, and finance
 
@@ -122,9 +156,9 @@ Each dataset exposes volume, domain fit, language/region coverage, deduplication
 
 ### Research and evaluation
 
-Research is a graph with alternative prerequisites, complementarity, and diminishing returns. Tracks cover architectures, optimization, data methods, evaluation/control, inference systems, hardware/infrastructure, and product tooling. Discoveries create options rather than flat global percentage buffs. Research projects use staff, time, money, and sometimes experiments. Failure gives partial evidence and reusable knowledge, with an explanation.
+Research is a graph with alternative prerequisites, complementarity, and diminishing returns. The reviewed [technology plan](TECHNOLOGY.md) and [candidate catalog](TECHNOLOGY_CATALOG.md) extend it across ten domains. A specialist can adopt, license, purchase or partner rather than research every discipline internally. Knowledge, implementation, permissions and evidence are separate. Discoveries create configuration options rather than global buffs. Important projects can have planning, finding and completion choices that create compatible variants; routine work follows bounded policies. Projects use real staff, time, money and experiments. Failure gives concrete evidence and bounded reusable credit.
 
-Publishing a paper, releasing code, sharing a dataset, releasing weights, selling a license, and keeping a trade secret are distinct decisions. Benefits depend on audience, evidence, license, and actual usefulness. Publicity alone does not automatically raise trust. Rivals adopt public work after time and adaptation cost. A public release cannot be un-released by changing a policy later.
+Publishing a paper, releasing code, sharing a dataset, releasing weights, selling a license, and keeping a trade secret are distinct decisions. Scientific prestige differs from buzz and audience trust; credible contributions and unique independent adopters earn diminishing credit. Funding still needs a willing backer and signed terms. Public methods have no access fee; adaptation, rights, experiments and integration retain real costs. A public release cannot be un-released. Archiving a result does not erase costs, history, obligations or other labs' copies; denunciation can influence contested standards, not instantly ban a field worldwide.
 
 Evaluation requires time, staff, and held-out evidence. Show known performance, coverage gaps, and uncertainty. The same displayed score can support different deployment judgments depending on test coverage. Test-set contamination boosts the misleading score but not real customer performance. Independent audits, interpretability, access controls, staged rollout, monitoring, and incident response reduce different risks; none is a universal safety switch.
 
@@ -176,7 +210,7 @@ The economy has demand, capital conditions, employment opportunity, energy capac
 
 ## 10. Eras, AGI, ASI, and endings
 
-2014–2026 content is inspired by documented research and hardware eras, using fictional vendors and game statistics. Public discoveries in this reference interval have availability windows; investment can change local adoption and occasionally bring a research direction forward within a bounded window. The player is not forced to reenact real corporate history. The simulation is alternate history from its first day.
+2015–2026 content is inspired by documented research and hardware eras, using fictional vendors and game statistics. Public discoveries in this reference interval have availability windows; investment can change local adoption and occasionally bring a research direction forward within a bounded window. The player is not forced to reenact real corporate history. The simulation is alternate history from its first day. EEY technology bands are pacing/grounding metadata, distinct from observed gameplay stages; they never automatically grant discoveries.
 
 After 2026, each seed combines progress rate, energy availability, social adaptation, cooperation, and research uncertainty. There are no scheduled AGI/ASI arrival years. Progress can be fast, uneven, slow, or plateaued. Hardware concepts are opportunities with bottlenecks, not promises that quantum or photonic devices solve all problems.
 
@@ -186,7 +220,7 @@ Research assistance can accelerate experiments and software work subject to veri
 
 ### Objective rules
 
-Select one primary objective and optional secondary goals. Progress is visible with exact definitions; changing the primary objective marks the run as a custom sandbox. The ASI race may conclude early. All other victories are assessed at the century deadline using sustained conditions, so an early lead is not automatically permanent.
+The founding mission selects one primary objective, with optional secondary goals. Progress is visible with exact definitions; changing the primary objective marks the run custom. An ASI-race result can be secured or lost early and remains recorded while the campaign continues to 118. All other victories are assessed at the century deadline using sustained conditions, so an early lead is not automatically permanent. A pure nonprofit cannot select founder-wealth Profit; nonprofit assets are not the founder's property.
 
 | Objective | Winning condition |
 | --- | --- |
@@ -204,6 +238,12 @@ The objective panel distinguishes progress from whether the deadline remains att
 Failure conditions are unresolved insolvency after a warned 30-day workout, complete loss of institutional control, final closure under enforceable orders, or a scenario-ending catastrophe. A takeover offer, bad launch, executive departure, or lost election is not automatically game over. Postmortems show causal chains, unfulfilled obligations, lessons, and alternative actions that were available at the time.
 
 ## 11. Interface, atmosphere, and accessibility
+
+The following describes existing functional areas and accessibility requirements.
+The main-game layout and how it changes by broad gameplay stage are the user's
+next discussion; this revision does not finalize a new arrangement. Opening
+office art will reflect calendar period, company scale and selected building,
+using a modest set of original designs/variations.
 
 The **Office** is the hub: cash/runway, service health, current projects, inbox, calendar, objectives, and a next-decision summary. The **Lab** handles research/data/models/evaluation. **Operations** handles hardware, capacity, and sites. **People & Board** handles staffing and governance. **Finance & Deals** handles accounts, products, and negotiation. **Civic & Media** handles policy, testimony, and public communications. The **Map Room** links domestic sites and the wider world. Banks, investors, hearings, and meetings open contextual location sets rather than creating additional navigation chores.
 

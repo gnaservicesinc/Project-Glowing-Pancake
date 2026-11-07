@@ -1,12 +1,16 @@
 # Simulation and balance specification
 
-Baseline 1.2 · 2026-11-03 · Implementation contract, with provisional balance constants
+Baseline 1.3 · 2026-11-07 · Planned mechanical contract, with provisional balance constants
+
+The [campaign revision](CAMPAIGN_FLOW.md) and [technology plan](TECHNOLOGY.md)
+supersede earlier default setup/research assumptions. These are design changes;
+current 2014 prototype scenarios and saves keep their implemented rules.
 
 Read alongside [the game design](GAME_DESIGN.md). The simulation models fictional companies and simplified world systems. Its formulas support interesting, understandable choices; they are not predictions of actual AI development, investment returns, elections, or catastrophic risk.
 
 ## 1. Time, units, and reproducibility
 
-One authoritative step is a day. The normal decision snapshot dated `t` is that day's morning briefing, after opening deliveries/rules/flows but before staff/compute assignment and work. Advancing one day finishes activity over `[t, t+1)` and prepares the next morning. The campaign stops at 2114-01-01 after settling 2113-12-31; it does not execute a new day's deliveries or work. Weekly reviews occur every seventh day from the campaign epoch; monthly and annual settlements follow the Gregorian calendar. All deadlines name a date and a phase, avoiding ambiguous inclusive end dates. Save the day cursor as well as the date: a partially resolved morning is different from a morning already prepared for work.
+One authoritative step is a day. The normal decision snapshot dated `t` is that day's morning briefing, after opening deliveries/rules/flows but before staff/compute assignment and work. Advancing one day finishes activity over `[t, t+1)` and prepares the next morning. The new default starts company play at age 18 on 2015-01-01 and stops at age 118 on 2115-01-01 after settling 2114-12-31; it executes no new opening deliveries/work before freezing the campaign result. Weekly reviews occur every seventh day from the scenario epoch; monthly and annual settlements follow the Gregorian calendar. Deadlines name a date and phase. Save the day cursor as well as the date: a partially resolved morning differs from a morning ready for work. Existing 2014–2114 scenarios retain their own epochs and deadlines.
 
 | Quantity | Stored unit | Display |
 | --- | --- | --- |
@@ -92,7 +96,14 @@ Seeded incidents declare integer chance/weights, eligibility, cadence, bounds, n
 
 ## 3. Opening balance and the first experiment
 
-The vertical slice covers 2014-01-01 through 2017-01-01. It offers three headquarters choices (California, Texas, Washington), cloud leasing, six research nodes, four dataset offers, one enterprise contract family, one product channel, two startup rivals, and one heavyweight with a limited warning/mobilization behavior. It is a three-year game with a complete start, tutorial, recovery route, and ending.
+The following 2014 slice values describe the earlier prototype baseline, not
+universal starting packages for the new founder campaign. New packages derive
+cash, restrictions, ownership, staff and obligations from biography, entry route
+and signed funding terms. Every offered route needs an affordable office and a
+feasible first research assignment, with little or no commercial product.
+The finished first-play tutorial is deferred until gameplay/layout are final.
+
+The earlier vertical-slice design covers 2014-01-01 through 2017-01-01. It offers three headquarters choices (California, Texas, Washington), cloud leasing, six research nodes, four dataset offers, one enterprise contract family, one product channel, two startup rivals, and one heavyweight with a limited warning/mobilization behavior. It provides a bounded start, temporary guide, recovery route and ending; it is not the finalized new campaign introduction/tutorial.
 
 Initial normal-difficulty balance, before player changes:
 
@@ -205,7 +216,19 @@ Incident probability is a scenario-authored integer lookup over deployment scale
 
 A research definition contains prerequisites (`all_of`, `any_of`), field, required knowledge, staff-days, experiment CU, cash, maturity, outputs, failure-learning credit, and allowed publication choices. Progress accrues from qualified effective staff-days and completed experiments. Changing teams causes a bounded handover cost. Research hazards depend on project/knowledge state, not how often the player presses a button.
 
-Initial six nodes: efficient image features; sequence modeling; data deduplication; held-out evaluation; efficient serving; reproducible experiment tooling. Later groups introduce attention-based architectures, multimodality, preference adaptation, tool use, retrieval, verification, mechanistic analysis, robust deployment, advanced hardware/software co-design, and speculative broad research systems. Nodes create capabilities and constraints for recipes/products. The content team expands the graph only after the slice loop works.
+The prototype began with six nodes: efficient image features, sequence modeling,
+data deduplication, held-out evaluation, efficient serving and reproducible
+experiment tooling; its century catalog later expanded to 60 topics. The new
+[technology contract](TECHNOLOGY.md) and [candidate list](TECHNOLOGY_CATALOG.md)
+separate knowledge, implementation, rights and evidence, support selected
+variants and AND/OR prerequisites, and require bounded deduplicated effects.
+Public access has no method fee but retains integration work. Commercial
+licenses carry explicit rights/royalties; purchases/partnerships can provide
+operating capability without owning the supplier's research. Prestige/buzz and
+audience trust are distinct. Repeatable refinement approaches practical bounds;
+EEY pacing does not force a discovery. These additions need versioned schema,
+state, commands and migration work; the existing loader does not implement them
+merely because they appear in prose.
 
 A topic can specify a first-experiment setback, a safeguard topic,
 a finding and a retry credit. The outcome resolves when actual work settles,
@@ -215,6 +238,29 @@ topic's first result unresolved. After a setback the next settled experiment suc
 with a bounded compute credit. The larger of the public and retained
 credits applies, subject to the full staff-day floor. A failed result
 cannot satisfy a prerequisite or support publication.
+
+### Campaign setup, organizational form and stage observations
+
+Setup is a saved draft until a single validated finalization creates the
+company. Recomputing childhood choices cannot stack cash, contacts or research.
+Names/pronouns, birth date, traits, dated public/private choices, entry route,
+mission, backers and committed terms persist. A genius founder contributes
+finite qualified staff-days, competing with leadership work. Retirement changes
+roles without ending the founder's guaranteed campaign life at 118.
+
+For-profit equity, nonprofit restricted/unrestricted funding and recognized
+tax exemption are separate states. A pure nonprofit has no founder-owned equity
+or dividends and cannot select Profit. Apply dated authored tax rules to eligible
+bases, preserving other applicable obligations. Its goodwill bonus applies only
+to observed mission-serving actions among relevant audiences. No blanket tax
+immunity, moral score or automatically generated goodwill/capital.
+
+Persist an industry stage, company stage and independent conditional crisis
+overlay with observation windows, transition causes/receipts and hysteresis.
+The [campaign flow](CAMPAIGN_FLOW.md#broad-gameplay-stages) owns provisional gates.
+Actual independently qualified service/adoption can trigger a rival-led boom;
+measured control outcomes support maturation. A plateau world may skip a boom.
+Stages never award products, cash, knowledge or objective completion themselves.
 
 ## 6. Organization and opponents
 
@@ -268,7 +314,15 @@ Game AGI requires all six domain scores ≥75, held-out transfer ≥70, reliabil
 
 Game ASI requires all domains ≥90, novel science/engineering ≥95, and three independently replicated improvements from its research process across at least 180 days. Research, physical verification, and integration costs still apply. These thresholds are fictional labels. Control quality is reported alongside them but is not an ASI-race prerequisite. Models cannot self-certify, and assessment windows must use held-out tasks.
 
-Monopoly accumulates delivered useful work by region/company over the final 60 settled calendar months (January 2109–December 2113). Its global/regional thresholds use aggregate task sums, not an every-month threshold: a single weak month is not automatically fatal. Regional shares use their own denominators. If a region has no delivered tasks, it does not satisfy the regional threshold; financing a token shell deployment does not qualify without meaningful demand. Domination requires qualifying regional authority throughout those final 60 months, covering ≥80% population and output on every month-end check. Utopia requires all thresholds at each of the final 120 month-end checks (January 2104–December 2113). Store monthly sums, exact check dates and violation counters rather than only checking the final day.
+For the new default, Monopoly accumulates useful work over the final 60 settled
+calendar months, January 2110–December 2114. Its global/regional thresholds use
+aggregate task sums, not an every-month threshold: one weak month is not
+automatically fatal. Regions use their own denominators; no delivered work means
+no qualifying share. Domination requires qualifying authority on all 60 month-end
+checks, covering ≥80% population and output. Utopia requires all thresholds at
+each of the final 120 month ends, January 2105–December 2114. Derive windows from
+the versioned scenario deadline; do not shift historic saves or weaken thresholds.
+Store monthly sums, exact check dates and violation counters.
 
 Track objective feasibility separately from ordinary progress. An irreversible final-window breach for Domination/Utopia immediately shows the failed check/threshold and auto-pauses by default. Offer an immediate postmortem, continued scored play for other distinctions, or custom sandbox continuation; never require years of play to see an already determined primary-objective loss. Monopoly gets an impossibility alert only when accumulated totals and defensible remaining bounds prove it, not from a bad monthly share or a pessimistic forecast. Preserve breach/acknowledgment state across reload. Keep the century deadline and strict windows in the default rules; rolling early victory/grace months would change objective balance and require a separate decision/playtest.
 
@@ -276,7 +330,15 @@ Profit uses **founder-legacy wealth**: the retained founder trust's ownership fr
 
 Survival means positive operating status, liabilities serviced or within an agreed workout, at least one active team, and either paid useful work or a funded active research program in the final year. A dormant cash shell does not qualify. A warning starts the 30-day insolvency workout; rescue, asset sale, negotiated restructuring, or an approved merger can resolve it.
 
-Objective completion/failure checks occur after the day's committed transactions. ASI simultaneous completion shares a win; no entity-ID advantage. Save/load preserves all objective windows, deadlines, and prior violations.
+Objective completion/failure checks occur after committed daily transactions.
+ASI simultaneous completion shares the result; no entity-ID advantage. In the
+new default the race result locks when established, while play continues to the
+age-118 ending. Save/load preserves all windows, deadlines and violations.
+At the final boundary, freeze the campaign result/history before any new-day
+work, then offer a separate sandbox continuation with the original result
+attached. Epilogue projections do not alter that continuation's actual starting
+state. Compact monthly/annual history retains major biography/company/world
+events and chart aggregates without copying the full daily history on each step.
 
 ## 9. Balancing and long campaigns
 
