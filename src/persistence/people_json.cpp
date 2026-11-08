@@ -1,0 +1,60 @@
+#include "people_json.hpp"
+namespace pgp::persistence::detail {
+namespace {
+Json profile(const core::PersonProfile& p) {
+    return {{"id",p.id},{"name",p.name},{"gender",p.gender},{"pronouns",p.pronouns},{"education",p.education},{"role",p.role},{"bio",p.bio},{"preferred_mission",p.preferred_mission},
+        {"birth_year",p.birth_year},{"experience",p.experience},{"research",p.research},{"engineering",p.engineering},{"evaluation",p.evaluation},{"mission_fit",p.mission_fit},{"applied_on",p.applied_on.value()},
+        {"portrait",{{"kit",p.portrait.kit},{"parts",p.portrait.parts}}}};
+}
+core::PersonProfile parse_profile(const Json& j) {
+    fields(j,"person",{"id","name","gender","pronouns","education","role","bio","preferred_mission","birth_year","experience","research","engineering","evaluation","mission_fit","applied_on"},{"portrait"});
+    const auto year=i64(j.at("birth_year"),"birth_year");if(year<1800 || year>3000) invalid("person","Birth year out of bounds");
+    const auto count=[&](const char* name){return static_cast<std::uint32_t>(u64(j.at(name),name,100));};
+    core::PersonProfile result{text(j.at("id"),"id",64),text(j.at("name"),"name",128),text(j.at("gender"),"gender",32),text(j.at("pronouns"),"pronouns",64),
+        text(j.at("education"),"education",128,true),text(j.at("role"),"role",64),text(j.at("bio"),"bio",512,true),text(j.at("preferred_mission"),"preferred_mission",32),static_cast<int>(year),count("experience"),count("research"),count("engineering"),count("evaluation"),count("mission_fit"),core::OrdinalDay{i64(j.at("applied_on"),"applied_on")}};
+    if(j.contains("portrait")) {
+        const auto& recipe=j.at("portrait");fields(recipe,"portrait",{"kit","parts"});
+        result.portrait.kit=static_cast<std::uint16_t>(u64(recipe.at("kit"),"portrait kit",65535));
+        array(recipe.at("parts"),"portrait layers",core::portrait_part_counts.size());
+        if(recipe.at("parts").size()!=core::portrait_part_counts.size()) invalid("portrait","Missing layer IDs");
+        for(std::size_t i=0;i<core::portrait_part_counts.size();++i)
+            result.portrait.parts[i]=static_cast<std::uint8_t>(u64(recipe.at("parts")[i],"portrait layer",255));
+        core::validate_portrait(result.portrait);
+    } else {
+        // Older development saves acquire a deterministic appearance without
+        // consuming their saved simulation stream or rewriting the source file.
+        result.portrait=core::make_portrait(0,result.id+"/"+result.name);
+    }
+    return result;
+}
+Json applicant(const core::Applicant& a) {return {{"profile",profile(a.profile)},{"salary",a.salary.value()},{"signing",a.signing.value()},{"evaluation_credit",a.evaluation_credit.value()}};}
+core::Applicant parse_applicant(const Json& j) {
+    fields(j,"applicant",{"profile","salary","signing","evaluation_credit"});
+    return {parse_profile(j.at("profile")),core::Cents{i64(j.at("salary"),"salary")},core::Cents{i64(j.at("signing"),"signing")},core::BasisPoints{i64(j.at("evaluation_credit"),"evaluation_credit")}};
+}
+}
+Json people_json(const core::PeopleState& p) {
+    Json applicants=Json::array(),employees=Json::array(),known=Json::object();
+    for(const auto& [id,person]:p.known_people) known[id]=profile(person);
+    for(const auto& a:p.applicants) applicants.push_back(applicant(a));
+    for(const auto& e:p.employees) employees.push_back({{"terms",applicant(e.terms)},{"joined_on",e.joined_on.value()},{"ready_on",e.ready_on.value()},
+        {"opening",e.opening},{"departed_on",e.departed_on?Json(e.departed_on->value()):Json(nullptr)}});
+    return {{"stream",p.stream},{"next_id",p.next_id},{"starts_on",p.starts_on.value()},{"next_recruitment",p.next_recruitment.value()},
+        {"offered_pay",p.offered_pay.value()},{"mission",p.mission},{"founding_prestige",p.founding_prestige},{"applicants",std::move(applicants)},{"employees",std::move(employees)},{"known_people",std::move(known)}};
+}
+core::PeopleState parse_people(const Json& j) {
+    fields(j,"people",{"stream","next_id","starts_on","next_recruitment","offered_pay","mission","founding_prestige","applicants","employees","known_people"});
+    core::PeopleState p;p.stream=u64(j.at("stream"),"stream");p.next_id=u64(j.at("next_id"),"next_id");
+    p.starts_on=core::OrdinalDay{i64(j.at("starts_on"),"starts_on")};p.next_recruitment=core::OrdinalDay{i64(j.at("next_recruitment"),"next_recruitment")};
+    p.offered_pay=core::SalaryRate{i64(j.at("offered_pay"),"offered_pay")};p.mission=text(j.at("mission"),"mission",32);p.founding_prestige=static_cast<std::uint32_t>(u64(j.at("founding_prestige"),"prestige",10));
+    array(j.at("applicants"),"applicants",12);for(const auto& a:j.at("applicants")) p.applicants.push_back(parse_applicant(a));
+    if(!j.at("known_people").is_object() || j.at("known_people").size()>512) invalid("known_people","Authored identity count out of bounds");
+    for(const auto& [id,row]:j.at("known_people").items()) p.known_people.emplace(text(Json(id),"offer id",128),parse_profile(row));
+    array(j.at("employees"),"employees",256);for(const auto& e:j.at("employees")) {
+        fields(e,"employee",{"terms","joined_on","ready_on","opening","departed_on"});
+        p.employees.push_back({parse_applicant(e.at("terms")),core::OrdinalDay{i64(e.at("joined_on"),"joined_on")},core::OrdinalDay{i64(e.at("ready_on"),"ready_on")},boolean(e.at("opening"),"opening"),
+            e.at("departed_on").is_null()?std::nullopt:std::optional{core::OrdinalDay{i64(e.at("departed_on"),"departed_on")}}});
+    }
+    return p;
+}
+}

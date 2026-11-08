@@ -625,6 +625,23 @@ RuntimeResult transaction(const CompiledProgram& program, Checkpoint& original, 
                 objective_detail::finish(next.world,CampaignEndCause::catastrophe,std::get<std::string>(receipt.after));
         }
         settle_objectives(next.world,{},program);
+        if(next.world.counties) {
+            const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find(next.world.scenario_id)->data);
+            int regional=0,global=0;
+            if(next.world.society && !next.world.society->months.empty()) {
+                const auto& outcomes=next.world.society->months.back().components;
+                const auto& baselines=next.world.society->catalog.regions;
+                for(std::size_t i=0;i<outcomes.size();++i) {
+                    const auto current=core::welfare_indices(outcomes[i]);const auto base=core::welfare_indices(baselines[i].initial);
+                    int delta=0;for(std::size_t k=0;k<current.size();++k) delta+=static_cast<int>(current[k])-static_cast<int>(base[k]);
+                    delta/=static_cast<int>(current.size()*100);
+                    if(baselines[i].id=="region.us") regional=delta;
+                    global+=delta;
+                }
+                global/=static_cast<int>(outcomes.size());
+            }
+            core::advance_counties(*next.world.counties,*scenario.counties,campaign_day(next.world),regional,global);
+        }
         validate_checkpoint_with_simulation(program, next, !core_already_validated);
         original = std::move(next);
         result.revision = original.world.simulation.revision;

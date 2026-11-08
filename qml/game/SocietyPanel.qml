@@ -27,7 +27,8 @@ ColumnLayout {
         onClicked: campaign.advanceTo("society")
     }
     Heading { text: qsTr("Regional outcomes") }
-    TextField {
+    DraftField {
+        objectName: "societyRegionFilter"
         Layout.fillWidth: true
         font.pixelSize: panel.textSize
         placeholderText: qsTr("Filter regions")

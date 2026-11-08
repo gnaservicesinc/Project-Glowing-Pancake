@@ -13,6 +13,8 @@ struct CampaignSnapshot {
     runtime::Checkpoint checkpoint;
     persistence::Settings settings;
     bool driver_halted = false;
+    bool current_campaign = false;
+    bool storage_blocked = false;
 };
 using CampaignSnapshotPtr = std::shared_ptr<const CampaignSnapshot>;
 }

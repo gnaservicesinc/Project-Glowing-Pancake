@@ -3,7 +3,7 @@ qt_add_executable(pgp-probe
     main.cpp probe_controller.cpp probe_controller.hpp probe_smoke.cpp probe_smoke.hpp)
 target_link_libraries(pgp-probe PRIVATE
     pgp::core pgp::resources pgp::graphics pgp::audio
-    Qt6::Quick Qt6::QuickControls2)
+    Qt6::Quick Qt6::QuickControls2 Qt6::Quick3D)
 pgp_project_target(pgp-probe)
 
 qt_add_resources(pgp-probe probe_ui
@@ -17,17 +17,32 @@ qt_add_resources(pgp-probe probe_images
 
 endif()
 
+add_library(pgp_portraits STATIC portrait_images.cpp portrait_images.hpp)
+target_link_libraries(pgp_portraits PUBLIC pgp::core Qt6::Quick Qt6::Svg)
+target_include_directories(pgp_portraits PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+pgp_project_target(pgp_portraits)
+qt_add_resources(pgp_portraits portrait_kit PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+    FILES "${PROJECT_SOURCE_DIR}/assets/portraits/kit-v1.json")
 qt_add_executable(pgp-game game_main.cpp music_controller.cpp music_controller.hpp menu_media.cpp menu_media.hpp)
 if(BUILD_TESTING)
-    target_sources(pgp-game PRIVATE founding_smoke.cpp founding_smoke.hpp game_smoke.cpp game_smoke.hpp menu_smoke.cpp menu_smoke.hpp)
+    target_sources(pgp-game PRIVATE world_smoke.cpp world_smoke.hpp founding_smoke.cpp founding_smoke.hpp game_smoke.cpp game_smoke.hpp menu_smoke.cpp menu_smoke.hpp)
 endif()
 target_compile_definitions(pgp-game PRIVATE PGP_TEST_HOOKS=$<BOOL:${BUILD_TESTING}>)
-target_link_libraries(pgp-game PRIVATE pgp::bridge pgp::resources pgp::graphics pgp::audio
-    Qt6::Quick Qt6::QuickControls2)
+target_link_libraries(pgp-game PRIVATE pgp::bridge pgp::resources pgp::graphics pgp::audio pgp_portraits
+    Qt6::Quick Qt6::QuickControls2 Qt6::Quick3D)
 pgp_project_target(pgp-game)
 qt_add_resources(pgp-game game_ui
     PREFIX "/pgp" BASE "${PROJECT_SOURCE_DIR}/qml"
     FILES "${PROJECT_SOURCE_DIR}/qml/game/Main.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/Workspace3D.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/WorldButton.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/WorldDesktop.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/WorldMap.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/PeoplePanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/EmployeePortrait.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/CountyMap.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/GlobalMap.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/DraftField.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FoundingFlow.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FoundingStory.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/GameInk.qml"
@@ -81,7 +96,9 @@ endif()
 qt_add_resources(pgp-game domestic_map
     PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
     FILES "${PROJECT_SOURCE_DIR}/assets/maps/us-states-2024.json"
-          "${PROJECT_SOURCE_DIR}/assets/maps/CENSUS_TERMS.txt")
+          "${PROJECT_SOURCE_DIR}/assets/maps/CENSUS_TERMS.txt"
+          "${PROJECT_SOURCE_DIR}/assets/maps/world-countries.json"
+          "${PROJECT_SOURCE_DIR}/assets/maps/NATURAL_EARTH_LICENSE.md")
 set(pgp_music_credits "${PROJECT_SOURCE_DIR}/assets/audio/CREDITS.json")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${pgp_music_credits}")
 file(READ "${pgp_music_credits}" pgp_music_json)

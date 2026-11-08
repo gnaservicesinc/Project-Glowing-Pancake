@@ -1,4 +1,5 @@
 #include "management_json.hpp"
+#include "people_json.hpp"
 #include "governance_json.hpp"
 #include <pgp/content/management_catalog.hpp>
 #include <algorithm>
@@ -44,6 +45,7 @@ Json management_json(const core::ManagementState& m) {
         {"deadline",n.deadline?Json(n.deadline->value()):Json(nullptr)},{"required",n.required},{"acknowledged",n.acknowledged}});
     Json result{{"catalog",Json::parse(content::canonical_management_catalog(m.catalog))},{"financing",std::move(financing)},{"specialists",std::move(specialists)},
         {"policies",std::move(policies)},{"decisions",std::move(decisions)},{"notices",std::move(notices)},{"reviewed_on",m.reviewed_on?Json(m.reviewed_on->value()):Json(nullptr)}};
+    if (m.people) result["people"]=people_json(*m.people);
     if (m.governance) result["governance"]=governance_json(*m.governance);
     if (!m.funding_support.awards.empty() || !m.funding_support.uses.empty()) {
         Json awards=Json::array(),uses=Json::array();
@@ -58,8 +60,9 @@ Json management_json(const core::ManagementState& m) {
 core::ManagementState parse_management(const Json& source) {
     auto j=source;std::optional<core::GovernanceState> governance;
     if (j.contains("governance")) {governance=parse_governance(j.at("governance"));j.erase("governance");}
-    fields(j,"management",{"catalog","financing","specialists","policies","decisions","notices","reviewed_on"},{"funding_support"});
+    fields(j,"management",{"catalog","financing","specialists","policies","decisions","notices","reviewed_on"},{"funding_support","people"});
     core::ManagementState m;m.governance=std::move(governance);m.catalog=content::load_management_catalog(j.at("catalog").dump());
+    if (j.contains("people")) m.people=parse_people(j.at("people"));
     if (j.contains("funding_support")) {
         const auto& support=j.at("funding_support");
         fields(support,"management/funding_support",{"awards","uses"});

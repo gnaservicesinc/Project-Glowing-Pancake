@@ -4,6 +4,8 @@
 #include "menu_media.hpp"
 #include "menu_smoke.hpp"
 #include "founding_smoke.hpp"
+#include "world_smoke.hpp"
+#include "portrait_images.hpp"
 
 #include <pgp/core/build_identity.hpp>
 #include <pgp/graphics/graphics_policy.hpp>
@@ -62,6 +64,8 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("menu-smoke"),QStringLiteral("Exercise the Mac menu, settings, media, New Game entry and recovery.")});
     parser.addOption({QStringLiteral("screenshot"),QStringLiteral("Capture the smoke-test window."),QStringLiteral("file")});
     parser.addOption({QStringLiteral("founding-smoke"),QStringLiteral("Exercise the actual New Game biography, funding and first morning with an isolated local save.")});
+    parser.addOption({QStringLiteral("world-smoke"),QStringLiteral("Exercise world navigation and continuing campaign in an isolated root.")});
+    parser.addOption({QStringLiteral("portrait-smoke"),QStringLiteral("Check interactive portraits at 1080p, 8K and a narrow high-text layout.")});
     parser.process(application);
 #if !PGP_TEST_HOOKS
     if(parser.isSet(QStringLiteral("smoke-test"))) {
@@ -69,6 +73,7 @@ int main(int argc, char* argv[]) {
     }
 #endif
     if (parser.isSet(QStringLiteral("build-info"))) { core::write_build_identity(std::cout); return 0; }
+    const bool world_smoke=parser.isSet(QStringLiteral("world-smoke")) || parser.isSet(QStringLiteral("portrait-smoke"));
     const bool civic_smoke = parser.isSet(QStringLiteral("civic-smoke"));
     const bool society_smoke = parser.isSet(QStringLiteral("society-smoke"));
     const bool institutions_smoke = parser.isSet(QStringLiteral("institutions-smoke"));
@@ -80,8 +85,8 @@ int main(int argc, char* argv[]) {
     const bool music_smoke = parser.isSet(QStringLiteral("music-smoke"));
     const bool menu_smoke = parser.isSet(QStringLiteral("menu-smoke"));
     const bool founding_smoke = parser.isSet(QStringLiteral("founding-smoke"));
-    const bool prototype_smoke = parser.isSet(QStringLiteral("smoke-test")) && !menu_smoke && !founding_smoke;
-    const auto variants = static_cast<int>(society_smoke) + static_cast<int>(institutions_smoke) +
+    const bool prototype_smoke = parser.isSet(QStringLiteral("smoke-test")) && !menu_smoke && !founding_smoke && !world_smoke;
+    const auto variants = static_cast<int>(world_smoke) + static_cast<int>(society_smoke) + static_cast<int>(institutions_smoke) +
         static_cast<int>(civic_smoke) + static_cast<int>(infrastructure_smoke) + static_cast<int>(competition_smoke) + static_cast<int>(frontier_smoke) + static_cast<int>(leadership_smoke) + static_cast<int>(objectives_smoke) + static_cast<int>(music_smoke) + static_cast<int>(menu_smoke) + static_cast<int>(founding_smoke);
     if (!parser.positionalArguments().isEmpty() ||
         (parser.isSet(QStringLiteral("screenshot")) && !parser.isSet(QStringLiteral("smoke-test"))) ||
@@ -126,7 +131,7 @@ int main(int argc, char* argv[]) {
         [[maybe_unused]] const auto selection = graphics::configure(parser.isSet(QStringLiteral("software")));
         QQuickStyle::setStyle(QStringLiteral("Basic"));
         bridge::CampaignController campaign{std::move(program),std::move(initial),paths,settings,nullptr,
-            bundled || competition_smoke || infrastructure_smoke || institutions_smoke || founding_smoke};
+            bundled || competition_smoke || infrastructure_smoke || institutions_smoke || founding_smoke, !prototype_smoke};
         const auto audio_mode=prototype_smoke || ((menu_smoke || founding_smoke) && parser.isSet(QStringLiteral("software")))
             ? audio::DeviceMode::Silent : audio::DeviceMode::NativeIfAvailable;
         MusicController music{nullptr,music_smoke ? audio::DeviceMode::NativeIfAvailable : audio_mode};
@@ -145,12 +150,14 @@ int main(int argc, char* argv[]) {
         qmlRegisterModule("Pgp.Menu",1,0);
         qmlProtectModule("Pgp.Menu",1);
         QQmlApplicationEngine engine;
+        engine.addImageProvider(QStringLiteral("portraits"),new pgp::app::PortraitImages);
         QObject::connect(&engine,&QQmlEngine::warnings,&application,[](const QList<QQmlError>& warnings) {
             for (const auto& warning:warnings) std::cerr << warning.toString().toStdString() << '\n';
         });
         const auto qt_imports = QLibraryInfo::path(QLibraryInfo::QmlImportsPath);
         engine.setImportPathList({qt_imports,QStringLiteral("qrc:/qt/qml")});
         resources::ResourcePolicy policy;
+        if(!policy.allow_image_provider(QStringLiteral("portraits"))) throw std::runtime_error("The local portrait renderer is unavailable");
         if (!policy.allow_local_root(qt_imports) || !policy.allow_resource_prefix(QStringLiteral("/qt-project.org/imports/")) ||
             !policy.allow_resource_prefix(QStringLiteral("/qt/qml/"))) throw std::runtime_error("Trusted local Qt imports are unavailable");
         const auto resource_stats = resources::install_resource_guards(engine,std::move(policy));
@@ -159,6 +166,7 @@ int main(int argc, char* argv[]) {
         engine.rootContext()->setContextProperty(QStringLiteral("soundtrack"),&music);
         engine.rootContext()->setContextProperty(QStringLiteral("menuAudio"),&menu_audio);
         engine.rootContext()->setContextProperty(QStringLiteral("prototypeSmoke"),prototype_smoke);
+        engine.rootContext()->setContextProperty(QStringLiteral("softwareWorld"),parser.isSet(QStringLiteral("software")));
         QTimer startup_deadline;
         startup_deadline.setSingleShot(true);
         QQuickWindow* window=nullptr;
@@ -180,7 +188,9 @@ int main(int argc, char* argv[]) {
 #if PGP_TEST_HOOKS
             if (parser.isSet(QStringLiteral("smoke-test"))) {
                 window->resize(1280,720);
-                if (founding_smoke)
+                if (world_smoke)
+                    schedule_world_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")),parser.isSet(QStringLiteral("portrait-smoke")));
+                else if (founding_smoke)
                     schedule_founding_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));
                 else if (menu_smoke)
                     schedule_menu_smoke(*window,campaign,music,selection.api,paths,parser.value(QStringLiteral("screenshot")));
@@ -200,7 +210,7 @@ int main(int argc, char* argv[]) {
                 else schedule_game_smoke(*window,campaign,selection.api,paths,parser.value(QStringLiteral("screenshot")));
             }
 #endif
-            if (prototype_smoke || founding_smoke) window->show();
+            if (prototype_smoke || founding_smoke || world_smoke) window->show();
             else QMetaObject::invokeMethod(window,"applyDisplayPreferences",Qt::QueuedConnection);
             interface_ready=true;
             sync_music();

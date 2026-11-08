@@ -34,8 +34,9 @@ ColumnLayout {
         property alias value: input.text
         Layout.fillWidth: true
         Copy { text: parent.label }
-        TextField {
+        DraftField {
             id: input
+            objectName: parent.objectName + "Input"
             Layout.fillWidth: true
             font.pixelSize: panel.textSize
             Accessible.name: parent.label
@@ -127,7 +128,7 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "lab" && panel.section === "data"
         Copy { text: qsTr("License rights and coverage before training. Purchased data affects new training; an existing checkpoint keeps its original mixture.") }
-        TextField {
+        DraftField {
             objectName: "dataOfferFilter"
             Layout.fillWidth: true
             font.pixelSize: panel.textSize
@@ -271,7 +272,7 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "lab" && panel.section === "research"
-        TextField {
+        DraftField {
             objectName: "researchTopicFilter"
             Layout.fillWidth: true
             font.pixelSize: panel.textSize
@@ -342,9 +343,9 @@ ColumnLayout {
             }
         }
         Choice { id: trainingSource; label: qsTr("Training compute source"); options: manager.sources; onValueChanged: training.refresh() }
-        Field { id: trainingRate; label: qsTr("Training CU per day"); value: manager.recommended.trainingRate || ""; onValueChanged: training.refresh() }
-        Field { id: trainingStaff; label: qsTr("Training staff"); value: manager.recommended.trainingStaff || ""; onValueChanged: training.refresh() }
-        Field { id: trainingWork; label: qsTr("Additional training budget, total CU"); value: manager.recommended.trainingWork || ""; onValueChanged: training.refresh() }
+        Field { id: trainingRate; objectName: "trainingRateField"; label: qsTr("Training CU per day"); value: manager.recommended.trainingRate || ""; onValueChanged: training.refresh() }
+        Field { id: trainingStaff; objectName: "trainingStaffField"; label: qsTr("Training staff"); value: manager.recommended.trainingStaff || ""; onValueChanged: training.refresh() }
+        Field { id: trainingWork; objectName: "trainingWorkField"; label: qsTr("Additional training budget, total CU"); value: manager.recommended.trainingWork || ""; onValueChanged: training.refresh() }
         CheckBox {
             id: continueTraining
             Layout.fillWidth: true
@@ -830,11 +831,11 @@ ColumnLayout {
         Choice { id: policyModel; label: qsTr("Model checkpoint (may still be training)"); rows: manager.models; visible: policyKind.value === "evaluation" }
         Choice { id: policyPlan; label: qsTr("Independent evaluation plan"); options: manager.evaluations; visible: policyKind.value === "evaluation" }
         Choice { id: policySource; label: qsTr("Evaluation source"); options: manager.sources; visible: policyKind.value === "evaluation" }
-        Field { id: policyRate; label: qsTr("Evaluation CU/day ceiling"); value: manager.recommended.testingRate || ""; visible: policyKind.value === "evaluation" }
-        Field { id: policyStaff; label: qsTr("Evaluation staff ceiling"); value: manager.recommended.testingStaff || ""; visible: policyKind.value === "evaluation" }
-        Field { id: policyInterval; label: qsTr("Days between evaluations"); value: manager.policyDefaults.interval || ""; visible: policyKind.value === "evaluation" }
+        Field { id: policyRate; objectName: "policyRateField"; label: qsTr("Evaluation CU/day ceiling"); value: manager.recommended.testingRate || ""; visible: policyKind.value === "evaluation" }
+        Field { id: policyStaff; objectName: "policyStaffField"; label: qsTr("Evaluation staff ceiling"); value: manager.recommended.testingStaff || ""; visible: policyKind.value === "evaluation" }
+        Field { id: policyInterval; objectName: "policyIntervalField"; label: qsTr("Days between evaluations"); value: manager.policyDefaults.interval || ""; visible: policyKind.value === "evaluation" }
         Choice { id: policyLease; label: qsTr("Accepted renewable lease and conservative term cost"); options: manager.renewableLeases; visible: policyKind.value === "lease_renewal" }
-        Field { id: policyMonthly; label: qsTr("Maximum lease bill per month, dollars"); value: manager.policyDefaults.monthly || ""; visible: policyKind.value === "lease_renewal" }
+        Field { id: policyMonthly; objectName: "policyMonthlyField"; label: qsTr("Maximum lease bill per month, dollars"); value: manager.policyDefaults.monthly || ""; visible: policyKind.value === "lease_renewal" }
         ColumnLayout {
             visible: policyKind.value === "pricing"
             Layout.fillWidth: true
@@ -869,8 +870,8 @@ ColumnLayout {
                     return visible ? manager.replacementFamilies(oldRack.value) : []
                 }
             }
-            Field { id: replacementPurchase; label: qsTr("Maximum replacement purchase, dollars"); value: replacementFamily.selectedOption.purchase || "" }
-            Field { id: replacementMonthly; label: qsTr("Maximum replacement maintenance per month, dollars"); value: replacementFamily.selectedOption.maintenance || "" }
+            Field { id: replacementPurchase; objectName: "replacementPurchaseField"; label: qsTr("Maximum replacement purchase, dollars"); value: replacementFamily.selectedOption.purchase || "" }
+            Field { id: replacementMonthly; objectName: "replacementMonthlyField"; label: qsTr("Maximum replacement maintenance per month, dollars"); value: replacementFamily.selectedOption.maintenance || "" }
             Copy {
                 text: oldRack.options.length === 0
                     ? qsTr("Commission owned hardware in Operations to schedule a replacement within this campaign.")
@@ -881,7 +882,7 @@ ColumnLayout {
             visible: policyKind.value === "operating_reserve"
             text: qsTr("Keep this amount available for operating costs. New purchases and delegated spending use cash above the target. Existing obligations, debt repayment and story consequences can draw it down. Incoming cash replenishes it automatically. Suspend the policy to release the reserve.")
         }
-        Field { id: policyBudget; label: qsTr("Total policy commitment budget, dollars"); value: manager.policyDefaults.budget || ""; visible: policyKind.value === "evaluation" || policyKind.value === "lease_renewal" }
+        Field { id: policyBudget; objectName: "policyBudgetField"; label: qsTr("Total policy commitment budget, dollars"); value: manager.policyDefaults.budget || ""; visible: policyKind.value === "evaluation" || policyKind.value === "lease_renewal" }
         Field {
             id: policyReserve
             objectName: "policyReserveField"

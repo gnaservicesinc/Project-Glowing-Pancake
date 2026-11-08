@@ -1,6 +1,7 @@
 #include "campaign_worker.hpp"
 
 #include <QThread>
+#include <QDir>
 #include <pgp/runtime/scenario.hpp>
 
 #include <algorithm>
@@ -27,9 +28,9 @@ bool clock_ready(const runtime::Checkpoint& checkpoint) {
 QString error_text(const std::exception& error) { return QString::fromUtf8(error.what()); }
 }
 CampaignWorker::CampaignWorker(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
-    persistence::LocalPaths paths, persistence::Settings settings, QObject* parent)
+    persistence::LocalPaths paths, persistence::Settings settings, QObject* parent, bool continuous)
     : QObject(parent),campaign_(std::move(program),std::move(checkpoint),paths.saves_directory / "autosaves",settings),
-      paths_(std::move(paths)),timer_(new QTimer(this)) {
+      paths_(std::move(paths)),current_(paths_.saves_directory / "continuing"),continuous_(continuous),timer_(new QTimer(this)) {
     last_publish_.start();
     qRegisterMetaType<CampaignSnapshotPtr>();
     timer_->setInterval(1000);
@@ -46,12 +47,32 @@ void CampaignWorker::publish() {
     if (running && !timer_->isActive()) timer_->start();
     if (!running) timer_->stop();
     emit snapshotReady(std::make_shared<const CampaignSnapshot>(CampaignSnapshot{
-        generation_,std::move(checkpoint),campaign_.settings(),halted_}));
+        generation_,std::move(checkpoint),campaign_.settings(),halted_,active_,storage_blocked_}));
 }
 void CampaignWorker::pauseDriver() {
     halted_ = true;
 }
-void CampaignWorker::complete(std::uint64_t token, const session::OperationResult& result) {
+bool CampaignWorker::persist(bool advanced_day) {
+    if (!continuous_ || !active_) return true;
+    try {
+        if (!writer_lock_ || !writer_lock_->isLocked()) throw std::runtime_error("This campaign is open in another game window. Close that window and relaunch.");
+        current_.commit(campaign_.program(),campaign_.checkpoint(),advanced_day);
+        storage_blocked_=false;
+        return true;
+    } catch (const std::exception& error) {
+        storage_blocked_=true;pauseDriver();
+        emit noticeRaised(QStringLiteral("Progress could not be secured. Time is paused. Retry before exiting. ") + error_text(error));
+        return false;
+    }
+}
+void CampaignWorker::retryPersistence(std::uint64_t token) {
+    requireOwningThread();
+    const bool success=active_ && persist();
+    publish();
+    emit operationCompleted(static_cast<qulonglong>(token),success,success ? QStringLiteral("Progress secured locally.") : QStringLiteral("Recovery is still required. Existing files are preserved."));
+}
+void CampaignWorker::complete(std::uint64_t token, const session::OperationResult& result, bool advanced_day) {
+    if (result.command.accepted()) (void)persist(advanced_day);
     if (result.halt_requested || result.storage_notice) pauseDriver();
     QString message = QString::fromStdString(result.command.explanation);
     if (result.storage_notice) message += QStringLiteral(" ") + QString::fromStdString(result.storage_notice->explanation);
@@ -70,6 +91,9 @@ void CampaignWorker::newCampaign(std::uint64_t token,std::string headquarters,bo
     std::optional<core::ObjectiveSelection> objectives,runtime::ScenarioOptions options) {
     requireOwningThread();
     try {
+        if (continuous_ && (storage_blocked_ || (active_ && !runtime::objective_time_stopped(campaign_.checkpoint().world) &&
+            campaign_.checkpoint().world.simulation.phase!=core::DayPhase::closed && campaign_.checkpoint().world.simulation.phase!=core::DayPhase::finished)))
+            throw std::runtime_error("Finish the current company through Leadership or its campaign ending before starting another.");
         if (generation_==std::numeric_limits<std::uint64_t>::max()) throw std::overflow_error("Campaign generation is exhausted");
         if (id.empty()) for (const auto& [candidate,definition]:campaign_.program().collection.definitions) {
             const auto* scenario=std::get_if<content::ScenarioDefinition>(&definition.data);
@@ -89,6 +113,12 @@ void CampaignWorker::newCampaign(std::uint64_t token,std::string headquarters,bo
         session::Campaign next{campaign_.program(),std::move(initial),paths_.saves_directory/"autosaves",campaign_.settings()};
         const auto prepared=next.prepare_opening(next.checkpoint().world.simulation.revision);
         if (!prepared.command.accepted()) throw std::runtime_error(prepared.command.explanation);
+        if (continuous_) {
+            if (!writer_lock_ || !writer_lock_->isLocked()) throw std::runtime_error("Another game window owns this campaign.");
+            if (active_) current_.archive(campaign_.program(),campaign_.checkpoint());
+            current_.commit(next.program(),next.checkpoint());
+            active_=true;
+        }
         campaign_=std::move(next);++generation_;halted_=true;milestone_.reset();publish();
         emit operationCompleted(static_cast<qulonglong>(token),true,QStringLiteral("New campaign started. Time is paused."));
     } catch (const std::exception& error) {
@@ -98,6 +128,18 @@ void CampaignWorker::newCampaign(std::uint64_t token,std::string headquarters,bo
 void CampaignWorker::start() {
     requireOwningThread();
     try {
+        if (continuous_) {
+            const auto lock_path=paths_.saves_directory / "current-campaign.lock";
+            if (!QDir{}.mkpath(QString::fromStdU16String(paths_.saves_directory.u16string())))
+                throw std::runtime_error("Cannot create the local campaign folder.");
+            writer_lock_=std::make_unique<QLockFile>(QString::fromStdU16String(lock_path.u16string()));
+            writer_lock_->setStaleLockTime(0);
+            if (!writer_lock_->tryLock()) throw std::runtime_error("The continuing campaign is open in another game window. Close that window and relaunch.");
+            if (auto checkpoint=current_.resume(campaign_.program())) {
+                campaign_=session::Campaign{campaign_.program(),std::move(*checkpoint),paths_.saves_directory/"autosaves",campaign_.settings()};
+                active_=true;halted_=true;publish();return;
+            }
+        }
         const auto state = campaign_.checkpoint().world.simulation;
         if (!runtime::objective_time_stopped(campaign_.checkpoint().world) && !runtime::observing_world(campaign_.checkpoint().world) &&
             state.phase != core::DayPhase::finished && state.phase != core::DayPhase::closed) {
@@ -111,6 +153,7 @@ void CampaignWorker::start() {
         }
         publish();
     } catch (const std::exception& error) {
+        if(continuous_) storage_blocked_=true;
         pauseDriver(); emit noticeRaised(error_text(error)); publish();
     }
 }
@@ -136,7 +179,7 @@ void CampaignWorker::submitCommand(std::uint64_t token, core::Command command) {
         if (pause) milestone_.reset();
         const auto result = campaign_.submit(command);
         if (pause && !pause->paused && result.command.accepted()) halted_ = false;
-        complete(token,result);
+        complete(token,result,std::holds_alternative<core::AdvanceDay>(command.action));
     } catch (const std::exception& error) {
         pauseDriver(); emit noticeRaised(error_text(error)); publish();
         emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));
@@ -176,7 +219,7 @@ void CampaignWorker::tick() {
     const auto& checkpoint = campaign_.checkpoint();
     const auto& state = checkpoint.world.simulation;
     if (halted_ || !clock_ready(checkpoint)) return;
-    try { complete(0,campaign_.submit({state.revision,core::AdvanceDay{}})); }
+    try { complete(0,campaign_.submit({state.revision,core::AdvanceDay{}}),true); }
     catch (const std::exception& error) { pauseDriver(); emit noticeRaised(error_text(error)); publish(); }
 }
 void CampaignWorker::saveTo(std::uint64_t token,std::filesystem::path path) {
@@ -193,6 +236,17 @@ void CampaignWorker::loadFrom(std::uint64_t token,std::filesystem::path path) {
     requireOwningThread();
     try {
         if (generation_ == std::numeric_limits<std::uint64_t>::max()) throw std::overflow_error("Campaign generation is exhausted");
+        if (continuous_) {
+            if (!writer_lock_ || !writer_lock_->isLocked()) throw std::runtime_error("Another game window owns this campaign.");
+            if (active_ && !storage_blocked_) throw std::runtime_error("A company is already in progress. Its automatic continuation is active.");
+            // Decode first; a bad import must not move or replace current files.
+            auto recovered=persistence::load_file(campaign_.program(),path);
+            current_.preserve_for_recovery();
+            current_.commit(campaign_.program(),recovered.checkpoint);
+            campaign_=session::Campaign{campaign_.program(),std::move(recovered.checkpoint),paths_.saves_directory/"autosaves",campaign_.settings()};
+            active_=true;storage_blocked_=false;++generation_;milestone_.reset();halted_=true;publish();
+            emit operationCompleted(static_cast<qulonglong>(token),true,QStringLiteral("Campaign recovered. Original files were preserved."));return;
+        }
         const auto loaded = campaign_.load(path);
         if (!loaded.loaded) {
             const auto message = loaded.notice ? QString::fromStdString(loaded.notice->explanation) : QStringLiteral("The campaign could not be loaded.");

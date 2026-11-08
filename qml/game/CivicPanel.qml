@@ -59,7 +59,8 @@ ColumnLayout {
     }
 
     Heading { text: qsTr("Public docket") }
-    TextField {
+    DraftField {
+        objectName: "civicDocketFilter"
         Layout.fillWidth: true
         font.pixelSize: panel.textSize
         placeholderText: qsTr("Filter by policy, date or status")

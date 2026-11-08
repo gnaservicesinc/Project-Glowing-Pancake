@@ -8,7 +8,7 @@ continuation. [Campaign flow](docs/CAMPAIGN_FLOW.md),
 [technology design](docs/TECHNOLOGY.md) and the
 [140-candidate technology catalog](docs/TECHNOLOGY_CATALOG.md) describe the new
 direction. New Game now implements the founder introduction and company setup;
-later stages and the main-game layout await the next discussion.
+the company world, automatic resume and generated HQ people are available for review.
 
 **Current state.** The initial skeleton phase closed on 2026-11-07. The current
 core is ready for human feedback and the user's selected refinements. The
@@ -22,7 +22,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.30.0-dev.1**, generation **30**.
+The finalized internal content version is **0.31.0-dev.1**, generation **31**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).
@@ -44,12 +44,11 @@ build/core-release/bin/pgp-headless --competition-demo data/runtime/first-playab
 ```
 
 Builds never launch the application. On Mac, open **Project Glowing Pancake.app**
-in `dist` from Finder. It opens to a full-screen main menu with New Game,
-Load Game, Settings, Credits and Quit. New Game opens with a hospital scene in
-1997 and presents one decision at a time through childhood and founding.
-The first morning begins paused. Escape
-opens an exit confirmation with Cancel and Exit game. The in-game Main Menu
-button pauses and opens the menu; Resume returns to the current session.
+in `dist` from Finder. A current company resumes automatically, paused at the
+same place. Otherwise New Game opens the 1997 prologue and leads through founding
+to the 2015 workspace. The HUD, room controls and device dock open the company's
+tools. Select a person's vector portrait to inspect their profile. Escape pauses
+and opens the menu; Quit uses an exit confirmation. [World and portrait design](docs/GAMEPLAY_INTERFACE.md).
 The Codex Run action uses `./script/build_and_run.sh` to explicitly build,
 package and launch. Use the in-game guide
 or [player path](docs/PLAYABILITY.md) for the first loop. The headless executable

@@ -115,6 +115,9 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     else if (headquarters == "US-TX") world.state_id = "state.us_tx";
     else if (headquarters == "US-WA") world.state_id = "state.us_wa";
     else throw std::invalid_argument("Headquarters has no implemented scope binding");
+    core::initialize_people(world.simulation,seed,world.identity?world.identity->founder_name:std::string{},world.identity?world.identity->founder_pronouns:std::string{},
+        world.founding && world.founding->researcher=="founder",world.founding && world.founding->leg=="genius"?3:0);
+    if(scenario->counties) world.counties=core::initialize_counties(*scenario->counties,world.simulation.date,seed);
     initialize_competition(world,program,scenario->rivals,competition);
     if(scenario->objectives) initialize_objectives(world,*scenario->objectives,std::move(objectives));
     else if(objectives) throw std::invalid_argument("This scenario uses its own introductory ending.");

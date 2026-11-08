@@ -423,6 +423,8 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             (void)content::founding_terms(*scenario->founding,*world.founding);
         }
         (void)content::scenario_difficulty(*scenario,world.difficulty);
+        if(scenario->counties.has_value()!=world.counties.has_value()) invalid("County model differs from the authored scenario.");
+        if(world.counties) core::validate_counties(*world.counties,*scenario->counties,campaign_day(world));
         if (validate_core_simulation && (scenario->infrastructure ? (!world.simulation.infrastructure || world.simulation.infrastructure->catalog!=*scenario->infrastructure) : world.simulation.infrastructure.has_value()))
             invalid("Saved owned infrastructure rules differ from the source scenario");
         if (const auto* risks=content::resilience_catalog(program.collection,*scenario)) {

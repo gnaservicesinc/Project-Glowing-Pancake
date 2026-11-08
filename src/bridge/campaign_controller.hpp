@@ -12,6 +12,7 @@
 #include "succession_controller.hpp"
 #include "objectives_controller.hpp"
 #include "founding_controller.hpp"
+#include "world_controller.hpp"
 
 #include <QThread>
 #include <QUrl>
@@ -28,8 +29,12 @@ class CampaignController final : public QObject {
     Q_PROPERTY(FrontierController* frontier READ frontier CONSTANT)
     Q_PROPERTY(SuccessionController* leadership READ leadership CONSTANT)
     Q_PROPERTY(ObjectivesController* objectives READ objectives CONSTANT)
+    Q_PROPERTY(WorldController* world READ world CONSTANT)
     Q_PROPERTY(FoundingController* founding READ founding CONSTANT)
     Q_PROPERTY(int daysPerSecond READ daysPerSecond WRITE setDaysPerSecond NOTIFY stateChanged)
+    Q_PROPERTY(bool currentCampaign READ currentCampaign NOTIFY stateChanged)
+    Q_PROPERTY(bool storageBlocked READ storageBlocked NOTIFY stateChanged)
+    Q_PROPERTY(bool canStartNew READ canStartNew NOTIFY stateChanged)
     Q_PROPERTY(bool welcome READ welcome NOTIFY stateChanged)
     Q_PROPERTY(QVariantList headquarters READ headquarters CONSTANT)
     Q_PROPERTY(QVariantList scenarios READ scenarios CONSTANT)
@@ -77,7 +82,7 @@ class CampaignController final : public QObject {
 public:
     CampaignController(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
                        persistence::LocalPaths paths, persistence::Settings initial_settings = {},
-                       QObject* parent = nullptr, bool welcome = false);
+                       QObject* parent = nullptr, bool welcome = false, bool continuous = false);
     ~CampaignController() override;
     ManagementController* management() const { return management_; }
     InfrastructureController* infrastructure() const { return infrastructure_; }
@@ -87,9 +92,14 @@ public:
     FrontierController* frontier() const { return frontier_; }
     SuccessionController* leadership() const {return leadership_;}
     ObjectivesController* objectives() const {return objectives_;}
+    WorldController* world() const {return world_;}
     FoundingController* founding() const {return founding_;}
     int daysPerSecond() const { return days_per_second_; }
     void setDaysPerSecond(int value);
+    bool currentCampaign() const {return snapshot_ && snapshot_->current_campaign;}
+    bool storageBlocked() const {return snapshot_ && snapshot_->storage_blocked;}
+    bool canStartNew() const;
+    Q_INVOKABLE void retryPersistence();
     bool welcome() const { return welcome_; }
     QVariantList headquarters() const;
     QVariantList scenarios() const;
@@ -186,7 +196,7 @@ signals:
 private:
     void startCampaign(QString headquarters,bool stories,QString scenario,QString primary,QStringList secondary,
         runtime::ScenarioOptions options);
-    bool beginOperation();
+    bool beginOperation(bool recovery = false);
     void submit(core::CommandAction action);
     void changeSettings(persistence::Settings settings);
     void acceptSnapshot(CampaignSnapshotPtr snapshot);
@@ -202,6 +212,7 @@ private:
     SuccessionController* leadership_;
     ObjectivesController* objectives_;
     FoundingController* founding_;
+    WorldController* world_;
     bool welcome_ = false;
     bool starting_founder_ = false;
     int days_per_second_ = 1;

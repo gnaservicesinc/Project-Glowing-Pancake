@@ -69,7 +69,7 @@ if(PGP_BUILD_EDITOR)
 endif()
 
 if(NOT PGP_CORE_ONLY)
-    find_package(Qt6 6.12.0 EXACT REQUIRED COMPONENTS Core Gui Network Qml Quick QuickControls2)
+    find_package(Qt6 6.12.0 EXACT REQUIRED COMPONENTS Core Gui Network Qml Quick QuickControls2 Quick3D Svg)
     qt_standard_project_setup()
     add_subdirectory(src/bridge)
     add_subdirectory(src/platform/resources)

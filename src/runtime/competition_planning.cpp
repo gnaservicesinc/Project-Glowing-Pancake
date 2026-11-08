@@ -303,6 +303,8 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
     if (world.simulation.frontier)
         state.frontier=opening_frontier(world.simulation.frontier->catalog,world.simulation.frontier->seed);
     state.management=ManagementState{*authored.management,{},{},{},{},{},{}};state.management->catalog.setbacks.clear();
+    // Distant companies retain aggregate teams; only the player's HQ has biographies.
+    state.management->catalog.people.reset();
     if (authored.management->staff_workload) state.capacity->workload=StaffWorkload{*authored.management->staff_workload};
     if (authored.management->corporate_tax) state.accounts->taxes=CorporateTaxes{*authored.management->corporate_tax,day};
     state.management->catalog.governance.reset();

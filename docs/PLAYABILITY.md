@@ -46,13 +46,18 @@ implemented on Mac; human author qualification remains deferred.
 
 On Mac, build with `./make.sh --package --jobs 4`, then open
 `dist/Project Glowing Pancake.app` from Finder. The game opens full screen to
-New Game, Load Game, Settings, Credits and Quit. Settings persists display mode,
-window resolution, music/effects volume, text size, reduced motion and the
-still/video menu background locally. New installations start music at 40%;
-existing music preferences are preserved. Full screen uses the native display
-resolution. Escape opens an exit confirmation; Cancel keeps the current screen
-and session. The Main Menu button pauses and opens the menu; Resume keeps the
-session. Quit and the window close button use the same exit confirmation.
+New Game, Settings, Credits and Quit when no company is underway. A current
+company resumes automatically in its last place, with time paused. Recovery/import
+preserves original files. Settings persists display, audio, text and motion choices.
+Escape pauses and opens the menu; Quit and the window close button confirm exit.
+
+The workspace HUD and dock keep company tools, people, research, decisions,
+places and map scales reachable. People includes new applicants and grouped
+branch operators. Select a portrait using the pointer or Tab and Space for the
+full profile; scroll long profiles in smaller windows. Offers disclose signing
+cost, monthly salary, onboarding and evaluation work credit. Portraits retain
+their appearance through hiring and reloading. Form drafts survive closing and
+reopening the game. [Interface scope](GAMEPLAY_INTERFACE.md).
 
 **New Game opens in a California maternity ward in 1997.** Continue after the
 birth narration, then answer one question at a time. Use Enter or Space to

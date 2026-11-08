@@ -213,7 +213,7 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::InsureSite>(command.action) ||
         std::holds_alternative<core::ReplicateService>(command.action) ||
         std::holds_alternative<core::AcceptBusinessOffer>(command.action) ||
-        std::holds_alternative<core::TakeFinancing>(command.action) || std::holds_alternative<core::HireSpecialist>(command.action) ||
+        std::holds_alternative<core::TakeFinancing>(command.action) || std::holds_alternative<core::HireSpecialist>(command.action) || std::holds_alternative<core::HireEmployee>(command.action) ||
         std::holds_alternative<core::AddDelegationPolicy>(command.action) || std::holds_alternative<core::RenewComputeLease>(command.action) ||
         std::holds_alternative<core::ReviewDelegation>(command.action) ||
         std::holds_alternative<core::AppointExecutive>(command.action) || std::holds_alternative<core::VoteBoardMotion>(command.action) || std::holds_alternative<core::RespondCorporateDispute>(command.action) ||

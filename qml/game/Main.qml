@@ -24,6 +24,40 @@ ApplicationWindow {
     palette.highlightedText: "#ffffff"
 
     property string room: "office"
+    property bool deviceOpen: prototypeSmoke
+    property bool startupRouted: false
+    property string activeDevice: "laptop"
+    function openApp(app, section, device) {
+        campaign.world.navigate(campaign.world.navigation.place || "workspace", campaign.world.navigation.scale || "hq", device || "laptop", app, section || "")
+        room = app
+        activeDevice = device || "laptop"
+        deviceOpen = true
+        if (section && app === "office") managementPanel.officeSection = section
+        if (section && app === "lab") managementPanel.section = section
+    }
+    function closeApp() {
+        deviceOpen = false
+        campaign.world.navigate(campaign.world.navigation.place || "workspace", campaign.world.navigation.scale || "hq", "", "", "")
+    }
+    function restoreNavigation() {
+        const nav = campaign.world.navigation
+        if (nav.app) {
+            room = nav.app
+            activeDevice = nav.device || "laptop"
+            if (nav.section && room === "office") managementPanel.officeSection = nav.section
+            if (nav.section && room === "lab") managementPanel.section = nav.section
+        }
+        deviceOpen = !!nav.app || prototypeSmoke
+    }
+    function routeStartup() {
+        if (startupRouted || !campaign.ready) return
+        startupRouted = true
+        if (campaign.currentCampaign || campaign.founding.hasDraft) {
+            sessionEntered = true
+            menuVisible = false
+            restoreNavigation()
+        }
+    }
     property bool settingsOpen: false
     property bool menuVisible: !prototypeSmoke
     property bool sessionEntered: prototypeSmoke
@@ -33,10 +67,12 @@ ApplicationWindow {
     property bool exitConfirmed: false
     property bool resumeAfterExitCancel: false
     property bool exitCancelPending: false
-    readonly property int textSize: Math.round(14 * campaign.textScalePercent / 100)
+    readonly property real viewportScale:Math.max(1,Math.min(4,Math.min(width/1920,height/1080)))
+    readonly property int textSize: Math.round(14 * campaign.textScalePercent / 100 * viewportScale)
     readonly property bool narrow: width < 1030
     font.pixelSize: textSize
 
+    Component.onCompleted: Qt.callLater(routeStartup)
     GameInk { id: gameInk }
 
     function applyDisplayPreferences() {
@@ -84,11 +120,14 @@ ApplicationWindow {
     Shortcut {
         sequence: "Escape"
         enabled: !saveDialog.visible && !loadDialog.visible && !restartDialog.visible && !musicCredits.visible && !cancelDialog.visible && !exitDialog.visible
-        onActivated: window.requestExit()
+        onActivated: {
+            if (window.menuVisible && window.sessionEntered) window.menuVisible = false
+            else window.openMainMenu()
+        }
     }
     Connections {
         target: campaign
-        function onStateChanged() { window.syncOverlayPause() }
+        function onStateChanged() { window.routeStartup(); window.syncOverlayPause() }
         function onSettingsChanged() { window.applyDisplayPreferences() }
         function onCommandFinished(accepted, explanation) {
             if (window.pendingMenuSettings) {
@@ -106,6 +145,26 @@ ApplicationWindow {
         }
     }
 
+    Connections {
+        target: campaign.world
+        function onNavigationChanged() { window.restoreNavigation() }
+    }
+    WorldDesktop {
+        id: worldDesktop
+        anchors.fill: parent
+        visible: !window.menuVisible && !campaign.welcome
+        enabled: visible
+        textSize: window.textSize
+        onOpenApp: (app,section,device) => window.openApp(app,section,device)
+        onMenuRequested: window.openMainMenu()
+    }
+    Rectangle {
+        anchors.fill: deviceWindow
+        visible: deviceWindow.visible
+        color: "#f0172b31"
+        border.color: "#64857b"
+        radius: 12
+    }
     component Heading: Label {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
@@ -180,7 +239,7 @@ ApplicationWindow {
             Label {
                 Layout.fillWidth: true
                 text: window.sessionEntered && !campaign.welcome
-                    ? qsTr("Any unsaved progress will be lost. Return to the desktop?")
+                    ? (campaign.storageBlocked ? qsTr("Progress could not be secured. Cancel and retry automatic saving to retain the latest actions.") : qsTr("Your company will resume here next time. Return to the desktop?"))
                     : qsTr("Return to the desktop?")
                 textFormat: Text.PlainText
                 wrapMode: Text.Wrap
@@ -226,9 +285,9 @@ ApplicationWindow {
     FileDialog {
         id: loadDialog
         objectName: "campaignLoadDialog"
-        title: qsTr("Load campaign")
+        title: qsTr("Recover or import a campaign")
         fileMode: FileDialog.OpenFile
-        nameFilters: [qsTr("Campaign saves (*.pgpsave)")]
+        nameFilters: [qsTr("Campaign and recovery files (*.pgpsave *.pgpsave.bak)")]
         currentFolder: campaign.saveFolder
         onAccepted: window.loadCampaign(selectedFile)
         onRejected: if (window.menuVisible) frontMenu.home()
@@ -241,7 +300,7 @@ ApplicationWindow {
         anchors.centerIn: Overlay.overlay
         width: Math.min(580, window.width - 32)
         standardButtons: Dialog.Ok | Dialog.Cancel
-        contentItem: Label { text: qsTr("Save first if you want to return to this campaign. Starting a new one replaces the current unsaved session. Existing local save files remain available."); textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: window.textSize }
+        contentItem: Label { text: qsTr("Your completed company will be archived locally before a new founder begins."); textFormat: Text.PlainText; wrapMode: Text.Wrap; font.pixelSize: window.textSize }
         onAccepted: {
             campaign.openWelcome()
             window.menuVisible = false
@@ -258,147 +317,22 @@ ApplicationWindow {
         onClosed: musicCreditsButton.forceActiveFocus()
     }
     ColumnLayout {
-        visible: !window.menuVisible && !(campaign.welcome && campaign.founding.available)
+        id: deviceWindow
+        visible: !window.menuVisible && !(campaign.welcome && campaign.founding.available) && (window.deviceOpen || campaign.welcome)
         enabled: visible
         anchors.fill: parent
-        anchors.margins: 12
+        anchors.margins: 18
+        anchors.topMargin: campaign.welcome ? 18 : worldDesktop.headerHeight + 8
+        anchors.bottomMargin: campaign.welcome ? 18 : worldDesktop.footerHeight + 8
         spacing: 8
-
         Panel {
             padding: 10
-            contentItem: ColumnLayout {
-                spacing: 5
-                Copy {
-                    objectName: "statusLine"
-                    Layout.maximumWidth: window.width - 44
-                    text: qsTr("%1  ·  %2  ·  Cash %3  ·  Available %4")
-                        .arg(campaign.date).arg(campaign.phaseText).arg(campaign.cashText).arg(campaign.availableText)
-                }
-                Flow {
-                    Layout.fillWidth: true
-                    spacing: 6
-                    Action {
-                        objectName: "officeTab"; text: qsTr("Office")
-                        checked: window.room === "office"
-                        onClicked: window.room = "office"
-                    }
-                    Action {
-                        objectName: "labTab"; text: qsTr("Lab")
-                        checked: window.room === "lab"
-                        onClicked: window.room = "lab"
-                    }
-                    Action {
-                        objectName: "inboxTab"; text: qsTr("Inbox")
-                        checked: window.room === "inbox"
-                        onClicked: window.room = "inbox"
-                    }
-                    Action {
-                        objectName: "operationsTab"; text: qsTr("Operations")
-                        visible: !campaign.welcome && campaign.infrastructure.available
-                        checked: window.room === "operations"
-                        onClicked: window.room = "operations"
-                    }
-                    Action {
-                        objectName: "civicTab"; text: qsTr("Civic")
-                        visible: !campaign.welcome && campaign.civic.available
-                        checked: window.room === "civic"
-                        onClicked: window.room = "civic"
-                    }
-                    Action {
-                        objectName: "societyTab"; text: qsTr("World")
-                        visible: !campaign.welcome && campaign.society.available
-                        checked: window.room === "society"
-                        onClicked: window.room = "society"
-                    }
-                    Action {
-                        objectName: "institutionsTab"; text: qsTr("Institutions")
-                        visible: !campaign.welcome && campaign.institutions.available
-                        checked: window.room === "institutions"
-                        onClicked: window.room = "institutions"
-                    }
-                    Action {
-                        objectName: "frontierTab"; text: qsTr("Frontier")
-                        visible: !campaign.welcome && campaign.frontier.available
-                        checked: window.room === "frontier"
-                        onClicked: window.room = "frontier"
-                    }
-                    Action {
-                        objectName: "leadershipTab"; text: qsTr("Leadership")
-                        visible: !campaign.welcome && campaign.leadership.available
-                        checked: window.room === "leadership"
-                        onClicked: window.room = "leadership"
-                    }
-                    Action {
-                        objectName: "objectivesTab"; text: qsTr("Objectives")
-                        visible: !campaign.welcome && campaign.objectives.available
-                        checked: window.room === "objectives"
-                        onClicked: window.room = "objectives"
-                    }
-                    Action {
-                        objectName: "pauseButton"
-                        text: campaign.paused ? qsTr("Play") : qsTr("Pause")
-                        enabled: !campaign.busy && (!campaign.paused || campaign.canPlay)
-                        onClicked: campaign.togglePaused()
-                    }
-                    ComboBox {
-                        objectName: "speedControl"
-                        model: [1, 10, 30, 60]
-                        currentIndex: model.indexOf(campaign.daysPerSecond)
-                        displayText: qsTr("%1 days/s").arg(campaign.daysPerSecond)
-                        Accessible.name: qsTr("Days per second")
-                        font.pixelSize: window.textSize
-                        implicitWidth: window.textSize * 8
-                        onActivated: campaign.daysPerSecond = model[currentIndex]
-                    }
-                    Action {
-                        objectName: "stepButton"; text: qsTr("Step day")
-                        enabled: campaign.paused && campaign.canAdvance
-                        onClicked: campaign.step()
-                    }
-                    ComboBox {
-                        id: milestoneChoice
-                        implicitWidth: window.textSize * 11
-                        model: [{id:"project",label:qsTr("Next project")},{id:"evaluation",label:qsTr("Next evaluation")},{id:"deadline",label:qsTr("Next deadline")}]
-                            .concat(campaign.leadership.available ? [{id:"leadership",label:qsTr("Next leadership date")}] : [])
-                            .concat(campaign.objectives.nextCheck ? [{id:"objectives",label:qsTr("Next objective check")}] : [])
-                        textRole: "label"
-                        font.pixelSize: window.textSize
-                        Accessible.name: qsTr("Advance target")
-                    }
-                    Action {
-                        objectName: "advanceToButton"; text: qsTr("Advance to target")
-                        enabled: campaign.paused && campaign.canPlay
-                        onClicked: campaign.advanceTo(milestoneChoice.model[milestoneChoice.currentIndex].id)
-                    }
-                    Action {
-                        objectName: "saveButton"; text: qsTr("Save")
-                        enabled: campaign.ready && !campaign.busy
-                        onClicked: saveDialog.open()
-                    }
-                    Action {
-                        objectName: "loadButton"; text: qsTr("Load")
-                        enabled: campaign.ready && !campaign.busy
-                        onClicked: loadDialog.open()
-                    }
-                    Action {
-                        text: qsTr("New campaign…")
-                        visible: campaign.management.available && !campaign.welcome
-                        enabled: !campaign.busy
-                        onClicked: restartDialog.open()
-                    }
-                    Action {
-                        objectName: "mainMenuButton"; text: qsTr("Main Menu")
-                        onClicked: window.openMainMenu()
-                    }
-                    Action {
-                        objectName: "settingsButton"; text: qsTr("Settings")
-                        checked: window.settingsOpen
-                        onClicked: window.settingsOpen = !window.settingsOpen
-                    }
-                }
+            contentItem: RowLayout {
+                Copy { text: ({office:qsTr("Company"),people:qsTr("People"),lab:qsTr("Research notebook"),inbox:qsTr("News & decisions"),operations:qsTr("Infrastructure & travel"),civic:qsTr("Public affairs"),society:qsTr("World affairs"),institutions:qsTr("Institutions"),frontier:qsTr("Frontier"),leadership:qsTr("Leadership & retirement"),objectives:qsTr("Company mission")})[window.room] || window.room; font.bold:true }
+                Label {visible:!window.narrow;text:window.activeDevice;font.pixelSize:window.textSize;color:"#b8d2c5"}
+                Action {objectName:"closeDeviceButton";text:qsTr("Return to world");onClicked:window.closeApp()}
             }
         }
-
         ScrollView {
             id: scroll
             objectName: "managementScroll"
@@ -526,12 +460,6 @@ ApplicationWindow {
                     }
                 }
 
-                RoomScene {
-                    objectName: "roomScene"
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: window.narrow ? 48 : 66
-                    room: campaign.welcome ? "welcome" : window.room
-                }
 
                 Panel {
                     visible: campaign.notice.length > 0
@@ -541,6 +469,10 @@ ApplicationWindow {
                     }
                 }
 
+                Panel {
+                    visible: !campaign.welcome && window.room === "people"
+                    contentItem: PeoplePanel {textSize:window.textSize;onOpenApp:(app,section)=>window.openApp(app,section,"laptop")}
+                }
                 Panel {
                     visible: window.settingsOpen
                     contentItem: ColumnLayout {
@@ -797,7 +729,7 @@ ApplicationWindow {
                                 competitionChoice.currentValue, openingObjectives.visible ? openingObjectives.primary : "", openingObjectives.visible ? openingObjectives.secondary() : [],
                                 companyNameInput.text, founderNameInput.text, founderPronounsInput.text, worldSeedInput.text, backgroundChoice.currentValue || "", charterChoice.currentValue || "", difficultyChoice.currentValue || "")
                         }
-                        Action { text: qsTr("Load an existing local campaign…"); enabled: campaign.ready && !campaign.busy; onClicked: loadDialog.open() }
+                        Action { text: qsTr("Recover an existing local campaign…"); enabled: campaign.ready && !campaign.busy; onClicked: loadDialog.open() }
                     }
                 }
                 Panel {
@@ -862,7 +794,7 @@ ApplicationWindow {
                     contentItem: ObjectivesPanel { textSize: window.textSize }
                 }
                 GridLayout {
-                    visible: !campaign.welcome && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && window.room !== "institutions" && window.room !== "frontier" && window.room !== "leadership" && window.room !== "objectives" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
+                    visible: !campaign.welcome && window.room !== "people" && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && window.room !== "institutions" && window.room !== "frontier" && window.room !== "leadership" && window.room !== "objectives" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
                     Layout.fillWidth: true
                     columns: window.narrow || campaign.compactManagement ? 1 : 2
                     columnSpacing: 10
@@ -1016,6 +948,24 @@ ApplicationWindow {
         standardButtons: Dialog.Yes | Dialog.No
         onAccepted: campaign.projectCancel(projectId)
     }
+    Rectangle {
+        anchors.horizontalCenter:parent.horizontalCenter
+        anchors.top:parent.top
+        anchors.topMargin:worldDesktop.headerHeight+8
+        width:Math.min(parent.width-32,650)
+        height:storageMessage.implicitHeight+24
+        color:"#49362b";radius:8
+        visible:!window.menuVisible && !window.deviceOpen && campaign.notice.length>0
+        ColumnLayout {
+            id:storageMessage
+            anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:12
+            Label {Layout.fillWidth:true;text:campaign.notice;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.pixelSize:window.textSize;color:"#fff0d8"}
+            Flow {Layout.fillWidth:true;spacing:8
+                Action {visible:campaign.storageBlocked && campaign.currentCampaign;text:qsTr("Retry saving");onClicked:campaign.retryPersistence()}
+                Action {text:qsTr("Dismiss");visible:!campaign.storageBlocked;onClicked:campaign.clearNotice()}
+            }
+        }
+    }
     FoundingFlow {
         id: foundingFlow
         anchors.fill: parent
@@ -1031,7 +981,7 @@ ApplicationWindow {
         visible: window.menuVisible
         enabled: visible
         focus: visible
-        canResume: window.sessionEntered || (campaign.welcome && campaign.founding.hasDraft)
+        canResume: campaign.currentCampaign || window.sessionEntered || (campaign.welcome && campaign.founding.hasDraft)
         textSize: Math.round(16 * campaign.textScalePercent / 100)
         onNewGameRequested: {
             if (window.sessionEntered && !campaign.welcome) restartDialog.open()
@@ -1041,6 +991,7 @@ ApplicationWindow {
                 window.menuVisible = false
             }
         }
+        onLeadershipRequested: { window.menuVisible = false; window.openApp("leadership","","laptop") }
         onLoadRequested: { campaign.clearNotice(); loadDialog.open() }
         onResumeRequested: {
             window.sessionEntered = true

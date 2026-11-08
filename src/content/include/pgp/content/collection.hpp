@@ -13,6 +13,7 @@
 #include <pgp/content/authority_catalog.hpp>
 #include <pgp/content/frontier_catalog.hpp>
 #include <pgp/content/founding.hpp>
+#include <pgp/content/county_catalog.hpp>
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/objectives.hpp>
 #include <pgp/core/random.hpp>
@@ -23,7 +24,7 @@
 namespace pgp::content {
 
 inline constexpr std::uint32_t content_schema = 1;
-inline constexpr std::size_t maximum_document_bytes = 2'097'152;
+inline constexpr std::size_t maximum_document_bytes = 4'194'304;
 
 class ValidationError : public std::runtime_error {
 public:
@@ -189,6 +190,7 @@ struct ScenarioDefinition {
     std::vector<FounderBackground> backgrounds{};
     std::vector<CampaignDifficulty> difficulties{};
     std::optional<FoundingCatalog> founding{};
+    std::optional<core::CountyCatalog> counties{};
 };
 struct ScenarioOpening {
     core::Cents cash{0};

@@ -195,6 +195,56 @@
       "credit_group": "Music",
       "review_status": "reviewed",
       "role": "tension"
+    },
+    {
+      "id": "map.world_countries",
+      "path": "assets/maps/world-countries.json",
+      "sha256": "3a586dc8d6c73528cc8f4e5a49f0fd65992e2d2fe34833980cabec7b3434f3f1",
+      "kind": "data",
+      "title": "World countries — offline display geometry",
+      "creator": "Natural Earth contributors",
+      "source_url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson",
+      "retrieved_on": "2026-11-07",
+      "source_archive_sha256": "6866c877d39cba9c357620878839b336d569f8c662d3cfab4cb1dbe2d39c977f",
+      "license_id": "LicenseRef-Natural-Earth-Public-Domain",
+      "license_url": "https://www.naturalearthdata.com/about/terms-of-use/",
+      "license_evidence_path": "assets/maps/NATURAL_EARTH_LICENSE.md",
+      "modifications": "Removed statistical attributes, retained 176 country outlines excluding Antarctica, quantized to integer hundredths of a degree and assigned broad fictional game regions. Display boundaries do not model historical border changes.",
+      "derived_from": [
+        "assets/maps/sources/ne_110m_admin_0_countries.geojson"
+      ],
+      "preparation_tool": "tools/prepare_world_map.py",
+      "purpose": "Offline world map with a full country list alternative",
+      "ai_generated": false,
+      "generation_record": null,
+      "credit_text": "Made with Natural Earth. Public domain. Prepared for game display.",
+      "credit_group": "Maps",
+      "review_status": "source-and-terms-verified-for-visual-display"
+    },
+    {
+      "id": "portraits.employee_kit_v1",
+      "path": "assets/portraits/kit-v1.json",
+      "sha256": "015dc24a6c38fee0cbb0c48b6b94097914554e84d9d230c862aa9360cca614cd",
+      "kind": "data",
+      "title": "Employee portrait vector layers v1",
+      "creator": "VexStrips / future (selected Bitclone head and hair paths); Project Glowing Pancake (complementary procedural layers and palette)",
+      "source_url": "https://openclipart.org/detail/302186/bitclone-basic-face-kit-2",
+      "retrieved_on": "2026-11-07",
+      "source_archive_sha256": "f630c46704983b5466aceb90da2e06bb0d3015c2f35f084c45b3d5c5eee37a6b",
+      "license_id": "CC0-1.0 AND GPL-3.0-or-later",
+      "license_url": "https://openclipart.org/share",
+      "license_evidence_path": "assets/portraits/README.md",
+      "modifications": "Selected 6 head and 8 rear-hair paths; normalized geometry; replaced palette and strokes; authored compatible facial features, front hair, necks and clothing. Removed editor metadata and effects.",
+      "derived_from": [
+        "assets/portraits/sources/bitclone-basic-face-kit-2.svg"
+      ],
+      "preparation_tool": "tools/prepare_portrait_kit.py",
+      "purpose": "Offline scale-independent portraits generated at application time; versioned IDs persisted in profiles",
+      "ai_generated": false,
+      "generation_record": null,
+      "credit_text": "Head and rear-hair shapes adapted from Bitclone Basic Face Kit 2 by VexStrips / future, Openclipart CC0. Complementary layers and palette by Project Glowing Pancake.",
+      "credit_group": "Portraits",
+      "review_status": "source-and-terms-verified-for-vector-composition"
     }
   ]
 }

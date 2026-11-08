@@ -870,7 +870,7 @@ RegionalMarkets parse_regional_markets(const Json& value, const std::string& pat
 }
 ScenarioDefinition scenario(const Json& value, const std::string& path) {
     fields(value, path, {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
-                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society", "authority", "frontier", "objectives", "backgrounds", "difficulties", "founding"},
+                        "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents", "market", "business_plan", "lab", "business_offers", "rivals", "service_catalog", "management", "competition", "infrastructure", "regional_markets", "resilience", "civic", "society", "authority", "frontier", "objectives", "backgrounds", "difficulties", "founding", "counties"},
            {"id", "kind", "revision", "starts_on", "ends_before", "seed", "cash_cents", "capacity_milli_CU_per_day", "ownership_basis_points", "research", "flows",
             "lease_energy_included", "team_people", "headquarters_choices", "monthly_commitments_cents"});
     ScenarioDefinition result{date(value.at("starts_on"), child(path, "starts_on")), date(value.at("ends_before"), child(path, "ends_before")),
@@ -879,6 +879,7 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         boolean(value.at("lease_energy_included"), child(path, "lease_energy_included")),
         positive(value.at("team_people"), child(path, "team_people"), 1'000'000), {}, {}, {},
         identifiers(value.at("research"), child(path, "research")), identifiers(value.at("flows"), child(path, "flows"))};
+    if (value.contains("counties")) result.counties=load_county_catalog(value.at("counties").dump());
     if (value.contains("founding")) result.founding=load_founding_catalog(value.at("founding").dump());
     if (result.ends_before <= result.starts_on) fail("range", path, "Scenario end must follow start");
     const auto& hqs = value.at("headquarters_choices"); array(hqs, child(path, "headquarters_choices"), 64, true);
@@ -1502,11 +1503,12 @@ Registry registry_with_variables(const Registry& registry, const std::vector<Fac
     return result;
 }
 Collection load_collection(std::string_view document, const Registry& registry) {
-    if (document.size() > maximum_document_bytes) fail("budget", "/", "Content document exceeds two MiB");
+    if (document.size() > maximum_document_bytes) fail("budget", "/", "Content document exceeds four MiB");
     std::vector<std::set<std::string>> keys;
     std::size_t tokens = 0;
     auto callback = [&](int depth, Json::parse_event_t event, Json& parsed) {
-        if (depth > 48 || ++tokens > 100'000) fail("budget", "/", "JSON depth/token budget exceeded");
+        // Includes the bounded 3,300-entry county catalog alongside scenario content.
+        if (depth > 48 || ++tokens > 200'000) fail("budget", "/", "JSON depth/token budget exceeded");
         if (event == Json::parse_event_t::object_start) keys.emplace_back();
         else if (event == Json::parse_event_t::object_end) keys.pop_back();
         else if (event == Json::parse_event_t::key && !keys.back().insert(parsed.get<std::string>()).second)

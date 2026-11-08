@@ -269,3 +269,19 @@ target_link_libraries(pgp-founder-journey-test PRIVATE pgp::session)
 target_compile_definitions(pgp-founder-journey-test PRIVATE PGP_FOUNDING_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-founder-journey-test)
 add_test(NAME runtime.founder-journey COMMAND pgp-founder-journey-test)
+
+add_executable(pgp-current-campaign-test current_campaign_test.cpp)
+target_link_libraries(pgp-current-campaign-test PRIVATE pgp::persistence)
+target_compile_definitions(pgp-current-campaign-test PRIVATE
+    PGP_RUNTIME_FIXTURE_PATH="${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json"
+    PGP_INTEGRATION_SCRATCH_PATH="${CMAKE_CURRENT_BINARY_DIR}")
+pgp_project_target(pgp-current-campaign-test)
+add_test(NAME session.continuing-campaign COMMAND pgp-current-campaign-test)
+set_tests_properties(session.continuing-campaign PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-world-life-test world_life_test.cpp)
+target_link_libraries(pgp-world-life-test PRIVATE pgp::session)
+target_compile_definitions(pgp-world-life-test PRIVATE PGP_WORLD_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/gameplay-world.json")
+pgp_project_target(pgp-world-life-test)
+add_test(NAME runtime.world-life COMMAND pgp-world-life-test)
+set_tests_properties(runtime.world-life PROPERTIES TIMEOUT 30)

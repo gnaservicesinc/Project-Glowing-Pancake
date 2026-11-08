@@ -46,7 +46,7 @@ ColumnLayout {
         property int maximumLength: 96
         Layout.fillWidth: true
         Copy { text: field.label }
-        TextField {
+        DraftField {
             id: edit
             objectName: field.inputName
             Layout.fillWidth: true; Layout.minimumWidth: 0
@@ -186,7 +186,7 @@ ColumnLayout {
             ColumnLayout {
                 Layout.fillWidth: true; Layout.minimumWidth: 0; Layout.preferredWidth: 385
                 Heading { text: qsTr("State list · 50 states and DC") }
-                TextField {
+                DraftField {
                     id: stateSearch; objectName: "stateSearch"
                     Layout.fillWidth: true; placeholderText: qsTr("Filter by state name or code")
                     Accessible.name: placeholderText; font.pixelSize: panel.textSize

@@ -3,6 +3,8 @@
 #include "campaign_snapshot.hpp"
 #include <pgp/session/milestone.hpp>
 #include <pgp/runtime/scenario.hpp>
+#include <pgp/persistence/current_campaign.hpp>
+#include <QLockFile>
 
 #include <QObject>
 #include <QTimer>
@@ -16,13 +18,14 @@ class CampaignWorker final : public QObject {
 public:
     CampaignWorker(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
                    persistence::LocalPaths paths, persistence::Settings settings,
-                   QObject* parent = nullptr);
+                   QObject* parent = nullptr, bool continuous = false);
     void newCampaign(std::uint64_t token,std::string headquarters,bool stories,std::string scenario_id = {},
         std::optional<core::ObjectiveSelection> objectives = {}, runtime::ScenarioOptions options = {});
     void advanceTo(std::uint64_t token,std::uint64_t revision,std::string kind);
     void setSpeed(int days_per_second);
     void start();
     void stop();
+    void retryPersistence(std::uint64_t token);
     void submitCommand(std::uint64_t token, core::Command command);
     void respondCompetitiveOffer(std::uint64_t token,std::uint64_t revision,std::string id,bool accept);
     void proposeAcquisition(std::uint64_t token,std::uint64_t revision,std::string id,bool equity);
@@ -43,9 +46,13 @@ private:
     void publish();
     void tick();
     void pauseDriver();
-    void complete(std::uint64_t token, const session::OperationResult& result);
+    void complete(std::uint64_t token, const session::OperationResult& result, bool advanced_day = false);
+    bool persist(bool advanced_day = false);
     session::Campaign campaign_;
     persistence::LocalPaths paths_;
+    persistence::CurrentCampaign current_;
+    std::unique_ptr<QLockFile> writer_lock_;
+    bool continuous_ = false, active_ = false, storage_blocked_ = false;
     QTimer* timer_;
     QElapsedTimer last_publish_;
     std::uint64_t generation_ = 1;

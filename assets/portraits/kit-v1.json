@@ -1,0 +1,129 @@
+{
+  "kit": 1,
+  "viewBox": [
+    0,
+    0,
+    240,
+    240
+  ],
+  "source": "Bitclone Basic Face Kit 2, VexStrips / future, Openclipart CC0; original complementary game layers.",
+  "head": [
+    "<g transform=\"translate(-1632.964475 -771.151329) scale(0.71255755 0.90201029)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -17556.115,18785.299 c -18.097,0.1 -49.063,-14.88 -63.681,-34.555 -5.364,-7.22 -8.28,-22.673 -9.101,-42.829 -1.403,-34.428 10.773,-49.278 64.839,-49.067 50.087,0.196 60.05,18.306 57.208,60.388 -0.412,9.636 5.798,22.246 -1.912,30.815 -20.1,22.338 -28.697,35.149 -47.353,35.248 z\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2.806790837488855\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>",
+    "<g transform=\"translate(-1776.230519 -774.892802) scale(0.72183845 0.90642815)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -17365.921,18784.337 c -18.097,0.1 -53.671,-10.844 -66.909,-33.909 -7.824,-13.633 -27.646,-7.8 -28.467,-42.829 -0.808,-34.441 10.773,-49.278 64.839,-49.067 50.087,0.196 60.049,18.306 57.207,60.388 -0.411,9.636 -0.06,20.355 -1.911,30.815 -3.155,17.812 -6.103,34.502 -24.759,34.602 z\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2.7707030630125598\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>",
+    "<g transform=\"translate(-1416.783699 -1075.594339) scale(0.66716935 0.82033567)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -17726.418,19260.176 c -13.371,-0.02 -33.105,-6.053 -38.463,-10.328 0,0 -22.774,-41.297 -23.044,-55.557 -0.203,-10.75 -2.522,-21.306 -1.918,-31.128 1.441,-23.453 12.849,-41.826 61.171,-42.206 52.193,-0.41 68.014,17.591 71.126,40.926 1.345,10.088 -2.002,21.172 -1.97,32.198 -0.475,12.148 -26.136,55.489 -26.136,55.489 -5.156,3.481 -26.999,10.617 -40.766,10.606 z\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2.9977396387220425\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>",
+    "<g transform=\"translate(-1472.837603 -1068.338184) scale(0.63963323 0.81338174)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -17528.84,19264.226 c -13.371,-0.02 -33.105,-6.053 -38.463,-10.328 0,0 -36.683,-41.297 -36.953,-55.556 -0.203,-10.751 -2.19,-21.706 -1.723,-31.532 1.442,-30.316 23.037,-42.634 71.358,-43.014 52.194,-0.41 65.512,26.02 67.097,38.908 0,0 -0.491,23.594 -2.977,35.023 -0.475,12.149 -17.573,55.893 -17.573,55.893 -5.156,3.481 -26.999,10.617 -40.766,10.606 z\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"3.126791875474737\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>",
+    "<g transform=\"translate(-1603.473813 -1070.666063) scale(0.64583384 0.81338173)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -17330.42,19267.088 c -13.371,-0.02 -46.016,-6.053 -51.374,-10.328 0,0 -11.967,-0.615 -20.715,-31.806 -2.942,-10.49 -22.091,-12.117 -22.693,-23.751 -0.555,-10.742 -2.19,-21.705 -1.723,-31.531 1.442,-30.316 23.036,-42.634 71.358,-43.014 52.193,-0.41 63.898,26.019 65.482,38.908 0,0 1.124,23.594 -1.363,35.023 -0.474,12.149 -6.276,55.893 -6.276,55.893 -5.155,3.481 -18.929,10.617 -32.696,10.606 z\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"3.0967717852539662\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>",
+    "<g transform=\"translate(-1571.779504 -1416.301621) scale(0.63425679 0.79600536)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -17331.504,19734.577 c -35.038,0.03 -88.773,-31.427 -96.596,-73.232 -8.323,-44.478 19.398,-70.632 71.002,-70.326 72.207,0.428 64.108,55.183 67.173,76.157 1.181,47.976 -6.541,67.367 -41.579,67.401 z\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"3.1532969342138033\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>"
+  ],
+  "hairBack": [
+    "",
+    "<g transform=\"translate(-1530.881686 -76.760203) scale(0.42044804 0.46312500)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -16072.703,18109.931 c 2.572,-46.261 32.809,-136.475 -41.569,-121.022 -82.495,17.139 -43.647,109.269 -63.392,171.528 1.229,85.045 -34.375,110.644 -73.785,141.034 83.038,91.069 200.915,-23.684 301.374,22.87 -21.465,-138.742 -108.48,-121.495 -122.628,-214.41 z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"4.756830368628982\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>",
+    "<g transform=\"translate(-3042.503558 -359.131336) scale(0.73072245 1.03837961)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -15673.882,18137.925 c -0.936,-8.497 7.607,-14.168 18.594,-12.111 l -5.833,15.138 c 26.327,-23.682 42.584,1.148 43.749,15.474 l -24.791,-0.336 c 15.276,6.952 11.367,13.904 12.031,20.857 l -29.531,-9.756 c -14.916,27.488 10.504,51.372 18.594,78.044 l 28.436,15.474 c -12.015,9.614 -20.733,9.374 -31.718,6.728 l 2.188,9.083 c -21.616,3.35 -31.673,-2.779 -45.208,-6.055 -20.433,5.322 -36.715,14.955 -71.822,5.046 l 14.583,-12.783 c -12.552,1.877 -24.547,6.453 -40.833,-9.756 l 24.426,-9.419 -24.791,-6.392 c 31.073,4.097 20.205,-36.273 26.615,-67.279 6.148,-29.742 51.471,-38.914 85.311,-31.957 z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"2.737017302661741\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>",
+    "<g transform=\"translate(-3391.185989 -163.925643) scale(0.75173036 0.66761276)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -15360.793,18043.9 c -71.931,7.393 -73.097,92.671 -58.526,130.587 17.178,44.7 -8.644,86.669 -20.694,100.612 32.056,10.841 70.448,21.152 91.383,-9.034 25.174,24.787 57.297,11.884 69.842,3.613 -16.82,-18.43 -14.262,-40.882 -4.595,-76.401 16.916,-62.148 20.746,-161.541 -43.057,-135.018 -2.61,-5.476 -24.103,-15.413 -34.353,-14.359 z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"2.6605284365214743\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>",
+    "<g transform=\"translate(-2519.811809 -658.008567) scale(0.63023370 0.96268252)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -15813.084,18465.735 c -9.701,-0.02 -19.407,2.411 -25.916,6.781 -10.444,-9.665 -32.806,-7.985 -41.293,-0.652 -18.566,16.039 -30.622,17.976 -47.114,13.593 5.71,7.362 7.91,16.222 24.851,18.796 -6.822,12.103 -19.765,11.779 -31.461,13.986 7.293,8.648 12.818,7.598 18.79,8.997 -2.28,12.966 -13.295,18.365 -22.951,21.552 0.749,13.925 9.381,28.967 26.175,43.759 l -8.589,0 c 4.489,7.111 13.488,15.089 22.424,17.709 l -8.113,2.106 c 8.82,7.62 18.551,13.15 30.538,13.493 l -1.432,5.9 c 16.394,1.986 30.527,0.263 42.467,-5.058 -3.72,-14.808 19.03,7.791 43.19,5.058 l -1.431,-5.9 c 11.987,-0.343 20.031,-4.678 28.85,-12.298 l -8.113,-2.11 c 8.936,-2.62 10.85,-11.19 15.339,-18.301 l -8.585,0 c 16.794,-14.792 5.805,-17.873 5.866,-34.958 -1.862,-4.283 -2.592,0 -1.33,-13.09 6.161,0 11.236,2.282 20.618,-4.436 -10.743,-4.804 -23.374,-7.437 -26.745,-20.72 17.106,1.367 21.606,-6.718 29.111,-12.551 -17.156,0.489 -32.03,-7.962 -44.569,-28.38 -5.641,-9.185 -18.105,-13.254 -30.577,-13.276 z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"3.1734259864212504\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>",
+    "<g transform=\"translate(-3138.688449 -966.076147) scale(0.78770435 0.92307980)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -15860.457,18843.136 c 17.278,-12.085 66.033,-4.475 44.622,36.744 4.872,3.545 5.707,28.599 -11.63,30.124 -6.501,29.555 17.492,27.613 3.647,51.148 12.834,38.133 -16.423,42.368 -30.221,32.513 -15.744,16.35 -42.6,10.439 -68.592,6.258 -31.321,5.171 -48.878,-10.545 -34.581,-24.323 -7.619,0.183 -15.159,-10.02 -3.672,-11.76 -17.078,-9.988 -3.429,-34.103 4.396,-28.792 -8.598,-5.306 -13.52,-19.911 2.684,-29.513 -16.544,-0.857 -22.011,-21.802 -6.994,-29.883 -7.716,-5.11 0.457,-9.792 3.877,-10.042 -14.182,-14.999 7.914,-39.125 41.111,-28.939 4.736,-11.899 30.68,-5.89 36.697,4.561 8.819,-3.726 15.73,-1.746 18.656,1.904 z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"2.539023676254402\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>",
+    "<g transform=\"translate(-2928.573029 -923.022073) scale(0.68130277 0.87173288)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -15559.588,18850.007 c -51.571,-14.026 -69.965,43.679 -59.111,94.503 6.822,31.943 -12.35,52.109 -26.257,60.48 15.774,19.603 59.102,42.56 97.098,2.299 39.918,20.138 75.282,25.309 87.697,-16.058 -8.803,-4.369 -32.232,-12.384 -22.525,-57.685 9.928,-46.337 -15.005,-106.864 -76.902,-83.539 z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"2.9355524200207412\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>",
+    "<g transform=\"translate(-3471.596035 -1030.777660) scale(0.75732180 0.98907808)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -15275.393,18823.409 c -14.23,0.09 -28.279,5.337 -36.455,17.705 -10.583,-9.32 -20.359,-1.741 -27.014,7.504 -14.557,20.221 -0.618,35.53 -15.361,30.267 0.994,7.307 5.334,11.937 11.387,10.058 -16.011,14.691 2.641,61.062 -24.808,61.255 13.015,16.449 22.884,17.805 33.978,12.488 -1.839,11.272 -5.06,12.88 -9.956,15.883 17.249,8.797 38.314,12.017 53.698,-6.526 23.141,15.941 50.803,16.974 68.053,8.176 -3.899,-5.303 -8.118,-4.614 -9.956,-15.885 11.094,5.316 16.478,7.644 29.493,-8.805 -15.457,-6.433 -15.91,-49.28 -15.91,-49.28 l -0.04,-2.428 0.02,0.03 c 0,0 -0.138,-11.471 -0.898,-14.903 6.091,12.027 17.456,-5.634 17.37,-13.739 -14.743,8.023 -22.83,-22.658 -32.81,-35.059 -8.297,-10.309 -24.657,-16.837 -40.785,-16.737 z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"2.6408852713328486\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>",
+    "<g transform=\"translate(-2977.168478 -214.809625) scale(0.62099134 0.80781054)\"><g transform=\"translate(20027.023,-17744.089)\"><path d=\"m -15058.802,18076.259 c -35.305,-3.944 -65.199,10.317 -73.983,61.076 -6.686,38.626 54.765,73.546 -8.835,117.328 80.454,-26.133 161.338,18.391 201.671,-17.133 -49.991,-4.687 -11.231,-75.888 -7.149,-115.394 36.023,-29.132 -42.856,-102.078 -124.67,-47.196\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"3.2206568226614536\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></g>"
+  ],
+  "hairFront": [
+    "",
+    "<path d=\"M75 75 Q65 28 112 30 Q164 25 168 74 Q141 64 128 44 Q114 67 75 75Z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M72 75 Q65 31 112 31 L155 30 Q175 42 168 83 L148 61 L140 42 Q115 66 72 75Z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M72 81 Q66 30 120 30 Q174 30 169 83 L150 78 L145 53 L135 81 L113 79 L110 55 L98 80Z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M70 75 Q64 26 120 29 Q174 25 170 77 Q159 61 150 68 Q142 47 133 58 Q120 44 111 58 Q91 50 87 72Z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M74 79 Q66 32 115 28 Q168 25 170 80 Q154 57 142 56 Q112 85 74 79Z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M74 74 Q67 32 120 30 Q172 30 166 76 Q143 62 121 45 Q100 64 74 74Z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M75 73 Q69 33 121 31 Q169 29 166 74 L144 55 L126 73 L114 49 L96 72Z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M74 70 Q72 30 120 30 Q166 30 167 70 Q140 48 120 47 Q96 47 74 70Z\" fill=\"@hair\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  ],
+  "nose": [
+    "<path d=\"M121 106 L116 125 Q121 129 127 124\" fill=\"none\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M119 109 Q109 126 120 128 L129 124\" fill=\"none\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M120 108 L123 126 M116 128 Q122 131 129 127\" fill=\"none\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M121 109 L115 122 Q111 128 119 129 L128 127\" fill=\"none\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M120 111 Q116 119 120 124 M113 126 Q120 131 128 126\" fill=\"none\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  ],
+  "ears": [
+    "<ellipse cx=\"73\" cy=\"110\" rx=\"9\" ry=\"16\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2\"/><ellipse cx=\"167\" cy=\"110\" rx=\"9\" ry=\"16\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2\"/><path d=\"M73 105 Q80 112 74 118 M167 105 Q160 112 166 118\" fill=\"none\" stroke=\"@shade\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<ellipse cx=\"73\" cy=\"110\" rx=\"7\" ry=\"12\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2\"/><ellipse cx=\"167\" cy=\"110\" rx=\"7\" ry=\"12\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2\"/><path d=\"M73 105 Q80 112 74 118 M167 105 Q160 112 166 118\" fill=\"none\" stroke=\"@shade\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<ellipse cx=\"73\" cy=\"110\" rx=\"11\" ry=\"14\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2\"/><ellipse cx=\"167\" cy=\"110\" rx=\"11\" ry=\"14\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2\"/><path d=\"M73 105 Q80 112 74 118 M167 105 Q160 112 166 118\" fill=\"none\" stroke=\"@shade\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  ],
+  "mouth": [
+    "<path d=\"M105 143 Q120 153 136 141\" fill=\"none\" stroke=\"@lip\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M105 141 Q120 145 136 140 Q132 157 121 157 Q111 155 105 141Z\" fill=\"@lip\" stroke=\"@ink\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M108 142 Q121 145 133 141 L130 147 L111 148Z\" fill=\"@paper\" stroke=\"none\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M108 146 Q120 143 132 145\" fill=\"none\" stroke=\"@lip\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M107 143 Q120 149 134 142 M116 152 L126 152\" fill=\"none\" stroke=\"@lip\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M109 143 Q119 136 131 143 Q120 153 109 143Z\" fill=\"@lip\" stroke=\"none\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  ],
+  "chin": [
+    "",
+    "<path d=\"M114 160 Q120 163 126 160\" fill=\"none\" stroke=\"@shade\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M118 159 L121 161 L124 159\" fill=\"none\" stroke=\"@shade\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  ],
+  "neck": [
+    "<path d=\"M103 153 L102 184 Q120 200 138 184 L136 152Z\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M107 151 L106 185 Q121 195 134 185 L132 151Z\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M99 152 L97 185 Q120 202 143 185 L141 151Z\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  ],
+  "eyes": [
+    "<ellipse cx=\"98\" cy=\"103\" rx=\"11\" ry=\"6\" fill=\"@paper\" stroke=\"@ink\" stroke-width=\"1.5\"/><ellipse cx=\"99\" cy=\"103\" rx=\"4\" ry=\"5\" fill=\"@eye\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"99\" cy=\"103\" rx=\"2\" ry=\"3\" fill=\"@ink\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"100\" cy=\"101\" rx=\"1\" ry=\"1\" fill=\"@paper\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"142\" cy=\"103\" rx=\"11\" ry=\"6\" fill=\"@paper\" stroke=\"@ink\" stroke-width=\"1.5\"/><ellipse cx=\"143\" cy=\"103\" rx=\"4\" ry=\"5\" fill=\"@eye\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"143\" cy=\"103\" rx=\"2\" ry=\"3\" fill=\"@ink\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"144\" cy=\"101\" rx=\"1\" ry=\"1\" fill=\"@paper\" stroke=\"none\" stroke-width=\"2\"/>",
+    "<ellipse cx=\"98\" cy=\"103\" rx=\"11\" ry=\"4.5\" fill=\"@paper\" stroke=\"@ink\" stroke-width=\"1.5\"/><ellipse cx=\"99\" cy=\"103\" rx=\"3.5\" ry=\"3.5\" fill=\"@eye\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"99\" cy=\"103\" rx=\"2\" ry=\"3\" fill=\"@ink\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"100\" cy=\"101\" rx=\"1\" ry=\"1\" fill=\"@paper\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"142\" cy=\"103\" rx=\"11\" ry=\"4.5\" fill=\"@paper\" stroke=\"@ink\" stroke-width=\"1.5\"/><ellipse cx=\"143\" cy=\"103\" rx=\"3.5\" ry=\"3.5\" fill=\"@eye\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"143\" cy=\"103\" rx=\"2\" ry=\"3\" fill=\"@ink\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"144\" cy=\"101\" rx=\"1\" ry=\"1\" fill=\"@paper\" stroke=\"none\" stroke-width=\"2\"/>",
+    "<ellipse cx=\"98\" cy=\"103\" rx=\"11\" ry=\"7\" fill=\"@paper\" stroke=\"@ink\" stroke-width=\"1.5\"/><ellipse cx=\"99\" cy=\"103\" rx=\"4.5\" ry=\"6\" fill=\"@eye\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"99\" cy=\"103\" rx=\"2\" ry=\"3\" fill=\"@ink\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"100\" cy=\"101\" rx=\"1\" ry=\"1\" fill=\"@paper\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"142\" cy=\"103\" rx=\"11\" ry=\"7\" fill=\"@paper\" stroke=\"@ink\" stroke-width=\"1.5\"/><ellipse cx=\"143\" cy=\"103\" rx=\"4.5\" ry=\"6\" fill=\"@eye\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"143\" cy=\"103\" rx=\"2\" ry=\"3\" fill=\"@ink\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"144\" cy=\"101\" rx=\"1\" ry=\"1\" fill=\"@paper\" stroke=\"none\" stroke-width=\"2\"/>",
+    "<ellipse cx=\"98\" cy=\"103\" rx=\"11\" ry=\"5\" fill=\"@paper\" stroke=\"@ink\" stroke-width=\"1.5\"/><ellipse cx=\"99\" cy=\"103\" rx=\"3.5\" ry=\"4\" fill=\"@eye\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"99\" cy=\"103\" rx=\"2\" ry=\"3\" fill=\"@ink\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"100\" cy=\"101\" rx=\"1\" ry=\"1\" fill=\"@paper\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"142\" cy=\"103\" rx=\"11\" ry=\"5\" fill=\"@paper\" stroke=\"@ink\" stroke-width=\"1.5\"/><ellipse cx=\"143\" cy=\"103\" rx=\"3.5\" ry=\"4\" fill=\"@eye\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"143\" cy=\"103\" rx=\"2\" ry=\"3\" fill=\"@ink\" stroke=\"none\" stroke-width=\"2\"/><ellipse cx=\"144\" cy=\"101\" rx=\"1\" ry=\"1\" fill=\"@paper\" stroke=\"none\" stroke-width=\"2\"/>"
+  ],
+  "brows": [
+    "<path d=\"M87 89 Q98 84 108 89 M132 89 Q143 84 154 89\" fill=\"none\" stroke=\"@hair\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M87 88 L108 86 M132 86 L154 88\" fill=\"none\" stroke=\"@hair\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M87 91 Q98 82 108 89 M132 89 Q143 82 154 91\" fill=\"none\" stroke=\"@hair\" stroke-width=\"5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M88 88 L107 89 M133 89 L152 88\" fill=\"none\" stroke=\"@hair\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  ],
+  "facialHair": [
+    "",
+    "<path d=\"M106 136 Q114 130 121 135 Q128 130 135 136 L129 141 L120 138 L111 141Z\" fill=\"@hair\" stroke=\"none\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M93 139 Q98 165 120 170 Q143 166 149 139 L141 151 Q120 164 101 151Z\" fill=\"@hair\" stroke=\"none\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M114 155 Q120 158 127 155 L125 167 L117 167Z\" fill=\"@hair\" stroke=\"none\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  ],
+  "glasses": [
+    "",
+    "<path d=\"M83 97 H112 V111 Q99 118 86 111Z M128 97 H157 L154 111 Q141 118 128 111Z M112 101 Q120 97 128 101 M78 100 L83 100 M157 100 L162 100\" fill=\"none\" stroke=\"@ink\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<ellipse cx=\"99\" cy=\"104\" rx=\"16\" ry=\"13\" fill=\"none\" stroke=\"@ink\" stroke-width=\"2\"/><ellipse cx=\"141\" cy=\"104\" rx=\"16\" ry=\"13\" fill=\"none\" stroke=\"@ink\" stroke-width=\"2\"/><path d=\"M115 101 Q120 98 125 101 M78 101 L83 101 M157 101 L162 101\" fill=\"none\" stroke=\"@ink\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>",
+    "<path d=\"M83 97 Q98 94 113 98 L110 112 Q96 118 85 111Z M127 98 Q142 94 157 97 L155 111 Q142 118 130 112Z M113 101 H127\" fill=\"none\" stroke=\"@ink\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+  ],
+  "skin": [
+    "#f3d3b3",
+    "#e4b08a",
+    "#cb936c",
+    "#b57952",
+    "#995f43",
+    "#7b4936",
+    "#5c392e",
+    "#dfbaa0"
+  ],
+  "hairColor": [
+    "#273332",
+    "#46352e",
+    "#714b32",
+    "#a96c3d",
+    "#c3a371",
+    "#674a43",
+    "#a6a9a0",
+    "#d8d7c7"
+  ],
+  "shirtColor": [
+    "#356a69",
+    "#a46a4c",
+    "#4f6684",
+    "#756487",
+    "#748259",
+    "#b18b48"
+  ],
+  "background": [
+    "#c5d6c6",
+    "#dfcead",
+    "#b8cdcd",
+    "#d3c5bf",
+    "#bbc4d2",
+    "#c9cbb7"
+  ]
+}

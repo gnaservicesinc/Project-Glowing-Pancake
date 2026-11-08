@@ -1,5 +1,6 @@
 #pragma once
 #include <pgp/core/lab.hpp>
+#include <pgp/core/people.hpp>
 #include <pgp/core/market.hpp>
 #include <pgp/core/governance.hpp>
 #include <pgp/core/succession.hpp>
@@ -60,6 +61,7 @@ struct ManagementCatalog {
     std::optional<CorporateTaxPolicy> corporate_tax{};
     std::optional<ServiceMonitoringRules> service_monitoring{};
     std::optional<StaffWorkloadRules> staff_workload{};
+    std::optional<PeopleRules> people{};
     auto operator<=>(const ManagementCatalog&) const = default;
 };
 struct ManagementAcceptance {
@@ -118,6 +120,7 @@ struct ManagementState {
     std::optional<OrdinalDay> reviewed_on;
     std::optional<GovernanceState> governance{};
     FundingSupportState funding_support{};
+    std::optional<PeopleState> people{};
     auto operator<=>(const ManagementState&) const = default;
 };
 struct TakeFinancing { std::string id; };

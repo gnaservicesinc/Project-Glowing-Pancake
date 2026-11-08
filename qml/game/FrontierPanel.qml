@@ -41,7 +41,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         Copy { text: field.label }
-        TextField {
+        DraftField {
             id: entry
             objectName: field.inputName
             Layout.fillWidth: true

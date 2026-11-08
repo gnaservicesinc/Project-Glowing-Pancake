@@ -909,8 +909,10 @@ QVariantList ManagementController::evaluationSpecialists() const {
         const auto offer=std::ranges::find_if(state().management->catalog.specialists,[&](const auto& row) {
             return "specialist/"+row.id==hire.id;
         });
-        auto value=option(hire.id,tr("%1 · %2 less experiment work")
-            .arg(offer==state().management->catalog.specialists.end()?readable(hire.id):text(offer->name),percent(hire.evaluation_credit)));
+        auto name=offer==state().management->catalog.specialists.end()?readable(hire.id):text(offer->name);
+        if(state().management->people) for(const auto& employee:state().management->people->employees)
+            if(employee.terms.profile.id==hire.id) name=text(employee.terms.profile.name);
+        auto value=option(hire.id,tr("%1 · %2 less experiment work").arg(name,percent(hire.evaluation_credit)));
         value["detail"]=tr("Included in the entered staff count. Committed to this test until completion or cancellation, including while paused.");
         result.push_back(std::move(value));
     }

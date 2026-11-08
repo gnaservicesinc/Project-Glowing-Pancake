@@ -14,6 +14,7 @@ FocusScope {
     readonly property real margin: width < 800 ? 28 : Math.max(56, width * 0.055)
     readonly property bool compact: width < 850 || height < 650
     signal newGameRequested()
+    signal leadershipRequested()
     signal loadRequested()
     signal resumeRequested()
     signal quitRequested()
@@ -21,7 +22,7 @@ FocusScope {
 
     GameInk { id: ink }
 
-    function home() { page = "home"; newGameButton.forceActiveFocus() }
+    function home() { page = "home"; if (newGameButton.visible) newGameButton.forceActiveFocus() }
     function keepFocusVisible() {
         Qt.callLater(() => menu.reveal(menu.lastFocusItem))
     }
@@ -153,6 +154,7 @@ FocusScope {
                     id: newGameButton
                     objectName: "menuNewGameButton"
                     number: "01"; text: qsTr("New Game"); primary: true
+                    visible: campaign.canStartNew
                     textSize: menu.textSize * 1.3
                     Layout.fillWidth: true
                     enabled: campaign.ready && !campaign.busy
@@ -160,11 +162,27 @@ FocusScope {
                 }
                 MenuButton {
                     objectName: "menuLoadGameButton"
-                    number: "02"; text: qsTr("Load Game")
+                    number: "02"; text: qsTr("Recover a campaign…")
+                    visible: !campaign.currentCampaign || campaign.storageBlocked
                     textSize: menu.textSize * 1.3
                     Layout.fillWidth: true
                     enabled: campaign.ready && !campaign.busy
                     onClicked: { menuAudio.select(); menu.loadRequested() }
+                }
+                MenuButton {
+                    objectName: "menuLeadershipButton"
+                    text: qsTr("Leadership & retirement")
+                    visible: campaign.currentCampaign
+                    textSize: menu.textSize * 1.3
+                    Layout.fillWidth: true
+                    onClicked: menu.leadershipRequested()
+                }
+                MenuButton {
+                    text: qsTr("Retry automatic saving")
+                    visible: campaign.storageBlocked && campaign.currentCampaign
+                    textSize: menu.textSize * 1.3
+                    Layout.fillWidth: true
+                    onClicked: campaign.retryPersistence()
                 }
                 MenuButton {
                     objectName: "menuSettingsButton"

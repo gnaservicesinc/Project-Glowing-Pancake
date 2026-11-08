@@ -3,6 +3,7 @@
 #include <pgp/content/succession_catalog.hpp>
 #include "corporate_tax_codec.hpp"
 #include "staff_workload_codec.hpp"
+#include "people_codec.hpp"
 #include <nlohmann/json.hpp>
 #include <limits>
 #include <set>
@@ -41,6 +42,7 @@ core::ManagementCatalog load_management_catalog(std::string_view bytes) {
         c.corporate_tax=civic_codec::decode<core::CorporateTaxPolicy>(j.at("corporate_tax"));
         j.erase("corporate_tax");
     }
+    if (j.contains("people")) {c.people=people_codec::decode(j.at("people"));j.erase("people");}
     if (j.contains("staff_workload")) {
         c.staff_workload=staff_workload_codec::decode(j.at("staff_workload"));
         j.erase("staff_workload");
@@ -141,6 +143,7 @@ std::string canonical_management_catalog(const core::ManagementCatalog& c) {
         {"scoring",{{"task_target",c.scoring.task_target},{"weights",c.scoring.weights},{"founder",c.scoring.founder},{"opening_founder_share_bp",c.scoring.opening_founder_share.value()}}},
         {"minimum_evaluation_interval_days",c.minimum_evaluation_interval.value()},{"maximum_policy_runs",c.maximum_policy_runs},{"default_policy_budget_cents",c.default_policy_budget.value()},
         {"default_reserve_floor_cents",c.default_reserve_floor.value()},{"default_monthly_ceiling_cents",c.default_monthly_ceiling.value()},{"default_policy_runs",c.default_policy_runs}};
+    if (c.people) result["people"]=people_codec::encode(*c.people);
     if (c.governance) result["governance"]=Json::parse(canonical_governance_catalog(*c.governance));
     if (c.corporate_tax) result["corporate_tax"]=civic_codec::encode(*c.corporate_tax);
     if (c.succession) result["succession"]=Json::parse(canonical_succession_catalog(*c.succession));

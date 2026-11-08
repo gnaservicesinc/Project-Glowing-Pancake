@@ -9,7 +9,7 @@ Updated 2026-11-07
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-founder-setup batch advances content to **0.30.0-dev.1**, generation **30**.
+world/interface batch advances content to **0.31.0-dev.1**, generation **31**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -28,7 +28,29 @@ Escape opens an exit confirmation with Cancel and Exit game, including during
 play. The Main Menu button pauses; Resume returns to the same session.
 
 New Game now uses the founder setup described below.
-The gameplay interface/environment and usable Mac Content Studio remain open.
+The gameplay interface foundation is described below; usable Mac Content Studio remains open.
+
+## Selected feedback: inhabitable company and portraits
+
+The game now opens a continuing company automatically, with an original 3D
+workspace, permanent HUD, device applications and HQ/city/state/country/world
+navigation. Escape pauses into the menu. Accepted actions and completed days
+persist atomically; storage failure stops play and preserves recovery files.
+Unfinished named form fields and the current navigation are stored locally.
+
+HQ recruitment supplies stable generated profiles, real signing costs/payroll,
+onboarding and usable evaluation expertise. Branch operators remain aggregated.
+The founder campaign adds 3,143 counties with a 2010 Census population/location
+baseline and explicitly fictional bounded monthly economic trends. World outlines
+and region briefings are offline. Employee portraits combine versioned vector
+part/color IDs saved in each profile; selecting a portrait opens its dossier.
+
+Focused core/persistence checks and native navigation/restart checks pass.
+Portrait layer rendering, 1080p/8K offscreen viewports and a narrow 200% text
+profile are checked separately from attached-display native Metal evidence.
+The [selected design](GAMEPLAY_INTERFACE.md) records remaining room construction,
+branch blueprint, device lifecycle and briefing progression work. These checks
+do not close human review, extended campaign or release/device gates.
 
 ## Selected feedback: campaign and technology design
 

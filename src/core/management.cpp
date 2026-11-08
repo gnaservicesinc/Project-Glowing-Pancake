@@ -141,6 +141,7 @@ void require_operating_reserve(Cents cash_before,const SimulationState& after) {
         invalid("New spending would use the operating reserve. Review the policy in Office or choose a smaller commitment.");
 }
 void validate_management_catalog(const ManagementCatalog& c) {
+    if(c.people) validate_people_rules(*c.people);
     if(c.staff_workload) validate_staff_workload(*c.staff_workload);
     validate_funding_offers(c.support_offers);
     if (c.service_monitoring) validate_service_monitoring(*c.service_monitoring);
@@ -363,6 +364,7 @@ void review_delegation(SimulationState& s,Cents protected_cash) {
     }
 }
 void prepare_management(SimulationState& s) {
+    prepare_people(s);
     if (!s.management) return;
     auto& m=*s.management;
     for (const auto& hire:m.specialists) {
@@ -431,6 +433,7 @@ SliceScore slice_score(const SimulationState& s) {
 }
 
 void validate_management(const SimulationState& s,bool deep) {
+    validate_people(s);
     if (!s.management) {
         if (s.accounts && s.accounts->taxes) invalid("Corporate taxes require the scenario's management policy");
         if (s.market && std::any_of(s.market->price_events.begin(),s.market->price_events.end(),[](const auto& e){return !e.actor.empty();}))
@@ -504,7 +507,7 @@ void validate_management(const SimulationState& s,bool deep) {
                 invalid("An evaluation retained specialist expertise after the paid appointment ended");
     }
     const auto management_hires=std::ranges::count_if(s.capacity->staff_additions,
-        [](const auto& row){return !row.id.starts_with(authority_hire_prefix);});
+        [](const auto& row){return !row.id.starts_with(authority_hire_prefix) && !row.id.starts_with("employee/");});
     if (static_cast<std::size_t>(management_hires)!=ready_specialists+(m.governance?m.governance->appointments.size():0))
         invalid("Team additions lack their actual onboarded specialists or executives");
     std::map<std::string_view,std::vector<const DelegationDecision*>> decisions_by_policy;

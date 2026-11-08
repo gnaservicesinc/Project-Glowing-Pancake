@@ -1,0 +1,11 @@
+{
+  "file": "data/drafts/gameplay-world.json",
+  "county_source": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/Gaz_counties_national.zip",
+  "source_page": "https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.2010.html",
+  "source_zip_sha256": "592fd19e5027658a4af44be22396561907032ec56b6fbd7ea2dc65ea9ddf4118",
+  "source_member": "Gaz_counties_national.txt",
+  "source_rights": "US Census Bureau US-government geographic data. Existing Census terms are retained at assets/maps/CENSUS_TERMS.txt.",
+  "transform": "Exclude Puerto Rico; retain county identifiers/names/2010 populations; convert representative points to integer microdegrees; author bounded game archetypes and connection summaries from population density/water area with five tourism overrides. Not official socioeconomic classifications.",
+  "names": "Original selection of common names. Uses the pooled first-name/surname approach inspected in WTPStory1/game/functions/get_name.rpy; no Ren'Py code, full source list or story content copied. Core C++ uses its own deterministic identity stream.",
+  "art": "Workspace geometry and interface are original Qt Quick/Quick3D source. Reference screenshots were studied for navigation relationships only; no image assets copied."
+}

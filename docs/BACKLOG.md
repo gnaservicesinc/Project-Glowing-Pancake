@@ -26,7 +26,15 @@ the setup implementation is described below. The PDF proposals remain advisory a
 hospital scene and presents one decision at a time on a canvas that scales
 with the window. It leads through the formative chapters and founding terms to
 the paused 2015 office. Standalone sandbox creation was removed. The broader
-stages, ending narrative and main-game layout remain design work.
+stages and ending narrative remain design work.
+
+**F-03 world/interface foundation and generated people are ready for review.**
+Continuing-company resume, 3D places, device apps, scalable layered portraits,
+HQ recruitment and bounded county conditions are implemented. Follow-up work is
+explicit in [Gameplay interface](GAMEPLAY_INTERFACE.md): room purchases/blueprints,
+manager effects, device lifecycle, briefing access and retirement narrative.
+The native Mac walkthrough and focused persistence/simulation checks are
+separate from 8K offscreen layout evidence and later device qualification.
 
 The build wrapper now defaults to both apps in locally optimized Release with
 `BUILD_TESTING=OFF`, diagnostics off and no test execution. Tests and debugging

@@ -1,4 +1,5 @@
 #include <pgp/runtime/compiler.hpp>
+#include <pgp/content/county_catalog.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -306,6 +307,7 @@ Json definition_json(const Definition& definition, const std::string& key) {
         for (const auto& [name, value] : scenario->ownership) result["ownership_basis_points"][name] = value.value();
         result["research"] = scenario->research; result["flows"] = scenario->flows;
         if(scenario->founding) result["founding"]=Json::parse(canonical_founding_catalog(*scenario->founding));
+        if(scenario->counties) result["counties"]=Json::parse(content::canonical_county_catalog(*scenario->counties));
         if(!scenario->difficulties.empty()) {
             result["difficulties"]=Json::array();
             for(const auto& d:scenario->difficulties) result["difficulties"].push_back({{"id",d.id},{"name",d.name},{"description",d.description},

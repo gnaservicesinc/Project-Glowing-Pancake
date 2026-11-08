@@ -57,6 +57,7 @@ struct WorldState {
     std::string background{};
     std::string difficulty{};
     std::optional<content::FoundingSelection> founding{};
+    std::optional<core::CountyState> counties{};
     auto operator<=>(const WorldState&) const = default;
 };
 

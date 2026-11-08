@@ -687,6 +687,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                         refuse(CommandReason::dependent_commitment,"Wait until the published service commitments end before withdrawing operations.");
                 discard_service_rollouts(next);
                 withdraw_pending_specialists(next);
+                withdraw_people(next);
                 std::vector<std::string> projects,recurring,sources;
                 for (const auto& row:next.capacity->projects)
                     if (row.status==ProjectStatus::active || row.status==ProjectStatus::paused) projects.push_back(row.id);
@@ -910,6 +911,10 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 refuse(CommandReason::invalid_argument,"Regional media and standards require the owning world transaction.");
             } else if constexpr (std::is_same_v<Action, TakeFinancing>) {
                 const auto before=next.cash;take_financing(next,action.id);(void)receipt(next,"take_financing",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, HireEmployee>) {
+                const auto before=next.cash;hire_employee(next,action.id,reserved_cash(next));(void)receipt(next,"hire_employee",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, SetRecruitingTerms>) {
+                set_recruiting_terms(next,action);(void)receipt(next,"set_recruiting_terms");
             } else if constexpr (std::is_same_v<Action, HireSpecialist>) {
                 const auto before=next.cash;hire_specialist(next,action.id,reserved_cash(next));(void)receipt(next,"hire_specialist",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, NegotiateCorporateFinance>) {

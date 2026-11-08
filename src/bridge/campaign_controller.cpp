@@ -130,15 +130,18 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const 
 }
 }
 CampaignController::CampaignController(runtime::CompiledProgram program,runtime::Checkpoint checkpoint,
-    persistence::LocalPaths paths,persistence::Settings initial_settings,QObject* parent,bool welcome)
+    persistence::LocalPaths paths,persistence::Settings initial_settings,QObject* parent,bool welcome,bool continuous)
     : QObject(parent),program_(program),management_(new ManagementController(this)),infrastructure_(new InfrastructureController(this)),
       civic_(new CivicController(this)),society_(new SocietyController(this)),institutions_(new InstitutionsController(this)),
       frontier_(new FrontierController(this)),
       leadership_(new SuccessionController(this)),
       objectives_(new ObjectivesController(this)),
       founding_(new FoundingController(program_.collection,paths.saves_directory.parent_path()/"founding-draft.json",this)),
+      world_(new WorldController(paths.saves_directory.parent_path()/"world-navigation",this)),
       welcome_(welcome),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
       save_folder_(QUrl::fromLocalFile(QString::fromStdU16String(paths.saves_directory.u16string()))) {
+    connect(world_,&WorldController::actionRequested,this,&CampaignController::submit);
+    connect(world_,&WorldController::noticeRaised,this,&CampaignController::setNotice);
     connect(management_,&ManagementController::actionRequested,this,&CampaignController::submit);
     connect(infrastructure_,&InfrastructureController::actionRequested,this,&CampaignController::submit);
     connect(infrastructure_,&InfrastructureController::noticeRaised,this,&CampaignController::setNotice);
@@ -179,7 +182,7 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
         },Qt::QueuedConnection);
     });
     (void)persistence::encode_settings(settings_);
-    worker_ = new CampaignWorker(std::move(program),std::move(checkpoint),std::move(paths),settings_);
+    worker_ = new CampaignWorker(std::move(program),std::move(checkpoint),std::move(paths),settings_,nullptr,continuous);
     worker_->moveToThread(&thread_);
     connect(&thread_,&QThread::finished,worker_,&QObject::deleteLater);
     connect(worker_,&CampaignWorker::snapshotReady,this,&CampaignController::acceptSnapshot);
@@ -212,6 +215,7 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     const bool first = !snapshot_;
     const bool replace = first || snapshot_->generation != snapshot->generation;
     auto projects = project_rows(snapshot->checkpoint);
+    world_->update(snapshot,program_,replace);
     management_->update(snapshot,program_,replace);
     infrastructure_->update(snapshot,program_,replace);
     civic_->update(snapshot, replace);
@@ -221,7 +225,7 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     leadership_->update(snapshot,replace);
     objectives_->update(snapshot,program_,replace);
     auto inbox = inbox_rows(snapshot->checkpoint,program_.collection,*management_);
-    if (!first && replace) welcome_=false;
+    if ((!first && replace) || snapshot->current_campaign) welcome_=false;
     if (replace) { projects_->beginCampaign(std::move(projects)); inbox_->beginCampaign(std::move(inbox)); }
     else { projects_->setRows(std::move(projects)); inbox_->setRows(std::move(inbox)); }
     const bool changed_settings = settings_ != snapshot->settings;
@@ -229,6 +233,17 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     if (first) busy_ = false;
     if (changed_settings) emit settingsChanged();
     emit stateChanged(); emit snapshotChanged(); emit selectionChanged();
+}
+bool CampaignController::canStartNew() const {
+    return ready() && !busy_ && !storageBlocked() && (!currentCampaign() ||
+        runtime::objective_time_stopped(snapshot_->checkpoint.world) ||
+        snapshot_->checkpoint.world.simulation.phase==core::DayPhase::closed ||
+        snapshot_->checkpoint.world.simulation.phase==core::DayPhase::finished);
+}
+void CampaignController::retryPersistence() {
+    if(busy_ || !ready()) return;
+    busy_=true;++token_;emit stateChanged();
+    QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_]{worker->retryPersistence(token);},Qt::QueuedConnection);
 }
 QVariantList CampaignController::headquarters() const {
     QVariantList result;
@@ -393,6 +408,7 @@ void CampaignController::startCampaign(QString hq,bool stories,QString scenario,
     },Qt::QueuedConnection);
 }
 void CampaignController::openWelcome() {
+    if(currentCampaign() && !canStartNew()) {setNotice(tr("Your company is still in progress. Plan a handover in Leadership."));return;}
     if (!management_->available() || busy_) return;
     if (!paused()) submit(core::SetPaused{true});
     clearNotice();
@@ -567,12 +583,14 @@ void CampaignController::setSelectedInboxId(QString id) {
 }
 void CampaignController::setNotice(QString explanation) { if (explanation == notice_) return; notice_ = std::move(explanation); emit noticeChanged(); }
 void CampaignController::clearNotice() { setNotice({}); }
-bool CampaignController::beginOperation() {
+bool CampaignController::beginOperation(bool recovery) {
+    if(storageBlocked() && !recovery) {setNotice(tr("Automatic saving needs recovery. Retry before continuing."));return false;}
     if (busy_ || !snapshot_) return false;
     if (token_ == std::numeric_limits<std::uint64_t>::max()) { setNotice(QStringLiteral("The command identifier range is exhausted.")); return false; }
     ++token_; busy_ = true; emit stateChanged(); return true;
 }
 void CampaignController::submit(core::CommandAction action) {
+    if(storageBlocked()) {setNotice(tr("Progress needs recovery. Retry automatic saving before making another decision."));return;}
     if (!beginOperation()) return;
     if (welcome_) { busy_=false;emit stateChanged();return; }
     const auto command = core::Command{snapshot_->checkpoint.world.simulation.revision,std::move(action)};
@@ -648,12 +666,12 @@ void CampaignController::saveTo(QUrl url) {
 void CampaignController::loadFrom(QUrl url) {
     try {
         const auto path = local_path(url);
-        if (!beginOperation()) return;
+        if (!beginOperation(true)) return;
         QMetaObject::invokeMethod(worker_,[worker = worker_,token = token_,path] { worker->loadFrom(token,path); },Qt::QueuedConnection);
     } catch (const std::exception& error) { setNotice(QString::fromUtf8(error.what())); }
 }
 void CampaignController::changeSettings(persistence::Settings settings) {
-    if (settings == settings_ || !beginOperation()) return;
+    if (settings == settings_ || !beginOperation(true)) return;
     QMetaObject::invokeMethod(worker_,[worker = worker_,token = token_,settings] { worker->changeSettings(token,settings); },Qt::QueuedConnection);
 }
 void CampaignController::setTextScalePercent(int value) {
