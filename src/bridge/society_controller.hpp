@@ -8,6 +8,7 @@ class SocietyController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool available READ available NOTIFY changed)
     Q_PROPERTY(StableListModel* regions READ regions CONSTANT)
+    Q_PROPERTY(StableListModel* mapRegions READ mapRegions CONSTANT)
     Q_PROPERTY(QString assumptions READ assumptions NOTIFY changed)
     Q_PROPERTY(QString global READ global NOTIFY changed)
     Q_PROPERTY(QString forum READ forum NOTIFY changed)
@@ -22,6 +23,7 @@ public:
     void update(CampaignSnapshotPtr,bool replace);
     bool available() const;
     StableListModel* regions() {return &regions_;}
+    StableListModel* mapRegions() {return &map_regions_;}
     QString assumptions() const;
     QString global() const;
     QString forum() const;
@@ -45,7 +47,7 @@ private:
     bool editable() const;
     void updateRows(bool replace);
     CampaignSnapshotPtr snapshot_;
-    StableListModel regions_;
+    StableListModel regions_,map_regions_;
     QString review_text_;
     std::optional<core::CommandAction> pending_;
     std::uint64_t reviewed_revision_=0;

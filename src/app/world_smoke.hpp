@@ -10,3 +10,4 @@ void schedule_departure_smoke(QQuickWindow&,pgp::bridge::CampaignController&,QSt
 void schedule_decision_smoke(QQuickWindow&,pgp::bridge::CampaignController&,QString,bool largeViewport=false);
 void schedule_content_recovery_smoke(QQuickWindow&,pgp::bridge::CampaignController&,pgp::persistence::LocalPaths,QString source,QString screenshot);
 void schedule_form_drafts_smoke(QQuickWindow&,pgp::bridge::CampaignController&,pgp::persistence::LocalPaths,QString screenshot);
+void schedule_map_layout_smoke(QQuickWindow&,pgp::bridge::CampaignController&,pgp::persistence::LocalPaths,QString screenshot);

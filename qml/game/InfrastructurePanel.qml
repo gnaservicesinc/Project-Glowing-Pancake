@@ -186,9 +186,10 @@ ColumnLayout {
                 visible: panel.showMap
                 Layout.fillWidth: true; Layout.minimumWidth: 0; Layout.preferredWidth: 550
                 DomesticMap {
+                    textSize:panel.textSize
                     objectName: "domesticMap"
                     visible: !!geometry.features
-                    Layout.fillWidth: true; Layout.preferredHeight: panel.textSize >= 24 ? 305 : 355
+                    Layout.fillWidth: true; Layout.preferredHeight: panel.textSize*25.4
                     geometry: infra.mapGeometry; selectedId: infra.states.selectedId
                     onStatePicked: id => {
                         if (infra.states.indexOf(id) < 0)

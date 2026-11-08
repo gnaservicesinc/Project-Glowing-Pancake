@@ -44,7 +44,13 @@ QString StableListModel::idAt(int position) const {
 QVariantMap StableListModel::row(const QString& id) const {
     const auto position = indexOf(id);
     if (position < 0) return {};
-    const auto& value = rows_[static_cast<std::size_t>(position)];
+    return mapped(rows_[static_cast<std::size_t>(position)]);
+}
+QVariantMap StableListModel::sourceRow(const QString& id) const {
+    const auto found=std::ranges::find(source_rows_,id,&CampaignRow::entity_id);
+    return found==source_rows_.end()?QVariantMap{}:mapped(*found);
+}
+QVariantMap StableListModel::mapped(const CampaignRow& value) {
     return {{QStringLiteral("entityId"),value.entity_id},{QStringLiteral("title"),value.title},
         {QStringLiteral("subtitle"),value.subtitle},{QStringLiteral("detail"),value.detail},
         {QStringLiteral("status"),value.status},{QStringLiteral("required"),value.required},

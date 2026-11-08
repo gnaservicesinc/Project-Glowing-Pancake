@@ -13,7 +13,7 @@ QString score(std::uint32_t value) {return QStringLiteral("%1.%2").arg(value/100
 QString count(std::uint64_t value) {return QString::number(static_cast<qulonglong>(value));}
 QString money(Cents value) {return QStringLiteral("$%1.%2 (2014)").arg(value.value()/100).arg(value.value()%100,2,10,QLatin1Char('0'));}
 }
-SocietyController::SocietyController(QObject* parent):QObject(parent),regions_(this) {
+SocietyController::SocietyController(QObject* parent):QObject(parent),regions_(this),map_regions_(this) {
     connect(&regions_,&StableListModel::selectedIdChanged,this,&SocietyController::clearReview);
 }
 bool SocietyController::available() const {return snapshot_ && world().society.has_value();}
@@ -137,6 +137,7 @@ void SocietyController::updateRows(bool replace) {
         }
         rows.push_back({text(profile.id),text(profile.name),QStringLiteral("Population weight %1 · output weight %2").arg(profile.population_weight).arg(profile.output_weight),detail.join(u'\n'),QStringLiteral("Regional profile")});
     }
+    if(replace) map_regions_.beginCampaign(rows);else map_regions_.setRows(rows);
     if(replace) regions_.beginCampaign(std::move(rows));else regions_.setRows(std::move(rows));
     if(regions_.selectedId().isEmpty() && regions_.rowCount()) regions_.setSelectedId(regions_.idAt(0));
 }

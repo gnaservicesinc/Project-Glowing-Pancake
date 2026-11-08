@@ -1,6 +1,6 @@
 # Feedback and later-phase backlog
 
-Updated 2026-11-07
+Updated 2026-11-08
 
 **The initial skeleton implementation queue is closed.** The current core is
 the starting point for human feedback. Work now follows the user's selected
@@ -40,6 +40,8 @@ records, ordered queues and per-company defaults are preserved without automatic
 commands. Compatible content updates retain
 each company's original collection; reviewed missing-content recovery and exact
 older-company restart are implemented and checked.
+World/US/county map scaling and pointer briefing/selection are checked at
+1080p, 8K and narrow 200% text, with independent filters and no campaign mutation.
 The native Mac walkthrough and focused persistence/simulation checks are
 separate from 8K offscreen layout evidence and later device qualification.
 

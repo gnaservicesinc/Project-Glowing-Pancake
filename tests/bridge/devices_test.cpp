@@ -1,4 +1,5 @@
 #include "world_controller.hpp"
+#include "society_controller.hpp"
 #include <pgp/runtime/scenario.hpp>
 #include <pgp/persistence/save.hpp>
 #include <QCoreApplication>
@@ -24,6 +25,12 @@ int main(int argc,char** argv) {
         const auto submit=[&](core::CommandAction a) {const auto result=live.submit({live.current_state().world.simulation.revision,std::move(a)});check(result.accepted(),result.explanation.c_str());};
         const auto snapshot=[&] {return std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,live.current_state(),{},true,false});};
         bridge::WorldController world{{}};world.update(snapshot(),program,true);
+        bridge::SocietyController society;society.update(snapshot(),true);
+        const auto regions=society.mapRegions()->rowCount();
+        society.regions()->setFilterText(QStringLiteral("No matching region"));
+        check(regions>0 && society.mapRegions()->rowCount()==regions && society.regions()->rowCount()==0,"World-map briefings must not inherit the World affairs filter");
+        society.mapRegions()->setSelectedId(society.mapRegions()->idAt(regions-1));
+        check(society.regions()->rowCount()==0 && society.regions()->selectedId().isEmpty(),"Map selection must not replace another app's filtered context");
         check(world.referenceCity("US-MI")=="Detroit" && world.referenceCity("state.us_nj")=="Newark" && world.referenceCity("US-TN")=="Memphis" && world.referenceCity("US-HI")=="Honolulu", "City context must use the complete offline 2010 baseline, including aliases and CDPs");
         check(world.devices().size()==3,"Shared office must include three owned working device kinds");
         check(world.navigate("workspace","hq","phone","lab","research") && world.navigation().value("device")=="laptop","Phone app routing must choose an actually compatible device");

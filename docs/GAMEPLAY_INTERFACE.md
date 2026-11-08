@@ -117,7 +117,25 @@ software/offscreen viewports; native Metal is checked on the attached display,
 which caps window height. The 650x480, 200% text profile remains scrollable.
 These are development checks, not physical 8K-device or release qualification.
 
-## Further design work
+The final map audit scales world/US map extents, county markers, labels and
+selection targets with the interface. Country and county hover cards use a
+noninteractive overlay inside the window bounds, so they cannot intercept map
+clicks. Country cards show existing public regional conditions and actual
+operating-office counts for that region. Map regions have an independent
+presentation model, so a saved World affairs filter cannot hide or redirect a
+map briefing. Briefings refresh with new public snapshots even under a stationary
+pointer. No country ranking or geography-based authority is invented.
+Pointer hover/selection and unchanged campaign/journal bytes are checked at
+1920×1080, 7680×4320 and 650×480 with 200% text in the last layout.
+
+The final full world walkthrough passes in the active software/offscreen window.
+Native captures verify the 3D workplace, applications and map rendering. The
+attached native window remained inactive during the final Escape probe, even
+when launched through its app bundle; that probe is not native shortcut
+acceptance. Physical input/window-focus, attached 8K devices and release
+qualification retain their separate later gates.
+
+## Simulation boundaries and save behavior
 
 This implementation supplies the playable world, persistence, recruitment,
 layered portraits, county simulation and work-backed operations management.

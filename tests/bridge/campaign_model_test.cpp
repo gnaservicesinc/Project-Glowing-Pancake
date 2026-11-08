@@ -117,6 +117,9 @@ void filtered_inbox() {
     inbox.setFilterText(QStringLiteral("SUPPLIER"));
     check(inbox.containsSourceId(QStringLiteral("warning.3")) && !inbox.containsSourceId(QStringLiteral("missing")),
           "Draft validation must recognize filtered source IDs and refuse unknown IDs");
+    check(inbox.sourceRow(QStringLiteral("warning.3")).value(QStringLiteral("title"))==QStringLiteral("Liquidity warning") &&
+          inbox.sourceRow(QStringLiteral("missing")).isEmpty() && inbox.selectedId()==QStringLiteral("choice.1"),
+          "Read-only map briefings retain filtered public rows without changing selection");
     check(inbox.rowCount() == 1 && choice.isValid() && inbox.row(QStringLiteral("choice.1")).value(QStringLiteral("required")).toBool(),
           "Case-insensitive inbox filter must retain required actions");
     inbox.setRows({row(QStringLiteral("choice.1"),QStringLiteral("Supplier decision"),QStringLiteral("resolved"),false),

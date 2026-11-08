@@ -57,6 +57,7 @@ public:
     Q_INVOKABLE [[nodiscard]] int indexOf(const QString& id) const;
     Q_INVOKABLE [[nodiscard]] bool containsSourceId(const QString& id) const;
     Q_INVOKABLE [[nodiscard]] QVariantMap row(const QString& id) const;
+    Q_INVOKABLE [[nodiscard]] QVariantMap sourceRow(const QString& id) const;
     Q_INVOKABLE [[nodiscard]] QString idAt(int index) const;
 signals:
     void countChanged();
@@ -71,6 +72,7 @@ signals:
     void aboutToReconcile();
     void reconciled();
 private:
+    static QVariantMap mapped(const CampaignRow&);
     void requireOwningThread() const;
     static void validateRows(const std::vector<CampaignRow>& rows);
     [[nodiscard]] std::vector<CampaignRow> visibleRows(const std::vector<CampaignRow>& rows) const;

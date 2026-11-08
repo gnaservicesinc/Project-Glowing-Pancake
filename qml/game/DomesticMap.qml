@@ -4,6 +4,8 @@ Canvas {
     id: map
     required property var geometry
     required property string selectedId
+    property int textSize:14
+    readonly property real markerScale:textSize/14
     signal statePicked(string id)
     Accessible.name: qsTr("Domestic map. Use the adjacent state list for keyboard selection.")
     Accessible.role: Accessible.Graphic
@@ -11,6 +13,8 @@ Canvas {
     onSelectedIdChanged: requestPaint()
     onWidthChanged: requestPaint()
     onHeightChanged: requestPaint()
+    onVisibleChanged: if(visible)requestPaint()
+    onTextSizeChanged: requestPaint()
     readonly property real ratio: geometry.width > 0 ? Math.min(width / geometry.width, height / geometry.height) : 1
     readonly property real insetX: (width - (geometry.width || 0) * ratio) / 2
     readonly property real insetY: (height - (geometry.height || 0) * ratio) / 2
@@ -25,7 +29,7 @@ Canvas {
         }
         ctx.fillStyle = selected ? "#d29a57" : "#405d75"
         ctx.strokeStyle = selected ? "#ffe0a3" : "#a2bbce"
-        ctx.lineWidth = (selected ? 1.6 : 0.7) / ratio
+        ctx.lineWidth = (selected ? 1.6 : 0.7) * markerScale / ratio
         ctx.fill()
         ctx.stroke()
     }
@@ -53,10 +57,10 @@ Canvas {
             drawState(ctx, selected, true)
         if (district) {
             ctx.beginPath()
-            ctx.arc(district.label[0], district.label[1], 5 / ratio, 0, 2 * Math.PI)
+            ctx.arc(district.label[0], district.label[1], 5 * markerScale / ratio, 0, 2 * Math.PI)
             ctx.fillStyle = selectedId === district.id ? "#ffd897" : "#e0eef7"
             ctx.fill()
-            ctx.lineWidth = 1.2 / ratio
+            ctx.lineWidth = 1.2 * markerScale / ratio
             ctx.strokeStyle = "#14283c"
             ctx.stroke()
         }
@@ -78,7 +82,7 @@ Canvas {
         const x = (px - insetX) / ratio
         const y = (py - insetY) / ratio
         for (const state of geometry.features) {
-            if (state.callout && Math.hypot(state.label[0] - x, state.label[1] - y) * ratio <= 8) {
+            if (state.callout && Math.hypot(state.label[0] - x, state.label[1] - y) * ratio <= 8*markerScale) {
                 statePicked(state.id)
                 return
             }

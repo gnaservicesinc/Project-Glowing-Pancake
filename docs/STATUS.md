@@ -1,6 +1,6 @@
 # Project status and next handoff
 
-Updated 2026-11-07
+Updated 2026-11-08
 
 ## Implementation progress
 
@@ -77,6 +77,10 @@ their original definitions. Missing collections have a reviewed recovery path
 that preserves company/journal files and damaged cache bytes. Focused failure,
 replay and native rendered recovery/restart checks pass. These checks
 do not close human review, extended campaign or release/device gates.
+The final map audit adds scaled geometry/markers and readable, click-through
+hover cards at 1080p, 8K and narrow high-text layouts. Map briefings no longer
+inherit another app's filter. The complete active offscreen world/pause path
+passes; native rendering and native OS shortcut acceptance remain distinct.
 
 ## Selected feedback: campaign and technology design
 

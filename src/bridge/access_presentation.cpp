@@ -32,7 +32,7 @@ QVariantList WorldController::overseasOffices() const {
         const auto& offers=s.infrastructure->catalog.workplace->access->offices;const auto& model=*std::ranges::find(offers,o.offer,&core::LiaisonOfficeOffer::id);
         const bool open=core::liaison_office_open(s,o,s.date);
         const auto status=o.closed_on?tr("Closed %1").arg(q(core::iso_date(*o.closed_on))):o.ready_on>s.date?tr("Opening %1").arg(q(core::iso_date(o.ready_on))):open?tr("Operating"):tr("Operations withdrawn");
-        rows.push_back(QVariantMap{{"id",QString::number(o.id)},{"name",q(model.name)},{"canClose",!o.closed_on},{"revision",reviewToken()},
+        rows.push_back(QVariantMap{{"id",QString::number(o.id)},{"name",q(model.name)},{"region",q(model.region)},{"operating",open},{"canClose",!o.closed_on},{"revision",reviewToken()},
             {"detail",status+tr(" · %1 local employees · %2/month payroll and rent").arg(open?model.people:0).arg(money(model.monthly))}});
     }return rows;
 }
