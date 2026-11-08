@@ -193,8 +193,8 @@ using CommandAction = std::variant<AssignOperationsManager, OpenLiaisonOffice, C
                                    SubmitPublicTestimony,MakePublicPromise,RequestInstitutionalMandate,NegotiatePublicCase,
                                    NegotiateExecutiveDispute,AcknowledgePublicCase,RelinquishInstitutionalMandate,DirectRegionalProcurement,
                                    RegisterFrontierSystem,StartFrontierTrial,AuthorizeFrontierResearch,AuthorizeFrontierRefresh,CancelFrontierPolicy,
-                                   ProposeSuccession,VoteSuccession,CancelSuccession,RetireFounderChair,AcknowledgeSuccession,
-                                   SelectCampaignObjectives,AcknowledgeObjectiveBreach,EndWithPostmortem,ContinueAfterEnding>;
+                                   ProposeSuccession,VoteSuccession,CancelSuccession,RetireFounderChair,AcknowledgeSuccession,AnnounceFounderDeparture,
+                                   SelectCampaignObjectives,AcknowledgeObjectiveBreach,EndWithPostmortem,ContinueAfterEnding,FinishFounderRun>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

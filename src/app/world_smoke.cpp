@@ -1,5 +1,6 @@
 #include "world_smoke.hpp"
 #include "campaign_controller.hpp"
+#include <pgp/runtime/objectives.hpp>
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include <QWheelEvent>
@@ -394,6 +395,79 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             }
             std::cout<<"World navigation, device apps, map, persistence and pause passed; resumed="<<state->resumed<<"\n";
             timer->stop();QCoreApplication::exit(0);
+        }
+    });timer->start();
+}
+
+void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,QString screenshot) {
+    using namespace pgp;
+    struct Check {int phase=0,ticks=0;bool resumed=false;core::OrdinalDay handover{0};core::Cents cash{0};};
+    const auto check=std::make_shared<Check>();auto* timer=new QTimer(&window);timer->setInterval(80);
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,check,screenshot] {
+        const auto fail=[&](const char* why){std::cerr<<"Retirement check "<<check->phase<<": "<<why<<" / "<<campaign.notice().toStdString()<<'\n';if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-failed.png");timer->stop();QCoreApplication::exit(3);};
+        if(++check->ticks>1500) {fail("Timeout");return;}
+        if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
+        const auto click=[&](const char* name){if(press(window,find(window.contentItem(),QString::fromUtf8(name))))return true;fail(name);return false;};
+        const auto capture=[&](const char* suffix){if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+QString::fromUtf8(suffix)+".png");};
+        const auto* desk=campaign.leadership();const auto& s=campaign.snapshot()->checkpoint.world.simulation;
+        if(check->phase==0) {
+            check->resumed=campaign.currentCampaign();
+            if(!check->resumed) {
+                auto* founder=campaign.founding();founder->reset();founder->setField("family","rich");founder->setField("office","leased");
+                for(const auto& chapter:founder->chapters()) {const auto row=chapter.toMap();founder->choose(row.value("id").toString(),row.value("choices").toList().front().toMap().value("id").toString());}
+                campaign.startFounderCampaign();
+            }
+            ++check->phase;return;
+        }
+        if(check->phase==1) {
+            if(check->resumed && (!campaign.canStartNew() || !runtime::objective_time_stopped(campaign.snapshot()->checkpoint.world) || campaign.snapshot()->checkpoint.world.objectives->end->cause!=runtime::CampaignEndCause::retirement)) {fail("Retirement ending did not resume");return;}
+            window.setProperty("menuVisible",false);window.setProperty("sessionEntered",true);QMetaObject::invokeMethod(&window,"closeApp");
+            window.showNormal();window.resize(campaign.textScalePercent()>=200?650:1280,campaign.textScalePercent()>=200?480:800);
+            if(check->resumed) {check->phase=30;return;}
+            check->phase=100;return;
+        }
+        if(campaign.requiredKind()=="content") {const auto choices=campaign.requiredChoices();campaign.choose(choices.back().toMap().value("choiceId").toString());return;}
+        if(campaign.requiredKind()=="management") {campaign.acknowledgeManagement();return;}
+        if(campaign.requiredKind()=="site") {campaign.acknowledgeSiteAlert();return;}
+        switch(check->phase) {
+        case 100: if(click("devicesButton")) check->phase=101;return;
+        case 101: if(click("leadershipApp")) check->phase=2;return;
+        case 2:
+            if(desk->candidatesAt(desk->recommendedDate()).isEmpty()) {fail("No opening senior candidate");return;}
+            check->cash=s.cash;if(click("reviewLeadershipNomination")) ++check->phase;return;
+        case 3:
+            if(desk->reviewText().isEmpty() || s.cash!=check->cash) {fail("Nomination preview mutated cash");return;}
+            capture("-nomination");if(click("confirmLeadershipAction")) ++check->phase;return;
+        case 4: if(click("reviewLeadershipSupport")) ++check->phase;return;
+        case 5: capture("-vote");if(click("confirmLeadershipAction")) ++check->phase;return;
+        case 6:
+            if(s.succession->plans.front().status!=core::SuccessionStatus::approved) {fail("Board did not fund handover");return;}
+            check->handover=s.succession->plans.front().handover_on;check->cash=s.cash;
+            if(click("reviewDepartureAnnouncement")) ++check->phase;return;
+        case 7:
+            if(s.cash!=check->cash || !s.succession->releases->empty()) {fail("Announcement preview mutated company");return;}
+            capture("-announcement");if(click("confirmLeadershipAction")) ++check->phase;return;
+        case 8:
+            if(s.succession->releases->size()!=1 || s.cash>=check->cash || desk->canFinish()) {fail("Release was not paid or allowed premature retirement");return;}
+            campaign.setDaysPerSecond(60);if(click("advanceLeadership")) ++check->phase;return;
+        case 9:
+            if(!campaign.paused()) return;
+            if(s.date<check->handover) {if(campaign.requiredKind()=="leadership") campaign.leadership()->acknowledge();else (void)click("advanceLeadership");return;}
+            if(s.succession->plans.front().status!=core::SuccessionStatus::activated || !desk->canFinish() || !campaign.paused()) {fail("Paid work did not produce the announced handover");return;}
+            if(campaign.requiredKind()=="leadership") {campaign.leadership()->acknowledge();return;}
+            if(click("reviewFounderRunRetirement")) ++check->phase;return;
+        case 10: capture("-ending-review");if(click("confirmLeadershipAction")) ++check->phase;return;
+        case 11:
+            if(!campaign.canStartNew() || !runtime::objective_time_stopped(campaign.snapshot()->checkpoint.world) || campaign.snapshot()->checkpoint.world.objectives->end->cause!=runtime::CampaignEndCause::retirement) {fail("Ending did not enable New Game");return;}
+            capture("-retired");QMetaObject::invokeMethod(&window,"closeApp");check->phase=30;return;
+        case 30: if(click("mainMenuButton")) ++check->phase;return;
+        case 31: capture("-new-game");if(click("menuNewGameButton")) ++check->phase;return;
+        case 32:
+            if(press(window,buttonText(window.contentItem(),QStringLiteral("OK")))) ++check->phase;else fail("Archive and New Game review");return;
+        default:
+            if(!campaign.welcome()) {fail("New Game did not open founding");return;}
+            std::cout<<"Retirement "<<(check->resumed?"resume":"walkthrough")<<" passed: paid release, funded successor, frozen ending and New Game route\n";
+            timer->stop();QCoreApplication::exit(0);return;
         }
     });timer->start();
 }

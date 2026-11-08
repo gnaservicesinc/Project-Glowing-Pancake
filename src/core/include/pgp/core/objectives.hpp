@@ -33,6 +33,7 @@ struct ObjectiveCharter {
 struct SelectCampaignObjectives { ObjectiveSelection selection; };
 struct AcknowledgeObjectiveBreach { ObjectiveKind objective; };
 struct EndWithPostmortem {};
+struct FinishFounderRun {};
 struct ContinueAfterEnding {};
 
 struct DeliveredWork {

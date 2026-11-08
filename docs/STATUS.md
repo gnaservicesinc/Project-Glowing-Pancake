@@ -9,7 +9,7 @@ Updated 2026-11-07
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-world/interface batch advances content to **0.35.0-dev.1**, generation **35**.
+world/interface batch advances content to **0.36.0-dev.1**, generation **36**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -61,7 +61,10 @@ overseas opening establishes world contacts. Existing public information and
 obligation responses remain available. HQ operations managers now reserve one real
 worker and daily compute; their engineering skill and completed management work
 improve aggregate branch availability within physical limits. People shows the
-tradeoff and preserves the selected page and manager/source drafts. The [selected design](GAMEPLAY_INTERFACE.md)
+tradeoff and preserves the selected page and manager/source drafts. Founder
+retirement now requires a public, funded successor handover; authored messages
+affect public confidence, and the saved ending enables New Game while retaining
+the company and its optional sandbox continuation. The [selected design](GAMEPLAY_INTERFACE.md)
 records remaining retirement narrative and interface/save-upgrade audit work. These checks
 do not close human review, extended campaign or release/device gates.
 

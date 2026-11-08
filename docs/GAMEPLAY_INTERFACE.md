@@ -51,9 +51,9 @@ preserved. Completed companies are archived before replacement.
 
 Retirement uses the existing leadership/succession system: successor, board vote,
 funded transition, control and company consequences. Ending a run records its
-outcome; it is not a disguised destructive reset. Press-release/image-management
-content can be expanded through the shared event runtime after this interface
-is reviewed.
+outcome; it is not a disguised destructive reset. Founder departure now adds an authored public announcement and a preserved
+retirement ending to that funded process; its audience effects use the existing
+public-record system.
 
 ## Distance and detail
 
@@ -121,7 +121,7 @@ These are development checks, not physical 8K-device or release qualification.
 
 This implementation supplies the playable world, persistence, recruitment,
 layered portraits, county simulation and work-backed operations management.
-Expanded retirement press-release content remains a refinement. Existing facilities/operators, paid infrastructure and
+Existing facilities/operators, paid infrastructure and
 succession retain their real financial/authority contracts. National/world maps
 show public information; contact progression and the existing institutional
 eligibility rules jointly own action authority. Country outlines are display geometry; economic summaries describe
@@ -269,3 +269,31 @@ refusal and exact saves. GUI checks exercise portraits, reviewed assignments,
 work delivery, release/reassignment and page restoration at normal size and
 650x480 with 200% text. Physical native input and release qualification remain
 separate. Content 0.35.0-dev.1 is an exact new internal content identity.
+
+## Public founder handover and retirement
+
+The founding campaign has senior successor cohorts available in 2015. Leadership
+reviews an actual nominee, board decision, preparation fee, staff/compute and
+ongoing salary. The public announcement names that funded successor and offers
+three authored messages with disclosed company expenses and audience effects.
+Each founder plan can be announced once. Confidence gains begin only when the
+handover completes; a delayed or cancelled public commitment harms confidence.
+These bounded effects fade through the existing public-record memory and feed
+its institutional consent calculation. There is no instant productivity bonus.
+
+After the completed public handover, a founder who retained the personal chair
+can continue guiding the company or retire that role. Review retirement then
+records a distinct early ending with the successor, trust, accounts and
+obligations intact. It awards no unfinished century distinctions. New Game
+opens founding and archives the completed company before replacement; optional
+sandbox continuation preserves the recorded ending. A completed handover can
+also be announced afterward. Older charters without departure rules retain
+their original save shape.
+
+Focused checks cover protected funds, duplicate/invalid announcements, real
+preparation, chair retirement, cancellation confidence, altered expense proofs,
+early-ending autosaves, exact reload and sandbox continuation. The native and
+650x480/200% in-process walkthroughs exercise the public review and New Game
+route, with automatic restart checked separately. Physical native input remains
+unqualified because the computer-use pipe is unavailable. Content is now
+0.36.0-dev.1; prior development saves retain their original content identity.

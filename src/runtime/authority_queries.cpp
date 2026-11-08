@@ -198,14 +198,32 @@ AuthorityMonth authority_snapshot(const WorldState& w,OrdinalDay day) {
 }
 std::vector<PublicIdentityEvent> public_identity_events(const WorldState& w,OrdinalDay day) {
     std::vector<PublicIdentityEvent> result;if(!w.authority) return result;const auto& a=*w.authority;
-    const auto add=[&](std::size_t effect,OrdinalDay on,std::string subject,std::string cause){if(on<=day) result.push_back({effect,on,std::move(subject),std::move(cause)});};
+    const auto add=[&](std::size_t effect,OrdinalDay on,std::string subject,std::string cause){if(on<=day) result.push_back({effect,on,std::move(subject),std::move(cause),{}});};
     for(const auto& t:a.testimonies) add(0,t.day,t.report,"Disclosed a completed independent evaluation");
     for(const auto& p:a.promises) if(p.met_on) add(1,*p.met_on,std::to_string(p.id),"Fulfilled a documented public commitment");
     for(const auto& c:a.cases) if(c.disclosed_on) add(c.kind==PublicCaseKind::promise?2:c.kind==PublicCaseKind::resistance?5:6,*c.disclosed_on,std::to_string(c.id),"A documented issue passed its response deadline without an effective remedy");
     if(w.simulation.management && w.simulation.management->governance) for(const auto& c:w.simulation.management->governance->disputes)
         if(c.kind=="publication" && c.status==CorporateDisputeStatus::departed && c.resolved_on) add(3,*c.resolved_on,c.subject,"An executive departed after an unfulfilled publication commitment and failed response path");
     for(const auto& m:a.mandates) if(authority_offer(a.catalog,m.offer).kind==AuthorityKind::coercive) add(4,m.applied_on,m.region,"Funded an abstract coercive institution");
-    std::sort(result.begin(),result.end(),[](const auto& x,const auto& y){return std::tie(x.day,x.effect,x.subject)<std::tie(y.day,y.effect,y.subject);});return result;
+    if(w.simulation.succession && w.simulation.succession->releases) {
+        const auto& actor=*w.simulation.succession;const auto& rules=*succession_catalog(w.simulation).departure;
+        for(const auto& release:*actor.releases) {
+            if(release.day>day) continue;
+            const auto& p=actor.plans.at(release.plan-1);const auto& message=departure_message(succession_catalog(w.simulation),release.message);
+            const auto subject=leadership_candidate(succession_catalog(w.simulation),p.candidate).name;
+            result.push_back({7,release.day,subject,"Founder announcement: "+message.title,std::array<std::int32_t,society_audiences>{}});
+            if(p.status==SuccessionStatus::activated && p.finished_on && *p.finished_on<=day)
+                result.push_back({7,std::max(release.day,*p.finished_on),subject,"Completed the publicly announced founder handover",message.completed_effect});
+            const bool stopped=p.status==SuccessionStatus::cancelled || p.status==SuccessionStatus::obsolete;
+            const bool late=p.handover_on<=day && (!p.finished_on || *p.finished_on>p.handover_on);
+            if((stopped && p.finished_on && *p.finished_on<=day) || late) {
+                auto on=late?p.handover_on:*p.finished_on;
+                if(stopped && p.finished_on) on=std::min(on,*p.finished_on);
+                result.push_back({7,std::max(release.day,on),subject,"The announced founder handover was delayed or cancelled",rules.broken_effect});
+            }
+        }
+    }
+    std::sort(result.begin(),result.end(),[](const auto& x,const auto& y){return std::tie(x.day,x.effect,x.subject,x.cause)<std::tie(y.day,y.effect,y.subject,y.cause);});return result;
 }
 AudienceScores public_identity(const WorldState& w,OrdinalDay day) {
     const auto* known=known_month(w,day);AudienceScores result=known?known->audiences:AudienceScores{5000,5000,5000,5000,5000,5000};
@@ -213,7 +231,7 @@ AudienceScores public_identity(const WorldState& w,OrdinalDay day) {
     std::array<std::int64_t,society_audiences> delta{};const auto memory=w.authority->catalog.identity_memory.value();
     for(const auto& e:public_identity_events(w,day)) {
         const auto age=day.value()-e.day.value();if(age>=memory) continue;
-        for(std::size_t i=0;i<delta.size();++i) delta[i]+=static_cast<std::int64_t>(w.authority->catalog.identity_effects[e.effect][i])*(memory-age)/memory;
+        for(std::size_t i=0;i<delta.size();++i) delta[i]+=static_cast<std::int64_t>((e.direct_effect?(*e.direct_effect)[i]:w.authority->catalog.identity_effects.at(e.effect)[i]))*(memory-age)/memory;
     }
     for(std::size_t i=0;i<result.size();++i) result[i]=static_cast<std::uint32_t>(std::clamp<std::int64_t>(result[i]+delta[i],0,10000));return result;
 }

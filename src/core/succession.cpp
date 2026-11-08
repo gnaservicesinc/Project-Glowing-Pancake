@@ -155,6 +155,7 @@ void initialize_succession(SimulationState& s, std::optional<std::string> founde
     validate_succession_opening(c,s.date,s.end_date);
     SuccessionState actor;actor.founder_holder=s.management->catalog.scoring.founder;
     actor.founder_name=std::move(founder_name);
+    if(c.departure) actor.releases.emplace();
     actor.personal_cash=c.personal_cash;actor.posting_cursor=s.accounts->postings.size();s.succession=std::move(actor);
     if(s.date<succession_detail::year_day(c.founder_birth_year+static_cast<int>(c.executive_retirement_age)))
         appoint(s,{"founder",s.succession->founder_name.value_or(c.founder_name),{},c.founder_birth_year,Cents{0},c.founder_salary},false,0,FounderRole::executive);

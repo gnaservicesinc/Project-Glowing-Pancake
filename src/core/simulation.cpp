@@ -449,7 +449,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 }
             }
             if constexpr (std::is_same_v<Action, SelectCampaignObjectives> || std::is_same_v<Action, AcknowledgeObjectiveBreach> ||
-                          std::is_same_v<Action, EndWithPostmortem> || std::is_same_v<Action, ContinueAfterEnding>) {
+                          std::is_same_v<Action, FinishFounderRun> || std::is_same_v<Action, EndWithPostmortem> || std::is_same_v<Action, ContinueAfterEnding>) {
                 refuse(CommandReason::invalid_argument,"Campaign objectives belong to the shared world transaction.");
             } else if constexpr (std::is_same_v<Action, ReserveFunds>) {
                 if (!valid_text(action.name) || action.amount.value() <= 0) {
@@ -897,6 +897,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 (void)receipt(next,"vote_succession",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, CancelSuccession>) {
                 cancel_succession(next,action.id);(void)receipt(next,"cancel_succession");
+            } else if constexpr (std::is_same_v<Action, AnnounceFounderDeparture>) {
+                const auto before=next.cash;announce_founder_departure(next,action,reserved_cash(next));
+                (void)receipt(next,"announce_founder_departure",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, RetireFounderChair>) {
                 retire_founder_chair(next);(void)receipt(next,"retire_founder_chair");
             } else if constexpr (std::is_same_v<Action, AcknowledgeSuccession>) {

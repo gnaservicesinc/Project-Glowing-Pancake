@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.35.0-dev.1",
+  "content_version": "0.36.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -74161,6 +74161,60 @@
           "chair_retirement_age": 80,
           "chair_salary_cents": 100000,
           "chair_seats": 1,
+          "departure": {
+            "broken_effect_bp": [
+              -200,
+              -150,
+              -250,
+              -150,
+              -300,
+              -100
+            ],
+            "messages": [
+              {
+                "completed_effect_bp": [
+                  100,
+                  50,
+                  100,
+                  50,
+                  150,
+                  50
+                ],
+                "copy": "The founder introduces the board-approved successor, explains the funded handover and confirms that existing company commitments continue.",
+                "fee_cents": 25000,
+                "id": "continuity",
+                "title": "A steady next chapter"
+              },
+              {
+                "completed_effect_bp": [
+                  50,
+                  150,
+                  50,
+                  150,
+                  100,
+                  150
+                ],
+                "copy": "Share the transition schedule, preparation commitments and retained governing rights. Give the incoming leader room to explain the next chapter in their own words.",
+                "fee_cents": 75000,
+                "id": "open_record",
+                "title": "Publish the transition record"
+              },
+              {
+                "completed_effect_bp": [
+                  150,
+                  -50,
+                  100,
+                  -50,
+                  50,
+                  -50
+                ],
+                "copy": "Center the announcement on the founder and introduce the successor as the next steward. The celebration reassures supporters, while some audiences question how independent the new leader will be.",
+                "fee_cents": 50000,
+                "id": "founder_legacy",
+                "title": "Celebrate the founding story"
+              }
+            ]
+          },
           "executive_retirement_age": 70,
           "founder_birth_year": 1997,
           "founder_board": "board.founder",
@@ -74175,7 +74229,7 @@
           "tracks": [
             {
               "cohort_years": 20,
-              "first_birth_year": 1990,
+              "first_birth_year": 1970,
               "id": "leadership.delivery",
               "monthly_salary_cents": 1800000,
               "names": [
@@ -74191,7 +74245,7 @@
             },
             {
               "cohort_years": 20,
-              "first_birth_year": 1992,
+              "first_birth_year": 1972,
               "id": "leadership.research",
               "monthly_salary_cents": 2100000,
               "names": [
@@ -74207,7 +74261,7 @@
             },
             {
               "cohort_years": 20,
-              "first_birth_year": 1991,
+              "first_birth_year": 1971,
               "id": "leadership.operations",
               "monthly_salary_cents": 1840000,
               "names": [
@@ -74223,7 +74277,7 @@
             },
             {
               "cohort_years": 20,
-              "first_birth_year": 1993,
+              "first_birth_year": 1973,
               "id": "leadership.partnerships",
               "monthly_salary_cents": 1950000,
               "names": [
@@ -74369,7 +74423,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 6,
+      "revision": 7,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

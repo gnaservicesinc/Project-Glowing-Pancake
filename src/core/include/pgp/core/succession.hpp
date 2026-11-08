@@ -1,5 +1,6 @@
 #pragma once
 #include <pgp/core/lab.hpp>
+#include <array>
 #include <pgp/core/governance.hpp>
 
 namespace pgp::core {
@@ -7,6 +8,23 @@ struct SimulationState;
 inline constexpr std::size_t succession_plan_limit=128, succession_term_limit=256, succession_notice_limit=512;
 enum class FounderRole { executive,chair,trust };
 enum class SuccessionStatus { proposed,approved,rejected,expired,cancelled,activated,obsolete };
+struct DepartureMessage {
+    std::string id,title,copy;
+    Cents fee{0};
+    std::array<std::int32_t,6> completed_effect{};
+    auto operator<=>(const DepartureMessage&) const = default;
+};
+struct DepartureRules {
+    std::vector<DepartureMessage> messages;
+    std::array<std::int32_t,6> broken_effect{};
+    auto operator<=>(const DepartureRules&) const = default;
+};
+struct DepartureRelease {
+    std::uint64_t plan=0,posting_cursor=0;
+    std::string message;
+    OrdinalDay day{0};
+    auto operator<=>(const DepartureRelease&) const = default;
+};
 struct LeadershipTrack {
     std::string id,priorities;
     std::vector<std::string> names;
@@ -25,6 +43,7 @@ struct SuccessionCatalog {
     MilliCU transition_work{900000};
     Cents founder_salary{0},chair_salary{0},cash_floor{0},personal_cash{0},personal_liabilities{0};
     std::vector<LeadershipTrack> tracks;
+    std::optional<DepartureRules> departure;
     auto operator<=>(const SuccessionCatalog&) const = default;
 };
 struct LeadershipCandidate {
@@ -78,12 +97,14 @@ struct SuccessionState {
     std::vector<SuccessionPlan> plans;
     std::vector<SuccessionNotice> notices;
     std::optional<std::string> founder_name{};
+    std::optional<std::vector<DepartureRelease>> releases;
     auto operator<=>(const SuccessionState&) const = default;
 };
 struct ProposeSuccession { std::string candidate;OrdinalDay handover_on{0};bool retain_chair=false;LabAllocation allocation; };
 struct VoteSuccession { std::uint64_t id=0;bool support=false; };
 struct CancelSuccession { std::uint64_t id=0; };
 struct RetireFounderChair {};
+struct AnnounceFounderDeparture { std::uint64_t plan=0;std::string message; };
 struct AcknowledgeSuccession { std::uint64_t id=0; };
 
 void validate_succession_catalog(const SuccessionCatalog&);
@@ -102,5 +123,9 @@ void propose_succession(SimulationState&,const ProposeSuccession&);
 void vote_succession(SimulationState&,const VoteSuccession&,Cents protected_cash);
 void cancel_succession(SimulationState&,std::uint64_t);
 void retire_founder_chair(SimulationState&);
+void announce_founder_departure(SimulationState&,const AnnounceFounderDeparture&,Cents protected_cash);
+void validate_founder_departure(const SimulationState&);
+[[nodiscard]] const DepartureMessage& departure_message(const SuccessionCatalog&,std::string_view);
+[[nodiscard]] std::string departure_reference(std::uint64_t);
 void acknowledge_succession(SimulationState&,std::uint64_t);
 }

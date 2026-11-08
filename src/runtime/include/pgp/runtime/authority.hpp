@@ -6,6 +6,7 @@ struct PublicIdentityEvent {
     std::size_t effect=0;
     core::OrdinalDay day{0};
     std::string subject,cause;
+    std::optional<std::array<std::int32_t,core::society_audiences>> direct_effect;
 };
 [[nodiscard]] bool submit_authority_action(WorldState&,const core::CommandAction&);
 // Returns whether owning company resources changed after the core close.

@@ -16,7 +16,15 @@ ColumnLayout {
         wrapMode: Text.Wrap
         font.pixelSize: panel.textSize
     }
-    component Action: Button { font.pixelSize: panel.textSize }
+    component Action: Button {
+        id: action
+        font.pixelSize: panel.textSize
+        padding: panel.textSize * 0.65
+        implicitHeight: Math.max(panel.textSize * 2.6, contentItem.implicitHeight + topPadding + bottomPadding)
+        width: Math.min(implicitWidth, panel.width)
+        Layout.maximumWidth: panel.width
+        contentItem: Text { text: action.text; font: action.font; color: action.palette.buttonText; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; wrapMode: Text.Wrap }
+    }
     component Field: ColumnLayout {
         id: field
         required property string label
@@ -37,12 +45,15 @@ ColumnLayout {
         }
     }
     component Picker: ComboBox {
+        property string chosenId: ""
+        currentIndex: model.length ? Math.max(0, model.findIndex(row => row.id === chosenId)) : -1
+        Component.onCompleted: chosenId = campaign.world.draft(objectName + "/selection", "")
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         font.pixelSize: panel.textSize
         textRole: "label"
         valueRole: "id"
-        onActivated: panel.desk.clearReview()
+        onActivated: { chosenId = currentValue; campaign.world.setDraft(objectName + "/selection", currentValue); panel.desk.clearReview() }
     }
     component Records: ColumnLayout {
         id: records
@@ -86,8 +97,11 @@ ColumnLayout {
         objectName: "leadershipRetainChair"
         visible: panel.desk.founderExecutive
         font.pixelSize: panel.textSize
+        Layout.fillWidth: true
         text: qsTr("Founder moves to the personal chair role")
-        onToggled: panel.desk.clearReview()
+        contentItem: Label { text: chair.text; font: chair.font; leftPadding: chair.indicator.width + chair.spacing; wrapMode: Text.Wrap }
+        checked: campaign.world.draft("leadership/chair", "false") === "true"
+        onToggled: { campaign.world.setDraft("leadership/chair", checked ? "true" : "false"); panel.desk.clearReview() }
     }
     Copy { text: qsTr("Transition exercises use spare staff and compute while existing company work continues.") }
     Picker {
@@ -99,8 +113,8 @@ ColumnLayout {
     GridLayout {
         Layout.fillWidth: true
         columns: panel.width >= panel.textSize * 29 ? 2 : 1
-        Field { id: rate; inputName: "leadershipRate"; label: qsTr("Compute per day (CU)") }
-        Field { id: staff; inputName: "leadershipStaff"; label: qsTr("Staff for preparation") }
+        Field { id: rate; inputName: "leadershipRate"; label: qsTr("Compute per day (CU)"); initialValue: panel.desk.recommendedRate }
+        Field { id: staff; inputName: "leadershipStaff"; label: qsTr("Staff for preparation"); initialValue: "1" }
     }
     Action {
         objectName: "reviewLeadershipNomination"
@@ -145,6 +159,13 @@ ColumnLayout {
         enabled: panel.editable
         onClicked: panel.desk.reviewRetirement()
     }
+    Copy { text: qsTr("Announce the founder handover"); font.bold: true; visible: message.model.length > 0 }
+    Copy { text: qsTr("Fund and approve a founder successor plan, then choose its public message. Complete the preparation and handover before retiring. Keeping the personal chair role lets you continue guiding the company."); visible: message.model.length > 0 }
+    Picker { id: message; objectName: "departureMessage"; model: panel.desk.departureMessages; visible: model.length > 0; Accessible.name: qsTr("Public handover message") }
+    Copy { text: message.currentIndex >= 0 ? message.model[message.currentIndex].detail : ""; visible: text.length > 0 }
+    Action { objectName: "reviewDepartureAnnouncement"; text: qsTr("Review public announcement"); visible: message.model.length > 0; enabled: panel.editable && (panel.desk.plans.selectedRow.fields?.announce ?? false); onClicked: panel.desk.reviewAnnouncement(message.currentValue) }
+    Copy { objectName: "departureHistory"; text: panel.desk.departureHistory; visible: text.length > 0 }
+    Action { objectName: "reviewFounderRunRetirement"; text: qsTr("Review retirement"); visible: message.model.length > 0; enabled: panel.editable && panel.desk.canFinish; onClicked: panel.desk.reviewFinish() }
     Copy { text: qsTr("Executive history"); font.bold: true }
     Records { listName: "leadershipTerms"; rows: panel.desk.terms; emptyText: qsTr("Executive terms") }
     Dialog {

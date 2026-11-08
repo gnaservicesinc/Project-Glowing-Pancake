@@ -57,6 +57,7 @@ QString loss_cause(const WorldState& w,const CompiledProgram& program,const Camp
         }
         return {};
     case CampaignEndCause::catastrophe:return text(*program.collection.message(end.source));
+    case CampaignEndCause::retirement:return QStringLiteral("The founder retired after a public, funded handover. The successor, company obligations and retained ownership are preserved. You can start a new company or follow this one in the sandbox. Century distinctions remain unfinished.");
     case CampaignEndCause::postmortem:return text(objective_breach_explanation(w,*objective_kind(end.source)));
     }
     return {};

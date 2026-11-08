@@ -175,7 +175,8 @@ invalid file before retrying; recovery does not silently resume overwriting it.
 Disabled autosaves perform no reads or writes. Monthly saves accept the first
 morning, including a suspended required opening choice, or the exclusive
 completed final-month boundary. An explicit campaign-end reason also accepts a
-valid completed scenario ending midway through a month. The coordinator also
+valid completed scenario or recorded objective ending midway through a month,
+including a founder retirement at a prepared morning. The coordinator also
 calls the ring before irreversible commitments.
 
 `Settings` has only autosave, reduced motion, alert pause, compact management,

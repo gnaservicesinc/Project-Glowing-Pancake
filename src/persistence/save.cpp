@@ -3,6 +3,7 @@
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/core/build_identity.hpp>
 #include <pgp/runtime/competition.hpp>
+#include <pgp/runtime/objectives.hpp>
 #include "json_support.hpp"
 #include "accounts_json.hpp"
 #include "capacity_json.hpp"
@@ -1012,8 +1013,8 @@ std::optional<std::filesystem::path> AutosaveRing::write(const runtime::Compiled
           checkpoint.world.simulation.phase!=core::DayPhase::awaiting_choice && checkpoint.world.simulation.phase!=core::DayPhase::finished)))
         throw PersistenceError("autosave_boundary","Monthly autosaves require the first morning, including a suspended opening choice, or completed final month");
     if (reason==AutosaveReason::campaign_end && checkpoint.world.simulation.phase!=core::DayPhase::finished &&
-        checkpoint.world.simulation.phase!=core::DayPhase::closed)
-        throw PersistenceError("autosave_boundary","Campaign-end autosaves require a completed campaign");
+        checkpoint.world.simulation.phase!=core::DayPhase::closed && !runtime::objective_time_stopped(checkpoint.world))
+        throw PersistenceError("autosave_boundary","Campaign-end autosaves require a recorded campaign ending");
     if (reason!=AutosaveReason::monthly_boundary && reason!=AutosaveReason::before_irreversible_commitment && reason!=AutosaveReason::campaign_end)
         throw PersistenceError("autosave_reason","Unsupported autosave reason");
     std::uint64_t generation=0;

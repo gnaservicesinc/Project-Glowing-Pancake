@@ -749,7 +749,7 @@ RuntimeResult Runtime::submit(const core::Command& command) {
     if (command.expected_revision != checkpoint_.world.simulation.revision)
         return {RuntimeReason::stale_revision, checkpoint_.world.simulation.revision, "The command's observed revision is stale.", {}, {}};
     const auto& action=command.action;
-    const bool objectives_command=std::holds_alternative<core::SelectCampaignObjectives>(action) ||
+    const bool objectives_command=std::holds_alternative<core::FinishFounderRun>(action) || std::holds_alternative<core::SelectCampaignObjectives>(action) ||
         std::holds_alternative<core::AcknowledgeObjectiveBreach>(action) || std::holds_alternative<core::EndWithPostmortem>(action) ||
         std::holds_alternative<core::ContinueAfterEnding>(action);
     if(objectives_command) return transaction(program_,checkpoint_,command.expected_revision,[&](auto& next,auto& result,auto& steps,bool&) {
@@ -764,6 +764,11 @@ RuntimeResult Runtime::submit(const core::Command& command) {
                 acknowledge_objective(next.world,review->objective);
                 if(!required_objective_review(next.world)) prepare(next,program_,result,steps,trace_mode_);
                 result.explanation="Loss recorded. The other scored distinctions are still available.";
+            } else if(std::holds_alternative<core::FinishFounderRun>(action)) {
+                if(has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date)
+                    fail(RuntimeReason::morning_not_ready,"Resolve required content choices before retirement.");
+                finish_founder_run(next.world);
+                result.explanation="The founder retired after the announced, funded handover. This company is preserved; New Game is available.";
             } else if(std::holds_alternative<core::EndWithPostmortem>(action)) {
                 open_campaign_postmortem(next.world);
                 result.explanation="The scored campaign ended at the recorded breach.";

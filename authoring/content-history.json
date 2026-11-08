@@ -106887,6 +106887,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "0165a683be0feac4ab276296c45aab8b8c685ee8064afee90053f598b449af11",
+          "before_hash": "bbcd3faff97419e981624bdea9ae1f776b3ad2d005d5464880ac616a4bb99b41",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 6,
+          "revision": 7
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "c0065b5ea14cb38e8f103f55fe0063b44e8f292c713cc4c477f0c7fc942a50ff",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.36.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 36,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.35.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000035.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000036.collection.json",
+      "summary": "Funded founder announcements, public handover consequences and a preserved retirement ending",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

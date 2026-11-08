@@ -8,7 +8,7 @@ template<> struct Extension<core::ObjectiveKind> {
 };
 template<> struct Extension<runtime::CampaignEndCause> {
     static constexpr auto key=runtime::campaign_end_key;
-    static constexpr std::size_t count=7;
+    static constexpr std::size_t count=8;
 };
 template<> struct Extension<runtime::ObjectiveMode> {
     static constexpr auto key=runtime::objective_mode_key;

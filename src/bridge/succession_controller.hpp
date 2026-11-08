@@ -9,6 +9,10 @@ class SuccessionController final : public QObject {
     Q_PROPERTY(bool editable READ editable NOTIFY changed)
     Q_PROPERTY(bool founderExecutive READ founderExecutive NOTIFY changed)
     Q_PROPERTY(bool founderChair READ founderChair NOTIFY changed)
+    Q_PROPERTY(bool canFinish READ canFinish NOTIFY changed)
+    Q_PROPERTY(QVariantList departureMessages READ departureMessages NOTIFY changed)
+    Q_PROPERTY(QString departureHistory READ departureHistory NOTIFY changed)
+    Q_PROPERTY(QString recommendedRate READ recommendedRate NOTIFY changed)
     Q_PROPERTY(QString overview READ overview NOTIFY changed)
     Q_PROPERTY(QString noticeText READ noticeText NOTIFY changed)
     Q_PROPERTY(QString recommendedDate READ recommendedDate NOTIFY changed)
@@ -22,6 +26,10 @@ public:
     [[nodiscard]] bool editable() const;
     [[nodiscard]] bool founderExecutive() const;
     [[nodiscard]] bool founderChair() const;
+    [[nodiscard]] bool canFinish() const;
+    [[nodiscard]] QVariantList departureMessages() const;
+    [[nodiscard]] QString departureHistory() const;
+    [[nodiscard]] QString recommendedRate() const;
     [[nodiscard]] QString overview() const;
     [[nodiscard]] QString noticeText() const;
     [[nodiscard]] QString recommendedDate() const;
@@ -33,6 +41,8 @@ public:
     Q_INVOKABLE void reviewVote(bool support);
     Q_INVOKABLE void reviewCancellation();
     Q_INVOKABLE void reviewRetirement();
+    Q_INVOKABLE void reviewAnnouncement(QString message);
+    Q_INVOKABLE void reviewFinish();
     Q_INVOKABLE void acknowledge();
     Q_INVOKABLE void confirm();
     Q_INVOKABLE void clearReview();

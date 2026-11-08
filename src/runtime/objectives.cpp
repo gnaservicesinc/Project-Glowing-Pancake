@@ -7,7 +7,7 @@ namespace pgp::runtime {
 using namespace core;
 namespace {
 using namespace objective_detail;
-constexpr std::array<std::string_view,7> end_keys{"deadline","asi_race","insolvency","institutional_control","final_order","catastrophe","postmortem"};
+constexpr std::array<std::string_view,8> end_keys{"deadline","asi_race","insolvency","institutional_control","final_order","catastrophe","postmortem","retirement"};
 constexpr std::array<std::string_view,4> mode_keys{"scored","sandbox","observer","freeplay"};
 std::size_t index(ObjectiveKind kind) {
     const auto i=static_cast<std::size_t>(kind);
@@ -273,6 +273,25 @@ void open_campaign_postmortem(WorldState& world) {
     if(!kind) invalid("An early postmortem needs an irreversible loss of a selected objective.");
     finish(world,CampaignEndCause::postmortem,std::string(objective_key(*kind)));
 }
+std::optional<std::uint64_t> completed_founder_departure(const WorldState& world,OrdinalDay day) {
+    const auto& state=world.simulation;if(!state.succession || !state.succession->releases) return {};
+    const auto& actor=*state.succession;
+    const auto control=std::ranges::find_if(actor.controls.rbegin(),actor.controls.rend(),[&](const auto& c){return c.day<=day;});
+    if(control==actor.controls.rend() || control->role!=FounderRole::trust) return {};
+    for(const auto& release:*actor.releases) {
+        const auto& plan=actor.plans.at(release.plan-1);
+        if(release.day<=day && plan.incumbent==1 && plan.status==SuccessionStatus::activated && plan.finished_on && *plan.finished_on<=day)
+            return plan.id;
+    }
+    return {};
+}
+void finish_founder_run(WorldState& world) {
+    if(!world.objectives || world.objectives->end || world.objectives->mode!=ObjectiveMode::scored || world.simulation.phase!=DayPhase::work_ready)
+        invalid("Retirement needs an ongoing founder campaign at a prepared morning.");
+    const auto plan=completed_founder_departure(world,world.simulation.date);
+    if(!plan) invalid("Complete and announce the funded founder handover, then retire the personal chair role before ending this run.");
+    finish(world,CampaignEndCause::retirement,std::to_string(*plan));
+}
 void continue_campaign(WorldState& world) {
     if(!world.objectives || world.objectives->mode!=ObjectiveMode::scored)
         invalid("This campaign has already continued or has no scored ending.");
@@ -380,6 +399,10 @@ void validate_objectives(const WorldState& world,const CompiledProgram& program,
     } else if(!end.profit.empty() || end.survival) invalid("An early ending cannot award century scores.");
     if(end.cause==CampaignEndCause::asi_race && (!o.race || o.race->day>end.day || !end.source.empty() ||
         o.selections.back().selection.primary!=ObjectiveKind::asi)) invalid("An early ASI ending has no independently settled winner.");
+    if(end.cause==CampaignEndCause::retirement) {
+        const auto plan=completed_founder_departure(world,end.day);
+        if(!plan || end.source!=std::to_string(*plan)) invalid("Retirement lacks the completed, announced founder handover and dated trust role.");
+    }
     if(end.cause==CampaignEndCause::postmortem) {
         const auto kind=objective_kind(end.source);
         if(!kind || !selected(o.selections.back().selection,*kind) || !o.breaches[index(*kind)].first)

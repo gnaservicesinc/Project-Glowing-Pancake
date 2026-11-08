@@ -22,6 +22,17 @@ void validate_succession_catalog(const SuccessionCatalog& c) {
         c.cash_floor.value()<0 || c.cash_floor.value()>1000000000 || c.personal_cash.value()<0 || c.personal_cash.value()>1000000000000 ||
         c.personal_liabilities.value()<0 || c.personal_liabilities.value()>1000000000000 || c.tracks.size()<2 || c.tracks.size()>4)
         invalid("The leadership charter needs finite careers, preparation, board rights and compensation.");
+    if(c.departure) {
+        const auto& rules=*c.departure;
+        if(rules.messages.empty() || rules.messages.size()>6) invalid("Departure needs one to six authored messages.");
+        std::set<std::string> messages;
+        for(const auto& m:rules.messages) {
+            label(m.id,48);label(m.title);label(m.copy,2048);
+            if(!messages.insert(m.id).second || m.fee.value()<0 || m.fee.value()>10000000) invalid("Departure messages need distinct IDs and bounded fees.");
+            for(auto v:m.completed_effect) if(v < -1000 || v > 1000) invalid("Departure audience effects must be bounded.");
+        }
+        for(auto v:rules.broken_effect) if(v < -1000 || v > 0) invalid("A broken departure commitment cannot improve public standing.");
+    }
     std::set<std::string> ids;
     for(const auto& track:c.tracks) {
         label(track.id,48);label(track.priorities,512);
@@ -50,7 +61,9 @@ void validate_succession(const SimulationState& s,bool deep) {
         actor.controls.size()>succession_notice_limit || actor.plans.size()>succession_plan_limit || actor.notices.size()>succession_notice_limit ||
         actor.founder_holder!=s.management->catalog.scoring.founder || actor.posting_cursor>s.accounts->postings.size())
         invalid("The founder trust needs its actual company, financial cursor and bounded leadership history.");
+    if(c.departure.has_value()!=actor.releases.has_value()) invalid("Departure rules and saved releases must be present together.");
     if(!deep) return;
+    validate_founder_departure(s);
     validate_succession_catalog(c);
     validate_succession_opening(c,s.accounts->starts_on,s.end_date);
     Cents paid=c.personal_cash;std::vector<Cents> cash_prefix{Cents{0}};cash_prefix.reserve(s.accounts->postings.size()+1);

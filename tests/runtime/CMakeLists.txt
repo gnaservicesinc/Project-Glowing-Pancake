@@ -256,6 +256,12 @@ target_compile_definitions(pgp-succession-test PRIVATE PGP_SUCCESSION_SOURCE="${
 pgp_project_target(pgp-succession-test)
 add_test(NAME runtime.succession COMMAND pgp-succession-test)
 
+add_executable(pgp-founder-departure-test founder_departure_test.cpp)
+target_link_libraries(pgp-founder-departure-test PRIVATE pgp::session)
+target_compile_definitions(pgp-founder-departure-test PRIVATE PGP_DEPARTURE_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json" PGP_DEPARTURE_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
+pgp_project_target(pgp-founder-departure-test)
+add_test(NAME runtime.founder-departure COMMAND pgp-founder-departure-test)
+
 add_executable(pgp-objectives-test objectives_test.cpp)
 target_link_libraries(pgp-objectives-test PRIVATE pgp::session)
 target_include_directories(pgp-objectives-test PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")

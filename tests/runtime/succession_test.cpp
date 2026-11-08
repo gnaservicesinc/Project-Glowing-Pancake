@@ -52,6 +52,10 @@ runtime::CompiledProgram compile(Json source) {
     const auto registry=content::foundation_registry();return runtime::compile_collection(content::load_collection(source.dump(),registry),registry);
 }
 runtime::CompiledProgram fixture(Json source,bool rivals=false) {
+    // This fixture rewrites rival terms in its two scenarios. Do not leave a
+    // third scenario retaining different terms for the same rival identities.
+    auto& definitions=source["definitions"];
+    definitions.erase(std::remove_if(definitions.begin(),definitions.end(),[](const auto& row){return row["id"]=="scenario.founder_campaign";}),definitions.end());
     for(auto& row:source["definitions"]) if(row["id"]==scenario || row["id"]=="scenario.century_plateau") {
         row["starts_on"]="2027-01-01";row["flows"]=Json::array();row["business_offers"]=Json::array();
         row["management"]["setbacks"]=Json::array();

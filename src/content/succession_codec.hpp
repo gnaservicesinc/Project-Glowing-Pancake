@@ -15,6 +15,13 @@ template<class T,class F> void fields(T& r,F field) {
         field("transition_days",r.transition_days);field("vote_window_days",r.vote_window);field("transition_work_milli_CU",r.transition_work);
         field("founder_salary_cents",r.founder_salary);field("chair_salary_cents",r.chair_salary);field("cash_floor_cents",r.cash_floor);
         field("personal_cash_cents",r.personal_cash);field("personal_liabilities_cents",r.personal_liabilities);field("tracks",r.tracks);
+        field("departure",r.departure,true);
+    } else if constexpr(std::is_same_v<V,core::DepartureRules>) {
+        field("messages",r.messages);field("broken_effect_bp",r.broken_effect);
+    } else if constexpr(std::is_same_v<V,core::DepartureMessage>) {
+        field("id",r.id);field("title",r.title);field("copy",r.copy);field("fee_cents",r.fee);field("completed_effect_bp",r.completed_effect);
+    } else if constexpr(std::is_same_v<V,core::DepartureRelease>) {
+        field("plan",r.plan);field("posting_cursor",r.posting_cursor);field("message",r.message);field("day",r.day);
     } else if constexpr(std::is_same_v<V,core::LeadershipTrack>) {
         field("id",r.id);field("priorities",r.priorities);field("names",r.names);field("first_birth_year",r.first_birth_year);
         field("cohort_years",r.cohort_years);field("signing_cost_cents",r.signing_cost);field("monthly_salary_cents",r.monthly_salary);
@@ -36,7 +43,7 @@ template<class T,class F> void fields(T& r,F field) {
     } else if constexpr(std::is_same_v<V,core::SuccessionState>) {
         field("founder_holder",r.founder_holder);field("personal_cash_cents",r.personal_cash);field("posting_cursor",r.posting_cursor);
         field("terms",r.terms);field("controls",r.controls);field("plans",r.plans);field("notices",r.notices);
-        field("founder_name",r.founder_name,true);
+        field("founder_name",r.founder_name,true);field("releases",r.releases,true);
     }
 }
 }

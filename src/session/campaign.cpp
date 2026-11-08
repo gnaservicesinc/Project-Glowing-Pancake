@@ -165,6 +165,8 @@ OperationResult Campaign::prepare_opening(std::uint64_t expected_revision) {
 OperationResult Campaign::submit(const core::Command& command) {
     const auto* reservation = std::get_if<core::ReserveFunds>(&command.action);
     const bool irreversible = (reservation && !reservation->reversible) ||
+        std::holds_alternative<core::FinishFounderRun>(command.action) ||
+        std::holds_alternative<core::AnnounceFounderDeparture>(command.action) ||
         std::holds_alternative<core::EndWithPostmortem>(command.action) ||
         std::holds_alternative<core::ContinueAfterEnding>(command.action) ||
         std::holds_alternative<core::ConsumeReservation>(command.action) ||

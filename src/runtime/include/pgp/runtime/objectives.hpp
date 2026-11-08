@@ -35,7 +35,7 @@ struct SurvivalEvidence {
     core::MilliCU paid_wholesale{0}, funded_research{0};
     auto operator<=>(const SurvivalEvidence&) const = default;
 };
-enum class CampaignEndCause { deadline, asi_race, insolvency, institutional_control, final_order, catastrophe, postmortem };
+enum class CampaignEndCause { deadline, asi_race, insolvency, institutional_control, final_order, catastrophe, postmortem, retirement };
 struct CampaignEnd {
     core::OrdinalDay day{0};
     CampaignEndCause cause = CampaignEndCause::deadline;
@@ -84,6 +84,8 @@ void validate_objectives(const WorldState&,const CompiledProgram&,bool deep);
 void select_objectives(WorldState&,const core::ObjectiveSelection&);
 void acknowledge_objective(WorldState&,core::ObjectiveKind);
 void open_campaign_postmortem(WorldState&);
+[[nodiscard]] std::optional<std::uint64_t> completed_founder_departure(const WorldState&,core::OrdinalDay);
+void finish_founder_run(WorldState&);
 void continue_campaign(WorldState&);
 
 } // namespace pgp::runtime
