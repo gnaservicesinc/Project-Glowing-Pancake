@@ -217,6 +217,7 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::AddDelegationPolicy>(command.action) || std::holds_alternative<core::RenewComputeLease>(command.action) ||
         std::holds_alternative<core::ReviewDelegation>(command.action) ||
         std::holds_alternative<core::AppointExecutive>(command.action) || std::holds_alternative<core::VoteBoardMotion>(command.action) || std::holds_alternative<core::RespondCorporateDispute>(command.action) ||
+        std::holds_alternative<core::OpenLiaisonOffice>(command.action) || std::holds_alternative<core::CloseLiaisonOffice>(command.action) ||
         std::holds_alternative<core::BuyPersonalDevice>(command.action) || std::holds_alternative<core::ServicePersonalDevice>(command.action) || std::holds_alternative<core::RetirePersonalDevice>(command.action) ||
         std::holds_alternative<core::ExpandHeadquarters>(command.action) || std::holds_alternative<core::BuildFromBlueprint>(command.action) ||
         std::holds_alternative<core::BuildOwnedSite>(command.action) || std::holds_alternative<core::OrderOwnedHardware>(command.action) ||

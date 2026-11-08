@@ -232,6 +232,7 @@ core::MarketInfluences society_market_conditions(const WorldState& world,const c
     });
 }
 core::MediaCampaign preview_media_campaign(const WorldState& world,const core::BuyMediaCampaign& request) {
+    if(request.region!="region.us") if(const auto block=core::regional_contact_block(world.simulation,request.region);!block.empty()) throw std::invalid_argument(block);
     if(!world.society) invalid("This scenario has no regional media system.");
     return media_terms(world,request,world.simulation.date,world.society->campaigns);
 }

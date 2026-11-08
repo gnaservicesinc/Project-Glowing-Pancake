@@ -27,6 +27,11 @@ class WorldController final : public QObject {
     Q_PROPERTY(QVariantList deviceOffers READ deviceOffers NOTIFY changed)
     Q_PROPERTY(QString deviceSummary READ deviceSummary NOTIFY changed)
     Q_PROPERTY(bool companyArchive READ companyArchive NOTIFY changed)
+    Q_PROPERTY(bool nationalAccess READ nationalAccess NOTIFY changed)
+    Q_PROPERTY(bool worldAccess READ worldAccess NOTIFY changed)
+    Q_PROPERTY(QString accessSummary READ accessSummary NOTIFY changed)
+    Q_PROPERTY(QVariantList overseasOfficeOffers READ overseasOfficeOffers NOTIFY changed)
+    Q_PROPERTY(QVariantList overseasOffices READ overseasOffices NOTIFY changed)
     Q_PROPERTY(QVariantList scales READ scales NOTIFY changed)
     Q_PROPERTY(QVariantMap worldGeometry READ worldGeometry CONSTANT)
     Q_PROPERTY(QString officeKind READ officeKind NOTIFY changed)
@@ -60,6 +65,13 @@ public:
     QVariantList deviceOffers() const;
     QString deviceSummary() const;
     bool companyArchive() const;
+    bool nationalAccess() const;
+    bool worldAccess() const;
+    QString accessSummary() const;
+    QVariantList overseasOfficeOffers() const;
+    QVariantList overseasOffices() const;
+    Q_INVOKABLE void openOverseasOffice(QString offer,QString revision);
+    Q_INVOKABLE void closeOverseasOffice(QString id,QString revision);
     Q_INVOKABLE void buyDevice(QString offer,QString revision);
     Q_INVOKABLE void serviceDevice(QString id,QString revision);
     Q_INVOKABLE void powerDevice(QString id,bool powered);

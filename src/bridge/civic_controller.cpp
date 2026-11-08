@@ -86,6 +86,8 @@ std::optional<core::CivicAdvocacyTerms> CivicController::terms() const {
 bool CivicController::canAdvocate() const {
     const auto price = terms();
     if (!price) return false;
+    const auto& policy=civic_policy(state().civic->catalog,selected()->policy_id);
+    if(policy.jurisdiction=="US" && policy.rule!=CivicRule::final_closure && !national_access(state())) return false;
     auto funds = state().cash;
     for (const auto& row : state().reservations) funds = checked_unit_subtract(funds, row.reserved);
     return funds >= price->fee;

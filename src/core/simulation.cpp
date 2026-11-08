@@ -693,7 +693,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     if (row.status==ProjectStatus::active || row.status==ProjectStatus::paused) projects.push_back(row.id);
                 for (const auto& row:next.accounts->recurring)
                     if ((!row.ends_before || *row.ends_before>std::max(row.starts_on,next.date)) &&
-                        !row.id.starts_with("offer.lease/") && !row.id.starts_with("offer.renew/")) recurring.push_back(row.id);
+                        !row.id.starts_with("offer.lease/") && !row.id.starts_with("offer.renew/") &&
+                        !row.id.starts_with("leadership/")) recurring.push_back(row.id);
                 for (const auto& row:next.capacity->sources) sources.push_back(row.id);
                 for (const auto& id:projects) cancel_project(*next.capacity,next.date,id);
                 for (const auto& id:recurring) {
@@ -711,6 +712,10 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 })) refuse(CommandReason::invalid_argument,"Owned and imported capacity follow actual site power and supplier terms.");
                 update_effective_capacity(capacity(next), next.date, action.source_id, action.available);
                 (void)receipt(next, "capacity_availability");
+            } else if constexpr (std::is_same_v<Action, OpenLiaisonOffice>) {
+                const auto before=next.cash;open_liaison_office(next,action.offer,reserved_cash(next));(void)receipt(next,"open_liaison_office",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, CloseLiaisonOffice>) {
+                close_liaison_office(next,action.id);(void)receipt(next,"close_liaison_office");
             } else if constexpr (std::is_same_v<Action, BuyPersonalDevice>) {
                 const auto before=next.cash;buy_personal_device(next,action.offer,reserved_cash(next));(void)receipt(next,"buy_personal_device",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, ServicePersonalDevice>) {
@@ -987,6 +992,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
         }, command.action);
         if (reserve_applies) require_operating_reserve(uncommitted_before,next);
         if (!std::holds_alternative<AdvanceDay>(command.action)) {prepare_governance(next);prepare_succession(next);prepare_infrastructure(next);}
+        prepare_access(next);
         if (next.liquidity && !std::holds_alternative<AdvanceDay>(command.action))
             refresh_liquidity(*next.liquidity,*next.accounts);
         // The input was validated at construction; every daily subsystem owns

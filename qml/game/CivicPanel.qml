@@ -18,6 +18,7 @@ ColumnLayout {
     component Heading: Copy { font.bold: true }
     component Action: Button { font.pixelSize: panel.textSize }
 
+    Copy {text:campaign.world.accessSummary}
     Heading { text: qsTr("Civic · elections and rules") }
     Copy { text: panel.civic.assumptions }
     ComboBox {

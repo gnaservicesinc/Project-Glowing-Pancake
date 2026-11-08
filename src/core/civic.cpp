@@ -167,6 +167,8 @@ std::vector<std::string> civic_evidence_options(const SimulationState& state, co
 
 void fund_policy_advocacy(SimulationState& state, const FundPolicyAdvocacy& request, Cents protected_cash) {
     auto& docket = mutable_docket(state, request.docket);
+    const auto& rule=civic_policy(state.civic->catalog,docket.policy_id);
+    if(rule.jurisdiction=="US" && rule.rule!=CivicRule::final_closure && !national_access(state)) invalid("National advocacy opens through your background, staff, earned revenue or published research. Public information and oversight responses remain available.");
     const auto terms = civic_advocacy_terms(*state.civic, docket, state.date);
     if (!terms) invalid("The disclosed advocacy window or its three submissions are exhausted.");
     if (!state.accounts || terms->fee > checked_unit_subtract(state.cash, protected_cash))

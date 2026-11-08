@@ -292,3 +292,10 @@ target_compile_definitions(pgp-workplace-test PRIVATE PGP_WORKPLACE_SOURCE="${PR
 pgp_project_target(pgp-workplace-test)
 add_test(NAME runtime.workplace COMMAND pgp-workplace-test)
 set_tests_properties(runtime.workplace PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-contacts-test contacts_test.cpp)
+target_link_libraries(pgp-contacts-test PRIVATE pgp::session)
+target_compile_definitions(pgp-contacts-test PRIVATE PGP_CONTACTS_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/contacts.json")
+pgp_project_target(pgp-contacts-test)
+add_test(NAME runtime.contacts COMMAND pgp-contacts-test)
+set_tests_properties(runtime.contacts PROPERTIES TIMEOUT 30)

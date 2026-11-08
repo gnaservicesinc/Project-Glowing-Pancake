@@ -12,6 +12,7 @@ ColumnLayout {
     Repeater {
         model:campaign.world.deviceInventory
         Frame {
+            property bool focusContext:true
             required property var modelData
             Layout.fillWidth:true
             contentItem:ColumnLayout {
@@ -31,6 +32,7 @@ ColumnLayout {
     Repeater {
         model:campaign.world.deviceOffers
         Frame {
+            property bool focusContext:true
             required property var modelData
             Layout.fillWidth:true
             contentItem:ColumnLayout {
@@ -40,7 +42,17 @@ ColumnLayout {
             }
         }
     }
-    function review(action,row,detail) {if(!campaign.paused)campaign.togglePaused();confirmation.action=action;confirmation.reviewed=row;confirmation.detail=detail;confirmation.open()}
+    ReviewPause {id:reviewPause}
+    function review(action,row,detail) {
+        reviewPause.begin(()=>{
+            const rows=action==="buy"?campaign.world.deviceOffers:campaign.world.deviceInventory
+            const current=rows.find(value=>value.id===row.id)
+            if(!current) return
+            confirmation.action=action;confirmation.reviewed=current
+            confirmation.detail=action==="buy"?current.detail:action==="service"?current.serviceDetail:detail
+            confirmation.open()
+        })
+    }
     Dialog {
         id:confirmation
         objectName:"deviceQuote"

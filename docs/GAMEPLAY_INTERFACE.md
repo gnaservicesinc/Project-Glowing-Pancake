@@ -123,10 +123,12 @@ This implementation supplies the playable world, persistence, recruitment,
 layered portraits and county simulation foundation. Manager-derived department productivity and expanded retirement press-release content remain
 future refinements. Existing facilities/operators, paid infrastructure and
 succession retain their real financial/authority contracts. National/world maps
-show public information; the existing institutional eligibility rules still own
-action authority. A separate progression gate for private briefings remains to
-be designed. Country outlines are display geometry; economic summaries describe
+show public information; contact progression and the existing institutional
+eligibility rules jointly own action authority. Country outlines are display geometry; economic summaries describe
 the existing fictional regions, not estimated country-level statistics.
+The remaining interface audit also covers decision participants, largest-city
+labels outside the three founding states, unfinished non-text form selections,
+and reviewed handling of existing campaigns across development content updates.
 
 ## Paid headquarters and facility plans
 
@@ -187,3 +189,45 @@ header and restart. Rendered normal and 650x480/200% layouts are checked
 separately from physical native input, which remains unverified in this session.
 Content 0.33.0-dev.1 is an exact new content identity; prior campaigns retain
 their original files and require their original content or a reviewed migration.
+
+## National contacts and overseas offices
+
+The founder campaign starts nationally connected for a rich family, Wealthy
+Elite, or Child of Political Elite background. Other founders earn national
+contacts at any one authored threshold: 12 productive staff, $250,000 recognized
+company revenue, or three published research results. The interface shows
+current progress. A saved date, cause and source-record cursors preserve what
+earned the milestone, including later departures or revenue reversals. Cash
+investment alone does not count as earned revenue.
+
+Seven foreign game regions offer liaison offices with local payroll,
+setup prices, aggregated representation teams and opening delays. Each office
+is paid for, has a recurring payroll/rent obligation beginning at its opening,
+and can be closed without refunding setup. It adds no HQ workstations, research
+staff or compute. Cancelling or withdrawing before an opening grants no world
+contacts. The first actual opening records a permanent world-contact milestone;
+later closure does not erase people the company has already met.
+
+National contacts permit voluntary federal advocacy and domestic institutional
+initiatives. World contacts permit foreign institutional initiatives, standards
+participation and media campaigns. Existing eligibility, evidence, capacity,
+fees and voting still apply. Public maps, laws, officeholders, evidence submissions
+and responses to existing obligations remain available; public research promises
+are not treated as private diplomatic access. This preserves informed decisions
+before a company becomes influential. Older scenarios without access rules
+retain their original eligibility behavior.
+
+Equipment, construction and office quotes pause running time, wait for the
+updated snapshot and review fresh prices/dates before confirmation. Stale
+confirmations still refuse without spending. A focused regression also preserves
+contractual executive compensation when operations withdraw; withdrawing research
+and facilities does not terminate the separate leadership engagement.
+
+Focused checks cover connected/ordinary backgrounds, real onboarding and revenue
+milestones, paid and duplicate office commitments, cancellation/withdrawal before
+opening, permanent contacts after closure, altered payroll/proof refusal, and
+exact persistence. The GUI harness checks a quote opened while time is running,
+paid setup, the full opening delay and restart. Narrow 650x480/200% rendering is
+checked separately from native render-harness evidence and physical input.
+Content 0.34.0-dev.1 is a new exact content identity with the earlier save
+preservation restriction described above.

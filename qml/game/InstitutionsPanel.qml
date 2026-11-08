@@ -56,6 +56,7 @@ ColumnLayout {
         Copy { text: records.rows.selectedRow.detail || ""; visible: text.length > 0 }
     }
 
+    Copy {text:campaign.world.accessSummary}
     Heading { text: qsTr("Institutions · agreements and public commitments") }
     Copy { objectName: "institutionCoverage"; text: panel.institutions.coverage }
     Action {

@@ -17,6 +17,7 @@ ColumnLayout {
     component Heading: Copy { font.bold: true }
     component Action: Button { font.pixelSize: panel.textSize }
 
+    Copy {text:campaign.world.accessSummary}
     Heading { text: qsTr("World · delivery, welfare and standards") }
     Copy { text: panel.society.assumptions }
     Copy { objectName: "societyGlobal"; text: panel.society.global }

@@ -201,6 +201,10 @@ namespace authority_detail {
 void replay_prepare(WorldState& w,std::optional<OrdinalDay> settled) {(void)prepare_impl(w,settled,true);}
 }
 bool submit_authority_action(WorldState& w,const CommandAction& action) {
+    std::string region;
+    if(const auto* mandate=std::get_if<RequestInstitutionalMandate>(&action)) region=mandate->region;
+    else if(const auto* promise=std::get_if<MakePublicPromise>(&action)) region=promise->region;
+    if(!region.empty()) if(const auto block=regional_contact_block(w.simulation,region);!block.empty()) throw std::invalid_argument(block);
     const bool own=std::holds_alternative<SubmitPublicTestimony>(action) || std::holds_alternative<MakePublicPromise>(action) ||
         std::holds_alternative<RequestInstitutionalMandate>(action) || std::holds_alternative<NegotiatePublicCase>(action) ||
         std::holds_alternative<NegotiateExecutiveDispute>(action) || std::holds_alternative<AcknowledgePublicCase>(action) ||

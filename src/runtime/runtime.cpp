@@ -619,6 +619,7 @@ RuntimeResult transaction(const CompiledProgram& program, Checkpoint& original, 
         std::size_t steps = 0;
         bool core_already_validated = false;
         action(next, result, steps, core_already_validated);
+        if(core::prepare_access(next.world.simulation)) core_already_validated=false;
         for(std::size_t i=original.runtime.receipts.size();i<next.runtime.receipts.size();++i) {
             const auto& receipt=next.runtime.receipts[i];
             if(receipt.operation=="record_world_catastrophe" && std::get<std::int64_t>(receipt.before)==0)
@@ -821,6 +822,12 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             fail(RuntimeReason::morning_not_ready, "Resolve required content choices and prepare the morning before work.");
         if(std::holds_alternative<core::AdvanceDay>(command.action) && required_public_case(next.world))
             fail(RuntimeReason::morning_not_ready,"Review and acknowledge the public dispute notice before advancing.");
+        std::string contact_region;
+        if(const auto* mandate=std::get_if<core::RequestInstitutionalMandate>(&action)) contact_region=mandate->region;
+        else if(const auto* promise=std::get_if<core::MakePublicPromise>(&action)) contact_region=promise->region;
+        else if(const auto* forum=std::get_if<core::EndorseForumStandard>(&action)) contact_region=forum->region;
+        else if(const auto* media=std::get_if<core::BuyMediaCampaign>(&action);media && media->region!="region.us") contact_region=media->region;
+        if(!contact_region.empty()) if(const auto block=core::regional_contact_block(next.world.simulation,contact_region);!block.empty()) fail(RuntimeReason::effect_rejected,block);
         const auto before=core::operating_reserve_target(next.world.simulation).value()>0?
             core::uncommitted_cash(next.world.simulation):core::Cents{0};
         if (submit_authority_action(next.world,command.action)) {

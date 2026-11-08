@@ -350,15 +350,18 @@ ApplicationWindow {
                 if (!item || item === scroll || !scroll.contentItem)
                     return
                 let ancestor = item
-                while (ancestor && ancestor !== page)
+                let context = item
+                while (ancestor && ancestor !== page) {
+                    if (ancestor.focusContext === true && ancestor.height <= scroll.availableHeight) context = ancestor
                     ancestor = ancestor.parent
+                }
                 if (!ancestor)
                     return
-                const point = item.mapToItem(page, 0, 0)
+                const point = context.mapToItem(page, 0, 0)
                 const top = scroll.contentItem.contentY
                 const bottom = top + scroll.availableHeight
-                const target = point.y < top ? point.y : point.y + item.height > bottom ?
-                    point.y + item.height - scroll.availableHeight : top
+                const target = point.y < top ? point.y : point.y + context.height > bottom ?
+                    point.y + context.height - scroll.availableHeight : top
                 scroll.contentItem.contentY = Math.max(0, Math.min(target, page.height - scroll.availableHeight))
             }
 

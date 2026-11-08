@@ -247,6 +247,7 @@ QVariantList WorldController::branches() const {
         for(const auto& hire:i.hires) if(hire.site_id==site.id) {if(hire.starts_on<=s.date) count+=hire.people;else pending+=hire.people;}
         rows.push_back(QVariantMap{{"name",q(site.name)},{"detail",tr("Operations department · %1 operators · %2 joining\n%3 · Staffing and capacity are managed with this facility.").arg(count).arg(pending).arg(q(site.state_id))}});
     }
+    for(const auto& value:overseasOffices()) {const auto office=value.toMap();rows.push_back(QVariantMap{{"name",office.value("name")},{"detail",tr("Local representation department · %1").arg(office.value("detail").toString())}});}
     return rows;
 }
 void WorldController::setCountyState(QString value) {

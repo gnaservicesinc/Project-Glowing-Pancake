@@ -265,3 +265,17 @@ is working. Required decisions still permit power recovery. This equipment
 model is enabled in the founder campaign; older engineering scenarios retain
 fixed devices. Development content revisions still require exact save/content
 identity, preserving incompatible campaigns for recovery rather than replacing them.
+
+### Contacts and overseas offices
+
+**Headquarters → Your company's reach** shows national/world access and overseas
+liaison offices. Ordinary founders earn national contacts through staff,
+recognized revenue or published research; connected backgrounds begin with them.
+An overseas office pays setup now, starts payroll/rent when it opens, and unlocks
+world contacts on that date. It supplies local representation, without compute
+or HQ seats. Established contacts survive later office closure. Public information,
+laws, evidence and existing obligation responses remain available before those
+milestones. Other institutional eligibility and costs still apply.
+
+Construction, equipment and liaison-office reviews pause running time and refresh
+the quoted state before asking for confirmation.

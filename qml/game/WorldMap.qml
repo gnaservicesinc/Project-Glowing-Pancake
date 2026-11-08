@@ -89,8 +89,10 @@ Rectangle {
                 Label {visible:mapPage.scale==="world";Layout.fillWidth:true;text:qsTr("Conditions below describe the country's game region. Individual country economies and private company rankings are not estimated.");wrapMode:Text.Wrap;font.pixelSize:mapPage.textSize;color:"#acc4b8"}
                 StableEntityList {visible:mapPage.scale==="world";Layout.fillWidth:true;Layout.preferredHeight:180;rows:campaign.society.regions;textSize:mapPage.textSize;reducedMotion:campaign.reducedMotion;emptyText:qsTr("Regional briefings will appear as this campaign develops.");onSelected:id=>rows.selectedId=id}
                 Label {visible:mapPage.scale==="world";Layout.fillWidth:true;text:campaign.society.regions.selectedRow.detail || campaign.society.global;font.pixelSize:mapPage.textSize;color:"#d6e2d6";wrapMode:Text.Wrap}
+                Label {visible:mapPage.scale==="country" || mapPage.scale==="world";Layout.fillWidth:true;text:campaign.world.accessSummary;font.pixelSize:mapPage.textSize;color:"#b7cec4";wrapMode:Text.Wrap}
                 Flow {
                     Layout.fillWidth:true;spacing:8
+                    WorldButton {visible:mapPage.scale==="world";text:qsTr("Overseas offices & contacts");textSize:mapPage.textSize;onClicked:mapPage.openApp("facilities","")}
                     WorldButton {visible:mapPage.scale!=="hq";text:qsTr("Facilities & travel");textSize:mapPage.textSize;onClicked:mapPage.openApp("operations","")}
                     WorldButton {visible:mapPage.scale==="country" || mapPage.scale==="state";text:qsTr("Public affairs");textSize:mapPage.textSize;onClicked:mapPage.openApp("civic","")}
                     WorldButton {visible:mapPage.scale==="world";text:qsTr("Markets & presence");textSize:mapPage.textSize;onClicked:mapPage.openApp("office","markets")}

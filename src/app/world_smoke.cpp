@@ -28,11 +28,11 @@ QQuickItem* buttonText(QQuickItem* root,const QString& text) {
     return nullptr;
 }
 }
-void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot,bool portraits,bool workplaces,bool devices) {
+void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot,bool portraits,bool workplaces,bool devices,bool contacts) {
     struct State {int phase=0,ticks=0,portraitPixels=0,constructionDays=0;QString revision;bool resumed=false,workplaceDone=false;};
     auto state=std::make_shared<State>();
     auto* timer=new QTimer(&window);timer->setInterval(150);
-    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot,portraits,workplaces,devices] {
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot,portraits,workplaces,devices,contacts] {
         const auto fail=[&](const char* message){std::cerr<<"World check: "<<message<<" / "<<campaign.notice().toStdString()<<"\n";if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-failed.png");timer->stop();QCoreApplication::exit(3);};
         if(++state->ticks>200) {fail("Timeout");return;}
         if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
@@ -59,10 +59,17 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             window.setProperty("menuVisible",false);window.setProperty("sessionEntered",true);
             QMetaObject::invokeMethod(&window,"closeApp");
             window.showNormal();window.resize(portraits?1920:1280,portraits?1080:800);
-            if((workplaces || devices) && campaign.textScalePercent()>=200) window.resize(650,480);
+            if((workplaces || devices || contacts) && campaign.textScalePercent()>=200) window.resize(650,480);
             state->phase=2;return;
         }
         if(state->phase==2) {
+            if(contacts) {
+                if(state->resumed) {
+                    if(!campaign.world()->nationalAccess() || !campaign.world()->worldAccess() || campaign.world()->overseasOffices().size()!=1) {fail("Overseas offices and contacts did not resume");return;}
+                    std::cout<<"Paid overseas office, opening history and world contacts resumed exactly\n";timer->stop();QCoreApplication::exit(0);return;
+                }
+                if(!click("headquartersTab")) {fail("Headquarters and contacts app");return;}state->phase=400;return;
+            }
             if(devices) {
                 if(state->resumed) {
                     const auto rows=campaign.world()->deviceInventory();
@@ -81,6 +88,35 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             }
             if(!screenshot.isEmpty() && !window.grabWindow().save(screenshot+"-world.png")) {fail("World screenshot");return;}
             if(!click("peopleTab")) {fail("People dock navigation");return;}state->phase=3;return;
+        }
+        if(state->phase==400) {
+            if(!campaign.world()->nationalAccess() || campaign.world()->worldAccess()) {fail("Background and overseas progression are distinct");return;}
+            if(!click("overseasOfficePlanning")) {fail("Open overseas planning");return;}state->phase=401;return;
+        }
+        if(state->phase==401) {campaign.togglePaused();state->phase=402;return;}
+        if(state->phase==402) {
+            if(campaign.paused()) {fail("Exercise office quote from running time");return;}
+            if(!click("reviewOffice_liaison.canada")) {fail("Review overseas commitment");return;}state->phase=403;return;
+        }
+        if(state->phase==403) {
+            if(!campaign.paused()) return;
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-office-quote.png");
+            if(!press(window,buttonText(window.contentItem(),QStringLiteral("OK")))) {fail("Confirm the current paused office quote");return;}state->phase=404;return;
+        }
+        if(state->phase==404) {
+            if(campaign.world()->overseasOffices().size()!=1 || campaign.world()->worldAccess()) {fail("Paid office must await opening");return;}
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-opening.png");state->phase=405;return;
+        }
+        if(state->phase==405) {
+            if(state->constructionDays<14) {campaign.step();++state->constructionDays;return;}
+            if(!campaign.world()->worldAccess()) {fail("Actual overseas opening must unlock world contacts");return;}
+            auto* office=find(window.contentItem(),"closeOffice_1");if(!office || !office->isEnabled()) {fail("Inspect the operating office");return;}
+            office->forceActiveFocus(Qt::TabFocusReason);state->phase=406;return;
+        }
+        if(state->phase==406) {
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-contacts.png");
+            std::cout<<"Live-time pause before quote, paid liaison office, opening delay and national/world progression passed\n";
+            timer->stop();QCoreApplication::exit(0);return;
         }
         if(state->phase==300) {
             if(!click("equipmentApp")) {fail("Equipment launcher entry");return;}state->phase=301;return;

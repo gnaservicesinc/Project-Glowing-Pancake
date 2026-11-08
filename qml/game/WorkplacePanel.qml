@@ -11,6 +11,9 @@ ColumnLayout {
     readonly property bool editable:campaign.companyEditable && !campaign.storageBlocked && !campaign.busy
     signal visitRoom(string place)
     signal openInfrastructure()
+    ReviewPause {id:reviewPause}
+    function reviewRoom(id) {reviewPause.begin(()=>{const current=campaign.world.roomOffers.find(row=>row.id===id);if(current){roomDialog.review={id:current.id,detail:current.name+"\n"+current.detail,revision:campaign.revision};roomDialog.open()}})}
+    function reviewBuild() {reviewPause.begin(()=>{buildDialog.review=campaign.world.blueprintQuote(panel.blueprintId || campaign.world.blueprints[0].id,panel.buildState);buildDialog.open()})}
     function restoreForm() {
         hardwareId=campaign.world.draft("workplace/hardware","rack.reference")
         blueprintId=campaign.world.draft("workplace/blueprint","")
@@ -43,7 +46,7 @@ ColumnLayout {
                 id:offer;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:14;spacing:8
                 Heading {text:modelData.name}
                 Copy {text:modelData.detail}
-                WorldButton {objectName:"reviewRoom_"+modelData.id;text:qsTr("Review construction");textSize:panel.textSize;enabled:panel.editable;onClicked:{roomDialog.review={id:modelData.id,detail:modelData.name+"\n"+modelData.detail,revision:campaign.revision};roomDialog.open()}}
+                WorldButton {objectName:"reviewRoom_"+modelData.id;text:qsTr("Review construction");textSize:panel.textSize;enabled:panel.editable;onClicked:panel.reviewRoom(modelData.id)}
             }
         }
     }
@@ -86,9 +89,10 @@ ColumnLayout {
         }
         WorldButton {
             objectName:"reviewBlueprintBuild";text:qsTr("Review the complete state quote");textSize:panel.textSize;enabled:panel.editable
-            onClicked:{buildDialog.review=campaign.world.blueprintQuote(panel.blueprintId || campaign.world.blueprints[0].id,panel.buildState);buildDialog.open()}
+            onClicked:panel.reviewBuild()
         }
     }
+    AccessPanel {Layout.fillWidth:true;textSize:panel.textSize}
     WorldButton {text:qsTr("Manage facilities, inspections & travel");textSize:panel.textSize;onClicked:panel.openInfrastructure()}
     Dialog {
         id:roomDialog;objectName:"headquartersRoomDialog";property var review:({})

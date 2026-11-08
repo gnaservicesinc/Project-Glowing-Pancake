@@ -155,6 +155,7 @@ void SocietyController::reviewMedia(const QString& service,int audience) {
 }
 void SocietyController::reviewEndorsement(const QString& report,bool support) {
     clearReview();if(!editable()) return;
+    if(const auto block=core::regional_contact_block(world().simulation,regions_.selectedId().toStdString());!block.empty()) {emit noticeRaised(text(block));return;}
     const auto& state=society();
     if(state.rounds.empty() || state.rounds.back().ballot_on<=world().simulation.date || !evidence().contains(report) ||
         std::any_of(state.rounds.back().endorsements.begin(),state.rounds.back().endorsements.end(),[&](const auto& row){return text(row.region)==regions_.selectedId();})) {

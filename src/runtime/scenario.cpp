@@ -120,6 +120,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     else throw std::invalid_argument("Headquarters has no implemented scope binding");
     core::initialize_people(world.simulation,seed,world.identity?world.identity->founder_name:std::string{},world.identity?world.identity->founder_pronouns:std::string{},
         world.founding && world.founding->researcher=="founder",world.founding && world.founding->leg=="genius"?3:0);
+    core::initialize_access(world.simulation,world.founding && (world.founding->family=="rich" || world.founding->leg=="wealthy" || world.founding->leg=="political"));
     if(scenario->counties) world.counties=core::initialize_counties(*scenario->counties,world.simulation.date,seed);
     initialize_competition(world,program,scenario->rivals,competition);
     if(scenario->objectives) initialize_objectives(world,*scenario->objectives,std::move(objectives));
