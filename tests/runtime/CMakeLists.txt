@@ -285,6 +285,16 @@ pgp_project_target(pgp-current-campaign-test)
 add_test(NAME session.continuing-campaign COMMAND pgp-current-campaign-test)
 set_tests_properties(session.continuing-campaign PROPERTIES TIMEOUT 30)
 
+add_executable(pgp-original-content-test original_content_test.cpp)
+target_link_libraries(pgp-original-content-test PRIVATE pgp::persistence)
+target_include_directories(pgp-original-content-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-original-content-test PRIVATE
+    PGP_RUNTIME_FIXTURE_PATH="${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json"
+    PGP_INTEGRATION_SCRATCH_PATH="${CMAKE_CURRENT_BINARY_DIR}")
+pgp_project_target(pgp-original-content-test)
+add_test(NAME session.original-content COMMAND pgp-original-content-test)
+set_tests_properties(session.original-content PROPERTIES TIMEOUT 30)
+
 add_executable(pgp-world-life-test world_life_test.cpp)
 target_link_libraries(pgp-world-life-test PRIVATE pgp::session)
 target_compile_definitions(pgp-world-life-test PRIVATE PGP_WORLD_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/gameplay-world.json")

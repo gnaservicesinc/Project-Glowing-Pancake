@@ -26,3 +26,12 @@ target_compile_definitions(pgp-devices-test PRIVATE PGP_DEVICES_SOURCE="${PROJEC
 pgp_project_target(pgp-devices-test)
 add_test(NAME bridge.devices COMMAND pgp-devices-test)
 set_tests_properties(bridge.devices PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-content-recovery-test content_recovery_test.cpp)
+target_link_libraries(pgp-content-recovery-test PRIVATE pgp::bridge)
+target_compile_definitions(pgp-content-recovery-test PRIVATE
+    PGP_RECOVERY_SOURCE="${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json"
+    PGP_RECOVERY_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
+pgp_project_target(pgp-content-recovery-test)
+add_test(NAME bridge.content-recovery COMMAND pgp-content-recovery-test)
+set_tests_properties(bridge.content-recovery PROPERTIES TIMEOUT 30)

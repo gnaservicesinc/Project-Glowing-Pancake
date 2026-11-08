@@ -36,7 +36,7 @@ bool local_exists(const std::filesystem::path& path) {
 }
 }
 CurrentCampaign::CurrentCampaign(std::filesystem::path directory)
-    : path_(directory / "current.pgpsave"), journal_(directory / "current-days.json") {}
+    : path_(directory / "current.pgpsave"), journal_(directory / "current-days.json"),content_(directory.parent_path()/"campaign-content") {}
 std::optional<runtime::Checkpoint> CurrentCampaign::resume(const runtime::CompiledProgram& program) {
     if (!local_exists(path_)) {
         if (local_exists(journal_) || local_exists(path_.string() + ".bak") || local_exists(path_.string() + ".tmp"))
@@ -59,11 +59,13 @@ std::optional<runtime::Checkpoint> CurrentCampaign::resume(const runtime::Compil
         if (!result.accepted() || engine.checkpoint().world.simulation.revision != revision)
             throw PersistenceError("current_replay", "A recorded day could not be resumed exactly. Current and recovery files were preserved.");
     }
+    content_ready_=false;
     generation_ = loaded.autosave_sequence;
     days_ = std::move(replay);
     return engine.checkpoint();
 }
 void CurrentCampaign::commit(const runtime::CompiledProgram& program, const runtime::Checkpoint& checkpoint, bool advanced_day) {
+    if(!advanced_day || !content_ready_) {content_.preserve(program);content_ready_=true;}
     if (advanced_day && generation_ != 0 && days_.size() < 31) {
         auto days = days_;
         days.push_back(checkpoint.world.simulation.revision);
@@ -80,6 +82,9 @@ void CurrentCampaign::commit(const runtime::CompiledProgram& program, const runt
     generation_ = next;
     days_.clear();
 }
+std::string CurrentCampaign::fingerprint() const {
+    return sha256(read_bounded(path_))+"/"+(local_exists(journal_)?sha256(read_bounded(journal_,journal_limit)):"none");
+}
 void CurrentCampaign::preserve_for_recovery() {
     const auto directory = path_.parent_path();
     if (local_exists(directory)) {
@@ -88,7 +93,7 @@ void CurrentCampaign::preserve_for_recovery() {
         if (local_exists(preserved)) throw PersistenceError("recovery_conflict", "Recovery folder already exists.");
         std::filesystem::rename(directory, preserved);
     }
-    generation_ = 0;
+    generation_ = 0;content_ready_=false;
     days_.clear();
 }
 void CurrentCampaign::archive(const runtime::CompiledProgram& program, const runtime::Checkpoint& checkpoint) {

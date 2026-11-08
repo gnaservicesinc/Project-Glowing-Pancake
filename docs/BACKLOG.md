@@ -35,7 +35,9 @@ facility blueprints, owned devices, paid delivery/service and compatible app
 routing, dated national contacts, paid overseas office/world access and
 work-backed HQ operations managers, public founder handovers and preserved
 retirement endings are implemented. Follow-up work is explicit in [Gameplay interface](GAMEPLAY_INTERFACE.md):
-the remaining interface/save-upgrade audit.
+the remaining non-text form selection audit. Compatible content updates retain
+each company's original collection; reviewed missing-content recovery and exact
+older-company restart are implemented and checked.
 The native Mac walkthrough and focused persistence/simulation checks are
 separate from 8K offscreen layout evidence and later device qualification.
 

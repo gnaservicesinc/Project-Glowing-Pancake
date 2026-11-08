@@ -30,6 +30,8 @@ struct LoadedSave {
     std::uint64_t autosave_sequence = 0;
 };
 [[nodiscard]] SaveIdentity save_identity(const runtime::CompiledProgram& program);
+// Validates a bounded, checksummed envelope; decode_save still validates state.
+[[nodiscard]] SaveIdentity inspect_save_identity(std::string_view bytes,SaveLimits limits = {});
 [[nodiscard]] std::string encode_save(const runtime::CompiledProgram& program,
                                       const runtime::Checkpoint& checkpoint,
                                       std::uint64_t autosave_sequence = 0,

@@ -68,7 +68,11 @@ the company and its optional sandbox continuation. Decisions now show explicitly
 authored participants with profile inspection, including saved company portraits,
 three named story contacts and organization cards. City labels cover all 50
 states and DC from the offline 2010 Census baseline. The [selected design](GAMEPLAY_INTERFACE.md)
-records remaining retirement narrative and interface/save-upgrade audit work. These checks
+records the remaining non-text form selection audit. Original content is now
+retained locally so compatible content updates resume existing companies under
+their original definitions. Missing collections have a reviewed recovery path
+that preserves company/journal files and damaged cache bytes. Focused failure,
+replay and native rendered recovery/restart checks pass. These checks
 do not close human review, extended campaign or release/device gates.
 
 ## Selected feedback: campaign and technology design

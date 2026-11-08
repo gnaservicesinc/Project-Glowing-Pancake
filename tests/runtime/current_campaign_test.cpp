@@ -8,7 +8,8 @@ namespace {
 void require(bool value,const char* message) {if(!value) throw std::runtime_error(message);}
 }
 int main() {
-    const auto root=std::filesystem::path{PGP_INTEGRATION_SCRATCH_PATH}/("continuing-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    const auto scratch=std::filesystem::path{PGP_INTEGRATION_SCRATCH_PATH}/("continuing-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    const auto root=scratch/"continuing";
     try {
         auto program=integration_fixture::program(PGP_RUNTIME_FIXTURE_PATH,false);
         auto initial=runtime::begin_scenario(program,"scenario.foundation","US-CA");
@@ -42,12 +43,12 @@ int main() {
         require(failed,"Corrupt current fails closed");
         require(std::filesystem::exists(root/"current.pgpsave.bak"),"Recovery copy survives");
         // This entire isolated scratch tree belongs to the test.
-        std::filesystem::remove_all(root);
+        std::filesystem::remove_all(scratch);
         std::cout<<"Continuing campaign exact replay, compaction and failure preservation passed\n";
         return 0;
     } catch(const std::exception& error) {
         std::cerr<<error.what()<<"\n";
-        std::filesystem::remove_all(root);
+        std::filesystem::remove_all(scratch);
         return 1;
     }
 }

@@ -34,6 +34,10 @@ class CampaignController final : public QObject {
     Q_PROPERTY(int daysPerSecond READ daysPerSecond WRITE setDaysPerSecond NOTIFY stateChanged)
     Q_PROPERTY(bool currentCampaign READ currentCampaign NOTIFY stateChanged)
     Q_PROPERTY(bool storageBlocked READ storageBlocked NOTIFY stateChanged)
+    Q_PROPERTY(bool needsOriginalContent READ needsOriginalContent NOTIFY stateChanged)
+    Q_PROPERTY(bool canRestoreBundledContent READ canRestoreBundledContent NOTIFY stateChanged)
+    Q_PROPERTY(QString originalContentReview READ originalContentReview NOTIFY stateChanged)
+    Q_PROPERTY(QString campaignContentVersion READ campaignContentVersion NOTIFY stateChanged)
     Q_PROPERTY(bool canStartNew READ canStartNew NOTIFY stateChanged)
     Q_PROPERTY(bool welcome READ welcome NOTIFY stateChanged)
     Q_PROPERTY(QVariantList headquarters READ headquarters CONSTANT)
@@ -129,6 +133,13 @@ public:
     Q_INVOKABLE QVariantMap generateCampaignNames() const;
     Q_INVOKABLE QString generateWorldSeed() const;
     Q_INVOKABLE void openWelcome();
+    Q_INVOKABLE void reviewOriginalContent(QUrl source);
+    Q_INVOKABLE void confirmOriginalContent();
+    Q_INVOKABLE void cancelOriginalContent();
+    bool needsOriginalContent() const {return snapshot_ && !snapshot_->missing_content_hash.empty();}
+    bool canRestoreBundledContent() const;
+    QString originalContentReview() const {return original_content_review_;}
+    QString campaignContentVersion() const;
     Q_INVOKABLE void startFounderCampaign();
     [[nodiscard]] QString date() const;
     [[nodiscard]] bool ready() const noexcept { return static_cast<bool>(snapshot_); }
@@ -205,6 +216,9 @@ private:
     void setNotice(QString explanation);
     [[nodiscard]] const runtime::Presentation* waitingPresentation() const;
     const runtime::CompiledProgram program_;
+    std::shared_ptr<const runtime::CompiledProgram> active_content_;
+    QString original_content_review_;
+    const runtime::CompiledProgram& activeProgram() const {return active_content_?*active_content_:program_;}
     ManagementController* management_;
     InfrastructureController* infrastructure_;
     CivicController* civic_;

@@ -36,11 +36,15 @@ public:
     void saveTo(std::uint64_t token, std::filesystem::path path);
     void loadFrom(std::uint64_t token, std::filesystem::path path);
     void changeSettings(std::uint64_t token, persistence::Settings settings);
+    void reviewOriginalContent(std::uint64_t token,std::filesystem::path source);
+    void confirmOriginalContent(std::uint64_t token);
+    void cancelOriginalContent();
 signals:
     void snapshotReady(pgp::bridge::CampaignSnapshotPtr snapshot);
     void operationCompleted(qulonglong token, bool accepted, QString explanation);
     // Required notices are independent of snapshot coalescing.
     void noticeRaised(QString explanation);
+    void originalContentReviewReady(QString review);
 private:
     void requireOwningThread() const;
     void publish();
@@ -48,6 +52,7 @@ private:
     void pauseDriver();
     void complete(std::uint64_t token, const session::OperationResult& result, bool advanced_day = false);
     bool persist(bool advanced_day = false);
+    std::shared_ptr<const runtime::CompiledProgram> installed_,active_content_;
     session::Campaign campaign_;
     persistence::LocalPaths paths_;
     persistence::CurrentCampaign current_;
@@ -58,5 +63,17 @@ private:
     std::uint64_t generation_ = 1;
     bool halted_ = false;
     std::optional<session::Milestone> milestone_;
+    std::string missing_content_hash_;
+    std::filesystem::path content_target_;
+    bool content_target_current_=true;
+    struct ContentReview {
+        std::shared_ptr<const runtime::CompiledProgram> source;
+        runtime::Checkpoint checkpoint;
+        std::unique_ptr<persistence::CurrentCampaign> continuing;
+        std::filesystem::path target;
+        std::string fingerprint;
+        bool current=false;
+    };
+    std::optional<ContentReview> content_review_;
 };
 }

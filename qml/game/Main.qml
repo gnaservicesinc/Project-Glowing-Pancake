@@ -49,6 +49,7 @@ ApplicationWindow {
     function routeStartup() {
         if (startupRouted || !campaign.ready) return
         startupRouted = true
+        if (campaign.storageBlocked) { menuVisible = true; return }
         if (campaign.currentCampaign || campaign.founding.hasDraft) {
             sessionEntered = true
             menuVisible = false
@@ -91,6 +92,10 @@ ApplicationWindow {
         menuVisible = true
         frontMenu.home()
     }
+    function locateOriginalContent() {
+        if (campaign.canRestoreBundledContent) campaign.reviewOriginalContent("")
+        else originalContentDialog.open()
+    }
     function loadCampaign(file) {
         pendingMenuLoad = menuVisible
         campaign.loadFrom(file)
@@ -117,7 +122,7 @@ ApplicationWindow {
     Shortcut {
         objectName:"gameEscapeShortcut"
         sequence: "Escape"
-        enabled: !saveDialog.visible && !loadDialog.visible && !restartDialog.visible && !musicCredits.visible && !cancelDialog.visible && !exitDialog.visible
+        enabled: !saveDialog.visible && !loadDialog.visible && !originalContentDialog.visible && !originalContentReview.visible && !restartDialog.visible && !musicCredits.visible && !cancelDialog.visible && !exitDialog.visible
         onActivated: {
             if (window.menuVisible && window.sessionEntered) window.menuVisible = false
             else window.openMainMenu()
@@ -125,7 +130,10 @@ ApplicationWindow {
     }
     Connections {
         target: campaign
-        function onStateChanged() { window.routeStartup(); window.syncOverlayPause() }
+        function onStateChanged() {
+            window.routeStartup(); window.syncOverlayPause()
+            if (!campaign.busy && campaign.originalContentReview.length > 0 && !originalContentReview.visible) originalContentReview.open()
+        }
         function onSettingsChanged() { window.applyDisplayPreferences() }
         function onCommandFinished(accepted, explanation) {
             if (window.pendingMenuSettings) {
@@ -138,7 +146,7 @@ ApplicationWindow {
             if (accepted) {
                 window.sessionEntered = true
                 window.menuVisible = false
-                window.room = "office"
+                window.restoreNavigation()
             } else frontMenu.message = explanation
         }
     }
@@ -291,6 +299,54 @@ ApplicationWindow {
         onRejected: if (window.menuVisible) frontMenu.home()
     }
 
+    FileDialog {
+        id: originalContentDialog
+        objectName: "originalContentFileDialog"
+        title: qsTr("Locate this company's original rules")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [qsTr("Content collections (*.json)")]
+        currentFolder: campaign.saveFolder
+        onAccepted: campaign.reviewOriginalContent(selectedFile)
+    }
+    Dialog {
+        id: originalContentReview
+        objectName: "originalContentReviewDialog"
+        title: qsTr("Resume with original rules?")
+        modal: true
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(window.textSize * 48, window.width - 32)
+        height: Math.min(implicitHeight, window.height - 32)
+        header: Label {
+            text: originalContentReview.title
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+            font.pixelSize: window.textSize
+            font.bold: true
+            padding: window.textSize * 0.6
+        }
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        contentItem: ScrollView {
+            id: originalContentScroll
+            objectName: "originalContentScroll"
+            implicitHeight: originalContentText.implicitHeight
+            readonly property real scrollOffset: contentItem ? contentItem.contentY : 0
+            focus: true
+            clip: true
+            contentWidth: availableWidth
+            contentHeight: originalContentText.implicitHeight
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+            Label {
+                id: originalContentText
+                width: originalContentScroll.availableWidth
+                text: campaign.originalContentReview
+                textFormat: Text.PlainText
+                wrapMode: Text.Wrap
+                font.pixelSize: window.textSize
+            }
+        }
+        onAccepted: { window.pendingMenuLoad = true; campaign.confirmOriginalContent() }
+        onRejected: campaign.cancelOriginalContent()
+    }
     Dialog {
         id: restartDialog
         title: qsTr("Start another campaign?")
@@ -971,7 +1027,8 @@ ApplicationWindow {
             anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:12
             Label {Layout.fillWidth:true;text:campaign.notice;textFormat:Text.PlainText;wrapMode:Text.Wrap;font.pixelSize:window.textSize;color:"#fff0d8"}
             Flow {Layout.fillWidth:true;spacing:8
-                Action {visible:campaign.storageBlocked && campaign.currentCampaign;text:qsTr("Retry saving");onClicked:campaign.retryPersistence()}
+                Action {visible:campaign.needsOriginalContent;text:qsTr("Restore original rules…");enabled:!campaign.busy;onClicked:window.locateOriginalContent()}
+                Action {visible:campaign.storageBlocked && !campaign.needsOriginalContent;text:qsTr("Retry saving");enabled:!campaign.busy;onClicked:campaign.retryPersistence()}
                 Action {text:qsTr("Dismiss");visible:!campaign.storageBlocked;onClicked:campaign.clearNotice()}
             }
         }
@@ -1003,6 +1060,7 @@ ApplicationWindow {
         }
         onLeadershipRequested: { window.menuVisible = false; window.openApp("leadership","","laptop") }
         onLoadRequested: { campaign.clearNotice(); loadDialog.open() }
+        onOriginalContentRequested: window.locateOriginalContent()
         onResumeRequested: {
             window.sessionEntered = true
             window.menuVisible = false

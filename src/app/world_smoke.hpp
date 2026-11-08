@@ -8,3 +8,4 @@ void schedule_world_smoke(QQuickWindow&,pgp::bridge::CampaignController&,pgp::pe
 void schedule_departure_smoke(QQuickWindow&,pgp::bridge::CampaignController&,QString);
 
 void schedule_decision_smoke(QQuickWindow&,pgp::bridge::CampaignController&,QString,bool largeViewport=false);
+void schedule_content_recovery_smoke(QQuickWindow&,pgp::bridge::CampaignController&,pgp::persistence::LocalPaths,QString source,QString screenshot);

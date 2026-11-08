@@ -49,6 +49,9 @@ On Mac, build with `./make.sh --package --jobs 4`, then open
 New Game, Settings, Credits and Quit when no company is underway. A current
 company resumes automatically in its last place, with time paused. Recovery/import
 preserves original files. Settings persists display, audio, text and motion choices.
+Compatible content updates keep an existing company's original rules. If an older
+company lacks that local copy, choose **Locate original rules…** in the menu,
+select its matching collection, and review the saved company before confirming.
 Escape pauses and opens the menu; Quit and the window close button confirm exit.
 
 The workspace HUD and dock keep company tools, people, research, decisions,

@@ -15,6 +15,8 @@ struct CampaignSnapshot {
     bool driver_halted = false;
     bool current_campaign = false;
     bool storage_blocked = false;
+    std::shared_ptr<const runtime::CompiledProgram> content{};
+    std::string missing_content_hash{};
 };
 using CampaignSnapshotPtr = std::shared_ptr<const CampaignSnapshot>;
 }

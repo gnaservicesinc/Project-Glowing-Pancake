@@ -1,5 +1,5 @@
 #pragma once
-#include <pgp/persistence/save.hpp>
+#include <pgp/persistence/campaign_content.hpp>
 #include <optional>
 #include <vector>
 
@@ -15,9 +15,13 @@ public:
     void preserve_for_recovery();
     void archive(const runtime::CompiledProgram&, const runtime::Checkpoint&);
     [[nodiscard]] const std::filesystem::path& path() const { return path_; }
+    CampaignContent& content() {return content_;}
+    [[nodiscard]] std::string fingerprint() const;
 private:
     std::filesystem::path path_, journal_;
+    CampaignContent content_;
     std::uint64_t generation_ = 0;
+    bool content_ready_=false;
     std::vector<std::uint64_t> days_;
 };
 }

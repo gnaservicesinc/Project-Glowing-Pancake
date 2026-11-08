@@ -918,6 +918,17 @@ SaveIdentity save_identity(const runtime::CompiledProgram& program) {
     return {build.save_format,build.simulation_rules,build.content_schema,std::string(build.game_version),
         program.collection.content_version,sha256(canonical)};
 }
+SaveIdentity inspect_save_identity(std::string_view bytes,SaveLimits limits) {
+    limits_valid(limits);
+    auto body=detail::parse(bytes,limits.maximum_bytes,limits.maximum_json_events);
+    detail::fields(body,"save",{"format","identity","autosave_sequence","checkpoint","sha256"});
+    if(detail::text(body.at("format"),"format",64)!="project-glowing-pancake.save")
+        throw PersistenceError("format","This is not a Project Glowing Pancake save");
+    const auto digest=detail::text(body.at("sha256"),"sha256",64);body.erase("sha256");
+    if(digest!=sha256(body.dump())) throw PersistenceError("integrity","Save checksum does not match; original files were preserved");
+    (void)detail::u64(body.at("autosave_sequence"),"autosave_sequence");
+    return parse_identity(body.at("identity"));
+}
 namespace {
 std::string encode_save_impl(const runtime::CompiledProgram& program,const runtime::Checkpoint& checkpoint,
                              std::uint64_t autosave_sequence,SaveLimits limits,const SaveIdentity* checked_identity) {

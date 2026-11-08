@@ -189,6 +189,7 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
     connect(&thread_,&QThread::finished,worker_,&QObject::deleteLater);
     connect(worker_,&CampaignWorker::snapshotReady,this,&CampaignController::acceptSnapshot);
     connect(worker_,&CampaignWorker::noticeRaised,this,&CampaignController::setNotice);
+    connect(worker_,&CampaignWorker::originalContentReviewReady,this,[this](QString review){original_content_review_=std::move(review);emit stateChanged();});
     connect(worker_,&CampaignWorker::operationCompleted,this,[this](qulonglong token,bool accepted,QString explanation) {
         if (token != static_cast<qulonglong>(token_)) return;
         if (accepted && starting_founder_) founding_->reset();
@@ -216,17 +217,19 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
         (snapshot->generation == snapshot_->generation && snapshot->checkpoint.world.simulation.revision < snapshot_->checkpoint.world.simulation.revision))) return;
     const bool first = !snapshot_;
     const bool replace = first || snapshot_->generation != snapshot->generation;
+    if(snapshot->content || replace) active_content_=snapshot->content;
+    const auto& content=activeProgram();
     auto projects = project_rows(snapshot->checkpoint);
-    world_->update(snapshot,program_,replace);
-    management_->update(snapshot,program_,replace);
-    infrastructure_->update(snapshot,program_,replace);
+    world_->update(snapshot,content,replace);
+    management_->update(snapshot,content,replace);
+    infrastructure_->update(snapshot,content,replace);
     civic_->update(snapshot, replace);
     society_->update(snapshot, replace);
     institutions_->update(snapshot, replace);
     frontier_->update(snapshot, replace);
     leadership_->update(snapshot,replace);
-    objectives_->update(snapshot,program_,replace);
-    auto inbox = inbox_rows(snapshot->checkpoint,program_.collection,*management_);
+    objectives_->update(snapshot,content,replace);
+    auto inbox = inbox_rows(snapshot->checkpoint,content.collection,*management_);
     if ((!first && replace) || snapshot->current_campaign) welcome_=false;
     if (replace) { projects_->beginCampaign(std::move(projects)); inbox_->beginCampaign(std::move(inbox)); }
     else { projects_->setRows(std::move(projects)); inbox_->setRows(std::move(inbox)); }
@@ -354,11 +357,11 @@ QString CampaignController::identitySummary() const {
             world.identity->founder_pronouns.empty() ? QString{} : QStringLiteral(" (%1)").arg(text(world.identity->founder_pronouns)), summary);
     }
     if(!world.background.empty()) {
-        if(const auto* d=program_.collection.find(world.scenario_id)) if(const auto* s=std::get_if<content::ScenarioDefinition>(&d->data))
+        if(const auto* d=activeProgram().collection.find(world.scenario_id)) if(const auto* s=std::get_if<content::ScenarioDefinition>(&d->data))
             for(const auto& b:s->backgrounds) if(b.id==world.background) summary+=QStringLiteral(" · %1").arg(text(b.name));
     }
     if(!world.difficulty.empty()) {
-        if(const auto* def=program_.collection.find(world.scenario_id)) if(const auto* s=std::get_if<content::ScenarioDefinition>(&def->data))
+        if(const auto* def=activeProgram().collection.find(world.scenario_id)) if(const auto* s=std::get_if<content::ScenarioDefinition>(&def->data))
             summary+=QStringLiteral(" · %1").arg(text(content::scenario_difficulty(*s,world.difficulty)->name));
     }
     if(const auto* charter=core::active_charter(world.simulation)) summary+=QStringLiteral(" · %1").arg(text(charter->name));
@@ -499,7 +502,7 @@ QString CampaignController::requiredTitle() const {
     if(kind==QStringLiteral("objective")) return QStringLiteral("An objective is now out of reach");
     if(kind==QStringLiteral("leadership")) return QStringLiteral("Leadership planning and continuity");
     if (kind == QStringLiteral("core")) return QStringLiteral("Delivery decision");
-    if (kind == QStringLiteral("content")) return presentation_heading(*waitingPresentation(),program_.collection);
+    if (kind == QStringLiteral("content")) return presentation_heading(*waitingPresentation(),activeProgram().collection);
     if (kind == QStringLiteral("liquidity")) return QStringLiteral("Unpaid obligations need a response");
     if (kind == QStringLiteral("deploymentIncident")) {
         const auto* alert=core::required_deployment_incident(snapshot_->checkpoint.world.simulation);
@@ -538,7 +541,7 @@ QString CampaignController::requiredText() const {
     if (kind == QStringLiteral("core")) return QStringLiteral("A scheduled delivery awaits your decision. Accepting consumes its reserved funds; declining does not refund earlier purchases.");
     if (kind == QStringLiteral("content")) {
         const auto* row=waitingPresentation();
-        auto result=presentation_detail(snapshot_->checkpoint,*row,&program_.collection);
+        auto result=presentation_detail(snapshot_->checkpoint,*row,&activeProgram().collection);
         const auto& s=snapshot_->checkpoint.world.simulation;
         if (s.business_offers && (row->flow_id=="slice.supplier_offer" || row->flow_id=="slice.recovery_opportunity"))
             for (const auto& offer:s.business_offers->catalog)
@@ -564,7 +567,7 @@ QVariantList CampaignController::requiredChoices() const {
     QVariantList result;
     if (const auto* presentation = waitingPresentation())
         for (const auto& choice : presentation->choices)
-            result.push_back(QVariantMap{{QStringLiteral("choiceId"),text(choice.id)},{QStringLiteral("label"),choice_label(choice,&program_.collection)}});
+            result.push_back(QVariantMap{{QStringLiteral("choiceId"),text(choice.id)},{QStringLiteral("label"),choice_label(choice,&activeProgram().collection)}});
     return result;
 }
 bool CampaignController::canAdvance() const {

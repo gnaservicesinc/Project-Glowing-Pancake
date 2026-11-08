@@ -16,6 +16,7 @@ FocusScope {
     signal newGameRequested()
     signal leadershipRequested()
     signal loadRequested()
+    signal originalContentRequested()
     signal resumeRequested()
     signal quitRequested()
     signal settingsSubmitted()
@@ -178,8 +179,18 @@ FocusScope {
                     onClicked: menu.leadershipRequested()
                 }
                 MenuButton {
+                    objectName: "menuOriginalContentButton"
+                    text: campaign.canRestoreBundledContent ? qsTr("Review original rules…") : qsTr("Locate original rules…")
+                    visible: campaign.needsOriginalContent
+                    enabled: campaign.ready && !campaign.busy
+                    textSize: menu.textSize * 1.3
+                    Layout.fillWidth: true
+                    onClicked: menu.originalContentRequested()
+                }
+                MenuButton {
                     text: qsTr("Retry automatic saving")
-                    visible: campaign.storageBlocked && campaign.currentCampaign
+                    visible: campaign.storageBlocked && !campaign.needsOriginalContent
+                    enabled: campaign.ready && !campaign.busy
                     textSize: menu.textSize * 1.3
                     Layout.fillWidth: true
                     onClicked: campaign.retryPersistence()

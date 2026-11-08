@@ -126,11 +126,36 @@ succession retain their real financial/authority contracts. National/world maps
 show public information; contact progression and the existing institutional
 eligibility rules jointly own action authority. Country outlines are display geometry; economic summaries describe
 the existing fictional regions, not estimated country-level statistics.
-The remaining interface audit covers unfinished non-text form selections and
-reviewed handling of existing campaigns across development content updates.
+The remaining interface audit covers unfinished non-text form selections.
 New companies save a local instance ID so reused seeds and names do not share
 unfinished fields or navigation. The ID never feeds simulation RNG; imported
 and resumed saves retain it. Older saves retain their existing draft location.
+
+### Original content and automatic continuation
+
+Continuing companies now keep an immutable local collection in
+`saves/campaign-content/<content-hash>.json`. A compatible content update resumes
+the company with that exact collection and its saved checkpoint/day journal;
+the UI's text, choices, catalogs and quotes use the same original definitions.
+New companies use the installed collection. Autosave rings are separated by
+content hash, and daily journaling does not rewrite the collection.
+
+Older companies without a cached collection expose **Locate original rules…**
+in the menu. A matching local JSON collection produces a read-only review of
+the actual company, saved date, cash and original content version. Cancel leaves
+the company blocked. Confirm rechecks that the reviewed files have not changed,
+preserves any damaged/incomplete cache files, restores the verified collection
+and resumes paused. Restoring rules leaves the current checkpoint and day journal
+in place. Manual save recovery retains its point-in-time semantics and preserves
+the prior continuing folder. Unsupported game/rules/save formats still refuse;
+this is content retention, not a guessed migration or an old executable archive.
+
+Focused tests cover original-registry defaults, exact daily replay, malformed or
+missing collections, incomplete writes, cancellation, stale review and manual
+recovery. An isolated 0.35 company recovered under the 0.37 installation with
+native Metal rendering and in-process Qt keyboard cancel/confirm, then restarted
+automatically with the exact checkpoint. The review is scrollable at 650×480 and
+200% text. This does not establish physical input or release/device qualification.
 
 ## Paid headquarters and facility plans
 

@@ -3,6 +3,7 @@
 #include <QThread>
 #include <QDir>
 #include <pgp/runtime/scenario.hpp>
+#include <pgp/persistence/sha256.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -25,11 +26,13 @@ bool clock_ready(const runtime::Checkpoint& checkpoint) {
     if(runtime::observing_world(checkpoint.world)) return runtime::campaign_day(checkpoint.world)<runtime::campaign_calendar_limit(checkpoint.world);
     return checkpoint.world.simulation.phase==core::DayPhase::work_ready;
 }
+std::filesystem::path autosave_path(const persistence::LocalPaths& paths,const runtime::CompiledProgram& program) {return paths.saves_directory/"autosaves"/persistence::sha256(program.canonical_content_bytes);}
 QString error_text(const std::exception& error) { return QString::fromUtf8(error.what()); }
 }
 CampaignWorker::CampaignWorker(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
     persistence::LocalPaths paths, persistence::Settings settings, QObject* parent, bool continuous)
-    : QObject(parent),campaign_(std::move(program),std::move(checkpoint),paths.saves_directory / "autosaves",settings),
+    : QObject(parent),installed_(std::make_shared<const runtime::CompiledProgram>(std::move(program))),active_content_(installed_),
+      campaign_(*installed_,std::move(checkpoint),autosave_path(paths,*installed_),settings),
       paths_(std::move(paths)),current_(paths_.saves_directory / "continuing"),continuous_(continuous),timer_(new QTimer(this)) {
     last_publish_.start();
     qRegisterMetaType<CampaignSnapshotPtr>();
@@ -47,7 +50,7 @@ void CampaignWorker::publish() {
     if (running && !timer_->isActive()) timer_->start();
     if (!running) timer_->stop();
     emit snapshotReady(std::make_shared<const CampaignSnapshot>(CampaignSnapshot{
-        generation_,std::move(checkpoint),campaign_.settings(),halted_,active_,storage_blocked_}));
+        generation_,std::move(checkpoint),campaign_.settings(),halted_,active_,storage_blocked_,active_content_,missing_content_hash_}));
 }
 void CampaignWorker::pauseDriver() {
     halted_ = true;
@@ -67,6 +70,7 @@ bool CampaignWorker::persist(bool advanced_day) {
 }
 void CampaignWorker::retryPersistence(std::uint64_t token) {
     requireOwningThread();
+    if(!active_ && continuous_) start();
     const bool success=active_ && persist();
     publish();
     emit operationCompleted(static_cast<qulonglong>(token),success,success ? QStringLiteral("Progress secured locally.") : QStringLiteral("Recovery is still required. Existing files are preserved."));
@@ -95,31 +99,32 @@ void CampaignWorker::newCampaign(std::uint64_t token,std::string headquarters,bo
             campaign_.checkpoint().world.simulation.phase!=core::DayPhase::closed && campaign_.checkpoint().world.simulation.phase!=core::DayPhase::finished)))
             throw std::runtime_error("Finish the current company through Leadership or its campaign ending before starting another.");
         if (generation_==std::numeric_limits<std::uint64_t>::max()) throw std::overflow_error("Campaign generation is exhausted");
-        if (id.empty()) for (const auto& [candidate,definition]:campaign_.program().collection.definitions) {
+        if (id.empty()) for (const auto& [candidate,definition]:installed_->collection.definitions) {
             const auto* scenario=std::get_if<content::ScenarioDefinition>(&definition.data);
             if (scenario && scenario->service_catalog) { id=candidate;break; }
         }
-        const auto* selected=campaign_.program().collection.find(id);
+        const auto* selected=installed_->collection.find(id);
         const auto* selected_scenario=selected?std::get_if<content::ScenarioDefinition>(&selected->data):nullptr;
         if (!selected_scenario || !selected_scenario->service_catalog) throw std::invalid_argument("Choose a playable scenario from this content collection");
-        auto initial=runtime::begin_scenario(campaign_.program(),id,headquarters,std::move(objectives),std::move(options));
+        auto initial=runtime::begin_scenario(*installed_,id,headquarters,std::move(objectives),std::move(options));
         if (!stories && initial.world.enabled_flows) {
             auto& roots=*initial.world.enabled_flows;
             roots.erase(std::remove_if(roots.begin(),roots.end(),[&](const auto& flow_id) {
-                const auto& flow=std::get<content::FlowDefinition>(campaign_.program().collection.find(flow_id)->data);
+                const auto& flow=std::get<content::FlowDefinition>(installed_->collection.find(flow_id)->data);
                 return std::find(flow.tags.begin(),flow.tags.end(),"story")!=flow.tags.end();
             }),roots.end());
         }
-        session::Campaign next{campaign_.program(),std::move(initial),paths_.saves_directory/"autosaves",campaign_.settings()};
+        session::Campaign next{*installed_,std::move(initial),autosave_path(paths_,*installed_),campaign_.settings()};
         const auto prepared=next.prepare_opening(next.checkpoint().world.simulation.revision);
         if (!prepared.command.accepted()) throw std::runtime_error(prepared.command.explanation);
         if (continuous_) {
             if (!writer_lock_ || !writer_lock_->isLocked()) throw std::runtime_error("Another game window owns this campaign.");
+            current_.content().restore(next.program());
             if (active_) current_.archive(campaign_.program(),campaign_.checkpoint());
             current_.commit(next.program(),next.checkpoint());
             active_=true;
         }
-        campaign_=std::move(next);++generation_;halted_=true;milestone_.reset();publish();
+        campaign_=std::move(next);active_content_=installed_;missing_content_hash_.clear();++generation_;halted_=true;milestone_.reset();publish();
         emit operationCompleted(static_cast<qulonglong>(token),true,QStringLiteral("New campaign started. Time is paused."));
     } catch (const std::exception& error) {
         emit noticeRaised(error_text(error));emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));
@@ -132,12 +137,18 @@ void CampaignWorker::start() {
             const auto lock_path=paths_.saves_directory / "current-campaign.lock";
             if (!QDir{}.mkpath(QString::fromStdU16String(paths_.saves_directory.u16string())))
                 throw std::runtime_error("Cannot create the local campaign folder.");
-            writer_lock_=std::make_unique<QLockFile>(QString::fromStdU16String(lock_path.u16string()));
-            writer_lock_->setStaleLockTime(0);
-            if (!writer_lock_->tryLock()) throw std::runtime_error("The continuing campaign is open in another game window. Close that window and relaunch.");
-            if (auto checkpoint=current_.resume(campaign_.program())) {
-                campaign_=session::Campaign{campaign_.program(),std::move(*checkpoint),paths_.saves_directory/"autosaves",campaign_.settings()};
-                active_=true;halted_=true;publish();return;
+            if(!writer_lock_) {
+                writer_lock_=std::make_unique<QLockFile>(QString::fromStdU16String(lock_path.u16string()));
+                writer_lock_->setStaleLockTime(0);
+                if (!writer_lock_->tryLock()) throw std::runtime_error("The continuing campaign is open in another game window. Close that window and relaunch.");
+            } else if(!writer_lock_->isLocked() && !writer_lock_->tryLock()) throw std::runtime_error("Another game window owns the continuing company.");
+            std::error_code error;auto selected=installed_;
+            if(std::filesystem::exists(current_.path(),error)) selected=current_.content().for_save(installed_,current_.path());
+            if (auto checkpoint=current_.resume(*selected)) {
+                current_.content().preserve(*selected);
+                campaign_=session::Campaign{*selected,std::move(*checkpoint),autosave_path(paths_,*selected),campaign_.settings()};
+                active_content_=std::move(selected);
+                active_=true;storage_blocked_=false;missing_content_hash_.clear();content_target_.clear();halted_=true;publish();return;
             }
         }
         const auto state = campaign_.checkpoint().world.simulation;
@@ -154,6 +165,10 @@ void CampaignWorker::start() {
         publish();
     } catch (const std::exception& error) {
         if(continuous_) storage_blocked_=true;
+        if(const auto* storage=dynamic_cast<const persistence::PersistenceError*>(&error);storage && (storage->code()=="content_unavailable" || storage->code()=="content_integrity")) {
+            content_target_=current_.path();content_target_current_=true;
+            try {missing_content_hash_=persistence::inspect_save_identity(persistence::read_bounded(content_target_)).content_hash;}catch(const std::exception&) {}
+        }
         pauseDriver(); emit noticeRaised(error_text(error)); publish();
     }
 }
@@ -240,11 +255,14 @@ void CampaignWorker::loadFrom(std::uint64_t token,std::filesystem::path path) {
             if (!writer_lock_ || !writer_lock_->isLocked()) throw std::runtime_error("Another game window owns this campaign.");
             if (active_ && !storage_blocked_) throw std::runtime_error("A company is already in progress. Its automatic continuation is active.");
             // Decode first; a bad import must not move or replace current files.
-            auto recovered=persistence::load_file(campaign_.program(),path);
+            auto selected=current_.content().for_save(installed_,path);
+            auto recovered=persistence::load_file(*selected,path);
+            session::Campaign next{*selected,std::move(recovered.checkpoint),autosave_path(paths_,*selected),campaign_.settings()};
+            current_.content().preserve(*selected);
             current_.preserve_for_recovery();
-            current_.commit(campaign_.program(),recovered.checkpoint);
-            campaign_=session::Campaign{campaign_.program(),std::move(recovered.checkpoint),paths_.saves_directory/"autosaves",campaign_.settings()};
-            active_=true;storage_blocked_=false;++generation_;milestone_.reset();halted_=true;publish();
+            current_.commit(*selected,next.checkpoint());
+            campaign_=std::move(next);active_content_=std::move(selected);
+            active_=true;storage_blocked_=false;missing_content_hash_.clear();content_target_.clear();++generation_;milestone_.reset();halted_=true;publish();
             emit operationCompleted(static_cast<qulonglong>(token),true,QStringLiteral("Campaign recovered. Original files were preserved."));return;
         }
         const auto loaded = campaign_.load(path);
@@ -259,6 +277,10 @@ void CampaignWorker::loadFrom(std::uint64_t token,std::filesystem::path path) {
         publish();
         emit operationCompleted(static_cast<qulonglong>(token),true,QStringLiteral("Campaign loaded and paused."));
     } catch (const std::exception& error) {
+        if(const auto* storage=dynamic_cast<const persistence::PersistenceError*>(&error);continuous_ && storage && (storage->code()=="content_unavailable" || storage->code()=="content_integrity")) {
+            content_target_=path;content_target_current_=false;storage_blocked_=true;
+            try {missing_content_hash_=persistence::inspect_save_identity(persistence::read_bounded(path)).content_hash;}catch(const std::exception&) {}
+        }
         pauseDriver(); emit noticeRaised(error_text(error)); publish();
         emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));
     }
