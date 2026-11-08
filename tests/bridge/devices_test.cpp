@@ -102,6 +102,22 @@ int main(int argc,char** argv) {
         restored.update(ui_snapshot(legacy,5),program,true);
         check(restored.draft("lab/note","")=="Legacy unfinished field" && persistence::encode_save(program,legacy).find("instance_id")==std::string::npos,"Legacy saves and existing drafts must retain their original shape and location");
         auto invalid_identity=*first.world.identity;invalid_identity.instance_id="../other";refuses([&]{runtime::validate_campaign_identity(invalid_identity);});
+        // Read-only presentation fixture: source metadata is projected without
+        // claiming that this later story's gameplay trigger has occurred.
+        auto cast_checkpoint=live.current_state();runtime::Presentation contact;
+        contact.id=700;contact.day=cast_checkpoint.world.simulation.date;contact.kind=runtime::PresentationKind::dialogue;
+        contact.flow_id="story.cedar_delivery_review";contact.node_id="choice";cast_checkpoint.runtime.presentations.push_back(contact);
+        world.update(std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{3,cast_checkpoint,{},true,false}),program,true);
+        const auto cast=world.decisionParticipants("content",700);const auto source_cast=std::get<content::FlowDefinition>(program.collection.find(contact.flow_id)->data).nodes.at(contact.node_id).participants;
+        if(cast.size()!=2 || cast.back().toMap().value("name")!="Lio Ward") {
+            std::cerr<<"Cast refs "<<source_cast.size()<<" rows "<<cast.size()<<'\n';
+            for(const auto& item:cast) {const auto row=item.toMap();std::cerr<<row.value("id").toString().toStdString()<<" / "<<row.value("name").toString().toStdString()<<" / "<<row.value("portrait").toString().toStdString()<<'\n';}
+        }
+        check(source_cast.size()==2 && cast.size()==2 && cast[0].toMap().value("id")=="founder" && cast[1].toMap().value("name")=="Lio Ward" && cast[1].toMap().value("portrait").toString().startsWith("image://portraits/1/"),"Decisions must resolve explicit source contacts and layered vectors alongside the actual founder");
+        const auto candidate=world.person("executive.research",cast_checkpoint.world.simulation.date);
+        check(candidate.value("name")=="Mara Hart" && !candidate.value("portrait").toString().isEmpty(),"Company participants must reuse their saved hiring profile");
+        check(world.decisionParticipants("content",99999).isEmpty(),"Unknown presentations cannot invent a cast");
+        check(cast_checkpoint.world.simulation==live.current_state().world.simulation,"Inspecting participants must not mutate company resources or RNG");
         auto rules=*definition.infrastructure->workplace->devices;refuses([&]{rules.offers[0].delivery=core::Days{-1};core::validate_device_rules(rules);});
         std::cout<<"Owned device delivery, power, app routing, portable access, service, retirement, rollback and exact persistence passed\n";
     }catch(const std::exception& error) {std::cerr<<error.what()<<'\n';return 1;}

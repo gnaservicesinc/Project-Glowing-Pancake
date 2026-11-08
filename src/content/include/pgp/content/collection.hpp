@@ -16,6 +16,7 @@
 #include <pgp/content/county_catalog.hpp>
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/objectives.hpp>
+#include <pgp/core/portrait.hpp>
 #include <pgp/core/random.hpp>
 #include <pgp/core/units.hpp>
 
@@ -109,6 +110,13 @@ struct GroupPort {
     bool output = false;
 };
 enum class NodeKind { end, effect, news, dialogue, result, delay, sequence, subflow, random };
+enum class ParticipantKind { founder, employee, contact, organization };
+struct ParticipantRef {
+    ParticipantKind kind=ParticipantKind::founder;
+    std::string id,name_key,role_key;
+    std::optional<core::PortraitRecipe> portrait{};
+    auto operator<=>(const ParticipantRef&) const = default;
+};
 struct Node {
     NodeKind kind;
     std::string next;
@@ -123,6 +131,7 @@ struct Node {
     std::vector<WeightedBranch> branches;
     std::string random_stream;
     std::map<std::string, std::string, std::less<>> group_bindings{};
+    std::vector<ParticipantRef> participants{};
 };
 struct FlowDefinition {
     Scope scope;

@@ -174,7 +174,10 @@ QVariantMap WorldController::founder() const {
     auto portrait=core::make_portrait(w.root_seed,"founder/"+name.toStdString());bool managing=false;
     const auto* manager=core::operations_manager_on(w.simulation,w.simulation.date);
     if(w.simulation.management && w.simulation.management->people) for(const auto& employee:w.simulation.management->people->employees)
-        if(employee.terms.profile.role=="Founder / researcher") {portrait=employee.terms.profile.portrait;managing=manager && manager->person==employee.terms.profile.id;}
+        if(employee.terms.profile.role=="Founder / researcher") {
+            const auto& p=employee.terms.profile;portrait=p.portrait;managing=manager && manager->person==p.id;
+            detail+=tr("\n%1\nResearch %2 · Engineering %3 · Evaluation %4").arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation);
+        }
     return {{"id","founder"},{"portrait",portraitUrl(portrait)},{"name",name},{"initials",name.section(' ',0,0).left(1)+name.section(' ',-1).left(1)},
         {"detail",detail},{"role",managing?tr("Founder / operations manager"):tr("Founder")},{"bio",w.founding?tr("%1 · %2 · %3").arg(q(w.founding->sociability),q(w.founding->activity),q(w.founding->disposition)):QString{}}};
 }
@@ -217,6 +220,7 @@ QVariantList WorldController::people() const {
                 if(it!=s.management->catalog.governance->executives.end()) rows.push_back(QVariantMap{{"name",q(it->name)},{"initials",q(it->name).left(1)}, {"role",q(it->role)},{"detail",q(it->priorities)}});
             }
     }
+    if(s.succession && s.succession->terms.back().person!="founder") rows.push_back(person("leadership.ceo",s.date));
     return rows;
 }
 QVariantList WorldController::applicants() const {

@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.36.0-dev.1",
+  "content_version": "0.37.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -3783,6 +3783,19 @@
           ],
           "default_choice_if_dismissed": "decline",
           "kind": "dialogue",
+          "participants": [
+            {
+              "id": "founder",
+              "kind": "founder",
+              "role_key": "cast.founder"
+            },
+            {
+              "id": "organization.cedar",
+              "kind": "organization",
+              "name_key": "cast.cedar.name",
+              "role_key": "cast.customer"
+            }
+          ],
           "text_key": "century.product_customer.cedar_recovery.body",
           "title_key": "century.product_customer.cedar_recovery.title"
         },
@@ -3796,7 +3809,7 @@
           "text_key": "century.product_customer.cedar_recovery.result"
         }
       },
-      "revision": 1,
+      "revision": 2,
       "scope": "company",
       "tags": [
         "base_event",
@@ -92893,6 +92906,19 @@
           ],
           "default_choice_if_dismissed": "decline",
           "kind": "dialogue",
+          "participants": [
+            {
+              "id": "founder",
+              "kind": "founder",
+              "role_key": "cast.founder"
+            },
+            {
+              "id": "organization.pilot_customer",
+              "kind": "organization",
+              "name_key": "cast.customer.name",
+              "role_key": "cast.customer"
+            }
+          ],
           "text_key": "slice.recovery.text",
           "title_key": "slice.recovery.title"
         },
@@ -92906,7 +92932,7 @@
           "text_key": "slice.recovery.accepted"
         }
       },
-      "revision": 3,
+      "revision": 4,
       "scope": "company",
       "tags": [
         "base_event",
@@ -93073,6 +93099,19 @@
           ],
           "default_choice_if_dismissed": "decline",
           "kind": "dialogue",
+          "participants": [
+            {
+              "id": "founder",
+              "kind": "founder",
+              "role_key": "cast.founder"
+            },
+            {
+              "id": "organization.cloud_supplier",
+              "kind": "organization",
+              "name_key": "cast.supplier.name",
+              "role_key": "cast.supplier"
+            }
+          ],
           "text_key": "slice.supplier.text",
           "title_key": "slice.supplier.title"
         },
@@ -93102,7 +93141,7 @@
           "stream": "markets"
         }
       },
-      "revision": 3,
+      "revision": 4,
       "scope": "company",
       "tags": [
         "base_event",
@@ -94021,6 +94060,24 @@
           ],
           "default_choice_if_dismissed": "decline",
           "kind": "dialogue",
+          "participants": [
+            {
+              "id": "founder",
+              "kind": "founder",
+              "role_key": "cast.founder"
+            },
+            {
+              "id": "leadership.ceo",
+              "kind": "employee",
+              "role_key": "cast.incumbent"
+            },
+            {
+              "id": "organization.board",
+              "kind": "organization",
+              "name_key": "cast.board.name",
+              "role_key": "cast.board"
+            }
+          ],
           "text_key": "story.after_the_vote.body",
           "title_key": "story.after_the_vote.title"
         },
@@ -94044,7 +94101,7 @@
           "next": "followup"
         }
       },
-      "revision": 1,
+      "revision": 2,
       "scope": "company",
       "tags": [
         "story",
@@ -94107,6 +94164,39 @@
           ],
           "default_choice_if_dismissed": "decline",
           "kind": "dialogue",
+          "participants": [
+            {
+              "id": "founder",
+              "kind": "founder",
+              "role_key": "cast.founder"
+            },
+            {
+              "id": "contact.lio_ward",
+              "kind": "contact",
+              "name_key": "cast.lio.name",
+              "portrait": {
+                "kit": 1,
+                "parts": [
+                  2,
+                  3,
+                  1,
+                  1,
+                  2,
+                  0,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  3,
+                  1,
+                  1,
+                  0
+                ]
+              },
+              "role_key": "cast.procurement"
+            }
+          ],
           "text_key": "story.cedar_delivery_review.body",
           "title_key": "story.cedar_delivery_review.title"
         },
@@ -94131,7 +94221,7 @@
         }
       },
       "on_committed": "market.contract_missed_start",
-      "revision": 1,
+      "revision": 2,
       "scope": "company",
       "tags": [
         "story",
@@ -94184,6 +94274,19 @@
           ],
           "default_choice_if_dismissed": "decline",
           "kind": "dialogue",
+          "participants": [
+            {
+              "id": "founder",
+              "kind": "founder",
+              "role_key": "cast.founder"
+            },
+            {
+              "id": "organization.plainwick",
+              "kind": "organization",
+              "name_key": "cast.plainwick.name",
+              "role_key": "cast.lab"
+            }
+          ],
           "text_key": "story.field_lab.body",
           "title_key": "story.field_lab.title"
         },
@@ -94197,7 +94300,7 @@
           "text_key": "story.field_lab.result"
         }
       },
-      "revision": 1,
+      "revision": 2,
       "scope": "company",
       "tags": [
         "story",
@@ -94272,6 +94375,39 @@
           ],
           "default_choice_if_dismissed": "decline",
           "kind": "dialogue",
+          "participants": [
+            {
+              "id": "founder",
+              "kind": "founder",
+              "role_key": "cast.founder"
+            },
+            {
+              "id": "contact.maren_pell",
+              "kind": "contact",
+              "name_key": "cast.maren.name",
+              "portrait": {
+                "kit": 1,
+                "parts": [
+                  0,
+                  5,
+                  2,
+                  2,
+                  3,
+                  1,
+                  2,
+                  2,
+                  2,
+                  0,
+                  1,
+                  2,
+                  4,
+                  4,
+                  1
+                ]
+              },
+              "role_key": "cast.field_desk"
+            }
+          ],
           "text_key": "story.harbormark_continuity.body",
           "title_key": "story.harbormark_continuity.title"
         },
@@ -94295,7 +94431,7 @@
           "next": "followup"
         }
       },
-      "revision": 1,
+      "revision": 2,
       "scope": "company",
       "tags": [
         "story",
@@ -94358,6 +94494,19 @@
           ],
           "default_choice_if_dismissed": "decline",
           "kind": "dialogue",
+          "participants": [
+            {
+              "id": "founder",
+              "kind": "founder",
+              "role_key": "cast.founder"
+            },
+            {
+              "id": "organization.morrow",
+              "kind": "organization",
+              "name_key": "cast.morrow.name",
+              "role_key": "cast.cooperative"
+            }
+          ],
           "text_key": "story.morrow_cooperative.body",
           "title_key": "story.morrow_cooperative.title"
         },
@@ -94381,7 +94530,7 @@
           "next": "followup"
         }
       },
-      "revision": 1,
+      "revision": 2,
       "scope": "company",
       "tags": [
         "story",
@@ -94450,6 +94599,39 @@
           ],
           "default_choice_if_dismissed": "decline",
           "kind": "dialogue",
+          "participants": [
+            {
+              "id": "founder",
+              "kind": "founder",
+              "role_key": "cast.founder"
+            },
+            {
+              "id": "contact.iona_pell",
+              "kind": "contact",
+              "name_key": "cast.iona.name",
+              "portrait": {
+                "kit": 1,
+                "parts": [
+                  3,
+                  8,
+                  0,
+                  0,
+                  1,
+                  2,
+                  0,
+                  3,
+                  0,
+                  0,
+                  2,
+                  5,
+                  6,
+                  0,
+                  2
+                ]
+              },
+              "role_key": "cast.council_secretary"
+            }
+          ],
           "text_key": "story.willow_council.body",
           "title_key": "story.willow_council.title"
         },
@@ -94473,7 +94655,7 @@
           "next": "followup"
         }
       },
-      "revision": 1,
+      "revision": 2,
       "scope": "company",
       "tags": [
         "story",
@@ -94495,6 +94677,25 @@
     "authority.executive_disclosure": "An executive has departed after a concrete unfulfilled publication commitment and a failed response window. The saved private concern, recommendation, negotiation if any, and public disclosure remain visible in Institutions and Office.",
     "authority.monthly_review": "The monthly governing-authority check is settled. Compare actual soft and hard authority, regional resistance, and separate population/output coverage in Institutions. Media attention and market share are not governing rights.",
     "authority.public_review": "A documented institutional decision or response milestone is ready. Institutions shows the source evidence, exact deadline, paid team and available remedies. Acknowledging a notice does not waive the obligation.",
+    "cast.board": "Board secretariat",
+    "cast.board.name": "Board secretariat",
+    "cast.cedar.name": "Cedar Desk",
+    "cast.cooperative": "Compute cooperative",
+    "cast.council_secretary": "Council secretary",
+    "cast.customer": "Pilot customer",
+    "cast.customer.name": "Pilot customer",
+    "cast.field_desk": "Field desk, Harbormark",
+    "cast.founder": "Founder",
+    "cast.incumbent": "Incoming chief executive",
+    "cast.iona.name": "Iona Pell",
+    "cast.lab": "Independent lab",
+    "cast.lio.name": "Lio Ward",
+    "cast.maren.name": "Maren Pell",
+    "cast.morrow.name": "Morrow Cooperative",
+    "cast.plainwick.name": "Plainwick lab",
+    "cast.procurement": "Procurement lead, Cedar Desk",
+    "cast.supplier": "Compute supplier",
+    "cast.supplier.name": "Cloud lease supplier",
     "century.finance_competition.acquisition_close.body": "A real acquisition closed into the group\nAt least one company joined the group. Review its retained obligations, outside receipts and working-capital needs before asking it to pay a dividend.",
     "century.finance_competition.actual_capital.body": "A negotiated financing motion closed\nA corporate funding motion was executed. Review the cash posting beside the recorded dilution or debt term before updating the runway.",
     "century.finance_competition.cash_and_evidence.body": "The ledger can support a staged Frontier quote\nCompany cash is at least $2 million and a system is registered. Compare the actual protocol, external fees and reserved work before setting the research ceiling.",

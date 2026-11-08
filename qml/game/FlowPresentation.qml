@@ -29,6 +29,11 @@ ColumnLayout {
         Repeater {
             model: card.choices
             Button {
+                id: choiceButton
+                width: Math.min(implicitWidth, card.width)
+                padding: font.pixelSize * 0.65
+                implicitHeight: Math.max(font.pixelSize * 2.6, contentItem.implicitHeight + topPadding + bottomPadding)
+                contentItem: Label {text:choiceButton.text;font:choiceButton.font;wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter}
                 required property var modelData
                 objectName: "flowChoice_" + modelData.choiceId
                 text: modelData.label

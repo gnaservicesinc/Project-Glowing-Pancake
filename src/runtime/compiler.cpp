@@ -1,3 +1,4 @@
+#include "../content/participants_codec.hpp"
 #include <pgp/runtime/compiler.hpp>
 #include <pgp/content/county_catalog.hpp>
 
@@ -217,7 +218,8 @@ Json node_json(const Node& node, Scope scope, const std::string& path) {
     const bool delay = node.kind == NodeKind::delay;
     const bool subflow = node.kind == NodeKind::subflow;
     const bool random = node.kind == NodeKind::random;
-    shape((effect ? !node.effects.empty() : node.effects.empty()) && node.effects.size() <= 64 &&
+    shape((presentation || node.participants.empty()) && node.participants.size()<=8 &&
+              (effect ? !node.effects.empty() : node.effects.empty()) && node.effects.size() <= 64 &&
               (presentation ? !node.text_key.empty() : node.text_key.empty()) &&
               (dialogue ? !node.title_key.empty() : node.title_key.empty()) &&
               (dialogue ? !node.choices.empty() : node.choices.empty()) && node.choices.size() <= 32 &&
@@ -259,6 +261,7 @@ Json node_json(const Node& node, Scope scope, const std::string& path) {
         break;
     default: fail("operation", path, "Unknown typed node kind");
     }
+    if(!node.participants.empty()) result["participants"]=content::participants_codec::encode(node.participants);
     if (node.kind == NodeKind::end || dialogue || random) shape(node.next.empty(), path, "Terminal/branch node cannot have an implicit next link");
     else { shape(!node.next.empty(), path, "Node requires an explicit next link"); result["next"] = node.next; }
     return result;

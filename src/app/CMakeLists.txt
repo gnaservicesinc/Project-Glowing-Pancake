@@ -58,6 +58,8 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/MenuSettings.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/StableEntityList.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FlowPresentation.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/DecisionParticipants.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/PersonProfileDialog.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/ManagementPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/AccountsPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/InfrastructurePanel.qml"

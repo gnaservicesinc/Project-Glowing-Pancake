@@ -126,9 +126,8 @@ succession retain their real financial/authority contracts. National/world maps
 show public information; contact progression and the existing institutional
 eligibility rules jointly own action authority. Country outlines are display geometry; economic summaries describe
 the existing fictional regions, not estimated country-level statistics.
-The remaining interface audit also covers decision participants and unfinished
-non-text form selections,
-and reviewed handling of existing campaigns across development content updates.
+The remaining interface audit covers unfinished non-text form selections and
+reviewed handling of existing campaigns across development content updates.
 New companies save a local instance ID so reused seeds and names do not share
 unfinished fields or navigation. The ID never feeds simulation RNG; imported
 and resumed saves retain it. Older saves retain their existing draft location.
@@ -307,3 +306,31 @@ the interface shortens legal suffixes. This does not invent facilities or change
 travel. Source hash, rights and a reproducible local preparation command are in
 [the map sources](../assets/maps/README.md). A focused bridge check covers states
 outside the founding choices, aliases and the historical Memphis ranking.
+
+## People in a decision
+
+Presentation nodes can name up to eight typed participants: the actual founder,
+a saved company hiring identity, the chief executive at that meeting's date,
+a named story contact or an organization. All nine authored dialogue cards now
+carry explicit casts. Three existing named contacts use authored part/color IDs
+from the same vector kit; organizations have labeled monograms. No unnamed HQ
+staff are added to a meeting by guesswork. Company profiles retain their saved
+appearance; new successor terms now retain vector IDs as well, and the current
+CEO appears in People. Founder dossiers show their actual saved skills.
+
+Each card opens a scrollable profile by pointer or keyboard. These inspections
+leave the waiting choice, company resources and RNG unchanged. The shared
+presentation runtime and its choices are unchanged. Node forms expose the cast,
+source, message keys and portrait layers; catalog reference edits follow name,
+role and company hiring references. Canonical content keeps the metadata, so a
+resumed decision resolves the same cast from its exact installed collection.
+Supplier review now shows only the supplier offer involved in that decision.
+
+Focused checks cover invalid/duplicate sources and layer IDs, message links,
+reference renames, saved company profiles, successor portraits and exact saves.
+The ordinary day-14 supplier walkthrough opens both profiles, retains the waiting
+choice for restart, then resumes and commits a keyboard decline. Normal native,
+650x480/200% compact rows and 7680x4320 software layouts are checked separately
+from physical input qualification. Profile dialogs size to their content and
+scroll within the available window.
+Content is 0.37.0-dev.1, with the prior development content identities preserved.

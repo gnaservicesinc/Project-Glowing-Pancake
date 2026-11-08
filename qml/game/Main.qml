@@ -374,6 +374,7 @@ ApplicationWindow {
                     objectName: "requiredPanel"
                     visible: !campaign.welcome && campaign.requiredKind !== "none"
                     contentItem: ColumnLayout {
+                        DecisionParticipants {Layout.fillWidth:true;participants:campaign.requiredParticipants;textSize:window.textSize;reducedMotion:campaign.reducedMotion}
                         FlowPresentation {
                             Layout.fillWidth: true
                             visible: campaign.requiredKind === "content"

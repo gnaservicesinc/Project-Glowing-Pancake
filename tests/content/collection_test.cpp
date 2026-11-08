@@ -71,6 +71,20 @@ int main() {
     check(registry.fact("company.cash_cents")->boundary == Boundary::committed_result &&
           registry.fact("company.cash_cents")->visibility == Visibility::player_known, "Phase and knowledge explicit");
 
+    auto cast=source;
+    cast["messages"]["cast.test.name"]="Rin Vale";cast["messages"]["cast.test.role"]="External contact";
+    auto& cast_node=definition(cast,"flow.supplier.exclusivity_offer")["nodes"]["offer"];
+    cast_node["participants"]=Json::array({{{"kind","founder"},{"id","founder"}},{{"kind","contact"},{"id","contact.rin"},{"name_key","cast.test.name"},{"role_key","cast.test.role"},{"portrait",{{"kit",1},{"parts",std::vector<unsigned>(15,0)}}}}});
+    const auto with_cast=load_collection(cast.dump(),registry);
+    check(std::get<FlowDefinition>(with_cast.find("flow.supplier.exclusivity_offer")->data).nodes.at("offer").participants.size()==2,"Typed participant references and vector IDs load");
+    const auto change_cast=[&](const auto& mutate) {mutated(cast,"participants",[&](auto& value){mutate(definition(value,"flow.supplier.exclusivity_offer")["nodes"]["offer"]["participants"]);});};
+    change_cast([](auto& rows){rows.push_back(rows[0]);});
+    change_cast([](auto& rows){rows[1]["portrait"]["parts"][0]=6;});
+    change_cast([](auto& rows){rows[1]["kind"]="script";});
+    change_cast([](auto& rows){rows[1]["name_key"]="cast.missing";});
+    change_cast([](auto& rows){rows[0]["portrait"]={{"kit",1},{"parts",std::vector<unsigned>(15,0)}};});
+    change_cast([](auto& rows){rows[1]={{"kind","employee"},{"id","executive.missing"}};});
+
     rejects("{", "json");
     rejects("{\"content_schema\":1,\"content_schema\":1}", "duplicate_key");
     rejects(std::string(maximum_document_bytes + 1, ' '), "budget");

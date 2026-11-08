@@ -64,6 +64,9 @@ void index_and_refactor(studio::DraftDocument& d) {
     content::Node end{};end.kind=content::NodeKind::end;
     literal.nodes.emplace("op",std::move(effect));literal.nodes.emplace("capacity_project_id",std::move(end));
     next.definitions.emplace("catalog.literal",content::Definition{"catalog.literal",1,std::move(literal)});
+    auto& cast=std::get<content::FlowDefinition>(next.definitions.at("slice.supplier_offer").data).nodes.at("choice").participants;
+    cast.push_back({content::ParticipantKind::organization,"catalog.contact",next.messages.begin()->first,next.messages.begin()->first,{}});
+    cast.push_back({content::ParticipantKind::employee,"executive.research",{},{},{}});
     (void)d.replace(next);
     const auto index=studio::catalog_index(d);
     check(index.entries.size()>100 && index.references.size()>100,"Catalog index omits nested simulation records");
@@ -98,6 +101,11 @@ void index_and_refactor(studio::DraftDocument& d) {
     refused(d,[&]{(void)studio::edit_message(d,"missing.english","fr","Manquant");});
     const auto text=studio::RefactorPlan::rename(d,"text",old_text,"catalog.text");
     check(text.apply(d) && d.collection().messages.contains("catalog.text"),"Localized message key refactor failed");
+    const auto& cast_refs=std::get<content::FlowDefinition>(d.collection().find("slice.supplier_offer")->data).nodes.at("choice").participants;
+    check(cast_refs[cast_refs.size()-2].name_key=="catalog.text" && cast_refs[cast_refs.size()-2].role_key=="catalog.text","Message rename must preserve participant name and role links");
+    const auto rename_person=studio::RefactorPlan::rename(d,"executive","executive.research","executive.authored_research");
+    check(rename_person.apply(d) && std::get<content::FlowDefinition>(d.collection().find("slice.supplier_offer")->data).nodes.at("choice").participants.back().id=="executive.authored_research","Hiring identity rename must update participant references");
+    check(d.undo(),"Restore the hiring identity after the participant reference check");
     check(studio::content_uses(studio::catalog_index(d),"text",old_text).empty(),"Message refactor left a presentation/choice reference behind");
     check(*d.collection().message("catalog.text","fr-CA")=="Texte canadien" && !d.collection().message(old_text,"fr"),"Renaming a message dropped a translation");
     const auto research_path="/definitions/research.efficient_serving";

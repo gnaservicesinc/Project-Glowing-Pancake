@@ -106926,6 +106926,137 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "b071ceba66d96165f2efb6102326cd420742d8d180ac3e46a035a8d141ec6308",
+          "before_hash": "ee2b7bc465f48d6ad247f9865b2b8b7cc434d4e1120fda868c67fc841e06755a",
+          "change": "changed",
+          "id": "century.product_customer.cedar_recovery",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "4c64221c1f1dcc4d1d4b2ae1b27bed094d383d9131e576c30d1dd41b8eca671f",
+          "before_hash": "00e3099d38f58b789f187701cced8abdc993b3d6d80752449248f86b4b24b41b",
+          "change": "changed",
+          "id": "slice.recovery_opportunity",
+          "kind": "flow",
+          "old_revision": 3,
+          "revision": 4
+        },
+        {
+          "after_hash": "fa65a5ae19dca7762bfe1f7aa285e2a377e9b0a2eec2ee235af461afa85c0204",
+          "before_hash": "50530d136fb30e985f215ffcd061cefbce566a76618659c1f9fbcc9ad63b9cf9",
+          "change": "changed",
+          "id": "slice.supplier_offer",
+          "kind": "flow",
+          "old_revision": 3,
+          "revision": 4
+        },
+        {
+          "after_hash": "8e44c2bd81ecf5026bc1f793aaf261b11a1cea37ef68b85a1b65c5f87013585e",
+          "before_hash": "8a17615f0966338a67c5ceb7e55d409d49754eeceb00865f64808e60a2ad13ba",
+          "change": "changed",
+          "id": "story.after_the_vote",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "fc9fae8dcffeb13094ee66e94626e6ea9f528943cae08138bfb1f2bd463e9ea6",
+          "before_hash": "c20188f4ffdcb5d3f46aa458d1e53248266dbb5f21670d87c661fc9e16e3b110",
+          "change": "changed",
+          "id": "story.cedar_delivery_review",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "36c972e49df6cdea9c0839b9e1485da75c83a746e23e69755456d794a5d474d3",
+          "before_hash": "117923b5b4a98601aef85d1cdb9a139fd338d1547fa3b17bf3de9d2a77249b29",
+          "change": "changed",
+          "id": "story.field_lab",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "aeef5b6061860343f670887d250853a2ddf89fef8f216c3cd5fca5aecdcd143a",
+          "before_hash": "2eeb1b23245f273380f85aa6ebd4a80e07119d228cddd94b906346217b91669f",
+          "change": "changed",
+          "id": "story.harbormark_continuity",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "938f8cb1fed2e9a382b5e40cad4786d9a07d2a845b6d4fc0a9c26c32a9fbef56",
+          "before_hash": "93416c4226c09892a8c78a1225c2d49490abbed04a681f2f0f5c48a17a66e800",
+          "change": "changed",
+          "id": "story.morrow_cooperative",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "032d8e0363edd76ad013a26f9b9bc169018d6848813a8f564217e2115dea4dee",
+          "before_hash": "0d3c0d23088786c2997525f605d386d0485d0846cbc9af699cf91045ef0b2e34",
+          "change": "changed",
+          "id": "story.willow_council",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        }
+      ],
+      "changed_text_keys": [
+        "cast.board",
+        "cast.board.name",
+        "cast.cedar.name",
+        "cast.cooperative",
+        "cast.council_secretary",
+        "cast.customer",
+        "cast.customer.name",
+        "cast.field_desk",
+        "cast.founder",
+        "cast.incumbent",
+        "cast.iona.name",
+        "cast.lab",
+        "cast.lio.name",
+        "cast.maren.name",
+        "cast.morrow.name",
+        "cast.plainwick.name",
+        "cast.procurement",
+        "cast.supplier",
+        "cast.supplier.name"
+      ],
+      "collection_hash": "e3694045e9aedab33b16f44d2301265152568c38ae32e4d7413d145dee8f8d44",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.37.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 37,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.36.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000036.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000037.collection.json",
+      "summary": "Explicit decision participants with persistent company portraits and authored contact vectors",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

@@ -63,6 +63,7 @@ class CampaignController final : public QObject {
     Q_PROPERTY(QString requiredTitle READ requiredTitle NOTIFY stateChanged)
     Q_PROPERTY(QString requiredText READ requiredText NOTIFY stateChanged)
     Q_PROPERTY(QVariantList requiredChoices READ requiredChoices NOTIFY stateChanged)
+    Q_PROPERTY(QVariantList requiredParticipants READ requiredParticipants NOTIFY stateChanged)
     Q_PROPERTY(bool needsWarning READ needsWarning NOTIFY stateChanged)
     Q_PROPERTY(StableListModel* projects READ projects CONSTANT)
     Q_PROPERTY(StableListModel* inbox READ inbox CONSTANT)
@@ -147,6 +148,7 @@ public:
     [[nodiscard]] QString requiredTitle() const;
     [[nodiscard]] QString requiredText() const;
     [[nodiscard]] QVariantList requiredChoices() const;
+    [[nodiscard]] QVariantList requiredParticipants() const;
     [[nodiscard]] bool needsWarning() const;
     [[nodiscard]] StableListModel* projects() const { return projects_; }
     [[nodiscard]] StableListModel* inbox() const { return inbox_; }

@@ -22,7 +22,7 @@ set_tests_properties(bridge.portraits PROPERTIES TIMEOUT 15 ENVIRONMENT "QT_QPA_
 
 add_executable(pgp-devices-test devices_test.cpp)
 target_link_libraries(pgp-devices-test PRIVATE pgp::bridge)
-target_compile_definitions(pgp-devices-test PRIVATE PGP_DEVICES_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/devices.json")
+target_compile_definitions(pgp-devices-test PRIVATE PGP_DEVICES_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-devices-test)
 add_test(NAME bridge.devices COMMAND pgp-devices-test)
 set_tests_properties(bridge.devices PROPERTIES TIMEOUT 30)

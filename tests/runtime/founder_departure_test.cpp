@@ -69,6 +69,7 @@ int main() {
         check(std::ranges::any_of(failed_events,[](const auto& e){return e.cause.find("cancelled")!=std::string::npos && e.direct_effect && (*e.direct_effect)[4]<0;}),"Breaking a public handover must affect actual audience confidence.");
         while(state(game).date<due) day(game);
         check(state(game).succession->plans.front().status==SuccessionStatus::activated && state(game).succession->terms.size()==2,"Retirement requires actual paid preparation and handover.");
+        check(state(game).succession->terms.back().portrait.has_value(),"The appointed CEO must retain vector part IDs in the leadership record.");
         refuse(game,FinishFounderRun{});apply(game,RetireFounderChair{});
         const auto& world=game.current_state().world;auto without=world;without.simulation.succession->releases->clear();
         const auto with_scores=runtime::public_identity(world,state(game).date),without_scores=runtime::public_identity(without,state(game).date);
@@ -79,6 +80,7 @@ int main() {
         const auto scratch=std::filesystem::path{PGP_DEPARTURE_SCRATCH}/("retirement-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
         persistence::AutosaveRing ring{scratch};
         rejects([&]{(void)ring.write(program,game.current_state(),persistence::AutosaveReason::campaign_end);});
+        auto bad_portrait=game.current_state();bad_portrait.world.simulation.succession->terms.back().portrait->parts[0]=6;rejects([&]{runtime::validate_checkpoint(program,bad_portrait);});
         const auto founder_accounts=state(game).accounts;apply(game,FinishFounderRun{});
         const auto end_save=ring.write(program,game.current_state(),persistence::AutosaveReason::campaign_end);
         check(end_save && persistence::load_file(program,*end_save).checkpoint==game.current_state(),"A prepared-morning retirement ending must autosave and reload.");

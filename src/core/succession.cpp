@@ -76,6 +76,7 @@ void appoint(SimulationState& s,const LeadershipCandidate& candidate,bool careta
     }
     LeadershipTerm term{actor.terms.size()+1,plan,candidate.id,candidate.name,candidate.birth_year,s.date,
         term_due(succession_catalog(s),candidate.birth_year,s.date,caretaker),{},caretaker};
+    if(candidate.id!="founder") term.portrait=make_portrait(0,"leadership/"+candidate.id);
     actor.terms.push_back(term);
     if(candidate.monthly_salary.value()>0) add_recurring(*s.accounts,{salary_id(term),candidate.monthly_salary,s.date,{},"Agreed chief executive salary: "+candidate.name});
     set_role(s,role);

@@ -72,33 +72,7 @@ ColumnLayout {
             }
         }
     }
-    Dialog {
-        id:profileDialog;objectName:"employeeProfileDialog"
-        property var person:({})
-        anchors.centerIn:Overlay.overlay
-        width:Math.min(panel.textSize*48,Overlay.overlay.width-32)
-        height:Math.min(panel.textSize*54,Overlay.overlay.height-32)
-        modal:true;focus:true;title:person.name || qsTr("Employee profile")
-        standardButtons:Dialog.Close
-        contentItem:ScrollView {
-            id:profileScroll;objectName:"employeeProfileScroll";contentWidth:availableWidth;clip:true;focus:true
-            readonly property real scrollOffset:contentItem?contentItem.contentY:0
-            ColumnLayout {
-                width:profileScroll.availableWidth;spacing:16
-                EmployeePortrait {
-                    objectName:"profilePortrait"
-                    Layout.alignment:Qt.AlignHCenter
-                    Layout.preferredWidth:Math.max(100,Math.min(panel.textSize*23,profileScroll.availableWidth*0.65,profileDialog.height*0.43))
-                    Layout.preferredHeight:Layout.preferredWidth
-                    portraitSource:profileDialog.person.portrait || "";personName:profileDialog.person.name || ""
-                    enabled:false
-                }
-                Label {Layout.fillWidth:true;text:profileDialog.person.role || "";wrapMode:Text.Wrap;textFormat:Text.PlainText;font.pixelSize:panel.textSize*1.15;font.bold:true}
-                Label {Layout.fillWidth:true;text:profileDialog.person.detail || "";wrapMode:Text.Wrap;textFormat:Text.PlainText;font.pixelSize:panel.textSize}
-                Label {visible:text.length>0;Layout.fillWidth:true;text:profileDialog.person.bio || "";wrapMode:Text.Wrap;textFormat:Text.PlainText;font.pixelSize:panel.textSize}
-            }
-        }
-    }
+    PersonProfileDialog {id:profileDialog;textSize:panel.textSize}
     ManagerPanel {Layout.fillWidth:true;visible:panel.page==="branches" && Object.keys(campaign.world.operationsManagement).length>0;textSize:panel.textSize;onProfileRequested:person=>{profileDialog.person=person;profileDialog.open()}}
     Repeater {
         model:panel.page==="branches" ? campaign.world.branches : []

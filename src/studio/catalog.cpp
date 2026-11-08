@@ -81,7 +81,7 @@ std::string reference_family(std::string_view key,std::string_view path,std::str
     if(key=="founder" || key=="holder") return "owner";
     if(kind=="flow" && key=="flow_id") return "flow";
     if(kind=="flow" && key=="variable") return "variable";
-    if(kind=="flow" && (key=="text_key" || key=="title_key" || key=="label_key")) return "text";
+    if(kind=="flow" && (key=="text_key" || key=="title_key" || key=="label_key" || key=="name_key" || key=="role_key")) return "text";
     return {};
 }
 void index_node(CatalogIndex& index,const content::Registry& registry,const Json& node,const std::string& path,const std::string& owner,
@@ -111,6 +111,9 @@ void index_node(CatalogIndex& index,const content::Registry& registry,const Json
                     }
                     if (key=="id" && parent(relative).ends_with("/corpora")) { reference="dataset"; linked_identity=true; }
                     if (key=="id" && parent(relative).ends_with("/recipes")) { reference="recipe"; linked_identity=true; }
+                }
+                if(kind=="flow" && key=="id" && parent(relative).ends_with("/participants") && node.value("kind",std::string{})=="employee" && value!="leadership.ceo") {
+                    reference="participant_employee";linked_identity=true;
                 }
                 if(effect) for(const auto& arg:effect->arguments) if(arg.name==key && arg.type==content::ValueType::reference) reference=family(arg.reference_kind);
                 if(kind=="flow" && key=="fact") {
@@ -146,6 +149,11 @@ CatalogIndex catalog_index(const runtime::CompiledProgram& program) {
     }
     if(document.contains("messages")) for(const auto& [key,value]:document.at("messages").items())
         result.entries.push_back({"text",key,value,"messages","/messages/"+detail::pointer_escape(key),true});
+    for(auto& ref:result.references) if(ref.family=="participant_employee") {
+        const auto declaration=std::ranges::find_if(result.entries,[&](const auto& entry){return entry.id==ref.id && (entry.family=="executive" || entry.family=="specialist");});
+        if(declaration==result.entries.end()) throw std::invalid_argument("Participant hiring identity has no catalog declaration.");
+        ref.family=declaration->family;
+    }
     std::sort(result.entries.begin(),result.entries.end(),[](const auto& a,const auto& b){return std::tie(a.family,a.id,a.path)<std::tie(b.family,b.id,b.path);});
     std::sort(result.references.begin(),result.references.end(),[](const auto& a,const auto& b){return std::tie(a.family,a.id,a.path)<std::tie(b.family,b.id,b.path);});
     return result;

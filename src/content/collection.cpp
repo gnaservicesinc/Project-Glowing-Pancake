@@ -1,3 +1,4 @@
+#include "participants_codec.hpp"
 #include <pgp/content/collection.hpp>
 #include <pgp/content/deployment_risk.hpp>
 
@@ -485,13 +486,13 @@ Node node(const Json& value, const std::string& path, Scope context, const Regis
         for (std::size_t i = 0; i < value.at("effects").size(); ++i)
             result.effects.push_back(effect(value.at("effects")[i], child(child(path, "effects"), std::to_string(i)), context, registry));
     } else if (kind == "news" || kind == "result") {
-        fields(value, path, {"kind", "text_key", "next", "show_committed_changes"}, {"kind", "text_key", "next"});
+        fields(value, path, {"kind", "text_key", "next", "show_committed_changes", "participants"}, {"kind", "text_key", "next"});
         result.kind = kind == "news" ? NodeKind::news : NodeKind::result;
         result.text_key = id(value.at("text_key"), child(path, "text_key"));
         if (value.contains("show_committed_changes") && !boolean(value.at("show_committed_changes"), path))
             fail("presentation", path, "Results must show committed changes");
     } else if (kind == "dialogue") {
-        fields(value, path, {"kind", "title_key", "text_key", "choices", "default_choice_if_dismissed"},
+        fields(value, path, {"kind", "title_key", "text_key", "choices", "default_choice_if_dismissed", "participants"},
                {"kind", "title_key", "text_key", "choices", "default_choice_if_dismissed"});
         result.kind = NodeKind::dialogue;
         result.title_key = id(value.at("title_key"), child(path, "title_key"));
@@ -546,6 +547,10 @@ Node node(const Json& value, const std::string& path, Scope context, const Regis
                                        id(branch.at("next"), child(branch_path, "next"))});
         }
     } else fail("operation", path, "Unsupported node kind");
+    if(value.contains("participants")) {
+        try {result.participants=participants_codec::decode(value.at("participants"));}
+        catch(const std::exception& e){fail("participants",child(path,"participants"),e.what());}
+    }
     if (value.contains("next")) result.next = id(value.at("next"), child(path, "next"));
     return result;
 }
@@ -1151,6 +1156,7 @@ void validate_references(const Collection& collection, const Registry& registry)
     };
     std::map<std::string, std::vector<std::string>, std::less<>> research_edges;
     std::map<std::string, std::vector<std::string>, std::less<>> subflow_edges;
+    std::map<std::pair<ParticipantKind,std::string>,std::pair<std::string,std::optional<core::PortraitRecipe>>> cast;
     for (const auto& [name, definition] : collection.definitions) {
         const auto path = child("/definitions", name);
         if (const auto* scenario_definition = std::get_if<ScenarioDefinition>(&definition.data)) {
@@ -1325,6 +1331,25 @@ void validate_references(const Collection& collection, const Registry& registry)
             if (flow_definition->group) for (const auto& port : *flow_definition->group)
                 if (!port.output) read_only.insert(port.variable);
             for (const auto& [node_id, node_value] : flow_definition->nodes) {
+                for(const auto& person:node_value.participants) {
+                    const auto where=child(child(path,node_id),"participants");
+                    if((!person.name_key.empty() && !collection.message(person.name_key)) || (!person.role_key.empty() && !collection.message(person.role_key)))
+                        fail("participants",where,"Participant name and role must reference existing messages.");
+                    const auto identity=std::pair{person.name_key,person.portrait};
+                    const auto [known,inserted]=cast.emplace(std::pair{person.kind,person.id},identity);
+                    if(!inserted && known->second!=identity) fail("participants",where,"A participant ID must keep one name and portrait throughout the collection.");
+                    if(person.kind==ParticipantKind::employee) {
+                        bool exists=person.id=="leadership.ceo";
+                        for(const auto& [scenario_id,candidate]:collection.definitions) {
+                            (void)scenario_id;const auto* scenario=std::get_if<ScenarioDefinition>(&candidate.data);
+                            if(!scenario || !scenario->management) continue;
+                            const auto& management=*scenario->management;
+                            exists=exists || std::ranges::any_of(management.specialists,[&](const auto& offer){return offer.id==person.id;}) ||
+                                (management.governance && std::ranges::any_of(management.governance->executives,[&](const auto& offer){return offer.id==person.id;}));
+                        }
+                        if(!exists) fail("participants",where,"Employee participants must reference a defined hiring identity.");
+                    }
+                }
                 if (node_value.kind == NodeKind::subflow) {
                     const auto& target = reference(node_value.subflow_id, "flow", child(path, node_id));
                     const auto& called = std::get<FlowDefinition>(target.data);

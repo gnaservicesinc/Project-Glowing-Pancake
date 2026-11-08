@@ -542,7 +542,7 @@ QString CampaignController::requiredText() const {
         const auto& s=snapshot_->checkpoint.world.simulation;
         if (s.business_offers && (row->flow_id=="slice.supplier_offer" || row->flow_id=="slice.recovery_opportunity"))
             for (const auto& offer:s.business_offers->catalog)
-                if ((row->flow_id=="slice.supplier_offer" && offer.kind==core::BusinessOfferKind::compute_lease) ||
+                if ((row->flow_id=="slice.supplier_offer" && offer.id=="offer.supplier_small") ||
                     (row->flow_id=="slice.recovery_opportunity" && offer.kind==core::BusinessOfferKind::recovery_pilot && offer.id=="offer.recovery_pilot"))
                     result+=QStringLiteral("\n\n")+management_->offers()->row(text(offer.id)).value(QStringLiteral("detail")).toString();
         return result;
@@ -554,6 +554,11 @@ QString CampaignController::requiredText() const {
                  money(report.unpaid_payables),money(report.matured_principal),text(core::iso_date(*report.deadline)));
     }
     return {};
+}
+QVariantList CampaignController::requiredParticipants() const {
+    const auto kind=requiredKind();if(kind=="none") return {};
+    const auto* presentation=kind=="content"?waitingPresentation():nullptr;
+    return world_->decisionParticipants(kind,presentation?presentation->id:0);
 }
 QVariantList CampaignController::requiredChoices() const {
     QVariantList result;

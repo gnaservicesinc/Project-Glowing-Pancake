@@ -90,13 +90,13 @@
     }
   ],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "c0065b5ea14cb38e8f103f55fe0063b44e8f292c713cc4c477f0c7fc942a50ff",
+  "collection_hash": "e3694045e9aedab33b16f44d2301265152568c38ae32e4d7413d145dee8f8d44",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.36.0-dev.1",
+  "content_version": "0.37.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -503,8 +503,8 @@
     {
       "id": "century.product_customer.cedar_recovery",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "59730dc4da770ee4a0eb6974c6c39cc35eabb9d569b4631a5ba24bd9c0cdfa33"
+      "revision": 2,
+      "semantic_hash": "03c76e256d04c2f9025dc6efa25b63af937150f3adf78a41bf13c57ec1d3648a"
     },
     {
       "id": "century.product_customer.customer_backlog",
@@ -1205,8 +1205,8 @@
     {
       "id": "slice.recovery_opportunity",
       "kind": "flow",
-      "revision": 3,
-      "semantic_hash": "9aeee9aa6312843f0d25bd4b3f0f52c3e6044a0077db787371416ca0fb2bea7b"
+      "revision": 4,
+      "semantic_hash": "13122a769a611994ea240a1c8cfb8c4a71cde0cd0e30d820458c2d576dcb11e4"
     },
     {
       "id": "slice.research_milestone",
@@ -1223,8 +1223,8 @@
     {
       "id": "slice.supplier_offer",
       "kind": "flow",
-      "revision": 3,
-      "semantic_hash": "201056752d74f0e512d10b134f94608bff90fa3d2d2cd8d5a972abbfb38d24fe"
+      "revision": 4,
+      "semantic_hash": "d9fc08a17c05b6a66d6a446d60841dfd009a7664b9b914883aa2e9930eea6093"
     },
     {
       "id": "society.century",
@@ -1259,43 +1259,43 @@
     {
       "id": "story.after_the_vote",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "abcd7924dea665b234c7e7bf9a2a959ad9b9c01a68caee0ccbb1f1e79e712ea7"
+      "revision": 2,
+      "semantic_hash": "e1443234b393c6b76ef07044b5e8460a7b9a0b97d700417629134b095e319f56"
     },
     {
       "id": "story.cedar_delivery_review",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "f9ba1066ec4d0ce76a1599ea85234caeebf8b92df674e289af195a67baca027f"
+      "revision": 2,
+      "semantic_hash": "834a5a2bc4fe73d1e684545a2d58221a404a05997c95ad5308b620a09a7e892d"
     },
     {
       "id": "story.field_lab",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "557e111d74d0471f135137a7902a344a1811d20274ee2847026eb90669975528"
+      "revision": 2,
+      "semantic_hash": "5781820ab26bb1cb307b5434d9e0f3cd8151b2fc713a200cfdc0495e730f9cdc"
     },
     {
       "id": "story.harbormark_continuity",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "cad3490ca898d55902d93e25d3feca0ecebe0775e03c10e0175091e4c8a121c2"
+      "revision": 2,
+      "semantic_hash": "cc11919a424af3b8151a321a689227c0ac8a2ddb5bfabd2d36530cc734b1c36b"
     },
     {
       "id": "story.morrow_cooperative",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "668d441263eb7debe37b00e50ca23bebd54b1814d6b5d6d5c514ab691307b5cd"
+      "revision": 2,
+      "semantic_hash": "79fe50d01533f8504b1e16b89a9dad97851b2d187ab327c20f74d85aaf163459"
     },
     {
       "id": "story.willow_council",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "c99e922d39ab6e8438f8de728824f5e3859ce020b8c22e6cae1f8fd0e8e336f8"
+      "revision": 2,
+      "semantic_hash": "746301345662021904df18f25d7823b54bf126f4b37ad4786d3ac79e81540d3d"
     }
   ],
   "format": 1,
-  "generation": 36,
-  "messages_hash": "37b8f24f1ab1c613b4a154e6d141ca193a345ba13cede56720d37600d8880f4f",
+  "generation": 37,
+  "messages_hash": "0113c08ef2d7c1c4e5eb1016c281cba8762f911c71ee46008ed4b43e41c56363",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
     "scenario.century_frontier": [
@@ -1763,5 +1763,5 @@
       "deployment.incident_news"
     ]
   },
-  "source_hash": "e6d6b3a2e42919dd6e1a21a3318578387f77759a82537b58d0b1bc7369871153"
+  "source_hash": "c13e8a8ac3b497a30046f3091cf3d649b11dc0f3e7ce8d3c9eba23b187d0e19f"
 }

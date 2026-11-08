@@ -156,6 +156,33 @@ void node_fields(FormBuilder& builder, const std::string& id, const Node& node, 
     if (!node.text_key.empty())
         builder.add("text", "Text key", node.text_key, "Reference a stable localized text key.", FormControl::text,
                     [access](FlowDefinition& flow, std::string_view value) { access(flow).text_key = value; });
+    if(node.kind==NodeKind::dialogue || node.kind==NodeKind::news || node.kind==NodeKind::result) {
+        for(std::size_t i=0;i<node.participants.size();++i) {
+            const auto& p=node.participants[i];const auto prefix="participant/"+std::to_string(i)+"/";
+            const auto get=[access,i](FlowDefinition& flow)->ParticipantRef& {return access(flow).participants.at(i);};
+            static const std::vector<FormOption> sources{{"0","Founder"},{"1","Company hiring identity"},{"2","Named external contact"},{"3","Organization"}};
+            builder.add(prefix+"source","Participant source",std::to_string(static_cast<unsigned>(p.kind)),"Use saved company profiles or explicitly authored contacts.",FormControl::choice,
+                [get,access](FlowDefinition& flow,std::string_view value) {
+                    auto& person=get(flow);person.kind=static_cast<ParticipantKind>(parse_count(value,0,3));
+                    if(person.kind==ParticipantKind::founder) {person.id="founder";person.name_key.clear();person.role_key.clear();person.portrait.reset();}
+                    else if(person.kind==ParticipantKind::employee) {person.id="leadership.ceo";person.name_key.clear();person.role_key.clear();person.portrait.reset();}
+                    else {if(person.name_key.empty())person.name_key=access(flow).text_key;if(person.role_key.empty())person.role_key=access(flow).text_key;
+                        if(person.kind==ParticipantKind::contact && !person.portrait)person.portrait=core::PortraitRecipe{};
+                        if(person.kind==ParticipantKind::organization)person.portrait.reset();}
+                },sources);
+            builder.add(prefix+"id","Participant ID",p.id,"Stable identity; employee references use an existing hiring ID or leadership.ceo.",FormControl::text,[get](FlowDefinition& flow,std::string_view value){get(flow).id=value;});
+            if(p.kind==ParticipantKind::contact || p.kind==ParticipantKind::organization)
+                builder.add(prefix+"name","Name message",p.name_key,"Localized contact or organization name.",FormControl::text,[get](FlowDefinition& flow,std::string_view value){get(flow).name_key=value;});
+            builder.add(prefix+"role","Role message",p.role_key,"Optional for company profiles; required for external participants.",FormControl::text,[get](FlowDefinition& flow,std::string_view value){get(flow).role_key=value;});
+            if(p.portrait) for(std::size_t part=0;part<p.portrait->parts.size();++part)
+                builder.add(prefix+"portrait/"+std::to_string(part),"Portrait layer "+std::to_string(part+1),std::to_string(p.portrait->parts[part]),"Version 1 vector part/color ID; order follows the portrait kit.",FormControl::integer,
+                    [get,part](FlowDefinition& flow,std::string_view value){get(flow).portrait->parts[part]=static_cast<std::uint8_t>(parse_count(value,0,core::portrait_part_counts[part]-1));});
+            builder.action(prefix+"remove","Remove participant","Remove this participant from this presentation.",[access,i](FlowDefinition& flow,std::string_view){auto& people=access(flow).participants;people.erase(people.begin()+static_cast<std::ptrdiff_t>(i));});
+        }
+        if(node.participants.size()<8) builder.action("add_participant","Add participant","Add an organization; choose a different source and edit its name/role as needed.",[access](FlowDefinition& flow,std::string_view) {
+            auto& node=access(flow);ParticipantRef p;p.kind=ParticipantKind::organization;p.id=unique_row(node.participants,"contact");p.name_key=node.text_key;p.role_key=node.text_key;node.participants.push_back(std::move(p));
+        });
+    }
     if (node.kind == NodeKind::dialogue) {
         builder.add("title", "Title key", node.title_key, "Reference a stable localized title key.", FormControl::text,
                     [access](FlowDefinition& flow, std::string_view value) { access(flow).title_key = value; });

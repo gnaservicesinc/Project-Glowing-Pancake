@@ -1,6 +1,7 @@
 #pragma once
 #include <pgp/core/lab.hpp>
 #include <array>
+#include <pgp/core/portrait.hpp>
 #include <pgp/core/governance.hpp>
 
 namespace pgp::core {
@@ -59,6 +60,7 @@ struct LeadershipTerm {
     OrdinalDay starts_on{0},due_on{0};
     std::optional<OrdinalDay> ended_on;
     bool caretaker=false;
+    std::optional<PortraitRecipe> portrait{};
     auto operator<=>(const LeadershipTerm&) const = default;
 };
 struct LeadershipControl {

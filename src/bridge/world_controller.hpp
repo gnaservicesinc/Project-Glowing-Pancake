@@ -54,6 +54,8 @@ public:
     bool atHeadquarters() const;
     QVariantMap founder() const;
     QVariantList people() const;
+    QVariantMap person(QString id,core::OrdinalDay day) const;
+    QVariantList decisionParticipants(QString kind,std::uint64_t presentation=0) const;
     QVariantList applicants() const;
     QVariantList branches() const;
     QString recruitingSummary() const;
