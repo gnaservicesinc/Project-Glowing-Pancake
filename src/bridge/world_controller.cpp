@@ -83,7 +83,7 @@ void WorldController::restore() {
     if(drafts.open(QIODevice::ReadOnly) && drafts.size()<=256*1024) {
         const auto values=QJsonDocument::fromJson(drafts.readAll()).object().toVariantMap();
         if(values.size()<=512) for(auto it=values.begin();it!=values.end();++it)
-            if(it.key().size()<=192 && it.value().metaType().id()==QMetaType::QString && it.value().toString().size()<=1024) drafts_[it.key()]=it.value();
+            if(it.key().size()<=192 && it.value().metaType().id()==QMetaType::QString && it.value().toString().size()<=8192) drafts_[it.key()]=it.value();
     }
     emit navigationChanged();
     emit draftsReset();
@@ -94,12 +94,13 @@ QString WorldController::reviewToken() const {
 }
 QString WorldController::draft(QString key,QString fallback) const {return drafts_.value(key,fallback).toString();}
 void WorldController::setDraft(QString key,QString value) {
-    if(!snapshot_ || !snapshot_->current_campaign || snapshot_->storage_blocked || key.isEmpty() || key.size()>192 || value.size()>1024 ||
+    if(!snapshot_ || !snapshot_->current_campaign || snapshot_->storage_blocked || key.isEmpty() || key.size()>192 || value.size()>8192 ||
         (drafts_.size()>=512 && !drafts_.contains(key)) || drafts_.value(key)==value) return;
     auto next=drafts_;next[key]=value;
     if(!QDir{}.mkpath(QString::fromStdU16String(directory_.u16string()))) {emit noticeRaised(tr("Could not preserve this unfinished field. Check local storage."));return;}
     QSaveFile file{QString::fromStdU16String(path_.u16string())+".drafts"};
     const auto bytes=QJsonDocument{QJsonObject::fromVariantMap(next)}.toJson(QJsonDocument::Compact);
+    if(bytes.size()>256*1024) {emit noticeRaised(tr("Unfinished form storage is full. Existing drafts were preserved."));return;}
     if(!file.open(QIODevice::WriteOnly) || file.write(bytes)!=bytes.size() || !file.commit()) {emit noticeRaised(tr("Could not preserve this unfinished field. Check local storage."));return;}
     drafts_=std::move(next);
 }

@@ -68,7 +68,10 @@ the company and its optional sandbox continuation. Decisions now show explicitly
 authored participants with profile inspection, including saved company portraits,
 three named story contacts and organization cards. City labels cover all 50
 states and DC from the offline 2010 Census baseline. The [selected design](GAMEPLAY_INTERFACE.md)
-records the remaining non-text form selection audit. Original content is now
+records the completed interface/save audit. Unfinished choices, checked sets,
+selected records and ordered queues now persist with text fields, without
+issuing commands on restore. New companies use their own defaults; compact
+resizing keeps the focused field visible. Original content is now
 retained locally so compatible content updates resume existing companies under
 their original definitions. Missing collections have a reviewed recovery path
 that preserves company/journal files and damaged cache bytes. Focused failure,

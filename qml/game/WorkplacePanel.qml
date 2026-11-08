@@ -55,7 +55,7 @@ ColumnLayout {
     ColumnLayout {
         visible:campaign.world.roomOffers.length>0;Layout.fillWidth:true;spacing:8
         Copy {text:qsTr("Blueprint name")}
-        DraftField {id:blueprintName;objectName:"blueprintName";Layout.fillWidth:true;font.pixelSize:panel.textSize;maximumLength:72;text:qsTr("Compact research branch");Accessible.name:qsTr("Blueprint name")}
+        DraftField {id:blueprintName;objectName:"blueprintName";Layout.fillWidth:true;font.pixelSize:panel.textSize;maximumLength:72;defaultText:qsTr("Compact research branch");Accessible.name:qsTr("Blueprint name")}
         Copy {text:qsTr("Hardware bundle")}
         ComboBox {
             id:hardware;objectName:"blueprintHardware";Layout.fillWidth:true;font.pixelSize:panel.textSize
@@ -65,9 +65,9 @@ ColumnLayout {
         }
         Copy {text:(campaign.world.blueprintHardware.find(row=>row.id===panel.hardwareId) || {}).detail || ""}
         Copy {text:qsTr("Grid reservation · whole kW")}
-        DraftField {id:grid;objectName:"blueprintGridKw";Layout.fillWidth:true;font.pixelSize:panel.textSize;maximumLength:4;text:"20";Accessible.name:qsTr("Blueprint grid reservation in whole kW")}
+        DraftField {id:grid;objectName:"blueprintGridKw";Layout.fillWidth:true;font.pixelSize:panel.textSize;maximumLength:4;defaultText:"20";Accessible.name:qsTr("Blueprint grid reservation in whole kW")}
         Copy {text:qsTr("Dedicated operators")}
-        DraftField {id:operators;objectName:"blueprintOperators";Layout.fillWidth:true;font.pixelSize:panel.textSize;maximumLength:2;text:"1";Accessible.name:qsTr("Blueprint operator headcount")}
+        DraftField {id:operators;objectName:"blueprintOperators";Layout.fillWidth:true;font.pixelSize:panel.textSize;maximumLength:2;defaultText:"1";Accessible.name:qsTr("Blueprint operator headcount")}
         CheckBox {id:cooling;objectName:"blueprintWaterCooling";text:qsTr("Evaporative cooling · uses water");font.pixelSize:panel.textSize;onToggled:campaign.world.setDraft("workplace/cooling",checked?"evaporative":"air")}
         WorldButton {objectName:"saveFacilityBlueprint";text:qsTr("Save this blueprint");textSize:panel.textSize;enabled:panel.editable;onClicked:campaign.world.createBlueprint(blueprintName.text,panel.hardwareId,grid.text,operators.text,cooling.checked)}
     }

@@ -40,7 +40,7 @@ ColumnLayout {
             Layout.fillWidth: true
             font.pixelSize: panel.textSize
             Accessible.name: field.label
-            text: field.initialValue
+            defaultText: field.initialValue
             onTextEdited: panel.desk.clearReview()
         }
     }

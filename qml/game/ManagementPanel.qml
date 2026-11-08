@@ -10,6 +10,27 @@ ColumnLayout {
     property string officeSection: "offers"
     property var manager: campaign.management
     property var trainingData: []
+    DraftState {
+        id: mixtureDraft
+        draftKey: "training/mixture"
+        accepts: value => Array.isArray(value) && value.length <= 64 && value.every(id => typeof id === "string") && new Set(value).size === value.length
+        onRestored: value => panel.trainingData = value.filter(id => manager.dataOffers.containsSourceId(id))
+        onReset: panel.trainingData = []
+    }
+    DraftState {
+        id: labPageDraft
+        draftKey: "pages/lab"
+        accepts: value => ["data", "research", "train", "models", "evaluate", "deploy", "projects"].includes(value)
+        onRestored: value => panel.section = value
+        onReset: panel.section = "data"
+    }
+    DraftState {
+        id: officePageDraft
+        draftKey: "pages/office"
+        accepts: value => ["offers", "products", "contracts", "markets", "rivals", "accounts", "funding", "governance", "policies", "score"].includes(value)
+        onRestored: value => panel.officeSection = value
+        onReset: panel.officeSection = "offers"
+    }
     readonly property bool editable: campaign.paused && !campaign.busy && campaign.companyEditable
     spacing: 10
 
@@ -31,12 +52,14 @@ ColumnLayout {
     }
     component Field: ColumnLayout {
         property string label
+        property string initialValue: ""
         property alias value: input.text
         Layout.fillWidth: true
         Copy { text: parent.label }
         DraftField {
             id: input
             objectName: parent.objectName + "Input"
+            defaultText: parent.initialValue
             Layout.fillWidth: true
             font.pixelSize: panel.textSize
             Accessible.name: parent.label
@@ -49,11 +72,17 @@ ColumnLayout {
         property string label
         property var options: []
         property var rows: null
+        property string draftScope: ""
+        property var resetValue: undefined
         property string value: rows ? (rows.count > 0 ? rows.idAt(0) : "") : (options.length ? options[0].id : "")
         readonly property var selectedOption: options.find(o => o.id === value) || ({})
         Layout.fillWidth: true
         Copy { text: choice.label }
-        ComboBox {
+        DraftComboBox {
+            draftOwner: choice
+            draftScope: choice.draftScope
+            draftProperty: "value"
+            draftResetValue: choice.resetValue !== undefined ? choice.resetValue : choice.rows ? (choice.rows.count ? choice.rows.idAt(0) : "") : (choice.options.length ? choice.options[0].id : "")
             Layout.fillWidth: true
             font.pixelSize: panel.textSize
             Accessible.name: choice.label
@@ -73,6 +102,7 @@ ColumnLayout {
         spacing: 8
         Copy { text: selection.heading; font.bold: true; color: "#ffd897" }
         StableEntityList {
+            objectName: selection.objectName.length ? selection.objectName + "List" : ""
             Layout.fillWidth: true
             Layout.preferredHeight: Math.max(125, Math.min(340, selection.rows.count * panel.textSize * 6))
             rows: selection.rows
@@ -99,7 +129,7 @@ ColumnLayout {
                 font.pixelSize: panel.textSize
                 checked: panel.section === modelData.id
                 Accessible.name: text
-                onClicked: panel.section = modelData.id
+                onClicked: { panel.section = modelData.id; labPageDraft.remember(modelData.id) }
             }
         }
     }
@@ -120,7 +150,7 @@ ColumnLayout {
                 font.pixelSize: panel.textSize
                 checked: panel.officeSection === modelData.id
                 Accessible.name: text
-                onClicked: panel.officeSection = modelData.id
+                onClicked: { panel.officeSection = modelData.id; officePageDraft.remember(modelData.id) }
             }
         }
     }
@@ -137,7 +167,7 @@ ColumnLayout {
             text: manager.dataOffers.filterText
             onTextEdited: manager.dataOffers.filterText = text
         }
-        Selection { heading: qsTr("Data offers"); rows: manager.dataOffers }
+        Selection { objectName: "managementDataOffersSelection"; heading: qsTr("Data offers"); rows: manager.dataOffers }
         Action {
             objectName: "buyDataButton"
             text: qsTr("Buy selected license")
@@ -156,8 +186,8 @@ ColumnLayout {
             }
             Copy { text: collectionOffer.selectedOption.detail || "" }
             Choice { id: collectionSource; objectName: "collectionSourceChoice"; label: qsTr("Collection compute source"); options: manager.sources }
-            Field { id: collectionRate; objectName: "collectionRateField"; label: qsTr("Collection CU per day"); value: "10" }
-            Field { id: collectionStaff; objectName: "collectionStaffField"; label: qsTr("Collection staff"); value: "1" }
+            Field { id: collectionRate; objectName: "collectionRateField"; label: qsTr("Collection CU per day"); initialValue: "10" }
+            Field { id: collectionStaff; objectName: "collectionStaffField"; label: qsTr("Collection staff"); initialValue: "1" }
             Action {
                 objectName: "reviewCollectionButton"
                 text: qsTr("Review data collection…")
@@ -228,10 +258,10 @@ ColumnLayout {
                 options: manager.synthesisRecipes.length > 0 ? manager.synthesisVerification(synthesisRecipe.value, synthesisTeacher.value) : []
                 onOptionsChanged: if (!options.some(o => o.id === value)) value = options.length ? options[0].id : ""
             }
-            Field { id: synthesisUnits; objectName: "synthesisUnitsField"; label: qsTr("Attempted records"); value: "10000" }
+            Field { id: synthesisUnits; objectName: "synthesisUnitsField"; label: qsTr("Attempted records"); initialValue: "10000" }
             Choice { id: synthesisSource; objectName: "synthesisSourceChoice"; label: qsTr("Generation compute source"); options: manager.sources }
-            Field { id: synthesisRate; objectName: "synthesisRateField"; label: qsTr("Generation CU per day"); value: manager.recommended.testingRate || "20" }
-            Field { id: synthesisStaff; objectName: "synthesisStaffField"; label: qsTr("Generation and verification staff"); value: "1" }
+            Field { id: synthesisRate; objectName: "synthesisRateField"; label: qsTr("Generation CU per day"); initialValue: manager.recommended.testingRate || "20" }
+            Field { id: synthesisStaff; objectName: "synthesisStaffField"; label: qsTr("Generation and verification staff"); initialValue: "1" }
             Action {
                 objectName: "reviewSynthesisButton"
                 text: qsTr("Review generation and verification…")
@@ -283,8 +313,8 @@ ColumnLayout {
         }
         Selection { objectName: "researchTopicSelection"; heading: qsTr("Research topics"); rows: manager.researchTopics }
         Choice { id: researchSource; objectName: "researchSourceChoice"; label: qsTr("Research compute source"); options: manager.sources }
-        Field { id: researchRate; objectName: "researchRateField"; label: qsTr("Research CU per day"); value: manager.recommended.testingRate || "" }
-        Field { id: researchStaff; objectName: "researchStaffField"; label: qsTr("Research staff"); value: manager.recommended.researchStaff || "" }
+        Field { id: researchRate; objectName: "researchRateField"; label: qsTr("Research CU per day"); initialValue: manager.recommended.testingRate || "" }
+        Field { id: researchStaff; objectName: "researchStaffField"; label: qsTr("Research staff"); initialValue: manager.recommended.researchStaff || "" }
         Action {
             objectName: "startResearchButton"
             text: (manager.researchTopics.selectedRow.fields || {}).canRetry === true
@@ -332,6 +362,7 @@ ColumnLayout {
                 checked: panel.trainingData.indexOf(entityId) >= 0
                 onClicked: {
                     panel.trainingData = checked ? panel.trainingData.concat([entityId]) : panel.trainingData.filter(id => id !== entityId)
+                    mixtureDraft.remember(panel.trainingData)
                     training.refresh()
                 }
                 contentItem: Text {
@@ -342,12 +373,13 @@ ColumnLayout {
                 Layout.fillWidth: true
             }
         }
-        Choice { id: trainingSource; label: qsTr("Training compute source"); options: manager.sources; onValueChanged: training.refresh() }
-        Field { id: trainingRate; objectName: "trainingRateField"; label: qsTr("Training CU per day"); value: manager.recommended.trainingRate || ""; onValueChanged: training.refresh() }
-        Field { id: trainingStaff; objectName: "trainingStaffField"; label: qsTr("Training staff"); value: manager.recommended.trainingStaff || ""; onValueChanged: training.refresh() }
-        Field { id: trainingWork; objectName: "trainingWorkField"; label: qsTr("Additional training budget, total CU"); value: manager.recommended.trainingWork || ""; onValueChanged: training.refresh() }
-        CheckBox {
+        Choice { objectName: "managementTrainingSourceChoice"; id: trainingSource; label: qsTr("Training compute source"); options: manager.sources; onValueChanged: training.refresh() }
+        Field { id: trainingRate; objectName: "trainingRateField"; label: qsTr("Training CU per day"); initialValue: manager.recommended.trainingRate || ""; onValueChanged: training.refresh() }
+        Field { id: trainingStaff; objectName: "trainingStaffField"; label: qsTr("Training staff"); initialValue: manager.recommended.trainingStaff || ""; onValueChanged: training.refresh() }
+        Field { id: trainingWork; objectName: "trainingWorkField"; label: qsTr("Additional training budget, total CU"); initialValue: manager.recommended.trainingWork || ""; onValueChanged: training.refresh() }
+        DraftCheckBox {
             id: continueTraining
+            objectName: "continueTrainingChoice"
             Layout.fillWidth: true
             text: qsTr("Continue a stopped checkpoint with the same recipe and data")
             font.pixelSize: panel.textSize
@@ -359,7 +391,7 @@ ColumnLayout {
                 wrapMode: Text.Wrap
             }
         }
-        Choice { id: parentModel; label: qsTr("Parent checkpoint"); rows: manager.models; visible: continueTraining.checked; onValueChanged: training.refresh() }
+        Choice { objectName: "managementParentModelChoice"; id: parentModel; label: qsTr("Parent checkpoint"); rows: manager.models; visible: continueTraining.checked; onValueChanged: training.refresh() }
         Copy { objectName: "trainingPreview"; text: training.preview.text || qsTr("Choose data and a recipe to preview.") }
         Action {
             objectName: "startTrainingButton"
@@ -396,8 +428,8 @@ ColumnLayout {
         Choice { id: evaluationPlan; objectName: "evaluationPlanChoice"; label: qsTr("Evaluation plan and cash fee"); options: manager.evaluations }
         Copy { text: evaluationPlan.selectedOption.detail || "" }
         Choice { id: evaluationSource; objectName: "evaluationSourceChoice"; label: qsTr("Evaluation compute source"); options: manager.sources }
-        Field { id: evaluationRate; objectName: "evaluationRateField"; label: qsTr("Evaluation CU per day"); value: manager.recommended.testingRate || "" }
-        Field { id: evaluationStaff; objectName: "evaluationStaffField"; label: qsTr("Evaluation staff"); value: manager.recommended.testingStaff || "" }
+        Field { id: evaluationRate; objectName: "evaluationRateField"; label: qsTr("Evaluation CU per day"); initialValue: manager.recommended.testingRate || "" }
+        Field { id: evaluationStaff; objectName: "evaluationStaffField"; label: qsTr("Evaluation staff"); initialValue: manager.recommended.testingStaff || "" }
         Choice {
             id: evaluationSpecialist
             objectName: "evaluationSpecialistChoice"
@@ -431,30 +463,36 @@ ColumnLayout {
         }
         Choice {
             id: weightAudience
+            draftScope: deploymentService.value
             objectName: "weightAudienceChoice"
             label: qsTr("Weight release audience and grant")
             visible: deploymentService.selectedOption.openWeights === true
             options: visible ? manager.weightAudiences(deploymentService.value, deploymentRegion.visible ? deploymentRegion.value : "") : []
             readonly property string publishedAudience: deploymentService.selectedOption.weightAudience || ""
+            resetValue: publishedAudience
             onPublishedAudienceChanged: value = publishedAudience
             onOptionsChanged: if (!options.some(o => o.id === value)) value = ""
         }
         Choice {
             id: agentTools
+            draftScope: deploymentService.value
             objectName: "agentToolsChoice"
             label: qsTr("Tool permissions")
             visible: deploymentService.selectedOption.reviewRequired === true
             options: [{id:"draft",label:qsTr("Drafts only · staff execute")}, {id:"internal",label:qsTr("Internal updates")}, {id:"external",label:qsTr("External actions")}]
             readonly property string currentPolicy: deploymentService.selectedOption.agentTools || "draft"
+            resetValue: currentPolicy
             onCurrentPolicyChanged: value = currentPolicy
         }
         Choice {
             id: agentOversight
+            draftScope: deploymentService.value
             objectName: "agentOversightChoice"
             label: qsTr("Human oversight")
             visible: agentTools.visible
             options: [{id:"each_action",label:qsTr("Approve each action")}, {id:"batch",label:qsTr("Batch review · faster intake")}]
             readonly property string currentPolicy: deploymentService.selectedOption.agentOversight || "each_action"
+            resetValue: currentPolicy
             onCurrentPolicyChanged: value = currentPolicy
         }
         Connections {
@@ -467,8 +505,11 @@ ColumnLayout {
         }
         Copy { visible: manager.launchRegions.length > 0; text: qsTr("A service keeps its launch territory when you replace its model.") }
         Copy { visible: deploymentService.selectedOption.reviewRequired === true; text: qsTr("This agent requires paid human review.") }
-        CheckBox {
+        DraftCheckBox {
             id: humanReview
+            objectName: "deploymentHumanReview"
+            draftScope: deploymentService.value
+            draftAllowed: enabled
             Layout.fillWidth: true
             contentItem: Text { text: humanReview.text; font: humanReview.font; color: humanReview.enabled ? "#f2f4f7" : "#aebbc7"; leftPadding: humanReview.indicator.width + humanReview.spacing; wrapMode: Text.Wrap }
             text: qsTr("Add paid human review")
@@ -503,8 +544,8 @@ ColumnLayout {
             Layout.fillWidth: true
             visible: deploymentService.selectedOption.live === true && deploymentService.selectedOption.trialPending !== true
             Copy { text: qsTr("Try a qualified checkpoint on a share of discretionary orders before changing production.") }
-            Field { id: trialShare; objectName: "trialShareField"; label: qsTr("Maximum trial share · whole percent (1–50)"); value: "20" }
-            Field { id: trialDays; objectName: "trialDaysField"; label: qsTr("Trial length · days (1–30)"); value: "14" }
+            Field { id: trialShare; objectName: "trialShareField"; label: qsTr("Maximum trial share · whole percent (1–50)"); initialValue: "20" }
+            Field { id: trialDays; objectName: "trialDaysField"; label: qsTr("Trial length · days (1–30)"); initialValue: "14" }
             Action {
                 objectName: "reviewStageRolloutButton"
                 text: qsTr("Review staged rollout…")
@@ -526,8 +567,8 @@ ColumnLayout {
             text: deploymentService.selectedOption.retired === true ? qsTr("This service retired on its published date. Choose another service to launch.") :
                 qsTr("This service has published its retirement date. Trials must end by that date. Updates still need to meet active compatibility commitments.")
         }
-        Selection { heading: qsTr("Deployed services"); rows: manager.products }
-        Field { id: productPrice; objectName: "productPriceField"; label: qsTr("Price per task · constant 2014 cents"); value: (manager.products.selectedRow.fields || {}).priceCents || ""; visible: (manager.products.selectedRow.fields || {}).freeWeights !== true && (manager.products.selectedRow.fields || {}).retired !== true }
+        Selection { objectName: "managementProductsSelection"; heading: qsTr("Deployed services"); rows: manager.products }
+        Field { id: productPrice; objectName: "productPriceField"; label: qsTr("Price per task · constant 2014 cents"); initialValue: (manager.products.selectedRow.fields || {}).priceCents || ""; visible: (manager.products.selectedRow.fields || {}).freeWeights !== true && (manager.products.selectedRow.fields || {}).retired !== true }
         Copy { visible: productPrice.visible; text: qsTr("Setting a price suspends any enabled pricing policy for this product. Review its retained bounds and counters in Office → Policies and alerts before resuming.") }
         Action {
             objectName: "setProductPriceButton"
@@ -590,8 +631,8 @@ ColumnLayout {
                 visible: deploymentIncident.selectedOption.canRespond === true
                 Copy { text: qsTr("Commission a paid incident response. Acknowledgment records the alert separately from compensation and recovery.") }
                 Choice { id: responseSource; objectName: "deploymentResponseSourceChoice"; label: qsTr("Response compute source"); options: manager.sources }
-                Field { id: responseRate; objectName: "deploymentResponseRateField"; label: qsTr("Response CU/day"); value: "20" }
-                Field { id: responseStaff; objectName: "deploymentResponseStaffField"; label: qsTr("Response staff"); value: "2" }
+                Field { id: responseRate; objectName: "deploymentResponseRateField"; label: qsTr("Response CU/day"); initialValue: "20" }
+                Field { id: responseStaff; objectName: "deploymentResponseStaffField"; label: qsTr("Response staff"); initialValue: "2" }
                 Action {
                     objectName: "reviewDeploymentResponseButton"
                     text: qsTr("Review paid incident response…")
@@ -639,7 +680,7 @@ ColumnLayout {
                 objectName: "serviceWaitlistDetails"
                 text: serviceOffice.selected.waitlistDetail || qsTr("Open enrollment. Use a waitlist to protect existing work while limiting new demand.")
             }
-            Field { id: intakeLimit; objectName: "waitlistIntakeField"; label: qsTr("Maximum new tasks/day · 0 pauses admissions"); value: serviceOffice.selected.waitlistLimit || "0" }
+            Field { id: intakeLimit; objectName: "waitlistIntakeField"; label: qsTr("Maximum new tasks/day · 0 pauses admissions"); initialValue: serviceOffice.selected.waitlistLimit || "0" }
             Action {
                 objectName: "reviewWaitlistButton"
                 text: qsTr("Review waitlist limit…")
@@ -704,7 +745,7 @@ ColumnLayout {
             Layout.fillWidth: true
             visible: serviceOffice.selected.live === true && serviceOffice.selected.trialPending !== true &&
                      (serviceOffice.selected.compatibilityActive !== true || serviceOffice.selected.retirementAnnounced !== true)
-            Field { id: serviceTermDays; objectName: "serviceTermDaysField"; label: qsTr("Compatibility or notice period · days (30–1,096)"); value: "90" }
+            Field { id: serviceTermDays; objectName: "serviceTermDaysField"; label: qsTr("Compatibility or notice period · days (30–1,096)"); initialValue: "90" }
             Action {
                 objectName: "reviewCompatibilityButton"
                 text: qsTr("Review compatibility commitment…")
@@ -773,7 +814,7 @@ ColumnLayout {
             }
         }
         Action { objectName: "declineCompetitiveOfferButton"; text: qsTr("Decline selected agreement"); enabled: panel.editable && manager.competitiveOffers.selectedRow.actionable === true; onClicked: manager.respondCompetitiveOffer(manager.competitiveOffers.selectedId, false) }
-        Selection { heading: qsTr("Public rival notices"); rows: manager.rivals }
+        Selection { objectName: "managementRivalsSelection"; heading: qsTr("Public rival notices"); rows: manager.rivals }
     }
     ColumnLayout {
         Layout.fillWidth: true
@@ -789,7 +830,7 @@ ColumnLayout {
             visible: accountsPanel.section === "bills"
             Layout.fillWidth: true
             Copy { text: manager.briefing }
-            Selection { heading: qsTr("Unpaid obligations"); rows: manager.payables }
+            Selection { objectName: "managementPayablesSelection"; heading: qsTr("Unpaid obligations"); rows: manager.payables }
             Action {
                 text: qsTr("Pay selected outstanding amount")
                 enabled: panel.editable && manager.payables.selectedId.length > 0
@@ -828,25 +869,25 @@ ColumnLayout {
                 {id:"hardware_replacement",label:qsTr("Replace obsolete owned hardware")}
             ]
         }
-        Choice { id: policyModel; label: qsTr("Model checkpoint (may still be training)"); rows: manager.models; visible: policyKind.value === "evaluation" }
-        Choice { id: policyPlan; label: qsTr("Independent evaluation plan"); options: manager.evaluations; visible: policyKind.value === "evaluation" }
-        Choice { id: policySource; label: qsTr("Evaluation source"); options: manager.sources; visible: policyKind.value === "evaluation" }
-        Field { id: policyRate; objectName: "policyRateField"; label: qsTr("Evaluation CU/day ceiling"); value: manager.recommended.testingRate || ""; visible: policyKind.value === "evaluation" }
-        Field { id: policyStaff; objectName: "policyStaffField"; label: qsTr("Evaluation staff ceiling"); value: manager.recommended.testingStaff || ""; visible: policyKind.value === "evaluation" }
-        Field { id: policyInterval; objectName: "policyIntervalField"; label: qsTr("Days between evaluations"); value: manager.policyDefaults.interval || ""; visible: policyKind.value === "evaluation" }
-        Choice { id: policyLease; label: qsTr("Accepted renewable lease and conservative term cost"); options: manager.renewableLeases; visible: policyKind.value === "lease_renewal" }
-        Field { id: policyMonthly; objectName: "policyMonthlyField"; label: qsTr("Maximum lease bill per month, dollars"); value: manager.policyDefaults.monthly || ""; visible: policyKind.value === "lease_renewal" }
+        Choice { objectName: "managementPolicyModelChoice"; id: policyModel; label: qsTr("Model checkpoint (may still be training)"); rows: manager.models; visible: policyKind.value === "evaluation" }
+        Choice { objectName: "managementPolicyPlanChoice"; id: policyPlan; label: qsTr("Independent evaluation plan"); options: manager.evaluations; visible: policyKind.value === "evaluation" }
+        Choice { objectName: "managementPolicySourceChoice"; id: policySource; label: qsTr("Evaluation source"); options: manager.sources; visible: policyKind.value === "evaluation" }
+        Field { id: policyRate; objectName: "policyRateField"; label: qsTr("Evaluation CU/day ceiling"); initialValue: manager.recommended.testingRate || ""; visible: policyKind.value === "evaluation" }
+        Field { id: policyStaff; objectName: "policyStaffField"; label: qsTr("Evaluation staff ceiling"); initialValue: manager.recommended.testingStaff || ""; visible: policyKind.value === "evaluation" }
+        Field { id: policyInterval; objectName: "policyIntervalField"; label: qsTr("Days between evaluations"); initialValue: manager.policyDefaults.interval || ""; visible: policyKind.value === "evaluation" }
+        Choice { objectName: "managementPolicyLeaseChoice"; id: policyLease; label: qsTr("Accepted renewable lease and conservative term cost"); options: manager.renewableLeases; visible: policyKind.value === "lease_renewal" }
+        Field { id: policyMonthly; objectName: "policyMonthlyField"; label: qsTr("Maximum lease bill per month, dollars"); initialValue: manager.policyDefaults.monthly || ""; visible: policyKind.value === "lease_renewal" }
         ColumnLayout {
             visible: policyKind.value === "pricing"
             Layout.fillWidth: true
             Choice { id: priceProduct; objectName: "pricingProductChoice"; label: qsTr("Operating product and current quote"); options: manager.pricedProducts }
-            Field { id: priceFloor; objectName: "pricingFloorField"; label: qsTr("Minimum price per task, dollars"); value: priceProduct.selectedOption.floor || "0.00" }
-            Field { id: priceCeiling; objectName: "pricingCeilingField"; label: qsTr("Maximum price per task, dollars"); value: priceProduct.selectedOption.ceiling || "1.00" }
-            Field { id: priceStep; objectName: "pricingStepField"; label: qsTr("Price adjustment per review, dollars"); value: priceProduct.selectedOption.step || "0.05" }
-            Field { id: priceLow; objectName: "pricingLowField"; label: qsTr("Lower price at or below this utilization, whole percent"); value: "25" }
-            Field { id: priceHigh; objectName: "pricingHighField"; label: qsTr("Raise price at or above this utilization, whole percent"); value: "85" }
-            Field { id: priceInterval; objectName: "pricingIntervalField"; label: qsTr("Days between price reviews, 7–365"); value: "30" }
-            Field { id: priceRuns; objectName: "pricingRunsField"; label: qsTr("Maximum price reviews, 1–10000"); value: "1200" }
+            Field { id: priceFloor; objectName: "pricingFloorField"; label: qsTr("Minimum price per task, dollars"); initialValue: priceProduct.selectedOption.floor || "0.00" }
+            Field { id: priceCeiling; objectName: "pricingCeilingField"; label: qsTr("Maximum price per task, dollars"); initialValue: priceProduct.selectedOption.ceiling || "1.00" }
+            Field { id: priceStep; objectName: "pricingStepField"; label: qsTr("Price adjustment per review, dollars"); initialValue: priceProduct.selectedOption.step || "0.05" }
+            Field { id: priceLow; objectName: "pricingLowField"; label: qsTr("Lower price at or below this utilization, whole percent"); initialValue: "25" }
+            Field { id: priceHigh; objectName: "pricingHighField"; label: qsTr("Raise price at or above this utilization, whole percent"); initialValue: "85" }
+            Field { id: priceInterval; objectName: "pricingIntervalField"; label: qsTr("Days between price reviews, 7–365"); initialValue: "30" }
+            Field { id: priceRuns; objectName: "pricingRunsField"; label: qsTr("Maximum price reviews, 1–10000"); initialValue: "1200" }
             Copy { text: qsTr("The first review is tomorrow. Later reviews use up to seven settled days of discretionary deliveries and serving slots left after protected contracts. Low utilization lowers the quote by one step; high utilization raises it. The policy holds through a known capacity reduction. Every review, including a hold, uses one authorization. Manual price changes suspend the policy. No spending authority is granted; existing contracts keep their agreed terms.") }
             Copy {
                 objectName: "pricingPreviewText"
@@ -870,8 +911,8 @@ ColumnLayout {
                     return visible ? manager.replacementFamilies(oldRack.value) : []
                 }
             }
-            Field { id: replacementPurchase; objectName: "replacementPurchaseField"; label: qsTr("Maximum replacement purchase, dollars"); value: replacementFamily.selectedOption.purchase || "" }
-            Field { id: replacementMonthly; objectName: "replacementMonthlyField"; label: qsTr("Maximum replacement maintenance per month, dollars"); value: replacementFamily.selectedOption.maintenance || "" }
+            Field { id: replacementPurchase; objectName: "replacementPurchaseField"; label: qsTr("Maximum replacement purchase, dollars"); initialValue: replacementFamily.selectedOption.purchase || "" }
+            Field { id: replacementMonthly; objectName: "replacementMonthlyField"; label: qsTr("Maximum replacement maintenance per month, dollars"); initialValue: replacementFamily.selectedOption.maintenance || "" }
             Copy {
                 text: oldRack.options.length === 0
                     ? qsTr("Commission owned hardware in Operations to schedule a replacement within this campaign.")
@@ -882,14 +923,14 @@ ColumnLayout {
             visible: policyKind.value === "operating_reserve"
             text: qsTr("Keep this amount available for operating costs. New purchases and delegated spending use cash above the target. Existing obligations, debt repayment and story consequences can draw it down. Incoming cash replenishes it automatically. Suspend the policy to release the reserve.")
         }
-        Field { id: policyBudget; objectName: "policyBudgetField"; label: qsTr("Total policy commitment budget, dollars"); value: manager.policyDefaults.budget || ""; visible: policyKind.value === "evaluation" || policyKind.value === "lease_renewal" }
+        Field { id: policyBudget; objectName: "policyBudgetField"; label: qsTr("Total policy commitment budget, dollars"); initialValue: manager.policyDefaults.budget || ""; visible: policyKind.value === "evaluation" || policyKind.value === "lease_renewal" }
         Field {
             id: policyReserve
             objectName: "policyReserveField"
             label: policyKind.value === "operating_reserve" ? qsTr("Cash reserve target, dollars") : qsTr("Minimum cash after commitment, dollars")
-            value: manager.policyDefaults.reserve || ""
+            initialValue: manager.policyDefaults.reserve || ""
         }
-        Field { id: policyRuns; objectName: "policyRunsField"; label: qsTr("Maximum authorized runs"); value: manager.policyDefaults.runs || ""; visible: policyKind.value === "evaluation" || policyKind.value === "lease_renewal" }
+        Field { id: policyRuns; objectName: "policyRunsField"; label: qsTr("Maximum authorized runs"); initialValue: manager.policyDefaults.runs || ""; visible: policyKind.value === "evaluation" || policyKind.value === "lease_renewal" }
         Copy { visible: policyKind.value === "lease_renewal"; text: qsTr("Renewal occurs on the expiry morning. The policy debits a conservative full-term commitment ceiling (setup plus enough monthly bills for the entire term); the ledger pays actual setup and daily accrued bills. It cannot renew a missed deadline retroactively.") }
         Action {
             objectName: "authorizePolicyButton"
@@ -903,7 +944,7 @@ ColumnLayout {
                 else manager.authorizeRenewal(policyLease.value, policyBudget.value, policyReserve.value, policyMonthly.value, policyRuns.value)
             }
         }
-        Selection { heading: qsTr("Authorized policies"); rows: manager.policies }
+        Selection { objectName: "managementPoliciesSelection"; heading: qsTr("Authorized policies"); rows: manager.policies }
         Action { objectName: "togglePolicyButton"; text: qsTr("Suspend / resume selected policy"); enabled: panel.editable && manager.policies.selectedId.length > 0; onClicked: manager.setPolicyEnabled(manager.policies.selectedId, !(manager.policies.selectedRow.fields || {}).enabled) }
         Action { text: qsTr("Renew selected lease explicitly on expiry morning"); visible: policyKind.value === "lease_renewal"; enabled: panel.editable && policyLease.value.length > 0; onClicked: manager.renewLease(policyLease.value) }
         Copy { objectName: "decisionPageLabel"; text: manager.decisionPageLabel }
@@ -913,8 +954,8 @@ ColumnLayout {
             Action { objectName: "newerPolicyDecisionsButton"; text: qsTr("Newer decisions"); enabled: manager.decisionPage > 0; onClicked: manager.setDecisionPage(manager.decisionPage - 1) }
             Action { objectName: "olderPolicyDecisionsButton"; text: qsTr("Older decisions"); enabled: manager.decisionPage + 1 < manager.decisionPageCount; onClicked: manager.setDecisionPage(manager.decisionPage + 1) }
         }
-        Selection { heading: qsTr("Policy decision log"); rows: manager.decisions }
-        Selection { heading: qsTr("Company alerts and deadlines"); rows: manager.alerts }
+        Selection { objectName: "managementDecisionsSelection"; heading: qsTr("Policy decision log"); rows: manager.decisions }
+        Selection { objectName: "managementAlertsSelection"; heading: qsTr("Company alerts and deadlines"); rows: manager.alerts }
         Action { objectName: "acknowledgeAlertButton"; text: qsTr("Acknowledge selected alert"); enabled: panel.editable && manager.alerts.selectedRow.actionable === true; onClicked: manager.acknowledgeAlert(manager.alerts.selectedId) }
     }
     ColumnLayout {
@@ -935,7 +976,7 @@ ColumnLayout {
             Selection { objectName: "executiveSelection"; heading: qsTr("Executive candidates and agreed terms"); rows: manager.executives }
             Action { objectName: "appointCashButton"; text: qsTr("Review cash-only appointment"); enabled: panel.editable && manager.executives.selectedRow.actionable === true; onClicked: corporateDialog.review("hireCash", manager.executives.selectedId, manager.executives.selectedRow.detail || "") }
             Action { objectName: "appointEquityButton"; text: qsTr("Review cash-plus-equity appointment"); enabled: panel.editable && manager.executives.selectedRow.actionable === true && (manager.executives.selectedRow.fields || {}).hybrid === true; onClicked: corporateDialog.review("hireEquity", manager.executives.selectedId, manager.executives.selectedRow.detail || "") }
-            Field { id: poolBp; objectName: "poolExpansionField"; label: qsTr("New pool allocation in basis points (100 = 1%)"); value: "500" }
+            Field { id: poolBp; objectName: "poolExpansionField"; label: qsTr("New pool allocation in basis points (100 = 1%)"); initialValue: "500" }
             Action { objectName: "proposePoolButton"; text: qsTr("Propose explicit pool-expansion dilution to board"); onClicked: manager.proposePool(poolBp.value) }
         }
         ColumnLayout {
@@ -1010,7 +1051,7 @@ ColumnLayout {
                     if (terms.length > 0) corporateDialog.review(equity ? "mergerEquity" : "mergerCash", id, terms)
                 }
             }
-            Field { id: groupDollars; objectName: "groupTransferField"; label: qsTr("Group transfer amount, dollars"); value: "1000.00" }
+            Field { id: groupDollars; objectName: "groupTransferField"; label: qsTr("Group transfer amount, dollars"); initialValue: "1000.00" }
             Action { objectName: "fundSubsidiaryButton"; text: qsTr("Review paid subsidiary capital funding"); enabled: panel.editable && (manager.mergerTargets.selectedRow.fields || {}).owned === true; onClicked: { corporateDialog.groupAmount = groupDollars.value; corporateDialog.review("groupFund", manager.mergerTargets.selectedId, qsTr("Transfer $%1 from your company's available cash to its owned subsidiary as capital? Cash is conserved; the payment is an investment, not an expense or product revenue.").arg(groupDollars.value) + "\n" + (manager.mergerTargets.selectedRow.detail || "")) } }
             Action { objectName: "dividendSubsidiaryButton"; text: qsTr("Review earned-profit dividend"); enabled: panel.editable && (manager.mergerTargets.selectedRow.fields || {}).owned === true; onClicked: { corporateDialog.groupAmount = groupDollars.value; corporateDialog.review("groupDividend", manager.mergerTargets.selectedId, qsTr("Request $%1 of actual undistributed profit earned since acquisition? The subsidiary must retain its cash floor and projected bills. Internal dividend income is eliminated from group profit.").arg(groupDollars.value) + "\n" + (manager.mergerTargets.selectedRow.detail || "")) } }
         }

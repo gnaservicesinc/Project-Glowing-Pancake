@@ -24,7 +24,11 @@ ColumnLayout {
     }
     component Heading: Copy { font.bold: true }
     component Action: Button { font.pixelSize: panel.textSize }
-    component Picker: ComboBox {
+    component Picker: DraftComboBox {
+        id: picker
+        draftOwner: picker
+        draftProperty: "rememberedId"
+        draftResetValue: ""
         property string rememberedId: ""
         Layout.fillWidth: true
         Layout.minimumWidth: 0
@@ -65,9 +69,10 @@ ColumnLayout {
         enabled: panel.institutions.hasUpcoming && campaign.canAdvance
         onClicked: campaign.advanceTo("institutions")
     }
-    ComboBox {
+    DraftComboBox {
         id: section
         objectName: "institutionsSection"
+        draftIds: ["authority", "public-record", "disputes"]
         Layout.fillWidth: true
         font.pixelSize: panel.textSize
         model: [qsTr("Authority"), qsTr("Public record"), qsTr("Disputes")]

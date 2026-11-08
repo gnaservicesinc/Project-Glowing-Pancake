@@ -35,6 +35,9 @@ int StableListModel::indexOf(const QString& id) const {
     const auto found = std::find_if(rows_.begin(),rows_.end(),[&](const auto& value) { return value.entity_id == id; });
     return found == rows_.end() ? -1 : static_cast<int>(found - rows_.begin());
 }
+bool StableListModel::containsSourceId(const QString& id) const {
+    return std::ranges::any_of(source_rows_,[&](const auto& row){return row.entity_id==id;});
+}
 QString StableListModel::idAt(int position) const {
     return position < 0 || position >= rowCount() ? QString{} : rows_[static_cast<std::size_t>(position)].entity_id;
 }

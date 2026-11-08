@@ -55,6 +55,7 @@ public:
     void setRows(std::vector<CampaignRow> rows);
     void beginCampaign(std::vector<CampaignRow> rows);
     Q_INVOKABLE [[nodiscard]] int indexOf(const QString& id) const;
+    Q_INVOKABLE [[nodiscard]] bool containsSourceId(const QString& id) const;
     Q_INVOKABLE [[nodiscard]] QVariantMap row(const QString& id) const;
     Q_INVOKABLE [[nodiscard]] QString idAt(int index) const;
 signals:

@@ -126,10 +126,37 @@ succession retain their real financial/authority contracts. National/world maps
 show public information; contact progression and the existing institutional
 eligibility rules jointly own action authority. Country outlines are display geometry; economic summaries describe
 the existing fictional regions, not estimated country-level statistics.
-The remaining interface audit covers unfinished non-text form selections.
+The interface audit now includes unfinished choices, checked sets and ordered
+queues as well as text fields.
 New companies save a local instance ID so reused seeds and names do not share
 unfinished fields or navigation. The ID never feeds simulation RNG; imported
 and resumed saves retain it. Older saves retain their existing draft location.
+
+### Unfinished forms
+
+Shared draft controls preserve stable choice IDs, checkbox values, selected
+records, training mixtures and ordered research queues in the current company's
+local UI file. Scalar choices are checked against their current options; unknown
+IDs are ignored. Views of the same model share a selection key. Restoring a form
+does not activate its controls or issue a simulation command. Pure queue editing
+remains available while a required decision waits; authorizing work still uses
+the existing pause, authority, budget and stale-review checks.
+
+Text fields separate their declared defaults from edited values. A later change
+to a recommendation does not overwrite a staged draft, and a new company resets
+the field to its own default. Explicit suggestion buttons also preserve the text
+they insert. The atomic UI file keeps at most 512 entries, with 8 KiB per value
+and a 256 KiB whole-file read/write bound; a full-file refusal preserves the prior
+readable values. These are UI preferences, separate from campaign checkpoints.
+
+Focused checks cover filtered source IDs, larger ordered drafts, company
+isolation, actual QML text reset/reload and storage-limit preservation. The native
+Metal walkthrough uses Qt keyboard events to edit a topic, recipe, numeric text,
+checkbox, checked mixture, two-topic queue, cooling and inspection method. A
+restart restores their values and queue order; the checkpoint and day-journal
+fingerprints stay unchanged. Resizing to 650×480 at 200% text keeps the focused
+selection visible. Physical input and release/device qualification remain later
+gates, separate from these rendered and in-process input checks.
 
 ### Original content and automatic continuation
 

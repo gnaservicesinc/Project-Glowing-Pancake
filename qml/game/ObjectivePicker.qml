@@ -18,14 +18,24 @@ ColumnLayout {
         checkedGoals = Array.from(defaultSecondary || [])
         if (choices.length > 0)
             primaryChoice.currentIndex = Math.max(0, choices.findIndex(row => row.id === defaultPrimary))
+        Qt.callLater(primaryChoice.restoreDraft)
+        Qt.callLater(secondaryDraft.restoreDraft)
+    }
+    DraftState {
+        id: secondaryDraft
+        draftKey: "objectives/" + picker.namePrefix
+        accepts: value => Array.isArray(value) && value.length <= 16 && value.every(id => typeof id === "string") && new Set(value).size === value.length
+        onRestored: value => picker.checkedGoals = value.filter(id => picker.choices.some(choice => choice.id === id))
+        onReset: picker.checkedGoals = Array.from(picker.defaultSecondary || [])
     }
     function secondary() {
         return choices.filter(row => row.id !== primary && checkedGoals.includes(row.id)).map(row => row.id)
     }
     Label { text: qsTr("Primary objective"); font.pixelSize: picker.textSize }
-    ComboBox {
+    DraftComboBox {
         id: primaryChoice
         objectName: picker.namePrefix + "Primary"
+        draftDefaultIndex: Math.max(0, picker.choices.findIndex(row => row.id === picker.defaultPrimary))
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         textRole: "label"
@@ -50,11 +60,12 @@ ColumnLayout {
                 font.pixelSize: picker.textSize
                 Accessible.name: qsTr("Secondary objective: %1").arg(text)
                 checked: picker.checkedGoals.includes(modelData.id)
-                onToggled: {
+                onClicked: {
                     const goals = picker.checkedGoals.filter(id => id !== modelData.id)
                     if (checked)
                         goals.push(modelData.id)
                     picker.checkedGoals = goals
+                    secondaryDraft.remember(goals)
                 }
             }
         }

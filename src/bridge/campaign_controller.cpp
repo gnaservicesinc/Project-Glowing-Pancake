@@ -1,4 +1,5 @@
 #include "campaign_controller.hpp"
+#include <QMetaProperty>
 #include <QUuid>
 #include <pgp/runtime/authority.hpp>
 #include "flow_presentation.hpp"
@@ -142,6 +143,18 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
       world_(new WorldController(paths.saves_directory.parent_path()/"world-navigation",this)),
       welcome_(welcome),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
       save_folder_(QUrl::fromLocalFile(QString::fromStdU16String(paths.saves_directory.u16string()))) {
+    const auto nameModels=[](QObject* owner,const QString& prefix) {
+        const auto* meta=owner->metaObject();
+        for(int index=meta->propertyOffset();index<meta->propertyCount();++index) {
+            const auto property=meta->property(index);
+            if(property.metaType()!=QMetaType::fromType<StableListModel*>()) continue;
+            if(auto* model=property.read(owner).value<StableListModel*>()) model->setObjectName(prefix+QLatin1Char('/')+QString::fromLatin1(property.name()));
+        }
+    };
+    nameModels(this,QStringLiteral("campaign"));nameModels(management_,QStringLiteral("management"));
+    nameModels(infrastructure_,QStringLiteral("infrastructure"));nameModels(civic_,QStringLiteral("civic"));
+    nameModels(society_,QStringLiteral("society"));nameModels(institutions_,QStringLiteral("institutions"));
+    nameModels(frontier_,QStringLiteral("frontier"));nameModels(leadership_,QStringLiteral("leadership"));nameModels(objectives_,QStringLiteral("objectives"));
     connect(world_,&WorldController::actionRequested,this,&CampaignController::submit);
     connect(world_,&WorldController::noticeRaised,this,&CampaignController::setNotice);
     connect(management_,&ManagementController::actionRequested,this,&CampaignController::submit);

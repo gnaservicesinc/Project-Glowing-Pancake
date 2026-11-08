@@ -59,17 +59,21 @@ ColumnLayout {
             Heading { text: qsTr("Standards forum") }
             Copy { objectName: "societyForum"; text: panel.society.forum }
             Copy { text: qsTr("Select a region above. A completed independent report can support one paid disclosure to that member during the hearing.") }
-            ComboBox {
+            DraftComboBox {
                 id: evidence
                 objectName: "societyEvidence"
+                draftScope: panel.society.regions.selectedId
                 Layout.fillWidth: true
                 model: panel.society.evidence
                 font.pixelSize: panel.textSize
                 Accessible.name: qsTr("Independent report for the selected forum member")
                 onActivated: panel.society.clearReview()
             }
-            ComboBox {
+            DraftComboBox {
                 id: stance
+                objectName: "societyStance"
+                draftIds: ["support", "oppose"]
+                draftScope: panel.society.regions.selectedId
                 Layout.fillWidth: true
                 model: [qsTr("Support"), qsTr("Oppose")]
                 font.pixelSize: panel.textSize
@@ -91,9 +95,10 @@ ColumnLayout {
             Copy { objectName: "societyAudiences"; text: panel.society.audiences }
             Heading { text: qsTr("Disclosed media campaigns") }
             Copy { objectName: "societyMedia"; text: panel.society.media }
-            ComboBox {
+            DraftComboBox {
                 id: service
                 objectName: "societyService"
+                draftScope: panel.society.regions.selectedId
                 Layout.fillWidth: true
                 model: panel.society.services
                 textRole: "label"
@@ -103,8 +108,10 @@ ColumnLayout {
                 onActivated: panel.society.clearReview()
             }
             Copy { visible: service.count === 0; text: qsTr("Deploy a service with completed independent evidence in this region to prepare a campaign.") }
-            ComboBox {
+            DraftComboBox {
                 id: audience
+                draftIds: ["investors", "researchers", "customers", "staff", "regulators", "communities"]
+                draftDefaultIndex: 2
                 objectName: "societyAudience"
                 Layout.fillWidth: true
                 model: [qsTr("Investors"), qsTr("Researchers"), qsTr("Customers"), qsTr("Staff"), qsTr("Regulators"), qsTr("Communities")]

@@ -389,6 +389,8 @@ ApplicationWindow {
         }
         ScrollView {
             id: scroll
+            onAvailableWidthChanged: Qt.callLater(() => reveal(window.activeFocusItem))
+            onAvailableHeightChanged: Qt.callLater(() => reveal(window.activeFocusItem))
             objectName: "managementScroll"
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -423,6 +425,7 @@ ApplicationWindow {
 
             ColumnLayout {
                 id: page
+                onHeightChanged: Qt.callLater(() => scroll.reveal(window.activeFocusItem))
                 width: scroll.availableWidth
                 spacing: 8
 

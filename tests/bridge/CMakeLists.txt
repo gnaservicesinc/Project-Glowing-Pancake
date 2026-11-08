@@ -35,3 +35,13 @@ target_compile_definitions(pgp-content-recovery-test PRIVATE
 pgp_project_target(pgp-content-recovery-test)
 add_test(NAME bridge.content-recovery COMMAND pgp-content-recovery-test)
 set_tests_properties(bridge.content-recovery PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-form-drafts-test form_drafts_test.cpp)
+target_link_libraries(pgp-form-drafts-test PRIVATE pgp::bridge Qt6::Quick Qt6::QuickControls2)
+target_compile_definitions(pgp-form-drafts-test PRIVATE
+    PGP_FORM_CONTENT="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json"
+    PGP_FORM_QML="${PROJECT_SOURCE_DIR}/qml/game"
+    PGP_FORM_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
+pgp_project_target(pgp-form-drafts-test)
+add_test(NAME bridge.form-drafts COMMAND pgp-form-drafts-test)
+set_tests_properties(bridge.form-drafts PROPERTIES TIMEOUT 30 ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

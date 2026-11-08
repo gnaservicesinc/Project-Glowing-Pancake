@@ -73,6 +73,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("device-smoke"),QStringLiteral("Exercise device ownership, equipment controls and compatible app routing.")});
     parser.addOption({QStringLiteral("workplace-smoke"),QStringLiteral("Exercise paid headquarters construction and repeatable facility blueprints.")});
     parser.addOption({QStringLiteral("content-recovery-smoke"),QStringLiteral("Review matching original content and resume an isolated older company."),QStringLiteral("source")});
+    parser.addOption({QStringLiteral("form-drafts-smoke"),QStringLiteral("Exercise unsubmitted form choices, exact state and UI-only restart.")});
     parser.process(application);
 #if !PGP_TEST_HOOKS
     if(parser.isSet(QStringLiteral("smoke-test"))) {
@@ -80,7 +81,7 @@ int main(int argc, char* argv[]) {
     }
 #endif
     if (parser.isSet(QStringLiteral("build-info"))) { core::write_build_identity(std::cout); return 0; }
-    const bool world_smoke=parser.isSet(QStringLiteral("content-recovery-smoke")) || parser.isSet(QStringLiteral("decision-smoke")) || parser.isSet(QStringLiteral("retirement-smoke")) || parser.isSet(QStringLiteral("world-smoke")) || parser.isSet(QStringLiteral("portrait-smoke")) || parser.isSet(QStringLiteral("workplace-smoke")) || parser.isSet(QStringLiteral("device-smoke")) || parser.isSet(QStringLiteral("contacts-smoke")) || parser.isSet(QStringLiteral("manager-smoke"));
+    const bool world_smoke=parser.isSet(QStringLiteral("form-drafts-smoke")) || parser.isSet(QStringLiteral("content-recovery-smoke")) || parser.isSet(QStringLiteral("decision-smoke")) || parser.isSet(QStringLiteral("retirement-smoke")) || parser.isSet(QStringLiteral("world-smoke")) || parser.isSet(QStringLiteral("portrait-smoke")) || parser.isSet(QStringLiteral("workplace-smoke")) || parser.isSet(QStringLiteral("device-smoke")) || parser.isSet(QStringLiteral("contacts-smoke")) || parser.isSet(QStringLiteral("manager-smoke"));
     const bool civic_smoke = parser.isSet(QStringLiteral("civic-smoke"));
     const bool society_smoke = parser.isSet(QStringLiteral("society-smoke"));
     const bool institutions_smoke = parser.isSet(QStringLiteral("institutions-smoke"));
@@ -195,7 +196,9 @@ int main(int argc, char* argv[]) {
 #if PGP_TEST_HOOKS
             if (parser.isSet(QStringLiteral("smoke-test"))) {
                 window->resize(1280,720);
-                if(parser.isSet(QStringLiteral("content-recovery-smoke")))
+                if(parser.isSet(QStringLiteral("form-drafts-smoke")))
+                    schedule_form_drafts_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));
+                else if(parser.isSet(QStringLiteral("content-recovery-smoke")))
                     schedule_content_recovery_smoke(*window,campaign,paths,parser.value(QStringLiteral("content-recovery-smoke")),parser.value(QStringLiteral("screenshot")));
                 else if(parser.isSet(QStringLiteral("decision-smoke")))
                     schedule_decision_smoke(*window,campaign,parser.value(QStringLiteral("screenshot")),parser.isSet(QStringLiteral("portrait-smoke")));

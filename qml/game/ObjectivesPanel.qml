@@ -7,6 +7,13 @@ ColumnLayout {
     required property int textSize
     readonly property var desk: campaign.objectives
     property bool choosing: false
+    DraftState {
+        id: choosingDraft
+        draftKey: "objectives/choosing"
+        accepts: value => typeof value === "boolean"
+        onRestored: value => panel.choosing = value
+        onReset: panel.choosing = false
+    }
     spacing: 10
     component Copy: Label {
         Layout.fillWidth: true
@@ -46,9 +53,10 @@ ColumnLayout {
         }
     }
     Copy { text: qsTr("Results and exact rules"); font.bold: true }
-    ComboBox {
+    DraftComboBox {
         id: selected
         objectName: "objectiveResultPicker"
+        draftDefaultIndex: Math.max(0, indexOfValue(panel.desk.primary))
         Layout.fillWidth: true
         Layout.minimumWidth: 0
         model: panel.desk.rows.map(row => ({id: row.id, label: row.label + " · " + row.role + " · " + row.status}))
@@ -65,7 +73,7 @@ ColumnLayout {
         objectName: "editObjectiveSelection"
         visible: panel.desk.editable
         text: panel.choosing ? qsTr("Hide selection") : qsTr("Change objectives…")
-        onClicked: { panel.choosing = !panel.choosing; panel.desk.clearReview() }
+        onClicked: { panel.choosing = !panel.choosing; choosingDraft.remember(panel.choosing); panel.desk.clearReview() }
     }
     ObjectivePicker {
         id: selection

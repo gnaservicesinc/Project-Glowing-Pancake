@@ -11,6 +11,33 @@ Rectangle {
     readonly property bool tight:height<textSize*16
     readonly property var counties:campaign.world.countyRows
     readonly property var selectedCountyRow:counties.find(row=>row.id===selectedCounty) || counties[0] || ({})
+    DraftState {
+        id: stateDraft
+        draftKey: "map/state"
+        accepts: value => typeof value === "string" && campaign.infrastructure.states.containsSourceId(value)
+        onRestored: value => { campaign.infrastructure.states.selectedId=value; campaign.world.countyState=value }
+    }
+    DraftState {
+        id: countyDraft
+        draftKey: "map/county/"+campaign.world.countyState
+        accepts: value => typeof value === "string" && mapPage.counties.some(row=>row.id===value)
+        onRestored: value => mapPage.selectedCounty=value
+        onReset: mapPage.selectedCounty=""
+    }
+    DraftState {
+        id: countryDraft
+        draftKey: "map/country"
+        accepts: value => typeof value === "string" && (campaign.world.worldGeometry.countries || []).some(row=>row.id===value)
+        onRestored: value => {
+            mapPage.selectedCountry=value
+            campaign.society.regions.selectedId=campaign.world.worldGeometry.countries.find(row=>row.id===value).region
+        }
+        onReset: mapPage.selectedCountry="USA"
+    }
+    onCountiesChanged: {
+        if (!counties.some(row=>row.id===selectedCounty)) selectedCounty=counties.length?counties[0].id:""
+        Qt.callLater(countyDraft.restoreDraft)
+    }
     signal openApp(string app,string section)
     signal visitHeadquarters()
     color:"#173035";radius:12;border.color:"#415d59"
@@ -47,28 +74,28 @@ Rectangle {
                     Layout.fillWidth:true;Layout.preferredHeight:Math.max(220,Math.min(440,mapPage.height*0.55))
                     geometry:campaign.infrastructure.mapGeometry
                     selectedId:campaign.infrastructure.states.selectedId
-                    onStatePicked:id=>{campaign.infrastructure.states.selectedId=id;campaign.world.countyState=id;mapPage.selectedCounty=""}
+                    onStatePicked:id=>{campaign.infrastructure.states.selectedId=id;campaign.world.countyState=id;stateDraft.remember(id)}
                 }
                 ComboBox {
                     visible:mapPage.scale==="state" || mapPage.scale==="country"
                     Layout.fillWidth:true;model:campaign.infrastructure.states;textRole:"title";valueRole:"entityId"
                     currentIndex:campaign.infrastructure.states.indexOf(campaign.infrastructure.states.selectedId)
                     font.pixelSize:mapPage.textSize;Accessible.name:qsTr("State")
-                    onActivated:{campaign.infrastructure.states.selectedId=currentValue;campaign.world.countyState=currentValue;mapPage.selectedCounty=""}
+                    onActivated:{campaign.infrastructure.states.selectedId=currentValue;campaign.world.countyState=currentValue;stateDraft.remember(currentValue)}
                 }
                 Label {visible:mapPage.scale==="country";Layout.fillWidth:true;text:campaign.infrastructure.states.selectedRow.detail || "";textFormat:Text.PlainText;font.pixelSize:mapPage.textSize;color:"#d6e2d6";wrapMode:Text.Wrap}
                 CountyMap {
                     visible:mapPage.scale==="state" && mapPage.counties.length>0
                     Layout.fillWidth:true;Layout.preferredHeight:Math.max(180,Math.min(260,mapPage.height*0.4))
                     rows:mapPage.counties;selectedId:mapPage.selectedCountyRow.id || ""
-                    onCountyPicked:id=>mapPage.selectedCounty=id
+                    onCountyPicked:id=>{mapPage.selectedCounty=id;countyDraft.remember(id)}
                 }
                 ComboBox {
                     visible:mapPage.scale==="state" && mapPage.counties.length>0
                     Layout.fillWidth:true;model:mapPage.counties;textRole:"name";valueRole:"id"
                     currentIndex:Math.max(0,model.findIndex(row=>row.id===mapPage.selectedCounty));font.pixelSize:mapPage.textSize
                     Accessible.name:qsTr("County")
-                    onActivated:mapPage.selectedCounty=currentValue
+                    onActivated:{mapPage.selectedCounty=currentValue;countyDraft.remember(currentValue)}
                 }
                 Label {visible:mapPage.scale==="state";Layout.fillWidth:true;text:mapPage.selectedCountyRow.detail || "";textFormat:Text.PlainText;font.pixelSize:mapPage.textSize;color:"#d6e2d6";wrapMode:Text.Wrap}
                 Label {visible:mapPage.scale==="state";Layout.fillWidth:true;text:campaign.world.countySummary;font.pixelSize:mapPage.textSize*0.9;color:"#acc4b8";wrapMode:Text.Wrap}
@@ -78,13 +105,13 @@ Rectangle {
                 GlobalMap {
                     visible:mapPage.scale==="world";Layout.fillWidth:true;Layout.preferredHeight:Math.max(180,Math.min(330,width*0.5))
                     geometry:campaign.world.worldGeometry;selectedId:mapPage.selectedCountry
-                    onCountryPicked:(id,region)=>{mapPage.selectedCountry=id;campaign.society.regions.selectedId=region}
+                    onCountryPicked:(id,region)=>{mapPage.selectedCountry=id;campaign.society.regions.selectedId=region;countryDraft.remember(id)}
                 }
                 ComboBox {
                     visible:mapPage.scale==="world";Layout.fillWidth:true
                     model:campaign.world.worldGeometry.countries || [];textRole:"name";valueRole:"id";font.pixelSize:mapPage.textSize
                     currentIndex:Math.max(0,model.findIndex(row=>row.id===mapPage.selectedCountry));Accessible.name:qsTr("Country")
-                    onActivated:{mapPage.selectedCountry=currentValue;campaign.society.regions.selectedId=model[currentIndex].region}
+                    onActivated:{mapPage.selectedCountry=currentValue;campaign.society.regions.selectedId=model[currentIndex].region;countryDraft.remember(currentValue)}
                 }
                 Label {visible:mapPage.scale==="world";Layout.fillWidth:true;text:qsTr("Conditions below describe the country's game region. Individual country economies and private company rankings are not estimated.");wrapMode:Text.Wrap;font.pixelSize:mapPage.textSize;color:"#acc4b8"}
                 StableEntityList {visible:mapPage.scale==="world";Layout.fillWidth:true;Layout.preferredHeight:180;rows:campaign.society.regions;textSize:mapPage.textSize;reducedMotion:campaign.reducedMotion;emptyText:qsTr("Regional briefings will appear as this campaign develops.");onSelected:id=>rows.selectedId=id}

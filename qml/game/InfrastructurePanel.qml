@@ -8,6 +8,14 @@ ColumnLayout {
     readonly property var infra: campaign.infrastructure
     readonly property bool editable: campaign.paused && !campaign.busy && campaign.canAdvance && campaign.companyEditable
     property string section: "map"
+    DraftState {
+        id: sectionDraft
+        draftKey: "pages/operations"
+        accepts: value => ["map", "sites", "calendar", "wholesale", "resilience", "activity"].includes(value)
+        onRestored: value => panel.section = value
+        onReset: panel.section = "map"
+    }
+    function showSection(value) { section = value; sectionDraft.remember(value) }
     property bool showMap: true
     property var comparison: ({})
     property string comparisonDate: ""
@@ -42,13 +50,16 @@ ColumnLayout {
         id: field
         property string label
         property string inputName
+        property string initialValue: ""
         property alias value: edit.text
+        function setValue(value) { edit.setDraftText(value) }
         property int maximumLength: 96
         Layout.fillWidth: true
         Copy { text: field.label }
         DraftField {
             id: edit
             objectName: field.inputName
+            defaultText: field.initialValue
             Layout.fillWidth: true; Layout.minimumWidth: 0
             Accessible.name: field.label; font.pixelSize: panel.textSize
             selectByMouse: true; maximumLength: field.maximumLength
@@ -64,7 +75,10 @@ ColumnLayout {
         objectName: inputName + "Picker"
         Layout.fillWidth: true
         Copy { text: picker.label }
-        ComboBox {
+        DraftComboBox {
+            draftOwner: picker
+            draftProperty: "value"
+            draftResetValue: picker.options.length ? picker.options[0].id : ""
             objectName: picker.inputName
             Layout.fillWidth: true; Layout.minimumWidth: 0
             Accessible.name: picker.label; font.pixelSize: panel.textSize
@@ -148,12 +162,12 @@ ColumnLayout {
     Copy { visible: !campaign.paused; color: "#ffd897"; text: qsTr("Pause time to change infrastructure commitments.") }
     Flow {
         Layout.fillWidth: true; spacing: 6
-        Action { objectName: "operationsMap"; text: qsTr("Map & states"); checked: panel.section === "map"; onClicked: panel.section = "map" }
-        Action { objectName: "operationsSites"; text: qsTr("Owned sites"); checked: panel.section === "sites"; onClicked: panel.section = "sites" }
-        Action { objectName: "operationsCalendar"; text: qsTr("Calendar"); checked: panel.section === "calendar"; onClicked: panel.section = "calendar" }
-        Action { objectName: "operationsWholesale"; text: qsTr("Wholesale"); visible: infra.wholesalePlans.length > 0; checked: panel.section === "wholesale"; onClicked: panel.section = "wholesale" }
-        Action { objectName: "operationsResilience"; text: qsTr("Resilience"); visible: infra.resilienceAvailable; checked: panel.section === "resilience"; onClicked: panel.section = "resilience" }
-        Action { text: qsTr("Activity"); checked: panel.section === "activity"; onClicked: panel.section = "activity" }
+        Action { objectName: "operationsMap"; text: qsTr("Map & states"); checked: panel.section === "map"; onClicked: panel.showSection("map") }
+        Action { objectName: "operationsSites"; text: qsTr("Owned sites"); checked: panel.section === "sites"; onClicked: panel.showSection("sites") }
+        Action { objectName: "operationsCalendar"; text: qsTr("Calendar"); checked: panel.section === "calendar"; onClicked: panel.showSection("calendar") }
+        Action { objectName: "operationsWholesale"; text: qsTr("Wholesale"); visible: infra.wholesalePlans.length > 0; checked: panel.section === "wholesale"; onClicked: panel.showSection("wholesale") }
+        Action { objectName: "operationsResilience"; text: qsTr("Resilience"); visible: infra.resilienceAvailable; checked: panel.section === "resilience"; onClicked: panel.showSection("resilience") }
+        Action { text: qsTr("Activity"); checked: panel.section === "activity"; onClicked: panel.showSection("activity") }
         Action { objectName: "nextSiteMilestone"; text: qsTr("Next site milestone"); enabled: panel.editable; onClicked: campaign.advanceTo("site") }
     }
 
@@ -219,8 +233,8 @@ ColumnLayout {
         Heading { text: qsTr("Order site construction") }
         GridLayout {
             Layout.fillWidth: true; columns: panel.width >= 720 ? 3 : 1
-            Field { id: siteName; inputName: "ownedSiteName"; label: qsTr("Site name"); value: qsTr("First compute site") }
-            Field { id: siteGrid; inputName: "ownedSiteGrid"; label: qsTr("Grid reservation (whole kW)"); value: "20"; maximumLength: 4 }
+            Field { id: siteName; inputName: "ownedSiteName"; label: qsTr("Site name"); initialValue: qsTr("First compute site") }
+            Field { id: siteGrid; inputName: "ownedSiteGrid"; label: qsTr("Grid reservation (whole kW)"); initialValue: "20"; maximumLength: 4 }
             Picker { id: cooling; inputName: "ownedSiteCooling"; label: qsTr("Cooling"); options: [{id: "air", label: qsTr("Air")}, {id: "evaporative", label: qsTr("Evaporative")} ] }
         }
         Action { objectName: "reviewBuildOwnedSite"; text: qsTr("Review construction"); enabled: panel.editable && !!infra.states.selectedId; onClicked: { infra.reviewBuild(infra.states.selectedId, siteName.value, siteGrid.value, cooling.value); review.open() } }
@@ -239,14 +253,14 @@ ColumnLayout {
             Action { objectName: "reviewOrderOwnedRack"; text: qsTr("Review hardware order"); enabled: panel.editable && !!rack.value; onClicked: { infra.reviewHardware(infra.sites.selectedId, rack.value); review.open() } }
             GridLayout {
                 Layout.fillWidth: true; columns: panel.width >= 650 ? 2 : 1
-                Field { id: operators; inputName: "ownedOperatorCount"; label: qsTr("Dedicated operators"); value: "1"; maximumLength: 2 }
+                Field { id: operators; inputName: "ownedOperatorCount"; label: qsTr("Dedicated operators"); initialValue: "1"; maximumLength: 2 }
                 Action { objectName: "reviewHireOwnedOperators"; text: qsTr("Review operator hire"); enabled: panel.editable; onClicked: { infra.reviewHire(infra.sites.selectedId, operators.value); review.open() } }
-                Field { id: budget; inputName: "ownedPowerBudget"; label: qsTr("Facility power budget (whole kW, 0 to power off)"); value: (panel.siteRow.fields || {}).powerKw || "0"; maximumLength: 4 }
+                Field { id: budget; inputName: "ownedPowerBudget"; label: qsTr("Facility power budget (whole kW, 0 to power off)"); initialValue: (panel.siteRow.fields || {}).powerKw || "0"; maximumLength: 4 }
                 Action { objectName: "reviewOwnedPower"; text: qsTr("Review power budget"); enabled: panel.editable; onClicked: { infra.reviewPower(infra.sites.selectedId, budget.value); review.open() } }
             }
             Flow {
                 Layout.fillWidth: true; spacing: 6
-                Action { text: qsTr("Book an inspection"); onClicked: panel.section = "calendar" }
+                Action { text: qsTr("Book an inspection"); onClicked: panel.showSection("calendar") }
                 Action { objectName: "reviewCloseOwnedSite"; text: qsTr("Review site closure"); enabled: panel.editable; onClicked: { infra.reviewClose(infra.sites.selectedId); review.open() } }
             }
         }
@@ -262,7 +276,9 @@ ColumnLayout {
         Layout.fillWidth: true; spacing: 9
         Heading { text: qsTr("Inspection and travel calendar") }
         Copy { text: qsTr("Every site needs one inspection before running hardware. Remote and delegated appointments keep the executive at base; on-site visits include the trip. You can manage the company throughout.") }
-        ComboBox {
+        DraftComboBox {
+            draftOwner: infra.sites
+            draftProperty: "selectedId"
             objectName: "inspectionSite"
             Layout.fillWidth: true; Layout.minimumWidth: 0
             model: infra.sites; textRole: "title"; valueRole: "entityId"; currentIndex: infra.sites.indexOf(infra.sites.selectedId)
@@ -272,11 +288,11 @@ ColumnLayout {
         GridLayout {
             Layout.fillWidth: true; columns: panel.width >= 760 ? 2 : 1
             Picker { id: method; inputName: "inspectionMethod"; label: qsTr("Inspection method"); options: [{id: "remote", label: qsTr("Remote")}, {id: "onsite", label: qsTr("On site")}, {id: "delegated", label: qsTr("Delegated")} ] }
-            Field { id: visit; inputName: "inspectionDate"; label: qsTr("Inspection date (YYYY-MM-DD)"); value: infra.suggestedVisit(infra.sites.selectedId, method.value); maximumLength: 10 }
+            Field { id: visit; inputName: "inspectionDate"; label: qsTr("Inspection date (YYYY-MM-DD)"); initialValue: infra.suggestedVisit(infra.sites.selectedId, method.value); maximumLength: 10 }
         }
         Flow {
             Layout.fillWidth: true; spacing: 6
-            Action { text: qsTr("Suggest earliest date"); enabled: !!infra.sites.selectedId; onClicked: visit.value = infra.suggestedVisit(infra.sites.selectedId, method.value) }
+            Action { text: qsTr("Suggest earliest date"); enabled: !!infra.sites.selectedId; onClicked: visit.setValue(infra.suggestedVisit(infra.sites.selectedId, method.value)) }
             Action { objectName: "reviewSiteInspection"; text: qsTr("Review inspection"); enabled: panel.editable && !!infra.sites.selectedId && !(panel.siteRow.fields || {}).closed; onClicked: { infra.reviewAppointment(infra.sites.selectedId, visit.value, method.value); review.open() } }
         }
         Selection { rows: infra.calendar; emptyText: qsTr("No appointments booked"); listName: "siteCalendarList" }

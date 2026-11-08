@@ -115,6 +115,8 @@ void filtered_inbox() {
     check(inbox.rowCount() == 2 && choice.isValid() && inbox.selectedId() == QStringLiteral("choice.1") && inbox.anchorOffset() == 8,
           "Required inbox filtering must preserve retained selection and anchor");
     inbox.setFilterText(QStringLiteral("SUPPLIER"));
+    check(inbox.containsSourceId(QStringLiteral("warning.3")) && !inbox.containsSourceId(QStringLiteral("missing")),
+          "Draft validation must recognize filtered source IDs and refuse unknown IDs");
     check(inbox.rowCount() == 1 && choice.isValid() && inbox.row(QStringLiteral("choice.1")).value(QStringLiteral("required")).toBool(),
           "Case-insensitive inbox filter must retain required actions");
     inbox.setRows({row(QStringLiteral("choice.1"),QStringLiteral("Supplier decision"),QStringLiteral("resolved"),false),

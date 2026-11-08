@@ -21,8 +21,10 @@ ColumnLayout {
     Copy {text:campaign.world.accessSummary}
     Heading { text: qsTr("Civic · elections and rules") }
     Copy { text: panel.civic.assumptions }
-    ComboBox {
+    DraftComboBox {
         id: jurisdiction
+        draftOwner: panel.civic
+        draftProperty: "jurisdiction"
         objectName: "civicJurisdiction"
         Layout.fillWidth: true
         model: panel.civic.jurisdictions
@@ -85,8 +87,10 @@ ColumnLayout {
         Copy { objectName: "civicPolicyDetail"; text: panel.civic.dockets.selectedRow.detail || "" }
         Heading { text: qsTr("Public submissions") }
         Copy { objectName: "civicAdvocacyTerms"; text: panel.civic.advocacy }
-        ComboBox {
+        DraftComboBox {
             id: stance
+            draftIds: ["support", "oppose"]
+            draftScope: panel.civic.dockets.selectedId
             objectName: "civicStance"
             Layout.minimumWidth: panel.textSize * 7
             model: [qsTr("Support"), qsTr("Oppose")]
@@ -122,8 +126,10 @@ ColumnLayout {
             text: panel.civic.evidence.length > 0 ? qsTr("The listed reports or connected sites meet this docket’s evidence requirement.")
                 : qsTr("No additional eligible evidence submission is available at this stage.")
         }
-        ComboBox {
+        DraftComboBox {
             id: evidence
+            objectName: "civicEvidence"
+            draftScope: panel.civic.dockets.selectedId
             visible: count > 0
             Layout.fillWidth: true
             model: panel.civic.evidence

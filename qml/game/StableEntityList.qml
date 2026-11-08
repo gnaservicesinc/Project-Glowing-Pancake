@@ -22,6 +22,17 @@ ListView {
     Accessible.name: emptyText
     ScrollBar.vertical: ScrollBar { }
     currentIndex: rows.indexOf(rows.selectedId)
+    DraftState {
+        id: selectionDraft
+        draftKey: list.rows.objectName.length ? "list/" + list.rows.objectName : ""
+        accepts: value => typeof value === "string" && list.rows.indexOf(value) >= 0
+        onRestored: value => list.rows.selectedId = value
+    }
+    Connections {
+        target: list
+        function onSelected(entityId) { selectionDraft.remember(entityId) }
+        function onCountChanged() { Qt.callLater(selectionDraft.restoreDraft) }
+    }
 
     function revealFocus() {
         if (currentIndex >= 0) {

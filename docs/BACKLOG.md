@@ -34,8 +34,10 @@ HQ recruitment, bounded county conditions, paid HQ rooms and reusable physical
 facility blueprints, owned devices, paid delivery/service and compatible app
 routing, dated national contacts, paid overseas office/world access and
 work-backed HQ operations managers, public founder handovers and preserved
-retirement endings are implemented. Follow-up work is explicit in [Gameplay interface](GAMEPLAY_INTERFACE.md):
-the remaining non-text form selection audit. Compatible content updates retain
+retirement endings are implemented. The interface/save audit in [Gameplay interface](GAMEPLAY_INTERFACE.md)
+is complete for this selected Mac implementation: typed form drafts, selected
+records, ordered queues and per-company defaults are preserved without automatic
+commands. Compatible content updates retain
 each company's original collection; reviewed missing-content recovery and exact
 older-company restart are implemented and checked.
 The native Mac walkthrough and focused persistence/simulation checks are

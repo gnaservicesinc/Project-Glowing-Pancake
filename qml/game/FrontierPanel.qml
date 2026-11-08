@@ -19,7 +19,11 @@ ColumnLayout {
     }
     component Heading: Copy { font.bold: true }
     component Action: Button { font.pixelSize: panel.textSize }
-    component Picker: ComboBox {
+    component Picker: DraftComboBox {
+        id: picker
+        draftOwner: picker
+        draftProperty: "selectedId"
+        draftResetValue: ""
         property string selectedId: ""
         Layout.fillWidth: true
         Layout.minimumWidth: 0
@@ -47,7 +51,7 @@ ColumnLayout {
             Layout.fillWidth: true
             font.pixelSize: panel.textSize
             Accessible.name: field.label
-            text: field.initialValue
+            defaultText: field.initialValue
             onTextEdited: panel.frontier.clearReview()
         }
     }
@@ -56,19 +60,28 @@ ColumnLayout {
         required property var options
         required property string optionName
         property var selected: []
+        DraftState {
+            id: checkedDraft
+            draftKey: "checks/" + choices.optionName
+            accepts: value => Array.isArray(value) && value.length <= 64 && value.every(id => typeof id === "string") && new Set(value).size === value.length
+            onRestored: value => choices.selected = value.filter(id => choices.options.some(option => option.id === id))
+            onReset: choices.selected = []
+        }
+        onOptionsChanged: Qt.callLater(checkedDraft.restoreDraft)
         Layout.fillWidth: true
         Repeater {
             model: choices.options
             CheckBox {
                 required property var modelData
-                objectName: choices.optionName
+                objectName: choices.optionName + "/" + modelData.id
                 Layout.fillWidth: true
                 font.pixelSize: panel.textSize
                 text: modelData.label
                 checked: choices.selected.includes(modelData.id)
-                onToggled: {
+                onClicked: {
                     choices.selected = checked ? choices.selected.concat([modelData.id])
                                                : choices.selected.filter(id => id !== modelData.id)
+                    checkedDraft.remember(choices.selected)
                     panel.frontier.clearReview()
                 }
             }
@@ -135,9 +148,10 @@ ColumnLayout {
 
     Heading { text: qsTr("Frontier · future conditions and independent evidence") }
     Copy { objectName: "frontierOverview"; text: panel.frontier.overview }
-    ComboBox {
+    DraftComboBox {
         id: section
         objectName: "frontierSection"
+        draftIds: ["assessments", "technology", "research", "refresh"]
         Layout.fillWidth: true
         font.pixelSize: panel.textSize
         Accessible.name: qsTr("Frontier section")
@@ -190,8 +204,10 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: section.currentIndex === 2
         Heading { text: qsTr("Authorize a research queue or standing track") }
-        ComboBox {
+        DraftComboBox {
             id: researchMode
+            objectName: "frontierResearchMode"
+            draftIds: ["queue", "standing"]
             Layout.fillWidth: true
             font.pixelSize: panel.textSize
             model: [qsTr("Ordered queue"), qsTr("Repeatable standing track")]
@@ -203,6 +219,14 @@ ColumnLayout {
             visible: researchMode.currentIndex === 0
             property var topics: []
             id: queue
+            objectName: "frontierQueueDraft"
+            DraftState {
+                id: queueDraft
+                draftKey: "frontier/researchQueue"
+                accepts: value => Array.isArray(value) && value.length <= 32 && value.every(id => typeof id === "string") && new Set(value).size === value.length
+                onRestored: value => queue.topics = value.filter(id => panel.frontier.researchTopics.some(topic => topic.id === id))
+                onReset: queue.topics = []
+            }
             Picker { id: queuedTopic; objectName: "frontierQueuedTopic"; model: panel.frontier.researchTopics; Accessible.name: qsTr("Topic to add to queue") }
             Flow {
                 Layout.fillWidth: true
@@ -210,9 +234,10 @@ ColumnLayout {
                 Action {
                     objectName: "appendFrontierQueue"
                     text: qsTr("Add topic")
-                    enabled: panel.editable && queuedTopic.currentIndex >= 0 && !queue.topics.includes(queuedTopic.currentValue)
+                    enabled: !campaign.busy && queuedTopic.currentIndex >= 0 && !queue.topics.includes(queuedTopic.currentValue)
                     onClicked: {
                         queue.topics = queue.topics.concat([queuedTopic.currentValue])
+                        queueDraft.remember(queue.topics)
                         panel.frontier.clearReview()
                     }
                 }
@@ -221,6 +246,7 @@ ColumnLayout {
                     enabled: queue.topics.length > 0
                     onClicked: {
                         queue.topics = queue.topics.slice(0, -1)
+                        queueDraft.remember(queue.topics)
                         panel.frontier.clearReview()
                     }
                 }
@@ -237,6 +263,7 @@ ColumnLayout {
         }
         Picker {
             id: standingTopic
+            objectName: "frontierStandingTopic"
             visible: researchMode.currentIndex === 1
             model: panel.frontier.repeatableTopics
             Accessible.name: qsTr("Repeatable topic")

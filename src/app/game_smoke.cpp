@@ -1203,7 +1203,7 @@ void schedule_frontier_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             if(!desk->available() || !desk->editable() || !state.frontier->systems.empty() || state.deployments->records.size()!=1) {fail("prepared late-era fixture");return;}
             if(press("frontierTab")) ++run->phase;return;
         case 2:
-            if(set("frontierSystemName","Native research service") && press("frontierMember") && press("reviewFrontierSystem")) {
+            if(set("frontierSystemName","Native research service") && press((QStringLiteral("frontierMember/")+desk->services().front().toMap().value("id").toString()).toUtf8().constData()) && press("reviewFrontierSystem")) {
                 run->cash=state.cash;++run->phase;
             }
             return;
@@ -1246,7 +1246,7 @@ void schedule_frontier_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             if(!state.frontier->research_programs.front().cancelled_on) {fail("research cancellation");return;}
             if(capture(QStringLiteral("-queue"),"frontierResearchProgramsDetail") && section(3)) ++run->phase;return;
         case 13:
-            if(choose("frontierRefreshRecipe","recipe.frontier_mesh") && choose("frontierRefreshEvaluation","evaluation.held_out") && press("frontierRefreshData") &&
+            if(choose("frontierRefreshRecipe","recipe.frontier_mesh") && choose("frontierRefreshEvaluation","evaluation.held_out") && press((QStringLiteral("frontierRefreshData/")+desk->licensedData().front().toMap().value("id").toString()).toUtf8().constData()) &&
                 set("frontierRefreshWork","30000") && set("frontierRefreshGain","1") && set("frontierRefreshRate","100") && set("frontierRefreshStaff","2") &&
                 set("frontierRefreshLimit","50000") && set("frontierRefreshReserve","20000") && set("frontierRefreshInterval","90") &&
                 set("frontierRefreshRuns","1") && press("reviewFrontierRefresh")) ++run->phase;

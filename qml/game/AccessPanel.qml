@@ -22,7 +22,7 @@ ColumnLayout {
             }
         }
     }
-    CheckBox {id:planning;objectName:"overseasOfficePlanning";text:qsTr("Plan an overseas liaison office");font.pixelSize:panel.textSize}
+    DraftCheckBox {id:planning;objectName:"overseasOfficePlanning";text:qsTr("Plan an overseas liaison office");font.pixelSize:panel.textSize}
     Repeater {
         model:planning.checked?campaign.world.overseasOfficeOffers:[]
         Frame {
