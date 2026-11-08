@@ -23,6 +23,10 @@ class WorldController final : public QObject {
     Q_PROPERTY(QString countyState READ countyState WRITE setCountyState NOTIFY changed)
     Q_PROPERTY(QVariantList rooms READ rooms NOTIFY changed)
     Q_PROPERTY(QVariantList devices READ devices NOTIFY changed)
+    Q_PROPERTY(QVariantList deviceInventory READ deviceInventory NOTIFY changed)
+    Q_PROPERTY(QVariantList deviceOffers READ deviceOffers NOTIFY changed)
+    Q_PROPERTY(QString deviceSummary READ deviceSummary NOTIFY changed)
+    Q_PROPERTY(bool companyArchive READ companyArchive NOTIFY changed)
     Q_PROPERTY(QVariantList scales READ scales NOTIFY changed)
     Q_PROPERTY(QVariantMap worldGeometry READ worldGeometry CONSTANT)
     Q_PROPERTY(QString officeKind READ officeKind NOTIFY changed)
@@ -52,11 +56,20 @@ public:
     Q_INVOKABLE void setRecruitingTerms(int payPercent,QString mission);
     QVariantList rooms() const;
     QVariantList devices() const;
+    QVariantList deviceInventory() const;
+    QVariantList deviceOffers() const;
+    QString deviceSummary() const;
+    bool companyArchive() const;
+    Q_INVOKABLE void buyDevice(QString offer,QString revision);
+    Q_INVOKABLE void serviceDevice(QString id,QString revision);
+    Q_INVOKABLE void powerDevice(QString id,bool powered);
+    Q_INVOKABLE void retireDevice(QString id,QString revision);
+    Q_INVOKABLE bool appAvailable(QString app,QString preferred) const;
     QVariantList scales() const;
     QVariantMap worldGeometry() const {return world_geometry_;}
     QString officeKind() const;
     QVariantMap navigation() const {return navigation_;}
-    Q_INVOKABLE void navigate(QString place,QString scale,QString device,QString app,QString section);
+    Q_INVOKABLE bool navigate(QString place,QString scale,QString device,QString app,QString section);
     Q_INVOKABLE QString draft(QString key,QString fallback) const;
     Q_INVOKABLE void setDraft(QString key,QString value);
     QString headquartersSummary() const;

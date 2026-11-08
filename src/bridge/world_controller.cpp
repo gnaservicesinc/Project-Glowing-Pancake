@@ -33,8 +33,8 @@ QVariantMap navDefault() {return {{"place","workspace"},{"scale","hq"},{"device"
 bool valid(const QVariantMap& n) {
     return QStringList{"workspace","lab","meeting","compute","map","research_annex","evaluation_suite","collaboration"}.contains(n.value("place").toString()) &&
         QStringList{"hq","city","state","country","world"}.contains(n.value("scale").toString()) &&
-        QStringList{"","desktop","laptop","phone"}.contains(n.value("device").toString()) &&
-        QStringList{"","office","lab","people","facilities","inbox","operations","civic","society","institutions","frontier","leadership","objectives"}.contains(n.value("app").toString()) &&
+        QStringList{"","desktop","laptop","phone","tablet"}.contains(n.value("device").toString()) &&
+        QStringList{"","devices","office","lab","people","facilities","inbox","operations","civic","society","institutions","frontier","leadership","objectives"}.contains(n.value("app").toString()) &&
         n.value("section").toString().size()<=40;
 }
 }
@@ -54,8 +54,11 @@ void WorldController::update(CampaignSnapshotPtr snapshot,const runtime::Compile
     }
     if(navigation_.value("place")!="map" && std::ranges::none_of(rooms(),[&](const QVariant& row){return row.toMap().value("id")==navigation_.value("place");})) {
         navigation_["place"]="workspace";
-        if(navigation_.value("device")=="desktop") navigation_["device"]="laptop";
         emit navigationChanged();
+    }
+    const auto app=navigation_.value("app").toString();
+    if(!app.isEmpty() && !navigate(navigation_.value("place").toString(),navigation_.value("scale").toString(),navigation_.value("device").toString(),app,navigation_.value("section").toString())) {
+        navigation_["app"]="";navigation_["device"]="";navigation_["section"]="";emit navigationChanged();
     }
     emit changed();
 }
@@ -87,25 +90,37 @@ void WorldController::setDraft(QString key,QString value) {
     if(!file.open(QIODevice::WriteOnly) || file.write(bytes)!=bytes.size() || !file.commit()) {emit noticeRaised(tr("Could not preserve this unfinished field. Check local storage."));return;}
     drafts_=std::move(next);
 }
-void WorldController::navigate(QString place,QString scale,QString device,QString app,QString section) {
+bool WorldController::navigate(QString place,QString scale,QString device,QString app,QString section) {
     QVariantMap next{{"place",place},{"scale",scale},{"device",device},{"app",app},{"section",section}};
-    if(!snapshot_ || !valid(next) || next==navigation_) return;
-    if(place!="map" && std::ranges::none_of(rooms(),[&](const QVariant& row){return row.toMap().value("id")==place;})) return;
-    if(!device.isEmpty() && std::ranges::none_of(devices(),[&](const QVariant& row){return row.toMap().value("id")==device;})) return;
+    if(!snapshot_ || !valid(next)) return false;
+    if(place!="map" && std::ranges::none_of(rooms(),[&](const QVariant& row){return row.toMap().value("id")==place;})) return false;
+    const auto& s=snapshot_->checkpoint.world.simulation;
+    if(app=="devices" || app.isEmpty() || companyArchive()) next["device"]="";
+    else if(s.infrastructure && s.infrastructure->workplace && s.infrastructure->workplace->devices) {
+        const auto resolved=core::resolve_app_device(s,device.toStdString(),app.toStdString(),atHeadquarters());
+        if(resolved.empty()) {
+            emit noticeRaised(tr("No working device here supports that application. Turn on a device, arrange service or choose equipment."));
+            next["app"]="devices";next["device"]="";next["section"]="";
+        } else next["device"]=q(resolved);
+    } else if(!device.isEmpty() && std::ranges::none_of(devices(),[&](const QVariant& row){return row.toMap().value("id")==device;})) return false;
+    if(next==navigation_) return true;
     if(snapshot_->current_campaign) {
-        if(!QDir{}.mkpath(QString::fromStdU16String(directory_.u16string()))) {emit noticeRaised(tr("Could not remember your place. Check local storage."));return;}
+        if(!QDir{}.mkpath(QString::fromStdU16String(directory_.u16string()))) {emit noticeRaised(tr("Could not remember your place. Check local storage."));return false;}
         QSaveFile f{QString::fromStdU16String(path_.u16string())};
         const auto bytes=QJsonDocument{QJsonObject::fromVariantMap(next)}.toJson(QJsonDocument::Compact);
-        if(!f.open(QIODevice::WriteOnly) || f.write(bytes)!=bytes.size() || !f.commit()) {emit noticeRaised(tr("Could not remember your place. Check local storage."));return;}
+        if(!f.open(QIODevice::WriteOnly) || f.write(bytes)!=bytes.size() || !f.commit()) {emit noticeRaised(tr("Could not remember your place. Check local storage."));return false;}
     }
-    navigation_=std::move(next);emit navigationChanged();
+    navigation_=std::move(next);emit navigationChanged();return true;
 }
 bool WorldController::atHeadquarters() const {
     if(!snapshot_) return true;
     const auto& s=snapshot_->checkpoint.world.simulation;
     if(!s.infrastructure) return true;
     const auto location=core::executive_location(s);
-    return !location.traveling && !location.appointment.has_value();
+    if(location.traveling) return false;
+    if(location.appointment) for(const auto& appointment:s.infrastructure->appointments)
+        if(appointment.id==*location.appointment && appointment.mode==core::AppointmentMode::onsite) return false;
+    return true;
 }
 QString WorldController::location() const {
     if(!snapshot_) return {};
@@ -114,7 +129,7 @@ QString WorldController::location() const {
     if(s.infrastructure) {
         const auto loc=core::executive_location(s);
         if(loc.traveling) return tr("In transit · %1").arg(city(loc.state_id));
-        if(loc.appointment) {
+        if(loc.appointment && !atHeadquarters()) {
             for(const auto& appointment:s.infrastructure->appointments) if(appointment.id==*loc.appointment)
                 for(const auto& site:s.infrastructure->sites) if(site.id==appointment.site_id) return q(site.name)+" · "+city(site.state_id);
         }
@@ -282,6 +297,15 @@ QString WorldController::officeKind() const {
     return snapshot_ && snapshot_->checkpoint.world.founding?q(snapshot_->checkpoint.world.founding->office):QStringLiteral("leased");
 }
 QVariantList WorldController::devices() const {
+    if(snapshot_ && snapshot_->checkpoint.world.simulation.infrastructure && snapshot_->checkpoint.world.simulation.infrastructure->workplace && snapshot_->checkpoint.world.simulation.infrastructure->workplace->devices) {
+        QVariantList result;QStringList added;const auto& s=snapshot_->checkpoint.world.simulation;const bool headquarters=atHeadquarters();
+        for(const auto& d:s.infrastructure->workplace->devices->records) {
+            const auto kind=q(d.offer);if(!core::device_available(s,d,headquarters) || added.contains(kind)) continue;
+            const auto& offers=s.infrastructure->catalog.workplace->devices->offers;const auto& model=*std::ranges::find(offers,d.offer,&core::DeviceOffer::id);
+            added.push_back(kind);result.push_back(QVariantMap{{"id",kind},{"name",q(model.name)}});
+        }
+        return result;
+    }
     QVariantList result{QVariantMap{{"id","phone"},{"name",tr("Phone")},{"detail",tr("News, messages and calendar")}},
         QVariantMap{{"id","laptop"},{"name",tr("Laptop")},{"detail",tr("Your company applications")}}};
     if(atHeadquarters() && officeKind()!="home") result.push_back(QVariantMap{{"id","desktop"},{"name",tr("Office workstation")},{"detail",tr("All company applications")}});

@@ -22,7 +22,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.32.0-dev.1**, generation **32**.
+The finalized internal content version is **0.33.0-dev.1**, generation **33**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).
@@ -47,7 +47,9 @@ Builds never launch the application. On Mac, open **Project Glowing Pancake.app*
 in `dist` from Finder. A current company resumes automatically, paused at the
 same place. Otherwise New Game opens the 1997 prologue and leads through founding
 to the 2015 workspace. The HUD, room controls and device dock open the company's
-tools. Select a person's vector portrait to inspect their profile. Escape pauses
+tools. Select a person's vector portrait to inspect their profile. Devices & apps includes
+owned equipment, reviewed purchases, delivery, service and power controls. Apps
+choose an available compatible device; workstations remain at HQ. Escape pauses
 and opens the menu; Quit uses an exit confirmation. [World and portrait design](docs/GAMEPLAY_INTERFACE.md).
 The Codex Run action uses `./script/build_and_run.sh` to explicitly build,
 package and launch. Use the in-game guide

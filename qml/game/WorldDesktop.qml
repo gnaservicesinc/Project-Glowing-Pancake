@@ -174,7 +174,7 @@ Item {
                 WorldButton {objectName:"labTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Lab");textSize:desktop.textSize;onClicked:desktop.openApp("lab","research","laptop")}
                 WorldButton {objectName:"inboxTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("News & decisions");textSize:desktop.textSize;onClicked:desktop.openApp("inbox","","phone")}
                 WorldButton {objectName:"mapTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Map");textSize:desktop.textSize;checked:desktop.place==="map";onClicked:desktop.showMap(desktop.nav.scale || "hq")}
-                WorldButton {objectName:"devicesButton";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Devices & apps");textSize:desktop.textSize;onClicked:deviceMenu.open()}
+                WorldButton {objectName:"devicesButton";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Devices & apps");textSize:desktop.textSize;onClicked:{launcherDevice=campaign.world.devices.some(row=>row.id===launcherDevice)?launcherDevice:(campaign.world.devices.length?campaign.world.devices[0].id:"");deviceMenu.open()}}
             }
         }
     }
@@ -204,14 +204,15 @@ Item {
                 width:launcherScroll.availableWidth;spacing:14
                 Label {text:qsTr("Your devices");font.pixelSize:desktop.textSize*1.5;color:"#f4ead6"}
                 Flow {Layout.fillWidth:true;spacing:8
-                    Repeater {model:campaign.world.devices;WorldButton {required property var modelData;text:modelData.name;textSize:desktop.textSize;checked:launcherDevice===modelData.id;onClicked:launcherDevice=modelData.id}}
+                    Repeater {model:campaign.world.devices;WorldButton {required property var modelData;objectName:"launcherDevice_"+modelData.id;text:modelData.name;textSize:desktop.textSize;checked:launcherDevice===modelData.id;onClicked:launcherDevice=modelData.id}}
                 }
+                WorldButton {objectName:"equipmentApp";text:qsTr("Manage equipment");textSize:desktop.textSize;onClicked:{deviceMenu.close();desktop.openApp("devices","","")}}
                 Label {Layout.fillWidth:true;text:qsTr("Open an application. Close it to return to this place.");wrapMode:Text.Wrap;font.pixelSize:desktop.textSize;color:"#bbcec6"}
                 Flow {
                     Layout.fillWidth:true;spacing:8
                     Repeater {
                         model:[{id:"office",name:qsTr("Company")},{id:"people",name:qsTr("People")},{id:"facilities",name:qsTr("Headquarters & blueprints")},{id:"lab",name:qsTr("Research")},{id:"inbox",name:qsTr("News & decisions")},{id:"operations",name:qsTr("Infrastructure & travel")},{id:"civic",name:qsTr("Public affairs")},{id:"society",name:qsTr("World")},{id:"institutions",name:qsTr("Institutions")},{id:"frontier",name:qsTr("Frontier")},{id:"leadership",name:qsTr("Leadership & retirement")},{id:"objectives",name:qsTr("Company mission")}]
-                        WorldButton {required property var modelData;objectName:modelData.id+"App";text:modelData.name;textSize:desktop.textSize;onClicked:{deviceMenu.close();desktop.openApp(modelData.id,"",launcherDevice)}}
+                        WorldButton {required property var modelData;objectName:modelData.id+"App";text:modelData.name;textSize:desktop.textSize;enabled:(campaign.world.companyArchive || campaign.world.devices.length>0) && campaign.world.appAvailable(modelData.id,launcherDevice);onClicked:{deviceMenu.close();desktop.openApp(modelData.id,"",launcherDevice)}}
                     }
                 }
                 WorldButton {text:qsTr("Back to the room");textSize:desktop.textSize;onClicked:deviceMenu.close()}

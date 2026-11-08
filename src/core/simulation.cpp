@@ -441,7 +441,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
         std::visit([&](const auto& action) {
             using Action = std::decay_t<decltype(action)>;
             if constexpr (!std::is_same_v<Action, ResolveOpeningChoice> &&
-                          !std::is_same_v<Action, SetPaused>) {
+                          !std::is_same_v<Action, SetPaused> && !std::is_same_v<Action, SetDevicePower>) {
                 if (next.phase != DayPhase::work_ready) {
                     refuse(CommandReason::morning_not_ready,
                            "Resolve the required opening choice before planning or advancing work.");
@@ -711,6 +711,14 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 })) refuse(CommandReason::invalid_argument,"Owned and imported capacity follow actual site power and supplier terms.");
                 update_effective_capacity(capacity(next), next.date, action.source_id, action.available);
                 (void)receipt(next, "capacity_availability");
+            } else if constexpr (std::is_same_v<Action, BuyPersonalDevice>) {
+                const auto before=next.cash;buy_personal_device(next,action.offer,reserved_cash(next));(void)receipt(next,"buy_personal_device",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, ServicePersonalDevice>) {
+                const auto before=next.cash;service_personal_device(next,action.id,reserved_cash(next));(void)receipt(next,"service_personal_device",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, SetDevicePower>) {
+                set_device_power(next,action);(void)receipt(next,"device_power");
+            } else if constexpr (std::is_same_v<Action, RetirePersonalDevice>) {
+                retire_personal_device(next,action.id);(void)receipt(next,"retire_personal_device");
             } else if constexpr (std::is_same_v<Action, ExpandHeadquarters>) {
                 const auto before=next.cash;expand_headquarters(next,action,reserved_cash(next));(void)receipt(next,"expand_headquarters",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, CreateFacilityBlueprint>) {

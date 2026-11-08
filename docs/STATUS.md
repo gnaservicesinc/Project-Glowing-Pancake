@@ -9,7 +9,7 @@ Updated 2026-11-07
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-world/interface batch advances content to **0.32.0-dev.1**, generation **32**.
+world/interface batch advances content to **0.33.0-dev.1**, generation **33**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -51,8 +51,10 @@ profile are checked separately from attached-display native Metal evidence.
 Paid HQ rooms reserve real workstation capacity and open after construction.
 Reusable facility blueprints buy state-specific physical sites, hardware and
 operator teams through one transaction; inspection and commissioning remain
-required. The [selected design](GAMEPLAY_INTERFACE.md) records remaining device
-lifecycle, manager effects, briefing progression and retirement narrative work. These checks
+required. Owned phones, laptops, tablets and HQ workstations now have real purchase
+costs, delivery, service, power and retirement history. App routing uses working
+compatible equipment, including during travel; power recovery remains available
+while a decision is pending. The [selected design](GAMEPLAY_INTERFACE.md) records remaining manager effects, briefing progression and retirement narrative work. These checks
 do not close human review, extended campaign or release/device gates.
 
 ## Selected feedback: campaign and technology design

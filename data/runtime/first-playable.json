@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.32.0-dev.1",
+  "content_version": "0.33.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -69556,7 +69556,7 @@
           {
             "buzz": 0,
             "capital_cents": 0,
-            "detail": "An old desk, borrowed shelves and a modest equipment corner. Low fixed costs.",
+            "detail": "An old desk, borrowed shelves and a modest equipment corner. Low fixed costs. Includes your phone and laptop.",
             "family": "",
             "fee_cents": 50000,
             "id": "home",
@@ -69570,7 +69570,7 @@
           {
             "buzz": 0,
             "capital_cents": 0,
-            "detail": "A small shared office with a whiteboard and space for a growing team.",
+            "detail": "A small shared office with a whiteboard and space for a growing team. Includes your phone and laptop plus an HQ workstation.",
             "family": "",
             "fee_cents": 400000,
             "id": "shared",
@@ -69584,7 +69584,7 @@
           {
             "buzz": 0,
             "capital_cents": 0,
-            "detail": "A dedicated office with more room and a larger ongoing obligation.",
+            "detail": "A dedicated office with more room and a larger ongoing obligation. Includes your phone and laptop plus an HQ workstation.",
             "family": "",
             "fee_cents": 2000000,
             "id": "leased",
@@ -72113,6 +72113,111 @@
           }
         ],
         "workplace": {
+          "devices": {
+            "offers": [
+              {
+                "apps": [
+                  "people",
+                  "inbox",
+                  "civic",
+                  "society",
+                  "leadership",
+                  "objectives"
+                ],
+                "delivery_days": 1,
+                "id": "phone",
+                "included_offices": [
+                  "home",
+                  "shared",
+                  "leased"
+                ],
+                "name": "Pocket phone",
+                "portable": true,
+                "purchase_cents": 40000,
+                "service_cents": 7500,
+                "service_days": 0
+              },
+              {
+                "apps": [
+                  "office",
+                  "people",
+                  "facilities",
+                  "lab",
+                  "inbox",
+                  "operations",
+                  "civic",
+                  "society",
+                  "institutions",
+                  "frontier",
+                  "leadership",
+                  "objectives"
+                ],
+                "delivery_days": 2,
+                "id": "laptop",
+                "included_offices": [
+                  "home",
+                  "shared",
+                  "leased"
+                ],
+                "name": "Work laptop",
+                "portable": true,
+                "purchase_cents": 110000,
+                "service_cents": 15000,
+                "service_days": 2
+              },
+              {
+                "apps": [
+                  "office",
+                  "people",
+                  "facilities",
+                  "lab",
+                  "inbox",
+                  "operations",
+                  "civic",
+                  "society",
+                  "institutions",
+                  "frontier",
+                  "leadership",
+                  "objectives"
+                ],
+                "delivery_days": 2,
+                "id": "tablet",
+                "included_offices": [],
+                "name": "Portable tablet",
+                "portable": true,
+                "purchase_cents": 65000,
+                "service_cents": 10000,
+                "service_days": 2
+              },
+              {
+                "apps": [
+                  "office",
+                  "people",
+                  "facilities",
+                  "lab",
+                  "inbox",
+                  "operations",
+                  "civic",
+                  "society",
+                  "institutions",
+                  "frontier",
+                  "leadership",
+                  "objectives"
+                ],
+                "delivery_days": 3,
+                "id": "desktop",
+                "included_offices": [
+                  "shared",
+                  "leased"
+                ],
+                "name": "Office workstation",
+                "portable": false,
+                "purchase_cents": 140000,
+                "service_cents": 20000,
+                "service_days": 3
+              }
+            ]
+          },
           "home_seats": 2,
           "leased_seats": 16,
           "maximum_blueprints": 8,
@@ -74186,7 +74291,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 3,
+      "revision": 4,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

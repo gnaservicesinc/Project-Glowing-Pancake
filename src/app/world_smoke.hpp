@@ -3,4 +3,4 @@
 #include <QString>
 class QQuickWindow;
 namespace pgp::bridge {class CampaignController;}
-void schedule_world_smoke(QQuickWindow&,pgp::bridge::CampaignController&,pgp::persistence::LocalPaths,QString,bool portraits=false,bool workplaces=false);
+void schedule_world_smoke(QQuickWindow&,pgp::bridge::CampaignController&,pgp::persistence::LocalPaths,QString,bool portraits=false,bool workplaces=false,bool devices=false);

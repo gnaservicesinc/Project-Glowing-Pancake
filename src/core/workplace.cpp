@@ -30,6 +30,7 @@ void valid_blueprint(const SimulationState& s,const FacilityBlueprint& b) {
 }
 }
 void validate_workplace_rules(const WorkplaceRules& r) {
+    if(r.devices) validate_device_rules(*r.devices);
     const auto text=[](std::string_view value,std::size_t limit) {return !value.empty() && value.size()<=limit && value.find('\0')==std::string_view::npos;};
     if(r.home_seats<1 || r.shared_seats<r.home_seats || r.leased_seats<r.shared_seats || r.leased_seats>128 ||
         r.maximum_rooms<1 || r.maximum_rooms>24 || r.maximum_blueprints<1 || r.maximum_blueprints>16 || r.rooms.empty() || r.rooms.size()>8)
@@ -49,6 +50,7 @@ void initialize_workplace(SimulationState& s,std::string office,bool nonresearch
     validate_workplace_rules(*s.infrastructure->catalog.workplace);
     if(office!="home" && office!="shared" && office!="leased") invalid("Unsupported opening headquarters office.");
     s.infrastructure->workplace=WorkplaceState{s.date,std::move(office),nonresearch_founder,{},{},{}};
+    initialize_devices(s);
 }
 std::uint32_t headquarters_seats(const SimulationState& s) {
     const auto& r=rules(s);const auto& w=*s.infrastructure->workplace;
@@ -120,6 +122,7 @@ void validate_workplace(const SimulationState& s,bool deep) {
     if(i.catalog.workplace.has_value()!=i.workplace.has_value()) invalid("Headquarters plans must match their authored rules.");
     if(!i.workplace) return;
     const auto& r=rules(s);const auto& w=*i.workplace;
+    validate_devices(s,deep);
     if(w.starts_on!=s.accounts->starts_on || (w.opening_office!="home" && w.opening_office!="shared" && w.opening_office!="leased") ||
         w.rooms.size()>r.maximum_rooms || w.blueprints.size()>r.maximum_blueprints || w.builds.size()>i.catalog.maximum_sites)
         invalid("Headquarters history exceeds its opening or bounded plan limits.");

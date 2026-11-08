@@ -815,7 +815,8 @@ RuntimeResult Runtime::submit(const core::Command& command) {
         if(required_objective_review(next.world) && (std::holds_alternative<core::AdvanceDay>(action) ||
             (std::holds_alternative<core::SetPaused>(action) && !pause_only)))
             fail(RuntimeReason::morning_not_ready,"Review the irreversible objective breach before advancing.");
-        if (!pause_only && !core_choice &&
+        const bool device_power=std::holds_alternative<core::SetDevicePower>(command.action);
+        if (!pause_only && !core_choice && !device_power &&
             (has_choice(next.runtime) || next.runtime.prepared_day != next.world.simulation.date))
             fail(RuntimeReason::morning_not_ready, "Resolve required content choices and prepare the morning before work.");
         if(std::holds_alternative<core::AdvanceDay>(command.action) && required_public_case(next.world))

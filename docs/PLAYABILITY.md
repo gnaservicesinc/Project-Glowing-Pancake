@@ -253,3 +253,15 @@ M1-07 then adds
 built-in occurrence detection/dispatch. M2-01 through M2-04 implement accounts,
 shared capacity, contracts and the three-year scenario with warned recovery.
 The playable campaign connects those modules through ordinary controls. The current count is 31 completed Mac feature steps. M3-01 through M3-03, M3-05, E1A-04's internal snapshots, E1A-05's authoring walkthrough, E1B-01/02's typed canvas and graphical finalizer, and M4-01/02/03's competition, heavyweight responses and corporate governance are implemented, along with M5-01/02's owned compute, domestic map, regional markets and paid wholesale agreements. Per the 2026-11-05 user instruction, human player/author studies wait until all components are in place and the user is ready for v1 work. The [session kit](playtests/M3-session-guide.md) is prepared for later; no sessions are being arranged. Later components proceed with engineering checks. Deferred platform and release work stays recorded in the backlog.
+
+### Equipment
+
+Use **Devices & apps → Manage equipment** to inspect owned devices, toggle
+power, or review a paid purchase/service. New devices arrive on their quoted
+date; service takes a device offline for its quoted duration. Portable devices
+travel with the founder and workstations stay at HQ. Applications choose an
+available compatible device; the equipment controls remain accessible if none
+is working. Required decisions still permit power recovery. This equipment
+model is enabled in the founder campaign; older engineering scenarios retain
+fixed devices. Development content revisions still require exact save/content
+identity, preserving incompatible campaigns for recovery rather than replacing them.

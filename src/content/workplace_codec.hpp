@@ -1,10 +1,13 @@
 #pragma once
 #include "people_codec.hpp"
+#include "devices_codec.hpp"
 #include <pgp/core/workplace.hpp>
 namespace pgp::content::workplace_codec {
-inline core::WorkplaceRules decode(const nlohmann::json& j) {
+inline core::WorkplaceRules decode(nlohmann::json j) {
+    std::optional<core::DeviceRules> devices;
+    if(j.contains("devices")) {devices=devices_codec::decode(j.at("devices"));j.erase("devices");}
     people_codec::fields(j,{"home_seats","shared_seats","leased_seats","maximum_rooms","maximum_blueprints","rooms"});
-    core::WorkplaceRules r;r.home_seats=people_codec::count(j.at("home_seats"));r.shared_seats=people_codec::count(j.at("shared_seats"));
+    core::WorkplaceRules r;r.devices=std::move(devices);r.home_seats=people_codec::count(j.at("home_seats"));r.shared_seats=people_codec::count(j.at("shared_seats"));
     r.leased_seats=people_codec::count(j.at("leased_seats"));r.maximum_rooms=people_codec::count(j.at("maximum_rooms"));r.maximum_blueprints=people_codec::count(j.at("maximum_blueprints"));
     if(!j.at("rooms").is_array() || j.at("rooms").size()>8) throw std::invalid_argument("Room catalog exceeds its limit");
     for(const auto& row:j.at("rooms")) {
@@ -19,6 +22,7 @@ inline nlohmann::json encode(const core::WorkplaceRules& r) {
     nlohmann::json rooms=nlohmann::json::array();
     for(const auto& room:r.rooms) rooms.push_back({{"id",room.id},{"name",room.name},{"place",room.place},{"description",room.description},
         {"construction_cents",room.construction.value()},{"monthly_cents",room.monthly.value()},{"lead_days",room.lead.value()},{"seats",room.seats}});
-    return {{"home_seats",r.home_seats},{"shared_seats",r.shared_seats},{"leased_seats",r.leased_seats},{"maximum_rooms",r.maximum_rooms},{"maximum_blueprints",r.maximum_blueprints},{"rooms",std::move(rooms)}};
+    nlohmann::json j{{"home_seats",r.home_seats},{"shared_seats",r.shared_seats},{"leased_seats",r.leased_seats},{"maximum_rooms",r.maximum_rooms},{"maximum_blueprints",r.maximum_blueprints},{"rooms",std::move(rooms)}};
+    if(r.devices) j["devices"]=devices_codec::encode(*r.devices);return j;
 }
 }

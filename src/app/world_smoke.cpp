@@ -28,11 +28,11 @@ QQuickItem* buttonText(QQuickItem* root,const QString& text) {
     return nullptr;
 }
 }
-void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot,bool portraits,bool workplaces) {
+void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot,bool portraits,bool workplaces,bool devices) {
     struct State {int phase=0,ticks=0,portraitPixels=0,constructionDays=0;QString revision;bool resumed=false,workplaceDone=false;};
     auto state=std::make_shared<State>();
     auto* timer=new QTimer(&window);timer->setInterval(150);
-    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot,portraits,workplaces] {
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot,portraits,workplaces,devices] {
         const auto fail=[&](const char* message){std::cerr<<"World check: "<<message<<" / "<<campaign.notice().toStdString()<<"\n";if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-failed.png");timer->stop();QCoreApplication::exit(3);};
         if(++state->ticks>200) {fail("Timeout");return;}
         if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
@@ -40,6 +40,7 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
         if(state->phase==0) {
             state->resumed=campaign.currentCampaign();
             state->workplaceDone=state->resumed;
+            if(devices && state->resumed && (campaign.world()->navigation().value("app")!="lab" || window.property("room").toString()!="lab" || window.property("activeDevice").toString()!="tablet" || !window.property("deviceOpen").toBool())) {fail("Tablet application navigation did not restore automatically");return;}
             if(state->resumed && window.property("menuVisible").toBool()) {fail("Launch did not resume automatically");return;}
             if(!state->resumed) {
                 auto* founding=campaign.founding();founding->reset();founding->setField("family","rich");
@@ -58,10 +59,18 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             window.setProperty("menuVisible",false);window.setProperty("sessionEntered",true);
             QMetaObject::invokeMethod(&window,"closeApp");
             window.showNormal();window.resize(portraits?1920:1280,portraits?1080:800);
-            if(workplaces && campaign.textScalePercent()>=200) window.resize(650,480);
+            if((workplaces || devices) && campaign.textScalePercent()>=200) window.resize(650,480);
             state->phase=2;return;
         }
         if(state->phase==2) {
+            if(devices) {
+                if(state->resumed) {
+                    const auto rows=campaign.world()->deviceInventory();
+                    if(rows.size()!=4 || rows[1].toMap().value("powered").toBool() || !rows[3].toMap().value("available").toBool()) {fail("Equipment power and delivered tablet did not resume");return;}
+                    std::cout<<"Owned equipment, power and delivery resumed exactly\n";timer->stop();QCoreApplication::exit(0);return;
+                }
+                if(!click("devicesButton")) {fail("Device launcher");return;}state->phase=300;return;
+            }
             if(workplaces && state->resumed) {
                 const auto& s=campaign.snapshot()->checkpoint.world.simulation;
                 if(!s.infrastructure->workplace || s.infrastructure->workplace->rooms.size()!=1 || s.infrastructure->workplace->blueprints.size()!=1 || s.infrastructure->workplace->builds.size()!=1 || pgp::core::headquarters_seats(s)!=8 || campaign.world()->navigation().value("place")!="research_annex") {fail("Persisted workplace and annex position");return;}
@@ -72,6 +81,44 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             }
             if(!screenshot.isEmpty() && !window.grabWindow().save(screenshot+"-world.png")) {fail("World screenshot");return;}
             if(!click("peopleTab")) {fail("People dock navigation");return;}state->phase=3;return;
+        }
+        if(state->phase==300) {
+            if(!click("equipmentApp")) {fail("Equipment launcher entry");return;}state->phase=301;return;
+        }
+        if(state->phase==301) {
+            if(window.property("room").toString()!="devices" || campaign.world()->deviceInventory().size()!=3) {fail("Owned starter equipment");return;}
+            if(!click("devicePower2")) {fail("Laptop power control");return;}state->phase=302;return;
+        }
+        if(state->phase==302) {
+            if(campaign.world()->deviceInventory()[1].toMap().value("powered").toBool()) {fail("Laptop power command");return;}
+            if(!click("buyDevicetablet")) {fail("Tablet purchase review");return;}state->phase=303;return;
+        }
+        if(state->phase==303) {
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-purchase.png");
+            if(!press(window,buttonText(window.contentItem(),QStringLiteral("OK")))) {fail("Confirm device purchase");return;}state->phase=304;return;
+        }
+        if(state->phase==304) {
+            if(campaign.world()->deviceInventory().size()!=4 || campaign.world()->deviceInventory()[3].toMap().value("available").toBool()) {fail("Paid tablet needs delivery");return;}
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-equipment.png");
+            campaign.step();state->phase=305;return;
+        }
+        if(state->phase==305) {campaign.step();state->phase=306;return;}
+        if(state->phase==306) {
+            if(!campaign.world()->deviceInventory()[3].toMap().value("available").toBool()) {fail("Delivered tablet");return;}
+            if(!click("closeDeviceButton") || !click("devicesButton")) {fail("Return to device launcher");return;}state->phase=307;return;
+        }
+        if(state->phase==307) {
+            if(!click("launcherDevice_tablet")) {fail("Choose available tablet");return;}state->phase=308;return;
+        }
+        if(state->phase==308) {
+            if(!click("labApp")) {fail("Launch tablet research app");return;}state->phase=309;return;
+        }
+        if(state->phase==309) {
+            if(window.property("activeDevice").toString()!="tablet" || window.property("room").toString()!="lab") {fail("App header must match its available compatible device");return;}
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-tablet.png");
+            if(campaign.storageBlocked()) {fail("Durable device commands");return;}
+            std::cout<<"Equipment launcher, power controls, reviewed purchase, delayed delivery and tablet app routing passed\n";
+            timer->stop();QCoreApplication::exit(0);return;
         }
         if(state->phase==200) {
             if(window.property("room").toString()!="facilities" || campaign.world()->roomOffers().size()!=3) {fail("Headquarters room catalog");return;}

@@ -28,12 +28,9 @@ ApplicationWindow {
     property bool startupRouted: false
     property string activeDevice: "laptop"
     function openApp(app, section, device) {
-        campaign.world.navigate(campaign.world.navigation.place || "workspace", campaign.world.navigation.scale || "hq", device || "laptop", app, section || "")
-        room = app
-        activeDevice = device || "laptop"
-        deviceOpen = true
-        if (section && app === "office") managementPanel.officeSection = section
-        if (section && app === "lab") managementPanel.section = section
+        if (!campaign.world.navigate(campaign.world.navigation.place || "workspace", campaign.world.navigation.scale || "hq", device || "laptop", app, section || "")) return false
+        restoreNavigation()
+        return true
     }
     function closeApp() {
         deviceOpen = false
@@ -43,7 +40,7 @@ ApplicationWindow {
         const nav = campaign.world.navigation
         if (nav.app) {
             room = nav.app
-            activeDevice = nav.device || "laptop"
+            activeDevice = nav.device || ""
             if (nav.section && room === "office") managementPanel.officeSection = nav.section
             if (nav.section && room === "lab") managementPanel.section = nav.section
         }
@@ -329,8 +326,8 @@ ApplicationWindow {
         Panel {
             padding: 10
             contentItem: RowLayout {
-                Copy { text: ({office:qsTr("Company"),people:qsTr("People"),facilities:qsTr("Headquarters & blueprints"),lab:qsTr("Research notebook"),inbox:qsTr("News & decisions"),operations:qsTr("Infrastructure & travel"),civic:qsTr("Public affairs"),society:qsTr("World affairs"),institutions:qsTr("Institutions"),frontier:qsTr("Frontier"),leadership:qsTr("Leadership & retirement"),objectives:qsTr("Company mission")})[window.room] || window.room; font.bold:true }
-                Label {visible:!window.narrow;text:window.activeDevice;font.pixelSize:window.textSize;color:"#b8d2c5"}
+                Copy { text: ({devices:qsTr("Equipment"),office:qsTr("Company"),people:qsTr("People"),facilities:qsTr("Headquarters & blueprints"),lab:qsTr("Research notebook"),inbox:qsTr("News & decisions"),operations:qsTr("Infrastructure & travel"),civic:qsTr("Public affairs"),society:qsTr("World affairs"),institutions:qsTr("Institutions"),frontier:qsTr("Frontier"),leadership:qsTr("Leadership & retirement"),objectives:qsTr("Company mission")})[window.room] || window.room; font.bold:true }
+                Label {visible:!window.narrow && window.activeDevice.length>0;text:window.activeDevice;font.pixelSize:window.textSize;color:"#b8d2c5"}
                 Action {objectName:"closeDeviceButton";text:qsTr("Return to world");onClicked:window.closeApp()}
             }
         }
@@ -470,6 +467,10 @@ ApplicationWindow {
                     }
                 }
 
+                Panel {
+                    visible: !campaign.welcome && window.room === "devices"
+                    contentItem: DevicePanel {textSize:window.textSize}
+                }
                 Panel {
                     visible: !campaign.welcome && window.room === "people"
                     contentItem: PeoplePanel {textSize:window.textSize;onOpenApp:(app,section)=>window.openApp(app,section,"laptop")}

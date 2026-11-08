@@ -120,8 +120,7 @@ These are development checks, not physical 8K-device or release qualification.
 ## Further design work
 
 This implementation supplies the playable world, persistence, recruitment,
-layered portraits and county simulation foundation. Manager-derived department productivity, device
-ownership/failure mechanics and expanded retirement press-release content remain
+layered portraits and county simulation foundation. Manager-derived department productivity and expanded retirement press-release content remain
 future refinements. Existing facilities/operators, paid infrastructure and
 succession retain their real financial/authority contracts. National/world maps
 show public information; the existing institutional eligibility rules still own
@@ -158,3 +157,33 @@ the world and time bar. Native Metal rendering and the in-process keyboard
 construction harness are checked; physical native input remains unverified in
 this session because the computer-use pipe is unavailable. The separate
 offscreen harness verifies Escape/pause and the compact layout.
+
+## Owned equipment and application access
+
+The founder's package includes a phone and laptop; shared and leased offices
+also supply an HQ workstation. A tablet and replacement/backup devices can be
+purchased with company funds. Authored prices, delivery dates and service terms
+are reviewed before payment. Records preserve model IDs, ownership dates,
+power state, service dates and retirement; expenses reconcile to the ledger.
+Older scenarios without equipment rules retain their fixed device set.
+
+The launcher lists only working devices at the current location. Portable
+models travel; HQ workstations remain at home base. A remote appointment keeps
+the founder physically at HQ. Opening an application selects an owned,
+functioning, compatible device, updating the device header. When none is
+available, the equipment screen opens with an explanation. The physical
+equipment controls remain reachable with everything powered off, including
+power recovery while a decision is waiting. Servicing or retiring a portable
+device cannot strand the company without another working portable model.
+Completed-company records remain readable as archives with their accounts
+frozen. This pass models delivery/service downtime and power; it adds no random
+breakage or hidden battery timer.
+
+Focused checks cover purchases, unavailable/unsupported device routing, service,
+retirement refusal and rollback, actual remote/onsite visits, required-choice
+power recovery, and exact saves. The GUI harness exercises the equipment
+launcher, power button, reviewed tablet purchase, delayed delivery, tablet app
+header and restart. Rendered normal and 650x480/200% layouts are checked
+separately from physical native input, which remains unverified in this session.
+Content 0.33.0-dev.1 is an exact new content identity; prior campaigns retain
+their original files and require their original content or a reviewed migration.
