@@ -28,11 +28,11 @@ QQuickItem* buttonText(QQuickItem* root,const QString& text) {
     return nullptr;
 }
 }
-void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot,bool portraits,bool workplaces,bool devices,bool contacts) {
+void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot,bool portraits,bool workplaces,bool devices,bool contacts,bool managers) {
     struct State {int phase=0,ticks=0,portraitPixels=0,constructionDays=0;QString revision;bool resumed=false,workplaceDone=false;};
     auto state=std::make_shared<State>();
     auto* timer=new QTimer(&window);timer->setInterval(150);
-    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot,portraits,workplaces,devices,contacts] {
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot,portraits,workplaces,devices,contacts,managers] {
         const auto fail=[&](const char* message){std::cerr<<"World check: "<<message<<" / "<<campaign.notice().toStdString()<<"\n";if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-failed.png");timer->stop();QCoreApplication::exit(3);};
         if(++state->ticks>200) {fail("Timeout");return;}
         if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
@@ -59,10 +59,18 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             window.setProperty("menuVisible",false);window.setProperty("sessionEntered",true);
             QMetaObject::invokeMethod(&window,"closeApp");
             window.showNormal();window.resize(portraits?1920:1280,portraits?1080:800);
-            if((workplaces || devices || contacts) && campaign.textScalePercent()>=200) window.resize(650,480);
+            if((workplaces || devices || contacts || managers) && campaign.textScalePercent()>=200) window.resize(650,480);
             state->phase=2;return;
         }
         if(state->phase==2) {
+            if(managers) {
+                if(state->resumed) {
+                    const auto& s=campaign.snapshot()->checkpoint.world.simulation;
+                    if(!pgp::core::operations_manager_on(s,s.date) || pgp::core::operations_availability(s,s.date)<=pgp::core::BasisPoints{8500} || campaign.world()->draft("people/page","")!="branches") {fail("Manager, delivered guidance and People page did not resume");return;}
+                    if(!click("peopleTab")) {fail("Resume People");return;}state->phase=510;return;
+                }
+                if(!click("peopleTab")) {fail("Open HQ people");return;}state->phase=500;return;
+            }
             if(contacts) {
                 if(state->resumed) {
                     if(!campaign.world()->nationalAccess() || !campaign.world()->worldAccess() || campaign.world()->overseasOffices().size()!=1) {fail("Overseas offices and contacts did not resume");return;}
@@ -88,6 +96,53 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             }
             if(!screenshot.isEmpty() && !window.grabWindow().save(screenshot+"-world.png")) {fail("World screenshot");return;}
             if(!click("peopleTab")) {fail("People dock navigation");return;}state->phase=3;return;
+        }
+        if(state->phase==500) {
+            if(!click("peopleBranchesTab")) {fail("Branch departments tab");return;}state->phase=501;return;
+        }
+        if(state->phase==501) {
+            if(!find(window.contentItem(),"managerStatus") || !click("reviewOperationsManager")) {fail("Review an available HQ manager");return;}state->phase=502;return;
+        }
+        if(state->phase==502) {
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-manager-quote.png");
+            if(!press(window,buttonText(window.contentItem(),QStringLiteral("OK")))) {fail("Confirm actual manager resources");return;}state->phase=503;return;
+        }
+        if(state->phase==503) {
+            const auto& s=campaign.snapshot()->checkpoint.world.simulation;
+            if(!pgp::core::operations_manager_on(s,s.date) || pgp::core::operations_availability(s,s.date)!=pgp::core::BasisPoints{8500}) {fail("A new title cannot grant instant branch output");return;}
+            if(!click("managerPortrait")) {fail("Manager portrait interaction");return;}state->phase=504;return;
+        }
+        if(state->phase==504) {
+            auto* dialog=window.findChild<QObject*>("employeeProfileDialog");auto* portrait=find(window.contentItem(),"profilePortrait");
+            if(!dialog || !dialog->property("visible").toBool() || !portrait || portrait->property("portraitSource").toString().isEmpty()) {fail("Manager opens the actual employee dossier");return;}
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-manager-profile.png");
+            QMetaObject::invokeMethod(dialog,"close");campaign.step();state->phase=505;return;
+        }
+        if(state->phase==505) {
+            const auto& s=campaign.snapshot()->checkpoint.world.simulation;
+            if(pgp::core::operations_availability(s,s.date)<=pgp::core::BasisPoints{8500}) {fail("Actual manager work must improve guidance the following morning");return;}
+            if(!click("releaseOperationsManager")) {fail("Review manager release");return;}state->phase=506;return;
+        }
+        if(state->phase==506) {
+            if(!press(window,buttonText(window.contentItem(),QStringLiteral("OK")))) {fail("Confirm manager release");return;}state->phase=507;return;
+        }
+        if(state->phase==507) {
+            const auto& s=campaign.snapshot()->checkpoint.world.simulation;
+            if(pgp::core::operations_manager_on(s,s.date) || pgp::core::operations_availability(s,s.date)!=pgp::core::BasisPoints{8500}) {fail("Release must return the worker and coordination reservation");return;}
+            if(!click("reviewOperationsManager")) {fail("Reassign manager");return;}state->phase=508;return;
+        }
+        if(state->phase==508) {
+            if(!press(window,buttonText(window.contentItem(),QStringLiteral("OK")))) {fail("Confirm manager reassignment");return;}state->phase=509;return;
+        }
+        if(state->phase==509) {campaign.step();state->phase=510;return;}
+        if(state->phase==510) {
+            auto* status=find(window.contentItem(),"managerStatus");if(!status || campaign.storageBlocked()) {fail("Manager status, page persistence and durable commands");return;}
+            status->forceActiveFocus(Qt::TabFocusReason);state->phase=511;return;
+        }
+        if(state->phase==511) {
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-manager-active.png");
+            std::cout<<"Manager quote, real work delivery, portrait dossier, release/reassignment and People page persistence passed; resumed="<<state->resumed<<"\n";
+            timer->stop();QCoreApplication::exit(0);return;
         }
         if(state->phase==400) {
             if(!campaign.world()->nationalAccess() || campaign.world()->worldAccess()) {fail("Background and overseas progression are distinct");return;}

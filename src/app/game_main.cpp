@@ -66,6 +66,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("founding-smoke"),QStringLiteral("Exercise the actual New Game biography, funding and first morning with an isolated local save.")});
     parser.addOption({QStringLiteral("world-smoke"),QStringLiteral("Exercise world navigation and continuing campaign in an isolated root.")});
     parser.addOption({QStringLiteral("portrait-smoke"),QStringLiteral("Check interactive portraits at 1080p, 8K and a narrow high-text layout.")});
+    parser.addOption({QStringLiteral("manager-smoke"),QStringLiteral("Exercise HQ manager appointments, work delivery, portraits and resume.")});
     parser.addOption({QStringLiteral("contacts-smoke"),QStringLiteral("Exercise paid overseas offices and national/world contact progression.")});
     parser.addOption({QStringLiteral("device-smoke"),QStringLiteral("Exercise device ownership, equipment controls and compatible app routing.")});
     parser.addOption({QStringLiteral("workplace-smoke"),QStringLiteral("Exercise paid headquarters construction and repeatable facility blueprints.")});
@@ -76,7 +77,7 @@ int main(int argc, char* argv[]) {
     }
 #endif
     if (parser.isSet(QStringLiteral("build-info"))) { core::write_build_identity(std::cout); return 0; }
-    const bool world_smoke=parser.isSet(QStringLiteral("world-smoke")) || parser.isSet(QStringLiteral("portrait-smoke")) || parser.isSet(QStringLiteral("workplace-smoke")) || parser.isSet(QStringLiteral("device-smoke")) || parser.isSet(QStringLiteral("contacts-smoke"));
+    const bool world_smoke=parser.isSet(QStringLiteral("world-smoke")) || parser.isSet(QStringLiteral("portrait-smoke")) || parser.isSet(QStringLiteral("workplace-smoke")) || parser.isSet(QStringLiteral("device-smoke")) || parser.isSet(QStringLiteral("contacts-smoke")) || parser.isSet(QStringLiteral("manager-smoke"));
     const bool civic_smoke = parser.isSet(QStringLiteral("civic-smoke"));
     const bool society_smoke = parser.isSet(QStringLiteral("society-smoke"));
     const bool institutions_smoke = parser.isSet(QStringLiteral("institutions-smoke"));
@@ -192,7 +193,7 @@ int main(int argc, char* argv[]) {
             if (parser.isSet(QStringLiteral("smoke-test"))) {
                 window->resize(1280,720);
                 if (world_smoke)
-                    schedule_world_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")),parser.isSet(QStringLiteral("portrait-smoke")),parser.isSet(QStringLiteral("workplace-smoke")),parser.isSet(QStringLiteral("device-smoke")),parser.isSet(QStringLiteral("contacts-smoke")));
+                    schedule_world_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")),parser.isSet(QStringLiteral("portrait-smoke")),parser.isSet(QStringLiteral("workplace-smoke")),parser.isSet(QStringLiteral("device-smoke")),parser.isSet(QStringLiteral("contacts-smoke")),parser.isSet(QStringLiteral("manager-smoke")));
                 else if (founding_smoke)
                     schedule_founding_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));
                 else if (menu_smoke)

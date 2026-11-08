@@ -47,7 +47,7 @@ QVariantList WorldController::blueprints() const {
 }
 void WorldController::orderHeadquartersRoom(QString offer,QString revision) {
     if(!available(snapshot_)) return;
-    if(revision!=QString::number(snapshot_->checkpoint.world.simulation.revision)) {emit noticeRaised(tr("The company changed. Review the room cost and completion date again."));return;}
+    if(revision!=reviewToken()) {emit noticeRaised(tr("The company changed. Review the room cost and completion date again."));return;}
     const auto next=snapshot_->checkpoint.world.simulation.infrastructure->workplace->rooms.size()+1;
     emit actionRequested(core::ExpandHeadquarters{"room_"+std::to_string(next),offer.toStdString()});
 }
@@ -65,14 +65,14 @@ QVariantMap WorldController::blueprintQuote(QString blueprint,QString state) con
         const auto it=std::ranges::find(list,blueprint.toStdString(),&core::FacilityBlueprint::id);if(it==list.end()) return {{"error",tr("Choose a saved blueprint.")}};
         const auto id="branch_"+std::to_string(s.infrastructure->sites.size()+1);const auto name=it->name+" / "+state.toStdString();
         const auto quote=core::preview_blueprint_build(s,{it->id,id,name,state.toStdString()});
-        return {{"blueprint",blueprint},{"site",q(id)},{"name",q(name)},{"state",state},{"revision",QString::number(s.revision)},
+        return {{"blueprint",blueprint},{"site",q(id)},{"name",q(name)},{"state",state},{"revision",reviewToken()},
             {"detail",tr("%1\nConstruction %2 · hardware %3 · recruitment %4\nTotal now %5 · fixed monthly costs %6, plus metered electricity/water\nBuilding %7 · grid %8 · hardware %9 · operators %10\nAn inspection is still required before commissioning. No capacity is granted at purchase.")
                 .arg(q(name),money(quote.construction),money(quote.hardware),money(quote.recruitment),money(quote.total),money(quote.monthly),q(core::iso_date(quote.built_on)),q(core::iso_date(quote.grid_on)),q(core::iso_date(quote.delivery_on)),q(core::iso_date(quote.operators_on)))}};
     } catch(const std::exception& error) {return {{"error",QString::fromUtf8(error.what())}};}
 }
 void WorldController::buildBlueprint(QVariantMap reviewed) {
     if(!available(snapshot_)) return;
-    if(reviewed.value("revision").toString()!=QString::number(snapshot_->checkpoint.world.simulation.revision)) {emit noticeRaised(tr("The company changed. Review the state-specific facility quote again."));return;}
+    if(reviewed.value("revision").toString()!=reviewToken()) {emit noticeRaised(tr("The company changed. Review the state-specific facility quote again."));return;}
     emit actionRequested(core::BuildFromBlueprint{reviewed.value("blueprint").toString().toStdString(),reviewed.value("site").toString().toStdString(),reviewed.value("name").toString().toStdString(),reviewed.value("state").toString().toStdString()});
 }
 }

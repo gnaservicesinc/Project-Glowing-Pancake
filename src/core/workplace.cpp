@@ -32,6 +32,7 @@ void valid_blueprint(const SimulationState& s,const FacilityBlueprint& b) {
 void validate_workplace_rules(const WorkplaceRules& r) {
     if(r.devices) validate_device_rules(*r.devices);
     if(r.access) validate_access_rules(*r.access);
+    if(r.departments) validate_department_rules(*r.departments);
     const auto text=[](std::string_view value,std::size_t limit) {return !value.empty() && value.size()<=limit && value.find('\0')==std::string_view::npos;};
     if(r.home_seats<1 || r.shared_seats<r.home_seats || r.leased_seats<r.shared_seats || r.leased_seats>128 ||
         r.maximum_rooms<1 || r.maximum_rooms>24 || r.maximum_blueprints<1 || r.maximum_blueprints>16 || r.rooms.empty() || r.rooms.size()>8)
@@ -125,6 +126,7 @@ void validate_workplace(const SimulationState& s,bool deep) {
     const auto& r=rules(s);const auto& w=*i.workplace;
     validate_devices(s,deep);
     validate_access(s,deep);
+    validate_departments(s,deep);
     if(w.starts_on!=s.accounts->starts_on || (w.opening_office!="home" && w.opening_office!="shared" && w.opening_office!="leased") ||
         w.rooms.size()>r.maximum_rooms || w.blueprints.size()>r.maximum_blueprints || w.builds.size()>i.catalog.maximum_sites)
         invalid("Headquarters history exceeds its opening or bounded plan limits.");

@@ -54,6 +54,7 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
         switch (project.kind) {
         case core::ProjectKind::training: kind = QStringLiteral("Training"); break;
         case core::ProjectKind::research: kind = QStringLiteral("Research"); break;
+        case core::ProjectKind::management: kind = QStringLiteral("HQ operations management"); break;
         case core::ProjectKind::evaluation: kind = QStringLiteral("Evaluation"); break;
         case core::ProjectKind::serving: kind = QStringLiteral("Serving"); break;
         case core::ProjectKind::replication: kind = QStringLiteral("Replica synchronization"); break;
@@ -78,7 +79,7 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
         auto lifecycle=detail;
         if(project.status==core::ProjectStatus::paused) lifecycle+=QStringLiteral("\nPaused: compute and staff are released. Resume requests the same source and allocation. Existing bills and spent costs remain. A model checkpoint can continue on another source.");
         rows.push_back({text(project.id),readable(project.id),kind + QStringLiteral(" · ") + progress,lifecycle,status,
-            project.status == core::ProjectStatus::active || project.status==core::ProjectStatus::paused,
+            project.kind!=core::ProjectKind::management && (project.status == core::ProjectStatus::active || project.status==core::ProjectStatus::paused),
             {{"canPause",lab_projects.contains(project.id) && !protected_projects.contains(project.id) && project.pauses.size()<128 && project.status==core::ProjectStatus::active},
              {"canResume",lab_projects.contains(project.id) && project.status==core::ProjectStatus::paused}}});
     }

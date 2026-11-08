@@ -79,6 +79,9 @@ void WorldController::restore() {
     emit navigationChanged();
     emit draftsReset();
 }
+QString WorldController::reviewToken() const {
+    return snapshot_?QString::number(snapshot_->generation)+"/"+QString::number(snapshot_->checkpoint.world.simulation.revision):QString{};
+}
 QString WorldController::draft(QString key,QString fallback) const {return drafts_.value(key,fallback).toString();}
 void WorldController::setDraft(QString key,QString value) {
     if(!snapshot_ || !snapshot_->current_campaign || snapshot_->storage_blocked || key.isEmpty() || key.size()>192 || value.size()>1024 ||
@@ -158,11 +161,12 @@ QVariantMap WorldController::founder() const {
     const auto name=w.identity?q(w.identity->founder_name):tr("Founder");
     QString detail=w.identity?q(w.identity->founder_pronouns):QString{};
     if(w.founding) detail+=tr(" · Age %1").arg(core::from_ordinal(w.simulation.date).year-1997);
-    auto portrait=core::make_portrait(w.root_seed,"founder/"+name.toStdString());
+    auto portrait=core::make_portrait(w.root_seed,"founder/"+name.toStdString());bool managing=false;
+    const auto* manager=core::operations_manager_on(w.simulation,w.simulation.date);
     if(w.simulation.management && w.simulation.management->people) for(const auto& employee:w.simulation.management->people->employees)
-        if(employee.terms.profile.role=="Founder / researcher") portrait=employee.terms.profile.portrait;
+        if(employee.terms.profile.role=="Founder / researcher") {portrait=employee.terms.profile.portrait;managing=manager && manager->person==employee.terms.profile.id;}
     return {{"id","founder"},{"portrait",portraitUrl(portrait)},{"name",name},{"initials",name.section(' ',0,0).left(1)+name.section(' ',-1).left(1)},
-        {"detail",detail},{"role",tr("Founder")},{"bio",w.founding?tr("%1 · %2 · %3").arg(q(w.founding->sociability),q(w.founding->activity),q(w.founding->disposition)):QString{}}};
+        {"detail",detail},{"role",managing?tr("Founder / operations manager"):tr("Founder")},{"bio",w.founding?tr("%1 · %2 · %3").arg(q(w.founding->sociability),q(w.founding->activity),q(w.founding->disposition)):QString{}}};
 }
 QVariantList WorldController::people() const {
     QVariantList rows;
@@ -173,12 +177,13 @@ QVariantList WorldController::people() const {
         if(s.management->people) for(const auto& employee:s.management->people->employees) {
             if(employee.departed_on || employee.terms.profile.role=="Founder / researcher") continue;
             const auto& p=employee.terms.profile;
+            const auto* manager=core::operations_manager_on(s,s.date);const bool managing=manager && manager->person==p.id;
             const auto years=std::max(0,core::from_ordinal(s.date).year-core::from_ordinal(p.applied_on).year);
-            rows.push_back(QVariantMap{{"id",q(p.id)},{"portrait",portraitUrl(p.portrait)},{"name",q(p.name)},{"initials",q(p.name).section(' ',0,0).left(1)+q(p.name).section(' ',-1).left(1)}, {"role",q(p.role)},
+            rows.push_back(QVariantMap{{"id",q(p.id)},{"portrait",portraitUrl(p.portrait)},{"name",q(p.name)},{"initials",q(p.name).section(' ',0,0).left(1)+q(p.name).section(' ',-1).left(1)}, {"role",managing?tr("HQ operations manager"):q(p.role)},
                 {"detail",tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8\n%9")
                     .arg(q(p.gender),q(p.pronouns)).arg(core::from_ordinal(s.date).year-p.birth_year).arg(p.experience+static_cast<unsigned>(years))
                     .arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation)
-                    .arg(s.date<employee.ready_on?tr("Onboarding until %1").arg(q(core::iso_date(employee.ready_on))):tr("Ready for assignment"))}, {"bio",q(p.bio)}});
+                    .arg(s.date<employee.ready_on?tr("Onboarding until %1").arg(q(core::iso_date(employee.ready_on))):managing?tr("Dedicated to branch coordination; one staff allocation is reserved"):tr("Ready for assignment"))}, {"bio",q(p.bio)}});
         }
         for(const auto& hire:s.management->specialists) {
             if(hire.withdrawn_on) continue;
@@ -227,8 +232,9 @@ QVariantMap WorldController::recruitingTerms() const {
 QString WorldController::recruitingSummary() const {
     if(!snapshot_ || !snapshot_->checkpoint.world.simulation.management || !snapshot_->checkpoint.world.simulation.management->people) return {};
     const auto& s=snapshot_->checkpoint.world.simulation;const auto& p=*s.management->people;
-    auto summary=tr("%1 individual HQ staff · next applicants %2. New offers reflect pay, published research and mission fit. Existing offers retain their quoted terms. Skills describe the applicant; evaluation expertise supplies the stated work credit.")
+    auto summary=tr("%1 individual HQ staff · next applicants %2. New offers reflect pay, published research and mission fit. Existing offers retain their quoted terms. Evaluation expertise supplies the stated work credit.")
         .arg(p.employees.size()).arg(q(core::iso_date(p.next_recruitment)));
+    if(s.infrastructure && s.infrastructure->workplace && s.infrastructure->workplace->departments) summary+=tr(" Engineering skill supports HQ operations management.");
     if(s.infrastructure && s.infrastructure->workplace) summary+=tr("\nHQ workstations: %1 of %2 reserved. Expand through Headquarters when the office fills.").arg(core::headquarters_seats_used(s)).arg(core::headquarters_seats(s));
     return summary;
 }
@@ -236,6 +242,19 @@ void WorldController::hireEmployee(QString id) {emit actionRequested(core::HireE
 void WorldController::setRecruitingTerms(int pay,QString mission) {
     if(pay<75 || pay>150) {emit noticeRaised(tr("Recruiting pay must be between 75% and 150%."));return;}
     emit actionRequested(core::SetRecruitingTerms{core::SalaryRate{pay*100},mission.toStdString()});
+}
+QVariantList WorldController::managerCandidates() const {
+    QVariantList rows;
+    if(!snapshot_) return rows;const auto& s=snapshot_->checkpoint.world.simulation;
+    if(!s.infrastructure || !s.infrastructure->workplace || !s.infrastructure->workplace->departments || !s.management || !s.management->people) return rows;
+    const auto* current=core::operations_manager_on(s,s.date);
+    for(const auto& person:s.management->people->employees) if(!person.departed_on && person.ready_on<=s.date) {
+        const bool managing=current && current->person==person.terms.profile.id;
+        auto row=profileRow(person.terms.profile,s.date,managing?tr("Dedicated HQ operations manager; staff and compute are reserved"):tr("Ready for a dedicated HQ role"));
+        if(managing) row["role"]=tr("HQ operations manager");
+        row["label"]=q(person.terms.profile.name)+tr(" · Engineering %1/100").arg(person.terms.profile.engineering);rows.push_back(std::move(row));
+    }
+    return rows;
 }
 QVariantList WorldController::branches() const {
     QVariantList rows;
@@ -246,6 +265,10 @@ QVariantList WorldController::branches() const {
         std::uint64_t count=0,pending=0;
         for(const auto& hire:i.hires) if(hire.site_id==site.id) {if(hire.starts_on<=s.date) count+=hire.people;else pending+=hire.people;}
         rows.push_back(QVariantMap{{"name",q(site.name)},{"detail",tr("Operations department · %1 operators · %2 joining\n%3 · Staffing and capacity are managed with this facility.").arg(count).arg(pending).arg(q(site.state_id))}});
+    }
+    if(i.workplace && i.workplace->departments) for(auto& value:rows) {
+        auto row=value.toMap();row["detail"]=row.value("detail").toString()+tr("\nEngineering team skill %1/100 · operations availability %2%\nHQ coordination affects usable output after physical power and operator requirements.")
+            .arg(i.catalog.workplace->departments->operator_skill).arg(static_cast<double>(core::operations_availability(s,s.date).value())/100,0,'f',2);value=std::move(row);
     }
     for(const auto& value:overseasOffices()) {const auto office=value.toMap();rows.push_back(QVariantMap{{"name",office.value("name")},{"detail",tr("Local representation department · %1").arg(office.value("detail").toString())}});}
     return rows;

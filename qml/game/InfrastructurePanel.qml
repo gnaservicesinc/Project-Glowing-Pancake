@@ -142,6 +142,7 @@ ColumnLayout {
         function onCatalogChanged() { panel.comparison = ({}); stateSearch.text = "" }
     }
 
+    Copy {visible:Object.keys(campaign.world.operationsManagement).length>0;text:qsTr("Owned-facility operations availability: %1. People → Branch departments shows the local team's skill and HQ manager's actual coordination work.").arg(campaign.world.operationsManagement.availability || "")}
     Heading { text: qsTr("Operations · domestic sites") }
     Copy { objectName: "executiveLocation"; text: infra.executiveLocation }
     Copy { visible: !campaign.paused; color: "#ffd897"; text: qsTr("Pause time to change infrastructure commitments.") }

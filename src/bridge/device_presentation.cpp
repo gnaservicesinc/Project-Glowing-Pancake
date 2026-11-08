@@ -26,14 +26,14 @@ QVariantList WorldController::deviceInventory() const {
         rows.push_back(QVariantMap{{"id",QString::number(d.id)},{"kind",q(d.offer)},{"name",q(model.name)},{"powered",d.powered},
             {"available",core::device_available(s,d,headquarters)},{"canPower",!companyArchive() && !d.retired_on && d.ready_on<=s.date},
             {"canService",!d.retired_on && d.ready_on<=s.date && !servicing},{"canRetire",!d.retired_on && d.ready_on<=s.date && !servicing},
-            {"revision",QString::number(s.revision)},{"apps",apps.join(", ")},{"serviceCost",money(model.service)},
+            {"revision",reviewToken()},{"apps",apps.join(", ")},{"serviceCost",money(model.service)},
             {"serviceDetail",tr("%1 service · %2 days offline").arg(money(model.service)).arg(model.service_lead.value())},
             {"detail",status+tr(" · %1\n%2").arg(model.portable?tr("Portable"):tr("HQ workstation"),d.included?tr("Included in founding package"):tr("Company-owned purchase"))}});
     }return rows;
 }
 QVariantList WorldController::deviceOffers() const {
     QVariantList rows;if(!present(snapshot_)) return rows;const auto& s=snapshot_->checkpoint.world.simulation;
-    for(const auto& d:s.infrastructure->catalog.workplace->devices->offers) rows.push_back(QVariantMap{{"id",q(d.id)},{"name",q(d.name)},{"revision",QString::number(s.revision)},
+    for(const auto& d:s.infrastructure->catalog.workplace->devices->offers) rows.push_back(QVariantMap{{"id",q(d.id)},{"name",q(d.name)},{"revision",reviewToken()},
         {"detail",tr("%1 paid now · %2\nDelivery %3 · %4 days\n%5 service · %6 days offline").arg(money(d.purchase),d.portable?tr("Portable"):tr("At HQ only"),q(core::iso_date(core::advance_days(s.date,d.delivery)))).arg(d.delivery.value()).arg(money(d.service)).arg(d.service_lead.value())}});
     return rows;
 }
@@ -45,12 +45,12 @@ bool WorldController::appAvailable(QString app,QString preferred) const {
 }
 void WorldController::buyDevice(QString offer,QString revision) {
     if(!present(snapshot_)) return;
-    if(revision!=QString::number(snapshot_->checkpoint.world.simulation.revision)) {emit noticeRaised(tr("The company changed. Review the equipment quote again."));return;}
+    if(revision!=reviewToken()) {emit noticeRaised(tr("The company changed. Review the equipment quote again."));return;}
     emit actionRequested(core::BuyPersonalDevice{offer.toStdString()});
 }
 void WorldController::serviceDevice(QString id,QString revision) {
     if(!present(snapshot_)) return;
-    if(revision!=QString::number(snapshot_->checkpoint.world.simulation.revision)) {emit noticeRaised(tr("The company changed. Review the service quote again."));return;}
+    if(revision!=reviewToken()) {emit noticeRaised(tr("The company changed. Review the service quote again."));return;}
     bool okay=false;const auto key=id.toULongLong(&okay);if(okay) emit actionRequested(core::ServicePersonalDevice{key});
 }
 void WorldController::powerDevice(QString id,bool powered) {
@@ -58,7 +58,7 @@ void WorldController::powerDevice(QString id,bool powered) {
 }
 void WorldController::retireDevice(QString id,QString revision) {
     if(!present(snapshot_)) return;
-    if(revision!=QString::number(snapshot_->checkpoint.world.simulation.revision)) {emit noticeRaised(tr("The company changed. Review the device again."));return;}
+    if(revision!=reviewToken()) {emit noticeRaised(tr("The company changed. Review the device again."));return;}
     bool okay=false;const auto key=id.toULongLong(&okay);if(okay) emit actionRequested(core::RetirePersonalDevice{key});
 }
 }

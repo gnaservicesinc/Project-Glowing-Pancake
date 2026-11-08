@@ -120,8 +120,8 @@ These are development checks, not physical 8K-device or release qualification.
 ## Further design work
 
 This implementation supplies the playable world, persistence, recruitment,
-layered portraits and county simulation foundation. Manager-derived department productivity and expanded retirement press-release content remain
-future refinements. Existing facilities/operators, paid infrastructure and
+layered portraits, county simulation and work-backed operations management.
+Expanded retirement press-release content remains a refinement. Existing facilities/operators, paid infrastructure and
 succession retain their real financial/authority contracts. National/world maps
 show public information; contact progression and the existing institutional
 eligibility rules jointly own action authority. Country outlines are display geometry; economic summaries describe
@@ -129,6 +129,7 @@ the existing fictional regions, not estimated country-level statistics.
 The remaining interface audit also covers decision participants, largest-city
 labels outside the three founding states, unfinished non-text form selections,
 and reviewed handling of existing campaigns across development content updates.
+UI drafts must also distinguish new companies that reuse the same seed and names.
 
 ## Paid headquarters and facility plans
 
@@ -231,3 +232,40 @@ paid setup, the full opening delay and restart. Narrow 650x480/200% rendering is
 checked separately from native render-harness evidence and physical input.
 Content 0.34.0-dev.1 is a new exact content identity with the earlier save
 preservation restriction described above.
+
+## HQ managers and aggregate branch teams
+
+The founder campaign's Operations department can assign one onboarded individual
+from the HQ roster. Their existing salary continues; the appointment reserves
+one actual HQ worker and 0.10 CU/day on a selected company compute source. It
+uses a distinct management project, which creates no research, measured evidence
+or serving tasks. Insufficient staff/compute refuses the whole reassignment,
+retaining the old manager and reservation. Change or release the manager through
+People rather than cancelling their project independently.
+
+Branch operators remain aggregate engineering teams. The authored local skill
+is 50/100, producing 85% operating availability before HQ coordination. A manager
+adds at most 15 percentage points, weighted by engineering skill and their actual
+management work delivered on the previous day. For example, Engineering 47 with
+a full 0.10 CU management day gives 92.05% availability the next morning. A new
+title gives no instant benefit, and an undelivered workday gives no extra credit.
+The availability factor is applied after physical staffing, power and disruption
+limits and never exceeds rated hardware output. Leased compute and overseas
+liaison teams do not receive an invented physical-capacity bonus.
+
+Appointments retain the worker/source/project IDs, start, planned horizon and
+actual end. Reassignment replaces one reservation; release preserves payroll,
+past work and the employee profile. The saved horizon releases completed or
+unfinished appointments without changing historical terms if the company later
+continues. Manager portraits open the actual employee dossier. The People page
+and unfinished manager/source selections persist locally. Confirmation reviews
+include the campaign generation and revision, so loading another company cannot
+reuse an old equipment, room, office or manager confirmation.
+
+Focused checks exercise a real paid/commissioned branch, onboarding refusal,
+real staff/compute reservations, delayed availability, compute loss, physical
+ceilings, reassignment rollback, release, appointment horizons, altered-record
+refusal and exact saves. GUI checks exercise portraits, reviewed assignments,
+work delivery, release/reassignment and page restoration at normal size and
+650x480 with 200% text. Physical native input and release qualification remain
+separate. Content 0.35.0-dev.1 is an exact new internal content identity.

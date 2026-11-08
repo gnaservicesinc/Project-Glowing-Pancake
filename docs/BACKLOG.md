@@ -32,9 +32,9 @@ stages and ending narrative remain design work.
 Continuing-company resume, 3D places, device apps, scalable layered portraits,
 HQ recruitment, bounded county conditions, paid HQ rooms and reusable physical
 facility blueprints, owned devices, paid delivery/service and compatible app
-routing, dated national contacts and paid overseas office/world access are
-implemented. Follow-up work is explicit in [Gameplay interface](GAMEPLAY_INTERFACE.md):
-manager effects and retirement narrative.
+routing, dated national contacts, paid overseas office/world access and
+work-backed HQ operations managers are implemented. Follow-up work is explicit in [Gameplay interface](GAMEPLAY_INTERFACE.md):
+retirement narrative and the remaining interface/save-upgrade audit.
 The native Mac walkthrough and focused persistence/simulation checks are
 separate from 8K offscreen layout evidence and later device qualification.
 

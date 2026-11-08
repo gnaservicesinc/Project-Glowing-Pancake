@@ -53,10 +53,11 @@ SitePowerPreview power_plan(const SimulationState& s,const OwnedSite& owned,Ordi
     }
     if (result.it_watts<idle) {for (auto& output:result.hardware) output.powered=false;return result;}
     const auto fraction=delta==0?10000ULL:std::min<std::uint64_t>(10000,mul_div_floor(result.it_watts-idle,10000,delta).quotient);
+    const auto availability=operations_availability(s,day);
     for (auto& output:result.hardware) if (output.powered) {
         const auto& order=find(infrastructure(s).hardware,output.order_id);const auto& f=family(s,order);
-        output.effective=MilliCUPerDay{mul_div_floor(std::array<std::uint64_t,3>{
-            static_cast<std::uint64_t>(f.capacity.value()),fraction,static_cast<std::uint64_t>(disruption.remaining.value())},100'000'000).quotient};
+        output.effective=MilliCUPerDay{mul_div_floor(std::array<std::uint64_t,4>{
+            static_cast<std::uint64_t>(f.capacity.value()),fraction,static_cast<std::uint64_t>(disruption.remaining.value()),static_cast<std::uint64_t>(availability.value())},1'000'000'000'000ULL).quotient};
     }
     return result;
 }

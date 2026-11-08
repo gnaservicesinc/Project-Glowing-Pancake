@@ -21,7 +21,7 @@ QString WorldController::accessSummary() const {
 }
 QVariantList WorldController::overseasOfficeOffers() const {
     QVariantList rows;if(!present(snapshot_)) return rows;const auto& s=snapshot_->checkpoint.world.simulation;
-    for(const auto& o:s.infrastructure->catalog.workplace->access->offices) rows.push_back(QVariantMap{{"id",q(o.id)},{"name",q(o.name)},{"revision",QString::number(s.revision)},
+    for(const auto& o:s.infrastructure->catalog.workplace->access->offices) rows.push_back(QVariantMap{{"id",q(o.id)},{"name",q(o.name)},{"revision",reviewToken()},
         {"detail",tr("%1 setup paid now · %2/month payroll and rent\n%3 local employees · opens %4 (%5 days)\nA liaison office supplies contacts and local representation; it supplies no compute or HQ workstations.")
             .arg(money(o.setup),money(o.monthly)).arg(o.people).arg(q(core::iso_date(core::advance_days(s.date,o.lead)))).arg(o.lead.value())}});
     return rows;
@@ -32,18 +32,18 @@ QVariantList WorldController::overseasOffices() const {
         const auto& offers=s.infrastructure->catalog.workplace->access->offices;const auto& model=*std::ranges::find(offers,o.offer,&core::LiaisonOfficeOffer::id);
         const bool open=core::liaison_office_open(s,o,s.date);
         const auto status=o.closed_on?tr("Closed %1").arg(q(core::iso_date(*o.closed_on))):o.ready_on>s.date?tr("Opening %1").arg(q(core::iso_date(o.ready_on))):open?tr("Operating"):tr("Operations withdrawn");
-        rows.push_back(QVariantMap{{"id",QString::number(o.id)},{"name",q(model.name)},{"canClose",!o.closed_on},{"revision",QString::number(s.revision)},
+        rows.push_back(QVariantMap{{"id",QString::number(o.id)},{"name",q(model.name)},{"canClose",!o.closed_on},{"revision",reviewToken()},
             {"detail",status+tr(" · %1 local employees · %2/month payroll and rent").arg(open?model.people:0).arg(money(model.monthly))}});
     }return rows;
 }
 void WorldController::openOverseasOffice(QString offer,QString revision) {
     if(!present(snapshot_)) return;
-    if(revision!=QString::number(snapshot_->checkpoint.world.simulation.revision)) {emit noticeRaised(tr("The company changed. Review the office setup, payroll and opening date again."));return;}
+    if(revision!=reviewToken()) {emit noticeRaised(tr("The company changed. Review the office setup, payroll and opening date again."));return;}
     emit actionRequested(core::OpenLiaisonOffice{offer.toStdString()});
 }
 void WorldController::closeOverseasOffice(QString id,QString revision) {
     if(!present(snapshot_)) return;
-    if(revision!=QString::number(snapshot_->checkpoint.world.simulation.revision)) {emit noticeRaised(tr("The company changed. Review the office again."));return;}
+    if(revision!=reviewToken()) {emit noticeRaised(tr("The company changed. Review the office again."));return;}
     bool okay=false;const auto key=id.toULongLong(&okay);if(okay) emit actionRequested(core::CloseLiaisonOffice{key});
 }
 }

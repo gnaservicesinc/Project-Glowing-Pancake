@@ -74,8 +74,11 @@ int main(int argc,char** argv) {
         check(!world.atHeadquarters() && core::resolve_app_device(travel.checkpoint(),"desktop","lab",world.atHeadquarters())=="tablet","Onsite travel must exclude HQ workstations and retain portable devices");
         int orders=0;QObject::connect(&world,&bridge::WorldController::actionRequested,[&](const auto&){++orders;});
         const auto reviewed=world.deviceOffers().front().toMap().value("revision").toString();
-        world.buyDevice("tablet",QString::number(reviewed.toULongLong()-1));check(orders==0,"A stale equipment quote must not issue a purchase");
+        world.buyDevice("tablet",QStringLiteral("previous/")+reviewed);check(orders==0,"A stale equipment quote must not issue a purchase");
         world.buyDevice("tablet",reviewed);check(orders==1,"A current reviewed quote must issue the typed purchase");
+        world.update(std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{2,away,{},true,false}),program,true);
+        world.buyDevice("tablet",reviewed);check(orders==1,"A confirmation from another campaign generation must refuse even when revisions match");
+        world.buyDevice("tablet",world.deviceOffers().front().toMap().value("revision").toString());check(orders==2,"A freshly reviewed quote must work after campaign replacement");
         auto rules=*definition.infrastructure->workplace->devices;refuses([&]{rules.offers[0].delivery=core::Days{-1};core::validate_device_rules(rules);});
         std::cout<<"Owned device delivery, power, app routing, portable access, service, retirement, rollback and exact persistence passed\n";
     }catch(const std::exception& error) {std::cerr<<error.what()<<'\n';return 1;}

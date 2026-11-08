@@ -232,7 +232,7 @@ void validate_capacity(const CapacityState& state) {
                 row.status == ProjectStatus::completed)
                 invalid("Serving project has an invalid checked useful-task profile");
             break;
-        case ProjectKind::training: case ProjectKind::research: case ProjectKind::evaluation: case ProjectKind::data_generation: case ProjectKind::incident_response: case ProjectKind::data_acquisition:
+        case ProjectKind::training: case ProjectKind::research: case ProjectKind::evaluation: case ProjectKind::data_generation: case ProjectKind::incident_response: case ProjectKind::data_acquisition: case ProjectKind::management:
             if (row.total_work.value() <= 0 || row.completed_work > row.total_work || row.tasks_per_day != 0 ||
                 row.inference_milli_CU_per_task.value() != 0 || row.useful_tasks != 0 || row.monthly_support_cost.value() != 0)
                 invalid("Finite project has invalid work or serving-only fields");

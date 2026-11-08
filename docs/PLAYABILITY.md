@@ -279,3 +279,14 @@ milestones. Other institutional eligibility and costs still apply.
 
 Construction, equipment and liaison-office reviews pause running time and refresh
 the quoted state before asking for confirmation.
+
+### HQ operations managers
+
+In **People → Branch departments**, choose an onboarded HQ employee and a company
+compute source, then review the assignment. It reserves one worker and 0.10 CU/day
+while their current salary continues. Engineering skill and management work
+actually delivered improve owned-facility operating availability the following
+morning; a title alone grants no output. Physical operator, inspection and power
+requirements still apply. Release or replace the manager here to return their
+reservation. Their portrait opens the employee dossier; the selected People page
+and unfinished choices are preserved locally.

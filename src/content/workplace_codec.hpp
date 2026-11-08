@@ -2,15 +2,18 @@
 #include "people_codec.hpp"
 #include "devices_codec.hpp"
 #include "access_codec.hpp"
+#include "departments_codec.hpp"
 #include <pgp/core/workplace.hpp>
 namespace pgp::content::workplace_codec {
 inline core::WorkplaceRules decode(nlohmann::json j) {
+    std::optional<core::DepartmentRules> departments;
+    if(j.contains("departments")) {departments=departments_codec::decode(j.at("departments"));j.erase("departments");}
     std::optional<core::AccessRules> access;
     if(j.contains("access")) {access=access_codec::decode(j.at("access"));j.erase("access");}
     std::optional<core::DeviceRules> devices;
     if(j.contains("devices")) {devices=devices_codec::decode(j.at("devices"));j.erase("devices");}
     people_codec::fields(j,{"home_seats","shared_seats","leased_seats","maximum_rooms","maximum_blueprints","rooms"});
-    core::WorkplaceRules r;r.devices=std::move(devices);r.access=std::move(access);r.home_seats=people_codec::count(j.at("home_seats"));r.shared_seats=people_codec::count(j.at("shared_seats"));
+    core::WorkplaceRules r;r.devices=std::move(devices);r.access=std::move(access);r.departments=std::move(departments);r.home_seats=people_codec::count(j.at("home_seats"));r.shared_seats=people_codec::count(j.at("shared_seats"));
     r.leased_seats=people_codec::count(j.at("leased_seats"));r.maximum_rooms=people_codec::count(j.at("maximum_rooms"));r.maximum_blueprints=people_codec::count(j.at("maximum_blueprints"));
     if(!j.at("rooms").is_array() || j.at("rooms").size()>8) throw std::invalid_argument("Room catalog exceeds its limit");
     for(const auto& row:j.at("rooms")) {
@@ -27,6 +30,7 @@ inline nlohmann::json encode(const core::WorkplaceRules& r) {
         {"construction_cents",room.construction.value()},{"monthly_cents",room.monthly.value()},{"lead_days",room.lead.value()},{"seats",room.seats}});
     nlohmann::json j{{"home_seats",r.home_seats},{"shared_seats",r.shared_seats},{"leased_seats",r.leased_seats},{"maximum_rooms",r.maximum_rooms},{"maximum_blueprints",r.maximum_blueprints},{"rooms",std::move(rooms)}};
     if(r.devices) j["devices"]=devices_codec::encode(*r.devices);
-    if(r.access) j["access"]=access_codec::encode(*r.access);return j;
+    if(r.access) j["access"]=access_codec::encode(*r.access);
+    if(r.departments) j["departments"]=departments_codec::encode(*r.departments);return j;
 }
 }

@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.34.0-dev.1",
+  "content_version": "0.35.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -72183,6 +72183,14 @@
             "productive_staff": 12,
             "publications": 3
           },
+          "departments": {
+            "management_milli_CU_per_day": 100,
+            "manager_credit_bp": 1500,
+            "maximum_assignments": 512,
+            "minimum_availability_bp": 7000,
+            "operator_skill": 50,
+            "operator_skill_credit_bp": 3000
+          },
           "devices": {
             "offers": [
               {
@@ -74361,7 +74369,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 5,
+      "revision": 6,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

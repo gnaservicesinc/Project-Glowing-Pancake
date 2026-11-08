@@ -12,7 +12,7 @@ ColumnLayout {
     signal visitRoom(string place)
     signal openInfrastructure()
     ReviewPause {id:reviewPause}
-    function reviewRoom(id) {reviewPause.begin(()=>{const current=campaign.world.roomOffers.find(row=>row.id===id);if(current){roomDialog.review={id:current.id,detail:current.name+"\n"+current.detail,revision:campaign.revision};roomDialog.open()}})}
+    function reviewRoom(id) {reviewPause.begin(()=>{const current=campaign.world.roomOffers.find(row=>row.id===id);if(current){roomDialog.review={id:current.id,detail:current.name+"\n"+current.detail,revision:campaign.world.reviewToken};roomDialog.open()}})}
     function reviewBuild() {reviewPause.begin(()=>{buildDialog.review=campaign.world.blueprintQuote(panel.blueprintId || campaign.world.blueprints[0].id,panel.buildState);buildDialog.open()})}
     function restoreForm() {
         hardwareId=campaign.world.draft("workplace/hardware","rack.reference")

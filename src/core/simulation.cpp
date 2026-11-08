@@ -115,6 +115,7 @@ void prepare_opening(SimulationState& state, const std::vector<MarketAdoption>* 
     prepare_succession(state);
     prepare_management(state);
     prepare_service_lifecycle(state);
+    prepare_departments(state);
     prepare_infrastructure(state);
     if (state.business_offers) expire_business_offers(*state.business_offers,*state.capacity,state.date);
     while (state.opening_cursor < state.opening_actions.size()) {
@@ -542,6 +543,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 prepare_succession(next);
                 prepare_management(next);
                 prepare_service_lifecycle(next);
+                prepare_departments(next);
                 prepare_infrastructure(next);
                 if (next.liquidity) {
                     observe_liquidity(*next.liquidity, *next.accounts, next.date, false);
@@ -649,6 +651,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     pause_project(capacity(next),next.date,action.id);(void)receipt(next,"pause_project");
                 } else {resume_project(capacity(next),next.date,action.id);(void)receipt(next,"resume_project");}
             } else if constexpr (std::is_same_v<Action, CancelProject>) {
+                if(operations_project(next,action.id)) refuse(CommandReason::dependent_commitment,"Change or release the HQ operations manager in People to end this work reservation.");
                 if (next.deployments) for (const auto& rollout:next.deployments->rollouts) if (!rollout.resolved_on &&
                     (rollout.candidate.project_id==action.id ||
                      next.deployments->records.at(static_cast<std::size_t>(rollout.incumbent_release-1)).project_id==action.id))
@@ -712,6 +715,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 })) refuse(CommandReason::invalid_argument,"Owned and imported capacity follow actual site power and supplier terms.");
                 update_effective_capacity(capacity(next), next.date, action.source_id, action.available);
                 (void)receipt(next, "capacity_availability");
+            } else if constexpr (std::is_same_v<Action, AssignOperationsManager>) {
+                assign_operations_manager(next,action);(void)receipt(next,"assign_operations_manager");
             } else if constexpr (std::is_same_v<Action, OpenLiaisonOffice>) {
                 const auto before=next.cash;open_liaison_office(next,action.offer,reserved_cash(next));(void)receipt(next,"open_liaison_office",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, CloseLiaisonOffice>) {
@@ -991,7 +996,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             }
         }, command.action);
         if (reserve_applies) require_operating_reserve(uncommitted_before,next);
-        if (!std::holds_alternative<AdvanceDay>(command.action)) {prepare_governance(next);prepare_succession(next);prepare_infrastructure(next);}
+        if (!std::holds_alternative<AdvanceDay>(command.action)) {prepare_governance(next);prepare_succession(next);prepare_departments(next);prepare_infrastructure(next);}
         prepare_access(next);
         if (next.liquidity && !std::holds_alternative<AdvanceDay>(command.action))
             refresh_liquidity(*next.liquidity,*next.accounts);

@@ -32,10 +32,14 @@ class WorldController final : public QObject {
     Q_PROPERTY(QString accessSummary READ accessSummary NOTIFY changed)
     Q_PROPERTY(QVariantList overseasOfficeOffers READ overseasOfficeOffers NOTIFY changed)
     Q_PROPERTY(QVariantList overseasOffices READ overseasOffices NOTIFY changed)
+    Q_PROPERTY(QVariantList managerCandidates READ managerCandidates NOTIFY changed)
+    Q_PROPERTY(QVariantList managementSources READ managementSources NOTIFY changed)
+    Q_PROPERTY(QVariantMap operationsManagement READ operationsManagement NOTIFY changed)
     Q_PROPERTY(QVariantList scales READ scales NOTIFY changed)
     Q_PROPERTY(QVariantMap worldGeometry READ worldGeometry CONSTANT)
     Q_PROPERTY(QString officeKind READ officeKind NOTIFY changed)
     Q_PROPERTY(QVariantMap navigation READ navigation NOTIFY navigationChanged)
+    Q_PROPERTY(QString reviewToken READ reviewToken NOTIFY changed)
     Q_PROPERTY(QString headquartersSummary READ headquartersSummary NOTIFY changed)
     Q_PROPERTY(QVariantList roomOffers READ roomOffers NOTIFY changed)
     Q_PROPERTY(QVariantList headquartersRooms READ headquartersRooms NOTIFY changed)
@@ -70,6 +74,11 @@ public:
     QString accessSummary() const;
     QVariantList overseasOfficeOffers() const;
     QVariantList overseasOffices() const;
+    QVariantList managerCandidates() const;
+    QVariantList managementSources() const;
+    QVariantMap operationsManagement() const;
+    Q_INVOKABLE QVariantMap managerQuote(QString person,QString source) const;
+    Q_INVOKABLE void assignOperationsManager(QVariantMap reviewed);
     Q_INVOKABLE void openOverseasOffice(QString offer,QString revision);
     Q_INVOKABLE void closeOverseasOffice(QString id,QString revision);
     Q_INVOKABLE void buyDevice(QString offer,QString revision);
@@ -81,6 +90,7 @@ public:
     QVariantMap worldGeometry() const {return world_geometry_;}
     QString officeKind() const;
     QVariantMap navigation() const {return navigation_;}
+    QString reviewToken() const;
     Q_INVOKABLE bool navigate(QString place,QString scale,QString device,QString app,QString section);
     Q_INVOKABLE QString draft(QString key,QString fallback) const;
     Q_INVOKABLE void setDraft(QString key,QString value);

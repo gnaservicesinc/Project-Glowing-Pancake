@@ -6,14 +6,18 @@ ColumnLayout {
     property int textSize:14
     signal openApp(string app,string section)
     property string page: "team"
+    function changePage(value) {page=value;campaign.world.setDraft("people/page",value)}
+    function restorePage() {const value=campaign.world.draft("people/page","team");page=["team","applicants","branches"].includes(value)?value:"team"}
+    Component.onCompleted:restorePage()
+    Connections {target:campaign.world;function onDraftsReset(){panel.restorePage()}}
     spacing:16
     Label {text:qsTr("The people behind the company");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize*1.4;font.bold:true;color:"#eee5d2"}
     Label {text:qsTr("Your founder and named HQ specialists. Site operators remain grouped with their facilities.");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
     Flow {
         Layout.fillWidth:true;spacing:8
-        WorldButton {text:qsTr("HQ team");textSize:panel.textSize;checked:panel.page==="team";onClicked:panel.page="team"}
-        WorldButton {objectName:"peopleApplicantsTab";text:qsTr("Applicants");textSize:panel.textSize;checked:panel.page==="applicants";onClicked:panel.page="applicants"}
-        WorldButton {text:qsTr("Branch departments");textSize:panel.textSize;checked:panel.page==="branches";onClicked:panel.page="branches"}
+        WorldButton {text:qsTr("HQ team");textSize:panel.textSize;checked:panel.page==="team";onClicked:panel.changePage("team")}
+        WorldButton {objectName:"peopleApplicantsTab";text:qsTr("Applicants");textSize:panel.textSize;checked:panel.page==="applicants";onClicked:panel.changePage("applicants")}
+        WorldButton {objectName:"peopleBranchesTab";text:qsTr("Branch departments");textSize:panel.textSize;checked:panel.page==="branches";onClicked:panel.changePage("branches")}
     }
     Label {visible:campaign.world.recruitingSummary.length>0;Layout.fillWidth:true;text:campaign.world.recruitingSummary;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
     Flow {
@@ -95,6 +99,7 @@ ColumnLayout {
             }
         }
     }
+    ManagerPanel {Layout.fillWidth:true;visible:panel.page==="branches" && Object.keys(campaign.world.operationsManagement).length>0;textSize:panel.textSize;onProfileRequested:person=>{profileDialog.person=person;profileDialog.open()}}
     Repeater {
         model:panel.page==="branches" ? campaign.world.branches : []
         ColumnLayout {

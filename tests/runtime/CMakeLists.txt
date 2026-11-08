@@ -299,3 +299,10 @@ target_compile_definitions(pgp-contacts-test PRIVATE PGP_CONTACTS_SOURCE="${PROJ
 pgp_project_target(pgp-contacts-test)
 add_test(NAME runtime.contacts COMMAND pgp-contacts-test)
 set_tests_properties(runtime.contacts PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-departments-test departments_test.cpp)
+target_link_libraries(pgp-departments-test PRIVATE pgp::session)
+target_compile_definitions(pgp-departments-test PRIVATE PGP_DEPARTMENTS_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/departments.json")
+pgp_project_target(pgp-departments-test)
+add_test(NAME runtime.departments COMMAND pgp-departments-test)
+set_tests_properties(runtime.departments PROPERTIES TIMEOUT 30)
