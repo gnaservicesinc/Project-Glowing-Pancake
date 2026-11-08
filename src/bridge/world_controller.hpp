@@ -49,6 +49,7 @@ public:
     explicit WorldController(std::filesystem::path directory, QObject* parent=nullptr);
     void update(CampaignSnapshotPtr snapshot,const runtime::CompiledProgram&, bool replace);
     QString location() const;
+    Q_INVOKABLE QString referenceCity(QString state) const;
     QString setting() const;
     bool atHeadquarters() const;
     QVariantMap founder() const;

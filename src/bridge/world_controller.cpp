@@ -1,6 +1,7 @@
 #include "world_controller.hpp"
 #include <pgp/persistence/sha256.hpp>
 #include <QFile>
+#include <QResource>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSaveFile>
@@ -8,6 +9,10 @@
 #include <QLocale>
 #include <algorithm>
 
+static void initialize_world_baseline() {
+    static const bool initialized=[] {Q_INIT_RESOURCE(world_baseline);return true;}();
+    (void)initialized;
+}
 namespace pgp::bridge {
 namespace {
 QString q(const std::string& s) {return QString::fromStdString(s);}
@@ -24,10 +29,13 @@ QVariantMap profileRow(const core::PersonProfile& p,core::OrdinalDay now,QString
             .arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation).arg(status)}, {"bio",q(p.bio)}};
 }
 QString city(std::string_view state) {
-    if(state=="US-CA" || state=="state.us_ca") return QStringLiteral("Los Angeles");
-    if(state=="US-TX" || state=="state.us_tx") return QStringLiteral("Houston");
-    if(state=="US-WA" || state=="state.us_wa") return QStringLiteral("Seattle");
-    return q(std::string{state});
+    static const QJsonObject cities=[] {
+        initialize_world_baseline();QFile file{QStringLiteral(":/pgp/assets/maps/city-context-2010.json")};
+        if(!file.open(QIODevice::ReadOnly) || file.size()>64*1024) return QJsonObject{};
+        return QJsonDocument::fromJson(file.readAll()).object().value("cities").toObject();
+    }();
+    auto key=q(std::string{state});if(key.startsWith("state.us_")) key="US-"+key.mid(9).toUpper();
+    return cities.value(key).toObject().value("name").toString(q(std::string{state}));
 }
 QVariantMap navDefault() {return {{"place","workspace"},{"scale","hq"},{"device",""},{"app",""},{"section",""}};}
 bool valid(const QVariantMap& n) {
@@ -80,6 +88,7 @@ void WorldController::restore() {
     emit navigationChanged();
     emit draftsReset();
 }
+QString WorldController::referenceCity(QString state) const {return city(state.toStdString());}
 QString WorldController::reviewToken() const {
     return snapshot_?QString::number(snapshot_->generation)+"/"+QString::number(snapshot_->checkpoint.world.simulation.revision):QString{};
 }

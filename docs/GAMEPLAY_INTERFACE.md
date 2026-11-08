@@ -126,8 +126,8 @@ succession retain their real financial/authority contracts. National/world maps
 show public information; contact progression and the existing institutional
 eligibility rules jointly own action authority. Country outlines are display geometry; economic summaries describe
 the existing fictional regions, not estimated country-level statistics.
-The remaining interface audit also covers decision participants, largest-city
-labels outside the three founding states, unfinished non-text form selections,
+The remaining interface audit also covers decision participants and unfinished
+non-text form selections,
 and reviewed handling of existing campaigns across development content updates.
 New companies save a local instance ID so reused seeds and names do not share
 unfinished fields or navigation. The ID never feeds simulation RNG; imported
@@ -299,3 +299,11 @@ early-ending autosaves, exact reload and sandbox continuation. The native and
 route, with automatic restart checked separately. Physical native input remains
 unqualified because the computer-use pipe is unavailable. Content is now
 0.36.0-dev.1; prior development saves retain their original content identity.
+
+All 50 states and DC now use the largest place in their frozen 2010 Census
+baseline for city context, including consolidated-city balances and Honolulu's
+CDP. The 51-row offline extract retains full Census names, codes and population;
+the interface shortens legal suffixes. This does not invent facilities or change
+travel. Source hash, rights and a reproducible local preparation command are in
+[the map sources](../assets/maps/README.md). A focused bridge check covers states
+outside the founding choices, aliases and the historical Memphis ranking.

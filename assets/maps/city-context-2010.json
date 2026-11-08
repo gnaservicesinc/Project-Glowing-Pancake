@@ -1,0 +1,312 @@
+{
+  "format": 1,
+  "year": 2010,
+  "cities": {
+    "US-AK": {
+      "name": "Anchorage",
+      "census_name": "Anchorage municipality",
+      "geoid": "0203000",
+      "population": 291826
+    },
+    "US-AL": {
+      "name": "Birmingham",
+      "census_name": "Birmingham city",
+      "geoid": "0107000",
+      "population": 212237
+    },
+    "US-AR": {
+      "name": "Little Rock",
+      "census_name": "Little Rock city",
+      "geoid": "0541000",
+      "population": 193524
+    },
+    "US-AZ": {
+      "name": "Phoenix",
+      "census_name": "Phoenix city",
+      "geoid": "0455000",
+      "population": 1445632
+    },
+    "US-CA": {
+      "name": "Los Angeles",
+      "census_name": "Los Angeles city",
+      "geoid": "0644000",
+      "population": 3792621
+    },
+    "US-CO": {
+      "name": "Denver",
+      "census_name": "Denver city",
+      "geoid": "0820000",
+      "population": 600158
+    },
+    "US-CT": {
+      "name": "Bridgeport",
+      "census_name": "Bridgeport city",
+      "geoid": "0908000",
+      "population": 144229
+    },
+    "US-DC": {
+      "name": "Washington",
+      "census_name": "Washington city",
+      "geoid": "1150000",
+      "population": 601723
+    },
+    "US-DE": {
+      "name": "Wilmington",
+      "census_name": "Wilmington city",
+      "geoid": "1077580",
+      "population": 70851
+    },
+    "US-FL": {
+      "name": "Jacksonville",
+      "census_name": "Jacksonville city",
+      "geoid": "1235000",
+      "population": 821784
+    },
+    "US-GA": {
+      "name": "Atlanta",
+      "census_name": "Atlanta city",
+      "geoid": "1304000",
+      "population": 420003
+    },
+    "US-HI": {
+      "name": "Honolulu",
+      "census_name": "Urban Honolulu CDP",
+      "geoid": "1571550",
+      "population": 337256
+    },
+    "US-IA": {
+      "name": "Des Moines",
+      "census_name": "Des Moines city",
+      "geoid": "1921000",
+      "population": 203433
+    },
+    "US-ID": {
+      "name": "Boise",
+      "census_name": "Boise City city",
+      "geoid": "1608830",
+      "population": 205671
+    },
+    "US-IL": {
+      "name": "Chicago",
+      "census_name": "Chicago city",
+      "geoid": "1714000",
+      "population": 2695598
+    },
+    "US-IN": {
+      "name": "Indianapolis",
+      "census_name": "Indianapolis city (balance)",
+      "geoid": "1836003",
+      "population": 820445
+    },
+    "US-KS": {
+      "name": "Wichita",
+      "census_name": "Wichita city",
+      "geoid": "2079000",
+      "population": 382368
+    },
+    "US-KY": {
+      "name": "Louisville",
+      "census_name": "Louisville/Jefferson County metro government (balance)",
+      "geoid": "2148006",
+      "population": 597337
+    },
+    "US-LA": {
+      "name": "New Orleans",
+      "census_name": "New Orleans city",
+      "geoid": "2255000",
+      "population": 343829
+    },
+    "US-MA": {
+      "name": "Boston",
+      "census_name": "Boston city",
+      "geoid": "2507000",
+      "population": 617594
+    },
+    "US-MD": {
+      "name": "Baltimore",
+      "census_name": "Baltimore city",
+      "geoid": "2404000",
+      "population": 620961
+    },
+    "US-ME": {
+      "name": "Portland",
+      "census_name": "Portland city",
+      "geoid": "2360545",
+      "population": 66194
+    },
+    "US-MI": {
+      "name": "Detroit",
+      "census_name": "Detroit city",
+      "geoid": "2622000",
+      "population": 713777
+    },
+    "US-MN": {
+      "name": "Minneapolis",
+      "census_name": "Minneapolis city",
+      "geoid": "2743000",
+      "population": 382578
+    },
+    "US-MO": {
+      "name": "Kansas City",
+      "census_name": "Kansas City city",
+      "geoid": "2938000",
+      "population": 459787
+    },
+    "US-MS": {
+      "name": "Jackson",
+      "census_name": "Jackson city",
+      "geoid": "2836000",
+      "population": 173514
+    },
+    "US-MT": {
+      "name": "Billings",
+      "census_name": "Billings city",
+      "geoid": "3006550",
+      "population": 104170
+    },
+    "US-NC": {
+      "name": "Charlotte",
+      "census_name": "Charlotte city",
+      "geoid": "3712000",
+      "population": 731424
+    },
+    "US-ND": {
+      "name": "Fargo",
+      "census_name": "Fargo city",
+      "geoid": "3825700",
+      "population": 105549
+    },
+    "US-NE": {
+      "name": "Omaha",
+      "census_name": "Omaha city",
+      "geoid": "3137000",
+      "population": 408958
+    },
+    "US-NH": {
+      "name": "Manchester",
+      "census_name": "Manchester city",
+      "geoid": "3345140",
+      "population": 109565
+    },
+    "US-NJ": {
+      "name": "Newark",
+      "census_name": "Newark city",
+      "geoid": "3451000",
+      "population": 277140
+    },
+    "US-NM": {
+      "name": "Albuquerque",
+      "census_name": "Albuquerque city",
+      "geoid": "3502000",
+      "population": 545852
+    },
+    "US-NV": {
+      "name": "Las Vegas",
+      "census_name": "Las Vegas city",
+      "geoid": "3240000",
+      "population": 583756
+    },
+    "US-NY": {
+      "name": "New York",
+      "census_name": "New York city",
+      "geoid": "3651000",
+      "population": 8175133
+    },
+    "US-OH": {
+      "name": "Columbus",
+      "census_name": "Columbus city",
+      "geoid": "3918000",
+      "population": 787033
+    },
+    "US-OK": {
+      "name": "Oklahoma City",
+      "census_name": "Oklahoma City city",
+      "geoid": "4055000",
+      "population": 579999
+    },
+    "US-OR": {
+      "name": "Portland",
+      "census_name": "Portland city",
+      "geoid": "4159000",
+      "population": 583776
+    },
+    "US-PA": {
+      "name": "Philadelphia",
+      "census_name": "Philadelphia city",
+      "geoid": "4260000",
+      "population": 1526006
+    },
+    "US-RI": {
+      "name": "Providence",
+      "census_name": "Providence city",
+      "geoid": "4459000",
+      "population": 178042
+    },
+    "US-SC": {
+      "name": "Columbia",
+      "census_name": "Columbia city",
+      "geoid": "4516000",
+      "population": 129272
+    },
+    "US-SD": {
+      "name": "Sioux Falls",
+      "census_name": "Sioux Falls city",
+      "geoid": "4659020",
+      "population": 153888
+    },
+    "US-TN": {
+      "name": "Memphis",
+      "census_name": "Memphis city",
+      "geoid": "4748000",
+      "population": 646889
+    },
+    "US-TX": {
+      "name": "Houston",
+      "census_name": "Houston city",
+      "geoid": "4835000",
+      "population": 2099451
+    },
+    "US-UT": {
+      "name": "Salt Lake City",
+      "census_name": "Salt Lake City city",
+      "geoid": "4967000",
+      "population": 186440
+    },
+    "US-VA": {
+      "name": "Virginia Beach",
+      "census_name": "Virginia Beach city",
+      "geoid": "5182000",
+      "population": 437994
+    },
+    "US-VT": {
+      "name": "Burlington",
+      "census_name": "Burlington city",
+      "geoid": "5010675",
+      "population": 42417
+    },
+    "US-WA": {
+      "name": "Seattle",
+      "census_name": "Seattle city",
+      "geoid": "5363000",
+      "population": 608660
+    },
+    "US-WI": {
+      "name": "Milwaukee",
+      "census_name": "Milwaukee city",
+      "geoid": "5553000",
+      "population": 594833
+    },
+    "US-WV": {
+      "name": "Charleston",
+      "census_name": "Charleston city",
+      "geoid": "5414600",
+      "population": 51400
+    },
+    "US-WY": {
+      "name": "Cheyenne",
+      "census_name": "Cheyenne city",
+      "geoid": "5613900",
+      "population": 59466
+    }
+  }
+}

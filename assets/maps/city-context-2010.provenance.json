@@ -1,0 +1,14 @@
+{
+  "file": "assets/maps/city-context-2010.json",
+  "creator": "U.S. Census Bureau",
+  "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/Gaz_places_national.zip",
+  "source_page": "https://www.census.gov/geographies/reference-files/2010/geo/gazetter-file.html",
+  "source_zip_sha256": "db63b4ef027f2118221c057b9e4911a4bbda09975bdc4aac7d0c0ba286e04c76",
+  "source_member": "Gaz_places_national.txt",
+  "retrieved_on": "2026-11-07",
+  "rights": "U.S. federal statistical facts; Census Bureau employee data and works are generally not copyright-protected in the United States. No Census endorsement is implied.",
+  "rights_source": "https://www2.census.gov/foia/ds_policies/ds027.pdf",
+  "transform": "Decode source as Windows-1252; exclude Puerto Rico; choose maximum POP10 per state/DC with lowest GEOID as a tie-break; retain full Census name, GEOID and population. Shorten legal place suffixes and use display aliases Honolulu, Louisville, Indianapolis and Boise. All 51 labels remain a frozen 2010 reference, not a forecast.",
+  "preparation_tool": "tools/prepare_city_context.py",
+  "runtime": "Only the derived 51-row JSON is bundled. No download or location lookup runs in the game."
+}

@@ -5,3 +5,13 @@ The 2024 U.S. Census Bureau 1:5,000,000 KML and its exact metadata are retained 
 Run `python3 tools/prepare_us_map.py --check` from the repository to reproduce the reviewed 51-jurisdiction integer geometry. Preparation is local and never downloads at build/runtime. The chart uses a fixed display layout, two-unit subpixel simplification, scaled Alaska/Hawaii insets and an enlarged DC selection marker. Original geographic data are used only for visual display; game economics, travel zones, costs and delays are independently authored approximations.
 
 The runtime receives only `us-states-2024.json` and the offline terms/credit, through explicit resource entries. Original KML/metadata and the preparation script belong to the source checkout. The game provides a complete state list and keyboard equivalent; no map hotspot is needed for management.
+
+The city labels use the largest 2010 Census place in each state and DC, including
+Honolulu's census-designated place and the Census balances for consolidated
+cities. Full source names, GEOIDs and populations remain in
+`city-context-2010.json`; only short display aliases are used in the interface.
+This is the same frozen population vintage as the county baseline, rather than
+a future city-ranking forecast. The source ZIP hash and transformation are in
+`city-context-2010.provenance.json`. Reproduce locally with
+`python3 tools/prepare_city_context.py /path/to/Gaz_places_national.zip --check`.
+The game bundles the 51-row result and performs no downloads.

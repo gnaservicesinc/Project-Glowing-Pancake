@@ -245,6 +245,30 @@
       "credit_text": "Head and rear-hair shapes adapted from Bitclone Basic Face Kit 2 by VexStrips / future, Openclipart CC0. Complementary layers and palette by Project Glowing Pancake.",
       "credit_group": "Portraits",
       "review_status": "source-and-terms-verified-for-vector-composition"
+    },
+    {
+      "id": "data.us_city_context_2010",
+      "path": "assets/maps/city-context-2010.json",
+      "sha256": "f04669f2253e8d224f8d4bf17fcfa5c91a864c2842e0bebcfe2fc7ff89c55cb5",
+      "kind": "data",
+      "title": "Reference city in each state and DC, 2010 Census",
+      "creator": "U.S. Census Bureau",
+      "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/Gaz_places_national.zip",
+      "retrieved_on": "2026-11-07",
+      "source_year": 2010,
+      "source_archive_sha256": "db63b4ef027f2118221c057b9e4911a4bbda09975bdc4aac7d0c0ba286e04c76",
+      "license_id": "LicenseRef-US-Government-Data",
+      "license_url": "https://www2.census.gov/foia/ds_policies/ds027.pdf",
+      "license_evidence_path": "assets/maps/city-context-2010.provenance.json",
+      "modifications": "Selected largest 2010 Census place per state/DC by population; retained original names/codes/counts and added four short display aliases.",
+      "derived_from": [],
+      "preparation_tool": "tools/prepare_city_context.py",
+      "purpose": "Offline reference city labels; no economic or geographic simulation is inferred from these labels.",
+      "ai_generated": false,
+      "generation_record": null,
+      "credit_text": "City context: U.S. Census Bureau, 2010 National Places Gazetteer. Largest Census place in each state and DC; names shortened for display.",
+      "credit_group": "Geography",
+      "review_status": "source-and-terms-verified-for-statistical-reference"
     }
   ]
 }

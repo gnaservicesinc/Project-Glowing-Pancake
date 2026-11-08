@@ -15,3 +15,7 @@ set_target_properties(pgp_bridge PROPERTIES AUTOMOC ON)
 target_include_directories(pgp_bridge PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(pgp_bridge PUBLIC pgp::session Qt6::Core)
 pgp_project_target(pgp_bridge)
+
+qt_add_resources(pgp_bridge world_baseline
+    PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
+    FILES "${PROJECT_SOURCE_DIR}/assets/maps/city-context-2010.json")

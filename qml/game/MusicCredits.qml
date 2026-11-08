@@ -107,7 +107,7 @@ Dialog {
                 }
             }
             Copy {
-                text: qsTr("Domestic map: U.S. Census Bureau, 2024 Cartographic Boundary Files, 1:5,000,000. Prepared geometry with separately scaled Alaska and Hawaii insets and an enlarged DC marker.")
+                text: qsTr("Domestic map: U.S. Census Bureau, 2024 Cartographic Boundary Files, 1:5,000,000. Prepared geometry with separately scaled Alaska and Hawaii insets and an enlarged DC marker. County populations and city context: U.S. Census Bureau, 2010 Gazetteer Files.")
             }
             Copy {
                 text: qsTr("Project Glowing Pancake uses GPLv3. The game source and asset preparation records are available at github.com/gnaservicesinc/Project-Glowing-Pancake. Qt, nlohmann/json, miniaudio and stb_vorbis retain their own licenses.")

@@ -24,6 +24,7 @@ int main(int argc,char** argv) {
         const auto submit=[&](core::CommandAction a) {const auto result=live.submit({live.current_state().world.simulation.revision,std::move(a)});check(result.accepted(),result.explanation.c_str());};
         const auto snapshot=[&] {return std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,live.current_state(),{},true,false});};
         bridge::WorldController world{{}};world.update(snapshot(),program,true);
+        check(world.referenceCity("US-MI")=="Detroit" && world.referenceCity("state.us_nj")=="Newark" && world.referenceCity("US-TN")=="Memphis" && world.referenceCity("US-HI")=="Honolulu", "City context must use the complete offline 2010 baseline, including aliases and CDPs");
         check(world.devices().size()==3,"Shared office must include three owned working device kinds");
         check(world.navigate("workspace","hq","phone","lab","research") && world.navigation().value("device")=="laptop","Phone app routing must choose an actually compatible device");
         submit(core::SetDevicePower{2,false});world.update(snapshot(),program,false);
