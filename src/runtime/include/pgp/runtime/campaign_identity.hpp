@@ -9,6 +9,8 @@ struct CampaignIdentity {
     std::string company_name;
     std::string founder_name;
     std::string founder_pronouns;
+    // Local campaign identity for UI restoration; never a simulation seed.
+    std::string instance_id{};
     auto operator<=>(const CampaignIdentity&) const = default;
 };
 void validate_campaign_identity(const CampaignIdentity&);

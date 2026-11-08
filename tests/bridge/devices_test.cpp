@@ -2,6 +2,8 @@
 #include <pgp/runtime/scenario.hpp>
 #include <pgp/persistence/save.hpp>
 #include <QCoreApplication>
+#include <QTemporaryDir>
+#include <QDir>
 #include <iostream>
 #include <algorithm>
 namespace {
@@ -79,6 +81,26 @@ int main(int argc,char** argv) {
         world.update(std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{2,away,{},true,false}),program,true);
         world.buyDevice("tablet",reviewed);check(orders==1,"A confirmation from another campaign generation must refuse even when revisions match");
         world.buyDevice("tablet",world.deviceOffers().front().toMap().value("revision").toString());check(orders==2,"A freshly reviewed quote must work after campaign replacement");
+        QTemporaryDir drafts{QDir::currentPath()+"/campaign-drafts-XXXXXX"};check(drafts.isValid(),"Create owned draft test directory");
+        bridge::WorldController restored{drafts.path().toStdString()};
+        const auto ui_snapshot=[](const auto& checkpoint,std::uint64_t generation) {return std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{generation,checkpoint,{},true,true});};
+        const auto legacy=live.current_state();
+        restored.update(ui_snapshot(legacy,1),program,true);restored.setDraft("lab/note","Legacy unfinished field");
+        auto first=legacy;first.world.identity->instance_id="0123456789abcdef0123456789abcdef";
+        restored.update(ui_snapshot(first,2),program,true);
+        check(restored.draft("lab/note","").isEmpty(),"A new company cannot inherit an older company's same-name/seed draft");
+        restored.setDraft("lab/note","First new company");check(restored.navigate("map","state","","",""),"Store original navigation");
+        auto second=first;second.world.identity->instance_id="fedcba9876543210fedcba9876543210";
+        restored.update(ui_snapshot(second,3),program,true);
+        check(restored.draft("lab/note","").isEmpty() && restored.navigation().value("place")=="workspace","Identical names and seed must still have independent drafts and navigation");
+        restored.setDraft("lab/note","Second new company");
+        const auto saved=persistence::encode_save(program,first);const auto reloaded=persistence::decode_save(program,saved).checkpoint;
+        check(reloaded==first && first.world.simulation==legacy.world.simulation,"The local instance must persist without consuming simulation RNG or changing company work");
+        restored.update(ui_snapshot(reloaded,4),program,true);
+        check(restored.draft("lab/note","")=="First new company" && restored.navigation().value("place")=="map","Exact reload must recover that run's own fields and place");
+        restored.update(ui_snapshot(legacy,5),program,true);
+        check(restored.draft("lab/note","")=="Legacy unfinished field" && persistence::encode_save(program,legacy).find("instance_id")==std::string::npos,"Legacy saves and existing drafts must retain their original shape and location");
+        auto invalid_identity=*first.world.identity;invalid_identity.instance_id="../other";refuses([&]{runtime::validate_campaign_identity(invalid_identity);});
         auto rules=*definition.infrastructure->workplace->devices;refuses([&]{rules.offers[0].delivery=core::Days{-1};core::validate_device_rules(rules);});
         std::cout<<"Owned device delivery, power, app routing, portable access, service, retirement, rollback and exact persistence passed\n";
     }catch(const std::exception& error) {std::cerr<<error.what()<<'\n';return 1;}

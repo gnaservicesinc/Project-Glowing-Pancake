@@ -129,7 +129,9 @@ the existing fictional regions, not estimated country-level statistics.
 The remaining interface audit also covers decision participants, largest-city
 labels outside the three founding states, unfinished non-text form selections,
 and reviewed handling of existing campaigns across development content updates.
-UI drafts must also distinguish new companies that reuse the same seed and names.
+New companies save a local instance ID so reused seeds and names do not share
+unfinished fields or navigation. The ID never feeds simulation RNG; imported
+and resumed saves retain it. Older saves retain their existing draft location.
 
 ## Paid headquarters and facility plans
 

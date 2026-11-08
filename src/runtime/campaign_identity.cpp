@@ -21,6 +21,9 @@ void validate_campaign_identity(const CampaignIdentity& identity) {
     validate_text(identity.company_name, 128, true);
     validate_text(identity.founder_name, 128, true);
     validate_text(identity.founder_pronouns, 64, false);
+    if(!identity.instance_id.empty() && (identity.instance_id.size()!=32 ||
+        std::ranges::any_of(identity.instance_id,[](char c){return !((c>='0' && c<='9') || (c>='a' && c<='f'));})))
+        throw std::invalid_argument("The local campaign instance ID must contain 32 lowercase hexadecimal characters");
 }
 std::uint64_t parse_world_seed(std::string_view text) {
     std::uint64_t seed = 0;

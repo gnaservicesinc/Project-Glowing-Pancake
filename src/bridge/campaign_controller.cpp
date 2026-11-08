@@ -1,4 +1,5 @@
 #include "campaign_controller.hpp"
+#include <QUuid>
 #include <pgp/runtime/authority.hpp>
 #include "flow_presentation.hpp"
 
@@ -403,6 +404,8 @@ void CampaignController::startCampaign(QString hq,bool stories,QString scenario,
         if(!primary.isEmpty()) selection=parseObjectiveSelection(primary,secondary);
     } catch(const std::exception& error) {setNotice(QString::fromUtf8(error.what()));return;}
     if (!beginOperation()) return;
+    if(options.identity && options.identity->instance_id.empty())
+        options.identity->instance_id=QUuid::createUuid().toString(QUuid::Id128).toStdString();
     starting_founder_ = options.founding.has_value();
     QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,hq=hq.toStdString(),stories,scenario=scenario.toStdString(),selection,options=std::move(options)]{
         worker->newCampaign(token,hq,stories,scenario,selection,options);

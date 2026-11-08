@@ -56,6 +56,7 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
         }
         if(state->phase==1) {
             if(!campaign.currentCampaign() || campaign.storageBlocked()) {fail("Continuing company unavailable");return;}
+            if(!state->resumed && (!campaign.snapshot()->checkpoint.world.identity || campaign.snapshot()->checkpoint.world.identity->instance_id.empty())) {fail("New company needs its own saved UI instance");return;}
             campaign.clearNotice();
             window.setProperty("menuVisible",false);window.setProperty("sessionEntered",true);
             QMetaObject::invokeMethod(&window,"closeApp");

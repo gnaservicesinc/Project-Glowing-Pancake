@@ -48,7 +48,8 @@ void WorldController::update(CampaignSnapshotPtr snapshot,const runtime::Compile
     if (replace || path_.empty()) {
         if(snapshot_->checkpoint.world.simulation.infrastructure) county_state_=q(snapshot_->checkpoint.world.simulation.infrastructure->executive_base);
         const auto& w=snapshot_->checkpoint.world;
-        const auto key=std::to_string(w.root_seed)+"/"+w.scenario_id+"/"+(w.identity?w.identity->company_name:"")+"/"+(w.identity?w.identity->founder_name:"");
+        const auto key=w.identity && !w.identity->instance_id.empty()?"instance/"+w.identity->instance_id:
+            std::to_string(w.root_seed)+"/"+w.scenario_id+"/"+(w.identity?w.identity->company_name:"")+"/"+(w.identity?w.identity->founder_name:"");
         path_=directory_/(persistence::sha256(key)+".json");
         restore();
     }

@@ -569,6 +569,7 @@ Json world_json(const WorldState& world) {
     if (world.founding) result["founding"]=Json::parse(content::canonical_founding_selection(*world.founding));
     if (world.identity) result["identity"] = {{"company_name",world.identity->company_name},
         {"founder_name",world.identity->founder_name},{"founder_pronouns",world.identity->founder_pronouns}};
+    if(world.identity && !world.identity->instance_id.empty()) result["identity"]["instance_id"]=world.identity->instance_id;
     return result;
 }
 WorldState parse_world(Json& value,const CompiledProgram& program) {
@@ -592,10 +593,11 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
     if (value.contains("background")) result.background=detail::text(value.at("background"),"world/background",128);
     if (value.contains("identity")) {
         const auto& identity = value.at("identity");
-        detail::fields(identity,"world/identity",{"company_name","founder_name","founder_pronouns"});
+        detail::fields(identity,"world/identity",{"company_name","founder_name","founder_pronouns"},{"instance_id"});
         result.identity = CampaignIdentity{detail::text(identity.at("company_name"),"company_name",128),
             detail::text(identity.at("founder_name"),"founder_name",128),
             detail::text(identity.at("founder_pronouns"),"founder_pronouns",64,true)};
+        if(identity.contains("instance_id")) result.identity->instance_id=detail::text(identity.at("instance_id"),"instance_id",32);
     }
     const auto format = value.contains("simulation_storage") ?
         detail::text(value.at("simulation_storage"), "world/simulation_storage", 32) : std::string{};
