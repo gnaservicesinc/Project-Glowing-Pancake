@@ -3,9 +3,11 @@
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include <QWheelEvent>
+#include <QtTest/QTest>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QTimer>
+#include <algorithm>
 #include <iostream>
 #include <memory>
 namespace {
@@ -20,21 +22,28 @@ bool press(QQuickWindow& window,QQuickItem* item) {
     QKeyEvent down{QEvent::KeyPress,Qt::Key_Space,Qt::NoModifier},up{QEvent::KeyRelease,Qt::Key_Space,Qt::NoModifier};
     QCoreApplication::sendEvent(&window,&down);QCoreApplication::sendEvent(&window,&up);return true;
 }
+QQuickItem* buttonText(QQuickItem* root,const QString& text) {
+    if(root->isVisible() && root->metaObject()->indexOfProperty("down")>=0 && root->property("text").toString()==text) return root;
+    for(auto* child:root->childItems()) if(auto* item=buttonText(child,text)) return item;
+    return nullptr;
 }
-void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot,bool portraits) {
-    struct State {int phase=0,ticks=0,portraitPixels=0;QString revision;bool resumed=false;};
+}
+void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot,bool portraits,bool workplaces) {
+    struct State {int phase=0,ticks=0,portraitPixels=0,constructionDays=0;QString revision;bool resumed=false,workplaceDone=false;};
     auto state=std::make_shared<State>();
     auto* timer=new QTimer(&window);timer->setInterval(150);
-    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot,portraits] {
-        const auto fail=[&](const char* message){std::cerr<<"World check: "<<message<<" / "<<campaign.notice().toStdString()<<"\n";timer->stop();QCoreApplication::exit(3);};
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot,portraits,workplaces] {
+        const auto fail=[&](const char* message){std::cerr<<"World check: "<<message<<" / "<<campaign.notice().toStdString()<<"\n";if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-failed.png");timer->stop();QCoreApplication::exit(3);};
         if(++state->ticks>200) {fail("Timeout");return;}
         if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
         const auto click=[&](const char* name){return press(window,find(window.contentItem(),QString::fromUtf8(name)));};
         if(state->phase==0) {
             state->resumed=campaign.currentCampaign();
+            state->workplaceDone=state->resumed;
             if(state->resumed && window.property("menuVisible").toBool()) {fail("Launch did not resume automatically");return;}
             if(!state->resumed) {
                 auto* founding=campaign.founding();founding->reset();founding->setField("family","rich");
+                if(workplaces) founding->setField("office","home");
                 for(const auto& chapter:founding->chapters()) {
                     const auto row=chapter.toMap();const auto choices=row.value("choices").toList();
                     founding->choose(row.value("id").toString(),choices.front().toMap().value("id").toString());
@@ -49,11 +58,77 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             window.setProperty("menuVisible",false);window.setProperty("sessionEntered",true);
             QMetaObject::invokeMethod(&window,"closeApp");
             window.showNormal();window.resize(portraits?1920:1280,portraits?1080:800);
+            if(workplaces && campaign.textScalePercent()>=200) window.resize(650,480);
             state->phase=2;return;
         }
         if(state->phase==2) {
+            if(workplaces && state->resumed) {
+                const auto& s=campaign.snapshot()->checkpoint.world.simulation;
+                if(!s.infrastructure->workplace || s.infrastructure->workplace->rooms.size()!=1 || s.infrastructure->workplace->blueprints.size()!=1 || s.infrastructure->workplace->builds.size()!=1 || pgp::core::headquarters_seats(s)!=8 || campaign.world()->navigation().value("place")!="research_annex") {fail("Persisted workplace and annex position");return;}
+                std::cout<<"Paid headquarters, blueprint orders and annex navigation resumed exactly\n";timer->stop();QCoreApplication::exit(0);return;
+            }
+            if(workplaces && !state->workplaceDone) {
+                if(!click("headquartersTab")) {fail("Headquarters planning app");return;}state->phase=200;return;
+            }
             if(!screenshot.isEmpty() && !window.grabWindow().save(screenshot+"-world.png")) {fail("World screenshot");return;}
             if(!click("peopleTab")) {fail("People dock navigation");return;}state->phase=3;return;
+        }
+        if(state->phase==200) {
+            if(window.property("room").toString()!="facilities" || campaign.world()->roomOffers().size()!=3) {fail("Headquarters room catalog");return;}
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-planning.png");
+            if(!click("reviewRoom_hq.research")) {fail("Review room construction");return;}state->phase=201;return;
+        }
+        if(state->phase==201) {
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-room-review.png");
+            if(!press(window,buttonText(window.contentItem(),QStringLiteral("OK")))) {fail("Authorize room fit-out");return;}state->phase=202;return;
+        }
+        if(state->phase==202) {
+            const auto& s=campaign.snapshot()->checkpoint.world.simulation;
+            if(!s.infrastructure->workplace || s.infrastructure->workplace->rooms.size()!=1 || pgp::core::headquarters_seats(s)!=2) {fail("Room order and delayed capacity");return;}
+            if(!click("saveFacilityBlueprint")) {fail("Save facility blueprint");return;}state->phase=203;return;
+        }
+        if(state->phase==203) {
+            if(campaign.world()->blueprints().size()!=1 || !click("reviewBlueprintBuild")) {fail("Review saved blueprint");return;}state->phase=204;return;
+        }
+        if(state->phase==204) {
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-blueprint-review.png");
+            if(!press(window,buttonText(window.contentItem(),QStringLiteral("OK")))) {fail("Authorize complete facility");return;}state->phase=205;return;
+        }
+        if(state->phase==205) {
+            const auto& s=campaign.snapshot()->checkpoint.world.simulation;
+            if(s.infrastructure->sites.size()!=1 || s.infrastructure->hardware.size()!=1 || s.infrastructure->hires.size()!=1) {fail("Physical blueprint orders");return;}
+            state->phase=206;return;
+        }
+        if(state->phase==206) {
+            if(state->constructionDays<14) {campaign.step();++state->constructionDays;return;}
+            const auto& s=campaign.snapshot()->checkpoint.world.simulation;
+            if(pgp::core::headquarters_seats(s)!=8) {fail("Completed room workstations");return;}
+            if(!click("closeDeviceButton")) {fail("Return to expanded HQ");return;}
+            campaign.world()->navigate("research_annex","hq","","","");state->phase=207;return;
+        }
+        if(state->phase==207) {
+            if(campaign.world()->navigation().value("place")!="research_annex") {fail("Paid annex navigation");return;}
+            if(campaign.requiredKind()!=QStringLiteral("content") || campaign.canAdvance()) {fail("Prepared decision must stop further advancement");return;}
+            if(campaign.textScalePercent()>=200) {
+                auto* picker=find(window.contentItem(),"compactRoomPicker");auto* dock=find(window.contentItem(),"officeTab");
+                if(!picker || !dock || picker->mapToScene(QPointF{0,picker->height()}).y()>dock->mapToScene(QPointF{0,0}).y()) {fail("Compact room controls overlap the dock");return;}
+            }
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-annex.png");
+            if(campaign.textScalePercent()>=200) {
+                if(!click("mapTab")) {fail("Compact dock keyboard navigation");return;}state->phase=208;return;
+            }
+            std::cout<<"Paid room construction, complete blueprint purchase, prepared decision stop and 3D annex navigation passed\n";
+            timer->stop();QCoreApplication::exit(0);return;
+        }
+        if(state->phase==208) {
+            if(!find(window.contentItem(),"compactMapScale")) {fail("Compact map scale selector");return;}
+            if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-compact-map.png");
+            campaign.world()->navigate("research_annex","hq","","","");state->phase=209;return;
+        }
+        if(state->phase==209) {
+            if(campaign.world()->navigation().value("place")!="research_annex") {fail("Return from compact map");return;}
+            std::cout<<"Paid room construction, blueprint purchase, compact HUD/map controls and annex navigation passed\n";
+            timer->stop();QCoreApplication::exit(0);return;
         }
         if(state->phase==3) {
             if(window.property("room").toString()!="people" || !window.property("deviceOpen").toBool()) {fail("People app failed to open");return;}
@@ -147,17 +222,38 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             QKeyEvent edit{QEvent::KeyPress,0,Qt::NoModifier,QStringLiteral("37")};QCoreApplication::sendEvent(&window,&edit);
             if(campaign.world()->draft("field/researchRateFieldInput/","")!="37") {fail("Per-keystroke field preservation");return;}
             if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-lab.png");
+            if(campaign.requiredKind()==QStringLiteral("content")) {
+                if(!click("inboxTab")) {fail("Prepared decision before advancement");return;}state->phase=71;return;
+            }
             if(!click("closeDeviceButton")) {fail("Close lab");return;}
             state->revision=campaign.revision();
             campaign.step();state->phase=8;return;
         }
+        if(state->phase==71) {
+            const auto choices=campaign.requiredChoices();
+            const auto decline=std::ranges::find_if(choices,[](const QVariant& value){const auto row=value.toMap();return row.value("choiceId").toString().contains("decline",Qt::CaseInsensitive) || row.value("label").toString().contains("decline",Qt::CaseInsensitive);});
+            if(decline==choices.end() || !press(window,find(window.contentItem(),"flowChoice_"+decline->toMap().value("choiceId").toString()))) {fail("Decline optional cloud offer through the actual decision");return;}
+            state->phase=72;return;
+        }
+        if(state->phase==72) {
+            if(campaign.requiredKind()!=QStringLiteral("none")) {fail("Prepared choice resolution");return;}
+            if(!click("closeDeviceButton")) {fail("Return after decision");return;}
+            state->revision=campaign.revision();campaign.step();state->phase=8;return;
+        }
         if(state->phase==8) {
             if(campaign.revision()==state->revision || campaign.storageBlocked() || !std::filesystem::exists(paths.saves_directory/"continuing/current.pgpsave")) {fail("Advance and durable checkpoint");return;}
-            QKeyEvent escape{QEvent::KeyPress,Qt::Key_Escape,Qt::NoModifier};QCoreApplication::sendEvent(&window,&escape);
+            window.requestActivate();state->phase=81;return;
+        }
+        if(state->phase==81) {
+            QTest::keyClick(&window,Qt::Key_Escape);
             state->phase=9;return;
         }
         if(state->phase==9) {
-            if(!window.property("menuVisible").toBool() || !campaign.paused()) {fail("Escape pause menu");return;}
+            if(!window.property("menuVisible").toBool() || !campaign.paused()) {
+                const auto* shortcut=window.findChild<QObject*>("gameEscapeShortcut");
+                std::cerr<<"Escape diagnostic: menu="<<window.property("menuVisible").toBool()<<" paused="<<campaign.paused()<<" active="<<window.isActive()<<" shortcut="<<(shortcut?shortcut->property("enabled").toBool():false)<<" focus="<<(window.activeFocusItem()?window.activeFocusItem()->metaObject()->className():"none")<<'\n';
+                fail("Escape pause menu");return;
+            }
             std::cout<<"World navigation, device apps, map, persistence and pause passed; resumed="<<state->resumed<<"\n";
             timer->stop();QCoreApplication::exit(0);
         }

@@ -9,11 +9,19 @@ Item {
     readonly property real footerHeight: dock.height
     readonly property real uiScale:Math.max(1,textSize/14)
     readonly property bool compact: width < 1050*uiScale
+    readonly property bool shortLayout:height<textSize*26
     readonly property var nav: campaign.world.navigation
     readonly property string place: nav.place || "workspace"
     signal openApp(string app, string section, string device)
     signal menuRequested()
     function visit(id) { campaign.world.navigate(id, nav.scale || "hq", "", "", "") }
+    function placeApp() {return place==="lab" || place==="research_annex" || place==="evaluation_suite"?"lab":place==="meeting" || place==="collaboration"?"inbox":place==="compute"?"operations":"office"}
+    function openPlace() {desktop.openApp(placeApp(),place==="evaluation_suite"?"evaluate":placeApp()==="lab"?"research":"",campaign.world.atHeadquarters && campaign.world.officeKind!=="home"?"desktop":"laptop")}
+    function revealDock(item) {
+        let left=item.mapToItem(dockRow,0,0).x,view=dockScroll.contentItem
+        if(left<view.contentX) view.contentX=left
+        else if(left+item.width>view.contentX+dockScroll.availableWidth) view.contentX=left+item.width-dockScroll.availableWidth
+    }
     function showMap(scale) {campaign.world.navigate("map",scale,"","","")}
 
     Rectangle {anchors.fill:parent;color:"#17282c"}
@@ -47,7 +55,7 @@ Item {
         anchors.bottom: dock.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: 18
+        anchors.margins: desktop.shortLayout?8:18
         visible: desktop.place === "map"
         enabled: visible
         scale: desktop.nav.scale || "hq"
@@ -60,18 +68,18 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        height: hudContent.implicitHeight + 28*desktop.uiScale
+        height: hudContent.implicitHeight + (desktop.shortLayout?16:28*desktop.uiScale)
         color: "#ef13252b"
         ColumnLayout {
             id: hudContent
             anchors.left: parent.left;anchors.right:parent.right;anchors.top:parent.top
-            anchors.margins: 14*desktop.uiScale
+            anchors.margins: desktop.shortLayout?8:14*desktop.uiScale
             spacing: 10
             RowLayout {
                 spacing: 12
                 EmployeePortrait {
                     objectName:"founderPortrait"
-                    Layout.preferredWidth:Math.max(44,desktop.textSize*3);Layout.preferredHeight:Layout.preferredWidth
+                    Layout.preferredWidth:desktop.shortLayout?44:Math.max(44,desktop.textSize*3);Layout.preferredHeight:Layout.preferredWidth
                     portraitSource:campaign.world.founder.portrait || "";personName:campaign.world.founder.name || ""
                     reducedMotion:campaign.reducedMotion
                     onClicked:desktop.openApp("people","","laptop")
@@ -90,12 +98,13 @@ Item {
             }
             Flow {
                 Layout.fillWidth:true;spacing:8
-                Label {height:42*desktop.uiScale;text:campaign.date;font.pixelSize:desktop.textSize;color:"#f0ecdd";verticalAlignment:Text.AlignVCenter;rightPadding:8}
+                Label {height:desktop.shortLayout?desktop.textSize*2.2:42*desktop.uiScale;text:campaign.date;font.pixelSize:desktop.textSize;color:"#f0ecdd";verticalAlignment:Text.AlignVCenter;rightPadding:8}
                 WorldButton {objectName:"pauseButton";text:campaign.paused?qsTr("▶ Play"):qsTr("Ⅱ Pause");textSize:desktop.textSize;primary:campaign.paused;enabled:!campaign.busy && !campaign.storageBlocked && (!campaign.paused || campaign.canPlay);onClicked:campaign.togglePaused()}
-                WorldButton {objectName:"stepButton";text:qsTr("Next day");textSize:desktop.textSize;enabled:campaign.paused && campaign.canAdvance && !campaign.storageBlocked;onClicked:campaign.step()}
-                ComboBox {objectName:"speedControl";model:[1,10,30,60];currentIndex:model.indexOf(campaign.daysPerSecond);displayText:qsTr("%1 days/s").arg(campaign.daysPerSecond);Accessible.name:qsTr("Days per second");font.pixelSize:desktop.textSize;implicitWidth:desktop.textSize*9;onActivated:campaign.daysPerSecond=model[currentIndex]}
-                WorldButton {text:qsTr("Advance…");textSize:desktop.textSize;onClicked:advanceMenu.open()}
-                Label {visible:desktop.compact;height:42*desktop.uiScale;text:qsTr("Available %1").arg(campaign.availableText);font.pixelSize:desktop.textSize;color:"#b7dfc7";verticalAlignment:Text.AlignVCenter}
+                WorldButton {objectName:"stepButton";visible:!desktop.shortLayout;text:qsTr("Next day");textSize:desktop.textSize;enabled:campaign.paused && campaign.canAdvance && !campaign.storageBlocked;onClicked:campaign.step()}
+                ComboBox {objectName:"speedControl";visible:!desktop.shortLayout;model:[1,10,30,60];currentIndex:model.indexOf(campaign.daysPerSecond);displayText:qsTr("%1 days/s").arg(campaign.daysPerSecond);Accessible.name:qsTr("Days per second");font.pixelSize:desktop.textSize;implicitWidth:desktop.textSize*9;onActivated:campaign.daysPerSecond=model[currentIndex]}
+                WorldButton {visible:!desktop.shortLayout;text:qsTr("Advance…");textSize:desktop.textSize;onClicked:advanceMenu.open()}
+                WorldButton {visible:desktop.shortLayout;text:campaign.requiredKind!=="none"?qsTr("Review decision"):qsTr("Time & funds");textSize:desktop.textSize;primary:campaign.requiredKind!=="none";onClicked:campaign.requiredKind!=="none"?desktop.openApp("inbox","","phone"):compactTime.open()}
+                Label {visible:desktop.compact && !desktop.shortLayout;height:42*desktop.uiScale;text:qsTr("Available %1").arg(campaign.availableText);font.pixelSize:desktop.textSize;color:"#b7dfc7";verticalAlignment:Text.AlignVCenter}
             }
         }
     }
@@ -103,7 +112,7 @@ Item {
         id: places
         anchors.top:hud.bottom;anchors.left:parent.left;anchors.right:parent.right;anchors.margins:16*desktop.uiScale
         spacing:8
-        visible:desktop.place!=="map"
+        visible:desktop.place!=="map" && !desktop.shortLayout
         Repeater {
             model:campaign.world.rooms
             WorldButton {required property var modelData;objectName:"place_"+modelData.id;text:modelData.name;textSize:desktop.textSize;checked:desktop.place===modelData.id;onClicked:desktop.visit(modelData.id)}
@@ -112,11 +121,17 @@ Item {
     ColumnLayout {
         anchors.left:parent.left;anchors.bottom:dock.top;anchors.margins:22*desktop.uiScale
         width:Math.max(200,Math.min(520*desktop.uiScale,desktop.width-(desktop.compact?44:320*desktop.uiScale)))
-        visible:desktop.place!=="map"
+        visible:desktop.place!=="map" && !desktop.shortLayout
         spacing:7
-        Label {Layout.fillWidth:true;text:({workspace:qsTr("An idea takes shape."),lab:qsTr("Make the next discovery."),meeting:qsTr("Every choice has a company behind it."),compute:qsTr("Keep the work running.")})[desktop.place] || "";font.pixelSize:desktop.textSize*1.7;font.bold:true;color:"#f4ead6";wrapMode:Text.Wrap}
+        Label {Layout.fillWidth:true;text:({workspace:qsTr("An idea takes shape."),lab:qsTr("Make the next discovery."),meeting:qsTr("Every choice has a company behind it."),compute:qsTr("Keep the work running."),research_annex:qsTr("Space for the next idea."),evaluation_suite:qsTr("Put your evidence to work."),collaboration:qsTr("Bring the team together.")})[desktop.place] || "";font.pixelSize:desktop.textSize*1.7;font.bold:true;color:"#f4ead6";wrapMode:Text.Wrap}
         Label {Layout.fillWidth:true;text:campaign.world.setting;font.pixelSize:desktop.textSize;color:"#c7d7cf";wrapMode:Text.Wrap}
-        WorldButton {objectName:"openPlaceApp";text:desktop.place==="lab"?qsTr("Open research notebook"):desktop.place==="meeting"?qsTr("Open decisions"):desktop.place==="compute"?qsTr("Open infrastructure"):qsTr("Open company desktop");textSize:desktop.textSize;primary:true;onClicked:desktop.openApp(desktop.place==="lab"?"lab":desktop.place==="meeting"?"inbox":desktop.place==="compute"?"operations":"office",desktop.place==="lab"?"research":"",campaign.world.atHeadquarters?"desktop":"laptop")}
+        WorldButton {objectName:"openPlaceApp";text:desktop.placeApp()==="lab"?qsTr("Open research notebook"):desktop.placeApp()==="inbox"?qsTr("Open decisions"):desktop.placeApp()==="operations"?qsTr("Open infrastructure"):qsTr("Open company desktop");textSize:desktop.textSize;primary:true;onClicked:desktop.openPlace()}
+    }
+    RowLayout {
+        visible:desktop.shortLayout && desktop.place!=="map"
+        anchors.top:hud.bottom;anchors.left:parent.left;anchors.right:parent.right;anchors.margins:10
+        ComboBox {objectName:"compactRoomPicker";Layout.fillWidth:true;model:campaign.world.rooms;textRole:"name";valueRole:"id";font.pixelSize:desktop.textSize;currentIndex:Math.max(0,model.findIndex(row=>row.id===desktop.place));Accessible.name:qsTr("Current room");onActivated:desktop.visit(currentValue)}
+        WorldButton {text:qsTr("Open");textSize:desktop.textSize;onClicked:desktop.openPlace()}
     }
     Rectangle {
         id: agenda
@@ -145,18 +160,35 @@ Item {
     Rectangle {
         id:dock
         anchors.left:parent.left;anchors.right:parent.right;anchors.bottom:parent.bottom
-        height:68*desktop.uiScale;color:"#11242a"
+        height:desktop.shortLayout?desktop.textSize*3.2+16:68*desktop.uiScale;color:"#11242a"
         ScrollView {
-            anchors.fill:parent;anchors.margins:10*desktop.uiScale;contentHeight:availableHeight;clip:true
+            id:dockScroll
+            anchors.fill:parent;anchors.margins:desktop.shortLayout?8:10*desktop.uiScale;contentHeight:availableHeight;clip:true
             ScrollBar.vertical.policy:ScrollBar.AlwaysOff
             Row {
+                id:dockRow
                 spacing:8
-                WorldButton {objectName:"officeTab";text:qsTr("Company");textSize:desktop.textSize;onClicked:desktop.openApp("office","","laptop")}
-                WorldButton {objectName:"peopleTab";text:qsTr("People");textSize:desktop.textSize;onClicked:desktop.openApp("people","","laptop")}
-                WorldButton {objectName:"labTab";text:qsTr("Lab");textSize:desktop.textSize;onClicked:desktop.openApp("lab","research","laptop")}
-                WorldButton {objectName:"inboxTab";text:qsTr("News & decisions");textSize:desktop.textSize;onClicked:desktop.openApp("inbox","","phone")}
-                WorldButton {objectName:"mapTab";text:qsTr("Map");textSize:desktop.textSize;checked:desktop.place==="map";onClicked:desktop.showMap(desktop.nav.scale || "hq")}
-                WorldButton {objectName:"devicesButton";text:qsTr("Devices & apps");textSize:desktop.textSize;onClicked:deviceMenu.open()}
+                WorldButton {objectName:"officeTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Company");textSize:desktop.textSize;onClicked:desktop.openApp("office","","laptop")}
+                WorldButton {objectName:"peopleTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("People");textSize:desktop.textSize;onClicked:desktop.openApp("people","","laptop")}
+                WorldButton {objectName:"headquartersTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Headquarters");textSize:desktop.textSize;onClicked:desktop.openApp("facilities","","laptop")}
+                WorldButton {objectName:"labTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Lab");textSize:desktop.textSize;onClicked:desktop.openApp("lab","research","laptop")}
+                WorldButton {objectName:"inboxTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("News & decisions");textSize:desktop.textSize;onClicked:desktop.openApp("inbox","","phone")}
+                WorldButton {objectName:"mapTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Map");textSize:desktop.textSize;checked:desktop.place==="map";onClicked:desktop.showMap(desktop.nav.scale || "hq")}
+                WorldButton {objectName:"devicesButton";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Devices & apps");textSize:desktop.textSize;onClicked:deviceMenu.open()}
+            }
+        }
+    }
+    Popup {
+        id:compactTime;anchors.centerIn:Overlay.overlay;width:Math.min(520,desktop.width-32);height:Math.min(500,desktop.height-32);modal:true;focus:true
+        contentItem:ScrollView {
+            id:timeScroll;contentWidth:availableWidth;clip:true
+            ColumnLayout {
+                width:timeScroll.availableWidth;spacing:12
+                Label {Layout.fillWidth:true;text:qsTr("Cash %1\nAvailable %2").arg(campaign.cashText,campaign.availableText);font.pixelSize:desktop.textSize;wrapMode:Text.Wrap}
+                WorldButton {text:qsTr("Next day");textSize:desktop.textSize;enabled:campaign.canAdvance && !campaign.storageBlocked;onClicked:campaign.step()}
+                ComboBox {Layout.fillWidth:true;model:[1,10,30,60];currentIndex:model.indexOf(campaign.daysPerSecond);displayText:qsTr("%1 days/s").arg(campaign.daysPerSecond);font.pixelSize:desktop.textSize;Accessible.name:qsTr("Days per second");onActivated:campaign.daysPerSecond=model[currentIndex]}
+                WorldButton {text:qsTr("Advance until…");textSize:desktop.textSize;onClicked:{compactTime.close();advanceMenu.open()}}
+                WorldButton {text:qsTr("Close");textSize:desktop.textSize;onClicked:compactTime.close()}
             }
         }
     }
@@ -178,7 +210,7 @@ Item {
                 Flow {
                     Layout.fillWidth:true;spacing:8
                     Repeater {
-                        model:[{id:"office",name:qsTr("Company")},{id:"people",name:qsTr("People")},{id:"lab",name:qsTr("Research")},{id:"inbox",name:qsTr("News & decisions")},{id:"operations",name:qsTr("Infrastructure & travel")},{id:"civic",name:qsTr("Public affairs")},{id:"society",name:qsTr("World")},{id:"institutions",name:qsTr("Institutions")},{id:"frontier",name:qsTr("Frontier")},{id:"leadership",name:qsTr("Leadership & retirement")},{id:"objectives",name:qsTr("Company mission")}]
+                        model:[{id:"office",name:qsTr("Company")},{id:"people",name:qsTr("People")},{id:"facilities",name:qsTr("Headquarters & blueprints")},{id:"lab",name:qsTr("Research")},{id:"inbox",name:qsTr("News & decisions")},{id:"operations",name:qsTr("Infrastructure & travel")},{id:"civic",name:qsTr("Public affairs")},{id:"society",name:qsTr("World")},{id:"institutions",name:qsTr("Institutions")},{id:"frontier",name:qsTr("Frontier")},{id:"leadership",name:qsTr("Leadership & retirement")},{id:"objectives",name:qsTr("Company mission")}]
                         WorldButton {required property var modelData;objectName:modelData.id+"App";text:modelData.name;textSize:desktop.textSize;onClicked:{deviceMenu.close();desktop.openApp(modelData.id,"",launcherDevice)}}
                     }
                 }

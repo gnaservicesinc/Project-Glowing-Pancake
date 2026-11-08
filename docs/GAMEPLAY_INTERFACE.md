@@ -120,8 +120,7 @@ These are development checks, not physical 8K-device or release qualification.
 ## Further design work
 
 This implementation supplies the playable world, persistence, recruitment,
-layered portraits and county simulation foundation. Individual room purchases,
-branch blueprint authoring, manager-derived department productivity, device
+layered portraits and county simulation foundation. Manager-derived department productivity, device
 ownership/failure mechanics and expanded retirement press-release content remain
 future refinements. Existing facilities/operators, paid infrastructure and
 succession retain their real financial/authority contracts. National/world maps
@@ -129,3 +128,33 @@ show public information; the existing institutional eligibility rules still own
 action authority. A separate progression gate for private briefings remains to
 be designed. Country outlines are display geometry; economic summaries describe
 the existing fictional regions, not estimated country-level statistics.
+
+## Paid headquarters and facility plans
+
+The founder campaign's opening HQ has two workstations at home, eight in a
+shared office, or sixteen in a leased office. Employees in onboarding, hired
+specialists and appointed executives reserve workstations. Construction orders
+for a research annex, evaluation suite or collaboration room pay the disclosed
+fit-out immediately. Workstations and room navigation become available on the
+completion date; monthly costs begin then. No workers, compute or research
+bonuses appear with the furniture. The finished annex has an original 3D room
+and the same labeled keyboard navigation as the opening HQ.
+
+Headquarters also saves immutable facility blueprints: a hardware bundle,
+whole-kW grid reservation, cooling and dedicated operator count. Reusing a plan
+in a state obtains a fresh, complete quote for construction, hardware, recruiting,
+monthly overhead and delivery/grid/operator dates. The complete purchase is one
+transaction, preserving cash and orders if any part fails. Every instance is
+bound to its real infrastructure records and follows the existing inspection,
+commissioning, utility, payroll and capacity rules. Blueprint creation itself
+only records a plan. The controls and unfinished form values persist locally;
+old quotes must be reviewed again after the company changes.
+
+The short-window HUD uses a room selector and a Time & funds popup, with a
+prominent Review decision action when time is waiting for a choice. The dock
+scrolls its focused control into view. Compact map scales also use a selector.
+This preserves readable controls at 650x480 with 200% text instead of overlapping
+the world and time bar. Native Metal rendering and the in-process keyboard
+construction harness are checked; physical native input remains unverified in
+this session because the computer-use pipe is unavailable. The separate
+offscreen harness verifies Escape/pause and the compact layout.

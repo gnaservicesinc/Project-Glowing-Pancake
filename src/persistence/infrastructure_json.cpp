@@ -1,4 +1,5 @@
 #include "infrastructure_json.hpp"
+#include "workplace_json.hpp"
 #include <pgp/content/infrastructure_catalog.hpp>
 #include <type_traits>
 namespace pgp::persistence::detail {
@@ -55,6 +56,12 @@ template<class T> Json encode(const T& value) {
     else {auto j=Json::object();visit(value,[&](const char* name,const auto& field) {j[name]=encode(field);});return j;}
 }
 }
-Json infrastructure_json(const core::InfrastructureState& state) {return encode(state);}
-core::InfrastructureState parse_infrastructure(const Json& json) {return decode<core::InfrastructureState>(json);}
+Json infrastructure_json(const core::InfrastructureState& state) {
+    auto json=encode(state);if(state.workplace) json["workplace"]=workplace_json(*state.workplace);return json;
+}
+core::InfrastructureState parse_infrastructure(const Json& json) {
+    auto base=json;std::optional<core::WorkplaceState> workplace;
+    if(base.contains("workplace")) {workplace=parse_workplace(base.at("workplace"));base.erase("workplace");}
+    auto state=decode<core::InfrastructureState>(base);state.workplace=std::move(workplace);return state;
+}
 }

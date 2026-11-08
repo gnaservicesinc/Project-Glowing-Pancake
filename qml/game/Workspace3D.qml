@@ -8,6 +8,7 @@ View3D {
     property int peopleCount: 1
     property string officeKind:"shared"
     property var availableRooms:[]
+    readonly property bool annex:place==="research_annex" || place==="evaluation_suite" || place==="collaboration"
     signal placePicked(string place)
     environment: SceneEnvironment {
         backgroundMode: SceneEnvironment.Color
@@ -56,7 +57,7 @@ View3D {
     }
     Node {
         id: company
-        visible: scene.atHeadquarters
+        visible: scene.atHeadquarters && !scene.annex
         Block { size: Qt.vector3d(900,24,610); position: Qt.vector3d(0,-18,0); tint: "#92785d" }
         Block { size: Qt.vector3d(880,5,590); y: -3; tint: "#dbccb0" }
         Block { size: Qt.vector3d(900,185,12); position: Qt.vector3d(0,80,-300); tint: "#a9bebb" }
@@ -127,6 +128,38 @@ View3D {
                 Block {y:73;size:Qt.vector3d(34,43,25);tint:"#638f91";destination:"lab"}
             }
         }
+    }
+    Node {
+        visible:scene.atHeadquarters && scene.annex
+        Block {size:Qt.vector3d(760,24,560);y:-18;tint:"#92785d"}
+        Block {size:Qt.vector3d(745,5,545);y:-3;tint:"#d8d0b7"}
+        Block {size:Qt.vector3d(760,185,12);position:Qt.vector3d(0,80,-280);tint:"#91aca6"}
+        Block {size:Qt.vector3d(12,185,560);position:Qt.vector3d(-380,80,0);tint:"#91aca6"}
+        Repeater3D {
+            model:3
+            Block {required property int index;position:Qt.vector3d(-240+index*235,100,-270);size:Qt.vector3d(180,115,3);tint:"#4a7984"}
+        }
+        Block {position:Qt.vector3d(0,0,0);size:Qt.vector3d(570,2,370);tint:scene.place==="evaluation_suite"?"#97adaf":scene.place==="collaboration"?"#c1ae8d":"#8eaea0"}
+        Repeater3D {
+            model:scene.place==="collaboration"?0:4
+            Desk {required property int index;position:Qt.vector3d(-210+(index%2)*270,0,-160+Math.floor(index/2)*225);destination:scene.place;glow:scene.place==="evaluation_suite"?"#b2cddd":"#b4d69d"}
+        }
+        Node {
+            visible:scene.place==="collaboration"
+            Block {y:70;size:Qt.vector3d(360,10,130);tint:"#d5b98e";destination:"collaboration"}
+            Repeater3D {
+                model:4
+                Node {
+                    required property int index;x:-110+(index%2)*220;z:index<2?-120:120
+                    Block {y:40;size:Qt.vector3d(48,8,48);tint:"#637f7d";destination:"collaboration"}
+                    Block {y:65;z:parent.index<2?-22:22;size:Qt.vector3d(48,48,8);tint:"#637f7d"}
+                }
+            }
+        }
+        Plant {position:Qt.vector3d(310,0,-205)}
+        Plant {position:Qt.vector3d(-310,0,210)}
+        Model {source:"#Sphere";position:Qt.vector3d(-190,105,-65);scale:Qt.vector3d(0.26,0.29,0.26);materials:PrincipledMaterial {baseColor:"#d2aa82";roughness:0.8}}
+        Block {position:Qt.vector3d(-190,72,-65);size:Qt.vector3d(34,43,25);tint:"#637f7d";destination:scene.place}
     }
     Node {
         visible:!scene.atHeadquarters

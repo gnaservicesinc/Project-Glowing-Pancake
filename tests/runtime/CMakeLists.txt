@@ -285,3 +285,10 @@ target_compile_definitions(pgp-world-life-test PRIVATE PGP_WORLD_SOURCE="${PROJE
 pgp_project_target(pgp-world-life-test)
 add_test(NAME runtime.world-life COMMAND pgp-world-life-test)
 set_tests_properties(runtime.world-life PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-workplace-test workplace_test.cpp)
+target_link_libraries(pgp-workplace-test PRIVATE pgp::session)
+target_compile_definitions(pgp-workplace-test PRIVATE PGP_WORKPLACE_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/workplaces.json")
+pgp_project_target(pgp-workplace-test)
+add_test(NAME runtime.workplace COMMAND pgp-workplace-test)
+set_tests_properties(runtime.workplace PROPERTIES TIMEOUT 30)

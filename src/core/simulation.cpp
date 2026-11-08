@@ -711,6 +711,12 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 })) refuse(CommandReason::invalid_argument,"Owned and imported capacity follow actual site power and supplier terms.");
                 update_effective_capacity(capacity(next), next.date, action.source_id, action.available);
                 (void)receipt(next, "capacity_availability");
+            } else if constexpr (std::is_same_v<Action, ExpandHeadquarters>) {
+                const auto before=next.cash;expand_headquarters(next,action,reserved_cash(next));(void)receipt(next,"expand_headquarters",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, CreateFacilityBlueprint>) {
+                create_facility_blueprint(next,action.blueprint);(void)receipt(next,"create_facility_blueprint");
+            } else if constexpr (std::is_same_v<Action, BuildFromBlueprint>) {
+                const auto before=next.cash;build_from_blueprint(next,action,reserved_cash(next));(void)receipt(next,"build_from_blueprint",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, BuildOwnedSite>) {
                 const auto before=next.cash;build_owned_site(next,action,reserved_cash(next));(void)receipt(next,"build_owned_site",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, OrderOwnedHardware>) {

@@ -1,4 +1,5 @@
 #include <pgp/content/infrastructure_catalog.hpp>
+#include "workplace_codec.hpp"
 #include <nlohmann/json.hpp>
 #include <limits>
 #include <set>
@@ -54,14 +55,18 @@ template<class T> Json encode(const T& value) {
 }
 core::InfrastructureCatalog load_infrastructure_catalog(std::string_view bytes) {
     if (bytes.size()>131072) invalid();std::vector<std::set<std::string>> keys;std::size_t tokens=0;
-    const auto j=Json::parse(bytes.begin(),bytes.end(),[&](int depth,Json::parse_event_t event,Json& value) {
+    auto j=Json::parse(bytes.begin(),bytes.end(),[&](int depth,Json::parse_event_t event,Json& value) {
         if (depth>16 || ++tokens>32768) invalid();
         if (event==Json::parse_event_t::object_start) keys.emplace_back();
         else if (event==Json::parse_event_t::object_end) keys.pop_back();
         else if (event==Json::parse_event_t::key && !keys.back().insert(value.get<std::string>()).second) invalid();
         else if (event==Json::parse_event_t::value && value.is_number_float()) invalid();return true;
     });
-    auto catalog=decode<core::InfrastructureCatalog>(j);core::validate_infrastructure_catalog(catalog);return catalog;
+    std::optional<core::WorkplaceRules> workplace;
+    if(j.contains("workplace")) {workplace=workplace_codec::decode(j.at("workplace"));j.erase("workplace");}
+    auto catalog=decode<core::InfrastructureCatalog>(j);catalog.workplace=std::move(workplace);core::validate_infrastructure_catalog(catalog);return catalog;
 }
-std::string canonical_infrastructure_catalog(const core::InfrastructureCatalog& c) {core::validate_infrastructure_catalog(c);return encode(c).dump();}
+std::string canonical_infrastructure_catalog(const core::InfrastructureCatalog& c) {
+    core::validate_infrastructure_catalog(c);auto j=encode(c);if(c.workplace) j["workplace"]=workplace_codec::encode(*c.workplace);return j.dump();
+}
 }

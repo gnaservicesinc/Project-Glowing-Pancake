@@ -30,9 +30,9 @@ stages and ending narrative remain design work.
 
 **F-03 world/interface foundation and generated people are ready for review.**
 Continuing-company resume, 3D places, device apps, scalable layered portraits,
-HQ recruitment and bounded county conditions are implemented. Follow-up work is
-explicit in [Gameplay interface](GAMEPLAY_INTERFACE.md): room purchases/blueprints,
-manager effects, device lifecycle, briefing access and retirement narrative.
+HQ recruitment, bounded county conditions, paid HQ rooms and reusable physical
+facility blueprints are implemented. Follow-up work is
+explicit in [Gameplay interface](GAMEPLAY_INTERFACE.md): manager effects, device lifecycle, briefing access and retirement narrative.
 The native Mac walkthrough and focused persistence/simulation checks are
 separate from 8K offscreen layout evidence and later device qualification.
 

@@ -52,7 +52,10 @@ preserves original files. Settings persists display, audio, text and motion choi
 Escape pauses and opens the menu; Quit and the window close button confirm exit.
 
 The workspace HUD and dock keep company tools, people, research, decisions,
-places and map scales reachable. People includes new applicants and grouped
+places and map scales reachable. Headquarters orders paid rooms; workstations
+open after construction. Saved facility blueprints quote and buy real sites,
+racks and operators in each state, with inspection and commissioning still
+required. People includes new applicants and grouped
 branch operators. Select a portrait using the pointer or Tab and Space for the
 full profile; scroll long profiles in smaller windows. Offers disclose signing
 cost, monthly salary, onboarding and evaluation work credit. Portraits retain

@@ -77,7 +77,10 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         world.simulation.management=core::ManagementState{*management,{},{},{},{},{},{}};
         if(management->staff_workload) world.simulation.capacity->workload=core::StaffWorkload{*management->staff_workload};
     }
-    if (scenario->infrastructure) {core::InfrastructureState owned;owned.catalog=*scenario->infrastructure;owned.executive_base=std::string(headquarters);world.simulation.infrastructure=std::move(owned);}
+    if (scenario->infrastructure) {
+        core::InfrastructureState owned;owned.catalog=*scenario->infrastructure;owned.executive_base=std::string(headquarters);world.simulation.infrastructure=std::move(owned);
+        core::initialize_workplace(world.simulation,world.founding?world.founding->office:"leased",world.founding && world.founding->researcher!="founder");
+    }
     if (const auto* catalog=content::resilience_catalog(program.collection,*scenario)) {
         core::ResilienceState risks;risks.catalog=*catalog;risks.insurer_cash=catalog->insurer_capital;
         world.simulation.resilience=std::move(risks);

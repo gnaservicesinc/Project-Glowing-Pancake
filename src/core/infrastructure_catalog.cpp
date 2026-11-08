@@ -3,6 +3,7 @@
 namespace pgp::core {
 using namespace infrastructure_detail;
 void validate_infrastructure_catalog(const InfrastructureCatalog& c) {
+    if(c.workplace) validate_workplace_rules(*c.workplace);
     const auto text=[](std::string_view v,std::size_t max) {return !v.empty() && v.size()<=max && std::none_of(v.begin(),v.end(),[](unsigned char ch){return ch<32 || ch==127;});};
     const auto money=[](Cents v,bool positive=false) {return v.value()>=(positive?1:0) && v.value()<=1'000'000'000'000LL;};
     const auto lead=[](Days v,bool positive=false) {return v.value()>=(positive?1:0) && v.value()<=3650;};

@@ -8,6 +8,7 @@ Rectangle {
     property int textSize:14
     property string selectedCounty:"06037"
     property string selectedCountry:"USA"
+    readonly property bool tight:height<textSize*16
     readonly property var counties:campaign.world.countyRows
     readonly property var selectedCountyRow:counties.find(row=>row.id===selectedCounty) || counties[0] || ({})
     signal openApp(string app,string section)
@@ -16,8 +17,16 @@ Rectangle {
     ColumnLayout {
         anchors.fill:parent;anchors.margins:16;spacing:12
         Flow {
+            visible:!mapPage.tight
             Layout.fillWidth:true;spacing:8
             Repeater {model:campaign.world.scales;WorldButton {required property var modelData;objectName:"mapScale_"+modelData.id;text:modelData.name;textSize:mapPage.textSize;checked:mapPage.scale===modelData.id;onClicked:campaign.world.navigate("map",modelData.id,"","","")}}
+        }
+        ComboBox {
+            objectName:"compactMapScale"
+            visible:mapPage.tight;Layout.fillWidth:true
+            model:campaign.world.scales;textRole:"name";valueRole:"id";font.pixelSize:mapPage.textSize
+            currentIndex:Math.max(0,model.findIndex(row=>row.id===mapPage.scale));Accessible.name:qsTr("Map scale")
+            onActivated:campaign.world.navigate("map",currentValue,"","","")
         }
         ScrollView {
             id: mapScroll
@@ -32,7 +41,7 @@ Rectangle {
                     Repeater {model:campaign.world.rooms;WorldButton {required property var modelData;text:modelData.name;textSize:mapPage.textSize;onClicked:campaign.world.navigate(modelData.id,"hq","","","")}}
                 }
                 WorldButton {visible:mapPage.scale==="hq";text:qsTr("Return to the workspace");textSize:mapPage.textSize;primary:true;onClicked:mapPage.visitHeadquarters()}
-                WorldButton {visible:mapPage.scale==="hq";text:qsTr("Expand facilities & capabilities");textSize:mapPage.textSize;onClicked:mapPage.openApp("operations","")}
+                WorldButton {objectName:"headquartersPlanButton";visible:mapPage.scale==="hq";text:qsTr("Expand headquarters & design branches");textSize:mapPage.textSize;onClicked:mapPage.openApp("facilities","")}
                 DomesticMap {
                     visible:mapPage.scale==="country"
                     Layout.fillWidth:true;Layout.preferredHeight:Math.max(220,Math.min(440,mapPage.height*0.55))

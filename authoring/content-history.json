@@ -106731,6 +106731,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "1f3e44111781e59e4464e6f8bda0a3844237a23b00d9a81e5b4fb6906fb3da70",
+          "before_hash": "4e249d48edda7f6e2e955b49370826a74a77e1490854396a37862a4b5ee7f061",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 2,
+          "revision": 3
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "f11e1d118d361d30baa4c37599c179d956c8877a049ca3c953d398914a9ac0a1",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.32.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 32,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.31.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000031.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000032.collection.json",
+      "summary": "Paid headquarters rooms and repeatable physical facility blueprints",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

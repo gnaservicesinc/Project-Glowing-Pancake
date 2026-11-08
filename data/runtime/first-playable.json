@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.31.0-dev.1",
+  "content_version": "0.32.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -72111,7 +72111,46 @@
             "one_way_days": 0,
             "to": "hawaii"
           }
-        ]
+        ],
+        "workplace": {
+          "home_seats": 2,
+          "leased_seats": 16,
+          "maximum_blueprints": 8,
+          "maximum_rooms": 12,
+          "rooms": [
+            {
+              "construction_cents": 3500000,
+              "description": "A dedicated research room with six additional workstations. Hire people separately.",
+              "id": "hq.research",
+              "lead_days": 14,
+              "monthly_cents": 150000,
+              "name": "Research annex",
+              "place": "research_annex",
+              "seats": 6
+            },
+            {
+              "construction_cents": 2500000,
+              "description": "A quiet evaluation room with four additional workstations. Tests still require their people, compute and fees.",
+              "id": "hq.evaluation",
+              "lead_days": 10,
+              "monthly_cents": 110000,
+              "name": "Evaluation suite",
+              "place": "evaluation_suite",
+              "seats": 4
+            },
+            {
+              "construction_cents": 1800000,
+              "description": "Four additional workstations around a shared project table. New space never supplies free staff.",
+              "id": "hq.collaboration",
+              "lead_days": 7,
+              "monthly_cents": 80000,
+              "name": "Collaboration room",
+              "place": "collaboration",
+              "seats": 4
+            }
+          ],
+          "shared_seats": 8
+        }
       },
       "kind": "scenario",
       "lab": {
@@ -74147,7 +74186,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 2,
+      "revision": 3,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

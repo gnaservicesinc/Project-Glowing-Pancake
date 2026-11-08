@@ -118,6 +118,7 @@ ApplicationWindow {
         if (!exitConfirmed) { close.accepted = false; requestExit() }
     }
     Shortcut {
+        objectName:"gameEscapeShortcut"
         sequence: "Escape"
         enabled: !saveDialog.visible && !loadDialog.visible && !restartDialog.visible && !musicCredits.visible && !cancelDialog.visible && !exitDialog.visible
         onActivated: {
@@ -328,7 +329,7 @@ ApplicationWindow {
         Panel {
             padding: 10
             contentItem: RowLayout {
-                Copy { text: ({office:qsTr("Company"),people:qsTr("People"),lab:qsTr("Research notebook"),inbox:qsTr("News & decisions"),operations:qsTr("Infrastructure & travel"),civic:qsTr("Public affairs"),society:qsTr("World affairs"),institutions:qsTr("Institutions"),frontier:qsTr("Frontier"),leadership:qsTr("Leadership & retirement"),objectives:qsTr("Company mission")})[window.room] || window.room; font.bold:true }
+                Copy { text: ({office:qsTr("Company"),people:qsTr("People"),facilities:qsTr("Headquarters & blueprints"),lab:qsTr("Research notebook"),inbox:qsTr("News & decisions"),operations:qsTr("Infrastructure & travel"),civic:qsTr("Public affairs"),society:qsTr("World affairs"),institutions:qsTr("Institutions"),frontier:qsTr("Frontier"),leadership:qsTr("Leadership & retirement"),objectives:qsTr("Company mission")})[window.room] || window.room; font.bold:true }
                 Label {visible:!window.narrow;text:window.activeDevice;font.pixelSize:window.textSize;color:"#b8d2c5"}
                 Action {objectName:"closeDeviceButton";text:qsTr("Return to world");onClicked:window.closeApp()}
             }
@@ -472,6 +473,10 @@ ApplicationWindow {
                 Panel {
                     visible: !campaign.welcome && window.room === "people"
                     contentItem: PeoplePanel {textSize:window.textSize;onOpenApp:(app,section)=>window.openApp(app,section,"laptop")}
+                }
+                Panel {
+                    visible:!campaign.welcome && window.room === "facilities"
+                    contentItem:WorkplacePanel {textSize:window.textSize;onVisitRoom:place=>{window.closeApp();campaign.world.navigate(place,"hq","","","")};onOpenInfrastructure:window.openApp("operations","","laptop")}
                 }
                 Panel {
                     visible: window.settingsOpen

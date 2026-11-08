@@ -29,6 +29,7 @@ void add_meter(OwnedSite& replay,OrdinalDay day,const MeterSample& sample,Cents 
 void validate_infrastructure(const SimulationState& s,bool deep) {
     if (!s.infrastructure) return;
     const auto& i=infrastructure(s);const auto& c=i.catalog;
+    validate_workplace(s,deep);
     if (i.closed_through!=s.accounts->closed_through || i.sites.size()>c.maximum_sites || i.hardware.size()>maximum_hardware_orders || i.hires.size()>maximum_hires ||
         i.appointments.size()>maximum_appointments || i.notices.size()>maximum_notices) invalid("Owned infrastructure differs from its bounded accounts cursor");
     if (!deep) return;

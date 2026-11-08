@@ -27,6 +27,11 @@ class WorldController final : public QObject {
     Q_PROPERTY(QVariantMap worldGeometry READ worldGeometry CONSTANT)
     Q_PROPERTY(QString officeKind READ officeKind NOTIFY changed)
     Q_PROPERTY(QVariantMap navigation READ navigation NOTIFY navigationChanged)
+    Q_PROPERTY(QString headquartersSummary READ headquartersSummary NOTIFY changed)
+    Q_PROPERTY(QVariantList roomOffers READ roomOffers NOTIFY changed)
+    Q_PROPERTY(QVariantList headquartersRooms READ headquartersRooms NOTIFY changed)
+    Q_PROPERTY(QVariantList blueprints READ blueprints NOTIFY changed)
+    Q_PROPERTY(QVariantList blueprintHardware READ blueprintHardware NOTIFY changed)
 public:
     explicit WorldController(std::filesystem::path directory, QObject* parent=nullptr);
     void update(CampaignSnapshotPtr snapshot,const runtime::CompiledProgram&, bool replace);
@@ -54,6 +59,15 @@ public:
     Q_INVOKABLE void navigate(QString place,QString scale,QString device,QString app,QString section);
     Q_INVOKABLE QString draft(QString key,QString fallback) const;
     Q_INVOKABLE void setDraft(QString key,QString value);
+    QString headquartersSummary() const;
+    QVariantList roomOffers() const;
+    QVariantList headquartersRooms() const;
+    QVariantList blueprints() const;
+    QVariantList blueprintHardware() const;
+    Q_INVOKABLE void orderHeadquartersRoom(QString offer,QString revision);
+    Q_INVOKABLE void createBlueprint(QString name,QString hardware,QString gridKw,QString operators,bool evaporative);
+    Q_INVOKABLE QVariantMap blueprintQuote(QString blueprint,QString state) const;
+    Q_INVOKABLE void buildBlueprint(QVariantMap reviewed);
 signals:
     void actionRequested(core::CommandAction);
     void changed();

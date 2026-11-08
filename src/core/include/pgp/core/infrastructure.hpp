@@ -1,6 +1,7 @@
 #pragma once
 #include <pgp/core/accounts.hpp>
 #include <pgp/core/capacity.hpp>
+#include <pgp/core/workplace.hpp>
 
 namespace pgp::core {
 struct SimulationState;
@@ -45,6 +46,7 @@ struct InfrastructureCatalog {
     Days onsite_booking_lead{1},remote_booking_lead{7},delegated_booking_lead{3};
     std::uint64_t minimum_site_watts=1000,maximum_site_watts=1000000;
     std::uint32_t maximum_sites=50,maximum_hardware_per_site=4,maximum_operators_per_site=32;
+    std::optional<WorkplaceRules> workplace;
     auto operator<=>(const InfrastructureCatalog&) const = default;
 };
 struct SitePowerLimit {
@@ -115,6 +117,7 @@ struct InfrastructureState {
     std::vector<SiteOperatorHire> hires;
     std::vector<SiteAppointment> appointments;
     std::vector<InfrastructureNotice> notices;
+    std::optional<WorkplaceState> workplace;
     auto operator<=>(const InfrastructureState&) const = default;
 };
 struct BuildOwnedSite {std::string id,name,state_id;std::uint64_t grid_watts=0;CoolingMode cooling=CoolingMode::air;};

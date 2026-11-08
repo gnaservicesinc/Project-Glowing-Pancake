@@ -31,10 +31,10 @@ QString city(std::string_view state) {
 }
 QVariantMap navDefault() {return {{"place","workspace"},{"scale","hq"},{"device",""},{"app",""},{"section",""}};}
 bool valid(const QVariantMap& n) {
-    return QStringList{"workspace","lab","meeting","compute","map"}.contains(n.value("place").toString()) &&
+    return QStringList{"workspace","lab","meeting","compute","map","research_annex","evaluation_suite","collaboration"}.contains(n.value("place").toString()) &&
         QStringList{"hq","city","state","country","world"}.contains(n.value("scale").toString()) &&
         QStringList{"","desktop","laptop","phone"}.contains(n.value("device").toString()) &&
-        QStringList{"","office","lab","people","inbox","operations","civic","society","institutions","frontier","leadership","objectives"}.contains(n.value("app").toString()) &&
+        QStringList{"","office","lab","people","facilities","inbox","operations","civic","society","institutions","frontier","leadership","objectives"}.contains(n.value("app").toString()) &&
         n.value("section").toString().size()<=40;
 }
 }
@@ -52,7 +52,7 @@ void WorldController::update(CampaignSnapshotPtr snapshot,const runtime::Compile
         path_=directory_/(persistence::sha256(key)+".json");
         restore();
     }
-    if(!atHeadquarters() && navigation_.value("place")!="map") {
+    if(navigation_.value("place")!="map" && std::ranges::none_of(rooms(),[&](const QVariant& row){return row.toMap().value("id")==navigation_.value("place");})) {
         navigation_["place"]="workspace";
         if(navigation_.value("device")=="desktop") navigation_["device"]="laptop";
         emit navigationChanged();
@@ -126,6 +126,11 @@ QString WorldController::setting() const {
     if(!snapshot_) return {};
     const auto& w=snapshot_->checkpoint.world;
     if(!atHeadquarters()) return tr("Away from HQ · your portable devices keep you connected.");
+    for(const auto& value:headquartersRooms()) {
+        const auto room=value.toMap();
+        if(room.value("ready").toBool() && room.value("place")==navigation_.value("place"))
+            return room.value("name").toString()+QStringLiteral(" · ")+room.value("detail").toString();
+    }
     if(w.founding) {
         if(w.founding->office=="home") return tr("Home workspace · a company starts with one good idea.");
         if(w.founding->office=="shared") return tr("Shared workspace · a small team, room to grow.");
@@ -207,8 +212,10 @@ QVariantMap WorldController::recruitingTerms() const {
 QString WorldController::recruitingSummary() const {
     if(!snapshot_ || !snapshot_->checkpoint.world.simulation.management || !snapshot_->checkpoint.world.simulation.management->people) return {};
     const auto& s=snapshot_->checkpoint.world.simulation;const auto& p=*s.management->people;
-    return tr("%1 individual HQ staff · next applicants %2. New offers reflect pay, published research and mission fit. Existing offers retain their quoted terms. Skills describe the applicant; evaluation expertise supplies the stated work credit.")
+    auto summary=tr("%1 individual HQ staff · next applicants %2. New offers reflect pay, published research and mission fit. Existing offers retain their quoted terms. Skills describe the applicant; evaluation expertise supplies the stated work credit.")
         .arg(p.employees.size()).arg(q(core::iso_date(p.next_recruitment)));
+    if(s.infrastructure && s.infrastructure->workplace) summary+=tr("\nHQ workstations: %1 of %2 reserved. Expand through Headquarters when the office fills.").arg(core::headquarters_seats_used(s)).arg(core::headquarters_seats(s));
+    return summary;
 }
 void WorldController::hireEmployee(QString id) {emit actionRequested(core::HireEmployee{id.toStdString()});}
 void WorldController::setRecruitingTerms(int pay,QString mission) {
@@ -263,6 +270,11 @@ QVariantList WorldController::rooms() const {
         const auto& infrastructure=*snapshot_->checkpoint.world.simulation.infrastructure;
         if(std::ranges::any_of(infrastructure.sites,[&](const auto& site){return site.state_id==infrastructure.executive_base && site.commissioned_on && !site.closed_on;}))
             result.push_back(QVariantMap{{"id","compute"},{"name",tr("Compute facility")},{"detail",tr("Commissioned headquarters-state infrastructure")}});
+    }
+    for(const auto& value:headquartersRooms()) {
+        const auto room=value.toMap();if(!room.value("ready").toBool()) continue;
+        if(std::ranges::none_of(result,[&](const QVariant& row){return row.toMap().value("id")==room.value("place");}))
+            result.push_back(QVariantMap{{"id",room.value("place")},{"name",room.value("name")},{"detail",room.value("detail")}});
     }
     return result;
 }

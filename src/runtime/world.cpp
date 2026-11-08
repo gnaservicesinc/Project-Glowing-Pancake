@@ -422,6 +422,12 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                 invalid("The saved biography must match the founder and authored campaign.");
             (void)content::founding_terms(*scenario->founding,*world.founding);
         }
+        if(world.simulation.infrastructure && world.simulation.infrastructure->workplace) {
+            const auto& workplace=*world.simulation.infrastructure->workplace;
+            if(workplace.opening_office!=(world.founding?world.founding->office:"leased") ||
+                workplace.nonresearch_founder!=(world.founding && world.founding->researcher!="founder"))
+                invalid("The headquarters plan differs from the saved founding office and staffing terms.");
+        }
         (void)content::scenario_difficulty(*scenario,world.difficulty);
         if(scenario->counties.has_value()!=world.counties.has_value()) invalid("County model differs from the authored scenario.");
         if(world.counties) core::validate_counties(*world.counties,*scenario->counties,campaign_day(world));
