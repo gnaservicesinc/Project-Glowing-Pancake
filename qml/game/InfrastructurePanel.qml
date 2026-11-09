@@ -35,7 +35,7 @@ ColumnLayout {
         font.pixelSize: panel.textSize
     }
     component Heading: Copy { font.bold: true; color: "#ffd897" }
-    component Action: Button {
+    component Action: WorldButton {
         id: action
         Layout.maximumWidth: panel.width
         font.pixelSize: panel.textSize
@@ -106,7 +106,7 @@ ColumnLayout {
         Copy { visible: selection.showDetail && text.length > 0; text: selection.rows.selectedRow.detail || "" }
     }
 
-    Dialog {
+    GameDialog {
         id: review
         objectName: "infrastructureReview"
         title: qsTr("Review infrastructure terms")
@@ -126,12 +126,12 @@ ColumnLayout {
             }
         }
         footer: DialogButtonBox {
-            Button { objectName: "confirmInfrastructure"; text: qsTr("Confirm"); font.pixelSize: panel.textSize; enabled: infra.canConfirm && panel.editable; onClicked: { infra.confirm(); review.close() } }
-            Button { objectName: "dismissInfrastructure"; text: qsTr("Back"); font.pixelSize: panel.textSize; onClicked: review.close() }
+            WorldButton { objectName: "confirmInfrastructure"; text: qsTr("Confirm"); font.pixelSize: panel.textSize; enabled: infra.canConfirm && panel.editable; onClicked: { infra.confirm(); review.close() } }
+            WorldButton { objectName: "dismissInfrastructure"; text: qsTr("Back"); font.pixelSize: panel.textSize; onClicked: review.close() }
         }
         onClosed: infra.dismissReview()
     }
-    Dialog {
+    GameDialog {
         id: credits
         objectName: "mapCreditsDialog"
         title: qsTr("Domestic map credits")

@@ -43,7 +43,7 @@ ColumnLayout {
         font.weight: Font.DemiBold
         topPadding: 8
     }
-    component Choice: ComboBox {
+    component Choice: GameSelect {
         Layout.fillWidth: true
         font.pixelSize: page.textSize
         implicitHeight: Math.max(44, page.textSize * 2.4)
@@ -92,7 +92,7 @@ ColumnLayout {
         }
     }
     Section { text: qsTr("AUDIO") }
-    CheckBox {
+    GameCheck {
         objectName: "menuMusicEnabled"
         text: qsTr("Play music")
         font.pixelSize: page.textSize
@@ -100,7 +100,7 @@ ColumnLayout {
         onToggled: page.draftMusic = checked
     }
     Copy { text: qsTr("Music · %1%").arg(Math.round(musicVolume.value)) }
-    Slider {
+    GameSlider {
         id: musicVolume
         objectName: "menuMusicVolume"
         Layout.fillWidth: true
@@ -110,7 +110,7 @@ ColumnLayout {
         onMoved: page.draftMusicVolume = Math.round(value)
     }
     Copy { text: qsTr("Sound effects · %1%").arg(Math.round(effectsVolume.value)) }
-    Slider {
+    GameSlider {
         id: effectsVolume
         objectName: "menuEffectsVolume"
         Layout.fillWidth: true
@@ -129,7 +129,7 @@ ColumnLayout {
         Accessible.name: qsTr("Text size")
         onActivated: page.draftTextScale = model[currentIndex]
     }
-    CheckBox {
+    GameCheck {
         objectName: "menuReducedMotion"
         text: qsTr("Reduce motion")
         checked: page.draftReducedMotion

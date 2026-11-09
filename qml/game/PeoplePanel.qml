@@ -112,7 +112,7 @@ ColumnLayout {
         }
     }
     Label {visible:panel.page==="branches" && campaign.world.branches.length===0;Layout.fillWidth:true;text:qsTr("No branch departments yet. Hire site operators as a group when you build a facility.");wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#c2d8ca"}
-    Dialog {
+    GameDialog {
         id:hireDialog;objectName:"employeeHireDialog"
         property var applicant:({})
         anchors.centerIn:Overlay.overlay;width:Math.min(540,Overlay.overlay.width-32)

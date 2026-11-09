@@ -53,7 +53,7 @@ ColumnLayout {
             confirmation.open()
         })
     }
-    Dialog {
+    GameDialog {
         id:confirmation
         objectName:"deviceQuote"
         property string action:""

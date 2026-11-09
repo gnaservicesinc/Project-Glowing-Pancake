@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 
-CheckBox {
+GameCheck {
     id: check
     property string draftScope: ""
     property bool draftAllowed: true

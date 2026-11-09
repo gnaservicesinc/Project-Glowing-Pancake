@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Dialog {
+GameDialog {
         id:profileDialog;objectName:"employeeProfileDialog"
         property var person:({})
         property int textSize:14

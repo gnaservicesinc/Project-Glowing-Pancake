@@ -35,7 +35,7 @@ ColumnLayout {
                 { id: "tax", label: qsTr("Corporate tax") },
                 { id: "bills", label: qsTr("Bills and debt") }
             ]
-            Button {
+            WorldButton {
                 required property var modelData
                 objectName: "accounts_" + modelData.id
                 text: modelData.label
@@ -83,7 +83,7 @@ ColumnLayout {
         Line {
             text: qsTr("Compare how demand could affect cash and when a bill might go unpaid. Pause time to calculate from the current accounts.")
         }
-        Button {
+        WorldButton {
             objectName: "calculateCashScenariosButton"
             text: qsTr("Calculate cash scenarios")
             font.pixelSize: panel.textSize

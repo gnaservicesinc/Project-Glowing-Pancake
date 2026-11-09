@@ -99,6 +99,7 @@ public:
     Q_INVOKABLE void powerDevice(QString id,bool powered);
     Q_INVOKABLE void retireDevice(QString id,QString revision);
     Q_INVOKABLE bool appAvailable(QString app,QString preferred) const;
+    Q_INVOKABLE bool appAvailableOn(QString app,QString device) const;
     QVariantList scales() const;
     QVariantMap worldGeometry() const {return world_geometry_;}
     QString officeKind() const;

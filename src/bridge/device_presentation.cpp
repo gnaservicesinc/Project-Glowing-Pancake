@@ -48,6 +48,13 @@ bool WorldController::appAvailable(QString app,QString preferred) const {
     const auto& s=snapshot_->checkpoint.world.simulation;
     return !core::resolve_app_device(s,preferred.toStdString(),app.toStdString(),atHeadquarters()).empty();
 }
+bool WorldController::appAvailableOn(QString app,QString device) const {
+    if(app=="devices" || companyArchive()) return true;
+    if(device.isEmpty()) return false;
+    if(!present(snapshot_)) return appAvailable(app,device);
+    const auto& state=snapshot_->checkpoint.world.simulation;
+    return core::resolve_app_device(state,device.toStdString(),app.toStdString(),atHeadquarters())==device.toStdString();
+}
 void WorldController::buyDevice(QString offer,QString revision) {
     if(!present(snapshot_)) return;
     if(revision!=reviewToken()) {emit noticeRaised(tr("The company changed. Review the equipment quote again."));return;}

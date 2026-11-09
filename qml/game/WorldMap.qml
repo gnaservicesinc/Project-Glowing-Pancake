@@ -10,6 +10,10 @@ Rectangle {
     property string selectedCountry:"USA"
     readonly property bool tight:height<textSize*16
     readonly property var counties:campaign.world.countyRows
+    readonly property var stateRow: {
+        const update = campaign.infrastructure.states.selectedRow
+        return campaign.infrastructure.states.sourceRow(campaign.world.countyState)
+    }
     readonly property var selectedCountyRow:counties.find(row=>row.id===selectedCounty) || counties[0] || ({})
     DraftState {
         id: stateDraft
@@ -48,7 +52,7 @@ Rectangle {
             Layout.fillWidth:true;spacing:8
             Repeater {model:campaign.world.scales;WorldButton {required property var modelData;objectName:"mapScale_"+modelData.id;text:modelData.name;textSize:mapPage.textSize;checked:mapPage.scale===modelData.id;onClicked:campaign.world.navigate("map",modelData.id,"","","")}}
         }
-        ComboBox {
+        GameSelect {
             objectName:"compactMapScale"
             visible:mapPage.tight;Layout.fillWidth:true
             model:campaign.world.scales;textRole:"name";valueRole:"id";font.pixelSize:mapPage.textSize
@@ -61,15 +65,15 @@ Rectangle {
             Layout.fillWidth:true;Layout.fillHeight:true;contentWidth:availableWidth;clip:true
             ColumnLayout {
                 width:mapScroll.availableWidth;spacing:12
-                Label {Layout.fillWidth:true;text:mapPage.scale==="hq"?qsTr("Your headquarters"):mapPage.scale==="city"?campaign.world.location:mapPage.scale==="state"?qsTr("Regional conditions"):mapPage.scale==="country"?qsTr("United States"):qsTr("The wider world");font.pixelSize:mapPage.textSize*1.6;font.bold:true;color:"#eee5d2";wrapMode:Text.Wrap}
-                Label {Layout.fillWidth:true;text:mapPage.scale==="hq"?campaign.world.setting:mapPage.scale==="city"?qsTr("The state’s largest 2010 Census place provides the city setting. Facilities and visits follow your calendar."):mapPage.scale==="state"?qsTr("Select a state to inspect its local conditions and infrastructure."):mapPage.scale==="country"?qsTr("Explore states, infrastructure and the public affairs that affect your company."):qsTr("Public regional conditions and your operating footprint. Market access and institutional authority follow your company's actual progress.");font.pixelSize:mapPage.textSize;color:"#b7cec4";wrapMode:Text.Wrap}
+                Label {Layout.fillWidth:true;text:mapPage.scale==="hq"?qsTr("Your headquarters"):mapPage.scale==="city"?campaign.world.location:mapPage.scale==="state"?(mapPage.stateRow.title || qsTr("State atlas")):mapPage.scale==="country"?qsTr("United States"):qsTr("The wider world");font.pixelSize:mapPage.textSize*1.6;font.bold:true;color:"#eee5d2";wrapMode:Text.Wrap}
+                Label {Layout.fillWidth:true;text:mapPage.scale==="hq"?campaign.world.setting:mapPage.scale==="city"?qsTr("This is your headquarters city. View local premises and scheduled facility visits."):mapPage.scale==="state"?qsTr("Explore the state outline and select a county for its local conditions. Nearby state boundaries provide context."):mapPage.scale==="country"?qsTr("Explore states, infrastructure and the public affairs that affect your company."):qsTr("Public regional conditions and your operating footprint. Market access and institutional authority follow your company's actual progress.");font.pixelSize:mapPage.textSize;color:"#b7cec4";wrapMode:Text.Wrap}
                 Flow {
                     visible:mapPage.scale==="hq";Layout.fillWidth:true
                     spacing:8
                     Repeater {model:campaign.world.rooms;WorldButton {required property var modelData;text:modelData.name;textSize:mapPage.textSize;onClicked:campaign.world.navigate(modelData.id,"hq","","","")}}
                 }
                 WorldButton {visible:mapPage.scale==="hq";text:qsTr("Return to the workspace");textSize:mapPage.textSize;primary:true;onClicked:mapPage.visitHeadquarters()}
-                WorldButton {objectName:"headquartersPlanButton";visible:mapPage.scale==="hq";text:qsTr("Expand headquarters & design branches");textSize:mapPage.textSize;onClicked:mapPage.openApp("facilities","")}
+                WorldButton {objectName:"headquartersPlanButton";visible:mapPage.scale==="hq";text:Object.keys(campaign.world.headquarters).length?qsTr("Suppliers and property"):qsTr("Headquarters planning");textSize:mapPage.textSize;onClicked:mapPage.openApp("facilities","")}
                 DomesticMap {
                     objectName:"domesticWorldMap";textSize:mapPage.textSize
                     visible:mapPage.scale==="country"
@@ -78,29 +82,32 @@ Rectangle {
                     selectedId:campaign.infrastructure.states.selectedId
                     onStatePicked:id=>{campaign.infrastructure.states.selectedId=id;campaign.world.countyState=id;stateDraft.remember(id)}
                 }
-                ComboBox {
+                GameSelect {
                     visible:mapPage.scale==="state" || mapPage.scale==="country"
                     Layout.fillWidth:true;model:campaign.infrastructure.states;textRole:"title";valueRole:"entityId"
-                    currentIndex:campaign.infrastructure.states.indexOf(campaign.infrastructure.states.selectedId)
+                    currentIndex:campaign.infrastructure.states.indexOf(mapPage.scale==="state"?campaign.world.countyState:campaign.infrastructure.states.selectedId)
                     font.pixelSize:mapPage.textSize;Accessible.name:qsTr("State")
                     onActivated:{campaign.infrastructure.states.selectedId=currentValue;campaign.world.countyState=currentValue;stateDraft.remember(currentValue)}
                 }
                 Label {visible:mapPage.scale==="country";Layout.fillWidth:true;text:campaign.infrastructure.states.selectedRow.detail || "";textFormat:Text.PlainText;font.pixelSize:mapPage.textSize;color:"#d6e2d6";wrapMode:Text.Wrap}
                 CountyMap {
                     objectName:"stateCountyMap";textSize:mapPage.textSize
-                    visible:mapPage.scale==="state" && mapPage.counties.length>0
+                    visible:mapPage.scale==="state"
                     Layout.fillWidth:true;Layout.preferredHeight:Math.max(mapPage.textSize*12.85,Math.min(mapPage.textSize*18.6,mapPage.height*0.4))
+                    geometry:campaign.infrastructure.mapGeometry
+                    stateId:campaign.world.countyState
                     rows:mapPage.counties;selectedId:mapPage.selectedCountyRow.id || ""
                     onCountyPicked:id=>{mapPage.selectedCounty=id;countyDraft.remember(id)}
                 }
-                ComboBox {
+                GameSelect {
                     visible:mapPage.scale==="state" && mapPage.counties.length>0
                     Layout.fillWidth:true;model:mapPage.counties;textRole:"name";valueRole:"id"
                     currentIndex:Math.max(0,model.findIndex(row=>row.id===mapPage.selectedCounty));font.pixelSize:mapPage.textSize
                     Accessible.name:qsTr("County")
                     onActivated:{mapPage.selectedCounty=currentValue;countyDraft.remember(currentValue)}
                 }
-                Label {visible:mapPage.scale==="state";Layout.fillWidth:true;text:mapPage.selectedCountyRow.detail || "";textFormat:Text.PlainText;font.pixelSize:mapPage.textSize;color:"#d6e2d6";wrapMode:Text.Wrap}
+                Label {visible:mapPage.scale==="state" && !!mapPage.selectedCountyRow.name;Layout.fillWidth:true;text:mapPage.selectedCountyRow.name || "";font.bold:true;font.pixelSize:mapPage.textSize;color:"#efddb4";wrapMode:Text.Wrap}
+                Label {visible:mapPage.scale==="state";Layout.fillWidth:true;text:mapPage.selectedCountyRow.detail || mapPage.stateRow.detail || "";textFormat:Text.PlainText;font.pixelSize:mapPage.textSize;color:"#d6e2d6";wrapMode:Text.Wrap}
                 Label {visible:mapPage.scale==="state";Layout.fillWidth:true;text:campaign.world.countySummary;font.pixelSize:mapPage.textSize*0.9;color:"#acc4b8";wrapMode:Text.Wrap}
                 Label {visible:mapPage.scale==="city";Layout.fillWidth:true;text:campaign.infrastructure.executiveLocation;font.pixelSize:mapPage.textSize;color:"#d6e2d6";wrapMode:Text.Wrap}
                 StableEntityList {visible:mapPage.scale==="city";Layout.fillWidth:true;Layout.preferredHeight:Math.min(mapPage.textSize*17.1,Math.max(mapPage.textSize*6.8,rows.count*mapPage.textSize*5.7));rows:campaign.infrastructure.sites;textSize:mapPage.textSize;reducedMotion:campaign.reducedMotion;emptyText:qsTr("No additional facilities. Your headquarters is your company's base.");onSelected:id=>rows.selectedId=id}
@@ -112,7 +119,7 @@ Rectangle {
                     geometry:campaign.world.worldGeometry;selectedId:mapPage.selectedCountry
                     onCountryPicked:(id,region)=>{mapPage.selectedCountry=id;campaign.society.mapRegions.selectedId=region;countryDraft.remember(id)}
                 }
-                ComboBox {
+                GameSelect {
                     visible:mapPage.scale==="world";Layout.fillWidth:true
                     model:campaign.world.worldGeometry.countries || [];textRole:"name";valueRole:"id";font.pixelSize:mapPage.textSize
                     currentIndex:Math.max(0,model.findIndex(row=>row.id===mapPage.selectedCountry));Accessible.name:qsTr("Country")

@@ -28,7 +28,7 @@ ColumnLayout {
         spacing: 6
         Repeater {
             model: card.choices
-            Button {
+            WorldButton {
                 id: choiceButton
                 width: Math.min(implicitWidth, card.width)
                 padding: font.pixelSize * 0.65

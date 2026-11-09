@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 
-TextField {
+GameField {
     id:field
     property string draftScope:""
     property string defaultText:""

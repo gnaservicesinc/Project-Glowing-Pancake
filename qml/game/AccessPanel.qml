@@ -43,7 +43,7 @@ ColumnLayout {
         if(!current) return
         quote.reviewed=current;quote.closing=close;quote.open()
     })}
-    Dialog {
+    GameDialog {
         id:quote;objectName:"overseasOfficeQuote"
         property var reviewed:({})
         property bool closing:false

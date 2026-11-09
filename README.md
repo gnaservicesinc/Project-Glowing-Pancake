@@ -18,7 +18,9 @@ Fresh founder companies now have an actual furnishable garage/inherited office,
 paid suppliers, city property listings and contracted construction. Applicants
 negotiate compensation and need a furnished desk before they can be hired.
 Research now uses a connected technology tree, named staff, installed equipment
-and actual compute. The broader game interface remains in the refinement queue.
+and actual compute. The workspace includes a laptop desktop, device-specific apps
+and a state atlas with selectable counties. These changes are ready for the next
+human playtest.
 
  The initial skeleton phase closed on 2026-11-07. The current
 core is ready for human feedback and the user's selected refinements. The

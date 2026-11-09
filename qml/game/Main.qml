@@ -27,6 +27,11 @@ ApplicationWindow {
     property bool deviceOpen: prototypeSmoke
     property bool startupRouted: false
     property string activeDevice: "laptop"
+    readonly property string appTitle: ({devices:qsTr("Equipment"),office:qsTr("Company"),people:qsTr("People"),
+        facilities:qsTr("Headquarters"),lab:qsTr("Research notebook"),inbox:qsTr("News & decisions"),
+        operations:qsTr("Infrastructure & travel"),civic:qsTr("Public affairs"),society:qsTr("World affairs"),
+        institutions:qsTr("Institutions"),frontier:qsTr("Frontier"),leadership:qsTr("Leadership & retirement"),
+        objectives:qsTr("Company mission")})[room] || room
     function openApp(app, section, device) {
         if (!campaign.world.navigate(campaign.world.navigation.place || "workspace", campaign.world.navigation.scale || "hq", device || "laptop", app, section || "")) return false
         restoreNavigation()
@@ -122,7 +127,7 @@ ApplicationWindow {
     Shortcut {
         objectName:"gameEscapeShortcut"
         sequence: "Escape"
-        enabled: !saveDialog.visible && !loadDialog.visible && !originalContentDialog.visible && !originalContentReview.visible && !restartDialog.visible && !musicCredits.visible && !cancelDialog.visible && !exitDialog.visible
+        enabled: !saveDialog.visible && !loadDialog.visible && !originalContentDialog.visible && !originalContentReview.visible && !restartDialog.visible && !musicCredits.visible && !cancelDialog.visible && !exitDialog.visible && !deviceHome.visible
         onActivated: {
             if (window.menuVisible) window.requestExit()
             else window.openMainMenu()
@@ -169,13 +174,12 @@ ApplicationWindow {
         textSize: window.textSize
         onOpenApp: (app,section,device) => window.openApp(app,section,device)
         onMenuRequested: window.openMainMenu()
+        onLauncherRequested: deviceHome.showFor(window.activeDevice)
     }
-    Rectangle {
-        anchors.fill: deviceWindow
-        visible: deviceWindow.visible
-        color: "#f0172b31"
-        border.color: "#64857b"
-        radius: 12
+    DeviceHome {
+        id: deviceHome
+        textSize: window.textSize
+        onAppRequested: (app,section,device) => window.openApp(app,section,device)
     }
     component Heading: Label {
         Layout.fillWidth: true
@@ -195,7 +199,7 @@ ApplicationWindow {
         wrapMode: Text.Wrap
         textFormat: Text.PlainText
     }
-    component Action: Button {
+    component Action: WorldButton {
         id: action
         Layout.maximumWidth: window.width - 60
         Accessible.name: text
@@ -227,7 +231,7 @@ ApplicationWindow {
         background: Rectangle { radius: 8; color: "#192634"; border.color: "#394c5e" }
     }
 
-    Dialog {
+    GameDialog {
         id: exitDialog
         objectName: "exitConfirmDialog"
         anchors.centerIn: Overlay.overlay
@@ -314,7 +318,7 @@ ApplicationWindow {
         currentFolder: campaign.saveFolder
         onAccepted: campaign.reviewOriginalContent(selectedFile)
     }
-    Dialog {
+    GameDialog {
         id: originalContentReview
         objectName: "originalContentReviewDialog"
         title: qsTr("Resume with original rules?")
@@ -353,7 +357,7 @@ ApplicationWindow {
         onAccepted: { window.pendingMenuLoad = true; campaign.confirmOriginalContent() }
         onRejected: campaign.cancelOriginalContent()
     }
-    Dialog {
+    GameDialog {
         id: restartDialog
         title: qsTr("Start another campaign?")
         modal: true
@@ -376,629 +380,693 @@ ApplicationWindow {
         reducedMotion: campaign.reducedMotion
         onClosed: musicCreditsButton.forceActiveFocus()
     }
-    ColumnLayout {
+    DeviceFrame {
         id: deviceWindow
+        objectName: "activeDeviceFrame"
         visible: !window.menuVisible && !(campaign.welcome && campaign.founding.available) && (window.deviceOpen || campaign.welcome)
         enabled: visible
-        anchors.fill: parent
-        anchors.margins: 18
-        anchors.topMargin: campaign.welcome ? 18 : (window.room === "people" || window.room === "lab") && window.height < window.textSize * 24 ? 8 : worldDesktop.headerHeight + 8
-        anchors.bottomMargin: campaign.welcome ? 18 : worldDesktop.footerHeight + 8
-        spacing: 8
-        Panel {
-            padding: 10
-            contentItem: RowLayout {
-                Copy { text: ({devices:qsTr("Equipment"),office:qsTr("Company"),people:qsTr("People"),facilities:qsTr("Headquarters & blueprints"),lab:qsTr("Research notebook"),inbox:qsTr("News & decisions"),operations:qsTr("Infrastructure & travel"),civic:qsTr("Public affairs"),society:qsTr("World affairs"),institutions:qsTr("Institutions"),frontier:qsTr("Frontier"),leadership:qsTr("Leadership & retirement"),objectives:qsTr("Company mission")})[window.room] || window.room; font.bold:true }
-                Label {visible:!window.narrow && window.activeDevice.length>0;text:window.activeDevice;font.pixelSize:window.textSize;color:"#b8d2c5"}
-                WorldButton {objectName:"closeDeviceButton";text:qsTr("Return to world");textSize:window.textSize;onClicked:window.closeApp()}
-            }
-        }
-        ScrollView {
-            id: scroll
-            onAvailableWidthChanged: Qt.callLater(() => reveal(window.activeFocusItem))
-            onAvailableHeightChanged: Qt.callLater(() => reveal(window.activeFocusItem))
-            objectName: "managementScroll"
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            contentWidth: availableWidth
-            clip: true
-            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-            Binding {
-                target: scroll.contentItem
-                property: "boundsBehavior"
-                value: campaign.reducedMotion ? Flickable.StopAtBounds : Flickable.DragOverBounds
-                when: scroll.contentItem !== null
-            }
+        kind: window.activeDevice || "desktop"
+        textSize: window.textSize
+        readonly property int sideInset: window.height < window.textSize*24 ? 6 : 14
+        readonly property bool narrowContent: width < 1030
+        width: Math.min(parent.width - 2*sideInset, kind === "phone" ? textSize*34 : parent.width)
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.topMargin: campaign.welcome || window.height < window.textSize*24 ? 6 : worldDesktop.headerHeight + 4
+        anchors.bottomMargin: campaign.welcome ? 8 : worldDesktop.footerHeight + 4
 
-            function reveal(item) {
-                if (!item || item === scroll || !scroll.contentItem)
-                    return
-                let ancestor = item
-                let context = item
-                while (ancestor && ancestor !== page) {
-                    if (ancestor.focusContext === true && ancestor.height <= scroll.availableHeight) context = ancestor
-                    ancestor = ancestor.parent
-                }
-                if (!ancestor)
-                    return
-                const point = context.mapToItem(page, 0, 0)
-                const top = scroll.contentItem.contentY
-                const bottom = top + scroll.availableHeight
-                const target = point.y < top ? point.y : point.y + context.height > bottom ?
-                    point.y + context.height - scroll.availableHeight : top
-                scroll.contentItem.contentY = Math.max(0, Math.min(target, page.height - scroll.availableHeight))
-            }
-
-            ColumnLayout {
-                id: page
-                onHeightChanged: Qt.callLater(() => scroll.reveal(window.activeFocusItem))
-                width: scroll.availableWidth
-                spacing: 8
-
-                Panel {
-                    objectName: "requiredPanel"
-                    visible: !campaign.welcome && campaign.requiredKind !== "none"
-                    contentItem: ColumnLayout {
-                        DecisionParticipants {Layout.fillWidth:true;participants:campaign.requiredParticipants;textSize:window.textSize;reducedMotion:campaign.reducedMotion}
-                        FlowPresentation {
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 0
+            Rectangle {
+                objectName: "deviceApplicationBar"
+                Layout.fillWidth: true
+                implicitHeight: appBar.implicitHeight+10
+                color: "#18363b"
+                RowLayout {
+                    id: appBar
+                    anchors.fill: parent
+                    anchors.margins: 5
+                    spacing: 9
+                    WorldButton {
+                        objectName: "deviceHomeButton"
+                        text: qsTr("Apps")
+                        textSize: window.textSize
+                        visible: !campaign.welcome
+                        onClicked: deviceHome.showFor(window.activeDevice)
+                    }
+                    DeviceGlyph {
+                        visible: appBar.width>window.textSize*29
+                        Layout.preferredWidth: window.textSize*1.6
+                        Layout.preferredHeight: Layout.preferredWidth
+                        app: window.room
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        spacing: 2
+                        Label {
                             Layout.fillWidth: true
-                            visible: campaign.requiredKind === "content"
-                            heading: campaign.requiredTitle
-                            detail: campaign.requiredText
-                            choices: campaign.requiredChoices
-                            enabled: !campaign.busy
-                            onChosen: choiceId => campaign.choose(choiceId)
+                            text: window.appTitle
+                            textFormat: Text.PlainText
+                            elide: Text.ElideRight
+                            font.pixelSize: window.textSize
+                            font.bold: true
+                            color: "#f2e7cd"
                         }
-                        Heading { visible: campaign.requiredKind !== "content"; text: campaign.requiredTitle }
-                        Copy { visible: campaign.requiredKind !== "content"; text: campaign.requiredText }
-                        Flow {
+                        Label {
                             Layout.fillWidth: true
-                            spacing: 6
-                            Action {
-                                objectName: "acceptDelivery"; text: qsTr("Accept delivery")
-                                visible: campaign.requiredKind === "core"
+                            visible: appBar.width>window.textSize*31
+                            text: qsTr("Pancake Desktop · %1").arg(campaign.date)
+                            elide: Text.ElideRight
+                            font.pixelSize: window.textSize*0.75
+                            color: "#aac6b9"
+                        }
+                    }
+                    WorldButton {
+                        objectName: "deviceTimeButton"
+                        visible: !campaign.welcome && window.height<window.textSize*24
+                        text: qsTr("Time")
+                        textSize: window.textSize
+                        onClicked: worldDesktop.openTime()
+                    }
+                    WorldButton {
+                        objectName: "closeDeviceButton"
+                        text: appBar.width<window.textSize*36 ? qsTr("Close") : qsTr("Return to world")
+                        Accessible.name: qsTr("Return to world")
+                        textSize: window.textSize
+                        onClicked:window.closeApp()
+                    }
+                }
+            }
+            ScrollView {
+                id: scroll
+                onAvailableWidthChanged: Qt.callLater(() => reveal(window.activeFocusItem))
+                onAvailableHeightChanged: Qt.callLater(() => reveal(window.activeFocusItem))
+                objectName: "managementScroll"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                contentWidth: availableWidth
+                clip: true
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                Binding {
+                    target: scroll.contentItem
+                    property: "boundsBehavior"
+                    value: campaign.reducedMotion ? Flickable.StopAtBounds : Flickable.DragOverBounds
+                    when: scroll.contentItem !== null
+                }
+
+                function reveal(item) {
+                    if (!item || item === scroll || !scroll.contentItem)
+                        return
+                    let ancestor = item
+                    let context = item
+                    while (ancestor && ancestor !== page) {
+                        if (ancestor.focusContext === true && ancestor.height <= scroll.availableHeight) context = ancestor
+                        ancestor = ancestor.parent
+                    }
+                    if (!ancestor)
+                        return
+                    const point = context.mapToItem(page, 0, 0)
+                    const top = scroll.contentItem.contentY
+                    const bottom = top + scroll.availableHeight
+                    const target = point.y < top ? point.y : point.y + context.height > bottom ?
+                        point.y + context.height - scroll.availableHeight : top
+                    scroll.contentItem.contentY = Math.max(0, Math.min(target, page.height - scroll.availableHeight))
+                }
+
+                ColumnLayout {
+                    id: page
+                    onHeightChanged: Qt.callLater(() => scroll.reveal(window.activeFocusItem))
+                    width: scroll.availableWidth
+                    spacing: 8
+
+                    Panel {
+                        objectName: "requiredPanel"
+                        visible: !campaign.welcome && campaign.requiredKind !== "none"
+                        contentItem: ColumnLayout {
+                            DecisionParticipants {Layout.fillWidth:true;participants:campaign.requiredParticipants;textSize:window.textSize;reducedMotion:campaign.reducedMotion}
+                            FlowPresentation {
+                                Layout.fillWidth: true
+                                visible: campaign.requiredKind === "content"
+                                heading: campaign.requiredTitle
+                                detail: campaign.requiredText
+                                choices: campaign.requiredChoices
                                 enabled: !campaign.busy
-                                onClicked: campaign.resolveCoreChoice(true)
+                                onChosen: choiceId => campaign.choose(choiceId)
                             }
-                            Action {
-                                objectName: "declineDelivery"; text: qsTr("Decline delivery")
-                                visible: campaign.requiredKind === "core"
-                                enabled: !campaign.busy
-                                onClicked: campaign.resolveCoreChoice(false)
-                            }
-                            Action {
-                                objectName: "acknowledgeManagement"; text: qsTr("Acknowledge management alert")
-                                visible: campaign.requiredKind === "management"
-                                enabled: !campaign.busy
-                                onClicked: campaign.acknowledgeManagement()
-                            }
-                            Action {
-                                objectName: "acknowledgeDeploymentIncident"; text: qsTr("Acknowledge deployment incident alert")
-                                visible: campaign.requiredKind === "deploymentIncident"
-                                enabled: !campaign.busy
-                                onClicked: campaign.acknowledgeDeploymentIncident()
-                            }
-                            Action {
-                                objectName: "acknowledgeSiteAlert"; text: qsTr("Review site disruption")
-                                visible: campaign.requiredKind === "site"
-                                enabled: !campaign.busy
-                                onClicked: campaign.acknowledgeSiteAlert()
-                            }
-                            Action {
-                                objectName: "acknowledgeWarning"; text: qsTr("Acknowledge warning")
-                                visible: campaign.requiredKind === "liquidity"
-                                enabled: !campaign.busy
-                                onClicked: campaign.acknowledgeWarning()
-                            }
-                            Action {
-                                objectName: "openInstitutionNotice"; text: qsTr("Open dispute")
-                                visible: campaign.requiredKind === "institution" || campaign.requiredKind === "executive"
-                                onClicked: { window.room = "institutions"; institutionsPanel.showDisputes() }
-                            }
-                            Action {
-                                objectName: "acknowledgeInstitutionalNotice"; text: qsTr("Acknowledge notice")
-                                visible: campaign.requiredKind === "institution" || campaign.requiredKind === "executive" || campaign.requiredKind === "governance"
-                                enabled: !campaign.busy
-                                onClicked: campaign.acknowledgeInstitutionalNotice()
-                            }
-                            Action {
-                                objectName: "openLeadershipNotice"; text: qsTr("Open Leadership")
-                                visible: campaign.requiredKind === "leadership"
-                                onClicked: window.room = "leadership"
-                            }
-                            Action {
-                                objectName: "acknowledgeLeadershipNotice"; text: qsTr("Acknowledge leadership notice")
-                                visible: campaign.requiredKind === "leadership"
-                                enabled: !campaign.busy
-                                onClicked: campaign.leadership.acknowledge()
-                            }
-                            Action {
-                                objectName: "openObjectivePostmortem"; text: qsTr("Open postmortem")
-                                visible: campaign.requiredKind === "objective"
-                                onClicked: window.room = "objectives"
-                            }
-                            Action {
-                                objectName: "continueAfterObjectiveBreach"; text: qsTr("Continue scored play")
-                                visible: campaign.requiredKind === "objective"
-                                enabled: !campaign.busy
-                                onClicked: campaign.objectives.acknowledge()
+                            Heading { visible: campaign.requiredKind !== "content"; text: campaign.requiredTitle }
+                            Copy { visible: campaign.requiredKind !== "content"; text: campaign.requiredText }
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 6
+                                Action {
+                                    objectName: "acceptDelivery"; text: qsTr("Accept delivery")
+                                    visible: campaign.requiredKind === "core"
+                                    enabled: !campaign.busy
+                                    onClicked: campaign.resolveCoreChoice(true)
+                                }
+                                Action {
+                                    objectName: "declineDelivery"; text: qsTr("Decline delivery")
+                                    visible: campaign.requiredKind === "core"
+                                    enabled: !campaign.busy
+                                    onClicked: campaign.resolveCoreChoice(false)
+                                }
+                                Action {
+                                    objectName: "acknowledgeManagement"; text: qsTr("Acknowledge management alert")
+                                    visible: campaign.requiredKind === "management"
+                                    enabled: !campaign.busy
+                                    onClicked: campaign.acknowledgeManagement()
+                                }
+                                Action {
+                                    objectName: "acknowledgeDeploymentIncident"; text: qsTr("Acknowledge deployment incident alert")
+                                    visible: campaign.requiredKind === "deploymentIncident"
+                                    enabled: !campaign.busy
+                                    onClicked: campaign.acknowledgeDeploymentIncident()
+                                }
+                                Action {
+                                    objectName: "acknowledgeSiteAlert"; text: qsTr("Review site disruption")
+                                    visible: campaign.requiredKind === "site"
+                                    enabled: !campaign.busy
+                                    onClicked: campaign.acknowledgeSiteAlert()
+                                }
+                                Action {
+                                    objectName: "acknowledgeWarning"; text: qsTr("Acknowledge warning")
+                                    visible: campaign.requiredKind === "liquidity"
+                                    enabled: !campaign.busy
+                                    onClicked: campaign.acknowledgeWarning()
+                                }
+                                Action {
+                                    objectName: "openInstitutionNotice"; text: qsTr("Open dispute")
+                                    visible: campaign.requiredKind === "institution" || campaign.requiredKind === "executive"
+                                    onClicked: { window.room = "institutions"; institutionsPanel.showDisputes() }
+                                }
+                                Action {
+                                    objectName: "acknowledgeInstitutionalNotice"; text: qsTr("Acknowledge notice")
+                                    visible: campaign.requiredKind === "institution" || campaign.requiredKind === "executive" || campaign.requiredKind === "governance"
+                                    enabled: !campaign.busy
+                                    onClicked: campaign.acknowledgeInstitutionalNotice()
+                                }
+                                Action {
+                                    objectName: "openLeadershipNotice"; text: qsTr("Open Leadership")
+                                    visible: campaign.requiredKind === "leadership"
+                                    onClicked: window.room = "leadership"
+                                }
+                                Action {
+                                    objectName: "acknowledgeLeadershipNotice"; text: qsTr("Acknowledge leadership notice")
+                                    visible: campaign.requiredKind === "leadership"
+                                    enabled: !campaign.busy
+                                    onClicked: campaign.leadership.acknowledge()
+                                }
+                                Action {
+                                    objectName: "openObjectivePostmortem"; text: qsTr("Open postmortem")
+                                    visible: campaign.requiredKind === "objective"
+                                    onClicked: window.room = "objectives"
+                                }
+                                Action {
+                                    objectName: "continueAfterObjectiveBreach"; text: qsTr("Continue scored play")
+                                    visible: campaign.requiredKind === "objective"
+                                    enabled: !campaign.busy
+                                    onClicked: campaign.objectives.acknowledge()
+                                }
                             }
                         }
                     }
-                }
 
 
-                Panel {
-                    visible: campaign.notice.length > 0
-                    contentItem: RowLayout {
-                        Copy { text: campaign.notice }
-                        Action { text: qsTr("Dismiss"); onClicked: campaign.clearNotice() }
+                    Panel {
+                        visible: campaign.notice.length > 0
+                        contentItem: RowLayout {
+                            Copy { text: campaign.notice }
+                            Action { text: qsTr("Dismiss"); onClicked: campaign.clearNotice() }
+                        }
                     }
-                }
 
-                Panel {
-                    visible: !campaign.welcome && window.room === "devices"
-                    contentItem: DevicePanel {textSize:window.textSize}
-                }
-                Panel {
-                    visible: !campaign.welcome && window.room === "people"
-                    contentItem: PeoplePanel {textSize:window.textSize;onOpenApp:(app,section)=>window.openApp(app,section,"laptop")}
-                }
-                Panel {
-                    visible:!campaign.welcome && window.room === "facilities"
-                    contentItem:WorkplacePanel {textSize:window.textSize;onVisitRoom:place=>{window.closeApp();campaign.world.navigate(place,"hq","","","")};onOpenInfrastructure:window.openApp("operations","","laptop")}
-                }
-                Panel {
-                    visible: window.settingsOpen
-                    contentItem: ColumnLayout {
-                        Heading { text: qsTr("Local preferences") }
-                        Copy { text: qsTr("Required choices, the capacity setback and actual due-date stops remain active at every speed. These preferences control optional completion and advance-warning pauses.") }
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: 8
-                            ComboBox {
-                                id: scaleControl
-                                objectName: "scaleControl"
+                    Panel {
+                        visible: !campaign.welcome && window.room === "devices"
+                        contentItem: DevicePanel {textSize:window.textSize}
+                    }
+                    Panel {
+                        visible: !campaign.welcome && window.room === "people"
+                        contentItem: PeoplePanel {textSize:window.textSize;onOpenApp:(app,section)=>window.openApp(app,section,"laptop")}
+                    }
+                    Panel {
+                        visible:!campaign.welcome && window.room === "facilities"
+                        contentItem:WorkplacePanel {textSize:window.textSize;onVisitRoom:place=>{window.closeApp();campaign.world.navigate(place,"hq","","","")};onOpenInfrastructure:window.openApp("operations","","laptop")}
+                    }
+                    Panel {
+                        visible: window.settingsOpen
+                        contentItem: ColumnLayout {
+                            Heading { text: qsTr("Local preferences") }
+                            Copy { text: qsTr("Required choices, the capacity setback and actual due-date stops remain active at every speed. These preferences control optional completion and advance-warning pauses.") }
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                GameSelect {
+                                    id: scaleControl
+                                    objectName: "scaleControl"
+                                    font.pixelSize: window.textSize
+                                    implicitWidth: Math.max(implicitContentWidth + leftPadding + rightPadding, window.textSize * 6.5)
+                                    Accessible.name: qsTr("Text size")
+                                    model: [100, 125, 150, 175, 200]
+                                    currentIndex: model.indexOf(campaign.textScalePercent)
+                                    displayText: qsTr("Text %1%").arg(campaign.textScalePercent)
+                                    enabled: !campaign.busy
+                                    onActivated: campaign.textScalePercent = model[currentIndex]
+                                }
+                                Action {
+                                    objectName: "compactControl"; text: qsTr("Compact")
+                                    checked: campaign.compactManagement
+                                    enabled: !campaign.busy
+                                    onClicked: campaign.compactManagement = !campaign.compactManagement
+                                }
+                                Action {
+                                    text: qsTr("Reduce motion")
+                                    objectName: "reduceMotionControl"
+                                    checked: campaign.reducedMotion
+                                    enabled: !campaign.busy
+                                    onClicked: campaign.reducedMotion = !campaign.reducedMotion
+                                }
+                                Action {
+                                    id: musicCreditsButton
+                                    objectName: "musicCreditsButton"
+                                    text: qsTr("Music and credits…")
+                                    onClicked: musicCredits.open()
+                                }
+                                GameCheck { objectName: "pauseProjectsControl"; text: qsTr("Pause on project completion"); font.pixelSize: window.textSize; Accessible.name: text; checked: campaign.autoPauseProjects; enabled: !campaign.busy; onClicked: campaign.autoPauseProjects = checked }
+                                GameCheck { objectName: "pauseEvaluationsControl"; text: qsTr("Pause on evaluation results"); font.pixelSize: window.textSize; Accessible.name: text; checked: campaign.autoPauseEvaluations; enabled: !campaign.busy; onClicked: campaign.autoPauseEvaluations = checked }
+                                GameCheck { objectName: "pauseAlertsControl"; text: qsTr("Pause on company alerts"); font.pixelSize: window.textSize; Accessible.name: text; checked: campaign.autoPauseAlerts; enabled: !campaign.busy; onClicked: campaign.autoPauseAlerts = checked }
+                                Action {
+                                    text: qsTr("Show guide")
+                                    checked: campaign.showGuide
+                                    enabled: !campaign.busy
+                                    onClicked: campaign.showGuide = !campaign.showGuide
+                                }
+                                Action {
+                                    text: qsTr("Autosave")
+                                    checked: campaign.autosaveEnabled
+                                    enabled: !campaign.busy
+                                    onClicked: campaign.autosaveEnabled = !campaign.autosaveEnabled
+                                }
+                            }
+                        }
+                    }
+
+                    Panel {
+                        visible: campaign.welcome
+                        contentItem: ColumnLayout {
+                            id: campaignSetupForm
+                            property bool customSeed: false
+                            function resetWorldSeed() {
+                                worldSeedInput.text = (campaign.scenarios[competitionChoice.currentIndex] || {}).seed || ""
+                                customSeed = false
+                            }
+                            Heading { text: qsTr("Found your AI company") }
+                            Copy { text: qsTr("Choose an introduction or a century campaign, name your institution and founder, then build it through research, products and partnerships.") }
+                            Copy { text: qsTr("Company name") }
+                            GameField {
+                                id: companyNameInput
+                                objectName: "companyNameInput"
+                                Layout.fillWidth: true
+                                text: qsTr("Daybreak Systems")
+                                maximumLength: 32
                                 font.pixelSize: window.textSize
-                                implicitWidth: Math.max(implicitContentWidth + leftPadding + rightPadding, window.textSize * 6.5)
-                                Accessible.name: qsTr("Text size")
-                                model: [100, 125, 150, 175, 200]
-                                currentIndex: model.indexOf(campaign.textScalePercent)
-                                displayText: qsTr("Text %1%").arg(campaign.textScalePercent)
-                                enabled: !campaign.busy
-                                onActivated: campaign.textScalePercent = model[currentIndex]
+                                selectByMouse: true
+                                Accessible.name: qsTr("Company name")
+                            }
+                            Copy { text: qsTr("Founder name") }
+                            GameField {
+                                id: founderNameInput
+                                objectName: "founderNameInput"
+                                Layout.fillWidth: true
+                                text: qsTr("Alex Vale")
+                                maximumLength: 32
+                                font.pixelSize: window.textSize
+                                selectByMouse: true
+                                Accessible.name: qsTr("Founder name")
+                            }
+                            Copy { text: qsTr("Founder pronouns (optional)") }
+                            GameField {
+                                id: founderPronounsInput
+                                objectName: "founderPronounsInput"
+                                Layout.fillWidth: true
+                                text: qsTr("they/them")
+                                maximumLength: 20
+                                font.pixelSize: window.textSize
+                                selectByMouse: true
+                                Accessible.name: qsTr("Founder pronouns")
                             }
                             Action {
-                                objectName: "compactControl"; text: qsTr("Compact")
-                                checked: campaign.compactManagement
-                                enabled: !campaign.busy
-                                onClicked: campaign.compactManagement = !campaign.compactManagement
-                            }
-                            Action {
-                                text: qsTr("Reduce motion")
-                                objectName: "reduceMotionControl"
-                                checked: campaign.reducedMotion
-                                enabled: !campaign.busy
-                                onClicked: campaign.reducedMotion = !campaign.reducedMotion
-                            }
-                            Action {
-                                id: musicCreditsButton
-                                objectName: "musicCreditsButton"
-                                text: qsTr("Music and credits…")
-                                onClicked: musicCredits.open()
-                            }
-                            CheckBox { objectName: "pauseProjectsControl"; text: qsTr("Pause on project completion"); font.pixelSize: window.textSize; Accessible.name: text; checked: campaign.autoPauseProjects; enabled: !campaign.busy; onClicked: campaign.autoPauseProjects = checked }
-                            CheckBox { objectName: "pauseEvaluationsControl"; text: qsTr("Pause on evaluation results"); font.pixelSize: window.textSize; Accessible.name: text; checked: campaign.autoPauseEvaluations; enabled: !campaign.busy; onClicked: campaign.autoPauseEvaluations = checked }
-                            CheckBox { objectName: "pauseAlertsControl"; text: qsTr("Pause on company alerts"); font.pixelSize: window.textSize; Accessible.name: text; checked: campaign.autoPauseAlerts; enabled: !campaign.busy; onClicked: campaign.autoPauseAlerts = checked }
-                            Action {
-                                text: qsTr("Show guide")
-                                checked: campaign.showGuide
-                                enabled: !campaign.busy
-                                onClicked: campaign.showGuide = !campaign.showGuide
-                            }
-                            Action {
-                                text: qsTr("Autosave")
-                                checked: campaign.autosaveEnabled
-                                enabled: !campaign.busy
-                                onClicked: campaign.autosaveEnabled = !campaign.autosaveEnabled
-                            }
-                        }
-                    }
-                }
-
-                Panel {
-                    visible: campaign.welcome
-                    contentItem: ColumnLayout {
-                        id: campaignSetupForm
-                        property bool customSeed: false
-                        function resetWorldSeed() {
-                            worldSeedInput.text = (campaign.scenarios[competitionChoice.currentIndex] || {}).seed || ""
-                            customSeed = false
-                        }
-                        Heading { text: qsTr("Found your AI company") }
-                        Copy { text: qsTr("Choose an introduction or a century campaign, name your institution and founder, then build it through research, products and partnerships.") }
-                        Copy { text: qsTr("Company name") }
-                        TextField {
-                            id: companyNameInput
-                            objectName: "companyNameInput"
-                            Layout.fillWidth: true
-                            text: qsTr("Daybreak Systems")
-                            maximumLength: 32
-                            font.pixelSize: window.textSize
-                            selectByMouse: true
-                            Accessible.name: qsTr("Company name")
-                        }
-                        Copy { text: qsTr("Founder name") }
-                        TextField {
-                            id: founderNameInput
-                            objectName: "founderNameInput"
-                            Layout.fillWidth: true
-                            text: qsTr("Alex Vale")
-                            maximumLength: 32
-                            font.pixelSize: window.textSize
-                            selectByMouse: true
-                            Accessible.name: qsTr("Founder name")
-                        }
-                        Copy { text: qsTr("Founder pronouns (optional)") }
-                        TextField {
-                            id: founderPronounsInput
-                            objectName: "founderPronounsInput"
-                            Layout.fillWidth: true
-                            text: qsTr("they/them")
-                            maximumLength: 20
-                            font.pixelSize: window.textSize
-                            selectByMouse: true
-                            Accessible.name: qsTr("Founder pronouns")
-                        }
-                        Action {
-                            objectName: "generateCampaignNames"
-                            text: qsTr("Generate fictional names")
-                            onClicked: {
-                                const names = campaign.generateCampaignNames()
-                                companyNameInput.text = names.company
-                                founderNameInput.text = names.founder
-                            }
-                        }
-                        Copy { text: qsTr("Headquarters") }
-                        ComboBox {
-                            id: headquartersChoice
-                            objectName: "headquartersChoice"
-                            Layout.fillWidth: true
-                            model: campaign.headquarters
-                            textRole: "label"
-                            valueRole: "id"
-                            font.pixelSize: window.textSize
-                            Accessible.name: qsTr("Headquarters")
-                        }
-                        ComboBox {
-                            id: competitionChoice
-                            objectName: "competitionChoice"
-                            Layout.fillWidth: true
-                            model: campaign.scenarios
-                            textRole: "label"
-                            valueRole: "id"
-                            font.pixelSize: window.textSize
-                            Accessible.name: qsTr("Competition and financing setup")
-                            onCurrentIndexChanged: Qt.callLater(function() {
-                                if (!campaignSetupForm.customSeed) campaignSetupForm.resetWorldSeed()
-                            })
-                            Component.onCompleted: {
-                                for (let index = 0; index < campaign.scenarios.length; ++index)
-                                    if (campaign.scenarios[index].id === "scenario.world_competition") currentIndex = index
-                            }
-                        }
-                        Copy { text: (campaign.scenarios[competitionChoice.currentIndex] || {}).detail || "" }
-                        Copy { text: qsTr("Founder background") }
-                        ComboBox {
-                            id: backgroundChoice
-                            objectName: "backgroundChoice"
-                            Layout.fillWidth: true
-                            model: (campaign.scenarios[competitionChoice.currentIndex] || {}).backgrounds || []
-                            textRole: "label"; valueRole: "id"
-                            font.pixelSize: window.textSize
-                            Accessible.name: qsTr("Founder background")
-                        }
-                        Copy { text: (backgroundChoice.model[backgroundChoice.currentIndex] || {}).detail || "" }
-                        Copy { visible: charterChoice.count > 0; text: qsTr("Organizational charter") }
-                        ComboBox {
-                            id: charterChoice
-                            objectName: "charterChoice"
-                            Layout.fillWidth: true
-                            visible: count > 0
-                            model: (campaign.scenarios[competitionChoice.currentIndex] || {}).charters || []
-                            textRole: "label"; valueRole: "id"
-                            font.pixelSize: window.textSize
-                            Accessible.name: qsTr("Organizational charter")
-                        }
-                        Copy { visible: charterChoice.count > 0; text: (charterChoice.model[charterChoice.currentIndex] || {}).detail || "" }
-                        Copy { visible: difficultyChoice.count > 0; text: qsTr("Difficulty") }
-                        ComboBox {
-                            id: difficultyChoice
-                            objectName: "difficultyChoice"
-                            Layout.fillWidth: true
-                            visible: count > 0
-                            model: (campaign.scenarios[competitionChoice.currentIndex] || {}).difficulties || []
-                            textRole: "label"; valueRole: "id"
-                            font.pixelSize: window.textSize
-                            Accessible.name: qsTr("Difficulty")
-                            property string chosenId: "difficulty.standard"
-                            function restoreChoice() {
-                                for(let i=0;i<count;++i) if(model[i].id === chosenId) {currentIndex=i;return}
-                                currentIndex=count > 0 ? 0 : -1
-                            }
-                            onActivated: chosenId = currentValue
-                            onModelChanged: Qt.callLater(restoreChoice)
-                            Component.onCompleted: Qt.callLater(restoreChoice)
-                        }
-                        Copy { visible: difficultyChoice.count > 0; text: (difficultyChoice.model[difficultyChoice.currentIndex] || {}).detail || "" }
-
-                        Copy {
-                            objectName: "campaignOpeningPreview"
-                            text: campaign.setupPreview(competitionChoice.currentValue || "", backgroundChoice.currentValue || "", charterChoice.currentValue || "", difficultyChoice.currentValue || "")
-                        }
-                        Copy { text: qsTr("World seed") }
-                        TextField {
-                            id: worldSeedInput
-                            objectName: "worldSeedInput"
-                            Layout.fillWidth: true
-                            maximumLength: 20
-                            font.pixelSize: window.textSize
-                            selectByMouse: true
-                            inputMethodHints: Qt.ImhDigitsOnly
-                            validator: RegularExpressionValidator { regularExpression: /[0-9]{1,20}/ }
-                            Accessible.name: qsTr("World seed")
-                            onTextEdited: campaignSetupForm.customSeed = true
-                            Component.onCompleted: Qt.callLater(function() {
-                                if (!campaignSetupForm.customSeed) campaignSetupForm.resetWorldSeed()
-                            })
-                        }
-                        Copy { text: qsTr("The same seed and setup choices start the same world. Names are generated locally.") }
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: 8
-                            Action {
-                                objectName: "generateWorldSeed"
-                                text: qsTr("New random seed")
+                                objectName: "generateCampaignNames"
+                                text: qsTr("Generate fictional names")
                                 onClicked: {
-                                    campaignSetupForm.customSeed = true
-                                    worldSeedInput.text = campaign.generateWorldSeed()
+                                    const names = campaign.generateCampaignNames()
+                                    companyNameInput.text = names.company
+                                    founderNameInput.text = names.founder
                                 }
                             }
-                            Action { text: qsTr("Use scenario seed"); onClicked: campaignSetupForm.resetWorldSeed() }
-                        }
-                        ObjectivePicker {
-                            id: openingObjectives
-                            readonly property var selectedScenario: campaign.scenarios[competitionChoice.currentIndex] || {}
-                            visible: choices.length > 0
-                            Layout.fillWidth: true
-                            textSize: window.textSize
-                            namePrefix: "openingObjective"
-                            choices: selectedScenario.objectives || []
-                            defaultPrimary: selectedScenario.primary || ""
-                            defaultSecondary: selectedScenario.secondary || []
-                        }
-                        Copy {
-                            text: openingObjectives.selectedScenario.objectiveNote || ""
-                            visible: text.length > 0
-                        }
-                        CheckBox {
-                            id: includeStories
-                            Layout.fillWidth: true
-                            text: qsTr("Include optional story layers (base events always enabled)")
-                            checked: true
-                            font.pixelSize: window.textSize
-                            Accessible.name: text
-                            contentItem: Text {
-                                text: includeStories.text; font: includeStories.font; color: "#f2f4f7"
-                                leftPadding: includeStories.indicator.width + includeStories.spacing
-                                wrapMode: Text.Wrap
+                            Copy { text: qsTr("Headquarters") }
+                            GameSelect {
+                                id: headquartersChoice
+                                objectName: "headquartersChoice"
+                                Layout.fillWidth: true
+                                model: campaign.headquarters
+                                textRole: "label"
+                                valueRole: "id"
+                                font.pixelSize: window.textSize
+                                Accessible.name: qsTr("Headquarters")
                             }
-                        }
-                        Action {
-                            objectName: "newCampaignButton"; text: qsTr("Start new campaign")
-                            enabled: campaign.ready && !campaign.busy && companyNameInput.text.trim().length > 0
-                                && founderNameInput.text.trim().length > 0 && worldSeedInput.acceptableInput
-                                && (backgroundChoice.count === 0 || backgroundChoice.currentIndex >= 0) && (charterChoice.count === 0 || charterChoice.currentIndex >= 0)
-                                && (difficultyChoice.count === 0 || difficultyChoice.currentIndex >= 0)
-                            onClicked: campaign.newCampaignSetup(headquartersChoice.currentValue, includeStories.checked,
-                                competitionChoice.currentValue, openingObjectives.visible ? openingObjectives.primary : "", openingObjectives.visible ? openingObjectives.secondary() : [],
-                                companyNameInput.text, founderNameInput.text, founderPronounsInput.text, worldSeedInput.text, backgroundChoice.currentValue || "", charterChoice.currentValue || "", difficultyChoice.currentValue || "")
-                        }
-                        Action { text: qsTr("Recover an existing local campaign…"); enabled: campaign.ready && !campaign.busy; onClicked: loadDialog.open() }
-                    }
-                }
-                Panel {
-                    visible: !campaign.welcome && !campaign.objectives.available && campaign.management.ending.length > 0
-                    contentItem: ColumnLayout {
-                        Heading { text: qsTr("Campaign outcome") }
-                        Copy { text: campaign.management.ending }
-                        Action { text: qsTr("Choose a new campaign"); onClicked: campaign.openWelcome() }
-                    }
-                }
-                Panel {
-                    visible: !campaign.welcome && campaign.objectives.ended && window.room !== "objectives"
-                    contentItem: ColumnLayout {
-                        Heading { text: qsTr("Campaign outcome recorded") }
-                        Copy { text: campaign.objectives.overview }
-                        Action { text: qsTr("Review objectives and postmortem"); onClicked: window.room = "objectives" }
-                    }
-                }
-                Panel {
-                    visible: !campaign.welcome && campaign.management.available && (window.room === "office" || window.room === "lab") && campaign.showGuide && campaign.management.ending.length === 0
-                    contentItem: ColumnLayout {
-                        Heading { text: qsTr("Getting started") }
-                        Copy { text: campaign.management.guide }
-                        Action { text: qsTr("Hide guide"); enabled: !campaign.busy; onClicked: campaign.showGuide = false }
-                    }
-                }
-                Panel {
-                    visible: !campaign.welcome && campaign.management.available && (window.room === "office" || window.room === "lab")
-                    contentItem: ColumnLayout {
-                        Heading { text: window.room === "lab" ? qsTr("Lab · data, experiments and evidence") : qsTr("%1 · %2").arg(campaign.companyName).arg(campaign.headquartersText) }
-                        Copy { text: campaign.identitySummary }
-                        Copy { visible: window.room === "office"; text: campaign.capacityText + "\n" + campaign.management.briefing }
-                        ManagementPanel {
-                    onOpenSuppliers: window.openApp("facilities","equipment","laptop")
-                    id: managementPanel; Layout.fillWidth: true; room: window.room; textSize: window.textSize
-                }
-                    }
-                }
-                Panel {
-                    visible: !campaign.welcome && campaign.infrastructure.available && window.room === "operations"
-                    contentItem: InfrastructurePanel { textSize: window.textSize }
-                }
-                Panel {
-                    visible: !campaign.welcome && campaign.civic.available && window.room === "civic"
-                    contentItem: CivicPanel { textSize: window.textSize }
-                }
-                Panel {
-                    visible: !campaign.welcome && campaign.society.available && window.room === "society"
-                    contentItem: SocietyPanel { textSize: window.textSize }
-                }
-                Panel {
-                    visible: !campaign.welcome && campaign.institutions.available && window.room === "institutions"
-                    contentItem: InstitutionsPanel { id: institutionsPanel; textSize: window.textSize }
-                }
-                Panel {
-                    visible: !campaign.welcome && campaign.frontier.available && window.room === "frontier"
-                    contentItem: FrontierPanel { textSize: window.textSize }
-                }
-                Panel {
-                    visible: !campaign.welcome && campaign.leadership.available && window.room === "leadership"
-                    contentItem: SuccessionPanel { textSize: window.textSize }
-                }
-                Panel {
-                    visible: !campaign.welcome && campaign.objectives.available && window.room === "objectives"
-                    contentItem: ObjectivesPanel { textSize: window.textSize }
-                }
-                GridLayout {
-                    visible: !campaign.welcome && window.room !== "people" && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && window.room !== "institutions" && window.room !== "frontier" && window.room !== "leadership" && window.room !== "objectives" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
-                    Layout.fillWidth: true
-                    columns: window.narrow || campaign.compactManagement ? 1 : 2
-                    columnSpacing: 10
-                    rowSpacing: 8
+                            GameSelect {
+                                id: competitionChoice
+                                objectName: "competitionChoice"
+                                Layout.fillWidth: true
+                                model: campaign.scenarios
+                                textRole: "label"
+                                valueRole: "id"
+                                font.pixelSize: window.textSize
+                                Accessible.name: qsTr("Competition and financing setup")
+                                onCurrentIndexChanged: Qt.callLater(function() {
+                                    if (!campaignSetupForm.customSeed) campaignSetupForm.resetWorldSeed()
+                                })
+                                Component.onCompleted: {
+                                    for (let index = 0; index < campaign.scenarios.length; ++index)
+                                        if (campaign.scenarios[index].id === "scenario.world_competition") currentIndex = index
+                                }
+                            }
+                            Copy { text: (campaign.scenarios[competitionChoice.currentIndex] || {}).detail || "" }
+                            Copy { text: qsTr("Founder background") }
+                            GameSelect {
+                                id: backgroundChoice
+                                objectName: "backgroundChoice"
+                                Layout.fillWidth: true
+                                model: (campaign.scenarios[competitionChoice.currentIndex] || {}).backgrounds || []
+                                textRole: "label"; valueRole: "id"
+                                font.pixelSize: window.textSize
+                                Accessible.name: qsTr("Founder background")
+                            }
+                            Copy { text: (backgroundChoice.model[backgroundChoice.currentIndex] || {}).detail || "" }
+                            Copy { visible: charterChoice.count > 0; text: qsTr("Organizational charter") }
+                            GameSelect {
+                                id: charterChoice
+                                objectName: "charterChoice"
+                                Layout.fillWidth: true
+                                visible: count > 0
+                                model: (campaign.scenarios[competitionChoice.currentIndex] || {}).charters || []
+                                textRole: "label"; valueRole: "id"
+                                font.pixelSize: window.textSize
+                                Accessible.name: qsTr("Organizational charter")
+                            }
+                            Copy { visible: charterChoice.count > 0; text: (charterChoice.model[charterChoice.currentIndex] || {}).detail || "" }
+                            Copy { visible: difficultyChoice.count > 0; text: qsTr("Difficulty") }
+                            GameSelect {
+                                id: difficultyChoice
+                                objectName: "difficultyChoice"
+                                Layout.fillWidth: true
+                                visible: count > 0
+                                model: (campaign.scenarios[competitionChoice.currentIndex] || {}).difficulties || []
+                                textRole: "label"; valueRole: "id"
+                                font.pixelSize: window.textSize
+                                Accessible.name: qsTr("Difficulty")
+                                property string chosenId: "difficulty.standard"
+                                function restoreChoice() {
+                                    for(let i=0;i<count;++i) if(model[i].id === chosenId) {currentIndex=i;return}
+                                    currentIndex=count > 0 ? 0 : -1
+                                }
+                                onActivated: chosenId = currentValue
+                                onModelChanged: Qt.callLater(restoreChoice)
+                                Component.onCompleted: Qt.callLater(restoreChoice)
+                            }
+                            Copy { visible: difficultyChoice.count > 0; text: (difficultyChoice.model[difficultyChoice.currentIndex] || {}).detail || "" }
 
-                    Panel {
-                        visible: window.room === "office"
-                        Layout.alignment: Qt.AlignTop
-                        Layout.preferredWidth: 5
-                        contentItem: ColumnLayout {
-                            Heading { text: qsTr("Office") }
-                            Copy { text: qsTr("Review the company’s cash, capacity and decisions. Start the clock or work one day at a time.") }
-                            Copy { text: campaign.capacityText }
-                            Action {
-                                text: qsTr("Review inbox (%1)").arg(campaign.inbox.count)
-                                onClicked: window.room = "inbox"
+                            Copy {
+                                objectName: "campaignOpeningPreview"
+                                text: campaign.setupPreview(competitionChoice.currentValue || "", backgroundChoice.currentValue || "", charterChoice.currentValue || "", difficultyChoice.currentValue || "")
                             }
-                        }
-                    }
-
-                    Panel {
-                        visible: window.room !== "office"
-                        Layout.alignment: Qt.AlignTop
-                        Layout.preferredWidth: 5
-                        contentItem: ColumnLayout {
-                            Heading { text: window.room === "lab" ? qsTr("Lab projects") : qsTr("Inbox") }
-                            RowLayout {
-                                TextField {
-                                    objectName: "projectSearch"
-                                    Layout.fillWidth: true
-                                    visible: window.room === "lab"
-                                    placeholderText: qsTr("Filter projects")
-                                    Accessible.name: placeholderText
-                                    font.pixelSize: window.textSize
-                                    onTextEdited: campaign.projects.filterText = text
-                                }
-                                TextField {
-                                    objectName: "inboxSearch"
-                                    Layout.fillWidth: true
-                                    visible: window.room === "inbox"
-                                    placeholderText: qsTr("Filter inbox")
-                                    Accessible.name: placeholderText
-                                    font.pixelSize: window.textSize
-                                    onTextEdited: campaign.inbox.filterText = text
-                                }
+                            Copy { text: qsTr("World seed") }
+                            GameField {
+                                id: worldSeedInput
+                                objectName: "worldSeedInput"
+                                Layout.fillWidth: true
+                                maximumLength: 20
+                                font.pixelSize: window.textSize
+                                selectByMouse: true
+                                inputMethodHints: Qt.ImhDigitsOnly
+                                validator: RegularExpressionValidator { regularExpression: /[0-9]{1,20}/ }
+                                Accessible.name: qsTr("World seed")
+                                onTextEdited: campaignSetupForm.customSeed = true
+                                Component.onCompleted: Qt.callLater(function() {
+                                    if (!campaignSetupForm.customSeed) campaignSetupForm.resetWorldSeed()
+                                })
+                            }
+                            Copy { text: qsTr("The same seed and setup choices start the same world. Names are generated locally.") }
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 8
                                 Action {
-                                    visible: window.room === "inbox" && !window.narrow
-                                    text: qsTr("Required only")
-                                    checked: campaign.inbox.requiredOnly
-                                    onClicked: campaign.inbox.requiredOnly = !campaign.inbox.requiredOnly
-                                }
-                                Action {
-                                    text: qsTr("Sort A–Z")
-                                    checked: window.room === "lab" ? campaign.projects.sortByTitle : campaign.inbox.sortByTitle
+                                    objectName: "generateWorldSeed"
+                                    text: qsTr("New random seed")
                                     onClicked: {
-                                        const rows = window.room === "lab" ? campaign.projects : campaign.inbox
-                                        rows.sortByTitle = !rows.sortByTitle
+                                        campaignSetupForm.customSeed = true
+                                        worldSeedInput.text = campaign.generateWorldSeed()
                                     }
                                 }
+                                Action { text: qsTr("Use scenario seed"); onClicked: campaignSetupForm.resetWorldSeed() }
                             }
-                            StableEntityList {
-                                objectName: "projectList"
-                                visible: window.room === "lab"
+                            ObjectivePicker {
+                                id: openingObjectives
+                                readonly property var selectedScenario: campaign.scenarios[competitionChoice.currentIndex] || {}
+                                visible: choices.length > 0
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: window.textSize * (campaign.compactManagement ? 5.75 : 9)
-                                rows: campaign.projects
-                                reducedMotion: campaign.reducedMotion
                                 textSize: window.textSize
-                                emptyText: qsTr("No matching projects")
-                                onSelected: id => { campaign.selectedProjectId = id }
+                                namePrefix: "openingObjective"
+                                choices: selectedScenario.objectives || []
+                                defaultPrimary: selectedScenario.primary || ""
+                                defaultSecondary: selectedScenario.secondary || []
                             }
-                            StableEntityList {
-                                objectName: "inboxList"
-                                visible: window.room === "inbox"
+                            Copy {
+                                text: openingObjectives.selectedScenario.objectiveNote || ""
+                                visible: text.length > 0
+                            }
+                            GameCheck {
+                                id: includeStories
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: window.textSize * (campaign.compactManagement ? 5.75 : 9)
-                                rows: campaign.inbox
-                                reducedMotion: campaign.reducedMotion
-                                textSize: window.textSize
-                                emptyText: qsTr("No matching messages")
-                                onSelected: id => { campaign.selectedInboxId = id }
+                                text: qsTr("Include optional story layers (base events always enabled)")
+                                checked: true
+                                font.pixelSize: window.textSize
+                                Accessible.name: text
+                                contentItem: Text {
+                                    text: includeStories.text; font: includeStories.font; color: "#f2f4f7"
+                                    leftPadding: includeStories.indicator.width + includeStories.spacing
+                                    wrapMode: Text.Wrap
+                                }
                             }
+                            Action {
+                                objectName: "newCampaignButton"; text: qsTr("Start new campaign")
+                                enabled: campaign.ready && !campaign.busy && companyNameInput.text.trim().length > 0
+                                    && founderNameInput.text.trim().length > 0 && worldSeedInput.acceptableInput
+                                    && (backgroundChoice.count === 0 || backgroundChoice.currentIndex >= 0) && (charterChoice.count === 0 || charterChoice.currentIndex >= 0)
+                                    && (difficultyChoice.count === 0 || difficultyChoice.currentIndex >= 0)
+                                onClicked: campaign.newCampaignSetup(headquartersChoice.currentValue, includeStories.checked,
+                                    competitionChoice.currentValue, openingObjectives.visible ? openingObjectives.primary : "", openingObjectives.visible ? openingObjectives.secondary() : [],
+                                    companyNameInput.text, founderNameInput.text, founderPronounsInput.text, worldSeedInput.text, backgroundChoice.currentValue || "", charterChoice.currentValue || "", difficultyChoice.currentValue || "")
+                            }
+                            Action { text: qsTr("Recover an existing local campaign…"); enabled: campaign.ready && !campaign.busy; onClicked: loadDialog.open() }
                         }
                     }
-
                     Panel {
-                        id: inspector
-                        objectName: "inspector"
-                        Layout.alignment: Qt.AlignTop
-                        Layout.preferredWidth: 4
-                        readonly property var entry: window.room === "lab" ? campaign.projects.selectedRow : campaign.inbox.selectedRow
+                        visible: !campaign.welcome && !campaign.objectives.available && campaign.management.ending.length > 0
                         contentItem: ColumnLayout {
-                            Heading { text: qsTr("Inspector") }
-                            Copy {
-                                text: inspector.entry.title || qsTr("Select a project or inbox entry to review its details.")
-                                font.bold: true
+                            Heading { text: qsTr("Campaign outcome") }
+                            Copy { text: campaign.management.ending }
+                            Action { text: qsTr("Choose a new campaign"); onClicked: campaign.openWelcome() }
+                        }
+                    }
+                    Panel {
+                        visible: !campaign.welcome && campaign.objectives.ended && window.room !== "objectives"
+                        contentItem: ColumnLayout {
+                            Heading { text: qsTr("Campaign outcome recorded") }
+                            Copy { text: campaign.objectives.overview }
+                            Action { text: qsTr("Review objectives and postmortem"); onClicked: window.room = "objectives" }
+                        }
+                    }
+                    Panel {
+                        visible: !campaign.welcome && campaign.management.available && (window.room === "office" || window.room === "lab") && campaign.showGuide && campaign.management.ending.length === 0
+                        contentItem: ColumnLayout {
+                            Heading { text: qsTr("Getting started") }
+                            Copy { text: campaign.management.guide }
+                            Action { text: qsTr("Hide guide"); enabled: !campaign.busy; onClicked: campaign.showGuide = false }
+                        }
+                    }
+                    Panel {
+                        visible: !campaign.welcome && campaign.management.available && (window.room === "office" || window.room === "lab")
+                        contentItem: ColumnLayout {
+                            Heading { text: window.room === "lab" ? qsTr("Lab · data, experiments and evidence") : qsTr("%1 · %2").arg(campaign.companyName).arg(campaign.headquartersText) }
+                            Copy { text: campaign.identitySummary }
+                            Copy { visible: window.room === "office"; text: campaign.capacityText + "\n" + campaign.management.briefing }
+                            ManagementPanel {
+                        onOpenSuppliers: window.openApp("facilities","equipment","laptop")
+                        id: managementPanel; Layout.fillWidth: true; room: window.room; textSize: window.textSize
+                    }
+                        }
+                    }
+                    Panel {
+                        visible: !campaign.welcome && campaign.infrastructure.available && window.room === "operations"
+                        contentItem: InfrastructurePanel { textSize: window.textSize }
+                    }
+                    Panel {
+                        visible: !campaign.welcome && campaign.civic.available && window.room === "civic"
+                        contentItem: CivicPanel { textSize: window.textSize }
+                    }
+                    Panel {
+                        visible: !campaign.welcome && campaign.society.available && window.room === "society"
+                        contentItem: SocietyPanel { textSize: window.textSize }
+                    }
+                    Panel {
+                        visible: !campaign.welcome && campaign.institutions.available && window.room === "institutions"
+                        contentItem: InstitutionsPanel { id: institutionsPanel; textSize: window.textSize }
+                    }
+                    Panel {
+                        visible: !campaign.welcome && campaign.frontier.available && window.room === "frontier"
+                        contentItem: FrontierPanel { textSize: window.textSize }
+                    }
+                    Panel {
+                        visible: !campaign.welcome && campaign.leadership.available && window.room === "leadership"
+                        contentItem: SuccessionPanel { textSize: window.textSize }
+                    }
+                    Panel {
+                        visible: !campaign.welcome && campaign.objectives.available && window.room === "objectives"
+                        contentItem: ObjectivesPanel { textSize: window.textSize }
+                    }
+                    GridLayout {
+                        visible: !campaign.welcome && window.room !== "people" && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && window.room !== "institutions" && window.room !== "frontier" && window.room !== "leadership" && window.room !== "objectives" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))
+                        Layout.fillWidth: true
+                        columns: deviceWindow.narrowContent || campaign.compactManagement ? 1 : 2
+                        columnSpacing: 10
+                        rowSpacing: 8
+
+                        Panel {
+                            visible: window.room === "office"
+                            Layout.alignment: Qt.AlignTop
+                            Layout.preferredWidth: 5
+                            contentItem: ColumnLayout {
+                                Heading { text: qsTr("Office") }
+                                Copy { text: qsTr("Review the company’s cash, capacity and decisions. Start the clock or work one day at a time.") }
+                                Copy { text: campaign.capacityText }
+                                Action {
+                                    text: qsTr("Review inbox (%1)").arg(campaign.inbox.count)
+                                    onClicked: window.room = "inbox"
+                                }
                             }
-                            Copy { visible: text.length > 0; text: inspector.entry.detail || "" }
-                            Action {
-                                text: qsTr("Acknowledge company alert")
-                                visible: window.room === "inbox" && !!inspector.entry.fields && !!inspector.entry.fields.noticeId && !inspector.entry.fields.acknowledged
-                                enabled: campaign.paused && !campaign.busy
-                                onClicked: campaign.management.acknowledgeAlert(inspector.entry.fields.noticeId)
+                        }
+
+                        Panel {
+                            visible: window.room !== "office"
+                            Layout.alignment: Qt.AlignTop
+                            Layout.preferredWidth: 5
+                            contentItem: ColumnLayout {
+                                Heading { text: window.room === "lab" ? qsTr("Lab projects") : qsTr("Inbox") }
+                                RowLayout {
+                                    GameField {
+                                        objectName: "projectSearch"
+                                        Layout.fillWidth: true
+                                        visible: window.room === "lab"
+                                        placeholderText: qsTr("Filter projects")
+                                        Accessible.name: placeholderText
+                                        font.pixelSize: window.textSize
+                                        onTextEdited: campaign.projects.filterText = text
+                                    }
+                                    GameField {
+                                        objectName: "inboxSearch"
+                                        Layout.fillWidth: true
+                                        visible: window.room === "inbox"
+                                        placeholderText: qsTr("Filter inbox")
+                                        Accessible.name: placeholderText
+                                        font.pixelSize: window.textSize
+                                        onTextEdited: campaign.inbox.filterText = text
+                                    }
+                                    Action {
+                                        visible: window.room === "inbox" && !deviceWindow.narrowContent
+                                        text: qsTr("Required only")
+                                        checked: campaign.inbox.requiredOnly
+                                        onClicked: campaign.inbox.requiredOnly = !campaign.inbox.requiredOnly
+                                    }
+                                    Action {
+                                        text: qsTr("Sort A–Z")
+                                        checked: window.room === "lab" ? campaign.projects.sortByTitle : campaign.inbox.sortByTitle
+                                        onClicked: {
+                                            const rows = window.room === "lab" ? campaign.projects : campaign.inbox
+                                            rows.sortByTitle = !rows.sortByTitle
+                                        }
+                                    }
+                                }
+                                StableEntityList {
+                                    objectName: "projectList"
+                                    visible: window.room === "lab"
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: window.textSize * (campaign.compactManagement ? 5.75 : 9)
+                                    rows: campaign.projects
+                                    reducedMotion: campaign.reducedMotion
+                                    textSize: window.textSize
+                                    emptyText: qsTr("No matching projects")
+                                    onSelected: id => { campaign.selectedProjectId = id }
+                                }
+                                StableEntityList {
+                                    objectName: "inboxList"
+                                    visible: window.room === "inbox"
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: window.textSize * (campaign.compactManagement ? 5.75 : 9)
+                                    rows: campaign.inbox
+                                    reducedMotion: campaign.reducedMotion
+                                    textSize: window.textSize
+                                    emptyText: qsTr("No matching messages")
+                                    onSelected: id => { campaign.selectedInboxId = id }
+                                }
                             }
-                            Action {
-                                objectName: "pauseLabProject"
-                                text: qsTr("Pause lab project")
-                                visible: window.room === "lab" && !!inspector.entry.fields && inspector.entry.fields.canPause === true
-                                enabled: campaign.paused && !campaign.busy
-                                onClicked: campaign.projectPause(inspector.entry.entityId)
-                            }
-                            Action {
-                                objectName: "resumeLabProject"
-                                text: qsTr("Resume original allocation")
-                                visible: window.room === "lab" && !!inspector.entry.fields && inspector.entry.fields.canResume === true
-                                enabled: campaign.paused && !campaign.busy
-                                onClicked: campaign.projectResume(inspector.entry.entityId)
-                            }
-                            Action {
-                                objectName: "cancelProject"
-                                visible: window.room === "lab" && !!inspector.entry.actionable
-                                enabled: campaign.paused && !campaign.busy
-                                text: qsTr("Cancel project…")
-                                onClicked: {
-                                    cancelDialog.projectId = inspector.entry.entityId
-                                    cancelDialog.open()
+                        }
+
+                        Panel {
+                            id: inspector
+                            objectName: "inspector"
+                            Layout.alignment: Qt.AlignTop
+                            Layout.preferredWidth: 4
+                            readonly property var entry: window.room === "lab" ? campaign.projects.selectedRow : campaign.inbox.selectedRow
+                            contentItem: ColumnLayout {
+                                Heading { text: qsTr("Inspector") }
+                                Copy {
+                                    text: inspector.entry.title || qsTr("Select a project or inbox entry to review its details.")
+                                    font.bold: true
+                                }
+                                Copy { visible: text.length > 0; text: inspector.entry.detail || "" }
+                                Action {
+                                    text: qsTr("Acknowledge company alert")
+                                    visible: window.room === "inbox" && !!inspector.entry.fields && !!inspector.entry.fields.noticeId && !inspector.entry.fields.acknowledged
+                                    enabled: campaign.paused && !campaign.busy
+                                    onClicked: campaign.management.acknowledgeAlert(inspector.entry.fields.noticeId)
+                                }
+                                Action {
+                                    objectName: "pauseLabProject"
+                                    text: qsTr("Pause lab project")
+                                    visible: window.room === "lab" && !!inspector.entry.fields && inspector.entry.fields.canPause === true
+                                    enabled: campaign.paused && !campaign.busy
+                                    onClicked: campaign.projectPause(inspector.entry.entityId)
+                                }
+                                Action {
+                                    objectName: "resumeLabProject"
+                                    text: qsTr("Resume original allocation")
+                                    visible: window.room === "lab" && !!inspector.entry.fields && inspector.entry.fields.canResume === true
+                                    enabled: campaign.paused && !campaign.busy
+                                    onClicked: campaign.projectResume(inspector.entry.entityId)
+                                }
+                                Action {
+                                    objectName: "cancelProject"
+                                    visible: window.room === "lab" && !!inspector.entry.actionable
+                                    enabled: campaign.paused && !campaign.busy
+                                    text: qsTr("Cancel project…")
+                                    onClicked: {
+                                        cancelDialog.projectId = inspector.entry.entityId
+                                        cancelDialog.open()
+                                    }
                                 }
                             }
                         }
@@ -1017,7 +1085,7 @@ ApplicationWindow {
             scroll.reveal(activeFocusItem)
     }
 
-    Dialog {
+    GameDialog {
         id: cancelDialog
         property string projectId: ""
         title: qsTr("Cancel this project?")

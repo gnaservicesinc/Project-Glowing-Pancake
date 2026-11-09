@@ -17,6 +17,7 @@ Item {
     readonly property string place: nav.place || "workspace"
     signal openApp(string app, string section, string device)
     signal menuRequested()
+    signal launcherRequested()
     function visit(id) { campaign.world.navigate(id, nav.scale || "hq", "", "", "") }
     function placeApp() {return place==="lab" || place==="research_annex" || place==="evaluation_suite"?"lab":place==="meeting" || place==="collaboration"?"inbox":place==="compute"?"operations":"office"}
     function openPlace() {desktop.openApp(placeApp(),place==="evaluation_suite"?"evaluate":placeApp()==="lab"?"research":"",campaign.world.atHeadquarters && campaign.world.officeKind!=="home"?"desktop":"laptop")}
@@ -25,6 +26,7 @@ Item {
         if(left<view.contentX) view.contentX=left
         else if(left+item.width>view.contentX+dockScroll.availableWidth) view.contentX=left+item.width-dockScroll.availableWidth
     }
+    function openTime() { compactTime.open() }
     function showMap(scale) {campaign.world.navigate("map",scale,"","","")}
 
     Rectangle {anchors.fill:parent;color:"#17282c"}
@@ -165,7 +167,7 @@ Item {
     RowLayout {
         visible:desktop.shortLayout && desktop.place!=="map" && !desktop.physicalHQ
         anchors.top:hud.bottom;anchors.left:parent.left;anchors.right:parent.right;anchors.margins:10
-        ComboBox {objectName:"compactRoomPicker";Layout.fillWidth:true;model:campaign.world.rooms;textRole:"name";valueRole:"id";font.pixelSize:desktop.textSize;currentIndex:Math.max(0,model.findIndex(row=>row.id===desktop.place));Accessible.name:qsTr("Current room");onActivated:desktop.visit(currentValue)}
+        GameSelect {objectName:"compactRoomPicker";Layout.fillWidth:true;model:campaign.world.rooms;textRole:"name";valueRole:"id";font.pixelSize:desktop.textSize;currentIndex:Math.max(0,model.findIndex(row=>row.id===desktop.place));Accessible.name:qsTr("Current room");onActivated:desktop.visit(currentValue)}
         WorldButton {text:qsTr("Open");textSize:desktop.textSize;onClicked:desktop.openPlace()}
     }
     Rectangle {
@@ -209,55 +211,29 @@ Item {
                 WorldButton {objectName:"labTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Lab");textSize:desktop.textSize;onClicked:desktop.openApp("lab","research","laptop")}
                 WorldButton {objectName:"inboxTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("News & decisions");textSize:desktop.textSize;onClicked:desktop.openApp("inbox","","phone")}
                 WorldButton {objectName:"mapTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Map");textSize:desktop.textSize;checked:desktop.place==="map";onClicked:desktop.showMap(desktop.nav.scale || "hq")}
-                WorldButton {objectName:"devicesButton";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Devices & apps");textSize:desktop.textSize;onClicked:{launcherDevice=campaign.world.devices.some(row=>row.id===launcherDevice)?launcherDevice:(campaign.world.devices.length?campaign.world.devices[0].id:"");deviceMenu.open()}}
+                WorldButton {objectName:"devicesButton";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Devices & apps");textSize:desktop.textSize;onClicked:desktop.launcherRequested()}
             }
         }
     }
     Popup {
-        id:compactTime;anchors.centerIn:Overlay.overlay;width:Math.min(520,desktop.width-32);height:Math.min(500,desktop.height-32);modal:true;focus:true
+        id:compactTime;anchors.centerIn:Overlay.overlay;width:Math.min(520,desktop.width-32);height:Math.min(500,desktop.height-32);modal:true;focus:true; padding:16
+        background:Rectangle {radius:12;color:"#142e33";border.color:"#8d9d7e"}
         contentItem:ScrollView {
             id:timeScroll;contentWidth:availableWidth;clip:true
             ColumnLayout {
                 width:timeScroll.availableWidth;spacing:12
                 Label {Layout.fillWidth:true;text:qsTr("Cash %1\nAvailable %2").arg(campaign.cashText,campaign.availableText);font.pixelSize:desktop.textSize;wrapMode:Text.Wrap}
+                WorldButton {text:campaign.paused?qsTr("Play"):qsTr("Pause");textSize:desktop.textSize;enabled:!campaign.busy && !campaign.storageBlocked && (!campaign.paused || campaign.canPlay);onClicked:campaign.togglePaused()}
                 WorldButton {text:qsTr("Next day");textSize:desktop.textSize;enabled:campaign.canAdvance && !campaign.storageBlocked;onClicked:campaign.step()}
-                ComboBox {Layout.fillWidth:true;model:[1,10,30,60];currentIndex:model.indexOf(campaign.daysPerSecond);displayText:qsTr("%1 days/s").arg(campaign.daysPerSecond);font.pixelSize:desktop.textSize;Accessible.name:qsTr("Days per second");onActivated:campaign.daysPerSecond=model[currentIndex]}
+                GameSelect {Layout.fillWidth:true;model:[1,10,30,60];currentIndex:model.indexOf(campaign.daysPerSecond);displayText:qsTr("%1 days/s").arg(campaign.daysPerSecond);font.pixelSize:desktop.textSize;Accessible.name:qsTr("Days per second");onActivated:campaign.daysPerSecond=model[currentIndex]}
                 WorldButton {text:qsTr("Advance until…");textSize:desktop.textSize;onClicked:{compactTime.close();advanceMenu.open()}}
                 WorldButton {text:qsTr("Close");textSize:desktop.textSize;onClicked:compactTime.close()}
             }
         }
     }
     Popup {
-        id:deviceMenu;objectName:"deviceLauncher"
-        anchors.centerIn:Overlay.overlay;width:Math.min(700,desktop.width-32);height:Math.min(570,desktop.height-32)
-        modal:true;focus:true;padding:24
-        background:Rectangle {color:"#152d31";radius:14;border.color:"#7c9d91"}
-        contentItem:ScrollView {
-            id: launcherScroll
-            contentWidth:availableWidth;clip:true
-            ColumnLayout {
-                width:launcherScroll.availableWidth;spacing:14
-                Label {text:qsTr("Your devices");font.pixelSize:desktop.textSize*1.5;color:"#f4ead6"}
-                Flow {Layout.fillWidth:true;spacing:8
-                    Repeater {model:campaign.world.devices;WorldButton {required property var modelData;objectName:"launcherDevice_"+modelData.id;text:modelData.name;textSize:desktop.textSize;checked:launcherDevice===modelData.id;onClicked:launcherDevice=modelData.id}}
-                }
-                WorldButton {objectName:"equipmentApp";text:qsTr("Manage equipment");textSize:desktop.textSize;onClicked:{deviceMenu.close();desktop.openApp("devices","","")}}
-                Label {Layout.fillWidth:true;text:qsTr("Open an application. Close it to return to this place.");wrapMode:Text.Wrap;font.pixelSize:desktop.textSize;color:"#bbcec6"}
-                Flow {
-                    Layout.fillWidth:true;spacing:8
-                    Repeater {
-                        model:[{id:"office",name:qsTr("Company")},{id:"people",name:qsTr("People")},{id:"facilities",name:qsTr("Headquarters & blueprints")},{id:"lab",name:qsTr("Research")},{id:"inbox",name:qsTr("News & decisions")},{id:"operations",name:qsTr("Infrastructure & travel")},{id:"civic",name:qsTr("Public affairs")},{id:"society",name:qsTr("World")},{id:"institutions",name:qsTr("Institutions")},{id:"frontier",name:qsTr("Frontier")},{id:"leadership",name:qsTr("Leadership & retirement")},{id:"objectives",name:qsTr("Company mission")}]
-                        WorldButton {required property var modelData;objectName:modelData.id+"App";text:modelData.name;textSize:desktop.textSize;enabled:(campaign.world.companyArchive || campaign.world.devices.length>0) && campaign.world.appAvailable(modelData.id,launcherDevice);onClicked:{deviceMenu.close();desktop.openApp(modelData.id,"",launcherDevice)}}
-                    }
-                }
-                WorldButton {text:qsTr("Back to the room");textSize:desktop.textSize;onClicked:deviceMenu.close()}
-            }
-        }
-    }
-    property string launcherDevice:"laptop"
-    Popup {
         id:advanceMenu;anchors.centerIn:Overlay.overlay;width:Math.min(410,desktop.width-32);modal:true;focus:true;padding:20
-        background:Rectangle {color:"#183135";radius:12;border.color:"#72938a"}
+        background:Rectangle {radius:12;color:"#142e33";border.color:"#8d9d7e"}
         contentItem:ColumnLayout {
             Label {Layout.fillWidth:true;text:qsTr("Advance until…");font.pixelSize:desktop.textSize;color:"#f2e8d3"}
             Repeater {model:[{id:"project",name:qsTr("Next project")},{id:"evaluation",name:qsTr("Next evaluation")},{id:"deadline",name:qsTr("Next deadline")},{id:"leadership",name:qsTr("Next leadership date")}];WorldButton {required property var modelData;Layout.fillWidth:true;text:modelData.name;textSize:desktop.textSize;enabled:campaign.paused && campaign.canPlay && !campaign.storageBlocked;onClicked:{advanceMenu.close();campaign.advanceTo(modelData.id)}}}

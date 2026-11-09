@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 
-ComboBox {
+GameSelect {
     id: picker
     property string draftScope: ""
     property var draftIds: []

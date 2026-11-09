@@ -58,7 +58,14 @@ Escape during play pauses into the menu; Escape there, Quit and window close
 open exit confirmation.
 
 The workspace HUD and dock keep company tools, people, research, decisions,
-places and map scales reachable. In a fresh founder campaign, use **Suppliers**
+places and map scales reachable. Open **Devices & apps** to see the laptop
+desktop and choose a device. The launcher shows which apps work on that device.
+Use **Apps** inside a device to switch tools, and **Return to world** to close
+the device. On short displays, **Time** opens the clock controls. Open **Map →
+State** and select a state to see its outline and neighboring boundaries.
+Select a county on the map or in the county list to read its local conditions.
+
+In a fresh founder campaign, use **Suppliers**
 to order a desk and computer. Advance to delivery, choose **Furnish headquarters**,
 then place the desk and mount its computer. Drag furnishings or use the column/row
 controls; assign a person through the desk inspector. Empty/storage/powered-off

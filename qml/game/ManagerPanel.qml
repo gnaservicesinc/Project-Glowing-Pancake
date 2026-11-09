@@ -22,16 +22,16 @@ ColumnLayout {
     Label {Layout.fillWidth:true;text:qsTr("HQ operations management");font.pixelSize:panel.textSize*1.4;font.bold:true;wrapMode:Text.Wrap}
     Label {objectName:"managerStatus";textFormat:Text.PlainText;Layout.fillWidth:true;text:(panel.department.name || "")+qsTr(" · Branch availability %1").arg(panel.department.availability || "");font.pixelSize:panel.textSize;wrapMode:Text.Wrap}
     Label {Layout.fillWidth:true;text:panel.department.detail || "";textFormat:Text.PlainText;font.pixelSize:panel.textSize;wrapMode:Text.Wrap}
-    ComboBox {objectName:"operationsManagerPicker";Layout.fillWidth:true;model:panel.candidates;textRole:"label";valueRole:"id";currentIndex:Math.max(0,model.findIndex(row=>row.id===panel.personId));font.pixelSize:panel.textSize;Accessible.name:qsTr("HQ operations manager");onActivated:{panel.chosenPerson=currentValue;campaign.world.setDraft("departments/person",currentValue)}}
+    GameSelect {objectName:"operationsManagerPicker";Layout.fillWidth:true;model:panel.candidates;textRole:"label";valueRole:"id";currentIndex:Math.max(0,model.findIndex(row=>row.id===panel.personId));font.pixelSize:panel.textSize;Accessible.name:qsTr("HQ operations manager");onActivated:{panel.chosenPerson=currentValue;campaign.world.setDraft("departments/person",currentValue)}}
     EmployeePortrait {objectName:"managerPortrait";visible:panel.personId.length>0;Layout.preferredWidth:panel.textSize*6;Layout.preferredHeight:Layout.preferredWidth;portraitSource:panel.selectedPerson.portrait || "";personName:panel.selectedPerson.name || "";reducedMotion:campaign.reducedMotion;onClicked:panel.profileRequested(panel.selectedPerson)}
-    ComboBox {objectName:"operationsSourcePicker";Layout.fillWidth:true;model:campaign.world.managementSources;textRole:"name";valueRole:"id";currentIndex:Math.max(0,model.findIndex(row=>row.id===panel.sourceId));font.pixelSize:panel.textSize;Accessible.name:qsTr("Compute for management work");onActivated:{panel.chosenSource=currentValue;campaign.world.setDraft("departments/source",currentValue)}}
+    GameSelect {objectName:"operationsSourcePicker";Layout.fillWidth:true;model:campaign.world.managementSources;textRole:"name";valueRole:"id";currentIndex:Math.max(0,model.findIndex(row=>row.id===panel.sourceId));font.pixelSize:panel.textSize;Accessible.name:qsTr("Compute for management work");onActivated:{panel.chosenSource=currentValue;campaign.world.setDraft("departments/source",currentValue)}}
     Flow {Layout.fillWidth:true;spacing:8
         WorldButton {objectName:"reviewOperationsManager";text:qsTr("Review manager assignment…");textSize:panel.textSize;enabled:panel.editable && panel.personId.length>0 && panel.sourceId.length>0;onClicked:panel.review(false)}
         WorldButton {objectName:"releaseOperationsManager";text:qsTr("Release manager to other work…");textSize:panel.textSize;enabled:panel.editable && !!panel.department.person;onClicked:panel.review(true)}
     }
     ReviewPause {id:reviewPause}
     function review(release) {reviewPause.begin(()=>{quote.reviewed=campaign.world.managerQuote(release?"":panel.personId,release?"":panel.sourceId);quote.open()})}
-    Dialog {
+    GameDialog {
         id:quote;objectName:"operationsManagerQuote";property var reviewed:({})
         title:reviewed.error?qsTr("This assignment needs a change"):qsTr("HQ operations assignment")
         anchors.centerIn:Overlay.overlay;width:Math.min(panel.textSize*43,Overlay.overlay.width-32);height:Math.min(panel.textSize*34,Overlay.overlay.height-32);modal:true;focus:true

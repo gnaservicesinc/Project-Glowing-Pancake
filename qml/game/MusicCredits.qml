@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-Dialog {
+GameDialog {
     id: panel
     required property int textSize
     required property bool reducedMotion
@@ -47,7 +47,7 @@ Dialog {
             width: scroll.availableWidth
             height: implicitHeight
             spacing: 10
-            CheckBox {
+            GameCheck {
                 id: enableMusic
                 objectName: "musicEnabledControl"
                 text: qsTr("Play background music")
@@ -61,7 +61,7 @@ Dialog {
                 text: qsTr("Music volume: %1%").arg(volume.value)
                 font.pixelSize: panel.textSize
             }
-            Slider {
+            GameSlider {
                 id: volume
                 objectName: "musicVolumeControl"
                 Layout.fillWidth: true
@@ -74,7 +74,7 @@ Dialog {
                 value: campaign.musicVolume
                 onMoved: campaign.musicVolume = Math.round(value)
             }
-            ComboBox {
+            GameSelect {
                 id: track
                 objectName: "musicTrackControl"
                 Layout.fillWidth: true
@@ -92,14 +92,14 @@ Dialog {
             Flow {
                 Layout.fillWidth: true
                 spacing: 6
-                Button {
+                WorldButton {
                     objectName: "musicExcerptControl"
                     text: qsTr("Play selected excerpt")
                     Accessible.name: text
                     enabled: campaign.musicEnabled && track.currentIndex >= 0
                     onClicked: soundtrack.playExcerpt(track.currentIndex)
                 }
-                Button {
+                WorldButton {
                     text: qsTr("Track source")
                     Accessible.name: qsTr("Open the selected music source in your browser")
                     enabled: track.currentIndex >= 0
@@ -115,7 +115,7 @@ Dialog {
             Copy {
                 text: qsTr("Qt Core, Gui, QML, Quick and Quick Controls use the Qt open source license terms. Qt sources and third-party notices are available at download.qt.io/archive/qt and doc.qt.io/qt-6.12/licensing.html.")
             }
-            ComboBox {
+            GameSelect {
                 id: notice
                 objectName: "licenseSelector"
                 Layout.fillWidth: true
@@ -126,6 +126,9 @@ Dialog {
                 font.pixelSize: panel.textSize
             }
             TextArea {
+                color: "#e8e6d3"
+                selectionColor: "#52746b"
+                background: Rectangle { radius: 7; color: "#193539"; border.color: "#59776c" }
                 objectName: "licenseText"
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
@@ -140,7 +143,7 @@ Dialog {
         }
     }
     footer: DialogButtonBox {
-        Button {
+        WorldButton {
             objectName: "closeMusicCredits"
             text: qsTr("Close")
             Accessible.name: text

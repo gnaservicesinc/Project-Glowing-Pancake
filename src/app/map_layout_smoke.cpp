@@ -95,11 +95,19 @@ void schedule_map_layout_smoke(QQuickWindow& window,pgp::bridge::CampaignControl
         if(run->phase==5) {
             auto* map=item("domesticWorldMap");if(!map || map->property("textSize").toInt()!=window.property("textSize").toInt()){fail("domestic map scale");return;}
             (void)reveal(window,*map,QPointF{map->width()/2,map->height()/2});capture("country");
+            const auto state=run->size==1?QStringLiteral("US-TX"):QStringLiteral("US-CA");
+            campaign.infrastructure()->states()->setSelectedId(state);
+            campaign.world()->setCountyState(state);
             if(!navigate("state")){fail("open county map");return;}run->phase=6;return;
         }
         if(run->phase==6) {
             auto* map=item("stateCountyMap");const auto rows=campaign.world()->countyRows();
             if(!map || rows.size()<2 || map->property("textSize").toInt()!=window.property("textSize").toInt()){fail("county map and marker scale");return;}
+            const auto data=map->property("feature");
+            const auto feature=(data.metaType()==QMetaType::fromType<QJSValue>()?data.value<QJSValue>().toVariant():data).toMap();
+            if(feature.value("id").toString()!=campaign.world()->countyState() || feature.value("rings").toList().isEmpty()){
+                fail("the selected state needs its actual Census outline");return;
+            }
             if(run->size==0)run->county_height=map->height();
             if(run->size==1 && QGuiApplication::platformName()=="offscreen" && map->height()<run->county_height*3.8){fail("county map retained a small-screen pixel cap");return;}
             const auto target=map->property("selectedId").toString()==rows.back().toMap().value("id").toString()?rows.front():rows.back();run->county=target.toMap().value("id").toString();

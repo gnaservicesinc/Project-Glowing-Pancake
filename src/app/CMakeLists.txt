@@ -26,7 +26,7 @@ qt_add_resources(pgp_portraits portrait_kit PREFIX "/pgp/assets" BASE "${PROJECT
 qt_add_executable(pgp-game game_main.cpp music_controller.cpp music_controller.hpp menu_media.cpp menu_media.hpp)
 if(BUILD_TESTING)
     find_package(Qt6 6.12.0 EXACT REQUIRED COMPONENTS Test)
-    target_sources(pgp-game PRIVATE research_smoke.cpp recruitment_smoke.cpp headquarters_smoke.cpp map_layout_smoke.cpp form_drafts_smoke.cpp content_recovery_smoke.cpp world_smoke.cpp world_smoke.hpp founding_smoke.cpp founding_smoke.hpp game_smoke.cpp game_smoke.hpp menu_smoke.cpp menu_smoke.hpp)
+    target_sources(pgp-game PRIVATE device_interface_smoke.cpp research_smoke.cpp recruitment_smoke.cpp headquarters_smoke.cpp map_layout_smoke.cpp form_drafts_smoke.cpp content_recovery_smoke.cpp world_smoke.cpp world_smoke.hpp founding_smoke.cpp founding_smoke.hpp game_smoke.cpp game_smoke.hpp menu_smoke.cpp menu_smoke.hpp)
     target_link_libraries(pgp-game PRIVATE Qt6::Test)
 endif()
 target_compile_definitions(pgp-game PRIVATE PGP_TEST_HOOKS=$<BOOL:${BUILD_TESTING}>)
@@ -43,6 +43,9 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/HeadquartersPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/LegacyWorkplacePanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/GameSelect.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/GameCheck.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/GameSlider.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/GameDialog.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/GameField.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/WorldButton.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/WorldDesktop.qml"
@@ -53,10 +56,14 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/ManagerPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/WorkplacePanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/DevicePanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/DeviceFrame.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/DeviceGlyph.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/DeviceHome.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/AccessPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/ReviewPause.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/EmployeePortrait.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/CountyMap.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/StateProjection.js"
           "${PROJECT_SOURCE_DIR}/qml/game/GlobalMap.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/DraftField.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/DraftState.qml"

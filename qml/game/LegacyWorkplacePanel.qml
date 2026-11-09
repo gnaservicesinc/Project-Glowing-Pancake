@@ -57,7 +57,7 @@ ColumnLayout {
         Copy {text:qsTr("Blueprint name")}
         DraftField {id:blueprintName;objectName:"blueprintName";Layout.fillWidth:true;font.pixelSize:panel.textSize;maximumLength:72;defaultText:qsTr("Compact research branch");Accessible.name:qsTr("Blueprint name")}
         Copy {text:qsTr("Hardware bundle")}
-        ComboBox {
+        GameSelect {
             id:hardware;objectName:"blueprintHardware";Layout.fillWidth:true;font.pixelSize:panel.textSize
             model:campaign.world.blueprintHardware;textRole:"name";valueRole:"id";currentIndex:Math.max(0,model.findIndex(row=>row.id===panel.hardwareId))
             Accessible.name:qsTr("Blueprint hardware")
@@ -68,20 +68,20 @@ ColumnLayout {
         DraftField {id:grid;objectName:"blueprintGridKw";Layout.fillWidth:true;font.pixelSize:panel.textSize;maximumLength:4;defaultText:"20";Accessible.name:qsTr("Blueprint grid reservation in whole kW")}
         Copy {text:qsTr("Dedicated operators")}
         DraftField {id:operators;objectName:"blueprintOperators";Layout.fillWidth:true;font.pixelSize:panel.textSize;maximumLength:2;defaultText:"1";Accessible.name:qsTr("Blueprint operator headcount")}
-        CheckBox {id:cooling;objectName:"blueprintWaterCooling";text:qsTr("Evaporative cooling · uses water");font.pixelSize:panel.textSize;onToggled:campaign.world.setDraft("workplace/cooling",checked?"evaporative":"air")}
+        GameCheck {id:cooling;objectName:"blueprintWaterCooling";text:qsTr("Evaporative cooling · uses water");font.pixelSize:panel.textSize;onToggled:campaign.world.setDraft("workplace/cooling",checked?"evaporative":"air")}
         WorldButton {objectName:"saveFacilityBlueprint";text:qsTr("Save this blueprint");textSize:panel.textSize;enabled:panel.editable;onClicked:campaign.world.createBlueprint(blueprintName.text,panel.hardwareId,grid.text,operators.text,cooling.checked)}
     }
     Heading {visible:campaign.world.blueprints.length>0;text:qsTr("Build from a saved plan")}
     ColumnLayout {
         visible:campaign.world.blueprints.length>0;Layout.fillWidth:true
-        ComboBox {
+        GameSelect {
             objectName:"savedBlueprint";Layout.fillWidth:true;font.pixelSize:panel.textSize
             model:campaign.world.blueprints;textRole:"name";valueRole:"id";currentIndex:Math.max(0,model.findIndex(row=>row.id===panel.blueprintId))
             Accessible.name:qsTr("Saved blueprint")
             onActivated:{panel.blueprintId=currentValue;campaign.world.setDraft("workplace/blueprint",currentValue)}
         }
         Copy {text:(campaign.world.blueprints.find(row=>row.id===panel.blueprintId) || campaign.world.blueprints[0] || {}).detail || ""}
-        ComboBox {
+        GameSelect {
             objectName:"blueprintBuildState";Layout.fillWidth:true;font.pixelSize:panel.textSize
             model:campaign.infrastructure.states;textRole:"title";valueRole:"entityId";currentIndex:model.indexOf(panel.buildState)
             Accessible.name:qsTr("State for blueprint construction")
@@ -94,14 +94,14 @@ ColumnLayout {
     }
     AccessPanel {Layout.fillWidth:true;textSize:panel.textSize}
     WorldButton {text:qsTr("Manage facilities, inspections & travel");textSize:panel.textSize;onClicked:panel.openInfrastructure()}
-    Dialog {
+    GameDialog {
         id:roomDialog;objectName:"headquartersRoomDialog";property var review:({})
         anchors.centerIn:Overlay.overlay;width:Math.min(panel.textSize*42,Overlay.overlay.width-32);height:Math.min(panel.textSize*31,Overlay.overlay.height-32)
         modal:true;focus:true;title:qsTr("Authorize room construction?");standardButtons:Dialog.Ok|Dialog.Cancel
         contentItem:ScrollView {id:roomReviewScroll;contentWidth:availableWidth;clip:true;Label {width:roomReviewScroll.availableWidth;text:roomDialog.review.detail || "";wrapMode:Text.Wrap;textFormat:Text.PlainText;font.pixelSize:panel.textSize}}
         onAccepted:campaign.world.orderHeadquartersRoom(review.id,review.revision)
     }
-    Dialog {
+    GameDialog {
         id:buildDialog;objectName:"blueprintBuildDialog";property var review:({})
         anchors.centerIn:Overlay.overlay;width:Math.min(panel.textSize*48,Overlay.overlay.width-32);height:Math.min(panel.textSize*43,Overlay.overlay.height-32)
         modal:true;focus:true;title:review.error?qsTr("This plan needs a change"):qsTr("Authorize the complete facility?")

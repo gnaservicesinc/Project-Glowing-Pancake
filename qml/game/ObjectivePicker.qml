@@ -52,7 +52,7 @@ ColumnLayout {
         spacing: 4
         Repeater {
             model: picker.choices
-            delegate: CheckBox {
+            delegate: GameCheck {
                 required property var modelData
                 objectName: picker.namePrefix + "Secondary_" + modelData.id
                 visible: modelData.id !== picker.primary

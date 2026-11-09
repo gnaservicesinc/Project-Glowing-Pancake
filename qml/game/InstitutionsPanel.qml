@@ -23,7 +23,7 @@ ColumnLayout {
         font.pixelSize: panel.textSize
     }
     component Heading: Copy { font.bold: true }
-    component Action: Button { font.pixelSize: panel.textSize }
+    component Action: WorldButton { font.pixelSize: panel.textSize }
     component Picker: DraftComboBox {
         id: picker
         draftOwner: picker
@@ -237,7 +237,7 @@ ColumnLayout {
         }
     }
 
-    Dialog {
+    GameDialog {
         id: review
         objectName: "institutionsReview"
         title: qsTr("Review institutional terms")

@@ -16,7 +16,7 @@ ColumnLayout {
         wrapMode: Text.Wrap
         font.pixelSize: panel.textSize
     }
-    component Action: Button {
+    component Action: WorldButton {
         id: action
         font.pixelSize: panel.textSize
         padding: panel.textSize * 0.65
@@ -44,7 +44,7 @@ ColumnLayout {
             onTextEdited: panel.desk.clearReview()
         }
     }
-    component Picker: ComboBox {
+    component Picker: GameSelect {
         property string chosenId: ""
         currentIndex: model.length ? Math.max(0, model.findIndex(row => row.id === chosenId)) : -1
         Component.onCompleted: chosenId = campaign.world.draft(objectName + "/selection", "")
@@ -92,7 +92,7 @@ ColumnLayout {
         Accessible.name: qsTr("Successor eligible at the handover date")
     }
     Copy { text: candidate.currentIndex >= 0 ? candidate.model[candidate.currentIndex].detail : qsTr("Choose a future date with an eligible leadership cohort.") }
-    CheckBox {
+    GameCheck {
         id: chair
         objectName: "leadershipRetainChair"
         visible: panel.desk.founderExecutive
@@ -168,7 +168,7 @@ ColumnLayout {
     Action { objectName: "reviewFounderRunRetirement"; text: qsTr("Review retirement"); visible: message.model.length > 0; enabled: panel.editable && panel.desk.canFinish; onClicked: panel.desk.reviewFinish() }
     Copy { text: qsTr("Executive history"); font.bold: true }
     Records { listName: "leadershipTerms"; rows: panel.desk.terms; emptyText: qsTr("Executive terms") }
-    Dialog {
+    GameDialog {
         id: review
         title: qsTr("Review leadership decision")
         modal: true

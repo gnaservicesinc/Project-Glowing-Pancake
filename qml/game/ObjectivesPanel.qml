@@ -23,7 +23,7 @@ ColumnLayout {
         wrapMode: Text.Wrap
         font.pixelSize: panel.textSize
     }
-    component Action: Button { font.pixelSize: panel.textSize; enabled: !campaign.busy }
+    component Action: WorldButton { font.pixelSize: panel.textSize; enabled: !campaign.busy }
 
     Copy { objectName: "objectivesOverview"; text: panel.desk.overview; font.bold: true }
     Copy { text: qsTr("Postmortem"); font.bold: true; visible: postmortem.visible }

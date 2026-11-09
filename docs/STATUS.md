@@ -66,7 +66,13 @@ and server rentals remain actual costs. Focused tests exercise both completion
 orders, power loss, prerequisites, rented compute and fresh saves. Rendered
 checks cover the tree and its controls on native Metal and the software view.
 
-The state map and laptop/game interface remain open in F-04E.
+F-04E adds a laptop desktop and device-specific app launcher. Players can switch
+apps, move to a compatible phone app and return to the workspace. The game uses
+styled buttons, inputs, selectors and dialogs. The State atlas shows the selected
+state boundary, surrounding geography and interactive county briefings.
+Focused Mac walkthroughs cover the device and map controls at normal size and
+650×480 with 200% text. The five F-04 milestones are implemented. The broader
+interface still awaits human playtesting.
 
 All current builds, including optimized Release builds for human testers, include
 **DEV · Reset local data**, which clears game-local saves, cached rules, drafts

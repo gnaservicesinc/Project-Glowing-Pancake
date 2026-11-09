@@ -6,7 +6,7 @@ Button {
     property int textSize: 14
     property bool primary: false
     font.pixelSize: textSize
-    padding: Math.max(12,textSize*0.85)
+    padding: Math.max(12,font.pixelSize*0.85)
     activeFocusOnTab: true
     Accessible.name: text
     contentItem: Text {text:control.text;textFormat:Text.PlainText;font:control.font;color:!control.enabled?"#829594":control.primary?"#122b2e":"#e4ebe3";wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter}

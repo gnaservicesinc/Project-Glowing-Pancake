@@ -18,7 +18,7 @@ ColumnLayout {
         font.pixelSize: panel.textSize
     }
     component Heading: Copy { font.bold: true }
-    component Action: Button { font.pixelSize: panel.textSize }
+    component Action: WorldButton { font.pixelSize: panel.textSize }
     component Picker: DraftComboBox {
         id: picker
         draftOwner: picker
@@ -71,7 +71,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Repeater {
             model: choices.options
-            CheckBox {
+            GameCheck {
                 required property var modelData
                 objectName: choices.optionName + "/" + modelData.id
                 Layout.fillWidth: true
@@ -316,7 +316,7 @@ ColumnLayout {
         }
     }
 
-    Dialog {
+    GameDialog {
         id: review
         title: qsTr("Review frontier decision")
         modal: true

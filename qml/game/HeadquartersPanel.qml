@@ -187,7 +187,7 @@ ColumnLayout {
         Repeater {model:panel.headquarters.notices || [];Copy {required property var modelData;text:modelData.date+" · "+modelData.text}}
     }
     WorldButton {text:qsTr("Regional facilities & travel");textSize:panel.textSize;onClicked:panel.openInfrastructure()}
-    Dialog {
+    GameDialog {
         id:purchase;objectName:"hqPurchaseReview"
         property var review:({})
         property string kind:""

@@ -356,7 +356,7 @@ ColumnLayout {
         Copy { text: qsTr("Training mixture (licenses are purchased in Data)") }
         Repeater {
             model: manager.dataOffers
-            CheckBox {
+            GameCheck {
                 required property string entityId
                 objectName: "trainingData_" + entityId
                 required property string title
@@ -1061,7 +1061,7 @@ ColumnLayout {
             Action { objectName: "dividendSubsidiaryButton"; text: qsTr("Review earned-profit dividend"); enabled: panel.editable && (manager.mergerTargets.selectedRow.fields || {}).owned === true; onClicked: { corporateDialog.groupAmount = groupDollars.value; corporateDialog.review("groupDividend", manager.mergerTargets.selectedId, qsTr("Request $%1 of actual undistributed profit earned since acquisition? The subsidiary must retain its cash floor and projected bills. Internal dividend income is eliminated from group profit.").arg(groupDollars.value) + "\n" + (manager.mergerTargets.selectedRow.detail || "")) } }
         }
     }
-    Dialog {
+    GameDialog {
         id: corporateDialog
         objectName: "corporateConfirmation"
         property string actionKind: ""
@@ -1098,7 +1098,7 @@ ColumnLayout {
             else manager.proposeAcquisition(subjectId, actionKind === "mergerEquity")
         }
     }
-    Dialog {
+    GameDialog {
         id: fundingDialog
         objectName: "fundingConfirmation"
         title: qsTr("Accept fixed financing terms?")
@@ -1115,7 +1115,7 @@ ColumnLayout {
         }
         onAccepted: manager.takeFinancing(manager.funding.selectedId)
     }
-    Dialog {
+    GameDialog {
         id: releaseDialog
         objectName: "serviceReleaseConfirmation"
         font.pixelSize: panel.textSize
@@ -1160,7 +1160,7 @@ ColumnLayout {
             else manager.finishRollout(serviceId, kind === "promote")
         }
     }
-    Dialog {
+    GameDialog {
         id: competitiveDialog
         objectName: "competitiveOfferConfirmation"
         property string offerId: ""
@@ -1179,7 +1179,7 @@ ColumnLayout {
         }
         onAccepted: manager.respondCompetitiveOffer(offerId, true)
     }
-    Dialog {
+    GameDialog {
         id: advanceDialog
         objectName: "customerAdvanceConfirmation"
         property string offerId: ""
@@ -1198,7 +1198,7 @@ ColumnLayout {
         }
         onAccepted: manager.acceptOffer(offerId)
     }
-    Dialog {
+    GameDialog {
         id: cancelDialog
         objectName: "cancelCustomerContractConfirmation"
         property string contractId: ""

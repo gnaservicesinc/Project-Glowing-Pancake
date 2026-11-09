@@ -19,7 +19,7 @@ F-02/F-03 engineering checks do not constitute player acceptance.
 | 2 | F-04B: actual premises and equipment | Interactive garage/inherited office; buy/place/move equipment and assign desks; realtor city listings, leases and relocation; land, contractor bids, construction risks and property tax. Implemented; focused physical/financial/save checks and native Metal/software purchase-to-owned-building walkthroughs pass. |
 | 3 | F-04C: negotiated recruiting | Multiple applicants, compensation offers/counteroffers, accepted terms, onboarding and actual workspace. Implemented. Focused compensation, desk and save checks pass, including the rendered signing flow. |
 | 4 | F-04D: connected research and finite compute | Technology graph selection, staff work, actual equipment/lab prerequisites and bought/rented compute; replace arbitrary research fees. Implemented. The focused runtime and rendered tree checks pass, including power loss and fresh saves. |
-| 5 | F-04E: game interface, devices and state map | Coherent game styling, a recognizable usable laptop/apps, selected-state geography and interactive locations. Pending. |
+| 5 | F-04E: game interface, devices and state map | Implemented. Game-styled controls, a laptop desktop and compatible phone apps, and actual state outlines with selectable county briefings. Focused native and compact walkthroughs pass. Human interface review remains open. |
 
 Current optimized **Release playtest builds include DEV · Reset local data**.
 It clears this game's local test data in one click, including when an incompatible
