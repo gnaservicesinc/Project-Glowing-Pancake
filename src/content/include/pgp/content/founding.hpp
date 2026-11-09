@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <pgp/core/portrait.hpp>
 
 namespace pgp::content {
 // Authored setup fields, not executable scripts or another event language.
@@ -21,23 +22,26 @@ struct FormativeScene {
     std::vector<FoundingOption> choices;
     auto operator<=>(const FormativeScene&) const = default;
 };
+struct FoundingOpeningRules {
+    std::uint32_t inherited_staff=3, cofounder_staff=1, ceo_equity_bp=500;
+    auto operator<=>(const FoundingOpeningRules&) const = default;
+};
 struct FoundingCatalog {
     std::vector<FoundingOption> families, legs, routes, backers, offices, researchers;
     std::vector<FormativeScene> scenes;
     std::int64_t formation_cents=0, compute_monthly_cents=0, founder_salary_cents=0;
     std::uint32_t prestige_finance_bp=0, buzz_finance_bp=0, maximum_finance_bonus_bp=0;
+    std::optional<FoundingOpeningRules> opening;
     auto operator<=>(const FoundingCatalog&) const = default;
 };
 struct FoundingSelection {
-    // Legacy standalone sandbox fields remain in the exact save format.
     std::string mode="campaign", first_name="Alex", last_name="Vale", gender="nonbinary";
     std::string sociability="introverted", activity="sedentary", disposition="deliberate";
     std::string family="middle", leg="genius", route="partnership", legal_form="corporation";
     std::string office="shared", researcher="founder";
     std::map<std::string,std::string,std::less<>> choices;
     std::vector<std::string> backers;
-    std::optional<std::int64_t> sandbox_cash_cents;
-    std::optional<std::uint32_t> sandbox_staff;
+    core::PortraitRecipe appearance;
     auto operator<=>(const FoundingSelection&) const = default;
 };
 struct FoundingTerms {
@@ -45,6 +49,7 @@ struct FoundingTerms {
     std::uint32_t founder_bp=0, partner_bp=0, prestige=0, buzz=0;
     std::map<std::string,std::uint32_t,std::less<>> backer_shares;
     bool nonprofit=false, founder_researcher=false;
+    std::uint32_t opening_staff=0;
     auto operator<=>(const FoundingTerms&) const = default;
 };
 [[nodiscard]] FoundingCatalog load_founding_catalog(std::string_view);

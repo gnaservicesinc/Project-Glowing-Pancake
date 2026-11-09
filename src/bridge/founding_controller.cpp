@@ -25,8 +25,9 @@ QVariantMap defaults() {
     return {{"first_name","Alex"},{"last_name","Vale"},{"gender","nonbinary"},{"pronouns","they/them"},
         {"company","Daybreak Research"},{"seed","19972015"},{"headquarters","US-CA"},{"difficulty","difficulty.standard"},
         {"sociability","introverted"},{"activity","sedentary"},{"disposition","deliberate"},
-        {"family","middle"},{"leg","genius"},{"route","partnership"},{"legal_form","corporation"},
-        {"office","shared"},{"researcher","founder"},{"mission","survival"},
+        {"family","middle"},{"leg","genius"},{"route","investment"},{"legal_form","corporation"},
+        {"office","home"},{"researcher","founder"},{"mission","survival"},
+        {"appearance",QVariantList{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}},
         {"choices",QVariantMap{}},{"backers",QStringList{}}};
 }
 }
@@ -36,30 +37,26 @@ FoundingController::FoundingController(const content::Collection& collection, st
     if (const auto* definition = collection.find("scenario.founder_campaign")) {
         const auto& scenario = std::get<content::ScenarioDefinition>(definition->data);
         catalog_ = scenario.founding;
-        difficulties_ = scenario.difficulties;
         headquarters_ = scenario.headquarters_choices;
     }
+    deriveOpening();
     if (!available()) return;
     QFile file{QString::fromStdU16String(draft_path_.u16string())};
     if (!file.open(QIODevice::ReadOnly) || file.size() > 32768) return;
     const auto saved = QJsonDocument::fromJson(file.readAll()).object();
     const auto format = saved.value("format").toString();
-    if (format != QStringLiteral("founding-draft-1") && format != QStringLiteral("founding-draft-2")) return;
+    if (format != QStringLiteral("founding-draft-3")) return;
     const auto fields = saved.value("form").toObject().toVariantMap();
     for (auto it = fields.begin(); it != fields.end(); ++it)
         if (form_.contains(it.key())) form_[it.key()] = it.value();
-    if (format == QStringLiteral("founding-draft-1")) {
-        // The older pages grouped multiple questions. Walk through the story
-        // with their existing answers instead of guessing the last question.
-        if (saved.value("page").toInt() > 0) beat_ = QStringLiteral("first_name");
-    } else {
-        const auto id = saved.value("beat").toString();
-        if (!id.isEmpty() && id.size() <= 80) beat_ = id;
-    }
+    const auto id=saved.value("beat").toString();
+    if(!id.isEmpty() && id.size()<=80) beat_=id;
+    deriveOpening();
 }
 
 void FoundingController::reset() {
     form_ = defaults();
+    deriveOpening();
     beat_ = QStringLiteral("opening");
     error_.clear();
     if (available()) saveDraft();
@@ -82,6 +79,17 @@ content::FoundingSelection FoundingController::selection() const {
     selected.legal_form = field("legal_form");
     selected.office = field("office");
     selected.researcher = field("researcher");
+    if(catalog_ && catalog_->opening) {
+        core::PortraitRecipe recipe;
+        const auto parts=form_.value("appearance").toList();
+        if(parts.size()!=static_cast<qsizetype>(recipe.parts.size())) throw std::invalid_argument("Choose your appearance.");
+        for(std::size_t i=0;i<recipe.parts.size();++i) {
+            bool okay=false;const auto part=parts[static_cast<qsizetype>(i)].toInt(&okay);
+            if(!okay || part<0 || part>=core::portrait_part_counts[i]) throw std::invalid_argument("Unknown appearance choice.");
+            recipe.parts[i]=static_cast<std::uint8_t>(part);
+        }
+        selected.appearance=recipe;
+    }
     const auto choices = form_.value("choices").toMap();
     for (auto it = choices.begin(); it != choices.end(); ++it)
         selected.choices.emplace(it.key().toStdString(), it.value().toString().toStdString());
@@ -103,9 +111,12 @@ QVariantList FoundingController::options(const std::vector<content::FoundingOpti
 
 QVariantList FoundingController::families() const { return catalog_ ? options(catalog_->families) : QVariantList{}; }
 QVariantList FoundingController::legs() const { return catalog_ ? options(catalog_->legs) : QVariantList{}; }
-QVariantList FoundingController::routes() const { return catalog_ ? options(catalog_->routes) : QVariantList{}; }
+QVariantList FoundingController::routes() const {
+    return catalog_?options(catalog_->routes):QVariantList{};
+}
 QVariantList FoundingController::backers() const {
     if (!catalog_) return {};
+    if(catalog_->opening && form_.value("route")!="investment" && form_.value("route")!="mission_director") return {};
     auto rows = options(catalog_->backers);
     for (qsizetype i = 0; i < rows.size(); ++i) {
         const auto& backer = catalog_->backers[static_cast<std::size_t>(i)];
@@ -113,13 +124,14 @@ QVariantList FoundingController::backers() const {
         const auto share = static_cast<double>(backer.shares_bp) / 100;
         row["terms"] = backer.legal_form == "nonprofit" ? tr("The gift comes with a trustee seat.") :
             tr("They ask for a board seat and %1% equity.").arg(QLocale().toString(share, 'f', backer.shares_bp % 100 ? 2 : 0));
+        const auto terms=content::founding_terms(*catalog_,selection(),false);
+        const auto premium=std::min(catalog_->maximum_finance_bonus_bp,terms.prestige*catalog_->prestige_finance_bp+terms.buzz*catalog_->buzz_finance_bp);
+        const auto amount=core::mul_div_floor(static_cast<std::uint64_t>(backer.capital_cents),10000+premium,10000).quotient;
+        row["terms"]=tr("Your pitch receives an offer of %1. %2").arg(money(static_cast<std::int64_t>(amount)),row.value("terms").toString());
         rows[i] = row;
     }
     return rows;
 }
-QVariantList FoundingController::offices() const { return catalog_ ? options(catalog_->offices) : QVariantList{}; }
-QVariantList FoundingController::researchers() const { return catalog_ ? options(catalog_->researchers) : QVariantList{}; }
-
 QVariantList FoundingController::chapters() const {
     QVariantList result;
     if (catalog_) {
@@ -127,14 +139,6 @@ QVariantList FoundingController::chapters() const {
             result.push_back(QVariantMap{{"id",text(scene.id)},{"title",text(scene.title)},
                 {"date",text(scene.date)},{"text",text(scene.text)},{"choices",options(scene.choices)}});
     }
-    return result;
-}
-
-QVariantList FoundingController::difficulties() const {
-    QVariantList result;
-    for (const auto& difficulty : difficulties_)
-        result.push_back(QVariantMap{{"id",text(difficulty.id)},{"name",text(difficulty.name)},
-            {"detail",text(difficulty.description)}});
     return result;
 }
 
@@ -154,18 +158,30 @@ QString FoundingController::preview() const {
     if (!catalog_) return {};
     try {
         const auto terms = content::founding_terms(*catalog_, selection());
-        const auto difficulty = form_.value("difficulty").toString().toStdString();
-        const auto found = std::ranges::find(difficulties_, difficulty, &content::CampaignDifficulty::id);
-        if (found == difficulties_.end()) return tr("Choose a campaign difficulty.");
-        const auto cash = static_cast<std::int64_t>(core::mul_div_floor(
-            static_cast<std::uint64_t>(terms.contributed_cents), found->starting_cash_percent, 100).quotient);
-        if (cash <= terms.paid_setup_cents) return tr("These terms cannot pay the founding expenses.");
-        const auto monthly = terms.office_cents + terms.payroll_cents + catalog_->compute_monthly_cents + catalog_->founder_salary_cents;
+        const auto cash=terms.contributed_cents;
+        if(cash<=terms.paid_setup_cents) return tr("Secure funding sufficient to pay formation expenses.");
         const auto equity = terms.nonprofit ? tr("The institution owns its assets.") :
-            tr("Founder ownership: %1.%2%").arg(terms.founder_bp / 100).arg(terms.founder_bp % 100, 2, 10, QLatin1Char('0'));
-        return tr("Contributions   %1\nSigning costs   %2\nCash at opening   %3\nMonthly commitments   %4\n%5\nScientific prestige %6  ·  Public buzz %7")
-            .arg(money(cash), money(terms.paid_setup_cents), money(cash - terms.paid_setup_cents), money(monthly), equity)
-            .arg(terms.prestige).arg(terms.buzz);
+            tr("Your ownership: %1.%2%").arg(terms.founder_bp / 100).arg(terms.founder_bp % 100, 2, 10, QLatin1Char('0'));
+        {
+            const auto selected=selection();
+            QStringList sources;
+            if(selected.route!="hired_ceo") {
+                const auto family=content::founding_option(catalog_->families,selected.leg=="political"?"rich":selected.family).capital_cents;
+                const auto personal=family+content::founding_option(catalog_->legs,selected.leg).capital_cents;
+                sources<<tr("Personal/family capital %1").arg(money(personal));
+            }
+            const auto& route=content::founding_option(catalog_->routes,selected.route);
+            if(route.capital_cents>0 && selected.route!="mission_director") sources<<tr("%1: %2").arg(text(route.name),money(route.capital_cents));
+            const auto premium=std::min(catalog_->maximum_finance_bonus_bp,terms.prestige*catalog_->prestige_finance_bp+terms.buzz*catalog_->buzz_finance_bp);
+            for(const auto& id:selected.backers) {
+                const auto& offer=content::founding_option(catalog_->backers,id);
+                const auto amount=core::mul_div_floor(static_cast<std::uint64_t>(offer.capital_cents),10000+premium,10000).quotient;
+                sources<<tr("%1: %2").arg(text(offer.name),money(static_cast<std::int64_t>(amount)));
+            }
+            const auto equipment=selected.office=="home"?tr("You bring your existing phone and laptop; no desktop or compute lease."):tr("The office includes a workstation; you bring your phone and laptop. No compute lease.");
+            return tr("%1\nCash %2 · signing %3\nRent %4/mo · payroll %5/mo · your salary %6/mo\n%7\n%8 research-capable people · 0 CU/day\n%9")
+                .arg(sources.join(" · "),money(cash-terms.paid_setup_cents),money(terms.paid_setup_cents),money(terms.office_cents),money(terms.payroll_cents),money(catalog_->founder_salary_cents),equity).arg(terms.opening_staff).arg(equipment);
+        }
     } catch (const std::exception& error) {
         return QString::fromUtf8(error.what());
     }
@@ -176,7 +192,7 @@ void FoundingController::saveDraft() {
         std::filesystem::create_directories(draft_path_.parent_path());
         QSaveFile file{QString::fromStdU16String(draft_path_.u16string())};
         const auto bytes = QJsonDocument{QJsonObject::fromVariantMap(
-            {{"format","founding-draft-2"},{"beat",beat_},{"form",form_}})}.toJson(QJsonDocument::Compact);
+            {{"format","founding-draft-3"},{"beat",beat_},{"form",form_}})}.toJson(QJsonDocument::Compact);
         if (!file.open(QIODevice::WriteOnly) || file.write(bytes) != bytes.size() || !file.commit())
             error_ = tr("Could not save your place in the prologue.");
         else error_.clear();
@@ -195,20 +211,25 @@ void FoundingController::setBeat(QString id) {
 
 void FoundingController::setField(QString key, QVariant value) {
     const auto answer = value.toString();
-    if (!form_.contains(key) || key == "choices" || key == "backers" || answer.size() > 128 ||
+    if (!form_.contains(key) || key == "choices" || key == "backers" || key=="appearance" || answer.size() > 128 ||
         form_.value(key).toString() == answer) return;
+    if(key=="gender" && answer!="woman" && answer!="man" && answer!="nonbinary" && answer!="unspecified") return;
+    if(key=="pronouns" && answer!="she/her" && answer!="he/him" && answer!="they/them" && answer!="name only") return;
     form_[key] = answer;
+    if(key=="route" && answer=="hired_ceo") form_["company"]="Alder Research";
     if (key == "legal_form" || key == "route") form_["backers"] = QStringList{};
     if (key == "legal_form") {
-        form_["route"] = answer == "nonprofit" ? "mission_director" : "partnership";
+        form_["route"] = answer == "nonprofit" ? "mission_director" : "investment";
         if (answer == "nonprofit" && form_.value("mission").toString() == "profit") form_["mission"] = "survival";
     }
     if (key == "leg" && answer != "genius") form_["researcher"] = "first_hire";
+    deriveOpening();
     saveDraft();
     emit changed();
 }
 
 QString FoundingController::answerText(QString field, QString value) {
+    if(field=="gender" || field=="pronouns") return tr("Select an identity option.");
     value = value.trimmed();
     if (field == "seed") {
         try {
@@ -227,6 +248,40 @@ QString FoundingController::answerText(QString field, QString value) {
     }
     setField(std::move(field), value);
     return {};
+}
+
+void FoundingController::deriveOpening() {
+    if(!catalog_ || !catalog_->opening) return;
+    const auto leg=form_.value("leg").toString();
+    if(leg=="wealthy" && form_.value("family")!="rich") form_["leg"]="genius";
+    auto route=form_.value("route").toString();
+    if(route=="bootstrap" && form_.value("family")!="rich" && form_.value("leg")!="political") route=form_.value("legal_form")=="nonprofit"?"mission_director":"investment";
+    form_["route"]=route;
+    form_["researcher"]=form_.value("leg")=="genius"?"founder":"none";
+    form_["office"]=(route=="hired_ceo" || route=="partnership")?"shared":"home";
+    form_["difficulty"]="";
+    if(route!="investment" && route!="mission_director") form_["backers"]=QStringList{};
+    if(form_.value("gender")!="woman" && form_.value("gender")!="man" && form_.value("gender")!="nonbinary" && form_.value("gender")!="unspecified") form_["gender"]="unspecified";
+    if(form_.value("pronouns")!="she/her" && form_.value("pronouns")!="he/him" && form_.value("pronouns")!="they/them" && form_.value("pronouns")!="name only") form_["pronouns"]="they/them";
+}
+
+QString FoundingController::portrait() const {
+    QString url="image://portraits/1";
+    for(const auto& part:form_.value("appearance").toList()) url+='/'+QString::number(part.toInt());
+    return url;
+}
+QVariantList FoundingController::appearanceParts() const {
+    QVariantList rows;
+    const QStringList labels{tr("Head"),tr("Hair style"),tr("Nose"),tr("Ears"),tr("Mouth"),tr("Chin"),tr("Neck"),tr("Eyes"),tr("Brows"),tr("Facial hair"),tr("Glasses"),tr("Skin tone"),tr("Hair color"),tr("Clothing"),tr("Background")};
+    for(qsizetype i=0;i<labels.size();++i) rows.push_back(QVariantMap{{"name",labels[i]},{"count",core::portrait_part_counts[static_cast<std::size_t>(i)]}});
+    return rows;
+}
+void FoundingController::cycleAppearance(int part,int direction) {
+    if(part<0 || part>=static_cast<int>(core::portrait_part_counts.size()) || (direction!=1 && direction!=-1)) return;
+    auto values=form_.value("appearance").toList();if(values.size()!=15) return;
+    const auto count=core::portrait_part_counts[static_cast<std::size_t>(part)];
+    values[part]=(values[part].toInt()+direction+count)%count;form_["appearance"]=values;
+    saveDraft();emit changed();
 }
 
 void FoundingController::choose(QString scene, QString id) {

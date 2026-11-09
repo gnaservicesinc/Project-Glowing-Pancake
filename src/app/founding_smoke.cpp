@@ -61,7 +61,8 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
         bool edited_seed = false;
         bool saw_hillside = false;
         bool saw_company = false;
-        QString revision;
+        bool customized = false;
+        pgp::runtime::Checkpoint opening;
     };
     auto state = std::make_shared<State>();
     auto* timer = new QTimer(&window);
@@ -105,7 +106,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             state->phase = Phase::opening;
             break;
         case Phase::opening:
-            if (!screen || !screen->isVisible() || item("statusLine")->isVisible() || id != "opening" ||
+            if (!screen || !screen->isVisible() || !item("workspaceScene") || item("workspaceScene")->isVisible() || id != "opening" ||
                 (!campaign.reducedMotion() && !state->saw_opening_animation) ||
                 item("foundingQuestion")->isVisible() || !item("foundingAfterword")->property("text").toString().contains("newborn") ||
                 !shows("hospital", "slate")) {
@@ -191,8 +192,16 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 {"family","poor"},{"leg","charisma"},{"sociability","outgoing"},{"activity","athletic"},
                 {"disposition","deliberate"},{"legal_form","nonprofit"},{"route","mission_director"},
                 {"mission","survival"},{"offer-safety","accept"},{"offer-open_science","decline"},
-                {"headquarters","US-CA"},{"office","home"},{"researcher","first_hire"},{"difficulty","difficulty.standard"}
+                {"headquarters","US-CA"},{"gender","woman"},{"pronouns","she/her"}
             };
+            if(id=="appearance" && !state->customized) {
+                const auto before=story->portrait();
+                if(!click("foundingNextFeature") || !click("foundingNextVariant") || before==story->portrait() ||
+                    item("foundingPortraitPreview")->property("status").toInt()!=1) {fail("Live appearance customization");return;}
+                state->customized=true;
+                return;
+            }
+            if(id=="appearance" && !capture(".appearance")) {fail("Appearance screenshot");return;}
             if (id == "leg" && (!shows("street-apartments", "slate") || item("foundingChoice_wealthy")->isEnabled() ||
                 !capture(".apartments"))) { fail("Apartment scene and wealth eligibility"); return; }
             if (id == "route" && !shows("trust", "jade")) { fail("Nonprofit scene and palette"); return; }
@@ -219,11 +228,15 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             if (campaign.welcome() || story->hasDraft() || !world.founding || !world.identity || world.founding->choices.size() != 8 ||
                 world.founding->legal_form != "nonprofit" || world.founding->backers != std::vector<std::string>{"safety"} ||
                 world.identity->founder_name != "Mira Vale" || world.root_seed != 718 ||
+                world.founding->gender!="woman" || world.identity->founder_pronouns!="she/her" ||
+                !state->customized || world.founding->appearance.parts[1]!=1 ||
+                !world.difficulty.empty() || !world.simulation.capacity->sources.empty() ||
+                !world.simulation.management->people->employees.empty() ||
                 pgp::core::iso_date(world.simulation.date) != "2015-01-01" ||
                 pgp::core::iso_date(world.simulation.end_date) != "2115-01-01" || !campaign.paused()) {
                 fail("The founding choices did not reach the paused campaign"); return;
             }
-            state->revision = campaign.revision();
+            state->opening = campaign.snapshot()->checkpoint;
             campaign.saveTo(QUrl::fromLocalFile(QString::fromStdU16String((paths.saves_directory / "founder-ui.pgpsave").u16string())));
             state->phase = Phase::step;
             break;
@@ -232,17 +245,26 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             campaign.step();
             state->phase = Phase::reload;
             break;
-        case Phase::reload:
+        case Phase::reload: {
             if (campaign.date() != QStringLiteral("2015-01-02")) { fail("First day did not advance"); return; }
-            campaign.loadFrom(QUrl::fromLocalFile(QString::fromStdU16String((paths.saves_directory / "founder-ui.pgpsave").u16string())));
+            try {
+                const auto& program=*campaign.snapshot()->content;
+                const auto saved=pgp::persistence::load_file(program,paths.saves_directory/"founder-ui.pgpsave");
+                pgp::persistence::CurrentCampaign current{paths.saves_directory/"continuing"};
+                const auto resumed=current.resume(program);
+                if(saved.checkpoint!=state->opening || !resumed || *resumed!=campaign.snapshot()->checkpoint) {
+                    fail("Fresh export and automatic day continuation must reload exactly");return;
+                }
+            } catch(const std::exception& error) {fail(QString::fromUtf8(error.what()));return;}
             state->phase = Phase::done;
             break;
+        }
         case Phase::done:
-            if (campaign.revision() != state->revision || !campaign.snapshot()->checkpoint.world.founding || campaign.welcome()) {
+            if (!campaign.snapshot()->checkpoint.world.founding || campaign.welcome()) {
                 fail("Exact save continuation"); return;
             }
             std::cout << "Prologue UI passed: hospital opening, resized 650×480 canvas, editable name, branching art and palette, "
-                         "eight chapters, individual offers, world seed, paused office and exact reload\n";
+                         "eight chapters, individual offers, world seed, appearance, paused office and fresh-save/day continuation\n";
             timer->stop();
             QCoreApplication::exit(0);
             break;

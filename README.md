@@ -10,7 +10,12 @@ continuation. [Campaign flow](docs/CAMPAIGN_FLOW.md),
 direction. New Game now implements the founder introduction and company setup;
 the company world, automatic resume and generated HQ people are available for review.
 
-**Current state.** The initial skeleton phase closed on 2026-11-07. The current
+**Current state.** The 2026-11-09 review identified substantial unfinished main-game
+work; [selected refinement milestones](docs/FEEDBACK_REFINEMENTS.md) now lead the
+backlog. Current Release playtest builds include **DEV · Reset local data** in
+the menu; remove this action and its implementation before shipping v1.0.
+
+ The initial skeleton phase closed on 2026-11-07. The current
 core is ready for human feedback and the user's selected refinements. The
 [current handoff](docs/STATUS.md) and [feedback backlog](docs/BACKLOG.md)
 replace the initial implementation queue.
@@ -22,7 +27,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.37.0-dev.1**, generation **37**.
+The finalized internal content version is **0.38.1-dev.1**, generation **39**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).

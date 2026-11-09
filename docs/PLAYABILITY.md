@@ -1,6 +1,6 @@
 # Playability and evaluation checkpoints
 
-Updated 2026-11-07. The initial skeleton phase is closed for human feedback.
+Updated 2026-11-09. The initial skeleton phase is closed for human feedback.
 The bundled 2014–2017 Mac development campaign can be
 played from headquarters selection to its ending through the Office, Lab,
 Operations and Inbox. The [backlog](BACKLOG.md) records remaining acceptance gates and the
@@ -49,10 +49,13 @@ On Mac, build with `./make.sh --package --jobs 4`, then open
 New Game, Settings, Credits and Quit when no company is underway. A current
 company resumes automatically in its last place, with time paused. Recovery/import
 preserves original files. Settings persists display, audio, text and motion choices.
-Compatible content updates keep an existing company's original rules. If an older
-company lacks that local copy, choose **Locate original rules…** in the menu,
-select its matching collection, and review the saved company before confirming.
-Escape pauses and opens the menu; Quit and the window close button confirm exit.
+Development saves have no compatibility guarantee. Use **DEV · Reset local data**
+in the menu for a one-click fresh start after a breaking change. This clears local
+saves, autosaves, setup/navigation drafts, cached rules and settings; external
+exports are outside its scope. It is included in current optimized Release
+playtest builds and must be removed before shipping v1.0.
+Escape during play pauses into the menu; Escape there, Quit and window close
+open exit confirmation.
 
 The workspace HUD and dock keep company tools, people, research, decisions,
 places and map scales reachable. Headquarters orders paid rooms; workstations
@@ -73,11 +76,14 @@ fits the window as it resizes. Reduced motion shows each beat immediately.
 
 Eight formative choices lead to the founding scene at 18. Choose a legal form,
 entry route, company name and mission, then consider each eligible funding
-offer in turn. Choose the headquarters, office, first researcher and campaign
-difficulty. Wealthy Elite requires rich parents. Genius can supply the first
-research assignment personally. The signing review shows contributions, costs,
-cash, ownership and monthly commitments. Select World seed there to edit the
-seed before entering the office.
+offer in turn for a funded route. Choose the headquarters. Gender and pronouns
+are structured choices; use the appearance page to edit portrait features.
+Wealthy Elite requires rich parents; the founder profile records the leg up.
+A sole founder starts at their parents' house with $0 rent. A hired CEO inherits
+a small existing company. No first experiment, first hire or difficulty is
+selected in setup, and no compute lease is supplied automatically. Review
+contributions, cash, ownership, expenses and equipment before signing. World seed
+remains editable on the review page.
 
 The office opens paused on 2015-01-01. Nonprofit donors supply gifts and
 trustee rights. The institution owns its assets and mission income is exempt

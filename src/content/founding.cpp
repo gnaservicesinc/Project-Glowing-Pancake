@@ -9,7 +9,20 @@ namespace pgp::content {
 using Json=nlohmann::json;
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingOption,id,name,detail,capital_cents,monthly_cents,fee_cents,shares_bp,prestige,buzz,family,leg,legal_form)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FormativeScene,id,title,date,text,choices)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingCatalog,families,legs,routes,backers,offices,researchers,scenes,formation_cents,compute_monthly_cents,founder_salary_cents,prestige_finance_bp,buzz_finance_bp,maximum_finance_bonus_bp)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingOpeningRules,inherited_staff,cofounder_staff,ceo_equity_bp)
+void to_json(Json& j,const FoundingCatalog& c) {
+    j={{"families",c.families},{"legs",c.legs},{"routes",c.routes},{"backers",c.backers},{"offices",c.offices},{"researchers",c.researchers},{"scenes",c.scenes},
+        {"formation_cents",c.formation_cents},{"compute_monthly_cents",c.compute_monthly_cents},{"founder_salary_cents",c.founder_salary_cents},
+        {"prestige_finance_bp",c.prestige_finance_bp},{"buzz_finance_bp",c.buzz_finance_bp},{"maximum_finance_bonus_bp",c.maximum_finance_bonus_bp}};
+    if(c.opening) j["opening"]=*c.opening;
+}
+void from_json(const Json& j,FoundingCatalog& c) {
+    j.at("families").get_to(c.families);j.at("legs").get_to(c.legs);j.at("routes").get_to(c.routes);j.at("backers").get_to(c.backers);
+    j.at("offices").get_to(c.offices);j.at("researchers").get_to(c.researchers);j.at("scenes").get_to(c.scenes);
+    j.at("formation_cents").get_to(c.formation_cents);j.at("compute_monthly_cents").get_to(c.compute_monthly_cents);j.at("founder_salary_cents").get_to(c.founder_salary_cents);
+    j.at("prestige_finance_bp").get_to(c.prestige_finance_bp);j.at("buzz_finance_bp").get_to(c.buzz_finance_bp);j.at("maximum_finance_bonus_bp").get_to(c.maximum_finance_bonus_bp);
+    if(j.contains("opening")) c.opening=j.at("opening").get<FoundingOpeningRules>();
+}
 namespace {
 [[noreturn]] void invalid(std::string why) {throw std::invalid_argument(std::move(why));}
 Json parse(std::string_view bytes) {
@@ -43,7 +56,9 @@ void options(const std::vector<FoundingOption>& rows) {
 }
 void shape(const FoundingSelection& s) {
     text(s.first_name,64);text(s.last_name,64);text(s.gender,64);
-    if(s.mode!="campaign" && s.mode!="sandbox") invalid("Choose Campaign or Sandbox.");
+    core::validate_portrait(s.appearance);
+    if(s.gender!="woman" && s.gender!="man" && s.gender!="nonbinary" && s.gender!="unspecified") invalid("Choose a supported gender option.");
+    if(s.mode!="campaign") invalid("New companies use the founder campaign.");
     if(s.sociability!="introverted" && s.sociability!="outgoing") invalid("Choose a sociability tendency.");
     if(s.activity!="athletic" && s.activity!="sedentary") invalid("Choose an activity tendency.");
     if(s.disposition!="deliberate" && s.disposition!="impulsive") invalid("Choose a decision-making tendency.");
@@ -53,9 +68,7 @@ void shape(const FoundingSelection& s) {
     for(const auto& [scene,choice]:s.choices) {text(scene,64);text(choice,64);}
     std::set<std::string> backers;
     for(const auto& id:s.backers) if(!backers.insert(id).second) invalid("A backer can contribute only once.");
-    if(s.mode!="sandbox" && (s.sandbox_cash_cents || s.sandbox_staff)) invalid("Campaign capital and staff must follow the signed founding terms.");
-    if(s.sandbox_cash_cents) amount(*s.sandbox_cash_cents);
-    if(s.sandbox_staff && (*s.sandbox_staff<1 || *s.sandbox_staff>10000)) invalid("Sandbox research staff must be between 1 and 10,000.");
+
 }
 }
 FoundingCatalog load_founding_catalog(std::string_view bytes) {
@@ -64,6 +77,7 @@ FoundingCatalog load_founding_catalog(std::string_view bytes) {
     for(const auto* rows:{&c.families,&c.legs,&c.routes,&c.backers,&c.offices,&c.researchers}) options(*rows);
     amount(c.formation_cents);amount(c.compute_monthly_cents);amount(c.founder_salary_cents);
     if(c.prestige_finance_bp>1000 || c.buzz_finance_bp>1000 || c.maximum_finance_bonus_bp>5000) invalid("Founding reputation effects exceed their bounded terms.");
+    if(c.opening && (c.opening->inherited_staff<2 || c.opening->inherited_staff>6 || c.opening->cofounder_staff<1 || c.opening->cofounder_staff>3 || c.opening->ceo_equity_bp>1500)) invalid("Opening company terms exceed their bounds.");
     if(c.scenes.size()<6 || c.scenes.size()>12) invalid("The introduction needs six to twelve formative scenes.");
     std::set<std::string> ids;
     for(const auto& scene:c.scenes) {
@@ -93,20 +107,22 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
     for(const auto* option:{&route,&office,&researcher}) if(const auto why=founding_ineligibility(*option,s);!why.empty()) invalid(why);
     if(s.researcher=="founder" && s.leg!="genius") invalid("Only Actual Genius can supply the first research assignment without hiring a researcher.");
     t.founder_researcher=s.researcher=="founder";
+    const bool ceo=s.route=="hired_ceo";
+    {
+        if(!c.opening) invalid("Complete your appearance and founding terms.");
+        if(s.researcher!=(s.leg=="genius"?"founder":"none")) invalid("Research ability follows the biography; hiring takes place during play.");
+        const bool funded=s.route=="investment" || s.route=="mission_director";
+        if(s.route!="bootstrap" && s.route!="partnership" && !ceo && !funded) invalid("Choose a current company entry route.");
+        if(!funded && !s.backers.empty()) invalid("This entry route does not solicit outside backers.");
+        if(complete && funded && s.backers.empty()) invalid("Secure an investor or donor before signing this route.");
+        if(s.office!=((ceo || s.route=="partnership")?"shared":"home")) invalid("The starting premises follow your company entry route.");
+    }
     t.contributed_cents=core::checked_add(family.capital_cents,leg.capital_cents);
     if(s.leg=="political" && s.family!="rich") t.contributed_cents=core::checked_add(founding_option(c.families,"rich").capital_cents,leg.capital_cents);
     t.contributed_cents=core::checked_add(t.contributed_cents,route.capital_cents);
     t.partner_bp=t.nonprofit?0:route.shares_bp;
     t.paid_setup_cents=core::checked_add(c.formation_cents,core::checked_add(office.fee_cents,researcher.fee_cents));
     t.office_cents=office.monthly_cents;t.payroll_cents=researcher.monthly_cents;
-    if(const auto extra=s.sandbox_staff.value_or(1)-1;extra>0) {
-        const auto& hire=t.founder_researcher?founding_option(c.researchers,"first_hire"):researcher;
-        const auto cost=[&](std::int64_t per_person) {
-            return static_cast<std::int64_t>(core::mul_div_floor(static_cast<std::uint64_t>(per_person),extra,1).quotient);
-        };
-        t.payroll_cents=core::checked_add(t.payroll_cents,cost(hire.monthly_cents));
-        t.paid_setup_cents=core::checked_add(t.paid_setup_cents,cost(hire.fee_cents));
-    }
     t.prestige=leg.prestige;t.buzz=leg.buzz;
     for(const auto& scene:c.scenes) {
         const auto choice=s.choices.find(scene.id);
@@ -128,8 +144,21 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
     }
     if(sold>8500) invalid("These terms leave too little founding control; choose fewer equity backers.");
     t.founder_bp=t.nonprofit?0:10000-sold;
-    if(s.sandbox_cash_cents) t.contributed_cents=core::checked_add(*s.sandbox_cash_cents,t.paid_setup_cents);
-    if(t.contributed_cents<=t.paid_setup_cents) invalid("Choose a smaller office or funding sufficient to pay formation and the first researcher.");
+    {
+        // A nonprofit founder must secure the named gift; the entry route
+        // itself is not an unrequested endowment.
+        if(s.route=="mission_director") t.contributed_cents=core::checked_subtract(t.contributed_cents,route.capital_cents);
+        if(ceo) {
+            t.contributed_cents=route.capital_cents;
+            t.partner_bp=10000-c.opening->ceo_equity_bp;t.founder_bp=c.opening->ceo_equity_bp;
+            t.paid_setup_cents=0;
+        }
+        t.opening_staff=(t.founder_researcher?1U:0U)+(ceo?c.opening->inherited_staff:s.route=="partnership"?c.opening->cofounder_staff:0U);
+        const auto paid_staff=t.opening_staff-(t.founder_researcher?1U:0U);
+        t.payroll_cents=static_cast<std::int64_t>(core::mul_div_floor(static_cast<std::uint64_t>(founding_option(c.researchers,"first_hire").monthly_cents),paid_staff,1).quotient);
+        if(s.office=="home") {t.office_cents=0;t.paid_setup_cents=c.formation_cents;}
+    }
+    if(complete && t.contributed_cents<=t.paid_setup_cents) invalid("Secure funding sufficient to pay the disclosed formation expenses.");
     return t;
 }
 std::string canonical_founding_selection(const FoundingSelection& s) {
@@ -138,8 +167,7 @@ std::string canonical_founding_selection(const FoundingSelection& s) {
         {"sociability",s.sociability},{"activity",s.activity},{"disposition",s.disposition},
         {"family",s.family},{"leg",s.leg},{"route",s.route},{"legal_form",s.legal_form},
         {"office",s.office},{"researcher",s.researcher},{"choices",s.choices},{"backers",s.backers}};
-    if(s.sandbox_cash_cents) j["sandbox_cash_cents"]=*s.sandbox_cash_cents;
-    if(s.sandbox_staff) j["sandbox_staff"]=*s.sandbox_staff;
+    j["appearance"]={{"kit",s.appearance.kit},{"parts",s.appearance.parts}};
     return j.dump();
 }
 FoundingSelection load_founding_selection(std::string_view bytes) {
@@ -148,13 +176,13 @@ FoundingSelection load_founding_selection(std::string_view bytes) {
     s.sociability=j.at("sociability");s.activity=j.at("activity");s.disposition=j.at("disposition");
     s.family=j.at("family");s.leg=j.at("leg");s.route=j.at("route");s.legal_form=j.at("legal_form");
     s.office=j.at("office");s.researcher=j.at("researcher");s.choices=j.at("choices").get<decltype(s.choices)>();s.backers=j.at("backers").get<decltype(s.backers)>();
-    if(j.contains("sandbox_cash_cents")) {
-        const auto& v=j.at("sandbox_cash_cents");if(!v.is_number_integer() || (v.is_number_unsigned() && v.get<std::uint64_t>()>100000000000ULL)) invalid("Invalid sandbox capital.");
-        s.sandbox_cash_cents=v.get<std::int64_t>();
-    }
-    if(j.contains("sandbox_staff")) {
-        const auto& v=j.at("sandbox_staff");if(!v.is_number_integer() || v<0 || v>10000) invalid("Invalid sandbox staffing.");
-        s.sandbox_staff=v.get<std::uint32_t>();
+    {
+        const auto& a=j.at("appearance");core::PortraitRecipe p;
+        if(a.at("kit")!=1 || a.at("parts").size()!=p.parts.size()) invalid("Unsupported portrait kit.");
+        for(std::size_t i=0;i<p.parts.size();++i) {
+            const auto& v=a.at("parts").at(i);if(!v.is_number_integer() || v<0 || v>=core::portrait_part_counts[i]) invalid("Invalid portrait part.");p.parts[i]=v.get<std::uint8_t>();
+        }
+        s.appearance=p;
     }
     shape(s);if(Json::parse(canonical_founding_selection(s))!=j) invalid("Unsupported or out-of-range founding fields.");return s;
 }

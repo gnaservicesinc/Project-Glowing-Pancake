@@ -110,8 +110,8 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     core::initialize_succession(world.simulation, world.identity ? std::optional{world.identity->founder_name} : std::nullopt);
     if (!opening.business_offers.empty()) world.simulation.business_offers=core::BusinessOffersState{opening.business_offers,{}};
     world.facts.at("company.has_compute_lease") = !opening.capacity_sources.empty();
-    if (const auto lease = scenario->monthly_commitments.find("compute_lease");
-        lease != scenario->monthly_commitments.end())
+    if (const auto lease = opening.monthly_commitments.find("compute_lease");
+        lease != opening.monthly_commitments.end())
         world.facts.at("company.monthly_compute_bill_cents") = core::checked_add(lease->second.value(),opening.monthly_commitments.contains("founder_compute")?opening.monthly_commitments.at("founder_compute").value():0);
     world.facts.at("company.is_operating") = true;
     if (headquarters == "US-CA") world.state_id = "state.us_ca";
@@ -120,6 +120,15 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     else throw std::invalid_argument("Headquarters has no implemented scope binding");
     core::initialize_people(world.simulation,seed,world.identity?world.identity->founder_name:std::string{},world.identity?world.identity->founder_pronouns:std::string{},
         world.founding && world.founding->researcher=="founder",world.founding && world.founding->leg=="genius"?3:0);
+    if(world.founding && world.simulation.management && world.simulation.management->people) {
+        for(auto& employee:world.simulation.management->people->employees) {
+            auto& p=employee.terms.profile;
+            if(p.role=="Founder / researcher") {
+                p.gender=world.founding->gender;p.portrait=world.founding->appearance;
+                p.bio="Actual Genius: exceptional technical ability developed through the founder's formative years.";
+            } else if(world.founding->route=="partnership") p.role="Cofounder / researcher";
+        }
+    }
     core::initialize_departments(world.simulation);
     core::initialize_access(world.simulation,world.founding && (world.founding->family=="rich" || world.founding->leg=="wealthy" || world.founding->leg=="political"));
     if(scenario->counties) world.counties=core::initialize_counties(*scenario->counties,world.simulation.date,seed);

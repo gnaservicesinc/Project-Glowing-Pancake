@@ -171,16 +171,23 @@ QVariantMap WorldController::founder() const {
     const auto& w=snapshot_->checkpoint.world;
     const auto name=w.identity?q(w.identity->founder_name):tr("Founder");
     QString detail=w.identity?q(w.identity->founder_pronouns):QString{};
-    if(w.founding) detail+=tr(" · Age %1").arg(core::from_ordinal(w.simulation.date).year-1997);
+    if(w.founding) detail+=tr(" · %1 · Age %2").arg(q(w.founding->gender)).arg(core::from_ordinal(w.simulation.date).year-1997);
     auto portrait=core::make_portrait(w.root_seed,"founder/"+name.toStdString());bool managing=false;
+    if(w.founding) portrait=w.founding->appearance;
     const auto* manager=core::operations_manager_on(w.simulation,w.simulation.date);
     if(w.simulation.management && w.simulation.management->people) for(const auto& employee:w.simulation.management->people->employees)
         if(employee.terms.profile.role=="Founder / researcher") {
             const auto& p=employee.terms.profile;portrait=p.portrait;managing=manager && manager->person==p.id;
             detail+=tr("\n%1\nResearch %2 · Engineering %3 · Evaluation %4").arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation);
         }
+    QString bio;
+    if(w.founding) {
+        const auto& f=*w.founding;
+        const QString advantage=f.leg=="genius"?tr("Actual Genius"):f.leg=="wealthy"?tr("Wealthy Elite"):f.leg=="political"?tr("Child of Political Elite"):tr("Extremely Charismatic");
+        bio=tr("%1\nFamily: %2\n%3 · %4 · %5").arg(advantage,q(f.family),q(f.sociability),q(f.activity),q(f.disposition));
+    }
     return {{"id","founder"},{"portrait",portraitUrl(portrait)},{"name",name},{"initials",name.section(' ',0,0).left(1)+name.section(' ',-1).left(1)},
-        {"detail",detail},{"role",managing?tr("Founder / operations manager"):tr("Founder")},{"bio",w.founding?tr("%1 · %2 · %3").arg(q(w.founding->sociability),q(w.founding->activity),q(w.founding->disposition)):QString{}}};
+        {"detail",detail},{"role",managing?tr("Founder / operations manager"):w.founding && w.founding->route=="hired_ceo"?tr("Chief executive"):tr("Founder")},{"bio",bio}};
 }
 QVariantList WorldController::people() const {
     QVariantList rows;

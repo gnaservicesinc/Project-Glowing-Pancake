@@ -208,6 +208,13 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
         if (accepted && starting_founder_) founding_->reset();
         starting_founder_ = false;
         busy_ = false; emit stateChanged();
+        if(resetting_local_data_) {
+            resetting_local_data_=false;
+            if(accepted) {
+                founding_->reset();welcome_=true;original_content_review_.clear();
+                emit stateChanged();emit developmentResetFinished();
+            }
+        }
         if (!accepted || !explanation.isEmpty()) setNotice(explanation);
         emit commandFinished(accepted,explanation);
     });
@@ -450,7 +457,7 @@ void CampaignController::startFounderCampaign() {
             selection.first_name+" "+selection.last_name,form.value("pronouns").toString().trimmed().toStdString()};
         runtime::validate_campaign_identity(*options.identity);
         options.seed=runtime::parse_world_seed(form.value("seed").toString().trimmed().toStdString());
-        options.difficulty=form.value("difficulty").toString().toStdString();
+        options.difficulty={};
         startCampaign(form.value("headquarters").toString(),true,QStringLiteral("scenario.founder_campaign"),
             form.value("mission").toString(),{},std::move(options));
     } catch(const std::exception& e) {setNotice(QString::fromUtf8(e.what()));}

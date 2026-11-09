@@ -216,6 +216,16 @@ FocusScope {
                     Layout.fillWidth: true
                     onClicked: { menuAudio.select(); menu.quitRequested() }
                 }
+                // TODO(v1.0): remove local-data reset before shipping.
+                MenuButton {
+                    objectName: "developmentResetButton"
+                    text: qsTr("DEV · Reset local data")
+                    textSize: menu.textSize
+                    Layout.fillWidth: true
+                    enabled: campaign.ready && !campaign.busy
+                    Accessible.description: qsTr("Deletes local saves, autosaves, setup, drafts and settings for this game. Starts fresh immediately.")
+                    onClicked: campaign.resetLocalData()
+                }
             }
             Label {
                 visible: menu.message.length > 0 || campaign.notice.length > 0

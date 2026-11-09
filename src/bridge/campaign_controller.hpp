@@ -85,6 +85,7 @@ class CampaignController final : public QObject {
     Q_PROPERTY(int effectsVolume READ effectsVolume NOTIFY settingsChanged)
     Q_PROPERTY(bool motionBackground READ motionBackground NOTIFY settingsChanged)
 public:
+    Q_INVOKABLE void resetLocalData();
     CampaignController(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
                        persistence::LocalPaths paths, persistence::Settings initial_settings = {},
                        QObject* parent = nullptr, bool welcome = false, bool continuous = false);
@@ -200,6 +201,7 @@ public:
     // C++ smoke/tests can inspect authority without exposing mutation to QML.
     [[nodiscard]] CampaignSnapshotPtr snapshot() const { return snapshot_; }
 signals:
+    void developmentResetFinished();
     void stateChanged();
     void settingsChanged();
     void selectionChanged();
@@ -231,6 +233,7 @@ private:
     WorldController* world_;
     bool welcome_ = false;
     bool starting_founder_ = false;
+    bool resetting_local_data_ = false;
     int days_per_second_ = 1;
     QThread thread_;
     CampaignWorker* worker_ = nullptr;

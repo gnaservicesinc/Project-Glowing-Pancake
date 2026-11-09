@@ -45,3 +45,17 @@ target_compile_definitions(pgp-form-drafts-test PRIVATE
 pgp_project_target(pgp-form-drafts-test)
 add_test(NAME bridge.form-drafts COMMAND pgp-form-drafts-test)
 set_tests_properties(bridge.form-drafts PROPERTIES TIMEOUT 30 ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+add_executable(pgp-founding-test founding_test.cpp)
+target_link_libraries(pgp-founding-test PRIVATE pgp::bridge)
+target_compile_definitions(pgp-founding-test PRIVATE PGP_F04_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-founding-test)
+add_test(NAME bridge.founding COMMAND pgp-founding-test)
+set_tests_properties(bridge.founding PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-development-reset-test development_reset_test.cpp)
+target_link_libraries(pgp-development-reset-test PRIVATE pgp::bridge)
+target_compile_definitions(pgp-development-reset-test PRIVATE PGP_RESET_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-development-reset-test)
+add_test(NAME bridge.development-reset COMMAND pgp-development-reset-test)
+set_tests_properties(bridge.development-reset PROPERTIES TIMEOUT 30)

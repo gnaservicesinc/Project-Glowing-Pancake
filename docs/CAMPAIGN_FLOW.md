@@ -45,6 +45,10 @@ may voluntarily end or leave the game at any point. In post-game, institutional
 leadership continues; any playful founder-longevity Easter egg cannot rewrite
 the completed campaign's ending.
 
+The [2026-11-09 selected refinements](FEEDBACK_REFINEMENTS.md) supersede the
+earlier setup assumptions below. Starting conditions determine challenge; there
+is no difficulty choice. Hiring, premises shopping and experiments belong in play.
+
 ## Opening sequence
 
 ```mermaid
@@ -56,8 +60,7 @@ flowchart TD
     Entry --> Charter[Legal form, entry route, name and mission]
     Charter --> Funding[Founders, investors or donors and terms]
     Funding --> Budget[Capital and obligations preview]
-    Budget --> Office[First office and researcher or founder assignment]
-    Office --> Play[Paused first morning at age 18]
+    Budget --> Play[Paused first morning: solo home, agreed cofounder or inherited office]
     Play --> End[2115: campaign review and epilogue]
     End --> Continue[Optional post-game sandbox]
 ```
@@ -138,17 +141,16 @@ Offer “Use a prepared biography” with a complete review for repeat players.
 
 | Route | Example availability | Actual starting situation |
 | --- | --- | --- |
-| Bootstrap a small lab | Accessible founder capital; rich-family routes can fund a larger lab | Small office, finite runway, founder ownership and research to do |
-| Technical cofounder | Genius or demonstrated technical record, with a complementary partner | Cofounder supplies commercial capacity/capital under explicit ownership terms |
-| Investor-backed founding CEO | Particularly strong genius/charisma track or a demonstrated project | A fictional new lab recruits the young founder; investors retain their negotiated rights |
-| Mission-funded founding director | Credible research/public-service record and an eligible sponsor | Restricted grants/donations, nonprofit governance, paid work and disclosure obligations |
-| Small founding partnership | Guaranteed fallback for every background, including poor families | Modest seed support and a hired technical partner; modest ambitions remain viable |
+| Wealthy sole founder | Wealth at eighteen | Alone at parents’ house/garage, $0 rent; no outside backers |
+| Investor-backed founder | Solicit and accept at least one named offer | Alone at home, signed equity funding; hire and find premises during play |
+| Cofounding partnership | Agreed contribution and ownership terms | A founding partner, shared premises and disclosed payroll/rent |
+| Hired CEO | Accept the existing company's employment terms | Existing rented office, three employees and company cash; 5% employment grant |
+| Mission-funded founder | Solicit and accept a named nonprofit gift | Alone at home; institution owns the assets; no automatic trust/endowment |
 
-A prestigious CEO offer at 18 is exceptional and must be earned in the
-introduction. It is not an assertion about how any real AI company hires.
-The route still puts the player in charge of the startup; an ordinary employee
-career is outside this opening scope. Technical and nontechnical founders both
-get workable paths rather than a hidden difficulty trap.
+None of these routes starts a research project or supplies a finished product.
+Family resources and the selected route determine the opening, without difficulty
+multipliers. The main-game property, hiring and research milestones complete the
+first operating loop.
 
 ### Company, mission, charter and capital
 
@@ -217,25 +219,18 @@ Restricted cash reconciles with the total bank balance and its permitted uses;
 undrawn debt and expiring compute credits appear separately from cash.
 Record personal-source limits, conserved ownership, board seats, grant uses,
 recurring obligations and dates. No simultaneous unlimited cash and control.
-Review the resulting runway and a feasible first experiment before committing.
-Retire the prototype's universal $1.2m/six-person opening as a campaign default;
-numeric packages need later balance work, not invented financial precision here.
+Review contributions, formation costs, opening cash, ownership, rent, payroll,
+founder salary and actual equipment before signing. Opening research compute is
+zero until the player acquires a real source. The founder brings their disclosed
+personal phone/laptop; an inherited shared office includes a workstation. The
+pending equipment/compute milestone will connect physical machines to their
+measured capacity.
 
-After capital is committed, select the first office: home/garage, shared research
-space or small leased office, with real capacity, rent, deposit, lease term,
-location and prestige tradeoffs. A bootstrap route can use permitted home space;
-there must be an affordable option for every offered package. California is the
-biographical origin and default headquarters, not a prohibition on moving.
-
-Hire the first researcher or assign a qualified genius founder to the work.
-The founder cannot simultaneously supply a full researcher-day and full CEO-day.
-Other routes can fund a technical cofounder/first hire before payroll starts.
-Check data rights, experiment costs and compute as well as a salary. Start paused
-in the MC's office; tell the player they are 18 and the campaign runs to 118.
-There is initially little or no functional commercial product. Grants, a paid
-pilot or narrow specialist work may support research without creating a ready
-mass-market chatbot. Publication can earn evidence-based prestige and/or buzz,
-which in turn affects recruitment, funding meetings and terms.
+Do not choose an office, hire a first researcher or select the first experiment
+in setup. Start paused in the premises determined by the entry route. A genius
+can contribute their own working capacity; other solo founders have no research
+staff until they recruit during play. Property and recruitment decisions must
+use their actual main-game systems, with costs and terms the player can review.
 
 ## Broad gameplay stages
 

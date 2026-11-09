@@ -1,6 +1,6 @@
 # Project status and next handoff
 
-Updated 2026-11-08
+Updated 2026-11-09
 
 ## Implementation progress
 
@@ -9,12 +9,40 @@ Updated 2026-11-08
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-world/interface batch advances content to **0.37.0-dev.1**, generation **37**.
+world/interface batch advances content to **0.38.1-dev.1**, generation **39**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
 next tasks are candidates for that review. The initial implementation queue
 is closed.
+
+## Current human review: grounded founding and unfinished main game
+
+The 2026-11-09 review rejects the main interface as complete. The detailed
+[selected refinements](FEEDBACK_REFINEMENTS.md) and F-04 milestone queue in the
+[backlog](BACKLOG.md) supersede conflicting setup/UI assumptions below.
+
+F-04A implements structured gender/pronouns, a live appearance editor and founder
+profiles showing their actual leg up. Wealth is explicit. A self-funded founder
+starts alone at their parents' house with $0 rent; only requested and accepted
+investor/donor offers contribute funds. Cofounders have agreed founding terms;
+a hired CEO inherits an existing office, three employees and company cash with
+a disclosed minority grant. Setup no longer chooses the first experiment, forces
+a first hire, shops for offices or asks for difficulty. Opening research compute
+is zero until a source is acquired. The budget discloses capital sources,
+ownership, signing costs, rent, payroll, salary and existing/inherited equipment.
+Escape during play opens the pause menu; Escape from that menu opens exit confirmation.
+
+The decorative 3D space, property/furnishing mechanics, hiring negotiations,
+equipment-backed research trees, state geography and laptop/game interface are
+still unfinished and remain the next milestones. Passing earlier navigation or
+layout checks did not validate those missing gameplay interactions.
+
+All current builds, including optimized Release builds for human testers, include
+**DEV · Reset local data**, which clears game-local saves, cached rules, drafts
+and settings and returns to New Game. It works from a broken-save menu. Remove
+its UI and implementation before shipping v1.0. Development saves have no
+compatibility guarantee; verify only fresh current-build save/reload behavior.
 
 ## Selected feedback: Mac application and main menu
 
@@ -104,9 +132,9 @@ were rejected or deferred. [Campaign flow](CAMPAIGN_FLOW.md) ·
 
 New Game opens on the hospital prologue. Each beat uses original silhouette art,
 staged narration and one decision on a proportional canvas. Family background
-and legal form change later illustrations and accents. Identity, traits and eight
-formative choices lead into the entry route, legal form, mission, funding
-offers, office and first research assignment. The signing review reconciles
+and legal form change later illustrations and accents. Identity, traits, appearance and eight
+formative choices lead into entry route, legal form, mission and explicitly
+requested funding terms. The signing review reconciles
 contributions, costs, monthly commitments and ownership. The complete biography
 persists in campaign saves. The company starts paused in 2015.
 
@@ -118,7 +146,7 @@ in the backlog. [Images and pacing](../assets/founding/README.md).
 
 | Area | Available starting point |
 | --- | --- |
-| Campaign and persistence | Company setup, difficulty and seed choices, paused calendar, local saves, autosaves, exact continuation and a playable 2014–2017 campaign |
+| Campaign and persistence | Company setup and seed choices, paused calendar, local saves, autosaves, exact continuation and a playable 2014–2017 campaign |
 | Lab | Licensed, commissioned, feedback and synthetic data, research and setbacks, training and checkpoints, independent evaluation, deployment and specialist assignment |
 | Business and people | Accounts, contracts, forecasts, taxes, funding, protected budgets, paid hiring and onboarding, staffing pressure, executives and board decisions |
 | Products and competitors | Product channels, staged releases and rollback, compatibility and retirement, enrollment, incident response, rival plans and heavyweight responses |
@@ -140,19 +168,24 @@ selects Debug, and `--portable` disables host CPU tuning. Incremental caches
 are retained. The Codex Run action builds/packages/launches only the game via
 `script/build_and_run.sh`; builds alone never launch an application.
 
-Focused setup checks cover New Game, one question at a time, resizing to
-650×480 at 100% and 200% text, family and legal-form artwork, funding
-eligibility, the paused first day and exact reload. The native Mac prologue
-walkthrough and offscreen main menu check pass. The separate native menu
-check ended during its full-screen restore. Core checks cover alternative
-founding routes and prior save compatibility. Build-wrapper checks cover both-app defaults and explicit
-opt-ins. No full suite, long campaign or native matrix is part of this batch.
-Native file-picker row selection, VoiceOver and release/device qualification
-remain open. The prior forecast-padding and full-campaign staffing assertions
-remain recorded for later selected work. Content Studio usability is not
-accepted by this milestone.
+F-04A focused runtime/bridge checks pass for founding routes, structured identity,
+portrait editing/profile display, zero-capacity Lab defaults and current-build
+save/reload. The reset check recovers from an unreadable save, deletes only
+application-local data (without following links outside it) and starts a fresh
+company. Offscreen rendered prologue walkthroughs pass at 100% and 200% text,
+including the 650×480 canvas, live appearance editing, funding, paused office,
+first day, fresh export and automatic day continuation. The menu walkthrough
+passes one-click reset, settings, both Escape paths, cancellation and actual exit.
+These are focused Mac development checks using the software renderer, not new
+native Metal, OS shortcut, reader or clean-device qualification.
 
-Finalized content is generation 30. Game and editor versions remain development
+No full suite, long campaign or native matrix is part of this batch. Native
+file-picker row selection, VoiceOver and release/device qualification remain
+open. The prior forecast-padding and full-campaign staffing assertions remain
+recorded for later selected work. Content Studio usability is not accepted by
+this milestone.
+
+Finalized content is generation 39. Game and editor versions remain development
 placeholders, and release readiness is false.
 
 ## Next phase

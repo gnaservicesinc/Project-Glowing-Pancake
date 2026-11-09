@@ -17,7 +17,10 @@ The user closed the initial skeleton implementation phase on 2026-11-07.
 The current core is the handoff for human feedback. Follow the current
 `docs/STATUS.md` and `docs/BACKLOG.md`, which supersede archived task queues.
 Detailed design mechanics and earlier proposed next features are inputs for
-feedback and later selection. Work from the user's concrete next request.
+feedback and later selection. Work from the user's concrete next request. The selected 2026-11-09 F-04 requirements in
+`docs/FEEDBACK_REFINEMENTS.md` supersede conflicting older founding/interface
+assumptions: no difficulty setting, no forced first hire/experiment, and the main
+game interface remains unfinished.
 `tech_sug.txt` is a work in progress for later review. Its contents are
 reference material, and implementation requires the user's selection.
 
@@ -29,6 +32,8 @@ For authoring work, use `docs/CONTENT_EDITOR.md` and `docs/VERSIONING.md`. The c
 - Put small disposable scratch output under ignored `.work/` or build directories. Read installed system/SDK resources as needed, but do not modify global tools/settings for convenience.
 - Heavy Qt/native packaging, cross-platform SDK installs, and release staging belong on GitHub Actions. Existing local Qt: `/opt/Qt/6.12.0/macos`. Do not download duplicate SDKs or fill the local disk.
 - Use one incremental optimized Mac build per implementation batch and small focused checks for the changed behavior and relevant failure path. Keep owned incremental build trees between batches to avoid rebuilding; clean them only for a required toolchain reset or deliberate disk recovery. Remove disposable task scratch when finished. Preserve user saves, source assets, unrelated outputs and any files another task owns. No broad deletion based only on a filename pattern.
+- Current optimized Release playtest builds include the one-click local-data reset. Keep it available for human testers during development; remove its menu action and callable implementation before shipping v1.0. No separate production build flag is needed now.
+- During development, save compatibility is not a requirement. Do not add migrations, legacy founding modes or compatibility checks for earlier development saves unless the user explicitly requests them. Fresh saves must still reload correctly within the current build.
 - Keep `.gitignore` current. Do not commit binaries, SDKs, caches, secrets, local playtest data or personal saves.
 - At the end of an authorized repository-changing task, stage explicit task paths, commit, and push the task work. Unpushed local files may be removed between sessions. Verify the push and final Git status; report the commit and any unrelated remaining changes. Do not force-push, discard user work, or claim remote persistence if authentication/push failed.
 - Git preservation is separate from publishing a game. Public store uploads, submissions, account changes and paid resources require the corresponding explicit task/authorization.

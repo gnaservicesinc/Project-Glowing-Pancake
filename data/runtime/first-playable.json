@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.37.0-dev.1",
+  "content_version": "0.38.1-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -69569,14 +69569,14 @@
           {
             "buzz": 0,
             "capital_cents": 0,
-            "detail": "An old desk, borrowed shelves and a modest equipment corner. Low fixed costs. Includes your phone and laptop.",
+            "detail": "Start alone in a small room at your parents’ house, with $0 rent and room for one desk. You bring your personal phone and laptop; furnishings and research equipment are gameplay purchases.",
             "family": "",
-            "fee_cents": 50000,
+            "fee_cents": 0,
             "id": "home",
             "leg": "",
             "legal_form": "",
-            "monthly_cents": 100000,
-            "name": "Home research room",
+            "monthly_cents": 0,
+            "name": "Parents’ house / garage",
             "prestige": 0,
             "shares_bp": 0
           },
@@ -69609,6 +69609,11 @@
             "shares_bp": 0
           }
         ],
+        "opening": {
+          "ceo_equity_bp": 500,
+          "cofounder_staff": 1,
+          "inherited_staff": 3
+        },
         "prestige_finance_bp": 20,
         "researchers": [
           {
@@ -69628,14 +69633,28 @@
           {
             "buzz": 0,
             "capital_cents": 0,
-            "detail": "Your first researcher joins the founding lab. $5,000 signing cost and $9,000 monthly payroll in constant-2014 dollars.",
+            "detail": "Payroll for each explicitly agreed founding partner or inherited employee. Recruiting additional staff takes place during play.",
             "family": "",
             "fee_cents": 500000,
             "id": "first_hire",
             "leg": "",
             "legal_form": "",
             "monthly_cents": 900000,
-            "name": "Hire Dr. Rowan Ellis",
+            "name": "Founding employee payroll",
+            "prestige": 0,
+            "shares_bp": 0
+          },
+          {
+            "buzz": 0,
+            "capital_cents": 0,
+            "detail": "No researcher has been hired. Review applicants and agree employment terms during play.",
+            "family": "",
+            "fee_cents": 0,
+            "id": "none",
+            "leg": "",
+            "legal_form": "",
+            "monthly_cents": 0,
+            "name": "Hire during play",
             "prestige": 0,
             "shares_bp": 0
           }
@@ -69644,7 +69663,7 @@
           {
             "buzz": 0,
             "capital_cents": 30000000,
-            "detail": "A commercial cofounder provides capital for 20% ownership. A viable opening from every background.",
+            "detail": "$300,000 from a cofounder for 20%; shared office and payroll.",
             "family": "",
             "fee_cents": 0,
             "id": "partnership",
@@ -69658,7 +69677,7 @@
           {
             "buzz": 0,
             "capital_cents": 0,
-            "detail": "Use accessible personal capital and retain control. Requires a wealthy family at 18.",
+            "detail": "Start alone at your parents’ house. $0 rent; no outside backers.",
             "family": "rich",
             "fee_cents": 0,
             "id": "bootstrap",
@@ -69671,36 +69690,8 @@
           },
           {
             "buzz": 0,
-            "capital_cents": 65000000,
-            "detail": "A new fictional lab backs your exceptional technical record. Founding partners retain 35%.",
-            "family": "",
-            "fee_cents": 0,
-            "id": "technical_ceo",
-            "leg": "genius",
-            "legal_form": "corporation",
-            "monthly_cents": 0,
-            "name": "Recruited as the technical founding CEO",
-            "prestige": 0,
-            "shares_bp": 3500
-          },
-          {
-            "buzz": 0,
-            "capital_cents": 65000000,
-            "detail": "Your public record and charisma bring a founding offer. Partners retain 35%.",
-            "family": "",
-            "fee_cents": 0,
-            "id": "public_ceo",
-            "leg": "charisma",
-            "legal_form": "corporation",
-            "monthly_cents": 0,
-            "name": "Lead an investor-backed founding team",
-            "prestige": 0,
-            "shares_bp": 3500
-          },
-          {
-            "buzz": 0,
             "capital_cents": 45000000,
-            "detail": "A founding gift supports the stated research mission. Trustees protect the institution; no founder equity.",
+            "detail": "Pitch named donors. Start alone at home; no founder equity.",
             "family": "",
             "fee_cents": 0,
             "id": "mission_director",
@@ -69708,6 +69699,34 @@
             "legal_form": "nonprofit",
             "monthly_cents": 0,
             "name": "Found a mission-funded research institution",
+            "prestige": 0,
+            "shares_bp": 0
+          },
+          {
+            "buzz": 0,
+            "capital_cents": 0,
+            "detail": "Pitch named investors. Start alone at home with agreed funding.",
+            "family": "",
+            "fee_cents": 0,
+            "id": "investment",
+            "leg": "",
+            "legal_form": "corporation",
+            "monthly_cents": 0,
+            "name": "Convince an investor",
+            "prestige": 0,
+            "shares_bp": 0
+          },
+          {
+            "buzz": 0,
+            "capital_cents": 65000000,
+            "detail": "$650,000 company cash, three employees and an office; 5% grant.",
+            "family": "",
+            "fee_cents": 0,
+            "id": "hired_ceo",
+            "leg": "",
+            "legal_form": "corporation",
+            "monthly_cents": 0,
+            "name": "Get hired as CEO",
             "prestige": 0,
             "shares_bp": 0
           }
@@ -72309,7 +72328,7 @@
               }
             ]
           },
-          "home_seats": 2,
+          "home_seats": 1,
           "leased_seats": 16,
           "maximum_blueprints": 8,
           "maximum_rooms": 12,
@@ -74436,7 +74455,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 7,
+      "revision": 9,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

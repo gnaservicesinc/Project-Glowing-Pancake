@@ -51,7 +51,8 @@ QtObject {
                 id: row.id,
                 name: row.id === "poor" ? qsTr("We counted every dollar") :
                     row.id === "middle" ? qsTr("We had enough to get by") :
-                    row.id === "rich" ? qsTr("We had money to spare") : row.name
+                    row.id === "rich" ? qsTr("We were rich / wealthy") : row.name,
+                detail: row.detail
             })))
         const advantages = {
             genius: qsTr("You can take on the lab's first experiment yourself."),
@@ -112,12 +113,15 @@ QtObject {
         for (const scene of scenes) {
             if (scene.id === "record") {
                 const date = qsTr("YOUR FIRST PUBLIC TEST  /  2014")
-                field("gender", workshop, date, qsTr("In your own words"),
+                question("gender", workshop, date, qsTr("Your identity"),
                     qsTr("Ahead of your first public test, an organizer sends over a short biography for you to check."),
-                    qsTr("How do you describe your gender?"), 64)
-                field("pronouns", workshop, date, qsTr("The introduction"),
+                    qsTr("How do you describe your gender?"), [option("woman",qsTr("Woman")),option("man",qsTr("Man")),option("nonbinary",qsTr("Nonbinary")),option("unspecified",qsTr("Prefer not to say"))])
+                question("pronouns", workshop, date, qsTr("The introduction"),
                     qsTr("You hand the page back. The organizer will read it aloud before you take your seat."),
-                    qsTr("Which pronouns should they use?"), 64)
+                    qsTr("Which pronouns should they use?"), [option("she/her",qsTr("She / her")),option("he/him",qsTr("He / him")),option("they/them",qsTr("They / them")),option("name only",qsTr("Use my name"))])
+                add("appearance", workshop, date, qsTr("A face to the name"),
+                    qsTr("Choose how you appear in portraits throughout the game. Your appearance is independent of your abilities and identity."),
+                    qsTr("Select a feature, then change its appearance."), "appearance")
             }
             const copy = sceneCopy[scene.id] || {}
             add("chapter-" + scene.id, copy.art || workshop, copy.date || qsTr("CALIFORNIA  /  %1").arg(scene.date.slice(0, 4)),
@@ -156,8 +160,8 @@ QtObject {
             ])
         question("route", foundingArt, founding, qsTr("A way in"),
             qsTr("The offers on the table reflect what you have done and who is willing to take a chance on you."),
-            qsTr("How do you get the lab off the ground?"), story.routes.filter(row => row.available))
-        field("company", foundingArt, founding, qsTr("A name on the door"),
+            qsTr("How do you get the lab off the ground?"), story.routes.filter(row => row.available || row.id === "bootstrap"))
+        if (form.route !== "hired_ceo") field("company", foundingArt, founding, qsTr("A name on the door"),
             qsTr("Your signature is ready. The line for the institution is still blank."),
             qsTr("What will you call it?"), 128)
         question("mission", foundingArt, founding, qsTr("The reason for starting"),
@@ -193,24 +197,8 @@ QtObject {
         question("headquarters", foundingArt, founding, qsTr("An address"),
             qsTr("The registration papers ask for the state where the lab will do its work."),
             qsTr("Where will you put down roots?"), story.headquarters)
-        question("office", foundingArt, founding, qsTr("A room to work in"),
-            qsTr("Every month in a room you can afford buys another month of experiments."),
-            qsTr("Where will you set up your first desks?"), story.offices)
-        question("researcher", foundingArt, founding, qsTr("The first experiment"),
-            qsTr("The first notebook is open on the desk. Someone needs to do the work inside it."),
-            qsTr("Who takes on the research?"), story.researchers)
-        const difficultyNotes = {
-            "difficulty.forgiving": qsTr("More starting cash and slower rival decisions."),
-            "difficulty.standard": qsTr("Standard funding and rival pace."),
-            "difficulty.demanding": qsTr("Tighter funding and faster rival decisions.")
-        }
-        question("difficulty", foundingArt, founding, qsTr("The road ahead"),
-            qsTr("The lab is nearly ready. Take a moment to choose the conditions under which it will begin."),
-            qsTr("How demanding should the campaign be?"), story.difficulties.map(row =>
-                Object.assign({}, row, { detail: difficultyNotes[row.id] || row.detail })))
-
         add("review", foundingArt, founding, qsTr("The first morning"),
-            qsTr("%1 has a name, a place to work, and its first experiment ahead. Beyond the door, a new year is beginning.").arg(form.company),
+            form.route === "hired_ceo" ? qsTr("You join an existing office and inherit its payroll. Hiring, research and product decisions are yours to make during play.") : form.route === "partnership" ? qsTr("Your cofounder contributes capital and joins you in a shared office. Research and product decisions begin during play.") : qsTr("You start alone at your parents’ house, with no rent. Find premises, buy equipment and hire people during play. No experiment has been started."),
             "", "review")
         field("seed", foundingArt, founding, qsTr("World seed"), "",
             qsTr("Which seed should this campaign use?"), 20)

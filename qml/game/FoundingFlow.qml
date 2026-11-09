@@ -23,6 +23,7 @@ FocusScope {
     property real afterwordProgress: 1
     property real actionsProgress: 1
     property int choicePage: 0
+    property int appearanceFeature: 0
     property string actionError: ""
     property string inputBeat: ""
     property color sceneAccent: ink.accent
@@ -457,6 +458,55 @@ FocusScope {
                 }
             }
         }
+        Item {
+            x: stage.margin; y: 381; width: opening.readWidth; height: 221
+            visible: opening.beat.kind === "appearance"
+            enabled: visible && !opening.settling
+            opacity: opening.actionsProgress
+            Image {
+                objectName: "foundingPortraitPreview"
+                width: 210; height: 210
+                source: opening.story.portrait
+                sourceSize: Qt.size(420,420)
+                fillMode: Image.PreserveAspectFit
+                Accessible.role: Accessible.Graphic
+                Accessible.name: qsTr("Your customized portrait")
+            }
+            StoryText {
+                x: 240; width: parent.width-240; height: 46
+                text: opening.story.appearanceParts[opening.appearanceFeature].name
+                font.pixelSize: 24 * opening.zoom
+            }
+            StoryAction {
+                objectName: "foundingPreviousFeature"
+                x: 240; y: 52; width: (parent.width-250)/2; height: 50
+                caption: qsTr("‹ Previous feature")
+                onActivated: opening.appearanceFeature=(opening.appearanceFeature+14)%15
+            }
+            StoryAction {
+                objectName: "foundingNextFeature"
+                x: 245+(parent.width-250)/2; y: 52; width: (parent.width-250)/2; height: 50
+                caption: qsTr("Next feature ›")
+                onActivated: opening.appearanceFeature=(opening.appearanceFeature+1)%15
+            }
+            StoryText {
+                x: 240; y: 110; width: parent.width-240; height: 40
+                text: qsTr("Variant %1 of %2").arg(Number(opening.story.form.appearance[opening.appearanceFeature])+1).arg(opening.story.appearanceParts[opening.appearanceFeature].count)
+                font.pixelSize: 22 * opening.zoom
+            }
+            StoryAction {
+                objectName: "foundingPreviousVariant"
+                x: 240; y: 158; width: (parent.width-250)/2; height: 50
+                caption: qsTr("‹ Previous look")
+                onActivated: opening.story.cycleAppearance(opening.appearanceFeature,-1)
+            }
+            StoryAction {
+                objectName: "foundingNextVariant"
+                x: 245+(parent.width-250)/2; y: 158; width: (parent.width-250)/2; height: 50
+                caption: qsTr("Next look ›")
+                onActivated: opening.story.cycleAppearance(opening.appearanceFeature,1)
+            }
+        }
         StoryText {
             objectName: "foundingTerms"
             visible: opening.beat.kind === "review"
@@ -528,7 +578,7 @@ FocusScope {
             StoryAction {
                 id: continueAction
                 objectName: opening.beat.kind === "review" ? "foundingStartButton" : "foundingNextButton"
-                visible: opening.narrative || opening.beat.kind === "field" || opening.beat.kind === "review"
+                visible: opening.narrative || opening.beat.kind === "field" || opening.beat.kind === "review" || opening.beat.kind === "appearance"
                 x: Math.min(opening.readWidth - width, parent.width - width)
                 width: 280
                 height: parent.height

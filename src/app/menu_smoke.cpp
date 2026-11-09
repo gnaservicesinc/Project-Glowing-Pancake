@@ -29,7 +29,7 @@ bool key(QQuickWindow& window,QQuickItem* item,Qt::Key code) {
 }
 void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,MusicController& music,
     QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot,bool settingsOnly) {
-    struct State { int phase=0,ticks=0,loop_ticks=0,frames_before=0,display_ticks=0,layout_ticks=0,reported=-1; QString revision; };
+    struct State { int phase=0,ticks=0,loop_ticks=0,frames_before=0,display_ticks=0,layout_ticks=0,reported=-1; bool reset_checked=false; QString revision; };
     auto state=std::make_shared<State>();
     auto* timer=new QTimer(&window); timer->setInterval(60);
     QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot,expected,settingsOnly] {
@@ -47,6 +47,11 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
         if (state->reported!=state->phase) { state->reported=state->phase; std::cout << "Menu check phase " << state->phase << std::endl; }
         switch (state->phase) {
         case 0: {
+            if(campaign.metaObject()->indexOfMethod("resetLocalData()")<0) {fail("playtest reset availability");return;}
+            if(!state->reset_checked) {
+                if(!press("developmentResetButton")) {fail("one-click development reset");return;}
+                state->reset_checked=true;return;
+            }
             const auto* accessible=QAccessible::queryAccessibleInterface(item("menuNewGameButton"));
             if (!menu->isVisible() || !campaign.paused() || (item("statusLine") && item("statusLine")->isVisible()) ||
                 window.rendererInterface()->graphicsApi()!=expected || !accessible || accessible->text(QAccessible::Name).isEmpty() ||
@@ -120,7 +125,7 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
         case 4: {
             const bool has_prologue = campaign.founding()->available();
             if (menu->isVisible() || !campaign.welcome() || item("foundingScreen")->isVisible() != has_prologue ||
-                item("statusLine")->isVisible() == has_prologue) { fail("New Game entry"); return; }
+                (has_prologue && item("workspaceScene")->isVisible())) { fail("New Game entry"); return; }
             campaign.saveTo(QUrl::fromLocalFile(QString::fromStdU16String((paths.saves_directory/"menu-check.pgpsave").u16string())));
             state->revision=campaign.revision(); ++state->phase; break;
         }
@@ -192,19 +197,25 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
         }
         case 14: {
             auto* dialog=window.findChild<QObject*>(QStringLiteral("exitConfirmDialog"));
-            if (!dialog->property("visible").toBool() || menu->isVisible() || !campaign.paused()) { fail("in-game exit confirmation"); return; }
-            if (!screenshot.isEmpty()) window.grabWindow().save(screenshot+QStringLiteral(".exit.png"));
-            if (!key(window,item("exitCancelButton"),Qt::Key_Escape)) { fail("escape cancels confirmation"); return; }
+            if (dialog->property("visible").toBool() || !menu->isVisible() || !campaign.paused()) { fail("in-game Escape must pause into the menu"); return; }
+            if (!key(window,window.contentItem(),Qt::Key_Escape)) { fail("Escape from paused menu"); return; }
             ++state->phase; break;
         }
         case 15: {
             auto* dialog=window.findChild<QObject*>(QStringLiteral("exitConfirmDialog"));
-            if (dialog->property("visible").toBool() || menu->isVisible() || !press("mainMenuButton") || !press("menuQuitButton")) {
+            if (!dialog->property("visible").toBool() || !menu->isVisible()) {fail("paused menu exit confirmation");return;}
+            if (!screenshot.isEmpty()) window.grabWindow().save(screenshot+QStringLiteral(".exit.png"));
+            if (!key(window,item("exitCancelButton"),Qt::Key_Escape)) { fail("escape cancels confirmation"); return; }
+            ++state->phase; break;
+        }
+        case 16: {
+            auto* dialog=window.findChild<QObject*>(QStringLiteral("exitConfirmDialog"));
+            if (dialog->property("visible").toBool() || !menu->isVisible() || !press("menuQuitButton")) {
                 fail("cancel keeps game and quit uses confirmation"); return;
             }
             ++state->phase; break;
         }
-        case 16:
+        case 17:
             if (!press("exitConfirmButton") || !window.property("exitConfirmed").toBool()) { fail("confirmed exit"); return; }
             window.setProperty("menuSmokePassed",true);
             std::cout << "Main menu check passed, including the confirmed exit." << std::endl;

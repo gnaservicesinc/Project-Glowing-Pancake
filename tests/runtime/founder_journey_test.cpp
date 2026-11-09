@@ -2,6 +2,7 @@
 #include <pgp/persistence/save.hpp>
 #include <iostream>
 #include <stdexcept>
+#include <algorithm>
 
 namespace {
 using namespace pgp;
@@ -22,40 +23,46 @@ int main() {
             options.founding=std::move(s);
             return runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);
         };
-        auto original=make(selected);
-        require(core::iso_date(original.world.simulation.date)=="2015-01-01" && core::iso_date(original.world.simulation.end_date)=="2115-01-01","The biography must lead to the actual 2015–2115 calendar.");
-        require(original.world.simulation.lab->models.empty() && original.world.simulation.deployments->records.empty(),"Founding must not give the player a finished commercial model.");
-        require(core::opening_staff_count(*original.world.simulation.capacity)==1,"A genius supplies one finite research assignment.");
-        require(original.world.simulation.management->catalog.succession->founder_birth_year==1997,"Succession must retain the new founder's real birth year.");
-        const auto expected=content::founding_terms(catalog,selected);
-        require(original.world.simulation.cash.value()==expected.contributed_cents-expected.paid_setup_cents,"Capital and paid office costs must reconcile.");
-        require(persistence::decode_save(program,persistence::encode_save(program,original)).checkpoint==original,"The complete biography must roundtrip exactly.");
-        runtime::Runtime live{program,original};
-        const auto prepared=live.prepare_opening(live.current_state().world.simulation.revision);
-        require(prepared.accepted(),prepared.explanation.c_str());
-        const auto advanced=live.submit({live.current_state().world.simulation.revision,core::AdvanceDay{}});
-        require(advanced.accepted(),advanced.explanation.c_str());
-        require(core::iso_date(live.current_state().world.simulation.date)=="2015-01-02","The first morning must hand off to real daily play.");
-        require(persistence::decode_save(program,persistence::encode_save(program,live.current_state())).checkpoint==live.current_state(),"Played biography state must reload exactly.");
-        auto forged=original;forged.world.founding->backers.push_back("commercial");
-        refuses([&]{runtime::validate_checkpoint(program,forged);});
-        auto invalid=selected;invalid.family="poor";invalid.leg="wealthy";refuses([&]{(void)make(invalid);});
-        invalid=selected;invalid.choices.clear();refuses([&]{(void)make(invalid);});
-        invalid=selected;invalid.leg="charisma";refuses([&]{(void)make(invalid);});
-        selected.family="poor";selected.leg="charisma";selected.researcher="first_hire";
-        auto hired=make(selected);
-        require(hired.world.simulation.cash<original.world.simulation.cash,"A first hire must have a real cost.");
-        selected.legal_form="nonprofit";selected.route="mission_director";selected.backers={"safety","open_science"};
-        auto nonprofit=make(selected);
-        require(!nonprofit.world.simulation.accounts->taxes,"Recognized mission-serving nonprofit income should use its exemption.");
-        for(const auto& holder:nonprofit.world.simulation.accounts->holdings) if(holder.holder=="founder_trust") require(holder.shares.value()==0,"Nonprofit assets cannot be founder equity.");
-        require(nonprofit.world.simulation.management->catalog.financing.size()==1,"Nonprofit cannot sell ordinary VC equity.");
-        require(persistence::decode_save(program,persistence::encode_save(program,nonprofit)).checkpoint==nonprofit,"Nonprofit charter and donors must reload.");
-        invalid=selected;invalid.backers.push_back("commercial");refuses([&]{(void)make(invalid);});
-        selected.legal_form="corporation";selected.route="partnership";selected.backers.clear();selected.leg="political";
-        const auto political=make(selected);
-        require(political.world.simulation.cash>hired.world.simulation.cash,"Political-family rise must change accessible capital at 18.");
-        selected.mode="sandbox";selected.choices.clear();selected.sandbox_cash_cents=1234500;selected.sandbox_staff=7;
+        content::FoundingSelection revised;
+        revised.choices=selected.choices;revised.appearance=core::make_portrait(9,"founder");
+        revised.family="rich";revised.route="bootstrap";revised.office="home";
+        auto solo=make(revised);
+        require(solo.world.difficulty.empty() && solo.world.simulation.capacity->sources.empty(),"New openings must not inherit difficulty or a compute lease.");
+        require(solo.world.simulation.management->people->employees.size()==1,"A genius starts alone, without a forced first hire.");
+        require(std::ranges::none_of(solo.world.simulation.accounts->recurring,[](const auto& r){return r.id=="office_and_admin" || r.id=="compute_lease" || r.id=="payroll_with_benefits";}),"The parents' house has no rent, employee payroll or compute subscription.");
+        require(solo.world.simulation.management->people->employees.front().terms.profile.portrait==revised.appearance,"The research-capable founder must keep the customized portrait.");
+        require(persistence::decode_save(program,persistence::encode_save(program,solo)).checkpoint==solo,"Revised biography and appearance must reload exactly.");
+        revised.leg="charisma";revised.researcher="none";
+        const auto nontechnical=make(revised);
+        require(nontechnical.world.simulation.capacity->available_staff==0 && nontechnical.world.simulation.management->people->employees.empty(),"A nontechnical sole founder must not invent a researcher.");
+        runtime::Runtime quiet{program,nontechnical};
+        require(quiet.prepare_opening(quiet.current_state().world.simulation.revision).accepted(),"A company without research staff must open normally.");
+        const auto quiet_day=quiet.submit({quiet.current_state().world.simulation.revision,core::AdvanceDay{}});
+        require(quiet_day.accepted(),quiet_day.explanation.c_str());
+        revised.family="poor";refuses([&]{(void)make(revised);});
+        revised.route="investment";
+        refuses([&]{(void)make(revised);});
+        revised.backers={"commercial"};
+        const auto financed=make(revised);
+        require(financed.world.simulation.management->people->employees.empty(),"Investment does not hire staff.");
+        revised.route="hired_ceo";revised.office="shared";revised.backers.clear();
+        const auto employed=make(revised);
+        const auto employment=content::founding_terms(catalog,revised);
+        require(employed.world.simulation.management->people->employees.size()==catalog.opening->inherited_staff && employment.founder_bp==catalog.opening->ceo_equity_bp,"A hired CEO inherits a small roster and the disclosed minority grant.");
+        require(employment.contributed_cents==content::founding_option(catalog.routes,"hired_ceo").capital_cents,"CEO opening cash is the existing company's cash, not family money.");
+        require(employed.world.simulation.lab->research.empty() && employed.world.simulation.lab->models.empty(),"An existing office does not force a research or product choice.");
+        require(persistence::decode_save(program,persistence::encode_save(program,employed)).checkpoint==employed,"Inherited company terms must reload exactly.");
+        revised.backers={"commercial"};refuses([&]{(void)make(revised);});revised.backers.clear();
+        runtime::ScenarioOptions with_difficulty;with_difficulty.founding=revised;with_difficulty.difficulty="difficulty.forgiving";
+        refuses([&]{(void)runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",{},with_difficulty);});
+        revised.route="partnership";
+        require(make(revised).world.simulation.management->people->employees.size()==catalog.opening->cofounder_staff,"A cofounder route supplies only its agreed founding partner.");
+        revised.route="mission_director";revised.legal_form="nonprofit";revised.office="home";
+        refuses([&]{(void)make(revised);});
+        revised.backers={"safety"};
+        const auto donated=make(revised);
+        require(donated.world.simulation.capacity->available_staff==0,"A negotiated donor does not hire a researcher.");
+        selected.mode="sandbox";selected.choices.clear();
         refuses([&]{ (void)make(selected); });
         std::cout<<"Founder biography, calendar, costs, eligibility, nonprofit ownership and exact reload passed\n";
     } catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;}

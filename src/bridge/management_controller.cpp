@@ -1164,13 +1164,14 @@ QVariantList ManagementController::services() const {
     return result;
 }
 QVariantMap ManagementController::recommended() const {
-    if (!available()) return {};
+    if (!available() || state().lab->catalog.recipes.empty()) return {};
     const auto& s=state(); const auto& recipe=*std::min_element(s.lab->catalog.recipes.begin(),s.lab->catalog.recipes.end(),[](const auto& a,const auto& b){return a.requires_research.size()<b.requires_research.size();});
-    const auto rate=s.capacity->sources.front().nominal.value();
-    return {{QStringLiteral("trainingRate"),cu(rate*3/5)}, {QStringLiteral("trainingStaff"),QString::number(std::max<std::uint32_t>(1,s.capacity->available_staff>2?s.capacity->available_staff-2:1))},
+    const auto rate=s.capacity->sources.empty()?0:core::company_capacity(s.capacity->sources.front()).value();
+    const auto single=std::min(1U,s.capacity->available_staff);
+    return {{QStringLiteral("trainingRate"),cu(rate*3/5)}, {QStringLiteral("trainingStaff"),QString::number(s.capacity->available_staff>2?s.capacity->available_staff-2:single)},
         {QStringLiteral("trainingWork"),cu(core::checked_unit_add(recipe.compute_scale,recipe.compute_scale).value())},
-        {QStringLiteral("testingRate"),cu(std::max<std::int64_t>(1,rate/5))},{QStringLiteral("researchStaff"),QString::number(std::min<std::uint32_t>(2,s.capacity->available_staff))},
-        {QStringLiteral("testingStaff"),QStringLiteral("1")}};
+        {QStringLiteral("testingRate"),cu(rate>0?std::max<std::int64_t>(1,rate/5):0)},{QStringLiteral("researchStaff"),QString::number(std::min<std::uint32_t>(2,s.capacity->available_staff))},
+        {QStringLiteral("testingStaff"),QString::number(single)}};
 }
 QString ManagementController::briefing() const {
     if (!snapshot_ || !state().accounts) return {};

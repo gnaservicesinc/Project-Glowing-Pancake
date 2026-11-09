@@ -1,11 +1,35 @@
 # Feedback and later-phase backlog
 
-Updated 2026-11-08
+Updated 2026-11-09
 
 **The initial skeleton implementation queue is closed.** The current core is
 the starting point for human feedback. Work now follows the user's selected
 feedback changes. Proposed deeper mechanics from the initial pass await
 that review.
+
+## Selected refinement milestones (F-04)
+
+The 2026-11-09 human review found the main interface incomplete. Implement the
+[selected feedback](FEEDBACK_REFINEMENTS.md) as successive milestones. Previous
+F-02/F-03 engineering checks do not constitute player acceptance.
+
+| Order | Milestone | Acceptance / current state |
+| --- | --- | --- |
+| 1 | F-04A: coherent founding and identity | Structured gender/pronouns, editable appearance, visible leg up, explicit wealth/funding/CEO routes, $0 home rent, no forced hire/experiment/difficulty or automatic compute; menu Escape confirmation. Implemented; focused runtime/bridge checks and rendered setup/menu walkthroughs pass. |
+| 2 | F-04B: actual premises and equipment | Interactive garage/inherited office; buy/place/move equipment and assign desks; realtor city listings, leases and relocation; land, contractor bids, construction risks and property tax. Pending. |
+| 3 | F-04C: negotiated recruiting | Multiple applicants, compensation offers/counteroffers, accepted terms, onboarding and actual workspace. Pending. |
+| 4 | F-04D: connected research and finite compute | Technology graph selection, staff work, actual equipment/lab prerequisites and bought/rented compute; replace arbitrary research fees. Pending. |
+| 5 | F-04E: game interface, devices and state map | Coherent game styling, a recognizable usable laptop/apps, selected-state geography and interactive locations. Pending. |
+
+Current optimized **Release playtest builds include DEV · Reset local data**.
+It clears this game's local test data in one click, including when an incompatible
+save blocks play. Development saves have no compatibility requirement; do not
+spend milestone time on migrations or support for previous development saves.
+Fresh saves still need to reload within the current build.
+
+**Before shipping v1.0: remove DEV · Reset local data from the menu and remove its
+callable implementation. Verify both are absent from every shipped package.**
+No separate build flag is needed during current development.
 
 ## Next phase
 
@@ -22,13 +46,13 @@ in [Campaign flow](CAMPAIGN_FLOW.md), [Technology](TECHNOLOGY.md) and the
 and frozen ending with optional sandbox. The wider flow remains planning direction;
 the setup implementation is described below. The PDF proposals remain advisory and reviewed.
 
-**F-02 setup is ready for another pacing review.** New Game opens on a narrated
+**The earlier F-02 setup is superseded by F-04A above.** New Game opens on a narrated
 hospital scene and presents one decision at a time on a canvas that scales
 with the window. It leads through the formative chapters and founding terms to
 the paused 2015 office. Standalone sandbox creation was removed. The broader
 stages and ending narrative remain design work.
 
-**F-03 world/interface foundation and generated people are ready for review.**
+**F-03 supplied an engineering foundation; the human review requires the F-04 main-game rebuild above.**
 Continuing-company resume, 3D places, device apps, scalable layered portraits,
 HQ recruitment, bounded county conditions, paid HQ rooms and reusable physical
 facility blueprints, owned devices, paid delivery/service and compatible app

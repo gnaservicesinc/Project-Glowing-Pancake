@@ -107057,6 +107057,84 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "370069642cb631a857afda471d9a3948129266702383123478a7dc1611b6c852",
+          "before_hash": "0165a683be0feac4ab276296c45aab8b8c685ee8064afee90053f598b449af11",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 7,
+          "revision": 8
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "2610bd19c23ca2157a909ee8c7ff0d2b63599294d16d9107fcc8677a5712d836",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.38.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 38,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.37.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000037.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000038.collection.json",
+      "summary": "Ground founding routes in family wealth, signed funding and inherited companies; remove automatic staff and compute; define editable founder appearance.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "5a10aa97b9b00d51171ba991df8667274640bbe9b57ca5f7a5dfba0744ebcc7c",
+          "before_hash": "370069642cb631a857afda471d9a3948129266702383123478a7dc1611b6c852",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 8,
+          "revision": 9
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "30cce3382afdb82b4e090fc33babc5146db7acbb53dfc959bf6f7b51ca508017",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.38.1-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 39,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.38.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000038.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000039.collection.json",
+      "summary": "Keep founding-route choices readable in the compact story canvas; full costs and ownership remain in signing review.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

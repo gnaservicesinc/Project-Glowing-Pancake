@@ -124,7 +124,7 @@ ApplicationWindow {
         sequence: "Escape"
         enabled: !saveDialog.visible && !loadDialog.visible && !originalContentDialog.visible && !originalContentReview.visible && !restartDialog.visible && !musicCredits.visible && !cancelDialog.visible && !exitDialog.visible
         onActivated: {
-            if (window.menuVisible && window.sessionEntered) window.menuVisible = false
+            if (window.menuVisible) window.requestExit()
             else window.openMainMenu()
         }
     }
@@ -135,6 +135,12 @@ ApplicationWindow {
             if (!campaign.busy && campaign.originalContentReview.length > 0 && !originalContentReview.visible) originalContentReview.open()
         }
         function onSettingsChanged() { window.applyDisplayPreferences() }
+        function onDevelopmentResetFinished() {
+            window.sessionEntered=false
+            window.deviceOpen=false
+            window.menuVisible=true
+            frontMenu.home()
+        }
         function onCommandFinished(accepted, explanation) {
             if (window.pendingMenuSettings) {
                 window.pendingMenuSettings = false
