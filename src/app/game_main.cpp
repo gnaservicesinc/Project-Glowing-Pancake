@@ -75,6 +75,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("content-recovery-smoke"),QStringLiteral("Review matching original content and resume an isolated older company."),QStringLiteral("source")});
     parser.addOption({QStringLiteral("form-drafts-smoke"),QStringLiteral("Exercise unsubmitted form choices, exact state and UI-only restart.")});
     parser.addOption({QStringLiteral("map-layout-smoke"),QStringLiteral("Check responsive map geometry, country hover and pointer selection.")});
+    parser.addOption({QStringLiteral("settings-smoke"),QStringLiteral("Check visible settings scrolling, pinned apply and saved preferences.")});
     parser.process(application);
 #if !PGP_TEST_HOOKS
     if(parser.isSet(QStringLiteral("smoke-test"))) {
@@ -92,7 +93,7 @@ int main(int argc, char* argv[]) {
     const bool infrastructure_smoke = parser.isSet(QStringLiteral("infrastructure-smoke"));
     const bool competition_smoke = parser.isSet(QStringLiteral("competition-smoke"));
     const bool music_smoke = parser.isSet(QStringLiteral("music-smoke"));
-    const bool menu_smoke = parser.isSet(QStringLiteral("menu-smoke"));
+    const bool menu_smoke = parser.isSet(QStringLiteral("menu-smoke")) || parser.isSet(QStringLiteral("settings-smoke"));
     const bool founding_smoke = parser.isSet(QStringLiteral("founding-smoke"));
     const bool prototype_smoke = parser.isSet(QStringLiteral("smoke-test")) && !menu_smoke && !founding_smoke && !world_smoke;
     const auto variants = static_cast<int>(world_smoke) + static_cast<int>(society_smoke) + static_cast<int>(institutions_smoke) +
@@ -212,7 +213,7 @@ int main(int argc, char* argv[]) {
                 else if (founding_smoke)
                     schedule_founding_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));
                 else if (menu_smoke)
-                    schedule_menu_smoke(*window,campaign,music,selection.api,paths,parser.value(QStringLiteral("screenshot")));
+                    schedule_menu_smoke(*window,campaign,music,selection.api,paths,parser.value(QStringLiteral("screenshot")),parser.isSet(QStringLiteral("settings-smoke")));
                 else if (music_smoke)
                     schedule_music_smoke(*window,campaign,music,selection.api,paths,parser.value(QStringLiteral("screenshot")));
                 else if (objectives_smoke)

@@ -137,18 +137,11 @@ ColumnLayout {
         onToggled: page.draftReducedMotion = checked
     }
     Copy { color: "#adb8bd"; text: qsTr("Reduced motion keeps the background still. All preferences are saved on this computer.") }
-    MenuButton {
-        objectName: "menuApplySettings"
-        text: qsTr("Apply settings")
-        textSize: page.textSize * 1.15
-        Layout.fillWidth: true
-        enabled: campaign.ready && !campaign.busy
-        onClicked: {
-            campaign.clearNotice()
-            campaign.applyPresentationSettings(page.draftFullScreen, page.draftWidth, page.draftHeight,
-                page.draftMusic, page.draftMusicVolume, page.draftEffectsVolume, page.draftTextScale,
-                page.draftReducedMotion, page.draftMotionBackground)
-            page.applied()
-        }
+    function apply() {
+        campaign.clearNotice()
+        campaign.applyPresentationSettings(page.draftFullScreen, page.draftWidth, page.draftHeight,
+            page.draftMusic, page.draftMusicVolume, page.draftEffectsVolume, page.draftTextScale,
+            page.draftReducedMotion, page.draftMotionBackground)
+        page.applied()
     }
 }

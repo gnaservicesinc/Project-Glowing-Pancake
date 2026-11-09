@@ -44,6 +44,9 @@ World/US/county map scaling and pointer briefing/selection are checked at
 1080p, 8K and narrow 200% text, with independent filters and no campaign mutation.
 The native Mac walkthrough and focused persistence/simulation checks are
 separate from 8K offscreen layout evidence and later device qualification.
+The settings follow-up adds a pinned Apply & save action, visible save feedback
+and an explicit full-screen scrollbar; focused saved-preference and compact
+200% text checks cover the fix.
 
 The build wrapper now defaults to both apps in locally optimized Release with
 `BUILD_TESTING=OFF`, diagnostics off and no test execution. Tests and debugging

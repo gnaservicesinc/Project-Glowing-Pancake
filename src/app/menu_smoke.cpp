@@ -28,11 +28,11 @@ bool key(QQuickWindow& window,QQuickItem* item,Qt::Key code) {
 }
 }
 void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,MusicController& music,
-    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot) {
+    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot,bool settingsOnly) {
     struct State { int phase=0,ticks=0,loop_ticks=0,frames_before=0,display_ticks=0,layout_ticks=0,reported=-1; QString revision; };
     auto state=std::make_shared<State>();
     auto* timer=new QTimer(&window); timer->setInterval(60);
-    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot,expected] {
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot,expected,settingsOnly] {
         const auto item=[&](const char* name) { return find(window.contentItem(),name); };
         const auto press=[&](const char* name) { return key(window,item(name),Qt::Key_Space); };
         const auto fail=[&](const char* reason) {
@@ -48,7 +48,7 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
         switch (state->phase) {
         case 0: {
             const auto* accessible=QAccessible::queryAccessibleInterface(item("menuNewGameButton"));
-            if (!menu->isVisible() || !campaign.paused() || item("statusLine")->isVisible() ||
+            if (!menu->isVisible() || !campaign.paused() || (item("statusLine") && item("statusLine")->isVisible()) ||
                 window.rendererInterface()->graphicsApi()!=expected || !accessible || accessible->text(QAccessible::Name).isEmpty() ||
                 item("menuStillImage")->property("status").toInt()!=1) { fail("clean menu, accessible entry or still image"); return; }
             if (!screenshot.isEmpty()) window.grabWindow().save(screenshot+QStringLiteral(".launch.png"));
@@ -62,6 +62,14 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
             ++state->phase; break;
         case 2: {
             auto* settings=item("menuSettingsPage");
+            if(settingsOnly) {
+                auto* apply=item("menuApplySettings");auto* bar=item("menuDetailScrollbar");
+                const auto point=apply->mapToScene(QPointF{});
+                if(!bar || !bar->isVisible() || bar->width()<14 || bar->height()<100 || bar->x()<menu->width()/2 || point.y()<0 || point.y()+apply->height()>window.height()) {
+                    fail("full-screen settings need a visible scrollbar and pinned apply");return;
+                }
+                if(!screenshot.isEmpty())window.grabWindow().save(screenshot+QStringLiteral(".fullscreen-settings.png"));
+            }
             if (!settings || menu->property("page").toString()!=QStringLiteral("settings") ||
                 !key(window,item("menuDisplayMode"),Qt::Key_End) || !key(window,item("menuResolution"),Qt::Key_Home) ||
                 !key(window,item("menuTextScale"),Qt::Key_End)) { fail("keyboard display, resolution or text choices"); return; }
@@ -75,13 +83,15 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
         }
         case 3: {
             if (!window.isExposed()) return;
+            if(settingsOnly && window.visibility()!=QWindow::Windowed && ++state->display_ticks<50)return;
             const auto saved=pgp::persistence::load_settings(paths.settings_file);
             const bool audio_ok=music.loaded() && (expected==QSGRendererInterface::Software
                 ? music.backend()==QStringLiteral("silent") : music.playing());
             if (campaign.fullScreen() || campaign.windowWidth()!=1024 || campaign.windowHeight()!=640 ||
                 campaign.textScalePercent()!=200 || !campaign.reducedMotion() || campaign.musicVolume()!=35 ||
-                campaign.effectsVolume()!=45 || !audio_ok || video->active() ||
+                campaign.effectsVolume()!=45 || (!settingsOnly && !audio_ok) || video->active() ||
                 window.visibility()!=QWindow::Windowed || saved!=campaign.snapshot()->settings) {
+                qCritical()<<"Settings values"<<campaign.fullScreen()<<campaign.windowWidth()<<campaign.windowHeight()<<campaign.textScalePercent()<<campaign.reducedMotion()<<campaign.musicVolume()<<campaign.effectsVolume()<<video->active()<<window.visibility()<<(saved==campaign.snapshot()->settings);
                 fail("applied display/audio/accessibility or exact persisted settings"); return;
             }
             auto* apply=item("menuApplySettings");
@@ -89,6 +99,19 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
             if (position.y()<0 || position.y()+apply->height()>window.height()) {
                 if (++state->layout_ticks<30) return;
                 fail("focused control scroll at 200 percent"); return;
+            }
+            if(settingsOnly) {
+                if(window.size()!=QSize{650,480}) {window.resize(650,480);return;}
+                auto* scroll=item("menuDetailScroll");auto* bar=item("menuDetailScrollbar");
+                auto* content=qvariant_cast<QObject*>(scroll->property("contentItem"));
+                const auto maximum=content->property("contentHeight").toReal()-scroll->property("availableHeight").toReal();
+                if(maximum<=0 || !bar || !bar->isVisible() || bar->property("size").toReal()>=1) {fail("compact settings must scroll");return;}
+                const auto before=apply->mapToScene(QPointF{});
+                content->setProperty("contentY",0.);
+                content->setProperty("contentY",maximum);
+                if(apply->mapToScene(QPointF{})!=before || before.y()+apply->height()>window.height()) {fail("apply must remain pinned while scrolling");return;}
+                if(!screenshot.isEmpty())window.grabWindow().save(screenshot+QStringLiteral(".compact-settings.png"));
+                window.setProperty("menuSmokePassed",true);timer->stop();std::cout<<"Settings scrollbar, pinned apply, 200% compact layout and exact saved preferences passed\n";QCoreApplication::exit(0);return;
             }
             if (!screenshot.isEmpty() && !window.grabWindow().save(screenshot+QStringLiteral(".settings.png"))) { fail("settings screenshot"); return; }
             if (!press("menuBackButton") || !press("menuNewGameButton")) { fail("new game entry"); return; }

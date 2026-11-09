@@ -232,6 +232,21 @@ FocusScope {
     ScrollView {
         id: detailScroll
         objectName: "menuDetailScroll"
+        rightPadding: Math.max(20, menu.textSize)
+        ScrollBar.vertical: ScrollBar {
+            objectName: "menuDetailScrollbar"
+            parent: detailScroll
+            orientation: Qt.Vertical
+            x: detailScroll.width - width
+            y: detailScroll.topPadding
+            height: detailScroll.availableHeight
+            policy: ScrollBar.AlwaysOn
+            active: true
+            minimumSize: 0.08
+            implicitWidth: Math.max(14, menu.textSize * 0.65)
+            contentItem: Rectangle { radius: width / 2; color: parent.pressed ? "#f3cb8d" : "#a8c8bf" }
+            background: Rectangle { radius: width / 2; color: "#31494c" }
+        }
         visible: menu.page !== "home"
         anchors.left: parent.left
         anchors.right: parent.right
@@ -272,15 +287,6 @@ FocusScope {
                     if (campaign.busy) { menu.message = qsTr("Saving settings…"); menu.settingsSubmitted() }
                     else menu.message = qsTr("Settings unchanged.")
                 }
-            }
-            Label {
-                visible: menu.page === "settings" && (menu.message.length > 0 || campaign.notice.length > 0)
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                text: campaign.notice || menu.message
-                textFormat: Text.PlainText
-                font.pixelSize: menu.textSize
-                color: ink.accent
             }
             ColumnLayout {
                 visible: menu.page === "credits"
@@ -355,7 +361,7 @@ FocusScope {
         reducedMotion: campaign.reducedMotion
         onClosed: backButton.forceActiveFocus()
     }
-    RowLayout {
+    ColumnLayout {
         id: footer
         anchors.bottom: parent.bottom
         anchors.left: parent.left
@@ -363,18 +369,41 @@ FocusScope {
         anchors.leftMargin: menu.margin
         anchors.rightMargin: menu.margin
         anchors.bottomMargin: 22
+        spacing: 8
         Label {
-            text: qsTr("A CENTURY OF POSSIBILITY")
-            color: "#9daaaa"
-            font.pixelSize: 9
-            font.letterSpacing: 2
+            visible: menu.page === "settings"
             Layout.fillWidth: true
+            text: campaign.notice || menu.message || qsTr("Apply & save to keep your changes.")
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+            font.pixelSize: menu.textSize
+            color: ink.accent
         }
-        Label {
-            text: qsTr("Tab to navigate · Enter to select")
-            visible: menu.width > 700
-            font.pixelSize: 10
-            color: "#9daaaa"
+        MenuButton {
+            objectName: "menuApplySettings"
+            visible: menu.page === "settings"
+            text: qsTr("Apply & save")
+            primary: true
+            textSize: menu.textSize * 1.15
+            Layout.fillWidth: true
+            enabled: campaign.ready && !campaign.busy
+            onClicked: settings.apply()
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            Label {
+                text: qsTr("A CENTURY OF POSSIBILITY")
+                color: "#9daaaa"
+                font.pixelSize: 9
+                font.letterSpacing: 2
+                Layout.fillWidth: true
+            }
+            Label {
+                text: qsTr("Tab to navigate · Enter to select")
+                visible: menu.width > 700
+                font.pixelSize: 10
+                color: "#9daaaa"
+            }
         }
     }
     Component.onCompleted: newGameButton.forceActiveFocus()

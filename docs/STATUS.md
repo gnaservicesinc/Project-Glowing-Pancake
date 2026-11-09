@@ -81,6 +81,10 @@ The final map audit adds scaled geometry/markers and readable, click-through
 hover cards at 1080p, 8K and narrow high-text layouts. Map briefings no longer
 inherit another app's filter. The complete active offscreen world/pause path
 passes; native rendering and native OS shortcut acceptance remain distinct.
+Settings now keeps **Apply & save** and its result outside the scrolling form.
+A persistent, contrasting scrollbar remains visible in full-screen mode and
+compact windows. Focused checks cover applying preferences, their exact local
+file, and the pinned controls at 650×480 with 200% text.
 
 ## Selected feedback: campaign and technology design
 
