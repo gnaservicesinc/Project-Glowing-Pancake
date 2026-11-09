@@ -1,4 +1,5 @@
 #include <pgp/core/simulation.hpp>
+#include <pgp/core/workplace_research.hpp>
 
 #include <algorithm>
 #include <map>
@@ -152,6 +153,7 @@ Cents research_cash_fee(const SimulationState& state,std::string_view research) 
 
 Cents start_funded_research(SimulationState& state,std::string_view research,const LabAllocation& allocation,Cents protected_cash) {
     if (!state.accounts || !state.capacity) invalid("Research needs company accounts and compute capacity");
+    require_workplace_research(state,research,allocation);
     const auto quote=research_quote(state,research);
     start_research(*state.lab,*state.accounts,*state.capacity,state.date,research,allocation,protected_cash,quote.sponsored);
     if (quote.sponsored.value()>0)

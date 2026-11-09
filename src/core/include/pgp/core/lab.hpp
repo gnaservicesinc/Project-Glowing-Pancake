@@ -5,6 +5,7 @@
 #include <pgp/core/random.hpp>
 
 #include <array>
+#include <map>
 #include <span>
 
 namespace pgp::core {
@@ -108,6 +109,9 @@ struct LabCatalog {
     std::vector<EvaluationPlan> evaluations;
     std::vector<SyntheticRecipe> synthesis{};
     std::vector<DataAcquisitionOffer> acquisition{};
+    // When present, all research uses named equipped staff. Listed topics
+    // additionally require the specified equipment together in a room.
+    std::optional<std::map<std::string,std::vector<std::string>>> research_workplaces{};
     auto operator<=>(const LabCatalog&) const = default;
 };
 struct DataLicense {
@@ -122,6 +126,7 @@ struct ResearchRun {
     Cents sponsored_fee{0};
     bool failed = false;
     BasisPoints retry_credit{0};
+    std::vector<std::string> researchers{};
     auto operator<=>(const ResearchRun&) const = default;
 };
 struct ResearchPublication {
@@ -197,6 +202,7 @@ struct LabAllocation {
     std::string source_id;
     MilliCUPerDay daily_compute{0};
     std::uint32_t staff = 0;
+    std::vector<std::string> researchers{};
     auto operator<=>(const LabAllocation&) const = default;
 };
 struct GenerateDataset {

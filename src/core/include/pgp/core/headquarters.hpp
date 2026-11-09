@@ -2,6 +2,7 @@
 #include <pgp/core/units.hpp>
 #include <pgp/core/calendar.hpp>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -136,4 +137,6 @@ bool hq_computer_available(const SimulationState&);
 std::uint32_t furnished_hq_desks(const SimulationState&);
 std::uint32_t assigned_hq_desks(const SimulationState&);
 [[nodiscard]] std::uint32_t assigned_hq_desk(const SimulationState&,std::string_view person);
+[[nodiscard]] bool hq_workstation_ready(const SimulationState&,std::string_view person);
+[[nodiscard]] bool hq_has_lab_equipment(const SimulationState&,std::span<const std::string> equipment);
 }

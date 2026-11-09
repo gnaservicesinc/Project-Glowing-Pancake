@@ -10,6 +10,11 @@ class ManagementController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool available READ available NOTIFY changed)
     Q_PROPERTY(StableListModel* dataOffers READ dataOffers CONSTANT)
+    Q_PROPERTY(bool groundedResearch READ groundedResearch NOTIFY changed)
+    Q_PROPERTY(QVariantList researchGraph READ researchGraph NOTIFY changed)
+    Q_PROPERTY(QVariantList researchWorkers READ researchWorkers NOTIFY changed)
+    Q_PROPERTY(QVariantList researchSources READ researchSources NOTIFY changed)
+    Q_PROPERTY(QVariantList researchRentals READ researchRentals NOTIFY changed)
     Q_PROPERTY(StableListModel* researchTopics READ researchTopics CONSTANT)
     Q_PROPERTY(StableListModel* models READ models CONSTANT)
     Q_PROPERTY(StableListModel* evidence READ evidence CONSTANT)
@@ -97,6 +102,14 @@ public:
     Q_INVOKABLE void transferSubsidiaryFunds(QString id,QString dollars,bool funding);
     StableListModel* dataOffers() const { return data_; }
     StableListModel* researchTopics() const { return research_; }
+    bool groundedResearch() const;
+    QVariantList researchGraph() const;
+    QVariantList researchWorkers() const;
+    QVariantList researchSources() const;
+    QVariantList researchRentals() const;
+    Q_INVOKABLE QVariantMap researchTopic(QString id) const;
+    Q_INVOKABLE QString researchBlocker(QString id,QString source,QString rate,QStringList workers) const;
+    Q_INVOKABLE void beginGroundedResearch(QString id,QString source,QString rate,QStringList workers);
     StableListModel* models() const { return models_; }
     StableListModel* evidence() const { return evidence_; }
     StableListModel* offers() const { return offers_; }

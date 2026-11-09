@@ -1,4 +1,5 @@
 #include <pgp/session/campaign.hpp>
+#include <pgp/core/workplace_research.hpp>
 #include <pgp/runtime/authority.hpp>
 #include <algorithm>
 
@@ -30,6 +31,11 @@ OperationResult Campaign::operate(
     const auto prior_day = runtime::campaign_day(engine_.checkpoint().world);
     const bool prior_objective_end=runtime::objective_time_stopped(engine_.checkpoint().world);
     const auto prior_revision = engine_.checkpoint().world.simulation.revision;
+    std::vector<std::string> active_research;
+    const auto& prior_state=engine_.checkpoint().world.simulation;
+    if(core::workplace_research_enabled(prior_state) && !prior_state.lab->research.empty())
+        for(const auto& project:prior_state.capacity->projects)
+            if(project.required_staff_days && project.status==core::ProjectStatus::active) active_research.push_back(project.id);
     const auto prior_notices=engine_.checkpoint().world.simulation.management?engine_.checkpoint().world.simulation.management->notices.size():0;
     const auto prior_rivals=engine_.checkpoint().world.competition?engine_.checkpoint().world.competition->notices.size():0;
     runtime::RuntimeResult outcome;
@@ -93,6 +99,18 @@ OperationResult Campaign::operate(
         (core::liquidity_report(*after.world.simulation.liquidity).pending_warning.has_value() ||
          after.world.simulation.liquidity->status == core::LiquidityStatus::closed);
     std::optional<std::string> pause_notice;
+    const auto& current_state=after.world.simulation;
+    for(const auto& id:active_research) {
+        const auto& projects=current_state.capacity->projects;
+        const auto work=std::ranges::find(projects,id,&core::CapacityProject::id);
+        if(work==projects.end() || work->status!=core::ProjectStatus::paused) continue;
+        const auto& runs=current_state.lab->research;
+        const auto run=std::ranges::find(runs,id,&core::ResearchRun::project_id);
+        if(run==runs.end()) continue;
+        const auto reason=core::research_workplace_blocker(current_state,run->research_id,
+            {work->source_id,work->requested,work->staff,run->researchers},work->id);
+        if(!reason.empty()) {pause_notice="Research paused. "+reason;break;}
+    }
     if (after.world.simulation.date!=prior_day && after.world.simulation.capacity) {
         const auto& lab = after.world.simulation.lab;
         for (const auto& work:after.world.simulation.capacity->projects) {

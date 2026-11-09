@@ -9,7 +9,7 @@ Updated 2026-11-09
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-world/interface batch advances content to **0.40.0-dev.1**, generation **41**.
+world/interface batch advances content to **0.41.0-dev.1**, generation **42**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -56,9 +56,17 @@ simulation test checks refused hires, actual payments, expiry and fresh saves.
 The rendered Mac walkthrough signs a hire into a delivered desk and checks the
 discussion at 650×480 with 200% text.
 
-Equipment-backed research trees, state geography and the laptop/game interface
-remain open. F-04D will tie research work to its assigned people, available
-workstations and equipment.
+F-04D adds the interactive technology tree with required and alternative
+prerequisites. Select a topic to review its equipment, assign named researchers
+with powered workstations and reserve compute from a real source. Staff-days
+and experiment CU settle separately. Projects pause with an explanation when
+their resources disappear. Specialised topics require supplier equipment in
+one installed lab. Topics have no start fee. Salaries, hardware, electricity
+and server rentals remain actual costs. Focused tests exercise both completion
+orders, power loss, prerequisites, rented compute and fresh saves. Rendered
+checks cover the tree and its controls on native Metal and the software view.
+
+The state map and laptop/game interface remain open in F-04E.
 
 All current builds, including optimized Release builds for human testers, include
 **DEV · Reset local data**, which clears game-local saves, cached rules, drafts

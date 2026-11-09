@@ -1,3 +1,4 @@
+#include <pgp/core/workplace_research.hpp>
 #include <pgp/core/simulation.hpp>
 
 #include <algorithm>
@@ -193,6 +194,7 @@ void validate(const SimulationState& state,bool deep=true,std::size_t first_rece
     if (state.lab) {
         if (!state.accounts || !state.capacity) invalid("Lab requires business accounts and shared capacity");
         validate_lab(*state.lab, *state.capacity, *state.accounts, state.random, false);
+        if(deep) validate_workplace_research(state);
     }
     if (state.management) {validate_management(state,deep);validate_governance(state,deep);}
     validate_funding_support(state,deep);
@@ -649,7 +651,11 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     if(next.management && next.management->governance) for(const auto& d:next.management->governance->disputes)
                         if(d.review_project==action.id && !d.resolved_on) refuse(CommandReason::dependent_commitment,"The negotiated executive response reserves this review team until its promise is resolved or its deadline passes");
                     pause_project(capacity(next),next.date,action.id);(void)receipt(next,"pause_project");
-                } else {resume_project(capacity(next),next.date,action.id);(void)receipt(next,"resume_project");}
+                } else {
+                    require_workplace_research_resume(next,action.id);
+                    resume_project(capacity(next),next.date,action.id);
+                    (void)receipt(next,"resume_project");
+                }
             } else if constexpr (std::is_same_v<Action, CancelProject>) {
                 if(operations_project(next,action.id)) refuse(CommandReason::dependent_commitment,"Change or release the HQ operations manager in People to end this work reservation.");
                 if (next.deployments) for (const auto& rollout:next.deployments->rollouts) if (!rollout.resolved_on &&
@@ -1005,6 +1011,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
         if (reserve_applies) require_operating_reserve(uncommitted_before,next);
         if (!std::holds_alternative<AdvanceDay>(command.action)) {prepare_governance(next);prepare_succession(next);prepare_departments(next);prepare_infrastructure(next);}
         prepare_access(next);
+        reconcile_workplace_research(next);
         if (next.liquidity && !std::holds_alternative<AdvanceDay>(command.action))
             refresh_liquidity(*next.liquidity,*next.accounts);
         // The input was validated at construction; every daily subsystem owns

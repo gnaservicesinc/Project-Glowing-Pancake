@@ -382,7 +382,7 @@ ApplicationWindow {
         enabled: visible
         anchors.fill: parent
         anchors.margins: 18
-        anchors.topMargin: campaign.welcome ? 18 : window.room === "people" && window.height < window.textSize * 24 ? 8 : worldDesktop.headerHeight + 8
+        anchors.topMargin: campaign.welcome ? 18 : (window.room === "people" || window.room === "lab") && window.height < window.textSize * 24 ? 8 : worldDesktop.headerHeight + 8
         anchors.bottomMargin: campaign.welcome ? 18 : worldDesktop.footerHeight + 8
         spacing: 8
         Panel {
@@ -837,7 +837,10 @@ ApplicationWindow {
                         Heading { text: window.room === "lab" ? qsTr("Lab · data, experiments and evidence") : qsTr("%1 · %2").arg(campaign.companyName).arg(campaign.headquartersText) }
                         Copy { text: campaign.identitySummary }
                         Copy { visible: window.room === "office"; text: campaign.capacityText + "\n" + campaign.management.briefing }
-                        ManagementPanel { id: managementPanel; Layout.fillWidth: true; room: window.room; textSize: window.textSize }
+                        ManagementPanel {
+                    onOpenSuppliers: window.openApp("facilities","equipment","laptop")
+                    id: managementPanel; Layout.fillWidth: true; room: window.room; textSize: window.textSize
+                }
                     }
                 }
                 Panel {

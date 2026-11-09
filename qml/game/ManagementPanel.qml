@@ -10,6 +10,7 @@ ColumnLayout {
     property string officeSection: "offers"
     property var manager: campaign.management
     property var trainingData: []
+    signal openSuppliers()
     DraftState {
         id: mixtureDraft
         draftKey: "training/mixture"
@@ -42,12 +43,9 @@ ColumnLayout {
         wrapMode: Text.Wrap
         font.pixelSize: panel.textSize
     }
-    component Action: Button {
-        id: action
+    component Action: WorldButton {
         Layout.maximumWidth: panel.width
-        contentItem: Text { text: action.text; textFormat: Text.PlainText; font: action.font; color: action.enabled ? "#f2f4f7" : "#aebbc7"; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; wrapMode: Text.Wrap }
-        font.pixelSize: panel.textSize
-        Accessible.name: text
+        textSize: panel.textSize
         enabled: panel.editable
     }
     component Field: ColumnLayout {
@@ -122,11 +120,11 @@ ColumnLayout {
         Repeater {
             model: [{id:"data",label:qsTr("Data")}, {id:"research",label:qsTr("Research")}, {id:"train",label:qsTr("Train")},
                     {id:"models",label:qsTr("Checkpoints")}, {id:"evaluate",label:qsTr("Evaluate")}, {id:"deploy",label:qsTr("Deploy")}, {id:"projects",label:qsTr("Projects")}]
-            Button {
+            WorldButton {
                 required property var modelData
                 objectName: "lab_" + modelData.id
                 text: modelData.label
-                font.pixelSize: panel.textSize
+                textSize: panel.textSize
                 checked: panel.section === modelData.id
                 Accessible.name: text
                 onClicked: { panel.section = modelData.id; labPageDraft.remember(modelData.id) }
@@ -141,13 +139,13 @@ ColumnLayout {
             model: [{id:"offers",label:qsTr("Compare offers")}, {id:"products",label:qsTr("Services")}, {id:"contracts",label:qsTr("Contracts")},
                     {id:"markets",label:qsTr("Regional markets")},
                     {id:"rivals",label:qsTr("Rivals")}, {id:"accounts",label:qsTr("Accounts")}, {id:"funding",label:qsTr("Funding and team")}, {id:"governance",label:qsTr("Board and people")}, {id:"policies",label:qsTr("Policies and alerts")}, {id:"score",label:qsTr("Slice score")}]
-            Button {
+            WorldButton {
                 required property var modelData
                 objectName: "office_" + modelData.id
                 text: modelData.label
                 visible: (modelData.id !== "markets" || manager.regionalMarkets.count > 0) &&
                          (modelData.id !== "score" || !campaign.objectives.available)
-                font.pixelSize: panel.textSize
+                textSize: panel.textSize
                 checked: panel.officeSection === modelData.id
                 Accessible.name: text
                 onClicked: { panel.officeSection = modelData.id; officePageDraft.remember(modelData.id) }
@@ -299,9 +297,16 @@ ColumnLayout {
             }
         }
     }
+    ResearchTree {
+        Layout.fillWidth: true
+        visible: panel.room === "lab" && panel.section === "research" && manager.groundedResearch
+        textSize: panel.textSize
+        editable: panel.editable && !campaign.storageBlocked
+        onSuppliersRequested: panel.openSuppliers()
+    }
     ColumnLayout {
         Layout.fillWidth: true
-        visible: panel.room === "lab" && panel.section === "research"
+        visible: panel.room === "lab" && panel.section === "research" && !manager.groundedResearch
         DraftField {
             objectName: "researchTopicFilter"
             Layout.fillWidth: true

@@ -1,7 +1,7 @@
 add_library(pgp_bridge STATIC campaign_content_recovery.cpp content_recovery_controller.cpp decision_people.cpp department_presentation.cpp access_presentation.cpp recruitment_presentation.cpp device_presentation.cpp workplace_presentation.cpp world_controller.cpp world_controller.hpp founding_controller.cpp founding_controller.hpp reservation_model.cpp reservation_model.hpp
     simulation_worker.cpp simulation_worker.hpp campaign_model.cpp campaign_model.hpp
     campaign_worker.cpp campaign_worker.hpp campaign_controller.cpp campaign_controller.hpp
-    management_controller.cpp management_controller.hpp heavyweight_presentation.cpp governance_presentation.cpp heavyweight_presentation.hpp
+    management_controller.cpp management_controller.hpp research_presentation.cpp heavyweight_presentation.cpp governance_presentation.cpp heavyweight_presentation.hpp
     infrastructure_controller.cpp infrastructure_controller.hpp resilience_presentation.cpp resilience_presentation.hpp
     civic_controller.cpp civic_controller.hpp
     society_controller.cpp society_controller.hpp

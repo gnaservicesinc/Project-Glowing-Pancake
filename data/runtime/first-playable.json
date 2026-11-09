@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.40.0-dev.1",
+  "content_version": "0.41.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -34594,7 +34594,7 @@
           "id": "offer.supplier_small",
           "kind": "compute_lease",
           "monthly_amount_cents": 400000,
-          "name": "Small fixed-term cloud lease",
+          "name": "Palisade Cloud · small lab server lease",
           "product_id": "",
           "renewable": true,
           "segment_id": "",
@@ -72430,6 +72430,32 @@
                 "supplier": "Juniper Office & Lab Supply",
                 "watts": 0,
                 "width": 2
+              },
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 18,
+                "depth": 2,
+                "id": "materials",
+                "kind": "bench",
+                "memory_mib": 0,
+                "name": "Materials characterization station",
+                "price_cents": 2400000,
+                "supplier": "Meridian Scientific Instruments",
+                "watts": 600,
+                "width": 2
+              },
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 21,
+                "depth": 2,
+                "id": "energy",
+                "kind": "bench",
+                "memory_mib": 0,
+                "name": "Power and thermal test bench",
+                "price_cents": 3200000,
+                "supplier": "Meridian Scientific Instruments",
+                "watts": 900,
+                "width": 2
               }
             ],
             "home_depth": 3,
@@ -73943,6 +73969,69 @@
           }
         ],
         "research": [],
+        "research_workplaces": {
+          "research.efficient_image_features": [
+            "bench"
+          ],
+          "research.energy_prototype": [
+            "energy",
+            "evaluation",
+            "rack"
+          ],
+          "research.frontier.efficient_prototypes": [
+            "materials",
+            "energy",
+            "evaluation",
+            "rack"
+          ],
+          "research.frontier.field_metering": [
+            "energy",
+            "rack"
+          ],
+          "research.frontier.integrated_measurement": [
+            "materials",
+            "energy",
+            "evaluation",
+            "rack"
+          ],
+          "research.frontier.prototype_replication": [
+            "materials",
+            "energy",
+            "evaluation",
+            "rack"
+          ],
+          "research.frontier.sensor_alignment": [
+            "materials",
+            "evaluation"
+          ],
+          "research.frontier_fabric": [
+            "bench",
+            "rack"
+          ],
+          "research.held_out_evaluation": [
+            "evaluation"
+          ],
+          "research.integrated_science": [
+            "bench",
+            "evaluation",
+            "rack"
+          ],
+          "research.materials_prototype": [
+            "materials",
+            "evaluation",
+            "rack"
+          ],
+          "research.methods_prototype": [
+            "materials",
+            "energy",
+            "evaluation",
+            "rack"
+          ],
+          "research.multimodal_systems": [
+            "bench",
+            "evaluation"
+          ]
+        },
         "synthesis": [
           {
             "diversity_bp": 2500,
@@ -74570,35 +74659,7 @@
           "transition_work_milli_CU": 900000,
           "trust_seats": 1,
           "vote_window_days": 14
-        },
-        "support_offers": [
-          {
-            "claim_days": 90,
-            "coverage_bp": 7500,
-            "id": "support.methodology_grant",
-            "kind": "research_grant",
-            "limit_cents": 100000,
-            "name": "Independent methods research grant",
-            "opens_after_days": 0,
-            "research": [
-              "research.held_out_evaluation",
-              "research.reproducible_tooling",
-              "research.sequence_modeling"
-            ],
-            "use_days": 180
-          },
-          {
-            "bill": "compute_lease",
-            "claim_days": 60,
-            "coverage_bp": 5000,
-            "id": "support.opening_cloud_credit",
-            "kind": "cloud_credit",
-            "limit_cents": 1500000,
-            "name": "Opening cloud supplier credit",
-            "opens_after_days": 0,
-            "use_days": 45
-          }
-        ]
+        }
       },
       "market": {
         "contracts": [],
@@ -74697,7 +74758,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 11,
+      "revision": 12,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

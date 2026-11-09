@@ -107213,6 +107213,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "74f2f86fecac405465cf100f28a8818e916c60a4f4d3c4a897b6f04f1f42db0b",
+          "before_hash": "51022ef12c60835f50d074a43b5e14d012775358dd9398665079db0340c11c78",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 11,
+          "revision": 12
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "3211dd78f4a3f12b2e78535be695c568e2981fbb21c5eac0aa14a03a893b0428",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.41.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 42,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.40.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000041.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000042.collection.json",
+      "summary": "Connected technology tree, named workplace research and separate experimental compute and staff days",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

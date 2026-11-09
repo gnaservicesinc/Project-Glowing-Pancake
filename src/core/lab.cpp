@@ -230,9 +230,19 @@ void validate_lab_catalog(const LabCatalog& catalog) {
             for (const auto& edge : *edges) visit(find(catalog.research, edge), depth + 1);
         marks[node.id] = 2;
     };
+    if(catalog.research_workplaces) {
+        if(catalog.research_workplaces->size()>lab_catalog_limit) invalid("Too many research workplace requirements");
+        for(const auto& [id,required]:*catalog.research_workplaces) {
+            label(id);
+            if(required.empty() || required.size()>8 || (!catalog.research.empty() && std::ranges::none_of(catalog.research,[&](const auto& node){return node.id==id;})))
+                invalid("A workplace requirement needs equipment and a known research topic");
+            std::set<std::string_view> seen;
+            for(const auto& equipment:required) {label(equipment);if(!seen.insert(equipment).second) invalid("Research equipment requirements must be distinct");}
+        }
+    }
     for (const auto& node : catalog.research) {
         references(node.all_of); references(node.any_of);
-        if (node.cash.value() < 0 || node.staff_days.value() == 0 || node.staff_days.value() > 1'000'000 ||
+        if (node.cash.value() < 0 || (catalog.research_workplaces && node.cash.value()!=0) || node.staff_days.value() == 0 || node.staff_days.value() > 1'000'000 ||
             node.repeat_limit<1 || node.repeat_limit>12 ||
             node.experiment_work.value() == 0 || node.experiment_work.value() > 1'000'000'000'000LL)
             invalid("Research requires bounded positive staff-days and experiment work");
@@ -374,11 +384,15 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
     if (allocation.staff == 0) invalid("Research needs assigned staff");
     const auto credit=insight_on(state,research_id,day);
     const auto retry_credit = node.setback && has_failure && completed_runs == 0 ? node.setback->retry_credit : BasisPoints{0};
-    const auto work = research_work(node, allocation.daily_compute, allocation.staff, credit, retry_credit);
+    const bool grounded=state.catalog.research_workplaces.has_value();
+    if(grounded && allocation.researchers.size()!=allocation.staff) invalid("Choose the people who will do the research");
+    const auto work = grounded?insight_work(node.experiment_work,std::max(credit,retry_credit)):
+        research_work(node, allocation.daily_compute, allocation.staff, credit, retry_credit);
     auto row = project("lab/research/" + node.id + "/" + std::to_string(attempt), ProjectKind::research, day, allocation, work);
+    if(grounded) row.required_staff_days=static_cast<std::uint32_t>(node.staff_days.value());
     reserve_project(capacity, day, row);
     charge(accounts, day, checked_unit_subtract(node.cash,sponsored_fee), protected_cash, row.id);
-    state.research.push_back({node.id, row.id, false,credit,sponsored_fee,false,retry_credit});
+    state.research.push_back({node.id, row.id, false,credit,sponsored_fee,false,retry_credit,allocation.researchers});
 }
 void publish_research(LabState& state,const CapacityState& capacity,OrdinalDay day,std::string_view id) {
     require_day(state,day);
@@ -526,13 +540,20 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         const auto attempt = ++prior.attempts;
         const auto credit=insight_on(state,node.id,work.starts_on);
         const auto retry = node.setback && prior.failed && prior.successes == 0 ? node.setback->retry_credit : BasisPoints{0};
-        const auto minimum = research_work(node, work.requested, std::max(work.staff, 1U), credit, retry);
+        const bool grounded=state.catalog.research_workplaces.has_value();
+        const auto minimum = grounded?insight_work(node.experiment_work,std::max(credit,retry)):
+            research_work(node, work.requested, std::max(work.staff, 1U), credit, retry);
+        if(work.required_staff_days!=(grounded?static_cast<std::uint32_t>(node.staff_days.value()):0) ||
+            (grounded && (run.researchers.size()!=work.staff || run.researchers.size()>32 ||
+                std::set<std::string_view>(run.researchers.begin(),run.researchers.end()).size()!=run.researchers.size())) ||
+            (!grounded && !run.researchers.empty()))
+            invalid("Research needs its independent labor budget and named researchers");
         const bool failed = experiment_failed(state, capacity, node, work, prior.failed || prior.successes != 0);
         if (!projects.insert(work.id).second || work.id != "lab/research/" + node.id + "/" + std::to_string(attempt) ||
             work.kind != ProjectKind::research || work.staff == 0 || run.failed != failed ||
             run.completed != (work.status == ProjectStatus::completed && !failed) ||
             run.insight_credit != credit || run.retry_credit != retry || work.total_work < minimum ||
-            ((node.setback || credit.value()>0) && work.total_work != minimum))
+            ((grounded || node.setback || credit.value()>0) && work.total_work != minimum))
             invalid("Research progress or outcome differs from its settled work and accepted experiment terms");
         prior.latest = &work;
         prior.failed = prior.failed || run.failed;

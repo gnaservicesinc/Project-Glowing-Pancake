@@ -139,6 +139,28 @@ std::uint32_t assigned_hq_desk(const SimulationState& s,std::string_view person)
     const auto found=std::ranges::find_if(items,[&](const auto& i){return i.person==person && working(s,i);});
     return found==items.end()?0:found->id;
 }
+bool hq_workstation_ready(const SimulationState& s,std::string_view person) {
+    const auto desk=assigned_hq_desk(s,person);
+    return desk && std::ranges::any_of(hq(s).items,[&](const auto& i) {
+        return i.mount==desk && offer(s,i).kind=="desktop" && working(s,i);
+    });
+}
+bool hq_has_lab_equipment(const SimulationState& s,std::span<const std::string> required) {
+    if(required.empty()) return true;
+    if(!enabled(s) || !s.infrastructure->workplace->headquarters) return false;
+    const auto& location=current_headquarters(s);
+    const auto& items=hq(s).items;
+    return std::ranges::any_of(location.rooms,[&](const auto& room) {
+        return std::ranges::all_of(required,[&](const auto& id) {
+            return std::ranges::any_of(items,[&](const auto& i) {
+                if(i.offer!=id || !working(s,i)) return false;
+                const auto& floor=i.mount?find(items,i.mount):i;
+                return floor.x>=room.x && floor.y>=room.y &&
+                    floor.x<room.x+room.width && floor.y<room.y+room.depth;
+            });
+        });
+    });
+}
 bool headquarters_purchase(const HeadquartersAction& a) {return std::holds_alternative<BuyHQEquipment>(a) || std::holds_alternative<LeaseHQ>(a) || std::holds_alternative<BuyHQLand>(a) || std::holds_alternative<BuildHQ>(a) || std::holds_alternative<MoveToOwnedHQ>(a);}
 void manage_headquarters(SimulationState& s,const HeadquartersAction& action,Cents protected_cash) {
     const auto& r=rules(s);auto& h=hq(s);

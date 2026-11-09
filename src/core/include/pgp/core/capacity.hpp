@@ -64,6 +64,8 @@ struct CapacityProject {
     // preserving ordinary cancellation and release history.
     std::vector<ProjectPause> disruptions{};
     std::string specialist_id{};
+    // Research can require both experimental compute and separate person-days.
+    std::uint32_t required_staff_days=0,completed_staff_days=0;
     auto operator<=>(const CapacityProject&) const = default;
 };
 struct SourceDayUsage {

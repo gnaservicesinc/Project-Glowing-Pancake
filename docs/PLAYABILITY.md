@@ -231,6 +231,15 @@ The original introductory rendered Mac smoke exercises this path at 1280×720 wi
 including exact save/reload and a solvent ending above $2.25m. These are scripted
 checks, not independent human playtests or screen-reader/device qualification.
 
+In **Lab → Research**, select a technology from the graph or search by name.
+Solid links are required prerequisites. A group of dashed links offers
+alternatives. Assign people with powered computers on their desks and choose
+a local machine, rack or paid server rental. Some topics need additional
+supplier equipment installed together in one room. A project completes when
+both its staff-days and experimental compute have settled. Research has no
+start fee. If a required resource disappears, review the pause reason and
+restore the resource before resuming.
+
 ## Inspect the foundation now
 
 ```sh

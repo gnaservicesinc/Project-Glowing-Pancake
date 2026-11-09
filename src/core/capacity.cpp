@@ -40,6 +40,12 @@ std::int64_t demand(const CapacityProject& row) {
     return row.kind == ProjectKind::serving || row.kind==ProjectKind::replication ? row.requested.value() :
         std::min(row.requested.value(), checked_subtract(row.total_work.value(), row.completed_work.value()));
 }
+bool finite_goal_reached(const CapacityProject& row) {
+    return row.completed_work==row.total_work && row.completed_staff_days==row.required_staff_days;
+}
+std::uint32_t research_staff_credit(const CapacityProject& row,std::uint64_t staffed_days) {
+    return static_cast<std::uint32_t>(std::min<std::uint64_t>(row.required_staff_days,staffed_days*row.staff));
+}
 bool in_interval(const std::vector<ProjectPause>& intervals,OrdinalDay day) {
     const auto it=std::upper_bound(intervals.begin(),intervals.end(),day,[](OrdinalDay d,const ProjectPause& p){return d<p.starts_on;});
     if(it==intervals.begin()) return false;
@@ -262,20 +268,23 @@ void validate_capacity(const CapacityState& state) {
                 (i && (!row.disruptions[i-1].ends_before || interval.starts_on<=*row.disruptions[i-1].ends_before)))
                 invalid("Invalid or overlapping deployment containment intervals");
         }
+        if((row.required_staff_days>0 && row.kind!=ProjectKind::research) || row.required_staff_days>1'000'000 ||
+            row.completed_staff_days>row.required_staff_days)
+            invalid("Only research supports a bounded independent staff-day budget");
         const bool open_pause=!row.pauses.empty() && !row.pauses.back().ends_before;
         if(open_pause!=(row.status==ProjectStatus::paused)) invalid("Project status differs from its open pause interval");
         switch (row.status) {
         case ProjectStatus::active:
-            if (row.stopped_on || (row.kind != ProjectKind::serving && row.kind!=ProjectKind::replication && row.completed_work == row.total_work))
+            if (row.stopped_on || (row.kind != ProjectKind::serving && row.kind!=ProjectKind::replication && finite_goal_reached(row)))
                 invalid("Active project has a stop cursor or already completed its goal");
             if (!row.customer_inference)
                 source_reservations[row.source_id] = checked_add(source_reservations[row.source_id], demand(row));
             break;
         case ProjectStatus::paused:
-            if(row.stopped_on || row.completed_work==row.total_work) invalid("Paused finite work has a terminal cursor or finished goal");
+            if(row.stopped_on || finite_goal_reached(row)) invalid("Paused finite work has a terminal cursor or finished goal");
             break;
         case ProjectStatus::completed:
-            if (!row.stopped_on || row.kind == ProjectKind::serving || row.kind==ProjectKind::replication || row.completed_work != row.total_work)
+            if (!row.stopped_on || row.kind == ProjectKind::serving || row.kind==ProjectKind::replication || !finite_goal_reached(row))
                 invalid("Completed project has no exact finite completion");
             break;
         case ProjectStatus::cancelled:
@@ -354,7 +363,8 @@ void validate_capacity(const CapacityState& state) {
                 if (used.useful_tasks != 0 || used.protected_tasks != 0 || used.failed_tasks!=0 ||
                     (row.kind!=ProjectKind::replication && total.work > row.total_work))
                     invalid("Finite work history exceeds its goal or invents useful serving tasks");
-                if (row.kind!=ProjectKind::replication && total.work == row.total_work && (row.status != ProjectStatus::completed || !row.stopped_on || *row.stopped_on != day.day))
+                if (row.kind!=ProjectKind::replication && total.work == row.total_work &&
+                    research_staff_credit(row,total.days)==row.required_staff_days && (row.status != ProjectStatus::completed || !row.stopped_on || *row.stopped_on != day.day))
                     invalid("Finite work must complete on the exact day its goal is reached");
             }
             if (!row.customer_inference) {
@@ -401,6 +411,7 @@ void validate_capacity(const CapacityState& state) {
             if(end>pause.starts_on) expected_days-=static_cast<std::uint64_t>(end.value()-pause.starts_on.value());
         }
         if (total.work != row.completed_work || total.tasks != row.useful_tasks || total.days != expected_days ||
+            research_staff_credit(row,total.days)!=row.completed_staff_days ||
             (row.status == ProjectStatus::completed && (!total.last_day || *total.last_day != *row.stopped_on)))
             invalid("Project totals or lifecycle cursor differ from complete committed work history");
     }
@@ -458,7 +469,7 @@ void reserve_project(CapacityState& state, OrdinalDay day, CapacityProject row) 
     mutate(state, [&](auto& candidate) {
         require_day(candidate, day);
         if (row.starts_on != day || row.status != ProjectStatus::active || row.stopped_on ||
-            row.completed_work.value() != 0 || row.useful_tasks != 0 || !row.pauses.empty() || !row.disruptions.empty())
+            row.completed_work.value() != 0 || row.completed_staff_days != 0 || row.useful_tasks != 0 || !row.pauses.empty() || !row.disruptions.empty())
             invalid("A new project must start today without invented work or prior lifecycle state");
         const auto source_id = row.source_id;
         candidate.projects.push_back(std::move(row));
@@ -629,7 +640,8 @@ void close_capacity_day(CapacityState& state, OrdinalDay day, const std::vector<
             if (tasks > std::numeric_limits<std::uint64_t>::max() - row.useful_tasks)
                 throw std::overflow_error("Project useful task total overflow");
             row.completed_work = checked_unit_add(row.completed_work, work); row.useful_tasks += tasks;
-            if (row.kind != ProjectKind::serving && row.kind!=ProjectKind::replication && row.completed_work == row.total_work) {
+            row.completed_staff_days+=std::min(row.required_staff_days-row.completed_staff_days,found->assigned_staff);
+            if (row.kind != ProjectKind::serving && row.kind!=ProjectKind::replication && finite_goal_reached(row)) {
                 row.status = ProjectStatus::completed; row.stopped_on = day;
             }
         }

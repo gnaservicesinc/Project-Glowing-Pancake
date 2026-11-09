@@ -115,8 +115,16 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
     auto document_shape=doc;
     document_shape.erase("synthesis");
     document_shape.erase("acquisition");
+    document_shape.erase("research_workplaces");
     fields(document_shape, {"data", "research", "recipes", "evaluations"});
     core::LabCatalog catalog;
+    if(doc.contains("research_workplaces")) {
+        const auto& facilities=doc.at("research_workplaces");
+        if(!facilities.is_object() || facilities.size()>core::lab_catalog_limit) invalid("Research workplaces exceed the catalog bound");
+        catalog.research_workplaces.emplace();
+        for(const auto& [id,equipment]:facilities.items())
+            catalog.research_workplaces->emplace(text(Json(id)),ids(equipment));
+    }
     for (const auto field : {"data", "research", "recipes", "evaluations"}) array(doc.at(field));
     for (const auto& row : doc.at("data")) catalog.data.push_back(parse_data(row));
     for (const auto& row : doc.at("research")) {
@@ -236,6 +244,7 @@ std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
                 {"segment",offer->feedback->segment_id},{"opted_in_share_bp",offer->feedback->opted_in_share.value()}};
         }
     }
+    if(catalog.research_workplaces) result["research_workplaces"]=*catalog.research_workplaces;
     return result.dump();
 }
 core::LabCatalog scenario_lab_catalog(const Collection& collection, const ScenarioDefinition& scenario) {
@@ -246,7 +255,18 @@ core::LabCatalog scenario_lab_catalog(const Collection& collection, const Scenar
         const auto* definition = collection.find(id);
         if (!definition || !std::holds_alternative<ResearchDefinition>(definition->data)) invalid("Scenario research reference is not a research node");
         const auto& node = std::get<ResearchDefinition>(definition->data);
-        result.research.push_back({id, node.all_of, node.any_of, node.cash, node.staff_days, node.work, node.repeat_limit, node.setback});
+        result.research.push_back({id, node.all_of, node.any_of, result.research_workplaces?core::Cents{0}:node.cash, node.staff_days, node.work, node.repeat_limit, node.setback});
+    }
+    if(result.research_workplaces) {
+        if(!scenario.management || !scenario.management->people || !scenario.infrastructure ||
+            !scenario.infrastructure->workplace || !scenario.infrastructure->workplace->headquarters)
+            invalid("Equipment-backed research requires a physical headquarters");
+        const auto& offers=scenario.infrastructure->workplace->headquarters->equipment;
+        for(const auto& [id,required]:*result.research_workplaces) {
+            if(std::ranges::find(scenario.research,id)==scenario.research.end()) invalid("A research facility must serve a topic in this scenario");
+            for(const auto& equipment:required)
+                if(std::ranges::find(offers,equipment,&core::HQEquipmentOffer::id)==offers.end()) invalid("Research facility equipment must be sold by an actual supplier");
+        }
     }
     // Canonical order is also the saved catalog comparison order.
     result = load_lab_catalog(canonical_lab_catalog(result));

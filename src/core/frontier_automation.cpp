@@ -1,4 +1,5 @@
 #include "frontier_internal.hpp"
+#include <pgp/core/workplace_research.hpp>
 
 #include <set>
 
@@ -160,7 +161,16 @@ bool run_research(SimulationState& state, std::size_t index, Cents protected_cas
     }
     auto candidate=state;
     try {
-        const auto fee=start_funded_research(candidate,node.id,plan.budget.allocation,protected_cash);
+        auto allocation=plan.budget.allocation;
+        if(workplace_research_enabled(state)) {
+            auto workers=research_workers(state);
+            std::stable_sort(workers.begin(),workers.end(),[](const auto& left,const auto& right){return left.skill>right.skill;});
+            for(const auto& worker:workers) {
+                if(allocation.researchers.size()==allocation.staff) break;
+                if(worker.unavailable.empty()) allocation.researchers.push_back(worker.id);
+            }
+        }
+        const auto fee=start_funded_research(candidate,node.id,allocation,protected_cash);
         auto& accepted=candidate.frontier->research_programs[index];
         accepted.decisions.push_back({state.date,candidate.lab->research.back().project_id,fee});
         accepted.waiting.clear();

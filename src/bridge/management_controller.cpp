@@ -481,7 +481,7 @@ QString research_status(const core::LabState& lab,const core::CapacityState& cap
     }
     if (completed>=topic.repeat_limit) return QStringLiteral("Completed");
     if (completed>0) return QStringLiteral("Repeat available · %1 of %2 complete").arg(completed).arg(topic.repeat_limit);
-    if (failed) return QStringLiteral("Setback · paid retry available");
+    if (failed) return lab.catalog.research_workplaces?QStringLiteral("Setback · retry available"):QStringLiteral("Setback · paid retry available");
     return stopped?QStringLiteral("Stopped; retry available"):QStringLiteral("Available to research");
 }
 QString offer_terms(const core::BusinessOffer& offer) {
@@ -620,7 +620,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             const bool can_adopt=insight && !has_insight && !completed && status!=QStringLiteral("In progress") &&
                 s.date>=core::advance_days(insight->published_on,snapshot_->checkpoint.world.competition->setup->publication_delay);
             const auto cash_fee=core::research_cash_fee(s,row.id);
-            research.push_back({text(row.id),title_for(row.id),money(cash_fee)+QStringLiteral(" · ")+QString::number(row.staff_days.value())+QStringLiteral(" staff-days"),
+            research.push_back({text(row.id),title_for(row.id),(s.lab->catalog.research_workplaces?QString{}:money(cash_fee)+QStringLiteral(" · "))+QString::number(row.staff_days.value())+QStringLiteral(" staff-days"),
                 QStringLiteral("%1 CU of finite experiments plus %2 staff-days. Both must complete.\nPrerequisites: %3\nPaid work and staff time are not refunded when stopped.")
                     .arg(cu(row.experiment_work.value()),QString::number(row.staff_days.value()),prerequisites.isEmpty()?QStringLiteral("none"):prerequisites.join(QStringLiteral(", "))),status,
                 status!=QStringLiteral("Completed") && status!=QStringLiteral("In progress") && status!=QStringLiteral("Paused"),
@@ -633,7 +633,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
                     research.back().fields[QStringLiteral("canRetry")] = !completed;
                     research.back().detail += tr("\n\nSetback on %1 after %2 CU of settled work. %3")
                         .arg(text(core::iso_date(*work->stopped_on)),cu(work->completed_work.value()),text(risk->finding));
-                    if (!completed) research.back().detail += tr("\nThe next completed attempt resolves this issue. Retained evidence reduces experiment work by up to %1. Staff-days still apply. The fee above applies to a new attempt.")
+                    if (!completed) research.back().detail += tr("\nThe next completed attempt resolves this issue. Retained evidence reduces experiment work by up to %1. Staff-days still apply.")
                         .arg(percent(risk->retry_credit));
                 } else if (!completed) {
                     research.back().detail += tr("\n\nThe first experiment has a %1 setback chance unless %2 is complete before the start. %3")

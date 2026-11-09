@@ -63,6 +63,10 @@ Json capacity_json(const core::CapacityState& state, bool packed) {
         {"tasks_per_day",project.tasks_per_day},{"inference_milli_CU_per_task",project.inference_milli_CU_per_task.value()},
         {"useful_tasks",project.useful_tasks},{"monthly_support_cost_cents",project.monthly_support_cost.value()},
             {"cause",project.cause}});
+        if(project.required_staff_days) {
+            projects.back()["required_staff_days"]=project.required_staff_days;
+            projects.back()["completed_staff_days"]=project.completed_staff_days;
+        }
         if(!project.pauses.empty()) {
             projects.back()["pauses"]=Json::array();
             for(const auto& pause:project.pauses) projects.back()["pauses"].push_back({{"starts_on",pause.starts_on.value()},{"ends_before",optional_day(pause.ends_before)}});
@@ -158,7 +162,7 @@ core::CapacityState parse_capacity(const Json& value, bool packed) {
     for (const auto& project:projects) {
         fields(project,"capacity/project",{"id","source_id","kind","status","starts_on","stopped_on","requested_milli_CU_per_day",
             "staff","minimum_memory_mib","interconnect","total_work_milli_CU","completed_work_milli_CU","tasks_per_day",
-            "inference_milli_CU_per_task","useful_tasks","monthly_support_cost_cents","cause"},{"customer_inference","pauses","disruptions","specialist_id"});
+            "inference_milli_CU_per_task","useful_tasks","monthly_support_cost_cents","cause"},{"customer_inference","pauses","disruptions","specialist_id","required_staff_days","completed_staff_days"});
         result.projects.push_back({label(project.at("id")),text(project.at("source_id"),"capacity/source_id",100,true),
             parse_enum<core::ProjectKind>(project.at("kind"),project_names),
             parse_enum<core::ProjectStatus>(project.at("status"),status_names),day(project.at("starts_on")),
@@ -170,6 +174,12 @@ core::CapacityState parse_capacity(const Json& value, bool packed) {
             core::Cents{i64(project.at("monthly_support_cost_cents"),"capacity/project/monthly_support_cost_cents")},
             label(project.at("cause")), project.contains("customer_inference") &&
                 boolean(project.at("customer_inference"),"capacity/customer_inference")});
+        if(project.contains("required_staff_days")!=project.contains("completed_staff_days"))
+            invalid("capacity/project","Research staff days need both the requirement and progress");
+        if(project.contains("required_staff_days")) {
+            result.projects.back().required_staff_days=staff(project.at("required_staff_days"));
+            result.projects.back().completed_staff_days=staff(project.at("completed_staff_days"));
+        }
         if (project.contains("disruptions")) {
             array(project.at("disruptions"),"capacity/project/disruptions",core::deployment_incident_limit);
             for (const auto& row:project.at("disruptions")) {
