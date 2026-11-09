@@ -330,3 +330,10 @@ target_compile_definitions(pgp-headquarters-test PRIVATE PGP_HQ_SOURCE="${PROJEC
 pgp_project_target(pgp-headquarters-test)
 add_test(NAME runtime.headquarters COMMAND pgp-headquarters-test)
 set_tests_properties(runtime.headquarters PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-recruitment-test recruitment_test.cpp)
+target_link_libraries(pgp-recruitment-test PRIVATE pgp::session)
+target_compile_definitions(pgp-recruitment-test PRIVATE PGP_RECRUITING_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/f04-recruiting.json")
+pgp_project_target(pgp-recruitment-test)
+add_test(NAME runtime.recruitment COMMAND pgp-recruitment-test)
+set_tests_properties(runtime.recruitment PROPERTIES TIMEOUT 30)

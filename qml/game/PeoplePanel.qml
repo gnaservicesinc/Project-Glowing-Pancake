@@ -6,39 +6,58 @@ ColumnLayout {
     property int textSize:14
     signal openApp(string app,string section)
     property string page: "team"
+    property string selectedApplicant: campaign.world.draft("people/applicant", "")
+    readonly property bool showDiscussion: page === "applicants" && discussion.offer.id !== undefined
+    readonly property bool editable: campaign.paused && campaign.companyEditable && !campaign.busy && !campaign.storageBlocked
+    function selectApplicant(id) {
+        selectedApplicant=id
+        campaign.world.setDraft("people/applicant", id)
+        Qt.callLater(() => discussion.focusDiscussion())
+    }
     function changePage(value) {page=value;campaign.world.setDraft("people/page",value)}
     function restorePage() {const value=campaign.world.draft("people/page","team");page=["team","applicants","branches"].includes(value)?value:"team"}
     Component.onCompleted:restorePage()
-    Connections {target:campaign.world;function onDraftsReset(){panel.restorePage()}}
+    Connections {target:campaign.world;function onDraftsReset(){panel.restorePage();panel.selectedApplicant=campaign.world.draft("people/applicant","")}}
     spacing:16
-    Label {text:qsTr("The people behind the company");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize*1.4;font.bold:true;color:"#eee5d2"}
-    Label {text:qsTr("Your founder and named HQ specialists. Site operators remain grouped with their facilities.");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
+    Label {visible:!panel.showDiscussion;text:qsTr("The people behind the company");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize*1.4;font.bold:true;color:"#eee5d2"}
+    Label {visible:!panel.showDiscussion;text:qsTr("Your founder and named HQ specialists. Site operators remain grouped with their facilities.");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
     Flow {
+        visible:!panel.showDiscussion
         Layout.fillWidth:true;spacing:8
         WorldButton {text:qsTr("HQ team");textSize:panel.textSize;checked:panel.page==="team";onClicked:panel.changePage("team")}
         WorldButton {objectName:"peopleApplicantsTab";text:qsTr("Applicants");textSize:panel.textSize;checked:panel.page==="applicants";onClicked:panel.changePage("applicants")}
         WorldButton {objectName:"peopleBranchesTab";text:qsTr("Branch departments");textSize:panel.textSize;checked:panel.page==="branches";onClicked:panel.changePage("branches")}
     }
-    Label {visible:campaign.world.recruitingSummary.length>0;Layout.fillWidth:true;text:campaign.world.recruitingSummary;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
+    Label {visible:!panel.showDiscussion && campaign.world.recruitingSummary.length>0;Layout.fillWidth:true;text:campaign.world.recruitingSummary;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
     Flow {
-        visible:panel.page==="applicants" && campaign.world.recruitingSummary.length>0
+        visible:!panel.showDiscussion && panel.page==="applicants" && campaign.world.recruitingSummary.length>0
         Layout.fillWidth:true;spacing:8
         Label {text:qsTr("Pay for next cohort");font.pixelSize:panel.textSize;color:"#c9dfd0";height:42;verticalAlignment:Text.AlignVCenter}
-        ComboBox {
+        GameSelect {textSize:panel.textSize;
             id:pay;objectName:"recruitingPay";model:[75,100,125,150];currentIndex:Math.max(0,model.indexOf(campaign.world.recruitingTerms.pay || 100))
-            displayText:currentText+"%";font.pixelSize:panel.textSize;Accessible.name:qsTr("Recruiting salary percent")
+            displayText:currentText+"%";Accessible.name:qsTr("Recruiting salary percent")
             enabled:campaign.paused && !campaign.busy && !campaign.storageBlocked
             onActivated:campaign.world.setRecruitingTerms(model[currentIndex],campaign.world.recruitingTerms.mission || "research")
         }
-        ComboBox {
+        GameSelect {textSize:panel.textSize;
             id:mission;objectName:"recruitingMission";model:["research","public benefit","commercial"];currentIndex:Math.max(0,model.indexOf(campaign.world.recruitingTerms.mission || "research"))
-            font.pixelSize:panel.textSize;Accessible.name:qsTr("Recruiting mission")
+            Accessible.name:qsTr("Recruiting mission")
             enabled:campaign.paused && !campaign.busy && !campaign.storageBlocked
             onActivated:campaign.world.setRecruitingTerms(campaign.world.recruitingTerms.pay || 100,model[currentIndex])
         }
     }
+    RecruitmentDiscussion {
+        id:discussion
+        Layout.fillWidth:true
+        visible:panel.showDiscussion
+        applicantId:panel.selectedApplicant
+        textSize:panel.textSize
+        editable:panel.editable
+        onCloseRequested:panel.selectApplicant("")
+        onSuppliersRequested:panel.openApp("facilities","equipment")
+    }
     Repeater {
-        model:panel.page==="branches" ? [] : panel.page==="applicants" ? campaign.world.applicants : campaign.world.people
+        model:panel.showDiscussion || panel.page==="branches" ? [] : panel.page==="applicants" ? campaign.world.applicants : campaign.world.people
         Rectangle {
             required property var modelData
             Layout.fillWidth:true;implicitHeight:person.implicitHeight+28;color:"#213b40";radius:10
@@ -59,13 +78,21 @@ ColumnLayout {
                     Label {Layout.fillWidth:true;text:modelData.name || "";textFormat:Text.PlainText;wrapMode:Text.Wrap;font.pixelSize:panel.textSize*1.2;font.bold:true;color:"#f3ead8"}
                     Label {Layout.fillWidth:true;text:modelData.role || "";wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b2d6c4"}
                     Label {Layout.fillWidth:true;text:modelData.detail || "";wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#c5d7cb"}
+                    Label {
+                        visible:panel.page==="applicants" && !!modelData.discussion
+                        Layout.fillWidth:true;text:modelData.discussion || "";wrapMode:Text.Wrap
+                        font.pixelSize:panel.textSize;color:"#e6ca91"
+                    }
                     WorldButton {
                         objectName:"hireApplicant_"+(modelData.id || "")
                         visible:panel.page==="applicants"
-                        text:qsTr("Review offer for %1").arg(modelData.name)
+                        text:modelData.negotiated?qsTr("Discuss terms"):qsTr("Review offer for %1").arg(modelData.name)
                         textSize:panel.textSize
-                        enabled:campaign.paused && !campaign.busy && !campaign.storageBlocked
-                        onClicked:{hireDialog.applicant=modelData;hireDialog.open()}
+                        enabled:modelData.negotiated || panel.editable
+                        onClicked:{
+                            if(modelData.negotiated) panel.selectApplicant(modelData.id)
+                            else {hireDialog.applicant=modelData;hireDialog.open()}
+                        }
                     }
                     Label {visible:!!modelData.bio;Layout.fillWidth:true;text:modelData.bio || "";textFormat:Text.PlainText;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#c5d7cb"}
                 }
@@ -90,11 +117,17 @@ ColumnLayout {
         property var applicant:({})
         anchors.centerIn:Overlay.overlay;width:Math.min(540,Overlay.overlay.width-32)
         modal:true;focus:true;title:qsTr("Hire %1?").arg(applicant.name || "")
-        standardButtons:Dialog.Ok | Dialog.Cancel
-        contentItem:Label {text:hireDialog.applicant.detail || "";textFormat:Text.PlainText;wrapMode:Text.Wrap;font.pixelSize:panel.textSize}
+        background:Rectangle {radius:12;color:"#142d32";border.color:"#bba775"}
+        contentItem:Label {text:hireDialog.applicant.detail || "";textFormat:Text.PlainText;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#d7e3d7"}
+        footer:RowLayout {
+            Item {Layout.fillWidth:true}
+            WorldButton {text:qsTr("Cancel");textSize:panel.textSize;onClicked:hireDialog.reject()}
+            WorldButton {text:qsTr("Sign employment");textSize:panel.textSize;primary:true;onClicked:hireDialog.accept()}
+        }
         onAccepted:campaign.world.hireEmployee(applicant.id)
     }
     Flow {
+        visible:!panel.showDiscussion
         Layout.fillWidth:true;spacing:8
         WorldButton {text:qsTr("Recruit & assign specialists");textSize:panel.textSize;onClicked:panel.openApp("office","funding")}
         WorldButton {text:qsTr("Executives & board");textSize:panel.textSize;onClicked:panel.openApp("office","governance")}

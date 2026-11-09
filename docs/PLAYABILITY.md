@@ -71,11 +71,13 @@ commitment and unused funds return. Finished owned premises pay property tax,
 with no rent. Moving stores furniture for arrangement in the new space.
 Engineering scenarios retain their earlier facility tools. Saved blueprints buy real sites,
 racks and operators in each state, with inspection and commissioning still
-required. People includes new applicants and grouped
-branch operators. Select a portrait using the pointer or Tab and Space for the
-full profile; scroll long profiles in smaller windows. Offers disclose signing
-cost, monthly salary, onboarding and evaluation work credit. Portraits retain
-their appearance through hiring and reloading. Form drafts survive closing and
+required. Open **People → Applicants** to compare candidates and their requests.
+Discuss terms to enter a monthly salary and signing payment. Advance a day for
+the applicant's reply. You can revise the offer, accept their counteroffer or
+decline the applicant. Once you agree, select a free furnished desk and sign
+before the terms expire. The payment and salary start at signing. The employee
+is available after seven days of onboarding. Select a portrait to inspect the
+person's profile. Form drafts survive closing and
 reopening the game. [Interface scope](GAMEPLAY_INTERFACE.md).
 
 **New Game opens in a California maternity ward in 1997.** Continue after the

@@ -107174,6 +107174,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "51022ef12c60835f50d074a43b5e14d012775358dd9398665079db0340c11c78",
+          "before_hash": "13bbd8ae04350c36f8480ca9e170b3d8ffe8867403bbc364da04a7482520bf3e",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 10,
+          "revision": 11
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "ba9502ec7b2f6aa4f8ff4020521b696344d3161a33c63d5f460b832d4ca0b18d",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.40.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 41,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.39.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000040.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000041.collection.json",
+      "summary": "Negotiated recruiting with dated offers, signed payroll and physical desk assignment",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

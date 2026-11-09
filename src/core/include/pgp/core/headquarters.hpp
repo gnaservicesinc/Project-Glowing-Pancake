@@ -3,6 +3,7 @@
 #include <pgp/core/calendar.hpp>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -134,4 +135,5 @@ HQQuote preview_hq_build(const SimulationState&,const BuildHQ&);
 bool hq_computer_available(const SimulationState&);
 std::uint32_t furnished_hq_desks(const SimulationState&);
 std::uint32_t assigned_hq_desks(const SimulationState&);
+[[nodiscard]] std::uint32_t assigned_hq_desk(const SimulationState&,std::string_view person);
 }

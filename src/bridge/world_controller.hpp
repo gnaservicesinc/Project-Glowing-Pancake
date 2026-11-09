@@ -70,6 +70,11 @@ public:
     QString countyState() const {return county_state_;}
     void setCountyState(QString value);
     Q_INVOKABLE void hireEmployee(QString id);
+    Q_INVOKABLE QVariantMap recruitmentOffer(QString id) const;
+    Q_INVOKABLE void proposeEmployment(QString id,QString salary,QString signing,QString revision);
+    Q_INVOKABLE void acceptEmploymentCounter(QString id,QString revision);
+    Q_INVOKABLE void declineApplicant(QString id,QString revision);
+    Q_INVOKABLE void hireNegotiatedEmployee(QString id,int desk,QString revision);
     Q_INVOKABLE void setRecruitingTerms(int payPercent,QString mission);
     QVariantList rooms() const;
     QVariantList devices() const;

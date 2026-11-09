@@ -9,7 +9,7 @@ Updated 2026-11-09
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-world/interface batch advances content to **0.39.0-dev.1**, generation **40**.
+world/interface batch advances content to **0.40.0-dev.1**, generation **41**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -48,10 +48,17 @@ exercise purchases, assignment, pointer dragging, leases, building and relocatio
 The software view also checks furnishing and room placement at 650×480 with
 200% text.
 
-Hiring negotiations, equipment-backed research trees, state geography and the
-laptop/game interface remain the next milestones. Physical desk assignment does
-not yet gate all research work; that integration belongs to F-04C/D. Earlier
-navigation/layout checks did not validate those missing gameplay interactions.
+F-04C makes each applicant a separate compensation discussion. The player can
+compare profiles, propose a salary and signing payment, revise an offer, agree
+to a dated counteroffer or decline. Pay and desk assignment start with the
+signed hire. The employee becomes available after paid onboarding. A focused
+simulation test checks refused hires, actual payments, expiry and fresh saves.
+The rendered Mac walkthrough signs a hire into a delivered desk and checks the
+discussion at 650×480 with 200% text.
+
+Equipment-backed research trees, state geography and the laptop/game interface
+remain open. F-04D will tie research work to its assigned people, available
+workstations and equipment.
 
 All current builds, including optimized Release builds for human testers, include
 **DEV · Reset local data**, which clears game-local saves, cached rules, drafts

@@ -33,7 +33,7 @@ View3D {
         id: camera
         position: Qt.vector3d(1500, 1600, 1800)
         eulerRotation: Qt.vector3d(-34, 40, 0)
-        horizontalMagnification: Math.min(scene.width / ((scene.columns + scene.rows) * 85), scene.height / (Math.max(scene.columns,scene.rows) * 110)) * scene.zoom
+        horizontalMagnification: Math.max(0.01, Math.min(scene.width / ((scene.columns + scene.rows) * 85), scene.height / (Math.max(scene.columns,scene.rows) * 110)) * scene.zoom)
         verticalMagnification: horizontalMagnification
         clipNear: 1; clipFar: 10000
     }

@@ -382,7 +382,7 @@ ApplicationWindow {
         enabled: visible
         anchors.fill: parent
         anchors.margins: 18
-        anchors.topMargin: campaign.welcome ? 18 : worldDesktop.headerHeight + 8
+        anchors.topMargin: campaign.welcome ? 18 : window.room === "people" && window.height < window.textSize * 24 ? 8 : worldDesktop.headerHeight + 8
         anchors.bottomMargin: campaign.welcome ? 18 : worldDesktop.footerHeight + 8
         spacing: 8
         Panel {
@@ -390,7 +390,7 @@ ApplicationWindow {
             contentItem: RowLayout {
                 Copy { text: ({devices:qsTr("Equipment"),office:qsTr("Company"),people:qsTr("People"),facilities:qsTr("Headquarters & blueprints"),lab:qsTr("Research notebook"),inbox:qsTr("News & decisions"),operations:qsTr("Infrastructure & travel"),civic:qsTr("Public affairs"),society:qsTr("World affairs"),institutions:qsTr("Institutions"),frontier:qsTr("Frontier"),leadership:qsTr("Leadership & retirement"),objectives:qsTr("Company mission")})[window.room] || window.room; font.bold:true }
                 Label {visible:!window.narrow && window.activeDevice.length>0;text:window.activeDevice;font.pixelSize:window.textSize;color:"#b8d2c5"}
-                Action {objectName:"closeDeviceButton";text:qsTr("Return to world");onClicked:window.closeApp()}
+                WorldButton {objectName:"closeDeviceButton";text:qsTr("Return to world");textSize:window.textSize;onClicked:window.closeApp()}
             }
         }
         ScrollView {

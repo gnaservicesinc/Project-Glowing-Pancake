@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.39.0-dev.1",
+  "content_version": "0.40.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -74366,6 +74366,18 @@
           "onboarding_days": 7,
           "pay_skill_weight": 20,
           "prestige_skill_weight": 2,
+          "recruitment": {
+            "maximum_acceptance_bp": 10000,
+            "maximum_ask_bp": 12000,
+            "maximum_offer_bp": 20000,
+            "maximum_rounds": 3,
+            "maximum_signing_multiple": 5,
+            "minimum_acceptance_bp": 8000,
+            "minimum_ask_bp": 8500,
+            "minimum_offer_bp": 5000,
+            "response_days": 1,
+            "validity_days": 14
+          },
           "recruitment_days": 30,
           "signing_cost_cents": 100000,
           "skill_jitter": 15
@@ -74685,7 +74697,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 10,
+      "revision": 11,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

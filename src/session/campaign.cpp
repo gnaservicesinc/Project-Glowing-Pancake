@@ -130,6 +130,10 @@ OperationResult Campaign::operate(
     // due-day work; the player can still finance, pay or cancel explicitly.
     if (after.world.simulation.date!=prior_day) {
         const auto& state=after.world.simulation;
+        if(state.management && state.management->people && std::ranges::any_of(state.management->people->applicants,[&](const auto& applicant) {
+            return applicant.recruitment && !applicant.recruitment->withdrawn_on && !applicant.recruitment->offers.empty() &&
+                applicant.recruitment->offers.back().respond_on==state.date && applicant.recruitment->offers.back().reply!="pending";
+        })) pause_notice="An applicant responded to your offer. Review their terms in People → Applicants.";
         if (state.management && state.management->governance) for (const auto& motion:state.management->governance->motions)
             if (motion.status==core::BoardMotionStatus::expired && motion.resolved_on==state.date)
                 pause_notice="The board response deadline passed without a vote. The proposal expired without spending or dilution.";

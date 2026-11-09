@@ -15,8 +15,9 @@ work; [selected refinement milestones](docs/FEEDBACK_REFINEMENTS.md) now lead th
 backlog. Current Release playtest builds include **DEV · Reset local data** in
 the menu; remove this action and its implementation before shipping v1.0.
 Fresh founder companies now have an actual furnishable garage/inherited office,
-paid suppliers, city property listings and contracted construction. Recruiting,
-research and the broader game interface remain in the refinement queue.
+paid suppliers, city property listings and contracted construction. Applicants
+negotiate compensation and need a furnished desk before they can be hired.
+Research and the broader game interface remain in the refinement queue.
 
  The initial skeleton phase closed on 2026-11-07. The current
 core is ready for human feedback and the user's selected refinements. The
@@ -30,7 +31,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.39.0-dev.1**, generation **40**.
+The finalized internal content version is **0.40.0-dev.1**, generation **41**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).

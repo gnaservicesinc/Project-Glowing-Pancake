@@ -7,7 +7,7 @@ Json profile(const core::PersonProfile& p) {
         {"portrait",{{"kit",p.portrait.kit},{"parts",p.portrait.parts}}}};
 }
 core::PersonProfile parse_profile(const Json& j) {
-    fields(j,"person",{"id","name","gender","pronouns","education","role","bio","preferred_mission","birth_year","experience","research","engineering","evaluation","mission_fit","applied_on"},{"portrait"});
+    fields(j,"person",{"id","name","gender","pronouns","education","role","bio","preferred_mission","birth_year","experience","research","engineering","evaluation","mission_fit","applied_on","portrait"});
     const auto year=i64(j.at("birth_year"),"birth_year");if(year<1800 || year>3000) invalid("person","Birth year out of bounds");
     const auto count=[&](const char* name){return static_cast<std::uint32_t>(u64(j.at(name),name,100));};
     core::PersonProfile result{text(j.at("id"),"id",64),text(j.at("name"),"name",128),text(j.at("gender"),"gender",32),text(j.at("pronouns"),"pronouns",64),
@@ -20,17 +20,34 @@ core::PersonProfile parse_profile(const Json& j) {
         for(std::size_t i=0;i<core::portrait_part_counts.size();++i)
             result.portrait.parts[i]=static_cast<std::uint8_t>(u64(recipe.at("parts")[i],"portrait layer",255));
         core::validate_portrait(result.portrait);
-    } else {
-        // Older development saves acquire a deterministic appearance without
-        // consuming their saved simulation stream or rewriting the source file.
-        result.portrait=core::make_portrait(0,result.id+"/"+result.name);
     }
     return result;
 }
-Json applicant(const core::Applicant& a) {return {{"profile",profile(a.profile)},{"salary",a.salary.value()},{"signing",a.signing.value()},{"evaluation_credit",a.evaluation_credit.value()}};}
+Json recruitment(const core::Recruitment& n) {
+    Json offers=Json::array();for(const auto& o:n.offers) offers.push_back({{"salary",o.salary.value()},{"signing",o.signing.value()},{"counter_salary",o.counter_salary.value()},{"counter_signing",o.counter_signing.value()},
+        {"submitted_on",o.submitted_on.value()},{"respond_on",o.respond_on.value()},{"expires_on",o.expires_on.value()},{"reply",o.reply}});
+    const auto date=[](auto value){return value?Json(value->value()):Json(nullptr);};
+    return {{"ask_salary",n.ask_salary.value()},{"ask_signing",n.ask_signing.value()},{"minimum_salary",n.minimum_salary.value()},{"minimum_signing",n.minimum_signing.value()},
+        {"offers",std::move(offers)},{"agreed_on",date(n.agreed_on)},{"withdrawn_on",date(n.withdrawn_on)},{"hired_on",date(n.hired_on)}};
+}
+core::Recruitment parse_recruitment(const Json& j) {
+    fields(j,"recruitment",{"ask_salary","ask_signing","minimum_salary","minimum_signing","offers","agreed_on","withdrawn_on","hired_on"});
+    core::Recruitment n;
+    n.ask_salary=core::Cents{i64(j.at("ask_salary"),"ask_salary")};n.ask_signing=core::Cents{i64(j.at("ask_signing"),"ask_signing")};
+    n.minimum_salary=core::Cents{i64(j.at("minimum_salary"),"minimum_salary")};n.minimum_signing=core::Cents{i64(j.at("minimum_signing"),"minimum_signing")};
+    const auto date=[&](const char* key)->std::optional<core::OrdinalDay>{return j.at(key).is_null()?std::nullopt:std::optional{core::OrdinalDay{i64(j.at(key),key)}};};
+    n.agreed_on=date("agreed_on");n.withdrawn_on=date("withdrawn_on");n.hired_on=date("hired_on");
+    array(j.at("offers"),"employment offers",6);for(const auto& o:j.at("offers")) {
+        fields(o,"employment offer",{"salary","signing","counter_salary","counter_signing","submitted_on","respond_on","expires_on","reply"});
+        n.offers.push_back({core::Cents{i64(o.at("salary"),"salary")},core::Cents{i64(o.at("signing"),"signing")},core::Cents{i64(o.at("counter_salary"),"counter_salary")},core::Cents{i64(o.at("counter_signing"),"counter_signing")},
+            core::OrdinalDay{i64(o.at("submitted_on"),"submitted_on")},core::OrdinalDay{i64(o.at("respond_on"),"respond_on")},core::OrdinalDay{i64(o.at("expires_on"),"expires_on")},text(o.at("reply"),"reply",16)});
+    }return n;
+}
+Json applicant(const core::Applicant& a) {return {{"profile",profile(a.profile)},{"salary",a.salary.value()},{"signing",a.signing.value()},{"evaluation_credit",a.evaluation_credit.value()},{"recruitment",a.recruitment?recruitment(*a.recruitment):Json(nullptr)}};}
 core::Applicant parse_applicant(const Json& j) {
-    fields(j,"applicant",{"profile","salary","signing","evaluation_credit"});
-    return {parse_profile(j.at("profile")),core::Cents{i64(j.at("salary"),"salary")},core::Cents{i64(j.at("signing"),"signing")},core::BasisPoints{i64(j.at("evaluation_credit"),"evaluation_credit")}};
+    fields(j,"applicant",{"profile","salary","signing","evaluation_credit","recruitment"});
+    return {parse_profile(j.at("profile")),core::Cents{i64(j.at("salary"),"salary")},core::Cents{i64(j.at("signing"),"signing")},core::BasisPoints{i64(j.at("evaluation_credit"),"evaluation_credit")},
+        j.at("recruitment").is_null()?std::nullopt:std::optional{parse_recruitment(j.at("recruitment"))}};
 }
 }
 Json people_json(const core::PeopleState& p) {

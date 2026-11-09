@@ -133,6 +133,12 @@ void initialize_headquarters(SimulationState& s,std::uint64_t seed) {
 bool hq_computer_available(const SimulationState& s) {return enabled(s) && s.infrastructure->workplace->headquarters && std::ranges::any_of(hq(s).items,[&](const auto& i){return offer(s,i).kind=="desktop" && working(s,i);});}
 std::uint32_t furnished_hq_desks(const SimulationState& s) {return static_cast<std::uint32_t>(std::ranges::count_if(hq(s).items,[&](const auto& i){return offer(s,i).kind=="desk" && working(s,i);}));}
 std::uint32_t assigned_hq_desks(const SimulationState& s) {return static_cast<std::uint32_t>(std::ranges::count_if(hq(s).items,[&](const auto& i){return !i.person.empty() && working(s,i);}));}
+std::uint32_t assigned_hq_desk(const SimulationState& s,std::string_view person) {
+    if(person.empty() || !enabled(s) || !s.infrastructure->workplace->headquarters) return 0;
+    const auto& items=hq(s).items;
+    const auto found=std::ranges::find_if(items,[&](const auto& i){return i.person==person && working(s,i);});
+    return found==items.end()?0:found->id;
+}
 bool headquarters_purchase(const HeadquartersAction& a) {return std::holds_alternative<BuyHQEquipment>(a) || std::holds_alternative<LeaseHQ>(a) || std::holds_alternative<BuyHQLand>(a) || std::holds_alternative<BuildHQ>(a) || std::holds_alternative<MoveToOwnedHQ>(a);}
 void manage_headquarters(SimulationState& s,const HeadquartersAction& action,Cents protected_cash) {
     const auto& r=rules(s);auto& h=hq(s);

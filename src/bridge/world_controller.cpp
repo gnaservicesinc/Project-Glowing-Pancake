@@ -204,12 +204,19 @@ QVariantList WorldController::people() const {
             if(employee.departed_on || employee.terms.profile.role=="Founder / researcher") continue;
             const auto& p=employee.terms.profile;
             const auto* manager=core::operations_manager_on(s,s.date);const bool managing=manager && manager->person==p.id;
+            const auto desk=core::assigned_hq_desk(s,p.id);
+            QString workplace;
+            if(s.infrastructure && s.infrastructure->workplace && s.infrastructure->workplace->headquarters)
+                workplace=desk?tr("\nAssigned to desk %1").arg(desk):tr("\nNo desk assigned at headquarters");
+            if(!employee.opening) workplace+=tr("\nAgreed salary %1/month · signing payment %2")
+                .arg(QLocale{QLocale::English,QLocale::UnitedStates}.toCurrencyString(static_cast<double>(employee.terms.salary.value())/100),
+                    QLocale{QLocale::English,QLocale::UnitedStates}.toCurrencyString(static_cast<double>(employee.terms.signing.value())/100));
             const auto years=std::max(0,core::from_ordinal(s.date).year-core::from_ordinal(p.applied_on).year);
             rows.push_back(QVariantMap{{"id",q(p.id)},{"portrait",portraitUrl(p.portrait)},{"name",q(p.name)},{"initials",q(p.name).section(' ',0,0).left(1)+q(p.name).section(' ',-1).left(1)}, {"role",managing?tr("HQ operations manager"):q(p.role)},
                 {"detail",tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8\n%9")
                     .arg(q(p.gender),q(p.pronouns)).arg(core::from_ordinal(s.date).year-p.birth_year).arg(p.experience+static_cast<unsigned>(years))
                     .arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation)
-                    .arg(s.date<employee.ready_on?tr("Onboarding until %1").arg(q(core::iso_date(employee.ready_on))):managing?tr("Dedicated to branch coordination; one staff allocation is reserved"):tr("Ready for assignment"))}, {"bio",q(p.bio)}});
+                    .arg(s.date<employee.ready_on?tr("Onboarding until %1").arg(q(core::iso_date(employee.ready_on))):managing?tr("Dedicated to branch coordination; one staff allocation is reserved"):tr("Onboarding complete"))+workplace}, {"bio",q(p.bio)}});
         }
         for(const auto& hire:s.management->specialists) {
             if(hire.withdrawn_on) continue;
@@ -243,26 +250,37 @@ QVariantList WorldController::applicants() const {
     const auto money=[](core::Cents amount){return QLocale{QLocale::English,QLocale::UnitedStates}.toCurrencyString(static_cast<double>(amount.value())/100);};
     for(const auto& applicant:s.management->people->applicants) {
         const auto& p=applicant.profile;
-        rows.push_back(QVariantMap{{"id",q(p.id)},{"portrait",portraitUrl(p.portrait)},{"name",q(p.name)},{"role",q(p.role)},{"initials",q(p.name).left(1)},
+        auto row=QVariantMap{{"id",q(p.id)},{"portrait",portraitUrl(p.portrait)},{"name",q(p.name)},{"role",q(p.role)},{"initials",q(p.name).left(1)},
             {"detail",tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8 · Mission fit %9/100\n%10/month · %11 signing · %12 days onboarding\nEvaluation work credit: %13%")
                 .arg(q(p.gender),q(p.pronouns)).arg(core::from_ordinal(p.applied_on).year-p.birth_year).arg(p.experience).arg(q(p.education))
                 .arg(p.research).arg(p.engineering).arg(p.evaluation).arg(p.mission_fit).arg(money(applicant.salary),money(applicant.signing))
-                .arg(s.management->catalog.people->onboarding.value()).arg(static_cast<double>(applicant.evaluation_credit.value())/100)}, {"bio",q(p.bio)}});
+                .arg(s.management->catalog.people->onboarding.value()).arg(static_cast<double>(applicant.evaluation_credit.value())/100)}, {"bio",q(p.bio)}};
+        row["negotiated"]=applicant.recruitment.has_value();
+        if(applicant.recruitment) {
+            const auto status=core::recruitment_status(applicant,s.date);
+            if(status=="waiting") row["discussion"]=tr("Considering your offer");
+            else if(status=="counter") row["discussion"]=tr("Counteroffer received");
+            else if(status=="agreed") row["discussion"]=tr("Terms agreed · awaiting signature");
+            else if(status=="declined") row["discussion"]=tr("Discussion ended");
+            else if(status=="expired") row["discussion"]=tr("Terms expired");
+        }
+        rows.push_back(row);
     }
     return rows;
 }
 QVariantMap WorldController::recruitingTerms() const {
     if(!snapshot_ || !snapshot_->checkpoint.world.simulation.management || !snapshot_->checkpoint.world.simulation.management->people) return {};
     const auto& p=*snapshot_->checkpoint.world.simulation.management->people;
-    return {{"pay",static_cast<int>(p.offered_pay.value()/100)},{"mission",q(p.mission)}};
+    return {{"pay",static_cast<int>(p.offered_pay.value()/100)},{"mission",q(p.mission)},{"negotiated",snapshot_->checkpoint.world.simulation.management->catalog.people->recruitment.has_value()}};
 }
 QString WorldController::recruitingSummary() const {
     if(!snapshot_ || !snapshot_->checkpoint.world.simulation.management || !snapshot_->checkpoint.world.simulation.management->people) return {};
     const auto& s=snapshot_->checkpoint.world.simulation;const auto& p=*s.management->people;
     auto summary=tr("%1 individual HQ staff · next applicants %2. New offers reflect pay, published research and mission fit. Existing offers retain their quoted terms. Evaluation expertise supplies the stated work credit.")
         .arg(p.employees.size()).arg(q(core::iso_date(p.next_recruitment)));
+    if(s.management->catalog.people->recruitment) summary=tr("%1 HQ people · next applicants %2. Compare individual requests, send an offer and advance time for their response. Agree compensation before hiring; a delivered furnished desk is required. Pay starts when you sign, and research availability starts after onboarding.").arg(p.employees.size()).arg(q(core::iso_date(p.next_recruitment)));
     if(s.infrastructure && s.infrastructure->workplace && s.infrastructure->workplace->departments) summary+=tr(" Engineering skill supports HQ operations management.");
-    if(s.infrastructure && s.infrastructure->workplace) summary+=tr("\nHQ workstations: %1 of %2 reserved. Expand through Headquarters when the office fills.").arg(core::headquarters_seats_used(s)).arg(core::headquarters_seats(s));
+    if(s.infrastructure && s.infrastructure->workplace) summary+=tr("\nHQ workstations: %1 of %2 reserved. Buy and place desks, or visit the realtor when the office fills.").arg(core::headquarters_seats_used(s)).arg(core::headquarters_seats(s));
     return summary;
 }
 void WorldController::hireEmployee(QString id) {emit actionRequested(core::HireEmployee{id.toStdString()});}

@@ -39,16 +39,17 @@ Applicant applicant(SimulationState& s,bool opening) {
     person.research=skill();person.engineering=skill();person.evaluation=skill();
     // Bios are optional. No empty layout slot is needed for an absent biography.
     if(draw(rng,3)==0) person.bio="Drawn to "+person.preferred_mission+" work and a team where their contributions can be seen.";
-    p.stream=rng.state();
     const auto salary=Cents{mul_div_round_half_up(static_cast<std::uint64_t>(r.monthly_salary.value()),static_cast<std::uint64_t>(p.offered_pay.value()),10000)};
-    return {person,opening?Cents{0}:salary,opening?Cents{0}:r.signing_cost,
-        BasisPoints{r.maximum_evaluation_credit.value()*person.evaluation/100}};
+    Applicant result{person,opening?Cents{0}:salary,opening?Cents{0}:r.signing_cost,
+        BasisPoints{r.maximum_evaluation_credit.value()*person.evaluation/100},{}};
+    if(!opening && r.recruitment) initialize_recruitment(result,*r.recruitment,rng);
+    p.stream=rng.state();return result;
 }
 void recruit(SimulationState& s) {
     auto& p=*s.management->people;
-    p.applicants.clear();
     const auto& r=rules(s);
-    for(std::uint32_t i=0;i<r.candidates;++i) p.applicants.push_back(applicant(s,false));
+    std::erase_if(p.applicants,[&](const auto& a){const auto status=recruitment_status(a,s.date);return status!="waiting" && status!="counter" && status!="agreed";});
+    for(auto i=p.applicants.size();i<r.candidates;++i) p.applicants.push_back(applicant(s,false));
     p.next_recruitment=advance_days(s.date,r.recruitment_interval);
 }
 void profile_valid(const PersonProfile& p,OrdinalDay now) {
@@ -65,6 +66,7 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
 }
 }
 void validate_people_rules(const PeopleRules& r) {
+    if(r.recruitment) validate_recruitment_rules(*r.recruitment);
     if(r.first_names.empty() || r.first_names.size()>512 || r.last_names.empty() || r.last_names.size()>512 ||
         r.maximum_hq<1 || r.maximum_hq>256 || r.candidates<1 || r.candidates>12 ||
         r.recruitment_interval<Days{7} || r.recruitment_interval>Days{365} || r.onboarding>Days{90} ||
@@ -107,19 +109,29 @@ void set_recruiting_terms(SimulationState& s,const SetRecruitingTerms& action) {
         (action.mission!="research" && action.mission!="public benefit" && action.mission!="commercial"))
         invalid("Choose pay between 75% and 150% and a supported recruiting mission.");
     s.management->people->offered_pay=action.pay;s.management->people->mission=action.mission;
-    // Existing offers are signed terms. Only the next recruitment cohort changes.
+    // Changing recruiting terms affects the next cohort, not existing discussions.
 }
-void hire_employee(SimulationState& s,std::string_view id,Cents protected_cash) {
+void hire_employee(SimulationState& s,std::string_view id,Cents protected_cash,std::uint32_t desk) {
     const auto& r=rules(s);auto& p=*s.management->people;
     const auto it=std::ranges::find(p.applicants,id,[](const auto& row){return row.profile.id;});
     if(it==p.applicants.end()) invalid("This applicant is no longer available. Review the current cohort.");
     if(p.employees.size()>=r.maximum_hq) invalid("HQ has reached its individual staff limit. Branch operators are hired with their facilities.");
-    if(checked_unit_subtract(s.cash,protected_cash)<it->signing) invalid("Available cash does not cover the signing cost.");
+    Applicant accepted=*it;
+    if(r.recruitment) {
+        if(recruitment_status(*it,s.date)!="agreed") invalid("Agree compensation with the applicant before hiring.");
+        if(!s.infrastructure || !s.infrastructure->workplace || !s.infrastructure->workplace->headquarters || !desk) invalid("Choose a delivered, furnished desk for this person.");
+        const auto& items=s.infrastructure->workplace->headquarters->items;
+        const auto seat=std::ranges::find(items,desk,&HQEquipment::id);
+        if(seat==items.end() || !seat->person.empty()) invalid("Choose an unassigned furnished desk.");
+        const auto terms=agreed_employment(*it);accepted.salary=terms.first;accepted.signing=terms.second;accepted.recruitment->hired_on=s.date;
+    }
+    if(checked_unit_subtract(s.cash,protected_cash)<accepted.signing) invalid("Available cash does not cover the signing cost.");
     const auto ready=advance_days(s.date,r.onboarding);
     if(ready>=s.end_date) invalid("Onboarding would finish after this campaign's work ends.");
-    if(it->signing>Cents{0}) record_cash(*s.accounts,s.date,Cents{-it->signing.value()},Account::expenses,"Employee recruitment: "+it->profile.name,it->profile.id);
-    add_recurring(*s.accounts,{it->profile.id,it->salary,s.date,std::nullopt,"Employee salary: "+it->profile.name});
-    p.employees.push_back({*it,s.date,ready,false,{}});p.applicants.erase(it);
+    if(accepted.signing>Cents{0}) record_cash(*s.accounts,s.date,Cents{-accepted.signing.value()},Account::expenses,"Employee recruitment: "+accepted.profile.name,accepted.profile.id);
+    add_recurring(*s.accounts,{accepted.profile.id,accepted.salary,s.date,std::nullopt,"Employee salary: "+accepted.profile.name});
+    p.employees.push_back({std::move(accepted),s.date,ready,false,{}});p.applicants.erase(it);
+    if(r.recruitment) manage_headquarters(s,AssignHQDesk{desk,p.employees.back().terms.profile.id},protected_cash);
     s.cash=accounts_report(*s.accounts).cash;
     if(ready==s.date) {const auto& employee=p.employees.back();add_staff_capacity(*s.capacity,s.date,employee.terms.profile.id,1,employee.terms.evaluation_credit);}
 }
@@ -129,7 +141,8 @@ void prepare_people(SimulationState& s) {
     for(const auto& employee:p.employees) if(!employee.opening && !employee.departed_on && employee.ready_on==s.date &&
         std::ranges::none_of(s.capacity->staff_additions,[&](const auto& row){return row.id==employee.terms.profile.id;}))
         add_staff_capacity(*s.capacity,s.date,employee.terms.profile.id,1,employee.terms.evaluation_credit);
-    if(s.date>=p.next_recruitment && s.capacity->available_staff>0) recruit(s);
+    prepare_recruitment(s);
+    if(s.date>=p.next_recruitment && (rules(s).recruitment || s.capacity->available_staff>0)) recruit(s);
 }
 void withdraw_people(SimulationState& s) {
     if(!s.management || !s.management->people) return;
@@ -147,9 +160,9 @@ void validate_people(const SimulationState& s) {
         p.next_recruitment>advance_days(s.date,r.recruitment_interval) || p.founding_prestige>10 ||
         (p.mission!="research" && p.mission!="public benefit" && p.mission!="commercial")) invalid("HQ roster or recruitment state is outside its bounds.");
     std::set<std::string> ids;
-    const auto check=[&](const Applicant& a){profile_valid(a.profile,s.date);if(!ids.insert(a.profile.id).second || a.salary<Cents{0} || a.salary>Cents{15000000} ||
-        a.signing<Cents{0} || a.signing>r.signing_cost || a.evaluation_credit!=BasisPoints{r.maximum_evaluation_credit.value()*a.profile.evaluation/100}) invalid("Applicant identity, pay or evaluation evidence changed.");};
-    for(const auto& a:p.applicants) check(a);
+    const auto check=[&](const Applicant& a){profile_valid(a.profile,s.date);if(!ids.insert(a.profile.id).second || a.salary<Cents{0} || a.salary>Cents{r.recruitment?30000000:15000000} ||
+        a.signing<Cents{0} || a.signing>Cents{r.signing_cost.value()*(r.recruitment?r.recruitment->maximum_signing_multiple:1)} || a.evaluation_credit!=BasisPoints{r.maximum_evaluation_credit.value()*a.profile.evaluation/100}) invalid("Applicant identity, pay or evaluation evidence changed.");};
+    for(const auto& a:p.applicants) {check(a);if(r.recruitment.has_value()!=a.recruitment.has_value()) invalid("Current applicants need their compensation discussions.");validate_recruitment(a,r,s.date,false);}
     const auto known=[&](const auto& offer) {
         const auto it=p.known_people.find(offer.id);
         if(it==p.known_people.end() || it->second.name!=offer.name) invalid("Authored hiring offer has lost its stable identity.");
@@ -166,7 +179,10 @@ void validate_people(const SimulationState& s) {
         if(employee.opening) {++opening;if(employee.ready_on!=p.starts_on || employee.joined_on!=p.starts_on || employee.terms.salary!=Cents{0}) invalid("Opening staff must retain their existing payroll.");continue;}
         const auto minimum_salary=Cents{mul_div_round_half_up(static_cast<std::uint64_t>(r.monthly_salary.value()),7500,10000)};
         const auto maximum_salary=Cents{mul_div_round_half_up(static_cast<std::uint64_t>(r.monthly_salary.value()),15000,10000)};
-        if(employee.terms.salary<minimum_salary || employee.terms.salary>maximum_salary || employee.terms.signing!=r.signing_cost) invalid("Employee pay is outside the authored offer range.");
+        if(r.recruitment) {
+            if(!employee.terms.recruitment || employee.terms.recruitment->hired_on!=employee.joined_on) invalid("A hire needs its signed compensation history.");
+            validate_recruitment(employee.terms,r,s.date,true);
+        } else if(employee.terms.salary<minimum_salary || employee.terms.salary>maximum_salary || employee.terms.signing!=r.signing_cost) invalid("Employee pay is outside the authored offer range.");
         const auto& id=employee.terms.profile.id;
         const auto salary=std::ranges::find(s.accounts->recurring,id,&RecurringObligation::id);
         const auto hire=std::ranges::find(s.capacity->staff_additions,id,&StaffAddition::id);

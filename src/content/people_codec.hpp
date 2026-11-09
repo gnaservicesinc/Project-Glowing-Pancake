@@ -16,16 +16,28 @@ inline std::uint32_t count(const Json& j) {
     const auto n=integer(j);if(n<0 || n>1000) throw std::invalid_argument("Recruitment count out of bounds");return static_cast<std::uint32_t>(n);
 }
 inline Json encode(const core::PeopleRules& r) {
-    return {{"first_names",r.first_names},{"last_names",r.last_names},{"maximum_hq",r.maximum_hq},{"candidates",r.candidates},
+    Json j{{"first_names",r.first_names},{"last_names",r.last_names},{"maximum_hq",r.maximum_hq},{"candidates",r.candidates},
         {"recruitment_days",r.recruitment_interval.value()},{"onboarding_days",r.onboarding.value()},
         {"monthly_salary_cents",r.monthly_salary.value()},{"signing_cost_cents",r.signing_cost.value()},
         {"base_skill",r.base_skill},{"skill_jitter",r.skill_jitter},{"pay_skill_weight",r.pay_skill_weight},
         {"prestige_skill_weight",r.prestige_skill_weight},{"mission_skill_weight",r.mission_skill_weight},
         {"maximum_evaluation_credit_bp",r.maximum_evaluation_credit.value()}};
+    if(r.recruitment) {const auto& n=*r.recruitment;j["recruitment"]={{"response_days",n.response.value()},{"validity_days",n.validity.value()},{"maximum_rounds",n.maximum_rounds},
+        {"minimum_ask_bp",n.minimum_ask},{"maximum_ask_bp",n.maximum_ask},{"minimum_acceptance_bp",n.minimum_acceptance},{"maximum_acceptance_bp",n.maximum_acceptance},
+        {"minimum_offer_bp",n.minimum_offer},{"maximum_offer_bp",n.maximum_offer},{"maximum_signing_multiple",n.maximum_signing_multiple}};}
+    return j;
 }
-inline core::PeopleRules decode(const Json& j) {
+inline core::PeopleRules decode(Json j) {
+    std::optional<core::RecruitmentRules> recruitment;
+    if(j.contains("recruitment")) {
+        const auto& n=j.at("recruitment");fields(n,{"response_days","validity_days","maximum_rounds","minimum_ask_bp","maximum_ask_bp","minimum_acceptance_bp","maximum_acceptance_bp","minimum_offer_bp","maximum_offer_bp","maximum_signing_multiple"});
+        const auto ratio=[&](const char* key){const auto v=integer(n.at(key));if(v<0 || v>30000) throw std::invalid_argument("Recruiting ratio out of bounds");return static_cast<std::uint32_t>(v);};
+        recruitment=core::RecruitmentRules{core::Days{integer(n.at("response_days"))},core::Days{integer(n.at("validity_days"))},count(n.at("maximum_rounds")),
+            ratio("minimum_ask_bp"),ratio("maximum_ask_bp"),ratio("minimum_acceptance_bp"),ratio("maximum_acceptance_bp"),ratio("minimum_offer_bp"),ratio("maximum_offer_bp"),count(n.at("maximum_signing_multiple"))};
+        j.erase("recruitment");
+    }
     fields(j,{"first_names","last_names","maximum_hq","candidates","recruitment_days","onboarding_days","monthly_salary_cents","signing_cost_cents","base_skill","skill_jitter","pay_skill_weight","prestige_skill_weight","mission_skill_weight","maximum_evaluation_credit_bp"});
-    core::PeopleRules r;
+    core::PeopleRules r;r.recruitment=std::move(recruitment);
     for(const char* name:{"first_names","last_names"}) {
         const auto& list=j.at(name);
         if(!list.is_array() || list.size()>512) throw std::invalid_argument("Name pool exceeds its limit");
