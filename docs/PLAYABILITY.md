@@ -58,8 +58,18 @@ Escape during play pauses into the menu; Escape there, Quit and window close
 open exit confirmation.
 
 The workspace HUD and dock keep company tools, people, research, decisions,
-places and map scales reachable. Headquarters orders paid rooms; workstations
-open after construction. Saved facility blueprints quote and buy real sites,
+places and map scales reachable. In a fresh founder campaign, use **Suppliers**
+to order a desk and computer. Advance to delivery, choose **Furnish headquarters**,
+then place the desk and mount its computer. Drag furnishings or use the column/row
+controls; assign a person through the desk inspector. Empty/storage/powered-off
+machines provide no compute. A research desktop supplies 4 CU/day and consumes
+metered electricity. The home garage has room for one desk and costs $0 rent.
+**Realtor** compares named landlords, city prices, layouts, deposits and lease terms.
+Alternatively buy land, design rooms and compare three contractor bids. Construction
+can be delayed or exceed its base quote; the prepaid contingency caps the signed
+commitment and unused funds return. Finished owned premises pay property tax,
+with no rent. Moving stores furniture for arrangement in the new space.
+Engineering scenarios retain their earlier facility tools. Saved blueprints buy real sites,
 racks and operators in each state, with inspection and commissioning still
 required. People includes new applicants and grouped
 branch operators. Select a portrait using the pointer or Tab and Space for the

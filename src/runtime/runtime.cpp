@@ -923,6 +923,10 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             fail(RuntimeReason::effect_rejected, outcome.explanation);
         }
         next.world.simulation = std::move(core_state).release_checkpoint();
+        if(std::holds_alternative<core::ManageHeadquarters>(action) && next.world.simulation.infrastructure) {
+            const auto& base=next.world.simulation.infrastructure->executive_base;
+            next.world.state_id=base=="US-CA"?"state.us_ca":base=="US-TX"?"state.us_tx":"state.us_wa";
+        }
         complete_approved_acquisitions(next.world,program_);
         core::prepare_governance(next.world.simulation);
         if (next.world.simulation.date!=prior_day) {

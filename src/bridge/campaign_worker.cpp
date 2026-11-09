@@ -142,8 +142,9 @@ void CampaignWorker::start() {
                 writer_lock_->setStaleLockTime(0);
                 if (!writer_lock_->tryLock()) throw std::runtime_error("The continuing campaign is open in another game window. Close that window and relaunch.");
             } else if(!writer_lock_->isLocked() && !writer_lock_->tryLock()) throw std::runtime_error("Another game window owns the continuing company.");
-            std::error_code error;auto selected=installed_;
-            if(std::filesystem::exists(current_.path(),error)) selected=current_.content().for_save(installed_,current_.path());
+            // Development companies use the installed rules. A breaking change is
+            // handled by the playtest reset, without reviving an earlier game.
+            auto selected=installed_;
             if (auto checkpoint=current_.resume(*selected)) {
                 current_.content().preserve(*selected);
                 campaign_=session::Campaign{*selected,std::move(*checkpoint),autosave_path(paths_,*selected),campaign_.settings()};

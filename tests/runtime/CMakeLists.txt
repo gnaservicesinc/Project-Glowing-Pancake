@@ -322,3 +322,11 @@ target_compile_definitions(pgp-departments-test PRIVATE PGP_DEPARTMENTS_SOURCE="
 pgp_project_target(pgp-departments-test)
 add_test(NAME runtime.departments COMMAND pgp-departments-test)
 set_tests_properties(runtime.departments PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-headquarters-test headquarters_test.cpp)
+target_link_libraries(pgp-headquarters-test PRIVATE pgp::session)
+target_include_directories(pgp-headquarters-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-headquarters-test PRIVATE PGP_HQ_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/f04-premises.json")
+pgp_project_target(pgp-headquarters-test)
+add_test(NAME runtime.headquarters COMMAND pgp-headquarters-test)
+set_tests_properties(runtime.headquarters PROPERTIES TIMEOUT 30)

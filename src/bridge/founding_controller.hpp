@@ -55,6 +55,7 @@ private:
     void deriveOpening();
     std::optional<content::FoundingCatalog> catalog_;
     std::vector<std::string> headquarters_;
+    std::optional<core::HeadquartersRules> premises_rules_;
     std::filesystem::path draft_path_;
     QVariantMap form_;
     QString beat_ = QStringLiteral("opening");

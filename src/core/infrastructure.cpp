@@ -4,6 +4,7 @@ using namespace infrastructure_detail;
 void prepare_infrastructure(SimulationState& s) {
     if (!s.infrastructure) return;
     auto& i=infrastructure(s);
+    prepare_headquarters(s);
     prepare_site_resilience(s);
     if (i.initial_lease_ends_before && s.date>=*i.initial_lease_ends_before) {
         for (auto& source:s.capacity->sources) if ((source.id=="lease.initial" || source.id=="lease.founder")) source.effective=MilliCUPerDay{0};
@@ -70,6 +71,7 @@ void close_infrastructure_day(SimulationState& s) {
         const auto target=depreciation_through(h.paid,h.delivered_on,s.date,family(s,h).useful_life);
         depreciation=checked_unit_add(depreciation,checked_unit_subtract(target,h.depreciated));h.depreciated=target;
     }
+    meter_headquarters_day(s);
     accrue_metered_expense(*s.accounts,s.date,"owned_operations",costs,"Owned infrastructure utilities and operating costs",false);
     record_owned_depreciation(*s.accounts,s.date,"monthly",depreciation,false);i.closed_through=s.date;
 }

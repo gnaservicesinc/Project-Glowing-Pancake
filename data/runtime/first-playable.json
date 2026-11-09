@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.38.1-dev.1",
+  "content_version": "0.39.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -72328,6 +72328,236 @@
               }
             ]
           },
+          "headquarters": {
+            "building_tax_annual_bp": 100,
+            "contractors": [
+              {
+                "base_days": 7,
+                "cost_cents_per_square_metre": 100000,
+                "delay_bp": 3500,
+                "id": "budget",
+                "maximum_delay_days": 21,
+                "maximum_overrun_bp": 2000,
+                "name": "Marlowe Construction",
+                "overrun_bp": 4000,
+                "square_metres_per_day": 5
+              },
+              {
+                "base_days": 10,
+                "cost_cents_per_square_metre": 150000,
+                "delay_bp": 1500,
+                "id": "balanced",
+                "maximum_delay_days": 14,
+                "maximum_overrun_bp": 1500,
+                "name": "Cedar & Stone Builders",
+                "overrun_bp": 1500,
+                "square_metres_per_day": 4
+              },
+              {
+                "base_days": 7,
+                "cost_cents_per_square_metre": 180000,
+                "delay_bp": 500,
+                "id": "premium",
+                "maximum_delay_days": 7,
+                "maximum_overrun_bp": 1000,
+                "name": "Westbridge Contracting",
+                "overrun_bp": 500,
+                "square_metres_per_day": 6
+              }
+            ],
+            "equipment": [
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 1,
+                "depth": 2,
+                "id": "desk",
+                "kind": "desk",
+                "memory_mib": 0,
+                "name": "Desk and office chair",
+                "price_cents": 35000,
+                "supplier": "Juniper Office & Lab Supply",
+                "watts": 0,
+                "width": 2
+              },
+              {
+                "compute_milli_cu_per_day": 4000,
+                "delivery_days": 3,
+                "depth": 1,
+                "id": "desktop",
+                "kind": "desktop",
+                "memory_mib": 32768,
+                "name": "Research desktop computer",
+                "price_cents": 140000,
+                "supplier": "Juniper Office & Lab Supply",
+                "watts": 140,
+                "width": 1
+              },
+              {
+                "compute_milli_cu_per_day": 40000,
+                "delivery_days": 7,
+                "depth": 1,
+                "id": "rack",
+                "kind": "rack",
+                "memory_mib": 262144,
+                "name": "Compact server rack",
+                "price_cents": 1200000,
+                "supplier": "Juniper Office & Lab Supply",
+                "watts": 900,
+                "width": 1
+              },
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 5,
+                "depth": 1,
+                "id": "bench",
+                "kind": "bench",
+                "memory_mib": 0,
+                "name": "Research equipment bench",
+                "price_cents": 450000,
+                "supplier": "Juniper Office & Lab Supply",
+                "watts": 0,
+                "width": 2
+              },
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 10,
+                "depth": 1,
+                "id": "evaluation",
+                "kind": "evaluation",
+                "memory_mib": 0,
+                "name": "Instrumented evaluation station",
+                "price_cents": 900000,
+                "supplier": "Juniper Office & Lab Supply",
+                "watts": 0,
+                "width": 2
+              }
+            ],
+            "home_depth": 3,
+            "home_width": 3,
+            "markets": [
+              {
+                "agent": "Pacific Key Realty",
+                "city": "Los Angeles",
+                "deposit_months": 2,
+                "early_exit_months": 2,
+                "id": "los_angeles",
+                "land_cents_per_square_metre": 100000,
+                "landlord": "Mariposa Commercial",
+                "minimum_lease_days": 365,
+                "monthly_land_tax_cents_per_square_metre": 15,
+                "rent_cents_per_square_metre": 4000,
+                "state": "US-CA",
+                "street": "148 Alder Avenue"
+              },
+              {
+                "agent": "Bay Door Commercial",
+                "city": "San Francisco",
+                "deposit_months": 2,
+                "early_exit_months": 2,
+                "id": "san_francisco",
+                "land_cents_per_square_metre": 180000,
+                "landlord": "Harbor Block Properties",
+                "minimum_lease_days": 365,
+                "monthly_land_tax_cents_per_square_metre": 15,
+                "rent_cents_per_square_metre": 6500,
+                "state": "US-CA",
+                "street": "62 Lantern Street"
+              },
+              {
+                "agent": "Cedar Gate Realty",
+                "city": "Austin",
+                "deposit_months": 2,
+                "early_exit_months": 2,
+                "id": "austin",
+                "land_cents_per_square_metre": 65000,
+                "landlord": "Sunfield Commercial",
+                "minimum_lease_days": 365,
+                "monthly_land_tax_cents_per_square_metre": 15,
+                "rent_cents_per_square_metre": 2800,
+                "state": "US-TX",
+                "street": "340 Cedar Lane"
+              },
+              {
+                "agent": "Rainline Realty",
+                "city": "Seattle",
+                "deposit_months": 2,
+                "early_exit_months": 2,
+                "id": "seattle",
+                "land_cents_per_square_metre": 95000,
+                "landlord": "North Pier Properties",
+                "minimum_lease_days": 365,
+                "monthly_land_tax_cents_per_square_metre": 15,
+                "rent_cents_per_square_metre": 3800,
+                "state": "US-WA",
+                "street": "90 Rainier Court"
+              }
+            ],
+            "maximum_edge": 40,
+            "maximum_items": 128,
+            "maximum_properties": 16,
+            "plans": [
+              {
+                "depth": 4,
+                "id": "compact",
+                "name": "Compact two-room office",
+                "rooms": [
+                  {
+                    "depth": 4,
+                    "width": 3,
+                    "x": 0,
+                    "y": 0
+                  },
+                  {
+                    "depth": 4,
+                    "width": 3,
+                    "x": 3,
+                    "y": 0
+                  }
+                ],
+                "width": 6
+              },
+              {
+                "depth": 8,
+                "id": "studio",
+                "name": "Open-plan studio",
+                "rooms": [
+                  {
+                    "depth": 8,
+                    "width": 10,
+                    "x": 0,
+                    "y": 0
+                  }
+                ],
+                "width": 10
+              },
+              {
+                "depth": 12,
+                "id": "floor",
+                "name": "Three-room commercial building",
+                "rooms": [
+                  {
+                    "depth": 12,
+                    "width": 9,
+                    "x": 0,
+                    "y": 0
+                  },
+                  {
+                    "depth": 6,
+                    "width": 9,
+                    "x": 9,
+                    "y": 0
+                  },
+                  {
+                    "depth": 6,
+                    "width": 9,
+                    "x": 9,
+                    "y": 6
+                  }
+                ],
+                "width": 18
+              }
+            ]
+          },
           "home_seats": 1,
           "leased_seats": 16,
           "maximum_blueprints": 8,
@@ -74455,7 +74685,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 9,
+      "revision": 10,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

@@ -3,6 +3,7 @@
 #include <pgp/core/devices.hpp>
 #include <pgp/core/access.hpp>
 #include <pgp/core/departments.hpp>
+#include <pgp/core/headquarters.hpp>
 #include <optional>
 #include <string>
 #include <vector>
@@ -19,6 +20,7 @@ struct WorkplaceRules {
     std::optional<DeviceRules> devices{};
     std::optional<AccessRules> access{};
     std::optional<DepartmentRules> departments{};
+    std::optional<HeadquartersRules> headquarters{};
     auto operator<=>(const WorkplaceRules&) const = default;
 };
 struct HeadquartersRoom {
@@ -42,6 +44,7 @@ struct WorkplaceState {
     std::optional<DeviceInventory> devices{};
     std::optional<AccessState> access{};
     std::optional<DepartmentsState> departments{};
+    std::optional<HeadquartersState> headquarters{};
     auto operator<=>(const WorkplaceState&) const = default;
 };
 struct ExpandHeadquarters {std::string id,offer;};

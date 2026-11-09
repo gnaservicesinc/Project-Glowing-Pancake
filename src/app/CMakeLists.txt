@@ -26,7 +26,7 @@ qt_add_resources(pgp_portraits portrait_kit PREFIX "/pgp/assets" BASE "${PROJECT
 qt_add_executable(pgp-game game_main.cpp music_controller.cpp music_controller.hpp menu_media.cpp menu_media.hpp)
 if(BUILD_TESTING)
     find_package(Qt6 6.12.0 EXACT REQUIRED COMPONENTS Test)
-    target_sources(pgp-game PRIVATE map_layout_smoke.cpp form_drafts_smoke.cpp content_recovery_smoke.cpp world_smoke.cpp world_smoke.hpp founding_smoke.cpp founding_smoke.hpp game_smoke.cpp game_smoke.hpp menu_smoke.cpp menu_smoke.hpp)
+    target_sources(pgp-game PRIVATE headquarters_smoke.cpp map_layout_smoke.cpp form_drafts_smoke.cpp content_recovery_smoke.cpp world_smoke.cpp world_smoke.hpp founding_smoke.cpp founding_smoke.hpp game_smoke.cpp game_smoke.hpp menu_smoke.cpp menu_smoke.hpp)
     target_link_libraries(pgp-game PRIVATE Qt6::Test)
 endif()
 target_compile_definitions(pgp-game PRIVATE PGP_TEST_HOOKS=$<BOOL:${BUILD_TESTING}>)
@@ -37,6 +37,13 @@ qt_add_resources(pgp-game game_ui
     PREFIX "/pgp" BASE "${PROJECT_SOURCE_DIR}/qml"
     FILES "${PROJECT_SOURCE_DIR}/qml/game/Main.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/Workspace3D.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/Headquarters3D.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/HeadquartersPlan.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/HeadquartersTools.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/HeadquartersPanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/LegacyWorkplacePanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/GameSelect.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/GameField.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/WorldButton.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/WorldDesktop.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/WorldMap.qml"

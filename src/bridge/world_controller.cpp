@@ -147,6 +147,11 @@ QString WorldController::location() const {
             for(const auto& appointment:s.infrastructure->appointments) if(appointment.id==*loc.appointment)
                 for(const auto& site:s.infrastructure->sites) if(site.id==appointment.site_id) return q(site.name)+" · "+city(site.state_id);
         }
+        if(s.infrastructure->workplace && s.infrastructure->workplace->headquarters) {
+            const auto& p=core::current_headquarters(s);const auto& markets=s.infrastructure->catalog.workplace->headquarters->markets;
+            const auto it=std::ranges::find(markets,p.market,&core::HQMarket::id);
+            if(it!=markets.end()) return q(p.address)+" · "+q(it->city);
+        }
         return tr("Headquarters · %1").arg(city(s.infrastructure->executive_base));
     }
     return tr("Headquarters · %1").arg(city(w.state_id));
@@ -321,6 +326,7 @@ QString WorldController::countySummary() const {
     return q(c.assumptions)+tr("\nUpdated %1 · domestic driver %2 · global driver %3").arg(q(core::iso_date(w.counties->updated_on))).arg(w.counties->regional_driver).arg(w.counties->global_driver);
 }
 QVariantList WorldController::rooms() const {
+    if(atHeadquarters() && snapshot_ && snapshot_->checkpoint.world.simulation.infrastructure && snapshot_->checkpoint.world.simulation.infrastructure->workplace && snapshot_->checkpoint.world.simulation.infrastructure->workplace->headquarters) return {QVariantMap{{"id","workspace"},{"name",tr("Headquarters")},{"detail",tr("Your actual premises and equipment")}}};
     if(!atHeadquarters()) return {QVariantMap{{"id","workspace"},{"name",tr("Current location")},{"detail",tr("Portable workspace")}}};
     QVariantList result{QVariantMap{{"id","workspace"},{"name",tr("Workspace")},{"detail",tr("Company and people")}}};
     if(officeKind()!="home") {
@@ -340,6 +346,7 @@ QVariantList WorldController::rooms() const {
     return result;
 }
 QString WorldController::officeKind() const {
+    if(snapshot_ && snapshot_->checkpoint.world.simulation.infrastructure && snapshot_->checkpoint.world.simulation.infrastructure->workplace && snapshot_->checkpoint.world.simulation.infrastructure->workplace->headquarters) return core::current_headquarters(snapshot_->checkpoint.world.simulation).kind=="home"?QStringLiteral("home"):QStringLiteral("leased");
     return snapshot_ && snapshot_->checkpoint.world.founding?q(snapshot_->checkpoint.world.founding->office):QStringLiteral("leased");
 }
 QVariantList WorldController::devices() const {
@@ -350,6 +357,7 @@ QVariantList WorldController::devices() const {
             const auto& offers=s.infrastructure->catalog.workplace->devices->offers;const auto& model=*std::ranges::find(offers,d.offer,&core::DeviceOffer::id);
             added.push_back(kind);result.push_back(QVariantMap{{"id",kind},{"name",q(model.name)}});
         }
+        if(headquarters && s.infrastructure->workplace->headquarters && core::hq_computer_available(s)) result.push_back(QVariantMap{{"id","desktop"},{"name",tr("HQ computer")}});
         return result;
     }
     QVariantList result{QVariantMap{{"id","phone"},{"name",tr("Phone")},{"detail",tr("News, messages and calendar")}},

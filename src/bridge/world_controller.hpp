@@ -41,6 +41,11 @@ class WorldController final : public QObject {
     Q_PROPERTY(QVariantMap navigation READ navigation NOTIFY navigationChanged)
     Q_PROPERTY(QString reviewToken READ reviewToken NOTIFY changed)
     Q_PROPERTY(QString headquartersSummary READ headquartersSummary NOTIFY changed)
+    Q_PROPERTY(QVariantMap headquarters READ headquarters NOTIFY changed)
+    Q_PROPERTY(QVariantList hqEquipmentOffers READ hqEquipmentOffers NOTIFY changed)
+    Q_PROPERTY(QVariantList hqMarkets READ hqMarkets NOTIFY changed)
+    Q_PROPERTY(QVariantList hqProperties READ hqProperties NOTIFY changed)
+    Q_PROPERTY(QVariantList hqEmployees READ hqEmployees NOTIFY changed)
     Q_PROPERTY(QVariantList roomOffers READ roomOffers NOTIFY changed)
     Q_PROPERTY(QVariantList headquartersRooms READ headquartersRooms NOTIFY changed)
     Q_PROPERTY(QVariantList blueprints READ blueprints NOTIFY changed)
@@ -98,6 +103,24 @@ public:
     Q_INVOKABLE QString draft(QString key,QString fallback) const;
     Q_INVOKABLE void setDraft(QString key,QString value);
     QString headquartersSummary() const;
+    QVariantMap headquarters() const;
+    QVariantList hqEquipmentOffers() const;
+    QVariantList hqMarkets() const;
+    QVariantList hqProperties() const;
+    QVariantList hqEmployees() const;
+    Q_INVOKABLE QVariantList hqListings(QString market) const;
+    Q_INVOKABLE QVariantMap hqPropertyQuote(QString market,QString plan,bool land) const;
+    Q_INVOKABLE QVariantMap hqMoveQuote(QString construction) const;
+    Q_INVOKABLE QVariantList hqBids(QString land,int width,int depth,QVariantList rooms) const;
+    Q_INVOKABLE void buyHQEquipment(QString offer,QString revision);
+    Q_INVOKABLE void placeHQEquipment(int item,int x,int y,bool rotated,int mount,QString revision);
+    Q_INVOKABLE void storeHQEquipment(int item,QString revision);
+    Q_INVOKABLE void assignHQDesk(int item,QString person,QString revision);
+    Q_INVOKABLE void powerHQEquipment(int item,bool powered,QString revision);
+    Q_INVOKABLE void leaseHQ(QString market,QString plan,QString revision);
+    Q_INVOKABLE void buyHQLand(QString market,QString plan,QString revision);
+    Q_INVOKABLE void buildHQ(QString land,QString contractor,int width,int depth,QVariantList rooms,QString revision);
+    Q_INVOKABLE void moveToOwnedHQ(QString construction,QString revision);
     QVariantList roomOffers() const;
     QVariantList headquartersRooms() const;
     QVariantList blueprints() const;
@@ -113,6 +136,7 @@ signals:
     void draftsReset();
     void noticeRaised(QString);
 private:
+    bool hqReview(QString revision);
     void restore();
     CampaignSnapshotPtr snapshot_;
     const runtime::CompiledProgram* program_=nullptr;

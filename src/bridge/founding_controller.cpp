@@ -38,6 +38,7 @@ FoundingController::FoundingController(const content::Collection& collection, st
         const auto& scenario = std::get<content::ScenarioDefinition>(definition->data);
         catalog_ = scenario.founding;
         headquarters_ = scenario.headquarters_choices;
+        if(scenario.infrastructure && scenario.infrastructure->workplace) premises_rules_=scenario.infrastructure->workplace->headquarters;
     }
     deriveOpening();
     if (!available()) return;
@@ -178,9 +179,12 @@ QString FoundingController::preview() const {
                 const auto amount=core::mul_div_floor(static_cast<std::uint64_t>(offer.capital_cents),10000+premium,10000).quotient;
                 sources<<tr("%1: %2").arg(text(offer.name),money(static_cast<std::int64_t>(amount)));
             }
-            const auto equipment=selected.office=="home"?tr("You bring your existing phone and laptop; no desktop or compute lease."):tr("The office includes a workstation; you bring your phone and laptop. No compute lease.");
-            return tr("%1\nCash %2 · signing %3\nRent %4/mo · payroll %5/mo · your salary %6/mo\n%7\n%8 research-capable people · 0 CU/day\n%9")
-                .arg(sources.join(" · "),money(cash-terms.paid_setup_cents),money(terms.paid_setup_cents),money(terms.office_cents),money(terms.payroll_cents),money(catalog_->founder_salary_cents),equity).arg(terms.opening_staff).arg(equipment);
+            const auto desks=selected.office=="home"?0U:terms.opening_staff+(terms.founder_researcher?0U:1U);
+            std::int64_t compute=0;
+            if(premises_rules_) for(const auto& offer:premises_rules_->equipment) if(offer.id=="desktop") compute=offer.compute.value()*desks;
+            const auto equipment=premises_rules_ && desks?tr("Inherited company equipment: %1 desks and %1 desktop computers. You bring your phone and laptop; no compute lease.").arg(desks):selected.office=="home"?tr("You bring your existing phone and laptop; no desktop or compute lease."):tr("The office includes a workstation; you bring your phone and laptop. No compute lease.");
+            return tr("%1\nCash %2 · signing %3\nRent %4/mo · payroll %5/mo · your salary %6/mo\n%7\n%8 research-capable people · %9 CU/day\n%10")
+                .arg(sources.join(" · "),money(cash-terms.paid_setup_cents),money(terms.paid_setup_cents),money(terms.office_cents),money(terms.payroll_cents),money(catalog_->founder_salary_cents),equity).arg(terms.opening_staff).arg(static_cast<double>(compute)/1000).arg(equipment);
         }
     } catch (const std::exception& error) {
         return QString::fromUtf8(error.what());

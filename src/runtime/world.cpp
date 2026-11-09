@@ -22,7 +22,18 @@ bool binding_exists(const WorldState& world, const ScopeBinding& binding) {
     switch (binding.scope) {
     case content::Scope::company: return binding.id == world.company_id;
     case content::Scope::world: return binding.id == world.world_id;
-    case content::Scope::state: return binding.id == world.state_id;
+    case content::Scope::state: {
+        if(binding.id==world.state_id) return true;
+        const auto& i=world.simulation.infrastructure;
+        if(i && i->workplace && i->workplace->headquarters) {
+            for(const auto& p:i->workplace->headquarters->premises) {
+                const auto& markets=i->catalog.workplace->headquarters->markets;
+                const auto it=std::ranges::find(markets,p.market,&core::HQMarket::id);
+                if(it!=markets.end() && binding.id==(it->state=="US-CA"?"state.us_ca":it->state=="US-TX"?"state.us_tx":"state.us_wa")) return true;
+            }
+        }
+        return false;
+    }
     case content::Scope::capacity_source: case content::Scope::project: case content::Scope::contract: return false;
     }
     return false;

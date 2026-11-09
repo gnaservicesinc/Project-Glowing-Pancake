@@ -49,7 +49,7 @@ void validate_device_rules(const DeviceRules& r) {
 void initialize_devices(SimulationState& s) {
     if(!s.infrastructure || !s.infrastructure->workplace || !s.infrastructure->catalog.workplace->devices) return;
     auto& w=*s.infrastructure->workplace;w.devices=DeviceInventory{};
-    for(const auto& d:s.infrastructure->catalog.workplace->devices->offers) if(std::ranges::find(d.included_offices,w.opening_office)!=d.included_offices.end())
+    for(const auto& d:s.infrastructure->catalog.workplace->devices->offers) if(!(s.infrastructure->catalog.workplace->headquarters && d.id=="desktop") && std::ranges::find(d.included_offices,w.opening_office)!=d.included_offices.end())
         w.devices->records.push_back({w.devices->records.size()+1,d.id,s.date,s.date,true,true,{},{}});
 }
 bool device_functioning(const SimulationState& s,const PersonalDevice& d) {
@@ -61,12 +61,13 @@ bool device_supports_app(const SimulationState& s,std::string_view kind,std::str
 }
 std::string resolve_app_device(const SimulationState& s,std::string_view preferred,std::string_view app,bool headquarters) {
     (void)rules(s);const auto& rows=s.infrastructure->workplace->devices->records;
-    const auto usable=[&](std::string_view kind) {return std::ranges::any_of(rows,[&](const auto& d){return d.offer==kind && device_available(s,d,headquarters) && device_supports_app(s,kind,app);});};
+    const auto usable=[&](std::string_view kind) {if(kind=="desktop" && s.infrastructure->catalog.workplace->headquarters) return headquarters && hq_computer_available(s) && device_supports_app(s,kind,app);return std::ranges::any_of(rows,[&](const auto& d){return d.offer==kind && device_available(s,d,headquarters) && device_supports_app(s,kind,app);});};
     if(usable(preferred)) return std::string{preferred};
     for(const auto kind:{"laptop","tablet","desktop","phone"}) if(usable(kind)) return kind;
     return {};
 }
 void buy_personal_device(SimulationState& s,std::string_view id,Cents protected_cash) {
+    if(id=="desktop" && s.infrastructure->catalog.workplace->headquarters) {manage_headquarters(s,BuyHQEquipment{"desktop"},protected_cash);return;}
     const auto& model=offer(s,id);auto& rows=s.infrastructure->workplace->devices->records;
     if(rows.size()>=128) invalid("The bounded device purchase register is full.");
     const auto ready=advance_days(s.date,model.delivery);if(ready>=s.end_date) invalid("Device delivery would arrive after this campaign ends.");
@@ -114,6 +115,6 @@ void validate_devices(const SimulationState& s,bool deep) {
             if(deep && !paid("device/service/"+std::to_string(d.id)+"/"+std::to_string(j+1),service.ordered_on,model.service)) invalid("Device service has no matching expense.");next=service.ready_on;
         }
     }
-    for(const auto& model:rules(s).offers) if(std::ranges::find(model.included_offices,w.opening_office)!=model.included_offices.end() && !initial.contains(model.id)) invalid("The saved office package lost an included device.");
+    for(const auto& model:rules(s).offers) if(!(s.infrastructure->catalog.workplace->headquarters && model.id=="desktop") && std::ranges::find(model.included_offices,w.opening_office)!=model.included_offices.end() && !initial.contains(model.id)) invalid("The saved office package lost an included device.");
 }
 }

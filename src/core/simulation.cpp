@@ -729,6 +729,8 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 set_device_power(next,action);(void)receipt(next,"device_power");
             } else if constexpr (std::is_same_v<Action, RetirePersonalDevice>) {
                 retire_personal_device(next,action.id);(void)receipt(next,"retire_personal_device");
+            } else if constexpr (std::is_same_v<Action, ManageHeadquarters>) {
+                const auto before=next.cash;manage_headquarters(next,action.action,reserved_cash(next));(void)receipt(next,"manage_headquarters",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, ExpandHeadquarters>) {
                 const auto before=next.cash;expand_headquarters(next,action,reserved_cash(next));(void)receipt(next,"expand_headquarters",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, CreateFacilityBlueprint>) {

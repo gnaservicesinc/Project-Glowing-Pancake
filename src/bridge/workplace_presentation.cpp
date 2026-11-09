@@ -8,13 +8,14 @@ QString money(core::Cents amount) {return QLocale{QLocale::English,QLocale::Unit
 bool available(const CampaignSnapshotPtr& p) {return p && p->checkpoint.world.simulation.infrastructure && p->checkpoint.world.simulation.infrastructure->workplace.has_value();}
 }
 QString WorldController::headquartersSummary() const {
+    if(!headquarters().empty()) return headquarters().value("summary").toString();
     if(!available(snapshot_)) return tr("This scenario has no headquarters construction plan. The founder campaign supports room expansion and repeatable facility blueprints.");
     const auto& s=snapshot_->checkpoint.world.simulation;
     return tr("%1 of %2 paid HQ workstations reserved. People in onboarding reserve their places. Completed rooms add space; recruitment supplies the people. Fit-out costs are paid now, monthly room costs begin when construction completes.")
         .arg(core::headquarters_seats_used(s)).arg(core::headquarters_seats(s));
 }
 QVariantList WorldController::roomOffers() const {
-    QVariantList rows;if(!available(snapshot_)) return rows;const auto& s=snapshot_->checkpoint.world.simulation;
+    QVariantList rows;if(!available(snapshot_) || !headquarters().empty()) return rows;const auto& s=snapshot_->checkpoint.world.simulation;
     for(const auto& offer:s.infrastructure->catalog.workplace->rooms) rows.push_back(QVariantMap{{"id",q(offer.id)},{"name",q(offer.name)},{"place",q(offer.place)},
         {"detail",q(offer.description)+tr("\n%1 fit-out · %2/month · %3 workstations\nReady %4 (%5 days)").arg(money(offer.construction),money(offer.monthly)).arg(offer.seats).arg(q(core::iso_date(core::advance_days(s.date,offer.lead)))).arg(offer.lead.value())}});
     return rows;

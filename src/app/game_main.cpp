@@ -5,6 +5,7 @@
 #include "menu_smoke.hpp"
 #include "founding_smoke.hpp"
 #include "world_smoke.hpp"
+#include "headquarters_smoke.hpp"
 #include "portrait_images.hpp"
 
 #include <pgp/core/build_identity.hpp>
@@ -64,6 +65,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("menu-smoke"),QStringLiteral("Exercise the Mac menu, settings, media, New Game entry and recovery.")});
     parser.addOption({QStringLiteral("screenshot"),QStringLiteral("Capture the smoke-test window."),QStringLiteral("file")});
     parser.addOption({QStringLiteral("founding-smoke"),QStringLiteral("Exercise the actual New Game biography, funding and first morning with an isolated local save.")});
+    parser.addOption({QStringLiteral("headquarters-smoke"),QStringLiteral("Exercise physical HQ, suppliers, placement, leases and construction in an isolated company.")});
     parser.addOption({QStringLiteral("world-smoke"),QStringLiteral("Exercise world navigation and continuing campaign in an isolated root.")});
     parser.addOption({QStringLiteral("portrait-smoke"),QStringLiteral("Check interactive portraits at 1080p, 8K and a narrow high-text layout.")});
     parser.addOption({QStringLiteral("decision-smoke"),QStringLiteral("Exercise decision participants, profile inspection, required choices and restart.")});
@@ -83,7 +85,7 @@ int main(int argc, char* argv[]) {
     }
 #endif
     if (parser.isSet(QStringLiteral("build-info"))) { core::write_build_identity(std::cout); return 0; }
-    const bool world_smoke=parser.isSet(QStringLiteral("map-layout-smoke")) || parser.isSet(QStringLiteral("form-drafts-smoke")) || parser.isSet(QStringLiteral("content-recovery-smoke")) || parser.isSet(QStringLiteral("decision-smoke")) || parser.isSet(QStringLiteral("retirement-smoke")) || parser.isSet(QStringLiteral("world-smoke")) || parser.isSet(QStringLiteral("portrait-smoke")) || parser.isSet(QStringLiteral("workplace-smoke")) || parser.isSet(QStringLiteral("device-smoke")) || parser.isSet(QStringLiteral("contacts-smoke")) || parser.isSet(QStringLiteral("manager-smoke"));
+    const bool world_smoke=parser.isSet(QStringLiteral("headquarters-smoke")) || parser.isSet(QStringLiteral("map-layout-smoke")) || parser.isSet(QStringLiteral("form-drafts-smoke")) || parser.isSet(QStringLiteral("content-recovery-smoke")) || parser.isSet(QStringLiteral("decision-smoke")) || parser.isSet(QStringLiteral("retirement-smoke")) || parser.isSet(QStringLiteral("world-smoke")) || parser.isSet(QStringLiteral("portrait-smoke")) || parser.isSet(QStringLiteral("workplace-smoke")) || parser.isSet(QStringLiteral("device-smoke")) || parser.isSet(QStringLiteral("contacts-smoke")) || parser.isSet(QStringLiteral("manager-smoke"));
     const bool civic_smoke = parser.isSet(QStringLiteral("civic-smoke"));
     const bool society_smoke = parser.isSet(QStringLiteral("society-smoke"));
     const bool institutions_smoke = parser.isSet(QStringLiteral("institutions-smoke"));
@@ -142,7 +144,7 @@ int main(int argc, char* argv[]) {
         QQuickStyle::setStyle(QStringLiteral("Basic"));
         bridge::CampaignController campaign{std::move(program),std::move(initial),paths,settings,nullptr,
             bundled || competition_smoke || infrastructure_smoke || institutions_smoke || founding_smoke, !prototype_smoke};
-        const auto audio_mode=prototype_smoke || ((menu_smoke || founding_smoke) && parser.isSet(QStringLiteral("software")))
+        const auto audio_mode=prototype_smoke || world_smoke || ((menu_smoke || founding_smoke) && parser.isSet(QStringLiteral("software")))
             ? audio::DeviceMode::Silent : audio::DeviceMode::NativeIfAvailable;
         MusicController music{nullptr,music_smoke ? audio::DeviceMode::NativeIfAvailable : audio_mode};
         MenuAudio menu_audio{campaign,audio_mode};
@@ -198,7 +200,9 @@ int main(int argc, char* argv[]) {
 #if PGP_TEST_HOOKS
             if (parser.isSet(QStringLiteral("smoke-test"))) {
                 window->resize(1280,720);
-                if(parser.isSet(QStringLiteral("map-layout-smoke")))
+                if(parser.isSet(QStringLiteral("headquarters-smoke")))
+                    schedule_headquarters_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));
+                else if(parser.isSet(QStringLiteral("map-layout-smoke")))
                     schedule_map_layout_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));
                 else if(parser.isSet(QStringLiteral("form-drafts-smoke")))
                     schedule_form_drafts_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));

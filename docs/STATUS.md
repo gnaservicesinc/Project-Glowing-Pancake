@@ -9,7 +9,7 @@ Updated 2026-11-09
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-world/interface batch advances content to **0.38.1-dev.1**, generation **39**.
+world/interface batch advances content to **0.39.0-dev.1**, generation **40**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -28,15 +28,30 @@ starts alone at their parents' house with $0 rent; only requested and accepted
 investor/donor offers contribute funds. Cofounders have agreed founding terms;
 a hired CEO inherits an existing office, three employees and company cash with
 a disclosed minority grant. Setup no longer chooses the first experiment, forces
-a first hire, shops for offices or asks for difficulty. Opening research compute
-is zero until a source is acquired. The budget discloses capital sources,
+a first hire, shops for offices or asks for difficulty. A home opening has no compute. Inherited office output comes from its disclosed
+physical desktop computers. The budget discloses capital sources,
 ownership, signing costs, rent, payroll, salary and existing/inherited equipment.
 Escape during play opens the pause menu; Escape from that menu opens exit confirmation.
 
-The decorative 3D space, property/furnishing mechanics, hiring negotiations,
-equipment-backed research trees, state geography and laptop/game interface are
-still unfinished and remain the next milestones. Passing earlier navigation or
-layout checks did not validate those missing gameplay interactions.
+F-04B replaces the decorative HQ with the actual garage or inherited office.
+Suppliers sell desks, computers, racks and specialist benches with paid delivery;
+players place/move them, mount computers and assign people to desks. A working
+desktop supplies 4 CU/day, with metered electricity; storage, delivery and power
+state affect its actual output. Room functions follow installed equipment.
+Realtors offer named landlords, city prices, floor plans, deposits and lease terms.
+Land purchase, custom room partitions and three contractor bids lead to actual
+construction, disclosed delay/overrun risks, contingency refunds and property tax.
+Moving changes the actual HQ and stores its equipment for rearrangement.
+Focused runtime checks cover empty/inherited offices, costs, refused placements,
+forced construction risks and fresh reloads. Native Metal and software walkthroughs
+exercise purchases, assignment, pointer dragging, leases, building and relocation.
+The software view also checks furnishing and room placement at 650×480 with
+200% text.
+
+Hiring negotiations, equipment-backed research trees, state geography and the
+laptop/game interface remain the next milestones. Physical desk assignment does
+not yet gate all research work; that integration belongs to F-04C/D. Earlier
+navigation/layout checks did not validate those missing gameplay interactions.
 
 All current builds, including optimized Release builds for human testers, include
 **DEV · Reset local data**, which clears game-local saves, cached rules, drafts

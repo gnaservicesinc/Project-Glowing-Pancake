@@ -80,6 +80,13 @@ void validate_infrastructure(const SimulationState& s,bool deep) {
         } else if (found!=s.capacity->sources.end() || h.energy_remainder!=0) invalid("Undelivered or uncommissioned hardware cannot supply capacity or energy");
         expected(ledger,"owned.hardware/"+h.id,h.ordered_on,Account::assets,Account::cash,h.paid);
     }
+    if(i.workplace && i.workplace->headquarters) {
+        const auto& equipment=i.catalog.workplace->headquarters->equipment;
+        for(const auto& item:i.workplace->headquarters->items) {
+            const auto offer=std::ranges::find(equipment,item.offer,&HQEquipmentOffer::id);
+            if(offer!=equipment.end() && offer->compute.value()>0 && item.delivered_on<=s.date) sources.insert("hq.equipment/"+std::to_string(item.id));
+        }
+    }
     for (const auto& source:s.capacity->sources) if (source.kind==CapacitySourceKind::owned && !sources.contains(source.id)) invalid("An owned source has no conserved hardware owner");
     for (const auto& owned:i.sites) {
         std::vector<OrdinalDay> dates{owned.ordered_on};for (const auto& h:i.hardware) if (h.site_id==owned.id) dates.push_back(h.ordered_on);

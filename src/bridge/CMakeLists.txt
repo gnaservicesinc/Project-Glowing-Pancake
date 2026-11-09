@@ -11,7 +11,7 @@ add_library(pgp_bridge STATIC campaign_content_recovery.cpp content_recovery_con
     objectives_controller.cpp objectives_controller.hpp
     campaign_snapshot.hpp flow_presentation.cpp flow_presentation.hpp)
 add_library(pgp::bridge ALIAS pgp_bridge)
-target_sources(pgp_bridge PRIVATE development_reset.cpp)
+target_sources(pgp_bridge PRIVATE development_reset.cpp headquarters_presentation.cpp)
 set_target_properties(pgp_bridge PROPERTIES AUTOMOC ON)
 target_include_directories(pgp_bridge PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(pgp_bridge PUBLIC pgp::session Qt6::Core)

@@ -12,6 +12,8 @@ bool WorldController::companyArchive() const {
     return w.simulation.phase==core::DayPhase::finished || w.simulation.phase==core::DayPhase::closed || runtime::objective_time_stopped(w) || runtime::observing_world(w);
 }
 QString WorldController::deviceSummary() const {
+    if(present(snapshot_) && snapshot_->checkpoint.world.simulation.infrastructure->workplace->headquarters)
+        return tr("Your phone and laptop travel with you. HQ desktop computers are actual equipment: buy them from Suppliers, wait for delivery and mount each on a furnished desk. They work only when placed and powered. Inherited company equipment is shown in Arrange headquarters. Portable apps and power controls remain reachable from the world dock.");
     return present(snapshot_)?tr("Your founding package includes a phone and laptop; shared and leased offices also include a workstation. Portable devices travel with you. Workstations stay at HQ. Apps use an available compatible device. Power, delivery and service determine availability. Equipment controls remain reachable from the world dock."):
         tr("This earlier scenario uses a fixed set of company devices.");
 }
@@ -33,8 +35,11 @@ QVariantList WorldController::deviceInventory() const {
 }
 QVariantList WorldController::deviceOffers() const {
     QVariantList rows;if(!present(snapshot_)) return rows;const auto& s=snapshot_->checkpoint.world.simulation;
-    for(const auto& d:s.infrastructure->catalog.workplace->devices->offers) rows.push_back(QVariantMap{{"id",q(d.id)},{"name",q(d.name)},{"revision",reviewToken()},
+    for(const auto& d:s.infrastructure->catalog.workplace->devices->offers) {
+        if(d.id=="desktop" && s.infrastructure->workplace->headquarters) continue;
+        rows.push_back(QVariantMap{{"id",q(d.id)},{"name",q(d.name)},{"revision",reviewToken()},
         {"detail",tr("%1 paid now · %2\nDelivery %3 · %4 days\n%5 service · %6 days offline").arg(money(d.purchase),d.portable?tr("Portable"):tr("At HQ only"),q(core::iso_date(core::advance_days(s.date,d.delivery)))).arg(d.delivery.value()).arg(money(d.service)).arg(d.service_lead.value())}});
+    }
     return rows;
 }
 bool WorldController::appAvailable(QString app,QString preferred) const {

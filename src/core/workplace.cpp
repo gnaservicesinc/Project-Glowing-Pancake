@@ -30,6 +30,7 @@ void valid_blueprint(const SimulationState& s,const FacilityBlueprint& b) {
 }
 }
 void validate_workplace_rules(const WorkplaceRules& r) {
+    if(r.headquarters) validate_headquarters_rules(*r.headquarters);
     if(r.devices) validate_device_rules(*r.devices);
     if(r.access) validate_access_rules(*r.access);
     if(r.departments) validate_department_rules(*r.departments);
@@ -56,6 +57,7 @@ void initialize_workplace(SimulationState& s,std::string office,bool nonresearch
 }
 std::uint32_t headquarters_seats(const SimulationState& s) {
     const auto& r=rules(s);const auto& w=*s.infrastructure->workplace;
+    if(w.headquarters) return furnished_hq_desks(s);
     auto result=w.opening_office=="home"?r.home_seats:w.opening_office=="shared"?r.shared_seats:r.leased_seats;
     for(const auto& room:w.rooms) if(room.ready_on<=s.date) {
         const auto rent=std::ranges::find(s.accounts->recurring,"hq.room/"+room.id,&RecurringObligation::id);
@@ -64,7 +66,8 @@ std::uint32_t headquarters_seats(const SimulationState& s) {
     return result;
 }
 std::uint32_t headquarters_seats_used(const SimulationState& s) {
-    (void)rules(s);std::uint32_t used=0;
+    (void)rules(s);if(s.infrastructure->workplace->headquarters) return assigned_hq_desks(s);
+    std::uint32_t used=0;
     if(s.management && s.management->people) {
         for(const auto& person:s.management->people->employees) if(!person.departed_on) ++used;
     } else used=s.capacity->available_staff;
@@ -79,7 +82,9 @@ std::uint32_t headquarters_seats_used(const SimulationState& s) {
     return used;
 }
 void expand_headquarters(SimulationState& s,const ExpandHeadquarters& request,Cents protected_cash) {
-    const auto& r=rules(s);auto& w=*s.infrastructure->workplace;const auto& offer=find(r.rooms,request.offer);
+    const auto& r=rules(s);auto& w=*s.infrastructure->workplace;
+    if(w.headquarters) invalid("Use the realtor to lease premises, or buy land and hire a contractor. A room cannot be rented onto this home.");
+    const auto& offer=find(r.rooms,request.offer);
     if(!id_valid(request.id) || w.rooms.size()>=r.maximum_rooms || std::ranges::any_of(w.rooms,[&](const auto& room){return room.id==request.id;}))
         invalid("Choose a new room within the headquarters construction limit.");
     const auto ready=advance_days(s.date,offer.lead);
@@ -124,6 +129,8 @@ void validate_workplace(const SimulationState& s,bool deep) {
     if(i.catalog.workplace.has_value()!=i.workplace.has_value()) invalid("Headquarters plans must match their authored rules.");
     if(!i.workplace) return;
     const auto& r=rules(s);const auto& w=*i.workplace;
+    if(r.headquarters.has_value()!=w.headquarters.has_value()) invalid("The headquarters catalog and physical premises must agree.");
+    validate_headquarters(s,deep);
     validate_devices(s,deep);
     validate_access(s,deep);
     validate_departments(s,deep);

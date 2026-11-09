@@ -10,6 +10,9 @@ Item {
     readonly property real uiScale:Math.max(1,textSize/14)
     readonly property bool compact: width < 1050*uiScale
     readonly property bool shortLayout:height<textSize*26
+    readonly property bool physicalHQ: Object.keys(campaign.world.headquarters).length>0 && campaign.world.atHeadquarters
+    property bool furnishing:false
+    readonly property bool placementView:physicalHQ && furnishing && compact && hqTools.placing
     readonly property var nav: campaign.world.navigation
     readonly property string place: nav.place || "workspace"
     signal openApp(string app, string section, string device)
@@ -26,20 +29,27 @@ Item {
 
     Rectangle {anchors.fill:parent;color:"#17282c"}
     Component {id:flatWorld;RoomScene {room:"office"}}
+    Component {id:flatHeadquarters;HeadquartersPlan {objectName:"hqFloorPlan"}}
     Loader {
         id: worldView
         objectName: "workspaceScene"
-        anchors.top: hud.bottom
+        anchors.top: desktop.placementView?parent.top:desktop.physicalHQ?places.bottom:hud.bottom
         anchors.bottom: dock.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.rightMargin: desktop.compact || desktop.place === "map" ? 0 : 270*desktop.uiScale
+        anchors.rightMargin: desktop.physicalHQ ? (desktop.furnishing && !desktop.compact ? Math.min(360*desktop.uiScale,desktop.width*0.38)+24 : 0) : desktop.compact || desktop.place === "map" ? 0 : 270*desktop.uiScale
         active: true
         visible: desktop.place !== "map"
-        source: softwareWorld ? "" : "Workspace3D.qml"
-        sourceComponent: softwareWorld ? flatWorld : undefined
+        source: softwareWorld ? "" : desktop.physicalHQ ? "Headquarters3D.qml" : "Workspace3D.qml"
+        sourceComponent: softwareWorld ? (desktop.physicalHQ?flatHeadquarters:flatWorld) : undefined
         onLoaded: {
-            if(softwareWorld) item.room = "office"
+            if(desktop.physicalHQ) {
+                item.headquarters=Qt.binding(()=>campaign.world.headquarters)
+                item.editing=Qt.binding(()=>desktop.furnishing)
+                item.selectedItem=Qt.binding(()=>hqTools.selectedItem)
+                item.tilePicked.connect((x,y,id)=>{if(!desktop.furnishing && id){desktop.furnishing=true;hqTools.select(id);if(!campaign.paused)campaign.togglePaused()}else hqTools.tile(x,y,id)})
+                item.itemDragged.connect((id,x,y,target)=>hqTools.drag(id,x,y,target))
+            } else if(softwareWorld) item.room = "office"
             else {
                 item.place = Qt.binding(() => desktop.place)
                 item.atHeadquarters = Qt.binding(() => campaign.world.atHeadquarters)
@@ -68,7 +78,8 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        height: hudContent.implicitHeight + (desktop.shortLayout?16:28*desktop.uiScale)
+        visible:!desktop.placementView
+        height:visible?hudContent.implicitHeight + (desktop.shortLayout?16:28*desktop.uiScale):0
         color: "#ef13252b"
         ColumnLayout {
             id: hudContent
@@ -101,7 +112,7 @@ Item {
                 Label {height:desktop.shortLayout?desktop.textSize*2.2:42*desktop.uiScale;text:campaign.date;font.pixelSize:desktop.textSize;color:"#f0ecdd";verticalAlignment:Text.AlignVCenter;rightPadding:8}
                 WorldButton {objectName:"pauseButton";text:campaign.paused?qsTr("▶ Play"):qsTr("Ⅱ Pause");textSize:desktop.textSize;primary:campaign.paused;enabled:!campaign.busy && !campaign.storageBlocked && (!campaign.paused || campaign.canPlay);onClicked:campaign.togglePaused()}
                 WorldButton {objectName:"stepButton";visible:!desktop.shortLayout;text:qsTr("Next day");textSize:desktop.textSize;enabled:campaign.paused && campaign.canAdvance && !campaign.storageBlocked;onClicked:campaign.step()}
-                ComboBox {objectName:"speedControl";visible:!desktop.shortLayout;model:[1,10,30,60];currentIndex:model.indexOf(campaign.daysPerSecond);displayText:qsTr("%1 days/s").arg(campaign.daysPerSecond);Accessible.name:qsTr("Days per second");font.pixelSize:desktop.textSize;implicitWidth:desktop.textSize*9;onActivated:campaign.daysPerSecond=model[currentIndex]}
+                GameSelect {textSize:desktop.textSize;objectName:"speedControl";visible:!desktop.shortLayout;model:[1,10,30,60];currentIndex:model.indexOf(campaign.daysPerSecond);displayText:qsTr("%1 days/s").arg(campaign.daysPerSecond);Accessible.name:qsTr("Days per second");font.pixelSize:desktop.textSize;implicitWidth:desktop.textSize*9;onActivated:campaign.daysPerSecond=model[currentIndex]}
                 WorldButton {visible:!desktop.shortLayout;text:qsTr("Advance…");textSize:desktop.textSize;onClicked:advanceMenu.open()}
                 WorldButton {visible:desktop.shortLayout;text:campaign.requiredKind!=="none"?qsTr("Review decision"):qsTr("Time & funds");textSize:desktop.textSize;primary:campaign.requiredKind!=="none";onClicked:campaign.requiredKind!=="none"?desktop.openApp("inbox","","phone"):compactTime.open()}
                 Label {visible:desktop.compact && !desktop.shortLayout;height:42*desktop.uiScale;text:qsTr("Available %1").arg(campaign.availableText);font.pixelSize:desktop.textSize;color:"#b7dfc7";verticalAlignment:Text.AlignVCenter}
@@ -112,23 +123,47 @@ Item {
         id: places
         anchors.top:hud.bottom;anchors.left:parent.left;anchors.right:parent.right;anchors.margins:16*desktop.uiScale
         spacing:8
-        visible:desktop.place!=="map" && !desktop.shortLayout
+        visible:!desktop.placementView && desktop.place!=="map" && (!desktop.shortLayout || desktop.physicalHQ)
         Repeater {
-            model:campaign.world.rooms
+            model:desktop.shortLayout && desktop.physicalHQ?[]:campaign.world.rooms
             WorldButton {required property var modelData;objectName:"place_"+modelData.id;text:modelData.name;textSize:desktop.textSize;checked:desktop.place===modelData.id;onClicked:desktop.visit(modelData.id)}
         }
+        WorldButton {objectName:"hqFurnishButton";visible:desktop.physicalHQ;text:desktop.shortLayout?(desktop.furnishing?qsTr("Done arranging"):qsTr("Arrange HQ")):desktop.furnishing?qsTr("Done arranging"):qsTr("Furnish headquarters");textSize:desktop.textSize;onClicked:{desktop.furnishing=!desktop.furnishing;if(desktop.furnishing && !campaign.paused)campaign.togglePaused()}}
+        WorldButton {visible:desktop.physicalHQ && !desktop.shortLayout;text:qsTr("Suppliers");textSize:desktop.textSize;onClicked:desktop.openApp("facilities","equipment","laptop")}
+        WorldButton {visible:desktop.physicalHQ && !desktop.shortLayout;text:qsTr("Realtor");textSize:desktop.textSize;onClicked:desktop.openApp("facilities","property","laptop")}
+    }
+    HeadquartersTools {
+        id:hqTools
+        objectName:"headquartersTools"
+        anchors.right:parent.right;anchors.top:desktop.compact?parent.top:places.bottom;anchors.bottom:dock.top
+        anchors.margins:12
+        width:Math.min(360*desktop.uiScale,desktop.width-24)
+        visible:desktop.physicalHQ && desktop.furnishing && desktop.place!=="map" && (!desktop.compact || !placing)
+        textSize:desktop.textSize
+        compactOverlay:desktop.compact
+        onDoneRequested:desktop.furnishing=false
+        editable:campaign.companyEditable && !campaign.busy && !campaign.storageBlocked
+        onShopRequested:desktop.openApp("facilities","equipment","laptop")
+        onPropertiesRequested:desktop.openApp("facilities","property","laptop")
+    }
+    WorldButton {
+        visible:desktop.physicalHQ && desktop.furnishing && hqTools.placing && desktop.compact
+        anchors.horizontalCenter:parent.horizontalCenter;anchors.top:parent.top;anchors.topMargin:8
+        text:qsTr("Choose a position · Cancel")
+        textSize:desktop.textSize
+        onClicked:hqTools.placing=false
     }
     ColumnLayout {
         anchors.left:parent.left;anchors.bottom:dock.top;anchors.margins:22*desktop.uiScale
         width:Math.max(200,Math.min(520*desktop.uiScale,desktop.width-(desktop.compact?44:320*desktop.uiScale)))
-        visible:desktop.place!=="map" && !desktop.shortLayout
+        visible:desktop.place!=="map" && !desktop.shortLayout && !desktop.physicalHQ
         spacing:7
         Label {Layout.fillWidth:true;text:({workspace:qsTr("An idea takes shape."),lab:qsTr("Make the next discovery."),meeting:qsTr("Every choice has a company behind it."),compute:qsTr("Keep the work running."),research_annex:qsTr("Space for the next idea."),evaluation_suite:qsTr("Put your evidence to work."),collaboration:qsTr("Bring the team together.")})[desktop.place] || "";font.pixelSize:desktop.textSize*1.7;font.bold:true;color:"#f4ead6";wrapMode:Text.Wrap}
         Label {Layout.fillWidth:true;text:campaign.world.setting;font.pixelSize:desktop.textSize;color:"#c7d7cf";wrapMode:Text.Wrap}
         WorldButton {objectName:"openPlaceApp";text:desktop.placeApp()==="lab"?qsTr("Open research notebook"):desktop.placeApp()==="inbox"?qsTr("Open decisions"):desktop.placeApp()==="operations"?qsTr("Open infrastructure"):qsTr("Open company desktop");textSize:desktop.textSize;primary:true;onClicked:desktop.openPlace()}
     }
     RowLayout {
-        visible:desktop.shortLayout && desktop.place!=="map"
+        visible:desktop.shortLayout && desktop.place!=="map" && !desktop.physicalHQ
         anchors.top:hud.bottom;anchors.left:parent.left;anchors.right:parent.right;anchors.margins:10
         ComboBox {objectName:"compactRoomPicker";Layout.fillWidth:true;model:campaign.world.rooms;textRole:"name";valueRole:"id";font.pixelSize:desktop.textSize;currentIndex:Math.max(0,model.findIndex(row=>row.id===desktop.place));Accessible.name:qsTr("Current room");onActivated:desktop.visit(currentValue)}
         WorldButton {text:qsTr("Open");textSize:desktop.textSize;onClicked:desktop.openPlace()}
@@ -138,7 +173,7 @@ Item {
         objectName:"worldAgenda"
         anchors.top:places.bottom;anchors.bottom:dock.top;anchors.right:parent.right
         anchors.margins:16*desktop.uiScale;width:244*desktop.uiScale;color:"#15292b";radius:12;border.color:"#3b5555"
-        visible:!desktop.compact && desktop.place!=="map"
+        visible:!desktop.compact && desktop.place!=="map" && !desktop.physicalHQ
         ScrollView {
             id: agendaScroll
             anchors.fill:parent;anchors.margins:16*desktop.uiScale;contentWidth:availableWidth;clip:true

@@ -164,7 +164,8 @@ OperationResult Campaign::prepare_opening(std::uint64_t expected_revision) {
 }
 OperationResult Campaign::submit(const core::Command& command) {
     const auto* reservation = std::get_if<core::ReserveFunds>(&command.action);
-    const bool irreversible = (reservation && !reservation->reversible) ||
+    const auto* headquarters=std::get_if<core::ManageHeadquarters>(&command.action);
+    const bool irreversible = (headquarters && core::headquarters_purchase(headquarters->action)) || (reservation && !reservation->reversible) ||
         std::holds_alternative<core::FinishFounderRun>(command.action) ||
         std::holds_alternative<core::AnnounceFounderDeparture>(command.action) ||
         std::holds_alternative<core::EndWithPostmortem>(command.action) ||
