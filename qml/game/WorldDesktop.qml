@@ -138,6 +138,55 @@ Item {
         WorldButton {objectName:"hqFurnishButton";visible:desktop.physicalHQ;text:desktop.shortLayout?(desktop.furnishing?qsTr("Done arranging"):qsTr("Arrange HQ")):desktop.furnishing?qsTr("Done arranging"):qsTr("Furnish headquarters");textSize:desktop.textSize;onClicked:{desktop.furnishing=!desktop.furnishing;if(desktop.furnishing && !campaign.paused)campaign.togglePaused()}}
         WorldButton {visible:desktop.physicalHQ && !desktop.shortLayout;text:qsTr("Suppliers");textSize:desktop.textSize;onClicked:desktop.openApp("facilities","equipment","laptop")}
         WorldButton {visible:desktop.physicalHQ && !desktop.shortLayout;text:qsTr("Realtor");textSize:desktop.textSize;onClicked:desktop.openApp("facilities","property","laptop")}
+        WorldButton {
+            objectName:"hqTalkButton"
+            visible:desktop.physicalHQ && campaign.world.contactsAvailable && !desktop.furnishing
+            text:qsTr("Talk at HQ")
+            textSize:desktop.textSize
+            onClicked:{if(!campaign.paused)campaign.togglePaused();roomConversation.open()}
+        }
+    }
+    GameDialog {
+        id:roomConversation
+        objectName:"hqRoomConversation"
+        title:qsTr("Talk at headquarters")
+        anchors.centerIn:Overlay.overlay
+        width:Math.min(Overlay.overlay.width-32,desktop.textSize*46)
+        height:Math.min(Overlay.overlay.height-32,desktop.textSize*40)
+        modal:true
+        focus:true
+        enter: Transition {NumberAnimation {property:"opacity";from:0;to:1;duration:campaign.reducedMotion?0:150}}
+        exit: Transition {NumberAnimation {property:"opacity";from:1;to:0;duration:campaign.reducedMotion?0:110}}
+        contentItem:ScrollView {
+            id:roomConversationScroll
+            objectName:"roomConversationScroll"
+            contentWidth:availableWidth
+            clip:true
+            ScrollBar.horizontal.policy:ScrollBar.AlwaysOff
+            function reveal(target) {
+                let ancestor=target
+                while(ancestor && ancestor!==roomContactsPanel) ancestor=ancestor.parent
+                if(!ancestor || !contentItem) return
+                const y=target.mapToItem(roomContactsPanel,0,0).y
+                const top=contentItem.contentY
+                const bottom=top+availableHeight
+                const destination=y<top || target.height>availableHeight ? y : y+target.height>bottom ? y+target.height-availableHeight : top
+                contentItem.contentY=Math.max(0,Math.min(destination,roomContactsPanel.height-availableHeight))
+            }
+            Connections {
+                target: desktop.Window.window
+                enabled: roomConversation.opened
+                function onActiveFocusItemChanged(){roomConversationScroll.reveal(target.activeFocusItem)}
+            }
+            ContactsPanel {
+                id:roomContactsPanel
+                width:roomConversationScroll.availableWidth
+                inPerson:true
+                textSize:desktop.textSize
+                onRevealRequested: target=>roomConversationScroll.reveal(target)
+            }
+        }
+        footer:WorldButton {objectName:"hqCloseTalk";text:qsTr("Back to headquarters");textSize:desktop.textSize;onClicked:roomConversation.close()}
     }
     HeadquartersTools {
         id:hqTools
@@ -218,6 +267,7 @@ Item {
                 spacing:8
                 WorldButton {objectName:"officeTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Company");textSize:desktop.textSize;onClicked:desktop.openApp("office","","laptop")}
                 WorldButton {objectName:"peopleTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("People");textSize:desktop.textSize;onClicked:desktop.openApp("people","","laptop")}
+                WorldButton {objectName:"messagesTab";visible:campaign.world.contactsAvailable;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Messages");textSize:desktop.textSize;onClicked:desktop.openApp("people","messages","tablet")}
                 WorldButton {objectName:"headquartersTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Headquarters");textSize:desktop.textSize;onClicked:desktop.openApp("facilities","","laptop")}
                 WorldButton {objectName:"labTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Lab");textSize:desktop.textSize;onClicked:desktop.openApp("lab","research","laptop")}
                 WorldButton {objectName:"inboxTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("News & decisions");textSize:desktop.textSize;onClicked:desktop.openApp("inbox","","phone")}

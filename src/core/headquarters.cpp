@@ -241,6 +241,16 @@ bool hq_workstation_ready(const SimulationState& s,std::string_view person) {
         return i.mount==desk && hq_desk_device(offer(s,i).kind) && working(s,i);
     }));
 }
+std::uint32_t assigned_hq_room(const SimulationState& s,std::string_view person) {
+    const auto id=assigned_hq_desk(s,person);
+    if(!id) return 0;
+    const auto& desk=find(hq(s).items,id);
+    const auto& rooms=current_headquarters(s).rooms;
+    const auto it=std::ranges::find_if(rooms,[&](const auto& room) {
+        return desk.x>=room.x && desk.y>=room.y && desk.x<room.x+room.width && desk.y<room.y+room.depth;
+    });
+    return it==rooms.end()?0:static_cast<std::uint32_t>(it-rooms.begin()+1);
+}
 bool hq_has_lab_equipment(const SimulationState& s,std::span<const std::string> required) {
     if(required.empty()) return true;
     if(!enabled(s) || !s.infrastructure->workplace->headquarters) return false;

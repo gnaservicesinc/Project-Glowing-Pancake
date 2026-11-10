@@ -14,6 +14,8 @@ class WorldController final : public QObject {
     Q_PROPERTY(bool atHeadquarters READ atHeadquarters NOTIFY changed)
     Q_PROPERTY(QVariantMap founder READ founder NOTIFY changed)
     Q_PROPERTY(QVariantList people READ people NOTIFY changed)
+    Q_PROPERTY(QVariantList contacts READ contacts NOTIFY changed)
+    Q_PROPERTY(bool contactsAvailable READ contactsAvailable NOTIFY changed)
     Q_PROPERTY(QVariantList applicants READ applicants NOTIFY changed)
     Q_PROPERTY(QVariantMap recruitingTerms READ recruitingTerms NOTIFY changed)
     Q_PROPERTY(QString recruitingSummary READ recruitingSummary NOTIFY changed)
@@ -59,6 +61,12 @@ public:
     bool atHeadquarters() const;
     QVariantMap founder() const;
     QVariantList people() const;
+    QVariantList contacts() const;
+    bool contactsAvailable() const;
+    Q_INVOKABLE QVariantList roomContacts(int room) const;
+    Q_INVOKABLE QVariantMap contactThread(QString person) const;
+    Q_INVOKABLE void exchangeContact(QString person,int room,QString revision);
+    Q_INVOKABLE void messageContact(QString person,QString topic,int room,QString revision);
     QVariantMap person(QString id,core::OrdinalDay day) const;
     QVariantList decisionParticipants(QString kind,std::uint64_t presentation=0) const;
     QVariantList applicants() const;

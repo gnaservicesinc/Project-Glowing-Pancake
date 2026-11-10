@@ -27,7 +27,7 @@ ApplicationWindow {
     property bool deviceOpen: prototypeSmoke
     property bool startupRouted: false
     property string activeDevice: "laptop"
-    readonly property string appTitle: ({devices:qsTr("Equipment"),office:qsTr("Company"),people:qsTr("People"),
+    readonly property string appTitle: room === "people" && campaign.world.navigation.section === "messages" ? qsTr("Messages") : ({devices:qsTr("Equipment"),office:qsTr("Company"),people:qsTr("People"),
         facilities:qsTr("Headquarters"),lab:qsTr("Research notebook"),inbox:qsTr("News & decisions"),
         operations:qsTr("Infrastructure & travel"),civic:qsTr("Public affairs"),society:qsTr("World affairs"),
         institutions:qsTr("Institutions"),frontier:qsTr("Frontier"),leadership:qsTr("Leadership & retirement"),
@@ -609,7 +609,11 @@ ApplicationWindow {
                     }
                     Panel {
                         visible: !campaign.welcome && window.room === "people"
-                        contentItem: PeoplePanel {textSize:window.textSize;onOpenApp:(app,section)=>window.openApp(app,section,"laptop")}
+                        contentItem: PeoplePanel {
+                            textSize:window.textSize
+                            onOpenApp:(app,section)=>window.openApp(app,section,"laptop")
+                            onRevealRequested:target=>scroll.reveal(target)
+                        }
                     }
                     Panel {
                         visible:!campaign.welcome && window.room === "facilities"

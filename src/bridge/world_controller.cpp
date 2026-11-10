@@ -263,6 +263,85 @@ QVariantList WorldController::people() const {
     if(s.succession && s.succession->terms.back().person!="founder") rows.push_back(person("leadership.ceo",s.date));
     return rows;
 }
+bool WorldController::contactsAvailable() const {
+    if(!snapshot_) return false;
+    const auto& state=snapshot_->checkpoint.world.simulation;
+    return state.management && state.management->people && state.infrastructure &&
+        state.infrastructure->workplace && state.infrastructure->workplace->headquarters;
+}
+
+QVariantList WorldController::contacts() const {
+    QVariantList rows;
+    if(!contactsAvailable()) return rows;
+    const auto& roster=*snapshot_->checkpoint.world.simulation.management->people;
+    for(const auto& contact:roster.contacts) {
+        const auto found=std::ranges::find_if(roster.employees,[&](const auto& row){return row.terms.profile.id==contact.person;});
+        if(found==roster.employees.end()) continue;
+        const auto& person=found->terms.profile;
+        rows.push_back(QVariantMap{{"id",q(person.id)},{"name",q(person.name)},{"portrait",portraitUrl(person.portrait)},
+            {"role",found->departed_on?tr("Former employee"):q(person.role)}});
+    }
+    return rows;
+}
+
+QVariantList WorldController::roomContacts(int room) const {
+    QVariantList rows;
+    if(!contactsAvailable() || room<1) return rows;
+    const auto& state=snapshot_->checkpoint.world.simulation;
+    for(const auto& employee:state.management->people->employees) {
+        const auto& person=employee.terms.profile;
+        if(core::employee_contact_room(state,person.id)!=static_cast<std::uint32_t>(room)) continue;
+        rows.push_back(QVariantMap{{"id",q(person.id)},{"name",q(person.name)},{"portrait",portraitUrl(person.portrait)},{"role",q(person.role)}});
+    }
+    return rows;
+}
+
+QVariantMap WorldController::contactThread(QString person) const {
+    if(!contactsAvailable() || person.isEmpty()) return {};
+    const auto& state=snapshot_->checkpoint.world.simulation;
+    const auto& roster=*state.management->people;
+    const auto id=person.toStdString();
+    const auto employee=std::ranges::find_if(roster.employees,[&](const auto& row){return row.terms.profile.id==id;});
+    if(employee==roster.employees.end() || employee->terms.profile.role=="Founder / researcher") return {};
+    const auto contact=std::ranges::find(roster.contacts,id,&core::PeopleContact::person);
+    QVariantList messages;
+    bool checked_in=false,checked_workstation=false;
+    if(contact!=roster.contacts.end()) for(const auto& message:contact->messages) {
+        QString reply;
+        if(message.reply=="mood") reply=message.mood<45?tr("It's been a difficult stretch. Can we talk about what would help?"):
+            message.mood>=75?tr("I'm happy with how things are going here."):tr("Things are going all right. Thanks for asking.");
+        else if(message.reply=="laptop") reply=tr("I have a working company laptop. I can work at a desk or from home.");
+        else if(message.reply=="desk") reply=tr("My computer at headquarters is ready.");
+        else if(message.reply=="needs_computer") reply=tr("I still need a working desk computer or an issued laptop.");
+        else if(message.reply=="former") reply=tr("I've moved on from the company. Thanks for keeping in touch.");
+        else reply=tr("I'm getting settled. Thanks for checking in.");
+        const bool check_in=message.topic=="check_in";
+        messages.push_back(QVariantMap{{"date",q(core::iso_date(message.day))},
+            {"prompt",check_in?tr("How's work going?"):tr("Do you have a working computer?")},{"reply",reply}});
+        if(message.day==state.date) {
+            if(check_in) checked_in=true;
+            else checked_workstation=true;
+        }
+    }
+    const auto& profile=employee->terms.profile;
+    return {{"id",person},{"name",q(profile.name)},{"portrait",portraitUrl(profile.portrait)},{"role",q(profile.role)},
+        {"exchanged",contact!=roster.contacts.end()},{"current",!employee->departed_on},{"checkedIn",checked_in},
+        {"checkedWorkstation",checked_workstation},{"messages",messages},
+        {"room",core::employee_contact_room(state,id)}};
+}
+
+void WorldController::exchangeContact(QString person,int room,QString revision) {
+    if(hqReview(revision) && room>0)
+        emit actionRequested(core::ManagePeopleContact{core::ExchangePeopleContact{person.toStdString(),static_cast<std::uint32_t>(room)}});
+}
+
+void WorldController::messageContact(QString person,QString topic,int room,QString revision) {
+    if(!hqReview(revision) || room<0) return;
+    const auto device=room==0?navigation_.value("device").toString().toStdString():std::string{};
+    emit actionRequested(core::ManagePeopleContact{core::MessagePeopleContact{
+        person.toStdString(),topic.toStdString(),device,static_cast<std::uint32_t>(room)}});
+}
+
 QVariantList WorldController::applicants() const {
     QVariantList rows;
     if(!snapshot_ || !snapshot_->checkpoint.world.simulation.management || !snapshot_->checkpoint.world.simulation.management->people) return rows;

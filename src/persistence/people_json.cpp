@@ -56,16 +56,21 @@ core::Applicant parse_applicant(const Json& j) {
 }
 }
 Json people_json(const core::PeopleState& p) {
-    Json applicants=Json::array(),employees=Json::array(),known=Json::object();
+    Json applicants=Json::array(),employees=Json::array(),known=Json::object(),contacts=Json::array();
     for(const auto& [id,person]:p.known_people) known[id]=profile(person);
     for(const auto& a:p.applicants) applicants.push_back(applicant(a));
     for(const auto& e:p.employees) employees.push_back({{"terms",applicant(e.terms)},{"joined_on",e.joined_on.value()},{"ready_on",e.ready_on.value()},
         {"opening",e.opening},{"departed_on",e.departed_on?Json(e.departed_on->value()):Json(nullptr)}});
+    for(const auto& contact:p.contacts) {
+        Json messages=Json::array();
+        for(const auto& m:contact.messages) messages.push_back({{"day",m.day.value()},{"topic",m.topic},{"reply",m.reply},{"mood",m.mood}});
+        contacts.push_back({{"person",contact.person},{"exchanged_on",contact.exchanged_on.value()},{"messages",std::move(messages)}});
+    }
     return {{"stream",p.stream},{"next_id",p.next_id},{"starts_on",p.starts_on.value()},{"next_recruitment",p.next_recruitment.value()},
-        {"offered_pay",p.offered_pay.value()},{"mission",p.mission},{"founding_prestige",p.founding_prestige},{"applicants",std::move(applicants)},{"employees",std::move(employees)},{"known_people",std::move(known)}};
+        {"offered_pay",p.offered_pay.value()},{"mission",p.mission},{"founding_prestige",p.founding_prestige},{"applicants",std::move(applicants)},{"employees",std::move(employees)},{"known_people",std::move(known)},{"contacts",std::move(contacts)}};
 }
 core::PeopleState parse_people(const Json& j) {
-    fields(j,"people",{"stream","next_id","starts_on","next_recruitment","offered_pay","mission","founding_prestige","applicants","employees","known_people"});
+    fields(j,"people",{"stream","next_id","starts_on","next_recruitment","offered_pay","mission","founding_prestige","applicants","employees","known_people","contacts"});
     core::PeopleState p;p.stream=u64(j.at("stream"),"stream");p.next_id=u64(j.at("next_id"),"next_id");
     p.starts_on=core::OrdinalDay{i64(j.at("starts_on"),"starts_on")};p.next_recruitment=core::OrdinalDay{i64(j.at("next_recruitment"),"next_recruitment")};
     p.offered_pay=core::SalaryRate{i64(j.at("offered_pay"),"offered_pay")};p.mission=text(j.at("mission"),"mission",32);p.founding_prestige=static_cast<std::uint32_t>(u64(j.at("founding_prestige"),"prestige",10));
@@ -76,6 +81,20 @@ core::PeopleState parse_people(const Json& j) {
         fields(e,"employee",{"terms","joined_on","ready_on","opening","departed_on"});
         p.employees.push_back({parse_applicant(e.at("terms")),core::OrdinalDay{i64(e.at("joined_on"),"joined_on")},core::OrdinalDay{i64(e.at("ready_on"),"ready_on")},boolean(e.at("opening"),"opening"),
             e.at("departed_on").is_null()?std::nullopt:std::optional{core::OrdinalDay{i64(e.at("departed_on"),"departed_on")}}});
+    }
+    array(j.at("contacts"),"contacts",256);
+    for(const auto& contact:j.at("contacts")) {
+        fields(contact,"contact",{"person","exchanged_on","messages"});
+        core::PeopleContact entry{text(contact.at("person"),"person",64),core::OrdinalDay{i64(contact.at("exchanged_on"),"exchanged_on")},{}};
+        array(contact.at("messages"),"messages",32);
+        for(const auto& m:contact.at("messages")) {
+            fields(m,"message",{"day","topic","reply","mood"});
+            const auto mood=i64(m.at("mood"),"mood");
+            if(mood < -1 || mood > 100) invalid("message","Mood is outside the conversation range");
+            entry.messages.push_back({core::OrdinalDay{i64(m.at("day"),"day")},text(m.at("topic"),"topic",24),
+                text(m.at("reply"),"reply",24),static_cast<int>(mood)});
+        }
+        p.contacts.push_back(std::move(entry));
     }
     return p;
 }

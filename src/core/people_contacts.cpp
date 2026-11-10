@@ -1,0 +1,121 @@
+#include <pgp/core/people.hpp>
+#include <pgp/core/simulation.hpp>
+
+#include <algorithm>
+#include <set>
+
+namespace pgp::core {
+namespace {
+constexpr std::size_t message_limit = 32;
+
+const Employee* employee(const SimulationState& state, std::string_view person) {
+    if (!state.management || !state.management->people) return nullptr;
+    const auto& roster = state.management->people->employees;
+    const auto found = std::ranges::find_if(roster, [&](const auto& row) {
+        return row.terms.profile.id == person && row.terms.profile.role != "Founder / researcher";
+    });
+    return found == roster.end() ? nullptr : &*found;
+}
+
+bool at_hq(const SimulationState& state) {
+    if (!state.infrastructure) return false;
+    const auto location = executive_location(state);
+    if (location.traveling) return false;
+    return !location.appointment || std::ranges::none_of(state.infrastructure->appointments, [&](const auto& appointment) {
+        return appointment.id == *location.appointment && appointment.mode == AppointmentMode::onsite;
+    });
+}
+
+void require_room(const SimulationState& state, std::string_view person, std::uint32_t room) {
+    if (!room || employee_contact_room(state, person) != room)
+        throw std::invalid_argument("Meet this person at their current headquarters room.");
+}
+
+bool valid_reply(const ContactMessage& message) {
+    if (message.reply == "former") return message.mood == -1;
+    if (message.topic == "check_in") {
+        return message.reply == "mood" ? message.mood >= 0 && message.mood <= 100
+            : message.reply == "settled" && message.mood == -1;
+    }
+    return message.mood == -1 &&
+        (message.reply == "laptop" || message.reply == "desk" || message.reply == "needs_computer");
+}
+} // namespace
+
+std::uint32_t employee_contact_room(const SimulationState& state, std::string_view person) {
+    const auto* found = employee(state, person);
+    if (!found || found->departed_on || found->ready_on > state.date || !at_hq(state)) return 0;
+    return assigned_hq_room(state, person);
+}
+
+void manage_people_contact(SimulationState& state, const ContactAction& action) {
+    if (!state.management || !state.management->people)
+        throw std::invalid_argument("This company has no individual contacts.");
+    auto& contacts = state.management->people->contacts;
+    std::visit([&](const auto& request) {
+        const auto* found = employee(state, request.person);
+        if (!found) throw std::invalid_argument("Choose a person in the company roster.");
+        const auto contact = std::ranges::find(contacts, request.person, &PeopleContact::person);
+        using Action = std::decay_t<decltype(request)>;
+        if constexpr (std::is_same_v<Action, ExchangePeopleContact>) {
+            require_room(state, request.person, request.room);
+            if (contact != contacts.end()) throw std::invalid_argument("You have already exchanged contact details.");
+            contacts.push_back({request.person, state.date, {}});
+        } else {
+            if (contact == contacts.end()) throw std::invalid_argument("Exchange contact details in person first.");
+            if (request.room) {
+                require_room(state, request.person, request.room);
+            } else {
+                if (request.device != "phone" && request.device != "tablet" && request.device != "laptop" && request.device != "desktop")
+                    throw std::invalid_argument("Choose a powered device that supports People.");
+                if (!state.infrastructure || !state.infrastructure->workplace || !state.infrastructure->workplace->devices ||
+                    resolve_app_device(state, request.device, "people", at_hq(state)) != request.device)
+                    throw std::invalid_argument("The selected device cannot send a message here.");
+            }
+            if (request.topic != "check_in" && request.topic != "workstation")
+                throw std::invalid_argument("Choose a conversation topic.");
+            auto& messages = contact->messages;
+            if (std::ranges::any_of(messages, [&](const auto& old) { return old.day == state.date && old.topic == request.topic; }))
+                throw std::invalid_argument("You already asked about this today.");
+            ContactMessage message{state.date, request.topic, {}, -1};
+            if (found->departed_on) {
+                message.reply = "former";
+            } else if (request.topic == "check_in") {
+                const auto moods = workplace_moods(state);
+                const auto mood = moods.find(request.person);
+                message.reply = mood == moods.end() ? "settled" : "mood";
+                if (mood != moods.end()) message.mood = mood->second.score;
+            } else {
+                message.reply = hq_laptop_ready(state, request.person) ? "laptop"
+                    : hq_workstation_ready(state, request.person) ? "desk" : "needs_computer";
+            }
+            if (messages.size() == message_limit) messages.erase(messages.begin());
+            messages.push_back(std::move(message));
+        }
+    }, action);
+}
+
+void validate_people_contacts(const SimulationState& state) {
+    const auto& people = *state.management->people;
+    if (people.contacts.size() > people.employees.size())
+        throw std::invalid_argument("Contacts must come from people on the roster.");
+    std::set<std::string_view> people_seen;
+    for (const auto& contact : people.contacts) {
+        const auto* found = employee(state, contact.person);
+        if (!found || !people_seen.insert(contact.person).second || contact.exchanged_on < found->ready_on ||
+            contact.exchanged_on > state.date || (found->departed_on && contact.exchanged_on > *found->departed_on) ||
+            contact.messages.size() > message_limit)
+            throw std::invalid_argument("A contact must record a real meeting with an onboarded employee.");
+        auto previous = contact.exchanged_on;
+        std::set<std::pair<OrdinalDay,std::string_view>> asked;
+        for (const auto& message : contact.messages) {
+            if (message.day < previous || message.day > state.date ||
+                (message.topic != "check_in" && message.topic != "workstation") ||
+                (message.reply == "former" && (!found->departed_on || message.day < *found->departed_on)) ||
+                !asked.emplace(message.day,message.topic).second || !valid_reply(message))
+                throw std::invalid_argument("A conversation has an invalid date, topic or reply.");
+            previous = message.day;
+        }
+    }
+}
+} // namespace pgp::core

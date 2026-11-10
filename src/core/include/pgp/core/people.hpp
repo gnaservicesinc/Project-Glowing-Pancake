@@ -89,6 +89,18 @@ struct Employee {
     std::optional<OrdinalDay> departed_on;
     auto operator<=>(const Employee&) const = default;
 };
+struct ContactMessage {
+    OrdinalDay day{0};
+    std::string topic, reply;
+    int mood=-1;
+    auto operator<=>(const ContactMessage&) const = default;
+};
+struct PeopleContact {
+    std::string person;
+    OrdinalDay exchanged_on{0};
+    std::vector<ContactMessage> messages;
+    auto operator<=>(const PeopleContact&) const = default;
+};
 struct PeopleState {
     std::uint64_t stream=0,next_id=1;
     OrdinalDay starts_on{0},next_recruitment{0};
@@ -99,6 +111,7 @@ struct PeopleState {
     std::vector<Employee> employees;
     // Authored specialist/executive offers also have stable, saved personal profiles.
     std::map<std::string,PersonProfile> known_people;
+    std::vector<PeopleContact> contacts{};
     auto operator<=>(const PeopleState&) const = default;
 };
 struct SetRecruitingTerms {SalaryRate pay{10000};std::string mission;};
@@ -108,6 +121,13 @@ struct AcceptEmploymentCounter {std::string id;};
 struct DeclineApplicant {std::string id;};
 using RecruitmentAction=std::variant<ProposeEmployment,AcceptEmploymentCounter,DeclineApplicant>;
 struct ManageRecruitment {RecruitmentAction action;};
+struct ExchangePeopleContact {std::string person;std::uint32_t room=0;};
+struct MessagePeopleContact {std::string person,topic,device;std::uint32_t room=0;};
+using ContactAction=std::variant<ExchangePeopleContact,MessagePeopleContact>;
+struct ManagePeopleContact {ContactAction action;};
+void manage_people_contact(SimulationState&,const ContactAction&);
+void validate_people_contacts(const SimulationState&);
+[[nodiscard]] std::uint32_t employee_contact_room(const SimulationState&,std::string_view person);
 void validate_people_rules(const PeopleRules&);
 void initialize_people(SimulationState&,std::uint64_t seed,std::string founder_name={},std::string founder_pronouns={},bool founder_researcher=false,std::uint32_t prestige=0,std::string mission="research");
 void prepare_people(SimulationState&);

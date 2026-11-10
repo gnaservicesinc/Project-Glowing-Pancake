@@ -5,9 +5,11 @@ ColumnLayout {
     id:panel
     property int textSize:14
     signal openApp(string app,string section)
+    signal revealRequested(Item target)
     property string page: "team"
     property string selectedApplicant: campaign.world.draft("people/applicant", "")
     readonly property bool showDiscussion: page === "applicants" && discussion.offer.id !== undefined
+    readonly property bool messagesOnly: campaign.world.navigation.app === "people" && campaign.world.navigation.section === "messages"
     readonly property bool editable: campaign.paused && campaign.companyEditable && !campaign.busy && !campaign.storageBlocked
     function selectApplicant(id) {
         selectedApplicant=id
@@ -15,20 +17,28 @@ ColumnLayout {
         Qt.callLater(() => discussion.focusDiscussion())
     }
     function changePage(value) {page=value;campaign.world.setDraft("people/page",value)}
-    function restorePage() {const value=campaign.world.draft("people/page","team");page=["team","applicants","branches"].includes(value)?value:"team"}
+    function restorePage() {
+        const value=messagesOnly?"messages":campaign.world.draft("people/page","team")
+        page=["team","applicants","branches","messages"].includes(value)?value:"team"
+    }
     Component.onCompleted:restorePage()
-    Connections {target:campaign.world;function onDraftsReset(){panel.restorePage();panel.selectedApplicant=campaign.world.draft("people/applicant","")}}
+    Connections {
+        target:campaign.world
+        function onDraftsReset(){panel.restorePage();panel.selectedApplicant=campaign.world.draft("people/applicant","")}
+        function onNavigationChanged(){if(campaign.world.navigation.app==="people")panel.restorePage()}
+    }
     spacing:16
-    Label {visible:!panel.showDiscussion;text:qsTr("The people behind the company");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize*1.4;font.bold:true;color:"#eee5d2"}
-    Label {visible:!panel.showDiscussion;text:qsTr("Your founder and named HQ specialists. Site operators remain grouped with their facilities.");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
+    Label {visible:!panel.showDiscussion && panel.page!=="messages";text:qsTr("The people behind the company");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize*1.4;font.bold:true;color:"#eee5d2"}
+    Label {visible:!panel.showDiscussion && panel.page!=="messages";text:qsTr("Your founder and named HQ specialists. Site operators remain grouped with their facilities.");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
     Flow {
-        visible:!panel.showDiscussion
+        visible:!panel.showDiscussion && !panel.messagesOnly
         Layout.fillWidth:true;spacing:8
         WorldButton {objectName:"peopleTeamTab";text:qsTr("HQ team");textSize:panel.textSize;checked:panel.page==="team";onClicked:panel.changePage("team")}
         WorldButton {objectName:"peopleApplicantsTab";text:qsTr("Applicants");textSize:panel.textSize;checked:panel.page==="applicants";onClicked:panel.changePage("applicants")}
         WorldButton {objectName:"peopleBranchesTab";text:qsTr("Branch departments");textSize:panel.textSize;checked:panel.page==="branches";onClicked:panel.changePage("branches")}
+        WorldButton {objectName:"peopleMessagesTab";visible:campaign.world.contactsAvailable;text:qsTr("Messages");textSize:panel.textSize;checked:panel.page==="messages";onClicked:panel.changePage("messages")}
     }
-    Label {visible:!panel.showDiscussion && campaign.world.recruitingSummary.length>0;Layout.fillWidth:true;text:campaign.world.recruitingSummary;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
+    Label {visible:!panel.showDiscussion && panel.page!=="messages" && campaign.world.recruitingSummary.length>0;Layout.fillWidth:true;text:campaign.world.recruitingSummary;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
     Flow {
         visible:!panel.showDiscussion && panel.page==="applicants" && campaign.world.recruitingSummary.length>0
         Layout.fillWidth:true;spacing:8
@@ -57,7 +67,7 @@ ColumnLayout {
         onSuppliersRequested:panel.openApp("facilities","equipment")
     }
     Repeater {
-        model:panel.showDiscussion || panel.page==="branches" ? [] : panel.page==="applicants" ? campaign.world.applicants : campaign.world.people
+        model:panel.showDiscussion || panel.page==="branches" || panel.page==="messages" ? [] : panel.page==="applicants" ? campaign.world.applicants : campaign.world.people
         Rectangle {
             required property var modelData
             Layout.fillWidth:true;implicitHeight:person.implicitHeight+28;color:"#213b40";radius:10
@@ -107,6 +117,13 @@ ColumnLayout {
         }
     }
     PersonProfileDialog {id:profileDialog;textSize:panel.textSize}
+    ContactsPanel {
+        Layout.fillWidth:true
+        visible:panel.page==="messages" && campaign.world.contactsAvailable
+        showHeading:!panel.messagesOnly
+        textSize:panel.textSize
+        onRevealRequested:target=>panel.revealRequested(target)
+    }
     ManagerPanel {Layout.fillWidth:true;visible:panel.page==="branches" && Object.keys(campaign.world.operationsManagement).length>0;textSize:panel.textSize;onProfileRequested:person=>{profileDialog.person=person;profileDialog.open()}}
     Repeater {
         model:panel.page==="branches" ? campaign.world.branches : []

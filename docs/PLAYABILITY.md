@@ -101,6 +101,12 @@ person's profile. The mood breakdown shows how pay, reputation, duties,
 shared traits, temperament and amenities affect them. Form drafts survive closing and
 reopening the game. [Interface scope](GAMEPLAY_INTERFACE.md).
 
+Open **Talk at HQ**, select a room and click a portrait to meet an onboarded
+employee at their assigned desk. Exchange contact details to ask about work or
+their computer. **Messages** opens the same saved conversation, using a working
+tablet when available. From the conversation, you can also issue a delivered,
+unassigned company laptop.
+
 **New Game opens in a California maternity ward in 1997.** Continue after the
 birth narration, then answer one question at a time. Use Enter or Space to
 reveal a beat early, Tab to reach choices, and Back to revisit a decision.

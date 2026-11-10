@@ -48,6 +48,13 @@ research tree shows each part of the creativity threshold. Selected frontier
 research uses topic pacing before the shared frontier date, with seeded world
 conditions and physical requirements still enforced.
 
+HQ conversations use actual room and desk assignments. The founder can exchange
+details with an onboarded employee and then use a tablet or another working
+device to revisit the conversation. Dated mood and equipment replies persist,
+and available company laptops can be issued from the same view.
+The Release software walkthrough covers contact exchange, the visible latest
+reply in both views at 650 × 480 and 200% text, laptop issuance and fresh reload.
+
 Focused identity/investment, headquarters, creative-team and workplace-research
 checks pass, including refusal and fresh reload. Content review validates 24
 prepared openings/save roundtrips without compiler lints. The rendered software

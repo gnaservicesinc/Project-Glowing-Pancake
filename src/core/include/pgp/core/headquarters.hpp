@@ -151,6 +151,7 @@ bool hq_computer_available(const SimulationState&);
 std::uint32_t furnished_hq_desks(const SimulationState&);
 std::uint32_t assigned_hq_desks(const SimulationState&);
 [[nodiscard]] std::uint32_t assigned_hq_desk(const SimulationState&,std::string_view person);
+[[nodiscard]] std::uint32_t assigned_hq_room(const SimulationState&,std::string_view person);
 [[nodiscard]] bool hq_workstation_ready(const SimulationState&,std::string_view person);
 [[nodiscard]] bool hq_laptop_ready(const SimulationState&,std::string_view person);
 [[nodiscard]] bool hq_amenity_kind(std::string_view kind);

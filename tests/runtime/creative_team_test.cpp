@@ -32,6 +32,43 @@ int main() {
         check(game.prepare_opening(game.current_state().world.simulation.revision).accepted(),"Opening prepares.");
         const auto& s=game.current_state().world.simulation;
         {
+            runtime::Runtime conversations{program,game.current_state()};
+            const auto state=[&]() -> const auto& {return conversations.current_state().world.simulation;};
+            const auto send=[&](core::CommandAction action) {
+                return conversations.submit({state().revision,std::move(action)});
+            };
+            const auto apply=[&](core::CommandAction action) {
+                const auto result=send(std::move(action));
+                if(!result.accepted())throw std::runtime_error(result.explanation);
+            };
+            const auto refuse=[&](core::ContactAction action) {
+                const auto before=conversations.current_state();
+                check(!send(core::ManagePeopleContact{std::move(action)}).accepted() &&
+                    before==conversations.current_state(),"A refused contact action must be atomic.");
+            };
+            const auto contact=[&](core::ContactAction action){apply(core::ManagePeopleContact{std::move(action)});};
+            const auto id=s.management->people->employees.front().terms.profile.id;
+            const auto room=core::employee_contact_room(s,id);
+            check(room!=0,"The inherited employee must be available at their assigned desk.");
+            refuse(core::MessagePeopleContact{id,"check_in","laptop",0});
+            refuse(core::ExchangePeopleContact{id,room+1});
+            contact(core::ExchangePeopleContact{id,room});
+            refuse(core::ExchangePeopleContact{id,room});
+            const auto expected_mood=core::workplace_moods(state()).at(id).score;
+            contact(core::MessagePeopleContact{id,"check_in",{},room});
+            refuse(core::MessagePeopleContact{id,"workstation","tablet",0});
+            apply(core::BuyPersonalDevice{"tablet"});
+            refuse(core::MessagePeopleContact{id,"workstation","tablet",0});
+            for(int day=0;day<2;++day) apply(core::AdvanceDay{});
+            contact(core::MessagePeopleContact{id,"workstation","tablet",0});
+            refuse(core::MessagePeopleContact{id,"workstation","tablet",0});
+            const auto& history=state().management->people->contacts.front().messages;
+            check(history.size()==2 && history.front().mood==expected_mood && history.back().reply=="desk",
+                "In-person and device conversations must save their dated workplace replies.");
+            check(persistence::decode_save(program,persistence::encode_save(program,conversations.current_state())).checkpoint==conversations.current_state(),
+                "Exchanged contacts and both messages must reload exactly.");
+        }
+        {
             runtime::Runtime furnished{program,game.current_state()};
             const auto state=[&]() -> const auto& {return furnished.current_state().world.simulation;};
             const auto apply=[&](core::CommandAction action) {

@@ -26,6 +26,7 @@ void schedule_recruitment_smoke(QQuickWindow &window, pgp::bridge::CampaignContr
                                 pgp::persistence::LocalPaths paths, QString screenshot) {
     struct Walkthrough {
         int phase = 0, ticks = 0, frames = 0;
+        std::uint32_t laptop = 0;
         QString first, second;
     };
     const auto run = std::make_shared<Walkthrough>();
@@ -60,6 +61,13 @@ void schedule_recruitment_smoke(QQuickWindow &window, pgp::bridge::CampaignContr
         };
         const auto capture = [&](const QString &suffix) {
             return screenshot.isEmpty() || window.grabWindow().save(screenshot + "." + suffix + ".png");
+        };
+        const auto latest_reply_visible = [&](const QString &viewport_name) {
+            const auto *viewport = item(viewport_name);
+            const auto *reply = item("contactMessageCard");
+            if (!viewport || !reply || !reply->hasActiveFocus()) return false;
+            const auto bottom = reply->mapToItem(viewport, {0, reply->height()}).y();
+            return bottom > 0 && bottom <= viewport->height() + 1;
         };
         if (++run->ticks > 500) {
             fail("Timed out");
@@ -234,7 +242,91 @@ void schedule_recruitment_smoke(QQuickWindow &window, pgp::bridge::CampaignContr
                     report.value("score").toInt()!=expected.score || report.value("factors").toList().size()!=7 || !capture("mood-compact")) {
                     fail("The profile must show current workplace mood and all causes at 200% text");return;
                 }
+                if (world->contactsAvailable()) {
+                    QTest::keyClick(&window, Qt::Key_Escape);
+                    break;
+                }
             }
+            run->phase = 30;
+            return;
+        case 20:
+            if (item("employeeProfileScroll") || !key("closeDeviceButton")) {
+                fail("Return to the headquarters map");
+                return;
+            }
+            world->buyDevice("tablet", world->reviewToken());
+            break;
+        case 21:
+            run->laptop = static_cast<std::uint32_t>(state.infrastructure->workplace->headquarters->items.size() + 1);
+            world->buyHQEquipment("laptop", world->reviewToken());
+            break;
+        case 22:
+            if (roster.employees.front().ready_on > state.date) {
+                campaign.step();
+                return;
+            }
+            if (!key("hqTalkButton")) {
+                fail("Open the room conversation");
+                return;
+            }
+            break;
+        case 23:
+            if (!key("contactPerson_" + run->second) || !key("exchangeContactButton")) {
+                fail("Meet the new employee and exchange contact details");
+                return;
+            }
+            break;
+        case 24:
+            if (roster.contacts.size() != 1 || !key("contactCheckIn")) {
+                fail("Ask a saved contact about their day");
+                return;
+            }
+            break;
+        case 25:
+            if (roster.contacts.front().messages.size() != 1 || !latest_reply_visible("roomConversationScroll") || !capture("room-conversation") ||
+                !key("hqCloseTalk")) {
+                fail("Read and close the room conversation");
+                return;
+            }
+            break;
+        case 26:
+            if (item("hqCloseTalk")) return;
+            if (!key("messagesTab")) {
+                fail("Open Messages from the dock");
+                return;
+            }
+            break;
+        case 27:
+            if (world->navigation().value("device") != "tablet" || world->navigation().value("section") != "messages" ||
+                !key("contactPerson_" + run->second) || !key("contactWorkstation")) {
+                fail("Open the same contact through the tablet and ask about their computer");
+                return;
+            }
+            break;
+        case 28: {
+            const auto &history = roster.contacts.front().messages;
+            if (history.size() != 2 || history.front().topic != "check_in" || history.back().topic != "workstation" ||
+                !latest_reply_visible("managementScroll") || !capture("tablet-messages")) {
+                fail("The same history must appear on the tablet at 200% text");
+                return;
+            }
+            if (!key("contactIssueLaptop_" + QString::number(run->laptop))) {
+                fail("Issue a delivered inventory laptop through the conversation");
+                return;
+            }
+            break;
+        }
+        case 29: {
+            pgp::persistence::CurrentCampaign current{paths.saves_directory / "continuing"};
+            if (!pgp::core::hq_laptop_ready(state, run->second.toStdString()) ||
+                current.resume(*campaign.snapshot()->content) != std::optional{campaign.snapshot()->checkpoint}) {
+                fail("Conversation history and the laptop assignment must reload");
+                return;
+            }
+            std::cout << "Headquarters contact exchange, tablet messages, laptop issuance and fresh reload passed\n";
+            break;
+        }
+        case 30:
             std::cout << "Recruiting UI passed: comparison, two counteroffers, decline, signing, desk assignment, "
                          "onboarding, fresh reload and 200% text\n";
             timer->stop();
