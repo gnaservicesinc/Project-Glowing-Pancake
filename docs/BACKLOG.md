@@ -1,6 +1,6 @@
 # Feedback and later-phase backlog
 
-Updated 2026-11-09
+Updated 2026-11-10
 
 **The initial skeleton implementation queue is closed.** The current core is
 the starting point for human feedback. Work now follows the user's selected

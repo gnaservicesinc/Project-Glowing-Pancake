@@ -1,6 +1,6 @@
 # Project status and next handoff
 
-Updated 2026-11-09
+Updated 2026-11-10
 
 ## Implementation progress
 
@@ -9,7 +9,7 @@ Updated 2026-11-09
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive founding/equipment batch advances content to **0.46.0-dev.1**, generation **47**.
+immersive redesign advances content to **0.48.0-dev.1**, generation **49**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -119,9 +119,12 @@ Research checks cover a real prerequisite lowering the threshold, an early start
 by a mixed team, refusal for a solo team, unchanged frontier conditions and an
 exact reload of the early project. The Lab walkthrough verifies the early start
 calculation and the compact research tree.
-Retention, audience modifiers, full personal-world simulation,
-research balance and private-life purchases and events
-remain active work, as itemized in the plan and backlog.
+Retention, audience modifiers, full personal-world simulation, research balance,
+expanded private-life purchases and richer event preferences remain unfinished,
+as itemized in the plan and backlog. At the user's wrap-up checkpoint, the
+gatherings implementation is committed and pushed as `2b871e4`. Employee
+dismissal through conversations was investigated but has no implementation;
+it remains part of the backlog's employment actions.
 
 The 2026-11-09 review rejects the main interface as complete. The detailed
 [selected refinements](FEEDBACK_REFINEMENTS.md) and F-04 milestone queue in the
@@ -326,7 +329,7 @@ open. The prior forecast-padding and full-campaign staffing assertions remain
 recorded for later selected work. Content Studio usability is not accepted by
 this milestone.
 
-Finalized content is generation 39. Game and editor versions remain development
+Finalized content is generation 49. Game and editor versions remain development
 placeholders, and release readiness is false.
 
 ## Next phase
