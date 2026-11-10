@@ -32,6 +32,11 @@ struct DismissalRules {
     std::uint32_t severance_months=1;
     auto operator<=>(const DismissalRules&) const = default;
 };
+struct FounderAudienceRule {
+    std::string founder, audience;
+    int salary_bp=0, mood=0;
+    auto operator<=>(const FounderAudienceRule&) const = default;
+};
 struct PeopleRules {
     std::vector<std::string> first_names,last_names;
     std::uint32_t maximum_hq=128,candidates=4;
@@ -43,6 +48,7 @@ struct PeopleRules {
     std::vector<std::vector<std::string>> trait_groups{};
     std::optional<WorkplaceMoodRules> mood{};
     std::optional<DismissalRules> dismissal{};
+    std::vector<FounderAudienceRule> founder_audiences{};
     auto operator<=>(const PeopleRules&) const = default;
 };
 struct PersonProfile {
@@ -66,6 +72,7 @@ struct EmployeeMood {
     int score=50, pay=0, company_prestige=0, ceo_prestige=0, role=0, coworkers=0, amenities=0, temperament_effect=0, gatherings=0;
     std::string temperament;
     std::vector<std::string> accessible_amenities;
+    int founder_audience=0;
 };
 [[nodiscard]] std::map<std::string,EmployeeMood> workplace_moods(const SimulationState&);
 struct EmploymentOffer {
@@ -137,6 +144,7 @@ struct PeopleState {
     // Authored specialist/executive offers also have stable, saved personal profiles.
     std::map<std::string,PersonProfile> known_people;
     std::vector<PeopleContact> contacts{};
+    std::string founder_gender{};
     auto operator<=>(const PeopleState&) const = default;
 };
 struct SetRecruitingTerms {SalaryRate pay{10000};std::string mission;};
@@ -184,7 +192,8 @@ void validate_recruitment_rules(const RecruitmentRules&);
 void initialize_recruitment(Applicant&,const RecruitmentRules&,class SplitMix64&);
 void manage_recruitment(SimulationState&,const RecruitmentAction&);
 void prepare_recruitment(SimulationState&);
-void validate_recruitment(const Applicant&,const PeopleRules&,OrdinalDay,bool hired);
+void validate_recruitment(const Applicant&,const SimulationState&,bool hired);
+[[nodiscard]] const FounderAudienceRule* founder_audience_on(const SimulationState&,std::string_view audience,OrdinalDay);
 std::string recruitment_status(const Applicant&,OrdinalDay);
 std::pair<Cents,Cents> agreed_employment(const Applicant&);
 }

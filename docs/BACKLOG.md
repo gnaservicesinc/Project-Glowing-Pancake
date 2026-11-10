@@ -16,13 +16,13 @@ F-04 setup assumptions. This is ongoing work, not a completed interface review.
 | Area | Implemented | Remaining |
 | --- | --- | --- |
 | Furnishing | Illustrated pickup, translucent valid/blocked footprints, rotation/cancel, shared authoritative placement; expanded suppliers and equipment; issued laptops and powered-rack clients | Wider role effects and continued visual polish |
-| Identity and intro | Birth record and signature, narrated choice outcomes, Other pronouns, all portrait features exposed, color/pattern/build/height variants | Full-body art, identity audience consequences, richer choice sub-branches |
+| Identity and intro | Birth record and signature, narrated choice outcomes, Other pronouns, all portrait features exposed, color/pattern/build/height variants, and disclosed fictional gender reactions in hiring negotiations and employee mood | Full-body art, media, legitimacy and retention reactions, richer choice sub-branches |
 | Home and founding | Saved unemployed home stage after appearance; fictional services, legal/CEO routes, explicit personal investment, separate retained savings, signing ceremony, three to six furnishable rooms, return home, optional bylaws, self-funding and a startup bank loan. Saved home inbox for recruiter, application, investor, donor and cofounder replies. Three working cofounders bring distinct opening missions, contributions, salary, equity and board votes. My life opens the family rooms and framed birth record during commercial occupancy | Physical travel to the family home, securities and deeper relationship arcs |
 | Team research | Union of unique traits, zero duplicate bonus, shared-trait compatibility, bounded coordination benefit, hiring preview, prerequisite bypass, individual mood with temperament and amenity effects, and topic-specific EEY | Retention and playtest balance |
 | Relationships | Meet onboarded employees in their HQ room, exchange details, message from compatible devices and issue available company laptops. Reviewed dismissal ends payroll, pays severance, releases equipment and named work, and retains former contacts. Opening conversations continue in company Messages; Kestrel and Harbor quote follow-up rounds based on the company record, with holding, declining, expiry, board submission and actual capital. Open Field and Careful Futures offer nonprofit gifts, trustee rights and completed independent-evaluation gates | Wider outside-contact proposals, employment and stock actions |
 | Private life | Separate savings and salary fund three private home listings, interiors and art. Decoration, upkeep and arrears, resale, private legacy values, dinners, house parties, receptions and personally funded office parties with invitations, cancellation, attendance and temporary mood | Richer invitation preferences, aircraft, yachts, security, philanthropy, islands, sports teams and late-game funded interventions |
 
-Content **0.52.0-dev.1**, generation **53**, records this batch. Human playtesting
+Content **0.53.0-dev.1**, generation **54**, records this batch. Human playtesting
 and the rest of F-05 remain open.
 
 ## Selected refinement milestones (F-04)

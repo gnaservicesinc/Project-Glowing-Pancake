@@ -13,6 +13,14 @@ QString field(core::Cents value) {
     return QStringLiteral("%1.%2").arg(value.value() / 100).arg(value.value() % 100, 2, 10, QLatin1Char('0'));
 }
 QString date(core::OrdinalDay value) { return q(core::iso_date(value)); }
+QString audience_adjustment(const core::SimulationState& state,const core::PersonProfile& person,core::OrdinalDay day) {
+    const auto* reaction=core::founder_audience_on(state,person.gender,day);
+    if(!reaction || !reaction->salary_bp) return {};
+    const auto bp=reaction->salary_bp;
+    const auto rate=QLocale().toString(static_cast<double>(bp)/100,'f',bp%10?2:bp%100?1:0);
+    return QObject::tr("\nReaction to the founder’s gender · %1% salary floor (capped at the asking salary).")
+        .arg(bp>0?QStringLiteral("+")+rate:rate);
+}
 core::Cents amount(QString input) {
     input = input.trimmed();
     static const QRegularExpression form{QStringLiteral("^[0-9]{1,8}(?:\\.[0-9]{1,2})?$")};
@@ -57,6 +65,7 @@ QVariantMap WorldController::recruitmentOffer(QString id) const {
     for (const auto &o : n.offers) {
         QString detail =
             tr("%1 · your offer %2/month + %3 signing").arg(date(o.submitted_on), money(o.salary), money(o.signing));
+        detail += audience_adjustment(s,a.profile,o.submitted_on);
         if (o.reply == "pending")
             detail += tr("\nResponse due %1").arg(date(o.respond_on));
         else if (o.reply == "counter")
@@ -105,7 +114,7 @@ QVariantMap WorldController::recruitmentOffer(QString id) const {
                           .arg(r.response==core::Days{1}?tr("one day"):tr("%1 days").arg(r.response.value()))
                           .arg(r.validity.value())
                           .arg(r.maximum_rounds)
-                          .arg(s.management->catalog.people->onboarding.value())}};
+                          .arg(s.management->catalog.people->onboarding.value())+audience_adjustment(s,a.profile,s.date)}};
 }
 void WorldController::proposeEmployment(QString id, QString salary, QString signing, QString revision) {
     if (!hqReview(revision))

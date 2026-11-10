@@ -27,6 +27,11 @@ inline Json encode(const core::PeopleRules& r) {
         {"minimum_offer_bp",n.minimum_offer},{"maximum_offer_bp",n.maximum_offer},{"maximum_signing_multiple",n.maximum_signing_multiple}};}
     if(!r.trait_groups.empty()) j["trait_groups"]=r.trait_groups;
     if(r.dismissal) j["dismissal"]={{"severance_months",r.dismissal->severance_months}};
+    if(!r.founder_audiences.empty()) {
+        auto& rows=j["founder_audiences"]=Json::array();
+        for(const auto& row:r.founder_audiences)
+            rows.push_back({{"founder",row.founder},{"audience",row.audience},{"salary_bp",row.salary_bp},{"mood",row.mood}});
+    }
     if(r.mood) {
         const auto& m=*r.mood;
         j["mood"]={{"pay",m.pay},{"company_prestige",m.company_prestige},{"ceo_prestige",m.ceo_prestige},
@@ -36,6 +41,18 @@ inline Json encode(const core::PeopleRules& r) {
     return j;
 }
 inline core::PeopleRules decode(Json j) {
+    std::vector<core::FounderAudienceRule> audiences;
+    if(j.contains("founder_audiences")) {
+        const auto& rows=j.at("founder_audiences");
+        if(!rows.is_array() || rows.empty() || rows.size()>9) throw std::invalid_argument("Use one to nine founder audience rules");
+        for(const auto& row:rows) {
+            fields(row,{"founder","audience","salary_bp","mood"});
+            const auto salary=integer(row.at("salary_bp")),mood=integer(row.at("mood"));
+            if(salary < -500 || salary>500 || mood < -5 || mood>5) throw std::invalid_argument("Founder audience reaction out of bounds");
+            audiences.push_back({row.at("founder").get<std::string>(),row.at("audience").get<std::string>(),static_cast<int>(salary),static_cast<int>(mood)});
+        }
+        j.erase("founder_audiences");
+    }
     std::optional<core::DismissalRules> dismissal;
     if(j.contains("dismissal")) {
         fields(j.at("dismissal"),{"severance_months"});
@@ -79,7 +96,7 @@ inline core::PeopleRules decode(Json j) {
         j.erase("recruitment");
     }
     fields(j,{"first_names","last_names","maximum_hq","candidates","recruitment_days","onboarding_days","monthly_salary_cents","signing_cost_cents","base_skill","skill_jitter","pay_skill_weight","prestige_skill_weight","mission_skill_weight","maximum_evaluation_credit_bp"});
-    core::PeopleRules r;r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);r.mood=std::move(mood);r.dismissal=dismissal;
+    core::PeopleRules r;r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);r.mood=std::move(mood);r.dismissal=dismissal;r.founder_audiences=std::move(audiences);
     for(const char* name:{"first_names","last_names"}) {
         const auto& list=j.at(name);
         if(!list.is_array() || list.size()>512) throw std::invalid_argument("Name pool exceeds its limit");

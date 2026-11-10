@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.52.0-dev.1",
+  "content_version": "0.53.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -75202,6 +75202,38 @@
             "Ellis",
             "Remy"
           ],
+          "founder_audiences": [
+            {
+              "audience": "woman",
+              "founder": "woman",
+              "mood": 3,
+              "salary_bp": -200
+            },
+            {
+              "audience": "man",
+              "founder": "woman",
+              "mood": -2,
+              "salary_bp": 300
+            },
+            {
+              "audience": "man",
+              "founder": "man",
+              "mood": 1,
+              "salary_bp": -200
+            },
+            {
+              "audience": "woman",
+              "founder": "man",
+              "mood": 0,
+              "salary_bp": 200
+            },
+            {
+              "audience": "nonbinary",
+              "founder": "nonbinary",
+              "mood": 4,
+              "salary_bp": -250
+            }
+          ],
           "last_names": [
             "Smith",
             "Johnson",
@@ -75870,7 +75902,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 23,
+      "revision": 24,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

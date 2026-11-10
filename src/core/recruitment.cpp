@@ -23,11 +23,17 @@ Applicant &applicant(SimulationState &s, const std::string &id) {
         invalid("This applicant is no longer available. Review the current applicants.");
     return *it;
 }
-std::string expected_reply(const Recruitment &n, const EmploymentOffer &offer, std::size_t round,
+std::string expected_reply(const Recruitment &n, const EmploymentOffer &offer, Cents minimum_salary, std::size_t round,
                            const RecruitmentRules &r) {
-    if (offer.salary >= n.minimum_salary && offer.signing >= n.minimum_signing)
+    if (offer.salary >= minimum_salary && offer.signing >= n.minimum_signing)
         return "accept";
     return round >= r.maximum_rounds ? "decline" : "counter";
+}
+Cents audience_minimum_salary(const SimulationState& s,const Applicant& applicant,OrdinalDay submitted_on) {
+    const auto& n=*applicant.recruitment;
+    const auto* reaction=founder_audience_on(s,applicant.profile.gender,submitted_on);
+    if(!reaction || !reaction->salary_bp) return n.minimum_salary;
+    return std::min(n.ask_salary,scale(n.minimum_salary,static_cast<std::uint32_t>(10000+reaction->salary_bp)));
 }
 Cents counter(Cents offer, Cents ask, Cents minimum) {
     return std::max(minimum, std::min(ask, Cents{(checked_unit_add(offer, ask).value() + 1) / 2}));
@@ -127,17 +133,20 @@ void prepare_recruitment(SimulationState &s) {
         auto &offer = n.offers.back();
         if (offer.reply != "pending" || s.date < offer.respond_on)
             continue;
-        offer.reply = expected_reply(n, offer, n.offers.size(), r);
+        const auto minimum_salary=audience_minimum_salary(s,a,offer.submitted_on);
+        offer.reply = expected_reply(n, offer, minimum_salary, n.offers.size(), r);
         if (offer.reply == "counter") {
-            offer.counter_salary = counter(offer.salary, n.ask_salary, n.minimum_salary);
+            offer.counter_salary = counter(offer.salary, n.ask_salary, minimum_salary);
             offer.counter_signing = counter(offer.signing, n.ask_signing, n.minimum_signing);
         }
         s.paused = true;
     }
 }
-void validate_recruitment(const Applicant &a, const PeopleRules &people, OrdinalDay day, bool hired) {
+void validate_recruitment(const Applicant &a, const SimulationState &s, bool hired) {
     if (!a.recruitment)
         return;
+    const auto& people=*s.management->catalog.people;
+    const auto day=s.date;
     if (!people.recruitment)
         invalid("Applicant negotiations need their authored rules.");
     const auto &n = *a.recruitment;
@@ -158,6 +167,7 @@ void validate_recruitment(const Applicant &a, const PeopleRules &people, Ordinal
     std::optional<OrdinalDay> prior_expiry;
     for (const auto &offer : n.offers) {
         ++round;
+        const auto minimum_salary=audience_minimum_salary(s,a,offer.submitted_on);
         if (offer.submitted_on < prior || (prior_expiry && offer.submitted_on >= *prior_expiry) ||
             offer.submitted_on > day || offer.respond_on != advance_days(offer.submitted_on, r.response) ||
             offer.expires_on != advance_days(offer.respond_on, r.validity) ||
@@ -167,10 +177,10 @@ void validate_recruitment(const Applicant &a, const PeopleRules &people, Ordinal
         if (offer.reply == "pending") {
             if (round != n.offers.size() || (day >= offer.respond_on && !n.withdrawn_on))
                 invalid("An applicant response was lost.");
-        } else if (day < offer.respond_on || offer.reply != expected_reply(n, offer, round, r))
+        } else if (day < offer.respond_on || offer.reply != expected_reply(n, offer, minimum_salary, round, r))
             invalid("The recorded applicant response differs from their actual terms.");
         if (offer.reply == "counter") {
-            if (offer.counter_salary != counter(offer.salary, n.ask_salary, n.minimum_salary) ||
+            if (offer.counter_salary != counter(offer.salary, n.ask_salary, minimum_salary) ||
                 offer.counter_signing != counter(offer.signing, n.ask_signing, n.minimum_signing))
                 invalid("The applicant counteroffer changed.");
         } else if (offer.counter_salary != Cents{0} || offer.counter_signing != Cents{0})

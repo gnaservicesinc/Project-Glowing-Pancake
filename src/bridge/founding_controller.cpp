@@ -67,6 +67,7 @@ FoundingController::FoundingController(const content::Collection& collection, st
         headquarters_ = scenario.headquarters_choices;
         if(scenario.infrastructure && scenario.infrastructure->workplace) premises_rules_=scenario.infrastructure->workplace->headquarters;
         if(scenario.management && scenario.management->governance)charters_=scenario.management->governance->charters;
+        if(scenario.management && scenario.management->people)audiences_=scenario.management->people->founder_audiences;
     }
     deriveOpening();
     if (!available()) return;
@@ -421,6 +422,19 @@ QVariantMap FoundingController::startupLoan() const {
     const auto monthly=core::mul_div_round_half_up(static_cast<std::uint64_t>(loan.principal_cents),loan.monthly_interest_bp,10000);
     return {{"lender",text(loan.lender)},{"detail",tr("%1 paid into company accounts at signing.\nInterest %2% per month on outstanding principal (%3 for a full month at the opening balance).\nRemaining principal due %4. Repay early from company accounts.\nApproval requires at least %5 of your own savings invested in the company. The bank takes no shares.")
         .arg(money(loan.principal_cents)).arg(static_cast<double>(loan.monthly_interest_bp)/100).arg(money(static_cast<std::int64_t>(monthly)),text(core::iso_date(due)),money(loan.minimum_investment_cents))}};
+}
+QString FoundingController::genderAudience(QString gender) const {
+    if(audiences_.empty()) return {};
+    const auto key=gender.toStdString();
+    QStringList rows;
+    for(const auto& effect:audiences_) if(effect.founder==key) {
+        const auto audience=effect.audience=="woman"?tr("Women"):effect.audience=="man"?tr("Men"):tr("Nonbinary people");
+        const auto salary=(effect.salary_bp>0?QStringLiteral("+"):QString{})+
+            QLocale().toString(static_cast<double>(effect.salary_bp)/100,'f',effect.salary_bp%10?2:effect.salary_bp%100?1:0);
+        const auto mood=(effect.mood>0?QStringLiteral("+"):QString{})+QString::number(effect.mood);
+        rows.push_back(tr("%1 · %2% salary floor · %3 mood").arg(audience,salary,mood));
+    }
+    return rows.isEmpty()?tr("No gender-based hiring or mood adjustment."):rows.join(QLatin1Char('\n'));
 }
 QString FoundingController::signingError() const {
     if(!catalog_) return tr("The founding catalog is unavailable.");

@@ -46,8 +46,10 @@ QtObject {
             qsTr("She writes it down, leaving room on the card for the name you will carry out of the ward."),
             qsTr("What is your surname?"), 63)
                 question("gender", hospital, birth, qsTr("Your identity"),
-                    qsTr("Your family opens a keepsake record. This is your story, including the identity you will grow into."),
-                    qsTr("How do you describe your gender?"), [option("woman",qsTr("Woman")),option("man",qsTr("Man")),option("nonbinary",qsTr("Nonbinary")),option("unspecified",qsTr("Prefer not to say"))])
+                    qsTr("Your family opens a keepsake record. While you lead the company, some people react to your gender in hiring and at work."),
+                    qsTr("How do you describe your gender?"), [option("woman",qsTr("Woman"),story.genderAudience("woman")),
+                        option("man",qsTr("Man"),story.genderAudience("man")),option("nonbinary",qsTr("Nonbinary"),story.genderAudience("nonbinary")),
+                        option("unspecified",qsTr("Prefer not to say"),story.genderAudience("unspecified"))])
                 question("pronouns", hospital, birth, qsTr("The introduction"),
                     qsTr("Add the pronouns you will use when others tell your story."),
                     qsTr("Which pronouns should they use?"), [option("she/her",qsTr("She / her")),option("he/him",qsTr("He / him")),option("they/them",qsTr("They / them")),option("other",qsTr("Other pronouns"),qsTr("Choose from additional pronoun sets."))])

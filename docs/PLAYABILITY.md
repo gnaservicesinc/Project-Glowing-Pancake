@@ -179,8 +179,11 @@ reveal a beat early, Tab to reach choices, and Back to revisit a decision.
 Resume in the main menu returns to your saved place in the prologue. The canvas
 fits the window as it resizes. Reduced motion shows each beat immediately.
 
-Complete the birth record with a name, gender and pronouns; Other opens additional
-pronoun sets. Each formative choice has an impact summary and a narrated response.
+Complete the birth record with a name, gender and pronouns. Other opens additional
+pronoun sets. The gender cards show the fictional workplace reactions that can
+adjust salary negotiations and employee mood while you are CEO. Choose **Prefer
+not to say** for no adjustment. Recruiting and employee profiles explain the
+factor where it applies. Each formative choice has an impact summary and a narrated response.
 After eight childhood chapters, customize the portrait’s features, colors,
 clothing, patterns and build. The intro ends here, before company decisions.
 

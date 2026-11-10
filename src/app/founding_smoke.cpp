@@ -73,6 +73,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
         bool saw_hillside = false;
         bool saw_company = false;
         bool customized = false;
+        bool saw_founder_audience = false;
         pgp::runtime::Checkpoint opening;
     };
     auto state = std::make_shared<State>();
@@ -191,6 +192,18 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             }
             if(id=="appearance" && !capture(".appearance")) {fail("Appearance screenshot");return;}
             if (id == "offer-safety" && !capture(".offer")) { fail("Individual offer screenshot"); return; }
+            if (id=="gender" && partner && !state->saw_founder_audience) {
+                if(campaign.textScalePercent()!=200) {campaign.setTextScalePercent(200);return;}
+                const auto* woman=find_visible(window.contentItem(),"foundingChoice_woman");
+                const auto* man=find_visible(window.contentItem(),"foundingChoice_man");
+                if(!woman || !man || !woman->property("detail").toString().contains("+3% salary floor") ||
+                    !man->property("detail").toString().contains("-2% salary floor") || !capture(".founder-audience")) {
+                    fail("Show the authored audience reactions before choosing gender");return;
+                }
+                state->saw_founder_audience=true;
+                campaign.setTextScalePercent(100);
+                return;
+            }
             if (id=="family" && partner) {
                 if(!click("foundingChoice_rich") && !click("foundingMoreChoices"))fail("Choose a background with investor connections");
                 return;

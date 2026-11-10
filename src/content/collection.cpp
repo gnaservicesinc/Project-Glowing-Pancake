@@ -944,6 +944,8 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
     if (value.contains("management")) {
         result.management=load_management_catalog(value.at("management").dump());
         const auto& catalog=*result.management;
+        if(catalog.people && !catalog.people->founder_audiences.empty() && (!result.founding || !catalog.succession))
+            fail("management",path,"Founder audience rules need a founder biography and dated leadership terms");
         if (!result.lab || !result.market || !result.ownership.contains(catalog.scoring.founder) ||
             result.ownership.at(catalog.scoring.founder)!=catalog.scoring.opening_founder_share)
             fail("management",path,"Management requires the lab/market and the actual opening founder stake");

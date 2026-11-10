@@ -480,6 +480,11 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                 }
             }
         }
+        if(const auto& management=world.simulation.management;management && management->people) {
+            const auto uses_audiences=management->catalog.people && !management->catalog.people->founder_audiences.empty();
+            if(management->people->founder_gender!=(world.founding && uses_audiences?world.founding->gender:""))
+                invalid("Founder audience reactions must use the saved biography.");
+        }
         if(world.simulation.infrastructure && world.simulation.infrastructure->workplace) {
             const auto& workplace=*world.simulation.infrastructure->workplace;
             if(workplace.opening_office!=(world.founding?world.founding->office:"leased") ||

@@ -72,6 +72,14 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
 void validate_people_rules(const PeopleRules& r) {
     if(r.dismissal && r.dismissal->severance_months>6) invalid("Dismissal severance must be between zero and six months of salary.");
     if(r.recruitment) validate_recruitment_rules(*r.recruitment);
+    std::set<std::pair<std::string,std::string>> audience_pairs;
+    const auto identity=[](std::string_view value){return value=="woman" || value=="man" || value=="nonbinary";};
+    for(const auto& row:r.founder_audiences) {
+        if(!identity(row.founder) || !identity(row.audience) || !audience_pairs.emplace(row.founder,row.audience).second ||
+            row.salary_bp < -500 || row.salary_bp>500 || row.mood < -5 || row.mood>5 ||
+            (!r.recruitment && row.salary_bp) || (!r.mood && row.mood) || (!row.salary_bp && !row.mood))
+            invalid("Founder audience rules require unique gender pairs and bounded reactions.");
+    }
     if(r.trait_groups.size()>12) invalid("Too many trait categories.");
     std::set<std::string> trait_names;
     for(const auto& group:r.trait_groups) {
@@ -174,6 +182,18 @@ void withdraw_people(SimulationState& s) {
     for(auto& employee:s.management->people->employees) if(!employee.departed_on) employee.departed_on=s.date;
     s.management->people->applicants.clear();
 }
+const FounderAudienceRule* founder_audience_on(const SimulationState& s,std::string_view audience,OrdinalDay day) {
+    if(!s.management || !s.management->people || !s.succession) return nullptr;
+    const auto& people=*s.management->people;
+    if(people.founder_gender.empty()) return nullptr;
+    const auto& rows=s.management->catalog.people->founder_audiences;
+    const auto rule=std::ranges::find_if(rows,[&](const auto& row){return row.founder==people.founder_gender && row.audience==audience;});
+    if(rule==rows.end()) return nullptr;
+    const auto& terms=s.succession->terms;
+    if(std::ranges::none_of(terms,[&](const auto& term){return term.person=="founder" && term.starts_on<=day && (!term.ended_on || day<*term.ended_on);}))
+        return nullptr;
+    return &*rule;
+}
 void validate_people(const SimulationState& s,bool deep) {
     if(!s.management) return;
     const auto& m=*s.management;
@@ -183,11 +203,12 @@ void validate_people(const SimulationState& s,bool deep) {
     if(p.employees.size()>r.maximum_hq || p.applicants.size()>r.candidates || p.next_id==0 || p.next_id>1000000 ||
         p.offered_pay<SalaryRate{7500} || p.offered_pay>SalaryRate{15000} || p.starts_on>s.date || p.next_recruitment<p.starts_on ||
         p.next_recruitment>advance_days(s.date,r.recruitment_interval) || p.founding_prestige>10 ||
+        (!p.founder_gender.empty() && p.founder_gender!="woman" && p.founder_gender!="man" && p.founder_gender!="nonbinary" && p.founder_gender!="unspecified") ||
         (p.mission!="research" && p.mission!="public benefit" && p.mission!="commercial")) invalid("HQ roster or recruitment state is outside its bounds.");
     std::set<std::string> ids;
     const auto check=[&](const Applicant& a){profile_valid(a.profile,s.date);if(!ids.insert(a.profile.id).second || a.salary<Cents{0} || a.salary>Cents{r.recruitment?30000000:15000000} ||
         a.signing<Cents{0} || a.signing>Cents{r.signing_cost.value()*(r.recruitment?r.recruitment->maximum_signing_multiple:1)} || a.evaluation_credit!=BasisPoints{r.maximum_evaluation_credit.value()*a.profile.evaluation/100}) invalid("Applicant identity, pay or evaluation evidence changed.");};
-    for(const auto& a:p.applicants) {check(a);if(r.recruitment.has_value()!=a.recruitment.has_value()) invalid("Current applicants need their compensation discussions.");validate_recruitment(a,r,s.date,false);}
+    for(const auto& a:p.applicants) {check(a);if(r.recruitment.has_value()!=a.recruitment.has_value()) invalid("Current applicants need their compensation discussions.");validate_recruitment(a,s,false);}
     const auto known=[&](const auto& offer) {
         const auto it=p.known_people.find(offer.id);
         if(it==p.known_people.end() || it->second.name!=offer.name) invalid("Authored hiring offer has lost its stable identity.");
@@ -206,7 +227,7 @@ void validate_people(const SimulationState& s,bool deep) {
         const auto maximum_salary=Cents{mul_div_round_half_up(static_cast<std::uint64_t>(r.monthly_salary.value()),15000,10000)};
         if(r.recruitment) {
             if(!employee.terms.recruitment || employee.terms.recruitment->hired_on!=employee.joined_on) invalid("A hire needs its signed compensation history.");
-            validate_recruitment(employee.terms,r,s.date,true);
+            validate_recruitment(employee.terms,s,true);
         } else if(employee.terms.salary<minimum_salary || employee.terms.salary>maximum_salary || employee.terms.signing!=r.signing_cost) invalid("Employee pay is outside the authored offer range.");
         const auto& id=employee.terms.profile.id;
         const auto salary=std::ranges::find(s.accounts->recurring,id,&RecurringObligation::id);

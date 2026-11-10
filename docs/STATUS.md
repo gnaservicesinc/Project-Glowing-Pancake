@@ -9,7 +9,7 @@ Updated 2026-11-10
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.52.0-dev.1**, generation **53**.
+immersive redesign advances content to **0.53.0-dev.1**, generation **54**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -194,9 +194,19 @@ unchanged commercial premises until confirmation and fresh reload at 650 × 480
 with 200% text. The prologue walkthrough passes with the shared room scene.
 Physical travel to the family home remains in the backlog.
 
-Retention, audience modifiers, full personal-world simulation, research balance,
-expanded private-life purchases and richer event preferences remain unfinished,
-as itemized in the plan and backlog.
+The gender cards disclose audience-specific hiring and mood adjustments before
+selection. Recruiting applies those adjustments to applicants’ salary floors
+using the CEO on the date of the offer. Employee mood shows a separate factor
+while the founder leads. Applicant skills, traits and creativity are independent
+of the adjustment. Prefer not to say uses baseline terms. Focused checks compare
+identical seeded applicants, actual compensation replies, cofounder mood, dated
+leadership and exact reload. Content review passes 24 opening/save roundtrips.
+The Release software walkthrough verifies the gender-choice disclosure at 200%
+text. The recruiting, mood, contact and dismissal walkthrough also passes.
+
+Retention, media and legitimacy reactions, full personal-world simulation,
+research balance, expanded private-life purchases and richer event preferences
+remain unfinished, as itemized in the plan and backlog.
 
 The 2026-11-09 review rejects the main interface as complete. The detailed
 [selected refinements](FEEDBACK_REFINEMENTS.md) and F-04 milestone queue in the

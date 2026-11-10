@@ -162,8 +162,13 @@ remain open.
 Employee mood uses current pay, the company’s publications, the CEO’s biography
 and record in office, mission and duties, coworker affinity, temperament and
 active amenities. An installed amenity type contributes once for employees with
-assigned HQ desks, up to the authored cap. Retention effects, audience identity
-modifiers and broader role-specific equipment benefits remain open.
+assigned HQ desks, up to the authored cap. The identity cards disclose the
+fictional workplace reactions each gender can encounter. Those reactions
+adjust applicants’ salary acceptance floors and add a separate mood factor
+while the founder is CEO. The effect uses the leader on the date of an offer,
+so later succession preserves the recorded answer. Traits, skills and signing
+payments are independent of this rule. Retention, media and scandal reactions,
+and broader role-specific equipment benefits remain open.
 My life now offers a condo, hillside house and gallery estate, plus furnishings,
 paintings and sculpture. Purchases and monthly upkeep use personal savings.
 Unpaid upkeep becomes a personal liability and blocks discretionary purchases

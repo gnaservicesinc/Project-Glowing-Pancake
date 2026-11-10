@@ -9,11 +9,84 @@ void check(bool condition, const char *message) {
     if (!condition)
         throw std::runtime_error(message);
 }
+void check_founder_audiences() {
+    using namespace pgp;
+    const auto registry=content::foundation_registry();
+    const auto program=runtime::compile_collection(content::load_collection(
+        persistence::read_bounded(PGP_AUDIENCE_SOURCE,content::maximum_document_bytes),registry),registry);
+    const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
+    content::FoundingSelection founder;
+    founder.family="rich";founder.leg="charisma";founder.route="bootstrap";founder.office="home";founder.researcher="none";
+    for(const auto& scene:scenario.founding->scenes)founder.choices.emplace(scene.id,scene.choices.front().id);
+    const auto start=[&](std::string gender,bool partnership=false) {
+        runtime::ScenarioOptions options;options.founding=founder;options.seed=718;
+        options.founding->gender=std::move(gender);
+        if(partnership) {
+            options.founding->route="partnership";options.founding->office="shared";
+            options.founding->partner="partner_okafor";
+        }
+        options.identity=runtime::CampaignIdentity{"Audience test",founder.first_name+" "+founder.last_name,"they/them"};
+        auto opening=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",std::nullopt,options);
+        opening.world.enabled_flows=std::vector<std::string>{};
+        runtime::Runtime game{program,opening};
+        check(game.prepare_opening(opening.world.simulation.revision).accepted(),"Prepare the founder audience test.");
+        return game;
+    };
+    auto woman=start("woman"), man=start("man"), neutral=start("unspecified"), nonbinary=start("nonbinary");
+    const auto state=[](const auto& game)->const auto&{return game.current_state().world.simulation;};
+    const auto& candidates=state(neutral).management->people->applicants;
+    check(candidates==state(woman).management->people->applicants && candidates==state(man).management->people->applicants &&
+        candidates==state(nonbinary).management->people->applicants,"Founder identity must leave the applicant pool, skills, preferences and traits intact.");
+    const auto applicant=std::ranges::find_if(candidates,[](const auto& row) {
+        return row.profile.gender=="man" && row.recruitment->minimum_salary<row.recruitment->ask_salary;
+    });
+    check(applicant!=candidates.end(),"The seeded pool must have a male applicant with room for a higher salary floor.");
+    const auto id=applicant->profile.id;
+    const auto salary=applicant->recruitment->minimum_salary;
+    const auto lower_salary=core::Cents{salary.value()*99/100};
+    const auto signing=applicant->recruitment->ask_signing;
+    const auto submit=[&](runtime::Runtime& game,core::CommandAction action) {
+        const auto result=game.submit({state(game).revision,std::move(action)});
+        check(result.accepted(),result.explanation.c_str());
+    };
+    for(auto* game:{&woman,&man,&neutral,&nonbinary}) {
+        submit(*game,core::ManageRecruitment{core::ProposeEmployment{id,game==&woman?salary:lower_salary,signing}});
+        submit(*game,core::AdvanceDay{});
+    }
+    const auto reply=[&](const auto& game) {
+        const auto& applicants=state(game).management->people->applicants;
+        return std::ranges::find_if(applicants,[&](const auto& row){return row.profile.id==id;})->recruitment->offers.back().reply;
+    };
+    check(reply(woman)=="counter" && reply(man)=="accept" && reply(neutral)=="counter" && reply(nonbinary)=="counter",
+        "Audience adjustments must raise or lower the salary boundary while unmatched groups use the base terms.");
+    check(persistence::decode_save(program,persistence::encode_save(program,woman.current_state())).checkpoint==woman.current_state(),
+        "The offer and audience binding must survive exact save reload.");
+    auto forged=woman.current_state();
+    forged.world.simulation.management->people->founder_gender="man";
+    bool refused=false;
+    try {runtime::validate_checkpoint(program,forged);} catch(const std::invalid_argument&) {refused=true;}
+    check(refused,"A forged founder identity must be refused.");
+
+    const auto partnered=start("woman",true), partnered_neutral=start("unspecified",true);
+    const auto mood=core::workplace_moods(state(partnered)).begin()->second;
+    const auto neutral_mood=core::workplace_moods(state(partnered_neutral)).begin()->second;
+    check(mood.founder_audience==3 && neutral_mood.founder_audience==0 && mood.score==neutral_mood.score+3,
+        "A working cofounder's mood must show the positive audience response as a separate factor.");
+    auto changed_leadership=state(partnered);
+    auto successor=changed_leadership.succession->terms.front();
+    successor.starts_on=core::advance_days(changed_leadership.date,core::Days{1});successor.person="successor";
+    changed_leadership.succession->terms.front().ended_on=successor.starts_on;
+    changed_leadership.succession->terms.push_back(successor);
+    check(core::founder_audience_on(changed_leadership,"woman",changed_leadership.date) &&
+        !core::founder_audience_on(changed_leadership,"woman",successor.starts_on),
+        "A later CEO's appointment ends the current effect and preserves dated offers.");
+}
 } // namespace
 
 int main() {
     using namespace pgp;
     try {
+        check_founder_audiences();
         const auto registry = content::foundation_registry();
         const auto program = runtime::compile_collection(
             content::load_collection(persistence::read_bounded(PGP_RECRUITING_SOURCE, content::maximum_document_bytes),

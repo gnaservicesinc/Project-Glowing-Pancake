@@ -49,6 +49,7 @@ public:
     QVariantMap startupLoan() const;
     QString error() const {return error_;}
     Q_INVOKABLE QString signingError() const;
+    Q_INVOKABLE QString genderAudience(QString gender) const;
     Q_INVOKABLE void setField(QString,QVariant);
     Q_INVOKABLE QString answerText(QString field, QString value);
     Q_INVOKABLE void choose(QString,QString);
@@ -78,6 +79,7 @@ private:
     std::vector<std::string> headquarters_;
     std::optional<core::HeadquartersRules> premises_rules_;
     std::vector<core::OrganizationalCharter> charters_;
+    std::vector<core::FounderAudienceRule> audiences_;
     core::OrdinalDay starts_on_{0};
     std::filesystem::path draft_path_;
     QVariantMap form_;
