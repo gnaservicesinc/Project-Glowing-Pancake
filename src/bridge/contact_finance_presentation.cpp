@@ -82,7 +82,7 @@ QVariantMap WorldController::contactFunding(QString person) const {
     const auto reputation=core::contact_funding_reputation(state,state.date);
     return {{"available",true},{"donor",donor},{"canRequest",state.date>=next && known->funding.size()<core::contact_funding_limit},
         {"next",text(core::iso_date(next))},{"reputation",reputation},
-        {"record",tr("Reputation %1/100: founding prestige plus published research, capped at 100.").arg(reputation)},
+        {"record",tr("Reputation %1/100: founding prestige, community public interest and published research, capped at 100.").arg(reputation)},
         {"requirements",requirements.join("\n")},{"discussions",discussions}};
 }
 

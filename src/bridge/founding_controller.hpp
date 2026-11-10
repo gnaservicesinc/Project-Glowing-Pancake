@@ -51,6 +51,8 @@ public:
     Q_INVOKABLE QString signingError() const;
     Q_INVOKABLE QString genderAudience(QString gender) const;
     Q_INVOKABLE QString communitySupport(QString gender) const;
+    Q_INVOKABLE QString orientationAudience(QString orientation) const;
+    Q_INVOKABLE QString recognitionTerms() const;
     Q_INVOKABLE void setField(QString,QVariant);
     Q_INVOKABLE QString answerText(QString field, QString value);
     Q_INVOKABLE void choose(QString,QString);
@@ -59,6 +61,7 @@ public:
     Q_INVOKABLE QString respondHomeOffer(QString id, QString response);
     Q_INVOKABLE QString closeHomeOffer();
     Q_INVOKABLE void cycleAppearance(int part,int direction);
+    Q_INVOKABLE void setAppearance(int part,int value);
     QString portrait() const;
     QVariantList appearanceParts() const;
     QStringList pronounOptions() const;

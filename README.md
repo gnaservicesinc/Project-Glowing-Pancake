@@ -8,7 +8,9 @@ continuation. [Campaign flow](docs/CAMPAIGN_FLOW.md),
 [technology design](docs/TECHNOLOGY.md) and the
 [140-candidate technology catalog](docs/TECHNOLOGY_CATALOG.md) describe the new
 direction. New Game creates the founder, then opens their childhood bedroom
-before any company exists. The home computer leads to legal formation, financing
+before any company exists. The birth record is one editable form, and formative
+choices appear together. The portrait editor provides independent colors; home
+and company computers use a shared icon desktop. The home computer leads to legal formation, financing
 from banks or investors, and eligible lab appointments. Company and personal money
 stay separate. Eligible founders can sign with a working cofounder whose offer
 sets the opening mission, equity, salary and board terms.
@@ -53,7 +55,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.54.0-dev.1**, generation **55**.
+The finalized internal content version is **0.55.0-dev.1**, generation **56**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).

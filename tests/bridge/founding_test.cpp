@@ -26,8 +26,15 @@ int main(int argc,char** argv) {
         check(setup.form().value("pronouns")=="xe/xem","Additional pronouns must persist as a structured selection.");
         setup.setField("pronouns","name only");
         check(setup.form().value("pronouns")=="xe/xem","A name is not a pronoun option.");
+        for(const auto& pronoun:QStringList{"hu/hum","fae/faer","hir/hir","ey/em","ze/zir","xe/xem"}) {
+            setup.setField("pronouns",pronoun);check(setup.form().value("pronouns")==pronoun,"Requested neopronouns must be selectable.");
+        }
+        setup.setField("gender","unspecified");setup.setField("orientation","unspecified");
+        check(setup.form().value("gender")!="unspecified" && setup.form().value("orientation")!="unspecified","Nondisclosure is not an identity.");
+        const auto before_color=setup.portrait();setup.setAppearance(23,4);
+        check(setup.portrait()!=before_color,"Brow color must be editable independently.");
         const auto initial=setup.portrait();
-        for(int i=0;i<23;++i) setup.cycleAppearance(i,1);
+        for(int i=0;i<27;++i) setup.cycleAppearance(i,1);
         check(setup.portrait()!=initial,"Every appearance layer must be editable.");
         setup.setBeat("appearance");
         bridge::FoundingController reopened{program.collection,path};

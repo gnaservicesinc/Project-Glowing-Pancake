@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.54.0-dev.1",
+  "content_version": "0.55.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -69684,6 +69684,7 @@
         ],
         "prestige_finance_bp": 20,
         "queer_community_buzz": 4,
+        "queer_community_prestige": 2,
         "researchers": [
           {
             "buzz": 0,
@@ -69815,42 +69816,6 @@
           }
         ],
         "scenes": [
-          {
-            "choices": [
-              {
-                "buzz": 0,
-                "capital_cents": 0,
-                "detail": "A private memory of neighbors and familiar faces.",
-                "family": "",
-                "fee_cents": 0,
-                "id": "roots",
-                "leg": "",
-                "legal_form": "",
-                "monthly_cents": 0,
-                "name": "Stay close to family",
-                "prestige": 0,
-                "shares_bp": 0
-              },
-              {
-                "buzz": 0,
-                "capital_cents": 0,
-                "detail": "A private memory of a new place and a new beginning.",
-                "family": "",
-                "fee_cents": 0,
-                "id": "move",
-                "leg": "",
-                "legal_form": "",
-                "monthly_cents": 0,
-                "name": "Move for an opportunity",
-                "prestige": 0,
-                "shares_bp": 0
-              }
-            ],
-            "date": "1997-01-01",
-            "id": "arrival",
-            "text": "You are born into a California family. Before the world knows your name, your family makes a choice about the place you will grow up.",
-            "title": "California, 1997"
-          },
           {
             "choices": [
               {
@@ -70150,56 +70115,6 @@
             "id": "record",
             "text": "At seventeen, a panel asks what your work actually demonstrates. A weak case appears in the evaluation.",
             "title": "Your first public test"
-          },
-          {
-            "choices": [
-              {
-                "buzz": 1,
-                "capital_cents": 0,
-                "detail": "Your founding statement emphasizes credible research.",
-                "family": "",
-                "fee_cents": 0,
-                "id": "research",
-                "leg": "",
-                "legal_form": "",
-                "monthly_cents": 0,
-                "name": "Build an institution around evidence",
-                "prestige": 6,
-                "shares_bp": 0
-              },
-              {
-                "buzz": 6,
-                "capital_cents": 0,
-                "detail": "Your founding statement emphasizes practical access.",
-                "family": "",
-                "fee_cents": 0,
-                "id": "people",
-                "leg": "",
-                "legal_form": "",
-                "monthly_cents": 0,
-                "name": "Build around people who will use it",
-                "prestige": 2,
-                "shares_bp": 0
-              },
-              {
-                "buzz": 3,
-                "capital_cents": 0,
-                "detail": "Your founding statement emphasizes independence.",
-                "family": "",
-                "fee_cents": 0,
-                "id": "independence",
-                "leg": "",
-                "legal_form": "",
-                "monthly_cents": 0,
-                "name": "Keep room to choose your own direction",
-                "prestige": 3,
-                "shares_bp": 0
-              }
-            ],
-            "date": "2015-01-01",
-            "id": "threshold",
-            "text": "School is ending. Mentors, partners and backers see different futures for you. Your political family, if chosen, is now wealthy. You are eighteen; the company story begins today.",
-            "title": "The offer at eighteen"
           }
         ],
         "startup_loan": {
@@ -75203,38 +75118,6 @@
             "Ellis",
             "Remy"
           ],
-          "founder_audiences": [
-            {
-              "audience": "woman",
-              "founder": "woman",
-              "mood": 3,
-              "salary_bp": -200
-            },
-            {
-              "audience": "man",
-              "founder": "woman",
-              "mood": -2,
-              "salary_bp": 300
-            },
-            {
-              "audience": "man",
-              "founder": "man",
-              "mood": 1,
-              "salary_bp": -200
-            },
-            {
-              "audience": "woman",
-              "founder": "man",
-              "mood": 0,
-              "salary_bp": 200
-            },
-            {
-              "audience": "nonbinary",
-              "founder": "nonbinary",
-              "mood": 4,
-              "salary_bp": -250
-            }
-          ],
           "last_names": [
             "Smith",
             "Johnson",
@@ -75903,7 +75786,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 25,
+      "revision": 26,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

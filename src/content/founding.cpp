@@ -21,6 +21,7 @@ void to_json(Json& j,const FoundingCatalog& c) {
     if(c.startup_loan) j["startup_loan"]=*c.startup_loan;
     if(!c.partners.empty()) j["partners"]=c.partners;
     if(c.queer_community_buzz) j["queer_community_buzz"]=c.queer_community_buzz;
+    if(c.queer_community_prestige) j["queer_community_prestige"]=c.queer_community_prestige;
 }
 void from_json(const Json& j,FoundingCatalog& c) {
     j.at("families").get_to(c.families);j.at("legs").get_to(c.legs);j.at("routes").get_to(c.routes);j.at("backers").get_to(c.backers);
@@ -31,6 +32,7 @@ void from_json(const Json& j,FoundingCatalog& c) {
     if(j.contains("startup_loan")) c.startup_loan=j.at("startup_loan").get<FoundingLoan>();
     if(j.contains("partners")) c.partners=j.at("partners").get<std::vector<FoundingPartner>>();
     if(j.contains("queer_community_buzz")) c.queer_community_buzz=j.at("queer_community_buzz").get<std::uint32_t>();
+    if(j.contains("queer_community_prestige")) c.queer_community_prestige=j.at("queer_community_prestige").get<std::uint32_t>();
 }
 namespace {
 [[noreturn]] void invalid(std::string why) {throw std::invalid_argument(std::move(why));}
@@ -67,7 +69,7 @@ void shape(const FoundingSelection& s) {
     text(s.first_name,64);text(s.last_name,64);text(s.gender,64);
     core::validate_portrait(s.appearance);
     if(s.personal_investment_cents < -1 || s.personal_investment_cents>1000000000000) invalid("Choose a bounded personal investment.");
-    if(s.gender!="woman" && s.gender!="man" && s.gender!="nonbinary" && s.gender!="unspecified") invalid("Choose a supported gender option.");
+    if(s.gender!="woman" && s.gender!="man" && s.gender!="nonbinary") invalid("Choose a supported gender option.");
     if(s.birth_sex!="female" && s.birth_sex!="male" && s.birth_sex!="indeterminate") invalid("Choose a supported sex at birth.");
     if(std::ranges::find(founder_orientations,s.orientation)==founder_orientations.end()) invalid("Choose a supported orientation option.");
     if(s.mode!="campaign") invalid("New companies use the founder campaign.");
@@ -89,7 +91,7 @@ FoundingCatalog load_founding_catalog(std::string_view bytes) {
     if(Json(c)!=j) invalid("Unsupported fields in the founding catalog.");
     for(const auto* rows:{&c.families,&c.legs,&c.routes,&c.backers,&c.offices,&c.researchers}) options(*rows);
     amount(c.formation_cents);amount(c.compute_monthly_cents);amount(c.founder_salary_cents);
-    if(c.prestige_finance_bp>1000 || c.buzz_finance_bp>1000 || c.maximum_finance_bonus_bp>5000 || c.queer_community_buzz>20) invalid("Founding reputation effects exceed their bounded terms.");
+    if(c.prestige_finance_bp>1000 || c.buzz_finance_bp>1000 || c.maximum_finance_bonus_bp>5000 || c.queer_community_buzz>20 || c.queer_community_prestige>10) invalid("Founding reputation effects exceed their bounded terms.");
     if(c.opening && (c.opening->inherited_staff<2 || c.opening->inherited_staff>6 || c.opening->cofounder_staff<1 || c.opening->cofounder_staff>3 || c.opening->ceo_equity_bp>1500)) invalid("Opening company terms exceed their bounds.");
     if(!c.partners.empty()) {
         const auto& route=founding_option(c.routes,"partnership");
@@ -155,7 +157,11 @@ std::string partner_ineligibility(const FoundingPartner& partner,const FoundingS
     return {};
 }
 bool transgender_founder(const FoundingSelection& s) {
-    return s.gender!="unspecified" && ((s.birth_sex=="female" && s.gender!="woman") || (s.birth_sex=="male" && s.gender!="man"));
+    return (s.birth_sex=="female" && s.gender!="woman") || (s.birth_sex=="male" && s.gender!="man");
+}
+bool queer_founder(const FoundingSelection& s) {
+    return transgender_founder(s) || s.gender=="nonbinary" ||
+        (s.orientation!="straight" && s.orientation!="questioning");
 }
 FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s,bool complete) {
     shape(s);FoundingTerms t;t.nonprofit=s.legal_form=="nonprofit";
@@ -198,7 +204,7 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
     t.partner_bp=t.nonprofit?0:partner?partner->shares_bp:route.shares_bp;
     t.paid_setup_cents=core::checked_add(c.formation_cents,core::checked_add(office.fee_cents,researcher.fee_cents));
     t.office_cents=office.monthly_cents;t.payroll_cents=researcher.monthly_cents;
-    t.prestige=leg.prestige;t.buzz=leg.buzz+(transgender_founder(s)?c.queer_community_buzz:0);
+    t.prestige=leg.prestige+(queer_founder(s)?c.queer_community_prestige:0);t.buzz=leg.buzz+(queer_founder(s)?c.queer_community_buzz:0);
     for(const auto& scene:c.scenes) {
         const auto choice=s.choices.find(scene.id);
         if(choice==s.choices.end()) {if(complete && s.mode=="campaign") invalid("Complete each formative chapter before founding the company.");continue;}
@@ -247,7 +253,7 @@ std::string canonical_founding_selection(const FoundingSelection& s) {
     j["appearance"]={{"kit",s.appearance.kit},{"parts",s.appearance.parts},{"style",s.appearance.style}};
     if(!s.partner.empty()) j["partner"]=s.partner;
     if(s.birth_sex!="indeterminate") j["birth_sex"]=s.birth_sex;
-    if(s.orientation!="unspecified") j["orientation"]=s.orientation;
+    j["orientation"]=s.orientation;
     return j.dump();
 }
 FoundingSelection load_founding_selection(std::string_view bytes) {

@@ -29,7 +29,7 @@ Item {
     function openTime() { compactTime.open() }
     function showMap(scale) {campaign.world.navigate("map",scale,"","","")}
 
-    Rectangle {anchors.fill:parent;color:"#17282c"}
+    Rectangle {anchors.fill:parent;color:"#182b3b"}
     Component {id:flatWorld;RoomScene {room:"office"}}
     Component {id:flatHeadquarters;HeadquartersPlan {objectName:"hqFloorPlan"}}
     Loader {
@@ -87,7 +87,7 @@ Item {
         anchors.right: parent.right
         visible:!desktop.placementView
         height:visible?hudContent.implicitHeight + (desktop.shortLayout?16:28*desktop.uiScale):0
-        color: "#ef13252b"
+        color: "#f018293c"
         ColumnLayout {
             id: hudContent
             anchors.left: parent.left;anchors.right:parent.right;anchors.top:parent.top
@@ -104,7 +104,7 @@ Item {
                 }
                 ColumnLayout {
                     Layout.fillWidth:true;spacing:3
-                    Label {Layout.fillWidth:true;text:campaign.companyName;font.pixelSize:desktop.textSize*1.2;font.bold:true;color:"#f0ecdd";elide:Text.ElideRight;textFormat:Text.PlainText}
+                    Label {Layout.fillWidth:true;text:campaign.companyName;font.family:"Georgia";font.pixelSize:desktop.textSize*1.4;font.bold:true;color:"#f0ecdd";elide:Text.ElideRight;textFormat:Text.PlainText}
                     Label {Layout.fillWidth:true;text:campaign.world.location;font.pixelSize:desktop.textSize*0.85;color:"#a7c1bb";elide:Text.ElideRight;textFormat:Text.PlainText}
                 }
                 ColumnLayout {
@@ -234,18 +234,18 @@ Item {
         id: agenda
         objectName:"worldAgenda"
         anchors.top:places.bottom;anchors.bottom:dock.top;anchors.right:parent.right
-        anchors.margins:16*desktop.uiScale;width:244*desktop.uiScale;color:"#15292b";radius:12;border.color:"#3b5555"
+        anchors.margins:16*desktop.uiScale;width:244*desktop.uiScale;color:"#1b2d40";radius:12;border.color:"#4e6175"
         visible:!desktop.compact && desktop.place!=="map" && !desktop.physicalHQ
         ScrollView {
             id: agendaScroll
             anchors.fill:parent;anchors.margins:16*desktop.uiScale;contentWidth:availableWidth;clip:true
             ColumnLayout {
                 width:agendaScroll.availableWidth;spacing:14
-                Label {text:qsTr("TODAY");font.pixelSize:desktop.textSize*0.85;font.letterSpacing:2;color:"#a9d5c4"}
+                Label {text:qsTr("TODAY");font.pixelSize:desktop.textSize*0.85;font.letterSpacing:2;color:"#e5bc7e"}
                 Label {Layout.fillWidth:true;text:campaign.requiredKind!=="none"?campaign.requiredTitle:qsTr("Your next move");textFormat:Text.PlainText;wrapMode:Text.Wrap;font.pixelSize:desktop.textSize*1.2;font.bold:true;color:"#eee6d5"}
                 Label {Layout.fillWidth:true;text:campaign.requiredKind!=="none"?qsTr("A decision needs your attention. Time waits for you."):qsTr("Review the team, check your research, or let the next day begin.");wrapMode:Text.Wrap;font.pixelSize:desktop.textSize;color:"#b7cac2"}
                 WorldButton {objectName:"agendaDecisionButton";Layout.fillWidth:true;text:campaign.requiredKind!=="none"?qsTr("Review decision"):qsTr("Open journal (%1)").arg(campaign.inbox.count);textSize:desktop.textSize;primary:campaign.requiredKind!=="none";onClicked:desktop.openApp("inbox","","phone")}
-                Rectangle {Layout.fillWidth:true;height:1;color:"#3c5554"}
+                Rectangle {Layout.fillWidth:true;height:1;color:"#4e6175"}
                 Label {Layout.fillWidth:true;text:qsTr("%1 projects in your notebook").arg(campaign.projects.count);wrapMode:Text.Wrap;font.pixelSize:desktop.textSize;color:"#d9e3d7"}
                 WorldButton {Layout.fillWidth:true;text:qsTr("Review research");textSize:desktop.textSize;onClicked:desktop.openApp("lab","projects","laptop")}
                 Label {Layout.fillWidth:true;text:campaign.world.founder.name || "";textFormat:Text.PlainText;wrapMode:Text.Wrap;font.pixelSize:desktop.textSize;font.bold:true;color:"#eee6d5"}
@@ -257,7 +257,7 @@ Item {
     Rectangle {
         id:dock
         anchors.left:parent.left;anchors.right:parent.right;anchors.bottom:parent.bottom
-        height:desktop.shortLayout?desktop.textSize*3.2+16:68*desktop.uiScale;color:"#11242a"
+        height:desktop.shortLayout?desktop.textSize*3.2+16:68*desktop.uiScale;color:"#111e2e"
         ScrollView {
             id:dockScroll
             anchors.fill:parent;anchors.margins:desktop.shortLayout?8:10*desktop.uiScale;contentHeight:availableHeight;clip:true
@@ -265,21 +265,21 @@ Item {
             Row {
                 id:dockRow
                 spacing:8
-                WorldButton {objectName:"officeTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Company");textSize:desktop.textSize;onClicked:desktop.openApp("office","","laptop")}
-                WorldButton {objectName:"peopleTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("People");textSize:desktop.textSize;onClicked:desktop.openApp("people","","laptop")}
-                WorldButton {objectName:"messagesTab";visible:campaign.world.contactsAvailable;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Messages");textSize:desktop.textSize;onClicked:desktop.openApp("people","messages","tablet")}
-                WorldButton {objectName:"personalLifeTab";visible:!!campaign.world.personalLife.cash;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("My life");textSize:desktop.textSize;onClicked:desktop.openApp("leadership","personal","tablet")}
-                WorldButton {objectName:"headquartersTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Headquarters");textSize:desktop.textSize;onClicked:desktop.openApp("facilities","","laptop")}
-                WorldButton {objectName:"labTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Lab");textSize:desktop.textSize;onClicked:desktop.openApp("lab","research","laptop")}
-                WorldButton {objectName:"inboxTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("News & decisions");textSize:desktop.textSize;onClicked:desktop.openApp("inbox","","phone")}
-                WorldButton {objectName:"mapTab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Map");textSize:desktop.textSize;checked:desktop.place==="map";onClicked:desktop.showMap(desktop.nav.scale || "hq")}
-                WorldButton {objectName:"devicesButton";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Devices & apps");textSize:desktop.textSize;onClicked:desktop.launcherRequested()}
+                WorldButton {objectName:"officeTab";iconApp:"office";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Company");textSize:desktop.textSize;onClicked:desktop.openApp("office","","laptop")}
+                WorldButton {objectName:"peopleTab";iconApp:"people";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("People");textSize:desktop.textSize;onClicked:desktop.openApp("people","","laptop")}
+                WorldButton {objectName:"messagesTab";iconApp:"inbox";visible:campaign.world.contactsAvailable;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Messages");textSize:desktop.textSize;onClicked:desktop.openApp("people","messages","tablet")}
+                WorldButton {objectName:"personalLifeTab";iconApp:"leadership";visible:!!campaign.world.personalLife.cash;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("My life");textSize:desktop.textSize;onClicked:desktop.openApp("leadership","personal","tablet")}
+                WorldButton {objectName:"headquartersTab";iconApp:"facilities";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Headquarters");textSize:desktop.textSize;onClicked:desktop.openApp("facilities","","laptop")}
+                WorldButton {objectName:"labTab";iconApp:"lab";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Lab");textSize:desktop.textSize;onClicked:desktop.openApp("lab","research","laptop")}
+                WorldButton {objectName:"inboxTab";iconApp:"inbox";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("News & decisions");textSize:desktop.textSize;onClicked:desktop.openApp("inbox","","phone")}
+                WorldButton {objectName:"mapTab";iconApp:"society";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Map");textSize:desktop.textSize;checked:desktop.place==="map";onClicked:desktop.showMap(desktop.nav.scale || "hq")}
+                WorldButton {objectName:"devicesButton";iconApp:"devices";onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Devices & apps");textSize:desktop.textSize;onClicked:desktop.launcherRequested()}
             }
         }
     }
     Popup {
         id:compactTime;anchors.centerIn:Overlay.overlay;width:Math.min(520,desktop.width-32);height:Math.min(500,desktop.height-32);modal:true;focus:true; padding:16
-        background:Rectangle {radius:12;color:"#142e33";border.color:"#8d9d7e"}
+        background:Rectangle {radius:12;color:"#1a2b3d";border.color:"#8d9d7e"}
         contentItem:ScrollView {
             id:timeScroll;contentWidth:availableWidth;clip:true
             ColumnLayout {
@@ -295,7 +295,7 @@ Item {
     }
     Popup {
         id:advanceMenu;anchors.centerIn:Overlay.overlay;width:Math.min(410,desktop.width-32);modal:true;focus:true;padding:20
-        background:Rectangle {radius:12;color:"#142e33";border.color:"#8d9d7e"}
+        background:Rectangle {radius:12;color:"#1a2b3d";border.color:"#8d9d7e"}
         contentItem:ColumnLayout {
             Label {Layout.fillWidth:true;text:qsTr("Advance until…");font.pixelSize:desktop.textSize;color:"#f2e8d3"}
             Repeater {model:[{id:"project",name:qsTr("Next project")},{id:"evaluation",name:qsTr("Next evaluation")},{id:"deadline",name:qsTr("Next deadline")},{id:"leadership",name:qsTr("Next leadership date")}];WorldButton {required property var modelData;Layout.fillWidth:true;text:modelData.name;textSize:desktop.textSize;enabled:campaign.paused && campaign.canPlay && !campaign.storageBlocked;onClicked:{advanceMenu.close();campaign.advanceTo(modelData.id)}}}

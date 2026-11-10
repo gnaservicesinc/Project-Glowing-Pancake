@@ -79,19 +79,31 @@ int main() {
         revised.backers={"commercial"};
         const auto financed=make(revised);
         require(financed.world.simulation.management->people->employees.empty(),"Investment does not hire staff.");
-        auto community=revised;
-        community.birth_sex="male";community.gender="woman";community.orientation="bisexual";
-        auto baseline=community;baseline.birth_sex="female";
-        const auto supported=make(community), matching=make(baseline);
-        const auto support=content::founding_terms(catalog,community), ordinary=content::founding_terms(catalog,baseline);
-        require(content::transgender_founder(community) && !content::transgender_founder(baseline) &&
-            support.buzz==ordinary.buzz+4 && supported.world.simulation.cash>matching.world.simulation.cash,
-            "The authored queer community buzz must reach an actual funding quote.");
+        auto baseline=revised;
+        baseline.gender="woman";baseline.birth_sex="female";baseline.orientation="straight";
+        const auto ordinary=content::founding_terms(catalog,baseline);
+        for(const auto& identity:std::vector<std::pair<std::string,std::string>>{{"woman","bisexual"},{"woman","queer"},{"nonbinary","straight"},{"man","gay_or_lesbian"}}) {
+            auto community=baseline;community.gender=identity.first;community.orientation=identity.second;
+            const auto supported=make(community);
+            const auto support=content::founding_terms(catalog,community);
+            require(content::queer_founder(community) && support.buzz==ordinary.buzz+catalog.queer_community_buzz &&
+                support.prestige==ordinary.prestige+catalog.queer_community_prestige,
+                "Queer gender or orientation must receive the single disclosed company and public reaction.");
+            require(supported.world.simulation.management->people->community_prestige==catalog.queer_community_prestige && supported.world.simulation.management->people->community_buzz==catalog.queer_community_buzz,"Company and public reactions must reach persistent gameplay state.");
+            require(persistence::decode_save(program,persistence::encode_save(program,supported)).checkpoint==supported,
+                "Birth record, adult identity, orientation and every portrait color must reload exactly.");
+        }
+        auto community=baseline;community.birth_sex="male";
+        require(content::transgender_founder(community) && content::queer_founder(community),"Transgender recognition must include straight founders.");
+        community.orientation="bisexual";
+        require(content::founding_terms(catalog,community).buzz==ordinary.buzz+catalog.queer_community_buzz,"Gender and orientation must not stack the same audience reaction.");
         baseline.birth_sex="indeterminate";
-        require(!content::transgender_founder(baseline),"An indeterminate birth record alone cannot establish a mismatch.");
-        require(persistence::decode_save(program,persistence::encode_save(program,supported)).checkpoint==supported,
-            "Sex at birth, adult identity and orientation must reload independently.");
-        community.orientation="unknown";refuses([&]{(void)make(community);});
+        require(!content::transgender_founder(baseline),"An indeterminate birth record cannot establish a mismatch.");
+        community.orientation="unspecified";refuses([&]{(void)make(community);});
+        community.orientation="straight";community.gender="unspecified";refuses([&]{(void)make(community);});
+        require(scenario.management->people->founder_audiences.empty(),"The campaign must not assign employee pay or mood by founder gender.");
+        require(std::ranges::none_of(catalog.scenes,[](const auto& scene){return scene.id=="arrival" || scene.id=="threshold";}),
+            "The intro must not ask an infant to move or choose a company mission.");
         revised.route="hired_ceo";revised.office="shared";revised.backers.clear();
         refuses([&]{(void)make(revised);});
         revised.leg="political";

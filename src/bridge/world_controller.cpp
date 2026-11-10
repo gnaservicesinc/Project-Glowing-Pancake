@@ -224,8 +224,13 @@ QVariantMap WorldController::founder() const {
         if(content::transgender_founder(f)) bio+=tr("\nTransgender");
         const QString orientation=f.orientation=="straight"?tr("Straight"):f.orientation=="gay_or_lesbian"?tr("Gay or lesbian"):
             f.orientation=="bisexual"?tr("Bisexual"):f.orientation=="pansexual"?tr("Pansexual"):f.orientation=="asexual"?tr("Asexual"):
-            f.orientation=="queer"?tr("Queer"):f.orientation=="questioning"?tr("Questioning"):QString{};
+            f.orientation=="demisexual"?tr("Demisexual"):f.orientation=="queer"?tr("Queer"):f.orientation=="questioning"?tr("Questioning"):QString{};
         if(!orientation.isEmpty()) bio+=tr("\nOrientation: %1").arg(orientation);
+        if(w.simulation.management && w.simulation.management->people) {
+            const auto& people=*w.simulation.management->people;
+            if(people.community_prestige || people.community_buzz)
+                bio+=tr("\nQueer community recognition: +%1 company prestige · +%2 public interest. Company mood and funding conversations use these values.").arg(people.community_prestige).arg(people.community_buzz);
+        }
     }
     return {{"id","founder"},{"portrait",portraitUrl(portrait)},{"name",name},{"initials",name.section(' ',0,0).left(1)+name.section(' ',-1).left(1)},
         {"detail",detail},{"role",managing?tr("Founder / operations manager"):w.founding && w.founding->route=="hired_ceo"?tr("Chief executive"):tr("Founder")},

@@ -9,7 +9,7 @@
 namespace {
 void require(bool value,const char* message) {if(!value) throw std::runtime_error(message);}
 QString url(const pgp::core::PortraitRecipe& p) {
-    QString result=QString::number(p.kit);for(auto id:p.parts) result+='/'+QString::number(id);return result;
+    QString result=QString::number(p.kit);for(auto id:p.parts) result+='/'+QString::number(id);for(auto id:p.style) result+='/'+QString::number(id);return result;
 }
 }
 int main(int argc,char** argv) {
@@ -39,6 +39,7 @@ int main(int argc,char** argv) {
         const auto small=provider.requestImage(url(recipe),nullptr,{64,64});
         const auto large=provider.requestImage(url(recipe),nullptr,{1024,1024});
         require(large!=small.scaled(1024,1024,Qt::IgnoreAspectRatio,Qt::SmoothTransformation),"Large portraits must render from vectors instead of upscaling a thumbnail.");
+        require(provider.requestImage(url(recipe),nullptr,{-1,-1}).width()>=240,"An unspecified image size must never fall back to a blurry 32px thumbnail.");
         const auto fallback=provider.requestImage("../../file.svg",nullptr,{64,64});
         require(!fallback.isNull(),"Malformed portrait URLs must render a local safe fallback.");
         painter.end();

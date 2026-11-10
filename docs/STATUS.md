@@ -9,7 +9,7 @@ Updated 2026-11-10
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.54.0-dev.1**, generation **55**.
+immersive redesign advances content to **0.55.0-dev.1**, generation **56**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -194,24 +194,38 @@ unchanged commercial premises until confirmation and fresh reload at 650 × 480
 with 200% text. The prologue walkthrough passes with the shared room scene.
 Physical travel to the family home remains in the backlog.
 
-The gender cards disclose audience-specific hiring and mood adjustments before
-selection. Recruiting applies those adjustments to applicants’ salary floors
-using the CEO on the date of the offer. Employee mood shows a separate factor
-while the founder leads. Applicant skills, traits and creativity are independent
-of the adjustment. Prefer not to say uses baseline terms. Focused checks compare
-identical seeded applicants, actual compensation replies, cofounder mood, dated
-leadership and exact reload. Content review passes 24 opening/save roundtrips.
-The Release software walkthrough verifies the gender-choice disclosure at 200%
-text. The recruiting, mood, contact and dismissal walkthrough also passes.
+The 2026-11-10 correction replaces the gender salary/mood matrix. Applicant
+compensation preferences remain fixed. Transgender or nonbinary identity and
+queer orientation receive one authored community response: +2 company prestige
+and +4 public founding buzz, even when both qualify. Both values are saved,
+shown in the profile, and used by company mood and funding conversations.
+This is a bounded fictional audience response, not universal public approval.
 
-The birth certificate now puts both name entries and sex at birth on the paper
-beside the bassinet. The signature and seal reveal before the framed record
-becomes available in the bedroom. Gender identity, pronouns and sexual
-orientation are separate choices at eighteen. **More choices** is attached to
-the active list. A mismatch with a recorded male or female sex sets the
-transgender flag and adds four founding buzz through queer community support.
-That buzz enters the investor quote calculation. The body shape starts from the
-birth record, while hair and clothing start from adult identity. Both are editable.
+The birth certificate edits given name, surname and sex at birth together.
+All formative, gender and orientation options appear in adaptive grids without
+pagination. Pronouns have a main menu and one additional list, including hu,
+fae, hir, ey, ze and xe sets. Nondisclosure and ranking/combinations are not
+presented as identities or pronouns. The relocation choice and late homecoming
+are removed; childhood no longer asks for a company mission.
+
+The portrait uses original frontal silhouettes and independent color swatches,
+including brows, facial hair, jacket and tie. Unspecified image requests now
+render at 480px instead of 32px. The editor uses the full window. Home and
+company computers share a functional wallpaper/icon desktop, the bedroom has
+new scalable art, and shared controls/HUD/app frames use a coordinated palette.
+Qt Quick is retained after tracing the defects to layouts, artwork and raster
+size; human visual acceptance remains open.
+
+The optimized Mac and software walkthroughs pass the actual opening through
+signing, paused company entry, continuing inbox and fresh-save continuation.
+Every choice grid is inspected at normal size and 650 × 480 with enlarged text;
+the native path selects fae/faer from the second pronoun menu and signs a working
+cofounder. The software path exercises a refused startup loan before signing
+funded terms. The device walkthrough passes laptop apps, phone compatibility,
+compact keyboard navigation and return to the world. Four focused founder,
+recruiting, portrait and bridge tests pass. The finalized content review verifies
+24 opening/save roundtrips without compiler lints. Broader player and release
+qualification remain separate.
 
 Retention, media and legitimacy reactions, full personal-world simulation,
 research balance, expanded private-life purchases and richer event preferences

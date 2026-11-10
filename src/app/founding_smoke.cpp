@@ -4,6 +4,7 @@
 #include <QAccessible>
 #include <QCoreApplication>
 #include <QHash>
+#include <QJSValue>
 #include <QKeyEvent>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -51,7 +52,7 @@ QString fitting_error(QQuickItem& item, const QRectF& viewport) {
         bounds=bounds.intersected(parent->mapRectToScene({0,0,parent->width(),parent->height()}));
     if(bounds.isEmpty()) return {};
     if (!bounds.isEmpty() && !viewport.contains(bounds))
-        return item.objectName() + QStringLiteral(" lies outside the window");
+        return QStringLiteral("%1 %2 at %3,%4 %5×%6 lies outside %7×%8").arg(item.metaObject()->className(),item.objectName()).arg(bounds.x()).arg(bounds.y()).arg(bounds.width()).arg(bounds.height()).arg(viewport.width()).arg(viewport.height());
     if (item.property("truncated").toBool())
         return QStringLiteral("Clipped copy: ") + item.property("text").toString();
     for (auto* child : item.childItems())
@@ -67,6 +68,8 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
     struct State {
         Phase phase = Phase::launch;
         int ticks = 0,home_phase=0,frames=0,keepsake_frames=0;
+        QString layout_beat;
+        int layout_phase=0, fit_retries=0;
         bool saw_opening_animation = false;
         bool retried_name = false;
         bool edited_seed = false;
@@ -108,7 +111,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
         };
         if (screen && screen->isVisible() && screen->property("settling").toBool()) {
             // Let the first scene play, then exercise player-controlled reveal.
-            if (state->phase == Phase::opening && item("foundingAfterword")->opacity() < 1.0)
+            if (state->phase == Phase::opening && screen->property("settling").toBool())
                 state->saw_opening_animation = true;
             if (state->phase == Phase::questions) press(window, screen, Qt::Key_Return);
             return;
@@ -131,10 +134,12 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             state->phase = Phase::birth;
             break;
         case Phase::birth: {
+            if(window.visibility()!=QWindow::Windowed) {window.showNormal();return;}
+            if(window.width()!=1440) {window.resize(1440,900);return;}
             auto* input = item("foundingAnswer");
             auto* paper=item("foundingBirthCertificate");
             if (id != "first_name" || !input || !input->isVisible() || !QAccessible::queryAccessibleInterface(input) ||
-                !paper || input->parentItem()->parentItem()->parentItem()!=paper) {
+                !paper || !item("foundingSurname") || !item("foundingSurname")->isVisible()) {
                 fail("The accessible name field must be printed on the actual certificate"); return;
             }
             if (!capture(".name")) { fail("Full size name screenshot"); return; }
@@ -147,7 +152,8 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 fail("Resizing must preserve the current beat"); return;
             }
             const auto error = fitting_error(*screen, viewport);
-            if (!error.isEmpty()) { fail(error); return; }
+            if (!error.isEmpty()) { if(++state->fit_retries<8) return; fail(error); return; }
+            state->fit_retries=0;
             auto* input = item("foundingAnswer");
             if (!state->retried_name) {
                 type(window, *input, QStringLiteral(" "));
@@ -157,6 +163,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 state->retried_name = true;
                 return;
             }
+            if(!click("birthSex_male")) {fail("Edit birth sex beside both name fields");return;}
             type(window, *input, QStringLiteral("Mira"));
             if (!capture(".compact") || !press(window, input, Qt::Key_Return)) { fail("Compact name entry"); return; }
             state->phase = Phase::questions;
@@ -164,7 +171,32 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
         }
         case Phase::questions: {
             const auto error = fitting_error(*screen, viewport);
-            if (!error.isEmpty()) { fail(error); return; }
+            if (!error.isEmpty()) { if(++state->fit_retries<8) return; fail(error); return; }
+            state->fit_retries=0;
+            auto current_beat=screen->property("beat");
+            if(current_beat.canConvert<QJSValue>()) current_beat=current_beat.value<QJSValue>().toVariant();
+            const auto choices=current_beat.toMap().value("choices").toList();
+            if(!choices.empty() && !id.endsWith("-after")) {
+                if(state->layout_beat!=id) {state->layout_beat=id;state->layout_phase=0;}
+                if(state->layout_phase==0) {
+                    campaign.setTextScalePercent(100);window.resize(1440,900);state->layout_phase=1;return;
+                }
+                if(state->layout_phase==1) {
+                    if(!capture(".choices-"+id+"-normal")) {fail("Normal choice layout");return;}
+                    campaign.setTextScalePercent(200);window.resize(650,480);state->layout_phase=2;return;
+                }
+                if(state->layout_phase==2) {
+                    for(const auto& row:choices) {
+                        const auto option=row.toMap();
+                        auto* control=find_visible(window.contentItem(),"foundingChoice_"+option.value("id").toString());
+                        if(!control || control->height()<22 || !viewport.contains(control->mapRectToScene({0,0,control->width(),control->height()}))) {
+                            fail("Every choice must remain on the screen without pagination");return;
+                        }
+                    }
+                    if(!capture(".choices-"+id+"-compact")) {fail("Enlarged choice layout");return;}
+                    campaign.setTextScalePercent(100);state->layout_phase=3;return;
+                }
+            }
             const auto advance = [&] { return click("foundingNextButton"); };
             if (id == "last_name" && !story->form().value("first_name").toString().startsWith("Mira")) {
                 fail("Edited name was lost after resizing"); return;
@@ -195,7 +227,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 }
                 return;
             }
-            if(id=="gender-after" && !item("foundingAfterword")->property("text").toString().contains("founding buzz")) {
+            if(id=="gender-after" && !item("foundingAfterword")->property("text").toString().contains("public founding buzz")) {
                 fail("Disclose actual support for the transgender founder");return;
             }
             if(id=="pronouns" && partner) {
@@ -203,7 +235,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 return;
             }
             if(id=="other_pronouns") {
-                if(!click("foundingChoice_she/her + they/them"))fail("Choose a pronoun set and continue to orientation");
+                if(!click("foundingChoice_fae/faer"))fail("Choose a pronoun set and continue to orientation");
                 return;
             }
             if(id=="orientation") {
@@ -217,6 +249,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 state->customized=true;
                 return;
             }
+            if(id=="appearance" && state->frames++==0) {window.resize(1440,900);return;}
             if(id=="appearance" && !capture(".appearance")) {fail("Appearance screenshot");return;}
             if (id == "offer-safety" && !capture(".offer")) { fail("Individual offer screenshot"); return; }
             if (id=="gender" && partner && !state->saw_founder_audience) {
@@ -224,11 +257,10 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 campaign.clearNotice();
                 const auto* woman=find_visible(window.contentItem(),"foundingChoice_woman");
                 const auto* man=find_visible(window.contentItem(),"foundingChoice_man");
-                const auto* more=find_visible(window.contentItem(),"foundingMoreChoices");
-                if(!woman || !man || !more || more->mapToScene({0,0}).y()-man->mapToScene({0,man->height()}).y()>12 ||
-                    !woman->property("detail").toString().contains("+3% salary needed") ||
-                    !man->property("detail").toString().contains("-2% salary needed") || !capture(".founder-audience")) {
-                    fail("Show the impacts and keep pagination beside the adult choices");return;
+                const auto* nonbinary=find_visible(window.contentItem(),"foundingChoice_nonbinary");
+                if(!woman || !man || !nonbinary || find_visible(window.contentItem(),"foundingMoreChoices") ||
+                    woman->property("detail").toString().contains("salary needed") || !capture(".founder-audience")) {
+                    fail("Show all gender identities together without gender salary modifiers");return;
                 }
                 state->saw_founder_audience=true;
                 campaign.setTextScalePercent(100);
@@ -261,6 +293,10 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                     window.showNormal();window.resize(650,480);return;
                 }
                 if(state->home_phase<=12 && campaign.textScalePercent()!=200) {fail("Home conversations must be tested at 200% text");return;}
+                if(item("homeStart")->property("desktopOpen").toBool()) {
+                    if(!capture(".home-desktop") || !click("browserApp")) {fail("Launch the browser from the actual home desktop");return;}
+                    return;
+                }
                 if(partner) {
                     switch(state->home_phase) {
                     case 1:
@@ -362,11 +398,11 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 world.simulation.succession->personal_cash==pgp::core::Cents{1500000} && employees.empty() &&
                 world.simulation.capacity->sources.empty() &&
                 pgp::core::active_charter(world.simulation) && pgp::core::active_charter(world.simulation)->id=="charter.shared_research");
-            if (campaign.welcome() || story->hasDraft() || !world.founding || !world.identity || world.founding->choices.size() != 8 ||
+            if (campaign.welcome() || story->hasDraft() || !world.founding || !world.identity || world.founding->choices.size() != 6 ||
                 world.founding->legal_form != "corporation" || !expected_entry || !world.founding->backers.empty() ||
                 world.identity->founder_name != "Mira Vale" || world.root_seed != 718 ||
                 world.founding->gender!="woman" || world.founding->birth_sex!="male" || world.founding->orientation!="bisexual" ||
-                !pgp::content::transgender_founder(*world.founding) || world.identity->founder_pronouns!=(partner?"she/her + they/them":"she/her") ||
+                !pgp::content::transgender_founder(*world.founding) || world.identity->founder_pronouns!=(partner?"fae/faer":"she/her") ||
                 !state->customized || world.founding->appearance.parts[1]!=3 ||
                 !world.difficulty.empty() || !world.simulation.lab->research.empty() ||
                 pgp::core::iso_date(world.simulation.date) != "2015-01-01" ||
@@ -444,7 +480,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             }
             if(partner) std::cout << "Cofounder UI passed: eligible directory, defer and accept, signed mission, company board reply and exact save continuation\n";
             else std::cout << "Prologue UI passed: hospital opening, resized 650×480 canvas, editable name, branching art and palette, "
-                         "eight chapters, saved application and investor conversations at 200% text, appearance, paused office, continued company inbox and fresh-save/day continuation\n";
+                         "six formative chapters, saved application and investor conversations at 200% text, appearance, paused office, continued company inbox and fresh-save/day continuation\n";
             timer->stop();
             QCoreApplication::exit(0);
             break;

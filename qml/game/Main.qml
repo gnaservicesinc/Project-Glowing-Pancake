@@ -403,7 +403,7 @@ ApplicationWindow {
                 objectName: "deviceApplicationBar"
                 Layout.fillWidth: true
                 implicitHeight: appBar.implicitHeight+10
-                color: "#18363b"
+                color: "#203449"
                 RowLayout {
                     id: appBar
                     anchors.fill: parent
@@ -411,7 +411,7 @@ ApplicationWindow {
                     spacing: 9
                     WorldButton {
                         objectName: "deviceHomeButton"
-                        text: qsTr("Apps")
+                        text: qsTr("Desktop")
                         textSize: window.textSize
                         visible: !campaign.welcome
                         onClicked: deviceHome.showFor(window.activeDevice)

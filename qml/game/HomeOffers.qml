@@ -84,7 +84,7 @@ ColumnLayout {
             implicitHeight: listing.implicitHeight + 24
             radius: 10
             color: "#23434a"
-            border.color: "#567c76"
+            border.color: "#63788c"
             ColumnLayout {
                 id: listing
                 anchors.left: parent.left

@@ -36,6 +36,8 @@ pgp_project_target(pgp-game)
 qt_add_resources(pgp-game game_ui
     PREFIX "/pgp" BASE "${PROJECT_SOURCE_DIR}/qml"
     FILES "${PROJECT_SOURCE_DIR}/qml/game/Main.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/AppearanceEditor.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/DesktopSurface.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/Workspace3D.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/Headquarters3D.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/HeadquartersPlan.qml"
@@ -178,3 +180,5 @@ endif()
 qt_add_resources(pgp-game campaign_content
     PREFIX "/pgp/content" BASE "${PROJECT_SOURCE_DIR}/data/runtime"
     FILES ${pgp_game_runtime_content})
+
+qt_add_resources(pgp-game desktop_art PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/ui/desktop-wallpaper.svg" "${PROJECT_SOURCE_DIR}/assets/ui/family-bedroom.svg")

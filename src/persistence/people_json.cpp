@@ -74,15 +74,17 @@ Json people_json(const core::PeopleState& p) {
             {"opening",contact.opening?Json{{"source",contact.opening->source},{"outcome",contact.opening->outcome}}:Json(nullptr)}});
     }
     Json result{{"stream",p.stream},{"next_id",p.next_id},{"starts_on",p.starts_on.value()},{"next_recruitment",p.next_recruitment.value()},
-        {"offered_pay",p.offered_pay.value()},{"mission",p.mission},{"founding_prestige",p.founding_prestige},{"applicants",std::move(applicants)},{"employees",std::move(employees)},{"known_people",std::move(known)},{"contacts",std::move(contacts)}};
+        {"offered_pay",p.offered_pay.value()},{"mission",p.mission},{"founding_prestige",p.founding_prestige},{"community_prestige",p.community_prestige},{"community_buzz",p.community_buzz},{"applicants",std::move(applicants)},{"employees",std::move(employees)},{"known_people",std::move(known)},{"contacts",std::move(contacts)}};
     if(!p.founder_gender.empty()) result["founder_gender"]=p.founder_gender;
     return result;
 }
 core::PeopleState parse_people(const Json& j) {
-    fields(j,"people",{"stream","next_id","starts_on","next_recruitment","offered_pay","mission","founding_prestige","applicants","employees","known_people","contacts"},{"founder_gender"});
+    fields(j,"people",{"stream","next_id","starts_on","next_recruitment","offered_pay","mission","founding_prestige","community_prestige","community_buzz","applicants","employees","known_people","contacts"},{"founder_gender"});
     core::PeopleState p;p.stream=u64(j.at("stream"),"stream");p.next_id=u64(j.at("next_id"),"next_id");
     p.starts_on=core::OrdinalDay{i64(j.at("starts_on"),"starts_on")};p.next_recruitment=core::OrdinalDay{i64(j.at("next_recruitment"),"next_recruitment")};
     p.offered_pay=core::SalaryRate{i64(j.at("offered_pay"),"offered_pay")};p.mission=text(j.at("mission"),"mission",32);p.founding_prestige=static_cast<std::uint32_t>(u64(j.at("founding_prestige"),"prestige",10));
+    p.community_prestige=static_cast<std::uint32_t>(u64(j.at("community_prestige"),"community prestige",10));
+    p.community_buzz=static_cast<std::uint32_t>(u64(j.at("community_buzz"),"community buzz",20));
     if(j.contains("founder_gender")) p.founder_gender=text(j.at("founder_gender"),"founder_gender",32);
     array(j.at("applicants"),"applicants",12);for(const auto& a:j.at("applicants")) p.applicants.push_back(parse_applicant(a));
     if(!j.at("known_people").is_object() || j.at("known_people").size()>512) invalid("known_people","Authored identity count out of bounds");

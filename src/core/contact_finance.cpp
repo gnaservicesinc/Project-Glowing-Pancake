@@ -34,7 +34,7 @@ std::uint32_t publications_on(const SimulationState& state,OrdinalDay day) {
     return state.lab?static_cast<std::uint32_t>(std::ranges::count_if(state.lab->publications,[&](const auto& publication){return publication.day<=day;})):0;
 }
 std::uint32_t reputation(const SimulationState& state,std::uint32_t publications) {
-    return std::min(100U,state.management->people->founding_prestige+publications);
+    return std::min(100U,state.management->people->founding_prestige+state.management->people->community_buzz+publications);
 }
 std::vector<OrdinalDay> independent_evaluation_dates(const SimulationState& state) {
     std::vector<OrdinalDay> dates;

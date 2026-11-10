@@ -471,6 +471,10 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                     });
                     if(!partner_contact || count!=1) invalid("The signed cofounder must match the saved contact and opening team.");
                 }
+                const bool recognized=content::queer_founder(*world.founding);
+                if(management.people->community_prestige!=(recognized?scenario->founding->queer_community_prestige:0) ||
+                    management.people->community_buzz!=(recognized?scenario->founding->queer_community_buzz:0))
+                    invalid("Community recognition must match the saved identity and authored audience response.");
                 if(management.catalog.people && management.catalog.people->mood && management.people->founding_prestige!=std::min(10U,terms.prestige))
                     invalid("The founder's reputation differs from the saved biography.");
                 for(const auto& employee:management.people->employees) if(employee.terms.profile.role=="Founder / researcher") {

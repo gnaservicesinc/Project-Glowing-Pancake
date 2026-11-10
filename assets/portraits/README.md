@@ -1,45 +1,19 @@
-# Employee portrait kit v1
+# Employee portrait art
 
-Profiles store `portrait: {kit: 1, parts: [...], style: [...]}`. The 15-part layer order is
-head, hair, nose, ears, mouth, chin, neck, eyes, eyebrows, facial hair, glasses,
-skin color, hair color, clothing color, background. JSON integer encoding is
-slightly larger; no pixel images, SVG documents, paths or URLs enter saves.
-Existing IDs retain their meanings. Fresh saves preserve both arrays exactly;
-support for earlier development-save recipes is not a requirement.
+The current kit uses original frontal vector heads, hair and facial features,
+with a restrained illustrated palette shared with the rooms and desktop.
+All six heads use the same frontal feature anchors; side-facing source paths
+are no longer included. The archived Bitclone CC0 source remains as a reference.
+Runtime art is original project work under GPL-3.0-or-later, not AI-generated.
 
-Appearance is generated once on application/identity creation through a private
-visual stream. It does not consume simulation RNG or affect skills, pay, gender,
-pronouns or eligibility. Hires copy the applicant's exact profile.
+Profiles save 15 part IDs and 12 style IDs. The style array includes body build,
+height, clothing cut, pattern, eyes, lips, glasses, pattern color, brows,
+facial hair, jacket and tie. Hair, brows and facial hair have independent colors.
+Gender only suggests an editable starting look. Appearance never consumes the
+simulation RNG or sets aptitude, salary or eligibility.
 
-The game composes trusted bundled vector fragments and renders at each displayed
-portrait's device-pixel size. Only visible portrait size drives the texture size,
-with a 2048-pixel safety cap. Card portraits, founder HUD and enlarged profile use
-the same recipe. Keyboard activation and pointer selection open the profile;
-hover/focus styling respects reduced motion. Dense and narrow windows retain a
-scrollable layout. No network retrieval is performed in the game.
-
-## Sources and preparation
-
-`kit-v1.json` uses selected normalized head and rear-hair paths from **Bitclone
-Basic Face Kit 2**, VexStrips (with source remix credit to future), uploaded
-2018-05-19: https://openclipart.org/detail/302186/bitclone-basic-face-kit-2.
-The user supplied the source SVG, retained byte-for-byte in `sources/`.
-The source's publication page and Openclipart's CC0 policy were checked 2026-11-07:
-https://openclipart.org/share and https://creativecommons.org/publicdomain/zero/1.0/.
-Those selected paths retain their CC0 status. Complementary front hair, facial
-features, necks, clothing and palette are original code-authored project art under
-the repository license. This is procedural vector composition, not image-model
-output. Other files from the supplied SVG folder are references and are not bundled.
-
-`python3 tools/prepare_portrait_kit.py --check` reproduces the reviewed kit from
-the retained source and fails if its source bytes change. The script records the
-source SHA-256 and reviewed geometry bounds. SVG editor metadata, executable
-content, filters, external resources and statistical/source examples are excluded
-from the bundled kit. `assets/manifest.json` records provenance and modifications.
-
-The immersive-company extension adds eight bounded style IDs: body shape,
-height, clothing style, shirt pattern, eye color, lip color, glasses color and
-pattern color. All are saved with the recipe and generated for new employees.
-Procedural body/clothing/pattern paths are original project code; no new external
-portrait sources were introduced. Gender chooses an editable starting look;
-all variants remain selectable. Existing 15 part IDs keep their meanings.
+`python3 tools/prepare_portrait_kit.py --check` verifies the reproducible vector
+kit. Rendering uses the actual requested pixel density, with a 2048-pixel cap.
+An unspecified image request renders at 480 pixels, rather than a 32px fallback.
+Fresh saves retain every part and color; earlier development saves are not a
+compatibility target.

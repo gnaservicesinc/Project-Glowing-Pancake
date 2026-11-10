@@ -19,10 +19,11 @@ Rectangle {
     property bool signing:false
     property real signature:0
     property string pendingApp:"room"
+    property bool desktopOpen:false
     readonly property bool transitioning:pageTransition.running
     signal menuRequested()
     signal appearanceRequested()
-    color:"#102830"
+    color:"#142333"
     BirthKeepsake {
         id: birthKeepsake
         textSize: home.typeSize
@@ -100,7 +101,7 @@ Rectangle {
     ColumnLayout {
         width:homeScroll.availableWidth;spacing:12
         RowLayout {
-            Image {source:home.story.portrait;Layout.preferredWidth:64;Layout.preferredHeight:64}
+            Image {source:home.story.portrait;Layout.preferredWidth:72;Layout.preferredHeight:72;sourceSize:Qt.size(144*Screen.devicePixelRatio,144*Screen.devicePixelRatio)}
             ColumnLayout {
                 Layout.fillWidth:true
                 Heading {text:home.story.form.first_name+" "+home.story.form.last_name}
@@ -112,13 +113,13 @@ Rectangle {
         Flow {
             Layout.fillWidth:true;spacing:8
             Repeater {model:[{id:"room",name:qsTr("⌂ Home")},{id:"browser",name:qsTr("◉ Browser")},{id:"messages",name:home.waitingOffers?qsTr("✉ Messages (%1)").arg(home.waitingOffers):qsTr("✉ Messages")},{id:"bank",name:qsTr("▤ Personal accounts")}]
-                WorldButton {required property var modelData;objectName:"homeApp_"+modelData.id;text:modelData.name;textSize:home.typeSize;checked:home.app===modelData.id;onClicked:home.openApp(modelData.id)}
+                WorldButton {required property var modelData;objectName:"homeApp_"+modelData.id;text:modelData.name;textSize:home.typeSize;checked:home.app===modelData.id;onClicked: modelData.id==="browser" ? home.desktopOpen=true : home.openApp(modelData.id)}
             }
             WorldButton {text:qsTr("Appearance");textSize:home.typeSize;onClicked:{home.signing=false;home.appearanceRequested()}}
         }
         Rectangle {
             visible:campaign.showGuide && home.story.form.home_guide!=="dismissed" && ["room","browser"].includes(home.app)
-            Layout.fillWidth:true;implicitHeight:guide.implicitHeight+20;color:"#31524e";radius:10
+            Layout.fillWidth:true;implicitHeight:guide.implicitHeight+20;color:"#354b5e";radius:10
             RowLayout {
                 id:guide;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:10
                 Copy {text:qsTr("Your computer is your way into the world. Open the browser to find a lawyer, pitch an investor or apply to a lab. Nothing is signed until you review the terms.")}
@@ -139,7 +140,7 @@ Rectangle {
                         textSize: home.typeSize
                         bedroom: home.room === "Bedroom"
                         showRecord: true
-                        onComputerRequested: home.openApp("browser")
+                        onComputerRequested: home.desktopOpen=true
                         onRecordRequested: birthKeepsake.open()
                     }
                     Flow {Layout.fillWidth:true;spacing:8;Repeater {model:["Bedroom"].concat(home.story.familyHome.roomNames || []);WorldButton {required property string modelData;text:modelData;textSize:home.typeSize;checked:home.room===modelData;onClicked:{home.room=modelData;home.story.setField("home_room",modelData)}}}}
@@ -154,7 +155,7 @@ Rectangle {
                         model:[{id:"legal",name:"Cedar & Quill · business law",detail:qsTr("Found a corporation or nonprofit. Review registration costs, ownership and your investment.")},{id:"labs",name:"Alder Research · careers",detail:qsTr("Apply to lead an existing laboratory. Your biography determines whether the board will consider you.")},{id:"investors",name:"Founders’ Exchange · investors",detail:qsTr("Meet potential partners, compare funding and keep track of who wants a say.")},{id:"bank",name:"Redwood Mutual · personal banking",detail:qsTr("Inspect savings and choose the money you can afford to put at risk.")}]
                         Rectangle {
                             required property var modelData
-                            Layout.fillWidth:true;implicitHeight:service.implicitHeight+24;radius:12;color:"#24444a";border.color:"#567c76"
+                            Layout.fillWidth:true;implicitHeight:service.implicitHeight+24;radius:12;color:"#2a3e52";border.color:"#63788c"
                             ColumnLayout {id:service;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:12;Heading {text:modelData.name} Copy {text:modelData.detail} WorldButton {objectName:"homeService_"+modelData.id;text:qsTr("Visit website →");textSize:home.typeSize;onClicked:home.openApp(modelData.id)}}
                         }
                     }
@@ -189,8 +190,8 @@ Rectangle {
                         Layout.fillWidth:true
                         implicitHeight:loanOffer.implicitHeight+28
                         radius:12
-                        color:"#284a46"
-                        border.color:"#648779"
+                        color:"#304657"
+                        border.color:"#78908f"
                         ColumnLayout {
                             id:loanOffer
                             anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:14
@@ -285,4 +286,29 @@ Rectangle {
         }
     }
 }
+    Rectangle {
+        visible:home.desktopOpen
+        anchors.fill:parent;color:"#111d29";z:20
+        DeviceFrame {
+            anchors.fill:parent;anchors.margins:home.width<800?6:22
+            kind:"laptop";textSize:home.typeSize
+            DesktopSurface {
+                anchors.fill:parent;textSize:home.typeSize
+                owner:home.story.form.first_name+" "+home.story.form.last_name
+                date:qsTr("January 2015")
+                status:qsTr("A new morning.\nA world of possibilities.")
+                applications:[
+                    {id:"browser",name:qsTr("Web browser"),glyph:"society",tint:"#638a9e"},
+                    {id:"messages",name:qsTr("Messages"),glyph:"inbox",tint:"#9d8462"},
+                    {id:"bank",name:qsTr("Personal accounts"),glyph:"office",tint:"#628a7c"},
+                    {id:"legal",name:qsTr("Found a company"),glyph:"institutions",tint:"#96809f"},
+                    {id:"labs",name:qsTr("Careers"),glyph:"lab",tint:"#607e9f"},
+                    {id:"investors",name:qsTr("Founders’ Exchange"),glyph:"people",tint:"#a27b68"}
+                ]
+                onCloseRequested:home.desktopOpen=false
+                onLaunched:(app,section)=>{home.desktopOpen=false;home.openApp(app)}
+            }
+        }
+    }
+
 }

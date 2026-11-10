@@ -8,7 +8,7 @@ ComboBox {
     implicitHeight: Math.max(40,font.pixelSize*2.6)
     leftPadding: 12;rightPadding: 30
     contentItem: Text {text:control.displayText;font:control.font;color:control.enabled?"#e8e5d3":"#7b9690";verticalAlignment:Text.AlignVCenter;elide:Text.ElideRight}
-    background: Rectangle {radius:7;color:control.down?"#35544e":"#203d3f";border.width:control.visualFocus?2:1;border.color:control.visualFocus?"#dabe83":"#56746c"}
+    background: Rectangle {radius:7;color:control.down?"#35544e":"#203d3f";border.width:control.visualFocus?2:1;border.color:control.visualFocus?"#dabe83":"#63758b"}
     indicator: Text {x:control.width-width-12;y:(control.height-height)/2;text:"⌄";font.pixelSize:control.font.pixelSize;color:"#bed7c7"}
     delegate: ItemDelegate {
         id: row

@@ -49,11 +49,11 @@ std::map<std::string, EmployeeMood> workplace_moods(const SimulationState& state
     }
 
     const auto* leader = state.succession && !state.succession->terms.empty() ? &state.succession->terms.back() : nullptr;
-    std::size_t company_reputation = 0;
+    std::size_t company_reputation = people.community_prestige;
     std::size_t ceo_reputation = !leader || leader->person == "founder" ? people.founding_prestige : 0;
     std::set<std::string_view> researching;
     if (state.lab) {
-        company_reputation = state.lab->publications.size();
+        company_reputation += state.lab->publications.size();
         for (const auto& publication : state.lab->publications)
             if (!leader || publication.day >= leader->starts_on) ++ceo_reputation;
         std::set<std::string_view> active;

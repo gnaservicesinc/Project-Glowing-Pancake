@@ -139,6 +139,7 @@ struct PeopleState {
     SalaryRate offered_pay{10000};
     std::string mission="research";
     std::uint32_t founding_prestige=0;
+    std::uint32_t community_prestige=0, community_buzz=0;
     std::vector<Applicant> applicants;
     std::vector<Employee> employees;
     // Authored specialist/executive offers also have stable, saved personal profiles.

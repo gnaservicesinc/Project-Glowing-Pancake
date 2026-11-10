@@ -43,7 +43,7 @@ Item {
         anchors.topMargin: frame.topRim
         anchors.bottomMargin: frame.deck
         radius: 7
-        color: "#12282e"
+        color: "#162638"
         border.color: "#0c1a1f"
         clip: true
     }

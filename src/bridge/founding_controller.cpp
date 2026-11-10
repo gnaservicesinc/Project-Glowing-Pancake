@@ -23,13 +23,13 @@ QString money(std::int64_t cents) {
 }
 
 QVariantMap defaults() {
-    return {{"first_name","Alex"},{"last_name","Vale"},{"birth_sex","indeterminate"},{"gender","unspecified"},{"pronouns","they/them"},{"orientation","unspecified"},
+    return {{"first_name","Alex"},{"last_name","Vale"},{"birth_sex","indeterminate"},{"gender","nonbinary"},{"pronouns","they/them"},{"orientation","questioning"},
         {"home_app","room"},{"home_room","Bedroom"},{"home_guide",""},{"home_offer",""},{"home_replies",QVariantMap{}},{"company_draft","Daybreak Research"},
         {"investment","-1"},{"charter",""},{"company","Daybreak Research"},{"seed","19972015"},{"headquarters","US-CA"},{"difficulty","difficulty.standard"},
         {"sociability","introverted"},{"activity","sedentary"},{"disposition","deliberate"},
         {"family","middle"},{"leg","genius"},{"route","investment"},{"legal_form","corporation"},
         {"office","home"},{"researcher","founder"},{"mission","survival"},{"mission_draft","survival"},
-        {"style",QVariantList{0,0,0,0,0,0,0,0}},{"appearance",QVariantList{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}},
+        {"style",QVariantList{0,0,0,0,0,0,0,0,0,0,0,0}},{"appearance",QVariantList{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}},
         {"choices",QVariantMap{}},{"backers",QStringList{}},{"partner",""}};
 }
 
@@ -75,7 +75,7 @@ FoundingController::FoundingController(const content::Collection& collection, st
     if (!file.open(QIODevice::ReadOnly) || file.size() > 32768) return;
     const auto saved = QJsonDocument::fromJson(file.readAll()).object();
     const auto format = saved.value("format").toString();
-    if (format != QStringLiteral("founding-draft-4")) return;
+    if (format != QStringLiteral("founding-draft-5")) return;
     const auto fields = saved.value("form").toObject().toVariantMap();
     for (auto it = fields.begin(); it != fields.end(); ++it)
         if (form_.contains(it.key())) form_[it.key()] = it.value();
@@ -426,30 +426,32 @@ QVariantMap FoundingController::startupLoan() const {
         .arg(money(loan.principal_cents)).arg(static_cast<double>(loan.monthly_interest_bp)/100).arg(money(static_cast<std::int64_t>(monthly)),text(core::iso_date(due)),money(loan.minimum_investment_cents))}};
 }
 QString FoundingController::genderAudience(QString gender) const {
-    if(audiences_.empty()) return {};
-    const auto key=gender.toStdString();
-    QStringList rows;
-    for(const auto& effect:audiences_) if(effect.founder==key) {
-        const auto audience=effect.audience==key?tr("With your gender"):effect.audience=="woman"?tr("With women"):effect.audience=="man"?tr("With men"):tr("With nonbinary people");
-        QStringList impacts;
-        if(effect.salary_bp) {
-            const auto bp=effect.salary_bp;
-            const auto salary=(bp>0?QStringLiteral("+"):QString{})+QLocale().toString(static_cast<double>(bp)/100,'f',bp%10?2:bp%100?1:0);
-            impacts.push_back(tr("%1% salary needed").arg(salary));
-        }
-        if(effect.mood) impacts.push_back(tr("%1 mood").arg((effect.mood>0?QStringLiteral("+"):QString{})+QString::number(effect.mood)));
-        rows.push_back(tr("%1: %2").arg(audience,impacts.join(tr(", "))));
-    }
-    return rows.isEmpty()?tr("No gender-based hiring or mood adjustment."):rows.join(QLatin1Char('\n'));
-}
-QString FoundingController::communitySupport(QString gender) const {
-    if(!catalog_ || !catalog_->queer_community_buzz) return {};
     content::FoundingSelection identity;
     identity.birth_sex=form_.value("birth_sex").toString().toStdString();
     identity.gender=gender.toStdString();
-    if(!content::transgender_founder(identity)) return {};
-    return tr("Queer community support adds +%1 founding buzz and can improve investor terms.").arg(catalog_->queer_community_buzz);
+    identity.orientation="straight";
+    return content::queer_founder(identity) ? communitySupport(gender) :
+        tr("Your identity does not set employees’ pay or workplace mood.");
 }
+QString FoundingController::communitySupport(QString gender) const {
+    if(!catalog_) return {};
+    content::FoundingSelection identity;
+    identity.birth_sex=form_.value("birth_sex").toString().toStdString();
+    identity.gender=gender.toStdString();
+    identity.orientation=form_.value("orientation").toString().toStdString();
+    if(!content::queer_founder(identity)) return {};
+    return recognitionTerms();
+}
+QString FoundingController::recognitionTerms() const {
+    if(!catalog_) return {};
+    return tr("Queer community recognition: +%1 company prestige and +%2 public founding buzz. Applied once across gender and orientation. Company mood and funding conversations use this reputation. Employees keep their own pay preferences.")
+        .arg(catalog_->queer_community_prestige).arg(catalog_->queer_community_buzz);
+}
+QString FoundingController::orientationAudience(QString orientation) const {
+    auto identity=selection();identity.orientation=orientation.toStdString();
+    return content::queer_founder(identity)?recognitionTerms():tr("No additional community recognition from this orientation.");
+}
+
 QString FoundingController::signingError() const {
     if(!catalog_) return tr("The founding catalog is unavailable.");
     try {
@@ -510,7 +512,7 @@ void FoundingController::saveDraft() {
         std::filesystem::create_directories(draft_path_.parent_path());
         QSaveFile file{QString::fromStdU16String(draft_path_.u16string())};
         const auto bytes = QJsonDocument{QJsonObject::fromVariantMap(
-            {{"format","founding-draft-4"},{"beat",beat_},{"form",form_}})}.toJson(QJsonDocument::Compact);
+            {{"format","founding-draft-5"},{"beat",beat_},{"form",form_}})}.toJson(QJsonDocument::Compact);
         if (!file.open(QIODevice::WriteOnly) || file.write(bytes) != bytes.size() || !file.commit())
             error_ = tr("Could not save your place in the prologue.");
         else error_.clear();
@@ -544,7 +546,7 @@ void FoundingController::setField(QString key, QVariant value) {
         form_.value(key).toString() == answer) return;
     if (key=="route" && answer=="hired_ceo" && beat_=="home") return;
     if (key=="mission" && !form_.value("partner").toString().isEmpty()) return;
-    if(key=="gender" && answer!="woman" && answer!="man" && answer!="nonbinary" && answer!="unspecified") return;
+    if(key=="gender" && answer!="woman" && answer!="man" && answer!="nonbinary") return;
     if(key=="birth_sex" && answer!="female" && answer!="male" && answer!="indeterminate") return;
     if(key=="orientation" && std::ranges::find(content::founder_orientations,answer.toStdString())==content::founder_orientations.end()) return;
     if(key=="pronouns" && !pronounOptions().contains(answer)) return;
@@ -553,7 +555,7 @@ void FoundingController::setField(QString key, QVariant value) {
     form_[key] = answer;
     if(key=="gender" || key=="birth_sex") {
         auto parts=form_.value("appearance").toList(),style=form_.value("style").toList();
-        if(parts.size()==15 && style.size()==8) {
+        if(parts.size()==15 && style.size()==12) {
             if(key=="birth_sex") style[0]=answer=="female"?5:answer=="male"?0:2;
             else {parts[1]=answer=="woman"?2:answer=="man"?0:1;parts[9]=0;style[2]=answer=="woman"?1:0;}
             form_["appearance"]=parts;form_["style"]=style;
@@ -615,17 +617,16 @@ void FoundingController::deriveOpening() {
             form_["mission"]=form_.value("mission_draft","survival");
         } else form_["mission"]=text(partner->objective);
     }
-    if(form_.value("gender")!="woman" && form_.value("gender")!="man" && form_.value("gender")!="nonbinary" && form_.value("gender")!="unspecified") form_["gender"]="unspecified";
+    if(form_.value("gender")!="woman" && form_.value("gender")!="man" && form_.value("gender")!="nonbinary") form_["gender"]="nonbinary";
     if(form_.value("birth_sex")!="female" && form_.value("birth_sex")!="male" && form_.value("birth_sex")!="indeterminate") form_["birth_sex"]="indeterminate";
-    if(std::ranges::find(content::founder_orientations,form_.value("orientation").toString().toStdString())==content::founder_orientations.end()) form_["orientation"]="unspecified";
+    if(std::ranges::find(content::founder_orientations,form_.value("orientation").toString().toStdString())==content::founder_orientations.end()) form_["orientation"]="questioning";
     if(!pronounOptions().contains(form_.value("pronouns").toString())) form_["pronouns"]="they/them";
 }
 
 QStringList FoundingController::pronounOptions() const {
     // Sources and editorial policy: docs/IMMERSIVE_COMPANY_PLAN.md.
-    return {"she/her","he/him","they/them","she/her + they/them","he/him + they/them",
-        "she/her + he/him","she/her + he/him + they/them","xe/xem","ze/hir","ze/zir",
-        "zie/hir","ey/em","e/em","per/per","fae/faer"};
+    return {"she/her","he/him","they/them","e/em","ey/em","fae/faer","hu/hum","hir/hir",
+        "per/per","ve/ver","xe/xem","ze/hir","ze/zir","zie/hir","thon/thon"};
 }
 QString FoundingController::portrait() const {
     QString url="image://portraits/1";
@@ -636,15 +637,27 @@ QString FoundingController::portrait() const {
 QVariantList FoundingController::appearanceParts() const {
     QVariantList rows;
     const QStringList labels{tr("Head"),tr("Hair style"),tr("Nose"),tr("Ears"),tr("Mouth"),tr("Chin"),tr("Neck"),tr("Eyes"),tr("Brows"),tr("Facial hair"),tr("Glasses"),tr("Skin tone"),tr("Hair color"),tr("Clothing"),tr("Background")};
-    for(qsizetype i=0;i<labels.size();++i) rows.push_back(QVariantMap{{"name",labels[i]},{"count",core::portrait_part_counts[static_cast<std::size_t>(i)]}});
-    const QStringList styles{tr("Body shape"),tr("Height"),tr("Clothing style"),tr("Shirt pattern"),tr("Eye color"),tr("Lip color"),tr("Glasses color"),tr("Pattern color")};
-    for(qsizetype i=0;i<styles.size();++i) rows.push_back(QVariantMap{{"name",styles[i]},{"count",core::portrait_style_counts[static_cast<std::size_t>(i)]}});
+    const QVariantList palettes{
+        QStringList{"#f3d3b3","#e4b08a","#cb936c","#b57952","#995f43","#7b4936","#5c392e","#dfbaa0"},
+        QStringList{"#273332","#46352e","#714b32","#a96c3d","#c3a371","#674a43","#a6a9a0","#d8d7c7"},
+        QStringList{"#356a69","#a46a4c","#4f6684","#756487","#748259","#b18b48"},
+        QStringList{"#c5d6c6","#dfcead","#b8cdcd","#d3c5bf","#bbc4d2","#c9cbb7"}};
+    for(qsizetype i=0;i<labels.size();++i) rows.push_back(QVariantMap{{"name",labels[i]},{"count",core::portrait_part_counts[static_cast<std::size_t>(i)]},
+        {"palette",i>=11?palettes[i-11]:QVariant{}}});
+    const QStringList styles{tr("Body shape"),tr("Height"),tr("Clothing style"),tr("Shirt pattern"),tr("Eye color"),tr("Lip color"),tr("Glasses color"),tr("Pattern color"),tr("Brow color"),tr("Facial hair color"),tr("Jacket color"),tr("Tie color")};
+    const QVariantList stylePalettes{QVariant{},QVariant{},QVariant{},QVariant{},
+        QStringList{"#64766a","#527c9c","#714e38","#443c38","#a4a177","#888e92","#548a78","#7b6590"},
+        QStringList{"#804d4b","#a86e65","#be8a7a","#804c68","#604848","#c18d89"},
+        QStringList{"#ead4ae","#374f67","#bd8581","#80ac91","#b8a2ca","#e4dfd3"},
+        QStringList{"#ead4ae","#374f67","#bd8581","#80ac91","#b8a2ca","#e4dfd3"}};
+    for(qsizetype i=0;i<styles.size();++i) rows.push_back(QVariantMap{{"name",styles[i]},{"count",core::portrait_style_counts[static_cast<std::size_t>(i)]},
+        {"palette",i<8?stylePalettes[i]:palettes[1]}});
     return rows;
 }
 void FoundingController::cycleAppearance(int part,int direction) {
-    if(part<0 || part>=23 || (direction!=1 && direction!=-1)) return;
+    if(part<0 || part>=27 || (direction!=1 && direction!=-1)) return;
     const auto key=part<15?"appearance":"style";const auto index=part<15?part:part-15;
-    auto values=form_.value(key).toList();if(values.size()!=(part<15?15:8)) return;
+    auto values=form_.value(key).toList();if(values.size()!=(part<15?15:12)) return;
     const auto count=part<15?core::portrait_part_counts[static_cast<std::size_t>(index)]:core::portrait_style_counts[static_cast<std::size_t>(index)];
     values[index]=(values[index].toInt()+direction+count)%count;form_[key]=values;
     saveDraft();emit changed();
@@ -682,4 +695,13 @@ QString FoundingController::answerOffer(QString id, bool accept) {
     emit changed();
     return {};
 }
+}
+
+void pgp::bridge::FoundingController::setAppearance(int part,int value) {
+    if(part<0 || part>=27) return;
+    const auto count=part<15?core::portrait_part_counts[static_cast<std::size_t>(part)]:core::portrait_style_counts[static_cast<std::size_t>(part-15)];
+    if(value<0 || value>=count) return;
+    const auto key=part<15?"appearance":"style";auto values=form_.value(key).toList();
+    if(values.size()!=(part<15?15:12)) return;
+    values[part<15?part:part-15]=value;form_[key]=values;saveDraft();emit changed();
 }

@@ -139,6 +139,11 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     }
     core::initialize_people(world.simulation,seed,world.identity?world.identity->founder_name:std::string{},world.identity?world.identity->founder_pronouns:std::string{},
         world.founding && world.founding->researcher=="founder",founding_prestige,std::move(recruiting_mission));
+    if(world.founding && scenario->founding && world.simulation.management && world.simulation.management->people && content::queer_founder(*world.founding)) {
+        auto& people=*world.simulation.management->people;
+        people.community_prestige=scenario->founding->queer_community_prestige;
+        people.community_buzz=scenario->founding->queer_community_buzz;
+    }
     if(world.founding && world.simulation.management && world.simulation.management->people &&
         !world.simulation.management->catalog.people->founder_audiences.empty())
         world.simulation.management->people->founder_gender=world.founding->gender;

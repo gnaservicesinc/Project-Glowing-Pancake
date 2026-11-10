@@ -7,7 +7,7 @@ Dialog {
     spacing: 8
     background: Rectangle {
         radius: 12
-        color: "#142e33"
+        color: "#1a2b3d"
         border.color: "#8d9d7e"
     }
     header: Label {

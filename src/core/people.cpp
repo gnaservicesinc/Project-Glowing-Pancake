@@ -202,7 +202,7 @@ void validate_people(const SimulationState& s,bool deep) {
     const auto& r=rules(s);const auto& p=*m.people;
     if(p.employees.size()>r.maximum_hq || p.applicants.size()>r.candidates || p.next_id==0 || p.next_id>1000000 ||
         p.offered_pay<SalaryRate{7500} || p.offered_pay>SalaryRate{15000} || p.starts_on>s.date || p.next_recruitment<p.starts_on ||
-        p.next_recruitment>advance_days(s.date,r.recruitment_interval) || p.founding_prestige>10 ||
+        p.next_recruitment>advance_days(s.date,r.recruitment_interval) || p.founding_prestige>10 || p.community_prestige>10 || p.community_buzz>20 ||
         (!p.founder_gender.empty() && p.founder_gender!="woman" && p.founder_gender!="man" && p.founder_gender!="nonbinary" && p.founder_gender!="unspecified") ||
         (p.mission!="research" && p.mission!="public benefit" && p.mission!="commercial")) invalid("HQ roster or recruitment state is outside its bounds.");
     std::set<std::string> ids;

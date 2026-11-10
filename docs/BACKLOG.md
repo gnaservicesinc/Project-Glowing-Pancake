@@ -16,14 +16,28 @@ F-04 setup assumptions. This is ongoing work, not a completed interface review.
 | Area | Implemented | Remaining |
 | --- | --- | --- |
 | Furnishing | Illustrated pickup, translucent valid/blocked footprints, rotation/cancel, shared authoritative placement; expanded suppliers and equipment; issued laptops and powered-rack clients | Wider role effects and continued visual polish |
-| Identity and intro | Illustrated, editable birth certificate with sex at birth, animated signature and a framed copy. Separate gender identity, pronouns and orientation at age 18. Transgender flag and queer community founding buzz, narrated choices, and disclosed hiring and mood effects | Full-body art, media, legitimacy and retention reactions, richer choice sub-branches |
+| Identity and intro | One-sheet birth form and signing; unpaginated choice grids; two pronoun menus; adult gender and orientation with saved, bounded company/public community recognition; fixed applicant pay preferences; original frontal portraits and independent palette controls; coherent local-home timeline; company mission deferred to formation | Full-body art, wider media/legitimacy and retention reactions, richer choice sub-branches |
 | Home and founding | Saved unemployed home stage after appearance; fictional services, legal/CEO routes, explicit personal investment, separate retained savings, signing ceremony, three to six furnishable rooms, return home, optional bylaws, self-funding and a startup bank loan. Saved home inbox for recruiter, application, investor, donor and cofounder replies. Three working cofounders bring distinct opening missions, contributions, salary, equity and board votes. My life opens the family rooms and framed birth record during commercial occupancy | Physical travel to the family home, securities and deeper relationship arcs |
 | Team research | Union of unique traits, zero duplicate bonus, shared-trait compatibility, bounded coordination benefit, hiring preview, prerequisite bypass, individual mood with temperament and amenity effects, and topic-specific EEY | Retention and playtest balance |
 | Relationships | Meet onboarded employees in their HQ room, exchange details, message from compatible devices and issue available company laptops. Reviewed dismissal ends payroll, pays severance, releases equipment and named work, and retains former contacts. Opening conversations continue in company Messages; Kestrel and Harbor quote follow-up rounds based on the company record, with holding, declining, expiry, board submission and actual capital. Open Field and Careful Futures offer nonprofit gifts, trustee rights and completed independent-evaluation gates | Wider outside-contact proposals, employment and stock actions |
 | Private life | Separate savings and salary fund three private home listings, interiors and art. Decoration, upkeep and arrears, resale, private legacy values, dinners, house parties, receptions and personally funded office parties with invitations, cancellation, attendance and temporary mood | Richer invitation preferences, aircraft, yachts, security, philanthropy, islands, sports teams and late-game funded interventions |
 
-Content **0.54.0-dev.1**, generation **55**, records this batch. Human playtesting
+Content **0.55.0-dev.1**, generation **56**, records this batch. Human playtesting
 and the rest of F-05 remain open.
+
+## 2026-11-10 visual and intro correction
+
+The requested interface pass rebuilds the birth record, choice grids, portrait
+editor, home room and computer launcher. Both home and company devices use the
+same functional icon desktop. Shared controls, HUD and application frames use
+coordinated styling and complete button labels at enlarged text sizes. Removed
+infant relocation, late homecoming and premature company-mission cards. Removed
+invalid identity/nondisclosure and pronoun-ranking entries and gender pay rules.
+The toolkit evaluation retains Qt Quick because the diagnosed defects were in
+application layout, asset composition and requested raster sizes. Native and software opening/signing/reload walkthroughs, every choice grid at
+compact enlarged text, device switching, four focused tests and 24 content
+opening/save roundtrips pass. Human visual review remains required; this does
+not close the whole F-05 milestone.
 
 ## Selected refinement milestones (F-04)
 

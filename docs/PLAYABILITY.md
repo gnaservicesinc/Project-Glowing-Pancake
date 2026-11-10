@@ -42,6 +42,21 @@ in size, and native packaging, authors and players have separate evidence gates.
 Century endurance and final release qualification are later milestones. The required typed editor canvas and graphical finalizer are
 implemented on Mac; human author qualification remains deferred.
 
+## Intro and desktop review (2026-11-10)
+
+Edit both names and sex at birth on one certificate, then sign it. All formative,
+gender and orientation choices appear together. The main pronoun menu opens one
+additional list. The full-window reflection editor has direct color swatches,
+including independent brows, facial hair, jacket and tie. Appearance remains a
+bust portrait with build and height variants.
+
+The household stays in Silicon Valley through the intro. Company mission and
+structure are chosen only during formation. Open the bedroom computer to reach
+the icon desktop, then launch the browser, Messages, banking, legal formation,
+careers or Founders’ Exchange. Company devices use the same desktop; incompatible
+phone apps stay unavailable. At enlarged text, application icons and editor
+features scroll with keyboard focus rather than cutting off controls.
+
 ## Play the current campaign
 
 On Mac, build with `./make.sh --package --jobs 4`, then open

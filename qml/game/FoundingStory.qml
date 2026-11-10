@@ -39,17 +39,11 @@ QtObject {
             "", "narration", {
                 afterword: qsTr("A nurse draws the curtain around the bed. In the quiet, a newborn takes a first breath. Yours.")
             })
-        field("first_name", hospital, birth, qsTr("The birth record"),
-            qsTr("The nurse hands your family the birth record. They fill in your given name."),
-            qsTr("Given name"), 63)
-        field("last_name", hospital, birth, qsTr("The birth record"),
-            qsTr("Your family adds the surname you’ll carry home."),
-            qsTr("Surname"), 63)
-        question("birth_sex", hospital, birth, qsTr("The birth record"),
-            qsTr("The hospital records the sex observed at birth."), qsTr("Sex at birth"),
-            [option("female",qsTr("Female")),option("male",qsTr("Male")),option("indeterminate",qsTr("Indeterminate"))])
+        add("first_name", hospital, birth, qsTr("Certificate of Birth"),
+            qsTr("Your family fills in the birth record. Edit every field, then sign the keepsake."),
+            "", "birth")
         add("certificate",hospital,birth,qsTr("A place in the world"),
-            qsTr("A name, a date, the beginning of a life. Your family signs the keepsake and takes it home."),"","certificate")
+            qsTr("A name, a date, the beginning of a life."),"","certificate")
         question("family", street, qsTr("HOME  /  1997"), qsTr("The house you come home to"),
             qsTr("By morning, the rain has passed. Your parents take you home, to the street where your earliest memories will begin."),
             qsTr("How much did your family have?"), story.families.map(row => ({
@@ -72,11 +66,6 @@ QtObject {
 
         const scenes = Array.from(story.chapters)
         const sceneCopy = {
-            arrival: {
-                art: homeArt, date: qsTr("HOME  /  1997"), title: qsTr("Stay or go"),
-                narration: qsTr("A job offer arrives from another town. Your parents spend an evening at the kitchen table, weighing a new address against the people they know."),
-                prompt: qsTr("What do they decide?")
-            },
             curiosity: {
                 art: library, title: qsTr("After school"),
                 narration: qsTr("At six, you are allowed to walk from school to the library. In the back corner, an old computer hums beside the window. Outside, you can hear the neighborhood team practicing."),
@@ -107,13 +96,7 @@ QtObject {
                 narration: qsTr("Three reviewers pull up chairs at your workbench. One points to an example your system handled badly and asks how often it happens."),
                 prompt: qsTr("How do you answer the panel?")
             },
-            threshold: {
-                art: workshop, title: qsTr("Eighteen"),
-                narration: form.leg === "political" && form.family !== "rich"
-                    ? qsTr("Your family's rise in politics has brought money and a circle of contacts. At eighteen, you sit across from people willing to help turn your experiments into a lab.")
-                    : qsTr("The work you did at a borrowed desk has found its way into other people's conversations. At eighteen, you sit across from people willing to help you build a lab."),
-                prompt: qsTr("What matters most in the work ahead?")
-            }
+
         }
         for (const scene of scenes) {
             const copy = sceneCopy[scene.id] || {}
@@ -142,25 +125,23 @@ QtObject {
             }
         }
 
-        add("return-home",homeArt,qsTr("SILICON VALLEY  /  JANUARY 2015"),qsTr("Back where it begins"),
-            form.choices.arrival==="move"?qsTr("Your family followed opportunity away from the Valley. Now a new job brings them back, and your boxes return to a familiar California street."):qsTr("Silicon Valley has changed around your parents' home. You still know the sound of its front door."),
-            "","narration",{afterword:qsTr("Yesterday was your eighteenth birthday. Tomorrow can wait. This morning is yours.")})
+        add("eighteen",homeArt,qsTr("SILICON VALLEY  /  JANUARY 2015"),qsTr("A morning of your own"),
+            qsTr("The Valley has changed around the home you grew up in. Yesterday was your eighteenth birthday. Birthday cards still stand on your desk."),
+            "","narration",{afterword:qsTr("There is no company yet, no mission to promise. First, there is the person you have become.")})
         const adult = qsTr("SILICON VALLEY  /  AGE 18")
         question("gender",homeArt,adult,qsTr("Your identity"),
-            qsTr("You get to describe yourself. The notes show how people may respond in hiring and at work."),
+            qsTr("Describe who you are. Identity never sets an employee’s salary or mood. Community recognition can affect the reputation of a company you later found."),
             qsTr("What is your gender identity?"), [option("woman",qsTr("Woman"),story.genderAudience("woman")),
-                option("man",qsTr("Man"),story.genderAudience("man")),option("nonbinary",qsTr("Nonbinary"),story.genderAudience("nonbinary")),
-                option("unspecified",qsTr("Prefer not to say"),story.genderAudience("unspecified"))])
+                option("man",qsTr("Man"),story.genderAudience("man")),option("nonbinary",qsTr("Nonbinary"),story.genderAudience("nonbinary"))])
         question("pronouns",homeArt,adult,qsTr("The introduction"),qsTr("Choose the pronouns other people will use for you."),
             qsTr("Which pronouns fit?"), [option("she/her",qsTr("She / her")),option("he/him",qsTr("He / him")),
                 option("they/them",qsTr("They / them")),option("other",qsTr("Other pronouns"),qsTr("Open additional pronoun sets."))])
-        if(story.beat==="other_pronouns" || !["she/her","he/him","they/them"].includes(form.pronouns))
-            question("other_pronouns",homeArt,adult,qsTr("In your own words"),qsTr("Choose the set to use in your profile and conversations."),
+        question("other_pronouns",homeArt,adult,qsTr("In your own words"),qsTr("Choose the set to use in your profile and conversations."),
                 qsTr("Which set fits?"),story.pronounOptions.filter(value=>!["she/her","he/him","they/them"].includes(value)).map(value=>option(value,value)))
-        question("orientation",homeArt,adult,qsTr("Who you’re drawn to"),qsTr("At eighteen, you can decide what you want to share about yourself."),
+        question("orientation",homeArt,adult,qsTr("Who you’re drawn to"),qsTr("Your orientation is separate from gender and pronouns. ")+story.recognitionTerms(),
             qsTr("How do you describe your sexual orientation?"), [option("straight",qsTr("Straight")),option("gay_or_lesbian",qsTr("Gay or lesbian")),
                 option("bisexual",qsTr("Bisexual")),option("pansexual",qsTr("Pansexual")),option("asexual",qsTr("Asexual")),
-                option("queer",qsTr("Queer")),option("questioning",qsTr("Questioning")),option("unspecified",qsTr("Prefer not to say"))])
+                option("queer",qsTr("Queer")),option("questioning",qsTr("Questioning")),option("demisexual",qsTr("Demisexual"))].map(row => Object.assign({},row,{detail:story.orientationAudience(row.id)})))
         add("appearance",homeArt,qsTr("THE DAY AFTER YOUR EIGHTEENTH BIRTHDAY"),qsTr("Your reflection"),
             qsTr("Make this person your own. Your starting look is editable, from body shape to clothes and hair."),
             qsTr("Choose any feature to customize it."),"appearance")
@@ -192,13 +173,14 @@ QtObject {
         }
         const expanded=[]
         for(const beat of beats) {
+            if(beat.id === "other_pronouns" && story.beat !== "other_pronouns" && ["she/her","he/him","they/them"].includes(form.pronouns)) continue
             expanded.push(beat)
-            if(["choice","chapter"].includes(beat.kind) && beat.id!=="birth_sex") {
+            if(["choice","chapter"].includes(beat.kind)) {
                 const selected=beat.kind==="chapter"?form.choices[beat.chapter]:beat.id==="other_pronouns"?form.pronouns:form[beat.id]
                 const choice=(beat.choices || []).find(row=>row.id===selected)
                 if(choice) expanded.push({id:beat.id+"-after",art:beat.art,tone:beat.tone,date:beat.date,title:choice.name,
                     narration:beat.id==="gender"?qsTr("You write it in your own words and tuck the old keepsake back into the family album."):choice.detail || qsTr("The choice becomes part of how you tell your story."),
-                    prompt:"",kind:"narration",afterword:beat.id==="gender" && story.communitySupport(selected)?story.communitySupport(selected):reflections[selected] || qsTr("The years ahead will give you more chances to discover what this choice means to you.")})
+                    prompt:"",kind:"narration",afterword:["gender","orientation"].includes(beat.id) && story.communitySupport(form.gender)?story.communitySupport(form.gender):reflections[selected] || qsTr("The years ahead will give you more chances to discover what this choice means to you.")})
             }
         }
         return expanded

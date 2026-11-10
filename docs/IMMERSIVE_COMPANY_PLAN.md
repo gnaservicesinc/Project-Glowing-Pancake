@@ -9,7 +9,7 @@ older drafts are reference material, not executable instructions.
 The introduction creates a person, not a company. Complete the birth record,
 experience formative choices and their narrated consequences, customize the
 adult character, then wake in the childhood bedroom in Silicon Valley the day
-after turning eighteen. Moving away as a child gets an explicit return scene.
+after turning eighteen. The family stays in the Valley throughout this introduction; children do not choose household relocation.
 No company, mission, office or investor is silently selected during childhood.
 
 The computer is the early game's action hub. Fictional sites expose legal
@@ -198,6 +198,31 @@ height, clothing and pattern variants, not a full-body character editor.
 The selectable additional sets use the [UC Davis guide](https://lgbtqia.ucdavis.edu/educated/pronouns-inclusive-language),
 [UC Merced handout](https://lgbtqpridecenter.ucmerced.edu/sites/lgbtqpridecenter.ucmerced.edu/files/documents/gip_handout.pdf)
 and [Ontario Tech resource](https://studentservices.ontariotechu.ca/current-students/equity-and-inclusion/resources/pronouns.php).
-Mixed sets are explicit combinations of the same pronouns. This is a curated
-selection, not a claim that other pronouns are invalid. Names are not pronouns;
+The main selector opens one additional list of actual pronoun sets. Rankings,
+combination preferences and nondisclosure labels are excluded from these menus.
+This is a curated selection, not a claim that other pronouns are invalid. Names are not pronouns;
 pronouns do not infer sexuality or grant fictional scandal immunity.
+
+
+## 2026-11-10 interface correction
+
+The birth record is one editable sheet. Formative and adult identity choices
+use an adaptive grid without pagination. Removed the infant relocation decision,
+late return-home card and childhood company-mission question. Formation still
+collects the actual mission and legal structure.
+
+Removed the campaign's gender-based salary and mood matrix. A disclosed queer
+community response now recognizes transgender/nonbinary identity or queer
+orientation once: the authored company prestige and public interest are saved,
+reach company mood and funding conversations, and appear in the founder profile.
+Identity does not rewrite applicants' fixed compensation preferences. These are
+bounded fictional audience responses, not aptitude or blanket public approval.
+
+The editor uses the available window, direct independent palette swatches and
+frontal portrait art. Home and company computers share a wallpaper/icon desktop,
+functional app launchers and a device frame. The home room art and shared game
+controls use the same restrained illustrated palette. Qt Quick remains: the
+32px default portrait raster and narrow/paginated layouts were application
+choices. Replacing the renderer would not correct those causes, and would add
+porting work before another human visual review. This is a toolkit decision for
+this pass, not a claim of final player acceptance.
