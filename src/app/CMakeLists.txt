@@ -181,4 +181,4 @@ qt_add_resources(pgp-game campaign_content
     PREFIX "/pgp/content" BASE "${PROJECT_SOURCE_DIR}/data/runtime"
     FILES ${pgp_game_runtime_content})
 
-qt_add_resources(pgp-game desktop_art PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/ui/desktop-wallpaper.svg" "${PROJECT_SOURCE_DIR}/assets/ui/family-bedroom.svg")
+qt_add_resources(pgp-game desktop_art PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/ui/desktop-wallpaper.svg" "${PROJECT_SOURCE_DIR}/assets/ui/family-bedroom.svg" "${PROJECT_SOURCE_DIR}/assets/ui/hq-oak-floor.svg")

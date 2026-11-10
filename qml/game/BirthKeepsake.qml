@@ -14,7 +14,7 @@ GameDialog {
     height: Math.min((Overlay.overlay ? Overlay.overlay.height : 480) - 32, textSize * 24)
     modal: true
     focus: true
-    standardButtons: Dialog.Close
+    footer: WorldButton { objectName:"familyKeepsakeClose"; text:qsTr("Close"); textSize:record.textSize; onClicked:record.close() }
     font.pixelSize: textSize
     enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: campaign.reducedMotion ? 0 : 150 } }
     exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: campaign.reducedMotion ? 0 : 100 } }

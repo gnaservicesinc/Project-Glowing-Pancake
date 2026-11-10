@@ -39,6 +39,18 @@ compact enlarged text, device switching, four focused tests and 24 content
 opening/save roundtrips pass. Human visual review remains required; this does
 not close the whole F-05 milestone.
 
+## 2026-11-10 main-game graphics and interaction pass
+
+Implemented a warmer architectural headquarters, original floor material,
+more detailed equipment, camera fit/zoom controls, a floor-plan toggle and
+hover-to-inspect feedback. Placement previews keep the real equipment loaded.
+Shared controls and the HUD/dock now use coordinated colors and focus feedback;
+pending decisions stay visible and compact docks have explicit scroll controls.
+Native and software HQ walkthroughs cover placement through relocation and
+fresh reload, including 650 × 480 at 200% text. Device checks cover launcher,
+compatible apps, keyboard access and both dock scroll directions without
+mutating the company. Human visual review and the remaining F-05 work stay open.
+
 ## Selected refinement milestones (F-04)
 
 The 2026-11-09 human review found the main interface incomplete. Implement the

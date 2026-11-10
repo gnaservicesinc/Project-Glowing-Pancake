@@ -4,7 +4,7 @@ import QtQuick
 // labeled controls and lists. The scenes have no animated or clickable parts.
 Canvas {
     id: scene
-    required property string room
+    property string room: "office"
     Accessible.ignored: true
     GameInk {
         id: ink

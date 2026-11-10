@@ -16,12 +16,12 @@ QQuickItem* find(QQuickItem* root,const char* name) {if(root->objectName()==QLat
 bool key(QQuickWindow& window,QQuickItem* item,Qt::Key code=Qt::Key_Space) {if(!item || !item->isVisible() || !item->isEnabled()) return false;item->forceActiveFocus(Qt::TabFocusReason);QTest::keyClick(&window,code);return true;}
 }
 void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot) {
-    struct State {int phase=0,ticks=0,days=0,settle=0,reported=-1,previewPhase=0;std::uint64_t familyRevision=0;};auto state=std::make_shared<State>();
+    struct State {int phase=0,ticks=0,days=0,settle=0,reported=-1,previewPhase=0,viewPhase=0;std::uint64_t familyRevision=0;};auto state=std::make_shared<State>();
     auto* timer=new QTimer(&window);timer->setInterval(70);
     QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot] {
         const auto item=[&](const char* name){return find(window.contentItem(),name);};
         const auto press=[&](const char* name){return key(window,item(name));};
-        const auto fail=[&](const char* why){std::cerr<<"HQ UI phase "<<state->phase<<": "<<why<<" · "<<campaign.notice().toStdString()<<'\n';timer->stop();QCoreApplication::exit(3);};
+        const auto fail=[&](const char* why){std::cerr<<"HQ UI phase "<<state->phase<<": "<<why<<" · "<<campaign.notice().toStdString()<<'\n';if(!screenshot.isEmpty())window.grabWindow().save(screenshot+".failure.png");timer->stop();QCoreApplication::exit(3);};
         const auto capture=[&](const char* suffix){return screenshot.isEmpty() || window.grabWindow().save(screenshot+QLatin1String{suffix}+".png");};
         if(++state->ticks>1500) {fail("Timed out");return;}
         if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
@@ -40,6 +40,21 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
         case 1:
             if(!headquarters || !headquarters->items.empty() || pgp::core::current_headquarters(s).kind!="home") {fail("The actual garage must be empty");return;}
             if(++state->settle<12) return;state->settle=0;campaign.clearNotice();
+            if(auto* toggle=item("hqPlanToggle");toggle && toggle->isVisible() && state->viewPhase<3) {
+                if(state->viewPhase==0) {
+                    auto* scene=item("hqPhysicalScene");
+                    if(!scene || !press("hqZoomIn") || scene->property("zoom").toReal()<=1 ||
+                       !press("hqFitView") || scene->property("zoom").toReal()!=1 ||
+                       !press("hqZoomOut") || scene->property("zoom").toReal()>=1 ||
+                       !press("hqFitView") || !press("hqPlanToggle")) {fail("HQ zoom, fit and floor-plan controls");return;}
+                } else if(state->viewPhase==1) {
+                    auto* floor=item("hqFloorPlan");
+                    if(!floor || !floor->property("inspectionEnabled").toBool() ||
+                       !capture(".floor-plan") || !press("hqPlanToggle")) {fail("Inspectable floor-plan view and return to 3D");return;}
+                } else if(!item("hqPhysicalScene") || !headquarters->items.empty() ||
+                          !campaign.paused()) {fail("Camera controls must preserve the company and pause");return;}
+                ++state->viewPhase;return;
+            }
             if(!capture(".empty-garage") || !press("hqFurnishButton") || !press("hqOpenShop")) {fail("Garage and supplier entry");return;}
             ++state->phase;break;
         case 2:
@@ -91,7 +106,7 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
                     QTest::mouseMove(&window,validPoint.toPoint(),20);++state->previewPhase;return;
                 }
                 if(state->previewPhase==1) {
-                    if(!tools->property("placing").toBool() || !tools->property("preview").toMap().value("valid").toBool() || !capture(".placement-valid")) {fail("Valid translucent placement preview");return;}
+                    if(!tools->property("placing").toBool() || !tools->property("preview").toMap().value("valid").toBool() || !capture(".placement-valid")) {const auto p=tools->property("preview").toMap();std::cerr<<"Preview: "<<p.value("x").toInt()<<","<<p.value("y").toInt()<<" target="<<p.value("mount").toInt()<<" reason="<<p.value("reason").toString().toStdString()<<"\n";fail("Valid translucent placement preview");return;}
                     // Native terminal launches may lack OS activation. In that
                     // case exercise the equivalent visible rotation control;
                     // the active offscreen run covers the R shortcut.
@@ -197,7 +212,11 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
             const auto* record=item("familyCertificate");
             if(!record || !record->isVisible() || record->mapToScene({record->width(),0}).x()>window.width() ||
                 !capture(".family-keepsake-compact")) {fail("The family record must fit at 200% text");return;}
-            QTest::keyClick(&window,Qt::Key_Escape);state->settle=0;++state->phase;break;
+            // The software run exercises Escape with an active window. Native
+            // terminal launches can lack OS activation; use the visible close action.
+            if(window.isActive()) QTest::keyClick(&window,Qt::Key_Escape);
+            else if(!press("familyKeepsakeClose")) {fail("Close family keepsake");return;}
+            state->settle=0;++state->phase;break;
         }
         case 35:
             if(++state->settle<5)return;

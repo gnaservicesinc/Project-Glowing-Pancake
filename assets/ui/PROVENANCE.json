@@ -28,5 +28,15 @@
     "license": "Public-domain declaration embedded in original SVG metadata",
     "modifications": "None; copied byte for byte",
     "ai_generated": false
+  },
+  {
+    "path": "assets/ui/hq-oak-floor.svg",
+    "sha256": "a4a8ab5d1e7d635661ab06b463e796f6d9389d1928abc9d105ee1717273c1df0",
+    "source_url": "",
+    "creator": "Project Glowing Pancake contributors with Codex",
+    "source": "Original procedural SVG authored in this repository",
+    "license": "GPL-3.0-or-later",
+    "modifications": "Original artwork; no external imagery",
+    "ai_generated": true
   }
 ]

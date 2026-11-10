@@ -3,12 +3,13 @@ import QtQuick.Controls
 
 Dialog {
     id: dialog
+    GameInk { id: ink }
     padding: 16
     spacing: 8
     background: Rectangle {
         radius: 12
-        color: "#1a2b3d"
-        border.color: "#8d9d7e"
+        color: ink.panel
+        border.color: ink.border
     }
     header: Label {
         visible: dialog.title.length>0
@@ -16,6 +17,7 @@ Dialog {
         textFormat: Text.PlainText
         wrapMode: Text.Wrap
         font.pixelSize: dialog.font.pixelSize * 1.25
+        font.family: ink.displayFace
         font.bold: true
         color: "#f1e4c5"
         padding: 16

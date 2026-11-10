@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <metadata>Original procedural vector material authored with Codex for Project Glowing Pancake, 2026-11-10. GPL-3.0-or-later. No external imagery.</metadata>
+  <rect width="512" height="512" fill="#c4a47c"/>
+  <path fill="#caaa82" d="M0 0h512v64H0zM0 256h512v64H0z"/>
+  <path fill="#bfa079" d="M0 128h512v64H0zM0 384h512v64H0z"/>
+  <path fill="#c8a77e" d="M0 192h512v64H0zM0 448h512v64H0z"/>
+  <g fill="none" stroke="#917451" stroke-opacity=".4">
+    <path d="M0 0h512M0 64h512M0 128h512M0 192h512M0 256h512M0 320h512M0 384h512M0 448h512M0 512h512"/>
+    <path d="M256 0v64M128 64v64M384 128v64M64 192v64M320 256v64M192 320v64M448 384v64M256 448v64"/>
+  </g>
+  <g fill="none" stroke="#8e6f4a" stroke-opacity=".12">
+    <path d="M0 17c130 8 240-6 512 3M0 42c90-8 290 10 512-2M0 85c170-5 360 9 512 1M0 112c180 6 300-6 512 0M0 146c150 10 260-5 512 3M0 174c190-8 290 10 512-2M0 212c170-5 360 9 512 1M0 239c180 6 300-6 512 0M0 277c130 8 240-6 512 3M0 300c90-8 290 10 512-2M0 340c170-5 360 9 512 1M0 369c180 6 300-6 512 0M0 402c150 10 260-5 512 3M0 430c190-8 290 10 512-2M0 466c170-5 360 9 512 1M0 494c180 6 300-6 512 0"/>
+  </g>
+</svg>

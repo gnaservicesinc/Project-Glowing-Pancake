@@ -168,6 +168,12 @@ void schedule_device_interface_smoke(QQuickWindow &window, pgp::bridge::Campaign
                 fail("Compact app frame and reachable time controls");
                 return;
             }
+            break;
+        case 11:
+            if (!press("dockPrevious") || !press("dockNext")) {
+                fail("Compact dock scroll buttons must reveal apps in both directions");
+                return;
+            }
             if (run->fingerprint !=
                 pgp::persistence::CurrentCampaign{paths.saves_directory / "continuing"}.fingerprint()) {
                 fail("Device navigation must not mutate the company");

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 Rectangle {
     id: tools
+    GameInk { id: ink }
     required property int textSize
     required property bool editable
     property var headquarters:campaign.world.headquarters
@@ -30,7 +31,7 @@ Rectangle {
     signal doneRequested()
     signal shopRequested()
     signal propertiesRequested()
-    color:"#173338";radius:11;border.color:"#658475"
+    color:ink.panel;radius:11;border.color:ink.border
     function refreshSelection() {if(item){rotated=item.rotated;column.text=String(item.x+1);row.text=String(item.y+1);mount=item.mount || (desks[0] || {}).id || 0}}
     onItemChanged: refreshSelection()
     function select(id) {selectedItem=id;placing=false;campaign.world.setDraft("hq/selected-item",String(id));refreshSelection()}
@@ -58,8 +59,8 @@ Rectangle {
         id:scroll;anchors.fill:parent;anchors.margins:12;contentWidth:availableWidth;clip:true
         ScrollBar.vertical:ScrollBar {
             policy:ScrollBar.AlwaysOn;minimumSize:0.1
-            contentItem:Rectangle {implicitWidth:8;radius:4;color:"#92bca6"}
-            background:Rectangle {implicitWidth:8;radius:4;color:"#10292d"}
+            contentItem:Rectangle {implicitWidth:8;radius:4;color:"#91aabd"}
+            background:Rectangle {implicitWidth:8;radius:4;color:ink.chrome}
         }
         ColumnLayout {
             id:content;width:scroll.availableWidth;spacing:10
@@ -80,8 +81,8 @@ Rectangle {
                         required property var modelData
                         objectName:"hqPick_"+modelData.id
                         width:Math.max(88,tools.textSize*6);height:Math.max(112,tools.textSize*8)
-                        radius:10;color:tools.selectedItem===modelData.id?"#345b58":"#213f42"
-                        border.color:tools.selectedItem===modelData.id?"#ecd29a":"#68867b"
+                        radius:10;color:tools.selectedItem===modelData.id?"#384c5c":ink.control
+                        border.color:tools.selectedItem===modelData.id?ink.accent:ink.border
                         opacity:modelData.delivered?1:0.5
                         EquipmentGlyph {anchors.top:parent.top;anchors.horizontalCenter:parent.horizontalCenter;width:parent.width-20;height:parent.height*0.57;kind:modelData.kind;powered:modelData.powered}
                         Label {anchors.left:parent.left;anchors.right:parent.right;anchors.bottom:parent.bottom;anchors.margins:6;height:parent.height*0.35;text:modelData.name;font.pixelSize:tools.textSize*0.8;color:"#e7e5cf";wrapMode:Text.Wrap;elide:Text.ElideRight;textFormat:Text.PlainText}

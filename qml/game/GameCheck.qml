@@ -4,6 +4,7 @@ import QtQuick.Controls
 CheckBox {
     id: control
     property int textSize: 14
+    GameInk { id: ink }
     font.pixelSize: textSize
     padding: 5
     spacing: 10
@@ -14,9 +15,9 @@ CheckBox {
         x: control.leftPadding
         y: (control.height-height)/2
         radius: 5
-        color: control.checked ? "#aad8c9" : control.hovered ? "#304f4d" : "#1b3538"
+        color: control.checked ? ink.accent : control.hovered ? ink.hover : ink.control
         border.width: control.activeFocus ? 2 : 1
-        border.color: control.activeFocus ? "#f0c888" : "#68857b"
+        border.color: control.activeFocus ? ink.focus : ink.border
         Text {
             anchors.centerIn: parent
             text: control.checked ? "✓" : ""

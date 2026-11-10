@@ -5,8 +5,12 @@ Item {
     id: plan
     property var headquarters: ({width:3,depth:3,rooms:[],items:[]})
     property int selectedItem: 0
+    property int hoverItem: 0
+    onHoverItemChanged:drawing.requestPaint()
+    onEditingChanged:drawing.requestPaint()
     property int highlightedRoom: 0
     property bool editing: false
+    property bool inspectionEnabled: false
     readonly property int columns: headquarters.width || 3
     readonly property int rows: headquarters.depth || 3
     readonly property real cell: Math.max(1,Math.min((width-32)/columns,(height-32)/rows))
@@ -41,13 +45,15 @@ Item {
         id: drawing
         anchors.fill: parent
         onPaint: {
-            const c=getContext("2d");c.reset();c.fillStyle="#17292d";c.fillRect(0,0,width,height)
+            const c=getContext("2d");c.reset();c.fillStyle="#1a2d3c";c.fillRect(0,0,width,height)
             const u=plan.cell,x0=plan.leftEdge,y0=plan.topEdge,w=plan.columns*u,h=plan.rows*u
-            c.fillStyle=plan.headquarters.kind==="home"?"#69766c":"#a2a58f";c.fillRect(x0,y0,w,h)
-            c.strokeStyle="#748f83";c.lineWidth=0.6
+            c.fillStyle="#0e202c";c.fillRect(x0-7,y0-7,w+14,h+20)
+            c.fillStyle="#bf9f79";c.fillRect(x0,y0,w,h)
+            for(let y=0;y<plan.rows*4;y++) { c.fillStyle=["#ba9b78","#c4a580","#bfa07a","#ccad87"][y%4];c.fillRect(x0,y0+y*u/4,w,u/4-0.5) }
+            c.strokeStyle=plan.editing?"#6c786e":"#b69874";c.lineWidth=0.6
             for(let x=0;x<=plan.columns;++x){c.beginPath();c.moveTo(x0+x*u,y0);c.lineTo(x0+x*u,y0+h);c.stroke()}
             for(let y=0;y<=plan.rows;++y){c.beginPath();c.moveTo(x0,y0+y*u);c.lineTo(x0+w,y0+y*u);c.stroke()}
-            c.strokeStyle="#d9d7bb";c.lineWidth=3
+            c.strokeStyle="#e1d9bf";c.lineWidth=5
             for(const room of plan.headquarters.rooms || []) {
                 if (plan.highlightedRoom && room.id === plan.highlightedRoom) {
                     c.fillStyle = "#798a70"
@@ -61,7 +67,7 @@ Item {
                 if(!item.placed || item.mount) continue
                 const ix=x0+item.x*u,iy=y0+item.y*u,iw=item.width*u,ih=item.depth*u
                 c.fillStyle=item.kind==="desk"?"#b79670":item.kind==="rack"?"#314f58":item.kind==="evaluation"?"#a4bdc0":"#8baf94"
-                c.fillRect(ix+3,iy+3,iw-6,ih-6);c.strokeStyle=item.id===plan.selectedItem?"#f0d59b":"#d7d2b8";c.lineWidth=item.id===plan.selectedItem?3:1;c.strokeRect(ix+3,iy+3,iw-6,ih-6)
+                c.fillRect(ix+3,iy+3,iw-6,ih-6);c.strokeStyle=item.id===plan.selectedItem?"#ffe2a9":item.id===plan.hoverItem?"#bce6ed":"#d7d2b8";c.lineWidth=item.id===plan.selectedItem || item.id===plan.hoverItem?3:1;c.strokeRect(ix+3,iy+3,iw-6,ih-6)
                 Art.draw(c,item.kind,ix+4,iy+4,iw-8,ih-8,item.powered)
                 const computer=(plan.headquarters.items || []).find(row=>row.mount===item.id && row.placed)
                 if(computer)Art.draw(c,computer.kind,ix+iw*0.2,iy+ih*0.06,iw*0.6,ih*0.53,computer.powered)
@@ -82,13 +88,13 @@ Item {
     }
     MouseArea {
         anchors.fill: parent
-        enabled: plan.editing
+        enabled: plan.editing || plan.inspectionEnabled
         hoverEnabled:true
         acceptedButtons:Qt.LeftButton | Qt.RightButton
-        cursorShape:plan.placing?Qt.ClosedHandCursor:Qt.OpenHandCursor
+        cursorShape:plan.placing?Qt.ClosedHandCursor:plan.hoverItem?Qt.PointingHandCursor:Qt.ArrowCursor
         onPositionChanged:mouse=>{const x=Math.floor((mouse.x-plan.leftEdge)/plan.cell),y=Math.floor((mouse.y-plan.topEdge)/plan.cell);plan.hovered(x,y,plan.hit(x,y))}
         onExited:plan.hovered(-100,-100,0)
-        onPressed: mouse=>{if(mouse.button===Qt.RightButton){plan.cancelRequested();return}plan.pressedX=Math.floor((mouse.x-plan.leftEdge)/plan.cell);plan.pressedY=Math.floor((mouse.y-plan.topEdge)/plan.cell);plan.pressedItem=plan.hit(plan.pressedX,plan.pressedY)}
+        onPressed: mouse=>{if(mouse.button===Qt.RightButton){plan.cancelRequested();return}plan.pressedX=Math.floor((mouse.x-plan.leftEdge)/plan.cell);plan.pressedY=Math.floor((mouse.y-plan.topEdge)/plan.cell);plan.pressedItem=plan.editing?plan.hit(plan.pressedX,plan.pressedY):0}
         onReleased: mouse=>{
             if(mouse.button!==Qt.LeftButton)return
             const x=Math.floor((mouse.x-plan.leftEdge)/plan.cell),y=Math.floor((mouse.y-plan.topEdge)/plan.cell),target=plan.hit(x,y)

@@ -16,6 +16,25 @@ Working-condition programs and other deeper mechanics previously proposed as
 next tasks are candidates for that review. The initial implementation queue
 is closed.
 
+## Main-game visual refinement · 2026-11-10
+
+The headquarters now uses an original oak material, warm/cool lighting, framed
+windows, wall trim and more detailed desks. Its camera fits the premises, with
+visible zoom/reset controls and an inspectable floor-plan alternative. Equipment
+hover highlights lead into arrangement; moving the placement preview no longer
+recreates the real furniture. Architectural decoration never intercepts picking.
+The HUD, dock, furnishing panel and shared controls use a coordinated slate/amber
+palette, clear focus states and reduced-motion-aware hover feedback. Pending
+decisions have a HUD action, and compact docks expose scroll buttons.
+
+The optimized Mac native headquarters walkthrough passes camera/view switching,
+purchases, placement, rotation/cancellation, desk dragging, relocation, compact
+200% text and fresh reload. The software headquarters path and device/navigation
+checks also pass, including dock scrolling without company mutation. Native
+launches without OS activation use the visible keepsake Close action; Escape is
+covered by the active software run. Human visual acceptance and the wider F-05
+work remain open; these checks are not release or screen-reader qualification.
+
 ## Current human review: grounded founding and unfinished main game
 
 The expanded F-05 [immersive company plan](IMMERSIVE_COMPANY_PLAN.md) is now the
