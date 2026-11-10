@@ -123,8 +123,13 @@ outstanding principal and owes the remaining balance after 730 days. Personal
 home visits during commercial occupancy and stock and bond holdings remain open.
 At HQ the founder can select an onboarded employee at their assigned desk and
 exchange contact details. A supported device opens the same saved conversation
-for workplace check-ins, equipment questions and laptop issuance. Recruiter,
-investor, media and other contact routes still need their own offers and actions.
+for workplace check-ins, equipment questions and laptop issuance. The home inbox
+keeps recruiter invitations, lab application outcomes and funding replies.
+Actual Genius receives an Alder invitation, and Kestrel approaches a genius
+without family wealth. Accepting an offer selects its real terms for signing.
+Thinking it over keeps it open, and declining removes it from the paperwork.
+Continuing these relationships after formation, media contacts and named
+cofounder personalities and mandates remain open.
 Employee mood uses current pay, the company’s publications, the CEO’s biography
 and record in office, mission and duties, coworker affinity, temperament and
 active amenities. An installed amenity type contributes once for employees with

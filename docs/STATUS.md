@@ -30,6 +30,13 @@ A founder can choose a self-funded opening and adopt optional bylaws with a
 funded employee program and limits on board approvals. Redwood Mutual offers a
 startup loan with a minimum personal contribution. Signing draws company debt
 with dated interest and maturity under the existing accounts rules.
+The home inbox persists lab application replies, recruiter invitations and
+funding pitches. You can accept, defer or decline each active offer. Accepted
+terms reach the appropriate incorporation or appointment ceremony. Their actual
+cash, seats and equity take effect at signing.
+Focused checks cover draft restart, write failure and the inherited company. The
+Release software walkthrough covers a rejected application and an investment
+offer through defer, accept and withdraw at 650 × 480 with 200% text.
 
 Furnishing now supports illustrated object pickup, translucent red/green
 footprints, rotation and cancellation using the same core placement validation.

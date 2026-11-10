@@ -121,8 +121,12 @@ clothing, patterns and build. The intro ends here, before company decisions.
 At eighteen, you wake in your parents’ Silicon Valley house, unemployed. Use the
 computer or **Browser** to visit fictional legal, investor, career and banking
 services. A dismissible guide explains the routes. Cedar & Quill forms corporations
-or nonprofits; Alder considers CEO applications from geniuses and political or
-wealthy elites. Name the company, choose its purpose, enter your personal investment
+or nonprofits. Apply through Alder’s careers site or pitch a named investor or
+donor through Founders’ Exchange. **Messages** keeps replies and offers. Alder
+considers geniuses and political or wealthy elites, and approaches geniuses
+directly. Kestrel also approaches geniuses without family wealth. Review the
+terms and accept, think it over, or decline. Acceptance opens paperwork for
+review and signature. Name the company, choose its purpose, enter your personal investment
 and explicitly accept any outside funding. Choose **Use my savings** to self-fund.
 Optional bylaws add a monthly employee program and affect board approval terms.
 Uninvested savings stay personal. For startup credit, open **Redwood Mutual**

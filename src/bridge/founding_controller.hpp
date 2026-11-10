@@ -15,6 +15,7 @@ class FoundingController final : public QObject {
     Q_PROPERTY(QVariantList legs READ legs NOTIFY changed)
     Q_PROPERTY(QVariantList routes READ routes NOTIFY changed)
     Q_PROPERTY(QVariantList backers READ backers NOTIFY changed)
+    Q_PROPERTY(QVariantList homeOffers READ homeOffers NOTIFY changed)
     Q_PROPERTY(QVariantList headquarters READ headquarters CONSTANT)
     Q_PROPERTY(QString beat READ beat WRITE setBeat NOTIFY beatChanged)
     Q_PROPERTY(bool hasDraft READ hasDraft NOTIFY beatChanged)
@@ -36,6 +37,7 @@ public:
     QVariantList legs() const;
     QVariantList routes() const;
     QVariantList backers() const;
+    QVariantList homeOffers() const;
     QVariantList headquarters() const;
     QString beat() const { return beat_; }
     bool hasDraft() const { return available() && beat_ != QStringLiteral("opening"); }
@@ -51,6 +53,9 @@ public:
     Q_INVOKABLE QString answerText(QString field, QString value);
     Q_INVOKABLE void choose(QString,QString);
     Q_INVOKABLE QString answerOffer(QString id, bool accept);
+    Q_INVOKABLE QString contactHomeOffer(QString id);
+    Q_INVOKABLE QString respondHomeOffer(QString id, QString response);
+    Q_INVOKABLE QString closeHomeOffer();
     Q_INVOKABLE void cycleAppearance(int part,int direction);
     QString portrait() const;
     QVariantList appearanceParts() const;
@@ -62,6 +67,8 @@ signals:
     void beatChanged();
 private:
     QVariantList options(const std::vector<content::FoundingOption>&) const;
+    QVariantMap homeOffer(const QString& id) const;
+    QString commitHomeDraft(QVariantMap next);
     void saveDraft();
     void deriveOpening();
     std::optional<content::FoundingCatalog> catalog_;

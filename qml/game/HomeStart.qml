@@ -10,7 +10,8 @@ Rectangle {
     required property real textScale
     readonly property int typeSize:Math.round(16*textScale)
     readonly property bool rich:story.form.family==="rich" || story.form.leg==="political"
-    readonly property bool eligibleCEO:["genius","political","wealthy"].includes(story.form.leg)
+    readonly property var offers: story.homeOffers
+    readonly property int waitingOffers: offers.filter(offer => offer.status === "offered").length
     property string app:story.form.home_app || "room"
     property string room:story.form.home_room || "Bedroom"
     property string message:""
@@ -21,7 +22,15 @@ Rectangle {
     signal menuRequested()
     signal appearanceRequested()
     color:"#102830"
-    function showApp(id) {app=id;story.setField("home_app",id);message="";homeScroll.contentItem.contentY=0}
+    function revealPage() {
+        const flick=homeScroll.contentItem
+        const y=pages.mapToItem(flick.contentItem,0,0).y
+        flick.contentY=Math.max(0,Math.min(y,flick.contentHeight-flick.height))
+    }
+    function showApp(id) {
+        app=id;story.setField("home_app",id);message="";homeScroll.contentItem.contentY=0
+        if(["messages","labs","investors"].includes(id)) Qt.callLater(revealPage)
+    }
     function openApp(id) {
         if(app===id)return
         signing=false
@@ -33,6 +42,18 @@ Rectangle {
         story.setField("legal_form",legal);story.setField("route",route);story.setField("headquarters","US-CA")
         if(story.form.investment==="-1")story.setField("investment","0")
         openApp("formation")
+    }
+    function contact(id) {
+        message=story.contactHomeOffer(id)
+        if(message) return
+        if(app==="messages") Qt.callLater(revealPage)
+        else openApp("messages")
+    }
+    function reply(id, response) {
+        message=story.respondHomeOffer(id,response)
+        if(message) return
+        if(response==="accept") openApp("formation")
+        else Qt.callLater(revealPage)
     }
     function sign() {
         message=story.signingError()
@@ -82,13 +103,13 @@ Rectangle {
         Copy {text:qsTr("Personal savings %1 · Company funds $0 · Silicon Valley").arg(home.story.personalFunds.total);color:"#b9dba7"}
         Flow {
             Layout.fillWidth:true;spacing:8
-            Repeater {model:[{id:"room",name:qsTr("⌂ Home")},{id:"browser",name:qsTr("◉ Browser")},{id:"messages",name:qsTr("✉ Messages")},{id:"bank",name:qsTr("▤ Personal accounts")}]
+            Repeater {model:[{id:"room",name:qsTr("⌂ Home")},{id:"browser",name:qsTr("◉ Browser")},{id:"messages",name:home.waitingOffers?qsTr("✉ Messages (%1)").arg(home.waitingOffers):qsTr("✉ Messages")},{id:"bank",name:qsTr("▤ Personal accounts")}]
                 WorldButton {required property var modelData;objectName:"homeApp_"+modelData.id;text:modelData.name;textSize:home.typeSize;checked:home.app===modelData.id;onClicked:home.openApp(modelData.id)}
             }
             WorldButton {text:qsTr("Appearance");textSize:home.typeSize;onClicked:{home.signing=false;home.appearanceRequested()}}
         }
         Rectangle {
-            visible:campaign.showGuide && home.story.form.home_guide!=="dismissed"
+            visible:campaign.showGuide && home.story.form.home_guide!=="dismissed" && ["room","browser"].includes(home.app)
             Layout.fillWidth:true;implicitHeight:guide.implicitHeight+20;color:"#31524e";radius:10
             RowLayout {
                 id:guide;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:10
@@ -140,19 +161,19 @@ Rectangle {
                     WorldButton {objectName:"homeFoundCorporation";text:qsTr("Found a corporation");textSize:home.typeSize;onClicked:home.prepare(home.rich?"bootstrap":"investment","corporation")}
                     WorldButton {objectName:"homeFoundNonprofit";text:qsTr("Found a nonprofit");textSize:home.typeSize;onClicked:home.prepare("mission_director","nonprofit")}
                 }
-                ColumnLayout {
-                    visible:home.app==="labs";Layout.fillWidth:true
-                    Heading {text:qsTr("Alder Research · A seat at the table")}
-                    Copy {text:qsTr("An early-stage lab is looking for a leader who can attract backing and talent. Apply with your background and public work.")}
-                    WorldButton {objectName:"homeApplyCEO";text:qsTr("Send leadership application");textSize:home.typeSize;onClicked:{if(home.eligibleCEO){home.story.setField("home_contact","alder");home.prepare("hired_ceo","corporation")}else home.message=qsTr("Alder: Thank you for your interest. We are still in the early planning stages and cannot offer you the leadership role. Your own company remains an option.")}}
-                }
-                ColumnLayout {
-                    visible:home.app==="investors" || home.app==="messages";Layout.fillWidth:true
-                    Heading {text:home.app==="messages"?qsTr("Your conversations"):qsTr("Founders’ Exchange")}
-                    Copy {text:home.story.form.leg==="genius"?qsTr("Alder has heard about your work. A recruiter asks whether you would consider leading their lab. Investors are also interested in your next experiment."):home.rich?qsTr("Your family can make introductions. Funding still comes with terms, and influential partners expect to be heard."):qsTr("Your public work is your calling card. Put a clear proposal in front of a backer and find out whether they will take the meeting.")}
-                    WorldButton {visible:home.eligibleCEO;text:qsTr("Read Alder’s leadership invitation");textSize:home.typeSize;onClicked:home.openApp("labs")}
-                    WorldButton {text:qsTr("Pitch a company");textSize:home.typeSize;onClicked:home.prepare("investment","corporation")}
-                    WorldButton {visible:home.rich;text:qsTr("Meet a potential cofounder");textSize:home.typeSize;onClicked:home.prepare("partnership","corporation")}
+                HomeOffers {
+                    visible:["messages","labs","investors"].includes(home.app)
+                    Layout.fillWidth:true
+                    mode:visible?home.app:"messages"
+                    textSize:home.typeSize
+                    offers:visible?home.offers:[]
+                    selectedId:home.story.form.home_offer || ""
+                    errorText:home.message || home.story.error
+                    canMeetCofounder:home.rich
+                    onOpened:id=>home.contact(id)
+                    onReplied:(id,response)=>home.reply(id,response)
+                    onCloseThread:{home.message=home.story.closeHomeOffer();if(!home.message)Qt.callLater(home.revealPage)}
+                    onCofounderRequested:home.prepare("partnership","corporation")
                 }
                 ColumnLayout {
                     visible:home.app==="bank";Layout.fillWidth:true
@@ -209,15 +230,22 @@ Rectangle {
                         model:home.story.backers
                         ColumnLayout {
                             required property var modelData
+                            readonly property var offer:home.offers.find(row=>row.id===modelData.id)
                             visible:modelData.available;Layout.fillWidth:true
                             Heading {text:modelData.name}
-                            Copy {text:modelData.detail+"\n"+modelData.terms}
-                            WorldButton {objectName:"homeBacker_"+modelData.id;text:home.story.form.backers.includes(modelData.id)?qsTr("Decline this offer"):qsTr("Accept these terms");textSize:home.typeSize;onClicked:home.message=home.story.answerOffer(modelData.id,!home.story.form.backers.includes(modelData.id))}
+                            Copy {text:modelData.detail}
+                            WorldButton {
+                                objectName:"homeBacker_"+modelData.id
+                                text:offer?.status==="listed"?qsTr("Contact about funding"):qsTr("Open conversation · %1").arg(offer?.statusText || "")
+                                textSize:home.typeSize
+                                Layout.maximumWidth:parent.width
+                                onClicked:home.contact(modelData.id)
+                            }
                         }
                     }
                     Heading {text:qsTr("Before you sign")}
                     Copy {objectName:"homeTerms";text:home.story.preview}
-                    WorldButton {objectName:"homeSign";text:home.story.form.route==="hired_ceo"?qsTr("Accept the appointment"):qsTr("Sign the founding documents");primary:true;textSize:home.typeSize;onClicked:home.sign()}
+                    WorldButton {objectName:"homeSign";text:home.story.form.route==="hired_ceo"?qsTr("Sign the appointment"):qsTr("Sign the founding documents");primary:true;textSize:home.typeSize;onClicked:home.sign()}
                 }
                 Rectangle {
                     visible:home.signing;Layout.fillWidth:true;implicitHeight:ceremony.implicitHeight+48;color:"#ede2c7";border.color:"#ad8458";border.width:8
@@ -225,13 +253,13 @@ Rectangle {
                         id:ceremony;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:24
                         Label {Layout.fillWidth:true;text:home.story.form.route==="hired_ceo"?qsTr("APPOINTMENT OF CHIEF EXECUTIVE"):qsTr("ARTICLES OF INCORPORATION");color:"#655440";font.pixelSize:home.typeSize*1.2;wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter}
                         Label {Layout.fillWidth:true;text:home.story.form.company;color:"#30474a";font.pixelSize:home.typeSize*1.7;font.bold:true;wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter}
-                        Label {Layout.fillWidth:true;text:qsTr("A signature turns an idea into an obligation. People will depend on what you build next.");color:"#655440";font.pixelSize:home.typeSize;wrapMode:Text.Wrap}
+                        Label {Layout.fillWidth:true;text:home.story.form.route==="hired_ceo"?qsTr("You close the appointment letter. Across the valley, a team is waiting to hear from its new chief executive."):qsTr("A signature turns an idea into an obligation. People will depend on what you build next.");color:"#655440";font.pixelSize:home.typeSize;wrapMode:Text.Wrap}
                         Item {Layout.fillWidth:true;Layout.preferredHeight:home.typeSize*3;clip:true;Item {width:parent.width*home.signature;height:parent.height;clip:true;Label {width:ceremony.width;text:home.story.form.first_name+" "+home.story.form.last_name;font.family:"Snell Roundhand";font.pixelSize:home.typeSize*2;color:"#344b65"}}}
                         WorldButton {objectName:"homeEnterCompany";visible:home.signature===1;text:qsTr("Begin the first day →");primary:true;textSize:home.typeSize;enabled:!campaign.busy;onClicked:campaign.startFounderCampaign()}
                         WorldButton {text:qsTr("Review terms again");textSize:home.typeSize;enabled:!campaign.busy;onClicked:home.signing=false}
                     }
                 }
-                Copy {visible:!!home.message || !!campaign.notice;text:home.message || campaign.notice;color:"#f1c492"}
+                Copy {visible:(!!home.message && !["messages","labs","investors"].includes(home.app)) || !!campaign.notice;text:home.message || campaign.notice;color:"#f1c492"}
             }
         }
     }

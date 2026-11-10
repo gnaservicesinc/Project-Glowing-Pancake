@@ -188,11 +188,46 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 if(item("homeStart")->property("transitioning").toBool())return;
                 if(state->home_phase==0) {
                     if(!capture(".home") || !click("homeApp_browser")) {fail("Home desktop before company formation");return;}
-                    story->setField("seed","718");++state->home_phase;return;
+                    story->setField("seed","718");campaign.setTextScalePercent(200);++state->home_phase;return;
                 }
-                if(state->home_phase==1) {if(!click("homeService_bank")){fail("Browser banking service");return;}++state->home_phase;return;}
-                if(state->home_phase==2) {if(!click("homeReviewStartupLoan")){fail("Startup loan application");return;}++state->home_phase;return;}
+                if(state->home_phase<=12 && (window.visibility()!=QWindow::Windowed || window.size()!=QSize{650,480})) {
+                    window.showNormal();window.resize(650,480);return;
+                }
+                if(state->home_phase<=12 && campaign.textScalePercent()!=200) {fail("Home conversations must be tested at 200% text");return;}
+                if(state->home_phase==1) {if(!click("homeService_labs")){fail("Browser careers service");return;}++state->home_phase;return;}
+                if(state->home_phase==2) {if(!click("homeApplyCEO")){fail("Submit a leadership application");return;}++state->home_phase;return;}
                 if(state->home_phase==3) {
+                    auto* reply=item("homeOfferMessage");
+                    if(!reply || !reply->isVisible() || !reply->property("text").toString().contains("cannot offer") || item("homeAcceptOffer")->isVisible()) {
+                        fail("Ineligible application should have a saved rejection and no acceptance");return;
+                    }
+                    reply->forceActiveFocus(Qt::TabFocusReason);++state->home_phase;return;
+                }
+                if(state->home_phase==4) {if(!capture(".application") || !click("homeApp_browser")){fail("Read the rejection");return;}++state->home_phase;return;}
+                if(state->home_phase==5) {if(!click("homeService_investors")){fail("Browser investors service");return;}++state->home_phase;return;}
+                if(state->home_phase==6) {if(!click("homeContact_commercial")){fail("Pitch a named investor");return;}++state->home_phase;return;}
+                if(state->home_phase==7) {if(!click("homeDeferOffer")){fail("Set the investor's offer aside");return;}++state->home_phase;return;}
+                if(state->home_phase==8) {
+                    auto* status=item("homeOfferStatus");
+                    if(!status || !status->isVisible() || status->property("text")!="Saved for later") {fail("Deferred offer status");return;}
+                    status->forceActiveFocus(Qt::TabFocusReason);++state->home_phase;return;
+                }
+                if(state->home_phase==9) {if(!capture(".investor") || !click("homeAcceptOffer")){fail("Accept the investor for review");return;}++state->home_phase;return;}
+                if(state->home_phase==10) {
+                    if(story->form().value("backers").toStringList()!=QStringList{"commercial"} || !item("homeSign")->isVisible() || !campaign.welcome() ||
+                        !click("homeApp_messages")) {fail("Accepted terms must reach unsigned company paperwork");return;}
+                    ++state->home_phase;return;
+                }
+                if(state->home_phase==11) {if(!click("homeDeclineOffer")){fail("Withdraw the selected offer before signing");return;}++state->home_phase;return;}
+                if(state->home_phase==12) {
+                    if(!story->form().value("backers").toStringList().empty() || item("homeOfferStatus")->property("text")!="Declined" || !click("homeApp_browser")) {
+                        fail("Declined equity terms must be removed from paperwork");return;
+                    }
+                    campaign.setTextScalePercent(100);++state->home_phase;return;
+                }
+                if(state->home_phase==13) {if(!click("homeService_bank")){fail("Browser banking service");return;}++state->home_phase;return;}
+                if(state->home_phase==14) {if(!click("homeReviewStartupLoan")){fail("Startup loan application");return;}++state->home_phase;return;}
+                if(state->home_phase==15) {
                     if(!click("homeSign") || story->signingError().isEmpty() || !campaign.welcome()) {fail("Unfunded bank application must refuse");return;}
                     auto* investment=item("homeInvestment");
                     if(!investment) {fail("Loan investment field");return;}
@@ -201,13 +236,13 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                     if(!press(window,item("homeBylaws"),Qt::Key_End) || story->form().value("charter")!="charter.shared_research") {fail("Optional bylaws");return;}
                     ++state->home_phase;return;
                 }
-                if(state->home_phase==4) {if(!capture(".terms") || !click("homeSign")){fail("Reviewed signing");return;}++state->home_phase;return;}
-                if(state->home_phase==5) {
+                if(state->home_phase==16) {if(!capture(".terms") || !click("homeSign")){fail("Reviewed signing");return;}++state->home_phase;return;}
+                if(state->home_phase==17) {
                     if(!item("homeEnterCompany")->isVisible())return;
                     item("homeEnterCompany")->forceActiveFocus(Qt::TabFocusReason);
                     ++state->home_phase;return;
                 }
-                if(state->home_phase==6) {if(!capture(".signed") || !click("homeEnterCompany")){fail("Signed company entry");return;}state->phase=Phase::office;}
+                if(state->home_phase==18) {if(!capture(".signed") || !click("homeEnterCompany")){fail("Signed company entry");return;}state->phase=Phase::office;}
             } else if (!advance()) fail("Could not advance narration or answer");
             break;
         }
@@ -255,7 +290,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 fail("Exact save continuation"); return;
             }
             std::cout << "Prologue UI passed: hospital opening, resized 650×480 canvas, editable name, branching art and palette, "
-                         "eight chapters, individual offers, world seed, appearance, paused office and fresh-save/day continuation\n";
+                         "eight chapters, saved application and investor conversations at 200% text, appearance, paused office and fresh-save/day continuation\n";
             timer->stop();
             QCoreApplication::exit(0);
             break;

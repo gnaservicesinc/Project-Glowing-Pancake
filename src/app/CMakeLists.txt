@@ -74,6 +74,7 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/DraftCheckBox.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FoundingFlow.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/HomeStart.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/HomeOffers.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FoundingStory.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/GameInk.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MainMenu.qml"
