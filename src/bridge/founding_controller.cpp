@@ -23,7 +23,7 @@ QString money(std::int64_t cents) {
 }
 
 QVariantMap defaults() {
-    return {{"first_name","Alex"},{"last_name","Vale"},{"gender","nonbinary"},{"pronouns","they/them"},
+    return {{"first_name","Alex"},{"last_name","Vale"},{"birth_sex","indeterminate"},{"gender","unspecified"},{"pronouns","they/them"},{"orientation","unspecified"},
         {"home_app","room"},{"home_room","Bedroom"},{"home_guide",""},{"home_offer",""},{"home_replies",QVariantMap{}},{"company_draft","Daybreak Research"},
         {"investment","-1"},{"charter",""},{"company","Daybreak Research"},{"seed","19972015"},{"headquarters","US-CA"},{"difficulty","difficulty.standard"},
         {"sociability","introverted"},{"activity","sedentary"},{"disposition","deliberate"},
@@ -75,7 +75,7 @@ FoundingController::FoundingController(const content::Collection& collection, st
     if (!file.open(QIODevice::ReadOnly) || file.size() > 32768) return;
     const auto saved = QJsonDocument::fromJson(file.readAll()).object();
     const auto format = saved.value("format").toString();
-    if (format != QStringLiteral("founding-draft-3")) return;
+    if (format != QStringLiteral("founding-draft-4")) return;
     const auto fields = saved.value("form").toObject().toVariantMap();
     for (auto it = fields.begin(); it != fields.end(); ++it)
         if (form_.contains(it.key())) form_[it.key()] = it.value();
@@ -100,6 +100,8 @@ content::FoundingSelection FoundingController::selection() const {
     selected.first_name = field("first_name");
     selected.last_name = field("last_name");
     selected.gender = field("gender");
+    selected.birth_sex = field("birth_sex");
+    selected.orientation = field("orientation");
     selected.sociability = field("sociability");
     selected.activity = field("activity");
     selected.disposition = field("disposition");
@@ -428,13 +430,25 @@ QString FoundingController::genderAudience(QString gender) const {
     const auto key=gender.toStdString();
     QStringList rows;
     for(const auto& effect:audiences_) if(effect.founder==key) {
-        const auto audience=effect.audience=="woman"?tr("Women"):effect.audience=="man"?tr("Men"):tr("Nonbinary people");
-        const auto salary=(effect.salary_bp>0?QStringLiteral("+"):QString{})+
-            QLocale().toString(static_cast<double>(effect.salary_bp)/100,'f',effect.salary_bp%10?2:effect.salary_bp%100?1:0);
-        const auto mood=(effect.mood>0?QStringLiteral("+"):QString{})+QString::number(effect.mood);
-        rows.push_back(tr("%1 · %2% salary floor · %3 mood").arg(audience,salary,mood));
+        const auto audience=effect.audience==key?tr("With your gender"):effect.audience=="woman"?tr("With women"):effect.audience=="man"?tr("With men"):tr("With nonbinary people");
+        QStringList impacts;
+        if(effect.salary_bp) {
+            const auto bp=effect.salary_bp;
+            const auto salary=(bp>0?QStringLiteral("+"):QString{})+QLocale().toString(static_cast<double>(bp)/100,'f',bp%10?2:bp%100?1:0);
+            impacts.push_back(tr("%1% salary needed").arg(salary));
+        }
+        if(effect.mood) impacts.push_back(tr("%1 mood").arg((effect.mood>0?QStringLiteral("+"):QString{})+QString::number(effect.mood)));
+        rows.push_back(tr("%1: %2").arg(audience,impacts.join(tr(", "))));
     }
     return rows.isEmpty()?tr("No gender-based hiring or mood adjustment."):rows.join(QLatin1Char('\n'));
+}
+QString FoundingController::communitySupport(QString gender) const {
+    if(!catalog_ || !catalog_->queer_community_buzz) return {};
+    content::FoundingSelection identity;
+    identity.birth_sex=form_.value("birth_sex").toString().toStdString();
+    identity.gender=gender.toStdString();
+    if(!content::transgender_founder(identity)) return {};
+    return tr("Queer community support adds +%1 founding buzz and can improve investor terms.").arg(catalog_->queer_community_buzz);
 }
 QString FoundingController::signingError() const {
     if(!catalog_) return tr("The founding catalog is unavailable.");
@@ -496,7 +510,7 @@ void FoundingController::saveDraft() {
         std::filesystem::create_directories(draft_path_.parent_path());
         QSaveFile file{QString::fromStdU16String(draft_path_.u16string())};
         const auto bytes = QJsonDocument{QJsonObject::fromVariantMap(
-            {{"format","founding-draft-3"},{"beat",beat_},{"form",form_}})}.toJson(QJsonDocument::Compact);
+            {{"format","founding-draft-4"},{"beat",beat_},{"form",form_}})}.toJson(QJsonDocument::Compact);
         if (!file.open(QIODevice::WriteOnly) || file.write(bytes) != bytes.size() || !file.commit())
             error_ = tr("Could not save your place in the prologue.");
         else error_.clear();
@@ -531,13 +545,19 @@ void FoundingController::setField(QString key, QVariant value) {
     if (key=="route" && answer=="hired_ceo" && beat_=="home") return;
     if (key=="mission" && !form_.value("partner").toString().isEmpty()) return;
     if(key=="gender" && answer!="woman" && answer!="man" && answer!="nonbinary" && answer!="unspecified") return;
+    if(key=="birth_sex" && answer!="female" && answer!="male" && answer!="indeterminate") return;
+    if(key=="orientation" && std::ranges::find(content::founder_orientations,answer.toStdString())==content::founder_orientations.end()) return;
     if(key=="pronouns" && !pronounOptions().contains(answer)) return;
     if(key=="investment") {bool ok=false;const auto dollars=answer.toLongLong(&ok);if(!ok || dollars < -1 || dollars>10000000000)return;}
     const bool was_ceo=form_.value("route")=="hired_ceo";
     form_[key] = answer;
-    if(key=="gender") {
+    if(key=="gender" || key=="birth_sex") {
         auto parts=form_.value("appearance").toList(),style=form_.value("style").toList();
-        if(parts.size()==15 && style.size()==8) {parts[1]=answer=="woman"?2:answer=="man"?0:1;parts[9]=0;style[0]=answer=="woman"?5:0;style[2]=answer=="woman"?1:0;form_["appearance"]=parts;form_["style"]=style;}
+        if(parts.size()==15 && style.size()==8) {
+            if(key=="birth_sex") style[0]=answer=="female"?5:answer=="male"?0:2;
+            else {parts[1]=answer=="woman"?2:answer=="man"?0:1;parts[9]=0;style[2]=answer=="woman"?1:0;}
+            form_["appearance"]=parts;form_["style"]=style;
+        }
     }
     if(key=="route" && answer=="hired_ceo") {form_["company_draft"]=form_.value("company");form_["company"]="Alder Research";form_["charter"]="";}
     if (key == "legal_form" || key == "route") form_["backers"] = QStringList{};
@@ -553,7 +573,7 @@ void FoundingController::setField(QString key, QVariant value) {
 }
 
 QString FoundingController::answerText(QString field, QString value) {
-    if(field=="gender" || field=="pronouns") return tr("Select an identity option.");
+    if(field=="gender" || field=="birth_sex" || field=="pronouns" || field=="orientation") return tr("Select an identity option.");
     value = value.trimmed();
     if (field == "seed") {
         try {
@@ -596,6 +616,8 @@ void FoundingController::deriveOpening() {
         } else form_["mission"]=text(partner->objective);
     }
     if(form_.value("gender")!="woman" && form_.value("gender")!="man" && form_.value("gender")!="nonbinary" && form_.value("gender")!="unspecified") form_["gender"]="unspecified";
+    if(form_.value("birth_sex")!="female" && form_.value("birth_sex")!="male" && form_.value("birth_sex")!="indeterminate") form_["birth_sex"]="indeterminate";
+    if(std::ranges::find(content::founder_orientations,form_.value("orientation").toString().toStdString())==content::founder_orientations.end()) form_["orientation"]="unspecified";
     if(!pronounOptions().contains(form_.value("pronouns").toString())) form_["pronouns"]="they/them";
 }
 

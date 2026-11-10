@@ -70,7 +70,7 @@ QVariantMap WorldController::familyHome() const {
         {"width",home.plan.width},{"depth",home.plan.depth},{"kind","home"},{"atHome",premises.kind=="home"},
         {"items",premises.kind=="home"?headquarters().value("items").toList():QVariantList{}},
         {"founder",world.identity?q(world.identity->founder_name):QString{}},
-        {"gender",q(world.founding->gender)},{"pronouns",world.identity?q(world.identity->founder_pronouns):QString{}}};
+        {"birthSex",q(world.founding->birth_sex)},{"surname",q(world.founding->last_name)}};
 }
 QVariantList WorldController::hqEquipmentOffers() const {
     QVariantList rows;if(!available(snapshot_)) return rows;

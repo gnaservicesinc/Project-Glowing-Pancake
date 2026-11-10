@@ -23,6 +23,13 @@ Rectangle {
     signal menuRequested()
     signal appearanceRequested()
     color:"#102830"
+    BirthKeepsake {
+        id: birthKeepsake
+        textSize: home.typeSize
+        founder: home.story.form.first_name + " " + home.story.form.last_name
+        surname: home.story.form.last_name
+        birthSex: home.story.form.birth_sex
+    }
     function revealPage() {
         const flick=homeScroll.contentItem
         const y=pages.mapToItem(flick.contentItem,0,0).y
@@ -131,7 +138,9 @@ Rectangle {
                     FamilyRoomScene {
                         textSize: home.typeSize
                         bedroom: home.room === "Bedroom"
+                        showRecord: true
                         onComputerRequested: home.openApp("browser")
+                        onRecordRequested: birthKeepsake.open()
                     }
                     Flow {Layout.fillWidth:true;spacing:8;Repeater {model:["Bedroom"].concat(home.story.familyHome.roomNames || []);WorldButton {required property string modelData;text:modelData;textSize:home.typeSize;checked:home.room===modelData;onClicked:{home.room=modelData;home.story.setField("home_room",modelData)}}}}
                     Copy {text:qsTr("%1 free workspaces · %2 × %3 m in total · the family keeps a room for you when the company moves out.").arg((home.story.familyHome.rooms || []).length).arg(home.story.familyHome.width || 0).arg(home.story.familyHome.depth || 0)}

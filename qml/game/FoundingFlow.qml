@@ -15,6 +15,7 @@ FocusScope {
     readonly property string beatId: beat.id
     readonly property string sceneTone: beat.tone
     readonly property bool narrative: beat.kind === "narration"
+    readonly property bool birthPaper: ["first_name", "last_name", "birth_sex", "certificate"].includes(beatId)
     readonly property bool settling: textSequence.running
     readonly property real readWidth: 660 + 170 * Math.max(0, Math.min(textScale, 2) - 1)
     readonly property real zoom: Math.min(2, textScale)
@@ -28,6 +29,7 @@ FocusScope {
     property int appearanceFeature: 0
     property string actionError: ""
     property string inputBeat: ""
+    property real autograph: 0
     property color sceneAccent: ink.accent
 
     Behavior on sceneAccent {
@@ -48,6 +50,9 @@ FocusScope {
     function presentBeat() {
         if (!initialized || !visible) return
         textSequence.stop()
+        signing.stop()
+        autograph = beatId === "certificate" && reducedMotion ? 1 : 0
+        if (beatId === "certificate" && !reducedMotion) signing.start()
         choicePage = 0
         actionError = ""
         const source = "qrc:/pgp/assets/founding/" + beat.art + ".svg"
@@ -83,7 +88,7 @@ FocusScope {
             if (beat.kind === "field") {
                 editor.forceActiveFocus()
                 editor.selectAll()
-            } else if (continueAction.visible) {
+            } else if (continueAction.visible && continueAction.enabled) {
                 continueAction.forceActiveFocus()
             } else {
                 // Leave the decision unselected until the player reaches a choice.
@@ -98,6 +103,7 @@ FocusScope {
     }
 
     function advance() {
+        if (beatId === "certificate" && autograph < 1) return
         if (beat.kind === "review") {
             campaign.startFounderCampaign()
             return
@@ -115,7 +121,7 @@ FocusScope {
 
     function answer(id) {
         if(beatId==="pronouns" && id==="other") {moveTo("other_pronouns");return}
-        if(beatId==="other_pronouns") {story.setField("pronouns",id);moveTo("certificate");return}
+        if(beatId==="other_pronouns") {story.setField("pronouns",id);advance();return}
         if (beat.kind === "chapter") story.choose(beat.chapter, id)
         else if (beat.kind === "offer") {
             actionError = story.answerOffer(beat.offer, id === "accept")
@@ -127,6 +133,10 @@ FocusScope {
     function previousBeat() {
         moveTo(script.beats[Math.max(0,beatIndex-1)].id)
     }
+    function sceneFill(source) {
+        return width < height * 1.32 && source.toString().endsWith("/hospital.svg")
+            ? Image.PreserveAspectFit : Image.PreserveAspectCrop
+    }
 
     Component.onCompleted: {
         initialized = true
@@ -137,7 +147,14 @@ FocusScope {
     onReducedMotionChanged: if (visible && reducedMotion) {
         artFade.stop()
         scene.opacity = 1
+        if (beatId === "certificate") { signing.stop(); autograph = 1 }
         finishReveal()
+    }
+    NumberAnimation {
+        id: signing
+        target: opening; property: "autograph"
+        from: 0; to: 1; duration: 1800; easing.type: Easing.InOutSine
+        onFinished: if (!opening.settling) continueAction.forceActiveFocus()
     }
 
     Keys.onPressed: event => {
@@ -160,14 +177,14 @@ FocusScope {
         Image {
             id: previousScene
             anchors.fill: parent
-            fillMode: Image.PreserveAspectCrop
+            fillMode: opening.sceneFill(source)
             horizontalAlignment: Image.AlignRight
         }
         Image {
             id: scene
             objectName: "foundingScene"
             anchors.fill: parent
-            fillMode: Image.PreserveAspectCrop
+            fillMode: opening.sceneFill(source)
             horizontalAlignment: Image.AlignRight
         }
         Rectangle {
@@ -233,6 +250,7 @@ FocusScope {
         property bool indented: false
         property bool selected: false
         property bool alignRight: false
+        property bool onPaper: false
         property real typeSize: 20
         property real nameHeight: Math.min(42, height * 0.55)
         readonly property bool lit: pointer.containsMouse || activeFocus
@@ -254,7 +272,7 @@ FocusScope {
             width: 26
             height: title.height
             text: action.selected ? "◆" : "›"
-            color: action.lit || action.selected ? opening.sceneAccent : ink.muted
+            color: action.onPaper ? "#78593c" : action.lit || action.selected ? opening.sceneAccent : ink.muted
             font.pixelSize: action.selected ? 11 : 24
             verticalAlignment: Text.AlignVCenter
         }
@@ -265,7 +283,8 @@ FocusScope {
             height: action.detail.length ? action.nameHeight : parent.height
             text: action.caption
             font.pixelSize: Math.round(action.typeSize)
-            color: !action.enabled ? ink.muted : action.lit || action.selected ? opening.sceneAccent : ink.paper
+            color: action.onPaper ? (action.lit || action.selected ? "#704827" : "#293d43")
+                : !action.enabled ? ink.muted : action.lit || action.selected ? opening.sceneAccent : ink.paper
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: action.alignRight ? Text.AlignRight : Text.AlignLeft
             font.weight: action.lit ? Font.DemiBold : Font.Normal
@@ -288,7 +307,7 @@ FocusScope {
             y: parent.height - 1
             width: title.width
             height: 1
-            color: Qt.alpha(opening.sceneAccent, action.lit && action.enabled ? 1.0 : 0.23)
+            color: action.onPaper ? "#a98557" : Qt.alpha(opening.sceneAccent, action.lit && action.enabled ? 1.0 : 0.23)
             visible: action.indented || action.lit
         }
         MouseArea {
@@ -344,6 +363,7 @@ FocusScope {
         }
         StoryText {
             objectName: "foundingTitle"
+            visible: !opening.birthPaper
             x: stage.margin
             y: (opening.narrative ? 192 : 119) + 10 * (1 - opening.titleProgress)
             width: opening.readWidth + 60
@@ -358,6 +378,7 @@ FocusScope {
         }
         StoryText {
             objectName: "foundingNarration"
+            visible: !opening.birthPaper
             x: stage.margin
             y: (opening.narrative ? 294 : 219) + 9 * (1 - opening.narrationProgress)
             width: opening.readWidth
@@ -381,7 +402,7 @@ FocusScope {
         }
         StoryText {
             objectName: "foundingQuestion"
-            visible: !!opening.beat.prompt
+            visible: !opening.birthPaper && !!opening.beat.prompt
             x: stage.margin
             y: 323
             width: opening.readWidth
@@ -395,10 +416,11 @@ FocusScope {
         }
         Item {
             id: answerLine
-            x: stage.margin
-            y: 392
-            width: Math.min(opening.readWidth, 660)
-            height: 62
+            parent: opening.birthPaper ? paperFields : stage
+            x: opening.birthPaper ? 0 : stage.margin
+            y: opening.birthPaper ? (opening.beatId === "first_name" ? 157 : 234) : 392
+            width: opening.birthPaper ? paperFields.width : Math.min(opening.readWidth, 660)
+            height: opening.birthPaper ? 55 : 62
             visible: opening.beat.kind === "field"
             opacity: opening.actionsProgress
             enabled: !opening.settling
@@ -413,9 +435,9 @@ FocusScope {
                 maximumLength: opening.beat.limit || 128
                 font.family: ink.displayFace
                 font.pixelSize: Math.round(34 * Math.min(1.42, opening.zoom))
-                color: ink.paper
-                selectionColor: ink.stage
-                selectedTextColor: ink.paper
+                color: opening.birthPaper ? "#263d48" : ink.paper
+                selectionColor: opening.birthPaper ? "#395968" : ink.stage
+                selectedTextColor: "#fff7e5"
                 verticalAlignment: TextInput.AlignVCenter
                 Accessible.name: opening.beat.prompt || ""
                 onAccepted: opening.advance()
@@ -425,39 +447,46 @@ FocusScope {
                 anchors.bottom: parent.bottom
                 width: parent.width
                 height: 2
-                color: Qt.alpha(opening.sceneAccent, editor.activeFocus ? 0.85 : 0.4)
+                color: opening.birthPaper ? "#78593c" : Qt.alpha(opening.sceneAccent, editor.activeFocus ? 0.85 : 0.4)
             }
         }
 
         Item {
             id: decisions
+            parent: opening.birthPaper ? paperFields : stage
             readonly property var rows: opening.beat.choices || []
-            readonly property int pageSize: 2
+            readonly property int pageSize: opening.birthPaper ? 3 : 2
+            readonly property int pages: Math.ceil(rows.length / pageSize)
             readonly property var shown: rows.slice(opening.choicePage * pageSize, (opening.choicePage + 1) * pageSize)
-            x: stage.margin
-            y: 381 + 7 * (1 - opening.actionsProgress)
-            width: opening.readWidth
-            height: 221
+            x: opening.birthPaper ? 0 : stage.margin
+            y: opening.birthPaper ? 313 : 381 + 7 * (1 - opening.actionsProgress)
+            width: opening.birthPaper ? paperFields.width : opening.readWidth
+            height: opening.birthPaper ? 56 : 221
             opacity: opening.actionsProgress
             visible: rows.length > 0
             enabled: !opening.settling
+            function changePage(delta) {
+                opening.choicePage += delta
+                Qt.callLater(() => choiceButtons.itemAt(0)?.forceActiveFocus(Qt.TabFocusReason))
+            }
             Grid {
                 id: options
-                readonly property int rowCount: Math.max(1, Math.ceil(decisions.shown.length / columns))
-                columns: 1
+                columns: opening.birthPaper ? 3 : 1
                 spacing: 7
                 Repeater {
+                    id: choiceButtons
                     model: decisions.shown
                     delegate: StoryAction {
                         required property var modelData
                         objectName: "foundingChoice_" + modelData.id
                         width: (decisions.width - (options.columns - 1) * options.spacing) / options.columns
-                        height: Math.min(108, (decisions.height - (options.rowCount - 1) * options.spacing) / options.rowCount)
-                        nameHeight: options.columns > 1 && options.rowCount > 2 ? 29 : Math.min(42, height * 0.55)
+                        height: opening.birthPaper ? decisions.height : decisions.pages > 1 ? 86 : 106
+                        nameHeight: Math.min(38, height * 0.48)
                         caption: modelData.name
                         detail: modelData.available === false ? modelData.reason : modelData.detail || ""
                         typeSize: 21 * opening.zoom
                         indented: true
+                        onPaper: opening.birthPaper
                         selected: opening.beat.kind === "chapter"
                             ? opening.story.form.choices[opening.beat.chapter] === modelData.id
                             : opening.beat.kind === "offer"
@@ -466,6 +495,34 @@ FocusScope {
                         enabled: modelData.available !== false && decisions.enabled
                         onActivated: opening.answer(modelData.id)
                     }
+                }
+            }
+            Row {
+                y: options.height + 6
+                visible: decisions.pages > 1
+                spacing: 10
+                StoryAction {
+                    objectName: "foundingPreviousChoices"
+                    visible: opening.choicePage > 0
+                    width: 120; height: 33
+                    caption: qsTr("‹  Previous")
+                    typeSize: 20 * Math.min(opening.zoom, 1.45)
+                    onActivated: decisions.changePage(-1)
+                }
+                StoryText {
+                    width: 54; height: 33
+                    text: (opening.choicePage + 1) + " / " + decisions.pages
+                    verticalAlignment: Text.AlignVCenter
+                    font.pixelSize: 19
+                    color: ink.secondary
+                }
+                StoryAction {
+                    objectName: "foundingMoreChoices"
+                    visible: opening.choicePage + 1 < decisions.pages
+                    width: 170; height: 33
+                    caption: qsTr("More choices  ›")
+                    typeSize: 20 * Math.min(opening.zoom, 1.45)
+                    onActivated: decisions.changePage(1)
                 }
             }
         }
@@ -504,21 +561,95 @@ FocusScope {
             }
 
         }
-        Rectangle {
-            visible:["first_name","last_name","gender","pronouns","certificate"].includes(opening.beatId)
-            x:opening.beatId==="certificate"?stage.margin:820;y:opening.beatId==="certificate"?345:320
-            width:opening.beatId==="certificate"?660:250;height:opening.beatId==="certificate"?255:270
-            color:"#ede1c1";border.width:opening.beatId==="certificate"?10:2;border.color:"#ad8458";radius:3
-            Column {
-                anchors.fill:parent;anchors.margins:22;spacing:12
-                Text {width:parent.width;text:qsTr("RECORD OF A NEW LIFE");font.family:ink.displayFace;font.pixelSize:20;font.bold:true;color:"#5b5143";wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter}
-                Text {width:parent.width;text:opening.story.form.first_name+" "+opening.story.form.last_name;font.family:ink.displayFace;font.pixelSize:28;color:"#30464b";wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter}
-                Text {width:parent.width;text:qsTr("California · January 1997\n%1 · %2").arg(opening.story.form.gender).arg(opening.story.form.pronouns);font.pixelSize:16;color:"#5b5143";wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter}
+        Item {
+            id: paper
+            objectName: "foundingBirthCertificate"
+            x: stage.margin
+            y: 116
+            width: 620
+            height: 490
+            opacity: opening.birthPaper ? 1 : 0
+            visible: opacity > 0
+            enabled: opening.birthPaper
+            transform: Translate { y: 12 * (1 - paper.opacity) }
+            Behavior on opacity { enabled: !opening.reducedMotion; NumberAnimation { duration: 240 } }
+            Image {
+                anchors.fill: parent
+                source: "qrc:/pgp/assets/founding/birth-certificate.svg"
+                Accessible.ignored: true
+            }
+            Item {
+                id: paperFields
+                anchors.fill: parent
+                anchors.margins: 26
+                component PaperText: StoryText {
+                    width: paperFields.width
+                    color: "#35464b"
+                    minimumPixelSize: 17
+                    font.pixelSize: Math.round(21 * opening.zoom)
+                }
+                PaperText {
+                    y: 5; width: 440; height: 25
+                    text: qsTr("CALIFORNIA  /  JANUARY 1997")
+                    font.pixelSize: 17; font.letterSpacing: 2
+                    color: "#725637"
+                }
+                PaperText {
+                    y: 29; width: 450; height: 55
+                    text: qsTr("Certificate of Birth")
+                    font.family: ink.displayFace
+                    font.pixelSize: Math.round(47 * Math.min(1.3, opening.zoom))
+                    minimumPixelSize: 34
+                }
+                PaperText {
+                    y: 91; height: 46
+                    text: opening.beat.narration || ""
+                    color: "#604d3b"
+                }
+                PaperText { y: 140; height: 25; text: qsTr("Given name"); font.bold: true }
+                PaperText {
+                    visible: opening.beatId !== "first_name"
+                    y: 165; height: 44; text: opening.story.form.first_name || ""
+                    font.family: ink.displayFace; font.pixelSize: 33
+                }
+                Rectangle { visible: opening.beatId !== "first_name"; y: 211; width: parent.width; height: 1; color: "#ab8b65" }
+                PaperText { y: 217; height: 25; text: qsTr("Surname"); font.bold: true }
+                PaperText {
+                    visible: opening.beatId !== "last_name"
+                    y: 242; height: 44; text: opening.story.form.last_name || ""
+                    font.family: ink.displayFace; font.pixelSize: 33
+                }
+                Rectangle { visible: opening.beatId !== "last_name"; y: 288; width: parent.width; height: 1; color: "#ab8b65" }
+                PaperText { y: 297; height: 26; text: qsTr("Sex at birth"); font.bold: true }
+                PaperText {
+                    y: 329; height: 36
+                    visible: opening.beatId === "certificate"
+                    text: opening.story.form.birth_sex === "female" ? qsTr("Female")
+                        : opening.story.form.birth_sex === "male" ? qsTr("Male") : qsTr("Indeterminate")
+                    font.family: ink.displayFace; font.pixelSize: 29
+                }
                 Item {
-                    width:parent.width;height:48;clip:true;visible:opening.beatId==="certificate"
-                    property real reveal:visible?1:0
-                    Behavior on reveal {enabled:!opening.reducedMotion;NumberAnimation {duration:1600;easing.type:Easing.InOutSine}}
-                    Item {width:parent.width*parent.reveal;height:parent.height;clip:true;Text {width:600;text:qsTr("With love, the %1 family").arg(opening.story.form.last_name);font.family:"Snell Roundhand";font.pixelSize:30;color:"#344b65"}}
+                    objectName: "foundingSignature"
+                    y: 367; height: 62
+                    width: (paperFields.width - 65) * opening.autograph
+                    visible: opening.beatId === "certificate"
+                    clip: true
+                    Text {
+                        width: paperFields.width - 65; height: parent.height
+                        text: qsTr("The %1 family").arg(opening.story.form.last_name)
+                        font.family: "Snell Roundhand"; font.italic: true
+                        font.pixelSize: 42; minimumPixelSize: 23; fontSizeMode: Text.HorizontalFit
+                        verticalAlignment: Text.AlignVCenter; color: "#314865"
+                    }
+                }
+                Rectangle {
+                    x: paperFields.width - width; y: 374
+                    width: 52; height: 52; radius: 26
+                    color: "#903f42"; border.color: "#61272c"; border.width: 2
+                    visible: opening.beatId === "certificate"
+                    opacity: Math.max(0, (opening.autograph - 0.8) * 5)
+                    scale: 1.28 - 0.28 * opacity
+                    Text { anchors.centerIn: parent; text: "✦"; font.pixelSize: 27; color: "#f6dab1"; Accessible.ignored: true }
                 }
             }
         }
@@ -564,24 +695,6 @@ FocusScope {
                 onActivated: opening.previousBeat()
             }
             StoryAction {
-                visible: opening.choicePage > 0
-                x: 160
-                width: 180
-                height: parent.height
-                caption: qsTr("‹  More choices")
-                onActivated: opening.choicePage--
-            }
-            StoryAction {
-                visible: (opening.choicePage + 1) * decisions.pageSize < decisions.rows.length
-                objectName: "foundingMoreChoices"
-                x: parent.width - width
-                width: 180
-                height: parent.height
-                caption: qsTr("More choices  ›")
-                alignRight: true
-                onActivated: opening.choicePage++
-            }
-            StoryAction {
                 objectName: "foundingSeedButton"
                 visible: opening.beat.kind === "review"
                 x: 180
@@ -601,7 +714,7 @@ FocusScope {
                 caption: opening.beat.kind === "review" ? qsTr("Enter the office  →") : qsTr("Continue  →")
                 typeSize: 22 * opening.zoom
                 alignRight: true
-                enabled: campaign.ready && parent.enabled
+                enabled: campaign.ready && parent.enabled && (opening.beatId !== "certificate" || opening.autograph >= 1)
                 onActivated: opening.advance()
             }
         }

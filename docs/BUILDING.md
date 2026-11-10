@@ -35,7 +35,8 @@ downloads dependencies or launches a program during builds.
 | `./make.sh --editor --test` | Build the editor and test its library, draft workflow and typed flow forms |
 | `./make.sh --core-only --debug --test` | Debug core and tests in `build/core-debug` |
 | `./make.sh --qt-root /path/to/Qt/prefix` | Select an installed desktop Qt prefix |
-| `./make.sh --jobs 2` | Bound compilation parallelism |
+| `./make.sh -j11 -l11` | Build with up to 11 parallel jobs and a Ninja load limit of 11, the defaults |
+| `./make.sh --jobs 2` | Lower compilation parallelism for this run |
 | `./make.sh --core-only --clean` | Remove only the selected wrapper-owned tree; no rebuild |
 | `./make.sh --help` | Show flags, paths and requirements |
 

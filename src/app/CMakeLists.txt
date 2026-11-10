@@ -58,6 +58,7 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/ContactFundingPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/PersonalLifePanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FamilyHomePanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/BirthKeepsake.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FamilyRoomScene.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/PersonalEventsPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/RecruitmentDiscussion.qml"
@@ -111,6 +112,7 @@ qt_add_resources(pgp-game menu_assets
 qt_add_resources(pgp-game founding_images
     PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
     FILES "${PROJECT_SOURCE_DIR}/assets/founding/hospital.svg"
+          "${PROJECT_SOURCE_DIR}/assets/founding/birth-certificate.svg"
           "${PROJECT_SOURCE_DIR}/assets/founding/street.svg"
           "${PROJECT_SOURCE_DIR}/assets/founding/street-apartments.svg"
           "${PROJECT_SOURCE_DIR}/assets/founding/street-hillside.svg"

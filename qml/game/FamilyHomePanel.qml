@@ -97,35 +97,11 @@ ColumnLayout {
         textSize: panel.textSize; Layout.maximumWidth: panel.width
         onClicked: panel.realtorRequested()
     }
-    GameDialog {
+    BirthKeepsake {
         id: certificate
-        title: qsTr("Family keepsake")
-        anchors.centerIn: Overlay.overlay
-        width: Math.min((Overlay.overlay ? Overlay.overlay.width : 650) - 32, panel.textSize * 27)
-        height: Math.min((Overlay.overlay ? Overlay.overlay.height : 480) - 32, panel.textSize * 22)
-        modal: true; focus: true; standardButtons: Dialog.Close
-        font.pixelSize: panel.textSize
-        enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: campaign.reducedMotion ? 0 : 150 } }
-        exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: campaign.reducedMotion ? 0 : 100 } }
-        contentItem: ScrollView {
-            id: recordScroll
-            contentWidth: availableWidth; clip: true
-            Rectangle {
-                objectName: "familyCertificate"
-                width: recordScroll.availableWidth
-                height: recordCopy.implicitHeight + 32
-                color: "#f2e4be"; border.width: 6; border.color: "#a9794b"; radius: 3
-                ColumnLayout {
-                    id: recordCopy
-                    anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 16
-                    spacing: 8
-                    Copy { text: qsTr("CALIFORNIA  /  JANUARY 1997"); color: "#52432c"; font.pixelSize: panel.textSize * 0.85 }
-                    Copy { text: qsTr("Birth record"); color: "#493b26"; font.bold: true }
-                    Copy { text: panel.home.founder || ""; color: "#493b26"; font.pixelSize: panel.textSize * 1.15 }
-                    Copy { text: [panel.home.gender, panel.home.pronouns].filter(Boolean).join(" · "); color: "#52432c" }
-                    Copy { text: qsTr("Signed by your family"); color: "#604730"; font.italic: true }
-                }
-            }
-        }
+        textSize: panel.textSize
+        founder: panel.home.founder || ""
+        surname: panel.home.surname || ""
+        birthSex: panel.home.birthSex || "indeterminate"
     }
 }

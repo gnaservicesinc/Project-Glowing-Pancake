@@ -39,24 +39,15 @@ QtObject {
             "", "narration", {
                 afterword: qsTr("A nurse draws the curtain around the bed. In the quiet, a newborn takes a first breath. Yours.")
             })
-        field("first_name", hospital, birth, qsTr("The name card"),
-            qsTr("The nurse slips a blank card into the holder at the foot of the bassinet. Your family has a name in mind."),
-            qsTr("What first name do they give you?"), 63)
-        field("last_name", hospital, birth, qsTr("A name to carry"),
-            qsTr("She writes it down, leaving room on the card for the name you will carry out of the ward."),
-            qsTr("What is your surname?"), 63)
-                question("gender", hospital, birth, qsTr("Your identity"),
-                    qsTr("Your family opens a keepsake record. While you lead the company, some people react to your gender in hiring and at work."),
-                    qsTr("How do you describe your gender?"), [option("woman",qsTr("Woman"),story.genderAudience("woman")),
-                        option("man",qsTr("Man"),story.genderAudience("man")),option("nonbinary",qsTr("Nonbinary"),story.genderAudience("nonbinary")),
-                        option("unspecified",qsTr("Prefer not to say"),story.genderAudience("unspecified"))])
-                question("pronouns", hospital, birth, qsTr("The introduction"),
-                    qsTr("Add the pronouns you will use when others tell your story."),
-                    qsTr("Which pronouns should they use?"), [option("she/her",qsTr("She / her")),option("he/him",qsTr("He / him")),option("they/them",qsTr("They / them")),option("other",qsTr("Other pronouns"),qsTr("Choose from additional pronoun sets."))])
-                if(story.beat==="other_pronouns" || !["she/her","he/him","they/them"].includes(form.pronouns))
-                    question("other_pronouns",workshop,date,qsTr("In your own words"),
-                        qsTr("Choose the pronouns used in your profile. A pronoun set does not determine your gender or abilities."),
-                        qsTr("Which set fits?"),story.pronounOptions.filter(value=>!["she/her","he/him","they/them"].includes(value)).map(value=>option(value,value)))
+        field("first_name", hospital, birth, qsTr("The birth record"),
+            qsTr("The nurse hands your family the birth record. They fill in your given name."),
+            qsTr("Given name"), 63)
+        field("last_name", hospital, birth, qsTr("The birth record"),
+            qsTr("Your family adds the surname you’ll carry home."),
+            qsTr("Surname"), 63)
+        question("birth_sex", hospital, birth, qsTr("The birth record"),
+            qsTr("The hospital records the sex observed at birth."), qsTr("Sex at birth"),
+            [option("female",qsTr("Female")),option("male",qsTr("Male")),option("indeterminate",qsTr("Indeterminate"))])
         add("certificate",hospital,birth,qsTr("A place in the world"),
             qsTr("A name, a date, the beginning of a life. Your family signs the keepsake and takes it home."),"","certificate")
         question("family", street, qsTr("HOME  /  1997"), qsTr("The house you come home to"),
@@ -154,8 +145,24 @@ QtObject {
         add("return-home",homeArt,qsTr("SILICON VALLEY  /  JANUARY 2015"),qsTr("Back where it begins"),
             form.choices.arrival==="move"?qsTr("Your family followed opportunity away from the Valley. Now a new job brings them back, and your boxes return to a familiar California street."):qsTr("Silicon Valley has changed around your parents' home. You still know the sound of its front door."),
             "","narration",{afterword:qsTr("Yesterday was your eighteenth birthday. Tomorrow can wait. This morning is yours.")})
+        const adult = qsTr("SILICON VALLEY  /  AGE 18")
+        question("gender",homeArt,adult,qsTr("Your identity"),
+            qsTr("You get to describe yourself. The notes show how people may respond in hiring and at work."),
+            qsTr("What is your gender identity?"), [option("woman",qsTr("Woman"),story.genderAudience("woman")),
+                option("man",qsTr("Man"),story.genderAudience("man")),option("nonbinary",qsTr("Nonbinary"),story.genderAudience("nonbinary")),
+                option("unspecified",qsTr("Prefer not to say"),story.genderAudience("unspecified"))])
+        question("pronouns",homeArt,adult,qsTr("The introduction"),qsTr("Choose the pronouns other people will use for you."),
+            qsTr("Which pronouns fit?"), [option("she/her",qsTr("She / her")),option("he/him",qsTr("He / him")),
+                option("they/them",qsTr("They / them")),option("other",qsTr("Other pronouns"),qsTr("Open additional pronoun sets."))])
+        if(story.beat==="other_pronouns" || !["she/her","he/him","they/them"].includes(form.pronouns))
+            question("other_pronouns",homeArt,adult,qsTr("In your own words"),qsTr("Choose the set to use in your profile and conversations."),
+                qsTr("Which set fits?"),story.pronounOptions.filter(value=>!["she/her","he/him","they/them"].includes(value)).map(value=>option(value,value)))
+        question("orientation",homeArt,adult,qsTr("Who you’re drawn to"),qsTr("At eighteen, you can decide what you want to share about yourself."),
+            qsTr("How do you describe your sexual orientation?"), [option("straight",qsTr("Straight")),option("gay_or_lesbian",qsTr("Gay or lesbian")),
+                option("bisexual",qsTr("Bisexual")),option("pansexual",qsTr("Pansexual")),option("asexual",qsTr("Asexual")),
+                option("queer",qsTr("Queer")),option("questioning",qsTr("Questioning")),option("unspecified",qsTr("Prefer not to say"))])
         add("appearance",homeArt,qsTr("THE DAY AFTER YOUR EIGHTEENTH BIRTHDAY"),qsTr("Your reflection"),
-            qsTr("Make this person your own. Gender sets an initial look; every style remains available."),
+            qsTr("Make this person your own. Your starting look is editable, from body shape to clothes and hair."),
             qsTr("Choose any feature to customize it."),"appearance")
         add("home",homeArt,qsTr("SILICON VALLEY  /  JANUARY 2015"),"","","","home")
         const reflections={
@@ -186,10 +193,12 @@ QtObject {
         const expanded=[]
         for(const beat of beats) {
             expanded.push(beat)
-            if(["choice","chapter"].includes(beat.kind) && beat.id!=="other_pronouns") {
-                const selected=beat.kind==="chapter"?form.choices[beat.chapter]:form[beat.id]
+            if(["choice","chapter"].includes(beat.kind) && beat.id!=="birth_sex") {
+                const selected=beat.kind==="chapter"?form.choices[beat.chapter]:beat.id==="other_pronouns"?form.pronouns:form[beat.id]
                 const choice=(beat.choices || []).find(row=>row.id===selected)
-                if(choice) expanded.push({id:beat.id+"-after",art:beat.art,tone:beat.tone,date:beat.date,title:choice.name,narration:choice.detail || qsTr("The choice becomes part of how you tell your story."),prompt:"",kind:"narration",afterword:reflections[selected] || (beat.id==="gender" || beat.id==="pronouns"?qsTr("This is how you introduce yourself. Your appearance and your future remain yours to shape."):qsTr("The years ahead will give you more chances to discover what this choice means to you."))})
+                if(choice) expanded.push({id:beat.id+"-after",art:beat.art,tone:beat.tone,date:beat.date,title:choice.name,
+                    narration:beat.id==="gender"?qsTr("You write it in your own words and tuck the old keepsake back into the family album."):choice.detail || qsTr("The choice becomes part of how you tell your story."),
+                    prompt:"",kind:"narration",afterword:beat.id==="gender" && story.communitySupport(selected)?story.communitySupport(selected):reflections[selected] || qsTr("The years ahead will give you more chances to discover what this choice means to you.")})
             }
         }
         return expanded

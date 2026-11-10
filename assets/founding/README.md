@@ -8,6 +8,7 @@ from [GameInk.qml](../../qml/game/GameInk.qml).
 | Scene | Treatment |
 | --- | --- |
 | `hospital.svg` | Slate ward and a single bassinet. The supplied hospital photos grounded the window, curtain and wall rail. The adult bed is outside the frame. |
+| `birth-certificate.svg` | Original parchment border, registry ornament and infant footprint. The live QML fields, signature and seal sit above it. |
 | `street.svg` | Ochre bungalow street and a low morning sun. |
 | `street-apartments.svg` | Blue apartment row for the tight-budget family background. |
 | `street-hillside.svg` | Olive ridge and a long window wall for the wealthy background. |

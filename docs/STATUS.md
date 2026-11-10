@@ -9,7 +9,7 @@ Updated 2026-11-10
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.53.0-dev.1**, generation **54**.
+immersive redesign advances content to **0.54.0-dev.1**, generation **55**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -203,6 +203,15 @@ identical seeded applicants, actual compensation replies, cofounder mood, dated
 leadership and exact reload. Content review passes 24 opening/save roundtrips.
 The Release software walkthrough verifies the gender-choice disclosure at 200%
 text. The recruiting, mood, contact and dismissal walkthrough also passes.
+
+The birth certificate now puts both name entries and sex at birth on the paper
+beside the bassinet. The signature and seal reveal before the framed record
+becomes available in the bedroom. Gender identity, pronouns and sexual
+orientation are separate choices at eighteen. **More choices** is attached to
+the active list. A mismatch with a recorded male or female sex sets the
+transgender flag and adds four founding buzz through queer community support.
+That buzz enters the investor quote calculation. The body shape starts from the
+birth record, while hair and clothing start from adult identity. Both are editable.
 
 Retention, media and legitimacy reactions, full personal-world simulation,
 research balance, expanded private-life purchases and richer event preferences

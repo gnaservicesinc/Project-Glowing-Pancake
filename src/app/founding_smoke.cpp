@@ -66,7 +66,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
         company_messages, select_contact, question_contact, verify_contact, done };
     struct State {
         Phase phase = Phase::launch;
-        int ticks = 0,home_phase=0,frames=0;
+        int ticks = 0,home_phase=0,frames=0,keepsake_frames=0;
         bool saw_opening_animation = false;
         bool retried_name = false;
         bool edited_seed = false;
@@ -74,6 +74,8 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
         bool saw_company = false;
         bool customized = false;
         bool saw_founder_audience = false;
+        bool saw_signature = false;
+        bool opened_keepsake = false;
         pgp::runtime::Checkpoint opening;
     };
     auto state = std::make_shared<State>();
@@ -130,8 +132,10 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             break;
         case Phase::birth: {
             auto* input = item("foundingAnswer");
-            if (id != "first_name" || !input || !input->isVisible() || !QAccessible::queryAccessibleInterface(input)) {
-                fail("The first question must be a single, accessible name entry"); return;
+            auto* paper=item("foundingBirthCertificate");
+            if (id != "first_name" || !input || !input->isVisible() || !QAccessible::queryAccessibleInterface(input) ||
+                !paper || input->parentItem()->parentItem()->parentItem()!=paper) {
+                fail("The accessible name field must be printed on the actual certificate"); return;
             }
             if (!capture(".name")) { fail("Full size name screenshot"); return; }
             window.resize(650, 480);
@@ -181,8 +185,31 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 {"family","poor"},{"leg","charisma"},{"sociability","outgoing"},{"activity","athletic"},
                 {"disposition","deliberate"},{"legal_form","nonprofit"},{"route","mission_director"},
                 {"mission","survival"},{"offer-safety","accept"},{"offer-open_science","decline"},
-                {"headquarters","US-CA"},{"gender","woman"},{"pronouns","she/her"}
+                {"headquarters","US-CA"},{"birth_sex","male"},{"gender","woman"},{"pronouns","she/her"}
             };
+            if(id=="certificate") {
+                const auto progress=screen->property("autograph").toReal();
+                if(progress<1) {state->saw_signature=state->saw_signature || progress>0;return;}
+                if((!campaign.reducedMotion() && !state->saw_signature) || !capture(".signed-birth-record") || !advance()) {
+                    fail("Reveal the signature and seal before continuing");return;
+                }
+                return;
+            }
+            if(id=="gender-after" && !item("foundingAfterword")->property("text").toString().contains("founding buzz")) {
+                fail("Disclose actual support for the transgender founder");return;
+            }
+            if(id=="pronouns" && partner) {
+                if(!click("foundingChoice_other") && !click("foundingMoreChoices"))fail("Open more pronoun choices at age eighteen");
+                return;
+            }
+            if(id=="other_pronouns") {
+                if(!click("foundingChoice_she/her + they/them"))fail("Choose a pronoun set and continue to orientation");
+                return;
+            }
+            if(id=="orientation") {
+                if(!click("foundingChoice_bisexual") && !click("foundingMoreChoices"))fail("Choose a separate orientation");
+                return;
+            }
             if(id=="appearance" && !state->customized) {
                 const auto before=story->portrait();
                 if(!click("appearanceNext_1") || before==story->portrait() ||
@@ -194,11 +221,14 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             if (id == "offer-safety" && !capture(".offer")) { fail("Individual offer screenshot"); return; }
             if (id=="gender" && partner && !state->saw_founder_audience) {
                 if(campaign.textScalePercent()!=200) {campaign.setTextScalePercent(200);return;}
+                campaign.clearNotice();
                 const auto* woman=find_visible(window.contentItem(),"foundingChoice_woman");
                 const auto* man=find_visible(window.contentItem(),"foundingChoice_man");
-                if(!woman || !man || !woman->property("detail").toString().contains("+3% salary floor") ||
-                    !man->property("detail").toString().contains("-2% salary floor") || !capture(".founder-audience")) {
-                    fail("Show the authored audience reactions before choosing gender");return;
+                const auto* more=find_visible(window.contentItem(),"foundingMoreChoices");
+                if(!woman || !man || !more || more->mapToScene({0,0}).y()-man->mapToScene({0,man->height()}).y()>12 ||
+                    !woman->property("detail").toString().contains("+3% salary needed") ||
+                    !man->property("detail").toString().contains("-2% salary needed") || !capture(".founder-audience")) {
+                    fail("Show the impacts and keep pagination beside the adult choices");return;
                 }
                 state->saw_founder_audience=true;
                 campaign.setTextScalePercent(100);
@@ -213,6 +243,17 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             } else if (id == "home") {
                 if(item("homeStart")->property("transitioning").toBool())return;
                 if(state->home_phase==0) {
+                    if(!state->opened_keepsake) {
+                        if(!press(window,find_visible(window.contentItem(),"familyBirthRecord"))) {fail("Open the framed certificate from the bedroom");return;}
+                        state->opened_keepsake=true;return;
+                    }
+                    if(find_visible(window.contentItem(),"familyCertificate")) {
+                        if(++state->keepsake_frames<4)return;
+                        if(!capture(".framed-birth-record")) {fail("Render the framed birth record");return;}
+                        QKeyEvent escape{QEvent::KeyPress,Qt::Key_Escape,Qt::NoModifier};
+                        QCoreApplication::sendEvent(&window,&escape);
+                        return;
+                    }
                     if(!capture(".home") || !click("homeApp_browser")) {fail("Home desktop before company formation");return;}
                     story->setField("seed","718");campaign.setTextScalePercent(200);++state->home_phase;return;
                 }
@@ -324,7 +365,8 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             if (campaign.welcome() || story->hasDraft() || !world.founding || !world.identity || world.founding->choices.size() != 8 ||
                 world.founding->legal_form != "corporation" || !expected_entry || !world.founding->backers.empty() ||
                 world.identity->founder_name != "Mira Vale" || world.root_seed != 718 ||
-                world.founding->gender!="woman" || world.identity->founder_pronouns!="she/her" ||
+                world.founding->gender!="woman" || world.founding->birth_sex!="male" || world.founding->orientation!="bisexual" ||
+                !pgp::content::transgender_founder(*world.founding) || world.identity->founder_pronouns!=(partner?"she/her + they/them":"she/her") ||
                 !state->customized || world.founding->appearance.parts[1]!=3 ||
                 !world.difficulty.empty() || !world.simulation.lab->research.empty() ||
                 pgp::core::iso_date(world.simulation.date) != "2015-01-01" ||

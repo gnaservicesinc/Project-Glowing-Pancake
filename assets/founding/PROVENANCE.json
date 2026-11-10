@@ -15,6 +15,16 @@
       "sha256": "6708d82449d725caec5a3c3a1e7a51f9f64a958e2030cd4834d2109de130b7a9"
     },
     {
+      "path": "assets/founding/birth-certificate.svg",
+      "creation": "Original SVG paper, borders, and infant footprint authored with Codex assistance",
+      "created_on": "2026-11-10",
+      "license_id": "GPL-3.0-only",
+      "references": [
+        "User-supplied certificate and footprint SVGs, observed as design references"
+      ],
+      "sha256": "b7493e0ff430f806eba019769b29838ad3ed97bab85222d4ad4b314ad153aa69"
+    },
+    {
       "path": "assets/founding/street.svg",
       "creation": "Original SVG geometry authored with Codex assistance",
       "created_on": "2026-11-07",

@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.53.0-dev.1",
+  "content_version": "0.54.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -69683,6 +69683,7 @@
           }
         ],
         "prestige_finance_bp": 20,
+        "queer_community_buzz": 4,
         "researchers": [
           {
             "buzz": 0,
@@ -75902,7 +75903,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 24,
+      "revision": 25,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

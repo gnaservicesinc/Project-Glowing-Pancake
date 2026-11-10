@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -48,6 +49,7 @@ struct FoundingCatalog {
     std::optional<FoundingOpeningRules> opening;
     std::optional<FoundingLoan> startup_loan;
     std::vector<FoundingPartner> partners;
+    std::uint32_t queer_community_buzz=0;
     auto operator<=>(const FoundingCatalog&) const = default;
 };
 struct FoundingSelection {
@@ -60,8 +62,12 @@ struct FoundingSelection {
     std::string partner;
     core::PortraitRecipe appearance;
     std::int64_t personal_investment_cents=-1;
+    std::string birth_sex="indeterminate", orientation="unspecified";
     auto operator<=>(const FoundingSelection&) const = default;
 };
+inline constexpr std::array<std::string_view,8> founder_orientations{
+    "straight","gay_or_lesbian","bisexual","pansexual","asexual","queer","questioning","unspecified"};
+[[nodiscard]] bool transgender_founder(const FoundingSelection&);
 struct FoundingTerms {
     std::int64_t contributed_cents=0, paid_setup_cents=0, payroll_cents=0, office_cents=0;
     std::int64_t personal_contribution_cents=0,personal_remaining_cents=0;

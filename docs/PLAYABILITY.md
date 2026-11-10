@@ -179,11 +179,16 @@ reveal a beat early, Tab to reach choices, and Back to revisit a decision.
 Resume in the main menu returns to your saved place in the prologue. The canvas
 fits the window as it resizes. Reduced motion shows each beat immediately.
 
-Complete the birth record with a name, gender and pronouns. Other opens additional
-pronoun sets. The gender cards show the fictional workplace reactions that can
-adjust salary negotiations and employee mood while you are CEO. Choose **Prefer
-not to say** for no adjustment. Recruiting and employee profiles explain the
-factor where it applies. Each formative choice has an impact summary and a narrated response.
+Type your given name and surname on the birth certificate and select the sex
+recorded at birth. The family signs and seals the paper, and you can open the
+framed copy from your childhood bedroom. At eighteen, choose your gender
+identity, pronouns and sexual orientation. **More choices** sits directly below
+the choices it expands. The gender cards describe fictional reactions in hiring
+and employee mood. A difference between a recorded male or female sex and the
+chosen gender identity gives the founder a transgender flag and four founding
+buzz from queer community support. An indeterminate birth record or an
+undisclosed gender leaves the flag unset. Recruiting and employee profiles
+explain their applicable effects. Formative choices have narrated responses.
 After eight childhood chapters, customize the portrait’s features, colors,
 clothing, patterns and build. The intro ends here, before company decisions.
 

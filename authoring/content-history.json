@@ -107720,6 +107720,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "73660924f479f4605c68d239a95bdc3ffea9144b9cfcce532ecc5de541afb638",
+          "before_hash": "520e258d0094efbaca7c3222dd90bbf8fa4b7e7da8826cf8a2e2263ceca75ed1",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 24,
+          "revision": 25
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "a5bc2a12d3a0da0a8e62c4cc2c1f296f125a030abdbe0867da3bb4598c5190c2",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.54.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 55,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.53.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000054.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000055.collection.json",
+      "summary": "Separate the signed birth record and adult identity and apply queer community founding buzz",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

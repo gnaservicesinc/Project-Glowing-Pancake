@@ -79,6 +79,19 @@ int main() {
         revised.backers={"commercial"};
         const auto financed=make(revised);
         require(financed.world.simulation.management->people->employees.empty(),"Investment does not hire staff.");
+        auto community=revised;
+        community.birth_sex="male";community.gender="woman";community.orientation="bisexual";
+        auto baseline=community;baseline.birth_sex="female";
+        const auto supported=make(community), matching=make(baseline);
+        const auto support=content::founding_terms(catalog,community), ordinary=content::founding_terms(catalog,baseline);
+        require(content::transgender_founder(community) && !content::transgender_founder(baseline) &&
+            support.buzz==ordinary.buzz+4 && supported.world.simulation.cash>matching.world.simulation.cash,
+            "The authored queer community buzz must reach an actual funding quote.");
+        baseline.birth_sex="indeterminate";
+        require(!content::transgender_founder(baseline),"An indeterminate birth record alone cannot establish a mismatch.");
+        require(persistence::decode_save(program,persistence::encode_save(program,supported)).checkpoint==supported,
+            "Sex at birth, adult identity and orientation must reload independently.");
+        community.orientation="unknown";refuses([&]{(void)make(community);});
         revised.route="hired_ceo";revised.office="shared";revised.backers.clear();
         refuses([&]{(void)make(revised);});
         revised.leg="political";

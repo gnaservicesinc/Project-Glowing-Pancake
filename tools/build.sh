@@ -17,7 +17,8 @@ Usage: ./make.sh [options]
   --test           Build, then run CTest; failures return a nonzero exit code
   --clean          Remove only the selected, verified wrapper-owned build tree
   --qt-root PATH   Qt 6.12.0 prefix (or set QT_ROOT/CMAKE_PREFIX_PATH)
-  --jobs N         Limit parallel build jobs to a positive integer
+  -j N, --jobs N   Limit parallel build jobs (default 11)
+  -l N, --load-average N  Ninja load average limit (default 11, 0 disables)
   --help           Show this help without configuring or building
 
 Requires Bash, CMake, Ninja and a C++20 compiler; tests also use CTest.
@@ -41,7 +42,8 @@ package=0
 run_tests=0
 clean=0
 qt_root="${QT_ROOT:-}"
-jobs="${CMAKE_BUILD_PARALLEL_LEVEL:-4}"
+jobs="${CMAKE_BUILD_PARALLEL_LEVEL:-11}"
+load_average=11
 
 while (($#)); do
     case "$1" in
@@ -58,14 +60,21 @@ while (($#)); do
         --qt-root)
             (($# >= 2)) && [[ -n "$2" && "$2" != --* ]] || fail '--qt-root needs a directory'
             qt_root="$2"; shift ;;
-        --jobs)
+        --jobs|-j)
             (($# >= 2)) && [[ "$2" =~ ^[1-9][0-9]*$ ]] || fail '--jobs needs a positive integer'
             jobs="$2"; shift ;;
+        -j[1-9]*) jobs="${1#-j}" ;;
+        --load-average|-l)
+            (($# >= 2)) || fail '--load-average needs a nonnegative number'
+            load_average="$2"; shift ;;
+        -l[0-9]*) load_average="${1#-l}" ;;
         --all) fail "$1 is not implemented yet; see docs/BACKLOG.md" ;;
         *) fail "unknown option: $1 (use --help)" ;;
     esac
     shift
 done
+[[ "$jobs" =~ ^[1-9][0-9]*$ ]] || fail 'Parallel jobs must be a positive integer'
+[[ "$load_average" =~ ^[0-9]+([.][0-9]+)?$ ]] || fail 'Load average must be a nonnegative number'
 [[ "$clean" == 0 || "$run_tests" == 0 ]] || fail '--clean cannot be combined with --test'
 [[ "$build_scope" != editor || "$core_only" == OFF ]] || fail '--editor needs desktop Qt'
 [[ "$build_scope" != editor || "$clean" == 0 ]] || fail '--clean selects a whole build tree; omit --editor'
@@ -179,8 +188,7 @@ elif [[ "$build_scope" == game ]]; then
 else
     build_args+=(--target pgp-game pgp-editor)
 fi
-[[ -z "$jobs" ]] || build_args+=(--parallel "$jobs")
-cmake "${build_args[@]}"
+cmake "${build_args[@]}" --parallel "$jobs" -- -l "$load_average"
 if [[ "$core_only" == OFF && "$build_scope" != editor && "$(uname -s)" == Darwin && -d "$build_dir/bin/Project Glowing Pancake.app" &&
       -f "$build_dir/bin/pgp-game" && ! -L "$build_dir/bin/pgp-game" ]]; then
     rm -f -- "$build_dir/bin/pgp-game" # Retire only the wrapper-owned pre-bundle game output.
