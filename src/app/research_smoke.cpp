@@ -27,6 +27,7 @@ void schedule_research_smoke(QQuickWindow &window, pgp::bridge::CampaignControll
     struct Run {
         int phase = 0, ticks = 0, waited = 0, frames = 0;
         QString worker;
+        bool previewed=false;
     };
     const auto run = std::make_shared<Run>();
     auto *timer = new QTimer(&window);
@@ -59,7 +60,10 @@ void schedule_research_smoke(QQuickWindow &window, pgp::bridge::CampaignControll
         const auto &s = campaign.snapshot()->checkpoint.world.simulation;
         const auto *manager = campaign.management();
         auto *world = campaign.world();
-        const QString root = "research.reproducible_tooling", child = "research.sequence_modeling";
+        const bool has_pacing=s.lab && s.lab->catalog.creative_research.contains("research.attention_systems") &&
+            s.lab->catalog.creative_research.at("research.attention_systems").replaces_frontier_calendar;
+        const QString root = "research.reproducible_tooling";
+        const QString child = has_pacing ? "research.attention_systems" : "research.sequence_modeling";
         switch (run->phase) {
         case 0: {
             if (!press("menuNewGameButton")) {
@@ -116,10 +120,22 @@ void schedule_research_smoke(QQuickWindow &window, pgp::bridge::CampaignControll
             break;
         case 8: {
             auto *start = item("startGroundedResearch");
-            if (!start || start->isEnabled() ||
-                !manager->researchTopic(child).value("blocker").toString().contains("prerequisite")) {
-                fail("Connected prerequisite must lock the start action");
+            if (!start || start->isEnabled()) {
+                fail("Missing prerequisites and insufficient creativity must prevent starting");
                 return;
+            }
+            if(has_pacing && !run->previewed) {
+                if(!press("researcher_"+run->worker)) {fail("Assign a researcher for the early-start estimate");return;}
+                run->previewed=true;
+                return;
+            }
+            if(has_pacing) {
+                auto* explanation=item("researchPacingExplanation");
+                const auto copy=explanation?explanation->property("text").toString():QString{};
+                if(!copy.contains("Expected year 2017") || !copy.contains("×2 early start multiplier") ||
+                    !capture("early-research") || !press("researcher_"+run->worker)) {
+                    fail("The live estimate must show the expected year and early-start multiplier");return;
+                }
             }
             if (!press("technology_" + root) || !capture("graph")) {
                 fail("Select an available graph node");

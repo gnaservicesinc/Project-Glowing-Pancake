@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.45.0-dev.1",
+  "content_version": "0.46.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -73061,303 +73061,311 @@
         "creative_research": {
           "research.attention_systems": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 9,
+            "earliest_year": 2017,
+            "replaces_frontier_calendar": true
           },
           "research.compute.fabric_qos": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 21,
+            "earliest_year": 2030
           },
           "research.compute.flexible_duty": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 16,
+            "earliest_year": 2023
           },
           "research.compute.kernel_layout": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 16,
+            "earliest_year": 2021
           },
           "research.compute.local_memory": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 14,
+            "earliest_year": 2016
           },
           "research.compute.low_precision": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 15,
+            "earliest_year": 2018
           },
           "research.compute.pooled_boards": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 18,
+            "earliest_year": 2022
           },
           "research.compute.queue_metering": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
+            "difficulty": 16,
             "earliest_year": 2015
           },
           "research.compute.sparse_serving": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 19,
+            "earliest_year": 2025
           },
           "research.compute.thermal_profiles": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 14,
+            "earliest_year": 2018
           },
           "research.data.consent_registry": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 14,
+            "earliest_year": 2016
           },
           "research.data.exchange_protocol": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 18,
+            "earliest_year": 2024
           },
           "research.data.grid_normalization": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 13,
+            "earliest_year": 2017
           },
           "research.data.partition_audit": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 16,
+            "earliest_year": 2019
           },
           "research.data.receipt_layout": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
+            "difficulty": 15,
             "earliest_year": 2015
           },
           "research.data.table_indexing": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 15,
+            "earliest_year": 2020
           },
           "research.data_deduplication": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
+            "difficulty": 7,
             "earliest_year": 2015
           },
           "research.efficient_image_features": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
+            "difficulty": 8,
             "earliest_year": 2015
           },
           "research.efficient_serving": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
+            "difficulty": 16,
             "earliest_year": 2015
           },
           "research.energy_prototype": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 21,
+            "earliest_year": 2040,
+            "replaces_frontier_calendar": true
           },
           "research.evidence.edge_failures": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 14,
+            "earliest_year": 2016
           },
           "research.evidence.rare_cases": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 16,
+            "earliest_year": 2021
           },
           "research.evidence.regional_labeling": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
+            "difficulty": 15,
             "earliest_year": 2015
           },
           "research.evidence.service_evidence": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 16,
+            "earliest_year": 2023
           },
           "research.evidence.stress_replay": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 18,
+            "earliest_year": 2027
           },
           "research.evidence.transfer_holdouts": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 14,
+            "earliest_year": 2018
           },
           "research.frontier.cross_source_transfer": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 20,
+            "earliest_year": 2035
           },
           "research.frontier.efficient_prototypes": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 24,
+            "earliest_year": 2052
           },
           "research.frontier.field_metering": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 19,
+            "earliest_year": 2036
           },
           "research.frontier.integrated_measurement": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 24,
+            "earliest_year": 2044
           },
           "research.frontier.prototype_replication": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 22,
+            "earliest_year": 2044
           },
           "research.frontier.sensor_alignment": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 17,
+            "earliest_year": 2029
           },
           "research.frontier_fabric": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 18,
+            "earliest_year": 2032,
+            "replaces_frontier_calendar": true
           },
           "research.held_out_evaluation": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
+            "difficulty": 9,
             "earliest_year": 2015
           },
           "research.integrated_science": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 22,
+            "earliest_year": 2036,
+            "replaces_frontier_calendar": true
           },
           "research.materials_prototype": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 22,
+            "earliest_year": 2044,
+            "replaces_frontier_calendar": true
           },
           "research.methods_prototype": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 22,
+            "earliest_year": 2048,
+            "replaces_frontier_calendar": true
           },
           "research.models.adapter_maps": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 13,
+            "earliest_year": 2018
           },
           "research.models.bounded_tools": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 19,
+            "earliest_year": 2026
           },
           "research.models.budgeted_refresh": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 18,
+            "earliest_year": 2025
           },
           "research.models.grounded_synthesis": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 17,
+            "earliest_year": 2022
           },
           "research.models.indexed_retrieval": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 13,
+            "earliest_year": 2017
           },
           "research.models.region_adapters": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 16,
+            "earliest_year": 2021
           },
           "research.models.supervised_agents": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 23,
+            "earliest_year": 2036
           },
           "research.models.task_containment": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 18,
+            "earliest_year": 2027
           },
           "research.models.verified_workflow": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 20,
+            "earliest_year": 2031
           },
           "research.multimodal_systems": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 16,
+            "earliest_year": 2023,
+            "replaces_frontier_calendar": true
           },
           "research.operations.cold_replica": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 16,
+            "earliest_year": 2020
           },
           "research.operations.fault_diagnostics": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
+            "difficulty": 15,
             "earliest_year": 2015
           },
           "research.operations.resilient_backplane": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 19,
+            "earliest_year": 2028
           },
           "research.public.benchmark_exchange": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 17,
+            "earliest_year": 2022
           },
           "research.public.continuity_packages": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 15,
+            "earliest_year": 2019
           },
           "research.public.local_rollout": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 17,
+            "earliest_year": 2024
           },
           "research.public.publication_package": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
+            "difficulty": 15,
             "earliest_year": 2015
           },
           "research.public.replication_handbook": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 14,
+            "earliest_year": 2017
           },
           "research.public.translated_tables": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 13,
+            "earliest_year": 2016
           },
           "research.refresh_measurement": {
             "coordination_bonus_bp": 2000,
             "difficulty": 12,
-            "earliest_year": 2015
+            "earliest_year": 2018
           },
           "research.reproducible_tooling": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
+            "difficulty": 8,
             "earliest_year": 2015
           },
           "research.sequence_modeling": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
+            "difficulty": 16,
             "earliest_year": 2015
           },
           "research.workflow_verification": {
             "coordination_bonus_bp": 2000,
-            "difficulty": 12,
-            "earliest_year": 2015
+            "difficulty": 17,
+            "earliest_year": 2026,
+            "replaces_frontier_calendar": true
           }
         },
         "data": [
@@ -75144,6 +75152,58 @@
               "Interest: history",
               "Interest: art",
               "Interest: cooking"
+            ],
+            [
+              "Specialty: distributed systems",
+              "Specialty: interfaces",
+              "Specialty: data quality",
+              "Specialty: machine learning",
+              "Specialty: testing",
+              "Specialty: security",
+              "Specialty: hardware",
+              "Specialty: technical writing",
+              "Specialty: statistics",
+              "Specialty: operations"
+            ],
+            [
+              "Practice: prototypes",
+              "Practice: field observation",
+              "Practice: formal reasoning",
+              "Practice: user interviews",
+              "Practice: controlled experiments",
+              "Practice: historical comparison",
+              "Practice: benchmarking",
+              "Practice: simulation"
+            ],
+            [
+              "Industry: education",
+              "Industry: manufacturing",
+              "Industry: public service",
+              "Industry: media",
+              "Industry: logistics",
+              "Industry: finance",
+              "Industry: science",
+              "Industry: small business"
+            ],
+            [
+              "Collaboration: peer review",
+              "Collaboration: mentoring",
+              "Collaboration: pair work",
+              "Collaboration: quiet writing",
+              "Collaboration: workshops",
+              "Collaboration: open demos",
+              "Collaboration: cross-team reviews",
+              "Collaboration: independent exploration"
+            ],
+            [
+              "Perspective: accessibility",
+              "Perspective: efficiency",
+              "Perspective: reliability",
+              "Perspective: privacy",
+              "Perspective: long-term maintenance",
+              "Perspective: local knowledge",
+              "Perspective: low-cost access",
+              "Perspective: reproducibility"
             ]
           ]
         },
@@ -75434,7 +75494,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 16,
+      "revision": 17,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

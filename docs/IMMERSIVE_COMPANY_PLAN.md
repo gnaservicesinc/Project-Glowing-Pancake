@@ -127,9 +127,11 @@ and record in office, mission and duties, coworker affinity, temperament and
 active amenities. An installed amenity type contributes once for employees with
 assigned HQ desks, up to the authored cap. Retention effects, audience identity
 modifiers, broader role-specific equipment benefits and private-life assets and
-events remain open. Research rules initially use 2015 and difficulty 12;
-future EEY scaling is tested in core but authored technology dates and frontier
-gates still need integration. The portrait currently shows a bust with build,
+events remain open. The 60 founder research topics now have individual expected
+years and difficulties. The eight gated frontier research topics use this pacing
+in place of the shared frontier calendar. Seeded world conditions, work and
+equipment still apply. Data, recipes and hardware keep their existing gates.
+Expected years and traits need human balance testing. The portrait shows a bust with build,
 height, clothing and pattern variants, not a full-body character editor.
 
 ## Pronoun reference material

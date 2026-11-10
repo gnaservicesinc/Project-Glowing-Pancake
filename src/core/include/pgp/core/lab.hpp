@@ -105,7 +105,12 @@ struct DataAcquisitionOffer {
 struct CreativeResearchRule {
     int earliest_year=2015;
     std::uint32_t difficulty=1,coordination_bonus_bp=0;
+    bool replaces_frontier_calendar=false;
     auto operator<=>(const CreativeResearchRule&) const = default;
+};
+struct ResearchPacing {
+    std::uint32_t threshold=0, missing_groups=0, prerequisite_groups=0;
+    std::uint32_t expected_offset=0, early_multiplier=1;
 };
 struct LabCatalog {
     std::vector<DataOffer> data;
@@ -291,6 +296,7 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
                     std::string_view research_id, const LabAllocation& allocation, Cents protected_cash,
                     Cents sponsored_fee=Cents{0},std::uint32_t creativity=0,std::uint32_t compatibility_bp=0);
 [[nodiscard]] std::uint32_t research_creativity_threshold(const LabState&,const CapacityState&,std::string_view,OrdinalDay);
+[[nodiscard]] ResearchPacing research_pacing(const LabState&,const CapacityState&,std::string_view,OrdinalDay);
 [[nodiscard]] std::uint32_t coordinated_staff_days(const LabCatalog&,const LabResearch&,std::uint32_t compatibility_bp);
 void publish_research(LabState& state, const CapacityState& capacity, OrdinalDay day, std::string_view research_id);
 void acquire_research_insight(LabState& state, OrdinalDay day, ResearchInsight insight);

@@ -163,10 +163,12 @@ QVariantList ManagementController::researchGraph() const {
         const auto slot = next_slot[level]++;
         const auto *run = latest_run(lab, topic.id);
         const auto *work = run ? find_id(s.capacity->projects, run->project_id) : nullptr;
+        const bool missing = !prerequisites(lab, topic);
+        const bool creative = lab.catalog.creative_research.contains(topic.id);
         const bool locked =
-            (!prerequisites(lab, topic) && !lab.catalog.creative_research.contains(topic.id)) ||
+            (missing && !creative) ||
             !core::frontier_technology_block(s, core::FrontierTechnology::research, topic.id, s.date).empty();
-        QString status = locked ? QStringLiteral("locked") : QStringLiteral("ready");
+        QString status = locked ? QStringLiteral("locked") : missing ? QStringLiteral("creative") : QStringLiteral("ready");
         if (results(lab, topic.id) >= topic.repeat_limit)
             status = "complete";
         if (work && work->status == core::ProjectStatus::active)
@@ -263,13 +265,18 @@ QVariantMap ManagementController::researchTeam(QString id,QStringList workers) c
     std::vector<std::string> ids;for(const auto& worker:workers) ids.push_back(worker.toStdString());
     try {
         const auto team=core::research_team(s,ids);
-        const auto threshold=core::research_creativity_threshold(*s.lab,*s.capacity,topic->id,s.date);
+        const auto pacing=core::research_pacing(*s.lab,*s.capacity,topic->id,s.date);
         const auto& rule=s.lab->catalog.creative_research.at(topic->id);
+        const auto staff_days=core::coordinated_staff_days(s.lab->catalog,*topic,team.compatibility_bp);
         QStringList traits;for(const auto& trait:team.traits) traits.push_back(q(trait));
-        return {{"creativity",team.creativity},{"required",threshold},{"compatibility",static_cast<double>(team.compatibility_bp)/100},
-            {"days",core::coordinated_staff_days(s.lab->catalog,*topic,team.compatibility_bp)},
-            {"explanation",tr("Creativity: %1 distinct traits / %2 needed to bypass missing prerequisites. Duplicates add zero.\nShared-trait compatibility: %3% · coordinated work: %4 staff-days.\nThreshold uses EEY %5, difficulty %6, unmet prerequisite groups and years ahead (minimum ×1). Creativity is a threshold, not spent.")
-                .arg(team.creativity).arg(threshold).arg(static_cast<double>(team.compatibility_bp)/100,0,'f',1).arg(core::coordinated_staff_days(s.lab->catalog,*topic,team.compatibility_bp)).arg(rule.earliest_year).arg(rule.difficulty)},
+        const auto calculation=pacing.missing_groups
+            ? tr("Expected year %1 (year %2 of the campaign). Difficulty %3 · %4 of %5 prerequisite groups missing · ×%6 early start multiplier.")
+                .arg(rule.earliest_year).arg(pacing.expected_offset).arg(rule.difficulty).arg(pacing.missing_groups).arg(pacing.prerequisite_groups).arg(pacing.early_multiplier)
+            : tr("Expected year %1. Your team can follow the existing research path without a creativity threshold.").arg(rule.earliest_year);
+        return {{"creativity",team.creativity},{"required",pacing.threshold},{"compatibility",static_cast<double>(team.compatibility_bp)/100},
+            {"days",staff_days},
+            {"explanation",tr("Creativity %1 / %2 needed. Each distinct trait counts once.\n%3\nShared-trait compatibility %4% · %5 staff-days after coordination.")
+                .arg(team.creativity).arg(pacing.threshold).arg(calculation).arg(static_cast<double>(team.compatibility_bp)/100,0,'f',1).arg(staff_days)},
             {"traits",traits.join(" · ")}};
     } catch(const std::exception&) {return {};}
 }

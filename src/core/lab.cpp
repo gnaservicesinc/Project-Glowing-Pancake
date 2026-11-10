@@ -366,18 +366,30 @@ bool experiment_failed(const LabState& state, const CapacityState& capacity, con
     return draw.bounded(10'000) < static_cast<std::uint64_t>(node.setback->failure_chance.value());
 }
 }
-std::uint32_t research_creativity_threshold(const LabState& state,const CapacityState& capacity,std::string_view id,OrdinalDay day) {
+ResearchPacing research_pacing(const LabState& state,const CapacityState& capacity,std::string_view id,OrdinalDay day) {
     const auto& node=find(state.catalog.research,id);
-    std::uint32_t total=static_cast<std::uint32_t>(node.all_of.size())+(node.any_of.empty()?0U:1U),missing=0;
-    for(const auto& required:node.all_of) if(!knowledge_on(state,capacity,required,day)) ++missing;
-    if(!node.any_of.empty() && std::ranges::none_of(node.any_of,[&](const auto& required){return knowledge_on(state,capacity,required,day);})) ++missing;
-    if(!missing) return 0;
+    ResearchPacing pacing;
+    pacing.prerequisite_groups=static_cast<std::uint32_t>(node.all_of.size())+(node.any_of.empty()?0U:1U);
+    for(const auto& required:node.all_of) if(!knowledge_on(state,capacity,required,day)) ++pacing.missing_groups;
+    if(!node.any_of.empty() && std::ranges::none_of(node.any_of,[&](const auto& required){return knowledge_on(state,capacity,required,day);}))
+        ++pacing.missing_groups;
     const auto rule=state.catalog.creative_research.find(std::string{id});
-    if(rule==state.catalog.creative_research.end()) return UINT32_MAX;
+    if(rule==state.catalog.creative_research.end()) {
+        pacing.threshold=pacing.missing_groups?UINT32_MAX:0;
+        return pacing;
+    }
     const auto& r=rule->second;
-    const auto base=static_cast<std::uint64_t>(r.earliest_year-2015)+r.difficulty;
-    const auto early=static_cast<std::uint64_t>(std::max(1,r.earliest_year-from_ordinal(day).year));
-    return static_cast<std::uint32_t>((base*early*missing+total-1)/total);
+    pacing.expected_offset=static_cast<std::uint32_t>(std::max(0,r.earliest_year-from_ordinal(state.starts_on).year));
+    pacing.early_multiplier=static_cast<std::uint32_t>(std::max(1,r.earliest_year-from_ordinal(day).year));
+    if(pacing.missing_groups) {
+        const auto base=static_cast<std::uint64_t>(pacing.expected_offset)+r.difficulty;
+        const auto scaled=base*pacing.early_multiplier*pacing.missing_groups;
+        pacing.threshold=static_cast<std::uint32_t>((scaled+pacing.prerequisite_groups-1)/pacing.prerequisite_groups);
+    }
+    return pacing;
+}
+std::uint32_t research_creativity_threshold(const LabState& state,const CapacityState& capacity,std::string_view id,OrdinalDay day) {
+    return research_pacing(state,capacity,id,day).threshold;
 }
 std::uint32_t coordinated_staff_days(const LabCatalog& catalog,const LabResearch& node,std::uint32_t compatibility) {
     const auto found=catalog.creative_research.find(node.id);

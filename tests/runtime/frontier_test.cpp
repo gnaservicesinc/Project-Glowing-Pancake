@@ -77,6 +77,12 @@ runtime::CompiledProgram late_fixture(Json source,std::string_view path="path.ac
     const auto& catalog = *content::frontier_catalog(full.collection,scenario);
     std::uint64_t cooperative_seed = 0;
     while (opening_frontier(catalog,cooperative_seed).path!=path) ++cooperative_seed;
+    // The fixture changes rival launch dates. Keep only the scenarios using
+    // those altered definitions so another campaign cannot supply the same ID.
+    auto& definitions=source["definitions"];
+    definitions.erase(std::remove_if(definitions.begin(),definitions.end(),[](const auto& row) {
+        return row["kind"]=="scenario" && row["id"]!=frontier_id && row["id"]!=plateau_id;
+    }),definitions.end());
     if(scored) {
         const auto original=std::ranges::find_if(source["definitions"],[](const auto& row){return row["id"]=="society.global";});
         auto society=*original;society["id"]="society.frontier_fixture";

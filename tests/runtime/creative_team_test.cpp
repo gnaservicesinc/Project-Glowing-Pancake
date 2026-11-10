@@ -45,13 +45,15 @@ int main() {
             check(!initial_mood.temperament.empty() && initial_mood.ceo_prestige>0 && initial_mood.amenities==0,"The team must show its own temperament and the CEO's opening reputation.");
             action(core::BuyHQEquipment{"plant"});action(core::BuyHQEquipment{"plant"});action(core::BuyHQEquipment{"aquarium"});
             for(int day=0;day<2;++day) apply(core::AdvanceDay{});
-            check(core::workplace_moods(state()).at(id).amenities==0,"Stored amenities cannot improve mood.");
+            const auto before_install=core::workplace_moods(state()).at(id);
+            check(before_install.amenities==0,"Stored amenities cannot improve mood.");
             action(core::PlaceHQEquipment{first_item,0,8,0,false});
             action(core::PlaceHQEquipment{first_item+1,0,8,1,false});
             action(core::PlaceHQEquipment{first_item+2,0,8,2,false});
             const auto before_preview=furnished.current_state();
             const auto improved=core::workplace_moods(state()).at(id);
-            check(improved.amenities==5 && improved.score>initial_mood.score && improved.accessible_amenities.size()==2,"Amenities must improve mood once per installed type.");
+            check(improved.amenities==5 && improved.score==std::min(100,before_install.score+5) && improved.accessible_amenities.size()==2,
+                "Amenities must contribute once per installed type, up to the score ceiling.");
             check(furnished.current_state()==before_preview,"Mood previews must not mutate campaign state.");
             action(core::PowerHQEquipment{first_item+2,false});
             check(core::workplace_moods(state()).at(id).amenities==2,"A powered amenity must lose its contribution when switched off.");
@@ -59,15 +61,34 @@ int main() {
             check(core::workplace_moods(state()).at(id).amenities==0,"Workers without assigned HQ desks cannot claim the office amenity benefit.");
             const auto saved=persistence::decode_save(program,persistence::encode_save(program,furnished.current_state()));
             check(saved.checkpoint==furnished.current_state() && core::workplace_moods(saved.checkpoint.world.simulation).at(id).amenities==0,"The same mood must be derived after reload.");
+            const auto worker=s.management->people->employees[1].terms.profile.id;
+            const auto full=core::research_pacing(*state().lab,*state().capacity,"research.integrated_science",state().date);
+            apply(core::StartResearch{"research.reproducible_tooling",{"hq.equipment/2",core::MilliCUPerDay{4000},1,{worker}}});
+            for(int day=0;day<15;++day) apply(core::AdvanceDay{});
+            const auto partial=core::research_pacing(*state().lab,*state().capacity,"research.integrated_science",state().date);
+            const auto followed=core::research_pacing(*state().lab,*state().capacity,"research.sequence_modeling",state().date);
+            check(full.missing_groups==2 && partial.missing_groups==1 && partial.threshold==(full.threshold+1)/2,
+                "An actual completed prerequisite must proportionally reduce a later topic's creativity threshold.");
+            check(followed.threshold==0 && followed.missing_groups==0,"Following all prerequisites must remove the creativity threshold.");
         }
         core::LabAllocation plan{"hq.equipment/2",core::MilliCUPerDay{4000},3,{}};
         for(const auto& e:s.management->people->employees)plan.researchers.push_back(e.terms.profile.id);
-        const std::string topic="research.sequence_modeling";
+        const std::string topic="research.attention_systems";
+        check(s.date<s.frontier->catalog.branches_after && core::frontier_technology_block(s,core::FrontierTechnology::research,topic,s.date).empty(),"A topic with its own research calendar can start before the global frontier calendar.");
+        check(!core::frontier_technology_block(s,core::FrontierTechnology::recipe,"recipe.frontier_general",s.date).empty(),"Early research must not make future deployment recipes available.");
+        auto restricted=s;
+        restricted.frontier->conditions[0]=0;
+        check(!core::frontier_technology_block(restricted,core::FrontierTechnology::research,topic,s.date).empty(),"An early research topic still needs its actual world conditions.");
         const auto team_value=core::research_team(s,plan.researchers);
-        const auto needed=core::research_creativity_threshold(*s.lab,*s.capacity,topic,s.date);
-        check(needed>0 && team_value.creativity>=needed,"The mixed team must reach the bypass threshold for this fixture.");
+        const auto pacing=core::research_pacing(*s.lab,*s.capacity,topic,s.date);
+        check(pacing.threshold==22 && pacing.expected_offset==2 && pacing.early_multiplier==2 && pacing.missing_groups==1 && team_value.creativity>=pacing.threshold,"The mixed team must reach the authored early-start threshold.");
+        const auto at_target=core::research_pacing(*s.lab,*s.capacity,topic,core::parse_iso_date("2017-01-01"));
+        const auto after_target=core::research_pacing(*s.lab,*s.capacity,topic,core::parse_iso_date("2024-01-01"));
+        check(at_target.threshold==11 && after_target.threshold==11 && after_target.early_multiplier==1,"After the target year the remaining prerequisites retain the base threshold.");
         auto future=*s.lab;future.catalog.creative_research.at(topic)={2030,5,2000};
         check(core::research_creativity_threshold(future,*s.capacity,topic,s.date)==300,"EEY gap must multiply the base threshold before the expected year.");
+        future.starts_on=core::parse_iso_date("2014-01-01");
+        check(core::research_creativity_threshold(future,*s.capacity,topic,s.date)==315,"The EEY offset must use this campaign's actual start year.");
         auto solo=plan;solo.staff=1;solo.researchers.resize(1);
         const auto before=game.current_state();auto refusal=game.submit({s.revision,core::StartResearch{topic,solo}});
         check(!refusal.accepted() && before==game.current_state(),"Insufficient unique perspectives must refuse atomically.");

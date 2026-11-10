@@ -70,7 +70,7 @@ GridLayout {
         campaign.world.setDraft("research/team", JSON.stringify(assigned))
     }
     function statusName(status) {
-        return ({ready:qsTr("Open"), locked:qsTr("Locked"), active:qsTr("Researching"), paused:qsTr("Paused"), complete:qsTr("Complete")})[status] || ""
+        return ({ready:qsTr("Open"), creative:qsTr("Needs creativity"), locked:qsTr("Locked"), active:qsTr("Researching"), paused:qsTr("Paused"), complete:qsTr("Complete")})[status] || ""
     }
     onVisibleChanged: if (visible) Qt.callLater(restore)
     onVisibleSourcesChanged: if (visible) Qt.callLater(chooseSource)
@@ -92,7 +92,7 @@ GridLayout {
         color: "#c5dbce"
     }
     Copy { Layout.columnSpan: tree.columns; text: qsTr("Technology tree"); font.pixelSize: tree.textSize * 1.5; font.bold: true; color: "#f1e5c5" }
-    Copy { Layout.columnSpan: tree.columns; text: qsTr("Follow the links from earlier discoveries. Solid links are required. For a dashed group, complete any one of its branches.") }
+    Copy { Layout.columnSpan: tree.columns; text: qsTr("Follow the links from earlier discoveries. Solid links count individually, and one result satisfies a dashed group. Teams with enough distinct traits can start some topics before finishing those links.") }
     GameField {
         id: search
         Layout.columnSpan: tree.columns
@@ -116,7 +116,8 @@ GridLayout {
     }
     Rectangle {
         Layout.fillWidth: true
-        Layout.preferredWidth: tree.columns === 2 ? tree.width * 0.56 : tree.width
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: tree.textSize * 34
         Layout.preferredHeight: tree.textSize * (tree.columns === 2 ? 23 : 15)
         Layout.alignment: Qt.AlignTop
         color: "#11282d"
@@ -201,7 +202,8 @@ GridLayout {
 
     ColumnLayout {
         Layout.fillWidth: true
-        Layout.preferredWidth: tree.columns === 2 ? tree.width * 0.44 : tree.width
+        Layout.minimumWidth: 0
+        Layout.preferredWidth: tree.textSize * 27
         Layout.alignment: Qt.AlignTop
         spacing: 10
         Copy { text: tree.selected.name || ""; font.bold: true; font.pixelSize: tree.textSize * 1.25; color: "#f1e5c5" }
@@ -225,7 +227,7 @@ GridLayout {
             visible: !!tree.selected.name && !tree.selected.active && !tree.selected.paused && !tree.selected.completed
             Layout.fillWidth: true
             Copy { text: qsTr("Who will do the work? Use a powered desk computer or an issued laptop. Research laptops need a powered HQ rack."); font.bold: true }
-            Copy {visible:!!tree.teamPreview.explanation;text:tree.teamPreview.explanation || "";color:"#d9d3ae"}
+            Copy {objectName:"researchPacingExplanation";visible:!!tree.teamPreview.explanation;text:tree.teamPreview.explanation || "";color:"#d9d3ae"}
             Copy {visible:!!tree.teamPreview.traits;text:tree.teamPreview.traits || "";font.pixelSize:tree.textSize*0.85}
             Copy { visible: !tree.workers.length; text: qsTr("There are no research-capable people in the company. Recruit someone in People.") }
             Flow {

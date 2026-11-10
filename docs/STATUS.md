@@ -9,7 +9,7 @@ Updated 2026-11-09
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive founding/equipment batch advances content to **0.45.0-dev.1**, generation **46**.
+immersive founding/equipment batch advances content to **0.46.0-dev.1**, generation **47**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -43,6 +43,10 @@ contributes toward bounded compatibility. A new unshared trait preserves
 existing matches. Employees show a mood score based on salary, company and
 CEO reputation, mission and duties, coworker affinity, temperament, and active
 HQ amenities. Installed amenity types benefit employees with assigned desks.
+All 60 founder research topics have expected years and difficulty values. The
+research tree shows each part of the creativity threshold. Selected frontier
+research uses topic pacing before the shared frontier date, with seeded world
+conditions and physical requirements still enforced.
 
 Focused identity/investment, headquarters, creative-team and workplace-research
 checks pass, including refusal and fresh reload. Content review validates 24
@@ -57,8 +61,12 @@ check also covers accrued interest and repayment.
 The employee profile walkthrough verifies a visible mood score at 200% text.
 Simulation checks cover stored and installed amenities, duplicate types, power,
 desk access and the same mood after reloading.
+Research checks cover a real prerequisite lowering the threshold, an early start
+by a mixed team, refusal for a solo team, unchanged frontier conditions and an
+exact reload of the early project. The Lab walkthrough verifies the early start
+calculation and the compact research tree.
 Retention, audience modifiers, full personal-world simulation,
-future EEY/frontier integration and private-life purchases and events
+research balance and private-life purchases and events
 remain active work, as itemized in the plan and backlog.
 
 The 2026-11-09 review rejects the main interface as complete. The detailed

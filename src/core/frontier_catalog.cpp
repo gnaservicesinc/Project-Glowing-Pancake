@@ -216,7 +216,12 @@ std::string frontier_technology_block(const SimulationState& state, FrontierTech
     const auto& future = *state.frontier;
     const auto* requirement = gate(future.catalog,kind,id);
     if (!requirement) return {};
-    if (day < future.catalog.branches_after)
+    bool topic_calendar=false;
+    if (kind==FrontierTechnology::research && state.lab) {
+        const auto topic=state.lab->catalog.creative_research.find(std::string{id});
+        topic_calendar=topic!=state.lab->catalog.creative_research.end() && topic->second.replaces_frontier_calendar;
+    }
+    if (day < future.catalog.branches_after && !topic_calendar)
         return "This technology becomes available to research in the conditional future after " + iso_date(future.catalog.branches_after) + ".";
     for (std::size_t i=0; i<future.conditions.size(); ++i)
         if (future.conditions[i] < requirement->minimum[i])

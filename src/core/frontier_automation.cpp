@@ -147,7 +147,7 @@ bool run_research(SimulationState& state, std::size_t index, Cents protected_cas
         program.waiting=std::move(blocked);
         return false;
     }
-    if (!prerequisites(state,node.all_of,node.any_of)) {
+    if (!state.lab->catalog.creative_research.contains(node.id) && !prerequisites(state,node.all_of,node.any_of)) {
         program.waiting="Waiting for the selected topic's current prerequisites.";
         return false;
     }

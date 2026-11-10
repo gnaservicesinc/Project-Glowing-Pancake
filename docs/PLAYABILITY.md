@@ -137,8 +137,11 @@ shared-trait compatibility. Repeated traits do not increase creativity: fifty
 identical profiles have the same creativity as one. Compatibility reduces the
 project’s staff-day requirement by a bounded coordination benefit. Creativity is
 a threshold for bypassing prerequisites, not a currency spent by research. Equipment,
-compute and actual research work still apply. Initial topic difficulties and
-future EEY/frontier integration remain balance/development work.
+compute and actual research work still apply. The technology tree shows the topic’s
+expected year, difficulty, missing prerequisite groups and early start multiplier.
+Completing a prerequisite lowers the threshold. Completing the whole path removes
+it. Frontier research can begin before the shared frontier date if its world
+conditions and research requirements are met. The dates are game pacing targets.
 
 The base events remain enabled. Time begins paused; saves and preferences stay
 local. Play/Pause, Step day and 1/10/30/60 days per second stay in the header.

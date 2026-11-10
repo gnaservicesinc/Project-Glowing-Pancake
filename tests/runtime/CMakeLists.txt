@@ -347,7 +347,7 @@ set_tests_properties(runtime.workplace-research PROPERTIES TIMEOUT 30)
 
 add_executable(pgp-creative-team-test creative_team_test.cpp)
 target_link_libraries(pgp-creative-team-test PRIVATE pgp::session)
-target_compile_definitions(pgp-creative-team-test PRIVATE PGP_CREATIVE_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/workplace-mood.json")
+target_compile_definitions(pgp-creative-team-test PRIVATE PGP_CREATIVE_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/research-pacing.json")
 pgp_project_target(pgp-creative-team-test)
 add_test(NAME runtime.creative-team COMMAND pgp-creative-team-test)
 set_tests_properties(runtime.creative-team PROPERTIES TIMEOUT 30)

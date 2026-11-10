@@ -130,10 +130,14 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
         const auto& rows=doc.at("creative_research");
         if(!rows.is_object() || rows.size()>core::lab_catalog_limit) invalid("Creative research rules exceed their bounds");
         for(const auto& [id,row]:rows.items()) {
-            fields(row,{"earliest_year","difficulty","coordination_bonus_bp"});
+            auto shape=row;
+            shape.erase("replaces_frontier_calendar");
+            fields(shape,{"earliest_year","difficulty","coordination_bonus_bp"});
             const auto year=integer(row.at("earliest_year")),difficulty=integer(row.at("difficulty")),bonus=integer(row.at("coordination_bonus_bp"));
             if(year<2015 || year>2200 || difficulty<1 || difficulty>1000 || bonus<0 || bonus>2500) invalid("Invalid creative research rule");
-            catalog.creative_research.emplace(id,core::CreativeResearchRule{static_cast<int>(year),static_cast<std::uint32_t>(difficulty),static_cast<std::uint32_t>(bonus)});
+            if(row.contains("replaces_frontier_calendar") && !row.at("replaces_frontier_calendar").is_boolean()) invalid("Invalid research calendar policy");
+            catalog.creative_research.emplace(id,core::CreativeResearchRule{static_cast<int>(year),static_cast<std::uint32_t>(difficulty),
+                static_cast<std::uint32_t>(bonus),row.value("replaces_frontier_calendar",false)});
         }
     }
     for (const auto field : {"data", "research", "recipes", "evaluations"}) array(doc.at(field));
@@ -258,7 +262,11 @@ std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
     if(catalog.research_workplaces) result["research_workplaces"]=*catalog.research_workplaces;
     if(!catalog.creative_research.empty()) {
         result["creative_research"]=Json::object();
-        for(const auto& [id,r]:catalog.creative_research) result["creative_research"][id]={{"earliest_year",r.earliest_year},{"difficulty",r.difficulty},{"coordination_bonus_bp",r.coordination_bonus_bp}};
+        for(const auto& [id,r]:catalog.creative_research) {
+            auto& row=result["creative_research"][id];
+            row={{"earliest_year",r.earliest_year},{"difficulty",r.difficulty},{"coordination_bonus_bp",r.coordination_bonus_bp}};
+            if(r.replaces_frontier_calendar) row["replaces_frontier_calendar"]=true;
+        }
     }
     return result.dump();
 }

@@ -107408,6 +107408,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "e73dd984e364ba20f09669f490a5e084fc7814919a3cf622b31320bf735254ac",
+          "before_hash": "68fa6207a268e6785a58e173303e29278db2100d507f7952a0f780fcd6080878",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 16,
+          "revision": 17
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "96dcd450c6a630e491177a4260d0ad92b1a3fc7502021e896505674c75f88fbe",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.46.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 47,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.45.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000046.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000047.collection.json",
+      "summary": "Author topic-specific research years and difficulty, and preserve frontier conditions on early research.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1
