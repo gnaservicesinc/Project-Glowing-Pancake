@@ -67,10 +67,17 @@ Select a county on the map or in the county list to read its local conditions.
 
 In a fresh founder campaign, use **Suppliers**
 to order a desk and computer. Advance to delivery, choose **Furnish headquarters**,
-then place the desk and mount its computer. Drag furnishings or use the column/row
-controls; assign a person through the desk inspector. Empty/storage/powered-off
+then click an owned object’s picture to pick it up. Move its translucent preview
+over the floor: green fits, red explains why placement is blocked. Click to place,
+press R to rotate, and Escape or right-click to cancel. Visible rotation/cancel
+buttons and column/row controls are also available. Mount computers on desks and
+assign people through the inspector. Empty/storage/powered-off
 machines provide no compute. A research desktop supplies 4 CU/day and consumes
-metered electricity. The home garage has room for one desk and costs $0 rent.
+metered electricity. The garage, basement and shed each have room for one desk and cost $0 rent.
+Supplier filters show fictional brands. Issuing a delivered laptop lets its holder
+research without an assigned desk. Thin clients and research laptops require a
+powered installed rack; they do not duplicate its compute. Plants, aquariums and
+break-room furnishings can be bought and placed, with no mood bonus yet.
 **Realtor** compares named landlords, city prices, layouts, deposits and lease terms.
 Alternatively buy land, design rooms and compare three contractor bids. Construction
 can be delayed or exceed its base quote; the prepaid contingency caps the signed
@@ -93,21 +100,32 @@ reveal a beat early, Tab to reach choices, and Back to revisit a decision.
 Resume in the main menu returns to your saved place in the prologue. The canvas
 fits the window as it resizes. Reduced motion shows each beat immediately.
 
-Eight formative choices lead to the founding scene at 18. Choose a legal form,
-entry route, company name and mission, then consider each eligible funding
-offer in turn for a funded route. Choose the headquarters. Gender and pronouns
-are structured choices; use the appearance page to edit portrait features.
-Wealthy Elite requires rich parents; the founder profile records the leg up.
-A sole founder starts at their parents' house with $0 rent. A hired CEO inherits
-a small existing company. No first experiment, first hire or difficulty is
-selected in setup, and no compute lease is supplied automatically. Review
-contributions, cash, ownership, expenses and equipment before signing. World seed
-remains editable on the review page.
+Complete the birth record with a name, gender and pronouns; Other opens additional
+pronoun sets. Each formative choice has an impact summary and a narrated response.
+After eight childhood chapters, customize the portrait’s features, colors,
+clothing, patterns and build. The intro ends here, before company decisions.
 
-The office opens paused on 2015-01-01. Nonprofit donors supply gifts and
-trustee rights. The institution owns its assets and mission income is exempt
-from the modeled corporate tax. The first-play tutorial remains a backlog item.
-[Scene choices and music](../assets/founding/README.md).
+At eighteen, you wake in your parents’ Silicon Valley house, unemployed. Use the
+computer or **Browser** to visit fictional legal, investor, career and banking
+services. A dismissible guide explains the routes. Cedar & Quill forms corporations
+or nonprofits; Alder considers CEO applications from geniuses and political or
+wealthy elites. Name the company, choose its purpose, enter your personal investment
+and explicitly accept any outside funding. Uninvested savings stay personal.
+Review the actual costs and ownership before the signature ceremony. This home
+stage is saved between sessions; it does not advance simulation time.
+
+The company opens paused on 2015-01-01. A hired CEO inherits an existing company;
+other routes use their disclosed founding package. No first hire, experiment or
+difficulty is selected automatically. Nonprofit donors supply gifts and trustee
+rights; the institution owns its assets. [Scene choices and music](../assets/founding/README.md).
+
+In **Research**, select named researchers to see the union of their traits and
+shared-trait compatibility. Repeated traits do not increase creativity: fifty
+identical profiles have the same creativity as one. Compatibility reduces the
+project’s staff-day requirement by a bounded coordination benefit. Creativity is
+a threshold for bypassing prerequisites, not a currency spent by research. Equipment,
+compute and actual research work still apply. Initial topic difficulties and
+future EEY/frontier integration remain balance/development work.
 
 The base events remain enabled. Time begins paused; saves and preferences stay
 local. Play/Pause, Step day and 1/10/30/60 days per second stay in the header.

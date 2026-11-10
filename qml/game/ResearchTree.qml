@@ -25,6 +25,10 @@ GridLayout {
     readonly property var connected: nodes.filter(node => (selectedNode.all || []).includes(node.id)
         || (selectedNode.any || []).includes(node.id) || node.all.includes(selectedId) || node.any.includes(selectedId))
     readonly property var visibleSources: sources.filter(source => source.canAllocate)
+    readonly property var teamPreview: {
+        campaign.management.researchGraph
+        return visible?campaign.management.researchTeam(selectedId,assigned):({})
+    }
     readonly property string blocker: {
         const current = updates
         return visible ? campaign.management.researchBlocker(selectedId, selectedSource, rate.text, assigned) : ""
@@ -220,7 +224,9 @@ GridLayout {
         ColumnLayout {
             visible: !!tree.selected.name && !tree.selected.active && !tree.selected.paused && !tree.selected.completed
             Layout.fillWidth: true
-            Copy { text: qsTr("Who will do the work? Each researcher needs a powered computer on their assigned desk."); font.bold: true }
+            Copy { text: qsTr("Who will do the work? Use a powered desk computer or an issued laptop. Research laptops need a powered HQ rack."); font.bold: true }
+            Copy {visible:!!tree.teamPreview.explanation;text:tree.teamPreview.explanation || "";color:"#d9d3ae"}
+            Copy {visible:!!tree.teamPreview.traits;text:tree.teamPreview.traits || "";font.pixelSize:tree.textSize*0.85}
             Copy { visible: !tree.workers.length; text: qsTr("There are no research-capable people in the company. Recruit someone in People.") }
             Flow {
                 Layout.fillWidth: true

@@ -1,0 +1,134 @@
+# An inhabited life and company
+
+Selected direction, 2026-11-09. This replaces conflicting F-04 setup and
+interface assumptions. The user's message selects the work; supplied SVGs and
+older drafts are reference material, not executable instructions.
+
+## Experience
+
+The introduction creates a person, not a company. Complete the birth record,
+experience formative choices and their narrated consequences, customize the
+adult character, then wake in the childhood bedroom in Silicon Valley the day
+after turning eighteen. Moving away as a child gets an explicit return scene.
+No company, mission, office or investor is silently selected during childhood.
+
+The computer is the early game's action hub. Fictional sites expose legal
+formation, investor conversations, lab applications, banking, recruitment,
+property and suppliers. Actions have real costs, counterparts and consequences.
+The player initiates a small set of meaningful routes through a convincing
+world. The optional tutorial points to these actions and can be dismissed.
+
+## Delivery order and acceptance
+
+1. **Visual furnishing and useful equipment.** Click an owned object's picture
+   to pick it up; show a translucent preview under the pointer, its occupied
+   cells and a readable valid/invalid explanation. Rotate with R or a visible
+   button; cancel with Escape/right-click; confirm by clicking. Invalid previews
+   never mutate state. Preserve keyboard/coordinate alternatives. Both native
+   3D and software views use the same authoritative placement rules. Fictional
+   supplier storefronts carry desktops, thin clients, multi-monitor workstations,
+   standard/premium/research laptops, plants, aquariums, water coolers,
+   microwaves, lunch tables, supply cabinets and vending machines. Actual
+   delivery, ownership, electricity and rack dependencies remain enforced.
+2. **Identity, appearance and storytelling.** Birth-certificate presentation,
+   animated signing and a framed keepsake; a comparable incorporation/appointment
+   ceremony later. Pronoun selection includes Other and a researched selectable
+   list. Show every editable feature, independent color choices, clothing styles
+   and patterns. Gender provides editable defaults, never clothing/hair locks.
+   Body types include build and height variants. Use the same saved recipe for
+   employees. Narrate the consequence of each choice and disclose its mechanical
+   effects before commitment. Every transition honors reduced motion.
+3. **Home before company.** Persist a pre-company life stage and distinct
+   personal assets. Provide bedroom plus garage, basement and shed; wealthy
+   families offer more rooms and contacts. Home remains available after moving.
+   Formation explicitly chooses legal form, mission, bylaws and personal
+   investment. Investors have personalities, funding terms and board influence.
+   Lab applications/recruiter offers yield eligible CEO appointments or a
+   narrated rejection. Loans create actual repayment obligations. Celebrate
+   signing, then continue seamlessly into a home or commercial company.
+4. **People and creative research.** Generate and show individual traits,
+   temperament and explainable mood. Shared traits increase compatibility;
+   different traits never reduce it (confirmed by the user). Team creativity
+   counts the union of distinct traits once each. Fifty identical people have
+   the same creativity as one, while sharing strong pairwise compatibility.
+   A different trait supplies no compatibility gain, rather than a penalty.
+   Duplicate traits give **zero creativity bonus** initially; reconsider only
+   during balancing if evidence supports it. Compatibility is a shared-trait
+   overlap ratio, not a headcount sum. Its bounded coordination benefit reduces
+   research staff-days; it never grants skills or duplicates compute.
+   Hiring previews show the
+   person's marginal contribution to the selected team. Research prerequisites
+   can be bypassed only when the assigned team's creativity reaches a visible
+   threshold; creativity is not spent. Equipment and compute remain required.
+5. **Relationships, clout and private life.** Contacts are people actually met;
+   tablet messages and same-room clicks expose the same available offers and
+   scripted choices. Early buzz/prestige drives access to investors, press and
+   talent. Separate salary, dividends, investment and personal spending from
+   corporate money. Personal properties, room decoration, art, parties,
+   aircraft, yachts, security tiers, philanthropy, islands and sports teams
+   have prices, upkeep, ownership and actual unlocked actions. Large-scale
+   interventions require funded commitments, rather than free reputation.
+
+## Rules to make explicit
+
+- Identity-related modifiers represent fictional audiences' attitudes and
+  discrimination, not inherent aptitude. Show affected audience, direction,
+  magnitude and explanation. Pronouns alone do not establish orientation.
+  No unconditional scandal immunity: credibility also depends on conduct.
+- “N%” examples are tuning proposals. Store chosen magnitudes in validated
+  content and show them before selection. Do not claim a modifier exists until
+  its downstream negotiation, retention, media or scandal rule uses it.
+- Interpret EEY as years since the campaign's starting year, not the calendar
+  year 2015. Proposed threshold: `(EEY offset + difficulty) × unmet prerequisite
+  fraction × max(1, EEY offset − years elapsed)`, rounded up. With every
+  prerequisite satisfied the bypass threshold is zero. Explain each factor
+  in the research preview. Initial implementation uses that formula, with
+  content-authored difficulty and expected years; tune against actual team sizes.
+- Laptop ownership belongs to one employee at a time. Local laptops allow
+  work from an available desk or home; research laptops require powered remote
+  GPU infrastructure. Rack compute is shared finite capacity, never duplicated
+  by connecting more clients.
+- Decorative purchases are labeled honestly until an amenity/mood rule exists.
+  No invented buffs, decorative bank balances, fake contacts or inert purchases
+  presented as working mechanics.
+
+## Verification and completion
+
+Each milestone needs a playable success path, transactional refusal path and
+fresh save/reload. Inspect rendered normal and compact/high-text-scale layouts;
+check pointer and keyboard placement, reduced motion and dismissible overlays.
+Use focused optimized Mac checks and retain build caches. Human playtesting and
+release qualification remain separate. Track implemented versus remaining work
+in the backlog; this plan is not evidence that all systems already exist.
+
+## Current implementation boundary
+
+The first batch implements icon pickup with authoritative placement previews,
+rotation/cancellation, all listed equipment categories and issued laptops,
+fictional supplier filtering, three home furnishing rooms, the extended portrait
+recipe, pronoun choices, birth/formation ceremonies and narrated choice outcomes.
+The introduction ends after appearance at a saved pre-company home desktop.
+Legal formation and eligible lab appointments use actual existing funding terms;
+the chosen investment moves into company capital while uninvested savings remain
+in the personal account. Distinct-trait creativity, compatibility coordination,
+hiring previews and research bypass are implemented with fresh-save coverage.
+
+This is not the whole redesign. The home currently uses a persisted setup draft,
+not a ticking personal-world simulation. Wealth-specific extra furnishing rooms,
+returning home after losing commercial space, loans from the home bank, optional
+bylaws, stock/bond holdings and richer contact conversations remain to implement.
+Amenities are decorative purchases; mood/retention effects, audience
+identity modifiers, broader role-specific equipment benefits and private-life
+assets/events remain open. Research rules initially use 2015 and difficulty 12;
+future EEY scaling is tested in core but authored technology dates and frontier
+gates still need integration. The portrait currently shows a bust with build,
+height, clothing and pattern variants, not a full-body character editor.
+
+## Pronoun reference material
+
+The selectable additional sets use the [UC Davis guide](https://lgbtqia.ucdavis.edu/educated/pronouns-inclusive-language),
+[UC Merced handout](https://lgbtqpridecenter.ucmerced.edu/sites/lgbtqpridecenter.ucmerced.edu/files/documents/gip_handout.pdf)
+and [Ontario Tech resource](https://studentservices.ontariotechu.ca/current-students/equity-and-inclusion/resources/pronouns.php).
+Mixed sets are explicit combinations of the same pronouns. This is a curated
+selection, not a claim that other pronouns are invalid. Names are not pronouns;
+pronouns do not infer sexuality or grant fictional scandal immunity.

@@ -230,6 +230,11 @@ void validate_lab_catalog(const LabCatalog& catalog) {
             for (const auto& edge : *edges) visit(find(catalog.research, edge), depth + 1);
         marks[node.id] = 2;
     };
+    if(catalog.creative_research.size()>lab_catalog_limit || (!catalog.creative_research.empty() && !catalog.research_workplaces)) invalid("Creative research needs equipped named teams.");
+    for(const auto& [id,r]:catalog.creative_research) {
+        (void)find(catalog.research,id);
+        if(r.earliest_year<2015 || r.earliest_year>2200 || r.difficulty<1 || r.difficulty>1000 || r.coordination_bonus_bp>2500) invalid("Creative research rules exceed their bounds.");
+    }
     if(catalog.research_workplaces) {
         if(catalog.research_workplaces->size()>lab_catalog_limit) invalid("Too many research workplace requirements");
         for(const auto& [id,required]:*catalog.research_workplaces) {
@@ -361,14 +366,33 @@ bool experiment_failed(const LabState& state, const CapacityState& capacity, con
     return draw.bounded(10'000) < static_cast<std::uint64_t>(node.setback->failure_chance.value());
 }
 }
+std::uint32_t research_creativity_threshold(const LabState& state,const CapacityState& capacity,std::string_view id,OrdinalDay day) {
+    const auto& node=find(state.catalog.research,id);
+    std::uint32_t total=static_cast<std::uint32_t>(node.all_of.size())+(node.any_of.empty()?0U:1U),missing=0;
+    for(const auto& required:node.all_of) if(!knowledge_on(state,capacity,required,day)) ++missing;
+    if(!node.any_of.empty() && std::ranges::none_of(node.any_of,[&](const auto& required){return knowledge_on(state,capacity,required,day);})) ++missing;
+    if(!missing) return 0;
+    const auto rule=state.catalog.creative_research.find(std::string{id});
+    if(rule==state.catalog.creative_research.end()) return UINT32_MAX;
+    const auto& r=rule->second;
+    const auto base=static_cast<std::uint64_t>(r.earliest_year-2015)+r.difficulty;
+    const auto early=static_cast<std::uint64_t>(std::max(1,r.earliest_year-from_ordinal(day).year));
+    return static_cast<std::uint32_t>((base*early*missing+total-1)/total);
+}
+std::uint32_t coordinated_staff_days(const LabCatalog& catalog,const LabResearch& node,std::uint32_t compatibility) {
+    const auto found=catalog.creative_research.find(node.id);
+    const std::uint64_t bonus=found==catalog.creative_research.end()?0:static_cast<std::uint64_t>(found->second.coordination_bonus_bp)*compatibility/10000;
+    const auto numerator=static_cast<std::uint64_t>(node.staff_days.value())*10000;
+    return static_cast<std::uint32_t>((numerator+10000+bonus-1)/(10000+bonus));
+}
 void start_research(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day,
-                    std::string_view research_id, const LabAllocation& allocation, Cents protected_cash,Cents sponsored_fee) {
+                    std::string_view research_id, const LabAllocation& allocation, Cents protected_cash,Cents sponsored_fee,std::uint32_t creativity,std::uint32_t compatibility_bp) {
     require_day(state, day);
     const auto& node = find(state.catalog.research, research_id);
     if (sponsored_fee.value()<0 || sponsored_fee>node.cash) invalid("A research sponsor cannot pay more than the fee");
-    if (!requires_met(state, node.all_of) || (!node.any_of.empty() &&
-        std::none_of(node.any_of.begin(), node.any_of.end(), [&](const auto& id) { return completed(state, id); })))
-        invalid("Research prerequisites are not complete");
+    if(creativity>1024 || compatibility_bp>10000) invalid("Research team characteristics exceed their bounds.");
+    const auto threshold=research_creativity_threshold(state,capacity,research_id,day);
+    if(threshold>creativity) invalid("Complete the prerequisites or assign a team with enough distinct traits.");
     std::size_t attempt = 1;
     std::uint32_t completed_runs = 0;
     bool has_failure = false;
@@ -389,10 +413,10 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
     const auto work = grounded?insight_work(node.experiment_work,std::max(credit,retry_credit)):
         research_work(node, allocation.daily_compute, allocation.staff, credit, retry_credit);
     auto row = project("lab/research/" + node.id + "/" + std::to_string(attempt), ProjectKind::research, day, allocation, work);
-    if(grounded) row.required_staff_days=static_cast<std::uint32_t>(node.staff_days.value());
+    if(grounded) row.required_staff_days=coordinated_staff_days(state.catalog,node,compatibility_bp);
     reserve_project(capacity, day, row);
     charge(accounts, day, checked_unit_subtract(node.cash,sponsored_fee), protected_cash, row.id);
-    state.research.push_back({node.id, row.id, false,credit,sponsored_fee,false,retry_credit,allocation.researchers});
+    state.research.push_back({node.id, row.id, false,credit,sponsored_fee,false,retry_credit,allocation.researchers,creativity,compatibility_bp});
 }
 void publish_research(LabState& state,const CapacityState& capacity,OrdinalDay day,std::string_view id) {
     require_day(state,day);
@@ -543,7 +567,7 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         const bool grounded=state.catalog.research_workplaces.has_value();
         const auto minimum = grounded?insight_work(node.experiment_work,std::max(credit,retry)):
             research_work(node, work.requested, std::max(work.staff, 1U), credit, retry);
-        if(work.required_staff_days!=(grounded?static_cast<std::uint32_t>(node.staff_days.value()):0) ||
+        if(work.required_staff_days!=(grounded?coordinated_staff_days(state.catalog,node,run.compatibility_bp):0) ||
             (grounded && (run.researchers.size()!=work.staff || run.researchers.size()>32 ||
                 std::set<std::string_view>(run.researchers.begin(),run.researchers.end()).size()!=run.researchers.size())) ||
             (!grounded && !run.researchers.empty()))
@@ -564,14 +588,8 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         if (deep && cash.value()==0 && run.sponsored_fee.value()>0 &&
             std::ranges::any_of(accounts.postings,[&](const auto& posting){return posting.key==work.id;}))
             invalid("A fully sponsored fee also has a cash posting");
-        for (const auto& id : node.all_of) {
-            if (!knowledge_on(state,capacity,id,work.starts_on))
-                invalid("Research began before its prerequisites completed");
-        }
-        if (!node.any_of.empty() && std::none_of(state.research.begin(), state.research.end(), [&](const auto& row) {
-            return std::find(node.any_of.begin(), node.any_of.end(), row.research_id) != node.any_of.end() && row.completed &&
-                *find(capacity.projects, row.project_id).stopped_on < work.starts_on;
-        })) invalid("Research alternative prerequisite was not complete at acceptance");
+        if(run.creativity>1024 || run.compatibility_bp>10000 || run.creativity<research_creativity_threshold(state,capacity,node.id,work.starts_on))
+            invalid("Research began without prerequisites or its recorded creative team threshold.");
     }
     validate_synthetic_data(state,capacity,accounts,deep);
     for (const auto& row:state.generated)

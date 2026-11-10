@@ -1,0 +1,32 @@
+[
+  {
+    "path": "assets/ui/laptop.svg",
+    "sha256": "4907d5e39e5a93e009c87897bdc1d1a460d1667655e338a2cb7f6dacab9b9421",
+    "source_url": "https://openclipart.org/detail/159709/laptop-by-b.gaultier",
+    "creator": "b.gaultier",
+    "source": "User-supplied /opt/AI Startup/svg/UI",
+    "license": "Public-domain declaration embedded in original SVG metadata",
+    "modifications": "None; copied byte for byte",
+    "ai_generated": false
+  },
+  {
+    "path": "assets/ui/browser.svg",
+    "sha256": "587c23e22d2986189c4d7a08a0c93d8a79b8762e22f776459438ddf998d98e1d",
+    "source_url": "",
+    "creator": "m1981",
+    "source": "User-supplied /opt/AI Startup/svg/UI",
+    "license": "Public-domain declaration embedded in original SVG metadata",
+    "modifications": "None; copied byte for byte",
+    "ai_generated": false
+  },
+  {
+    "path": "assets/ui/mail.svg",
+    "sha256": "0159fddc5b1ae3b4576230648817a99fdf6f3d2d08680b351e0096b349d2952f",
+    "source_url": "",
+    "creator": "Not named in supplied file",
+    "source": "User-supplied /opt/AI Startup/svg/UI",
+    "license": "Public-domain declaration embedded in original SVG metadata",
+    "modifications": "None; copied byte for byte",
+    "ai_generated": false
+  }
+]

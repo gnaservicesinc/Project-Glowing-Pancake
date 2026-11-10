@@ -4,21 +4,26 @@ namespace {
 Json profile(const core::PersonProfile& p) {
     return {{"id",p.id},{"name",p.name},{"gender",p.gender},{"pronouns",p.pronouns},{"education",p.education},{"role",p.role},{"bio",p.bio},{"preferred_mission",p.preferred_mission},
         {"birth_year",p.birth_year},{"experience",p.experience},{"research",p.research},{"engineering",p.engineering},{"evaluation",p.evaluation},{"mission_fit",p.mission_fit},{"applied_on",p.applied_on.value()},
-        {"portrait",{{"kit",p.portrait.kit},{"parts",p.portrait.parts}}}};
+        {"traits",p.traits},{"portrait",{{"kit",p.portrait.kit},{"parts",p.portrait.parts},{"style",p.portrait.style}}}};
 }
 core::PersonProfile parse_profile(const Json& j) {
-    fields(j,"person",{"id","name","gender","pronouns","education","role","bio","preferred_mission","birth_year","experience","research","engineering","evaluation","mission_fit","applied_on","portrait"});
+    fields(j,"person",{"id","name","gender","pronouns","education","role","bio","preferred_mission","birth_year","experience","research","engineering","evaluation","mission_fit","applied_on","portrait","traits"});
     const auto year=i64(j.at("birth_year"),"birth_year");if(year<1800 || year>3000) invalid("person","Birth year out of bounds");
     const auto count=[&](const char* name){return static_cast<std::uint32_t>(u64(j.at(name),name,100));};
     core::PersonProfile result{text(j.at("id"),"id",64),text(j.at("name"),"name",128),text(j.at("gender"),"gender",32),text(j.at("pronouns"),"pronouns",64),
         text(j.at("education"),"education",128,true),text(j.at("role"),"role",64),text(j.at("bio"),"bio",512,true),text(j.at("preferred_mission"),"preferred_mission",32),static_cast<int>(year),count("experience"),count("research"),count("engineering"),count("evaluation"),count("mission_fit"),core::OrdinalDay{i64(j.at("applied_on"),"applied_on")}};
+    array(j.at("traits"),"traits",16);
+    for(const auto& trait:j.at("traits")) result.traits.push_back(text(trait,"trait",80));
     if(j.contains("portrait")) {
-        const auto& recipe=j.at("portrait");fields(recipe,"portrait",{"kit","parts"});
+        const auto& recipe=j.at("portrait");fields(recipe,"portrait",{"kit","parts","style"});
         result.portrait.kit=static_cast<std::uint16_t>(u64(recipe.at("kit"),"portrait kit",65535));
         array(recipe.at("parts"),"portrait layers",core::portrait_part_counts.size());
         if(recipe.at("parts").size()!=core::portrait_part_counts.size()) invalid("portrait","Missing layer IDs");
         for(std::size_t i=0;i<core::portrait_part_counts.size();++i)
             result.portrait.parts[i]=static_cast<std::uint8_t>(u64(recipe.at("parts")[i],"portrait layer",255));
+        array(recipe.at("style"),"portrait styling",core::portrait_style_counts.size());
+        if(recipe.at("style").size()!=result.portrait.style.size()) invalid("portrait","Missing style IDs");
+        for(std::size_t i=0;i<result.portrait.style.size();++i) result.portrait.style[i]=static_cast<std::uint8_t>(u64(recipe.at("style")[i],"portrait style",255));
         core::validate_portrait(result.portrait);
     }
     return result;

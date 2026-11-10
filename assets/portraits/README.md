@@ -1,17 +1,15 @@
 # Employee portrait kit v1
 
-Profiles store `portrait: {kit: 1, parts: [...]}`. The fixed 15-byte layer order is
+Profiles store `portrait: {kit: 1, parts: [...], style: [...]}`. The 15-part layer order is
 head, hair, nose, ears, mouth, chin, neck, eyes, eyebrows, facial hair, glasses,
 skin color, hair color, clothing color, background. JSON integer encoding is
 slightly larger; no pixel images, SVG documents, paths or URLs enter saves.
-Existing IDs retain their meanings. A new incompatible style needs a new kit
-version and a retained renderer for earlier saves.
+Existing IDs retain their meanings. Fresh saves preserve both arrays exactly;
+support for earlier development-save recipes is not a requirement.
 
 Appearance is generated once on application/identity creation through a private
 visual stream. It does not consume simulation RNG or affect skills, pay, gender,
-pronouns or eligibility. Hires copy the applicant's exact profile. Older development
-profiles without a recipe receive a repeatable fallback from their existing ID
-and name; importing preserves the source save.
+pronouns or eligibility. Hires copy the applicant's exact profile.
 
 The game composes trusted bundled vector fragments and renders at each displayed
 portrait's device-pixel size. Only visible portrait size drives the texture size,
@@ -38,3 +36,10 @@ the retained source and fails if its source bytes change. The script records the
 source SHA-256 and reviewed geometry bounds. SVG editor metadata, executable
 content, filters, external resources and statistical/source examples are excluded
 from the bundled kit. `assets/manifest.json` records provenance and modifications.
+
+The immersive-company extension adds eight bounded style IDs: body shape,
+height, clothing style, shirt pattern, eye color, lip color, glasses color and
+pattern color. All are saved with the recipe and generated for new employees.
+Procedural body/clothing/pattern paths are original project code; no new external
+portrait sources were introduced. Gender chooses an editable starting look;
+all variants remain selectable. Existing 15 part IDs keep their meanings.

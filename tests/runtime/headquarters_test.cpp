@@ -2,6 +2,7 @@
 #include <pgp/persistence/save.hpp>
 #include <nlohmann/json.hpp>
 #include <iostream>
+#include <algorithm>
 #include <stdexcept>
 
 namespace {
@@ -24,7 +25,7 @@ int main() {
         runtime::ScenarioOptions options;options.founding=selected;options.seed=719;
         options.identity=runtime::CampaignIdentity{"Physical HQ","Alex Vale","they/them"};
         auto inherited_options=options;
-        inherited_options.founding->route="hired_ceo";inherited_options.founding->office="shared";inherited_options.founding->leg="charisma";
+        inherited_options.founding->route="hired_ceo";inherited_options.founding->office="shared";inherited_options.founding->leg="political";
         inherited_options.founding->researcher="none";
         const auto inherited=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},inherited_options);
         const auto& office=inherited.world.simulation;
@@ -61,6 +62,36 @@ int main() {
         action(core::LeaseHQ{"austin","studio"});
         check(game.current_state().world.state_id=="state.us_tx" && core::current_headquarters(state()).width==10 && state().capacity->sources.front().effective.value()==0,"Moving must change geography and store equipment until it is placed again.");
         action(core::PlaceHQEquipment{1,0,0,0,false});action(core::PlaceHQEquipment{2,1,0,0,false});action(core::PlaceHQEquipment{3,0,3,0,false});
+        const auto before_preview=game.current_state();
+        check(core::hq_placement_blocker(state(),{1,0,3,0,false}).size()>0,"Placement preview must detect another desk.");
+        check(core::hq_placement_blocker(state(),{1,0,6,0,true}).empty(),"Rotation preview must find free floor.");
+        check(core::hq_placement_blocker(state(),{1,0,2147483647,0,false}).size()>0,"Oversized coordinates must be refused safely.");
+        check(game.current_state()==before_preview,"Hover previews must not change money, RNG or placements.");
+        action(core::BuyHQEquipment{"thin_client"}); // 4
+        action(core::BuyHQEquipment{"rack"}); // 5
+        action(core::BuyHQEquipment{"laptop"}); // 6
+        action(core::BuyHQEquipment{"research_laptop"}); // 7
+        action(core::BuyHQEquipment{"plant"}); // 8
+        for(int n=0;n<7;++n) apply(core::AdvanceDay{});
+        action(core::PlaceHQEquipment{4,3,0,0,false});
+        action(core::AssignHQDesk{3,"founder"});
+        check(!core::hq_workstation_ready(state(),"founder"),"A thin client without a powered rack is not a working computer.");
+        action(core::PlaceHQEquipment{5,0,7,0,false});
+        check(core::hq_workstation_ready(state(),"founder"),"A thin client must become usable when its rack is available.");
+        action(core::PowerHQEquipment{5,false});
+        check(!core::hq_workstation_ready(state(),"founder"),"Turning off the rack must disable dependent clients.");
+        action(core::AssignHQLaptop{6,"founder"});
+        action(core::AssignHQDesk{3,""});
+        check(core::hq_workstation_ready(state(),"founder") && !core::assigned_hq_desk(state(),"founder"),"An issued local laptop must support working from home without a fixed desk.");
+        action(core::AssignHQLaptop{7,"founder"});
+        check(headquarters().items[5].person.empty() && !core::hq_workstation_ready(state(),"founder"),"One employee gets one laptop; a research laptop requires its remote rack.");
+        action(core::PowerHQEquipment{5,true});
+        check(core::hq_workstation_ready(state(),"founder"),"Research laptop must use the powered remote rack.");
+        const auto rack_source=std::ranges::find(state().capacity->sources,std::string{"hq.equipment/5"},&core::CapacitySource::id);
+        check(rack_source!=state().capacity->sources.end() && rack_source->effective==core::MilliCUPerDay{40000},"Clients must not duplicate rack capacity.");
+        action(core::PlaceHQEquipment{8,0,8,0,false});
+        refuse(core::PlaceHQEquipment{8,0,0,0,false});
+        check(persistence::decode_save(program,persistence::encode_save(program,game.current_state())).checkpoint==game.current_state(),"Portable assignments and remote dependencies must reload exactly.");
         action(core::BuyHQLand{"seattle","compact"});
         const std::vector<core::HQRoom> layout{{0,0,3,4},{3,0,3,4}};
         const auto random_before=headquarters().stream;

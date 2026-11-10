@@ -1,4 +1,6 @@
 import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 FocusScope {
     id: opening
@@ -9,7 +11,7 @@ FocusScope {
     readonly property var story: campaign.founding
     readonly property bool reducedMotion: campaign.reducedMotion
     readonly property int beatIndex: Math.max(0, script.beats.findIndex(page => page.id === story.beat))
-    readonly property var beat: script.beats[beatIndex]
+    readonly property var beat: script.beats[beatIndex] || {id:"opening",kind:"narration",tone:"night",art:"hospital"}
     readonly property string beatId: beat.id
     readonly property string sceneTone: beat.tone
     readonly property bool narrative: beat.kind === "narration"
@@ -108,10 +110,12 @@ FocusScope {
             }
         }
         menuAudio.select()
-        moveTo(beatId === "seed" ? "review" : script.beats[beatIndex + 1].id)
+        moveTo(script.beats[Math.min(beatIndex+1,script.beats.length-1)].id)
     }
 
     function answer(id) {
+        if(beatId==="pronouns" && id==="other") {moveTo("other_pronouns");return}
+        if(beatId==="other_pronouns") {story.setField("pronouns",id);moveTo("certificate");return}
         if (beat.kind === "chapter") story.choose(beat.chapter, id)
         else if (beat.kind === "offer") {
             actionError = story.answerOffer(beat.offer, id === "accept")
@@ -121,7 +125,7 @@ FocusScope {
     }
 
     function previousBeat() {
-        moveTo(beatId === "seed" ? "review" : script.beats[beatIndex - 1].id)
+        moveTo(script.beats[Math.max(0,beatIndex-1)].id)
     }
 
     Component.onCompleted: {
@@ -143,6 +147,12 @@ FocusScope {
         }
     }
 
+    HomeStart {
+        anchors.fill:parent;visible:opening.beat.kind==="home";z:10
+        story:opening.story;textScale:opening.textScale
+        onMenuRequested:opening.menuRequested()
+        onAppearanceRequested:opening.moveTo("appearance")
+    }
     Rectangle { anchors.fill: parent; color: ink.ink }
     Item {
         anchors.fill: parent
@@ -293,6 +303,7 @@ FocusScope {
     // Logical pixels for the prologue. Fit the same stage at every window size.
     Item {
         id: stage
+        visible:opening.beat.kind!=="home"
         objectName: "foundingCanvas"
         anchors.centerIn: parent
         width: 1120
@@ -421,7 +432,7 @@ FocusScope {
         Item {
             id: decisions
             readonly property var rows: opening.beat.choices || []
-            readonly property int pageSize: 6
+            readonly property int pageSize: 2
             readonly property var shown: rows.slice(opening.choicePage * pageSize, (opening.choicePage + 1) * pageSize)
             x: stage.margin
             y: 381 + 7 * (1 - opening.actionsProgress)
@@ -433,7 +444,7 @@ FocusScope {
             Grid {
                 id: options
                 readonly property int rowCount: Math.max(1, Math.ceil(decisions.shown.length / columns))
-                columns: decisions.shown.length > 4 || (decisions.shown.length === 4 && opening.zoom >= 1.5) ? 2 : 1
+                columns: 1
                 spacing: 7
                 Repeater {
                     model: decisions.shown
@@ -441,7 +452,7 @@ FocusScope {
                         required property var modelData
                         objectName: "foundingChoice_" + modelData.id
                         width: (decisions.width - (options.columns - 1) * options.spacing) / options.columns
-                        height: Math.min(92, (decisions.height - (options.rowCount - 1) * options.spacing) / options.rowCount)
+                        height: Math.min(108, (decisions.height - (options.rowCount - 1) * options.spacing) / options.rowCount)
                         nameHeight: options.columns > 1 && options.rowCount > 2 ? 29 : Math.min(42, height * 0.55)
                         caption: modelData.name
                         detail: modelData.available === false ? modelData.reason : modelData.detail || ""
@@ -472,39 +483,43 @@ FocusScope {
                 Accessible.role: Accessible.Graphic
                 Accessible.name: qsTr("Your customized portrait")
             }
-            StoryText {
-                x: 240; width: parent.width-240; height: 46
-                text: opening.story.appearanceParts[opening.appearanceFeature].name
-                font.pixelSize: 24 * opening.zoom
+            ScrollView {
+                x:230;width:parent.width-230;height:parent.height;clip:true;contentWidth:availableWidth
+                ScrollBar.vertical.policy:ScrollBar.AlwaysOn
+                ColumnLayout {
+                    width:parent.width;spacing:6
+                    Repeater {
+                        model:opening.story.appearanceParts
+                        RowLayout {
+                            required property var modelData
+                            required property int index
+                            Layout.fillWidth:true
+                            Label {Layout.fillWidth:true;text:modelData.name;color:"#ece4cf";font.pixelSize:16*opening.zoom;wrapMode:Text.Wrap}
+                            WorldButton {objectName:"appearancePrev_"+index;text:"‹";textSize:16;Accessible.name:qsTr("Previous %1").arg(modelData.name);onClicked:opening.story.cycleAppearance(index,-1)}
+                            Label {text:String(Number(index<15?opening.story.form.appearance[index]:opening.story.form.style[index-15])+1)+" / "+modelData.count;color:"#c7d8cc";font.pixelSize:15}
+                            WorldButton {objectName:"appearanceNext_"+index;text:"›";textSize:16;Accessible.name:qsTr("Next %1").arg(modelData.name);onClicked:opening.story.cycleAppearance(index,1)}
+                        }
+                    }
+                }
             }
-            StoryAction {
-                objectName: "foundingPreviousFeature"
-                x: 240; y: 52; width: (parent.width-250)/2; height: 50
-                caption: qsTr("‹ Previous feature")
-                onActivated: opening.appearanceFeature=(opening.appearanceFeature+14)%15
-            }
-            StoryAction {
-                objectName: "foundingNextFeature"
-                x: 245+(parent.width-250)/2; y: 52; width: (parent.width-250)/2; height: 50
-                caption: qsTr("Next feature ›")
-                onActivated: opening.appearanceFeature=(opening.appearanceFeature+1)%15
-            }
-            StoryText {
-                x: 240; y: 110; width: parent.width-240; height: 40
-                text: qsTr("Variant %1 of %2").arg(Number(opening.story.form.appearance[opening.appearanceFeature])+1).arg(opening.story.appearanceParts[opening.appearanceFeature].count)
-                font.pixelSize: 22 * opening.zoom
-            }
-            StoryAction {
-                objectName: "foundingPreviousVariant"
-                x: 240; y: 158; width: (parent.width-250)/2; height: 50
-                caption: qsTr("‹ Previous look")
-                onActivated: opening.story.cycleAppearance(opening.appearanceFeature,-1)
-            }
-            StoryAction {
-                objectName: "foundingNextVariant"
-                x: 245+(parent.width-250)/2; y: 158; width: (parent.width-250)/2; height: 50
-                caption: qsTr("Next look ›")
-                onActivated: opening.story.cycleAppearance(opening.appearanceFeature,1)
+
+        }
+        Rectangle {
+            visible:["first_name","last_name","gender","pronouns","certificate"].includes(opening.beatId)
+            x:opening.beatId==="certificate"?stage.margin:820;y:opening.beatId==="certificate"?345:320
+            width:opening.beatId==="certificate"?660:250;height:opening.beatId==="certificate"?255:270
+            color:"#ede1c1";border.width:opening.beatId==="certificate"?10:2;border.color:"#ad8458";radius:3
+            Column {
+                anchors.fill:parent;anchors.margins:22;spacing:12
+                Text {width:parent.width;text:qsTr("RECORD OF A NEW LIFE");font.family:ink.displayFace;font.pixelSize:20;font.bold:true;color:"#5b5143";wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter}
+                Text {width:parent.width;text:opening.story.form.first_name+" "+opening.story.form.last_name;font.family:ink.displayFace;font.pixelSize:28;color:"#30464b";wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter}
+                Text {width:parent.width;text:qsTr("California · January 1997\n%1 · %2").arg(opening.story.form.gender).arg(opening.story.form.pronouns);font.pixelSize:16;color:"#5b5143";wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter}
+                Item {
+                    width:parent.width;height:48;clip:true;visible:opening.beatId==="certificate"
+                    property real reveal:visible?1:0
+                    Behavior on reveal {enabled:!opening.reducedMotion;NumberAnimation {duration:1600;easing.type:Easing.InOutSine}}
+                    Item {width:parent.width*parent.reveal;height:parent.height;clip:true;Text {width:600;text:qsTr("With love, the %1 family").arg(opening.story.form.last_name);font.family:"Snell Roundhand";font.pixelSize:30;color:"#344b65"}}
+                }
             }
         }
         StoryText {
@@ -578,7 +593,7 @@ FocusScope {
             StoryAction {
                 id: continueAction
                 objectName: opening.beat.kind === "review" ? "foundingStartButton" : "foundingNextButton"
-                visible: opening.narrative || opening.beat.kind === "field" || opening.beat.kind === "review" || opening.beat.kind === "appearance"
+                visible: opening.narrative || opening.beat.kind === "field" || opening.beat.kind === "review" || opening.beat.kind === "appearance" || opening.beat.kind === "certificate"
                 x: Math.min(opening.readWidth - width, parent.width - width)
                 width: 280
                 height: parent.height

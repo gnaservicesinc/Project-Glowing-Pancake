@@ -57,6 +57,7 @@ void options(const std::vector<FoundingOption>& rows) {
 void shape(const FoundingSelection& s) {
     text(s.first_name,64);text(s.last_name,64);text(s.gender,64);
     core::validate_portrait(s.appearance);
+    if(s.personal_investment_cents < -1 || s.personal_investment_cents>1000000000000) invalid("Choose a bounded personal investment.");
     if(s.gender!="woman" && s.gender!="man" && s.gender!="nonbinary" && s.gender!="unspecified") invalid("Choose a supported gender option.");
     if(s.mode!="campaign") invalid("New companies use the founder campaign.");
     if(s.sociability!="introverted" && s.sociability!="outgoing") invalid("Choose a sociability tendency.");
@@ -108,6 +109,7 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
     if(s.researcher=="founder" && s.leg!="genius") invalid("Only Actual Genius can supply the first research assignment without hiring a researcher.");
     t.founder_researcher=s.researcher=="founder";
     const bool ceo=s.route=="hired_ceo";
+    if(ceo && s.leg!="genius" && s.leg!="political" && s.leg!="wealthy") invalid("This lab considers leadership applications from an Actual Genius or a political or wealthy elite background.");
     {
         if(!c.opening) invalid("Complete your appearance and founding terms.");
         if(s.researcher!=(s.leg=="genius"?"founder":"none")) invalid("Research ability follows the biography; hiring takes place during play.");
@@ -119,7 +121,11 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
     }
     t.contributed_cents=core::checked_add(family.capital_cents,leg.capital_cents);
     if(s.leg=="political" && s.family!="rich") t.contributed_cents=core::checked_add(founding_option(c.families,"rich").capital_cents,leg.capital_cents);
-    t.contributed_cents=core::checked_add(t.contributed_cents,route.capital_cents);
+    const auto personal=t.contributed_cents;
+    t.personal_contribution_cents=ceo?0:s.personal_investment_cents<0?personal:s.personal_investment_cents;
+    if(t.personal_contribution_cents>personal) invalid("Your personal investment exceeds your available savings.");
+    t.personal_remaining_cents=core::checked_subtract(personal,t.personal_contribution_cents);
+    t.contributed_cents=core::checked_add(t.personal_contribution_cents,route.capital_cents);
     t.partner_bp=t.nonprofit?0:route.shares_bp;
     t.paid_setup_cents=core::checked_add(c.formation_cents,core::checked_add(office.fee_cents,researcher.fee_cents));
     t.office_cents=office.monthly_cents;t.payroll_cents=researcher.monthly_cents;
@@ -166,8 +172,8 @@ std::string canonical_founding_selection(const FoundingSelection& s) {
     Json j={{"mode",s.mode},{"first_name",s.first_name},{"last_name",s.last_name},{"gender",s.gender},
         {"sociability",s.sociability},{"activity",s.activity},{"disposition",s.disposition},
         {"family",s.family},{"leg",s.leg},{"route",s.route},{"legal_form",s.legal_form},
-        {"office",s.office},{"researcher",s.researcher},{"choices",s.choices},{"backers",s.backers}};
-    j["appearance"]={{"kit",s.appearance.kit},{"parts",s.appearance.parts}};
+        {"personal_investment_cents",s.personal_investment_cents},{"office",s.office},{"researcher",s.researcher},{"choices",s.choices},{"backers",s.backers}};
+    j["appearance"]={{"kit",s.appearance.kit},{"parts",s.appearance.parts},{"style",s.appearance.style}};
     return j.dump();
 }
 FoundingSelection load_founding_selection(std::string_view bytes) {
@@ -175,6 +181,7 @@ FoundingSelection load_founding_selection(std::string_view bytes) {
     s.mode=j.at("mode");s.first_name=j.at("first_name");s.last_name=j.at("last_name");s.gender=j.at("gender");
     s.sociability=j.at("sociability");s.activity=j.at("activity");s.disposition=j.at("disposition");
     s.family=j.at("family");s.leg=j.at("leg");s.route=j.at("route");s.legal_form=j.at("legal_form");
+    s.personal_investment_cents=j.at("personal_investment_cents").get<std::int64_t>();
     s.office=j.at("office");s.researcher=j.at("researcher");s.choices=j.at("choices").get<decltype(s.choices)>();s.backers=j.at("backers").get<decltype(s.backers)>();
     {
         const auto& a=j.at("appearance");core::PortraitRecipe p;
@@ -182,6 +189,7 @@ FoundingSelection load_founding_selection(std::string_view bytes) {
         for(std::size_t i=0;i<p.parts.size();++i) {
             const auto& v=a.at("parts").at(i);if(!v.is_number_integer() || v<0 || v>=core::portrait_part_counts[i]) invalid("Invalid portrait part.");p.parts[i]=v.get<std::uint8_t>();
         }
+        p.style=a.at("style").get<decltype(p.style)>();core::validate_portrait(p);
         s.appearance=p;
     }
     shape(s);if(Json::parse(canonical_founding_selection(s))!=j) invalid("Unsupported or out-of-range founding fields.");return s;

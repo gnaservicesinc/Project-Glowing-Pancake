@@ -25,9 +25,20 @@ inline Json encode(const core::PeopleRules& r) {
     if(r.recruitment) {const auto& n=*r.recruitment;j["recruitment"]={{"response_days",n.response.value()},{"validity_days",n.validity.value()},{"maximum_rounds",n.maximum_rounds},
         {"minimum_ask_bp",n.minimum_ask},{"maximum_ask_bp",n.maximum_ask},{"minimum_acceptance_bp",n.minimum_acceptance},{"maximum_acceptance_bp",n.maximum_acceptance},
         {"minimum_offer_bp",n.minimum_offer},{"maximum_offer_bp",n.maximum_offer},{"maximum_signing_multiple",n.maximum_signing_multiple}};}
+    if(!r.trait_groups.empty()) j["trait_groups"]=r.trait_groups;
     return j;
 }
 inline core::PeopleRules decode(Json j) {
+    std::vector<std::vector<std::string>> traits;
+    if(j.contains("trait_groups")) {
+        const auto& groups=j.at("trait_groups");
+        if(!groups.is_array() || groups.size()>12) throw std::invalid_argument("Use at most twelve trait groups");
+        for(const auto& group:groups) {
+            if(!group.is_array() || group.empty() || group.size()>16) throw std::invalid_argument("Use one to sixteen traits per group");
+            std::vector<std::string> values;for(const auto& v:group) {if(!v.is_string()) throw std::invalid_argument("Traits need names");values.push_back(v.get<std::string>());}traits.push_back(std::move(values));
+        }
+        j.erase("trait_groups");
+    }
     std::optional<core::RecruitmentRules> recruitment;
     if(j.contains("recruitment")) {
         const auto& n=j.at("recruitment");fields(n,{"response_days","validity_days","maximum_rounds","minimum_ask_bp","maximum_ask_bp","minimum_acceptance_bp","maximum_acceptance_bp","minimum_offer_bp","maximum_offer_bp","maximum_signing_multiple"});
@@ -37,7 +48,7 @@ inline core::PeopleRules decode(Json j) {
         j.erase("recruitment");
     }
     fields(j,{"first_names","last_names","maximum_hq","candidates","recruitment_days","onboarding_days","monthly_salary_cents","signing_cost_cents","base_skill","skill_jitter","pay_skill_weight","prestige_skill_weight","mission_skill_weight","maximum_evaluation_credit_bp"});
-    core::PeopleRules r;r.recruitment=std::move(recruitment);
+    core::PeopleRules r;r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);
     for(const char* name:{"first_names","last_names"}) {
         const auto& list=j.at(name);
         if(!list.is_array() || list.size()>512) throw std::invalid_argument("Name pool exceeds its limit");

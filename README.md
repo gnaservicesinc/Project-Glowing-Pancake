@@ -7,20 +7,25 @@ play at 18 in 2015 and an ending at 118 in 2115, followed by optional sandbox
 continuation. [Campaign flow](docs/CAMPAIGN_FLOW.md),
 [technology design](docs/TECHNOLOGY.md) and the
 [140-candidate technology catalog](docs/TECHNOLOGY_CATALOG.md) describe the new
-direction. New Game now implements the founder introduction and company setup;
-the company world, automatic resume and generated HQ people are available for review.
+direction. New Game creates the founder, then opens their childhood bedroom
+before any company exists. The home computer leads to legal formation, investor
+terms or an eligible lab appointment; company and personal money stay separate.
 
 **Current state.** The 2026-11-09 review identified substantial unfinished main-game
 work; [selected refinement milestones](docs/FEEDBACK_REFINEMENTS.md) now lead the
 backlog. Current Release playtest builds include **DEV · Reset local data** in
 the menu; remove this action and its implementation before shipping v1.0.
-Fresh founder companies now have an actual furnishable garage/inherited office,
+The ongoing [immersive redesign](docs/IMMERSIVE_COMPANY_PLAN.md) expands this work.
+Fresh founder companies have three home workspaces or an inherited office,
 paid suppliers, city property listings and contracted construction. Applicants
 negotiate compensation and need a furnished desk before they can be hired.
 Research now uses a connected technology tree, named staff, installed equipment
 and actual compute. The workspace includes a laptop desktop, device-specific apps
-and a state atlas with selectable counties. These changes are ready for the next
-human playtest.
+and a state atlas with selectable counties. Furnishing uses illustrated pickup, translucent placement feedback and rotation.
+Issued laptops support remote research; rack clients require powered infrastructure.
+Team creativity counts unique traits across the team, with shared traits providing
+a separate coordination benefit. The wider personal-life and relationship systems
+remain in progress.
 
  The initial skeleton phase closed on 2026-11-07. The current
 core is ready for human feedback and the user's selected refinements. The
@@ -34,7 +39,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.41.0-dev.1**, generation **42**.
+The finalized internal content version is **0.42.0-dev.1**, generation **43**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).

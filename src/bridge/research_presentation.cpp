@@ -164,7 +164,7 @@ QVariantList ManagementController::researchGraph() const {
         const auto *run = latest_run(lab, topic.id);
         const auto *work = run ? find_id(s.capacity->projects, run->project_id) : nullptr;
         const bool locked =
-            !prerequisites(lab, topic) ||
+            (!prerequisites(lab, topic) && !lab.catalog.creative_research.contains(topic.id)) ||
             !core::frontier_technology_block(s, core::FrontierTechnology::research, topic.id, s.date).empty();
         QString status = locked ? QStringLiteral("locked") : QStringLiteral("ready");
         if (results(lab, topic.id) >= topic.repeat_limit)
@@ -212,7 +212,7 @@ QVariantMap ManagementController::researchTopic(QString id) const {
     QString why;
     if (!technology.empty())
         why = q(technology);
-    else if (!prerequisites(*s.lab, *topic))
+    else if (!prerequisites(*s.lab, *topic) && !s.lab->catalog.creative_research.contains(topic->id))
         why = tr("Complete the linked prerequisites.");
     else if (!core::hq_has_lab_equipment(s, required))
         why = tr("Install the required equipment together in one room.");
@@ -254,6 +254,24 @@ QVariantMap ManagementController::researchTopic(QString id) const {
             {"progress", progress},
             {"hold", hold},
             {"project", work ? q(work->id) : QString{}}};
+}
+
+QVariantMap ManagementController::researchTeam(QString id,QStringList workers) const {
+    if(!groundedResearch()) return {};
+    const auto& s=state();const auto* topic=find_id(s.lab->catalog.research,id.toStdString());
+    if(!topic || !s.lab->catalog.creative_research.contains(topic->id)) return {};
+    std::vector<std::string> ids;for(const auto& worker:workers) ids.push_back(worker.toStdString());
+    try {
+        const auto team=core::research_team(s,ids);
+        const auto threshold=core::research_creativity_threshold(*s.lab,*s.capacity,topic->id,s.date);
+        const auto& rule=s.lab->catalog.creative_research.at(topic->id);
+        QStringList traits;for(const auto& trait:team.traits) traits.push_back(q(trait));
+        return {{"creativity",team.creativity},{"required",threshold},{"compatibility",static_cast<double>(team.compatibility_bp)/100},
+            {"days",core::coordinated_staff_days(s.lab->catalog,*topic,team.compatibility_bp)},
+            {"explanation",tr("Creativity: %1 distinct traits / %2 needed to bypass missing prerequisites. Duplicates add zero.\nShared-trait compatibility: %3% · coordinated work: %4 staff-days.\nThreshold uses EEY %5, difficulty %6, unmet prerequisite groups and years ahead (minimum ×1). Creativity is a threshold, not spent.")
+                .arg(team.creativity).arg(threshold).arg(static_cast<double>(team.compatibility_bp)/100,0,'f',1).arg(core::coordinated_staff_days(s.lab->catalog,*topic,team.compatibility_bp)).arg(rule.earliest_year).arg(rule.difficulty)},
+            {"traits",traits.join(" · ")}};
+    } catch(const std::exception&) {return {};}
 }
 
 QString ManagementController::researchBlocker(QString id, QString source, QString rate, QStringList workers) const {

@@ -42,10 +42,12 @@ struct FoundingSelection {
     std::map<std::string,std::string,std::less<>> choices;
     std::vector<std::string> backers;
     core::PortraitRecipe appearance;
+    std::int64_t personal_investment_cents=-1;
     auto operator<=>(const FoundingSelection&) const = default;
 };
 struct FoundingTerms {
     std::int64_t contributed_cents=0, paid_setup_cents=0, payroll_cents=0, office_cents=0;
+    std::int64_t personal_contribution_cents=0,personal_remaining_cents=0;
     std::uint32_t founder_bp=0, partner_bp=0, prestige=0, buzz=0;
     std::map<std::string,std::uint32_t,std::less<>> backer_shares;
     bool nonprofit=false, founder_researcher=false;

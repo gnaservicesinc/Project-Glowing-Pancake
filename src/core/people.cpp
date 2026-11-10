@@ -43,6 +43,7 @@ Applicant applicant(SimulationState& s,bool opening) {
     Applicant result{person,opening?Cents{0}:salary,opening?Cents{0}:r.signing_cost,
         BasisPoints{r.maximum_evaluation_credit.value()*person.evaluation/100},{}};
     if(!opening && r.recruitment) initialize_recruitment(result,*r.recruitment,rng);
+    for(const auto& group:r.trait_groups) result.profile.traits.push_back(group[draw(rng,static_cast<std::uint32_t>(group.size()))]);
     p.stream=rng.state();return result;
 }
 void recruit(SimulationState& s) {
@@ -54,6 +55,9 @@ void recruit(SimulationState& s) {
 }
 void profile_valid(const PersonProfile& p,OrdinalDay now) {
     validate_portrait(p.portrait);
+    if(p.traits.size()>16) invalid("Too many personal traits.");
+    std::set<std::string> unique;
+    for(const auto& trait:p.traits) if(trait.empty() || trait.size()>80 || trait.find('\0')!=trait.npos || !unique.insert(trait).second) invalid("Traits must have unique bounded names.");
     const auto year=from_ordinal(p.applied_on).year;
     if(!p.id.starts_with("employee/") || p.id.size()>64 || p.name.empty() || p.name.size()>128 ||
         p.gender.empty() || p.gender.size()>32 || p.pronouns.empty() || p.pronouns.size()>64 || p.education.size()>128 || p.role.size()>64 || p.bio.size()>512 ||
@@ -67,6 +71,12 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
 }
 void validate_people_rules(const PeopleRules& r) {
     if(r.recruitment) validate_recruitment_rules(*r.recruitment);
+    if(r.trait_groups.size()>12) invalid("Too many trait categories.");
+    std::set<std::string> trait_names;
+    for(const auto& group:r.trait_groups) {
+        if(group.empty() || group.size()>16) invalid("Trait groups need bounded choices.");
+        for(const auto& trait:group) if(trait.empty() || trait.size()>80 || trait.find('\0')!=trait.npos || !trait_names.insert(trait).second) invalid("Trait IDs must be distinct across categories.");
+    }
     if(r.first_names.empty() || r.first_names.size()>512 || r.last_names.empty() || r.last_names.size()>512 ||
         r.maximum_hq<1 || r.maximum_hq>256 || r.candidates<1 || r.candidates>12 ||
         r.recruitment_interval<Days{7} || r.recruitment_interval>Days{365} || r.onboarding>Days{90} ||

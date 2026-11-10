@@ -9,7 +9,7 @@ Updated 2026-11-09
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-world/interface batch advances content to **0.41.0-dev.1**, generation **42**.
+immersive founding/equipment batch advances content to **0.42.0-dev.1**, generation **43**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -17,6 +17,35 @@ next tasks are candidates for that review. The initial implementation queue
 is closed.
 
 ## Current human review: grounded founding and unfinished main game
+
+The expanded F-05 [immersive company plan](IMMERSIVE_COMPANY_PLAN.md) is now the
+selected ongoing work. The first batch separates the childhood intro from
+company formation: appearance leads to an unemployed eighteen-year-old's saved
+home desktop, with legal, investor and lab-application routes. Explicit personal
+investment leaves the remainder in the personal account. Birth and incorporation
+ceremonies, narrated choice consequences and an expanded portrait editor are
+implemented. The home company has a garage, basement and shed.
+
+Furnishing now supports illustrated object pickup, translucent red/green
+footprints, rotation and cancellation using the same core placement validation.
+The catalogue includes the requested computer tiers, issued laptops, rack-dependent
+clients and decorative amenities. Fictional supplier storefronts expose their
+actual prices and delivery. Team creativity counts each distinct trait once;
+compatibility supplies a bounded coordination benefit. Hiring and research
+previews show the real team values, and sufficient creativity can bypass research
+prerequisites without granting free equipment or compute.
+
+Focused identity/investment, headquarters, creative-team and workplace-research
+checks pass, including refusal and fresh reload. Content review validates 24
+prepared openings/save roundtrips without compiler lints. The rendered software
+intro and furnishing checks pass at normal/compact sizes. The native Metal
+furnishing walkthrough also passes through valid/blocked previews, visible
+rotation, cancellation, relocation and a compact 200% text layout. The software
+run covers the R shortcut; native terminal activation prevented shortcut testing
+there, so the visible rotation control was used. This does not close
+F-05: moods, audience modifiers, full personal-world simulation, home recovery,
+future EEY/frontier integration, loans/bylaws and private-life purchases/events
+remain active work, as itemized in the plan and backlog.
 
 The 2026-11-09 review rejects the main interface as complete. The detailed
 [selected refinements](FEEDBACK_REFINEMENTS.md) and F-04 milestone queue in the

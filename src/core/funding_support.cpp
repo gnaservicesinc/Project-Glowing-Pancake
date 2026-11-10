@@ -155,7 +155,8 @@ Cents start_funded_research(SimulationState& state,std::string_view research,con
     if (!state.accounts || !state.capacity) invalid("Research needs company accounts and compute capacity");
     require_workplace_research(state,research,allocation);
     const auto quote=research_quote(state,research);
-    start_research(*state.lab,*state.accounts,*state.capacity,state.date,research,allocation,protected_cash,quote.sponsored);
+    const auto team=state.lab->catalog.creative_research.contains(std::string{research})?research_team(state,allocation.researchers):TeamDynamics{};
+    start_research(*state.lab,*state.accounts,*state.capacity,state.date,research,allocation,protected_cash,quote.sponsored,team.creativity,team.compatibility_bp);
     if (quote.sponsored.value()>0)
         record_use(state.management->funding_support,quote.award,state.lab->research.back().project_id,state.date,quote.sponsored);
     state.cash=accounts_report(*state.accounts).cash;

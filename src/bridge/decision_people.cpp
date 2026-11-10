@@ -9,6 +9,7 @@ QString text(std::string_view value) {return QString::fromUtf8(value.data(),stat
 QString portrait(const core::PortraitRecipe& recipe) {
     QString result=QStringLiteral("image://portraits/%1").arg(recipe.kit);
     for(auto part:recipe.parts) result+='/'+QString::number(part);
+    for(auto part:recipe.style) result+='/'+QString::number(part);
     return result;
 }
 QVariantMap profile(const core::PersonProfile& p,core::OrdinalDay day,QString status) {

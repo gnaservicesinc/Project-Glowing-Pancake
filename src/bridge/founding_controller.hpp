@@ -18,9 +18,11 @@ class FoundingController final : public QObject {
     Q_PROPERTY(QVariantList headquarters READ headquarters CONSTANT)
     Q_PROPERTY(QString beat READ beat WRITE setBeat NOTIFY beatChanged)
     Q_PROPERTY(bool hasDraft READ hasDraft NOTIFY beatChanged)
+    Q_PROPERTY(QVariantMap personalFunds READ personalFunds NOTIFY changed)
     Q_PROPERTY(QString preview READ preview NOTIFY changed)
     Q_PROPERTY(QString error READ error NOTIFY changed)
     Q_PROPERTY(QString portrait READ portrait NOTIFY changed)
+    Q_PROPERTY(QStringList pronounOptions READ pronounOptions CONSTANT)
     Q_PROPERTY(QVariantList appearanceParts READ appearanceParts CONSTANT)
 public:
     FoundingController(const content::Collection&,std::filesystem::path,QObject* parent=nullptr);
@@ -36,7 +38,9 @@ public:
     bool hasDraft() const { return available() && beat_ != QStringLiteral("opening"); }
     void setBeat(QString);
     QString preview() const;
+    QVariantMap personalFunds() const;
     QString error() const {return error_;}
+    Q_INVOKABLE QString signingError() const;
     Q_INVOKABLE void setField(QString,QVariant);
     Q_INVOKABLE QString answerText(QString field, QString value);
     Q_INVOKABLE void choose(QString,QString);
@@ -44,6 +48,7 @@ public:
     Q_INVOKABLE void cycleAppearance(int part,int direction);
     QString portrait() const;
     QVariantList appearanceParts() const;
+    QStringList pronounOptions() const;
     void reset();
     [[nodiscard]] content::FoundingSelection selection() const;
 signals:

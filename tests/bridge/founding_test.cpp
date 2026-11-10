@@ -22,8 +22,12 @@ int main(int argc,char** argv) {
         setup.setField("gender","arbitrary");setup.setField("pronouns","arbitrary");
         check(setup.form().value("gender")=="woman" && setup.form().value("pronouns")=="she/her","Identity must use structured options.");
         check(!setup.answerText("gender","free text").isEmpty(),"Text entry must not bypass identity choices.");
+        setup.setField("pronouns","xe/xem");
+        check(setup.form().value("pronouns")=="xe/xem","Additional pronouns must persist as a structured selection.");
+        setup.setField("pronouns","name only");
+        check(setup.form().value("pronouns")=="xe/xem","A name is not a pronoun option.");
         const auto initial=setup.portrait();
-        for(int i=0;i<15;++i) setup.cycleAppearance(i,1);
+        for(int i=0;i<23;++i) setup.cycleAppearance(i,1);
         check(setup.portrait()!=initial,"Every appearance layer must be editable.");
         setup.setBeat("appearance");
         bridge::FoundingController reopened{program.collection,path};
@@ -34,10 +38,19 @@ int main(int argc,char** argv) {
             const auto chapter=row.toMap();
             setup.choose(chapter.value("id").toString(),chapter.value("choices").toList().front().toMap().value("id").toString());
         }
+        setup.setField("investment","100000");
+        check(setup.signingError().isEmpty(),"A reviewed investment within personal savings must be signable.");
+        setup.setBeat("home");setup.setField("home_app","formation");
+        bridge::FoundingController home_draft{program.collection,path};
+        check(home_draft.beat()=="home" && home_draft.form().value("investment")=="100000" && home_draft.form().value("home_app")=="formation","Pre-company home and reviewed investment must survive a restart without founding.");
         runtime::ScenarioOptions options;
         options.founding=setup.selection();
         options.identity=runtime::CampaignIdentity{"Test lab","Alex Vale","she/her"};
         const auto checkpoint=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);
+        const auto& catalog=*std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data).founding;
+        const auto terms=content::founding_terms(catalog,*options.founding);
+        check(terms.personal_contribution_cents==10000000 && checkpoint.world.simulation.succession->personal_cash==core::Cents{terms.personal_remaining_cents},"Only the chosen investment enters company funds; remaining savings stay personal.");
+        check(persistence::decode_save(program,persistence::encode_save(program,checkpoint)).checkpoint==checkpoint,"Personal savings and appearance styling must reload exactly.");
         bridge::WorldController world{std::filesystem::path{scratch.path().toStdString()}/"world"};
         world.update(std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,checkpoint,{},true,false}),program,true);
         check(world.founder().value("portrait")==setup.portrait(),"The world profile must show the customized portrait.");

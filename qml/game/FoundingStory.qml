@@ -45,6 +45,18 @@ QtObject {
         field("last_name", hospital, birth, qsTr("A name to carry"),
             qsTr("She writes it down, leaving room on the card for the name you will carry out of the ward."),
             qsTr("What is your surname?"), 63)
+                question("gender", hospital, birth, qsTr("Your identity"),
+                    qsTr("Your family opens a keepsake record. This is your story, including the identity you will grow into."),
+                    qsTr("How do you describe your gender?"), [option("woman",qsTr("Woman")),option("man",qsTr("Man")),option("nonbinary",qsTr("Nonbinary")),option("unspecified",qsTr("Prefer not to say"))])
+                question("pronouns", hospital, birth, qsTr("The introduction"),
+                    qsTr("Add the pronouns you will use when others tell your story."),
+                    qsTr("Which pronouns should they use?"), [option("she/her",qsTr("She / her")),option("he/him",qsTr("He / him")),option("they/them",qsTr("They / them")),option("other",qsTr("Other pronouns"),qsTr("Choose from additional pronoun sets."))])
+                if(story.beat==="other_pronouns" || !["she/her","he/him","they/them"].includes(form.pronouns))
+                    question("other_pronouns",workshop,date,qsTr("In your own words"),
+                        qsTr("Choose the pronouns used in your profile. A pronoun set does not determine your gender or abilities."),
+                        qsTr("Which set fits?"),story.pronounOptions.filter(value=>!["she/her","he/him","they/them"].includes(value)).map(value=>option(value,value)))
+        add("certificate",hospital,birth,qsTr("A place in the world"),
+            qsTr("A name, a date, the beginning of a life. Your family signs the keepsake and takes it home."),"","certificate")
         question("family", street, qsTr("HOME  /  1997"), qsTr("The house you come home to"),
             qsTr("By morning, the rain has passed. Your parents take you home, to the street where your earliest memories will begin."),
             qsTr("How much did your family have?"), story.families.map(row => ({
@@ -111,18 +123,6 @@ QtObject {
             }
         }
         for (const scene of scenes) {
-            if (scene.id === "record") {
-                const date = qsTr("YOUR FIRST PUBLIC TEST  /  2014")
-                question("gender", workshop, date, qsTr("Your identity"),
-                    qsTr("Ahead of your first public test, an organizer sends over a short biography for you to check."),
-                    qsTr("How do you describe your gender?"), [option("woman",qsTr("Woman")),option("man",qsTr("Man")),option("nonbinary",qsTr("Nonbinary")),option("unspecified",qsTr("Prefer not to say"))])
-                question("pronouns", workshop, date, qsTr("The introduction"),
-                    qsTr("You hand the page back. The organizer will read it aloud before you take your seat."),
-                    qsTr("Which pronouns should they use?"), [option("she/her",qsTr("She / her")),option("he/him",qsTr("He / him")),option("they/them",qsTr("They / them")),option("name only",qsTr("Use my name"))])
-                add("appearance", workshop, date, qsTr("A face to the name"),
-                    qsTr("Choose how you appear in portraits throughout the game. Your appearance is independent of your abilities and identity."),
-                    qsTr("Select a feature, then change its appearance."), "appearance")
-            }
             const copy = sceneCopy[scene.id] || {}
             add("chapter-" + scene.id, copy.art || workshop, copy.date || qsTr("CALIFORNIA  /  %1").arg(scene.date.slice(0, 4)),
                 copy.title || scene.title, copy.narration || scene.text,
@@ -149,59 +149,47 @@ QtObject {
             }
         }
 
-        add("threshold", workshop, founding, qsTr("The door is open"),
-            qsTr("You turn eighteen. On the table are a key, a stack of papers, and a notebook full of experiments you want to run."),
-            "", "narration", { afterword: qsTr("For the first time, the decision is yours to sign.") })
-        question("legal_form", workshop, founding, qsTr("The charter"),
-            qsTr("The first page names the institution you are about to create. It sets the rules for who can fund it and who holds the rights."),
-            qsTr("What kind of institution do you found?"), [
-                option("corporation", qsTr("For-profit corporation"), qsTr("Issue equity to raise capital and share profits with owners.")),
-                option("nonprofit", qsTr("Nonprofit research institution"), qsTr("Fund the mission with gifts and answer to trustees. The institution owns its assets."))
-            ])
-        question("route", foundingArt, founding, qsTr("A way in"),
-            qsTr("The offers on the table reflect what you have done and who is willing to take a chance on you."),
-            qsTr("How do you get the lab off the ground?"), story.routes.filter(row => row.available || row.id === "bootstrap"))
-        if (form.route !== "hired_ceo") field("company", foundingArt, founding, qsTr("A name on the door"),
-            qsTr("Your signature is ready. The line for the institution is still blank."),
-            qsTr("What will you call it?"), 128)
-        question("mission", foundingArt, founding, qsTr("The reason for starting"),
-            qsTr("People will join, leave, and disagree about what this place is for. The first statement of purpose is yours to write."),
-            qsTr("What are you building toward?"), [
-                option("survival", qsTr("Build a lab that lasts"), qsTr("Stay solvent and active through 2115.")),
-                option("utopia", qsTr("Make lives better"), qsTr("Sustain welfare in the last decade.")),
-                option("monopoly", qsTr("Build the leading AI platform"), qsTr("Lead useful work over the last five years.")),
-                option("domination", qsTr("Steer the AI age"), qsTr("Earn durable industry authority.")),
-                option("asi", qsTr("Demonstrate ASI first"), qsTr("Beat rivals to independent validation.")),
-                { id: "profit", name: qsTr("Leave a financial legacy"), detail: qsTr("Build the most founder wealth by 2115."),
-                    available: form.legal_form !== "nonprofit", reason: qsTr("Requires a company with founder equity.") }
-            ])
-        const offers = {
-            frontier: qsTr("Kestrel's partner opens your notebook to the most ambitious experiment. That's the work they want to fund."),
-            acceleration: qsTr("Morrow wants your research in people's hands quickly. Its partner asks how soon you can open it up."),
-            commercial: qsTr("Harbor's partner asks to meet the first customer. They want evidence of demand and a plan to cover the costs."),
-            compute: qsTr("Copperline offers capital and a connection to a compute supplier. You would be tying the two relationships together."),
-            safety: qsTr("The foundation offers to fund the research. Its trustee wants independent evaluations and a public record of the results."),
-            open_science: qsTr("The trust wants others to be able to reproduce the work and use what they learn. It offers to help pay for that.")
+        add("return-home",homeArt,qsTr("SILICON VALLEY  /  JANUARY 2015"),qsTr("Back where it begins"),
+            form.choices.arrival==="move"?qsTr("Your family followed opportunity away from the Valley. Now a new job brings them back, and your boxes return to a familiar California street."):qsTr("Silicon Valley has changed around your parents' home. You still know the sound of its front door."),
+            "","narration",{afterword:qsTr("Yesterday was your eighteenth birthday. Tomorrow can wait. This morning is yours.")})
+        add("appearance",homeArt,qsTr("THE DAY AFTER YOUR EIGHTEENTH BIRTHDAY"),qsTr("Your reflection"),
+            qsTr("Make this person your own. Gender sets an initial look; every style remains available."),
+            qsTr("Choose any feature to customize it."),"appearance")
+        add("home",homeArt,qsTr("SILICON VALLEY  /  JANUARY 2015"),"","","","home")
+        const reflections={
+            roots:qsTr("Years later, neighbors still remember your family. Familiar streets become a network of people who know your name."),
+            move:qsTr("Boxes replace the furniture. A new town means learning unfamiliar rules, and discovering that a fresh start can be both frightening and useful."),
+            computer:qsTr("You stay until the librarian turns out the lights. The machine never gets bored of your questions; neither, for a while, do you."),
+            library:qsTr("Next week, someone brings a friend. A table of strangers becomes a regular meeting, and you learn that enthusiasm can be contagious."),
+            team:qsTr("You learn who needs encouragement, who wants space, and how much a team can depend on one quiet act of trust."),
+            share:qsTr("A repaired tool passes from one household to another. You cannot fix the recession, but you can make the week easier for someone nearby."),
+            scholarship:qsTr("Evenings disappear into applications and practice. A letter eventually arrives, opening a door your family could not have paid to unlock."),
+            venture:qsTr("Customers remember a promise kept. You begin to notice the difference between an exciting idea and something people will actually buy."),
+            science:qsTr("The project works after the third redesign. The best part is explaining why the first two failed, together, without anyone needing to hide it."),
+            community:qsTr("People disagree about nearly every detail. You find enough common ground to get started, and a few become friends you can call years later."),
+            business:qsTr("The till balances at the end of the day. Behind every small decision is a person trying to make rent or keep a customer."),
+            reproduce:qsTr("The second run contradicts your favorite result. You fix the mistake before anyone sees it. The final claim is smaller, but it holds."),
+            demonstrate:qsTr("You show the result and its limits. The room asks harder questions than you expected, and several people ask to see what comes next."),
+            hype:qsTr("The headline travels farther than the caveats. Your name starts appearing in conversations you have never been part of."),
+            publish:qsTr("A stranger reproduces the method and sends a useful correction. Something that was yours alone begins to belong to a wider conversation."),
+            license:qsTr("The agreement takes three revisions. You leave with resources to continue and a clearer understanding of what you have promised."),
+            private:qsTr("You close the workshop door and keep going. The work stays yours, though fewer people hear about it."),
+            disclose:qsTr("You put the weak result on the screen. One reviewer nods and asks how they could help design the next test."),
+            narrow:qsTr("You cross out the broad claim. The replacement says less, but you can defend every word."),
+            sell:qsTr("The strongest chart fills the screen. The audience remembers it; the unanswered question remains in your notebook."),
+            research:qsTr("You imagine a place where asking a difficult question is part of the job, and changing your mind is allowed."),
+            people:qsTr("You think about the person on the other side of the screen. Their needs are less tidy than a benchmark, and more interesting."),
+            independence:qsTr("You leave a blank page at the front of the notebook. Some decisions should stay open until you know more.")
         }
-        for (const backer of story.backers.filter(row => row.available)) {
-            const narration = offers[backer.id] ? offers[backer.id] + " " + backer.terms : backer.detail
-            add("offer-" + backer.id, foundingArt, founding, backer.name, narration,
-                qsTr("Do you accept the offer?"), "offer", {
-                    offer: backer.id,
-                    choices: [
-                        option("accept", qsTr("Accept the offer")),
-                        option("decline", qsTr("Decline the offer"))
-                    ]
-                })
+        const expanded=[]
+        for(const beat of beats) {
+            expanded.push(beat)
+            if(["choice","chapter"].includes(beat.kind) && beat.id!=="other_pronouns") {
+                const selected=beat.kind==="chapter"?form.choices[beat.chapter]:form[beat.id]
+                const choice=(beat.choices || []).find(row=>row.id===selected)
+                if(choice) expanded.push({id:beat.id+"-after",art:beat.art,tone:beat.tone,date:beat.date,title:choice.name,narration:choice.detail || qsTr("The choice becomes part of how you tell your story."),prompt:"",kind:"narration",afterword:reflections[selected] || (beat.id==="gender" || beat.id==="pronouns"?qsTr("This is how you introduce yourself. Your appearance and your future remain yours to shape."):qsTr("The years ahead will give you more chances to discover what this choice means to you."))})
+            }
         }
-        question("headquarters", foundingArt, founding, qsTr("An address"),
-            qsTr("The registration papers ask for the state where the lab will do its work."),
-            qsTr("Where will you put down roots?"), story.headquarters)
-        add("review", foundingArt, founding, qsTr("The first morning"),
-            form.route === "hired_ceo" ? qsTr("You join an existing office and inherit its payroll. Hiring, research and product decisions are yours to make during play.") : form.route === "partnership" ? qsTr("Your cofounder contributes capital and joins you in a shared office. Research and product decisions begin during play.") : qsTr("You start alone at your parents’ house, with no rent. Find premises, buy equipment and hire people during play. No experiment has been started."),
-            "", "review")
-        field("seed", foundingArt, founding, qsTr("World seed"), "",
-            qsTr("Which seed should this campaign use?"), 20)
-        return beats
+        return expanded
     }
 }

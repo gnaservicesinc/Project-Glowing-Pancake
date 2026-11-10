@@ -29,7 +29,7 @@ template<class T,class F> void fields(T& r,F field) {
         field("id",r.id);field("plan",r.plan);field("person",r.person);field("name",r.name);field("birth_year",r.birth_year);
         field("starts_on",r.starts_on);field("due_on",r.due_on);field("ended_on",r.ended_on);field("caretaker",r.caretaker);field("portrait",r.portrait,true);
     } else if constexpr(std::is_same_v<V,core::PortraitRecipe>) {
-        field("kit",r.kit);field("parts",r.parts);
+        field("kit",r.kit);field("parts",r.parts);field("style",r.style,true);
     } else if constexpr(std::is_same_v<V,core::LeadershipControl>) {
         field("day",r.day);field("term",r.term);field("role",r.role);
     } else if constexpr(std::is_same_v<V,core::SuccessionPlan>) {

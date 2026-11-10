@@ -7,6 +7,11 @@ View3D {
     property var headquarters: ({})
     property bool editing: false
     property int selectedItem: 0
+    property bool placing:false
+    property var preview:({})
+    signal hovered(int x,int y,int target)
+    signal cancelRequested()
+    signal rotateRequested()
     property real zoom: 1
     property int dragItem: 0
     property int tileX: -1
@@ -45,7 +50,7 @@ View3D {
         property int equipmentId: 0
         source: "#Cube"
         scale: Qt.vector3d(size.x/100,size.y/100,size.z/100)
-        pickable: true
+        pickable: equipmentId>=0
         materials: PrincipledMaterial { baseColor: parent.tint; roughness: 0.78 }
     }
     Block { size: Qt.vector3d(scene.columns*100+16,18,scene.rows*100+16); y:-12; tint:scene.headquarters.kind==="home"?"#898b83":"#c0af94" }
@@ -79,13 +84,14 @@ View3D {
         }
     }
     Repeater3D {
-        model: scene.headquarters.items || []
+        model: (scene.headquarters.items || []).concat(scene.placing && scene.preview.width ? [Object.assign({},(scene.headquarters.items || []).find(row=>row.id===scene.selectedItem) || {},{id:-1,placed:true,delivered:true,x:scene.preview.x,y:scene.preview.y,width:scene.preview.width,depth:scene.preview.depth,mount:scene.preview.mount,rotated:scene.preview.rotated})] : [])
         Node {
             id: furnishing
             required property var modelData
             readonly property var parentDesk: modelData.mount ? (scene.headquarters.items || []).find(row=>row.id===modelData.mount) : null
             readonly property real spanX: parentDesk ? parentDesk.width : modelData.width
             readonly property real spanY: parentDesk ? parentDesk.depth : modelData.depth
+            opacity:modelData.id===-1?0.48:1
             visible: modelData.placed && modelData.delivered
             position: Qt.vector3d(((parentDesk ? parentDesk.x : modelData.x)+spanX/2)*100-scene.columns*50,0,((parentDesk ? parentDesk.y : modelData.y)+spanY/2)*100-scene.rows*50)
             eulerRotation.y: (parentDesk ? parentDesk.rotated : modelData.rotated) ? 90 : 0
@@ -100,12 +106,42 @@ View3D {
                 Block {position:Qt.vector3d(0,21,50);size:Qt.vector3d(7,42,7);tint:"#34494c";equipmentId:furnishing.modelData.id}
             }
             Node {
-                visible: furnishing.modelData.kind==="desktop"
+                visible: ["desktop","workstation","thin_client","laptop","research_laptop"].includes(furnishing.modelData.kind)
                 Block {position:Qt.vector3d(0,103,-49);size:Qt.vector3d(57,34,5);tint:"#263d41";equipmentId:furnishing.modelData.id}
                 Block {position:Qt.vector3d(0,103,-45);size:Qt.vector3d(50,28,1);tint:furnishing.modelData.powered?"#83b5ae":"#243b3f";equipmentId:furnishing.modelData.id}
                 Block {position:Qt.vector3d(0,83,-49);size:Qt.vector3d(5,14,6);tint:"#496064";equipmentId:furnishing.modelData.id}
                 Block {position:Qt.vector3d(0,79,-14);size:Qt.vector3d(45,2,14);tint:"#d0d0b8";equipmentId:furnishing.modelData.id}
-                Block {position:Qt.vector3d(58,96,-34);size:Qt.vector3d(17,37,38);tint:"#31484b";equipmentId:furnishing.modelData.id}
+                Block {visible:furnishing.modelData.kind==="desktop";position:Qt.vector3d(58,96,-34);size:Qt.vector3d(17,37,38);tint:"#31484b";equipmentId:furnishing.modelData.id}
+            }
+            Node {
+                visible:furnishing.modelData.kind==="workstation"
+                Block {position:Qt.vector3d(-56,103,-42);size:Qt.vector3d(49,34,5);tint:"#7ab4ad";equipmentId:furnishing.modelData.id}
+                Block {position:Qt.vector3d(56,103,-42);size:Qt.vector3d(49,34,5);tint:"#7ab4ad";equipmentId:furnishing.modelData.id}
+            }
+            Node {
+                visible:["laptop","research_laptop"].includes(furnishing.modelData.kind)
+                Block {position:Qt.vector3d(0,80,-28);size:Qt.vector3d(59,3,38);tint:"#c3cec5";equipmentId:furnishing.modelData.id}
+            }
+            Node {
+                visible:furnishing.modelData.kind==="plant"
+                Block {y:23;size:Qt.vector3d(42,46,42);tint:"#b37d61";equipmentId:furnishing.modelData.id}
+                Block {y:70;size:Qt.vector3d(7,70,7);tint:"#728c60";equipmentId:furnishing.modelData.id}
+                Block {position:Qt.vector3d(-15,85,0);size:Qt.vector3d(42,32,48);tint:"#79a877";equipmentId:furnishing.modelData.id}
+                Block {position:Qt.vector3d(14,110,0);size:Qt.vector3d(43,39,45);tint:"#95be88";equipmentId:furnishing.modelData.id}
+            }
+            Node {
+                visible:furnishing.modelData.kind==="aquarium" || furnishing.modelData.kind==="table"
+                Block {y:70;size:Qt.vector3d(furnishing.modelData.kind==="table"?230:150,8,70);tint:"#b89a74";equipmentId:furnishing.modelData.id}
+                Block {position:Qt.vector3d(-60,32,0);size:Qt.vector3d(7,64,60);tint:"#4d6866";equipmentId:furnishing.modelData.id}
+                Block {position:Qt.vector3d(60,32,0);size:Qt.vector3d(7,64,60);tint:"#4d6866";equipmentId:furnishing.modelData.id}
+                Block {visible:furnishing.modelData.kind==="aquarium";y:105;size:Qt.vector3d(140,60,60);tint:"#69b8bc";equipmentId:furnishing.modelData.id}
+                Block {visible:furnishing.modelData.kind==="aquarium";position:Qt.vector3d(24,105,31);size:Qt.vector3d(20,10,3);tint:"#ebbd7a";equipmentId:furnishing.modelData.id}
+            }
+            Node {
+                visible:["water","microwave","cabinet","vending"].includes(furnishing.modelData.kind)
+                Block {y:60;size:Qt.vector3d(65,120,65);tint:furnishing.modelData.kind==="cabinet"?"#bfad8b":"#a9c7be";equipmentId:furnishing.modelData.id}
+                Block {visible:furnishing.modelData.kind!=="cabinet";position:Qt.vector3d(0,80,34);size:Qt.vector3d(48,48,3);tint:"#386b78";equipmentId:furnishing.modelData.id}
+                Block {visible:furnishing.modelData.kind==="water";y:137;size:Qt.vector3d(37,34,37);tint:"#91c9d6";equipmentId:furnishing.modelData.id}
             }
             Node {
                 visible: furnishing.modelData.kind==="rack"
@@ -124,10 +160,24 @@ View3D {
             }
         }
     }
+    Repeater3D {
+        model:scene.placing && scene.preview.width?scene.preview.width*scene.preview.depth:0
+        Block {
+            required property int index
+            equipmentId:-1
+            position:Qt.vector3d((scene.preview.x+index%scene.preview.width+0.5)*100-scene.columns*50,3,(scene.preview.y+Math.floor(index/scene.preview.width)+0.5)*100-scene.rows*50)
+            size:Qt.vector3d(96,3,96);opacity:0.65;tint:scene.preview.valid?"#76d3a1":"#e77d71"
+        }
+    }
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
+        acceptedButtons:Qt.LeftButton | Qt.RightButton
+        cursorShape:scene.placing?Qt.ClosedHandCursor:Qt.OpenHandCursor
+        onPositionChanged:mouse=>{const hit=scene.pick(mouse.x,mouse.y);if(hit.objectHit){const tile=scene.coordinates(hit);scene.hovered(tile.x,tile.y,tile.item)}else scene.hovered(-100,-100,0)}
+        onExited:scene.hovered(-100,-100,0)
         onPressed: mouse=>{
+            if(mouse.button===Qt.RightButton){scene.cancelRequested();return}
             const hit=scene.pick(mouse.x,mouse.y)
             if(!hit.objectHit) return
             const tile=scene.coordinates(hit)
@@ -135,10 +185,11 @@ View3D {
             scene.dragItem=scene.editing?tile.item:0
         }
         onReleased: mouse=>{
+            if(mouse.button!==Qt.LeftButton)return
             const hit=scene.pick(mouse.x,mouse.y)
             if(hit.objectHit) {
                 const tile=scene.coordinates(hit)
-                if(scene.dragItem && (tile.x!==scene.tileX || tile.y!==scene.tileY)) {
+                if(!scene.placing && scene.dragItem && (tile.x!==scene.tileX || tile.y!==scene.tileY)) {
                     const moved=(scene.headquarters.items || []).find(item=>item.id===scene.dragItem)
                     scene.itemDragged(scene.dragItem,moved.x+tile.x-scene.tileX,moved.y+tile.y-scene.tileY,tile.item)
                 }

@@ -24,7 +24,17 @@ void affordable(const SimulationState& s,Cents cost,Cents protected_cash) {if(ch
 const HQMarket& market(const SimulationState& s,const HQPremises& p) {return find(rules(s).markets,p.market);}
 std::uint32_t area(int w,int d) {return static_cast<std::uint32_t>(w*d);}
 bool working(const SimulationState& s,const HQEquipment& i) {
-    if(i.delivered_on>s.date || !i.powered || i.premises!=current_headquarters(s).id) return false;
+    if(i.delivered_on>s.date || !i.powered) return false;
+    const auto& model=offer(s,i);
+    const bool issued=hq_portable(model.kind) && !i.person.empty();
+    if(issued && i.person!="founder" && (!s.management || !s.management->people || std::ranges::none_of(s.management->people->employees,[&](const auto& e){return e.terms.profile.id==i.person && !e.departed_on;}))) return false;
+    if(!issued && i.premises!=current_headquarters(s).id) return false;
+    if(model.kind=="thin_client" || model.kind=="research_laptop") {
+        const bool rack=std::ranges::any_of(hq(s).items,[&](const auto& server) {
+            return offer(s,server).kind=="rack" && server.powered && server.delivered_on<=s.date && server.premises==current_headquarters(s).id;
+        });
+        if(!rack) return false;
+    }
     if(i.mount) {const auto& desk=find(hq(s).items,i.mount);return desk.premises==i.premises && desk.delivered_on<=s.date && offer(s,desk).kind=="desk";}
     return true;
 }
@@ -38,7 +48,7 @@ void move(SimulationState& s,HQPremises next,Cents protected_cash) {
     for(auto& term:s.accounts->recurring) if(!term.ends_before && (term.id=="office_and_admin" || term.id==key("hq.rent/",old.id))) term.ends_before=s.date;
     hq(s).premises.back().left_on=s.date;
     if(next.rent.value()>0) add_recurring(*s.accounts,{key("hq.rent/",next.id),next.rent,s.date,std::nullopt,"Office rent: "+next.lessor+", "+next.address});
-    for(auto& owned:hq(s).items) {owned.premises=0;owned.mount=0;owned.person.clear();}
+    for(auto& owned:hq(s).items) {owned.premises=0;owned.mount=0;if(!hq_portable(offer(s,owned).kind)) owned.person.clear();}
     const auto state=market(s,next).state;
     hq(s).premises.push_back(std::move(next));s.infrastructure->executive_base=state;
 }
@@ -60,6 +70,37 @@ void sync_capacity(SimulationState& s) {
     }
 }
 }
+bool hq_portable(std::string_view kind) {return kind=="laptop" || kind=="research_laptop";}
+bool hq_desk_device(std::string_view kind) {return kind=="desktop" || kind=="workstation" || kind=="thin_client" || hq_portable(kind);}
+bool hq_laptop_ready(const SimulationState& s,std::string_view person) {
+    return enabled(s) && s.infrastructure->workplace->headquarters && !person.empty() && std::ranges::any_of(hq(s).items,[&](const auto& i) {
+        return i.person==person && hq_portable(offer(s,i).kind) && working(s,i);
+    });
+}
+std::string hq_placement_blocker(const SimulationState& s,const PlaceHQEquipment& a) {
+    const auto& items=hq(s).items;
+    const auto found=std::ranges::find(items,a.item,&HQEquipment::id);
+    if(found==items.end()) return "Choose an owned item.";
+    const auto& i=*found;const auto& e=offer(s,i);const auto& p=current_headquarters(s);
+    if(i.delivered_on>s.date) return "Wait for delivery before placing this item.";
+    if(a.mount) {
+        const auto desk=std::ranges::find(items,a.mount,&HQEquipment::id);
+        if(!hq_desk_device(e.kind) || desk==items.end() || offer(s,*desk).kind!="desk" || desk->premises!=p.id || desk->delivered_on>s.date) return "Choose a delivered desk in this office.";
+        if(std::ranges::any_of(items,[&](const auto& other){return other.id!=i.id && other.mount==a.mount;})) return "That desk already has a computer.";
+        return {};
+    }
+    if(hq_desk_device(e.kind)) return "Choose a free desk for this computer.";
+    const int w=a.rotated?e.depth:e.width,d=a.rotated?e.width:e.depth;
+    // Bound coordinates before addition to keep arbitrary command inputs safe.
+    if(a.x<0 || a.y<0 || a.x>p.width-w || a.y>p.depth-d) return "The whole object must fit inside the floor.";
+    if(std::ranges::none_of(p.rooms,[&](const auto& r){return a.x>=r.x && a.y>=r.y && a.x+w<=r.x+r.width && a.y+d<=r.y+r.depth;})) return "The object crosses a room wall.";
+    for(const auto& other:items) {
+        if(other.id==i.id || other.mount || other.premises!=p.id) continue;
+        const auto& model=offer(s,other);const int ow=other.rotated?model.depth:model.width,od=other.rotated?model.width:model.depth;
+        if(a.x<other.x+ow && a.x+w>other.x && a.y<other.y+od && a.y+d>other.y) return "This space is occupied. Move the other object first.";
+    }
+    return {};
+}
 void validate_hq_plan(int width,int depth,const std::vector<HQRoom>& rooms,int maximum_edge) {
     if(width<3 || depth<3 || width>maximum_edge || depth>maximum_edge || rooms.empty() || rooms.size()>16) invalid("Choose a floor plan within the plot, with one to sixteen rooms.");
     std::vector<bool> covered(static_cast<std::size_t>(width*depth));
@@ -72,7 +113,7 @@ void validate_hq_plan(int width,int depth,const std::vector<HQRoom>& rooms,int m
     if(std::ranges::find(covered,false)!=covered.end()) invalid("The rooms must cover the complete building floor.");
 }
 void validate_headquarters_rules(const HeadquartersRules& r) {
-    if(r.maximum_edge<3 || r.maximum_edge>40 || r.maximum_items<4 || r.maximum_items>128 || r.maximum_properties<1 || r.maximum_properties>16 || r.building_tax_annual_bp>1000 || r.markets.empty() || r.markets.size()>16 || r.plans.empty() || r.plans.size()>8 || r.equipment.empty() || r.equipment.size()>16 || r.contractors.size()!=3) invalid("Headquarters catalogs exceed their supported bounds.");
+    if(r.maximum_edge<3 || r.maximum_edge>40 || r.maximum_items<4 || r.maximum_items>128 || r.maximum_properties<1 || r.maximum_properties>16 || r.building_tax_annual_bp>1000 || r.markets.empty() || r.markets.size()>16 || r.plans.empty() || r.plans.size()>8 || r.equipment.empty() || r.equipment.size()>48 || r.contractors.size()!=3) invalid("Headquarters catalogs exceed their supported bounds.");
     validate_hq_plan(r.home_width,r.home_depth,{{0,0,r.home_width,r.home_depth}},r.maximum_edge);
     const auto text=[](const std::string& v){return !v.empty() && v.size()<=128 && v.find('\0')==v.npos;};
     const auto ids=[&](const auto& rows){std::set<std::string> seen;for(const auto& row:rows) if(!text(row.id) || !seen.insert(row.id).second) invalid("Headquarters catalog identities must be unique.");};
@@ -80,7 +121,7 @@ void validate_headquarters_rules(const HeadquartersRules& r) {
     for(const auto& m:r.markets) if((m.state!="US-CA" && m.state!="US-TX" && m.state!="US-WA") || !text(m.city) || !text(m.agent) || !text(m.landlord) || !text(m.street) || m.rent_per_cell<Cents{100} || m.land_per_cell<Cents{10000} || m.monthly_land_tax_per_cell<Cents{1} || m.deposit_months>6 || m.minimum_lease_days>1095 || m.early_exit_months>6) invalid("Property listings need actual counterparties and bounded prices and lease terms.");
     for(const auto& p:r.plans) {if(!text(p.name)) invalid("Name the floor plan.");validate_hq_plan(p.width,p.depth,p.rooms,r.maximum_edge);}
     std::set<std::string> kinds;
-    for(const auto& e:r.equipment) {kinds.insert(e.kind);if(!text(e.name) || !text(e.supplier) || e.price<Cents{100} || e.price>Cents{100000000} || e.delivery<Days{0} || e.delivery>Days{90} || e.width<1 || e.depth<1 || e.width>4 || e.depth>4 || e.compute>MilliCUPerDay{1000000} || e.watts>10000 || e.memory_mib>16777216 || (e.kind!="desk" && e.kind!="desktop" && e.kind!="rack" && e.kind!="bench" && e.kind!="evaluation")) invalid("Equipment needs physical dimensions, a supplier, a price and bounded delivery/output.");}
+    for(const auto& e:r.equipment) {kinds.insert(e.kind);if(!text(e.name) || !text(e.supplier) || e.price<Cents{100} || e.price>Cents{100000000} || e.delivery<Days{0} || e.delivery>Days{90} || e.width<1 || e.depth<1 || e.width>4 || e.depth>4 || e.compute<MilliCUPerDay{0} || e.compute>MilliCUPerDay{1000000} || ((e.kind=="thin_client" || e.kind=="research_laptop") && e.compute.value()!=0) || e.watts>10000 || e.memory_mib>16777216 || (!hq_desk_device(e.kind) && e.kind!="desk" && e.kind!="rack" && e.kind!="bench" && e.kind!="evaluation" && e.kind!="plant" && e.kind!="aquarium" && e.kind!="water" && e.kind!="microwave" && e.kind!="table" && e.kind!="cabinet" && e.kind!="vending")) invalid("Equipment needs physical dimensions, a supplier, a price and bounded delivery/output.");}
     if(!kinds.contains("desk") || !kinds.contains("desktop")) invalid("The equipment shop must supply desks and computers.");
     for(const auto& c:r.contractors) if(!text(c.name) || c.cost_per_cell<Cents{10000} || c.cost_per_cell>Cents{10000000} || c.base_days<1 || c.base_days>365 || c.cells_per_day<1 || c.cells_per_day>100 || c.delay_bp>10000 || c.overrun_bp>10000 || c.maximum_delay_days>90 || c.maximum_overrun_bp>5000) invalid("Contractor bids need bounded costs, duration and disclosed risks.");
 }
@@ -113,7 +154,12 @@ void initialize_headquarters(SimulationState& s,std::uint64_t seed) {
     SplitMix64 stream{seed ^ UINT64_C(0x4845414451554152)};h.stream=stream.next();
     const auto& r=rules(s);const auto it=std::ranges::find(r.markets,s.infrastructure->executive_base,&HQMarket::state);
     if(it==r.markets.end()) invalid("The opening headquarters has no local property market.");
-    if(w.opening_office=="home") h.premises.push_back({1,"home",it->id,"home","Your parents","Parents' house / garage",r.home_width,r.home_depth,{{0,0,r.home_width,r.home_depth}},Cents{0},Cents{0},s.date,{},0});
+    if(w.opening_office=="home") {
+        std::vector<HQRoom> rooms;
+        if(r.home_width>=9 && r.home_width%3==0) for(int x=0;x<r.home_width;x+=r.home_width/3) rooms.push_back({x,0,r.home_width/3,r.home_depth});
+        else rooms.push_back({0,0,r.home_width,r.home_depth});
+        h.premises.push_back({1,"home",it->id,"home","Your parents","Parents' house / free workspaces",r.home_width,r.home_depth,rooms,Cents{0},Cents{0},s.date,{},0});
+    }
     else {
         const auto& p=find(r.plans,std::string{"studio"});Cents rent{0};
         for(const auto& term:s.accounts->recurring) if(term.id=="office_and_admin") rent=term.monthly_amount;
@@ -130,20 +176,20 @@ void initialize_headquarters(SimulationState& s,std::uint64_t seed) {
     }
     sync_capacity(s);
 }
-bool hq_computer_available(const SimulationState& s) {return enabled(s) && s.infrastructure->workplace->headquarters && std::ranges::any_of(hq(s).items,[&](const auto& i){return offer(s,i).kind=="desktop" && working(s,i);});}
+bool hq_computer_available(const SimulationState& s) {return enabled(s) && s.infrastructure->workplace->headquarters && std::ranges::any_of(hq(s).items,[&](const auto& i){return hq_desk_device(offer(s,i).kind) && working(s,i);});}
 std::uint32_t furnished_hq_desks(const SimulationState& s) {return static_cast<std::uint32_t>(std::ranges::count_if(hq(s).items,[&](const auto& i){return offer(s,i).kind=="desk" && working(s,i);}));}
-std::uint32_t assigned_hq_desks(const SimulationState& s) {return static_cast<std::uint32_t>(std::ranges::count_if(hq(s).items,[&](const auto& i){return !i.person.empty() && working(s,i);}));}
+std::uint32_t assigned_hq_desks(const SimulationState& s) {return static_cast<std::uint32_t>(std::ranges::count_if(hq(s).items,[&](const auto& i){return offer(s,i).kind=="desk" && !i.person.empty() && working(s,i);}));}
 std::uint32_t assigned_hq_desk(const SimulationState& s,std::string_view person) {
     if(person.empty() || !enabled(s) || !s.infrastructure->workplace->headquarters) return 0;
     const auto& items=hq(s).items;
-    const auto found=std::ranges::find_if(items,[&](const auto& i){return i.person==person && working(s,i);});
+    const auto found=std::ranges::find_if(items,[&](const auto& i){return offer(s,i).kind=="desk" && i.person==person && working(s,i);});
     return found==items.end()?0:found->id;
 }
 bool hq_workstation_ready(const SimulationState& s,std::string_view person) {
     const auto desk=assigned_hq_desk(s,person);
-    return desk && std::ranges::any_of(hq(s).items,[&](const auto& i) {
-        return i.mount==desk && offer(s,i).kind=="desktop" && working(s,i);
-    });
+    return hq_laptop_ready(s,person) || (desk && std::ranges::any_of(hq(s).items,[&](const auto& i) {
+        return i.mount==desk && hq_desk_device(offer(s,i).kind) && working(s,i);
+    }));
 }
 bool hq_has_lab_equipment(const SimulationState& s,std::span<const std::string> required) {
     if(required.empty()) return true;
@@ -172,14 +218,15 @@ void manage_headquarters(SimulationState& s,const HeadquartersAction& action,Cen
             const auto id=static_cast<std::uint32_t>(h.items.size()+1);pay(s,e.price,Account::expenses,"Equipment purchase from "+e.supplier+": "+e.name,key("hq.item/",id));
             h.items.push_back({id,e.id,{},s.date,delivery,e.price,false,true,false,0,0,0,0});
         } else if constexpr(std::is_same_v<A,PlaceHQEquipment>) {
-            auto& i=item(s,a.item);if(i.delivered_on>s.date) invalid("Wait for delivery before placing this item.");
+            const auto blocker=hq_placement_blocker(s,a);if(!blocker.empty()) throw std::invalid_argument(blocker);
+            auto& i=item(s,a.item);
             if(a.mount) {
                 const auto& desk=find(h.items,a.mount);
-                if(offer(s,i).kind!="desktop" || offer(s,desk).kind!="desk" || desk.premises!=current_headquarters(s).id || desk.delivered_on>s.date) invalid("Place the computer on a delivered desk in this office.");
+                if(!hq_desk_device(offer(s,i).kind) || offer(s,desk).kind!="desk" || desk.premises!=current_headquarters(s).id || desk.delivered_on>s.date) invalid("Place the computer on a delivered desk in this office.");
                 if(std::ranges::any_of(h.items,[&](const auto& other){return other.id!=i.id && other.mount==a.mount;})) invalid("That desk already has a computer.");
-                i.mount=a.mount;i.premises=desk.premises;i.x=0;i.y=0;i.rotated=false;
+                i.person.clear();i.mount=a.mount;i.premises=desk.premises;i.x=0;i.y=0;i.rotated=false;
             } else {
-                if(offer(s,i).kind=="desktop") invalid("A desktop computer must be placed on a desk.");
+                if(hq_desk_device(offer(s,i).kind)) invalid("Place this computer on a desk, or issue a laptop to an employee.");
                 i.mount=0;i.premises=current_headquarters(s).id;i.x=a.x;i.y=a.y;i.rotated=a.rotated;
                 for(auto& child:h.items) if(child.mount==i.id) child.premises=i.premises;
             }
@@ -194,7 +241,15 @@ void manage_headquarters(SimulationState& s,const HeadquartersAction& action,Cen
             auto person=a.person;
             if(s.management && s.management->people) for(const auto& employee:s.management->people->employees)
                 if(employee.terms.profile.id==person && employee.terms.profile.role=="Founder / researcher") person="founder";
-            for(auto& other:h.items) if(other.person==person) other.person.clear();i.person=std::move(person);
+            for(auto& other:h.items) if(offer(s,other).kind=="desk" && other.person==person) other.person.clear();i.person=std::move(person);
+        } else if constexpr(std::is_same_v<A,AssignHQLaptop>) {
+            auto& laptop=item(s,a.item);
+            if(!hq_portable(offer(s,laptop).kind) || laptop.delivered_on>s.date) invalid("Choose a delivered laptop.");
+            if(!a.person.empty() && a.person!="founder" && (!s.management || !s.management->people || std::ranges::none_of(s.management->people->employees,[&](const auto& e){return e.terms.profile.id==a.person && !e.departed_on;}))) invalid("Choose a current employee.");
+            auto person=a.person;
+            if(s.management && s.management->people) for(const auto& e:s.management->people->employees) if(e.terms.profile.id==person && e.terms.profile.role=="Founder / researcher") person="founder";
+            if(!person.empty()) for(auto& other:h.items) if(hq_portable(offer(s,other).kind) && other.person==person) other.person.clear();
+            laptop.person=person;laptop.mount=0;laptop.premises=0;
         } else if constexpr(std::is_same_v<A,PowerHQEquipment>) {
             auto& i=item(s,a.item);if(offer(s,i).watts==0) invalid("This furnishing has no power switch.");i.powered=a.powered;
         }
@@ -253,17 +308,21 @@ void validate_headquarters(const SimulationState& s,bool deep) {
     if(h.premises.empty() || h.premises.size()>64 || h.items.size()>r.maximum_items || h.land.size()>r.maximum_properties || h.construction.size()>r.maximum_properties || h.notices.size()>2*r.maximum_properties) invalid("Headquarters records exceed their bounded history.");
     const auto& p=current_headquarters(s);if(p.left_on) invalid("The current headquarters cannot have a departure date.");
     validate_hq_plan(p.width,p.depth,p.rooms,r.maximum_edge);
-    std::vector<std::uint32_t> occupancy(static_cast<std::size_t>(p.width*p.depth));std::set<std::string> people;std::set<std::uint32_t> mounts;
+    std::vector<std::uint32_t> occupancy(static_cast<std::size_t>(p.width*p.depth));std::set<std::string> people,laptop_people;std::set<std::uint32_t> mounts;
     const auto opening_people=opening_staff_count(*s.capacity)+(s.infrastructure->workplace->nonresearch_founder?1U:0U);
     for(std::size_t n=0;n<h.items.size();++n) {
         const auto& i=h.items[n];
         if(i.inherited && (s.infrastructure->workplace->opening_office=="home" || i.ordered_on!=s.infrastructure->workplace->starts_on || i.id>2*opening_people)) invalid("Inherited furnishings must come from the actual opening company.");const auto& e=offer(s,i);
         if(i.id!=n+1 || i.ordered_on<s.infrastructure->workplace->starts_on || i.ordered_on>s.date || i.delivered_on!=advance_days(i.ordered_on,i.inherited?Days{0}:e.delivery) || i.paid!=(i.inherited?Cents{0}:e.price)) invalid("Equipment ownership, price or delivery changed.");
-        if(!i.person.empty() && (!people.insert(i.person).second || e.kind!="desk" || i.premises!=p.id)) invalid("A person can be assigned to one placed desk.");
-        if(!i.premises) {if(i.mount || !i.person.empty()) invalid("Stored equipment cannot have a desk attachment or employee.");continue;}
+        if(!i.person.empty()) {
+            if(hq_portable(e.kind)) {
+                if(!laptop_people.insert(i.person).second || i.delivered_on>s.date) invalid("A person can hold one delivered company laptop.");
+            } else if(!people.insert(i.person).second || e.kind!="desk" || i.premises!=p.id) invalid("A person can be assigned to one placed desk.");
+        }
+        if(!i.premises) {if(i.mount || (!i.person.empty() && !hq_portable(e.kind))) invalid("Stored equipment cannot have a desk attachment or employee.");continue;}
         if(i.premises!=p.id || i.delivered_on>s.date) invalid("Only delivered equipment can occupy the current premises.");
-        if(i.mount) {const auto& desk=find(h.items,i.mount);if(e.kind!="desktop" || offer(s,desk).kind!="desk" || desk.premises!=p.id || !mounts.insert(i.mount).second) invalid("A computer needs its own placed desk.");continue;}
-        if(e.kind=="desktop") invalid("Desktop computers require a desk attachment.");
+        if(i.mount) {const auto& desk=find(h.items,i.mount);if(!hq_desk_device(e.kind) || offer(s,desk).kind!="desk" || desk.premises!=p.id || !mounts.insert(i.mount).second) invalid("A computer needs its own placed desk.");continue;}
+        if(hq_desk_device(e.kind)) invalid("Computers require a desk attachment or an issued laptop assignment.");
         const auto width=i.rotated?e.depth:e.width,depth=i.rotated?e.width:e.depth;
         if(i.x<0 || i.y<0 || i.x+width>p.width || i.y+depth>p.depth || std::ranges::none_of(p.rooms,[&](const auto& room){return i.x>=room.x && i.y>=room.y && i.x+width<=room.x+room.width && i.y+depth<=room.y+room.depth;})) invalid("The item must fit inside one room, without crossing a wall.");
         for(int y=i.y;y<i.y+depth;++y) for(int x=i.x;x<i.x+width;++x) {auto& cell=occupancy[static_cast<std::size_t>(y*p.width+x)];if(cell) invalid("Equipment cannot overlap. Move the other item or choose another position.");cell=i.id;}

@@ -108,6 +108,7 @@ public:
     QVariantList researchSources() const;
     QVariantList researchRentals() const;
     Q_INVOKABLE QVariantMap researchTopic(QString id) const;
+    Q_INVOKABLE QVariantMap researchTeam(QString id,QStringList workers) const;
     Q_INVOKABLE QString researchBlocker(QString id,QString source,QString rate,QStringList workers) const;
     Q_INVOKABLE void beginGroundedResearch(QString id,QString source,QString rate,QStringList workers);
     StableListModel* models() const { return models_; }

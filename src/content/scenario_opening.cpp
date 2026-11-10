@@ -38,6 +38,7 @@ std::optional<core::ManagementCatalog> scenario_management(const ScenarioDefinit
         result->scoring.opening_founder_share=core::BasisPoints{terms.founder_bp};
         if(result->succession) {
             result->succession->founder_birth_year=1997;
+            result->succession->personal_cash=core::Cents{terms.personal_remaining_cents};
             result->succession->founder_salary=core::Cents{s.founding->founder_salary_cents};
             result->succession->chair_salary=core::Cents{s.founding->founder_salary_cents/2};
         }

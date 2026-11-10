@@ -49,6 +49,11 @@ Item {
                 item.headquarters=Qt.binding(()=>campaign.world.headquarters)
                 item.editing=Qt.binding(()=>desktop.furnishing)
                 item.selectedItem=Qt.binding(()=>hqTools.selectedItem)
+                item.placing=Qt.binding(()=>desktop.furnishing && hqTools.placing)
+                item.preview=Qt.binding(()=>hqTools.preview)
+                item.hovered.connect((x,y,target)=>hqTools.hover(x,y,target))
+                item.cancelRequested.connect(()=>hqTools.placing=false)
+                item.rotateRequested.connect(()=>hqTools.rotated=!hqTools.rotated)
                 item.tilePicked.connect((x,y,id)=>{if(!desktop.furnishing && id){desktop.furnishing=true;hqTools.select(id);if(!campaign.paused)campaign.togglePaused()}else hqTools.tile(x,y,id)})
                 item.itemDragged.connect((id,x,y,target)=>hqTools.drag(id,x,y,target))
             } else if(softwareWorld) item.room = "office"
@@ -148,13 +153,19 @@ Item {
         onShopRequested:desktop.openApp("facilities","equipment","laptop")
         onPropertiesRequested:desktop.openApp("facilities","property","laptop")
     }
-    WorldButton {
-        visible:desktop.physicalHQ && desktop.furnishing && hqTools.placing && desktop.compact
-        anchors.horizontalCenter:parent.horizontalCenter;anchors.top:parent.top;anchors.topMargin:8
-        text:qsTr("Choose a position · Cancel")
-        textSize:desktop.textSize
-        onClicked:hqTools.placing=false
+    ColumnLayout {
+        visible:desktop.physicalHQ && desktop.furnishing && hqTools.placing
+        anchors.horizontalCenter:worldView.horizontalCenter;anchors.top:worldView.top;anchors.topMargin:8
+        width:Math.min(worldView.width-24,580)
+        Label {Layout.fillWidth:true;text:hqTools.preview.reason || qsTr("Move over the floor to preview placement");font.pixelSize:desktop.textSize;color:hqTools.preview.valid?"#b9f2ce":"#ffd0bc";wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter}
+        RowLayout {
+            Layout.alignment:Qt.AlignHCenter
+            WorldButton {objectName:"hqRotatePreview";text:qsTr("Rotate · R");textSize:desktop.textSize;onClicked:hqTools.rotated=!hqTools.rotated}
+            WorldButton {text:qsTr("Cancel · Esc");textSize:desktop.textSize;onClicked:hqTools.placing=false}
+        }
     }
+    Shortcut {sequence:"R";enabled:desktop.visible && desktop.furnishing && hqTools.placing;onActivated:hqTools.rotated=!hqTools.rotated}
+    Shortcut {sequence:"Escape";enabled:desktop.visible && desktop.furnishing && hqTools.placing;onActivated:hqTools.placing=false}
     ColumnLayout {
         anchors.left:parent.left;anchors.bottom:dock.top;anchors.margins:22*desktop.uiScale
         width:Math.max(200,Math.min(520*desktop.uiScale,desktop.width-(desktop.compact?44:320*desktop.uiScale)))

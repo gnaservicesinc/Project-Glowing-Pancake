@@ -26,12 +26,16 @@ inline std::vector<ParticipantRef> decode(const Json& value) {
         message("name_key",p.name_key);message("role_key",p.role_key);
         if(row.contains("portrait")) {
             const auto& portrait=row["portrait"];
-            if(!portrait.is_object() || portrait.size()!=2 || !portrait.contains("kit") || !portrait.contains("parts") ||
+            if(!portrait.is_object() || (portrait.size()!=2 && portrait.size()!=3) || !portrait.contains("kit") || !portrait.contains("parts") ||
                !portrait["kit"].is_number_integer() || portrait["kit"]!=1 || !portrait["parts"].is_array() || portrait["parts"].size()!=core::portrait_part_counts.size()) invalid();
             core::PortraitRecipe recipe;
             for(std::size_t i=0;i<recipe.parts.size();++i) {
                 const auto& part=portrait["parts"][i];if(!part.is_number_integer() || part<0 || part>=core::portrait_part_counts[i]) invalid();
                 recipe.parts[i]=part.get<std::uint8_t>();
+            }
+            if(portrait.contains("style")) {
+                if(!portrait["style"].is_array() || portrait["style"].size()!=recipe.style.size()) invalid();
+                for(std::size_t i=0;i<recipe.style.size();++i) {const auto& v=portrait["style"][i];if(!v.is_number_integer() || v<0 || v>=core::portrait_style_counts[i]) invalid();recipe.style[i]=v.get<std::uint8_t>();}
             }
             core::validate_portrait(recipe);p.portrait=recipe;++fields;
         }
@@ -51,6 +55,7 @@ inline Json encode(const std::vector<ParticipantRef>& rows) {
         if(!p.name_key.empty()) row["name_key"]=p.name_key;
         if(!p.role_key.empty()) row["role_key"]=p.role_key;
         if(p.portrait) row["portrait"]={{"kit",p.portrait->kit},{"parts",p.portrait->parts}};
+        if(p.portrait && p.portrait->style!=decltype(p.portrait->style){}) row["portrait"]["style"]=p.portrait->style;
         result.push_back(std::move(row));
     }
     (void)decode(result);return result;

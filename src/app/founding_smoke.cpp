@@ -39,7 +39,10 @@ void type(QQuickWindow& window, QQuickItem& input, const QString& value) {
 // verifies that complete text is drawn, even when there is ample logical space.
 QString fitting_error(QQuickItem& item, const QRectF& viewport) {
     if (!item.isVisible()) return {};
-    const auto bounds = item.mapRectToScene(QRectF{0, 0, item.width(), item.height()});
+    auto bounds = item.mapRectToScene(QRectF{0, 0, item.width(), item.height()});
+    for(auto* parent=item.parentItem();parent;parent=parent->parentItem()) if(parent->clip())
+        bounds=bounds.intersected(parent->mapRectToScene({0,0,parent->width(),parent->height()}));
+    if(bounds.isEmpty()) return {};
     if (!bounds.isEmpty() && !viewport.contains(bounds))
         return item.objectName() + QStringLiteral(" lies outside the window");
     if (item.property("truncated").toBool())
@@ -55,7 +58,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
     enum class Phase { launch, opening, birth, compact, questions, office, step, reload, done };
     struct State {
         Phase phase = Phase::launch;
-        int ticks = 0;
+        int ticks = 0,home_phase=0;
         bool saw_opening_animation = false;
         bool retried_name = false;
         bool edited_seed = false;
@@ -152,7 +155,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             if (id == "last_name" && !story->form().value("first_name").toString().startsWith("Mira")) {
                 fail("Edited name was lost after resizing"); return;
             }
-            if (id.startsWith("chapter-")) {
+            if (id.startsWith("chapter-") && !id.endsWith("-after")) {
                 if (id == "chapter-curiosity" && !capture(".childhood")) { fail("Childhood screenshot"); return; }
                 for (const auto& row : story->chapters()) {
                     const auto chapter = row.toMap();
@@ -164,30 +167,6 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 fail("Unknown childhood beat");
                 return;
             }
-            if (id == "family" && !state->saw_hillside) {
-                if (!click("foundingChoice_rich")) fail("Hillside family choice");
-                return;
-            }
-            if (id == "leg" && !state->saw_hillside) {
-                if (!shows("street-hillside", "olive") || !capture(".hillside") || !click("foundingBackButton")) {
-                    fail("Family choice must change the art and palette");
-                    return;
-                }
-                state->saw_hillside = true;
-                return;
-            }
-            if (id == "legal_form" && !state->saw_company) {
-                if (!click("foundingChoice_corporation")) fail("Corporation choice");
-                return;
-            }
-            if (id == "route" && !state->saw_company) {
-                if (!shows("company", "amber") || !capture(".company") || !click("foundingBackButton")) {
-                    fail("Corporation choice must reveal the term sheet scene");
-                    return;
-                }
-                state->saw_company = true;
-                return;
-            }
             static const QHash<QString, QString> answers{
                 {"family","poor"},{"leg","charisma"},{"sociability","outgoing"},{"activity","athletic"},
                 {"disposition","deliberate"},{"legal_form","nonprofit"},{"route","mission_director"},
@@ -196,30 +175,31 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             };
             if(id=="appearance" && !state->customized) {
                 const auto before=story->portrait();
-                if(!click("foundingNextFeature") || !click("foundingNextVariant") || before==story->portrait() ||
+                if(!click("appearanceNext_1") || before==story->portrait() ||
                     item("foundingPortraitPreview")->property("status").toInt()!=1) {fail("Live appearance customization");return;}
                 state->customized=true;
                 return;
             }
             if(id=="appearance" && !capture(".appearance")) {fail("Appearance screenshot");return;}
-            if (id == "leg" && (!shows("street-apartments", "slate") || item("foundingChoice_wealthy")->isEnabled() ||
-                !capture(".apartments"))) { fail("Apartment scene and wealth eligibility"); return; }
-            if (id == "route" && !shows("trust", "jade")) { fail("Nonprofit scene and palette"); return; }
-            if (id == "mission" && item("foundingChoice_profit")->isEnabled()) { fail("Nonprofit mission compatibility"); return; }
             if (id == "offer-safety" && !capture(".offer")) { fail("Individual offer screenshot"); return; }
             if (const auto chosen = answers.find(id); chosen != answers.end()) {
                 if (!click("foundingChoice_" + *chosen)) fail("Expected response is unavailable");
-            } else if (id == "review") {
-                if (!state->edited_seed) {
-                    state->edited_seed = true;
-                    if (!click("foundingSeedButton")) fail("World seed action");
-                    return;
+            } else if (id == "home") {
+                if(item("homeStart")->property("transitioning").toBool())return;
+                if(state->home_phase==0) {
+                    if(!capture(".home") || !click("homeApp_browser")) {fail("Home desktop before company formation");return;}
+                    story->setField("seed","718");++state->home_phase;return;
                 }
-                if (!capture(".terms") || !click("foundingStartButton")) { fail("Opening terms or office entry"); return; }
-                state->phase = Phase::office;
-            } else if (id == "seed") {
-                type(window, *item("foundingAnswer"), QStringLiteral("718"));
-                if (!advance()) fail("Optional seed entry");
+                if(state->home_phase==1) {if(!click("homeService_legal")){fail("Browser legal service");return;}++state->home_phase;return;}
+                if(state->home_phase==2) {if(!click("homeFoundNonprofit")){fail("Nonprofit formation");return;}++state->home_phase;return;}
+                if(state->home_phase==3) {if(!click("homeBacker_safety")){fail("Named backer offer");return;}++state->home_phase;return;}
+                if(state->home_phase==4) {if(!capture(".terms") || !click("homeSign")){fail("Reviewed signing");return;}++state->home_phase;return;}
+                if(state->home_phase==5) {
+                    if(!item("homeEnterCompany")->isVisible())return;
+                    item("homeEnterCompany")->forceActiveFocus(Qt::TabFocusReason);
+                    ++state->home_phase;return;
+                }
+                if(state->home_phase==6) {if(!capture(".signed") || !click("homeEnterCompany")){fail("Signed company entry");return;}state->phase=Phase::office;}
             } else if (!advance()) fail("Could not advance narration or answer");
             break;
         }
@@ -229,7 +209,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 world.founding->legal_form != "nonprofit" || world.founding->backers != std::vector<std::string>{"safety"} ||
                 world.identity->founder_name != "Mira Vale" || world.root_seed != 718 ||
                 world.founding->gender!="woman" || world.identity->founder_pronouns!="she/her" ||
-                !state->customized || world.founding->appearance.parts[1]!=1 ||
+                !state->customized || world.founding->appearance.parts[1]!=3 ||
                 !world.difficulty.empty() || !world.simulation.capacity->sources.empty() ||
                 !world.simulation.management->people->employees.empty() ||
                 pgp::core::iso_date(world.simulation.date) != "2015-01-01" ||

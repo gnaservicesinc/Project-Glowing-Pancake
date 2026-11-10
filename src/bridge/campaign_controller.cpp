@@ -444,6 +444,7 @@ void CampaignController::openWelcome() {
 }
 void CampaignController::startFounderCampaign() {
     try {
+        if(const auto error=founding_->signingError();!error.isEmpty()) throw std::invalid_argument(error.toStdString());
         const auto form=founding_->form();
         runtime::ScenarioOptions options;
         options.founding=founding_->selection();

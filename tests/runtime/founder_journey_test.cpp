@@ -46,6 +46,8 @@ int main() {
         const auto financed=make(revised);
         require(financed.world.simulation.management->people->employees.empty(),"Investment does not hire staff.");
         revised.route="hired_ceo";revised.office="shared";revised.backers.clear();
+        refuses([&]{(void)make(revised);});
+        revised.leg="political";
         const auto employed=make(revised);
         const auto employment=content::founding_terms(catalog,revised);
         require(employed.world.simulation.management->people->employees.size()==catalog.opening->inherited_staff && employment.founder_bp==catalog.opening->ceo_equity_bp,"A hired CEO inherits a small roster and the disclosed minority grant.");

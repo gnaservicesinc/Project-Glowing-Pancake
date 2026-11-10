@@ -46,7 +46,7 @@ std::vector<ResearchWorker> research_workers(const SimulationState &state, std::
             worker.unavailable = "Assigned to operations management";
         else if (committed.contains(person.id))
             worker.unavailable = "Already working on another research project";
-        else if (!assigned_hq_desk(state, desk_identity))
+        else if (!assigned_hq_desk(state, desk_identity) && !hq_laptop_ready(state, desk_identity))
             worker.unavailable = "Needs an assigned HQ desk";
         else if (!hq_workstation_ready(state, desk_identity))
             worker.unavailable = "Needs a powered computer on their desk";
@@ -79,6 +79,12 @@ std::string research_workplace_blocker(const SimulationState &state, std::string
             return "An assigned researcher is no longer available at this company.";
         if (!worker->unavailable.empty())
             return worker->name + ": " + worker->unavailable + ".";
+    }
+    if(except_project.empty()) {
+        const auto threshold=research_creativity_threshold(*state.lab,*state.capacity,topic,state.date);
+        const auto team=research_team(state,plan.researchers);
+        if(threshold==UINT32_MAX) return "Complete the linked prerequisites.";
+        if(team.creativity<threshold) return "Team creativity is "+std::to_string(team.creativity)+" distinct traits; this research needs "+std::to_string(threshold)+". Add new perspectives or complete more prerequisites.";
     }
     const auto equipment = research_equipment(state, topic);
     if (!hq_has_lab_equipment(state, equipment)) {
@@ -165,6 +171,10 @@ void validate_workplace_research(const SimulationState &state) {
                 (worker->second->departed_on && *worker->second->departed_on < work->starts_on))
                 throw std::invalid_argument("A research assignment must name an onboarded person in the company.");
         }
+        if(state.lab->catalog.creative_research.contains(run.research_id)) {
+            const auto team=research_team(state,run.researchers);
+            if(run.creativity!=team.creativity || run.compatibility_bp!=team.compatibility_bp) throw std::invalid_argument("Research team characteristics must match the actual saved people.");
+        } else if(run.creativity || run.compatibility_bp) throw std::invalid_argument("This research has no creative-team rule.");
         if (work->status == ProjectStatus::active &&
             !research_workplace_blocker(state, run.research_id, allocation(run, *work), work->id).empty())
             throw std::invalid_argument("Active research is missing its staff, physical equipment or compute.");

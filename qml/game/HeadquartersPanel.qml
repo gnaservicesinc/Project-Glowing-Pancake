@@ -18,6 +18,8 @@ ColumnLayout {
     property int selectedRoom:0
     property var bids:[]
     property string error:""
+    property string supplier:"All shops"
+    readonly property var suppliers:["All shops"].concat(Array.from(new Set(campaign.world.hqEquipmentOffers.map(row=>row.supplier))))
     spacing:14
     ReviewPause {id:reviewPause}
     component Copy:Label {Layout.fillWidth:true;wrapMode:Text.Wrap;textFormat:Text.PlainText;font.pixelSize:panel.textSize;color:"#c5d8cb"}
@@ -89,14 +91,27 @@ ColumnLayout {
     ColumnLayout {
         visible:panel.tab==="equipment";Layout.fillWidth:true;spacing:12
         Copy {text:qsTr("Buy furnishings and hardware from a supplier. Deliveries go into storage. Return to the room to place and move them, mount a computer on a desk, and assign people. Power and actual hardware determine compute; an empty room supplies none.")}
+        Rectangle {
+            Layout.fillWidth:true;implicitHeight:storeHeader.implicitHeight+24;radius:12;color:"#e7dfc8"
+            ColumnLayout {
+                id:storeHeader;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:12
+                Label {text:qsTr("←  →   ◉   supplies.local / storefronts");font.pixelSize:panel.textSize;color:"#39585a"}
+                Label {text:panel.supplier==="All shops"?qsTr("Make room for your next idea."):panel.supplier;font.pixelSize:panel.textSize*1.55;font.bold:true;color:"#233f46";Layout.fillWidth:true;wrapMode:Text.Wrap}
+                Flow {Layout.fillWidth:true;spacing:6;Repeater {model:panel.suppliers;WorldButton {required property string modelData;text:modelData;textSize:panel.textSize;checked:panel.supplier===modelData;onClicked:panel.supplier=modelData}}}
+            }
+        }
         Repeater {
-            model:campaign.world.hqEquipmentOffers
+            model:campaign.world.hqEquipmentOffers.filter(row=>panel.supplier==="All shops" || row.supplier===panel.supplier)
             Rectangle {
                 required property var modelData
                 Layout.fillWidth:true;implicitHeight:equipmentCard.implicitHeight+28;color:"#213d40";radius:10;border.color:"#48675c"
                 ColumnLayout {
                     id:equipmentCard;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:14
-                    Heading {text:modelData.name}
+                    RowLayout {
+                        Layout.fillWidth:true
+                        EquipmentGlyph {Layout.preferredWidth:panel.textSize*6;Layout.preferredHeight:panel.textSize*6;kind:modelData.kind}
+                        ColumnLayout {Layout.fillWidth:true;Heading {text:modelData.name} Copy {text:modelData.supplier;color:"#b2ccaa"}}
+                    }
                     Copy {text:modelData.detail}
                     WorldButton {objectName:"hqBuy_"+modelData.id;text:qsTr("Order · %1").arg(modelData.price);textSize:panel.textSize;enabled:panel.editable;onClicked:panel.reviewEquipment(modelData.id)}
                 }

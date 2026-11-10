@@ -15,6 +15,18 @@ Rectangle {
     readonly property var item:(headquarters.items || []).find(row=>row.id===selectedItem) || null
     readonly property var desks:(headquarters.items || []).filter(row=>row.kind==="desk" && row.placed && row.delivered)
     property int mount:0
+    property var preview:({})
+    property int hoverX:-1
+    property int hoverY:-1
+    property int hoverTarget:0
+    function hover(x,y,target) {
+        hoverX=x;hoverY=y;hoverTarget=target
+        preview=placing && item?campaign.world.hqPlacement(item.id,x,y,rotated,target):({})
+    }
+    onRotatedChanged:hover(hoverX,hoverY,hoverTarget)
+    onPlacingChanged:hover(hoverX,hoverY,hoverTarget)
+    onHeadquartersChanged:hover(hoverX,hoverY,hoverTarget)
+    function pickup(id) {select(id);if(item && item.delivered && editable){placing=true;hover(hoverX,hoverY,hoverTarget)}}
     signal doneRequested()
     signal shopRequested()
     signal propertiesRequested()
@@ -24,21 +36,18 @@ Rectangle {
     function select(id) {selectedItem=id;placing=false;campaign.world.setDraft("hq/selected-item",String(id));refreshSelection()}
     function tile(x,y,target) {
         if(!placing || !item) {if(target) select(target);return}
-        let desk=0
-        if(item.kind==="desktop") {
-            const hit=(headquarters.items || []).find(entry=>entry.id===target)
-            desk=hit?(hit.kind==="desk"?hit.id:hit.mount || 0):0
-        }
-        place(item.id,x,y,rotated,desk)
+        hover(x,y,target)
+        if(!preview.valid) return
+        place(item.id,preview.x,preview.y,rotated,preview.mount)
     }
     function drag(id,x,y,target) {
         select(id)
         if(!item) return
-        if(item.kind==="desktop") {placing=true;tile(x,y,target)}
+        if(item.deskDevice) {placing=true;tile(x,y,target)}
         else place(id,x,y,item.rotated,0)
     }
     function place(id,x,y,turn,desk) {
-        if(!editable) return
+        if(!editable || pending) return
         pending=true
         campaign.world.placeHQEquipment(id,x,y,turn,desk,campaign.world.reviewToken)
     }
@@ -57,11 +66,33 @@ Rectangle {
             component Copy:Label {Layout.fillWidth:true;wrapMode:Text.Wrap;textFormat:Text.PlainText;font.pixelSize:tools.textSize;color:"#c9dacb"}
             Copy {text:qsTr("Arrange headquarters");font.bold:true;font.pixelSize:tools.textSize*1.2;color:"#eee4c9"}
             WorldButton {objectName:"hqDoneArranging";visible:tools.compactOverlay;text:qsTr("Done arranging");textSize:tools.textSize;onClicked:tools.doneRequested()}
-            Copy {text:tools.headquarters.kind==="home"?qsTr("A small garage, with room for one desk. Nothing is furnished until you buy and place it."):qsTr("Arrange your actual furnishings. Drag placed items, or use the coordinates below. Rooms take their purpose from their equipment.")}
+            Copy {text:tools.headquarters.kind==="home"?qsTr("Your home workspace. Pick up a delivered object, then click a valid floor tile or desk."):qsTr("Arrange your actual furnishings. Drag placed items, or use the coordinates below. Rooms take their purpose from their equipment.")}
             Flow {
                 Layout.fillWidth:true;spacing:6
                 WorldButton {objectName:"hqOpenShop";text:qsTr("Suppliers");textSize:tools.textSize;onClicked:tools.shopRequested()}
                 WorldButton {objectName:"hqOpenRealtor";text:qsTr("Realtor");textSize:tools.textSize;onClicked:tools.propertiesRequested()}
+            }
+            Flow {
+                Layout.fillWidth:true;spacing:8
+                Repeater {
+                    model:tools.headquarters.items || []
+                    Rectangle {
+                        required property var modelData
+                        objectName:"hqPick_"+modelData.id
+                        width:Math.max(88,tools.textSize*6);height:Math.max(112,tools.textSize*8)
+                        radius:10;color:tools.selectedItem===modelData.id?"#345b58":"#213f42"
+                        border.color:tools.selectedItem===modelData.id?"#ecd29a":"#68867b"
+                        opacity:modelData.delivered?1:0.5
+                        EquipmentGlyph {anchors.top:parent.top;anchors.horizontalCenter:parent.horizontalCenter;width:parent.width-20;height:parent.height*0.57;kind:modelData.kind;powered:modelData.powered}
+                        Label {anchors.left:parent.left;anchors.right:parent.right;anchors.bottom:parent.bottom;anchors.margins:6;height:parent.height*0.35;text:modelData.name;font.pixelSize:tools.textSize*0.8;color:"#e7e5cf";wrapMode:Text.Wrap;elide:Text.ElideRight;textFormat:Text.PlainText}
+                        activeFocusOnTab:true
+                        Accessible.role:Accessible.Button;Accessible.name:qsTr("Pick up %1 · %2").arg(modelData.name).arg(modelData.detail)
+                        Accessible.onPressAction:tools.pickup(modelData.id)
+                        Keys.onReturnPressed:tools.pickup(modelData.id)
+                        Keys.onSpacePressed:tools.pickup(modelData.id)
+                        MouseArea {anchors.fill:parent;cursorShape:Qt.OpenHandCursor;onClicked:tools.pickup(modelData.id)}
+                    }
+                }
             }
             GameSelect {
                 objectName:"hqOwnedItemPicker";Layout.fillWidth:true;textSize:tools.textSize
@@ -76,25 +107,32 @@ Rectangle {
                 Copy {text:tools.item?tools.item.name+"\n"+tools.item.detail+"\n"+tools.item.ownership:""}
                 Copy {visible:tools.item && tools.item.compute>0;text:tools.item?qsTr("%1 CU/day · %2 W when powered. Output requires a delivered, placed and powered machine.").arg(tools.item.compute).arg(tools.item.watts):""}
                 WorldButton {objectName:"hqStartPlacement";text:tools.placing?qsTr("Cancel placement"):tools.item && tools.item.placed?qsTr("Choose a new position"):qsTr("Place in the room");textSize:tools.textSize;enabled:tools.editable && !!tools.item && tools.item.delivered;onClicked:tools.placing=!tools.placing}
-                Copy {visible:tools.placing;text:tools.item && tools.item.kind==="desktop"?qsTr("Click a free desk to mount this computer."):qsTr("Click a floor cell for the top-left corner. Items cannot overlap or cross a wall.");color:"#f1cf8e"}
+                Copy {visible:tools.placing;text:tools.item && tools.item.deskDevice?qsTr("Click a free desk to mount this computer."):qsTr("Move the translucent object over the floor. Green fits; red needs another position. R rotates; right-click or Escape cancels.");color:"#f1cf8e"}
                 GameSelect {
-                    visible:tools.item && tools.item.kind==="desktop";Layout.fillWidth:true;textSize:tools.textSize
+                    visible:tools.item && tools.item.deskDevice;Layout.fillWidth:true;textSize:tools.textSize
                     model:tools.desks.map(desk=>({id:desk.id,name:qsTr("Desk %1 · %2").arg(desk.id).arg(desk.personName || qsTr("unassigned"))}))
                     textRole:"name";valueRole:"id";currentIndex:Math.max(0,model.findIndex(desk=>desk.id===tools.mount))
                     Accessible.name:qsTr("Desk for this computer");onActivated:tools.mount=currentValue
                 }
                 RowLayout {
-                    visible:tools.item && tools.item.kind!=="desktop";Layout.fillWidth:true
+                    visible:tools.item && !tools.item.deskDevice;Layout.fillWidth:true
                     GameField {id:column;objectName:"hqItemColumn";Layout.fillWidth:true;text:"1";textSize:tools.textSize;maximumLength:2;Accessible.name:qsTr("Floor column, starting at one")}
                     GameField {id:row;objectName:"hqItemRow";Layout.fillWidth:true;text:"1";textSize:tools.textSize;maximumLength:2;Accessible.name:qsTr("Floor row, starting at one")}
                 }
-                WorldButton {visible:tools.item && tools.item.kind!=="desktop";text:tools.rotated?qsTr("Orientation · rotated"):qsTr("Orientation · normal");textSize:tools.textSize;enabled:tools.editable;onClicked:tools.rotated=!tools.rotated}
-                WorldButton {objectName:"hqPlaceAtCoordinates";text:tools.item && tools.item.kind==="desktop"?qsTr("Mount on selected desk"):qsTr("Place at column / row");textSize:tools.textSize;enabled:tools.editable && !!tools.item && tools.item.delivered;onClicked:tools.place(tools.item.id,Number(column.text)-1,Number(row.text)-1,tools.rotated,tools.item.kind==="desktop"?tools.mount:0)}
+                WorldButton {visible:tools.item && !tools.item.deskDevice;text:tools.rotated?qsTr("Orientation · rotated"):qsTr("Orientation · normal");textSize:tools.textSize;enabled:tools.editable;onClicked:tools.rotated=!tools.rotated}
+                WorldButton {objectName:"hqPlaceAtCoordinates";text:tools.item && tools.item.deskDevice?qsTr("Mount on selected desk"):qsTr("Place at column / row");textSize:tools.textSize;enabled:tools.editable && !!tools.item && tools.item.delivered;onClicked:tools.place(tools.item.id,Number(column.text)-1,Number(row.text)-1,tools.rotated,tools.item.deskDevice?tools.mount:0)}
                 GameSelect {
                     objectName:"hqDeskPerson";visible:tools.item && tools.item.kind==="desk" && tools.item.placed
                     Layout.fillWidth:true;textSize:tools.textSize;model:campaign.world.hqEmployees;textRole:"name";valueRole:"id"
                     currentIndex:Math.max(0,model.findIndex(person=>tools.item && person.id===tools.item.person))
                     Accessible.name:qsTr("Person assigned to this desk");onActivated:campaign.world.assignHQDesk(tools.item.id,currentValue,campaign.world.reviewToken)
+                }
+                GameSelect {
+                    objectName:"hqLaptopPerson";visible:tools.item && tools.item.portable
+                    Layout.fillWidth:true;textSize:tools.textSize;model:campaign.world.hqEmployees;textRole:"name";valueRole:"id"
+                    currentIndex:Math.max(0,model.findIndex(person=>tools.item && person.id===tools.item.person))
+                    Accessible.name:qsTr("Issue laptop to employee for desk or home working")
+                    onActivated:campaign.world.assignHQLaptop(tools.item.id,currentValue,campaign.world.reviewToken)
                 }
                 WorldButton {objectName:"hqEquipmentPower";visible:tools.item && tools.item.watts>0;text:tools.item && tools.item.powered?qsTr("Turn power off"):qsTr("Turn power on");textSize:tools.textSize;enabled:tools.editable;onClicked:campaign.world.powerHQEquipment(tools.item.id,!tools.item.powered,campaign.world.reviewToken)}
                 WorldButton {objectName:"hqStoreItem";visible:tools.item && tools.item.placed;text:qsTr("Move to storage");textSize:tools.textSize;enabled:tools.editable;onClicked:campaign.world.storeHQEquipment(tools.item.id,campaign.world.reviewToken)}

@@ -125,6 +125,8 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
             auto& p=employee.terms.profile;
             if(p.role=="Founder / researcher") {
                 p.gender=world.founding->gender;p.portrait=world.founding->appearance;
+                if(!world.simulation.management->catalog.people->trait_groups.empty())
+                    p.traits={"Social: "+world.founding->sociability,"Activity: "+world.founding->activity,"Temperament: "+world.founding->disposition,"Upbringing: "+world.founding->family};
                 p.bio="Actual Genius: exceptional technical ability developed through the founder's formative years.";
             } else if(world.founding->route=="partnership") p.role="Cofounder / researcher";
         }

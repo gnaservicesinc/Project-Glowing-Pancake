@@ -29,10 +29,10 @@ QVariantMap WorldController::headquarters() const {
     if(s.management && s.management->people) for(const auto& e:s.management->people->employees) names[e.terms.profile.id]=q(e.terms.profile.name);
     for(const auto& i:h.items) {
         const auto& e=find(r.equipment,i.offer);const bool delivered=i.delivered_on<=s.date,placed=i.premises==p.id;
-        items.push_back(QVariantMap{{"id",i.id},{"offer",q(e.id)},{"name",q(e.name)},{"kind",q(e.kind)},{"supplier",q(e.supplier)},{"inherited",i.inherited},
+        items.push_back(QVariantMap{{"id",i.id},{"offer",q(e.id)},{"name",q(e.name)},{"kind",q(e.kind)},{"supplier",q(e.supplier)},{"inherited",i.inherited},{"deskDevice",core::hq_desk_device(e.kind)},{"portable",core::hq_portable(e.kind)},
             {"x",i.x},{"y",i.y},{"width",i.rotated?e.depth:e.width},{"depth",i.rotated?e.width:e.depth},{"rotated",i.rotated},{"mount",i.mount},{"placed",placed},{"delivered",delivered},
             {"powered",i.powered},{"watts",e.watts},{"compute",static_cast<double>(e.compute.value())/1000},{"person",q(i.person)},{"personName",names.contains(i.person)?names.at(i.person):QString{}},
-            {"detail",!delivered?tr("Delivery %1").arg(date(i.delivered_on)):placed?tr("Placed in headquarters"):tr("Delivered · in storage")},
+            {"detail",!i.person.empty() && core::hq_portable(e.kind)?tr("Issued to %1 · work at any desk or from home").arg(names[i.person]):!delivered?tr("Delivery %1").arg(date(i.delivered_on)):placed?tr("Placed in headquarters"):tr("Delivered · in storage")},
             {"ownership",i.inherited?tr("Inherited company equipment"):tr("Purchased from %1 for %2").arg(q(e.supplier),money(i.paid))}});
     }
     int index=0;
@@ -43,22 +43,22 @@ QVariantMap WorldController::headquarters() const {
             for(const auto& child:h.items) if(child.mount==i.id && child.premises==p.id) ++computers;
         }
         QStringList functions;if(desks) functions<<tr("Office");if(benches) functions<<tr("Research");if(tests) functions<<tr("Evaluation");if(racks) functions<<tr("Compute");
-        roomRows.push_back(QVariantMap{{"id",++index},{"x",room.x},{"y",room.y},{"width",room.width},{"depth",room.depth},{"name",tr("Room %1 · %2").arg(index).arg(functions.empty()?tr("Empty"):functions.join(" / "))},
+        roomRows.push_back(QVariantMap{{"id",++index},{"x",room.x},{"y",room.y},{"width",room.width},{"depth",room.depth},{"name",(p.kind=="home" && p.rooms.size()==3?QStringList{tr("Garage"),tr("Basement"),tr("Shed")}[index-1]:tr("Room %1").arg(index))+" · "+(functions.empty()?tr("Empty"):functions.join(" / "))},
             {"detail",tr("%1 desks · %2 computers · %3 racks").arg(desks).arg(computers).arg(racks)}});
     }
     for(const auto& n:h.notices) notices.push_back(QVariantMap{{"date",date(n.day)},{"text",q(n.text)}});
     return {{"width",p.width},{"depth",p.depth},{"rooms",roomRows},{"items",items},{"kind",q(p.kind)},{"address",q(p.address)},{"city",q(city.city)},{"market",q(p.market)},{"landlord",q(p.lessor)},
         {"rent",money(p.rent)},{"deposit",money(p.deposit)},{"notices",notices},{"summary",tr("%1 · %2\n%3 × %4 m · %5 desks, %6 assigned\n%7\nSecurity deposit held: %8")
             .arg(q(p.address),q(city.city)).arg(p.width).arg(p.depth).arg(core::furnished_hq_desks(s)).arg(core::assigned_hq_desks(s))
-            .arg(p.kind=="home"?tr("Your parents' garage · $0 rent"):p.kind=="owned"?tr("Company-owned building · no rent; property taxes accrue"):tr("Rent %1/month to %2").arg(money(p.rent),q(p.lessor)),money(p.deposit))}};
+            .arg(p.kind=="home"?tr("Your parents' home workspaces · $0 rent"):p.kind=="owned"?tr("Company-owned building · no rent; property taxes accrue"):tr("Rent %1/month to %2").arg(money(p.rent),q(p.lessor)),money(p.deposit))}};
 }
 QVariantList WorldController::hqEquipmentOffers() const {
     QVariantList rows;if(!available(snapshot_)) return rows;const auto day=snapshot_->checkpoint.world.simulation.date;
-    for(const auto& e:rules(snapshot_).equipment) rows.push_back(QVariantMap{{"id",q(e.id)},{"name",q(e.name)},{"price",money(e.price)},{"kind",q(e.kind)},{"revision",reviewToken()},
+    for(const auto& e:rules(snapshot_).equipment) rows.push_back(QVariantMap{{"id",q(e.id)},{"name",q(e.name)},{"price",money(e.price)},{"kind",q(e.kind)},{"revision",reviewToken()},{"supplier",q(e.supplier)},
         {"detail",tr("%1 · %2\nDelivery %3 · %4 × %5 m%6\n%7")
             .arg(money(e.price),q(e.supplier),date(core::advance_days(day,e.delivery))).arg(e.width).arg(e.depth)
-            .arg(e.kind=="desktop"?tr(" · mounts on a desk"):QString{})
-            .arg(e.compute.value()>0?tr("%1 CU/day · %2 W when on; output requires delivery, placement and power").arg(static_cast<double>(e.compute.value())/1000).arg(e.watts):tr("Physical furnishings; no compute allocation"))}});
+            .arg(core::hq_desk_device(e.kind)?tr(" · mounts on a desk"):QString{})
+            .arg(e.compute.value()>0?tr("%1 CU/day · %2 W when on; output requires delivery, placement and power").arg(static_cast<double>(e.compute.value())/1000).arg(e.watts):e.kind=="thin_client"?tr("Marketing / PR terminal · requires a powered HQ rack; uses its shared capacity"):e.kind=="research_laptop"?tr("Remote GPU research · issue to an employee; requires a powered HQ rack"):e.kind=="workstation"?tr("Multi-monitor coding / management workstation"):tr("Office furnishing · no research compute or mood bonus"))}});
     return rows;
 }
 QVariantList WorldController::hqMarkets() const {QVariantList rows;if(!available(snapshot_)) return rows;for(const auto& m:rules(snapshot_).markets) rows.push_back(QVariantMap{{"id",q(m.id)},{"name",q(m.city)},{"agent",q(m.agent)},{"state",q(m.state)}});return rows;}
@@ -123,6 +123,23 @@ QVariantList WorldController::hqEmployees() const {
 }
 bool WorldController::hqReview(QString revision) {if(!available(snapshot_)) return false;if(companyArchive()) {emit noticeRaised(tr("This company is no longer accepting new commitments."));return false;}if(revision!=reviewToken()) {emit noticeRaised(tr("The company changed. Review the headquarters action again."));return false;}return true;}
 void WorldController::buyHQEquipment(QString offer,QString revision) {if(hqReview(revision)) emit actionRequested(core::ManageHeadquarters{core::BuyHQEquipment{offer.toStdString()}});}
+QVariantMap WorldController::hqPlacement(int item,int x,int y,bool rotated,int target) const {
+    if(!available(snapshot_) || item<=0) return {{"valid",false},{"reason",tr("Choose an owned object.")}};
+    const auto& s=snapshot_->checkpoint.world.simulation;const auto& items=hq(snapshot_).items;
+    const auto selected=std::ranges::find(items,static_cast<std::uint32_t>(item),&core::HQEquipment::id);
+    if(selected==items.end()) return {{"valid",false},{"reason",tr("This object is no longer available.")}};
+    const auto& model=find(rules(snapshot_).equipment,selected->offer);
+    const auto hit=std::ranges::find(items,static_cast<std::uint32_t>(std::max(0,target)),&core::HQEquipment::id);
+    std::uint32_t mount=0;int width=rotated?model.depth:model.width,depth=rotated?model.width:model.depth;
+    if(core::hq_desk_device(model.kind) && hit!=items.end()) {
+        mount=find(rules(snapshot_).equipment,hit->offer).kind=="desk"?hit->id:hit->mount;
+        if(mount) {const auto& desk=find(items,mount);const auto& shape=find(rules(snapshot_).equipment,desk.offer);x=desk.x;y=desk.y;width=desk.rotated?shape.depth:shape.width;depth=desk.rotated?shape.width:shape.depth;}
+    }
+    const auto why=core::hq_placement_blocker(s,{selected->id,mount,x,y,rotated});
+    return {{"valid",why.empty()},{"reason",why.empty()?tr("Click to place · R rotates · right-click cancels"):q(why)},
+        {"x",x},{"y",y},{"width",width},{"depth",depth},{"mount",mount},{"rotated",rotated},{"revision",reviewToken()}};
+}
+void WorldController::assignHQLaptop(int item,QString person,QString revision) {if(hqReview(revision) && item>0) emit actionRequested(core::ManageHeadquarters{core::AssignHQLaptop{static_cast<std::uint32_t>(item),person.toStdString()}});}
 void WorldController::placeHQEquipment(int item,int x,int y,bool rotated,int mount,QString revision) {if(hqReview(revision) && item>0 && mount>=0) emit actionRequested(core::ManageHeadquarters{core::PlaceHQEquipment{static_cast<std::uint32_t>(item),static_cast<std::uint32_t>(mount),x,y,rotated}});}
 void WorldController::storeHQEquipment(int item,QString revision) {if(hqReview(revision) && item>0) emit actionRequested(core::ManageHeadquarters{core::StoreHQEquipment{static_cast<std::uint32_t>(item)}});}
 void WorldController::assignHQDesk(int item,QString person,QString revision) {if(hqReview(revision) && item>0) emit actionRequested(core::ManageHeadquarters{core::AssignHQDesk{static_cast<std::uint32_t>(item),person.toStdString()}});}

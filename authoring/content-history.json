@@ -107252,6 +107252,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "4a6ff95946088143f4b63b53e4eada7bede6d09383b1a5b55077f9068ccb811a",
+          "before_hash": "74f2f86fecac405465cf100f28a8818e916c60a4f4d3c4a897b6f04f1f42db0b",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 12,
+          "revision": 13
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "15729a4c8405f743a898a1672bc2f8bed8a8a011d98394c8d9cbedf85d2ffb48",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.42.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 43,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.41.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000042.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000043.collection.json",
+      "summary": "Begin at home before founding; add visual equipment placement, portable workstations and distinct-trait creative research.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

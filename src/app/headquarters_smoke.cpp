@@ -16,7 +16,7 @@ QQuickItem* find(QQuickItem* root,const char* name) {if(root->objectName()==QLat
 bool key(QQuickWindow& window,QQuickItem* item,Qt::Key code=Qt::Key_Space) {if(!item || !item->isVisible() || !item->isEnabled()) return false;item->forceActiveFocus(Qt::TabFocusReason);QTest::keyClick(&window,code);return true;}
 }
 void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot) {
-    struct State {int phase=0,ticks=0,days=0,settle=0,reported=-1;};auto state=std::make_shared<State>();
+    struct State {int phase=0,ticks=0,days=0,settle=0,reported=-1,previewPhase=0;};auto state=std::make_shared<State>();
     auto* timer=new QTimer(&window);timer->setInterval(70);
     QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot] {
         const auto item=[&](const char* name){return find(window.contentItem(),name);};
@@ -67,13 +67,49 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
             auto* view=item("hqPhysicalScene");QPointF start,end;
             if(view) {
                 QVector3D a,b;
-                if(!QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,a),Q_ARG(QVector3D,(QVector3D{-50,48,0}))) ||
-                   !QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,b),Q_ARG(QVector3D,(QVector3D{50,48,0})))) {fail("Native room projection");return;}
+                if(!QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,a),Q_ARG(QVector3D,(QVector3D{static_cast<float>(100-pgp::core::current_headquarters(s).width*50),48,0}))) ||
+                   !QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,b),Q_ARG(QVector3D,(QVector3D{static_cast<float>(200-pgp::core::current_headquarters(s).width*50),48,0})))) {fail("Native room projection");return;}
                 start=view->mapToScene(QPointF{a.x(),a.y()});end=view->mapToScene(QPointF{b.x(),b.y()});
             } else {
                 view=item("hqFloorPlan");if(!view) {fail("Interactive scene unavailable");return;}
                 const auto cell=view->property("cell").toReal(),left=view->property("leftEdge").toReal(),top=view->property("topEdge").toReal();
                 start=view->mapToScene(QPointF{left+cell*1.25,top+cell*1.25});end=view->mapToScene(QPointF{left+cell*2.25,top+cell*1.25});
+            }
+            if(state->previewPhase<4) {
+                QPointF validPoint,invalidPoint;
+                if(item("hqPhysicalScene")) {
+                    QVector3D v,b;
+                    QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,v),Q_ARG(QVector3D,(QVector3D{static_cast<float>(150-pgp::core::current_headquarters(s).width*50),0,-100})));
+                    QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,b),Q_ARG(QVector3D,(QVector3D{static_cast<float>(250-pgp::core::current_headquarters(s).width*50),0,100})));
+                    validPoint=view->mapToScene({v.x(),v.y()});invalidPoint=view->mapToScene({b.x(),b.y()});
+                } else {
+                    const auto cell=view->property("cell").toReal(),left=view->property("leftEdge").toReal(),top=view->property("topEdge").toReal();
+                    validPoint=view->mapToScene({left+cell*1.2,top+cell*0.2});invalidPoint=view->mapToScene({left+cell*2.2,top+cell*2.2});
+                }
+                if(state->previewPhase==0) {
+                    if(!press("hqPick_1")) {fail("Pick up illustrated equipment card");return;}
+                    QTest::mouseMove(&window,validPoint.toPoint(),20);++state->previewPhase;return;
+                }
+                if(state->previewPhase==1) {
+                    if(!tools->property("placing").toBool() || !tools->property("preview").toMap().value("valid").toBool() || !capture(".placement-valid")) {fail("Valid translucent placement preview");return;}
+                    // Native terminal launches may lack OS activation. In that
+                    // case exercise the equivalent visible rotation control;
+                    // the active offscreen run covers the R shortcut.
+                    if(window.isActive()) QTest::keyClick(&window,Qt::Key_R);
+                    else if(!press("hqRotatePreview")) {fail("Visible placement rotation control");return;}
+                    QTest::mouseMove(&window,invalidPoint.toPoint(),20);++state->previewPhase;return;
+                }
+                if(state->previewPhase==2) {
+                    if(!capture(".placement-blocked") || !tools->property("rotated").toBool() || tools->property("preview").toMap().value("valid").toBool()) {
+                        const auto preview=tools->property("preview").toMap();
+                        std::cerr<<"Placement rotated="<<tools->property("rotated").toBool()<<" x="<<preview.value("x").toInt()<<" y="<<preview.value("y").toInt()<<" valid="<<preview.value("valid").toBool()<<" active="<<window.isActive()<<'\n';
+                        fail("Rotate and invalid footprint feedback");return;
+                    }
+                    QTest::mouseClick(&window,Qt::LeftButton,Qt::NoModifier,invalidPoint.toPoint());
+                    QTest::mouseClick(&window,Qt::RightButton,Qt::NoModifier,invalidPoint.toPoint());++state->previewPhase;return;
+                }
+                if(tools->property("placing").toBool() || headquarters->items[0].x!=0 || headquarters->items[0].rotated) {fail("Invalid placement and cancel must preserve the real object");return;}
+                ++state->previewPhase;
             }
             QTest::mousePress(&window,Qt::LeftButton,Qt::NoModifier,start.toPoint());QTest::mouseMove(&window,end.toPoint(),20);QTest::mouseRelease(&window,Qt::LeftButton,Qt::NoModifier,end.toPoint());
             ++state->phase;break;
@@ -121,11 +157,13 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
             if(++state->settle<10) return;
             if(!capture(".compact-200") || !press("hqStartPlacement")) {fail("Compact high-text placement controls");return;}
             state->settle=0;++state->phase;break;
-        case 25:
+        case 25: {
             if(++state->settle<8) return;
-            if(!item("hqFloorPlan") || item("hqFloorPlan")->height()<250 || !capture(".compact-placement")) {fail("Compact room must have space for actual placement");return;}
+            auto* floor=item("hqFloorPlan");if(!floor)floor=item("hqPhysicalScene");
+            if(!floor || floor->height()<250 || !capture(".compact-placement")) {fail("Compact room must have space for actual placement");return;}
             std::cout<<"HQ UI passed: empty garage, paid suppliers/delivery, placement, desk assignment, pointer drag, landlord lease, city land purchase, custom rooms, contractor bids and completion, owned relocation, fresh resume\n";
             timer->stop();QCoreApplication::exit(0);break;
+        }
         }
     });timer->start();
 }

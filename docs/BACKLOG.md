@@ -7,6 +7,23 @@ the starting point for human feedback. Work now follows the user's selected
 feedback changes. Proposed deeper mechanics from the initial pass await
 that review.
 
+## Selected immersive redesign (F-05, in progress)
+
+The user's expanded draft and clarified team counterbalance select the
+[immersive company plan](IMMERSIVE_COMPANY_PLAN.md). It supersedes conflicting
+F-04 setup assumptions. This is ongoing work, not a completed interface review.
+
+| Area | Implemented in the first batch | Remaining |
+| --- | --- | --- |
+| Furnishing | Illustrated pickup, translucent valid/blocked footprints, rotation/cancel, shared authoritative placement; expanded suppliers and equipment; issued laptops and powered-rack clients | Wider role effects, amenity mood effects, continued visual polish |
+| Identity and intro | Birth record and signature, narrated choice outcomes, Other pronouns, all portrait features exposed, color/pattern/build/height variants | Full-body art, identity audience consequences, richer choice sub-branches |
+| Home and founding | Saved unemployed home stage after appearance; fictional services, legal/CEO routes, explicit personal investment, separate retained savings, signing ceremony, three actual workspaces | Wealth-sized rooms, home return, bylaws, loans, securities and richer contacts |
+| Team research | Union of unique traits, zero duplicate bonus, shared-trait compatibility, bounded coordination benefit, hiring preview and prerequisite bypass | Mood, temperament consequences, future technology EEY/frontier integration and balance |
+| Private life | Existing personal salary/account used by the explicit founding investment split | Properties, decoration, luxury assets, events, contacts and late-game funded interventions |
+
+Content **0.42.0-dev.1**, generation **43**, records this batch. Human playtesting
+and the rest of F-05 remain open.
+
 ## Selected refinement milestones (F-04)
 
 The 2026-11-09 human review found the main interface incomplete. Implement the

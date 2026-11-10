@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.41.0-dev.1",
+  "content_version": "0.42.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -69569,7 +69569,7 @@
           {
             "buzz": 0,
             "capital_cents": 0,
-            "detail": "Start alone in a small room at your parents’ house, with $0 rent and room for one desk. You bring your personal phone and laptop; furnishings and research equipment are gameplay purchases.",
+            "detail": "Three free workspaces at your parents’ Silicon Valley home: garage, basement and shed. Buy and place furniture during play; empty rooms provide no compute.",
             "family": "",
             "fee_cents": 0,
             "id": "home",
@@ -72375,7 +72375,7 @@
                 "memory_mib": 0,
                 "name": "Desk and office chair",
                 "price_cents": 35000,
-                "supplier": "Juniper Office & Lab Supply",
+                "supplier": "Juniper Office",
                 "watts": 0,
                 "width": 2
               },
@@ -72388,7 +72388,7 @@
                 "memory_mib": 32768,
                 "name": "Research desktop computer",
                 "price_cents": 140000,
-                "supplier": "Juniper Office & Lab Supply",
+                "supplier": "Kestrel Computing",
                 "watts": 140,
                 "width": 1
               },
@@ -72401,7 +72401,7 @@
                 "memory_mib": 262144,
                 "name": "Compact server rack",
                 "price_cents": 1200000,
-                "supplier": "Juniper Office & Lab Supply",
+                "supplier": "Kestrel Computing",
                 "watts": 900,
                 "width": 1
               },
@@ -72414,7 +72414,7 @@
                 "memory_mib": 0,
                 "name": "Research equipment bench",
                 "price_cents": 450000,
-                "supplier": "Juniper Office & Lab Supply",
+                "supplier": "Meridian Scientific",
                 "watts": 0,
                 "width": 2
               },
@@ -72427,7 +72427,7 @@
                 "memory_mib": 0,
                 "name": "Instrumented evaluation station",
                 "price_cents": 900000,
-                "supplier": "Juniper Office & Lab Supply",
+                "supplier": "Meridian Scientific",
                 "watts": 0,
                 "width": 2
               },
@@ -72440,7 +72440,7 @@
                 "memory_mib": 0,
                 "name": "Materials characterization station",
                 "price_cents": 2400000,
-                "supplier": "Meridian Scientific Instruments",
+                "supplier": "Meridian Scientific",
                 "watts": 600,
                 "width": 2
               },
@@ -72453,27 +72453,196 @@
                 "memory_mib": 0,
                 "name": "Power and thermal test bench",
                 "price_cents": 3200000,
-                "supplier": "Meridian Scientific Instruments",
+                "supplier": "Meridian Scientific",
                 "watts": 900,
                 "width": 2
+              },
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "thin_client",
+                "kind": "thin_client",
+                "memory_mib": 0,
+                "name": "Kestrel Link · thin client",
+                "price_cents": 32000,
+                "supplier": "Kestrel Computing",
+                "watts": 18,
+                "width": 1
+              },
+              {
+                "compute_milli_cu_per_day": 1000,
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "budget_desktop",
+                "kind": "desktop",
+                "memory_mib": 8192,
+                "name": "Kestrel Everyday · basic desktop",
+                "price_cents": 65000,
+                "supplier": "Kestrel Computing",
+                "watts": 65,
+                "width": 1
+              },
+              {
+                "compute_milli_cu_per_day": 6500,
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "coding_workstation",
+                "kind": "workstation",
+                "memory_mib": 65536,
+                "name": "Kestrel Panorama · three-monitor workstation",
+                "price_cents": 260000,
+                "supplier": "Kestrel Computing",
+                "watts": 230,
+                "width": 1
+              },
+              {
+                "compute_milli_cu_per_day": 2000,
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "laptop",
+                "kind": "laptop",
+                "memory_mib": 16384,
+                "name": "Kestrel Roam · employee laptop",
+                "price_cents": 110000,
+                "supplier": "Kestrel Computing",
+                "watts": 45,
+                "width": 1
+              },
+              {
+                "compute_milli_cu_per_day": 7000,
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "premium_laptop",
+                "kind": "laptop",
+                "memory_mib": 65536,
+                "name": "Kestrel Roam Pro · high-end laptop",
+                "price_cents": 420000,
+                "supplier": "Kestrel Computing",
+                "watts": 95,
+                "width": 1
+              },
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "research_laptop",
+                "kind": "research_laptop",
+                "memory_mib": 16384,
+                "name": "Meridian Relay · remote GPU laptop",
+                "price_cents": 190000,
+                "supplier": "Meridian Scientific",
+                "watts": 35,
+                "width": 1
+              },
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "plant",
+                "kind": "plant",
+                "memory_mib": 0,
+                "name": "Juniper fern · floor plant",
+                "price_cents": 6500,
+                "supplier": "Juniper Office",
+                "watts": 0,
+                "width": 1
+              },
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "aquarium",
+                "kind": "aquarium",
+                "memory_mib": 0,
+                "name": "Juniper Reef · fish tank",
+                "price_cents": 85000,
+                "supplier": "Juniper Office",
+                "watts": 60,
+                "width": 2
+              },
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "water_cooler",
+                "kind": "water",
+                "memory_mib": 0,
+                "name": "Breakwater Fresh · water cooler",
+                "price_cents": 18000,
+                "supplier": "Breakwater Pantry",
+                "watts": 45,
+                "width": 1
+              },
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "microwave",
+                "kind": "microwave",
+                "memory_mib": 0,
+                "name": "Breakwater Quick · microwave station",
+                "price_cents": 24000,
+                "supplier": "Breakwater Pantry",
+                "watts": 15,
+                "width": 1
+              },
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 2,
+                "depth": 2,
+                "id": "lunch_table",
+                "kind": "table",
+                "memory_mib": 0,
+                "name": "Juniper Gather · lunch table",
+                "price_cents": 45000,
+                "supplier": "Juniper Office",
+                "watts": 0,
+                "width": 3
+              },
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "supply_cabinet",
+                "kind": "cabinet",
+                "memory_mib": 0,
+                "name": "Juniper Archive · office supply cabinet",
+                "price_cents": 22000,
+                "supplier": "Juniper Office",
+                "watts": 0,
+                "width": 1
+              },
+              {
+                "compute_milli_cu_per_day": 0,
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "snack_machine",
+                "kind": "vending",
+                "memory_mib": 0,
+                "name": "Breakwater Treat · snack machine",
+                "price_cents": 180000,
+                "supplier": "Breakwater Pantry",
+                "watts": 110,
+                "width": 1
               }
             ],
             "home_depth": 3,
-            "home_width": 3,
+            "home_width": 9,
             "markets": [
               {
-                "agent": "Pacific Key Realty",
-                "city": "Los Angeles",
+                "agent": "Valley Key Properties",
+                "city": "Palo Alto",
                 "deposit_months": 2,
                 "early_exit_months": 2,
                 "id": "los_angeles",
                 "land_cents_per_square_metre": 100000,
-                "landlord": "Mariposa Commercial",
+                "landlord": "Peninsula Workspace Partners",
                 "minimum_lease_days": 365,
                 "monthly_land_tax_cents_per_square_metre": 15,
                 "rent_cents_per_square_metre": 4000,
                 "state": "US-CA",
-                "street": "148 Alder Avenue"
+                "street": "Juniper Way"
               },
               {
                 "agent": "Bay Door Commercial",
@@ -72736,6 +72905,308 @@
             "staff_days": 4
           }
         ],
+        "creative_research": {
+          "research.attention_systems": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.compute.fabric_qos": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.compute.flexible_duty": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.compute.kernel_layout": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.compute.local_memory": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.compute.low_precision": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.compute.pooled_boards": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.compute.queue_metering": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.compute.sparse_serving": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.compute.thermal_profiles": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.data.consent_registry": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.data.exchange_protocol": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.data.grid_normalization": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.data.partition_audit": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.data.receipt_layout": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.data.table_indexing": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.data_deduplication": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.efficient_image_features": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.efficient_serving": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.energy_prototype": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.evidence.edge_failures": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.evidence.rare_cases": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.evidence.regional_labeling": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.evidence.service_evidence": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.evidence.stress_replay": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.evidence.transfer_holdouts": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.frontier.cross_source_transfer": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.frontier.efficient_prototypes": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.frontier.field_metering": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.frontier.integrated_measurement": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.frontier.prototype_replication": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.frontier.sensor_alignment": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.frontier_fabric": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.held_out_evaluation": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.integrated_science": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.materials_prototype": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.methods_prototype": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.models.adapter_maps": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.models.bounded_tools": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.models.budgeted_refresh": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.models.grounded_synthesis": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.models.indexed_retrieval": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.models.region_adapters": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.models.supervised_agents": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.models.task_containment": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.models.verified_workflow": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.multimodal_systems": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.operations.cold_replica": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.operations.fault_diagnostics": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.operations.resilient_backplane": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.public.benchmark_exchange": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.public.continuity_packages": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.public.local_rollout": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.public.publication_package": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.public.replication_handbook": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.public.translated_tables": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.refresh_measurement": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.reproducible_tooling": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.sequence_modeling": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          },
+          "research.workflow_verification": {
+            "coordination_bonus_bp": 2000,
+            "difficulty": 12,
+            "earliest_year": 2015
+          }
+        },
         "data": [
           {
             "commercial_use": true,
@@ -74469,7 +74940,36 @@
           },
           "recruitment_days": 30,
           "signing_cost_cents": 100000,
-          "skill_jitter": 15
+          "skill_jitter": 15,
+          "trait_groups": [
+            [
+              "Social: introverted",
+              "Social: outgoing"
+            ],
+            [
+              "Activity: athletic",
+              "Activity: sedentary"
+            ],
+            [
+              "Temperament: deliberate",
+              "Temperament: impulsive",
+              "Temperament: patient",
+              "Temperament: adventurous"
+            ],
+            [
+              "Upbringing: poor",
+              "Upbringing: middle",
+              "Upbringing: rich"
+            ],
+            [
+              "Interest: music",
+              "Interest: nature",
+              "Interest: games",
+              "Interest: history",
+              "Interest: art",
+              "Interest: cooking"
+            ]
+          ]
         },
         "scoring": {
           "founder": "founder_trust",
@@ -74758,7 +75258,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 12,
+      "revision": 13,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

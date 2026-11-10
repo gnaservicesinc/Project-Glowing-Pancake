@@ -39,6 +39,8 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/Workspace3D.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/Headquarters3D.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/HeadquartersPlan.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/EquipmentGlyph.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/EquipmentArt.js"
           "${PROJECT_SOURCE_DIR}/qml/game/HeadquartersTools.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/HeadquartersPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/LegacyWorkplacePanel.qml"
@@ -70,6 +72,7 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/DraftComboBox.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/DraftCheckBox.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FoundingFlow.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/HomeStart.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FoundingStory.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/GameInk.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MainMenu.qml"
@@ -107,7 +110,10 @@ qt_add_resources(pgp-game founding_images
           "${PROJECT_SOURCE_DIR}/assets/founding/library.svg"
           "${PROJECT_SOURCE_DIR}/assets/founding/workshop.svg"
           "${PROJECT_SOURCE_DIR}/assets/founding/company.svg"
-          "${PROJECT_SOURCE_DIR}/assets/founding/trust.svg")
+          "${PROJECT_SOURCE_DIR}/assets/founding/trust.svg"
+          "${PROJECT_SOURCE_DIR}/assets/ui/laptop.svg"
+          "${PROJECT_SOURCE_DIR}/assets/ui/browser.svg"
+          "${PROJECT_SOURCE_DIR}/assets/ui/mail.svg")
 if(APPLE)
     set(CMAKE_OBJCXX_COMPILER "${CMAKE_CXX_COMPILER}")
     enable_language(OBJCXX)

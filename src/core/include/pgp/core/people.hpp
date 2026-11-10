@@ -8,6 +8,7 @@
 #include <vector>
 #include <variant>
 #include <utility>
+#include <span>
 namespace pgp::core {
 struct SimulationState;
 struct SalaryRateTag;
@@ -28,6 +29,7 @@ struct PeopleRules {
     std::uint32_t base_skill=50,skill_jitter=15,pay_skill_weight=20,prestige_skill_weight=2,mission_skill_weight=8;
     BasisPoints maximum_evaluation_credit{2000};
     std::optional<RecruitmentRules> recruitment{};
+    std::vector<std::vector<std::string>> trait_groups{};
     auto operator<=>(const PeopleRules&) const = default;
 };
 struct PersonProfile {
@@ -36,8 +38,15 @@ struct PersonProfile {
     std::uint32_t experience=0,research=0,engineering=0,evaluation=0,mission_fit=0;
     OrdinalDay applied_on{0};
     PortraitRecipe portrait{};
+    std::vector<std::string> traits{};
     auto operator<=>(const PersonProfile&) const = default;
 };
+struct TeamDynamics {
+    std::uint32_t creativity=0,compatibility_bp=0;
+    std::vector<std::string> traits;
+};
+[[nodiscard]] TeamDynamics team_dynamics(std::span<const PersonProfile* const>);
+[[nodiscard]] TeamDynamics research_team(const SimulationState&,std::span<const std::string>);
 struct EmploymentOffer {
     Cents salary{0},signing{0},counter_salary{0},counter_signing{0};
     OrdinalDay submitted_on{0},respond_on{0},expires_on{0};

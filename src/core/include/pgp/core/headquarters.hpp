@@ -110,11 +110,12 @@ struct PlaceHQEquipment {std::uint32_t item=0,mount=0;int x=0,y=0;bool rotated=f
 struct StoreHQEquipment {std::uint32_t item=0;};
 struct AssignHQDesk {std::uint32_t desk=0;std::string person;};
 struct PowerHQEquipment {std::uint32_t item=0;bool powered=true;};
+struct AssignHQLaptop {std::uint32_t item=0;std::string person;};
 struct LeaseHQ {std::string market,plan;};
 struct BuyHQLand {std::string market,plan;};
 struct BuildHQ {std::uint32_t land=0;std::string contractor;int width=0,depth=0;std::vector<HQRoom> rooms;};
 struct MoveToOwnedHQ {std::uint32_t construction=0;};
-using HeadquartersAction=std::variant<BuyHQEquipment,PlaceHQEquipment,StoreHQEquipment,AssignHQDesk,PowerHQEquipment,LeaseHQ,BuyHQLand,BuildHQ,MoveToOwnedHQ>;
+using HeadquartersAction=std::variant<BuyHQEquipment,PlaceHQEquipment,StoreHQEquipment,AssignHQDesk,PowerHQEquipment,LeaseHQ,BuyHQLand,BuildHQ,MoveToOwnedHQ,AssignHQLaptop>;
 struct ManageHeadquarters {HeadquartersAction action;};
 struct HQQuote {
     Cents price{0},maximum{0},monthly{0},exit_fee{0},refund{0};
@@ -138,5 +139,9 @@ std::uint32_t furnished_hq_desks(const SimulationState&);
 std::uint32_t assigned_hq_desks(const SimulationState&);
 [[nodiscard]] std::uint32_t assigned_hq_desk(const SimulationState&,std::string_view person);
 [[nodiscard]] bool hq_workstation_ready(const SimulationState&,std::string_view person);
+[[nodiscard]] bool hq_laptop_ready(const SimulationState&,std::string_view person);
+[[nodiscard]] bool hq_desk_device(std::string_view kind);
+[[nodiscard]] bool hq_portable(std::string_view kind);
+[[nodiscard]] std::string hq_placement_blocker(const SimulationState&,const PlaceHQEquipment&);
 [[nodiscard]] bool hq_has_lab_equipment(const SimulationState&,std::span<const std::string> equipment);
 }
