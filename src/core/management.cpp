@@ -433,7 +433,7 @@ SliceScore slice_score(const SimulationState& s) {
 }
 
 void validate_management(const SimulationState& s,bool deep) {
-    validate_people(s);
+    validate_people(s,deep);
     if (!s.management) {
         if (s.accounts && s.accounts->taxes) invalid("Corporate taxes require the scenario's management policy");
         if (s.market && std::any_of(s.market->price_events.begin(),s.market->price_events.end(),[](const auto& e){return !e.actor.empty();}))

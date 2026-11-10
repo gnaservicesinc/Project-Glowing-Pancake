@@ -63,7 +63,7 @@ std::uint32_t employee_contact_room(const SimulationState& state, std::string_vi
     return assigned_hq_room(state, person);
 }
 
-void manage_people_contact(SimulationState& state, const ContactAction& action) {
+void manage_people_contact(SimulationState& state, const ContactAction& action,Cents protected_cash) {
     if (!state.management || !state.management->people)
         throw std::invalid_argument("This company has no individual contacts.");
     auto& contacts = state.management->people->contacts;
@@ -75,7 +75,8 @@ void manage_people_contact(SimulationState& state, const ContactAction& action) 
             if (contact != contacts.end()) throw std::invalid_argument("You have already exchanged contact details.");
             contacts.push_back({request.person, state.date, {}});
         } else {
-            if (contact == contacts.end()) throw std::invalid_argument("Choose someone whose contact details you have.");
+            if (contact == contacts.end() && (!std::is_same_v<Action,DismissPeopleContact> || !request.room))
+                throw std::invalid_argument("Choose someone whose contact details you have.");
             if (request.room) {
                 require_room(state, request.person, request.room);
             } else {
@@ -85,30 +86,36 @@ void manage_people_contact(SimulationState& state, const ContactAction& action) 
                     resolve_app_device(state, request.device, "people", at_hq(state)) != request.device)
                     throw std::invalid_argument("The selected device cannot send a message here.");
             }
-            if (!contact->opening && request.topic != "check_in" && request.topic != "workstation")
-                throw std::invalid_argument("Choose a conversation topic.");
-            auto& messages = contact->messages;
-            if (std::ranges::any_of(messages, [&](const auto& old) { return old.day == state.date && old.topic == request.topic; }))
-                throw std::invalid_argument("You already asked about this today.");
-            ContactMessage message{state.date, request.topic, {}, -1};
-            const auto* found=employee(state,request.person);
-            if (contact->opening) {
-                message.reply=opening_reply(state,*contact,request.topic);
-            } else if (!found) {
-                throw std::invalid_argument("Choose an employee contact.");
-            } else if (found->departed_on) {
-                message.reply = "former";
-            } else if (request.topic == "check_in") {
-                const auto moods = workplace_moods(state);
-                const auto mood = moods.find(request.person);
-                message.reply = mood == moods.end() ? "settled" : "mood";
-                if (mood != moods.end()) message.mood = mood->second.score;
+            if constexpr (std::is_same_v<Action,DismissPeopleContact>) {
+                // Keep an employment conversation available after an in-person departure.
+                if(contact==contacts.end()) contacts.push_back({request.person,state.date,{}});
+                dismiss_employee(state,request.person,protected_cash);
             } else {
-                message.reply = hq_laptop_ready(state, request.person) ? "laptop"
-                    : hq_workstation_ready(state, request.person) ? "desk" : "needs_computer";
+                if (!contact->opening && request.topic != "check_in" && request.topic != "workstation")
+                    throw std::invalid_argument("Choose a conversation topic.");
+                auto& messages = contact->messages;
+                if (std::ranges::any_of(messages, [&](const auto& old) { return old.day == state.date && old.topic == request.topic; }))
+                    throw std::invalid_argument("You already asked about this today.");
+                ContactMessage message{state.date, request.topic, {}, -1};
+                const auto* found=employee(state,request.person);
+                if (contact->opening) {
+                    message.reply=opening_reply(state,*contact,request.topic);
+                } else if (!found) {
+                    throw std::invalid_argument("Choose an employee contact.");
+                } else if (found->departed_on) {
+                    message.reply = "former";
+                } else if (request.topic == "check_in") {
+                    const auto moods = workplace_moods(state);
+                    const auto mood = moods.find(request.person);
+                    message.reply = mood == moods.end() ? "settled" : "mood";
+                    if (mood != moods.end()) message.mood = mood->second.score;
+                } else {
+                    message.reply = hq_laptop_ready(state, request.person) ? "laptop"
+                        : hq_workstation_ready(state, request.person) ? "desk" : "needs_computer";
+                }
+                if (messages.size() == message_limit) messages.erase(messages.begin());
+                messages.push_back(std::move(message));
             }
-            if (messages.size() == message_limit) messages.erase(messages.begin());
-            messages.push_back(std::move(message));
         }
     }, action);
 }

@@ -10,6 +10,7 @@ ColumnLayout {
     property int room: 1
     property string selected: ""
     property string pendingTopic: ""
+    property string pendingDeparture: ""
     property var messageRows: []
     signal revealRequested(Item target)
     signal governanceRequested()
@@ -40,12 +41,21 @@ ColumnLayout {
             revealRequested(latest)
         }
     }
+    function revealDeparture() {
+        if (dismissal.visible || !pendingDeparture || thread.id !== pendingDeparture || thread.current !== false) return
+        pendingDeparture = ""
+        if (visible) {
+            contactStatus.forceActiveFocus(Qt.OtherFocusReason)
+            revealRequested(contactStatus)
+        }
+    }
     onThreadChanged: {
         const rows = (thread.messages || []).slice().reverse()
         if (JSON.stringify(rows) !== JSON.stringify(messageRows)) messageRows = rows
         Qt.callLater(revealReply)
+        Qt.callLater(revealDeparture)
     }
-    onSelectedChanged: pendingTopic = ""
+    onSelectedChanged: { pendingTopic = ""; pendingDeparture = "" }
 
     component Copy: Label {
         Layout.fillWidth: true
@@ -133,7 +143,7 @@ ColumnLayout {
         spacing: 8
         Copy { text: panel.thread.name || ""; font.bold: true; font.pixelSize: panel.textSize * 1.22 }
         Copy { text: panel.thread.role || ""; color: "#9fc2b5" }
-        Copy { visible: !!panel.thread.status; text: panel.thread.status || ""; color: "#bddda7" }
+        Copy { id: contactStatus; objectName: "contactEmploymentStatus"; visible: !!panel.thread.status; text: panel.thread.status || ""; color: "#bddda7" }
         WorldButton {
             objectName: "exchangeContactButton"
             visible: panel.inPerson && !panel.thread.exchanged
@@ -168,6 +178,20 @@ ColumnLayout {
             text: qsTr("Open company governance")
             textSize: panel.textSize
             onClicked: panel.governanceRequested()
+        }
+        WorldButton {
+            objectName: "contactReviewDismissal"
+            visible: !!panel.thread.canDismiss
+            text: qsTr("Review dismissal…")
+            textSize: panel.textSize
+            enabled: panel.editable
+            onClicked: {
+                dismissal.person = panel.selected
+                dismissal.room = panel.conversationRoom
+                dismissal.revision = campaign.world.reviewToken
+                dismissal.quote = campaign.world.dismissalQuote(dismissal.person, dismissal.room)
+                dismissal.open()
+            }
         }
         Repeater {
             id: messageCards
@@ -207,6 +231,72 @@ ColumnLayout {
                 Layout.maximumWidth: panel.width
                 enabled: panel.editable
                 onClicked: campaign.world.assignHQLaptop(modelData.id, panel.selected, campaign.world.reviewToken)
+            }
+        }
+    }
+    GameDialog {
+        id: dismissal
+        objectName: "contactDismissalDialog"
+        property string person: ""
+        property int room: 0
+        property string revision: ""
+        property var quote: ({})
+        title: qsTr("Review employment departure")
+        modal: true
+        focus: true
+        anchors.centerIn: Overlay.overlay
+        width: Math.min((Overlay.overlay ? Overlay.overlay.width : 650) - 32, panel.textSize * 36)
+        height: Math.min((Overlay.overlay ? Overlay.overlay.height : 480) - 32, panel.textSize * 28)
+        header: Item { visible: false; implicitHeight: 0 }
+        enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: campaign.reducedMotion ? 0 : 150 } }
+        exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: campaign.reducedMotion ? 0 : 100 } }
+        onOpened: if (dismissalScroll.contentItem) dismissalScroll.contentItem.contentY = 0
+        onClosed: Qt.callLater(panel.revealDeparture)
+        contentItem: ScrollView {
+            id: dismissalScroll
+            objectName: "contactDismissalScroll"
+            contentWidth: availableWidth
+            clip: true
+            ScrollBar.vertical.policy: ScrollBar.AlwaysOn
+            ColumnLayout {
+                width: dismissalScroll.availableWidth
+                spacing: 12
+                Copy { text: dismissal.title; font.bold: true; color: "#f1e3bc"; font.pixelSize: panel.textSize * 1.2 }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Image {
+                        visible: !!dismissal.quote.portrait
+                        Layout.preferredWidth: panel.textSize * 3
+                        Layout.preferredHeight: Layout.preferredWidth
+                        source: dismissal.quote.portrait || ""
+                        fillMode: Image.PreserveAspectFit
+                    }
+                    Copy { text: dismissal.quote.name || ""; font.bold: true }
+                }
+                Copy { objectName: "contactDismissalTerms"; text: dismissal.quote.detail || "" }
+            }
+        }
+        footer: Flow {
+            width: dismissal.availableWidth
+            padding: 8
+            spacing: 8
+            WorldButton {
+                objectName: "contactDismissalBack"
+                text: qsTr("Keep employee")
+                textSize: panel.textSize
+                onClicked: dismissal.close()
+            }
+            WorldButton {
+                objectName: "contactDismissalConfirm"
+                text: qsTr("Pay severance & dismiss")
+                textSize: panel.textSize
+                width: Math.min(implicitWidth, parent.width - 16)
+                enabled: panel.editable && !!dismissal.quote.allowed && dismissal.revision === campaign.world.reviewToken
+                onClicked: {
+                    panel.pendingDeparture = dismissal.person
+                    campaign.world.dismissContact(dismissal.person, dismissal.room, dismissal.revision)
+                    dismissal.close()
+                }
             }
         }
     }

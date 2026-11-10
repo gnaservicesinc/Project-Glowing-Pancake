@@ -26,6 +26,7 @@ inline Json encode(const core::PeopleRules& r) {
         {"minimum_ask_bp",n.minimum_ask},{"maximum_ask_bp",n.maximum_ask},{"minimum_acceptance_bp",n.minimum_acceptance},{"maximum_acceptance_bp",n.maximum_acceptance},
         {"minimum_offer_bp",n.minimum_offer},{"maximum_offer_bp",n.maximum_offer},{"maximum_signing_multiple",n.maximum_signing_multiple}};}
     if(!r.trait_groups.empty()) j["trait_groups"]=r.trait_groups;
+    if(r.dismissal) j["dismissal"]={{"severance_months",r.dismissal->severance_months}};
     if(r.mood) {
         const auto& m=*r.mood;
         j["mood"]={{"pay",m.pay},{"company_prestige",m.company_prestige},{"ceo_prestige",m.ceo_prestige},
@@ -35,6 +36,12 @@ inline Json encode(const core::PeopleRules& r) {
     return j;
 }
 inline core::PeopleRules decode(Json j) {
+    std::optional<core::DismissalRules> dismissal;
+    if(j.contains("dismissal")) {
+        fields(j.at("dismissal"),{"severance_months"});
+        dismissal=core::DismissalRules{count(j.at("dismissal").at("severance_months"))};
+        j.erase("dismissal");
+    }
     std::optional<core::WorkplaceMoodRules> mood;
     if(j.contains("mood")) {
         const auto& m=j.at("mood");
@@ -72,7 +79,7 @@ inline core::PeopleRules decode(Json j) {
         j.erase("recruitment");
     }
     fields(j,{"first_names","last_names","maximum_hq","candidates","recruitment_days","onboarding_days","monthly_salary_cents","signing_cost_cents","base_skill","skill_jitter","pay_skill_weight","prestige_skill_weight","mission_skill_weight","maximum_evaluation_credit_bp"});
-    core::PeopleRules r;r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);r.mood=std::move(mood);
+    core::PeopleRules r;r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);r.mood=std::move(mood);r.dismissal=dismissal;
     for(const char* name:{"first_names","last_names"}) {
         const auto& list=j.at(name);
         if(!list.is_array() || list.size()>512) throw std::invalid_argument("Name pool exceeds its limit");

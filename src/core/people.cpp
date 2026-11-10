@@ -70,6 +70,7 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
 }
 }
 void validate_people_rules(const PeopleRules& r) {
+    if(r.dismissal && r.dismissal->severance_months>6) invalid("Dismissal severance must be between zero and six months of salary.");
     if(r.recruitment) validate_recruitment_rules(*r.recruitment);
     if(r.trait_groups.size()>12) invalid("Too many trait categories.");
     std::set<std::string> trait_names;
@@ -116,6 +117,7 @@ void initialize_people(SimulationState& s,std::uint64_t seed,std::string founder
         }
         s.management->people->employees.push_back({std::move(terms),s.date,s.date,true,{}});
     }
+    initialize_individual_payroll(s);
     for(const auto& offer:s.management->catalog.specialists) {
         auto person=applicant(s,true).profile;person.name=offer.name;person.role="Evaluation specialist";
         s.management->people->known_people.emplace(offer.id,std::move(person));
@@ -172,7 +174,7 @@ void withdraw_people(SimulationState& s) {
     for(auto& employee:s.management->people->employees) if(!employee.departed_on) employee.departed_on=s.date;
     s.management->people->applicants.clear();
 }
-void validate_people(const SimulationState& s) {
+void validate_people(const SimulationState& s,bool deep) {
     if(!s.management) return;
     const auto& m=*s.management;
     if(m.people.has_value()!=m.catalog.people.has_value()) invalid("HQ people and recruitment rules must agree.");
@@ -218,5 +220,6 @@ void validate_people(const SimulationState& s) {
     if(opening!=opening_staff_count(*s.capacity) || static_cast<std::size_t>(std::ranges::count_if(s.capacity->staff_additions,[](const auto& row){return row.id.starts_with("employee/");}))!=added)
         invalid("Individual HQ people do not reconcile with their staffing capacity.");
     validate_people_contacts(s);
+    if(deep) validate_employee_departures(s);
 }
 }

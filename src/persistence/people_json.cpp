@@ -60,7 +60,8 @@ Json people_json(const core::PeopleState& p) {
     for(const auto& [id,person]:p.known_people) known[id]=profile(person);
     for(const auto& a:p.applicants) applicants.push_back(applicant(a));
     for(const auto& e:p.employees) employees.push_back({{"terms",applicant(e.terms)},{"joined_on",e.joined_on.value()},{"ready_on",e.ready_on.value()},
-        {"opening",e.opening},{"departed_on",e.departed_on?Json(e.departed_on->value()):Json(nullptr)}});
+        {"opening",e.opening},{"departed_on",e.departed_on?Json(e.departed_on->value()):Json(nullptr)},
+        {"dismissal_severance",e.dismissal_severance?Json(e.dismissal_severance->value()):Json(nullptr)}});
     for(const auto& contact:p.contacts) {
         Json messages=Json::array();
         for(const auto& m:contact.messages) messages.push_back({{"day",m.day.value()},{"topic",m.topic},{"reply",m.reply},{"mood",m.mood}});
@@ -79,9 +80,10 @@ core::PeopleState parse_people(const Json& j) {
     if(!j.at("known_people").is_object() || j.at("known_people").size()>512) invalid("known_people","Authored identity count out of bounds");
     for(const auto& [id,row]:j.at("known_people").items()) p.known_people.emplace(text(Json(id),"offer id",128),parse_profile(row));
     array(j.at("employees"),"employees",256);for(const auto& e:j.at("employees")) {
-        fields(e,"employee",{"terms","joined_on","ready_on","opening","departed_on"});
+        fields(e,"employee",{"terms","joined_on","ready_on","opening","departed_on","dismissal_severance"});
         p.employees.push_back({parse_applicant(e.at("terms")),core::OrdinalDay{i64(e.at("joined_on"),"joined_on")},core::OrdinalDay{i64(e.at("ready_on"),"ready_on")},boolean(e.at("opening"),"opening"),
-            e.at("departed_on").is_null()?std::nullopt:std::optional{core::OrdinalDay{i64(e.at("departed_on"),"departed_on")}}});
+            e.at("departed_on").is_null()?std::nullopt:std::optional{core::OrdinalDay{i64(e.at("departed_on"),"departed_on")}},
+            e.at("dismissal_severance").is_null()?std::nullopt:std::optional{core::Cents{i64(e.at("dismissal_severance"),"dismissal_severance")}}});
     }
     array(j.at("contacts"),"contacts",256+core::opening_contact_limit);
     for(const auto& contact:j.at("contacts")) {

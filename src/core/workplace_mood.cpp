@@ -82,7 +82,7 @@ std::map<std::string, EmployeeMood> workplace_moods(const SimulationState& state
         const auto& person = terms.profile;
         EmployeeMood report;
         if(const auto found=gathering_points.find(person.id);found!=gathering_points.end())report.gatherings=found->second;
-        report.pay = pay_points(employee.opening ? inherited_salary : terms.salary,
+        report.pay = pay_points(employee.opening && !rules.dismissal ? inherited_salary : employee_monthly_salary(state,employee),
             terms.recruitment ? terms.recruitment->ask_salary : rules.monthly_salary, mood.pay);
         report.company_prestige = prestige_points(company_reputation, mood.company_prestige);
         report.ceo_prestige = prestige_points(ceo_reputation, mood.ceo_prestige);

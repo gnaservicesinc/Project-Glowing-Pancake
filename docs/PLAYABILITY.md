@@ -107,6 +107,15 @@ their computer. **Messages** opens the same saved conversation, using a working
 tablet when available. From the conversation, you can also issue a delivered,
 unassigned company laptop.
 
+Choose **Review dismissal…** to see the company payment, monthly payroll saving,
+equipment assignments and unfinished projects affected. The current severance is
+one month of that person's salary. Confirming ends their payroll today, releases
+their desk and laptop, ends any operations manager appointment and cancels their
+named research or specialist work. Earned wages and completed work stay recorded.
+The action refuses if protected cash or other staff commitments prevent it.
+**Keep employee** closes the review without changes. The former employee stays
+in Messages with their departure date and severance payment.
+
 Recruiter and funding conversations from the home computer also appear in
 company **Messages**. Select the sender to revisit the original message and
 confirm the recorded outcome. For signed agreements, ask about the organization’s

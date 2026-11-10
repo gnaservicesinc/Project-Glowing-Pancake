@@ -28,6 +28,10 @@ struct WorkplaceMoodRules {
     std::map<std::string, std::uint32_t> amenities;
     auto operator<=>(const WorkplaceMoodRules&) const = default;
 };
+struct DismissalRules {
+    std::uint32_t severance_months=1;
+    auto operator<=>(const DismissalRules&) const = default;
+};
 struct PeopleRules {
     std::vector<std::string> first_names,last_names;
     std::uint32_t maximum_hq=128,candidates=4;
@@ -38,6 +42,7 @@ struct PeopleRules {
     std::optional<RecruitmentRules> recruitment{};
     std::vector<std::vector<std::string>> trait_groups{};
     std::optional<WorkplaceMoodRules> mood{};
+    std::optional<DismissalRules> dismissal{};
     auto operator<=>(const PeopleRules&) const = default;
 };
 struct PersonProfile {
@@ -88,6 +93,7 @@ struct Employee {
     OrdinalDay joined_on{0},ready_on{0};
     bool opening=false;
     std::optional<OrdinalDay> departed_on;
+    std::optional<Cents> dismissal_severance{};
     auto operator<=>(const Employee&) const = default;
 };
 struct ContactMessage {
@@ -131,15 +137,27 @@ using RecruitmentAction=std::variant<ProposeEmployment,AcceptEmploymentCounter,D
 struct ManageRecruitment {RecruitmentAction action;};
 struct ExchangePeopleContact {std::string person;std::uint32_t room=0;};
 struct MessagePeopleContact {std::string person,topic,device;std::uint32_t room=0;};
-using ContactAction=std::variant<ExchangePeopleContact,MessagePeopleContact>;
+struct DismissPeopleContact {std::string person,device;std::uint32_t room=0;};
+using ContactAction=std::variant<ExchangePeopleContact,MessagePeopleContact,DismissPeopleContact>;
 struct ManagePeopleContact {ContactAction action;};
-void manage_people_contact(SimulationState&,const ContactAction&);
+struct DismissalQuote {
+    Cents monthly_salary{0},severance{0};
+    std::vector<std::string> projects;
+    std::uint32_t returned_items=0;
+    bool operations_manager=false;
+};
+[[nodiscard]] Cents employee_monthly_salary(const SimulationState&,const Employee&);
+[[nodiscard]] DismissalQuote dismissal_quote(const SimulationState&,std::string_view);
+void dismiss_employee(SimulationState&,std::string_view,Cents protected_cash);
+void initialize_individual_payroll(SimulationState&);
+void validate_employee_departures(const SimulationState&);
+void manage_people_contact(SimulationState&,const ContactAction&,Cents protected_cash=Cents{0});
 void validate_people_contacts(const SimulationState&);
 [[nodiscard]] std::uint32_t employee_contact_room(const SimulationState&,std::string_view person);
 void validate_people_rules(const PeopleRules&);
 void initialize_people(SimulationState&,std::uint64_t seed,std::string founder_name={},std::string founder_pronouns={},bool founder_researcher=false,std::uint32_t prestige=0,std::string mission="research");
 void prepare_people(SimulationState&);
-void validate_people(const SimulationState&);
+void validate_people(const SimulationState&,bool deep=true);
 void hire_employee(SimulationState&,std::string_view,Cents protected_cash,std::uint32_t desk=0);
 void set_recruiting_terms(SimulationState&,const SetRecruitingTerms&);
 void withdraw_people(SimulationState&);

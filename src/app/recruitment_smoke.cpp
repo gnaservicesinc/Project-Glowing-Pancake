@@ -6,6 +6,7 @@
 #include <QQuickWindow>
 #include <QTimer>
 #include <QtTest/QTest>
+#include <algorithm>
 #include <iostream>
 #include <memory>
 
@@ -254,7 +255,7 @@ void schedule_recruitment_smoke(QQuickWindow &window, pgp::bridge::CampaignContr
                     break;
                 }
             }
-            run->phase = 30;
+            run->phase = 34;
             return;
         case 20:
             if (item("employeeProfileScroll") || !key("closeDeviceButton")) {
@@ -335,9 +336,68 @@ void schedule_recruitment_smoke(QQuickWindow &window, pgp::bridge::CampaignContr
                 return;
             }
             std::cout << "Headquarters contact exchange, tablet messages, laptop issuance and fresh reload passed\n";
+            if(world->contactThread(run->second).value("canDismiss").toBool()) {
+                if(!key("contactReviewDismissal")) {fail("Open the dismissal review");return;}
+                run->frames=0;
+            } else run->phase=33;
             break;
         }
-        case 30:
+        case 30: {
+            if(++run->frames<3) return;
+            const auto quote=world->dismissalQuote(run->second,0);
+            const auto* terms=item("contactDismissalTerms");
+            const auto* confirm=item("contactDismissalConfirm");
+            if(!terms || !confirm || !confirm->isEnabled() || !quote.value("allowed").toBool() ||
+                terms->property("text").toString()!=quote.value("detail").toString() ||
+                confirm->mapToScene({0,confirm->height()}).y()>window.height() || !capture("dismissal-review-compact")) {
+                fail("Show quoted severance and reachable confirmation at 200% text, then cancel");return;
+            }
+            auto* scroll=item("contactDismissalScroll");
+            auto* content=scroll?scroll->property("contentItem").value<QObject*>():nullptr;
+            if(!content || !content->setProperty("contentY",std::max(0.,content->property("contentHeight").toDouble()-content->property("height").toDouble()))) {
+                fail("Scroll through the complete dismissal terms");return;
+            }
+            run->frames=0;run->phase=35;return;
+        }
+        case 31:
+            if(roster.employees.front().departed_on || !pgp::core::hq_laptop_ready(state,run->second.toStdString()) ||
+                !key("contactReviewDismissal")) {
+                fail("Cancelling must preserve employment and the issued laptop");return;
+            }
+            run->frames=0;
+            break;
+        case 32:
+            if(++run->frames<3) return;
+            if(!key("contactDismissalConfirm")) {fail("Confirm the reviewed dismissal");return;}
+            run->frames=0;
+            break;
+        case 33: {
+            if(++run->frames<3) return;
+            pgp::persistence::CurrentCampaign current{paths.saves_directory / "continuing"};
+            const auto& employee=roster.employees.front();
+            const auto* status=item("contactEmploymentStatus");
+            const auto* viewport=item("managementScroll");
+            if(!employee.departed_on || !employee.dismissal_severance || pgp::core::hq_laptop_ready(state,run->second.toStdString()) ||
+                world->contactThread(run->second).value("canDismiss").toBool() ||
+                !world->contactThread(run->second).value("status").toString().contains("Severance") ||
+                !status || !viewport || !status->hasActiveFocus() || status->mapToItem(viewport,{0,status->height()}).y()>viewport->height()+1 ||
+                current.resume(*campaign.snapshot()->content)!=std::optional{campaign.snapshot()->checkpoint} || !capture("dismissed-compact")) {
+                fail("Departure, former contact, returned laptop and paid severance must reload");return;
+            }
+            std::cout<<"Reviewed dismissal, cancellation, company severance, returned laptop, former contact and compact fresh reload passed\n";
+            break;
+        }
+        case 35: {
+            if(++run->frames<3) return;
+            const auto* terms=item("contactDismissalTerms");
+            const auto* scroll=item("contactDismissalScroll");
+            if(!terms || !scroll || terms->mapToItem(scroll,{0,terms->height()}).y()>scroll->height()+1 ||
+                !capture("dismissal-terms-compact") || !key("contactDismissalBack")) {
+                fail("The final terms and cancellation must be reachable at 200% text");return;
+            }
+            run->phase=31;return;
+        }
+        case 34:
             std::cout << "Recruiting UI passed: comparison, two counteroffers, decline, signing, desk assignment, "
                          "onboarding, fresh reload and 200% text\n";
             timer->stop();

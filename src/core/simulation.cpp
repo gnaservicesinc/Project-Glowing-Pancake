@@ -949,8 +949,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             } else if constexpr (std::is_same_v<Action, HireEmployee>) {
                 const auto before=next.cash;hire_employee(next,action.id,reserved_cash(next),action.desk);(void)receipt(next,"hire_employee",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, ManagePeopleContact>) {
-                manage_people_contact(next,action.action);
-                (void)receipt(next,"people_contact");
+                const auto before=next.cash;
+                manage_people_contact(next,action.action,reserved_cash(next));
+                (void)receipt(next,std::holds_alternative<DismissPeopleContact>(action.action)?"dismiss_employee":"people_contact",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, ManagePersonalLife>) {
                 manage_personal_life(next,action.action);
                 (void)receipt(next,"personal_life");

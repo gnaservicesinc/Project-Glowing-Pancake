@@ -123,7 +123,14 @@ outstanding principal and owes the remaining balance after 730 days. Personal
 home visits during commercial occupancy and stock and bond holdings remain open.
 At HQ the founder can select an onboarded employee at their assigned desk and
 exchange contact details. A supported device opens the same saved conversation
-for workplace check-ins, equipment questions and laptop issuance. The home inbox
+for workplace check-ins, equipment questions and laptop issuance. Dismissal can
+be reviewed in person or through a known contact's compatible device. It pays
+the authored severance from company cash, ends individual payroll, releases
+desks and laptops, and cancels unfinished projects naming that employee.
+An operations appointment ends with their departure. A remaining staff shortfall
+blocks the action until other work is released. Former conversations and earned
+work remain in history. Severance and broader retention behavior need balance
+testing. The home inbox
 keeps recruiter invitations, lab application outcomes and funding replies.
 Actual Genius receives an Alder invitation, and Kestrel approaches a genius
 without family wealth. Accepting an offer selects its real terms for signing.

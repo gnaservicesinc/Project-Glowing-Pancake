@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.48.0-dev.1",
+  "content_version": "0.49.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -75020,6 +75020,9 @@
         "people": {
           "base_skill": 50,
           "candidates": 4,
+          "dismissal": {
+            "severance_months": 1
+          },
           "first_names": [
             "Alex",
             "Jordan",
@@ -75718,7 +75721,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 19,
+      "revision": 20,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

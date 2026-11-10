@@ -367,3 +367,10 @@ target_compile_definitions(pgp-hosted-events-test PRIVATE PGP_EVENTS_SOURCE="${P
 pgp_project_target(pgp-hosted-events-test)
 add_test(NAME runtime.hosted-events COMMAND pgp-hosted-events-test)
 set_tests_properties(runtime.hosted-events PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-employee-departure-test employee_departure_test.cpp)
+target_link_libraries(pgp-employee-departure-test PRIVATE pgp::session)
+target_compile_definitions(pgp-employee-departure-test PRIVATE PGP_DEPARTURE_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/employee-dismissal.json")
+pgp_project_target(pgp-employee-departure-test)
+add_test(NAME runtime.employee-departure COMMAND pgp-employee-departure-test)
+set_tests_properties(runtime.employee-departure PROPERTIES TIMEOUT 30)

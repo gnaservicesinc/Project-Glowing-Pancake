@@ -242,6 +242,8 @@ QVariantList WorldController::people() const {
             if(!employee.opening) workplace+=tr("\nAgreed salary %1/month · signing payment %2")
                 .arg(QLocale{QLocale::English,QLocale::UnitedStates}.toCurrencyString(static_cast<double>(employee.terms.salary.value())/100),
                     QLocale{QLocale::English,QLocale::UnitedStates}.toCurrencyString(static_cast<double>(employee.terms.signing.value())/100));
+            else if(s.management->catalog.people->dismissal) workplace+=tr("\nInherited salary %1/month")
+                .arg(QLocale{QLocale::English,QLocale::UnitedStates}.toCurrencyString(static_cast<double>(core::employee_monthly_salary(s,employee).value())/100));
             const auto years=std::max(0,core::from_ordinal(s.date).year-core::from_ordinal(p.applied_on).year);
             auto row=QVariantMap{{"id",q(p.id)},{"portrait",portraitUrl(p.portrait)},{"name",q(p.name)},{"initials",q(p.name).section(' ',0,0).left(1)+q(p.name).section(' ',-1).left(1)}, {"role",managing?tr("HQ operations manager"):q(p.role)},
                 {"detail",tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8\n%9")
@@ -383,10 +385,15 @@ QVariantMap WorldController::contactThread(QString person) const {
         }
     }
     const auto& profile=employee->terms.profile;
+    const auto employment_status=employee->dismissal_severance?
+        tr("Employment ended %1 · Severance paid %2").arg(q(core::iso_date(*employee->departed_on)),
+            QLocale{QLocale::English,QLocale::UnitedStates}.toCurrencyString(static_cast<double>(employee->dismissal_severance->value())/100)):
+        employee->departed_on?tr("Former employee"):tr("Current employee");
     const QVariantList topics{topic("check_in","contactCheckIn",tr("How's work going?"),checked_in),
         topic("workstation","contactWorkstation",tr("Ask about their computer"),checked_workstation)};
     return {{"id",person},{"name",q(profile.name)},{"portrait",portraitUrl(profile.portrait)},{"role",q(profile.role)},
         {"exchanged",contact!=roster.contacts.end()},{"current",!employee->departed_on},{"topics",topics},{"messages",messages},
+        {"status",employment_status},{"canDismiss",!employee->departed_on && state.management->catalog.people->dismissal.has_value()},
         {"room",core::employee_contact_room(state,id)}};
 }
 
@@ -400,6 +407,43 @@ void WorldController::messageContact(QString person,QString topic,int room,QStri
     const auto device=room==0?navigation_.value("device").toString().toStdString():std::string{};
     emit actionRequested(core::ManagePeopleContact{core::MessagePeopleContact{
         person.toStdString(),topic.toStdString(),device,static_cast<std::uint32_t>(room)}});
+}
+
+QVariantMap WorldController::dismissalQuote(QString person,int room) const {
+    if(!contactsAvailable() || room<0) return {};
+    const auto& state=snapshot_->checkpoint.world.simulation;
+    try {
+        const auto quote=core::dismissal_quote(state,person.toStdString());
+        const auto money=[](core::Cents amount){return QLocale{QLocale::English,QLocale::UnitedStates}.toCurrencyString(static_cast<double>(amount.value())/100);};
+        const auto employee=std::ranges::find(state.management->people->employees,person.toStdString(),[](const auto& row){return row.terms.profile.id;});
+        QStringList work;
+        for(const auto& id:quote.projects) {
+            const auto project=std::ranges::find(state.capacity->projects,id,&core::CapacityProject::id);
+            work.push_back(q(project->cause.empty()?id:project->cause));
+        }
+        const auto device=room==0?navigation_.value("device").toString().toStdString():std::string{};
+        core::Simulation preview{state};
+        const auto result=preview.submit({state.revision,core::ManagePeopleContact{core::DismissPeopleContact{
+            person.toStdString(),device,static_cast<std::uint32_t>(room)}}});
+        const auto months=state.management->catalog.people->dismissal->severance_months;
+        const auto duration=months==1?tr("1 month of salary"):tr("%1 months of salary").arg(months);
+        auto detail=tr("End %1's employment today.\n\nCompany payment now: %2 severance (%3).\nPayroll ends today: %4/month. Earned wages and existing bills remain payable.\n\n%5 desk or laptop assignments will be released; the company keeps its equipment.")
+            .arg(q(employee->terms.profile.name),money(quote.severance),duration)
+            .arg(money(quote.monthly_salary)).arg(quote.returned_items);
+        if(!work.empty()) detail+=tr("\n\nThese unfinished projects will be cancelled. Completed work stays in their history; choose a new team to begin again:\n• %1").arg(work.join("\n• "));
+        if(quote.operations_manager) detail+=tr("\n\nTheir operations manager appointment will end.");
+        detail+=tr("\n\nTheir conversation remains available in Messages.");
+        if(!result.accepted()) detail+="\n\n"+q(result.explanation);
+        return {{"allowed",result.accepted()},{"detail",detail},{"portrait",portraitUrl(employee->terms.profile.portrait)},
+            {"name",q(employee->terms.profile.name)},{"severance",money(quote.severance)},{"payroll",money(quote.monthly_salary)}};
+    } catch(const std::exception& error) {return {{"allowed",false},{"detail",q(error.what())}};}
+}
+
+void WorldController::dismissContact(QString person,int room,QString revision) {
+    if(!hqReview(revision) || room<0) return;
+    const auto device=room==0?navigation_.value("device").toString().toStdString():std::string{};
+    emit actionRequested(core::ManagePeopleContact{core::DismissPeopleContact{
+        person.toStdString(),device,static_cast<std::uint32_t>(room)}});
 }
 
 QVariantList WorldController::applicants() const {
