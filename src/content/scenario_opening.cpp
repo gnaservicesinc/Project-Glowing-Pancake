@@ -61,6 +61,7 @@ std::optional<core::ManagementCatalog> scenario_management(const ScenarioDefinit
                 auto& g=*result->governance;
                 std::erase_if(g.financing,[](const auto& f){return f.acquired.value()>0;});
                 g.public_listing.reset();
+                g.contact_finance.reset();
                 for(auto& e:g.executives) {e.hybrid_grant=core::BasisPoints{0};e.hybrid_salary=e.cash_salary;}
             }
         }

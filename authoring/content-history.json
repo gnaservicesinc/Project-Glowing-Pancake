@@ -107564,6 +107564,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "2a5805b719bf30bd64f12bad21a15af528ded4aa3ad61074ac6c4c6a7beb504b",
+          "before_hash": "a5415d423535da0efa796619b95a4125d097c6649920b893ebf222e5c6c7ee18",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 20,
+          "revision": 21
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "efba4c308b7daa794cecd48abad52eedf2a526840fd45d2fad2b63445befe529",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.50.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 51,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.49.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000050.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000051.collection.json",
+      "summary": "Add reputation-backed funding discussions with continuing investor contacts and actual board approval",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

@@ -197,7 +197,10 @@ void company_equity(SimulationState& s,std::string investor,Cents proceeds,Basis
     }
     s.cash=accounts_report(*s.accounts).cash;
 }
-void negotiate_corporate_finance(SimulationState& s,std::string_view id) {
+void negotiate_corporate_finance(SimulationState& s,std::string_view id,bool from_contact) {
+    const auto& contact_rules=catalog(s).contact_finance;
+    if(contact_rules && !from_contact && std::ranges::any_of(contact_rules->offers,[&](const auto& offer){return offer.terms==id;}))
+        invalid("Discuss this round with the investor in Messages before submitting its terms.");
     const auto& terms=find(catalog(s).financing,id);
     if (finance_used(s,id)) invalid("This negotiated financing is already pending or completed");
     require_listing_qualification(s,id);

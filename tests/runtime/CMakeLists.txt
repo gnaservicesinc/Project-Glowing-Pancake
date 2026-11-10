@@ -374,3 +374,10 @@ target_compile_definitions(pgp-employee-departure-test PRIVATE PGP_DEPARTURE_SOU
 pgp_project_target(pgp-employee-departure-test)
 add_test(NAME runtime.employee-departure COMMAND pgp-employee-departure-test)
 set_tests_properties(runtime.employee-departure PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-contact-finance-test contact_finance_test.cpp)
+target_link_libraries(pgp-contact-finance-test PRIVATE pgp::session)
+target_compile_definitions(pgp-contact-finance-test PRIVATE PGP_CONTACT_FINANCE_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/contact-funding.json")
+pgp_project_target(pgp-contact-finance-test)
+add_test(NAME runtime.contact-finance COMMAND pgp-contact-finance-test)
+set_tests_properties(runtime.contact-finance PROPERTIES TIMEOUT 30)

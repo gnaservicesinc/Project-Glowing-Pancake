@@ -133,7 +133,7 @@ ColumnLayout {
                     }
                     Copy { text: modelData.name }
                 }
-                onClicked: panel.selected = modelData.id
+                onClicked: { panel.selected = modelData.id; fundingPanel.revealCurrent() }
             }
         }
     }
@@ -178,6 +178,15 @@ ColumnLayout {
             text: qsTr("Open company governance")
             textSize: panel.textSize
             onClicked: panel.governanceRequested()
+        }
+        ContactFundingPanel {
+            id: fundingPanel
+            Layout.fillWidth: true
+            textSize: panel.textSize
+            person: panel.selected
+            editable: panel.editable && !panel.inPerson
+            onRevealRequested: target => panel.revealRequested(target)
+            onGovernanceRequested: panel.governanceRequested()
         }
         WorldButton {
             objectName: "contactReviewDismissal"

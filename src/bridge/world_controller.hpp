@@ -85,6 +85,10 @@ public:
     Q_INVOKABLE void messageContact(QString person,QString topic,int room,QString revision);
     Q_INVOKABLE QVariantMap dismissalQuote(QString person,int room) const;
     Q_INVOKABLE void dismissContact(QString person,int room,QString revision);
+    Q_INVOKABLE QVariantMap contactFunding(QString person) const;
+    Q_INVOKABLE QVariantMap contactFundingQuote(QString person,int discussion,QString terms) const;
+    Q_INVOKABLE void requestContactFunding(QString person,QString revision);
+    Q_INVOKABLE void respondContactFunding(QString person,int discussion,QString reply,QString terms,QString revision);
     QVariantMap person(QString id,core::OrdinalDay day) const;
     QVariantList decisionParticipants(QString kind,std::uint64_t presentation=0) const;
     QVariantList applicants() const;

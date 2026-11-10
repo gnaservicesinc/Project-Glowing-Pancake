@@ -40,6 +40,16 @@ struct PublicListingRules {
     BasisPoints director_maximum_dilution{0};
     auto operator<=>(const PublicListingRules&) const = default;
 };
+struct ContactFinanceOffer {
+    std::string person,terms;
+    std::uint32_t minimum_reputation=0,minimum_publications=0;
+    auto operator<=>(const ContactFinanceOffer&) const = default;
+};
+struct ContactFinanceRules {
+    Days retry{30},validity{30};
+    std::vector<ContactFinanceOffer> offers;
+    auto operator<=>(const ContactFinanceRules&) const = default;
+};
 struct GovernanceCatalog {
     std::vector<CorporateFinanceTerms> financing;
     std::vector<ExecutiveCandidate> executives;
@@ -51,6 +61,7 @@ struct GovernanceCatalog {
     Days subsidiary_reserve_days{30};
     std::vector<OrganizationalCharter> charters{};
     std::optional<PublicListingRules> public_listing{};
+    std::optional<ContactFinanceRules> contact_finance{};
     auto operator<=>(const GovernanceCatalog&) const = default;
 };
 struct ExecutiveAppointment {
@@ -161,7 +172,7 @@ void close_public_reporting_day(SimulationState&);
 [[nodiscard]] std::vector<BoardMember> current_board(const SimulationState&);
 [[nodiscard]] std::vector<EquityHolding> corporate_holdings_before(const SimulationState&,OrdinalDay);
 void company_equity(SimulationState&,std::string investor,Cents proceeds,BasisPoints acquired,std::string key,bool assets=false);
-void negotiate_corporate_finance(SimulationState&,std::string_view);
+void negotiate_corporate_finance(SimulationState&,std::string_view,bool from_contact=false);
 void appoint_executive(SimulationState&,std::string_view,bool hybrid,Cents protected_cash);
 void propose_pool_expansion(SimulationState&,BasisPoints);
 void initialize_charter(SimulationState&,std::string_view);

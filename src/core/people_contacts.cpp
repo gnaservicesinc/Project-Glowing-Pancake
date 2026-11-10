@@ -43,17 +43,24 @@ bool valid_reply(const ContactMessage& message) {
 
 std::string opening_reply(const SimulationState& state, const PeopleContact& contact, std::string_view topic) {
     if (topic=="opening_terms") return contact.opening->outcome;
-    if (topic!="board_role" || contact.opening->outcome!="signed")
+    const bool followup=std::ranges::any_of(contact.funding,[](const auto& discussion){return discussion.status=="submitted";});
+    if (topic!="board_role" || (contact.opening->outcome!="signed" && !followup))
         throw std::invalid_argument("Choose a topic for this opening conversation.");
     if (!state.management->governance) return "no_seat";
     const auto id=contact.person.substr(opening_contact_prefix.size());
     const auto seat=id=="alder"?"board.cofounder":"board."+id;
-    return std::ranges::any_of(current_board(state),[&](const auto& row){return row.id==seat;})?"has_seat":"no_seat";
+    const auto board=current_board(state);
+    const bool opening_seat=contact.opening->outcome=="signed" && std::ranges::any_of(board,[&](const auto& row){return row.id==seat;});
+    const bool followup_seat=std::ranges::any_of(contact.funding,[&](const auto& discussion) {
+        return discussion.status=="submitted" && std::ranges::any_of(board,[&](const auto& row){return row.id=="seat/"+discussion.selected;});
+    });
+    return opening_seat || followup_seat?"has_seat":"no_seat";
 }
 
-bool valid_opening_reply(const OpeningConversation& opening, const ContactMessage& message) {
-    return message.mood==-1 && ((message.topic=="opening_terms" && message.reply==opening.outcome) ||
-        (message.topic=="board_role" && opening.outcome=="signed" && (message.reply=="has_seat" || message.reply=="no_seat")));
+bool valid_opening_reply(const PeopleContact& contact, const ContactMessage& message) {
+    const bool followup=std::ranges::any_of(contact.funding,[&](const auto& discussion){return discussion.status=="submitted" && discussion.responded_on && *discussion.responded_on<=message.day;});
+    return message.mood==-1 && ((message.topic=="opening_terms" && message.reply==contact.opening->outcome) ||
+        (message.topic=="board_role" && (contact.opening->outcome=="signed" || followup) && (message.reply=="has_seat" || message.reply=="no_seat")));
 }
 } // namespace
 
@@ -90,6 +97,10 @@ void manage_people_contact(SimulationState& state, const ContactAction& action,C
                 // Keep an employment conversation available after an in-person departure.
                 if(contact==contacts.end()) contacts.push_back({request.person,state.date,{}});
                 dismiss_employee(state,request.person,protected_cash);
+            } else if constexpr (std::is_same_v<Action,RequestContactFunding>) {
+                request_contact_funding(state,*contact);
+            } else if constexpr (std::is_same_v<Action,RespondContactFunding>) {
+                respond_contact_funding(state,*contact,request);
             } else {
                 if (!contact->opening && request.topic != "check_in" && request.topic != "workstation")
                     throw std::invalid_argument("Choose a conversation topic.");
@@ -142,7 +153,7 @@ void validate_people_contacts(const SimulationState& state) {
         auto previous = contact.exchanged_on;
         std::set<std::pair<OrdinalDay,std::string_view>> asked;
         for (const auto& message : contact.messages) {
-            const auto valid=contact.opening?valid_opening_reply(*contact.opening,message):
+            const auto valid=contact.opening?valid_opening_reply(contact,message):
                 (message.topic=="check_in" || message.topic=="workstation") && valid_reply(message) &&
                 (message.reply!="former" || (found->departed_on && message.day>=*found->departed_on));
             if (message.day < previous || message.day > state.date || !asked.emplace(message.day,message.topic).second || !valid)

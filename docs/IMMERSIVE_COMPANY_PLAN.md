@@ -138,9 +138,16 @@ Thinking it over keeps it open, and declining removes it from the paperwork.
 At signing these threads enter the company’s Messages app with the original
 message and recorded outcome. Follow-up replies confirm the opening agreement
 and, for signed agreements, the organization’s current board seat. Unsigned
-opening offers close when the founder commits to their company. New funding
-negotiations with these contacts, media contacts and named cofounder
-personalities and mandates remain open.
+opening offers close when the founder commits to their company. Kestrel Frontier
+Partners and Harbor Commercial Ventures now review follow-up pitches in Messages.
+Founding prestige and actual published research determine which authored terms
+are quoted. Discussions preserve their record and expiry, can be held or
+declined, and submit one selected counteroffer to an actual board motion.
+Approval contributes company capital, dilutes existing holdings once and adds
+the agreed board seat. The organization can confirm that new seat without
+rewriting the original opening agreement. Nonprofits retain their separate
+funding routes; follow-up donor gifts, wider outside contacts, media contacts
+and named cofounder personalities and mandates remain open.
 Employee mood uses current pay, the company’s publications, the CEO’s biography
 and record in office, mission and duties, coworker affinity, temperament and
 active amenities. An installed amenity type contributes once for employees with

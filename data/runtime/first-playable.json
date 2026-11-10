@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.49.0-dev.1",
+  "content_version": "0.50.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -74800,6 +74800,36 @@
             }
           ],
           "concern_period_days": 7,
+          "contact_finance": {
+            "offers": [
+              {
+                "minimum_publications": 0,
+                "minimum_reputation": 2,
+                "person": "opening/frontier",
+                "terms": "corporate.round_small"
+              },
+              {
+                "minimum_publications": 0,
+                "minimum_reputation": 4,
+                "person": "opening/frontier",
+                "terms": "corporate.round_large"
+              },
+              {
+                "minimum_publications": 1,
+                "minimum_reputation": 2,
+                "person": "opening/commercial",
+                "terms": "corporate.strategic_equity"
+              },
+              {
+                "minimum_publications": 3,
+                "minimum_reputation": 4,
+                "person": "opening/commercial",
+                "terms": "corporate.harbor_growth"
+              }
+            ],
+            "retry_days": 30,
+            "validity_days": 30
+          },
           "executives": [
             {
               "cash_salary_cents": 1800000,
@@ -74945,7 +74975,7 @@
               "covenant_cash_floor_cents": 0,
               "id": "corporate.round_small",
               "monthly_interest_bp": 0,
-              "name": "Smaller independent round",
+              "name": "Kestrel Frontier Partners · seed extension",
               "negotiation": "growth.round",
               "proceeds_cents": 40000000,
               "term_days": 0,
@@ -74957,7 +74987,7 @@
               "covenant_cash_floor_cents": 0,
               "id": "corporate.round_large",
               "monthly_interest_bp": 0,
-              "name": "Larger independent round",
+              "name": "Kestrel Frontier Partners · larger seed extension",
               "negotiation": "growth.round",
               "proceeds_cents": 60000000,
               "term_days": 0,
@@ -74981,7 +75011,7 @@
               "covenant_cash_floor_cents": 0,
               "id": "corporate.strategic_equity",
               "monthly_interest_bp": 0,
-              "name": "Strategic research partnership capital",
+              "name": "Harbor Commercial Ventures · first evidence round",
               "negotiation": "strategic.round",
               "proceeds_cents": 30000000,
               "term_days": 0,
@@ -74996,6 +75026,18 @@
               "name": "Initial public offering",
               "negotiation": "public_listing",
               "proceeds_cents": 500000000,
+              "term_days": 0,
+              "waiver_fee_cents": 0
+            },
+            {
+              "acquired_bp": 800,
+              "board_seat": true,
+              "covenant_cash_floor_cents": 0,
+              "id": "corporate.harbor_growth",
+              "monthly_interest_bp": 0,
+              "name": "Harbor Commercial Ventures · publication-backed round",
+              "negotiation": "strategic.round",
+              "proceeds_cents": 75000000,
               "term_days": 0,
               "waiver_fee_cents": 0
             }
@@ -75721,7 +75763,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 20,
+      "revision": 21,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

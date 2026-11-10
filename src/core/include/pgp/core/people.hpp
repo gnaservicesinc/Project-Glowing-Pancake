@@ -108,11 +108,21 @@ struct OpeningConversation {
     std::string source, outcome;
     auto operator<=>(const OpeningConversation&) const = default;
 };
+inline constexpr std::size_t contact_funding_limit=128;
+struct ContactFundingDiscussion {
+    std::uint32_t id=0,reputation=0,publications=0;
+    OrdinalDay requested_on{0},expires_on{0};
+    std::vector<std::string> offers;
+    std::string status="offered",selected,motion;
+    std::optional<OrdinalDay> responded_on;
+    auto operator<=>(const ContactFundingDiscussion&) const = default;
+};
 struct PeopleContact {
     std::string person;
     OrdinalDay exchanged_on{0};
     std::vector<ContactMessage> messages;
     std::optional<OpeningConversation> opening{};
+    std::vector<ContactFundingDiscussion> funding{};
     auto operator<=>(const PeopleContact&) const = default;
 };
 struct PeopleState {
@@ -138,7 +148,9 @@ struct ManageRecruitment {RecruitmentAction action;};
 struct ExchangePeopleContact {std::string person;std::uint32_t room=0;};
 struct MessagePeopleContact {std::string person,topic,device;std::uint32_t room=0;};
 struct DismissPeopleContact {std::string person,device;std::uint32_t room=0;};
-using ContactAction=std::variant<ExchangePeopleContact,MessagePeopleContact,DismissPeopleContact>;
+struct RequestContactFunding {std::string person,device;std::uint32_t room=0;};
+struct RespondContactFunding {std::string person,device;std::uint32_t discussion=0;std::string reply,terms;std::uint32_t room=0;};
+using ContactAction=std::variant<ExchangePeopleContact,MessagePeopleContact,DismissPeopleContact,RequestContactFunding,RespondContactFunding>;
 struct ManagePeopleContact {ContactAction action;};
 struct DismissalQuote {
     Cents monthly_salary{0},severance{0};
@@ -153,6 +165,11 @@ void initialize_individual_payroll(SimulationState&);
 void validate_employee_departures(const SimulationState&);
 void manage_people_contact(SimulationState&,const ContactAction&,Cents protected_cash=Cents{0});
 void validate_people_contacts(const SimulationState&);
+void request_contact_funding(SimulationState&,PeopleContact&);
+void respond_contact_funding(SimulationState&,PeopleContact&,const RespondContactFunding&);
+void validate_contact_funding(const SimulationState&);
+[[nodiscard]] std::uint32_t contact_funding_reputation(const SimulationState&,OrdinalDay);
+[[nodiscard]] bool contact_funding_available(const SimulationState&,std::string_view);
 [[nodiscard]] std::uint32_t employee_contact_room(const SimulationState&,std::string_view person);
 void validate_people_rules(const PeopleRules&);
 void initialize_people(SimulationState&,std::uint64_t seed,std::string founder_name={},std::string founder_pronouns={},bool founder_researcher=false,std::uint32_t prestige=0,std::string mission="research");

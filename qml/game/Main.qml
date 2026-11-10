@@ -491,7 +491,7 @@ ApplicationWindow {
                     const point = context.mapToItem(page, 0, 0)
                     const top = scroll.contentItem.contentY
                     const bottom = top + scroll.availableHeight
-                    const target = point.y < top ? point.y : point.y + context.height > bottom ?
+                    const target = item.revealAtTop === true ? point.y : point.y < top ? point.y : point.y + context.height > bottom ?
                         point.y + context.height - scroll.availableHeight : top
                     scroll.contentItem.contentY = Math.max(0, Math.min(target, page.height - scroll.availableHeight))
                 }

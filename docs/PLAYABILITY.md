@@ -122,6 +122,19 @@ confirm the recorded outcome. For signed agreements, ask about the organizationâ
 current board role or open company governance. Unsigned opening offers close
 when the company begins.
 
+Continuing Kestrel and Harbor contacts offer **Pitch for funding**. Review the
+requirements to see the reputation and publication gates. Reputation is founding
+prestige plus published research, capped at 100. A pitch quotes the terms your
+record qualifies for, without transferring money or ownership. You can think
+them over, decline them, or review one counteroffer's cash, dilution and board
+seat before sending it to the board. Quotes expire after 30 days; another pitch
+is available 30 days after the previous one. Alternatives in a round can fund
+once. Open the board to vote: only approval delivers the capital and changes
+ownership. The conversation then records funding and can confirm the investor's
+actual board seat. Existing company bills, board limits and personal savings
+continue to apply. These follow-up offers are equity funding for corporations;
+nonprofit donor follow-ups remain future work.
+
 Open **My life** for Juniper Estates, your private rooms and the interiors and
 gallery stores. Purchases use retained personal savings and paid salary.
 Review the price, first month of upkeep and resale value before confirming.

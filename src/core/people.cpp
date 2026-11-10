@@ -220,6 +220,6 @@ void validate_people(const SimulationState& s,bool deep) {
     if(opening!=opening_staff_count(*s.capacity) || static_cast<std::size_t>(std::ranges::count_if(s.capacity->staff_additions,[](const auto& row){return row.id.starts_with("employee/");}))!=added)
         invalid("Individual HQ people do not reconcile with their staffing capacity.");
     validate_people_contacts(s);
-    if(deep) validate_employee_departures(s);
+    if(deep) {validate_employee_departures(s);validate_contact_funding(s);}
 }
 }

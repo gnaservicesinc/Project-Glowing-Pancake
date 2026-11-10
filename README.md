@@ -35,6 +35,8 @@ Its gatherings calendar supports personally funded dinners, parties and
 receptions with invitations, attendance reports and temporary employee mood.
 Employee conversations offer reviewed dismissal with company-paid severance,
 released equipment and a saved departure record.
+Continuing investor conversations can quote follow-up rounds from the company's
+reputation and published research, with held terms and actual board approval.
 
  The initial skeleton phase closed on 2026-11-07. The current
 core is ready for human feedback and the user's selected refinements. The
@@ -48,7 +50,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.49.0-dev.1**, generation **50**.
+The finalized internal content version is **0.50.0-dev.1**, generation **51**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).

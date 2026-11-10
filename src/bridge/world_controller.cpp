@@ -332,6 +332,7 @@ QVariantMap WorldController::contactThread(QString person) const {
         if(offer.isEmpty()) return {};
         const auto& outcome=contact->opening->outcome;
         const bool signed_offer=outcome=="signed";
+        const bool followup=std::ranges::any_of(contact->funding,[](const auto& discussion){return discussion.status=="submitted";});
         const bool alder=id==std::string{core::opening_contact_prefix}+"alder";
         const auto original=offer.value("body").toString();
         QVariantList messages{QVariantMap{{"incoming",true},{"prompt",offer.value("subject")},
@@ -356,11 +357,11 @@ QVariantMap WorldController::contactThread(QString person) const {
             }
         }
         QVariantList topics{topic("opening_terms","contactOpeningTerms",opening_label,checked_opening)};
-        if(signed_offer) topics.push_back(topic("board_role","contactBoardRole",board_label,checked_board));
+        if(signed_offer || followup) topics.push_back(topic("board_role","contactBoardRole",board_label,checked_board));
         const auto status=signed_offer?tr("Signed at opening"):outcome=="declined"?tr("Declined before signing"):
             outcome=="rejected"?tr("Application closed"):tr("Expired at opening");
         return {{"id",person},{"name",offer.value("name")},{"role",offer.value("organization")},{"status",status},
-            {"exchanged",true},{"current",false},{"governance",signed_offer && state.management->governance.has_value()},
+            {"exchanged",true},{"current",false},{"governance",(signed_offer || followup) && state.management->governance.has_value()},
             {"messages",messages},{"topics",topics}};
     }
     const auto employee=std::ranges::find_if(roster.employees,[&](const auto& row){return row.terms.profile.id==id;});

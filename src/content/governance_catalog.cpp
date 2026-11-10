@@ -26,6 +26,16 @@ core::GovernanceCatalog load_governance_catalog(std::string_view bytes) {
     Json charters=Json::array();
     if(j.contains("charters")) {charters=j.at("charters");j.erase("charters");}
     core::GovernanceCatalog c;
+    if(j.contains("contact_finance")) {
+        const auto& rules=j.at("contact_finance");fields(rules,{"retry_days","validity_days","offers"});
+        c.contact_finance=core::ContactFinanceRules{core::Days{integer(rules.at("retry_days"))},core::Days{integer(rules.at("validity_days"))},{}};
+        array(rules.at("offers"),8);
+        for(const auto& offer:rules.at("offers")) {
+            fields(offer,{"person","terms","minimum_reputation","minimum_publications"});
+            c.contact_finance->offers.push_back({text(offer.at("person")),text(offer.at("terms")),count(offer.at("minimum_reputation"),100),count(offer.at("minimum_publications"),64)});
+        }
+        j.erase("contact_finance");
+    }
     if (j.contains("public_listing")) {
         const auto& rules=j.at("public_listing");
         fields(rules,{"offer","minimum_age_days","performance_days","minimum_revenue_cents","minimum_profit_cents","director_cash_floor_cents","director_maximum_dilution_bp"});
@@ -79,6 +89,12 @@ std::string canonical_governance_catalog(const core::GovernanceCatalog& c) {
             {"performance_days",rules.performance_days.value()},{"minimum_revenue_cents",rules.minimum_revenue.value()},
             {"minimum_profit_cents",rules.minimum_profit.value()},{"director_cash_floor_cents",rules.director_cash_floor.value()},
             {"director_maximum_dilution_bp",rules.director_maximum_dilution.value()}};
+    }
+    if(c.contact_finance) {
+        const auto& rules=*c.contact_finance;Json offers=Json::array();
+        for(const auto& offer:rules.offers) offers.push_back({{"person",offer.person},{"terms",offer.terms},
+            {"minimum_reputation",offer.minimum_reputation},{"minimum_publications",offer.minimum_publications}});
+        result["contact_finance"]={{"retry_days",rules.retry.value()},{"validity_days",rules.validity.value()},{"offers",std::move(offers)}};
     }
     return result.dump();
 }

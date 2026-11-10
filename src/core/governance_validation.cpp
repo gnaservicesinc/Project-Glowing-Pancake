@@ -41,6 +41,19 @@ void validate_governance_catalog(const GovernanceCatalog& c) {
             (f.term.value()==0 ? f.acquired.value()==0 || f.acquired.value()>3000 || f.monthly_interest.value()!=0 || f.covenant_cash_floor.value()!=0 || f.waiver_fee.value()!=0:
              f.term.value()<30 || f.term.value()>1096 || f.acquired.value()!=0 || (f.covenant_cash_floor.value()>0 && f.waiver_fee.value()==0))) invalid("Negotiated finance needs explicit cash, equity/debt and covenant terms");
     }
+    if(c.contact_finance) {
+        const auto& rules=*c.contact_finance;
+        if(rules.retry<Days{7} || rules.retry>Days{365} || rules.validity<Days{7} || rules.validity>rules.retry || rules.offers.empty() || rules.offers.size()>8)
+            invalid("Contact funding needs bounded offer, retry and validity windows.");
+        std::set<std::string> offers;
+        for(const auto& offer:rules.offers) {
+            label(offer.person,72);label(offer.terms,64);
+            const auto& terms=find(c.financing,offer.terms);
+            if(!offer.person.starts_with("opening/") || !offers.insert(offer.terms).second || offer.minimum_reputation>100 ||
+                offer.minimum_publications>64 || terms.term!=Days{0} || (c.public_listing && c.public_listing->offer_id==offer.terms))
+                invalid("An investor conversation needs unique private-equity terms and bounded reputation requirements.");
+        }
+    }
     if (c.public_listing) {
         const auto& rules=*c.public_listing;
         const auto& offer=find(c.financing,rules.offer_id);

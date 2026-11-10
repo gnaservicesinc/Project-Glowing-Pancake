@@ -87,7 +87,9 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
         auto detail=tr("Negotiate this fixed counteroffer, then submit it to the board. Proposing terms pays nothing. Approval rechecks and commits the exact terms once.\nCash proceeds: %1. New fully diluted ownership: %2. Board representative: %3.\n").arg(money(f.proceeds),percent(f.acquired),f.board_seat?tr("one seat"):tr("none"));
         if (f.term.value()>0) detail+=tr("Loan term %1 days · interest %2 per month · principal remains due. Cash covenant: at least %3. A breach first raises a concern, then a formal recommendation after %4 days and a %5-day response window. Restore cash, repay the debt, or buy the one permanent covenant waiver for %6; maturity and interest remain. Unresolved breach accelerates maturity to no later than 30 days after the response deadline.\n").arg(f.term.value()).arg(percent(f.monthly_interest),money(f.covenant_cash_floor)).arg(c.concern_period.value()).arg(c.response_window.value()).arg(money(f.waiver_fee));
         else detail+=tr("Equity proceeds are contributed capital, not product revenue. All existing holdings and unvested claims dilute once.\n");
-        result.financing.push_back({text(f.id),text(f.name),money(f.proceeds),detail,used?tr("Pending or completed"):tr("Counteroffer available"),!used,{}});
+        const bool through_contact=c.contact_finance && std::ranges::any_of(c.contact_finance->offers,[&](const auto& offer){return offer.terms==f.id;});
+        if(through_contact) detail+=tr("Discuss this round with its investor in Messages. The conversation records the offered terms before a board submission.\n");
+        result.financing.push_back({text(f.id),text(f.name),money(f.proceeds),detail,used?tr("Pending or completed"):through_contact?tr("Discuss in Messages"):tr("Counteroffer available"),!used && !through_contact,{}});
     }
     for (const auto& e:c.executives) {
         const auto a=std::find_if(g.appointments.begin(),g.appointments.end(),[&](const auto& v){return v.candidate==e.id;});

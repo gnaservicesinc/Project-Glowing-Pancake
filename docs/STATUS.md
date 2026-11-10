@@ -9,7 +9,7 @@ Updated 2026-11-10
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.49.0-dev.1**, generation **50**.
+immersive redesign advances content to **0.50.0-dev.1**, generation **51**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -136,6 +136,27 @@ That fixture needs updating separately; it is not evidence for this batch.
 The bundled Release software walkthrough covers the scrolling review,
 cancellation, confirmation, visible departure record, returned laptop and fresh
 reload at 650 × 480 with 200% text.
+
+Continuing Kestrel and Harbor conversations now offer follow-up funding rounds.
+The recorded pitch uses founding prestige and actual published research to
+select authored terms. Discussions support holding, declining, expiry and a
+reviewed counteroffer sent to the actual board. Approval contributes company
+capital, conserves ownership through dilution and adds the agreed seat. The
+conversation reports that new seat while preserving the original opening
+outcome. Generic financing controls cannot bypass a required conversation.
+Nonprofit formation removes the equity-only follow-up rules with its equity
+offers. Content **0.50.0-dev.1**, generation **51**, records the terms and gates.
+Focused checks cover unknown contacts and unavailable devices, reputation and
+publication gates, no payment on a pitch or submission, held/declined/expired
+terms, conserving funded ownership, board seats, nonprofit setup and exact
+reload. Governance and employee-departure regressions also pass.
+The bundled Release software walkthrough covers the actual contact, offered
+alternatives, holding, review cancellation, scrolling terms, an actual board
+vote, visible pending/funded replies and fresh reload at 650 × 480 with 200%
+text. Reply focus waits for the saved result and places its heading at the top
+of the reading area.
+The existing recruiting, messaging, laptop-issuance and dismissal software
+walkthrough also passes with the shared conversation and scrolling changes.
 
 Retention, audience modifiers, full personal-world simulation, research balance,
 expanded private-life purchases and richer event preferences remain unfinished,
@@ -344,7 +365,7 @@ open. The prior forecast-padding and full-campaign staffing assertions remain
 recorded for later selected work. Content Studio usability is not accepted by
 this milestone.
 
-Finalized content is generation 50. Game and editor versions remain development
+Finalized content is generation 51. Game and editor versions remain development
 placeholders, and release readiness is false.
 
 ## Next phase
