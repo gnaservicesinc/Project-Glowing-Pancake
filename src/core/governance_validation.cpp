@@ -38,7 +38,8 @@ void validate_governance_catalog(const GovernanceCatalog& c) {
         label(f.id,64);label(f.name);label(f.negotiation,64);
         if (!ids.insert(f.id).second || f.proceeds.value()<=0 || f.proceeds.value()>1000000000 || f.covenant_cash_floor.value()<0 ||
             f.waiver_fee.value()<0 || f.waiver_fee>f.proceeds || f.monthly_interest.value()>1000 ||
-            (f.term.value()==0 ? f.acquired.value()==0 || f.acquired.value()>3000 || f.monthly_interest.value()!=0 || f.covenant_cash_floor.value()!=0 || f.waiver_fee.value()!=0:
+            (f.donation ? f.acquired.value()!=0 || f.term.value()!=0 || f.monthly_interest.value()!=0 || f.covenant_cash_floor.value()!=0 || f.waiver_fee.value()!=0:
+             f.term.value()==0 ? f.acquired.value()==0 || f.acquired.value()>3000 || f.monthly_interest.value()!=0 || f.covenant_cash_floor.value()!=0 || f.waiver_fee.value()!=0:
              f.term.value()<30 || f.term.value()>1096 || f.acquired.value()!=0 || (f.covenant_cash_floor.value()>0 && f.waiver_fee.value()==0))) invalid("Negotiated finance needs explicit cash, equity/debt and covenant terms");
     }
     if(c.contact_finance) {
@@ -50,14 +51,14 @@ void validate_governance_catalog(const GovernanceCatalog& c) {
             label(offer.person,72);label(offer.terms,64);
             const auto& terms=find(c.financing,offer.terms);
             if(!offer.person.starts_with("opening/") || !offers.insert(offer.terms).second || offer.minimum_reputation>100 ||
-                offer.minimum_publications>64 || terms.term!=Days{0} || (c.public_listing && c.public_listing->offer_id==offer.terms))
-                invalid("An investor conversation needs unique private-equity terms and bounded reputation requirements.");
+                offer.minimum_publications>64 || offer.minimum_evaluations>64 || terms.term!=Days{0} || (c.public_listing && c.public_listing->offer_id==offer.terms))
+                invalid("A funding conversation needs unique equity or gift terms and bounded evidence requirements.");
         }
     }
     if (c.public_listing) {
         const auto& rules=*c.public_listing;
         const auto& offer=find(c.financing,rules.offer_id);
-        if (offer.term.value()!=0 || !offer.board_seat || rules.performance_days.value()<28 || rules.performance_days.value()>366 ||
+        if (offer.donation || offer.term.value()!=0 || !offer.board_seat || rules.performance_days.value()<28 || rules.performance_days.value()>366 ||
             rules.minimum_age<rules.performance_days || rules.minimum_age.value()>36524 ||
             rules.minimum_revenue.value()<=0 || rules.minimum_revenue.value()>100000000000LL ||
             rules.minimum_profit.value()<=0 || rules.minimum_profit>rules.minimum_revenue ||
@@ -137,6 +138,14 @@ void validate_governance(const SimulationState& s,bool deep) {
                 const auto& terms=find(management.catalog.financing,e.key.substr(10));
                 if (terms.term.value()!=0 || e.shares!=terms.acquired || e.subject!="investor/"+terms.id || e.consideration!=terms.proceeds) invalid("Fixed equity journal changed the accepted offer");
             }
+        } else if(e.kind=="donation") {
+            if(!e.key.starts_with("corporate/") || e.shares.value()!=0 || e.consideration.value()<=0 || !corporate_posts.insert(e.key).second)
+                invalid("A nonprofit gift needs distinct non-diluting contribution evidence.");
+            const auto& offer=find(c.financing,e.key.substr(10));
+            if(!offer.donation || e.subject!="donor/"+offer.id || e.consideration!=offer.proceeds ||
+                std::ranges::none_of(g.motions,[&](const auto& motion){return motion.kind==BoardMotionKind::financing && motion.executed && motion.subject==offer.id && motion.resolved_on==e.day;}))
+                invalid("A nonprofit gift differs from its approved donor terms.");
+            (void)posting(s,e.key,e.day,e.consideration,Account::cash,Account::equity);
         } else if (e.consideration.value()!=0) invalid("Vesting, grants and pool changes cannot create cash or assets");
         if ((e.kind=="grant" || e.kind=="vest" || e.kind=="departure") && e.key!="executive/"+e.subject) invalid("Grant movement lost its actual executive owner");
         if (e.kind=="pool") {

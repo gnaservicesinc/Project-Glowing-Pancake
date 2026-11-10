@@ -3,6 +3,9 @@
 
 namespace pgp::core {
 using namespace governance_detail;
+bool nonprofit_organization(const SimulationState& state) {
+    return state.accounts && std::ranges::any_of(state.accounts->holdings,[](const auto& holding){return holding.holder=="institution_endowment" && holding.shares.value()>0;});
+}
 namespace {
 void pay(SimulationState& s,Cents amount,Cents protected_cash,std::string key,std::string cause) {
     if (amount.value()<0 || amount>checked_unit_subtract(s.cash,protected_cash)) invalid("The agreed cash payment exceeds unreserved cash");
@@ -33,7 +36,7 @@ BoardMember financing_director(const GovernanceCatalog& rules,const CorporateFin
         return {"seat/"+finance.id,"Public shareholder director",1,false,
             listing.director_cash_floor,listing.director_maximum_dilution};
     }
-    return {"seat/"+finance.id,finance.name+" representative",1,false,finance.covenant_cash_floor,BasisPoints{1500}};
+    return {"seat/"+finance.id,finance.name+(finance.donation?" trustee":" representative"),1,false,finance.covenant_cash_floor,BasisPoints{1500}};
 }
 void depart(SimulationState& s,std::string_view id) {
     auto& g=governance(s);
@@ -74,9 +77,13 @@ BasisPoints vesting_due(const std::vector<EquityHolding>& h,const OptionGrant& g
 }
 void apply_capital(std::vector<EquityHolding>& h,std::vector<OptionGrant>& grants,const std::vector<ExecutiveAppointment>& appointments,const GovernanceCatalog& c,const CapitalEvent& e) {
     if (e.kind=="investment" || e.kind=="asset_equity" || e.kind=="pool") {
+        if(shares_of(h,"institution_endowment").value()>0) invalid("Nonprofit institutions do not issue private ownership.");
         if (e.shares.value()==0 || (e.kind=="pool" && e.shares>c.maximum_pool_expansion)) invalid("Corporate dilution has invalid terms");
         for (auto& g:grants) g.unvested=BasisPoints{mul_div_floor(static_cast<std::uint64_t>(g.unvested.value()),static_cast<std::uint64_t>(10000-e.shares.value()),10000).quotient};
         dilute_holdings(h,e.kind=="pool"?pool_id(h):e.subject,e.shares);
+    } else if(e.kind=="donation") {
+        if(e.shares.value()!=0 || e.consideration.value()<=0 || shares_of(h,"institution_endowment")!=BasisPoints{10000})
+            invalid("A nonprofit gift must leave the institutional endowment intact.");
     } else if (e.kind=="grant") {
         const auto& candidate=find(c.executives,e.subject);const auto& appointment=find(appointments,e.subject);
         if (!appointment.hybrid || appointment.hired_on!=e.day || e.shares!=candidate.hybrid_grant ||
@@ -164,7 +171,11 @@ std::vector<BoardBallot> ballots_for(const SimulationState& s,const BoardMotion&
 }
 void execute_finance(SimulationState& s,BoardMotion& m) {
     const auto& terms=find(catalog(s).financing,m.subject);const auto key="corporate/"+m.subject;
-    if (terms.term.value()==0) company_equity(s,"investor/"+terms.id,terms.proceeds,terms.acquired,key);
+    if(terms.donation) {
+        if(!nonprofit_organization(s)) invalid("This donor supports nonprofit institutions, not private equity holders.");
+        record_cash(*s.accounts,s.date,terms.proceeds,Account::equity,"Nonprofit gift: "+terms.name,key);
+        record_capital(s,{"donation","donor/"+terms.id,key,s.date,BasisPoints{0},terms.proceeds});
+    } else if (terms.term.value()==0) company_equity(s,"investor/"+terms.id,terms.proceeds,terms.acquired,key);
     else draw_debt(*s.accounts,s.date,{key,terms.proceeds,terms.monthly_interest,s.date,advance_days(s.date,terms.term),0,{}},"Negotiated finance: "+terms.name);
     s.cash=accounts_report(*s.accounts).cash;m.executed=true;
 }
@@ -185,6 +196,7 @@ std::vector<BoardMember> current_board(const SimulationState& s) {
 }
 void company_equity(SimulationState& s,std::string investor,Cents proceeds,BasisPoints acquired,std::string key,bool assets) {
     if (!s.accounts) invalid("Equity requires company accounts");
+    if(nonprofit_organization(s)) invalid("Nonprofit institutions do not issue private ownership.");
     const auto before=s.accounts->holdings;
     if (assets) issue_asset_equity(*s.accounts,s.date,investor,proceeds,acquired,key);
     else invest_equity(*s.accounts,s.date,investor,proceeds,acquired,key);
@@ -200,8 +212,9 @@ void company_equity(SimulationState& s,std::string investor,Cents proceeds,Basis
 void negotiate_corporate_finance(SimulationState& s,std::string_view id,bool from_contact) {
     const auto& contact_rules=catalog(s).contact_finance;
     if(contact_rules && !from_contact && std::ranges::any_of(contact_rules->offers,[&](const auto& offer){return offer.terms==id;}))
-        invalid("Discuss this round with the investor in Messages before submitting its terms.");
+        invalid("Discuss this funding with its contact in Messages before submitting its terms.");
     const auto& terms=find(catalog(s).financing,id);
+    if(terms.donation && !nonprofit_organization(s)) invalid("This donor supports nonprofit institutions, not private equity holders.");
     if (finance_used(s,id)) invalid("This negotiated financing is already pending or completed");
     require_listing_qualification(s,id);
     if (terms.term.value()>0 && advance_days(s.date,terms.term)>=s.end_date) invalid("The loan maturity must fall inside this campaign");
@@ -221,6 +234,7 @@ void appoint_executive(SimulationState& s,std::string_view id,bool hybrid,Cents 
     if (hybrid) record_capital(s,{"grant",c.id,"executive/"+c.id,s.date,c.hybrid_grant,Cents{0}});
 }
 void propose_pool_expansion(SimulationState& s,BasisPoints shares) {
+    if(nonprofit_organization(s)) invalid("Nonprofit institutions do not issue private ownership.");
     if (shares.value()==0 || shares>catalog(s).maximum_pool_expansion) invalid("Pool expansion exceeds the disclosed dilution ceiling");
     (void)new_motion(s,BoardMotionKind::pool_expansion,"option_pool",Cents{0},Cents{0},shares);
 }

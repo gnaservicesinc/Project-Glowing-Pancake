@@ -111,6 +111,7 @@ struct OpeningConversation {
 inline constexpr std::size_t contact_funding_limit=128;
 struct ContactFundingDiscussion {
     std::uint32_t id=0,reputation=0,publications=0;
+    std::uint32_t evaluations=0;
     OrdinalDay requested_on{0},expires_on{0};
     std::vector<std::string> offers;
     std::string status="offered",selected,motion;
@@ -169,6 +170,7 @@ void request_contact_funding(SimulationState&,PeopleContact&);
 void respond_contact_funding(SimulationState&,PeopleContact&,const RespondContactFunding&);
 void validate_contact_funding(const SimulationState&);
 [[nodiscard]] std::uint32_t contact_funding_reputation(const SimulationState&,OrdinalDay);
+[[nodiscard]] std::uint32_t contact_funding_evaluations(const SimulationState&,OrdinalDay);
 [[nodiscard]] bool contact_funding_available(const SimulationState&,std::string_view);
 [[nodiscard]] std::uint32_t employee_contact_room(const SimulationState&,std::string_view person);
 void validate_people_rules(const PeopleRules&);

@@ -65,7 +65,7 @@ Json people_json(const core::PeopleState& p) {
     for(const auto& contact:p.contacts) {
         Json messages=Json::array(),funding=Json::array();
         for(const auto& m:contact.messages) messages.push_back({{"day",m.day.value()},{"topic",m.topic},{"reply",m.reply},{"mood",m.mood}});
-        for(const auto& discussion:contact.funding) funding.push_back({{"id",discussion.id},{"reputation",discussion.reputation},{"publications",discussion.publications},
+        for(const auto& discussion:contact.funding) funding.push_back({{"id",discussion.id},{"reputation",discussion.reputation},{"publications",discussion.publications},{"evaluations",discussion.evaluations},
             {"requested_on",discussion.requested_on.value()},{"expires_on",discussion.expires_on.value()},{"offers",discussion.offers},
             {"status",discussion.status},{"selected",discussion.selected},{"motion",discussion.motion},
             {"responded_on",discussion.responded_on?Json(discussion.responded_on->value()):Json(nullptr)}});
@@ -108,11 +108,12 @@ core::PeopleState parse_people(const Json& j) {
         }
         array(contact.at("funding"),"funding discussions",core::contact_funding_limit);
         for(const auto& d:contact.at("funding")) {
-            fields(d,"funding discussion",{"id","reputation","publications","requested_on","expires_on","offers","status","selected","motion","responded_on"});
+            fields(d,"funding discussion",{"id","reputation","publications","evaluations","requested_on","expires_on","offers","status","selected","motion","responded_on"});
             core::ContactFundingDiscussion discussion;
             discussion.id=static_cast<std::uint32_t>(u64(d.at("id"),"discussion id",core::contact_funding_limit));
             discussion.reputation=static_cast<std::uint32_t>(u64(d.at("reputation"),"reputation",100));
             discussion.publications=static_cast<std::uint32_t>(u64(d.at("publications"),"publications",4096));
+            discussion.evaluations=static_cast<std::uint32_t>(u64(d.at("evaluations"),"evaluations",4096));
             discussion.requested_on=core::OrdinalDay{i64(d.at("requested_on"),"requested_on")};
             discussion.expires_on=core::OrdinalDay{i64(d.at("expires_on"),"expires_on")};
             array(d.at("offers"),"funding offers",8);

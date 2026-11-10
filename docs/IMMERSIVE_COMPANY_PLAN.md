@@ -145,9 +145,12 @@ are quoted. Discussions preserve their record and expiry, can be held or
 declined, and submit one selected counteroffer to an actual board motion.
 Approval contributes company capital, dilutes existing holdings once and adds
 the agreed board seat. The organization can confirm that new seat without
-rewriting the original opening agreement. Nonprofits retain their separate
-funding routes; follow-up donor gifts, wider outside contacts, media contacts
-and named cofounder personalities and mandates remain open.
+rewriting the original opening agreement. Open Field and Careful Futures now
+review nonprofit gift proposals. Gifts add institutional contributions without
+private ownership or personal income. Open Field requests a trustee seat;
+Careful Futures requires a publication and a completed independent evaluation.
+Started and self-reported tests do not qualify. Wider outside contacts, media
+contacts and named cofounder personalities and mandates remain open.
 Employee mood uses current pay, the company’s publications, the CEO’s biography
 and record in office, mission and duties, coworker affinity, temperament and
 active amenities. An installed amenity type contributes once for employees with

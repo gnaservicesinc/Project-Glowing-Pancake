@@ -381,3 +381,10 @@ target_compile_definitions(pgp-contact-finance-test PRIVATE PGP_CONTACT_FINANCE_
 pgp_project_target(pgp-contact-finance-test)
 add_test(NAME runtime.contact-finance COMMAND pgp-contact-finance-test)
 set_tests_properties(runtime.contact-finance PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-donor-finance-test donor_finance_test.cpp)
+target_link_libraries(pgp-donor-finance-test PRIVATE pgp::session)
+target_compile_definitions(pgp-donor-finance-test PRIVATE PGP_DONOR_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/donor-funding.json")
+pgp_project_target(pgp-donor-finance-test)
+add_test(NAME runtime.donor-finance COMMAND pgp-donor-finance-test)
+set_tests_properties(runtime.donor-finance PROPERTIES TIMEOUT 30)

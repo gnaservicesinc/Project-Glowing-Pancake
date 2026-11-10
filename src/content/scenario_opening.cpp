@@ -53,15 +53,19 @@ std::optional<core::ManagementCatalog> scenario_management(const ScenarioDefinit
                 const auto& backer=founding_option(s.founding->backers,id);
                 board.push_back({"board."+id,backer.name,1,false,core::Cents{0},core::BasisPoints{1500}});
             }
+            auto& governance=*result->governance;
+            std::erase_if(governance.financing,[&](const auto& offer){return terms.nonprofit?offer.acquired.value()>0:offer.donation;});
+            if(governance.contact_finance) {
+                std::erase_if(governance.contact_finance->offers,[&](const auto& offer){return std::ranges::none_of(governance.financing,[&](const auto& finance){return finance.id==offer.terms;});});
+                if(governance.contact_finance->offers.empty())governance.contact_finance.reset();
+            }
         }
         if(terms.nonprofit) {
             result->corporate_tax.reset();
             std::erase_if(result->financing,[](const auto& f){return f.term.value()==0;});
             if(result->governance) {
                 auto& g=*result->governance;
-                std::erase_if(g.financing,[](const auto& f){return f.acquired.value()>0;});
                 g.public_listing.reset();
-                g.contact_finance.reset();
                 for(auto& e:g.executives) {e.hybrid_grant=core::BasisPoints{0};e.hybrid_salary=e.cash_salary;}
             }
         }

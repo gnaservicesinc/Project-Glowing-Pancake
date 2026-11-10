@@ -107603,6 +107603,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "b15793dafce1071106beb10925c858a813a6f16b2dcfa4091bca4dd68b93c848",
+          "before_hash": "2a5805b719bf30bd64f12bad21a15af528ded4aa3ad61074ac6c4c6a7beb504b",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 21,
+          "revision": 22
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "2863eeca9354babb27bbab84710c4ba4b205e789b977b49340cecdd8f03de73a",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.51.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 52,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.50.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000051.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000052.collection.json",
+      "summary": "Add nonprofit donor gifts, trustee rights and completed independent-evaluation requirements",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

@@ -9,6 +9,7 @@ struct CorporateFinanceTerms {
     BasisPoints acquired{0},monthly_interest{0};
     Days term{0};
     bool board_seat=false;
+    bool donation=false;
     auto operator<=>(const CorporateFinanceTerms&) const = default;
 };
 struct ExecutiveCandidate {
@@ -43,6 +44,7 @@ struct PublicListingRules {
 struct ContactFinanceOffer {
     std::string person,terms;
     std::uint32_t minimum_reputation=0,minimum_publications=0;
+    std::uint32_t minimum_evaluations=0;
     auto operator<=>(const ContactFinanceOffer&) const = default;
 };
 struct ContactFinanceRules {
@@ -161,6 +163,7 @@ struct TransferCompanyOwnership { std::string parent; };
 struct TransferGroupFunds { std::string parent,target;std::uint32_t sequence=0;Cents amount{0};bool funding=false,parent_leg=false; };
 
 void validate_governance_catalog(const GovernanceCatalog&);
+[[nodiscard]] bool nonprofit_organization(const SimulationState&);
 void validate_governance(const SimulationState&,bool deep=true);
 void prepare_governance(SimulationState&);
 void close_public_reporting_day(SimulationState&);

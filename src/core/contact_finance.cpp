@@ -36,32 +36,54 @@ std::uint32_t publications_on(const SimulationState& state,OrdinalDay day) {
 std::uint32_t reputation(const SimulationState& state,std::uint32_t publications) {
     return std::min(100U,state.management->people->founding_prestige+publications);
 }
+std::vector<OrdinalDay> independent_evaluation_dates(const SimulationState& state) {
+    std::vector<OrdinalDay> dates;
+    if(!state.lab || !state.capacity)return dates;
+    std::map<std::string_view,const CapacityProject*> projects;
+    for(const auto& project:state.capacity->projects)if(project.status==ProjectStatus::completed && project.stopped_on)projects.emplace(project.id,&project);
+    std::set<std::string_view> independent;
+    for(const auto& plan:state.lab->catalog.evaluations)if(plan.independent)independent.insert(plan.id);
+    for(const auto& evidence:state.lab->evaluations)if(evidence.completed && independent.contains(evidence.plan_id)) {
+        const auto project=projects.find(evidence.project_id);
+        if(project!=projects.end())dates.push_back(*project->second->stopped_on);
+    }
+    std::ranges::sort(dates);return dates;
+}
+std::uint32_t evaluations_before(const std::vector<OrdinalDay>& dates,OrdinalDay day) {
+    // Work closes on the preceding day before a prepared morning can make a pitch.
+    return static_cast<std::uint32_t>(std::ranges::lower_bound(dates,day)-dates.begin());
+}
 } // namespace
 
 std::uint32_t contact_funding_reputation(const SimulationState& state,OrdinalDay day) {
     (void)catalog(state);return reputation(state,publications_on(state,day));
 }
+std::uint32_t contact_funding_evaluations(const SimulationState& state,OrdinalDay day) {
+    return evaluations_before(independent_evaluation_dates(state),day);
+}
 
 bool contact_funding_available(const SimulationState& state,std::string_view person) {
     if(!state.management || !state.management->people || !state.management->governance || !state.management->catalog.governance ||
         !state.management->catalog.governance->contact_finance || !state.accounts) return false;
-    if(std::ranges::any_of(state.accounts->holdings,[](const auto& holder){return holder.holder=="institution_endowment";})) return false;
-    return std::ranges::any_of(state.management->catalog.governance->contact_finance->offers,[&](const auto& offer){return offer.person==person;});
+    const auto nonprofit=nonprofit_organization(state);
+    return std::ranges::any_of(state.management->catalog.governance->contact_finance->offers,[&](const auto& offer){return offer.person==person && terms(catalog(state),offer.terms).donation==nonprofit;});
 }
 
 void request_contact_funding(SimulationState& state,PeopleContact& contact) {
     const auto& policy=rules(state);
     if(!contact.opening || !contact_funding_available(state,contact.person))
-        throw std::invalid_argument("This contact does not offer follow-up equity funding to this organization.");
+        throw std::invalid_argument("This contact does not offer follow-up funding to this organization.");
     if(contact.funding.size()>=contact_funding_limit) throw std::invalid_argument("This funding conversation has reached its history limit.");
     if(!contact.funding.empty() && state.date<advance_days(contact.funding.back().requested_on,policy.retry))
-        throw std::invalid_argument("This investor will review another pitch from "+iso_date(advance_days(contact.funding.back().requested_on,policy.retry))+".");
+        throw std::invalid_argument(std::string{nonprofit_organization(state)?"This donor will review another proposal from ":"This investor will review another pitch from "}+iso_date(advance_days(contact.funding.back().requested_on,policy.retry))+".");
     ContactFundingDiscussion discussion;
     discussion.id=static_cast<std::uint32_t>(contact.funding.size()+1);
     discussion.requested_on=state.date;discussion.expires_on=advance_days(state.date,policy.validity);
     discussion.publications=publications_on(state,state.date);discussion.reputation=reputation(state,discussion.publications);
+    discussion.evaluations=contact_funding_evaluations(state,state.date);
     for(const auto& offer:policy.offers) if(offer.person==contact.person && discussion.reputation>=offer.minimum_reputation &&
-        discussion.publications>=offer.minimum_publications && !used(state,offer.terms)) discussion.offers.push_back(offer.terms);
+        discussion.publications>=offer.minimum_publications && discussion.evaluations>=offer.minimum_evaluations &&
+        terms(catalog(state),offer.terms).donation==nonprofit_organization(state) && !used(state,offer.terms)) discussion.offers.push_back(offer.terms);
     if(discussion.offers.empty()) discussion.status="not_ready";
     contact.funding.push_back(std::move(discussion));
 }
@@ -87,6 +109,7 @@ void validate_contact_funding(const SimulationState& state) {
     const auto& contacts=state.management->people->contacts;
     const auto* definitions=state.management->catalog.governance?&*state.management->catalog.governance:nullptr;
     const auto* policy=definitions && definitions->contact_finance?&*definitions->contact_finance:nullptr;
+    const auto evaluation_dates=independent_evaluation_dates(state);
     std::map<std::string_view,const BoardMotion*> motions;
     if(state.management->governance) for(const auto& motion:state.management->governance->motions) motions.emplace(motion.id,&motion);
     std::set<std::string> submissions;
@@ -99,7 +122,8 @@ void validate_contact_funding(const SimulationState& state) {
             if(discussion.id!=i+1 || discussion.requested_on<contact.exchanged_on || discussion.requested_on>state.date ||
                 discussion.expires_on!=advance_days(discussion.requested_on,policy->validity) ||
                 (previous && discussion.requested_on<advance_days(*previous,policy->retry)) || discussion.offers.size()>8 ||
-                discussion.publications>(state.lab?state.lab->publications.size():0) || discussion.reputation!=reputation(state,discussion.publications))
+                discussion.publications>(state.lab?state.lab->publications.size():0) || discussion.reputation!=reputation(state,discussion.publications) ||
+                discussion.evaluations!=evaluations_before(evaluation_dates,discussion.requested_on))
                 throw std::invalid_argument("An investor pitch must retain its actual dates, reputation and publication evidence.");
             previous=discussion.requested_on;
             if(state.lab) {
@@ -111,7 +135,8 @@ void validate_contact_funding(const SimulationState& state) {
             std::set<std::string> offered;
             for(const auto& id:discussion.offers) {
                 const auto offer=std::ranges::find_if(policy->offers,[&](const auto& row){return row.terms==id && row.person==contact.person;});
-                if(offer==policy->offers.end() || !offered.insert(id).second || discussion.reputation<offer->minimum_reputation || discussion.publications<offer->minimum_publications)
+                if(offer==policy->offers.end() || !offered.insert(id).second || discussion.reputation<offer->minimum_reputation || discussion.publications<offer->minimum_publications ||
+                    discussion.evaluations<offer->minimum_evaluations || terms(*definitions,id).donation!=nonprofit_organization(state))
                     throw std::invalid_argument("An investor offered terms without their required company record.");
             }
             const bool unready=discussion.status=="not_ready",open=discussion.status=="offered",held=discussion.status=="held",

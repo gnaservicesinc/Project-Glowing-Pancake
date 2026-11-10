@@ -31,8 +31,9 @@ core::GovernanceCatalog load_governance_catalog(std::string_view bytes) {
         c.contact_finance=core::ContactFinanceRules{core::Days{integer(rules.at("retry_days"))},core::Days{integer(rules.at("validity_days"))},{}};
         array(rules.at("offers"),8);
         for(const auto& offer:rules.at("offers")) {
-            fields(offer,{"person","terms","minimum_reputation","minimum_publications"});
-            c.contact_finance->offers.push_back({text(offer.at("person")),text(offer.at("terms")),count(offer.at("minimum_reputation"),100),count(offer.at("minimum_publications"),64)});
+            auto row=offer;const auto evaluations=row.value("minimum_independent_evaluations",Json(0));row.erase("minimum_independent_evaluations");
+            fields(row,{"person","terms","minimum_reputation","minimum_publications"});
+            c.contact_finance->offers.push_back({text(row.at("person")),text(row.at("terms")),count(row.at("minimum_reputation"),100),count(row.at("minimum_publications"),64),count(evaluations,64)});
         }
         j.erase("contact_finance");
     }
@@ -54,9 +55,10 @@ core::GovernanceCatalog load_governance_catalog(std::string_view bytes) {
             core::Cents{integer(r.at("cash_floor_cents"))},core::Cents{integer(r.at("monthly_employee_budget_cents"))},core::BasisPoints{integer(r.at("maximum_dilution_bp"))}});
     }
     for (const auto& f:j.at("financing")) {
-        fields(f,{"id","name","negotiation","proceeds_cents","covenant_cash_floor_cents","waiver_fee_cents","acquired_bp","monthly_interest_bp","term_days","board_seat"});
-        c.financing.push_back({text(f.at("id")),text(f.at("name")),text(f.at("negotiation")),core::Cents{integer(f.at("proceeds_cents"))},core::Cents{integer(f.at("covenant_cash_floor_cents"))},core::Cents{integer(f.at("waiver_fee_cents"))},
-            core::BasisPoints{integer(f.at("acquired_bp"))},core::BasisPoints{integer(f.at("monthly_interest_bp"))},core::Days{integer(f.at("term_days"))},boolean(f.at("board_seat"))});
+        auto row=f;const auto donation=row.value("donation",Json(false));row.erase("donation");
+        fields(row,{"id","name","negotiation","proceeds_cents","covenant_cash_floor_cents","waiver_fee_cents","acquired_bp","monthly_interest_bp","term_days","board_seat"});
+        c.financing.push_back({text(row.at("id")),text(row.at("name")),text(row.at("negotiation")),core::Cents{integer(row.at("proceeds_cents"))},core::Cents{integer(row.at("covenant_cash_floor_cents"))},core::Cents{integer(row.at("waiver_fee_cents"))},
+            core::BasisPoints{integer(row.at("acquired_bp"))},core::BasisPoints{integer(row.at("monthly_interest_bp"))},core::Days{integer(row.at("term_days"))},boolean(row.at("board_seat")),boolean(donation)});
     }
     for (const auto& e:j.at("executives")) {
         fields(e,{"id","name","role","priorities","publication_research","signing_cost_cents","cash_salary_cents","hybrid_salary_cents","hybrid_grant_bp","cliff_days","vesting_days","promise_term_days","technical","commercial","risk_tolerance"});
@@ -74,7 +76,11 @@ core::GovernanceCatalog load_governance_catalog(std::string_view bytes) {
 }
 std::string canonical_governance_catalog(const core::GovernanceCatalog& c) {
     Json f=Json::array(),e=Json::array(),b=Json::array();
-    for (const auto& r:c.financing) f.push_back({{"id",r.id},{"name",r.name},{"negotiation",r.negotiation},{"proceeds_cents",r.proceeds.value()},{"covenant_cash_floor_cents",r.covenant_cash_floor.value()},{"waiver_fee_cents",r.waiver_fee.value()},{"acquired_bp",r.acquired.value()},{"monthly_interest_bp",r.monthly_interest.value()},{"term_days",r.term.value()},{"board_seat",r.board_seat}});
+    for (const auto& r:c.financing) {
+        Json row{{"id",r.id},{"name",r.name},{"negotiation",r.negotiation},{"proceeds_cents",r.proceeds.value()},{"covenant_cash_floor_cents",r.covenant_cash_floor.value()},{"waiver_fee_cents",r.waiver_fee.value()},{"acquired_bp",r.acquired.value()},{"monthly_interest_bp",r.monthly_interest.value()},{"term_days",r.term.value()},{"board_seat",r.board_seat}};
+        if(r.donation)row["donation"]=true;
+        f.push_back(std::move(row));
+    }
     for (const auto& r:c.executives) e.push_back({{"id",r.id},{"name",r.name},{"role",r.role},{"priorities",r.priorities},{"publication_research",r.publication_research},{"signing_cost_cents",r.signing_cost.value()},{"cash_salary_cents",r.cash_salary.value()},{"hybrid_salary_cents",r.hybrid_salary.value()},{"hybrid_grant_bp",r.hybrid_grant.value()},{"cliff_days",r.cliff.value()},{"vesting_days",r.vesting.value()},{"promise_term_days",r.promise_term.value()},{"technical",r.technical},{"commercial",r.commercial},{"risk_tolerance",r.risk_tolerance}});
     for (const auto& r:c.board) b.push_back({{"id",r.id},{"name",r.name},{"seats",r.seats},{"player",r.player},{"cash_floor_cents",r.cash_floor.value()},{"maximum_dilution_bp",r.maximum_dilution.value()}});
     Json result{{"financing",std::move(f)},{"executives",std::move(e)},{"board",std::move(b)},{"vote_window_days",c.vote_window.value()},{"concern_period_days",c.concern_period.value()},{"response_window_days",c.response_window.value()},{"maximum_pool_expansion_bp",c.maximum_pool_expansion.value()},{"acquisition_equity_bp",c.acquisition_equity.value()},{"acquisition_premium_cents",c.acquisition_premium.value()},{"subsidiary_cash_floor_cents",c.subsidiary_cash_floor.value()},{"subsidiary_reserve_days",c.subsidiary_reserve_days.value()}};
@@ -92,8 +98,11 @@ std::string canonical_governance_catalog(const core::GovernanceCatalog& c) {
     }
     if(c.contact_finance) {
         const auto& rules=*c.contact_finance;Json offers=Json::array();
-        for(const auto& offer:rules.offers) offers.push_back({{"person",offer.person},{"terms",offer.terms},
-            {"minimum_reputation",offer.minimum_reputation},{"minimum_publications",offer.minimum_publications}});
+        for(const auto& offer:rules.offers) {
+            Json row{{"person",offer.person},{"terms",offer.terms},{"minimum_reputation",offer.minimum_reputation},{"minimum_publications",offer.minimum_publications}};
+            if(offer.minimum_evaluations)row["minimum_independent_evaluations"]=offer.minimum_evaluations;
+            offers.push_back(std::move(row));
+        }
         result["contact_finance"]={{"retry_days",rules.retry.value()},{"validity_days",rules.validity.value()},{"offers",std::move(offers)}};
     }
     return result.dump();

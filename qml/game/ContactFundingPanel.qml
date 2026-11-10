@@ -65,14 +65,14 @@ ColumnLayout {
         textFormat: Text.PlainText
         wrapMode: Text.Wrap
     }
-    Copy { text: qsTr("Discuss the next round"); font.bold: true; color: "#e7c891" }
+    Copy { text: panel.funding.donor ? qsTr("Discuss a donor gift") : qsTr("Discuss the next round"); font.bold: true; color: "#e7c891" }
     Copy { text: panel.funding.record || ""; color: "#a9c6b8" }
     Flow {
         Layout.fillWidth: true
         spacing: 8
         WorldButton {
             objectName: "contactFundingPitch"
-            text: qsTr("Pitch for funding")
+            text: panel.funding.donor ? qsTr("Apply for a gift") : qsTr("Pitch for funding")
             textSize: panel.textSize
             enabled: panel.editable && !!panel.funding.canRequest
             onClicked: {
@@ -88,7 +88,7 @@ ColumnLayout {
             onClicked: panel.showRequirements = !panel.showRequirements
         }
     }
-    Copy { visible: !panel.funding.canRequest; text: qsTr("Next pitch from %1.").arg(panel.funding.next || "") }
+    Copy { visible: !panel.funding.canRequest; text: (panel.funding.donor ? qsTr("Next application from %1.") : qsTr("Next pitch from %1.")).arg(panel.funding.next || "") }
     Copy { visible: panel.showRequirements; text: panel.funding.requirements || "" }
     Repeater {
         id: discussions
@@ -110,7 +110,7 @@ ColumnLayout {
                 anchors.top: parent.top
                 anchors.margins: 12
                 spacing: 10
-                Copy { text: qsTr("%1 · Investor reply").arg(discussionCard.modelData.date); color: "#a9c6b8"; font.pixelSize: panel.textSize * 0.85 }
+                Copy { text: (panel.funding.donor ? qsTr("%1 · Donor reply") : qsTr("%1 · Investor reply")).arg(discussionCard.modelData.date); color: "#a9c6b8"; font.pixelSize: panel.textSize * 0.85 }
                 Copy { id: statusCopy; objectName: "contactFundingStatus"; property bool revealAtTop: true; text: discussionCard.modelData.label; font.bold: true; color: "#e7c891" }
                 Copy { objectName: "contactFundingReply"; text: discussionCard.modelData.reply }
                 Copy { text: discussionCard.modelData.record; color: "#b9cdbd"; font.pixelSize: panel.textSize * 0.9 }
@@ -133,14 +133,14 @@ ColumnLayout {
                             anchors.margins: 10
                             spacing: 8
                             Copy { text: offerCard.modelData.name; font.bold: true }
-                            Copy { text: qsTr("%1 company capital").arg(offerCard.modelData.cash); color: "#bfe0a5"; font.pixelSize: panel.textSize * 1.1 }
-                            Copy { text: qsTr("%1 post-issue ownership · %2").arg(offerCard.modelData.equity).arg(offerCard.modelData.seat ? qsTr("one board seat") : qsTr("no new board seat")) }
+                            Copy { text: (offerCard.modelData.donation ? qsTr("%1 institutional gift") : qsTr("%1 company capital")).arg(offerCard.modelData.cash); color: "#bfe0a5"; font.pixelSize: panel.textSize * 1.1 }
+                            Copy { text: offerCard.modelData.donation ? qsTr("No shares sold · %1").arg(offerCard.modelData.seat ? qsTr("one trustee seat") : qsTr("no new trustee seat")) : qsTr("%1 post-issue ownership · %2").arg(offerCard.modelData.equity).arg(offerCard.modelData.seat ? qsTr("one board seat") : qsTr("no new board seat")) }
                             Copy {
-                                visible: discussionCard.modelData.open
+                                visible: discussionCard.modelData.open && !offerCard.modelData.donation
                                 text: qsTr("Your current stake: %1 → %2 on approval").arg(offerCard.modelData.founderBefore).arg(offerCard.modelData.founderAfter)
                             }
                             Rectangle {
-                                visible: discussionCard.modelData.open
+                                visible: discussionCard.modelData.open && !offerCard.modelData.donation
                                 Layout.fillWidth: true
                                 implicitHeight: 10
                                 radius: 5
@@ -211,7 +211,7 @@ ColumnLayout {
         property string terms: ""
         property string revision: ""
         property var quote: ({})
-        title: qsTr("Review investor terms")
+        title: panel.funding.donor ? qsTr("Review donor gift") : qsTr("Review investor terms")
         modal: true
         focus: true
         anchors.centerIn: Overlay.overlay
@@ -241,7 +241,7 @@ ColumnLayout {
             WorldButton { objectName: "contactFundingBack"; text: qsTr("Back"); textSize: panel.textSize; onClicked: confirmation.close() }
             WorldButton {
                 objectName: "contactFundingConfirm"
-                text: qsTr("Send to the board")
+                text: panel.funding.donor ? qsTr("Send to trustees") : qsTr("Send to the board")
                 textSize: panel.textSize
                 width: Math.min(implicitWidth, parent.width - 16)
                 primary: true

@@ -9,7 +9,7 @@ Updated 2026-11-10
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.50.0-dev.1**, generation **51**.
+immersive redesign advances content to **0.51.0-dev.1**, generation **52**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -157,6 +157,23 @@ text. Reply focus waits for the saved result and places its heading at the top
 of the reading area.
 The existing recruiting, messaging, laptop-issuance and dismissal software
 walkthrough also passes with the shared conversation and scrolling changes.
+
+Nonprofit donor follow-ups now use the same saved discussions and actual trustee
+votes. Open Field offers an early institutional gift with a trustee seat; Careful
+Futures requires published research and completed independent evaluation work.
+Gifts have a distinct contribution journal, leave holdings unchanged and create
+no sales revenue, operating profit or personal windfall. Private equity issues
+and option-pool expansion are refused for nonprofit institutions. Corporation
+setup removes gift programs; nonprofit setup retains gifts and removes equity
+rounds. Content **0.51.0-dev.1**, generation **52**, records these programs.
+Focused checks cover both gifts, trustee rights, exact reload, duplicate and
+forged contributions, legal-form restrictions, and real research/training/tests
+that distinguish independent evidence from started or self-reported work.
+Bundled Release software walkthroughs pass for donor gifts and the existing
+investor route, including holding, scrolling review, cancellation, real trustee
+or board approval, visible funded replies and exact reload at 650 × 480 with
+200% text. The user requested a pause after this batch; remaining F-05 work
+stays in the backlog.
 
 Retention, audience modifiers, full personal-world simulation, research balance,
 expanded private-life purchases and richer event preferences remain unfinished,
@@ -365,7 +382,7 @@ open. The prior forecast-padding and full-campaign staffing assertions remain
 recorded for later selected work. Content Studio usability is not accepted by
 this milestone.
 
-Finalized content is generation 51. Game and editor versions remain development
+Finalized content is generation 52. Game and editor versions remain development
 placeholders, and release readiness is false.
 
 ## Next phase

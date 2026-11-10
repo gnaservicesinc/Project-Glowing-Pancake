@@ -24,6 +24,7 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
     GovernanceModels result;const auto& s=checkpoint.world.simulation;
     if (!s.management || !s.management->governance || !s.management->catalog.governance) return result;
     const auto& g=*s.management->governance;const auto& c=*s.management->catalog.governance;
+    const bool nonprofit=core::nonprofit_organization(s);
     const auto board=core::current_board(s);
     const auto listed=core::public_listing_date(s);
     const auto subject_label=[&](const std::string& id) {
@@ -34,8 +35,10 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
         if (checkpoint.world.competition) for (const auto& r:checkpoint.world.competition->companies) if (r.definition_id==id) return text(runtime::rival_definition(program,id).name);
         return readable(id);
     };
-    result.ownership=tr("Fully diluted ownership totals 100.00%. Unallocated option pool: %1. Unvested grants are reserved inside the existing pool. Vesting moves earned ownership; it creates no cash or second allocation.\n").arg(percent(core::unallocated_option_pool(s)));
+    result.ownership=nonprofit?tr("The endowment belongs to the institution and its mission. The founder and donors receive no private ownership. Gifts add institutional funds without selling shares or increasing personal wealth.\n"):
+        tr("Fully diluted ownership totals 100.00%. Unallocated option pool: %1. Unvested grants are reserved inside the existing pool. Vesting moves earned ownership; it creates no cash or second allocation.\n").arg(percent(core::unallocated_option_pool(s)));
     for (const auto& h:s.accounts->holdings) {
+        if(nonprofit)continue;
         QString label=text(h.holder);
         if (h.holder=="founder") label=tr("Founder");else if (h.holder=="cofounder") label=tr("Cofounder");else if (h.holder=="option_pool") label=tr("Reserved option pool");else if (h.holder=="seed_investor") label=tr("Seed investor");
         if(h.holder=="founder_trust") label=tr("Your equity");
@@ -51,8 +54,9 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
         const auto group=runtime::owned_group_report(checkpoint.world);
         result.ownership+=tr("Owned group: cash %1 · consolidated book net assets %2 · operating profit while owned %3. Investment assets and internal dividend income are eliminated from these group totals.\n").arg(money(group.cash),money(group.net_assets),money(group.operating_profit));
     }
-    result.board=tr("Board motions have a %1-day response window. A majority of seats decides; financing dilution does not itself change seats. Each nonplayer position uses cash after the proposed action and its maximum dilution. Review the recorded votes after deciding.\n").arg(c.vote_window.value());
-    for (const auto& member:board) result.board+=tr("%1: %2 seats · %3\n").arg(text(member.name)).arg(member.seats).arg(member.player?tr("your vote"):tr("supports cash ≥ %1 and dilution ≤ %2").arg(money(member.cash_floor),percent(member.maximum_dilution)));
+    result.board=(nonprofit?tr("Trustee motions have a %1-day response window. A majority of seats decides. Gift terms can add a trustee without granting ownership. Review the recorded votes after deciding.\n"):
+        tr("Board motions have a %1-day response window. A majority of seats decides; financing dilution does not itself change seats. Each nonplayer position uses cash after the proposed action and its maximum dilution. Review the recorded votes after deciding.\n")).arg(c.vote_window.value());
+    for (const auto& member:board) result.board+=tr("%1: %2 seats · %3\n").arg(text(member.name)).arg(member.seats).arg(member.player?tr("your vote"):nonprofit?tr("supports institutional cash ≥ %1").arg(money(member.cash_floor)):tr("supports cash ≥ %1 and dilution ≤ %2").arg(money(member.cash_floor),percent(member.maximum_dilution)));
     if (listed) {
         const auto* filing=core::latest_public_filing(s,s.date);
         result.board+=filing && filing->profit().value()<0?
@@ -71,6 +75,12 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
     for(const auto& change:g.charters) result.board+=tr("%1: %2 · %3\n").arg(date(change.day),subject_label(change.charter),change.motion.empty()?tr("selected at formation"):tr("approved by %1").arg(text(change.motion)));
     for (const auto& f:c.financing) {
         const bool used=std::any_of(g.motions.begin(),g.motions.end(),[&](const auto& m){return m.kind==core::BoardMotionKind::financing && (m.status==core::BoardMotionStatus::pending || m.executed) && std::any_of(c.financing.begin(),c.financing.end(),[&](const auto& prior){return prior.id==m.subject && prior.negotiation==f.negotiation;});});
+        if(f.donation) {
+            const auto detail=tr("A nonprofit gift of %1. No shares are issued and the endowment remains with the institution. Trustee representative: %2.\nDiscuss this program with its donor in Messages, then submit the offered terms for a majority trustee vote. Sending a proposal transfers nothing; approval records a contribution rather than sales revenue or personal income.")
+                .arg(money(f.proceeds),f.board_seat?tr("one seat"):tr("none"));
+            result.financing.push_back({text(f.id),text(f.name),money(f.proceeds),detail,used?tr("Pending or funded"):tr("Discuss with donor"),false,{}});
+            continue;
+        }
         if (c.public_listing && c.public_listing->offer_id==f.id) {
             const auto& rules=*c.public_listing;
             const auto eligible=core::advance_days(s.accounts->starts_on,rules.minimum_age);
@@ -103,7 +113,9 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
         result.executives.push_back({text(e.id),text(e.name),text(e.role),detail,a==g.appointments.end()?tr("Negotiable"):a->departed_on?tr("Departed"):tr("Appointed"),a==g.appointments.end(),{{QStringLiteral("hybrid"),e.hybrid_grant.value()>0 && e.hybrid_grant<=core::unallocated_option_pool(s)}}});
     }
     for (const auto& m:g.motions) {
-        auto detail=tr("Subject: %1. Opened %2; vote before %3.\nCash %4; explicit dilution %5. Approval commits the reviewed action atomically. No unvoted offer is accepted automatically.\n").arg(subject_label(m.subject),date(m.opened_on),date(m.deadline),money(m.cash),percent(m.shares));
+        const bool gift=m.kind==core::BoardMotionKind::financing && std::ranges::any_of(c.financing,[&](const auto& offer){return offer.id==m.subject && offer.donation;});
+        auto detail=gift?tr("Gift program: %1. Proposed %2; vote before %3.\nInstitutional contribution: %4. No ownership is transferred. Approval commits the reviewed gift once; sending a proposal transfers nothing.\n").arg(subject_label(m.subject),date(m.opened_on),date(m.deadline),money(m.cash)):
+            tr("Subject: %1. Opened %2; vote before %3.\nCash %4; explicit dilution %5. Approval commits the reviewed action atomically. No unvoted offer is accepted automatically.\n").arg(subject_label(m.subject),date(m.opened_on),date(m.deadline),money(m.cash),percent(m.shares));
         if(m.kind==core::BoardMotionKind::charter) for(const auto& charter:c.charters) if(charter.id==m.subject) {
             detail+=tr("Charter amendment: %1\nEmployees expect %2 Monthly program %3. Proposed cash floor %4; dilution ceiling %5. Approval replaces the current charter and future employee program charges from this day. Prior costs remain due.\n")
                 .arg(text(charter.priorities),text(charter.employee_expectations),money(charter.monthly_employee_budget),money(charter.cash_floor),percent(charter.maximum_dilution));
@@ -112,7 +124,7 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
             detail+=tr("IPO approval issues the public float and starts automatic quarterly disclosures. The new public director joins after this vote.\n");
         if (m.resolved_on) detail+=tr("%1 on %2.\n").arg(motion_status(m.status),date(*m.resolved_on));
         for (const auto& b:m.ballots) {QString member=readable(b.member);for (const auto& seat:board) if (seat.id==b.member) member=text(seat.name);detail+=tr("%1: %2 seats · %3\n").arg(member).arg(b.seats).arg(b.support?tr("support"):tr("oppose"));}
-        result.motions.push_back({text(m.id),subject_label(m.subject),percent(m.shares),detail,motion_status(m.status),m.status==core::BoardMotionStatus::pending,{}});
+        result.motions.push_back({text(m.id),subject_label(m.subject),gift?money(m.cash):percent(m.shares),detail,motion_status(m.status),m.status==core::BoardMotionStatus::pending,{}});
     }
     for (const auto& d:g.disputes) {
         auto detail=tr("Cause: %1 · %2. First concern %3; formal recommendation %4; respond by %5.\n").arg(d.kind=="publication"?tr("Publication commitment"):tr("Cash covenant"),subject_label(d.subject),date(d.opened_on),date(core::advance_days(d.opened_on,c.concern_period)),date(d.deadline));

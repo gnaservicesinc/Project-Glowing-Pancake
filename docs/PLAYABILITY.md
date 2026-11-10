@@ -132,8 +132,12 @@ is available 30 days after the previous one. Alternatives in a round can fund
 once. Open the board to vote: only approval delivers the capital and changes
 ownership. The conversation then records funding and can confirm the investor's
 actual board seat. Existing company bills, board limits and personal savings
-continue to apply. These follow-up offers are equity funding for corporations;
-nonprofit donor follow-ups remain future work.
+continue to apply. Corporations receive equity offers. Nonprofits instead
+use **Apply for a gift** with Open Field and Careful Futures. Gift reviews show
+the institutional payment and any additional trustee seat. Approval leaves the
+endowment and personal savings separate, with no shares issued. Careful Futures
+requires published research and a completed independent evaluation: a started
+test or a self-reported headline test does not count. Each gift program pays once.
 
 Open **My life** for Juniper Estates, your private rooms and the interiors and
 gallery stores. Purchases use retained personal savings and paid salary.
