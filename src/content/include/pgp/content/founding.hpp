@@ -8,6 +8,7 @@
 #include <pgp/core/portrait.hpp>
 
 namespace pgp::content {
+inline constexpr std::string_view startup_debt_id="founding/startup_loan";
 // Authored setup fields, not executable scripts or another event language.
 // All resource values are converted to strong units by scenario initialization.
 struct FoundingOption {
@@ -26,12 +27,19 @@ struct FoundingOpeningRules {
     std::uint32_t inherited_staff=3, cofounder_staff=1, ceo_equity_bp=500;
     auto operator<=>(const FoundingOpeningRules&) const = default;
 };
+struct FoundingLoan {
+    std::string lender;
+    std::int64_t principal_cents=0, minimum_investment_cents=0;
+    std::uint32_t monthly_interest_bp=0, term_days=0;
+    auto operator<=>(const FoundingLoan&) const = default;
+};
 struct FoundingCatalog {
     std::vector<FoundingOption> families, legs, routes, backers, offices, researchers;
     std::vector<FormativeScene> scenes;
     std::int64_t formation_cents=0, compute_monthly_cents=0, founder_salary_cents=0;
     std::uint32_t prestige_finance_bp=0, buzz_finance_bp=0, maximum_finance_bonus_bp=0;
     std::optional<FoundingOpeningRules> opening;
+    std::optional<FoundingLoan> startup_loan;
     auto operator<=>(const FoundingCatalog&) const = default;
 };
 struct FoundingSelection {
@@ -52,6 +60,7 @@ struct FoundingTerms {
     std::map<std::string,std::uint32_t,std::less<>> backer_shares;
     bool nonprofit=false, founder_researcher=false;
     std::uint32_t opening_staff=0;
+    std::optional<FoundingLoan> startup_loan;
     auto operator<=>(const FoundingTerms&) const = default;
 };
 [[nodiscard]] FoundingCatalog load_founding_catalog(std::string_view);

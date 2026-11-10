@@ -107330,6 +107330,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "7cc3963cbb1a82f81934c0b20bc429e94ca5ad4a2629b9cf12e9d1d7d7a59950",
+          "before_hash": "d90b717c1832e1c0f8a29ceaf2310fa41709d39f65260e390dbe6e05a04808ac",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 14,
+          "revision": 15
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "273fdf0b0dff15bc07c6e6ef5833caa965718a7433d379f98dbeeb1e11e4cd88",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.44.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 45,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.43.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000044.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000045.collection.json",
+      "summary": "Offer a Redwood Mutual startup loan that creates company principal, interest and maturity at signing.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

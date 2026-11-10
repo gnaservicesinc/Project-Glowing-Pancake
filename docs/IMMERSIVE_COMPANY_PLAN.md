@@ -117,8 +117,11 @@ The realtor offers a return to the original family home. Lease settlement follow
 the contract, existing company properties stay owned, and issued laptops stay
 assigned. Founders can self-fund and adopt optional bylaws that set board limits
 and fund an employee program. The home opening uses a saved setup draft.
-Personal home visits during commercial occupancy, bank loans, stock and bond
-holdings, and richer contact conversations remain to implement.
+The home bank offers a $50,000 startup loan to new corporations with at least
+$5,000 of personal investment. The company pays 0.75% monthly interest on
+outstanding principal and owes the remaining balance after 730 days. Personal
+home visits during commercial occupancy, stock and bond holdings, and richer
+contact conversations remain to implement.
 Amenities are decorative purchases; mood/retention effects, audience
 identity modifiers, broader role-specific equipment benefits and private-life
 assets/events remain open. Research rules initially use 2015 and difficulty 12;

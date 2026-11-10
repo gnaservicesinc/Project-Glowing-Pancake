@@ -45,11 +45,15 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     accounts.holdings.clear();
     for (const auto& [holder, shares] : content::scenario_ownership(*scenario,world.founding?&*world.founding:nullptr))
         accounts.holdings.push_back({holder, shares, holder == "option_pool"});
+    if(opening.startup_debt) {
+        const auto& lender=scenario->founding->startup_loan->lender;
+        core::draw_debt(accounts,scenario->starts_on,*opening.startup_debt,"Startup loan from "+lender);
+    }
     if(opening.setup_cost.value()>0) {
         core::record_cash(accounts,scenario->starts_on,core::Cents{-opening.setup_cost.value()},core::Account::expenses,
             "Formation, office deposit and first researcher signing costs","founding/setup");
-        world.simulation.cash=core::checked_unit_subtract(opening.cash,opening.setup_cost);
     }
+    world.simulation.cash=core::accounts_report(accounts).cash;
     for (const auto& [id, monthly] : opening.monthly_commitments) {
         if (monthly.value() > 0)
             core::add_recurring(accounts, {id, monthly, scenario->starts_on, std::nullopt, id});

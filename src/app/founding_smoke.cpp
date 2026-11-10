@@ -190,11 +190,15 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                     if(!capture(".home") || !click("homeApp_browser")) {fail("Home desktop before company formation");return;}
                     story->setField("seed","718");++state->home_phase;return;
                 }
-                if(state->home_phase==1) {if(!click("homeService_legal")){fail("Browser legal service");return;}++state->home_phase;return;}
-                if(state->home_phase==2) {if(!click("homeFoundNonprofit")){fail("Nonprofit formation");return;}++state->home_phase;return;}
+                if(state->home_phase==1) {if(!click("homeService_bank")){fail("Browser banking service");return;}++state->home_phase;return;}
+                if(state->home_phase==2) {if(!click("homeReviewStartupLoan")){fail("Startup loan application");return;}++state->home_phase;return;}
                 if(state->home_phase==3) {
-                    if(!click("homeBacker_safety") || !press(window,item("homeBylaws"),Qt::Key_End) ||
-                        story->form().value("charter")!="charter.shared_research") {fail("Named donor and optional bylaws");return;}
+                    if(!click("homeSign") || story->signingError().isEmpty() || !campaign.welcome()) {fail("Unfunded bank application must refuse");return;}
+                    auto* investment=item("homeInvestment");
+                    if(!investment) {fail("Loan investment field");return;}
+                    type(window,*investment,QStringLiteral("5000"));
+                    if(!press(window,investment,Qt::Key_Return) || story->form().value("investment")!="5000") {fail("Loan investment entry");return;}
+                    if(!press(window,item("homeBylaws"),Qt::Key_End) || story->form().value("charter")!="charter.shared_research") {fail("Optional bylaws");return;}
                     ++state->home_phase;return;
                 }
                 if(state->home_phase==4) {if(!capture(".terms") || !click("homeSign")){fail("Reviewed signing");return;}++state->home_phase;return;}
@@ -210,7 +214,9 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
         case Phase::office: {
             const auto& world = campaign.snapshot()->checkpoint.world;
             if (campaign.welcome() || story->hasDraft() || !world.founding || !world.identity || world.founding->choices.size() != 8 ||
-                world.founding->legal_form != "nonprofit" || world.founding->backers != std::vector<std::string>{"safety"} ||
+                world.founding->legal_form != "corporation" || world.founding->route!="bank_loan" || !world.founding->backers.empty() ||
+                world.simulation.accounts->debts.size()!=1 || world.simulation.accounts->debts.front().principal!=pgp::core::Cents{5000000} ||
+                world.simulation.succession->personal_cash!=pgp::core::Cents{1500000} ||
                 world.identity->founder_name != "Mira Vale" || world.root_seed != 718 ||
                 world.founding->gender!="woman" || world.identity->founder_pronouns!="she/her" ||
                 !state->customized || world.founding->appearance.parts[1]!=3 ||

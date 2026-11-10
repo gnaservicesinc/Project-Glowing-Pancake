@@ -158,6 +158,26 @@ Rectangle {
                     visible:home.app==="bank";Layout.fillWidth:true
                     Heading {text:qsTr("Redwood Mutual · Your money")}
                     Copy {text:qsTr("Cash savings: %1\nStocks: $0 · Bonds: $0 · Personal debt: $0\nNo company has been formed. Money stays yours until you explicitly invest it. Company expenses and salaries will use the company's separate accounts.").arg(home.story.personalFunds.total)}
+                    Rectangle {
+                        visible:!!home.story.startupLoan.lender
+                        Layout.fillWidth:true
+                        implicitHeight:loanOffer.implicitHeight+28
+                        radius:12
+                        color:"#284a46"
+                        border.color:"#648779"
+                        ColumnLayout {
+                            id:loanOffer
+                            anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:14
+                            Heading {text:qsTr("▤  %1 · Startup credit").arg(home.story.startupLoan.lender || "")}
+                            Copy {text:home.story.startupLoan.detail || ""}
+                            WorldButton {
+                                objectName:"homeReviewStartupLoan"
+                                text:qsTr("Apply with a new corporation →")
+                                textSize:home.typeSize
+                                onClicked:home.prepare("bank_loan","corporation")
+                            }
+                        }
+                    }
                     WorldButton {text:qsTr("Explore founding options");textSize:home.typeSize;onClicked:home.openApp("legal")}
                 }
                 ColumnLayout {
@@ -174,6 +194,7 @@ Rectangle {
                         onActivated:home.story.setField("route",currentValue);Accessible.name:qsTr("Company funding route")
                     }
                     Copy {visible:fundingRoute.visible;text:(fundingRoute.model[fundingRoute.currentIndex] || {}).detail || ""}
+                    Copy {visible:home.story.form.route==="bank_loan";text:home.story.startupLoan.detail || "";color:"#b9dba7"}
                     Copy {visible:home.story.form.route!=="hired_ceo";text:qsTr("Optional founding bylaws")}
                     GameSelect {
                         id:bylaws;objectName:"homeBylaws";visible:home.story.form.route!=="hired_ceo";Layout.fillWidth:true;textSize:home.typeSize;textRole:"name";valueRole:"id"

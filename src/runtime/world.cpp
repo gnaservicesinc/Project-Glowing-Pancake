@@ -513,6 +513,20 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                 const auto opening=content::scenario_opening(*scenario,world.background,world.company_id,world.difficulty,founding);
                 const auto management=content::scenario_management(*scenario,world.difficulty,founding);
                 const auto competition=content::scenario_competition(*scenario,world.difficulty);
+                if(world.simulation.accounts) {
+                    const auto& accounts=*world.simulation.accounts;
+                    const auto debt=std::ranges::find(accounts.debts,content::startup_debt_id,&core::Debt::id);
+                    if((debt!=accounts.debts.end())!=opening.startup_debt.has_value())
+                        invalid("The startup loan must match the signed founding route.");
+                    if(opening.startup_debt) {
+                        const auto& expected=*opening.startup_debt;
+                        const auto draw=std::ranges::find(accounts.postings,"debt/"+expected.id,&core::Posting::key);
+                        if(debt->drawn_on!=expected.drawn_on || debt->due!=expected.due || debt->monthly_interest!=expected.monthly_interest ||
+                           draw==accounts.postings.end() || draw->amount!=expected.principal || draw->day!=expected.drawn_on ||
+                           draw->debit!=core::Account::cash || draw->credit!=core::Account::debt || draw->document_id!=expected.id)
+                            invalid("The startup loan must keep its original principal, interest and maturity.");
+                    }
+                }
                 if(world.founding || !world.background.empty() || !world.difficulty.empty()) {
                     const auto& accounts=*world.simulation.accounts;
                     if(opening.cash.value()>0 && (accounts.postings.empty() || accounts.postings.front().key!="opening" || accounts.postings.front().amount!=opening.cash))

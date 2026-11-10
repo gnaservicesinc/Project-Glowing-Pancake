@@ -10,11 +10,13 @@ using Json=nlohmann::json;
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingOption,id,name,detail,capital_cents,monthly_cents,fee_cents,shares_bp,prestige,buzz,family,leg,legal_form)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FormativeScene,id,title,date,text,choices)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingOpeningRules,inherited_staff,cofounder_staff,ceo_equity_bp)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingLoan,lender,principal_cents,minimum_investment_cents,monthly_interest_bp,term_days)
 void to_json(Json& j,const FoundingCatalog& c) {
     j={{"families",c.families},{"legs",c.legs},{"routes",c.routes},{"backers",c.backers},{"offices",c.offices},{"researchers",c.researchers},{"scenes",c.scenes},
         {"formation_cents",c.formation_cents},{"compute_monthly_cents",c.compute_monthly_cents},{"founder_salary_cents",c.founder_salary_cents},
         {"prestige_finance_bp",c.prestige_finance_bp},{"buzz_finance_bp",c.buzz_finance_bp},{"maximum_finance_bonus_bp",c.maximum_finance_bonus_bp}};
     if(c.opening) j["opening"]=*c.opening;
+    if(c.startup_loan) j["startup_loan"]=*c.startup_loan;
 }
 void from_json(const Json& j,FoundingCatalog& c) {
     j.at("families").get_to(c.families);j.at("legs").get_to(c.legs);j.at("routes").get_to(c.routes);j.at("backers").get_to(c.backers);
@@ -22,6 +24,7 @@ void from_json(const Json& j,FoundingCatalog& c) {
     j.at("formation_cents").get_to(c.formation_cents);j.at("compute_monthly_cents").get_to(c.compute_monthly_cents);j.at("founder_salary_cents").get_to(c.founder_salary_cents);
     j.at("prestige_finance_bp").get_to(c.prestige_finance_bp);j.at("buzz_finance_bp").get_to(c.buzz_finance_bp);j.at("maximum_finance_bonus_bp").get_to(c.maximum_finance_bonus_bp);
     if(j.contains("opening")) c.opening=j.at("opening").get<FoundingOpeningRules>();
+    if(j.contains("startup_loan")) c.startup_loan=j.at("startup_loan").get<FoundingLoan>();
 }
 namespace {
 [[noreturn]] void invalid(std::string why) {throw std::invalid_argument(std::move(why));}
@@ -79,6 +82,16 @@ FoundingCatalog load_founding_catalog(std::string_view bytes) {
     amount(c.formation_cents);amount(c.compute_monthly_cents);amount(c.founder_salary_cents);
     if(c.prestige_finance_bp>1000 || c.buzz_finance_bp>1000 || c.maximum_finance_bonus_bp>5000) invalid("Founding reputation effects exceed their bounded terms.");
     if(c.opening && (c.opening->inherited_staff<2 || c.opening->inherited_staff>6 || c.opening->cofounder_staff<1 || c.opening->cofounder_staff>3 || c.opening->ceo_equity_bp>1500)) invalid("Opening company terms exceed their bounds.");
+    const auto loan_route=std::ranges::find(c.routes,std::string_view{"bank_loan"},&FoundingOption::id);
+    if((loan_route!=c.routes.end())!=c.startup_loan.has_value()) invalid("The startup loan must have both an entry route and lending terms.");
+    if(c.startup_loan) {
+        const auto& loan=*c.startup_loan;
+        text(loan.lender,64);amount(loan.principal_cents);amount(loan.minimum_investment_cents);
+        if(!c.opening || loan.principal_cents<=0 || loan.minimum_investment_cents<=0 ||
+           loan.monthly_interest_bp<1 || loan.monthly_interest_bp>500 || loan.term_days<90 || loan.term_days>3650 ||
+           loan_route->capital_cents || loan_route->shares_bp || loan_route->fee_cents || loan_route->monthly_cents)
+            invalid("A startup loan must have bounded debt terms without an equity contribution.");
+    }
     if(c.scenes.size()<6 || c.scenes.size()>12) invalid("The introduction needs six to twelve formative scenes.");
     std::set<std::string> ids;
     for(const auto& scene:c.scenes) {
@@ -109,12 +122,13 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
     if(s.researcher=="founder" && s.leg!="genius") invalid("Only Actual Genius can supply the first research assignment without hiring a researcher.");
     t.founder_researcher=s.researcher=="founder";
     const bool ceo=s.route=="hired_ceo";
+    const bool borrowing=s.route=="bank_loan";
     if(ceo && s.leg!="genius" && s.leg!="political" && s.leg!="wealthy") invalid("This lab considers leadership applications from an Actual Genius or a political or wealthy elite background.");
     {
         if(!c.opening) invalid("Complete your appearance and founding terms.");
         if(s.researcher!=(s.leg=="genius"?"founder":"none")) invalid("Research ability follows the biography; hiring takes place during play.");
         const bool funded=s.route=="investment" || s.route=="mission_director";
-        if(s.route!="bootstrap" && s.route!="partnership" && !ceo && !funded) invalid("Choose a current company entry route.");
+        if(s.route!="bootstrap" && s.route!="partnership" && !ceo && !funded && !borrowing) invalid("Choose a current company entry route.");
         if(!funded && !s.backers.empty()) invalid("This entry route does not solicit outside backers.");
         if(complete && funded && s.backers.empty()) invalid("Secure an investor or donor before signing this route.");
         if(s.office!=((ceo || s.route=="partnership")?"shared":"home")) invalid("The starting premises follow your company entry route.");
@@ -124,6 +138,12 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
     const auto personal=t.contributed_cents;
     t.personal_contribution_cents=ceo?0:s.personal_investment_cents<0?personal:s.personal_investment_cents;
     if(t.personal_contribution_cents>personal) invalid("Your personal investment exceeds your available savings.");
+    if(borrowing) {
+        if(!c.startup_loan) invalid("Startup lending is unavailable.");
+        if(complete && s.personal_investment_cents<c.startup_loan->minimum_investment_cents)
+            invalid("The bank requires a larger explicit personal investment before it can approve this loan.");
+        t.startup_loan=c.startup_loan;
+    }
     t.personal_remaining_cents=core::checked_subtract(personal,t.personal_contribution_cents);
     t.contributed_cents=core::checked_add(t.personal_contribution_cents,route.capital_cents);
     t.partner_bp=t.nonprofit?0:route.shares_bp;
@@ -164,7 +184,8 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
         t.payroll_cents=static_cast<std::int64_t>(core::mul_div_floor(static_cast<std::uint64_t>(founding_option(c.researchers,"first_hire").monthly_cents),paid_staff,1).quotient);
         if(s.office=="home") {t.office_cents=0;t.paid_setup_cents=c.formation_cents;}
     }
-    if(complete && t.contributed_cents<=t.paid_setup_cents) invalid("Secure funding sufficient to pay the disclosed formation expenses.");
+    const auto borrowed=t.startup_loan?t.startup_loan->principal_cents:0;
+    if(complete && core::checked_add(t.contributed_cents,borrowed)<=t.paid_setup_cents) invalid("Secure funding sufficient to pay the disclosed formation expenses.");
     return t;
 }
 std::string canonical_founding_selection(const FoundingSelection& s) {

@@ -44,6 +44,36 @@ int main() {
         revised.personal_investment_cents=catalog.formation_cents+500000;
         const auto small_bootstrap=make(revised);
         require(small_bootstrap.world.simulation.cash==core::Cents{500000},"A founder with a modest background can self-fund with their chosen contribution.");
+        {
+            require(catalog.startup_loan.has_value(),"The founder campaign must offer startup credit.");
+            const auto& loan=*catalog.startup_loan;
+            auto application=revised;
+            application.route="bank_loan";
+            application.personal_investment_cents=loan.minimum_investment_cents-1;
+            refuses([&]{(void)make(application);});
+            application.personal_investment_cents=loan.minimum_investment_cents;
+            auto funded=make(application);
+            const auto& opening=funded.world.simulation;
+            require(opening.cash==core::Cents{loan.principal_cents+loan.minimum_investment_cents-catalog.formation_cents},"The loan and personal contribution must both fund the new company.");
+            require(opening.accounts->postings.front().amount==core::Cents{loan.minimum_investment_cents},"Borrowed cash must enter through the debt ledger rather than an equity posting.");
+            require(opening.accounts->debts.size()==1 && opening.accounts->debts.front().principal==core::Cents{loan.principal_cents},"Signing must create one real principal balance.");
+            require(opening.succession->personal_cash==core::Cents{content::founding_terms(catalog,application).personal_remaining_cents},"The loan must never enter the founder's personal account.");
+            funded.world.enabled_flows=std::vector<std::string>{};
+            runtime::Runtime borrower{program,funded};
+            require(borrower.prepare_opening(opening.revision).accepted(),"The funded opening must prepare.");
+            const auto command=[&](core::CommandAction action) {
+                const auto result=borrower.submit({borrower.current_state().world.simulation.revision,std::move(action)});
+                require(result.accepted(),result.explanation.c_str());
+            };
+            for(int day=0;day<31;++day) command(core::AdvanceDay{});
+            const auto& accounts=*borrower.current_state().world.simulation.accounts;
+            const auto interest=accounts.invoices.find("interest/founding/startup_loan/2015-01-01");
+            require(interest.has_value() && accounts.invoices[*interest].amount==core::Cents{loan.principal_cents*loan.monthly_interest_bp/10000},"A full month must accrue the disclosed interest on actual principal.");
+            command(core::RepayDebt{std::string{content::startup_debt_id},core::Cents{50000},"startup-test-repayment"});
+            const auto& repaid=borrower.current_state();
+            require(repaid.world.simulation.accounts->debts.front().principal==core::Cents{loan.principal_cents-50000},"Repayment must reduce the outstanding principal.");
+            require(persistence::decode_save(program,persistence::encode_save(program,repaid)).checkpoint==repaid,"The loan, accrued interest and partial repayment must reload exactly.");
+        }
         revised.route="investment";
         refuses([&]{(void)make(revised);});
         revised.backers={"commercial"};

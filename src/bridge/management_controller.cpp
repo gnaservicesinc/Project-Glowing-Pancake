@@ -784,7 +784,12 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
         for (const auto& row:s.accounts->invoices) if (row.kind==core::InvoiceKind::payable && row.settled<row.amount) {
             payables.push_back({text(row.id),text(row.cause),money(core::checked_unit_subtract(row.amount,row.settled)),QStringLiteral("Due ")+text(core::iso_date(row.due)),QStringLiteral("Unpaid invoice"),true,{{QStringLiteral("debt"),false}}});
         }
-        for (const auto& row:s.accounts->debts) if (row.principal.value()>0) payables.push_back({text(row.id),QStringLiteral("Debt: ")+text(row.id),money(row.principal),QStringLiteral("Matures ")+text(core::iso_date(row.due)),QStringLiteral("Principal outstanding"),true,{{QStringLiteral("debt"),true}}});
+        for (const auto& row:s.accounts->debts) if (row.principal.value()>0) {
+            const auto title=row.id==content::startup_debt_id?tr("Startup loan"):tr("Debt: %1").arg(text(row.id));
+            payables.push_back({text(row.id),title,money(row.principal),
+                tr("Matures %1 · %2 interest per month").arg(text(core::iso_date(row.due)),percent(row.monthly_interest)),
+                tr("Principal outstanding"),true,{{QStringLiteral("debt"),true}}});
+        }
     }
     if (s.management) {
         const auto& m=*s.management;

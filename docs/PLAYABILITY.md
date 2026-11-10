@@ -116,7 +116,11 @@ or nonprofits; Alder considers CEO applications from geniuses and political or
 wealthy elites. Name the company, choose its purpose, enter your personal investment
 and explicitly accept any outside funding. Choose **Use my savings** to self-fund.
 Optional bylaws add a monthly employee program and affect board approval terms.
-Uninvested savings stay personal.
+Uninvested savings stay personal. For startup credit, open **Redwood Mutual**
+in the browser or select **Borrow from Redwood Mutual** while forming a
+corporation. Review the $50,000 principal, 0.75% monthly interest, maturity date
+and $5,000 minimum personal contribution. Signing draws the loan into the
+company’s accounts. Review or repay principal in **Accounts → Bills and debt**.
 Review the actual costs and ownership before the signature ceremony. This home
 stage is saved between sessions; it does not advance simulation time.
 

@@ -96,7 +96,13 @@ ScenarioOpening scenario_opening(const ScenarioDefinition& s,std::string_view ba
         if(!difficulty.empty()) throw std::invalid_argument("Campaign conditions follow the founding choices, without a difficulty setting.");
         result.cash=core::Cents{terms.contributed_cents};
         result.setup_cost=core::Cents{terms.paid_setup_cents};
-        if(result.cash<=result.setup_cost) throw std::invalid_argument("These terms cannot pay the founding expenses.");
+        if(terms.startup_loan) {
+            const auto& loan=*terms.startup_loan;
+            const auto due=core::advance_days(s.starts_on,core::Days{loan.term_days});
+            if(due>=s.ends_before) throw std::invalid_argument("The startup loan must mature within the campaign.");
+            result.startup_debt=core::Debt{std::string{startup_debt_id},core::Cents{loan.principal_cents},
+                core::BasisPoints{loan.monthly_interest_bp},s.starts_on,due,0,{}};
+        }
         result.team_people=terms.opening_staff;
         result.capacity_sources.clear();
         result.monthly_commitments.clear();

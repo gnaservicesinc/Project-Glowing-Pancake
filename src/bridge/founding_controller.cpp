@@ -37,6 +37,7 @@ FoundingController::FoundingController(const content::Collection& collection, st
     if (const auto* definition = collection.find("scenario.founder_campaign")) {
         const auto& scenario = std::get<content::ScenarioDefinition>(definition->data);
         catalog_ = scenario.founding;
+        starts_on_=scenario.starts_on;
         headquarters_ = scenario.headquarters_choices;
         if(scenario.infrastructure && scenario.infrastructure->workplace) premises_rules_=scenario.infrastructure->workplace->headquarters;
         if(scenario.management && scenario.management->governance)charters_=scenario.management->governance->charters;
@@ -196,15 +197,22 @@ QVariantList FoundingController::charters() const {
             .arg(text(c.priorities),text(c.employee_expectations),money(c.cash_floor.value())).arg(static_cast<double>(c.maximum_dilution.value())/100).arg(money(c.monthly_employee_budget.value()))}});
     return rows;
 }
+QVariantMap FoundingController::startupLoan() const {
+    if(!catalog_ || !catalog_->startup_loan) return {};
+    const auto& loan=*catalog_->startup_loan;
+    const auto due=core::advance_days(starts_on_,core::Days{loan.term_days});
+    const auto monthly=core::mul_div_round_half_up(static_cast<std::uint64_t>(loan.principal_cents),loan.monthly_interest_bp,10000);
+    return {{"lender",text(loan.lender)},{"detail",tr("%1 paid into company accounts at signing.\nInterest %2% per month on outstanding principal (%3 for a full month at the opening balance).\nRemaining principal due %4. Repay early from company accounts.\nApproval requires at least %5 of your own savings invested in the company. The bank takes no shares.")
+        .arg(money(loan.principal_cents)).arg(static_cast<double>(loan.monthly_interest_bp)/100).arg(money(static_cast<std::int64_t>(monthly)),text(core::iso_date(due)),money(loan.minimum_investment_cents))}};
+}
 QString FoundingController::signingError() const {
     if(!catalog_) return tr("The founding catalog is unavailable.");
     try {
         const auto selected=selection();
         if(selected.route=="hired_ceo" && selected.leg!="genius" && selected.leg!="political" && selected.leg!="wealthy") return tr("The lab has declined this leadership application.");
-        const auto terms=content::founding_terms(*catalog_,selected);
+        (void)content::founding_terms(*catalog_,selected);
         const auto charter=form_.value("charter").toString().toStdString();
         if(!charter.empty() && (selected.route=="hired_ceo" || std::ranges::none_of(charters_,[&](const auto& c){return c.id==charter;}))) return tr("Choose an available founding charter. A hired CEO inherits the company's existing terms.");
-        if(terms.contributed_cents<=terms.paid_setup_cents) return tr("Secure enough funding to pay formation expenses and leave the company some working cash.");
         runtime::validate_campaign_identity({form_.value("company").toString().trimmed().toStdString(),selected.first_name+" "+selected.last_name,form_.value("pronouns").toString().toStdString()});
         return {};
     } catch(const std::exception& e) {return QString::fromUtf8(e.what());}
@@ -213,18 +221,16 @@ QString FoundingController::preview() const {
     if (!catalog_) return {};
     try {
         const auto terms = content::founding_terms(*catalog_, selection());
-        const auto cash=terms.contributed_cents;
-        if(cash<=terms.paid_setup_cents) return tr("Secure funding sufficient to pay formation expenses.");
+        const auto cash=core::checked_add(terms.contributed_cents,terms.startup_loan?terms.startup_loan->principal_cents:0);
         const auto equity = terms.nonprofit ? tr("The institution owns its assets.") :
             tr("Your ownership: %1.%2%").arg(terms.founder_bp / 100).arg(terms.founder_bp % 100, 2, 10, QLatin1Char('0'));
         {
             const auto selected=selection();
             QStringList sources;
             if(selected.route!="hired_ceo") {
-                const auto family=content::founding_option(catalog_->families,selected.leg=="political"?"rich":selected.family).capital_cents;
-                const auto personal=family+content::founding_option(catalog_->legs,selected.leg).capital_cents;
-                (void)personal;sources<<tr("Your investment %1 · personal savings retained %2").arg(money(terms.personal_contribution_cents),money(terms.personal_remaining_cents));
+                sources<<tr("Your investment %1 · personal savings retained %2").arg(money(terms.personal_contribution_cents),money(terms.personal_remaining_cents));
             }
+            if(terms.startup_loan) sources<<tr("%1 loan: %2 borrowed by the company").arg(text(terms.startup_loan->lender),money(terms.startup_loan->principal_cents));
             const auto& route=content::founding_option(catalog_->routes,selected.route);
             if(route.capital_cents>0 && selected.route!="mission_director") sources<<tr("%1: %2").arg(text(route.name),money(route.capital_cents));
             const auto premium=std::min(catalog_->maximum_finance_bonus_bp,terms.prestige*catalog_->prestige_finance_bp+terms.buzz*catalog_->buzz_finance_bp);

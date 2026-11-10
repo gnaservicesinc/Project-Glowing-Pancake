@@ -21,6 +21,7 @@ class FoundingController final : public QObject {
     Q_PROPERTY(QVariantMap personalFunds READ personalFunds NOTIFY changed)
     Q_PROPERTY(QVariantMap familyHome READ familyHome NOTIFY changed)
     Q_PROPERTY(QVariantList charters READ charters CONSTANT)
+    Q_PROPERTY(QVariantMap startupLoan READ startupLoan CONSTANT)
     Q_PROPERTY(QString preview READ preview NOTIFY changed)
     Q_PROPERTY(QString error READ error NOTIFY changed)
     Q_PROPERTY(QString portrait READ portrait NOTIFY changed)
@@ -43,6 +44,7 @@ public:
     QVariantMap personalFunds() const;
     QVariantMap familyHome() const;
     QVariantList charters() const;
+    QVariantMap startupLoan() const;
     QString error() const {return error_;}
     Q_INVOKABLE QString signingError() const;
     Q_INVOKABLE void setField(QString,QVariant);
@@ -66,6 +68,7 @@ private:
     std::vector<std::string> headquarters_;
     std::optional<core::HeadquartersRules> premises_rules_;
     std::vector<core::OrganizationalCharter> charters_;
+    core::OrdinalDay starts_on_{0};
     std::filesystem::path draft_path_;
     QVariantMap form_;
     QString beat_ = QStringLiteral("opening");

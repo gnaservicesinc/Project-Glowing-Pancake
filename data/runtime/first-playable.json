@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.43.0-dev.1",
+  "content_version": "0.44.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -69729,6 +69729,20 @@
             "name": "Get hired as CEO",
             "prestige": 0,
             "shares_bp": 0
+          },
+          {
+            "buzz": 0,
+            "capital_cents": 0,
+            "detail": "Apply for a startup loan for your corporation. The company starts at home and is responsible for interest and repayment. Your own contribution must meet the minimum below.",
+            "family": "",
+            "fee_cents": 0,
+            "id": "bank_loan",
+            "leg": "",
+            "legal_form": "corporation",
+            "monthly_cents": 0,
+            "name": "Borrow from Redwood Mutual",
+            "prestige": 0,
+            "shares_bp": 0
           }
         ],
         "scenes": [
@@ -70118,7 +70132,14 @@
             "text": "School is ending. Mentors, partners and backers see different futures for you. Your political family, if chosen, is now wealthy. You are eighteen; the company story begins today.",
             "title": "The offer at eighteen"
           }
-        ]
+        ],
+        "startup_loan": {
+          "lender": "Redwood Mutual",
+          "minimum_investment_cents": 500000,
+          "monthly_interest_bp": 75,
+          "principal_cents": 5000000,
+          "term_days": 730
+        }
       },
       "frontier": "frontier.frontier_paths",
       "headquarters_choices": [
@@ -75390,7 +75411,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 14,
+      "revision": 15,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
