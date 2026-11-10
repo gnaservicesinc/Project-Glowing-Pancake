@@ -24,7 +24,7 @@ ColumnLayout {
     Flow {
         visible:!panel.showDiscussion
         Layout.fillWidth:true;spacing:8
-        WorldButton {text:qsTr("HQ team");textSize:panel.textSize;checked:panel.page==="team";onClicked:panel.changePage("team")}
+        WorldButton {objectName:"peopleTeamTab";text:qsTr("HQ team");textSize:panel.textSize;checked:panel.page==="team";onClicked:panel.changePage("team")}
         WorldButton {objectName:"peopleApplicantsTab";text:qsTr("Applicants");textSize:panel.textSize;checked:panel.page==="applicants";onClicked:panel.changePage("applicants")}
         WorldButton {objectName:"peopleBranchesTab";text:qsTr("Branch departments");textSize:panel.textSize;checked:panel.page==="branches";onClicked:panel.changePage("branches")}
     }
@@ -77,6 +77,13 @@ ColumnLayout {
                     Layout.fillWidth:true;spacing:5
                     Label {Layout.fillWidth:true;text:modelData.name || "";textFormat:Text.PlainText;wrapMode:Text.Wrap;font.pixelSize:panel.textSize*1.2;font.bold:true;color:"#f3ead8"}
                     Label {Layout.fillWidth:true;text:modelData.role || "";wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b2d6c4"}
+                    Label {
+                        visible:!!modelData.mood
+                        Layout.fillWidth:true;wrapMode:Text.Wrap
+                        text:modelData.mood?qsTr("Mood %1 / 100 · %2").arg(modelData.mood.score).arg(modelData.mood.label):""
+                        font.pixelSize:panel.textSize;font.bold:true
+                        color:modelData.mood && modelData.mood.score<45?"#f1ba92":"#b5dca9"
+                    }
                     Label {Layout.fillWidth:true;text:modelData.detail || "";wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#c5d7cb"}
                     Label {
                         visible:panel.page==="applicants" && !!modelData.discussion

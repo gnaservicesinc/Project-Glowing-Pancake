@@ -77,6 +77,19 @@ void sync_capacity(SimulationState& s) {
 }
 bool hq_portable(std::string_view kind) {return kind=="laptop" || kind=="research_laptop";}
 bool hq_desk_device(std::string_view kind) {return kind=="desktop" || kind=="workstation" || kind=="thin_client" || hq_portable(kind);}
+bool hq_amenity_kind(std::string_view kind) {
+    return kind=="plant" || kind=="aquarium" || kind=="water" || kind=="microwave" || kind=="table" || kind=="cabinet" || kind=="vending";
+}
+std::vector<std::pair<std::string,std::string>> hq_active_amenities(const SimulationState& s) {
+    std::vector<std::pair<std::string,std::string>> result;
+    if(!enabled(s) || !s.infrastructure->workplace->headquarters) return result;
+    std::set<std::string_view> present;
+    for(const auto& i:hq(s).items) {
+        const auto& e=offer(s,i);
+        if(hq_amenity_kind(e.kind) && working(s,i) && present.insert(e.kind).second) result.emplace_back(e.kind,e.name);
+    }
+    return result;
+}
 bool hq_laptop_ready(const SimulationState& s,std::string_view person) {
     return enabled(s) && s.infrastructure->workplace->headquarters && !person.empty() && std::ranges::any_of(hq(s).items,[&](const auto& i) {
         return i.person==person && hq_portable(offer(s,i).kind) && working(s,i);

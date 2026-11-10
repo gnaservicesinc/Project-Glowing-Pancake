@@ -9,7 +9,7 @@ Updated 2026-11-09
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive founding/equipment batch advances content to **0.44.0-dev.1**, generation **45**.
+immersive founding/equipment batch advances content to **0.45.0-dev.1**, generation **46**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -34,11 +34,15 @@ with dated interest and maturity under the existing accounts rules.
 Furnishing now supports illustrated object pickup, translucent red/green
 footprints, rotation and cancellation using the same core placement validation.
 The catalogue includes the requested computer tiers, issued laptops, rack-dependent
-clients and decorative amenities. Fictional supplier storefronts expose their
-actual prices and delivery. Team creativity counts each distinct trait once;
+clients and office amenities. Fictional supplier storefronts expose their
+prices, delivery and amenity mood benefits. Team creativity counts each distinct trait once;
 compatibility supplies a bounded coordination benefit. Hiring and research
 previews show the real team values, and sufficient creativity can bypass research
-prerequisites without granting free equipment or compute.
+prerequisites without granting free equipment or compute. Each shared trait
+contributes toward bounded compatibility. A new unshared trait preserves
+existing matches. Employees show a mood score based on salary, company and
+CEO reputation, mission and duties, coworker affinity, temperament, and active
+HQ amenities. Installed amenity types benefit employees with assigned desks.
 
 Focused identity/investment, headquarters, creative-team and workplace-research
 checks pass, including refusal and fresh reload. Content review validates 24
@@ -50,7 +54,10 @@ run covers the R shortcut; native terminal activation prevented shortcut testing
 there, so the visible rotation control was used. The bank walkthrough covers
 a declined application, the signed loan and a fresh reload. The simulation
 check also covers accrued interest and repayment.
-Moods, audience modifiers, full personal-world simulation,
+The employee profile walkthrough verifies a visible mood score at 200% text.
+Simulation checks cover stored and installed amenities, duplicate types, power,
+desk access and the same mood after reloading.
+Retention, audience modifiers, full personal-world simulation,
 future EEY/frontier integration and private-life purchases and events
 remain active work, as itemized in the plan and backlog.
 

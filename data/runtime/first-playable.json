@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.44.0-dev.1",
+  "content_version": "0.45.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -75076,6 +75076,29 @@
           "maximum_hq": 128,
           "mission_skill_weight": 8,
           "monthly_salary_cents": 500000,
+          "mood": {
+            "amenities": {
+              "aquarium": 3,
+              "cabinet": 1,
+              "microwave": 2,
+              "plant": 2,
+              "table": 3,
+              "vending": 2,
+              "water": 3
+            },
+            "amenity_cap": 14,
+            "ceo_prestige": 10,
+            "company_prestige": 12,
+            "coworkers": 12,
+            "pay": 25,
+            "role": 10,
+            "temperaments": {
+              "adventurous": 0,
+              "deliberate": 1,
+              "impulsive": -2,
+              "patient": 3
+            }
+          },
           "onboarding_days": 7,
           "pay_skill_weight": 20,
           "prestige_skill_weight": 2,
@@ -75411,7 +75434,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 15,
+      "revision": 16,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

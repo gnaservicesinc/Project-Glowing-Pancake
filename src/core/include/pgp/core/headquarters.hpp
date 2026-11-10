@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <variant>
+#include <utility>
 #include <vector>
 
 namespace pgp::core {
@@ -152,6 +153,8 @@ std::uint32_t assigned_hq_desks(const SimulationState&);
 [[nodiscard]] std::uint32_t assigned_hq_desk(const SimulationState&,std::string_view person);
 [[nodiscard]] bool hq_workstation_ready(const SimulationState&,std::string_view person);
 [[nodiscard]] bool hq_laptop_ready(const SimulationState&,std::string_view person);
+[[nodiscard]] bool hq_amenity_kind(std::string_view kind);
+[[nodiscard]] std::vector<std::pair<std::string,std::string>> hq_active_amenities(const SimulationState&);
 [[nodiscard]] bool hq_desk_device(std::string_view kind);
 [[nodiscard]] bool hq_portable(std::string_view kind);
 [[nodiscard]] std::string hq_placement_blocker(const SimulationState&,const PlaceHQEquipment&);

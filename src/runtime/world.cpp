@@ -431,14 +431,18 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
         if(world.founding) {
             if(!scenario->founding || !world.identity || world.identity->founder_name!=world.founding->first_name+" "+world.founding->last_name)
                 invalid("The saved biography must match the founder and authored campaign.");
-            (void)content::founding_terms(*scenario->founding,*world.founding);
+            const auto terms=content::founding_terms(*scenario->founding,*world.founding);
             if(!world.difficulty.empty()) invalid("Founding conditions cannot be overridden by a difficulty setting.");
-            if(world.simulation.management && world.simulation.management->people)
-                for(const auto& employee:world.simulation.management->people->employees) if(employee.terms.profile.role=="Founder / researcher") {
+            if(world.simulation.management && world.simulation.management->people) {
+                const auto& management=*world.simulation.management;
+                if(management.catalog.people && management.catalog.people->mood && management.people->founding_prestige!=std::min(10U,terms.prestige))
+                    invalid("The founder's reputation differs from the saved biography.");
+                for(const auto& employee:management.people->employees) if(employee.terms.profile.role=="Founder / researcher") {
                     const auto& p=employee.terms.profile;
                     if(p.portrait!=world.founding->appearance || p.gender!=world.founding->gender || p.pronouns!=world.identity->founder_pronouns || p.name!=world.identity->founder_name)
                         invalid("The founder's employee record differs from their saved identity and appearance.");
                 }
+            }
         }
         if(world.simulation.infrastructure && world.simulation.infrastructure->workplace) {
             const auto& workplace=*world.simulation.infrastructure->workplace;

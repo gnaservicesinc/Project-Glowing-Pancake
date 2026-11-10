@@ -26,9 +26,33 @@ inline Json encode(const core::PeopleRules& r) {
         {"minimum_ask_bp",n.minimum_ask},{"maximum_ask_bp",n.maximum_ask},{"minimum_acceptance_bp",n.minimum_acceptance},{"maximum_acceptance_bp",n.maximum_acceptance},
         {"minimum_offer_bp",n.minimum_offer},{"maximum_offer_bp",n.maximum_offer},{"maximum_signing_multiple",n.maximum_signing_multiple}};}
     if(!r.trait_groups.empty()) j["trait_groups"]=r.trait_groups;
+    if(r.mood) {
+        const auto& m=*r.mood;
+        j["mood"]={{"pay",m.pay},{"company_prestige",m.company_prestige},{"ceo_prestige",m.ceo_prestige},
+            {"role",m.role},{"coworkers",m.coworkers},{"amenity_cap",m.amenity_cap},
+            {"temperaments",m.temperaments},{"amenities",m.amenities}};
+    }
     return j;
 }
 inline core::PeopleRules decode(Json j) {
+    std::optional<core::WorkplaceMoodRules> mood;
+    if(j.contains("mood")) {
+        const auto& m=j.at("mood");
+        fields(m,{"pay","company_prestige","ceo_prestige","role","coworkers","amenity_cap","temperaments","amenities"});
+        mood=core::WorkplaceMoodRules{count(m.at("pay")),count(m.at("company_prestige")),count(m.at("ceo_prestige")),
+            count(m.at("role")),count(m.at("coworkers")),count(m.at("amenity_cap")),{}, {}};
+        const auto& temperaments=m.at("temperaments");
+        const auto& amenities=m.at("amenities");
+        if(!temperaments.is_object() || temperaments.size()>16 || !amenities.is_object() || amenities.size()>7)
+            throw std::invalid_argument("Mood needs bounded temperament and amenity maps");
+        for(const auto& [name,points]:temperaments.items()) {
+            const auto value=integer(points);
+            if(value < -15 || value>15) throw std::invalid_argument("Temperament mood points out of bounds");
+            mood->temperaments.emplace(name,static_cast<int>(value));
+        }
+        for(const auto& [kind,points]:amenities.items()) mood->amenities.emplace(kind,count(points));
+        j.erase("mood");
+    }
     std::vector<std::vector<std::string>> traits;
     if(j.contains("trait_groups")) {
         const auto& groups=j.at("trait_groups");
@@ -48,7 +72,7 @@ inline core::PeopleRules decode(Json j) {
         j.erase("recruitment");
     }
     fields(j,{"first_names","last_names","maximum_hq","candidates","recruitment_days","onboarding_days","monthly_salary_cents","signing_cost_cents","base_skill","skill_jitter","pay_skill_weight","prestige_skill_weight","mission_skill_weight","maximum_evaluation_credit_bp"});
-    core::PeopleRules r;r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);
+    core::PeopleRules r;r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);r.mood=std::move(mood);
     for(const char* name:{"first_names","last_names"}) {
         const auto& list=j.at(name);
         if(!list.is_array() || list.size()>512) throw std::invalid_argument("Name pool exceeds its limit");

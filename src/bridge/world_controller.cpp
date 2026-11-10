@@ -16,6 +16,22 @@ static void initialize_world_baseline() {
 namespace pgp::bridge {
 namespace {
 QString q(const std::string& s) {return QString::fromStdString(s);}
+QVariantMap moodRow(const core::EmployeeMood& mood) {
+    QVariantList factors;
+    const auto add=[&](QString name,int points){factors.push_back(QVariantMap{{"name",std::move(name)},{"points",points}});};
+    add(QObject::tr("Salary versus expectations"),mood.pay);
+    add(QObject::tr("Company publications"),mood.company_prestige);
+    add(QObject::tr("CEO reputation"),mood.ceo_prestige);
+    add(QObject::tr("Mission and duties"),mood.role);
+    add(QObject::tr("Shared traits with coworkers"),mood.coworkers);
+    add(QObject::tr("Office amenities"),mood.amenities);
+    add(QObject::tr("Temperament"),mood.temperament_effect);
+    QStringList amenities;
+    for(const auto& name:mood.accessible_amenities) amenities.push_back(q(name));
+    return {{"score",mood.score},{"label",mood.score>=75?QObject::tr("Thriving"):mood.score>=60?QObject::tr("Content"):
+        mood.score>=45?QObject::tr("Steady"):mood.score>=30?QObject::tr("Frustrated"):QObject::tr("Strained")},
+        {"temperament",q(mood.temperament)},{"factors",factors},{"amenities",amenities.join(QStringLiteral(", "))}};
+}
 QString portraitUrl(const core::PortraitRecipe& recipe) {
     QString url=QStringLiteral("image://portraits/%1").arg(recipe.kit);
     for(auto part:recipe.parts) url+='/'+QString::number(part);
@@ -201,6 +217,7 @@ QVariantList WorldController::people() const {
     rows.push_back(founder());
     const auto& s=snapshot_->checkpoint.world.simulation;
     if(s.management) {
+        const auto moods=core::workplace_moods(s);
         if(s.management->people) for(const auto& employee:s.management->people->employees) {
             if(employee.departed_on || employee.terms.profile.role=="Founder / researcher") continue;
             const auto& p=employee.terms.profile;
@@ -213,11 +230,13 @@ QVariantList WorldController::people() const {
                 .arg(QLocale{QLocale::English,QLocale::UnitedStates}.toCurrencyString(static_cast<double>(employee.terms.salary.value())/100),
                     QLocale{QLocale::English,QLocale::UnitedStates}.toCurrencyString(static_cast<double>(employee.terms.signing.value())/100));
             const auto years=std::max(0,core::from_ordinal(s.date).year-core::from_ordinal(p.applied_on).year);
-            rows.push_back(QVariantMap{{"id",q(p.id)},{"portrait",portraitUrl(p.portrait)},{"name",q(p.name)},{"initials",q(p.name).section(' ',0,0).left(1)+q(p.name).section(' ',-1).left(1)}, {"role",managing?tr("HQ operations manager"):q(p.role)},
+            auto row=QVariantMap{{"id",q(p.id)},{"portrait",portraitUrl(p.portrait)},{"name",q(p.name)},{"initials",q(p.name).section(' ',0,0).left(1)+q(p.name).section(' ',-1).left(1)}, {"role",managing?tr("HQ operations manager"):q(p.role)},
                 {"detail",tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8\n%9")
                     .arg(q(p.gender),q(p.pronouns)).arg(core::from_ordinal(s.date).year-p.birth_year).arg(p.experience+static_cast<unsigned>(years))
                     .arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation)
-                    .arg(s.date<employee.ready_on?tr("Onboarding until %1").arg(q(core::iso_date(employee.ready_on))):managing?tr("Dedicated to branch coordination; one staff allocation is reserved"):tr("Onboarding complete"))+workplace+([&]{QStringList traits;for(const auto& t:p.traits)traits.push_back(q(t));return QStringLiteral("\n")+traits.join(" · ");})()}, {"bio",q(p.bio)}});
+                    .arg(s.date<employee.ready_on?tr("Onboarding until %1").arg(q(core::iso_date(employee.ready_on))):managing?tr("Dedicated to branch coordination; one staff allocation is reserved"):tr("Onboarding complete"))+workplace+([&]{QStringList traits;for(const auto& t:p.traits)traits.push_back(q(t));return QStringLiteral("\n")+traits.join(" · ");})()}, {"bio",q(p.bio)}};
+            if(const auto mood=moods.find(p.id);mood!=moods.end()) row["mood"]=moodRow(mood->second);
+            rows.push_back(std::move(row));
         }
         for(const auto& hire:s.management->specialists) {
             if(hire.withdrawn_on) continue;

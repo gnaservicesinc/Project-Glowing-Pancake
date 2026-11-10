@@ -21,6 +21,12 @@ struct RecruitmentRules {
     std::uint32_t maximum_signing_multiple=5;
     auto operator<=>(const RecruitmentRules&) const = default;
 };
+struct WorkplaceMoodRules {
+    std::uint32_t pay=25, company_prestige=12, ceo_prestige=10, role=10, coworkers=12, amenity_cap=14;
+    std::map<std::string, int> temperaments;
+    std::map<std::string, std::uint32_t> amenities;
+    auto operator<=>(const WorkplaceMoodRules&) const = default;
+};
 struct PeopleRules {
     std::vector<std::string> first_names,last_names;
     std::uint32_t maximum_hq=128,candidates=4;
@@ -30,6 +36,7 @@ struct PeopleRules {
     BasisPoints maximum_evaluation_credit{2000};
     std::optional<RecruitmentRules> recruitment{};
     std::vector<std::vector<std::string>> trait_groups{};
+    std::optional<WorkplaceMoodRules> mood{};
     auto operator<=>(const PeopleRules&) const = default;
 };
 struct PersonProfile {
@@ -47,6 +54,14 @@ struct TeamDynamics {
 };
 [[nodiscard]] TeamDynamics team_dynamics(std::span<const PersonProfile* const>);
 [[nodiscard]] TeamDynamics research_team(const SimulationState&,std::span<const std::string>);
+[[nodiscard]] std::vector<std::string> distinct_person_traits(const PersonProfile&);
+[[nodiscard]] std::uint32_t shared_trait_compatibility(std::uint64_t matches,std::uint64_t pairs);
+struct EmployeeMood {
+    int score=50, pay=0, company_prestige=0, ceo_prestige=0, role=0, coworkers=0, amenities=0, temperament_effect=0;
+    std::string temperament;
+    std::vector<std::string> accessible_amenities;
+};
+[[nodiscard]] std::map<std::string,EmployeeMood> workplace_moods(const SimulationState&);
 struct EmploymentOffer {
     Cents salary{0},signing{0},counter_salary{0},counter_signing{0};
     OrdinalDay submitted_on{0},respond_on{0},expires_on{0};
@@ -94,7 +109,7 @@ struct DeclineApplicant {std::string id;};
 using RecruitmentAction=std::variant<ProposeEmployment,AcceptEmploymentCounter,DeclineApplicant>;
 struct ManageRecruitment {RecruitmentAction action;};
 void validate_people_rules(const PeopleRules&);
-void initialize_people(SimulationState&,std::uint64_t seed,std::string founder_name={},std::string founder_pronouns={},bool founder_researcher=false,std::uint32_t prestige=0);
+void initialize_people(SimulationState&,std::uint64_t seed,std::string founder_name={},std::string founder_pronouns={},bool founder_researcher=false,std::uint32_t prestige=0,std::string mission="research");
 void prepare_people(SimulationState&);
 void validate_people(const SimulationState&);
 void hire_employee(SimulationState&,std::string_view,Cents protected_cash,std::uint32_t desk=0);

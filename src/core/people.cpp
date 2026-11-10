@@ -77,6 +77,18 @@ void validate_people_rules(const PeopleRules& r) {
         if(group.empty() || group.size()>16) invalid("Trait groups need bounded choices.");
         for(const auto& trait:group) if(trait.empty() || trait.size()>80 || trait.find('\0')!=trait.npos || !trait_names.insert(trait).second) invalid("Trait IDs must be distinct across categories.");
     }
+    if(r.mood) {
+        const auto& mood=*r.mood;
+        if(mood.pay>50 || mood.company_prestige>30 || mood.ceo_prestige>30 || mood.role>30 ||
+           mood.coworkers>30 || mood.amenity_cap>30 || mood.temperaments.size()>16 || mood.amenities.size()>7)
+            invalid("Workplace mood weights exceed their bounds.");
+        for(const auto& [name,points]:mood.temperaments)
+            if(!trait_names.contains("Temperament: "+name) || points < -15 || points>15)
+                invalid("Temperament effects must use authored traits and bounded points.");
+        for(const auto& [kind,points]:mood.amenities)
+            if(!hq_amenity_kind(kind) || points==0 || points>mood.amenity_cap)
+                invalid("Amenity mood effects need a usable furnishing and bounded points.");
+    }
     if(r.first_names.empty() || r.first_names.size()>512 || r.last_names.empty() || r.last_names.size()>512 ||
         r.maximum_hq<1 || r.maximum_hq>256 || r.candidates<1 || r.candidates>12 ||
         r.recruitment_interval<Days{7} || r.recruitment_interval>Days{365} || r.onboarding>Days{90} ||
@@ -86,13 +98,14 @@ void validate_people_rules(const PeopleRules& r) {
     for(const auto* names:{&r.first_names,&r.last_names}) for(const auto& name:*names)
         if(name.empty() || name.size()>48 || name.find('\0')!=std::string::npos) invalid("Name pool entry is empty or oversized.");
 }
-void initialize_people(SimulationState& s,std::uint64_t seed,std::string founder_name,std::string founder_pronouns,bool founder_researcher,std::uint32_t prestige) {
+void initialize_people(SimulationState& s,std::uint64_t seed,std::string founder_name,std::string founder_pronouns,bool founder_researcher,std::uint32_t prestige,std::string mission) {
     if(!s.management || !s.management->catalog.people) return;
     validate_people_rules(*s.management->catalog.people);
     if(!s.capacity || !s.accounts || s.capacity->available_staff>s.management->catalog.people->maximum_hq)
         invalid("Opening HQ staff exceed the detailed roster capacity.");
     PeopleState state;SplitMix64 derivation{seed ^ UINT64_C(0x50454f504c455631)};
     state.stream=derivation.next();state.starts_on=s.date;state.founding_prestige=std::min(10U,prestige);
+    state.mission=std::move(mission);
     s.management->people=std::move(state);
     for(std::uint32_t i=0;i<s.capacity->available_staff;++i) {
         auto terms=applicant(s,true);

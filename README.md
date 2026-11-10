@@ -25,7 +25,8 @@ and actual compute. The workspace includes a laptop desktop, device-specific app
 and a state atlas with selectable counties. Furnishing uses illustrated pickup, translucent placement feedback and rotation.
 Issued laptops support remote research; rack clients require powered infrastructure.
 Team creativity counts unique traits across the team, with shared traits providing
-a separate coordination benefit. The wider personal-life and relationship systems
+a separate coordination benefit. Employee profiles show mood factors, including
+pay, reputation, duties and installed amenities. The wider personal-life and relationship systems
 remain in progress.
 
  The initial skeleton phase closed on 2026-11-07. The current
@@ -40,7 +41,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.44.0-dev.1**, generation **45**.
+The finalized internal content version is **0.45.0-dev.1**, generation **46**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).

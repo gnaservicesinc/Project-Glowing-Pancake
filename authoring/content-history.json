@@ -107369,6 +107369,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "68fa6207a268e6785a58e173303e29278db2100d507f7952a0f780fcd6080878",
+          "before_hash": "7cc3963cbb1a82f81934c0b20bc429e94ca5ad4a2629b9cf12e9d1d7d7a59950",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 15,
+          "revision": 16
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "e2b6ab3274d9e7f1d99694e9df154f98fc1efe4597af94444ee89c2da958f334",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.45.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 46,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.44.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000045.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000046.collection.json",
+      "summary": "Add employee temperament, explainable workplace moods, and installed amenity effects.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

@@ -78,7 +78,9 @@ home office, and wealthy homes add a library and guest house.
 Supplier filters show fictional brands. Issuing a delivered laptop lets its holder
 research without an assigned desk. Thin clients and research laptops require a
 powered installed rack; they do not duplicate its compute. Plants, aquariums and
-break-room furnishings can be bought and placed, with no mood bonus yet.
+break-room furnishings improve mood for employees with assigned HQ desks after
+installation and any required power. The supplier shows each effect. Additional
+copies of the same type do not add more mood points.
 **Realtor** compares named landlords, city prices, layouts, deposits and lease terms.
 Alternatively buy land, design rooms and compare three contractor bids. Construction
 can be delayed or exceed its base quote; the prepaid contingency caps the signed
@@ -95,7 +97,8 @@ the applicant's reply. You can revise the offer, accept their counteroffer or
 decline the applicant. Once you agree, select a free furnished desk and sign
 before the terms expire. The payment and salary start at signing. The employee
 is available after seven days of onboarding. Select a portrait to inspect the
-person's profile. Form drafts survive closing and
+person's profile. The mood breakdown shows how pay, reputation, duties,
+shared traits, temperament and amenities affect them. Form drafts survive closing and
 reopening the game. [Interface scope](GAMEPLAY_INTERFACE.md).
 
 **New Game opens in a California maternity ward in 1997.** Continue after the

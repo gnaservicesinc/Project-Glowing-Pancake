@@ -15,13 +15,13 @@ F-04 setup assumptions. This is ongoing work, not a completed interface review.
 
 | Area | Implemented in the first batch | Remaining |
 | --- | --- | --- |
-| Furnishing | Illustrated pickup, translucent valid/blocked footprints, rotation/cancel, shared authoritative placement; expanded suppliers and equipment; issued laptops and powered-rack clients | Wider role effects, amenity mood effects, continued visual polish |
+| Furnishing | Illustrated pickup, translucent valid/blocked footprints, rotation/cancel, shared authoritative placement; expanded suppliers and equipment; issued laptops and powered-rack clients | Wider role effects and continued visual polish |
 | Identity and intro | Birth record and signature, narrated choice outcomes, Other pronouns, all portrait features exposed, color/pattern/build/height variants | Full-body art, identity audience consequences, richer choice sub-branches |
 | Home and founding | Saved unemployed home stage after appearance; fictional services, legal/CEO routes, explicit personal investment, separate retained savings, signing ceremony, three to six furnishable rooms, return home, optional bylaws, self-funding and a startup bank loan | Personal home visits during commercial occupancy, securities and richer contacts |
-| Team research | Union of unique traits, zero duplicate bonus, shared-trait compatibility, bounded coordination benefit, hiring preview and prerequisite bypass | Mood, temperament consequences, future technology EEY/frontier integration and balance |
+| Team research | Union of unique traits, zero duplicate bonus, shared-trait compatibility, bounded coordination benefit, hiring preview, prerequisite bypass, and individual mood with temperament and amenity effects | Retention, future technology EEY/frontier integration and balance |
 | Private life | Existing personal salary/account used by the explicit founding investment split | Properties, decoration, luxury assets, events, contacts and late-game funded interventions |
 
-Content **0.44.0-dev.1**, generation **45**, records this batch. Human playtesting
+Content **0.45.0-dev.1**, generation **46**, records this batch. Human playtesting
 and the rest of F-05 remain open.
 
 ## Selected refinement milestones (F-04)

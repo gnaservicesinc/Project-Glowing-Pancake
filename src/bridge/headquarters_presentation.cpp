@@ -54,12 +54,30 @@ QVariantMap WorldController::headquarters() const {
             .arg(p.kind=="home"?tr("Your parents' home workspaces · $0 rent"):p.kind=="owned"?tr("Company-owned building · no rent; property taxes accrue"):tr("Rent %1/month to %2").arg(money(p.rent),q(p.lessor)),money(p.deposit))}};
 }
 QVariantList WorldController::hqEquipmentOffers() const {
-    QVariantList rows;if(!available(snapshot_)) return rows;const auto day=snapshot_->checkpoint.world.simulation.date;
-    for(const auto& e:rules(snapshot_).equipment) rows.push_back(QVariantMap{{"id",q(e.id)},{"name",q(e.name)},{"price",money(e.price)},{"kind",q(e.kind)},{"revision",reviewToken()},{"supplier",q(e.supplier)},
+    QVariantList rows;if(!available(snapshot_)) return rows;
+    const auto& state=snapshot_->checkpoint.world.simulation;
+    const auto day=state.date;
+    const auto* people=state.management && state.management->catalog.people?&*state.management->catalog.people:nullptr;
+    for(const auto& e:rules(snapshot_).equipment) {
+        QString use;
+        if(e.kind=="thin_client") use=tr("Marketing / PR terminal. Requires a powered HQ rack and uses its shared capacity.");
+        else if(e.kind=="research_laptop") use=tr("Remote GPU research. Issue to an employee and install a powered HQ rack.");
+        else if(e.kind=="workstation") use=tr("Multi-monitor workstation for coding, call centers and management.");
+        else if(e.id=="budget_desktop") use=tr("Entry desktop for everyday office work.");
+        else if(core::hq_portable(e.kind)) use=tr("Issue to an employee for work at any desk or from home.");
+        if(e.compute.value()>0) use+=(use.isEmpty()?QString{}:QStringLiteral("\n"))+tr("%1 CU/day · %2 W when on. Requires delivery, placement or issue, and power.").arg(static_cast<double>(e.compute.value())/1000).arg(e.watts);
+        if(people && people->mood) {
+            const auto bonus=people->mood->amenities.find(e.kind);
+            if(bonus!=people->mood->amenities.end()) use=tr("+%1 mood for employees with assigned HQ desks when installed%2. One benefit per amenity type, up to +%3 total.")
+                .arg(bonus->second).arg(e.watts?tr(" and powered"):QString{}).arg(people->mood->amenity_cap);
+        }
+        if(use.isEmpty()) use=tr("Office furnishing");
+        rows.push_back(QVariantMap{{"id",q(e.id)},{"name",q(e.name)},{"price",money(e.price)},{"kind",q(e.kind)},{"revision",reviewToken()},{"supplier",q(e.supplier)},
         {"detail",tr("%1 · %2\nDelivery %3 · %4 × %5 m%6\n%7")
             .arg(money(e.price),q(e.supplier),date(core::advance_days(day,e.delivery))).arg(e.width).arg(e.depth)
             .arg(core::hq_desk_device(e.kind)?tr(" · mounts on a desk"):QString{})
-            .arg(e.compute.value()>0?tr("%1 CU/day · %2 W when on; output requires delivery, placement and power").arg(static_cast<double>(e.compute.value())/1000).arg(e.watts):e.kind=="thin_client"?tr("Marketing / PR terminal · requires a powered HQ rack; uses its shared capacity"):e.kind=="research_laptop"?tr("Remote GPU research · issue to an employee; requires a powered HQ rack"):e.kind=="workstation"?tr("Multi-monitor coding / management workstation"):tr("Office furnishing · no research compute or mood bonus"))}});
+            .arg(use)}});
+    }
     return rows;
 }
 QVariantList WorldController::hqMarkets() const {QVariantList rows;if(!available(snapshot_)) return rows;for(const auto& m:rules(snapshot_).markets) rows.push_back(QVariantMap{{"id",q(m.id)},{"name",q(m.city)},{"agent",q(m.agent)},{"state",q(m.state)}});return rows;}

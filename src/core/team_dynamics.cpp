@@ -6,27 +6,36 @@
 #include <stdexcept>
 
 namespace pgp::core {
+std::vector<std::string> distinct_person_traits(const PersonProfile& person) {
+    std::set<std::string> traits(person.traits.begin(),person.traits.end());
+    traits.insert("Gender: "+person.gender);
+    traits.insert("Education: "+person.education);
+    traits.insert("Motivation: "+person.preferred_mission);
+    return {traits.begin(),traits.end()};
+}
+std::uint32_t shared_trait_compatibility(std::uint64_t matches,std::uint64_t pairs) {
+    // Five matches per pair saturate the gain. Unshared traits never enter
+    // the denominator, so gaining a new perspective cannot erase affinity.
+    constexpr std::uint64_t matches_for_full_gain=5;
+    if(!pairs) return 0;
+    const auto target=pairs*matches_for_full_gain;
+    return static_cast<std::uint32_t>(std::min(matches,target)*10000/target);
+}
 TeamDynamics team_dynamics(std::span<const PersonProfile* const> people) {
     if(people.size()>256) throw std::invalid_argument("Team exceeds the individual roster limit.");
     TeamDynamics result;
     std::map<std::string,std::uint64_t> frequency;
     std::set<std::string> identities;
-    std::uint64_t slots=0;
     for(const auto* p:people) {
         if(!p || !identities.insert(p->id).second) throw std::invalid_argument("A team must contain distinct people.");
         // Each trait counts once per person; identity/education/mission contribute
         // perspectives without changing a person's underlying ability scores.
-        std::set<std::string> traits(p->traits.begin(),p->traits.end());
-        traits.insert("Gender: "+p->gender);traits.insert("Education: "+p->education);traits.insert("Motivation: "+p->preferred_mission);
-        for(const auto& trait:traits) ++frequency[trait];
-        slots+=traits.size();
+        for(const auto& trait:distinct_person_traits(*p)) ++frequency[trait];
     }
     std::uint64_t shared=0;
     for(const auto& [trait,count]:frequency) {result.traits.push_back(trait);shared+=count*(count-1);}
     result.creativity=static_cast<std::uint32_t>(frequency.size());
-    // Weighted pairwise overlap: identical profiles reach 100%; differences add
-    // no shared-trait gain. Frequency aggregation avoids a pairwise daily loop.
-    if(people.size()>1 && slots) result.compatibility_bp=static_cast<std::uint32_t>(shared*10000/((people.size()-1)*slots));
+    if(people.size()>1) result.compatibility_bp=shared_trait_compatibility(shared,people.size()*(people.size()-1));
     return result;
 }
 TeamDynamics research_team(const SimulationState& state,std::span<const std::string> ids) {

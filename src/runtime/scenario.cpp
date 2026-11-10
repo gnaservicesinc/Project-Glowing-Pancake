@@ -122,8 +122,17 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     else if (headquarters == "US-TX") world.state_id = "state.us_tx";
     else if (headquarters == "US-WA") world.state_id = "state.us_wa";
     else throw std::invalid_argument("Headquarters has no implemented scope binding");
+    std::uint32_t founding_prestige=world.founding && world.founding->leg=="genius"?3U:0U;
+    std::string recruiting_mission="research";
+    if(world.founding && management && management->people && management->people->mood) {
+        founding_prestige=content::founding_terms(*scenario->founding,*world.founding).prestige;
+        if(world.founding->legal_form=="nonprofit" || (objectives && objectives->primary==core::ObjectiveKind::utopia))
+            recruiting_mission="public benefit";
+        else if(objectives && (objectives->primary==core::ObjectiveKind::profit || objectives->primary==core::ObjectiveKind::monopoly))
+            recruiting_mission="commercial";
+    }
     core::initialize_people(world.simulation,seed,world.identity?world.identity->founder_name:std::string{},world.identity?world.identity->founder_pronouns:std::string{},
-        world.founding && world.founding->researcher=="founder",world.founding && world.founding->leg=="genius"?3:0);
+        world.founding && world.founding->researcher=="founder",founding_prestige,std::move(recruiting_mission));
     if(world.founding && world.simulation.management && world.simulation.management->people) {
         for(auto& employee:world.simulation.management->people->employees) {
             auto& p=employee.terms.profile;

@@ -212,6 +212,29 @@ void schedule_recruitment_smoke(QQuickWindow &window, pgp::bridge::CampaignContr
                 fail("Compact discussion layout");
                 return;
             }
+            if(state.management->catalog.people->mood) {
+                if(!key("employmentBack") || !key("peopleTeamTab")) {fail("Return to the signed employee's team profile");return;}
+                run->frames=0;
+                break;
+            }
+            run->phase=19;
+            return;
+        case 18:
+            if(!key("personPortrait_"+run->second)) {fail("Open the signed employee's mood profile");return;}
+            break;
+        case 19:
+            if(state.management->catalog.people->mood) {
+                if(++run->frames<6)return;
+                auto* mood=item("employeeMoodCard");
+                auto* heading=item("employeeMoodHeading");
+                auto* scroll=item("employeeProfileScroll");
+                const auto report=mood?mood->property("mood").toMap():QVariantMap{};
+                const auto expected=pgp::core::workplace_moods(state).at(run->second.toStdString());
+                if(!mood || !heading || !scroll || heading->mapToScene({0,heading->height()}).y()>scroll->mapToScene({0,scroll->height()}).y() ||
+                    report.value("score").toInt()!=expected.score || report.value("factors").toList().size()!=7 || !capture("mood-compact")) {
+                    fail("The profile must show current workplace mood and all causes at 200% text");return;
+                }
+            }
             std::cout << "Recruiting UI passed: comparison, two counteroffers, decline, signing, desk assignment, "
                          "onboarding, fresh reload and 200% text\n";
             timer->stop();

@@ -53,8 +53,8 @@ world. The optional tutorial points to these actions and can be dismissed.
    the same creativity as one, while sharing strong pairwise compatibility.
    A different trait supplies no compatibility gain, rather than a penalty.
    Duplicate traits give **zero creativity bonus** initially; reconsider only
-   during balancing if evidence supports it. Compatibility is a shared-trait
-   overlap ratio, not a headcount sum. Its bounded coordination benefit reduces
+   during balancing if evidence supports it. Compatibility uses positive matches across pairs, capped at the gain from
+   five shared traits per pair on average. Its bounded coordination benefit reduces
    research staff-days; it never grants skills or duplicates compute.
    Hiring previews show the
    person's marginal contribution to the selected team. Research prerequisites
@@ -122,9 +122,12 @@ $5,000 of personal investment. The company pays 0.75% monthly interest on
 outstanding principal and owes the remaining balance after 730 days. Personal
 home visits during commercial occupancy, stock and bond holdings, and richer
 contact conversations remain to implement.
-Amenities are decorative purchases; mood/retention effects, audience
-identity modifiers, broader role-specific equipment benefits and private-life
-assets/events remain open. Research rules initially use 2015 and difficulty 12;
+Employee mood uses current pay, the company’s publications, the CEO’s biography
+and record in office, mission and duties, coworker affinity, temperament and
+active amenities. An installed amenity type contributes once for employees with
+assigned HQ desks, up to the authored cap. Retention effects, audience identity
+modifiers, broader role-specific equipment benefits and private-life assets and
+events remain open. Research rules initially use 2015 and difficulty 12;
 future EEY scaling is tested in core but authored technology dates and frontier
 gates still need integration. The portrait currently shows a bust with build,
 height, clothing and pattern variants, not a full-body character editor.
