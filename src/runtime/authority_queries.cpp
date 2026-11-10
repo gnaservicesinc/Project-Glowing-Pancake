@@ -275,6 +275,14 @@ bool institutional_delivery_allowed(const WorldState& w,const SimulationState& s
 MarketInfluences regional_market_conditions(const WorldState& w,const SimulationState& seller,OrdinalDay day) {
     auto result=society_market_conditions(w,seller,day);
     if(!seller.market) return result;
+    if(core::talent_rules(seller))for(const auto& product:seller.market->products) {
+        const auto bonus=core::software_market_bonus(seller,product.channel,day);if(bonus.value()==0)continue;
+        for(const auto& segment:seller.market->segments) {
+            auto it=std::ranges::find_if(result,[&](const auto& row){return row.product_id==product.id && row.segment_id==segment.id;});
+            if(it==result.end()){result.push_back({product.id,segment.id,BasisPoints{0},true,true,{},bonus});}
+            else it->software_quality=bonus;
+        }
+    }
     const bool authority=w.authority && (!w.authority->mandates.empty() || !w.authority->cases.empty());
     std::vector<std::pair<const MarketProduct*,const DeploymentRecord*>> trials;
     if (seller.deployments && (authority || w.society)) for (const auto& route:seller.market->trials) {

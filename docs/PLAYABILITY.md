@@ -465,3 +465,28 @@ morning; a title alone grants no output. Physical operator, inspection and power
 requirements still apply. Release or replace the manager here to return their
 reservation. Their portrait opens the employee dossier; the selected People page
 and unfinished choices are preserved locally.
+
+
+## Software Studio and Open Path University
+
+From the company desktop, open Company → Software Studio. Pick one of six
+software types, name the design, choose an aesthetic, navigation and development
+focus, and watch the prototype and three scores change. Assign a programmer
+with an actual powered computer; advanced types also require Architecture.
+Start development after reviewing the real cost and staff-days. Advance time,
+release the completed design, then refine it. Power loss or conflicting staffing
+pauses work; restore the prerequisite and resume. Released designs help matching
+marketed services, rather than creating a separate passive-income stream.
+
+People → Open Path University lists your founder and HQ employees, their skills,
+course prerequisites, tuition and duration. The founder can pay from personal
+savings or use company sponsorship; staff currently use company sponsorship.
+Courses complete after their dated part-time study period. Personal and company
+money remain distinct. Investing all savings is allowed; you can hire people or
+use company sponsorship instead of paying personal tuition.
+
+New Game selects one of eight activities and one of eight camps alongside the
+shared childhood scenes. Choosing to join opens a follow-up; another pursuit
+can bypass it. Skills and interests are disclosed beside choices and retained
+on the founder. Backtracking removes inactive answers. Reloading preserves the
+same selection. The larger relationship/career expansion remains unfinished.

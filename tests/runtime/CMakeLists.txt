@@ -389,3 +389,9 @@ target_compile_definitions(pgp-donor-finance-test PRIVATE PGP_DONOR_SOURCE="${PR
 pgp_project_target(pgp-donor-finance-test)
 add_test(NAME runtime.donor-finance COMMAND pgp-donor-finance-test)
 set_tests_properties(runtime.donor-finance PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-talent-test talent_test.cpp)
+target_link_libraries(pgp-talent-test PRIVATE pgp::persistence)
+target_compile_definitions(pgp-talent-test PRIVATE PGP_TALENT_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-talent-test)
+add_test(NAME runtime.talent COMMAND pgp-talent-test)

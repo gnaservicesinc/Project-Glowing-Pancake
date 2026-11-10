@@ -54,7 +54,7 @@ QtObject {
                 detail: row.detail
             })))
         const advantages = {
-            genius: qsTr("You can take on the lab's first experiment yourself."),
+            genius: qsTr("Learn Programming while growing up and you can take on the lab's first experiment yourself."),
             charisma: qsTr("You can talk your way into rooms that would otherwise stay closed."),
             wealthy: qsTr("Family money can fund a lab of your own."),
             political: qsTr("Your family rises into wealth and influence by the time you turn eighteen.")

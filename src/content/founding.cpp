@@ -1,15 +1,24 @@
 #include <pgp/content/founding.hpp>
 #include <pgp/core/checked_arithmetic.hpp>
 #include <pgp/core/objectives.hpp>
+#include <pgp/core/random.hpp>
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <set>
+#include <tuple>
 #include <stdexcept>
 
 namespace pgp::content {
 using Json=nlohmann::json;
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingOption,id,name,detail,capital_cents,monthly_cents,fee_cents,shares_bp,prestige,buzz,family,leg,legal_form)
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FormativeScene,id,title,date,text,choices)
+void to_json(Json& j,const FormativeScene& s) {
+    j={{"id",s.id},{"title",s.title},{"date",s.date},{"text",s.text},{"choices",s.choices}};
+    if(!s.pool.empty())j["pool"]=s.pool;if(!s.requires_choice.empty())j["requires_choice"]=s.requires_choice;
+}
+void from_json(const Json& j,FormativeScene& s) {
+    j.at("id").get_to(s.id);j.at("title").get_to(s.title);j.at("date").get_to(s.date);j.at("text").get_to(s.text);j.at("choices").get_to(s.choices);
+    if(j.contains("pool"))j.at("pool").get_to(s.pool);if(j.contains("requires_choice"))j.at("requires_choice").get_to(s.requires_choice);
+}
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingOpeningRules,inherited_staff,cofounder_staff,ceo_equity_bp)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingLoan,lender,principal_cents,minimum_investment_cents,monthly_interest_bp,term_days)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingPartner,id,name,pronouns,gender,letter,access,objective,traits,capital_cents,monthly_salary_cents,cash_floor_cents,shares_bp,seats,maximum_dilution_bp)
@@ -17,6 +26,8 @@ void to_json(Json& j,const FoundingCatalog& c) {
     j={{"families",c.families},{"legs",c.legs},{"routes",c.routes},{"backers",c.backers},{"offices",c.offices},{"researchers",c.researchers},{"scenes",c.scenes},
         {"formation_cents",c.formation_cents},{"compute_monthly_cents",c.compute_monthly_cents},{"founder_salary_cents",c.founder_salary_cents},
         {"prestige_finance_bp",c.prestige_finance_bp},{"buzz_finance_bp",c.buzz_finance_bp},{"maximum_finance_bonus_bp",c.maximum_finance_bonus_bp}};
+    if(!c.trait_rewards.empty())j["trait_rewards"]=c.trait_rewards;
+    if(!c.skill_rewards.empty())j["skill_rewards"]=c.skill_rewards;
     if(c.opening) j["opening"]=*c.opening;
     if(c.startup_loan) j["startup_loan"]=*c.startup_loan;
     if(!c.partners.empty()) j["partners"]=c.partners;
@@ -28,6 +39,8 @@ void from_json(const Json& j,FoundingCatalog& c) {
     j.at("offices").get_to(c.offices);j.at("researchers").get_to(c.researchers);j.at("scenes").get_to(c.scenes);
     j.at("formation_cents").get_to(c.formation_cents);j.at("compute_monthly_cents").get_to(c.compute_monthly_cents);j.at("founder_salary_cents").get_to(c.founder_salary_cents);
     j.at("prestige_finance_bp").get_to(c.prestige_finance_bp);j.at("buzz_finance_bp").get_to(c.buzz_finance_bp);j.at("maximum_finance_bonus_bp").get_to(c.maximum_finance_bonus_bp);
+    if(j.contains("trait_rewards"))j.at("trait_rewards").get_to(c.trait_rewards);
+    if(j.contains("skill_rewards"))j.at("skill_rewards").get_to(c.skill_rewards);
     if(j.contains("opening")) c.opening=j.at("opening").get<FoundingOpeningRules>();
     if(j.contains("startup_loan")) c.startup_loan=j.at("startup_loan").get<FoundingLoan>();
     if(j.contains("partners")) c.partners=j.at("partners").get<std::vector<FoundingPartner>>();
@@ -77,7 +90,7 @@ void shape(const FoundingSelection& s) {
     if(s.activity!="athletic" && s.activity!="sedentary") invalid("Choose an activity tendency.");
     if(s.disposition!="deliberate" && s.disposition!="impulsive") invalid("Choose a decision-making tendency.");
     if(s.legal_form!="corporation" && s.legal_form!="nonprofit") invalid("Choose a corporation or nonprofit.");
-    if(s.backers.size()>6 || s.choices.size()>16) invalid("Too many founding choices.");
+    if(s.backers.size()>6 || s.choices.size()>64) invalid("Too many founding choices.");
     for(const auto* id:{&s.family,&s.leg,&s.route,&s.office,&s.researcher}) text(*id,64);
     text(s.partner,64,false);
     for(const auto& [scene,choice]:s.choices) {text(scene,64);text(choice,64);}
@@ -126,13 +139,67 @@ FoundingCatalog load_founding_catalog(std::string_view bytes) {
            loan_route->capital_cents || loan_route->shares_bp || loan_route->fee_cents || loan_route->monthly_cents)
             invalid("A startup loan must have bounded debt terms without an equity contribution.");
     }
-    if(c.scenes.size()<6 || c.scenes.size()>12) invalid("The introduction needs six to twelve formative scenes.");
+    if(c.scenes.size()<6 || c.scenes.size()>64) invalid("The introduction needs six to sixty-four formative scenes.");
     std::set<std::string> ids;
     for(const auto& scene:c.scenes) {
         text(scene.id,64);text(scene.title);text(scene.date,10);text(scene.text,4096);options(scene.choices);
         if(!ids.insert(scene.id).second) invalid("Duplicate formative scene.");
     }
+    for(const auto& scene:c.scenes) {
+        if(!scene.pool.empty() && scene.pool!="activity" && scene.pool!="camp")invalid("Unknown formative scene pool.");
+        if(!scene.requires_choice.empty()) {
+            const auto slash=scene.requires_choice.find('/');if(slash==std::string::npos)invalid("A follow-up needs scene/choice.");
+            const auto parent=std::ranges::find(c.scenes,scene.requires_choice.substr(0,slash),&FormativeScene::id);
+            if(parent==c.scenes.end() || parent->date>=scene.date)invalid("A childhood follow-up must follow an earlier scene.");
+            (void)founding_option(parent->choices,scene.requires_choice.substr(slash+1));
+            if(!scene.pool.empty())invalid("Follow-ups inherit selection from their parent chain.");
+        }
+    }
+    for(const auto* table:{&c.skill_rewards,&c.trait_rewards}) {
+    if(table->size()>192)invalid("Too many formative rewards.");
+    for(const auto& [key,rewards]:*table) {
+        const auto slash=key.find('/');if(slash==key.npos || rewards.empty() || rewards.size()>3)invalid("Formative rewards need a scene/choice and one to three rewards.");
+        const auto scene=std::ranges::find(c.scenes,key.substr(0,slash),&FormativeScene::id);
+        if(scene==c.scenes.end())invalid("Formative reward names an unknown scene.");
+        (void)founding_option(scene->choices,key.substr(slash+1));
+        std::set<std::string> unique;for(const auto& id:rewards){text(id,table==&c.trait_rewards?80:64);if(!unique.insert(id).second)invalid("Duplicate formative reward.");}
+    }
+    }
     return c;
+}
+std::vector<const FormativeScene*> formative_scenes(const FoundingCatalog& c,const FoundingSelection& s) {
+    std::map<std::string,std::vector<const FormativeScene*>> pools;
+    for(const auto& scene:c.scenes)if(!scene.pool.empty())pools[scene.pool].push_back(&scene);
+    core::SplitMix64 rng{s.story_seed};std::set<std::string> selected;
+    for(const auto& [pool,rows]:pools){(void)pool;selected.insert(rows[static_cast<std::size_t>(rng.bounded(rows.size()))]->id);}
+    std::vector<const FormativeScene*> sorted;for(const auto& scene:c.scenes)sorted.push_back(&scene);
+    std::ranges::sort(sorted,[](const auto* a,const auto* b){return std::tie(a->date,a->id)<std::tie(b->date,b->id);});
+    std::vector<const FormativeScene*> result;std::set<std::string> active;
+    for(const auto* scene:sorted) {
+        if(!scene->pool.empty() && !selected.contains(scene->id))continue;
+        if(!scene->requires_choice.empty()) {
+            const auto slash=scene->requires_choice.find('/');const auto parent=scene->requires_choice.substr(0,slash);const auto choice=s.choices.find(parent);
+            if(!active.contains(parent) || choice==s.choices.end() || choice->second!=scene->requires_choice.substr(slash+1))continue;
+        }
+        active.insert(scene->id);result.push_back(scene);
+    }
+    return result;
+}
+std::vector<std::string> formative_skills(const FoundingCatalog& c,const FoundingSelection& s) {
+    std::set<std::string> result;
+    for(const auto* scene:formative_scenes(c,s)) {
+        const auto choice=s.choices.find(scene->id);if(choice==s.choices.end())continue;
+        if(const auto it=c.skill_rewards.find(scene->id+"/"+choice->second);it!=c.skill_rewards.end())result.insert(it->second.begin(),it->second.end());
+    }
+    return {result.begin(),result.end()};
+}
+std::vector<std::string> formative_traits(const FoundingCatalog& c,const FoundingSelection& s) {
+    std::set<std::string> result;
+    for(const auto* scene:formative_scenes(c,s)) {
+        const auto choice=s.choices.find(scene->id);if(choice==s.choices.end())continue;
+        if(const auto it=c.trait_rewards.find(scene->id+"/"+choice->second);it!=c.trait_rewards.end())result.insert(it->second.begin(),it->second.end());
+    }
+    return {result.begin(),result.end()};
 }
 std::string canonical_founding_catalog(const FoundingCatalog& c) {return Json(c).dump();}
 const FoundingOption& founding_option(const std::vector<FoundingOption>& rows,std::string_view id) {
@@ -205,7 +272,8 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
     t.paid_setup_cents=core::checked_add(c.formation_cents,core::checked_add(office.fee_cents,researcher.fee_cents));
     t.office_cents=office.monthly_cents;t.payroll_cents=researcher.monthly_cents;
     t.prestige=leg.prestige+(queer_founder(s)?c.queer_community_prestige:0);t.buzz=leg.buzz+(queer_founder(s)?c.queer_community_buzz:0);
-    for(const auto& scene:c.scenes) {
+    for(const auto* selected_scene:formative_scenes(c,s)) {
+        const auto& scene=*selected_scene;
         const auto choice=s.choices.find(scene.id);
         if(choice==s.choices.end()) {if(complete && s.mode=="campaign") invalid("Complete each formative chapter before founding the company.");continue;}
         const auto& r=founding_option(scene.choices,choice->second);
@@ -254,6 +322,7 @@ std::string canonical_founding_selection(const FoundingSelection& s) {
     if(!s.partner.empty()) j["partner"]=s.partner;
     if(s.birth_sex!="indeterminate") j["birth_sex"]=s.birth_sex;
     j["orientation"]=s.orientation;
+    j["story_seed"]=s.story_seed;
     return j.dump();
 }
 FoundingSelection load_founding_selection(std::string_view bytes) {
@@ -266,6 +335,7 @@ FoundingSelection load_founding_selection(std::string_view bytes) {
     if(j.contains("partner")) s.partner=j.at("partner").get<std::string>();
     if(j.contains("birth_sex")) s.birth_sex=j.at("birth_sex").get<std::string>();
     if(j.contains("orientation")) s.orientation=j.at("orientation").get<std::string>();
+    s.story_seed=j.at("story_seed").get<std::uint64_t>();
     {
         const auto& a=j.at("appearance");core::PortraitRecipe p;
         if(a.at("kit")!=1 || a.at("parts").size()!=p.parts.size()) invalid("Unsupported portrait kit.");

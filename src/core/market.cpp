@@ -1133,7 +1133,7 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
     for (const auto& influence : influences) {
         (void)find_id(next.products, influence.product_id);
         (void)find_id(next.segments, influence.segment_id);
-        if (influence.awareness.value() > 3000 ||
+        if (influence.software_quality.value()>2000 || influence.awareness.value() > 3000 ||
             !contextual.emplace(ContextKey{influence.product_id,influence.segment_id}, &influence).second)
             invalid("Regional awareness and eligibility need unique bounded market links");
         if (!influence.trial_eligible) blocked_trial_edges.emplace(influence.product_id,influence.segment_id);
@@ -1274,7 +1274,7 @@ MarketClosePlan prepare_market(const MarketState& next,const CapacityState& pool
             // existing switching cost and share without reserving their orders.
             const auto continuity = supported.contains(product_row.id)
                 ? mul_div_round_half_up(pref.switching_cost,old_share,10000) : 0;
-            const auto known = std::min(market_utility_limit, mul_div_round_half_up(pref.utility, 10000 + awareness, 10000)+continuity);
+            const auto known = std::min(market_utility_limit, mul_div_round_half_up(pref.utility, 10000 + awareness + (rule?static_cast<std::uint64_t>(rule->software_quality.value()):0), 10000)+continuity);
             const auto utility = known > switching ? known - switching : 0;
             const auto migration = static_cast<std::uint64_t>(market_migration(product_row, row).value());
             const auto normal_cap=std::min<std::uint64_t>(10000,old_share+migration);

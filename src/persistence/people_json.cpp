@@ -1,17 +1,20 @@
 #include "people_json.hpp"
+#include "talent_json.hpp"
 namespace pgp::persistence::detail {
 namespace {
 Json profile(const core::PersonProfile& p) {
     return {{"id",p.id},{"name",p.name},{"gender",p.gender},{"pronouns",p.pronouns},{"education",p.education},{"role",p.role},{"bio",p.bio},{"preferred_mission",p.preferred_mission},
         {"birth_year",p.birth_year},{"experience",p.experience},{"research",p.research},{"engineering",p.engineering},{"evaluation",p.evaluation},{"mission_fit",p.mission_fit},{"applied_on",p.applied_on.value()},
-        {"traits",p.traits},{"portrait",{{"kit",p.portrait.kit},{"parts",p.portrait.parts},{"style",p.portrait.style}}}};
+        {"skills",p.skills},{"orientation",p.orientation},{"traits",p.traits},{"portrait",{{"kit",p.portrait.kit},{"parts",p.portrait.parts},{"style",p.portrait.style}}}};
 }
 core::PersonProfile parse_profile(const Json& j) {
-    fields(j,"person",{"id","name","gender","pronouns","education","role","bio","preferred_mission","birth_year","experience","research","engineering","evaluation","mission_fit","applied_on","portrait","traits"});
+    fields(j,"person",{"id","name","gender","pronouns","education","role","bio","preferred_mission","birth_year","experience","research","engineering","evaluation","mission_fit","applied_on","portrait","traits","skills","orientation"});
     const auto year=i64(j.at("birth_year"),"birth_year");if(year<1800 || year>3000) invalid("person","Birth year out of bounds");
     const auto count=[&](const char* name){return static_cast<std::uint32_t>(u64(j.at(name),name,100));};
     core::PersonProfile result{text(j.at("id"),"id",64),text(j.at("name"),"name",128),text(j.at("gender"),"gender",32),text(j.at("pronouns"),"pronouns",64),
         text(j.at("education"),"education",128,true),text(j.at("role"),"role",64),text(j.at("bio"),"bio",512,true),text(j.at("preferred_mission"),"preferred_mission",32),static_cast<int>(year),count("experience"),count("research"),count("engineering"),count("evaluation"),count("mission_fit"),core::OrdinalDay{i64(j.at("applied_on"),"applied_on")}};
+    result.orientation=text(j.at("orientation"),"orientation",32);
+    array(j.at("skills"),"skills",96);for(const auto& id:j.at("skills"))result.skills.push_back(text(id,"skill",64));
     array(j.at("traits"),"traits",16);
     for(const auto& trait:j.at("traits")) result.traits.push_back(text(trait,"trait",80));
     if(j.contains("portrait")) {
@@ -75,12 +78,13 @@ Json people_json(const core::PeopleState& p) {
     }
     Json result{{"stream",p.stream},{"next_id",p.next_id},{"starts_on",p.starts_on.value()},{"next_recruitment",p.next_recruitment.value()},
         {"offered_pay",p.offered_pay.value()},{"mission",p.mission},{"founding_prestige",p.founding_prestige},{"community_prestige",p.community_prestige},{"community_buzz",p.community_buzz},{"applicants",std::move(applicants)},{"employees",std::move(employees)},{"known_people",std::move(known)},{"contacts",std::move(contacts)}};
+    result["talent"]=p.talent?talent_json(*p.talent):Json(nullptr);
     if(!p.founder_gender.empty()) result["founder_gender"]=p.founder_gender;
     return result;
 }
 core::PeopleState parse_people(const Json& j) {
-    fields(j,"people",{"stream","next_id","starts_on","next_recruitment","offered_pay","mission","founding_prestige","community_prestige","community_buzz","applicants","employees","known_people","contacts"},{"founder_gender"});
-    core::PeopleState p;p.stream=u64(j.at("stream"),"stream");p.next_id=u64(j.at("next_id"),"next_id");
+    fields(j,"people",{"stream","next_id","starts_on","next_recruitment","offered_pay","mission","founding_prestige","community_prestige","community_buzz","applicants","employees","known_people","contacts","talent"},{"founder_gender"});
+    core::PeopleState p;if(!j.at("talent").is_null())p.talent=parse_talent(j.at("talent"));p.stream=u64(j.at("stream"),"stream");p.next_id=u64(j.at("next_id"),"next_id");
     p.starts_on=core::OrdinalDay{i64(j.at("starts_on"),"starts_on")};p.next_recruitment=core::OrdinalDay{i64(j.at("next_recruitment"),"next_recruitment")};
     p.offered_pay=core::SalaryRate{i64(j.at("offered_pay"),"offered_pay")};p.mission=text(j.at("mission"),"mission",32);p.founding_prestige=static_cast<std::uint32_t>(u64(j.at("founding_prestige"),"prestige",10));
     p.community_prestige=static_cast<std::uint32_t>(u64(j.at("community_prestige"),"community prestige",10));

@@ -24,6 +24,13 @@ content::Scalar campaign_fact(const WorldState& world, std::string_view id) {
     using namespace core;
     const auto& s = world.simulation;
     const auto* founder=world.founding?&*world.founding:nullptr;
+    if(id=="company.founder_programming")return person_has_skill(s,"founder","programming");
+    if(id=="company.has_programmer" || id=="company.has_architect") {
+        if(!talent_rules(s))return false;
+        return std::ranges::any_of(s.management->people->employees,[&](const auto& e){return !e.departed_on && e.ready_on<=s.date && person_has_skill(s,e.terms.profile.id,id=="company.has_programmer"?"programming":"architecture");});
+    }
+    if(id=="company.completed_courses")return talent_rules(s)?static_cast<std::int64_t>(std::ranges::count_if(s.management->people->talent->courses,[](const auto& c){return c.completed;})):INT64_C(0);
+    if(id=="company.released_software")return talent_rules(s)?static_cast<std::int64_t>(std::ranges::count_if(s.management->people->talent->software,[](const auto& p){return p.released_on.has_value();})):INT64_C(0);
     if(id=="company.founder_genius") return founder && founder->leg=="genius";
     if(id=="company.founder_outgoing") return founder && founder->sociability=="outgoing";
     if(id=="company.founder_athletic") return founder && founder->activity=="athletic";

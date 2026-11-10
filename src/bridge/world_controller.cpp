@@ -41,6 +41,14 @@ QString portraitUrl(const core::PortraitRecipe& recipe) {
     for(auto part:recipe.style) url+='/'+QString::number(part);
     return url;
 }
+QString skillNames(const core::SimulationState& s,const core::PersonProfile& p) {
+    QStringList names;
+    if(const auto* rules=core::talent_rules(s))for(const auto& id:p.skills) {
+        const auto found=std::ranges::find(rules->skills,id,&core::SkillDefinition::id);
+        if(found!=rules->skills.end())names.push_back(q(found->name));
+    }
+    return names.isEmpty()?QString{}:QObject::tr("\nSkills · %1").arg(names.join(" · "));
+}
 QVariantMap profileRow(const core::PersonProfile& p,core::OrdinalDay now,QString status) {
     return {{"id",q(p.id)},{"portrait",portraitUrl(p.portrait)},{"name",q(p.name)},{"initials",q(p.name).section(' ',0,0).left(1)+q(p.name).section(' ',-1).left(1)}, {"role",q(p.role)},
         {"detail",QObject::tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8\n%9")
@@ -216,11 +224,19 @@ QVariantMap WorldController::founder() const {
             const auto& p=employee.terms.profile;portrait=p.portrait;managing=manager && manager->person==p.id;
             detail+=tr("\n%1\nResearch %2 · Engineering %3 · Evaluation %4").arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation);
         }
+    if(core::talent_rules(w.simulation)) {
+        QStringList names;for(const auto& id:core::person_skills(w.simulation,"founder"))
+            for(const auto& skill:core::talent_rules(w.simulation)->skills)if(skill.id==id)names.push_back(q(skill.name));
+        detail+=tr("\nSkills · %1").arg(names.isEmpty()?tr("None yet"):names.join(" · "));
+    }
     QString bio;
     if(w.founding) {
         const auto& f=*w.founding;
         const QString advantage=f.leg=="genius"?tr("Actual Genius"):f.leg=="wealthy"?tr("Wealthy Elite"):f.leg=="political"?tr("Child of Political Elite"):tr("Extremely Charismatic");
         bio=tr("%1\nFamily: %2\n%3 · %4 · %5").arg(advantage,q(f.family),q(f.sociability),q(f.activity),q(f.disposition));
+        const auto* definition=snapshot_->content->collection.find(w.scenario_id);
+        const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
+        if(scenario && scenario->founding)for(const auto& trait:content::formative_traits(*scenario->founding,f))bio+="\n"+q(trait);
         if(content::transgender_founder(f)) bio+=tr("\nTransgender");
         const QString orientation=f.orientation=="straight"?tr("Straight"):f.orientation=="gay_or_lesbian"?tr("Gay or lesbian"):
             f.orientation=="bisexual"?tr("Bisexual"):f.orientation=="pansexual"?tr("Pansexual"):f.orientation=="asexual"?tr("Asexual"):
@@ -261,7 +277,7 @@ QVariantList WorldController::people() const {
                 {"detail",tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8\n%9")
                     .arg(q(p.gender),q(p.pronouns)).arg(core::from_ordinal(s.date).year-p.birth_year).arg(p.experience+static_cast<unsigned>(years))
                     .arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation)
-                    .arg(s.date<employee.ready_on?tr("Onboarding until %1").arg(q(core::iso_date(employee.ready_on))):managing?tr("Dedicated to branch coordination; one staff allocation is reserved"):tr("Onboarding complete"))+workplace+([&]{QStringList traits;for(const auto& t:p.traits)traits.push_back(q(t));return QStringLiteral("\n")+traits.join(" · ");})()}, {"bio",q(p.bio)}};
+                    .arg(s.date<employee.ready_on?tr("Onboarding until %1").arg(q(core::iso_date(employee.ready_on))):managing?tr("Dedicated to branch coordination; one staff allocation is reserved"):tr("Onboarding complete"))+workplace+([&]{QStringList traits;for(const auto& t:p.traits)traits.push_back(q(t));return QStringLiteral("\n")+traits.join(" · ")+skillNames(s,p);})()}, {"bio",q(p.bio)}};
             if(const auto mood=moods.find(p.id);mood!=moods.end()) row["mood"]=moodRow(mood->second);
             rows.push_back(std::move(row));
         }
@@ -479,6 +495,7 @@ QVariantList WorldController::applicants() const {
         QStringList traits;for(const auto& trait:p.traits) traits.push_back(q(trait));
         row["detail"]=row["detail"].toString()+tr("\nDistinct perspectives added to the current roster: +%1 · team total %2\nShared-trait compatibility after hiring: %3%\n%4")
             .arg(after.creativity-before.creativity).arg(after.creativity).arg(static_cast<double>(after.compatibility_bp)/100,0,'f',1).arg(traits.join(" · "));
+        row["detail"]=row["detail"].toString()+skillNames(s,p);
         row["negotiated"]=applicant.recruitment.has_value();
         if(applicant.recruitment) {
             const auto status=core::recruitment_status(applicant,s.date);

@@ -138,7 +138,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
             recruiting_mission="commercial";
     }
     core::initialize_people(world.simulation,seed,world.identity?world.identity->founder_name:std::string{},world.identity?world.identity->founder_pronouns:std::string{},
-        world.founding && world.founding->researcher=="founder",founding_prestige,std::move(recruiting_mission));
+        world.founding && scenario->founding && content::founding_terms(*scenario->founding,*world.founding).founder_researcher,founding_prestige,std::move(recruiting_mission));
     if(world.founding && scenario->founding && world.simulation.management && world.simulation.management->people && content::queer_founder(*world.founding)) {
         auto& people=*world.simulation.management->people;
         people.community_prestige=scenario->founding->queer_community_prestige;
@@ -170,6 +170,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
                 p.gender=world.founding->gender;p.portrait=world.founding->appearance;
                 if(!world.simulation.management->catalog.people->trait_groups.empty())
                     p.traits={"Social: "+world.founding->sociability,"Activity: "+world.founding->activity,"Temperament: "+world.founding->disposition,"Upbringing: "+world.founding->family};
+                if(scenario->founding)for(const auto& trait:content::formative_traits(*scenario->founding,*world.founding))if(std::ranges::find(p.traits,trait)==p.traits.end())p.traits.push_back(trait);
                 p.bio="Actual Genius: exceptional technical ability developed through the founder's formative years.";
             } else if(world.founding->route=="partnership") {
                 p.role="Cofounder / researcher";
@@ -183,6 +184,12 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
                 }
             }
         }
+    }
+    if(world.founding && scenario->founding && core::talent_rules(world.simulation)) {
+        auto& people=*world.simulation.management->people;auto& talent=*people.talent;
+        talent.founder_skills=content::formative_skills(*scenario->founding,*world.founding);talent.founder_genius=world.founding->leg=="genius";
+        for(auto& e:people.employees)if(e.terms.profile.role=="Founder / researcher") {e.terms.profile.skills=talent.founder_skills;e.terms.profile.orientation=world.founding->orientation;}
+        else if(e.terms.profile.role=="Cofounder / researcher" && !core::has_skill(e.terms.profile,"ml_research"))e.terms.profile.skills.push_back("ml_research");
     }
     core::initialize_headquarters(world.simulation,seed,world.founding?(world.founding->leg=="political"?"rich":world.founding->family):"");
     core::initialize_departments(world.simulation);

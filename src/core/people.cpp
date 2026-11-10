@@ -44,6 +44,19 @@ Applicant applicant(SimulationState& s,bool opening) {
         BasisPoints{r.maximum_evaluation_credit.value()*person.evaluation/100},{}};
     if(!opening && r.recruitment) initialize_recruitment(result,*r.recruitment,rng);
     for(const auto& group:r.trait_groups) result.profile.traits.push_back(group[draw(rng,static_cast<std::uint32_t>(group.size()))]);
+    if(r.talent) {
+        person.orientation=std::array{"straight","gay_or_lesbian","bisexual","pansexual","asexual","demisexual"}[draw(rng,6)];
+        result.profile.orientation=person.orientation;
+        const auto role=r.talent->roles.find(result.profile.role);
+        if(role!=r.talent->roles.end())result.profile.skills.push_back(role->second);
+        for(int i=0;i<r.talent->extra_skills;++i) {
+            std::vector<const SkillDefinition*> eligible;
+            for(const auto& skill:r.talent->skills)if(skill.teachable && !has_skill(result.profile,skill.id) &&
+                (skill.prerequisite.empty() || has_skill(result.profile,skill.prerequisite)))eligible.push_back(&skill);
+            if(eligible.empty())break;
+            result.profile.skills.push_back(eligible[draw(rng,static_cast<std::uint32_t>(eligible.size()))]->id);
+        }
+    }
     p.stream=rng.state();return result;
 }
 void recruit(SimulationState& s) {
@@ -58,6 +71,8 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
     if(p.traits.size()>16) invalid("Too many personal traits.");
     std::set<std::string> unique;
     for(const auto& trait:p.traits) if(trait.empty() || trait.size()>80 || trait.find('\0')!=trait.npos || !unique.insert(trait).second) invalid("Traits must have unique bounded names.");
+    const std::array orientations{"unrecorded","straight","gay_or_lesbian","bisexual","pansexual","asexual","queer","questioning","demisexual"};
+    if(std::ranges::find(orientations,p.orientation)==orientations.end())invalid("Unknown saved orientation.");
     const auto year=from_ordinal(p.applied_on).year;
     if(!p.id.starts_with("employee/") || p.id.size()>64 || p.name.empty() || p.name.size()>128 ||
         p.gender.empty() || p.gender.size()>32 || p.pronouns.empty() || p.pronouns.size()>64 || p.education.size()>128 || p.role.size()>64 || p.bio.size()>512 ||
@@ -70,6 +85,7 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
 }
 }
 void validate_people_rules(const PeopleRules& r) {
+    if(r.talent)validate_talent_rules(*r.talent);
     if(r.dismissal && r.dismissal->severance_months>6) invalid("Dismissal severance must be between zero and six months of salary.");
     if(r.recruitment) validate_recruitment_rules(*r.recruitment);
     std::set<std::pair<std::string,std::string>> audience_pairs;
@@ -113,6 +129,7 @@ void initialize_people(SimulationState& s,std::uint64_t seed,std::string founder
     if(!s.capacity || !s.accounts || s.capacity->available_staff>s.management->catalog.people->maximum_hq)
         invalid("Opening HQ staff exceed the detailed roster capacity.");
     PeopleState state;SplitMix64 derivation{seed ^ UINT64_C(0x50454f504c455631)};
+    if(s.management->catalog.people->talent)state.talent=TalentState{};
     state.stream=derivation.next();state.starts_on=s.date;state.founding_prestige=std::min(10U,prestige);
     state.mission=std::move(mission);
     s.management->people=std::move(state);
@@ -175,6 +192,7 @@ void prepare_people(SimulationState& s) {
         std::ranges::none_of(s.capacity->staff_additions,[&](const auto& row){return row.id==employee.terms.profile.id;}))
         add_staff_capacity(*s.capacity,s.date,employee.terms.profile.id,1,employee.terms.evaluation_credit);
     prepare_recruitment(s);
+    prepare_talent(s);
     if(s.date>=p.next_recruitment && (rules(s).recruitment || s.capacity->available_staff>0)) recruit(s);
 }
 void withdraw_people(SimulationState& s) {
@@ -241,6 +259,7 @@ void validate_people(const SimulationState& s,bool deep) {
     if(opening!=opening_staff_count(*s.capacity) || static_cast<std::size_t>(std::ranges::count_if(s.capacity->staff_additions,[](const auto& row){return row.id.starts_with("employee/");}))!=added)
         invalid("Individual HQ people do not reconcile with their staffing capacity.");
     validate_people_contacts(s);
+    validate_talent(s);
     if(deep) {validate_employee_departures(s);validate_contact_funding(s);}
 }
 }

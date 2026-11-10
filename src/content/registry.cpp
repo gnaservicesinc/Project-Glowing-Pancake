@@ -249,6 +249,11 @@ Registry foundation_registry() {
     boolean("company.is_operating", "Whether company operations remain active.");
     number("company.campaign_days",Scope::company,Unit::days,0,maximum,
         "Days elapsed since this campaign opened.", "campaign");
+    boolean("company.founder_programming","The founder has acquired Programming, independently of education.",Scope::company,"campaign");
+    boolean("company.has_programmer","At least one current, onboarded HQ employee has Programming.",Scope::company,"campaign");
+    boolean("company.has_architect","At least one current, onboarded HQ employee has Software Architecture.",Scope::company,"campaign");
+    number("company.completed_courses",Scope::company,Unit::count,0,2048,"Completed online courses with acquired skills.","campaign");
+    number("company.released_software",Scope::company,Unit::count,0,256,"Completed and released software designs.","campaign");
     boolean("company.founder_genius","The founder selected Actual Genius in the saved introduction.",Scope::company,"campaign");
     boolean("company.founder_outgoing","The founder's saved sociability tendency is outgoing.",Scope::company,"campaign");
     boolean("company.founder_athletic","The founder's saved activity tendency is athletic.",Scope::company,"campaign");

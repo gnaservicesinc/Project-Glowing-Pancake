@@ -4,11 +4,13 @@
 #include <QJsonObject>
 #include <QLocale>
 #include <QSaveFile>
+#include <QRandomGenerator>
 #include <pgp/core/checked_arithmetic.hpp>
 #include <pgp/core/objectives.hpp>
 #include <pgp/runtime/campaign_identity.hpp>
 
 #include <algorithm>
+#include <set>
 
 namespace pgp::bridge {
 namespace {
@@ -30,7 +32,7 @@ QVariantMap defaults() {
         {"family","middle"},{"leg","genius"},{"route","investment"},{"legal_form","corporation"},
         {"office","home"},{"researcher","founder"},{"mission","survival"},{"mission_draft","survival"},
         {"style",QVariantList{0,0,0,0,0,0,0,0,0,0,0,0}},{"appearance",QVariantList{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}},
-        {"choices",QVariantMap{}},{"backers",QStringList{}},{"partner",""}};
+        {"story_seed",QString::number(QRandomGenerator::global()->generate64())},{"choices",QVariantMap{}},{"backers",QStringList{}},{"partner",""}};
 }
 
 bool eligible_ceo(const content::FoundingSelection& selection) {
@@ -97,6 +99,7 @@ void FoundingController::reset() {
 content::FoundingSelection FoundingController::selection() const {
     content::FoundingSelection selected;
     const auto field = [&](const char* key) { return form_.value(QLatin1String{key}).toString().trimmed().toStdString(); };
+    selected.story_seed=form_.value("story_seed").toString().toULongLong();
     selected.first_name = field("first_name");
     selected.last_name = field("last_name");
     selected.gender = field("gender");
@@ -374,9 +377,18 @@ QString FoundingController::respondHomeOffer(QString id, QString response) {
 QVariantList FoundingController::chapters() const {
     QVariantList result;
     if (catalog_) {
-        for (const auto& scene : catalog_->scenes)
+        for (const auto* active : content::formative_scenes(*catalog_,selection())) {
+            const auto& scene=*active;
+            auto rows=options(scene.choices);
+            for(auto& row:rows) {
+                auto value=row.toMap();const auto key=scene.id+"/"+value.value("id").toString().toStdString();
+                if(const auto traits=catalog_->trait_rewards.find(key);traits!=catalog_->trait_rewards.end()) {
+                    auto detail=value.value("detail").toString();for(const auto& trait:traits->second)detail+=" · "+text(trait);value["detail"]=detail;row=value;
+                }
+            }
             result.push_back(QVariantMap{{"id",text(scene.id)},{"title",text(scene.title)},
-                {"date",text(scene.date)},{"text",text(scene.text)},{"choices",options(scene.choices)}});
+                {"date",text(scene.date)},{"text",text(scene.text)},{"choices",rows}});
+        }
     }
     return result;
 }
@@ -541,7 +553,7 @@ void FoundingController::setBeat(QString id) {
 
 void FoundingController::setField(QString key, QVariant value) {
     const auto answer = value.toString();
-    if (!form_.contains(key) || key == "choices" || key == "backers" || key=="partner" || key=="mission_draft" || key=="home_replies" || key=="home_offer" || key=="company_draft" ||
+    if (!form_.contains(key) || key == "choices" || key == "story_seed" || key == "backers" || key=="partner" || key=="mission_draft" || key=="home_replies" || key=="home_offer" || key=="company_draft" ||
         key=="appearance" || key=="style" || answer.size() > 128 ||
         form_.value(key).toString() == answer) return;
     if (key=="route" && answer=="hired_ceo" && beat_=="home") return;
@@ -670,6 +682,9 @@ void FoundingController::choose(QString scene, QString id) {
         std::ranges::find(found->choices, id.toStdString(), &content::FoundingOption::id) == found->choices.end()) return;
     auto choices = form_.value("choices").toMap();
     choices[scene] = id;
+    form_["choices"] = choices;
+    std::set<QString> active;for(const auto* chapter:content::formative_scenes(*catalog_,selection()))active.insert(text(chapter->id));
+    for(auto it=choices.begin();it!=choices.end();)if(!active.contains(it.key()))it=choices.erase(it);else ++it;
     form_["choices"] = choices;
     saveDraft();
     emit changed();

@@ -42,6 +42,11 @@ std::vector<ResearchWorker> research_workers(const SimulationState &state, std::
         ResearchWorker worker{person.id, person.name, {}, person.research};
         if (employee.ready_on > state.date)
             worker.unavailable = "Onboarding until " + iso_date(employee.ready_on);
+        else if (talent_rules(state) && !person_has_skill(state,person.id,"ml_research") &&
+            !(person.role=="Founder / researcher" && state.management->people->talent->founder_genius && person_has_skill(state,person.id,"programming")))
+            worker.unavailable = "Needs ML Research, or Programming plus Actual Genius";
+        else if (talent_rules(state) && !software_worker_blocker(state,person.id,except_project).empty())
+            worker.unavailable = software_worker_blocker(state,person.id,except_project);
         else if (manager && manager->person == person.id)
             worker.unavailable = "Assigned to operations management";
         else if (committed.contains(person.id))

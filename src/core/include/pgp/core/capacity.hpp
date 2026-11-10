@@ -32,7 +32,7 @@ struct CapacitySource {
     MilliCUPerDay replica_reserved{0};
     auto operator<=>(const CapacitySource&) const = default;
 };
-enum class ProjectKind { training, research, evaluation, serving, replication, data_generation, incident_response, data_acquisition, management };
+enum class ProjectKind { training, research, evaluation, serving, replication, data_generation, incident_response, data_acquisition, management, software };
 enum class ProjectStatus { active, completed, cancelled, paused };
 struct ProjectPause {
     OrdinalDay starts_on{0};

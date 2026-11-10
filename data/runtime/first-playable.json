@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.55.0-dev.1",
+  "content_version": "0.57.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -69821,7 +69821,7 @@
               {
                 "buzz": 0,
                 "capital_cents": 0,
-                "detail": "You begin taking small systems apart and putting them back together.",
+                "detail": "You begin taking small systems apart and putting them back together. Skill: Programming.",
                 "family": "",
                 "fee_cents": 0,
                 "id": "computer",
@@ -69835,7 +69835,7 @@
               {
                 "buzz": 2,
                 "capital_cents": 0,
-                "detail": "You learn how different people explain the same problem.",
+                "detail": "You learn how different people explain the same problem. Skill: Public Speaking.",
                 "family": "",
                 "fee_cents": 0,
                 "id": "library",
@@ -69849,7 +69849,7 @@
               {
                 "buzz": 1,
                 "capital_cents": 0,
-                "detail": "You learn to practice, cooperate and lose without giving up.",
+                "detail": "You learn to practice, cooperate and lose without giving up. Skill: Soccer.",
                 "family": "",
                 "fee_cents": 0,
                 "id": "team",
@@ -69921,7 +69921,7 @@
               {
                 "buzz": 0,
                 "capital_cents": 0,
-                "detail": "A teacher remembers your technical persistence.",
+                "detail": "A teacher remembers your technical persistence. Skill: Soldering.",
                 "family": "",
                 "fee_cents": 0,
                 "id": "science",
@@ -69935,7 +69935,7 @@
               {
                 "buzz": 4,
                 "capital_cents": 0,
-                "detail": "Your first public promise is small enough to deliver.",
+                "detail": "Your first public promise is small enough to deliver. Skill: Empathetic Listening.",
                 "family": "",
                 "fee_cents": 0,
                 "id": "community",
@@ -69949,7 +69949,7 @@
               {
                 "buzz": 5,
                 "capital_cents": 0,
-                "detail": "A future commercial contact sees how you handle a real customer.",
+                "detail": "A future commercial contact sees how you handle a real customer. Skill: Accounting.",
                 "family": "",
                 "fee_cents": 0,
                 "id": "business",
@@ -70115,14 +70115,1548 @@
             "id": "record",
             "text": "At seventeen, a panel asks what your work actually demonstrates. A weak case appears in the evaluation.",
             "title": "Your first public test"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Spend the term learning safe electronics assembly. Skill: Soldering.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "build",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Join the pit crew",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Practice code after school. Skill: Programming.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "code",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Write a better steering program",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Lead the cheering section. Skill: Public Speaking.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "spirit",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Make the team impossible to ignore",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Track parts, receipts and the bake-sale money. Skill: Accounting.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "business",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Keep the team solvent",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-09-01",
+            "id": "robot_club",
+            "pool": "activity",
+            "text": "A wheeled robot bumps into the hallway trophy cabinet. The robotics club has a vacancy. Possibly because of the robot.",
+            "title": "The robot has escaped"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Patient bench work teaches you how the whole machine fits together. Skill: Robotics.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "repair",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Repair the wheel together",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Explain what worked and what did not. Skill: Public Speaking.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "explain",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Give the judges an honest demo",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-12-01",
+            "id": "robot_club_finale",
+            "requires_choice": "robot_club/build",
+            "text": "Competition morning. The robot has three working wheels and the team has four opinions.",
+            "title": "One wheel short"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You find a voice in front of an audience. Skill: Public Speaking.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "stage",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Try the stage",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Make a cardboard castle look almost convincing. Skill: Painting.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "paint",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Paint the scenery",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-09-01",
+            "id": "theatre_club",
+            "pool": "activity",
+            "text": "The school play needs performers, scenery and someone who can remember where the scenery went.",
+            "title": "A very small spotlight"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "A paper cup becomes a crown. The audience loves it. Skill: Comedy.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "improv",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Make the mistake part of the show",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn to notice when someone needs a hand. Skill: Empathetic Listening.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "help",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Quietly help your partner recover",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-12-01",
+            "id": "theatre_club_finale",
+            "requires_choice": "theatre_club/stage",
+            "text": "Your scene partner reaches for a crown. The crown is nowhere to be found.",
+            "title": "The missing prop"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn an instrument one squeaky afternoon at a time. Skill: Music Performance.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "play",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Practice with the band",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn to turn a blank page into an invitation. Skill: Drawing.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "draw",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Design the gig posters",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-09-01",
+            "id": "music_club",
+            "pool": "activity",
+            "text": "Someone donates a keyboard to school. It has eighty sounds; you intend to investigate all of them.",
+            "title": "Please turn it down"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Make space for every instrument. Skill: Music Mixing.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "mix",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Learn to mix the recording",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "A simpler song becomes your first original. Skill: Music Composition.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "compose",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Write something the band can play",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-12-01",
+            "id": "music_club_finale",
+            "requires_choice": "music_club/play",
+            "text": "The band sounds wonderful in your head. On the recording, the drums sound like falling furniture.",
+            "title": "The first recording"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn balance, falls and getting back up. Skill: Skateboarding.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "skate",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Keep practicing",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Practice framing and editing instead. Skill: Film Production.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "film",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Film the attempts",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-09-01",
+            "id": "skate_club",
+            "pool": "activity",
+            "text": "Friends have found a skate park. Everyone is wearing a helmet. Nobody is looking graceful yet.",
+            "title": "Four wheels and a lot of pavement"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Listen before offering advice. Skill: Empathetic Listening.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "welcome",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Help them find their feet",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Make the park feel inviting. Skill: Digital Art.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "poster",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Draw a beginners welcome poster",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-12-01",
+            "id": "skate_club_finale",
+            "requires_choice": "skate_club/skate",
+            "text": "Beginners arrive at the park and hover at the edge. You remember that feeling.",
+            "title": "The community session"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn how to get people involved. Skill: Public Relations.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "organize",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Organize the neighborhood planting day",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Discover how much a lump of clay can become. Skill: Sculpture.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "sculpt",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Make plant markers from clay",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-09-01",
+            "id": "garden_club",
+            "pool": "activity",
+            "text": "A teacher offers a patch of neglected ground and an alarming number of seed packets.",
+            "title": "A garden in the cracks"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Finding common ground takes practice. Skill: Empathetic Listening.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "listen",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Hear everyone out",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Observe the patterns behind the argument. Skill: Sociology.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "study",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Map how the group makes decisions",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-12-01",
+            "id": "garden_club_finale",
+            "requires_choice": "garden_club/organize",
+            "text": "Neighbors disagree about flowers, vegetables and the football that keeps landing in the beds.",
+            "title": "Whose garden is it?"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn to ask clear questions and explain the answers. Skill: Public Relations.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "report",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Join the reporting team",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Make a point with a pencil. Skill: Drawing.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "cartoon",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Draw the weekly cartoon",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-09-01",
+            "id": "school_paper",
+            "pool": "activity",
+            "text": "The school paper has one working camera and a fierce debate about the cafeteria pudding.",
+            "title": "Extra! Extra!"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Think through accountability in public. Skill: Ethics.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "correct",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Print a clear correction",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Turn the mistake into a better process. Skill: Policy.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "process",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Improve the editorial rules",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-12-01",
+            "id": "school_paper_finale",
+            "requires_choice": "school_paper/report",
+            "text": "A story gets something wrong. The person it describes asks you to fix it.",
+            "title": "A correction on page one"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Practice passing and positioning. Skill: Soccer.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "soccer",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Join the soccer team",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn to see the court as a team. Skill: Basketball.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "basketball",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Try basketball instead",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-09-01",
+            "id": "sports_club",
+            "pool": "activity",
+            "text": "The after-school league needs one more player. The kit is mismatched. The enthusiasm is not.",
+            "title": "Last picked, first practice"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn to speak when people need encouragement. Skill: Public Speaking.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "talk",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Give the half-time talk",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Help a teammate feel heard. Skill: Empathetic Listening.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "listen",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Check in with the discouraged player",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-12-01",
+            "id": "sports_club_finale",
+            "requires_choice": "sports_club/soccer",
+            "text": "Your team is one person short and two goals down. Someone has to settle the nerves.",
+            "title": "The captain is absent"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Undo is a wonderful invention. Skill: Digital Art.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "tablet",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Learn the drawing tablet",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Make something your hands can understand. Skill: Sculpture.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "clay",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Work with clay",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-09-01",
+            "id": "art_club",
+            "pool": "activity",
+            "text": "The art room cupboard contains clay, old paints and one drawing tablet with a temperamental cable.",
+            "title": "The cupboard of possibilities"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Redesign around what people actually need. Skill: UI Design.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "usability",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Watch visitors use the gallery",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Explore color and composition. Skill: Painting.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "paint",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Make a new set of illustrations",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-12-01",
+            "id": "art_club_finale",
+            "requires_choice": "art_club/tablet",
+            "text": "The club wants an online gallery. Your first design leaves visitors wondering which button does what.",
+            "title": "An exhibition for everyone"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Practice loops, bugs and finishing things. Skill: Programming.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "build",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Build a little program",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Start with people and paper prototypes. Skill: UI Design.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "design",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Design the screens",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-06-01",
+            "id": "code_camp",
+            "pool": "camp",
+            "text": "A community coding camp offers borrowed computers and a challenge: make something a friend would use.",
+            "title": "A summer of tiny programs"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "An awkward minute becomes a useful redesign. Skill: UI Design.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "observe",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Watch without giving hints",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Tell the story of what the program does. Skill: Public Speaking.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "explain",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Practice a clearer demonstration",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-08-01",
+            "id": "code_camp_finale",
+            "requires_choice": "code_camp/build",
+            "text": "Your program works. Your friend cannot figure out how to start it.",
+            "title": "Demo day, suspicious silence"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Practice with supervision and a soldering iron. Skill: Soldering.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "assemble",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Learn to assemble it safely",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Turn scraps into something unexpected. Skill: Sculpture.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "sculpt",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Build a sculpture from spare parts",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-06-01",
+            "id": "maker_camp",
+            "pool": "camp",
+            "text": "The makerspace has donated a box of components. A mentor promises there is a working radio in there somewhere.",
+            "title": "The box marked miscellaneous"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn to make the connections repeatable. Skill: PCB Design.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "layout",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Draw a proper circuit-board layout",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn how a repeatable production process works. Skill: Electronics Manufacturing.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "process",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Write an assembly checklist",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-08-01",
+            "id": "maker_camp_finale",
+            "requires_choice": "maker_camp/assemble",
+            "text": "The radio works. The second copy does not. Your wiring notes are mostly arrows and optimism.",
+            "title": "Can we make another one?"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn addresses, connections and troubleshooting. Skill: Computer Networking.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "network",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Help connect the machines",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Practice patient explanations. Skill: Empathetic Listening.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "help",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Help people use the machines",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-06-01",
+            "id": "network_camp",
+            "pool": "camp",
+            "text": "A library computer camp wants to link its computers. The shortest cable is inexplicably always missing.",
+            "title": "Connected by a very long cable"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn defensive network checks. Skill: Network Security.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "secure",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Fix and document the practice network",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn to make instructions clear. Skill: UI Design.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "guide",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Write a friendly setup guide",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-08-01",
+            "id": "network_camp_finale",
+            "requires_choice": "network_camp/network",
+            "text": "On the practice network, a deliberately misconfigured machine reveals why permissions matter.",
+            "title": "Who left that door open?"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Practice planning, shooting and editing. Skill: Film Production.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "direct",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Make the short film",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Give a cardboard monster some dignity. Skill: Music Composition.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "score",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Write the creature a theme tune",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-06-01",
+            "id": "film_camp",
+            "pool": "camp",
+            "text": "Your camp group has a camera, three afternoons and a cardboard creature with enormous ambitions.",
+            "title": "The monster is made of cardboard"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "The creature becomes a comedy. Skill: Comedy.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "comedy",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Perform the missing scenes live",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Keep an audience informed and excited. Skill: Public Relations.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "announce",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Organize a new screening",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-08-01",
+            "id": "film_camp_finale",
+            "requires_choice": "film_camp/direct",
+            "text": "A rainstorm ruins the outdoor screening. Your audience is already arriving.",
+            "title": "The screening"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Follow the money carefully. Skill: Accounting.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "budget",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Balance the town budget",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Compare competing goals and their tradeoffs. Skill: Policy.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "policy",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Write the town rules",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-06-01",
+            "id": "civic_camp",
+            "pool": "camp",
+            "text": "At a youth civic workshop, you get a fictional town, a tiny budget and more demands than money.",
+            "title": "A town for a week"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Practice institutional negotiation. Skill: Government Affairs.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "negotiate",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Bring the groups together",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Think carefully about fair decisions. Skill: Ethics.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "fairness",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Explain who gains and who loses",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-08-01",
+            "id": "civic_camp_finale",
+            "requires_choice": "civic_camp/budget",
+            "text": "Everyone supports the new park until the discussion turns to where it should go.",
+            "title": "The public meeting"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn to listen before guessing what someone needs. Skill: Empathetic Listening.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "listen",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Work at the welcome desk",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn how groups support one another. Skill: Sociology.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "organize",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Study how the center runs",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-06-01",
+            "id": "volunteer_camp",
+            "pool": "camp",
+            "text": "A volunteer program pairs you with a community center. The to-do board is longer than the wall.",
+            "title": "A week of helping hands"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Study behavior, without pretending to be a clinician. Skill: Psychology.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "learn",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Learn about behavior with the supervisor",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Practice inclusive communication. Skill: Public Relations.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "invite",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Make the next activity easier to join",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-08-01",
+            "id": "volunteer_camp_finale",
+            "requires_choice": "volunteer_camp/listen",
+            "text": "A regular visitor has stopped joining activities. The supervisor asks what you have noticed.",
+            "title": "The quiet visitor"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Find your place in a larger sound. Skill: Music Performance.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "perform",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Practice with the ensemble",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Make room for the instruments you actually have. Skill: Music Composition.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "compose",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Write for the ensemble",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-06-01",
+            "id": "music_camp",
+            "pool": "camp",
+            "text": "At music camp, everyone can play their own part. Playing together is proving more complicated.",
+            "title": "An orchestra of almost"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Balance the instruments instead of turning everything up. Skill: Music Mixing.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "mix",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Help clean up the live sound",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Make a room full of strangers feel welcome. Skill: Public Speaking.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "host",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Host the concert",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-08-01",
+            "id": "music_camp_finale",
+            "requires_choice": "music_camp/perform",
+            "text": "The rehearsal recording is muddy. The concert is tomorrow.",
+            "title": "The final concert"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn timing, space and passing. Skill: Basketball.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "basketball",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Practice basketball",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Build confidence one small trick at a time. Skill: Skateboarding.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "skate",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Choose the skateboarding sessions",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-06-01",
+            "id": "sports_camp",
+            "pool": "camp",
+            "text": "The sports camp has a chalkboard full of plays and a coach who remembers everyone by their best effort.",
+            "title": "A summer on the court"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Find out what would help each person. Skill: Empathetic Listening.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "coach",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Coach the nervous beginners",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Learn to hold a crowd with your voice. Skill: Public Speaking.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "announce",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Call the game",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-08-01",
+            "id": "sports_camp_finale",
+            "requires_choice": "sports_camp/basketball",
+            "text": "The last afternoon is a game for new campers. Winning seems less important than getting everyone involved.",
+            "title": "A game without a scoreboard"
           }
         ],
+        "skill_rewards": {
+          "art_club/clay": [
+            "sculpture"
+          ],
+          "art_club/tablet": [
+            "digital_art"
+          ],
+          "art_club_finale/paint": [
+            "painting"
+          ],
+          "art_club_finale/usability": [
+            "ui_design"
+          ],
+          "circle/business": [
+            "accounting"
+          ],
+          "circle/community": [
+            "empathy"
+          ],
+          "circle/science": [
+            "soldering"
+          ],
+          "civic_camp/budget": [
+            "accounting"
+          ],
+          "civic_camp/policy": [
+            "policy"
+          ],
+          "civic_camp_finale/fairness": [
+            "ethics"
+          ],
+          "civic_camp_finale/negotiate": [
+            "government_affairs"
+          ],
+          "code_camp/build": [
+            "programming"
+          ],
+          "code_camp/design": [
+            "ui_design"
+          ],
+          "code_camp_finale/explain": [
+            "public_speaking"
+          ],
+          "code_camp_finale/observe": [
+            "ui_design"
+          ],
+          "curiosity/computer": [
+            "programming"
+          ],
+          "curiosity/library": [
+            "public_speaking"
+          ],
+          "curiosity/team": [
+            "soccer"
+          ],
+          "film_camp/direct": [
+            "film"
+          ],
+          "film_camp/score": [
+            "music_composition"
+          ],
+          "film_camp_finale/announce": [
+            "public_relations"
+          ],
+          "film_camp_finale/comedy": [
+            "comedy"
+          ],
+          "garden_club/organize": [
+            "public_relations"
+          ],
+          "garden_club/sculpt": [
+            "sculpture"
+          ],
+          "garden_club_finale/listen": [
+            "empathy"
+          ],
+          "garden_club_finale/study": [
+            "sociology"
+          ],
+          "maker_camp/assemble": [
+            "soldering"
+          ],
+          "maker_camp/sculpt": [
+            "sculpture"
+          ],
+          "maker_camp_finale/layout": [
+            "pcb_design"
+          ],
+          "maker_camp_finale/process": [
+            "electronics_manufacturing"
+          ],
+          "music_camp/compose": [
+            "music_composition"
+          ],
+          "music_camp/perform": [
+            "music_playing"
+          ],
+          "music_camp_finale/host": [
+            "public_speaking"
+          ],
+          "music_camp_finale/mix": [
+            "music_mixing"
+          ],
+          "music_club/draw": [
+            "drawing"
+          ],
+          "music_club/play": [
+            "music_playing"
+          ],
+          "music_club_finale/compose": [
+            "music_composition"
+          ],
+          "music_club_finale/mix": [
+            "music_mixing"
+          ],
+          "network_camp/help": [
+            "empathy"
+          ],
+          "network_camp/network": [
+            "networking"
+          ],
+          "network_camp_finale/guide": [
+            "ui_design"
+          ],
+          "network_camp_finale/secure": [
+            "network_security"
+          ],
+          "robot_club/build": [
+            "soldering"
+          ],
+          "robot_club/business": [
+            "accounting"
+          ],
+          "robot_club/code": [
+            "programming"
+          ],
+          "robot_club/spirit": [
+            "public_speaking"
+          ],
+          "robot_club_finale/explain": [
+            "public_speaking"
+          ],
+          "robot_club_finale/repair": [
+            "robotics"
+          ],
+          "school_paper/cartoon": [
+            "drawing"
+          ],
+          "school_paper/report": [
+            "public_relations"
+          ],
+          "school_paper_finale/correct": [
+            "ethics"
+          ],
+          "school_paper_finale/process": [
+            "policy"
+          ],
+          "skate_club/film": [
+            "film"
+          ],
+          "skate_club/skate": [
+            "skateboarding"
+          ],
+          "skate_club_finale/poster": [
+            "digital_art"
+          ],
+          "skate_club_finale/welcome": [
+            "empathy"
+          ],
+          "sports_camp/basketball": [
+            "basketball"
+          ],
+          "sports_camp/skate": [
+            "skateboarding"
+          ],
+          "sports_camp_finale/announce": [
+            "public_speaking"
+          ],
+          "sports_camp_finale/coach": [
+            "empathy"
+          ],
+          "sports_club/basketball": [
+            "basketball"
+          ],
+          "sports_club/soccer": [
+            "soccer"
+          ],
+          "sports_club_finale/listen": [
+            "empathy"
+          ],
+          "sports_club_finale/talk": [
+            "public_speaking"
+          ],
+          "theatre_club/paint": [
+            "painting"
+          ],
+          "theatre_club/stage": [
+            "public_speaking"
+          ],
+          "theatre_club_finale/help": [
+            "empathy"
+          ],
+          "theatre_club_finale/improv": [
+            "comedy"
+          ],
+          "volunteer_camp/listen": [
+            "empathy"
+          ],
+          "volunteer_camp/organize": [
+            "sociology"
+          ],
+          "volunteer_camp_finale/invite": [
+            "public_relations"
+          ],
+          "volunteer_camp_finale/learn": [
+            "psychology"
+          ]
+        },
         "startup_loan": {
           "lender": "Redwood Mutual",
           "minimum_investment_cents": 500000,
           "monthly_interest_bp": 75,
           "principal_cents": 5000000,
           "term_days": 730
+        },
+        "trait_rewards": {
+          "art_club/clay": [
+            "Interest: sculpture"
+          ],
+          "art_club/tablet": [
+            "Interest: digital art"
+          ],
+          "civic_camp/budget": [
+            "Interest: civic service"
+          ],
+          "civic_camp/policy": [
+            "Interest: policy"
+          ],
+          "code_camp/build": [
+            "Interest: coding"
+          ],
+          "code_camp/design": [
+            "Interest: design"
+          ],
+          "film_camp/direct": [
+            "Interest: film"
+          ],
+          "film_camp/score": [
+            "Interest: music"
+          ],
+          "garden_club/organize": [
+            "Interest: gardening"
+          ],
+          "garden_club/sculpt": [
+            "Interest: sculpture"
+          ],
+          "maker_camp/assemble": [
+            "Interest: making"
+          ],
+          "maker_camp/sculpt": [
+            "Interest: sculpture"
+          ],
+          "music_camp/compose": [
+            "Interest: composition"
+          ],
+          "music_camp/perform": [
+            "Interest: music"
+          ],
+          "music_club/draw": [
+            "Interest: drawing"
+          ],
+          "music_club/play": [
+            "Interest: music"
+          ],
+          "network_camp/help": [
+            "Interest: volunteering"
+          ],
+          "network_camp/network": [
+            "Interest: networking"
+          ],
+          "robot_club/build": [
+            "Robotics: build team"
+          ],
+          "robot_club/business": [
+            "Robotics: business team"
+          ],
+          "robot_club/code": [
+            "Robotics: programming team"
+          ],
+          "robot_club/spirit": [
+            "Robotics: spirit team"
+          ],
+          "school_paper/cartoon": [
+            "Interest: drawing"
+          ],
+          "school_paper/report": [
+            "Interest: journalism"
+          ],
+          "skate_club/film": [
+            "Interest: film"
+          ],
+          "skate_club/skate": [
+            "Interest: skateboarding"
+          ],
+          "sports_camp/basketball": [
+            "Interest: basketball"
+          ],
+          "sports_camp/skate": [
+            "Interest: skateboarding"
+          ],
+          "sports_club/basketball": [
+            "Interest: basketball"
+          ],
+          "sports_club/soccer": [
+            "Interest: soccer"
+          ],
+          "theatre_club/paint": [
+            "Interest: painting"
+          ],
+          "theatre_club/stage": [
+            "Interest: theatre"
+          ],
+          "volunteer_camp/listen": [
+            "Interest: volunteering"
+          ],
+          "volunteer_camp/organize": [
+            "Interest: community"
+          ]
         }
       },
       "frontier": "frontier.frontier_paths",
@@ -75193,6 +76727,605 @@
           "recruitment_days": 30,
           "signing_cost_cents": 100000,
           "skill_jitter": 15,
+          "talent": {
+            "ai_architecture_floor": 8500,
+            "ai_compute_milli": 1000,
+            "ai_programming_floor": 9500,
+            "ai_reliability_floor": 9000,
+            "ai_work_percent": 75,
+            "ai_workflow_floor": 8500,
+            "design_bonus": 10,
+            "extra_skills": 2,
+            "focus_bonus": 20,
+            "focus_penalty": 10,
+            "market_bonus_max_bp": 1500,
+            "roles": {
+              "Evaluation researcher": "ml_research",
+              "Researcher": "ml_research",
+              "Software engineer": "programming"
+            },
+            "skills": [
+              {
+                "course_days": 30,
+                "description": "Qualifies for software development. A genius programmer can also conduct ML research.",
+                "engineering": 5,
+                "evaluation": 0,
+                "id": "programming",
+                "name": "Programming",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 50000
+              },
+              {
+                "course_days": 90,
+                "description": "Qualifies a team for advanced software design.",
+                "engineering": 5,
+                "evaluation": 0,
+                "id": "architecture",
+                "name": "Software Architecture",
+                "prerequisite": "programming",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 200000
+              },
+              {
+                "course_days": 45,
+                "description": "Improves software usability.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "ui_design",
+                "name": "UI Design",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 75000
+              },
+              {
+                "course_days": 120,
+                "description": "Qualifies for named ML research assignments.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "ml_research",
+                "name": "ML Research",
+                "prerequisite": "programming",
+                "research": 5,
+                "teachable": true,
+                "tuition_cents": 300000
+              },
+              {
+                "course_days": 60,
+                "description": "Security engineering practice and code review.",
+                "engineering": 5,
+                "evaluation": 0,
+                "id": "software_security",
+                "name": "Software Security",
+                "prerequisite": "programming",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 125000
+              },
+              {
+                "course_days": 45,
+                "description": "Design and troubleshoot computer networks.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "networking",
+                "name": "Computer Networking",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 80000
+              },
+              {
+                "course_days": 60,
+                "description": "Audit and protect computer networks.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "network_security",
+                "name": "Network Security",
+                "prerequisite": "networking",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 120000
+              },
+              {
+                "course_days": 60,
+                "description": "Evaluate model misuse and security boundaries.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "model_security",
+                "name": "Model Security",
+                "prerequisite": "ml_research",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 150000
+              },
+              {
+                "course_days": 60,
+                "description": "Design adversarial evaluations.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "red_team",
+                "name": "Red Team Practice",
+                "prerequisite": "software_security",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 150000
+              },
+              {
+                "course_days": 30,
+                "description": "Practical electronics assembly and repair.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "soldering",
+                "name": "Soldering",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 50000
+              },
+              {
+                "course_days": 120,
+                "description": "Architecture and implementation of processors.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "cpu_design",
+                "name": "CPU Design",
+                "prerequisite": "programming",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 250000
+              },
+              {
+                "course_days": 120,
+                "description": "Architecture and implementation of parallel processors.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "gpu_design",
+                "name": "GPU Design",
+                "prerequisite": "programming",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 250000
+              },
+              {
+                "course_days": 90,
+                "description": "Circuit-board design and layout.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "pcb_design",
+                "name": "PCB Design",
+                "prerequisite": "soldering",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 175000
+              },
+              {
+                "course_days": 180,
+                "description": "Process planning for semiconductor fabrication.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "silicon_manufacturing",
+                "name": "Silicon Manufacturing",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 400000
+              },
+              {
+                "course_days": 90,
+                "description": "Electronics production planning.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "electronics_manufacturing",
+                "name": "Electronics Manufacturing",
+                "prerequisite": "soldering",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 200000
+              },
+              {
+                "course_days": 90,
+                "description": "Practical robot design, construction and teamwork.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "robotics",
+                "name": "Robotics",
+                "prerequisite": "programming",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 150000
+              },
+              {
+                "course_days": 30,
+                "description": "Communicate with external audiences.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "public_relations",
+                "name": "Public Relations",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 50000
+              },
+              {
+                "course_days": 30,
+                "description": "Present clearly to a group.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "public_speaking",
+                "name": "Public Speaking",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 40000
+              },
+              {
+                "course_days": 30,
+                "description": "Write and perform comic material.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "comedy",
+                "name": "Comedy",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 30000
+              },
+              {
+                "course_days": 60,
+                "description": "Plan and produce films.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "film",
+                "name": "Film Production",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 90000
+              },
+              {
+                "course_days": 60,
+                "description": "Play a musical instrument.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "music_playing",
+                "name": "Music Performance",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 70000
+              },
+              {
+                "course_days": 60,
+                "description": "Compose original music.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "music_composition",
+                "name": "Music Composition",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 70000
+              },
+              {
+                "course_days": 45,
+                "description": "Record and mix music.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "music_mixing",
+                "name": "Music Mixing",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 60000
+              },
+              {
+                "course_days": 30,
+                "description": "Develop observational drawing skills.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "drawing",
+                "name": "Drawing",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 40000
+              },
+              {
+                "course_days": 45,
+                "description": "Work with paint, color and composition.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "painting",
+                "name": "Painting",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 60000
+              },
+              {
+                "course_days": 60,
+                "description": "Create physical three-dimensional art.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "sculpture",
+                "name": "Sculpture",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 80000
+              },
+              {
+                "course_days": 45,
+                "description": "Create and edit digital artwork.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "digital_art",
+                "name": "Digital Art",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 75000
+              },
+              {
+                "course_days": 60,
+                "description": "Understand institutional engagement.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "government_affairs",
+                "name": "Government Affairs",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 150000
+              },
+              {
+                "course_days": 45,
+                "description": "Analyze responsibilities and competing values.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "ethics",
+                "name": "Ethics",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 60000
+              },
+              {
+                "course_days": 60,
+                "description": "Analyze and communicate public policy.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "policy",
+                "name": "Policy",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 100000
+              },
+              {
+                "course_days": 90,
+                "description": "Read accounts and prepare financial records.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "accounting",
+                "name": "Accounting",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 150000
+              },
+              {
+                "course_days": 365,
+                "description": "Professional legal qualification; unavailable as a short online class.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "law",
+                "name": "Legal Practice",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": false,
+                "tuition_cents": 0
+              },
+              {
+                "course_days": 365,
+                "description": "Professional medical qualification; unavailable as a short online class.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "medicine",
+                "name": "Medical Practice",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": false,
+                "tuition_cents": 0
+              },
+              {
+                "course_days": 365,
+                "description": "Professional nursing qualification; unavailable as a short online class.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "nursing",
+                "name": "Nursing",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": false,
+                "tuition_cents": 0
+              },
+              {
+                "course_days": 90,
+                "description": "Study behavior and evidence; does not confer a clinical license.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "psychology",
+                "name": "Psychology",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 120000
+              },
+              {
+                "course_days": 90,
+                "description": "Study groups, organizations and social research.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "sociology",
+                "name": "Sociology",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 120000
+              },
+              {
+                "course_days": 60,
+                "description": "Plan practical site protection.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "physical_security",
+                "name": "Physical Security",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 100000
+              },
+              {
+                "course_days": 30,
+                "description": "Learn balance and skateboarding technique.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "skateboarding",
+                "name": "Skateboarding",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 30000
+              },
+              {
+                "course_days": 30,
+                "description": "Develop team play and ball control.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "soccer",
+                "name": "Soccer",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 30000
+              },
+              {
+                "course_days": 30,
+                "description": "Develop court awareness and team play.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "basketball",
+                "name": "Basketball",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 30000
+              },
+              {
+                "course_days": 45,
+                "description": "Practice listening and conflict resolution.",
+                "engineering": 0,
+                "evaluation": 0,
+                "id": "empathy",
+                "name": "Empathetic Listening",
+                "prerequisite": "",
+                "research": 0,
+                "teachable": true,
+                "tuition_cents": 50000
+              }
+            ],
+            "software": [
+              {
+                "advanced": false,
+                "description": "A focused conversational workspace.",
+                "features": [
+                  "Conversation history",
+                  "Message composer",
+                  "Sources and context"
+                ],
+                "id": "chat",
+                "monthly_revenue_cents": 0,
+                "name": "Chat interface",
+                "setup_cents": 75000,
+                "work_days": 18
+              },
+              {
+                "advanced": false,
+                "description": "A document-centered desktop tool.",
+                "features": [
+                  "Workspace",
+                  "Document tools",
+                  "Local files"
+                ],
+                "id": "desktop",
+                "monthly_revenue_cents": 0,
+                "name": "Desktop application",
+                "setup_cents": 100000,
+                "work_days": 24
+              },
+              {
+                "advanced": true,
+                "description": "A browser with a visible AI assistant.",
+                "features": [
+                  "Tabs and address",
+                  "Assistant panel",
+                  "Permission review"
+                ],
+                "id": "browser",
+                "monthly_revenue_cents": 0,
+                "name": "Desktop AI browser",
+                "setup_cents": 250000,
+                "work_days": 45
+              },
+              {
+                "advanced": true,
+                "description": "An editor with reviewable agent changes.",
+                "features": [
+                  "Project files",
+                  "Code editor",
+                  "Diff and test review"
+                ],
+                "id": "coding",
+                "monthly_revenue_cents": 0,
+                "name": "Desktop coding agent",
+                "setup_cents": 350000,
+                "work_days": 60
+              },
+              {
+                "advanced": true,
+                "description": "An agent workspace with explicit approvals.",
+                "features": [
+                  "Task queue",
+                  "Activity timeline",
+                  "Approval inbox"
+                ],
+                "id": "work",
+                "monthly_revenue_cents": 0,
+                "name": "Desktop work agent",
+                "setup_cents": 350000,
+                "work_days": 60
+              },
+              {
+                "advanced": true,
+                "description": "An integrated chat, browser, code and work client.",
+                "features": [
+                  "App switcher",
+                  "Shared workspace",
+                  "Unified inbox",
+                  "Permission center"
+                ],
+                "id": "megaclient",
+                "monthly_revenue_cents": 0,
+                "name": "All-in-one megaclient",
+                "setup_cents": 600000,
+                "work_days": 90
+              }
+            ]
+          },
           "trait_groups": [
             [
               "Social: introverted",
@@ -75786,7 +77919,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 26,
+      "revision": 28,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

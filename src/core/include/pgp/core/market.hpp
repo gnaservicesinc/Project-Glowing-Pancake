@@ -270,6 +270,7 @@ struct MarketInfluence {
     bool trial_eligible = true;
     // Absent means retained copies inherit the ordinary edge restriction.
     std::optional<std::vector<std::string>> blocked_weight_projects{};
+    BasisPoints software_quality{0};
     auto operator<=>(const MarketInfluence&) const = default;
 };
 using MarketInfluences = std::vector<MarketInfluence>;

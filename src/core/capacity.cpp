@@ -55,7 +55,7 @@ bool in_interval(const std::vector<ProjectPause>& intervals,OrdinalDay day) {
 bool paused_on(const CapacityProject& row,OrdinalDay day) { return in_interval(row.pauses,day); }
 bool pausable(ProjectKind kind) {
     return kind==ProjectKind::training || kind==ProjectKind::research || kind==ProjectKind::evaluation ||
-        kind==ProjectKind::data_generation || kind==ProjectKind::incident_response || kind==ProjectKind::data_acquisition;
+        kind==ProjectKind::data_generation || kind==ProjectKind::incident_response || kind==ProjectKind::data_acquisition || kind==ProjectKind::software;
 }
 template<class Operation> void mutate(CapacityState& state, Operation operation) {
     validate_capacity(state);
@@ -213,7 +213,10 @@ void validate_capacity(const CapacityState& state) {
             (void)evaluation_work(state,row.starts_on,row.total_work,row.specialist_id);
         }
         (void)from_ordinal(row.starts_on);
-        if (row.customer_inference) {
+        if (row.kind==ProjectKind::software && row.source_id.empty()) {
+            if(!row.source_id.empty() || row.requested.value()!=0 || row.total_work.value()!=0 || row.completed_work.value()!=0 || !row.required_staff_days || row.customer_inference)
+                invalid("Software requires staff-days and local computers, without reserved model compute");
+        } else if (row.customer_inference) {
             if (row.kind != ProjectKind::serving || !row.source_id.empty() || row.requested.value() != 0 ||
                 row.completed_work.value() != 0)
                 invalid("Customer inference uses a serving team and no company compute");
@@ -243,6 +246,10 @@ void validate_capacity(const CapacityState& state) {
                 row.inference_milli_CU_per_task.value() != 0 || row.useful_tasks != 0 || row.monthly_support_cost.value() != 0)
                 invalid("Finite project has invalid work or serving-only fields");
             break;
+        case ProjectKind::software:
+            if(!row.required_staff_days || row.total_work.value()<0 || row.completed_work>row.total_work || (!row.source_id.empty() && row.total_work.value()==0))invalid("Software work requires actual staff-days and any reserved AI compute");
+            if(row.tasks_per_day || row.inference_milli_CU_per_task.value() || row.useful_tasks || row.monthly_support_cost.value()) invalid("Software cannot invent inference work");
+            break;
         case ProjectKind::replication:
             if (row.total_work.value()!=0 || row.tasks_per_day!=0 || row.inference_milli_CU_per_task.value()!=0 ||
                 row.useful_tasks!=0 || row.status==ProjectStatus::completed || row.customer_inference)
@@ -268,7 +275,7 @@ void validate_capacity(const CapacityState& state) {
                 (i && (!row.disruptions[i-1].ends_before || interval.starts_on<=*row.disruptions[i-1].ends_before)))
                 invalid("Invalid or overlapping deployment containment intervals");
         }
-        if((row.required_staff_days>0 && row.kind!=ProjectKind::research) || row.required_staff_days>1'000'000 ||
+        if((row.required_staff_days>0 && row.kind!=ProjectKind::research && row.kind!=ProjectKind::software) || row.required_staff_days>1'000'000 ||
             row.completed_staff_days>row.required_staff_days)
             invalid("Only research supports a bounded independent staff-day budget");
         const bool open_pause=!row.pauses.empty() && !row.pauses.back().ends_before;
@@ -277,7 +284,7 @@ void validate_capacity(const CapacityState& state) {
         case ProjectStatus::active:
             if (row.stopped_on || (row.kind != ProjectKind::serving && row.kind!=ProjectKind::replication && finite_goal_reached(row)))
                 invalid("Active project has a stop cursor or already completed its goal");
-            if (!row.customer_inference)
+            if (!row.customer_inference && !row.source_id.empty())
                 source_reservations[row.source_id] = checked_add(source_reservations[row.source_id], demand(row));
             break;
         case ProjectStatus::paused:
@@ -367,7 +374,7 @@ void validate_capacity(const CapacityState& state) {
                     research_staff_credit(row,total.days)==row.required_staff_days && (row.status != ProjectStatus::completed || !row.stopped_on || *row.stopped_on != day.day))
                     invalid("Finite work must complete on the exact day its goal is reached");
             }
-            if (!row.customer_inference) {
+            if (!row.customer_inference && !row.source_id.empty()) {
                 auto [supply, fresh] = source_use.try_emplace(row.source_id, MilliCU{0});
                 (void)fresh;
                 supply->second = checked_unit_add(supply->second, used.work);
@@ -514,7 +521,7 @@ void resume_project(CapacityState& state,OrdinalDay day,std::string_view id) {
         row.status=ProjectStatus::active;row.pauses.back().ends_before=day;
         std::int64_t reserved=0;
         for(const auto& other:candidate.projects) if(other.status==ProjectStatus::active && other.source_id==row.source_id) reserved=checked_add(reserved,demand(other));
-        if(reserved>company_capacity(source(candidate,row.source_id)).value()) invalid("Resume needs the original compute allocation to be available again");
+        if(!row.source_id.empty() && reserved>company_capacity(source(candidate,row.source_id)).value()) invalid("Resume needs the original compute allocation to be available again");
     });
 }
 void update_effective_capacity(CapacityState& state, OrdinalDay day, std::string_view source_id, MilliCUPerDay effective) {

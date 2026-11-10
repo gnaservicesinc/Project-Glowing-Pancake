@@ -398,7 +398,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 world.simulation.succession->personal_cash==pgp::core::Cents{1500000} && employees.empty() &&
                 world.simulation.capacity->sources.empty() &&
                 pgp::core::active_charter(world.simulation) && pgp::core::active_charter(world.simulation)->id=="charter.shared_research");
-            if (campaign.welcome() || story->hasDraft() || !world.founding || !world.identity || world.founding->choices.size() != 6 ||
+            if (campaign.welcome() || story->hasDraft() || !world.founding || !world.identity || (world.founding->choices.size() < 8 || world.founding->choices.size() > 10) ||
                 world.founding->legal_form != "corporation" || !expected_entry || !world.founding->backers.empty() ||
                 world.identity->founder_name != "Mira Vale" || world.root_seed != 718 ||
                 world.founding->gender!="woman" || world.founding->birth_sex!="male" || world.founding->orientation!="bisexual" ||
@@ -480,7 +480,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             }
             if(partner) std::cout << "Cofounder UI passed: eligible directory, defer and accept, signed mission, company board reply and exact save continuation\n";
             else std::cout << "Prologue UI passed: hospital opening, resized 650×480 canvas, editable name, branching art and palette, "
-                         "six formative chapters, saved application and investor conversations at 200% text, appearance, paused office, continued company inbox and fresh-save/day continuation\n";
+                         "sampled formative chains, saved application and investor conversations at 200% text, appearance, paused office, continued company inbox and fresh-save/day continuation\n";
             timer->stop();
             QCoreApplication::exit(0);
             break;

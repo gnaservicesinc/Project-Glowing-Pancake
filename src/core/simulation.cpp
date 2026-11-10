@@ -118,6 +118,7 @@ void prepare_opening(SimulationState& state, const std::vector<MarketAdoption>* 
     prepare_service_lifecycle(state);
     prepare_departments(state);
     prepare_infrastructure(state);
+    reconcile_software(state);
     if (state.business_offers) expire_business_offers(*state.business_offers,*state.capacity,state.date);
     while (state.opening_cursor < state.opening_actions.size()) {
         const auto& due = state.opening_actions[state.opening_cursor];
@@ -646,14 +647,17 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     std::ranges::any_of(next.lab->acquisitions,[&](const auto& r){return r.project_id==action.id;}));
                 const bool response = next.deployments && next.deployments->risk &&
                     std::ranges::any_of(next.deployments->risk->responses,[&](const auto& row){return row.project_id==action.id;});
-                if(!owned && !response) refuse(CommandReason::invalid_argument,"Choose a finite laboratory or incident response project owned by this company");
+                const auto software=talent_rules(next)?std::ranges::find(next.management->people->talent->software,action.id,&SoftwareProject::project):std::vector<SoftwareProject>::iterator{};
+                const bool software_owned=talent_rules(next) && software!=next.management->people->talent->software.end();
+                if(!owned && !response && !software_owned) refuse(CommandReason::invalid_argument,"Choose a finite laboratory or incident response project owned by this company");
                 if constexpr(std::is_same_v<Action,PauseProject>) {
                     if(next.management && next.management->governance) for(const auto& d:next.management->governance->disputes)
                         if(d.review_project==action.id && !d.resolved_on) refuse(CommandReason::dependent_commitment,"The negotiated executive response reserves this review team until its promise is resolved or its deadline passes");
                     pause_project(capacity(next),next.date,action.id);(void)receipt(next,"pause_project");
                 } else {
                     require_workplace_research_resume(next,action.id);
-                    resume_project(capacity(next),next.date,action.id);
+                    if(software_owned)manage_talent(next,ResumeSoftware{software->id},reserved_cash(next));
+                    else resume_project(capacity(next),next.date,action.id);
                     (void)receipt(next,"resume_project");
                 }
             } else if constexpr (std::is_same_v<Action, CancelProject>) {
@@ -948,6 +952,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 const auto before=next.cash;take_financing(next,action.id);(void)receipt(next,"take_financing",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, HireEmployee>) {
                 const auto before=next.cash;hire_employee(next,action.id,reserved_cash(next),action.desk);(void)receipt(next,"hire_employee",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, ManageTalent>) {
+                const auto before=next.cash;manage_talent(next,action.action,reserved_cash(next));
+                (void)receipt(next,"talent",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, ManagePeopleContact>) {
                 const auto before=next.cash;
                 manage_people_contact(next,action.action,reserved_cash(next));
@@ -1019,6 +1026,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
         if (!std::holds_alternative<AdvanceDay>(command.action)) {prepare_governance(next);prepare_succession(next);prepare_departments(next);prepare_infrastructure(next);}
         prepare_access(next);
         reconcile_workplace_research(next);
+        reconcile_software(next);
         if (next.liquidity && !std::holds_alternative<AdvanceDay>(command.action))
             refresh_liquidity(*next.liquidity,*next.accounts);
         // The input was validated at construction; every daily subsystem owns

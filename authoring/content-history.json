@@ -107798,6 +107798,84 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "8351515c17723028b3105207c3ef23919678203bd26c49253d79810a342621a8",
+          "before_hash": "23eb917fb6fb2446b3f2fe433b646073cd5ec985114ec68e5c50d2b166b42ece",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 26,
+          "revision": 27
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "f15475f574850fbcfe77a268ae0f914025eb2be7d73954be5c9a5bca5fea3f7f",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.56.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 57,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.55.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000056.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000057.collection.json",
+      "summary": "Skills, paid online study and formative capabilities; software design, staff work, verified AI assistance, refinement and bounded service utility.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "f6d5c7c99ecf72e7af034d03948bf6ec42c55056e0570a9b42f49836231b0563",
+          "before_hash": "8351515c17723028b3105207c3ef23919678203bd26c49253d79810a342621a8",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 27,
+          "revision": 28
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "227fe5c63e3c7589761dfd52100d9b79f9a0a0ac5a7d286213391b09469581ee",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.57.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 58,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.56.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000057.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000058.collection.json",
+      "summary": "Sampled childhood activities and camps with saved seeds, conditional follow-ups, skill and interest rewards; retain voluntary all-in founding investment.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

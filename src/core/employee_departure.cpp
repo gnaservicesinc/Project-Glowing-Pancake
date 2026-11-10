@@ -66,6 +66,8 @@ DismissalQuote dismissal_quote(const SimulationState& state,std::string_view id)
     std::set<std::string_view> named_work;
     if(state.lab) for(const auto& run:state.lab->research)
         if(std::ranges::find(run.researchers,id)!=run.researchers.end()) named_work.insert(run.project_id);
+    if(talent_rules(state))for(const auto& run:state.management->people->talent->software)
+        if(std::ranges::find(run.design.workers,id)!=run.design.workers.end())named_work.insert(run.project);
     const auto* manager=operations_manager_on(state,state.date);
     quote.operations_manager=manager && manager->person==id;
     if(quote.operations_manager) named_work.insert(manager->project);

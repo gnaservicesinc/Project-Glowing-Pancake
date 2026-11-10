@@ -2,6 +2,7 @@
 #include <pgp/core/units.hpp>
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/portrait.hpp>
+#include <pgp/core/talent.hpp>
 #include <optional>
 #include <map>
 #include <string>
@@ -49,6 +50,7 @@ struct PeopleRules {
     std::optional<WorkplaceMoodRules> mood{};
     std::optional<DismissalRules> dismissal{};
     std::vector<FounderAudienceRule> founder_audiences{};
+    std::optional<TalentRules> talent{};
     auto operator<=>(const PeopleRules&) const = default;
 };
 struct PersonProfile {
@@ -58,6 +60,8 @@ struct PersonProfile {
     OrdinalDay applied_on{0};
     PortraitRecipe portrait{};
     std::vector<std::string> traits{};
+    std::vector<std::string> skills{};
+    std::string orientation="unrecorded";
     auto operator<=>(const PersonProfile&) const = default;
 };
 struct TeamDynamics {
@@ -146,6 +150,7 @@ struct PeopleState {
     std::map<std::string,PersonProfile> known_people;
     std::vector<PeopleContact> contacts{};
     std::string founder_gender{};
+    std::optional<TalentState> talent{};
     auto operator<=>(const PeopleState&) const = default;
 };
 struct SetRecruitingTerms {SalaryRate pay{10000};std::string mission;};

@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:ns1="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:ns2="http://www.inkscape.org/namespaces/inkscape" xmlns:ns4="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" id="svg7347" ns1:docname="receipt.svg" viewBox="0 0 290.95013 451.51775" version="1.1" ns2:version="0.48.4 r9939">
+  <ns1:namedview id="namedview169" fit-margin-left="0" ns2:zoom="1.3452276" borderopacity="1" ns2:current-layer="layer1" ns2:cx="102.44496" ns2:cy="193.16101" ns2:window-maximized="1" showgrid="false" fit-margin-right="0" bordercolor="#666666" ns2:window-x="-2" guidetolerance="10" objecttolerance="10" ns2:window-y="-3" fit-margin-bottom="0" ns2:window-width="1920" ns2:pageopacity="0" ns2:pageshadow="2" pagecolor="#ffffff" gridtolerance="10" ns2:window-height="1025" fit-margin-top="0" />
+  <defs id="defs7349">
+    <filter id="filter3939" ns2:collect="always" color-interpolation-filters="sRGB">
+      <feGaussianBlur id="feGaussianBlur3941" stdDeviation="4.552225" ns2:collect="always" />
+    </filter>
+  </defs>
+  <g id="layer1" transform="translate(-286.45 -290.01)">
+    <g id="layer1-0" style="fill:#000000" transform="matrix(1.1733 0 0 1.1733 42.91 114.72)" />
+    <rect id="rect3146" style="filter:url(#filter3939);fill:#4d4d4d" height="429.67" width="269.1" y="300.94" x="297.37" />
+    <rect id="rect3146-1" style="fill:#ffffff" height="429.67" width="269.1" y="304.75" x="299.51" />
+    <g id="g5604" transform="translate(-6.6903 6.6903)">
+      <rect id="rect5443" style="fill:#5f5f5f" height="48.015" width="3.5787" y="607.85" x="327.76" />
+      <rect id="rect5443-2" style="fill:#5f5f5f" height="48.015" width="1.1929" y="607.85" x="334.18" />
+      <rect id="rect5443-2-9" style="fill:#5f5f5f" height="48.015" width="2.3858" y="607.85" x="337.39" />
+      <rect id="rect5443-2-8" style="fill:#5f5f5f" height="48.015" width="1.1929" y="607.85" x="321.35" />
+      <rect id="rect5443-2-9-1" style="fill:#5f5f5f" height="48.015" width="2.3858" y="607.85" x="324.56" />
+      <rect id="rect5443-0" style="fill:#5f5f5f" height="48.015" width="3.5787" y="607.85" x="348.44" />
+      <rect id="rect5443-2-0" style="fill:#5f5f5f" height="48.015" width="1.1929" y="607.85" x="354.86" />
+      <rect id="rect5443-2-9-8" style="fill:#5f5f5f" height="48.015" width="2.3858" y="607.85" x="358.07" />
+      <rect id="rect5443-2-8-7" style="fill:#5f5f5f" height="48.015" width="1.1929" y="607.85" x="342.02" />
+      <rect id="rect5443-2-9-1-6" style="fill:#5f5f5f" height="48.015" width="2.3858" y="607.85" x="345.23" />
+      <rect id="rect5443-0-0" style="fill:#5f5f5f" transform="scale(-1,1)" height="48.015" width="3.5787" y="607.85" x="-373.59" />
+      <rect id="rect5443-2-0-2" style="fill:#5f5f5f" transform="scale(-1,1)" height="48.015" width="1.1929" y="607.85" x="-367.17" />
+      <rect id="rect5443-2-9-8-5" style="fill:#5f5f5f" transform="scale(-1,1)" height="48.015" width="2.3858" y="607.85" x="-363.96" />
+      <rect id="rect5443-2-8-7-6" style="fill:#5f5f5f" transform="scale(-1,1)" height="48.015" width="1.1929" y="607.85" x="-380.01" />
+      <rect id="rect5443-2-9-1-6-2" style="fill:#5f5f5f" transform="scale(-1,1)" height="48.015" width="2.3858" y="607.85" x="-376.8" />
+      <rect id="rect5443-3" style="fill:#5f5f5f" height="48.015" width="3.5787" y="607.85" x="388.74" />
+      <rect id="rect5443-2-06" style="fill:#5f5f5f" height="48.015" width="1.1929" y="607.85" x="395.16" />
+      <rect id="rect5443-2-9-12" style="fill:#5f5f5f" height="48.015" width="2.3858" y="607.85" x="398.37" />
+      <rect id="rect5443-2-8-0" style="fill:#5f5f5f" height="48.015" width="1.1929" y="607.85" x="382.33" />
+      <rect id="rect5443-2-9-1-9" style="fill:#5f5f5f" height="48.015" width="2.3858" y="607.85" x="385.54" />
+      <rect id="rect5443-2-8-7-1" style="fill:#5f5f5f" height="48.015" width="1.1929" y="607.85" x="403" />
+    </g>
+  </g>
+  <metadata>
+    <rdf:RDF>
+      <ns4:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <ns4:license rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:publisher>
+          <ns4:Agent rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </ns4:Agent>
+        </dc:publisher>
+      </ns4:Work>
+      <ns4:License rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <ns4:permits rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <ns4:permits rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <ns4:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </ns4:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

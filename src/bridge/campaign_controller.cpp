@@ -56,6 +56,7 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
         switch (project.kind) {
         case core::ProjectKind::training: kind = QStringLiteral("Training"); break;
         case core::ProjectKind::research: kind = QStringLiteral("Research"); break;
+        case core::ProjectKind::software: kind = QStringLiteral("Software development"); break;
         case core::ProjectKind::management: kind = QStringLiteral("HQ operations management"); break;
         case core::ProjectKind::evaluation: kind = QStringLiteral("Evaluation"); break;
         case core::ProjectKind::serving: kind = QStringLiteral("Serving"); break;

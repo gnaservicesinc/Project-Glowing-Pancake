@@ -1198,6 +1198,8 @@ QVariantMap ManagementController::financialStatements() const {
     const auto other_assets=checked_unit_subtract(report.assets,report.accumulated_depreciation);
     const auto assets=checked_unit_add(checked_unit_add(report.cash,report.receivables),other_assets);
     QVariantMap result{
+        {QStringLiteral("cashOnHand"),money(report.cash)},
+        {QStringLiteral("spendable"),money(discretionary_cash(s))},
         {QStringLiteral("date"),text(iso_date(s.date))},
         {QStringLiteral("assets"),tr("Cash %1\nReceivables %2\nOther assets %3\nAccumulated depreciation %4\nTotal assets %5")
             .arg(money(report.cash),money(report.receivables),money(report.assets),money(report.accumulated_depreciation),money(assets))},

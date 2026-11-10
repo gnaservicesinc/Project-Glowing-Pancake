@@ -9,12 +9,43 @@ Updated 2026-11-10
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.55.0-dev.1**, generation **56**.
+immersive redesign advances content to **0.57.0-dev.1**, generation **58**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
 next tasks are candidates for that review. The initial implementation queue
 is closed.
+
+## People and software foundation · F-06
+
+The selected [expansion plan](PEOPLE_AND_SOFTWARE_PLAN.md) now has a playable
+skills/software and childhood foundation. Software Studio offers six briefs,
+aesthetic/navigation/focus choices with a live prototype, named qualified staff,
+powered-computer requirements, actual staff work, release and refinement. Advanced
+software needs Architecture; verified deployed AI may reduce technical requirements
+with allocated compute. Released designs improve matching service utility, capped
+by content rules, rather than granting arbitrary passive income.
+
+Open Path University offers paid part-time study for the founder and company-
+sponsored staff. Skills are separate from degrees; new applicants carry their
+role's base skill and seeded extras. Forty-one skills are recorded; only the
+implemented development/research gates and proficiency bonuses are active so far.
+The childhood catalogue samples one of eight activities and one of eight camps,
+with sixteen possible follow-ups, saved choices, skill and interest rewards.
+Investing all savings remains a valid choice. Money artwork accompanies actual
+personal/company balances, with source rights retained in `assets/finance`.
+
+The optimized Mac game/editor builds pass. Focused talent and workplace-research
+checks pass, including exact saves, tuition separation, computer/power/staff gates,
+market effects and 64 seeded childhood selections. Content review passes 24
+prepared-opening save roundtrips. The actual prologue walkthrough passes sampled
+chains, company entry and reload at compact 200% text; the native talent walkthrough
+passes real development and sponsored study. Human playtesting remains open.
+
+This is an implementation checkpoint, not completion of F-06. Relationships,
+major-company individual rosters, family progression, the additional design
+puzzles, career transitions and USCIF remain in the plan. Existing human review
+and platform/release gates remain open.
 
 ## Main-game visual refinement · 2026-11-10
 

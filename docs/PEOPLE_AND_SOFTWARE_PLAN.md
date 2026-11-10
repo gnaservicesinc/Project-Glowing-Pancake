@@ -1,0 +1,134 @@
+# People, software and changing careers
+
+Selected expansion F-06, 2026-11-10. This develops the user's software, skills,
+social-world and alternate-career draft. It extends F-05; technical aptitude
+alone will no longer qualify the founder for specialist work.
+
+## Experience and delivery order
+
+1. **Skills, university and software studio.** A validated skill catalogue,
+   separate from education and numerical proficiency. Applicants qualify for
+   their advertised role and receive seeded extra skills. Founder skills follow
+   chosen formative activities. Classes have personal/company tuition and dated
+   completion. Six software briefs: chat, desktop app, AI browser, coding agent,
+   work agent, megaclient. Choose aesthetics, navigation and development focus,
+   inspect a live prototype and work estimates, assign qualified people with
+   actual computers, build, release and refine. Advanced work needs architecture.
+   Independently demonstrated AI capability can reduce or replace requirements.
+2. **Varied childhood.** Seed a few chains from a larger authored scene pool,
+   with prerequisites and follow-ups. Save paths and choices; reviewing/reloading
+   cannot reroll rewards. Clubs, camps, volunteering, arts, sport and robotics
+   roles grant specific skills/traits. Most runs see only a few. Extend existing
+   content and event vocabulary, not a second interpreter.
+3. **People and social knowledge.** Stable full identity records include
+   orientation and preferences, without tying aptitude to identity. Friendship
+   strength is independent of work, romance and family. Acquaintance → casual or
+   work friend → friend → close friend → best friend; multiple best friends.
+   Pronouns and professional skills are public; other traits become known through
+   contact and openness. Visualize known close-or-better connections with a graph
+   and equivalent accessible list.
+4. **An inhabited industry.** Major-company HQ rosters use the same people,
+   equipment, learning and work rules; other locations stay aggregated. Bounded
+   weekly encounters avoid all-pairs daily simulation. Same city gives frequent
+   contact, same state supports ties, remote contact is sparse and often plateaus.
+   Existing ties can survive moves. Shared interests help; differences introduce
+   friction without forbidding friendship. Connections provide introductions,
+   recruiting referrals and collaboration.
+5. **Long relationships.** Mutually compatible single adults can date, separate,
+   become engaged or marry. Family edges include biological, adoptive, foster
+   and step relationships. Children age into ordinary qualified applicants.
+   Rivalry requires a concrete betrayal, such as abandoning a deeply held mission.
+   HR can mediate before rivalry; empathy and prior friendship support repair.
+   Repaired-and-befriended rivals become frenemies, immune to renewed rivalry.
+   Rival coworkers need mediation, reassignment or an actual departure.
+6. **Design puzzles with consequences.** Extend software prototyping into data
+   balance, racks/network topology and power/cooling/redundancy. Room layout
+   exposes walking routes, accessible desks, congestion and amenity travel.
+   Preview and commit use the same calculation; every score has a real effect.
+7. **Career transitions.** A CEO without controlling ownership can face dismissal
+   after repeated missed expectations, poor finances, a scandal and a final board
+   trigger. Strong employee ties/respect can support reinstatement and a negotiated
+   governance reset. A replacement-led AI trajectory with independently proven
+   executive capability can also remove the CEO. Both preserve the person, wealth,
+   family and industry, returning home (family bedroom fallback) with formation
+   and competitor-employment routes. Firing does not grant control of the old firm.
+8. **USCIF alternate campaign.** Between independently established AGI and ASI,
+   sustained government mistrust, withheld evidence and a large public/private
+   capability gap can trigger a telegraphed intervention. Allow disclosure,
+   negotiation and assurance responses. The fictional branch appoints the MC
+   Civilian Administrator of the United States Computerized Intelligence Force
+   at Travis AFB, reporting to the Secretary of Defense, with generated Chief and
+   Vice-Chief of AI Operations and Chief Master Sergeant (CMSSF). Government
+   ownership, compute rationing, power diversion, international competition and
+   civilian service obligations replace profit objectives. Explicit alternate
+   history: the DPA premise is narrative, not a claim about real legal authority.
+
+## Shared decisions
+
+- Skills unlock actions; proficiency modifies eligible work. Education describes
+  background; short classes do not award professional medical/legal licensure.
+- Programming plus Actual Genius permits ML work. Soldering plus genius can
+  qualify for chip design with physical prerequisites intact. Robotics build,
+  programming, spirit and business roles need separate effects. The unfinished
+  genius+robotics idea remains a candidate for authored follow-ups.
+- Interpret “Spots” as sports and “Seeley minigames” as small design puzzles.
+  Skateboarding's age-sensitive respect figures are tuning proposals; bound
+  their effect to prevent exponential/universal respect inflation.
+- Deduplicate repeated friendship labels. Coworker is a context, rivalry/frenemy
+  a conflict history, romance a separate status, family a typed edge.
+- Similarity affects ease, never permission to become friends. Orientation and
+  mutual preferences govern romance; pronouns do not imply sexuality. No minors
+  participate in romance. Private identities remain stable even before disclosure.
+- Existing board, finance, capacity, event and save systems remain authoritative.
+  No parallel simulation in QML, fake balances, inert success buttons or universal
+  early-game game-over rolls. All transitions need causes and player responses.
+- Event authors get registered typed skill and relationship facts/effects.
+  Numerical tuning belongs in validated content, with previewed consequences.
+
+## Acceptance
+
+Each stage needs playable success/refusal paths, actual costs/work/equipment,
+deterministic continuation, exact fresh save/reload and compact/high-text rendered
+checks. Retain optimized Mac caches. Human balance/visual acceptance and release
+qualification remain separate. STATUS/BACKLOG record verified delivery only;
+this plan is not completion evidence.
+
+## Delivered foundation · 2026-11-10
+
+Stages 1–2 now provide the first playable slice: 41 named skills; founder and
+employee courses; six software briefs with live prototypes, qualified teams,
+real work, pause/resume, release and refinement; and sampled childhood chains.
+The current human founder-work route is the existing working-genius opening;
+other founders can hire qualified staff. Employee tuition currently uses company
+sponsorship. Employee personal savings/self-funded study still needs the social
+world's individual financial records. Only Programming, Architecture, ML Research
+and UI Design have specialist work gates/bonuses in this slice; course proficiency
+bonuses also apply. Other skills and interests are saved vocabulary for later
+jobs, events and relationship effects, not claims those activities already exist.
+
+Released interfaces improve the utility of matching marketed services, bounded
+by the authored maximum; they do not print passive revenue. AI assistance requires
+independent Frontier evidence, an active deployment, a human supervisor with a
+computer and allocated compute. Advanced human-only teams require Architecture.
+
+The childhood catalogue contains six shared scenes, eight optional activities,
+eight optional camps and sixteen conditional follow-ups. A saved story seed picks
+one activity and one camp; choices open or bypass their follow-ups. Inactive
+branches grant no skills, interests, reputation or funding bonuses. Going back
+removes hidden answers. Investing all personal savings remains valid.
+
+To author another chain, add an ordinary `scenes` entry with `pool: "activity"`
+or `pool: "camp"`. Add later scenes with `requires_choice: "parent-id/choice-id"`.
+Leave `pool` empty on follow-ups. Dates must follow the parent. Use `skill_rewards`
+for catalogue skill IDs and `trait_rewards` for bounded interest/trait labels,
+keyed by `scene-id/choice-id`. Keep rewards visible in choice details. The content
+review/finalize workflow remains required; there is no executable event script.
+
+The supplied money illustrations now accompany actual balances in University
+and Accounts. Account cards reveal explanatory notes, courses show progress and
+completion, and the software prototype changes with the player's design choices.
+Asset originals and rights metadata are retained under `assets/finance`.
+
+Stages 3–8 remain planned work. In particular, this batch does not yet implement
+the industry friendship graph, romance/families/rivalry repair, employee-paid
+study, the other infrastructure/dataset puzzles, career re-entry or USCIF.

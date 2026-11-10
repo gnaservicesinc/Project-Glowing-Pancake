@@ -28,7 +28,7 @@ ColumnLayout {
     DraftState {
         id: officePageDraft
         draftKey: "pages/office"
-        accepts: value => ["offers", "products", "contracts", "markets", "rivals", "accounts", "funding", "governance", "policies", "score"].includes(value)
+        accepts: value => ["software", "offers", "products", "contracts", "markets", "rivals", "accounts", "funding", "governance", "policies", "score"].includes(value)
         onRestored: value => panel.officeSection = value
         onReset: panel.officeSection = "offers"
     }
@@ -134,16 +134,16 @@ ColumnLayout {
     Flow {
         Layout.fillWidth: true
         spacing: 6
-        visible: panel.room === "office"
+        visible: panel.room === "office" && panel.officeSection!=="software"
         Repeater {
-            model: [{id:"offers",label:qsTr("Compare offers")}, {id:"products",label:qsTr("Services")}, {id:"contracts",label:qsTr("Contracts")},
+            model: [{id:"software",label:qsTr("Software Studio")}, {id:"offers",label:qsTr("Compare offers")}, {id:"products",label:qsTr("Services")}, {id:"contracts",label:qsTr("Contracts")},
                     {id:"markets",label:qsTr("Regional markets")},
                     {id:"rivals",label:qsTr("Rivals")}, {id:"accounts",label:qsTr("Accounts")}, {id:"funding",label:qsTr("Funding and team")}, {id:"governance",label:qsTr("Board and people")}, {id:"policies",label:qsTr("Policies and alerts")}, {id:"score",label:qsTr("Slice score")}]
             WorldButton {
                 required property var modelData
                 objectName: "office_" + modelData.id
                 text: modelData.label
-                visible: (modelData.id !== "markets" || manager.regionalMarkets.count > 0) &&
+                visible: (modelData.id !== "software" || !!campaign.world.talent.briefs) && (modelData.id !== "markets" || manager.regionalMarkets.count > 0) &&
                          (modelData.id !== "score" || !campaign.objectives.available)
                 textSize: panel.textSize
                 checked: panel.officeSection === modelData.id
@@ -152,6 +152,8 @@ ColumnLayout {
             }
         }
     }
+    WorldButton {visible:panel.room==="office" && panel.officeSection==="software";text:qsTr("Back to company tools");textSize:panel.textSize;onClicked:{panel.officeSection="offers";officePageDraft.remember("offers")}}
+    SoftwareStudio {Layout.fillWidth:true;visible:panel.room==="office" && panel.officeSection==="software";textSize:panel.textSize}
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "lab" && panel.section === "data"

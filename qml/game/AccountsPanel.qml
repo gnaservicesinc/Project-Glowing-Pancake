@@ -61,6 +61,11 @@ ColumnLayout {
     ColumnLayout {
         visible: panel.section === "statements"
         Layout.fillWidth: true
+        GridLayout {
+            Layout.fillWidth:true;columns:panel.width<700?1:2
+            MoneyCard {Layout.fillWidth:true;textSize:panel.textSize;caption:qsTr("Company cash");amount:panel.statements.cashOnHand || "";detail:qsTr("The cash currently in the company's accounts. Bills, payroll and committed work still have claims on it.")}
+            MoneyCard {Layout.fillWidth:true;textSize:panel.textSize;caption:qsTr("Room for a new idea");amount:panel.statements.spendable || "";detail:qsTr("Cash remaining after existing reservations and the operating reserve. Review the cash scenarios before making a large commitment.")}
+        }
         Heading { text: qsTr("Balance sheet · %1").arg(panel.statements.date || "") }
         Line { objectName: "financeAssets"; text: panel.statements.assets || "" }
         Line { objectName: "financeLiabilities"; text: panel.statements.liabilities || "" }

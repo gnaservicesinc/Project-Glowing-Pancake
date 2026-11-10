@@ -92,6 +92,13 @@ also runs isolated engineering and complete baseline demonstrations. See
 local save directories, explicit launch options and focused checks. No
 dependencies are downloaded by the build.
 
+The current people/software expansion adds **Software Studio** under Company and
+**Open Path University** under People. Design a live software prototype, assign
+qualified staff with computers, build and release it; or pay for skills that
+unlock new work. New characters encounter sampled clubs/camps and conditional
+follow-ups. See the [expansion plan](docs/PEOPLE_AND_SOFTWARE_PLAN.md) for delivered
+behavior and the remaining social-world and career work.
+
 ## Read the plan
 
 | Document | Purpose |

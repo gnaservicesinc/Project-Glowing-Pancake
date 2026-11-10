@@ -22,6 +22,7 @@ struct FoundingOption {
 struct FormativeScene {
     std::string id, title, date, text;
     std::vector<FoundingOption> choices;
+    std::string pool,requires_choice;
     auto operator<=>(const FormativeScene&) const = default;
 };
 struct FoundingOpeningRules {
@@ -50,6 +51,7 @@ struct FoundingCatalog {
     std::optional<FoundingLoan> startup_loan;
     std::vector<FoundingPartner> partners;
     std::uint32_t queer_community_buzz=0, queer_community_prestige=0;
+    std::map<std::string,std::vector<std::string>> skill_rewards,trait_rewards;
     auto operator<=>(const FoundingCatalog&) const = default;
 };
 struct FoundingSelection {
@@ -63,10 +65,14 @@ struct FoundingSelection {
     core::PortraitRecipe appearance;
     std::int64_t personal_investment_cents=-1;
     std::string birth_sex="indeterminate", orientation="questioning";
+    std::uint64_t story_seed=19972015;
     auto operator<=>(const FoundingSelection&) const = default;
 };
 inline constexpr std::array<std::string_view,8> founder_orientations{
     "straight","gay_or_lesbian","bisexual","pansexual","asexual","queer","questioning","demisexual"};
+[[nodiscard]] std::vector<const FormativeScene*> formative_scenes(const FoundingCatalog&,const FoundingSelection&);
+[[nodiscard]] std::vector<std::string> formative_skills(const FoundingCatalog&,const FoundingSelection&);
+[[nodiscard]] std::vector<std::string> formative_traits(const FoundingCatalog&,const FoundingSelection&);
 [[nodiscard]] bool transgender_founder(const FoundingSelection&);
 [[nodiscard]] bool queer_founder(const FoundingSelection&);
 struct FoundingTerms {

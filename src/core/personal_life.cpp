@@ -178,6 +178,7 @@ void prepare_personal_life(SimulationState& state) {
 
 PersonalValuation personal_valuation(const SimulationState& state,OrdinalDay before) {
     PersonalValuation result;
+    result.spent=personal_tuition(state,before);
     if(!state.succession || !state.succession->personal_life) return result;
     const auto& owned=*state.succession->personal_life;
     const auto& catalog=personal_life_catalog(state);
