@@ -136,7 +136,7 @@ struct HardwareReplacementTerms {
     OrdinalDay eligible_on{0};
     Cents purchase{0},monthly_maintenance{0};
 };
-struct ExecutiveLocation {std::string base,state_id;bool traveling=false;std::optional<std::string> appointment;};
+struct ExecutiveLocation {std::string base,state_id;bool traveling=false;std::optional<std::string> appointment;bool family_home=false;};
 void validate_infrastructure_catalog(const InfrastructureCatalog&);
 void validate_infrastructure(const SimulationState&,bool deep=true);
 [[nodiscard]] SiteBuildPreview preview_site_build(const SimulationState&,const BuildOwnedSite&);
@@ -144,6 +144,7 @@ void validate_infrastructure(const SimulationState&,bool deep=true);
 [[nodiscard]] Cents wholesale_electricity(const SimulationState&,std::string_view source_id,MilliCU work);
 [[nodiscard]] SiteAppointment preview_site_appointment(const SimulationState&,const ScheduleSiteAppointment&);
 [[nodiscard]] ExecutiveLocation executive_location(const SimulationState&);
+[[nodiscard]] bool executive_at_headquarters(const SimulationState&);
 [[nodiscard]] CashProjection project_company_cash(const SimulationState&,OrdinalDay,Cents protected_cash=Cents{0});
 [[nodiscard]] CashOutlook project_company_cash_outlook(const SimulationState&,OrdinalDay near_through,
     Cents protected_cash,std::span<const ProjectedCashDay>);

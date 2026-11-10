@@ -8,6 +8,9 @@ template<class T,class F> void fields(T& row,F f) {
     if constexpr(std::is_same_v<V,core::PersonalLifeCatalog>) {
         f("properties",row.properties);f("decor",row.decor);
         f("events",row.events,true);
+        f("family_visits",row.family_visits,true);
+    } else if constexpr(std::is_same_v<V,core::FamilyVisitRules>) {
+        f("notice_days",row.notice);f("maximum_stay_days",row.maximum_stay);
     } else if constexpr(std::is_same_v<V,core::PersonalPropertyOffer>) {
         f("id",row.id);f("name",row.name);f("agent",row.agent);f("description",row.description);f("plan",row.plan);
         f("price_cents",row.price);f("monthly_upkeep_cents",row.monthly_upkeep);f("resale_bp",row.resale);
@@ -21,6 +24,11 @@ template<class T,class F> void fields(T& row,F f) {
     } else if constexpr(std::is_same_v<V,core::PersonalLifeState>) {
         f("properties",row.properties);f("decor",row.decor);f("bills",row.bills);f("spent_cents",row.spent);f("unpaid_cents",row.unpaid);
         f("events",row.events);f("pending_events",row.pending_events);
+        f("family_visits",row.family_visits,true);
+    } else if constexpr(std::is_same_v<V,core::FamilyVisit>) {
+        f("premises",row.premises);f("stay_days",row.stay);f("booked_on",row.booked_on);f("departs_on",row.departs_on);
+        f("arrives_on",row.arrives_on);f("leaves_on",row.leaves_on);f("returns_on",row.returns_on);f("fare_cents",row.fare);
+        f("cancelled_on",row.cancelled_on);
     } else if constexpr(std::is_same_v<V,core::PersonalProperty>) {
         f("id",row.id);f("offer",row.offer);f("purchased_on",row.purchased_on);f("next_upkeep",row.next_upkeep);f("sold_on",row.sold_on);
     } else if constexpr(std::is_same_v<V,core::PersonalDecor>) {

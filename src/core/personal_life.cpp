@@ -60,6 +60,9 @@ Cents personal_resale(Cents price,BasisPoints resale) {
 }
 void validate_personal_life_catalog(const PersonalLifeCatalog& catalog) {
     if(catalog.events)validate_personal_event_rules(*catalog.events);
+    if(catalog.family_visits && (catalog.family_visits->notice<Days{1} || catalog.family_visits->notice>Days{30} ||
+        catalog.family_visits->maximum_stay<Days{1} || catalog.family_visits->maximum_stay>Days{14}))
+        invalid("Family visits need bounded booking notice and stay length.");
     if(catalog.properties.empty() || catalog.properties.size()>8 || catalog.decor.empty() || catalog.decor.size()>16)
         invalid("The personal property catalog needs bounded property and furnishing offers.");
     std::set<std::string> ids;
@@ -160,6 +163,16 @@ void manage_personal_life(SimulationState& state,const PersonalLifeAction& actio
             book_personal_event(state,request);
         } else if constexpr(std::is_same_v<Action,CancelPersonalEvent>) {
             cancel_personal_event(state,request.event);
+        } else if constexpr(std::is_same_v<Action,BookFamilyVisit>) {
+            auto trip=family_visit_quote(state,request.stay);
+            spend(state,trip.fare);
+            owned.family_visits.push_back(std::move(trip));
+        } else if constexpr(std::is_same_v<Action,CancelFamilyVisit>) {
+            const auto* trip=pending_family_visit(state);
+            if(!trip || state.date>=trip->departs_on) invalid("Cancel the visit before departure.");
+            state.succession->personal_cash=checked_unit_add(state.succession->personal_cash,trip->fare);
+            owned.spent=checked_unit_subtract(owned.spent,trip->fare);
+            owned.family_visits.back().cancelled_on=state.date;
         } else {
             if(owned.unpaid.value()==0) invalid("You have no unpaid personal upkeep.");
             spend(state,owned.unpaid);
@@ -204,6 +217,8 @@ PersonalValuation personal_valuation(const SimulationState& state,OrdinalDay bef
         result.spent=checked_unit_add(result.spent,event.paid);
         if(event.resolved_on && *event.resolved_on<before)result.spent=checked_unit_subtract(result.spent,event.refund);
     }
+    for(const auto& trip:owned.family_visits) if(trip.booked_on<before && (!trip.cancelled_on || *trip.cancelled_on>=before))
+        result.spent=checked_unit_add(result.spent,trip.fare);
     return result;
 }
 
@@ -213,12 +228,13 @@ void validate_personal_life(const SimulationState& state,bool deep) {
     if(rules.personal_life.has_value()!=actor.personal_life.has_value()) invalid("Personal property rules and ownership must be present together.");
     if(!actor.personal_life) return;
     const auto& owned=*actor.personal_life;
-    if(owned.properties.size()>personal_property_limit || owned.decor.size()>personal_item_limit || owned.bills.size()>personal_bill_limit ||
+    if(owned.properties.size()>personal_property_limit || owned.decor.size()>personal_item_limit || owned.bills.size()>personal_bill_limit || owned.family_visits.size()>family_visit_limit ||
         owned.spent.value()<0 || owned.unpaid.value()<0 || actor.personal_cash.value()<0)
         invalid("Personal finances or ownership exceed their supported bounds.");
     if(!deep) return;
     validate_personal_life_catalog(*rules.personal_life);
     validate_personal_events(state);
+    validate_family_visits(state);
     const auto& catalog=*rules.personal_life;
     std::vector<OrdinalDay> expected;
     std::set<std::string> active;

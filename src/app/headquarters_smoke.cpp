@@ -16,7 +16,11 @@ QQuickItem* find(QQuickItem* root,const char* name) {if(root->objectName()==QLat
 bool key(QQuickWindow& window,QQuickItem* item,Qt::Key code=Qt::Key_Space) {if(!item || !item->isVisible() || !item->isEnabled()) return false;item->forceActiveFocus(Qt::TabFocusReason);QTest::keyClick(&window,code);return true;}
 }
 void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot) {
-    struct State {int phase=0,ticks=0,days=0,settle=0,reported=-1,previewPhase=0;std::uint64_t familyRevision=0;};auto state=std::make_shared<State>();
+    struct State {
+        int phase=0,ticks=0,days=0,settle=0,reported=-1,previewPhase=0;
+        std::uint64_t familyRevision=0;
+        pgp::core::Cents personalBeforeVisit{0}, companyBeforeVisit{0};
+    };auto state=std::make_shared<State>();
     auto* timer=new QTimer(&window);timer->setInterval(70);
     QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot] {
         const auto item=[&](const char* name){return find(window.contentItem(),name);};
@@ -34,6 +38,7 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
         case 0: {
             if(!press("menuNewGameButton")) {fail("New Game");return;}
             auto* founding=campaign.founding();founding->setField("family","rich");founding->setField("route","bootstrap");
+            founding->setField("investment","790000");
             for(const auto& row:founding->chapters()) {const auto chapter=row.toMap();founding->choose(chapter.value("id").toString(),chapter.value("choices").toList().front().toMap().value("id").toString());}
             campaign.startFounderCampaign();++state->phase;break;
         }
@@ -182,7 +187,7 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
             if(++state->settle<10)return;
             const auto& program=*campaign.snapshot()->content;pgp::persistence::CurrentCampaign current{paths.saves_directory/"continuing"};
             if(current.resume(program)!=std::optional{campaign.snapshot()->checkpoint} || !capture(".returned-home")) {fail("Home recovery must render and reload exactly");return;}
-            std::cout<<"HQ UI passed: paid supplies, placement previews, rotation/cancel, assignment/drag, commercial lease, construction, owned relocation, family rooms and keepsake at 200% text, return home and fresh resume\n";
+            std::cout<<"HQ UI passed: paid supplies, placement, commercial lease, owned relocation, family rooms and keepsake, reviewed personal visit, arrival and return at 200% text, moving the company home and fresh resume\n";
             timer->stop();QCoreApplication::exit(0);break;
         }
         case 31:
@@ -227,10 +232,51 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
             ++state->phase;break;
         }
         case 38:
-            if(campaign.world()->draft("personal/family-room","")!="1" || !press("familyHomeRealtor")) {
-                fail("Select a room on the plan and open the realtor from the family home");return;
+            if(campaign.world()->draft("personal/family-room","")!="1" || !press("familyVisitReview")) {
+                fail("Select a room on the plan and review a trip home");return;
             }
-            if(s.revision!=state->familyRevision || pgp::core::current_headquarters(s).kind!="owned") {fail("Opening the realtor must not relocate the company");return;}
+            state->personalBeforeVisit=s.succession->personal_cash;
+            state->companyBeforeVisit=s.cash;
+            state->settle=0;++state->phase;break;
+        case 39:
+            if(++state->settle<5)return;
+            if(s.revision!=state->familyRevision || !capture(".family-visit-review") || !press("familyVisitConfirm")) {fail("Review the personal fare and dates before booking");return;}
+            ++state->phase;break;
+        case 40: {
+            const auto* trip=pgp::core::pending_family_visit(s);
+            if(!trip || s.cash!=state->companyBeforeVisit || s.succession->personal_cash!=pgp::core::checked_unit_subtract(state->personalBeforeVisit,trip->fare) ||
+                !press("familyVisitCancel")) {fail("Booking must use personal cash and offer a refund before departure");return;}
+            ++state->phase;break;
+        }
+        case 41:
+            if(pgp::core::pending_family_visit(s) || s.succession->personal_cash!=state->personalBeforeVisit || !press("familyVisitReview")) {fail("Cancel and rebook a fully refunded visit");return;}
+            state->settle=0;++state->phase;break;
+        case 42:
+            if(++state->settle<5)return;
+            if(!press("familyVisitConfirm")) {fail("Confirm the second reviewed fare");return;}
+            ++state->phase;break;
+        case 43: {
+            const auto* trip=pgp::core::pending_family_visit(s);
+            if(!trip) {fail("Keep the booked family visit");return;}
+            if(s.date<trip->arrives_on) {if(!press("familyVisitAdvance"))fail("Advance to departure or arrival");return;}
+            if(!pgp::core::executive_location(s).family_home || campaign.world()->atHeadquarters() || !press("familyRoom_0")) {fail("Arrive at the family home while the company stays in its office");return;}
+            state->settle=0;++state->phase;break;
+        }
+        case 44: {
+            if(++state->settle<5)return;
+            pgp::persistence::CurrentCampaign current{paths.saves_directory/"continuing"};
+            auto* status=item("familyVisitStatus");
+            if(!status || !status->isVisible() || !campaign.world()->location().contains("Family home") ||
+                current.resume(*campaign.snapshot()->content)!=std::optional{campaign.snapshot()->checkpoint}) {fail("Show the saved arrival in the family home and world location");return;}
+            status->forceActiveFocus(Qt::OtherFocusReason);
+            if(!capture(".family-visit-arrival") || !press("familyVisitAdvance")) {fail("Advance from the family visit toward headquarters");return;}
+            ++state->phase;break;
+        }
+        case 45:
+            if(pgp::core::pending_family_visit(s)) {if(!press("familyVisitAdvance"))fail("Finish the return leg");return;}
+            if(!campaign.world()->atHeadquarters() || pgp::core::current_headquarters(s).kind!="owned" || !press("familyHomeRealtor")) {
+                fail("Return to the same company office and separately open the realtor");return;
+            }
             campaign.setTextScalePercent(100);window.resize(1280,720);state->settle=0;state->phase=26;break;
         }
     });timer->start();

@@ -6,6 +6,8 @@ ColumnLayout {
     id: panel
     required property int textSize
     required property var home
+    required property bool editable
+    readonly property var visit: campaign.world.familyVisit
     signal messagesRequested()
     signal realtorRequested()
     property int roomId: Number(campaign.world.draft("personal/family-room", "0"))
@@ -40,7 +42,85 @@ ColumnLayout {
     }
     Copy {
         text: panel.home.atHome ? qsTr("The company works in the family’s free rooms. Your childhood bedroom is still yours.")
-                               : qsTr("Your parents keep your bedroom for you. The family workspaces are available if you decide to move the company home.")
+                               : panel.visit.atHome ? qsTr("You’re back in your childhood bedroom. The company is still operating from its own office.")
+                               : qsTr("Your parents keep your bedroom for you. Browse the house or book a visit from your current headquarters.")
+    }
+    ColumnLayout {
+        visible: !!panel.visit.stays && !panel.home.atHome
+        Layout.fillWidth: true
+        Copy {
+            objectName: "familyVisitStatus"
+            visible: !!panel.visit.status
+            text: panel.visit.status || ""
+            font.bold: true; color: "#b9dba7"
+        }
+        Copy {
+            visible: !!panel.visit.active
+            text: (panel.visit.dates || "") + "\n" + qsTr("Personal fare paid %1").arg(panel.visit.fare || "")
+        }
+        Item {
+            visible: !!panel.visit.active
+            Layout.fillWidth: true
+            Layout.preferredHeight: 20
+            Accessible.ignored: true
+            Rectangle { anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; height: 3; color: "#64877e" }
+            Repeater {
+                model: 5
+                Rectangle {
+                    required property int index
+                    width: 8; height: 8; radius: 4
+                    x: (parent.width - width) * index / 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: "#9db8ad"
+                }
+            }
+            Rectangle {
+                width: 16; height: 16; radius: 8
+                x: (parent.width - width) * (panel.visit.stage || 0) / 4
+                anchors.verticalCenter: parent.verticalCenter
+                color: "#f1ce86"; border.color: "#30474a"
+                Behavior on x { NumberAnimation { duration: campaign.reducedMotion ? 0 : 220; easing.type: Easing.InOutSine } }
+            }
+        }
+        GameSelect {
+            id: stay
+            visible: !panel.visit.active
+            textSize: panel.textSize; Layout.fillWidth: true
+            model: panel.visit.stays || []; textRole: "name"; valueRole: "id"
+            Accessible.name: qsTr("Length of the family visit")
+        }
+        Flow {
+            Layout.fillWidth: true; spacing: 8
+            WorldButton {
+                objectName: "familyVisitReview"
+                visible: !panel.visit.active
+                text: qsTr("Review family visit"); textSize: panel.textSize
+                width: Math.min(implicitWidth, parent.width)
+                enabled: panel.editable && !!stay.currentValue
+                onClicked: {
+                    booking.stay = stay.currentValue
+                    booking.quote = campaign.world.familyVisitQuote(booking.stay)
+                    booking.revision = campaign.world.reviewToken
+                    booking.open()
+                }
+            }
+            WorldButton {
+                objectName: "familyVisitAdvance"
+                visible: !!panel.visit.active
+                text: panel.visit.advance || ""; textSize: panel.textSize
+                width: Math.min(implicitWidth, parent.width)
+                enabled: panel.editable && campaign.canPlay
+                onClicked: campaign.advanceTo("family_visit")
+            }
+            WorldButton {
+                objectName: "familyVisitCancel"
+                visible: !!panel.visit.canCancel
+                text: qsTr("Cancel for a full refund"); textSize: panel.textSize
+                width: Math.min(implicitWidth, parent.width)
+                enabled: panel.editable
+                onClicked: campaign.world.cancelFamilyVisit(campaign.world.reviewToken)
+            }
+        }
     }
     Flow {
         Layout.fillWidth: true
@@ -92,10 +172,44 @@ ColumnLayout {
     }
     WorldButton {
         objectName: "familyHomeRealtor"
-        visible: !panel.home.atHome
+        visible: !panel.home.atHome && !panel.visit.active
         text: qsTr("Review moving the company home")
         textSize: panel.textSize; Layout.maximumWidth: panel.width
         onClicked: panel.realtorRequested()
+    }
+    GameDialog {
+        id: booking
+        property int stay: 1
+        property var quote: ({})
+        property string revision: ""
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(Overlay.overlay.width - 32, panel.textSize * 32)
+        height: Math.min(Overlay.overlay.height - 32, panel.textSize * 17)
+        modal: true; focus: true
+        header: Item { visible: false; implicitHeight: 0 }
+        enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: campaign.reducedMotion ? 0 : 150 } }
+        exit: Transition { NumberAnimation { property: "opacity"; from: 1; to: 0; duration: campaign.reducedMotion ? 0 : 100 } }
+        contentItem: ScrollView {
+            id: itinerary
+            contentWidth: availableWidth; clip: true
+            ColumnLayout {
+                width: itinerary.availableWidth; spacing: 8
+                Copy { text: qsTr("Round trip to %1").arg(panel.home.city || ""); font.bold: true; color: "#f0e3c2" }
+                Copy { text: booking.quote.dates || ""; visible: !!booking.quote.dates }
+                Copy { text: qsTr("Round-trip fare %1 from personal savings. Cancel before departure for a full refund.").arg(booking.quote.fare || ""); visible: !!booking.quote.fare }
+                Copy { text: booking.quote.reason || ""; visible: !!booking.quote.reason; color: "#f1c492" }
+            }
+        }
+        footer: Flow {
+            width: booking.availableWidth; spacing: 8; padding: 8
+            WorldButton { text: qsTr("Back"); textSize: panel.textSize; onClicked: booking.close() }
+            WorldButton {
+                objectName: "familyVisitConfirm"
+                text: qsTr("Book and pay fare"); textSize: panel.textSize
+                enabled: panel.editable && !!booking.quote.valid
+                onClicked: { campaign.world.bookFamilyVisit(booking.stay, booking.revision); booking.close() }
+            }
+        }
     }
     GameDialog {
         id: certificate

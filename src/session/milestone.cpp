@@ -26,6 +26,11 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
             }
         }
         if(!result.deadline)throw std::invalid_argument("There is no upcoming gathering.");
+    } else if(kind=="family_visit") {
+        if(const auto* trip=core::pending_family_visit(s))
+            for(const auto day:{trip->departs_on,trip->arrives_on,trip->leaves_on,trip->returns_on})
+                if(day>s.date) {result.deadline=day;break;}
+        if(!result.deadline) throw std::invalid_argument("There is no upcoming family visit milestone.");
     } else if (kind=="leadership") {
         result.deadline=core::next_succession_boundary(s);
         if(!result.deadline) throw std::invalid_argument("There is no later leadership boundary within this campaign.");

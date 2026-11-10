@@ -17,15 +17,6 @@ const Employee* employee(const SimulationState& state, std::string_view person) 
     return found == roster.end() ? nullptr : &*found;
 }
 
-bool at_hq(const SimulationState& state) {
-    if (!state.infrastructure) return false;
-    const auto location = executive_location(state);
-    if (location.traveling) return false;
-    return !location.appointment || std::ranges::none_of(state.infrastructure->appointments, [&](const auto& appointment) {
-        return appointment.id == *location.appointment && appointment.mode == AppointmentMode::onsite;
-    });
-}
-
 void require_room(const SimulationState& state, std::string_view person, std::uint32_t room) {
     if (!room || employee_contact_room(state, person) != room)
         throw std::invalid_argument("Meet this person at their current headquarters room.");
@@ -66,7 +57,7 @@ bool valid_opening_reply(const PeopleContact& contact, const ContactMessage& mes
 
 std::uint32_t employee_contact_room(const SimulationState& state, std::string_view person) {
     const auto* found = employee(state, person);
-    if (!found || found->departed_on || found->ready_on > state.date || !at_hq(state)) return 0;
+    if (!found || found->departed_on || found->ready_on > state.date || !executive_at_headquarters(state)) return 0;
     return assigned_hq_room(state, person);
 }
 
@@ -90,7 +81,7 @@ void manage_people_contact(SimulationState& state, const ContactAction& action,C
                 if (request.device != "phone" && request.device != "tablet" && request.device != "laptop" && request.device != "desktop")
                     throw std::invalid_argument("Choose a powered device that supports People.");
                 if (!state.infrastructure || !state.infrastructure->workplace || !state.infrastructure->workplace->devices ||
-                    resolve_app_device(state, request.device, "people", at_hq(state)) != request.device)
+                    resolve_app_device(state, request.device, "people", executive_at_headquarters(state)) != request.device)
                     throw std::invalid_argument("The selected device cannot send a message here.");
             }
             if constexpr (std::is_same_v<Action,DismissPeopleContact>) {

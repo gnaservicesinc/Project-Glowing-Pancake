@@ -106,9 +106,8 @@ void validate_infrastructure(const SimulationState& s,bool deep) {
     ids.clear();for (std::size_t at=0;at<i.appointments.size();++at) {
         const auto& a=i.appointments[at];const auto& owned=site(s,a.site_id);Days lead{0},travel{0};Cents price{0};
         if (a.mode==AppointmentMode::onsite) {
-            const auto& from=find(c.states,i.executive_base);const auto& to=profile(s,owned);
-            const auto route=std::find_if(c.travel.begin(),c.travel.end(),[&](const auto& r){return r.from==from.travel_zone && r.to==to.travel_zone;});
-            if (route==c.travel.end()) invalid("A trip has no authored route");travel=route->one_way;lead=c.onsite_booking_lead;price=checked_unit_add(c.onsite_inspection,Cents{mul_div_floor(static_cast<std::uint64_t>(route->fare.value()),2,1).quotient});
+            const auto& route=travel_route(c,i.executive_base,owned.state_id);
+            travel=route.one_way;lead=c.onsite_booking_lead;price=checked_unit_add(c.onsite_inspection,checked_unit_add(route.fare,route.fare));
         } else if (a.mode==AppointmentMode::remote) {lead=c.remote_booking_lead;price=c.remote_inspection;}
         else if (a.mode==AppointmentMode::delegated) {lead=c.delegated_booking_lead;price=c.delegated_inspection;}
         else invalid("Unknown appointment mode");

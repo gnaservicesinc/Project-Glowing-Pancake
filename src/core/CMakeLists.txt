@@ -6,7 +6,7 @@ add_library(pgp_core STATIC build_configuration.cpp build_identity.cpp portrait.
     infrastructure.cpp infrastructure_orders.cpp infrastructure_physics.cpp infrastructure_calendar.cpp infrastructure_catalog.cpp infrastructure_validation.cpp
     resilience.cpp resilience_catalog.cpp resilience_incidents.cpp resilience_replicas.cpp resilience_validation.cpp
     civic.cpp civic_calendar.cpp civic_validation.cpp society.cpp authority.cpp frontier_catalog.cpp frontier.cpp frontier_automation.cpp
-    succession.cpp succession_validation.cpp personal_life.cpp personal_events.cpp founder_departure.cpp objectives.cpp)
+    succession.cpp succession_validation.cpp personal_life.cpp personal_events.cpp family_visit.cpp founder_departure.cpp objectives.cpp)
 add_library(pgp::core ALIAS pgp_core)
 target_include_directories(pgp_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(pgp_core PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")

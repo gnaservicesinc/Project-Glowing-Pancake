@@ -40,6 +40,7 @@ bool working(const SimulationState& s,const HQEquipment& i) {
 }
 Cents exit_fee(const SimulationState& s) {const auto& p=current_headquarters(s);if(p.kind!="lease") return Cents{0};const auto& m=market(s,p);return s.date<advance_days(p.entered_on,Days{m.minimum_lease_days})?times(p.rent,m.early_exit_months):Cents{0};}
 void move(SimulationState& s,HQPremises next,Cents protected_cash) {
+    if(pending_family_visit(s)) invalid("Return from your family visit or cancel it before moving headquarters.");
     const auto old=current_headquarters(s);const auto fee=exit_fee(s);
     affordable(s,checked_unit_subtract(checked_unit_add(next.deposit,fee),old.deposit),protected_cash);
     if(old.deposit.value()>0) pay(s,Cents{-old.deposit.value()},Account::assets,"Returned office security deposit",key("hq.deposit.return/",old.id));

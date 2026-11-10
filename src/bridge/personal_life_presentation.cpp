@@ -13,6 +13,10 @@ QString money(core::Cents amount) {
 bool available(const CampaignSnapshotPtr& snapshot) {
     return snapshot && snapshot->checkpoint.world.simulation.succession && snapshot->checkpoint.world.simulation.succession->personal_life;
 }
+QString visit_dates(const core::FamilyVisit& trip) {
+    return QObject::tr("Depart %1 · Arrive %2\nLeave %3 · Return to headquarters %4")
+        .arg(q(core::iso_date(trip.departs_on)),q(core::iso_date(trip.arrives_on)),q(core::iso_date(trip.leaves_on)),q(core::iso_date(trip.returns_on)));
+}
 template<class Rows,class Id> const auto& find(const Rows& rows,const Id& id) {
     const auto found=std::ranges::find_if(rows,[&](const auto& row){return row.id==id;});
     if(found==rows.end())throw std::invalid_argument("Choose an available offer.");
@@ -102,6 +106,50 @@ void WorldController::placePersonalDecor(int item,int property,int x,int y,bool 
 void WorldController::storePersonalDecor(int item,QString revision) {if(item>0)personalAction(core::StorePersonalDecor{static_cast<std::uint32_t>(item)},revision);}
 void WorldController::sellPersonalDecor(int item,QString revision) {if(item>0)personalAction(core::SellPersonalDecor{static_cast<std::uint32_t>(item)},revision);}
 void WorldController::payPersonalUpkeep(QString revision) {personalAction(core::PayPersonalUpkeep{},revision);}
+
+QVariantMap WorldController::familyVisit() const {
+    if(!available(snapshot_)) return {};
+    const auto& state=snapshot_->checkpoint.world.simulation;
+    const auto& rules=core::personal_life_catalog(state).family_visits;
+    if(!rules || core::family_home_state(state).empty()) return {};
+    QVariantList stays;
+    for(auto days=1;days<=rules->maximum_stay.value();++days) stays.push_back(QVariantMap{{"id",days},{"name",tr("%n day(s) at home",nullptr,days)}});
+    QVariantMap result{{"stays",stays},{"active",false}};
+    const auto& rows=state.succession->personal_life->family_visits;
+    if(rows.empty()) return result;
+    const auto& trip=rows.back();
+    if(!core::pending_family_visit(state)) {
+        result["status"]=trip.cancelled_on?tr("Visit canceled. %1 returned to personal savings.").arg(money(trip.fare)):
+            tr("Back at headquarters · %1").arg(q(core::iso_date(trip.returns_on)));
+        return result;
+    }
+    const auto day=state.date;
+    result["active"]=true;
+    result["canCancel"]=day<trip.departs_on;
+    result["atHome"]=day>=trip.arrives_on && day<trip.leaves_on;
+    result["stage"]=day<trip.departs_on?0:day<trip.arrives_on?1:day<trip.leaves_on?2:3;
+    result["status"]=day<trip.departs_on?tr("Visit booked"):
+        day<trip.arrives_on?tr("Traveling to the family home"):day<trip.leaves_on?tr("You’re at the family home"):tr("Returning to headquarters");
+    result["advance"]=day<trip.departs_on && trip.departs_on<trip.arrives_on?tr("Advance to departure"):
+        day<trip.arrives_on?tr("Advance to arrival"):day<trip.leaves_on && trip.leaves_on<trip.returns_on?tr("Advance to the return trip"):tr("Advance to return");
+    result["dates"]=visit_dates(trip);
+    result["fare"]=money(trip.fare);
+    return result;
+}
+QVariantMap WorldController::familyVisitQuote(int stay) const {
+    if(!available(snapshot_)) return {};
+    try {
+        const auto& state=snapshot_->checkpoint.world.simulation;
+        const auto trip=core::family_visit_quote(state,core::Days{stay});
+        const auto affordable=state.succession->personal_cash>=trip.fare;
+        return {{"valid",affordable},{"dates",visit_dates(trip)},{"fare",money(trip.fare)},
+            {"reason",affordable?QString{}:tr("Your personal savings cannot cover this fare.")}};
+    } catch(const std::exception& error) {return {{"valid",false},{"reason",QString::fromUtf8(error.what())}};}
+}
+void WorldController::bookFamilyVisit(int stay,QString revision) {
+    if(stay>0 && stay<=14) personalAction(core::BookFamilyVisit{core::Days{stay}},revision);
+}
+void WorldController::cancelFamilyVisit(QString revision) {personalAction(core::CancelFamilyVisit{},revision);}
 
 QVariantMap WorldController::personalEvents() const {
     if(!available(snapshot_))return {};

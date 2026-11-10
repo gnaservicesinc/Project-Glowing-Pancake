@@ -139,6 +139,9 @@ QString InfrastructureController::assumptions() const {return available()?text(s
 QString InfrastructureController::executiveLocation() const {
     if (!available()) return {};
     const auto& s=state();const auto& i=*s.infrastructure;const auto location=executive_location(s);const auto base=text(find(i.catalog.states,location.base).name);
+    if(const auto* visit=core::family_visit_on(s,s.date))
+        return tr("%1 · Return to %2 on %3.").arg(location.family_home?tr("At the family home"):
+            s.date<visit->arrives_on?tr("Traveling to the family home"):tr("Returning from the family home"),base,date(visit->returns_on));
     if (!location.appointment) return QStringLiteral("Executive at base: %1").arg(base);
     const auto& appointment=find(i.appointments,*location.appointment);const auto destination=site_location(i,find(i.sites,appointment.site_id));
     if (location.traveling) return QStringLiteral("Executive %1 %2 · return to %3 %4. Management remains available.").arg(s.date<appointment.visit_on?QStringLiteral("traveling to"):QStringLiteral("returning from"),destination,base,date(appointment.ends_before));

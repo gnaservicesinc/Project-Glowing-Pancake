@@ -31,7 +31,7 @@ std::string invitation_reply(const SimulationState& state,std::string_view id,Or
     return employee && employee->ready_on<=day && !employee->departed_on?"accepted":"unavailable";
 }
 bool host_present(const SimulationState& state,OrdinalDay day) {
-    return std::ranges::none_of(state.infrastructure->appointments,[&](const auto& row){
+    return !family_visit_on(state,day) && std::ranges::none_of(state.infrastructure->appointments,[&](const auto& row){
         return row.mode==AppointmentMode::onsite && day>=row.starts_on && day<row.ends_before &&
             (!row.cancelled_on || *row.cancelled_on>day);
     });
@@ -79,6 +79,7 @@ Cents personal_event_quote(const SimulationState& state,const BookPersonalEvent&
     if(request.guests.empty() || request.guests.size()>gathering.guests) invalid("Choose a guest list within this gathering's capacity.");
     if(request.day<advance_days(state.date,gathering.notice) || request.day>advance_days(state.date,rules(state).maximum_notice) || request.day>=state.end_date)
         invalid("Allow the gathering's notice period and stay within this campaign.");
+    if(family_visit_on(state,request.day)) invalid("Choose a gathering date outside your family visit.");
     venue(state,gathering,request.property,state.date);
     std::set<std::string_view> unique;
     for(const auto& id:request.guests) {

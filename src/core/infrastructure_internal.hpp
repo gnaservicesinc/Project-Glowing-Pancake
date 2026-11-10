@@ -20,6 +20,13 @@ inline InfrastructureState& infrastructure(SimulationState& s) {return const_cas
 inline const OwnedSite& site(const SimulationState& s,std::string_view id) {return find(infrastructure(s).sites,id);}
 inline OwnedSite& site(SimulationState& s,std::string_view id) {return const_cast<OwnedSite&>(site(std::as_const(s),id));}
 inline const StateSiteProfile& profile(const SimulationState& s,const OwnedSite& owned) {return find(infrastructure(s).catalog.states,owned.state_id);}
+inline const TravelRoute& travel_route(const InfrastructureCatalog& catalog,std::string_view from,std::string_view to) {
+    const auto& origin=find(catalog.states,from).travel_zone;
+    const auto& destination=find(catalog.states,to).travel_zone;
+    const auto route=std::ranges::find_if(catalog.travel,[&](const auto& row){return row.from==origin && row.to==destination;});
+    if(route==catalog.travel.end()) invalid("The authored domestic travel route is unavailable.");
+    return *route;
+}
 inline const HardwareFamily& family(const SimulationState& s,const HardwareOrder& order) {return find(infrastructure(s).catalog.hardware,order.family_id);}
 inline OrdinalDay first_of_month(OrdinalDay day) {const auto c=from_ordinal(day);return to_ordinal({c.year,c.month,1});}
 inline bool month_end(OrdinalDay day) {const auto c=from_ordinal(day);return c.day==days_in_month(c.year,c.month);}

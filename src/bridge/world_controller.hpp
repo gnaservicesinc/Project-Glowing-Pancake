@@ -17,6 +17,7 @@ class WorldController final : public QObject {
     Q_PROPERTY(QVariantList contacts READ contacts NOTIFY changed)
     Q_PROPERTY(QVariantMap personalLife READ personalLife NOTIFY changed)
     Q_PROPERTY(QVariantMap familyHome READ familyHome NOTIFY changed)
+    Q_PROPERTY(QVariantMap familyVisit READ familyVisit NOTIFY changed)
     Q_PROPERTY(QVariantMap personalEvents READ personalEvents NOTIFY changed)
     Q_PROPERTY(bool contactsAvailable READ contactsAvailable NOTIFY changed)
     Q_PROPERTY(QVariantList applicants READ applicants NOTIFY changed)
@@ -67,6 +68,10 @@ public:
     QVariantList contacts() const;
     QVariantMap personalLife() const;
     QVariantMap familyHome() const;
+    QVariantMap familyVisit() const;
+    Q_INVOKABLE QVariantMap familyVisitQuote(int stay) const;
+    Q_INVOKABLE void bookFamilyVisit(int stay,QString revision);
+    Q_INVOKABLE void cancelFamilyVisit(QString revision);
     QVariantMap personalEvents() const;
     Q_INVOKABLE QVariantMap personalEventQuote(QString offer,int property,QString day,QStringList guests) const;
     Q_INVOKABLE void bookPersonalEvent(QString offer,int property,QString day,QStringList guests,QString revision);

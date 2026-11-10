@@ -160,12 +160,7 @@ bool WorldController::navigate(QString place,QString scale,QString device,QStrin
 bool WorldController::atHeadquarters() const {
     if(!snapshot_) return true;
     const auto& s=snapshot_->checkpoint.world.simulation;
-    if(!s.infrastructure) return true;
-    const auto location=core::executive_location(s);
-    if(location.traveling) return false;
-    if(location.appointment) for(const auto& appointment:s.infrastructure->appointments)
-        if(appointment.id==*location.appointment && appointment.mode==core::AppointmentMode::onsite) return false;
-    return true;
+    return !s.infrastructure || core::executive_at_headquarters(s);
 }
 QString WorldController::location() const {
     if(!snapshot_) return {};
@@ -173,6 +168,9 @@ QString WorldController::location() const {
     const auto& s=w.simulation;
     if(s.infrastructure) {
         const auto loc=core::executive_location(s);
+        if(loc.family_home) return tr("Family home · %1").arg(familyHome().value("city").toString());
+        if(const auto* visit=core::family_visit_on(s,s.date);visit && loc.traveling)
+            return s.date<visit->arrives_on?tr("Traveling to the family home"):tr("Returning from the family home");
         if(loc.traveling) return tr("In transit · %1").arg(city(loc.state_id));
         if(loc.appointment && !atHeadquarters()) {
             for(const auto& appointment:s.infrastructure->appointments) if(appointment.id==*loc.appointment)

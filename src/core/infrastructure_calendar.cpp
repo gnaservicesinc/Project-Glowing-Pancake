@@ -8,10 +8,8 @@ SiteAppointment preview_site_appointment(const SimulationState& s,const Schedule
     SiteAppointment appointment;appointment.id=request.id;appointment.site_id=request.site_id;appointment.mode=request.mode;appointment.booked_on=s.date;appointment.visit_on=request.visit_on;
     Days lead{0},travel{0};
     if (request.mode==AppointmentMode::onsite) {
-        const auto& from=find(c.states,i.executive_base);const auto& to=profile(s,owned);
-        const auto route=std::find_if(c.travel.begin(),c.travel.end(),[&](const auto& r){return r.from==from.travel_zone && r.to==to.travel_zone;});
-        if (route==c.travel.end()) invalid("The authored domestic travel route is unavailable");
-        travel=route->one_way;lead=c.onsite_booking_lead;appointment.paid=checked_unit_add(c.onsite_inspection,Cents{mul_div_floor(static_cast<std::uint64_t>(route->fare.value()),2,1).quotient});
+        const auto& route=travel_route(c,i.executive_base,owned.state_id);
+        travel=route.one_way;lead=c.onsite_booking_lead;appointment.paid=checked_unit_add(c.onsite_inspection,checked_unit_add(route.fare,route.fare));
     } else if (request.mode==AppointmentMode::remote) {lead=c.remote_booking_lead;appointment.paid=c.remote_inspection;}
     else if (request.mode==AppointmentMode::delegated) {lead=c.delegated_booking_lead;appointment.paid=c.delegated_inspection;}
     else invalid("Unsupported site appointment mode");
@@ -20,6 +18,9 @@ SiteAppointment preview_site_appointment(const SimulationState& s,const Schedule
     if (appointment.starts_on<advance_days(s.date,lead) || request.visit_on<std::max(owned.built_on,owned.grid_on) || appointment.ends_before>s.end_date) invalid("The appointment needs its booking/travel lead, completed building and grid connection, and a return before the ending");
     if (request.mode!=AppointmentMode::delegated) for (const auto& prior:i.appointments)
         if (!prior.cancelled_on && prior.mode!=AppointmentMode::delegated && appointment.starts_on<prior.ends_before && prior.starts_on<appointment.ends_before) invalid("The executive already has a conflicting appointment or trip; choose another date or delegate");
+    if(request.mode!=AppointmentMode::delegated) if(const auto* trip=pending_family_visit(s);
+        trip && appointment.starts_on<trip->returns_on && trip->departs_on<appointment.ends_before)
+        invalid("This appointment overlaps your family visit. Choose another date or delegate.");
     return appointment;
 }
 void schedule_site_appointment(SimulationState& s,const ScheduleSiteAppointment& request,Cents protected_cash) {
@@ -35,6 +36,12 @@ void cancel_site_appointment(SimulationState& s,std::string_view id) {
 ExecutiveLocation executive_location(const SimulationState& s) {
     if (!s.infrastructure) return {};
     const auto& i=*s.infrastructure;ExecutiveLocation result{i.executive_base,i.executive_base,false,std::nullopt};
+    if(const auto* trip=family_visit_on(s,s.date)) {
+        result.family_home=s.date>=trip->arrives_on && s.date<trip->leaves_on;
+        result.traveling=!result.family_home;
+        result.state_id=family_home_state(s);
+        return result;
+    }
     for (const auto& a:i.appointments) if (!a.cancelled_on && a.mode!=AppointmentMode::delegated && s.date>=a.starts_on && s.date<a.ends_before) {
         result.appointment=a.id;
         if (a.mode==AppointmentMode::onsite) {
@@ -43,6 +50,14 @@ ExecutiveLocation executive_location(const SimulationState& s) {
         break;
     }
     return result;
+}
+bool executive_at_headquarters(const SimulationState& s) {
+    if(!s.infrastructure) return false;
+    const auto location=executive_location(s);
+    if(location.traveling || location.family_home) return false;
+    return !location.appointment || std::ranges::none_of(s.infrastructure->appointments,[&](const auto& row) {
+        return row.id==*location.appointment && row.mode==AppointmentMode::onsite;
+    });
 }
 namespace infrastructure_detail {
 void prepare_site_appointments(SimulationState& s) {

@@ -110,6 +110,7 @@ ColumnLayout {
         visible: panel.page === "family" && !!panel.family.name
         textSize: panel.textSize
         home: panel.family
+        editable: panel.editable
         onMessagesRequested: panel.openApp("people", "messages", "laptop")
         onRealtorRequested: panel.openApp("facilities", "property", "laptop")
     }
