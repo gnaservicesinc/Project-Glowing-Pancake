@@ -146,6 +146,11 @@ The current month is charged in full, with further upkeep on the first of each
 month. Unpaid upkeep becomes a personal liability, and further purchases wait
 until it is paid.
 
+**My life → Family home** opens your childhood bedroom and the family's
+workspace plan. Select a room by name or click its area on the plan. The bedroom
+has the framed birth record and a shortcut to Messages. This view is available
+from commercial headquarters, and the realtor can quote a separate move home.
+
 Under **My rooms**, choose an owned home and select a delivered furnishing.
 The translucent preview shows valid or blocked cells. Click to place, use **R**
 or **Rotate**, and cancel with **Escape** or a right-click. Coordinate controls

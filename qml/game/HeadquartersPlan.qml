@@ -5,6 +5,7 @@ Item {
     id: plan
     property var headquarters: ({width:3,depth:3,rooms:[],items:[]})
     property int selectedItem: 0
+    property int highlightedRoom: 0
     property bool editing: false
     readonly property int columns: headquarters.width || 3
     readonly property int rows: headquarters.depth || 3
@@ -33,6 +34,7 @@ Item {
     }
     onHeadquartersChanged: drawing.requestPaint()
     onSelectedItemChanged: drawing.requestPaint()
+    onHighlightedRoomChanged: drawing.requestPaint()
     onWidthChanged: drawing.requestPaint()
     onHeightChanged: drawing.requestPaint()
     Canvas {
@@ -46,7 +48,14 @@ Item {
             for(let x=0;x<=plan.columns;++x){c.beginPath();c.moveTo(x0+x*u,y0);c.lineTo(x0+x*u,y0+h);c.stroke()}
             for(let y=0;y<=plan.rows;++y){c.beginPath();c.moveTo(x0,y0+y*u);c.lineTo(x0+w,y0+y*u);c.stroke()}
             c.strokeStyle="#d9d7bb";c.lineWidth=3
-            for(const room of plan.headquarters.rooms || []) c.strokeRect(x0+room.x*u,y0+room.y*u,room.width*u,room.depth*u)
+            for(const room of plan.headquarters.rooms || []) {
+                if (plan.highlightedRoom && room.id === plan.highlightedRoom) {
+                    c.fillStyle = "#798a70"
+                    c.fillRect(x0+room.x*u,y0+room.y*u,room.width*u,room.depth*u)
+                    c.strokeStyle = "#ffd897"
+                } else c.strokeStyle = "#d9d7bb"
+                c.strokeRect(x0+room.x*u,y0+room.y*u,room.width*u,room.depth*u)
+            }
             c.font=Math.max(9,Math.min(14,u*0.22))+"px sans-serif";c.textAlign="center";c.textBaseline="middle"
             for(const item of plan.headquarters.items || []) {
                 if(!item.placed || item.mount) continue
@@ -66,7 +75,7 @@ Item {
                 }
                 if(item){c.globalAlpha=0.55;Art.draw(c,item.kind,x0+p.x*u,y0+p.y*u,p.width*u,p.depth*u,item.powered);c.globalAlpha=1}
             }
-            if(!(plan.headquarters.items || []).some(item=>item.placed)) {
+            if(!plan.highlightedRoom && !(plan.headquarters.items || []).some(item=>item.placed)) {
                 c.fillStyle="#f1ead5";c.font=Math.max(11,Math.min(18,u*0.3))+"px sans-serif";c.fillText(qsTr("Empty premises"),x0+w/2,y0+h/2)
             }
         }

@@ -57,6 +57,8 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/ContactsPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/ContactFundingPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/PersonalLifePanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/FamilyHomePanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/FamilyRoomScene.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/PersonalEventsPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/RecruitmentDiscussion.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/ManagerPanel.qml"

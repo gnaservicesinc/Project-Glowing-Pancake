@@ -127,15 +127,10 @@ Rectangle {
                     visible:home.app==="room";Layout.fillWidth:true
                     Heading {text:qsTr("%1 · %2").arg(home.story.familyHome.name || qsTr("Your parents’ house")).arg(home.room)}
                     Copy {text:home.rich?qsTr("A quiet house in the hills and people who return your family's calls. The advantages are real. What you do with them is still yours."):qsTr("Yesterday's birthday cards are still on your desk. Your parents have offered the garage, basement and shed while you find your feet. There is no rent, and no company yet.")}
-                    Rectangle {
-                        Layout.fillWidth:true;Layout.preferredHeight:Math.max(230,home.typeSize*12);color:"#9d9f8c";radius:8;clip:true
-                        Rectangle {x:0;y:parent.height*0.58;width:parent.width;height:parent.height*0.42;color:"#786852"}
-                        Rectangle {x:parent.width*0.08;y:28;width:parent.width*0.23;height:parent.height*0.35;color:"#84b6c4";border.width:9;border.color:"#e6d7b8"}
-                        Rectangle {x:parent.width*0.07;y:parent.height*0.6;width:parent.width*0.35;height:parent.height*0.28;color:"#b0b9a5";radius:10;visible:home.room==="Bedroom"}
-                        Rectangle {x:parent.width*0.5;y:parent.height*0.53;width:parent.width*0.42;height:parent.height*0.08;color:"#c19b6e"}
-                        Image {x:parent.width*0.63;y:parent.height*0.21;width:parent.width*0.18;height:parent.height*0.36;source:"qrc:/pgp/assets/ui/laptop.svg";fillMode:Image.PreserveAspectFit}
-                        MouseArea {x:parent.width*0.5;y:parent.height*0.18;width:parent.width*0.42;height:parent.height*0.55;cursorShape:Qt.PointingHandCursor;onClicked:home.openApp("browser")}
-                        WorldButton {anchors.right:parent.right;anchors.bottom:parent.bottom;anchors.margins:12;objectName:"homeComputer";text:qsTr("Open your computer");textSize:home.typeSize;onClicked:home.openApp("browser")}
+                    FamilyRoomScene {
+                        textSize: home.typeSize
+                        bedroom: home.room === "Bedroom"
+                        onComputerRequested: home.openApp("browser")
                     }
                     Flow {Layout.fillWidth:true;spacing:8;Repeater {model:["Bedroom"].concat(home.story.familyHome.roomNames || []);WorldButton {required property string modelData;text:modelData;textSize:home.typeSize;checked:home.room===modelData;onClicked:{home.room=modelData;home.story.setField("home_room",modelData)}}}}
                     Copy {text:qsTr("%1 free workspaces · %2 × %3 m in total · the family keeps a room for you when the company moves out.").arg((home.story.familyHome.rooms || []).length).arg(home.story.familyHome.width || 0).arg(home.story.familyHome.depth || 0)}

@@ -119,8 +119,12 @@ assigned. Founders can self-fund and adopt optional bylaws that set board limits
 and fund an employee program. The home opening uses a saved setup draft.
 The home bank offers a $50,000 startup loan to new corporations with at least
 $5,000 of personal investment. The company pays 0.75% monthly interest on
-outstanding principal and owes the remaining balance after 730 days. Personal
-home visits during commercial occupancy and stock and bond holdings remain open.
+outstanding principal and owes the remaining balance after 730 days. The family
+home rooms and framed birth record are accessible from My life during
+commercial occupancy. The view remembers the selected room. The bedroom
+computer opens Messages, and a separate realtor action reviews moving company
+operations home. Physical travel to the family home and stock and bond holdings
+remain open.
 At HQ the founder can select an onboarded employee at their assigned desk and
 exchange contact details. A supported device opens the same saved conversation
 for workplace check-ins, equipment questions and laptop issuance. Dismissal can

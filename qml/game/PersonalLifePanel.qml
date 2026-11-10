@@ -8,6 +8,8 @@ ColumnLayout {
     objectName:"personalLifePanel"
     required property int textSize
     readonly property var life: campaign.world.personalLife
+    readonly property var family: campaign.world.familyHome
+    signal openApp(string app, string section, string device)
     readonly property bool editable: campaign.paused && campaign.companyEditable && !campaign.busy && !campaign.storageBlocked
     property string page: campaign.world.draft("personal/page", "homes")
     property string pendingPage: page
@@ -92,7 +94,9 @@ ColumnLayout {
     Flow {
         Layout.fillWidth:true;spacing:8
         Repeater {
-            model:[{id:"homes",name:qsTr("Juniper Estates")},{id:"rooms",name:qsTr("My rooms")},{id:"interiors",name:qsTr("Interiors & gallery")}].concat(campaign.world.personalEvents.packages?[{id:"events",name:qsTr("Gatherings")}]:[])
+            model:[{id:"homes",name:qsTr("Juniper Estates")},{id:"rooms",name:qsTr("My rooms")},{id:"interiors",name:qsTr("Interiors & gallery")}]
+                .concat(panel.family.name ? [{id:"family",name:qsTr("Family home")}] : [])
+                .concat(campaign.world.personalEvents.packages ? [{id:"events",name:qsTr("Gatherings")}] : [])
             WorldButton {
                 required property var modelData
                 objectName:"personalPage_"+modelData.id
@@ -100,6 +104,14 @@ ColumnLayout {
                 onClicked:panel.changePage(modelData.id)
             }
         }
+    }
+    FamilyHomePanel {
+        Layout.fillWidth: true
+        visible: panel.page === "family" && !!panel.family.name
+        textSize: panel.textSize
+        home: panel.family
+        onMessagesRequested: panel.openApp("people", "messages", "laptop")
+        onRealtorRequested: panel.openApp("facilities", "property", "laptop")
     }
     Repeater {
         model:panel.page==="homes"?panel.life.offers || []:[]

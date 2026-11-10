@@ -16,7 +16,7 @@ QQuickItem* find(QQuickItem* root,const char* name) {if(root->objectName()==QLat
 bool key(QQuickWindow& window,QQuickItem* item,Qt::Key code=Qt::Key_Space) {if(!item || !item->isVisible() || !item->isEnabled()) return false;item->forceActiveFocus(Qt::TabFocusReason);QTest::keyClick(&window,code);return true;}
 }
 void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot) {
-    struct State {int phase=0,ticks=0,days=0,settle=0,reported=-1,previewPhase=0;};auto state=std::make_shared<State>();
+    struct State {int phase=0,ticks=0,days=0,settle=0,reported=-1,previewPhase=0;std::uint64_t familyRevision=0;};auto state=std::make_shared<State>();
     auto* timer=new QTimer(&window);timer->setInterval(70);
     QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot] {
         const auto item=[&](const char* name){return find(window.contentItem(),name);};
@@ -162,11 +162,15 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
             auto* floor=item("hqFloorPlan");if(!floor)floor=item("hqPhysicalScene");
             if(!floor || floor->height()<250 || !capture(".compact-placement")) {fail("Compact room must have space for actual placement");return;}
             if(!press("hqCancelPreview")) {fail("Finish compact placement");return;}
-            campaign.setTextScalePercent(100);window.resize(1280,720);state->settle=0;++state->phase;break;
+            if(!press("hqDoneArranging")) {
+                if(!press("hqFurnishButton")) {fail("Finish furnishing before opening My life");return;}
+            }
+            state->familyRevision=s.revision;
+            state->settle=0;state->phase=31;break;
         }
         case 26:
             if(++state->settle<10)return;
-            if(!press("hqOpenRealtor")) {fail("Realtor return-home route");return;}++state->phase;break;
+            if(!press("hqReturnHome")) {fail("Open the reviewed relocation after visiting family home");return;}state->phase=28;break;
         case 27:
             if(!press("hqReturnHome")) {fail("The family home must remain available after commercial relocation");return;}++state->phase;break;
         case 28:
@@ -178,9 +182,56 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
             if(++state->settle<10)return;
             const auto& program=*campaign.snapshot()->content;pgp::persistence::CurrentCampaign current{paths.saves_directory/"continuing"};
             if(current.resume(program)!=std::optional{campaign.snapshot()->checkpoint} || !capture(".returned-home")) {fail("Home recovery must render and reload exactly");return;}
-            std::cout<<"HQ UI passed: paid supplies, placement previews, rotation/cancel, assignment/drag, commercial lease, construction, owned relocation, compact 200% layout, return home and fresh resume\n";
+            std::cout<<"HQ UI passed: paid supplies, placement previews, rotation/cancel, assignment/drag, commercial lease, construction, owned relocation, family rooms and keepsake at 200% text, return home and fresh resume\n";
             timer->stop();QCoreApplication::exit(0);break;
         }
+        case 31:
+            if(!press("personalLifeTab")) {fail("Open My life from commercial HQ");return;}++state->phase;break;
+        case 32:
+            if(!press("personalPage_family")) {fail("Open the family home independently of HQ");return;}state->settle=0;++state->phase;break;
+        case 33:
+            if(++state->settle<5)return;
+            if(!press("familyBirthRecord")) {fail("Open the framed record from the childhood bedroom");return;}state->settle=0;++state->phase;break;
+        case 34: {
+            if(++state->settle<5)return;
+            const auto* record=item("familyCertificate");
+            if(!record || !record->isVisible() || record->mapToScene({record->width(),0}).x()>window.width() ||
+                !capture(".family-keepsake-compact")) {fail("The family record must fit at 200% text");return;}
+            QTest::keyClick(&window,Qt::Key_Escape);state->settle=0;++state->phase;break;
+        }
+        case 35:
+            if(++state->settle<5)return;
+            if(!press("familyRoom_3")) {fail("Select a family workspace by keyboard");return;}state->settle=0;++state->phase;break;
+        case 36: {
+            if(++state->settle<5)return;
+            auto* plan=item("familyWorkspacePlan");
+            const auto family=campaign.world()->familyHome();
+            const auto home=pgp::core::headquarters_home(s);
+            if(s.revision!=state->familyRevision || pgp::core::current_headquarters(s).kind!="owned" || family.value("atHome").toBool() ||
+                !family.value("items").toList().empty() || family.value("rooms").toList().size()!=static_cast<qsizetype>(home.plan.rooms.size()) ||
+                !plan || !plan->isVisible() || plan->property("highlightedRoom").toInt()!=3 ||
+                campaign.world()->draft("personal/family-room","")!="3") {fail("The family plan must show its own saved rooms while the commercial HQ stays in place");return;}
+            plan->forceActiveFocus(Qt::OtherFocusReason);
+            state->settle=0;++state->phase;break;
+        }
+        case 37: {
+            if(++state->settle<5)return;
+            auto* plan=item("familyWorkspacePlan");const auto* viewport=item("managementScroll");
+            if(!plan || !viewport || plan->mapToItem(viewport,{0,plan->height()}).y()>viewport->height()+1 ||
+                !capture(".family-workspaces-compact")) {fail("Show the complete family plan at 200% text");return;}
+            const auto garage=pgp::core::headquarters_home(s).plan.rooms.front();
+            const auto cell=plan->property("cell").toReal();
+            const auto point=plan->mapToScene({plan->property("leftEdge").toReal()+(garage.x+0.5)*cell,
+                plan->property("topEdge").toReal()+(garage.y+0.5)*cell});
+            QTest::mouseClick(&window,Qt::LeftButton,Qt::NoModifier,point.toPoint());
+            ++state->phase;break;
+        }
+        case 38:
+            if(campaign.world()->draft("personal/family-room","")!="1" || !press("familyHomeRealtor")) {
+                fail("Select a room on the plan and open the realtor from the family home");return;
+            }
+            if(s.revision!=state->familyRevision || pgp::core::current_headquarters(s).kind!="owned") {fail("Opening the realtor must not relocate the company");return;}
+            campaign.setTextScalePercent(100);window.resize(1280,720);state->settle=0;state->phase=26;break;
         }
     });timer->start();
 }

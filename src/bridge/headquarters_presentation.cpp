@@ -53,6 +53,25 @@ QVariantMap WorldController::headquarters() const {
             .arg(q(p.address),q(city.city)).arg(p.width).arg(p.depth).arg(core::furnished_hq_desks(s)).arg(core::assigned_hq_desks(s))
             .arg(p.kind=="home"?tr("Your parents' home workspaces · $0 rent"):p.kind=="owned"?tr("Company-owned building · no rent; property taxes accrue"):tr("Rent %1/month to %2").arg(money(p.rent),q(p.lessor)),money(p.deposit))}};
 }
+QVariantMap WorldController::familyHome() const {
+    if(!available(snapshot_) || !snapshot_->checkpoint.world.founding) return {};
+    const auto& world=snapshot_->checkpoint.world;
+    const auto& state=world.simulation;
+    const auto& market=find(rules(snapshot_).markets,hq(snapshot_).home_market);
+    const auto home=core::headquarters_home(state);
+    const auto& premises=core::current_headquarters(state);
+    QVariantList rooms;
+    for(std::size_t i=0;i<home.plan.rooms.size();++i) {
+        const auto& room=home.plan.rooms[i];
+        rooms.push_back(QVariantMap{{"id",static_cast<int>(i+1)},{"name",q(home.room_names[i])},
+            {"x",room.x},{"y",room.y},{"width",room.width},{"depth",room.depth}});
+    }
+    return {{"name",q(home.plan.name)},{"city",q(market.city)},{"rooms",rooms},
+        {"width",home.plan.width},{"depth",home.plan.depth},{"kind","home"},{"atHome",premises.kind=="home"},
+        {"items",premises.kind=="home"?headquarters().value("items").toList():QVariantList{}},
+        {"founder",world.identity?q(world.identity->founder_name):QString{}},
+        {"gender",q(world.founding->gender)},{"pronouns",world.identity?q(world.identity->founder_pronouns):QString{}}};
+}
 QVariantList WorldController::hqEquipmentOffers() const {
     QVariantList rows;if(!available(snapshot_)) return rows;
     const auto& state=snapshot_->checkpoint.world.simulation;

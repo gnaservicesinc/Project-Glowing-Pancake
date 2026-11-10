@@ -172,8 +172,16 @@ that distinguish independent evidence from started or self-reported work.
 Bundled Release software walkthroughs pass for donor gifts and the existing
 investor route, including holding, scrolling review, cancellation, real trustee
 or board approval, visible funded replies and exact reload at 650 × 480 with
-200% text. The user requested a pause after this batch; remaining F-05 work
-stays in the backlog.
+200% text.
+
+My life now opens the childhood bedroom and the family's saved workspace
+plan during commercial occupancy. The bedroom has the framed birth record and
+a Messages shortcut. The workspace view remembers the selected room and links
+to a separate realtor review for moving company operations home. The software
+walkthrough passes keyboard and pointer room selection, the framed record,
+unchanged commercial premises until confirmation and fresh reload at 650 × 480
+with 200% text. The prologue walkthrough passes with the shared room scene.
+Physical travel to the family home remains in the backlog.
 
 Retention, audience modifiers, full personal-world simulation, research balance,
 expanded private-life purchases and richer event preferences remain unfinished,

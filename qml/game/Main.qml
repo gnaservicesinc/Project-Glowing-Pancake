@@ -940,7 +940,10 @@ ApplicationWindow {
                     }
                     Panel {
                         visible: !campaign.welcome && window.room === "leadership" && campaign.world.navigation.section === "personal" && !!campaign.world.personalLife.cash
-                        contentItem: PersonalLifePanel {textSize:window.textSize}
+                        contentItem: PersonalLifePanel {
+                            textSize: window.textSize
+                            onOpenApp: (app, section, device) => window.openApp(app, section, device)
+                        }
                     }
                     Panel {
                         visible: !campaign.welcome && campaign.objectives.available && window.room === "objectives"
