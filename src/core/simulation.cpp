@@ -951,6 +951,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             } else if constexpr (std::is_same_v<Action, ManagePeopleContact>) {
                 manage_people_contact(next,action.action);
                 (void)receipt(next,"people_contact");
+            } else if constexpr (std::is_same_v<Action, ManagePersonalLife>) {
+                manage_personal_life(next,action.action);
+                (void)receipt(next,"personal_life");
             } else if constexpr (std::is_same_v<Action, ManageRecruitment>) {
                 manage_recruitment(next,action.action);(void)receipt(next,"manage_recruitment");
             } else if constexpr (std::is_same_v<Action, SetRecruitingTerms>) {

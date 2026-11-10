@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.46.0-dev.1",
+  "content_version": "0.47.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -75324,6 +75324,172 @@
           "minimum_candidate_age": 35,
           "personal_cash_cents": 0,
           "personal_liabilities_cents": 0,
+          "personal_life": {
+            "decor": [
+              {
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "personal_plant",
+                "kind": "plant",
+                "name": "Indoor palm",
+                "price_cents": 20000,
+                "resale_bp": 5000,
+                "supplier": "Fern & Form",
+                "width": 1
+              },
+              {
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "sofa",
+                "kind": "sofa",
+                "name": "Linen sofa",
+                "price_cents": 250000,
+                "resale_bp": 5000,
+                "supplier": "Hearthline Interiors",
+                "width": 3
+              },
+              {
+                "delivery_days": 2,
+                "depth": 2,
+                "id": "dining_table",
+                "kind": "table",
+                "name": "Walnut dining table",
+                "price_cents": 150000,
+                "resale_bp": 5000,
+                "supplier": "Hearthline Interiors",
+                "width": 3
+              },
+              {
+                "delivery_days": 2,
+                "depth": 1,
+                "id": "painting",
+                "kind": "painting",
+                "name": "Quiet Horizon, original painting",
+                "price_cents": 5000000,
+                "resale_bp": 8000,
+                "supplier": "Stillwater Gallery",
+                "width": 2
+              },
+              {
+                "delivery_days": 2,
+                "depth": 2,
+                "id": "sculpture",
+                "kind": "sculpture",
+                "name": "Orbit, bronze sculpture",
+                "price_cents": 20000000,
+                "resale_bp": 8000,
+                "supplier": "Stillwater Gallery",
+                "width": 2
+              }
+            ],
+            "properties": [
+              {
+                "agent": "Juniper Estates",
+                "description": "A compact private home with a living room and a quiet room to make your own.",
+                "id": "valley_condo",
+                "monthly_upkeep_cents": 80000,
+                "name": "Valley courtyard condo",
+                "plan": {
+                  "depth": 6,
+                  "id": "valley_condo",
+                  "name": "Valley courtyard condo",
+                  "rooms": [
+                    {
+                      "depth": 6,
+                      "width": 5,
+                      "x": 0,
+                      "y": 0
+                    },
+                    {
+                      "depth": 6,
+                      "width": 3,
+                      "x": 5,
+                      "y": 0
+                    }
+                  ],
+                  "width": 8
+                },
+                "price_cents": 25000000,
+                "resale_bp": 9000
+              },
+              {
+                "agent": "Juniper Estates",
+                "description": "Three generous rooms overlooking the valley, with space for an art collection.",
+                "id": "hillside_house",
+                "monthly_upkeep_cents": 450000,
+                "name": "Hillside house",
+                "plan": {
+                  "depth": 10,
+                  "id": "hillside_house",
+                  "name": "Hillside house",
+                  "rooms": [
+                    {
+                      "depth": 6,
+                      "width": 8,
+                      "x": 0,
+                      "y": 0
+                    },
+                    {
+                      "depth": 10,
+                      "width": 4,
+                      "x": 8,
+                      "y": 0
+                    },
+                    {
+                      "depth": 4,
+                      "width": 8,
+                      "x": 0,
+                      "y": 6
+                    }
+                  ],
+                  "width": 12
+                },
+                "price_cents": 180000000,
+                "resale_bp": 9000
+              },
+              {
+                "agent": "Juniper Estates",
+                "description": "A private estate whose four wings can become lounges, galleries or rooms of your own design.",
+                "id": "gallery_estate",
+                "monthly_upkeep_cents": 2500000,
+                "name": "The gallery estate",
+                "plan": {
+                  "depth": 16,
+                  "id": "gallery_estate",
+                  "name": "The gallery estate",
+                  "rooms": [
+                    {
+                      "depth": 8,
+                      "width": 12,
+                      "x": 0,
+                      "y": 0
+                    },
+                    {
+                      "depth": 8,
+                      "width": 8,
+                      "x": 12,
+                      "y": 0
+                    },
+                    {
+                      "depth": 8,
+                      "width": 12,
+                      "x": 0,
+                      "y": 8
+                    },
+                    {
+                      "depth": 8,
+                      "width": 8,
+                      "x": 12,
+                      "y": 8
+                    }
+                  ],
+                  "width": 20
+                },
+                "price_cents": 1500000000,
+                "resale_bp": 9000
+              }
+            ]
+          },
           "planning_notice_days": 365,
           "tracks": [
             {
@@ -75494,7 +75660,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 17,
+      "revision": 18,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

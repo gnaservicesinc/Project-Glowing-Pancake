@@ -27,7 +27,7 @@ ApplicationWindow {
     property bool deviceOpen: prototypeSmoke
     property bool startupRouted: false
     property string activeDevice: "laptop"
-    readonly property string appTitle: room === "people" && campaign.world.navigation.section === "messages" ? qsTr("Messages") : ({devices:qsTr("Equipment"),office:qsTr("Company"),people:qsTr("People"),
+    readonly property string appTitle: room === "leadership" && campaign.world.navigation.section === "personal" ? qsTr("Personal life") : room === "people" && campaign.world.navigation.section === "messages" ? qsTr("Messages") : ({devices:qsTr("Equipment"),office:qsTr("Company"),people:qsTr("People"),
         facilities:qsTr("Headquarters"),lab:qsTr("Research notebook"),inbox:qsTr("News & decisions"),
         operations:qsTr("Infrastructure & travel"),civic:qsTr("Public affairs"),society:qsTr("World affairs"),
         institutions:qsTr("Institutions"),frontier:qsTr("Frontier"),leadership:qsTr("Leadership & retirement"),
@@ -935,8 +935,12 @@ ApplicationWindow {
                         contentItem: FrontierPanel { textSize: window.textSize }
                     }
                     Panel {
-                        visible: !campaign.welcome && campaign.leadership.available && window.room === "leadership"
+                        visible: !campaign.welcome && campaign.leadership.available && window.room === "leadership" && campaign.world.navigation.section !== "personal"
                         contentItem: SuccessionPanel { textSize: window.textSize }
+                    }
+                    Panel {
+                        visible: !campaign.welcome && window.room === "leadership" && campaign.world.navigation.section === "personal" && !!campaign.world.personalLife.cash
+                        contentItem: PersonalLifePanel {textSize:window.textSize}
                     }
                     Panel {
                         visible: !campaign.welcome && campaign.objectives.available && window.room === "objectives"

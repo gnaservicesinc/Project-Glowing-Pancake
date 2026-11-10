@@ -69,6 +69,22 @@ reply in both views at 650 × 480 and 200% text, laptop issuance and fresh reloa
 The home walkthrough also checks the opening conversations and a saved company
 reply at the same compact size and text scale.
 
+My life now provides three personal home listings, furniture and gallery art.
+Savings and paid salary fund purchases and monthly upkeep. Unpaid upkeep stays
+in personal liabilities and must be paid before discretionary purchases resume.
+Homes and delivered interiors can be sold at disclosed resale prices. Selling a
+home stores its contents. Illustrated room placement supports rotation,
+valid/blocked previews and keyboard coordinates. Current book wealth and the
+terminal valuation include private assets and personal liabilities separately
+from company equity. Content **0.47.0-dev.1**, generation **48**, records the
+catalogue. Focused checks cover arrears, sale proceeds, refused placements,
+historical cutoffs and fresh reload. Content review passes 24 prepared opening
+roundtrips without compiler lints.
+The bundled Release software walkthrough checks home and artwork purchases,
+delivery, valid/blocked previews, rotation, both resale actions and reload.
+At 650 × 480 with 200% text, the whole floor plan fits and sale terms scroll
+within the dialog.
+
 Focused identity/investment, headquarters, creative-team and workplace-research
 checks pass, including refusal and fresh reload. Content review validates 24
 prepared openings/save roundtrips without compiler lints. The rendered software

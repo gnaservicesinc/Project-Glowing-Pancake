@@ -138,8 +138,16 @@ Employee mood uses current pay, the company’s publications, the CEO’s biogra
 and record in office, mission and duties, coworker affinity, temperament and
 active amenities. An installed amenity type contributes once for employees with
 assigned HQ desks, up to the authored cap. Retention effects, audience identity
-modifiers, broader role-specific equipment benefits and private-life assets and
-events remain open. The 60 founder research topics now have individual expected
+modifiers and broader role-specific equipment benefits remain open.
+My life now offers a condo, hillside house and gallery estate, plus furnishings,
+paintings and sculpture. Purchases and monthly upkeep use personal savings.
+Unpaid upkeep becomes a personal liability and blocks discretionary purchases
+until paid. Homes and delivered furnishings can be sold at disclosed prices.
+Room decoration uses the same illustrated floor-plan component, with validated
+placement, rotation and storage. Private assets contribute their resale values
+to current and terminal legacy wealth. Events and invitations, aircraft, yachts,
+security, philanthropy, islands, sports teams and large funded interventions
+remain open. The 60 founder research topics now have individual expected
 years and difficulties. The eight gated frontier research topics use this pacing
 in place of the shared frontier calendar. Seeded world conditions, work and
 equipment still apply. Data, recipes and hardware keep their existing gates.

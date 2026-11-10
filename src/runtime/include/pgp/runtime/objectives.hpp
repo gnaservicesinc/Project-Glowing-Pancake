@@ -27,6 +27,7 @@ struct LegacyValuation {
     std::string institution;
     core::Cents realized_assets{0}, payables{0}, debt{0}, audited_profit{0}, company_equity{0};
     core::Cents founder_equity{0}, personal_cash{0}, personal_liabilities{0}, legacy_wealth{0};
+    core::Cents personal_assets{0};
     auto operator<=>(const LegacyValuation&) const = default;
 };
 struct SurvivalEvidence {

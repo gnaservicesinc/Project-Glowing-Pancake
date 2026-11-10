@@ -218,9 +218,9 @@ QVariantList ObjectivesController::rows() const {
                 auto ranks=o.end->profit;
                 std::stable_sort(ranks.begin(),ranks.end(),[](const auto& a,const auto& b){return a.legacy_wealth>b.legacy_wealth;});
                 QStringList lines;
-                for(const auto& row:ranks) lines.push_back(QStringLiteral("%1 · %2%3\nFounder equity %4 + personal cash %5 − personal liabilities %6. Company equity %7; audited operating profit %8.")
+                for(const auto& row:ranks) lines.push_back(QStringLiteral("%1 · %2%3\nFounder equity %4 + personal cash %5 + private assets %6 − personal liabilities %7. Company equity %8; audited operating profit %9.")
                     .arg(institution(row.institution,w,*program_),money(row.legacy_wealth),row.legacy_wealth==ranks.front().legacy_wealth?QStringLiteral(" · winner"):QString{},
-                         money(row.founder_equity),money(row.personal_cash),money(row.personal_liabilities),money(row.company_equity),money(row.audited_profit)));
+                         money(row.founder_equity),money(row.personal_cash),money(row.personal_assets),money(row.personal_liabilities),money(row.company_equity),money(row.audited_profit)));
                 progress=lines.join(QStringLiteral("\n\n"));
             } else progress=QStringLiteral("Terminal values will be calculated after the final December closes. Leadership shows the current book value.");
             break;

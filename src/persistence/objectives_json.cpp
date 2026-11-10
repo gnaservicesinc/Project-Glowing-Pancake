@@ -49,6 +49,7 @@ template<> struct Extension<runtime::LegacyValuation> {
         f("institution",r.institution);f("realized_assets_cents",r.realized_assets);f("payables_cents",r.payables);f("debt_cents",r.debt);
         f("audited_profit_cents",r.audited_profit);f("company_equity_cents",r.company_equity);f("founder_equity_cents",r.founder_equity);
         f("personal_cash_cents",r.personal_cash);f("personal_liabilities_cents",r.personal_liabilities);f("legacy_wealth_cents",r.legacy_wealth);
+        f("personal_assets_cents",r.personal_assets);
     }
 };
 template<> struct Extension<runtime::SurvivalEvidence> {

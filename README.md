@@ -29,6 +29,9 @@ a separate coordination benefit. Employee profiles show mood factors, including
 pay, reputation, duties and installed amenities. The wider personal-life and relationship systems
 remain in progress.
 
+**My life** now offers private homes, furnishings and gallery art, bought from
+personal savings with monthly upkeep, resale and room decoration.
+
  The initial skeleton phase closed on 2026-11-07. The current
 core is ready for human feedback and the user's selected refinements. The
 [current handoff](docs/STATUS.md) and [feedback backlog](docs/BACKLOG.md)
@@ -41,7 +44,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.46.0-dev.1**, generation **47**.
+The finalized internal content version is **0.47.0-dev.1**, generation **48**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).

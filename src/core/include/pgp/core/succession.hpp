@@ -3,6 +3,7 @@
 #include <array>
 #include <pgp/core/portrait.hpp>
 #include <pgp/core/governance.hpp>
+#include <pgp/core/personal_life.hpp>
 
 namespace pgp::core {
 struct SimulationState;
@@ -45,6 +46,7 @@ struct SuccessionCatalog {
     Cents founder_salary{0},chair_salary{0},cash_floor{0},personal_cash{0},personal_liabilities{0};
     std::vector<LeadershipTrack> tracks;
     std::optional<DepartureRules> departure;
+    std::optional<PersonalLifeCatalog> personal_life{};
     auto operator<=>(const SuccessionCatalog&) const = default;
 };
 struct LeadershipCandidate {
@@ -100,6 +102,7 @@ struct SuccessionState {
     std::vector<SuccessionNotice> notices;
     std::optional<std::string> founder_name{};
     std::optional<std::vector<DepartureRelease>> releases;
+    std::optional<PersonalLifeState> personal_life{};
     auto operator<=>(const SuccessionState&) const = default;
 };
 struct ProposeSuccession { std::string candidate;OrdinalDay handover_on{0};bool retain_chair=false;LabAllocation allocation; };

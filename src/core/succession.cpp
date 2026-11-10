@@ -157,6 +157,7 @@ void initialize_succession(SimulationState& s, std::optional<std::string> founde
     SuccessionState actor;actor.founder_holder=s.management->catalog.scoring.founder;
     actor.founder_name=std::move(founder_name);
     if(c.departure) actor.releases.emplace();
+    if(c.personal_life) actor.personal_life.emplace();
     actor.personal_cash=c.personal_cash;actor.posting_cursor=s.accounts->postings.size();s.succession=std::move(actor);
     if(s.date<succession_detail::year_day(c.founder_birth_year+static_cast<int>(c.executive_retirement_age)))
         appoint(s,{"founder",s.succession->founder_name.value_or(c.founder_name),{},c.founder_birth_year,Cents{0},c.founder_salary},false,0,FounderRole::executive);
@@ -225,6 +226,7 @@ void prepare_succession(SimulationState& s) {
     for(std::size_t i=actor.posting_cursor;i<s.accounts->postings.size();++i)
         if(founder_payment(s.accounts->postings[i])) actor.personal_cash=checked_unit_add(actor.personal_cash,s.accounts->postings[i].amount);
     actor.posting_cursor=s.accounts->postings.size();
+    prepare_personal_life(s);
     if(s.date>=s.end_date || s.phase==DayPhase::closed || s.phase==DayPhase::finished) return;
     if(founder_role(actor)==FounderRole::chair && s.date>=year_day(c.founder_birth_year+static_cast<int>(c.chair_retirement_age)))
         retire_founder_chair(s);

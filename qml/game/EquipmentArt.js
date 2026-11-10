@@ -5,7 +5,19 @@ function draw(c,kind,x,y,w,h,powered) {
     function box(x,y,w,h,color){c.fillStyle=color;c.fillRect(x,y,w,h)}
     function oval(x,y,w,h,color){c.fillStyle=color;c.beginPath();c.ellipse(x,y,w,h);c.fill()}
     function screen(x,y,w,h){box(x,y,w,h,"#223d48");box(x+3,y+3,w-6,h-6,powered?"#91d7ce":"#52747e");box(x+w/2-2,y+h,4,9,"#d6d9c9")}
-    if(kind==="desk" || kind==="table") {
+    if(kind==="home") {
+        box(19,42,62,48,"#d8bf94");box(43,64,15,26,"#42656b");box(25,51,13,15,"#a8d7cc");box(63,51,12,15,"#a8d7cc")
+        c.fillStyle="#a46f59";c.beginPath();c.moveTo(8,43);c.lineTo(50,8);c.lineTo(92,43);c.closePath();c.fill()
+    } else if(kind==="sofa") {
+        box(8,30,84,48,"#426c79");box(16,38,68,32,"#7ea7a9");box(39,38,2,31,"#426c79");box(63,38,2,31,"#426c79")
+        box(8,42,10,40,"#a2c2bb");box(82,42,10,40,"#a2c2bb");box(18,82,5,9,"#bca77e");box(77,82,5,9,"#bca77e")
+    } else if(kind==="painting") {
+        box(8,10,84,78,"#b79a68");box(14,16,72,66,"#e4d4ae");box(20,22,60,54,"#8ca9b2");box(20,51,60,25,"#567d71")
+        oval(56,28,13,13,"#ead59a");c.fillStyle="#b3c4ac";c.beginPath();c.moveTo(20,59);c.lineTo(43,35);c.lineTo(68,76);c.lineTo(20,76);c.closePath();c.fill()
+    } else if(kind==="sculpture") {
+        box(25,78,50,12,"#c4c0ad");box(31,68,38,10,"#9faea4")
+        c.strokeStyle="#bd9762";c.lineWidth=9;c.beginPath();c.ellipse(30,10,40,56);c.stroke();c.lineWidth=5;c.beginPath();c.ellipse(19,26,62,25);c.stroke()
+    } else if(kind==="desk" || kind==="table") {
         box(10,32,80,38,"#c89762");box(16,70,5,20,"#38555b");box(79,70,5,20,"#38555b")
         if(kind==="desk"){box(36,73,28,16,"#567f84");box(36,87,28,7,"#91afa5")}
         else {box(12,11,23,16,"#698b80");box(65,11,23,16,"#698b80");box(12,77,23,16,"#698b80");box(65,77,23,16,"#698b80")}

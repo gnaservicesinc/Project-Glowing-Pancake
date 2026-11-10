@@ -113,6 +113,20 @@ confirm the recorded outcome. For signed agreements, ask about the organizationâ
 current board role or open company governance. Unsigned opening offers close
 when the company begins.
 
+Open **My life** for Juniper Estates, your private rooms and the interiors and
+gallery stores. Purchases use retained personal savings and paid salary.
+Review the price, first month of upkeep and resale value before confirming.
+The current month is charged in full, with further upkeep on the first of each
+month. Unpaid upkeep becomes a personal liability, and further purchases wait
+until it is paid.
+
+Under **My rooms**, choose an owned home and select a delivered furnishing.
+The translucent preview shows valid or blocked cells. Click to place, use **R**
+or **Rotate**, and cancel with **Escape** or a right-click. Coordinate controls
+provide a keyboard alternative. Sell furnishings individually or sell the home
+and keep its contents in personal storage. Private assets use their disclosed
+resale values in legacy wealth.
+
 **New Game opens in a California maternity ward in 1997.** Continue after the
 birth narration, then answer one question at a time. Use Enter or Space to
 reveal a beat early, Tab to reach choices, and Back to revisit a decision.

@@ -107447,6 +107447,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "76ee8034895b1462292c251fa0f8496c0073e7cdb6a5892e9824ac6c2e7526f9",
+          "before_hash": "e73dd984e364ba20f09669f490a5e084fc7814919a3cf622b31320bf735254ac",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 17,
+          "revision": 18
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "ba8ee5f425c1d3dcc0dba03a21c37595112c39581e8957d6d9a1466d80f35649",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.47.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 48,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.46.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000047.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000048.collection.json",
+      "summary": "Private homes, monthly personal upkeep, furnishing, gallery art and resale with separate personal accounts and legacy values.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

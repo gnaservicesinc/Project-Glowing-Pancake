@@ -163,6 +163,10 @@ std::vector<LegacyValuation> terminal_profit(const WorldState& world,const Objec
             fraction(values.physical,static_cast<std::uint64_t>(rules.physical_assets_realizable.value()),10000));
         row.payables=values.payables;row.debt=values.debt;row.audited_profit=values.profit;
         row.personal_cash=values.personal_cash;row.personal_liabilities=succession_catalog(*institution).personal_liabilities;
+        const auto personal=personal_valuation(*institution,deadline);
+        row.personal_cash=checked_unit_subtract(row.personal_cash,personal.spent);
+        row.personal_assets=personal.assets;
+        row.personal_liabilities=checked_unit_add(row.personal_liabilities,personal.liabilities);
         ownership.emplace(id,holdings_at_deadline(world,*institution,deadline));
         founders.emplace(id,institution->succession->founder_holder);
         result.push_back(std::move(row));
@@ -189,7 +193,7 @@ std::vector<LegacyValuation> terminal_profit(const WorldState& world,const Objec
                 }
             }
         }
-        row.legacy_wealth=checked_unit_subtract(checked_unit_add(row.founder_equity,row.personal_cash),row.personal_liabilities);
+        row.legacy_wealth=checked_unit_subtract(checked_unit_add(checked_unit_add(row.founder_equity,row.personal_cash),row.personal_assets),row.personal_liabilities);
     }
     return result;
 }

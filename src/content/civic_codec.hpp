@@ -74,6 +74,10 @@ template<class T> constexpr std::size_t maximum_rows() {
     else if constexpr (std::is_same_v<T,core::DepartureRelease>) return core::succession_plan_limit;
     else if constexpr (std::is_same_v<T,core::SuccessionPlan>) return core::succession_plan_limit;
     else if constexpr (std::is_same_v<T,core::LeadershipTrack>) return 4;
+    else if constexpr (std::is_same_v<T,core::PersonalPropertyOffer> || std::is_same_v<T,core::PersonalProperty>) return core::personal_property_limit;
+    else if constexpr (std::is_same_v<T,core::PersonalDecorOffer>) return 16;
+    else if constexpr (std::is_same_v<T,core::PersonalDecor>) return core::personal_item_limit;
+    else if constexpr (std::is_same_v<T,core::PersonalBill>) return core::personal_bill_limit;
     else if constexpr (std::is_same_v<T,core::BoardBallot>) return 17;
     else if constexpr (std::is_same_v<T,core::SocietyMonth>) return core::society_month_limit;
     else if constexpr (std::is_same_v<T,core::AuthorityMonth>) return core::society_month_limit;

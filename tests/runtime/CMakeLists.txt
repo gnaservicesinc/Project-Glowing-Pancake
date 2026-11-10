@@ -351,3 +351,12 @@ target_compile_definitions(pgp-creative-team-test PRIVATE PGP_CREATIVE_SOURCE="$
 pgp_project_target(pgp-creative-team-test)
 add_test(NAME runtime.creative-team COMMAND pgp-creative-team-test)
 set_tests_properties(runtime.creative-team PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-personal-life-test personal_life_test.cpp)
+target_link_libraries(pgp-personal-life-test PRIVATE pgp::session)
+target_include_directories(pgp-personal-life-test PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+target_include_directories(pgp-personal-life-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-personal-life-test PRIVATE PGP_PERSONAL_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/personal-life.json")
+pgp_project_target(pgp-personal-life-test)
+add_test(NAME runtime.personal-life COMMAND pgp-personal-life-test)
+set_tests_properties(runtime.personal-life PROPERTIES TIMEOUT 30)

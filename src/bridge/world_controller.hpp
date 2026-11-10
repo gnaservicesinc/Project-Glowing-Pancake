@@ -15,6 +15,7 @@ class WorldController final : public QObject {
     Q_PROPERTY(QVariantMap founder READ founder NOTIFY changed)
     Q_PROPERTY(QVariantList people READ people NOTIFY changed)
     Q_PROPERTY(QVariantList contacts READ contacts NOTIFY changed)
+    Q_PROPERTY(QVariantMap personalLife READ personalLife NOTIFY changed)
     Q_PROPERTY(bool contactsAvailable READ contactsAvailable NOTIFY changed)
     Q_PROPERTY(QVariantList applicants READ applicants NOTIFY changed)
     Q_PROPERTY(QVariantMap recruitingTerms READ recruitingTerms NOTIFY changed)
@@ -62,6 +63,16 @@ public:
     QVariantMap founder() const;
     QVariantList people() const;
     QVariantList contacts() const;
+    QVariantMap personalLife() const;
+    Q_INVOKABLE QVariantMap personalFloor(int property) const;
+    Q_INVOKABLE QVariantMap personalPlacement(int item,int property,int x,int y,bool rotated) const;
+    Q_INVOKABLE void buyPersonalProperty(QString offer,QString revision);
+    Q_INVOKABLE void sellPersonalProperty(int property,QString revision);
+    Q_INVOKABLE void buyPersonalDecor(QString offer,QString revision);
+    Q_INVOKABLE void placePersonalDecor(int item,int property,int x,int y,bool rotated,QString revision);
+    Q_INVOKABLE void storePersonalDecor(int item,QString revision);
+    Q_INVOKABLE void sellPersonalDecor(int item,QString revision);
+    Q_INVOKABLE void payPersonalUpkeep(QString revision);
     bool contactsAvailable() const;
     Q_INVOKABLE QVariantList roomContacts(int room) const;
     Q_INVOKABLE QVariantMap contactThread(QString person) const;
@@ -154,6 +165,7 @@ signals:
     void draftsReset();
     void noticeRaised(QString);
 private:
+    void personalAction(core::PersonalLifeAction,QString revision);
     bool hqReview(QString revision);
     void restore();
     CampaignSnapshotPtr snapshot_;

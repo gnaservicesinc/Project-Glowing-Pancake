@@ -26,6 +26,9 @@ FounderLegacy founder_legacy(const WorldState& world,std::string_view institutio
     FounderLegacy result;result.institution=institution;
     result.holder=s.succession?s.succession->founder_holder:s.management->catalog.scoring.founder;
     if(s.succession) {result.cash=s.succession->personal_cash;result.liabilities=succession_catalog(s).personal_liabilities;}
+    const auto private_values=personal_valuation(s,OrdinalDay{s.date.value()+1});
+    result.assets=private_values.assets;
+    result.liabilities=checked_unit_add(result.liabilities,private_values.liabilities);
     const auto own=holding(s,result.holder);
     if(own.value()>0) result.positions.push_back({std::string(institution),result.holder,static_cast<std::uint64_t>(own.value()),10000});
     if(world.competition) for(const auto& acquisition:world.competition->acquisitions) if(acquisition.completed_on && acquisition.target==institution) {
@@ -45,7 +48,7 @@ FounderLegacy founder_legacy(const WorldState& world,std::string_view institutio
         const auto share=mul_div_floor(static_cast<std::uint64_t>(value.value()),position.numerator,position.denominator).quotient;
         result.book_equity=checked_unit_add(result.book_equity,Cents{share});
     }
-    result.net_book_wealth=checked_unit_subtract(checked_unit_add(result.book_equity,result.cash),result.liabilities);
+    result.net_book_wealth=checked_unit_subtract(checked_unit_add(checked_unit_add(result.book_equity,result.cash),result.assets),result.liabilities);
     return result;
 }
 }

@@ -10,6 +10,7 @@ void label(std::string_view value,std::size_t limit=128) {
 bool pending(SuccessionStatus status) {return status==SuccessionStatus::proposed || status==SuccessionStatus::approved;}
 }
 void validate_succession_catalog(const SuccessionCatalog& c) {
+    if(c.personal_life) validate_personal_life_catalog(*c.personal_life);
     label(c.founder_name);label(c.founder_board,64);
     if(c.founder_birth_year<1800 || c.founder_birth_year>9000 || c.executive_retirement_age<60 || c.executive_retirement_age>80 ||
         c.chair_retirement_age<c.executive_retirement_age || c.chair_retirement_age>90 || c.minimum_candidate_age<25 ||
@@ -62,6 +63,7 @@ void validate_succession(const SimulationState& s,bool deep) {
         actor.founder_holder!=s.management->catalog.scoring.founder || actor.posting_cursor>s.accounts->postings.size())
         invalid("The founder trust needs its actual company, financial cursor and bounded leadership history.");
     if(c.departure.has_value()!=actor.releases.has_value()) invalid("Departure rules and saved releases must be present together.");
+    validate_personal_life(s,deep);
     if(!deep) return;
     validate_founder_departure(s);
     validate_succession_catalog(c);
@@ -74,7 +76,8 @@ void validate_succession(const SimulationState& s,bool deep) {
         if(posting.credit==Account::cash) cash=checked_unit_subtract(cash,posting.amount);
         cash_prefix.push_back(cash);
     }
-    if(paid!=actor.personal_cash) invalid("Founder personal cash differs from the actual paid compensation.");
+    if(actor.personal_life) paid=checked_unit_subtract(paid,actor.personal_life->spent);
+    if(paid!=actor.personal_cash) invalid("Founder personal cash differs from paid compensation and private spending.");
     const auto in_time=[&](OrdinalDay day){return day>=s.accounts->starts_on && day<=s.date;};
     std::set<std::string> salaries,projects;
     for(std::size_t i=0;i<actor.terms.size();++i) {

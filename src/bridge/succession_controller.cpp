@@ -98,11 +98,11 @@ QString SuccessionController::overview() const {
     const auto& c=succession_catalog(company());const auto& term=actor().terms.back();
     const auto salary=term.person=="founder"?c.founder_salary:leadership_candidate(c,term.person).monthly_salary;
     const auto legacy=runtime::founder_legacy(snapshot_->checkpoint.world,snapshot_->checkpoint.world.company_id);
-    return QStringLiteral("%1 · born %2 · %3\nExecutive term %4 through %5. Current executive salary %6/month in 2014 dollars.\n%7\n%8 · paid personal cash %9 · personal liabilities %10.\nRetained equity at group book value %11 · founder legacy net book wealth %12. Company cash is included in that equity value.\nThe charter allows %13 years per executive term, retirement at %14, a personal founder chair through age %15 and %16 days of funded transition work.")
+    return QStringLiteral("%1 · born %2 · %3\nExecutive term %4 through %5. Current executive salary %6/month in 2014 dollars.\n%7\n%8 · personal cash %9 · personal liabilities %10 · private assets %17.\nRetained equity at group book value %11 · founder legacy net book wealth %12. Company cash is included in that equity value.\nThe charter allows %13 years per executive term, retirement at %14, a personal founder chair through age %15 and %16 days of funded transition work.")
         .arg(text(term.name),QString::number(term.birth_year),term.caretaker?QStringLiteral("Charter caretaker"):QStringLiteral("Chief executive"),
             date(term.starts_on),date(term.due_on),money(salary),role(founder_role(actor())),readable(legacy.holder),money(legacy.cash),money(legacy.liabilities),
             money(legacy.book_equity),money(legacy.net_book_wealth),QString::number(c.maximum_term_years),QString::number(c.executive_retirement_age),
-            QString::number(c.chair_retirement_age),QString::number(c.transition_days.value()));
+            QString::number(c.chair_retirement_age),QString::number(c.transition_days.value()),money(legacy.assets));
 }
 QString SuccessionController::noticeText() const {
     if(available()) if(const auto* n=required_succession_notice(company())) return notice(*n,actor());

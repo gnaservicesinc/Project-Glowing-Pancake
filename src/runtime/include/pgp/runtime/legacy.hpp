@@ -11,6 +11,7 @@ struct FounderLegacy {
     std::string institution,holder;
     core::Cents cash{0},liabilities{0},book_equity{0},net_book_wealth{0};
     std::vector<LegacyEquity> positions;
+    core::Cents assets{0};
     auto operator<=>(const FounderLegacy&) const = default;
 };
 // Exact retained beneficial claims, including the founder's share of a pooled
