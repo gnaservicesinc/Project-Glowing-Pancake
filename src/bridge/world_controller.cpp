@@ -296,7 +296,7 @@ QVariantList WorldController::contacts() const {
             if(offer.isEmpty()) continue;
             const auto name=offer.value("name").toString();
             rows.push_back(QVariantMap{{"id",q(contact.person)},{"name",name},{"role",offer.value("organization")},
-                {"initials",name.section(' ',0,0).left(1)+name.section(' ',1,1).left(1)}});
+                {"portrait",offer.value("portrait")},{"initials",name.section(' ',0,0).left(1)+name.section(' ',1,1).left(1)}});
             continue;
         }
         const auto found=std::ranges::find_if(roster.employees,[&](const auto& row){return row.terms.profile.id==contact.person;});
@@ -347,7 +347,8 @@ QVariantMap WorldController::contactThread(QString person) const {
             else if(message.reply=="declined") reply=tr("You declined our opening offer. There is no agreement to carry forward.");
             else if(message.reply=="rejected") reply=tr("The leadership application closed before your company began.");
             else if(message.reply=="unsigned") reply=tr("The opening offer closed when you signed other paperwork.");
-            else if(message.reply=="has_seat") reply=alder?tr("Alder's existing owners have a seat on the current board."):
+            else if(message.reply=="has_seat") reply=offer.value("kind")=="partner"?tr("I vote on the board under the terms we signed."):
+                alder?tr("Alder's existing owners have a seat on the current board."):
                 tr("Our organization has a seat on the current board under the signed agreement.");
             else reply=tr("Our organization has no seat on the current board.");
             messages.push_back(QVariantMap{{"topic",q(message.topic)},{"date",q(core::iso_date(message.day))},{"prompt",opening?opening_label:board_label},{"reply",reply}});
@@ -360,7 +361,8 @@ QVariantMap WorldController::contactThread(QString person) const {
         if(signed_offer || followup) topics.push_back(topic("board_role","contactBoardRole",board_label,checked_board));
         const auto status=signed_offer?tr("Signed at opening"):outcome=="declined"?tr("Declined before signing"):
             outcome=="rejected"?tr("Application closed"):tr("Expired at opening");
-        return {{"id",person},{"name",offer.value("name")},{"role",offer.value("organization")},{"status",status},
+        return {{"id",person},{"name",offer.value("name")},{"role",signed_offer && offer.value("kind")=="partner"?tr("Cofounder"):offer.value("organization")},
+            {"portrait",offer.value("portrait")},{"status",status},
             {"exchanged",true},{"current",false},{"governance",(signed_offer || followup) && state.management->governance.has_value()},
             {"messages",messages},{"topics",topics}};
     }

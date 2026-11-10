@@ -44,10 +44,17 @@ ColumnLayout {
             color: sender.offer.kind === "career" ? "#ba946e" : sender.offer.kind === "donor" ? "#a1a0c0" : "#a1b79c"
             Label {
                 anchors.centerIn: parent
+                visible: !sender.offer.portrait
                 text: sender.offer.name.split(" ").slice(0, 2).map(word => word[0]).join("")
                 color: "#193136"
                 font.pixelSize: panel.textSize * 0.95
                 font.bold: true
+            }
+            Image {
+                anchors.fill: parent; anchors.margins: 3
+                visible: !!sender.offer.portrait
+                source: sender.offer.portrait || ""
+                fillMode: Image.PreserveAspectFit
             }
         }
         ColumnLayout {
@@ -93,7 +100,8 @@ ColumnLayout {
                     objectName: panel.mode === "labs" ? "homeApplyCEO" : "homeContact_" + modelData.id
                     text: modelData.status !== "listed" ? qsTr("Open conversation")
                         : modelData.kind === "career" ? qsTr("Send leadership application")
-                        : modelData.kind === "donor" ? qsTr("Send grant proposal") : qsTr("Send pitch")
+                        : modelData.kind === "donor" ? qsTr("Send grant proposal")
+                        : modelData.kind === "partner" ? qsTr("Discuss a partnership") : qsTr("Send pitch")
                     textSize: panel.textSize
                     Layout.maximumWidth: listing.width
                     onClicked: panel.opened(modelData.id)

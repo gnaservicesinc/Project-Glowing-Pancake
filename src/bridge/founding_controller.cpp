@@ -5,6 +5,7 @@
 #include <QLocale>
 #include <QSaveFile>
 #include <pgp/core/checked_arithmetic.hpp>
+#include <pgp/core/objectives.hpp>
 #include <pgp/runtime/campaign_identity.hpp>
 
 #include <algorithm>
@@ -27,9 +28,9 @@ QVariantMap defaults() {
         {"investment","-1"},{"charter",""},{"company","Daybreak Research"},{"seed","19972015"},{"headquarters","US-CA"},{"difficulty","difficulty.standard"},
         {"sociability","introverted"},{"activity","sedentary"},{"disposition","deliberate"},
         {"family","middle"},{"leg","genius"},{"route","investment"},{"legal_form","corporation"},
-        {"office","home"},{"researcher","founder"},{"mission","survival"},
+        {"office","home"},{"researcher","founder"},{"mission","survival"},{"mission_draft","survival"},
         {"style",QVariantList{0,0,0,0,0,0,0,0}},{"appearance",QVariantList{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}},
-        {"choices",QVariantMap{}},{"backers",QStringList{}}};
+        {"choices",QVariantMap{}},{"backers",QStringList{}},{"partner",""}};
 }
 
 bool eligible_ceo(const content::FoundingSelection& selection) {
@@ -51,7 +52,8 @@ void prepare_offer(content::FoundingSelection& selected, std::string legal_form,
     if (selected.route != route || selected.legal_form != legal_form) selected.backers.clear();
     selected.legal_form=std::move(legal_form);
     selected.route=std::move(route);
-    selected.office=selected.route=="hired_ceo" ? "shared" : "home";
+    selected.office=selected.route=="hired_ceo" || selected.route=="partnership" ? "shared" : "home";
+    if(selected.route!="partnership") selected.partner.clear();
     if (selected.personal_investment_cents<0) selected.personal_investment_cents=0;
 }
 }
@@ -103,6 +105,7 @@ content::FoundingSelection FoundingController::selection() const {
     selected.family = field("family");
     selected.leg = field("leg");
     selected.route = field("route");
+    selected.partner = field("partner");
     bool investment_ok=false;const auto dollars=form_.value("investment").toString().toLongLong(&investment_ok);
     if(!investment_ok || dollars < -1 || dollars>10000000000) throw std::invalid_argument("Enter a whole-dollar personal investment within your savings.");
     selected.personal_investment_cents=dollars<0?-1:dollars*100;
@@ -174,7 +177,7 @@ QVariantMap FoundingController::homeOffer(const QString& id) const {
         selected.route!="hired_ceo" && selected.route!="partnership" && selected.backers.empty()) {
         status="offered";source="introduction";
     }
-    const bool selected_in_draft=id=="alder"?selected.route=="hired_ceo":
+    const bool selected_in_draft=id=="alder"?selected.route=="hired_ceo":id==text(selected.partner) ||
         std::ranges::find(selected.backers,id.toStdString())!=selected.backers.end();
     if(selected_in_draft && status=="considering") status="selected";
     return presentOffer(*catalog_,selected,id,source,status);
@@ -200,6 +203,20 @@ QVariantMap FoundingController::presentOffer(const content::FoundingCatalog& cat
         row["terms"]=tr("%1 in company cash · %2 inherited employees · shared office · %3% equity · %4 per month salary.")
             .arg(money(route->capital_cents)).arg(catalog.opening->inherited_staff)
             .arg(percent(catalog.opening->ceo_equity_bp),money(catalog.founder_salary_cents));
+    } else if(const auto* partner=content::founding_partner(catalog,id.toStdString())) {
+        const auto reason=content::partner_ineligibility(*partner,selected);
+        row["kind"]="partner";row["name"]=text(partner->name);row["organization"]=tr("Prospective cofounder");
+        row["subject"]=tr("An offer to build together");row["body"]=text(partner->letter);row["available"]=reason.empty();
+        row["terms"]=tr("%1 at signing · %2% equity · %3 board vote(s) · %4/month salary\nOpening mission · %5\nSupports proposals with company cash of at least %6 afterward and dilution of at most %7%.")
+            .arg(money(partner->capital_cents),percent(partner->shares_bp)).arg(partner->seats).arg(money(partner->monthly_salary_cents),
+                QString::fromStdString(std::string{core::objective_name(*core::objective_kind(partner->objective))}),
+                money(partner->cash_floor_cents),percent(partner->maximum_dilution_bp));
+        if(!reason.empty()) row["terms"]=text(reason)+"\n"+row["terms"].toString();
+        const auto recipe=core::make_portrait(19972015,"cofounder/"+partner->id);
+        auto portrait=QStringLiteral("image://portraits/1");
+        for(auto part:recipe.parts) portrait+='/'+QString::number(part);
+        for(auto style:recipe.style) portrait+='/'+QString::number(style);
+        row["portrait"]=portrait;
     } else {
         const auto backer=std::ranges::find(catalog.backers,id.toStdString(),&content::FoundingOption::id);
         if (backer==catalog.backers.end()) return {};
@@ -241,6 +258,7 @@ QVariantList FoundingController::homeOffers() const {
     QVariantList offers;
     if (auto alder=homeOffer("alder"); !alder.isEmpty()) offers.push_back(std::move(alder));
     for (const auto& backer:catalog_->backers) offers.push_back(homeOffer(text(backer.id)));
+    for (const auto& partner:catalog_->partners) offers.push_back(homeOffer(text(partner.id)));
     return offers;
 }
 
@@ -277,7 +295,7 @@ QString FoundingController::contactHomeOffer(QString id) {
         auto source=offer.value("source").toString();
         if (status=="listed") {
             status=id=="alder" && !eligible_ceo(selection())?"rejected":"offered";
-            source=id=="alder"?"application":"pitch";
+            source=id=="alder"?"application":offer.value("kind")=="partner"?"partnership":"pitch";
         }
         replies[id]=QVariantMap{{"status",status},{"source",source}};
     }
@@ -307,6 +325,9 @@ QString FoundingController::respondHomeOffer(QString id, QString response) {
     if (response=="accept") {
         if (id=="alder") {
             prepare_offer(selected,"corporation","hired_ceo");
+        } else if(const auto* partner=content::founding_partner(*catalog_,id.toStdString())) {
+            prepare_offer(selected,"corporation","partnership");
+            selected.partner=partner->id;
         } else {
             const auto& backer=content::founding_option(catalog_->backers,id.toStdString());
             const auto legal=backer.legal_form.empty()?selected.legal_form:backer.legal_form;
@@ -320,11 +341,16 @@ QString FoundingController::respondHomeOffer(QString id, QString response) {
         }
     } else if (offer.value("status")=="selected") {
         if (id=="alder") prepare_offer(selected,"corporation","investment");
+        else if(id==text(selected.partner)) prepare_offer(selected,"corporation","investment");
         else std::erase(selected.backers,id.toStdString());
     }
     const bool was_ceo=form_.value("route")=="hired_ceo";
     const bool is_ceo=selected.route=="hired_ceo";
     auto next=form_;
+    if(form_.value("partner").toString().isEmpty() && !selected.partner.empty()) next["mission_draft"]=form_.value("mission");
+    if(const auto* partner=content::founding_partner(*catalog_,selected.partner)) next["mission"]=text(partner->objective);
+    else if(!form_.value("partner").toString().isEmpty()) next["mission"]=form_.value("mission_draft","survival");
+    next["partner"]=text(selected.partner);
     if (!was_ceo && is_ceo) {
         next["company_draft"]=form_.value("company");
         next["company"]="Alder Research";
@@ -403,6 +429,9 @@ QString FoundingController::signingError() const {
         if(selected.route=="hired_ceo" && (!eligible_ceo(selected) ||
             (beat_=="home" && homeOffer("alder").value("status")!="selected")))
             return tr("Review and accept a leadership offer before signing an appointment.");
+        if(selected.route=="partnership" && !selected.partner.empty() && beat_=="home" &&
+            homeOffer(text(selected.partner)).value("status")!="selected")
+            return tr("Review and accept your cofounder's offer before signing.");
         (void)content::founding_terms(*catalog_,selected);
         const auto charter=form_.value("charter").toString().toStdString();
         if(!charter.empty() && (selected.route=="hired_ceo" || std::ranges::none_of(charters_,[&](const auto& c){return c.id==charter;}))) return tr("Choose an available founding charter. A hired CEO inherits the company's existing terms.");
@@ -426,6 +455,10 @@ QString FoundingController::preview() const {
             if(terms.startup_loan) sources<<tr("%1 loan: %2 borrowed by the company").arg(text(terms.startup_loan->lender),money(terms.startup_loan->principal_cents));
             const auto& route=content::founding_option(catalog_->routes,selected.route);
             if(route.capital_cents>0 && selected.route!="mission_director") sources<<tr("%1: %2").arg(text(route.name),money(route.capital_cents));
+            if(const auto* partner=content::founding_partner(*catalog_,selected.partner))
+                sources<<tr("%1: %2 for %3% equity and %4 board vote(s). Opening mission · %5")
+                    .arg(text(partner->name),money(partner->capital_cents),percent(partner->shares_bp)).arg(partner->seats)
+                    .arg(QString::fromStdString(std::string{core::objective_name(*core::objective_kind(partner->objective))}));
             for(const auto& id:selected.backers) {
                 const auto& offer=content::founding_option(catalog_->backers,id);
                 sources<<tr("%1: %2").arg(text(offer.name),money(backer_amount(*catalog_,terms,offer)));
@@ -478,10 +511,11 @@ void FoundingController::setBeat(QString id) {
 
 void FoundingController::setField(QString key, QVariant value) {
     const auto answer = value.toString();
-    if (!form_.contains(key) || key == "choices" || key == "backers" || key=="home_replies" || key=="home_offer" || key=="company_draft" ||
+    if (!form_.contains(key) || key == "choices" || key == "backers" || key=="partner" || key=="mission_draft" || key=="home_replies" || key=="home_offer" || key=="company_draft" ||
         key=="appearance" || key=="style" || answer.size() > 128 ||
         form_.value(key).toString() == answer) return;
     if (key=="route" && answer=="hired_ceo" && beat_=="home") return;
+    if (key=="mission" && !form_.value("partner").toString().isEmpty()) return;
     if(key=="gender" && answer!="woman" && answer!="man" && answer!="nonbinary" && answer!="unspecified") return;
     if(key=="pronouns" && !pronounOptions().contains(answer)) return;
     if(key=="investment") {bool ok=false;const auto dollars=answer.toLongLong(&ok);if(!ok || dollars < -1 || dollars>10000000000)return;}
@@ -537,6 +571,16 @@ void FoundingController::deriveOpening() {
     form_["office"]=(route=="hired_ceo" || route=="partnership")?"shared":"home";
     form_["difficulty"]="";
     if(route!="investment" && route!="mission_director") form_["backers"]=QStringList{};
+    if(!form_.value("partner").toString().isEmpty()) {
+        const auto* partner=content::founding_partner(*catalog_,form_.value("partner").toString().toStdString());
+        content::FoundingSelection biography;
+        biography.leg=form_.value("leg").toString().toStdString();
+        biography.family=form_.value("family").toString().toStdString();
+        if(route!="partnership" || !partner || !content::partner_ineligibility(*partner,biography).empty()) {
+            form_["partner"]="";
+            form_["mission"]=form_.value("mission_draft","survival");
+        } else form_["mission"]=text(partner->objective);
+    }
     if(form_.value("gender")!="woman" && form_.value("gender")!="man" && form_.value("gender")!="nonbinary" && form_.value("gender")!="unspecified") form_["gender"]="unspecified";
     if(!pronounOptions().contains(form_.value("pronouns").toString())) form_["pronouns"]="they/them";
 }

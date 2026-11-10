@@ -144,7 +144,7 @@ void validate_people_contacts(const SimulationState& state) {
             const auto& opening=*contact.opening;
             if (!contact.person.starts_with(opening_contact_prefix) || contact.person.size()<=opening_contact_prefix.size() ||
                 contact.person.size()>72 || contact.exchanged_on!=people.starts_on ||
-                (opening.source!="recruiter" && opening.source!="application" && opening.source!="introduction" && opening.source!="pitch") ||
+                (opening.source!="recruiter" && opening.source!="application" && opening.source!="introduction" && opening.source!="pitch" && opening.source!="partnership") ||
                 (opening.outcome!="signed" && opening.outcome!="declined" && opening.outcome!="rejected" && opening.outcome!="unsigned"))
                 throw std::invalid_argument("An opening conversation must record a supported source and outcome.");
         } else if (!found || contact.exchanged_on < found->ready_on || (found->departed_on && contact.exchanged_on > *found->departed_on)) {

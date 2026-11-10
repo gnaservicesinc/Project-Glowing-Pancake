@@ -11,6 +11,14 @@ and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
 immersive redesign advances content to **0.51.0-dev.1**, generation **52**.
 
+The named cofounder work is checkpointed against the unpublished
+[`founding-partners.json`](../data/drafts/founding-partners.json) draft. Its
+three offers carry distinct opening missions, capital, salaries, equity,
+board votes and limits. The bundled opening still uses generation 52.
+Before promoting the draft, verify eligibility, signing, board votes and
+save reload in a focused runtime check, then run the home inbox and
+incorporation walkthrough against the candidate content.
+
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
 next tasks are candidates for that review. The initial implementation queue

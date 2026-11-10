@@ -49,6 +49,11 @@ std::optional<core::ManagementCatalog> scenario_management(const ScenarioDefinit
             }),board.end());
             if(terms.partner_bp>0)
                 for(auto& member:board) if(member.id=="board.cofounder") member.name=founding->route=="hired_ceo"?"Existing company owners":"Founding partner";
+            if(const auto* partner=founding_partner(*s.founding,founding->partner)) {
+                const auto seat=std::ranges::find(board,std::string_view{"board.cofounder"},&core::BoardMember::id);
+                if(seat==board.end()) throw std::invalid_argument("The partnership requires a founding board position.");
+                *seat={"board."+partner->id,partner->name,partner->seats,false,core::Cents{partner->cash_floor_cents},core::BasisPoints{partner->maximum_dilution_bp}};
+            }
             for(const auto& id:founding->backers) {
                 const auto& backer=founding_option(s.founding->backers,id);
                 board.push_back({"board."+id,backer.name,1,false,core::Cents{0},core::BasisPoints{1500}});

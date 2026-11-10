@@ -33,6 +33,13 @@ struct FoundingLoan {
     std::uint32_t monthly_interest_bp=0, term_days=0;
     auto operator<=>(const FoundingLoan&) const = default;
 };
+struct FoundingPartner {
+    std::string id, name, pronouns, gender, letter, access, objective;
+    std::vector<std::string> traits;
+    std::int64_t capital_cents=0, monthly_salary_cents=0, cash_floor_cents=0;
+    std::uint32_t shares_bp=0, seats=1, maximum_dilution_bp=0;
+    auto operator<=>(const FoundingPartner&) const = default;
+};
 struct FoundingCatalog {
     std::vector<FoundingOption> families, legs, routes, backers, offices, researchers;
     std::vector<FormativeScene> scenes;
@@ -40,6 +47,7 @@ struct FoundingCatalog {
     std::uint32_t prestige_finance_bp=0, buzz_finance_bp=0, maximum_finance_bonus_bp=0;
     std::optional<FoundingOpeningRules> opening;
     std::optional<FoundingLoan> startup_loan;
+    std::vector<FoundingPartner> partners;
     auto operator<=>(const FoundingCatalog&) const = default;
 };
 struct FoundingSelection {
@@ -49,6 +57,7 @@ struct FoundingSelection {
     std::string office="shared", researcher="founder";
     std::map<std::string,std::string,std::less<>> choices;
     std::vector<std::string> backers;
+    std::string partner;
     core::PortraitRecipe appearance;
     std::int64_t personal_investment_cents=-1;
     auto operator<=>(const FoundingSelection&) const = default;
@@ -69,6 +78,8 @@ struct FoundingTerms {
 [[nodiscard]] std::string canonical_founding_selection(const FoundingSelection&);
 [[nodiscard]] const FoundingOption& founding_option(const std::vector<FoundingOption>&,std::string_view);
 [[nodiscard]] std::string founding_ineligibility(const FoundingOption&,const FoundingSelection&);
+[[nodiscard]] const FoundingPartner* founding_partner(const FoundingCatalog&,std::string_view id);
+[[nodiscard]] std::string partner_ineligibility(const FoundingPartner&,const FoundingSelection&);
 // A complete validation/preview is pure: changing an answer cannot stack rewards.
 [[nodiscard]] FoundingTerms founding_terms(const FoundingCatalog&,const FoundingSelection&,bool complete=true);
 }

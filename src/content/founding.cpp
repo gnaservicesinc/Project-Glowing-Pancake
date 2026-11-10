@@ -1,5 +1,6 @@
 #include <pgp/content/founding.hpp>
 #include <pgp/core/checked_arithmetic.hpp>
+#include <pgp/core/objectives.hpp>
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <set>
@@ -11,12 +12,14 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingOption,id,name,detail,capital_cents,m
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FormativeScene,id,title,date,text,choices)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingOpeningRules,inherited_staff,cofounder_staff,ceo_equity_bp)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingLoan,lender,principal_cents,minimum_investment_cents,monthly_interest_bp,term_days)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingPartner,id,name,pronouns,gender,letter,access,objective,traits,capital_cents,monthly_salary_cents,cash_floor_cents,shares_bp,seats,maximum_dilution_bp)
 void to_json(Json& j,const FoundingCatalog& c) {
     j={{"families",c.families},{"legs",c.legs},{"routes",c.routes},{"backers",c.backers},{"offices",c.offices},{"researchers",c.researchers},{"scenes",c.scenes},
         {"formation_cents",c.formation_cents},{"compute_monthly_cents",c.compute_monthly_cents},{"founder_salary_cents",c.founder_salary_cents},
         {"prestige_finance_bp",c.prestige_finance_bp},{"buzz_finance_bp",c.buzz_finance_bp},{"maximum_finance_bonus_bp",c.maximum_finance_bonus_bp}};
     if(c.opening) j["opening"]=*c.opening;
     if(c.startup_loan) j["startup_loan"]=*c.startup_loan;
+    if(!c.partners.empty()) j["partners"]=c.partners;
 }
 void from_json(const Json& j,FoundingCatalog& c) {
     j.at("families").get_to(c.families);j.at("legs").get_to(c.legs);j.at("routes").get_to(c.routes);j.at("backers").get_to(c.backers);
@@ -25,6 +28,7 @@ void from_json(const Json& j,FoundingCatalog& c) {
     j.at("prestige_finance_bp").get_to(c.prestige_finance_bp);j.at("buzz_finance_bp").get_to(c.buzz_finance_bp);j.at("maximum_finance_bonus_bp").get_to(c.maximum_finance_bonus_bp);
     if(j.contains("opening")) c.opening=j.at("opening").get<FoundingOpeningRules>();
     if(j.contains("startup_loan")) c.startup_loan=j.at("startup_loan").get<FoundingLoan>();
+    if(j.contains("partners")) c.partners=j.at("partners").get<std::vector<FoundingPartner>>();
 }
 namespace {
 [[noreturn]] void invalid(std::string why) {throw std::invalid_argument(std::move(why));}
@@ -69,6 +73,7 @@ void shape(const FoundingSelection& s) {
     if(s.legal_form!="corporation" && s.legal_form!="nonprofit") invalid("Choose a corporation or nonprofit.");
     if(s.backers.size()>6 || s.choices.size()>16) invalid("Too many founding choices.");
     for(const auto* id:{&s.family,&s.leg,&s.route,&s.office,&s.researcher}) text(*id,64);
+    text(s.partner,64,false);
     for(const auto& [scene,choice]:s.choices) {text(scene,64);text(choice,64);}
     std::set<std::string> backers;
     for(const auto& id:s.backers) if(!backers.insert(id).second) invalid("A backer can contribute only once.");
@@ -82,6 +87,29 @@ FoundingCatalog load_founding_catalog(std::string_view bytes) {
     amount(c.formation_cents);amount(c.compute_monthly_cents);amount(c.founder_salary_cents);
     if(c.prestige_finance_bp>1000 || c.buzz_finance_bp>1000 || c.maximum_finance_bonus_bp>5000) invalid("Founding reputation effects exceed their bounded terms.");
     if(c.opening && (c.opening->inherited_staff<2 || c.opening->inherited_staff>6 || c.opening->cofounder_staff<1 || c.opening->cofounder_staff>3 || c.opening->ceo_equity_bp>1500)) invalid("Opening company terms exceed their bounds.");
+    if(!c.partners.empty()) {
+        const auto& route=founding_option(c.routes,"partnership");
+        if(!c.opening || c.opening->cofounder_staff!=1 || c.partners.size()>8 || route.capital_cents!=0 || route.shares_bp!=0)
+            invalid("Named partnership terms require one working cofounder and no generic contribution.");
+        std::set<std::string> ids{"alder"};
+        for(const auto& backer:c.backers) ids.insert(backer.id);
+        for(const auto& partner:c.partners) {
+            text(partner.id,56);text(partner.name);text(partner.pronouns,64);text(partner.letter,512);
+            amount(partner.capital_cents);amount(partner.monthly_salary_cents);amount(partner.cash_floor_cents);
+            if(!ids.insert(partner.id).second || !core::objective_kind(partner.objective) ||
+                (partner.gender!="woman" && partner.gender!="man" && partner.gender!="nonbinary") ||
+                (partner.access!="technical" && partner.access!="connected") ||
+                partner.capital_cents<=0 || partner.monthly_salary_cents<=0 || partner.monthly_salary_cents>10000000 ||
+                partner.cash_floor_cents>1000000000 || !partner.shares_bp || partner.shares_bp>5000 ||
+                !partner.seats || partner.seats>3 || partner.maximum_dilution_bp>3000 || partner.traits.empty() || partner.traits.size()>16)
+                invalid("A cofounder needs a distinct identity, mission, funded terms and bounded board rights.");
+            std::set<std::string> traits;
+            for(const auto& trait:partner.traits) {
+                text(trait,80);
+                if(!traits.insert(trait).second) invalid("Cofounder traits must be distinct.");
+            }
+        }
+    }
     const auto loan_route=std::ranges::find(c.routes,std::string_view{"bank_loan"},&FoundingOption::id);
     if((loan_route!=c.routes.end())!=c.startup_loan.has_value()) invalid("The startup loan must have both an entry route and lending terms.");
     if(c.startup_loan) {
@@ -112,6 +140,16 @@ std::string founding_ineligibility(const FoundingOption& option,const FoundingSe
     if(!option.legal_form.empty() && s.legal_form!=option.legal_form) return "Available to a "+option.legal_form+" institution.";
     return {};
 }
+const FoundingPartner* founding_partner(const FoundingCatalog& catalog,std::string_view id) {
+    const auto found=std::ranges::find(catalog.partners,id,&FoundingPartner::id);
+    return found==catalog.partners.end()?nullptr:&*found;
+}
+std::string partner_ineligibility(const FoundingPartner& partner,const FoundingSelection& selection) {
+    if(partner.access=="technical" && selection.leg!="genius") return "Requires the Actual Genius leg up.";
+    if(partner.access=="connected" && selection.family!="rich" && selection.leg!="political")
+        return "Requires a wealthy family or political connections.";
+    return {};
+}
 FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s,bool complete) {
     shape(s);FoundingTerms t;t.nonprofit=s.legal_form=="nonprofit";
     const auto& family=founding_option(c.families,s.family);const auto& leg=founding_option(c.legs,s.leg);
@@ -123,6 +161,10 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
     t.founder_researcher=s.researcher=="founder";
     const bool ceo=s.route=="hired_ceo";
     const bool borrowing=s.route=="bank_loan";
+    const auto* partner=founding_partner(c,s.partner);
+    if(!s.partner.empty() && (s.route!="partnership" || !partner)) invalid("Choose a known cofounder for the partnership route.");
+    if(complete && s.route=="partnership" && !c.partners.empty() && !partner) invalid("Agree terms with a cofounder before signing.");
+    if(partner) if(const auto reason=partner_ineligibility(*partner,s);!reason.empty()) invalid(reason);
     if(ceo && s.leg!="genius" && s.leg!="political" && s.leg!="wealthy") invalid("This lab considers leadership applications from an Actual Genius or a political or wealthy elite background.");
     {
         if(!c.opening) invalid("Complete your appearance and founding terms.");
@@ -145,8 +187,8 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
         t.startup_loan=c.startup_loan;
     }
     t.personal_remaining_cents=core::checked_subtract(personal,t.personal_contribution_cents);
-    t.contributed_cents=core::checked_add(t.personal_contribution_cents,route.capital_cents);
-    t.partner_bp=t.nonprofit?0:route.shares_bp;
+    t.contributed_cents=core::checked_add(t.personal_contribution_cents,partner?partner->capital_cents:route.capital_cents);
+    t.partner_bp=t.nonprofit?0:partner?partner->shares_bp:route.shares_bp;
     t.paid_setup_cents=core::checked_add(c.formation_cents,core::checked_add(office.fee_cents,researcher.fee_cents));
     t.office_cents=office.monthly_cents;t.payroll_cents=researcher.monthly_cents;
     t.prestige=leg.prestige;t.buzz=leg.buzz;
@@ -182,6 +224,7 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
         t.opening_staff=(t.founder_researcher?1U:0U)+(ceo?c.opening->inherited_staff:s.route=="partnership"?c.opening->cofounder_staff:0U);
         const auto paid_staff=t.opening_staff-(t.founder_researcher?1U:0U);
         t.payroll_cents=static_cast<std::int64_t>(core::mul_div_floor(static_cast<std::uint64_t>(founding_option(c.researchers,"first_hire").monthly_cents),paid_staff,1).quotient);
+        if(partner)t.payroll_cents=partner->monthly_salary_cents;
         if(s.office=="home") {t.office_cents=0;t.paid_setup_cents=c.formation_cents;}
     }
     const auto borrowed=t.startup_loan?t.startup_loan->principal_cents:0;
@@ -195,6 +238,7 @@ std::string canonical_founding_selection(const FoundingSelection& s) {
         {"family",s.family},{"leg",s.leg},{"route",s.route},{"legal_form",s.legal_form},
         {"personal_investment_cents",s.personal_investment_cents},{"office",s.office},{"researcher",s.researcher},{"choices",s.choices},{"backers",s.backers}};
     j["appearance"]={{"kit",s.appearance.kit},{"parts",s.appearance.parts},{"style",s.appearance.style}};
+    if(!s.partner.empty()) j["partner"]=s.partner;
     return j.dump();
 }
 FoundingSelection load_founding_selection(std::string_view bytes) {
@@ -204,6 +248,7 @@ FoundingSelection load_founding_selection(std::string_view bytes) {
     s.family=j.at("family");s.leg=j.at("leg");s.route=j.at("route");s.legal_form=j.at("legal_form");
     s.personal_investment_cents=j.at("personal_investment_cents").get<std::int64_t>();
     s.office=j.at("office");s.researcher=j.at("researcher");s.choices=j.at("choices").get<decltype(s.choices)>();s.backers=j.at("backers").get<decltype(s.backers)>();
+    if(j.contains("partner")) s.partner=j.at("partner").get<std::string>();
     {
         const auto& a=j.at("appearance");core::PortraitRecipe p;
         if(a.at("kit")!=1 || a.at("parts").size()!=p.parts.size()) invalid("Unsupported portrait kit.");

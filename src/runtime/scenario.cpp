@@ -18,6 +18,12 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         throw std::invalid_argument("New games start with the founder campaign.");
     const auto opening=content::scenario_opening(*scenario,options.background,"company.player",options.difficulty,founding);
     const auto management=content::scenario_management(*scenario,options.difficulty,founding);
+    const auto* partner=founding && scenario->founding?content::founding_partner(*scenario->founding,founding->partner):nullptr;
+    if(partner) {
+        const auto mission=*core::objective_kind(partner->objective);
+        if(objectives && objectives->primary!=mission) throw std::invalid_argument("The signed cofounder offer sets the opening company mission.");
+        if(!objectives) objectives=core::ObjectiveSelection{mission,{}};
+    }
     if(founding && founding->legal_form=="nonprofit" && objectives &&
         (objectives->primary==core::ObjectiveKind::profit || std::find(objectives->secondary.begin(),objectives->secondary.end(),core::ObjectiveKind::profit)!=objectives->secondary.end()))
         throw std::invalid_argument("Nonprofit assets belong to the institution; choose a mission other than founder wealth.");
@@ -143,6 +149,12 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         }
         world.simulation.management->people->contacts=std::move(options.opening_contacts);
     }
+    if(partner && world.simulation.management && world.simulation.management->people) {
+        auto& contacts=world.simulation.management->people->contacts;
+        const auto id=std::string{core::opening_contact_prefix}+partner->id;
+        if(std::ranges::none_of(contacts,[&](const auto& row){return row.person==id;}))
+            contacts.push_back({id,scenario->starts_on,{},core::OpeningConversation{"partnership","signed"}});
+    }
     if(world.founding && world.simulation.management && world.simulation.management->people) {
         for(auto& employee:world.simulation.management->people->employees) {
             auto& p=employee.terms.profile;
@@ -151,7 +163,17 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
                 if(!world.simulation.management->catalog.people->trait_groups.empty())
                     p.traits={"Social: "+world.founding->sociability,"Activity: "+world.founding->activity,"Temperament: "+world.founding->disposition,"Upbringing: "+world.founding->family};
                 p.bio="Actual Genius: exceptional technical ability developed through the founder's formative years.";
-            } else if(world.founding->route=="partnership") p.role="Cofounder / researcher";
+            } else if(world.founding->route=="partnership") {
+                p.role="Cofounder / researcher";
+                if(partner) {
+                    p.name=partner->name;p.pronouns=partner->pronouns;p.gender=partner->gender;
+                    p.bio=partner->letter;p.traits=partner->traits;p.preferred_mission=world.simulation.management->people->mission;
+                    p.portrait=core::make_portrait(19972015,"cofounder/"+partner->id);
+                    auto& payroll=world.simulation.accounts->recurring;
+                    const auto salary=std::ranges::find(payroll,p.id,&core::RecurringObligation::id);
+                    if(salary!=payroll.end()) salary->cause="Employee salary: "+p.name;
+                }
+            }
         }
     }
     core::initialize_headquarters(world.simulation,seed,world.founding?(world.founding->leg=="political"?"rich":world.founding->family):"");

@@ -43,6 +43,11 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
         if (h.holder=="founder") label=tr("Founder");else if (h.holder=="cofounder") label=tr("Cofounder");else if (h.holder=="option_pool") label=tr("Reserved option pool");else if (h.holder=="seed_investor") label=tr("Seed investor");
         if(h.holder=="founder_trust") label=tr("Your equity");
         if(h.holder=="existing_owners") label=tr("Existing company owners");
+        if(h.holder=="cofounder" && checkpoint.world.founding && !checkpoint.world.founding->partner.empty()) {
+            const auto id="board."+checkpoint.world.founding->partner;
+            const auto member=std::ranges::find(c.board,id,&core::BoardMember::id);
+            if(member!=c.board.end()) label=text(member->name);
+        }
         for (const auto& e:c.executives) if (h.holder=="executive.grant/"+e.id) label=tr("%1 · vested grant").arg(text(e.name));
         for (const auto& f:c.financing) if (h.holder=="investor/"+f.id)
             label=c.public_listing && c.public_listing->offer_id==f.id?tr("Public shareholders"):text(f.name);

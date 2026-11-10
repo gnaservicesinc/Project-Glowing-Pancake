@@ -11,6 +11,7 @@ Rectangle {
     readonly property int typeSize:Math.round(16*textScale)
     readonly property bool rich:story.form.family==="rich" || story.form.leg==="political"
     readonly property var offers: story.homeOffers
+    readonly property var partners: offers.filter(offer => offer.kind === "partner")
     readonly property int waitingOffers: offers.filter(offer => offer.status === "offered").length
     property string app:story.form.home_app || "room"
     property string room:story.form.home_room || "Bedroom"
@@ -164,7 +165,7 @@ Rectangle {
                     offers:visible?home.offers:[]
                     selectedId:home.story.form.home_offer || ""
                     errorText:home.message || home.story.error
-                    canMeetCofounder:home.rich
+                    canMeetCofounder:home.rich && !home.partners.length
                     onOpened:id=>home.contact(id)
                     onReplied:(id,response)=>home.reply(id,response)
                     onCloseThread:{home.message=home.story.closeHomeOffer();if(!home.message)Qt.callLater(home.revealPage)}
@@ -201,7 +202,8 @@ Rectangle {
                     Heading {text:home.story.form.route==="hired_ceo"?qsTr("Alder Research · Appointment offer"):qsTr("Cedar & Quill · Formation workspace")}
                     Copy {text:home.story.form.route==="hired_ceo"?qsTr("The board offers an existing team, office and a disclosed minority stake. The company owns its cash and equipment; your personal savings remain yours."):qsTr("Name the institution, choose its purpose, and decide what you will personally invest. Outside funding only enters the company when you accept an offer below.")}
                     GameField {objectName:"homeCompanyName";visible:home.story.form.route!=="hired_ceo";Layout.fillWidth:true;text:home.story.form.company;textSize:home.typeSize;Accessible.name:qsTr("Company name");onEditingFinished:home.story.answerText("company",text)}
-                    GameSelect {objectName:"homeMission";Layout.fillWidth:true;textSize:home.typeSize;textRole:"name";valueRole:"id";model:[{id:"survival",name:qsTr("Build a lab that lasts")},{id:"utopia",name:qsTr("Make lives better")},{id:"monopoly",name:qsTr("Build the leading platform")},{id:"domination",name:qsTr("Steer the AI age")},{id:"asi",name:qsTr("Demonstrate ASI first")}];currentIndex:Math.max(0,model.findIndex(row=>row.id===home.story.form.mission));onActivated:home.story.setField("mission",currentValue);Accessible.name:qsTr("Mission")}
+                    GameSelect {objectName:"homeMission";Layout.fillWidth:true;textSize:home.typeSize;textRole:"name";valueRole:"id";enabled:!home.story.form.partner;model:[{id:"survival",name:qsTr("Build a lab that lasts")},{id:"utopia",name:qsTr("Make lives better")},{id:"monopoly",name:qsTr("Build the leading platform")},{id:"domination",name:qsTr("Steer the AI age")},{id:"asi",name:qsTr("Demonstrate ASI first")}];currentIndex:Math.max(0,model.findIndex(row=>row.id===home.story.form.mission));onActivated:home.story.setField("mission",currentValue);Accessible.name:qsTr("Mission")}
+                    Copy {visible:!!home.story.form.partner;text:qsTr("Your cofounder’s agreement sets the opening mission.")}
                     Copy {visible:home.story.form.route!=="hired_ceo";text:qsTr("How will you fund the company?")}
                     GameSelect {
                         id:fundingRoute;objectName:"homeFundingRoute";visible:home.story.form.route!=="hired_ceo";Layout.fillWidth:true;textSize:home.typeSize;textRole:"name";valueRole:"id"
@@ -210,6 +212,21 @@ Rectangle {
                         onActivated:home.story.setField("route",currentValue);Accessible.name:qsTr("Company funding route")
                     }
                     Copy {visible:fundingRoute.visible;text:(fundingRoute.model[fundingRoute.currentIndex] || {}).detail || ""}
+                    Repeater {
+                        model:home.story.form.route === "partnership" ? home.partners : []
+                        ColumnLayout {
+                            required property var modelData
+                            Layout.fillWidth:true
+                            Heading {text:modelData.name}
+                            Copy {text:modelData.terms}
+                            WorldButton {
+                                objectName:"homePartner_"+modelData.id
+                                text:modelData.status === "selected" ? qsTr("Review agreed terms") : qsTr("Open partnership conversation")
+                                textSize:home.typeSize;enabled:modelData.available
+                                onClicked:home.contact(modelData.id)
+                            }
+                        }
+                    }
                     Copy {visible:home.story.form.route==="bank_loan";text:home.story.startupLoan.detail || "";color:"#b9dba7"}
                     Copy {visible:home.story.form.route!=="hired_ceo";text:qsTr("Optional founding bylaws")}
                     GameSelect {

@@ -435,24 +435,41 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             if(!scenario->founding || !world.identity || world.identity->founder_name!=world.founding->first_name+" "+world.founding->last_name)
                 invalid("The saved biography must match the founder and authored campaign.");
             const auto terms=content::founding_terms(*scenario->founding,*world.founding);
+            const auto* partner=content::founding_partner(*scenario->founding,world.founding->partner);
+            if(partner && (!world.objectives || world.objectives->selections.empty() ||
+                core::objective_key(world.objectives->selections.front().selection.primary)!=partner->objective))
+                invalid("The initial mission must match the signed cofounder agreement.");
             if(!world.difficulty.empty()) invalid("Founding conditions cannot be overridden by a difficulty setting.");
             if(world.simulation.management && world.simulation.management->people) {
                 const auto& management=*world.simulation.management;
                 std::size_t opening_contacts=0;
+                bool partner_contact=false;
                 for(const auto& contact:management.people->contacts) if(contact.opening) {
                     if (++opening_contacts>core::opening_contact_limit || !contact.person.starts_with(core::opening_contact_prefix))
                         invalid("Invalid register of opening conversations.");
                     const auto id=std::string_view{contact.person}.substr(core::opening_contact_prefix.size());
                     const auto& opening=*contact.opening;
                     const bool career=id=="alder";
-                    const bool signed_at_opening=career?world.founding->route=="hired_ceo":
+                    const auto* candidate=content::founding_partner(*scenario->founding,id);
+                    const bool signed_at_opening=career?world.founding->route=="hired_ceo":candidate?candidate==partner:
                         std::ranges::find(world.founding->backers,id)!=world.founding->backers.end();
+                    if(candidate && candidate==partner) partner_contact=true;
                     if ((opening.outcome=="signed")!=signed_at_opening ||
                         (career && opening.source!="application" && opening.source!="recruiter") ||
                         (opening.outcome=="rejected" && (!career || opening.source!="application")) ||
-                        (!career && (std::ranges::find(scenario->founding->backers,id,&content::FoundingOption::id)==scenario->founding->backers.end() ||
+                        (candidate && opening.source!="partnership") ||
+                        (!career && !candidate && (std::ranges::find(scenario->founding->backers,id,&content::FoundingOption::id)==scenario->founding->backers.end() ||
                             (opening.source!="pitch" && (opening.source!="introduction" || id!="frontier")))))
                         invalid("The opening conversation must match a real founding option and its signed outcome.");
+                }
+                if(partner) {
+                    const auto count=std::ranges::count_if(management.people->employees,[&](const auto& employee) {
+                        const auto& p=employee.terms.profile;
+                        return employee.opening && p.role=="Cofounder / researcher" && p.name==partner->name &&
+                            p.gender==partner->gender && p.pronouns==partner->pronouns && p.traits==partner->traits &&
+                            p.bio==partner->letter && p.portrait==core::make_portrait(19972015,"cofounder/"+partner->id);
+                    });
+                    if(!partner_contact || count!=1) invalid("The signed cofounder must match the saved contact and opening team.");
                 }
                 if(management.catalog.people && management.catalog.people->mood && management.people->founding_prestige!=std::min(10U,terms.prestige))
                     invalid("The founder's reputation differs from the saved biography.");
