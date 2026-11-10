@@ -58,7 +58,7 @@ struct TeamDynamics {
 [[nodiscard]] std::vector<std::string> distinct_person_traits(const PersonProfile&);
 [[nodiscard]] std::uint32_t shared_trait_compatibility(std::uint64_t matches,std::uint64_t pairs);
 struct EmployeeMood {
-    int score=50, pay=0, company_prestige=0, ceo_prestige=0, role=0, coworkers=0, amenities=0, temperament_effect=0;
+    int score=50, pay=0, company_prestige=0, ceo_prestige=0, role=0, coworkers=0, amenities=0, temperament_effect=0, gatherings=0;
     std::string temperament;
     std::vector<std::string> accessible_amenities;
 };

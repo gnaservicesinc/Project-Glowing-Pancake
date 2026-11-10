@@ -107486,6 +107486,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "e6d7cac64b3e31770a4701bfda0cf4548fc74cb8fcf3d9147377c932b86a6cb0",
+          "before_hash": "76ee8034895b1462292c251fa0f8496c0073e7cdb6a5892e9824ac6c2e7526f9",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 18,
+          "revision": 19
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "b594227612cbc955ac83a7fa9b01335f3a59a3599a5940b091f63bf207a9271a",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.48.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 49,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.47.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000048.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000049.collection.json",
+      "summary": "Personally funded dinners, parties and receptions with known-contact invitations, cancellation refunds, attendance and temporary employee mood.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

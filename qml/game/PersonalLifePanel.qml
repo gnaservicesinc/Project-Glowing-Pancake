@@ -92,7 +92,7 @@ ColumnLayout {
     Flow {
         Layout.fillWidth:true;spacing:8
         Repeater {
-            model:[{id:"homes",name:qsTr("Juniper Estates")},{id:"rooms",name:qsTr("My rooms")},{id:"interiors",name:qsTr("Interiors & gallery")}]
+            model:[{id:"homes",name:qsTr("Juniper Estates")},{id:"rooms",name:qsTr("My rooms")},{id:"interiors",name:qsTr("Interiors & gallery")}].concat(campaign.world.personalEvents.packages?[{id:"events",name:qsTr("Gatherings")}]:[])
             WorldButton {
                 required property var modelData
                 objectName:"personalPage_"+modelData.id
@@ -224,6 +224,7 @@ ColumnLayout {
             }
         }
     }
+    PersonalEventsPanel {Layout.fillWidth:true;visible:panel.page==="events";textSize:panel.textSize}
     GameDialog {
         id:purchase
         property string kind:""

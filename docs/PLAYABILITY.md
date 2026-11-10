@@ -127,6 +127,21 @@ provide a keyboard alternative. Sell furnishings individually or sell the home
 and keep its contents in personal storage. Private assets use their disclosed
 resale values in legacy wealth.
 
+In **My life → Gatherings**, choose a dinner, house party, formal reception or
+office party. Home gatherings need an owned home. Office parties use the current
+HQ. Select known contacts, enter the date and review the personal payment and
+cancellation refund. The full booking cost includes invitations that are declined.
+Current employees who finish onboarding by the event date and signed opening
+partners accept. Other opening contacts decline.
+
+Use **Advance to next gathering** or advance days normally. The calendar records
+attendance and offers **Read about the evening**. Attending employees receive the
+disclosed mood benefit for seven days. The strongest recent benefit applies, and
+creativity traits stay as they were. Leave seven days between gatherings. A
+trip or on-site appointment keeps the host away and produces no benefit or
+refund. Moving HQ refunds an undelivered office party on its date. Cancel a home
+gathering before selling its venue.
+
 **New Game opens in a California maternity ward in 1997.** Continue after the
 birth narration, then answer one question at a time. Use Enter or Space to
 reveal a beat early, Tab to reach choices, and Back to revisit a decision.

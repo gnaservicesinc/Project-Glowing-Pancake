@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.47.0-dev.1",
+  "content_version": "0.48.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -75382,6 +75382,64 @@
                 "width": 2
               }
             ],
+            "events": {
+              "interval_days": 7,
+              "maximum_notice_days": 90,
+              "offers": [
+                {
+                  "booking_cents": 15000,
+                  "cancellation_refund_bp": 7500,
+                  "description": "A small catered dinner with time for conversation around your own table.",
+                  "duration_days": 7,
+                  "guests": 8,
+                  "id": "dinner",
+                  "mood": 4,
+                  "name": "Dinner with friends",
+                  "notice_days": 2,
+                  "per_guest_cents": 4500,
+                  "venue": "home"
+                },
+                {
+                  "booking_cents": 50000,
+                  "cancellation_refund_bp": 7500,
+                  "description": "Music, food and a room full of people. Invite familiar faces for an evening away from work.",
+                  "duration_days": 7,
+                  "guests": 20,
+                  "id": "house_party",
+                  "mood": 5,
+                  "name": "House party",
+                  "notice_days": 2,
+                  "per_guest_cents": 7500,
+                  "venue": "home"
+                },
+                {
+                  "booking_cents": 200000,
+                  "cancellation_refund_bp": 7500,
+                  "description": "A catered evening for partners and colleagues, hosted in your private home.",
+                  "duration_days": 7,
+                  "guests": 32,
+                  "id": "reception",
+                  "mood": 6,
+                  "name": "Formal reception",
+                  "notice_days": 3,
+                  "per_guest_cents": 15000,
+                  "venue": "home"
+                },
+                {
+                  "booking_cents": 30000,
+                  "cancellation_refund_bp": 7500,
+                  "description": "Thank your colleagues with a personally funded gathering at the current headquarters.",
+                  "duration_days": 7,
+                  "guests": 32,
+                  "id": "office_party",
+                  "mood": 4,
+                  "name": "Office party",
+                  "notice_days": 2,
+                  "per_guest_cents": 4000,
+                  "venue": "office"
+                }
+              ]
+            },
             "properties": [
               {
                 "agent": "Juniper Estates",
@@ -75660,7 +75718,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 18,
+      "revision": 19,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

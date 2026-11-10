@@ -31,6 +31,8 @@ remain in progress.
 
 **My life** now offers private homes, furnishings and gallery art, bought from
 personal savings with monthly upkeep, resale and room decoration.
+Its gatherings calendar supports personally funded dinners, parties and
+receptions with invitations, attendance reports and temporary employee mood.
 
  The initial skeleton phase closed on 2026-11-07. The current
 core is ready for human feedback and the user's selected refinements. The
@@ -44,7 +46,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.47.0-dev.1**, generation **48**.
+The finalized internal content version is **0.48.0-dev.1**, generation **49**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).

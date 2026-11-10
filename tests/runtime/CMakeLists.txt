@@ -360,3 +360,10 @@ target_compile_definitions(pgp-personal-life-test PRIVATE PGP_PERSONAL_SOURCE="$
 pgp_project_target(pgp-personal-life-test)
 add_test(NAME runtime.personal-life COMMAND pgp-personal-life-test)
 set_tests_properties(runtime.personal-life PROPERTIES TIMEOUT 30)
+
+add_executable(pgp-hosted-events-test hosted_events_test.cpp)
+target_link_libraries(pgp-hosted-events-test PRIVATE pgp::session)
+target_compile_definitions(pgp-hosted-events-test PRIVATE PGP_EVENTS_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/hosted-events.json")
+pgp_project_target(pgp-hosted-events-test)
+add_test(NAME runtime.hosted-events COMMAND pgp-hosted-events-test)
+set_tests_properties(runtime.hosted-events PROPERTIES TIMEOUT 30)

@@ -85,6 +85,23 @@ delivery, valid/blocked previews, rotation, both resale actions and reload.
 At 650 × 480 with 200% text, the whole floor plan fits and sale terms scroll
 within the dialog.
 
+Hosted gatherings now connect personal spending and known contacts. My life
+offers dinners, house parties, formal receptions and personally funded office
+parties with quoted costs, guest limits, notice and cancellation refunds.
+The saved calendar records replies and attendance, offers advancement to the
+next gathering and opens an evening report. Attending employees receive the
+strongest recent gathering’s mood contribution for its authored duration.
+Travel or an on-site appointment makes the host miss the event. Moving HQ
+refunds an undelivered office booking, and a pending home event blocks sale of
+its venue. Content **0.48.0-dev.1**, generation **49**, records the packages.
+Focused checks cover known contacts, duplicate/invalid invitations, personal
+payment, refunds, venue changes, attendance, mood expiry and reload. Content
+review passes 24 prepared opening/save roundtrips without compiler lints.
+The bundled Release software walkthrough covers selecting known guests,
+reviewing payment, cancellation, rebooking, advancing to the event, recorded
+attendance and the evening report at 650 × 480 with 200% text. Employee messaging,
+the expanded mood breakdown, laptop issuance and fresh reload also pass.
+
 Focused identity/investment, headquarters, creative-team and workplace-research
 checks pass, including refusal and fresh reload. Content review validates 24
 prepared openings/save roundtrips without compiler lints. The rendered software

@@ -17,6 +17,15 @@ Milestone plan_milestone(const runtime::Checkpoint& checkpoint,std::string_view 
             if (work.status==core::ProjectStatus::active && work.kind!=core::ProjectKind::serving && work.kind!=core::ProjectKind::replication &&
                 (kind=="project" || work.kind==core::ProjectKind::evaluation)) result.projects.push_back(work.id);
         if (result.projects.empty()) throw std::invalid_argument("Start a matching finite project before advancing to its completion.");
+    } else if (kind=="gathering") {
+        if(s.succession && s.succession->personal_life) {
+            const auto& owned=*s.succession->personal_life;
+            for(const auto id:owned.pending_events) {
+                const auto day=owned.events[id-1].day;
+                if(day>s.date && (!result.deadline || day<*result.deadline))result.deadline=day;
+            }
+        }
+        if(!result.deadline)throw std::invalid_argument("There is no upcoming gathering.");
     } else if (kind=="leadership") {
         result.deadline=core::next_succession_boundary(s);
         if(!result.deadline) throw std::invalid_argument("There is no later leadership boundary within this campaign.");

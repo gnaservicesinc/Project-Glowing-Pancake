@@ -1,6 +1,7 @@
 #include "world_controller.hpp"
 #include <QLocale>
 #include <algorithm>
+#include <set>
 
 namespace pgp::bridge {
 namespace {
@@ -13,7 +14,9 @@ bool available(const CampaignSnapshotPtr& snapshot) {
     return snapshot && snapshot->checkpoint.world.simulation.succession && snapshot->checkpoint.world.simulation.succession->personal_life;
 }
 template<class Rows,class Id> const auto& find(const Rows& rows,const Id& id) {
-    return *std::ranges::find_if(rows,[&](const auto& row){return row.id==id;});
+    const auto found=std::ranges::find_if(rows,[&](const auto& row){return row.id==id;});
+    if(found==rows.end())throw std::invalid_argument("Choose an available offer.");
+    return *found;
 }
 }
 QVariantMap WorldController::personalLife() const {
@@ -99,4 +102,74 @@ void WorldController::placePersonalDecor(int item,int property,int x,int y,bool 
 void WorldController::storePersonalDecor(int item,QString revision) {if(item>0)personalAction(core::StorePersonalDecor{static_cast<std::uint32_t>(item)},revision);}
 void WorldController::sellPersonalDecor(int item,QString revision) {if(item>0)personalAction(core::SellPersonalDecor{static_cast<std::uint32_t>(item)},revision);}
 void WorldController::payPersonalUpkeep(QString revision) {personalAction(core::PayPersonalUpkeep{},revision);}
+
+QVariantMap WorldController::personalEvents() const {
+    if(!available(snapshot_))return {};
+    const auto& state=snapshot_->checkpoint.world.simulation;
+    const auto& catalog=core::personal_life_catalog(state);
+    if(!catalog.events)return {};
+    const auto& rules=*catalog.events;
+    const auto& owned=*state.succession->personal_life;
+    QVariantList packages,venues,history;
+    for(const auto& row:rules.offers)packages.push_back(QVariantMap{{"id",q(row.id)},{"name",q(row.name)},{"venue",q(row.venue)},
+        {"description",q(row.description)},{"date",q(core::iso_date(core::advance_days(state.date,row.notice)))},
+        {"terms",tr("%1 booking + %2 per invited guest, up to %3. Allow %4 days' notice. Attending employees receive +%5 mood for %6 days. The strongest recent gathering applies.")
+            .arg(money(row.booking),money(row.per_guest)).arg(row.guests).arg(row.notice.value()).arg(row.mood).arg(row.duration.value())}});
+    for(const auto& property:owned.properties)if(!property.sold_on)
+        venues.push_back(QVariantMap{{"id",property.id},{"name",q(find(catalog.properties,property.offer).name)}});
+    const auto known=contacts();
+    const auto name=[&](const std::string& id){
+        for(const auto& value:known)if(value.toMap().value("id")==q(id))return value.toMap().value("name").toString();
+        return q(id);
+    };
+    std::set<std::uint32_t> displayed(owned.pending_events.begin(),owned.pending_events.end());
+    for(auto it=owned.events.rbegin();it!=owned.events.rend() && std::distance(owned.events.rbegin(),it)<32;++it)displayed.insert(it->id);
+    for(auto id=displayed.rbegin();id!=displayed.rend();++id) {
+        const auto& event=owned.events[*id-1];
+        const auto& package=find(rules.offers,event.offer);
+        QVariantList guests;
+        for(const auto& guest:event.guests) {
+            QString portrait;
+            for(const auto& value:known)if(value.toMap().value("id")==q(guest.person))portrait=value.toMap().value("portrait").toString();
+            guests.push_back(QVariantMap{{"id",q(guest.person)},{"name",name(guest.person)},{"portrait",portrait},
+            {"status",guest.attended?tr("Attended"):guest.reply=="declined"?tr("Declined"):guest.reply=="unavailable"?tr("Unavailable"):
+                event.outcome=="scheduled"?tr("Accepted"):event.outcome=="hosted"?tr("Could not attend"):tr("Did not attend")}});
+        }
+        const auto status=event.outcome=="scheduled"?tr("Scheduled"):event.outcome=="hosted"?tr("Hosted"):
+            event.outcome=="cancelled"?tr("Cancelled"):event.outcome=="venue_changed"?tr("Office changed · fully refunded"):tr("Host was away");
+        const auto attended=std::ranges::count(event.guests,true,&core::PersonalEventGuest::attended);
+        const auto story=event.outcome=="hosted"?tr("The evening is over. %1 of your %2 invited contacts joined you. Attending colleagues carry the good mood back to work for %3 days.")
+            .arg(attended).arg(event.guests.size()).arg(package.duration.value()):
+            event.outcome=="host_absent"?tr("Your travel or on-site appointment kept you away. The booked service was paid, and the gathering ended without its host."):QString{};
+        history.push_back(QVariantMap{{"id",event.id},{"name",q(package.name)},{"day",q(core::iso_date(event.day))},{"status",status},
+            {"venue",event.property?q(find(catalog.properties,owned.properties[event.property-1].offer).name):tr("Headquarters at booking")},
+            {"guests",guests},{"paid",money(event.paid)},{"refund",money(event.refund)},{"pending",!event.resolved_on},{"story",story},
+            {"cancellation",money(core::personal_resale(event.paid,package.cancellation_refund))}});
+    }
+    return {{"packages",packages},{"venues",venues},{"guests",known},{"history",history},{"upcoming",!owned.pending_events.empty()},
+        {"summary",tr("Pay from personal savings at booking, including guests who decline. Leave %1 days between gatherings and book within %2 days. Cancel before the date for the package refund. Keep the host free of travel and on-site appointments. A moved office receives a full refund on the event date.")
+            .arg(rules.interval.value()).arg(rules.maximum_notice.value())}};
+}
+QVariantMap WorldController::personalEventQuote(QString offer,int property,QString day,QStringList guests) const {
+    if(!available(snapshot_) || property<0)return {};
+    try {
+        std::vector<std::string> ids;for(const auto& id:guests)ids.push_back(id.toStdString());
+        const auto& state=snapshot_->checkpoint.world.simulation;
+        const auto& catalog=core::personal_life_catalog(state);
+        if(!catalog.events)return {};
+        const auto& package=find(catalog.events->offers,offer.toStdString());
+        const auto cost=core::personal_event_quote(state,{offer.toStdString(),static_cast<std::uint32_t>(property),core::parse_iso_date(day.toStdString()),std::move(ids)});
+        return {{"valid",cost<=state.succession->personal_cash},{"cost",money(cost)},
+            {"refund",money(core::personal_resale(cost,package.cancellation_refund))},
+            {"reason",cost<=state.succession->personal_cash?tr("Ready to send invitations"):tr("Your personal savings cannot cover this gathering.")}};
+    }catch(const std::exception& error){return {{"valid",false},{"reason",QString::fromUtf8(error.what())}};}
+}
+void WorldController::bookPersonalEvent(QString offer,int property,QString day,QStringList guests,QString revision) {
+    if(property<0)return;
+    try {
+        std::vector<std::string> ids;for(const auto& id:guests)ids.push_back(id.toStdString());
+        personalAction(core::BookPersonalEvent{offer.toStdString(),static_cast<std::uint32_t>(property),core::parse_iso_date(day.toStdString()),std::move(ids)},revision);
+    }catch(const std::exception& error){emit noticeRaised(QString::fromUtf8(error.what()));}
+}
+void WorldController::cancelPersonalEvent(int event,QString revision) {if(event>0)personalAction(core::CancelPersonalEvent{static_cast<std::uint32_t>(event)},revision);}
 }

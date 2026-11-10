@@ -246,7 +246,7 @@ void schedule_recruitment_smoke(QQuickWindow &window, pgp::bridge::CampaignContr
                 const auto report=mood?mood->property("mood").toMap():QVariantMap{};
                 const auto expected=pgp::core::workplace_moods(state).at(run->second.toStdString());
                 if(!mood || !heading || !scroll || heading->mapToScene({0,heading->height()}).y()>scroll->mapToScene({0,scroll->height()}).y() ||
-                    report.value("score").toInt()!=expected.score || report.value("factors").toList().size()!=7 || !capture("mood-compact")) {
+                    report.value("score").toInt()!=expected.score || report.value("factors").toList().size()!=8 || !capture("mood-compact")) {
                     fail("The profile must show current workplace mood and all causes at 200% text");return;
                 }
                 if (world->contactsAvailable()) {

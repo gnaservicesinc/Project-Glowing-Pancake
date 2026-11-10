@@ -145,9 +145,18 @@ Unpaid upkeep becomes a personal liability and blocks discretionary purchases
 until paid. Homes and delivered furnishings can be sold at disclosed prices.
 Room decoration uses the same illustrated floor-plan component, with validated
 placement, rotation and storage. Private assets contribute their resale values
-to current and terminal legacy wealth. Events and invitations, aircraft, yachts,
-security, philanthropy, islands, sports teams and large funded interventions
-remain open. The 60 founder research topics now have individual expected
+to current and terminal legacy wealth. Hosted dinners, house parties, formal
+receptions and office parties now use personal payment, known-contact
+invitations, a saved calendar and attendance reports. Current colleagues who
+finish onboarding by the event date and signed opening partners accept.
+Other opening contacts decline. Only attending employees receive the package’s
+temporary mood contribution, using the strongest recent gathering. This leaves
+distinct-trait creativity unchanged. Packages disclose capacity, notice, price,
+refund and timing. A host on a trip or on-site appointment misses the event and
+its benefit. A changed office refunds the booking, and pending home events must
+be cancelled before selling the venue. More nuanced invitation preferences,
+aircraft, yachts, security, philanthropy, islands, sports teams and large funded
+interventions remain open. The 60 founder research topics now have individual expected
 years and difficulties. The eight gated frontier research topics use this pacing
 in place of the shared frontier calendar. Seeded world conditions, work and
 equipment still apply. Data, recipes and hardware keep their existing gates.

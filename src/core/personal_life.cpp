@@ -59,6 +59,7 @@ Cents personal_resale(Cents price,BasisPoints resale) {
     return Cents{static_cast<std::int64_t>(mul_div_floor(static_cast<std::uint64_t>(price.value()),static_cast<std::uint64_t>(resale.value()),10000).quotient)};
 }
 void validate_personal_life_catalog(const PersonalLifeCatalog& catalog) {
+    if(catalog.events)validate_personal_event_rules(*catalog.events);
     if(catalog.properties.empty() || catalog.properties.size()>8 || catalog.decor.empty() || catalog.decor.size()>16)
         invalid("The personal property catalog needs bounded property and furnishing offers.");
     std::set<std::string> ids;
@@ -122,6 +123,8 @@ void manage_personal_life(SimulationState& state,const PersonalLifeAction& actio
         } else if constexpr(std::is_same_v<Action,SellPersonalProperty>) {
             auto& property=find(owned.properties,request.property);
             if(property.sold_on) invalid("This property has already been sold.");
+            if(std::ranges::any_of(owned.pending_events,[&](auto id){return owned.events[id-1].property==property.id;}))
+                invalid("Cancel the gatherings booked at this home before selling it.");
             const auto& offer=find(catalog.properties,property.offer);
             const auto refund=personal_resale(offer.price,offer.resale);
             state.succession->personal_cash=checked_unit_add(state.succession->personal_cash,refund);
@@ -153,6 +156,10 @@ void manage_personal_life(SimulationState& state,const PersonalLifeAction& actio
             state.succession->personal_cash=checked_unit_add(state.succession->personal_cash,refund);
             owned.spent=checked_unit_subtract(owned.spent,refund);
             item.sold_on=state.date;item.property=0;item.x=0;item.y=0;item.rotated=false;
+        } else if constexpr(std::is_same_v<Action,BookPersonalEvent>) {
+            book_personal_event(state,request);
+        } else if constexpr(std::is_same_v<Action,CancelPersonalEvent>) {
+            cancel_personal_event(state,request.event);
         } else {
             if(owned.unpaid.value()==0) invalid("You have no unpaid personal upkeep.");
             spend(state,owned.unpaid);
@@ -166,6 +173,7 @@ void prepare_personal_life(SimulationState& state) {
     if(!state.succession || !state.succession->personal_life || state.date>=state.end_date) return;
     for(auto& property:state.succession->personal_life->properties) if(!property.sold_on)
         while(property.next_upkeep<=state.date) bill(state,property,property.next_upkeep);
+    prepare_personal_events(state);
 }
 
 PersonalValuation personal_valuation(const SimulationState& state,OrdinalDay before) {
@@ -192,6 +200,10 @@ PersonalValuation personal_valuation(const SimulationState& state,OrdinalDay bef
         if(entry.paid_on && *entry.paid_on<before) result.spent=checked_unit_add(result.spent,entry.amount);
         else result.liabilities=checked_unit_add(result.liabilities,entry.amount);
     }
+    for(const auto& event:owned.events) if(event.booked_on<before) {
+        result.spent=checked_unit_add(result.spent,event.paid);
+        if(event.resolved_on && *event.resolved_on<before)result.spent=checked_unit_subtract(result.spent,event.refund);
+    }
     return result;
 }
 
@@ -206,6 +218,7 @@ void validate_personal_life(const SimulationState& state,bool deep) {
         invalid("Personal finances or ownership exceed their supported bounds.");
     if(!deep) return;
     validate_personal_life_catalog(*rules.personal_life);
+    validate_personal_events(state);
     const auto& catalog=*rules.personal_life;
     std::vector<OrdinalDay> expected;
     std::set<std::string> active;

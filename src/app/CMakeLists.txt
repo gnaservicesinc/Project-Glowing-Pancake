@@ -26,7 +26,7 @@ qt_add_resources(pgp_portraits portrait_kit PREFIX "/pgp/assets" BASE "${PROJECT
 qt_add_executable(pgp-game game_main.cpp music_controller.cpp music_controller.hpp menu_media.cpp menu_media.hpp)
 if(BUILD_TESTING)
     find_package(Qt6 6.12.0 EXACT REQUIRED COMPONENTS Test)
-    target_sources(pgp-game PRIVATE personal_life_smoke.cpp device_interface_smoke.cpp research_smoke.cpp recruitment_smoke.cpp headquarters_smoke.cpp map_layout_smoke.cpp form_drafts_smoke.cpp content_recovery_smoke.cpp world_smoke.cpp world_smoke.hpp founding_smoke.cpp founding_smoke.hpp game_smoke.cpp game_smoke.hpp menu_smoke.cpp menu_smoke.hpp)
+    target_sources(pgp-game PRIVATE hosted_events_smoke.cpp personal_life_smoke.cpp device_interface_smoke.cpp research_smoke.cpp recruitment_smoke.cpp headquarters_smoke.cpp map_layout_smoke.cpp form_drafts_smoke.cpp content_recovery_smoke.cpp world_smoke.cpp world_smoke.hpp founding_smoke.cpp founding_smoke.hpp game_smoke.cpp game_smoke.hpp menu_smoke.cpp menu_smoke.hpp)
     target_link_libraries(pgp-game PRIVATE Qt6::Test)
 endif()
 target_compile_definitions(pgp-game PRIVATE PGP_TEST_HOOKS=$<BOOL:${BUILD_TESTING}>)
@@ -56,6 +56,7 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/PeoplePanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/ContactsPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/PersonalLifePanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/PersonalEventsPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/RecruitmentDiscussion.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/ManagerPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/WorkplacePanel.qml"

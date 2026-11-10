@@ -27,6 +27,7 @@ QVariantMap moodRow(const core::EmployeeMood& mood) {
     add(QObject::tr("Shared traits with coworkers"),mood.coworkers);
     add(QObject::tr("Office amenities"),mood.amenities);
     add(QObject::tr("Temperament"),mood.temperament_effect);
+    add(QObject::tr("Recent hosted gatherings"),mood.gatherings);
     QStringList amenities;
     for(const auto& name:mood.accessible_amenities) amenities.push_back(q(name));
     return {{"score",mood.score},{"label",mood.score>=75?QObject::tr("Thriving"):mood.score>=60?QObject::tr("Content"):
