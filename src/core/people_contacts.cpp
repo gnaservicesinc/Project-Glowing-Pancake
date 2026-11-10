@@ -40,6 +40,21 @@ bool valid_reply(const ContactMessage& message) {
     return message.mood == -1 &&
         (message.reply == "laptop" || message.reply == "desk" || message.reply == "needs_computer");
 }
+
+std::string opening_reply(const SimulationState& state, const PeopleContact& contact, std::string_view topic) {
+    if (topic=="opening_terms") return contact.opening->outcome;
+    if (topic!="board_role" || contact.opening->outcome!="signed")
+        throw std::invalid_argument("Choose a topic for this opening conversation.");
+    if (!state.management->governance) return "no_seat";
+    const auto id=contact.person.substr(opening_contact_prefix.size());
+    const auto seat=id=="alder"?"board.cofounder":"board."+id;
+    return std::ranges::any_of(current_board(state),[&](const auto& row){return row.id==seat;})?"has_seat":"no_seat";
+}
+
+bool valid_opening_reply(const OpeningConversation& opening, const ContactMessage& message) {
+    return message.mood==-1 && ((message.topic=="opening_terms" && message.reply==opening.outcome) ||
+        (message.topic=="board_role" && opening.outcome=="signed" && (message.reply=="has_seat" || message.reply=="no_seat")));
+}
 } // namespace
 
 std::uint32_t employee_contact_room(const SimulationState& state, std::string_view person) {
@@ -53,8 +68,6 @@ void manage_people_contact(SimulationState& state, const ContactAction& action) 
         throw std::invalid_argument("This company has no individual contacts.");
     auto& contacts = state.management->people->contacts;
     std::visit([&](const auto& request) {
-        const auto* found = employee(state, request.person);
-        if (!found) throw std::invalid_argument("Choose a person in the company roster.");
         const auto contact = std::ranges::find(contacts, request.person, &PeopleContact::person);
         using Action = std::decay_t<decltype(request)>;
         if constexpr (std::is_same_v<Action, ExchangePeopleContact>) {
@@ -62,7 +75,7 @@ void manage_people_contact(SimulationState& state, const ContactAction& action) 
             if (contact != contacts.end()) throw std::invalid_argument("You have already exchanged contact details.");
             contacts.push_back({request.person, state.date, {}});
         } else {
-            if (contact == contacts.end()) throw std::invalid_argument("Exchange contact details in person first.");
+            if (contact == contacts.end()) throw std::invalid_argument("Choose someone whose contact details you have.");
             if (request.room) {
                 require_room(state, request.person, request.room);
             } else {
@@ -72,13 +85,18 @@ void manage_people_contact(SimulationState& state, const ContactAction& action) 
                     resolve_app_device(state, request.device, "people", at_hq(state)) != request.device)
                     throw std::invalid_argument("The selected device cannot send a message here.");
             }
-            if (request.topic != "check_in" && request.topic != "workstation")
+            if (!contact->opening && request.topic != "check_in" && request.topic != "workstation")
                 throw std::invalid_argument("Choose a conversation topic.");
             auto& messages = contact->messages;
             if (std::ranges::any_of(messages, [&](const auto& old) { return old.day == state.date && old.topic == request.topic; }))
                 throw std::invalid_argument("You already asked about this today.");
             ContactMessage message{state.date, request.topic, {}, -1};
-            if (found->departed_on) {
+            const auto* found=employee(state,request.person);
+            if (contact->opening) {
+                message.reply=opening_reply(state,*contact,request.topic);
+            } else if (!found) {
+                throw std::invalid_argument("Choose an employee contact.");
+            } else if (found->departed_on) {
                 message.reply = "former";
             } else if (request.topic == "check_in") {
                 const auto moods = workplace_moods(state);
@@ -97,22 +115,30 @@ void manage_people_contact(SimulationState& state, const ContactAction& action) 
 
 void validate_people_contacts(const SimulationState& state) {
     const auto& people = *state.management->people;
-    if (people.contacts.size() > people.employees.size())
-        throw std::invalid_argument("Contacts must come from people on the roster.");
+    if (people.contacts.size() > people.employees.size()+opening_contact_limit)
+        throw std::invalid_argument("The contact register exceeds its supported size.");
     std::set<std::string_view> people_seen;
     for (const auto& contact : people.contacts) {
-        const auto* found = employee(state, contact.person);
-        if (!found || !people_seen.insert(contact.person).second || contact.exchanged_on < found->ready_on ||
-            contact.exchanged_on > state.date || (found->departed_on && contact.exchanged_on > *found->departed_on) ||
-            contact.messages.size() > message_limit)
-            throw std::invalid_argument("A contact must record a real meeting with an onboarded employee.");
+        const auto* found = contact.opening?nullptr:employee(state, contact.person);
+        if (!people_seen.insert(contact.person).second || contact.exchanged_on > state.date || contact.messages.size() > message_limit)
+            throw std::invalid_argument("The contact has an invalid identity, date or history size.");
+        if (contact.opening) {
+            const auto& opening=*contact.opening;
+            if (!contact.person.starts_with(opening_contact_prefix) || contact.person.size()<=opening_contact_prefix.size() ||
+                contact.person.size()>72 || contact.exchanged_on!=people.starts_on ||
+                (opening.source!="recruiter" && opening.source!="application" && opening.source!="introduction" && opening.source!="pitch") ||
+                (opening.outcome!="signed" && opening.outcome!="declined" && opening.outcome!="rejected" && opening.outcome!="unsigned"))
+                throw std::invalid_argument("An opening conversation must record a supported source and outcome.");
+        } else if (!found || contact.exchanged_on < found->ready_on || (found->departed_on && contact.exchanged_on > *found->departed_on)) {
+            throw std::invalid_argument("An employee contact must record a meeting with an onboarded employee.");
+        }
         auto previous = contact.exchanged_on;
         std::set<std::pair<OrdinalDay,std::string_view>> asked;
         for (const auto& message : contact.messages) {
-            if (message.day < previous || message.day > state.date ||
-                (message.topic != "check_in" && message.topic != "workstation") ||
-                (message.reply == "former" && (!found->departed_on || message.day < *found->departed_on)) ||
-                !asked.emplace(message.day,message.topic).second || !valid_reply(message))
+            const auto valid=contact.opening?valid_opening_reply(*contact.opening,message):
+                (message.topic=="check_in" || message.topic=="workstation") && valid_reply(message) &&
+                (message.reply!="former" || (found->departed_on && message.day>=*found->departed_on));
+            if (message.day < previous || message.day > state.date || !asked.emplace(message.day,message.topic).second || !valid)
                 throw std::invalid_argument("A conversation has an invalid date, topic or reply.");
             previous = message.day;
         }

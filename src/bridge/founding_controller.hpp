@@ -62,6 +62,9 @@ public:
     QStringList pronounOptions() const;
     void reset();
     [[nodiscard]] content::FoundingSelection selection() const;
+    [[nodiscard]] std::vector<core::PeopleContact> openingContacts() const;
+    static QVariantMap presentOffer(const content::FoundingCatalog&,content::FoundingSelection,
+                                    const QString& id,const QString& source,const QString& status);
 signals:
     void changed();
     void beatChanged();

@@ -422,6 +422,9 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
         invalid("The founding executive name differs from the saved campaign identity");
     if ((world.simulation.civic || world.society || world.authority || world.simulation.frontier) && world.scenario_id.empty())
         invalid("Institutions, society and frontier research require an authored source scenario");
+    if ((!world.founding || world.scenario_id.empty()) && world.simulation.management && world.simulation.management->people &&
+        std::ranges::any_of(world.simulation.management->people->contacts,[](const auto& contact){return contact.opening.has_value();}))
+        invalid("Opening conversations require a saved founding biography.");
     if (!world.scenario_id.empty()) {
         const auto* definition=program.collection.find(world.scenario_id);
         const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
@@ -435,6 +438,22 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             if(!world.difficulty.empty()) invalid("Founding conditions cannot be overridden by a difficulty setting.");
             if(world.simulation.management && world.simulation.management->people) {
                 const auto& management=*world.simulation.management;
+                std::size_t opening_contacts=0;
+                for(const auto& contact:management.people->contacts) if(contact.opening) {
+                    if (++opening_contacts>core::opening_contact_limit || !contact.person.starts_with(core::opening_contact_prefix))
+                        invalid("Invalid register of opening conversations.");
+                    const auto id=std::string_view{contact.person}.substr(core::opening_contact_prefix.size());
+                    const auto& opening=*contact.opening;
+                    const bool career=id=="alder";
+                    const bool signed_at_opening=career?world.founding->route=="hired_ceo":
+                        std::ranges::find(world.founding->backers,id)!=world.founding->backers.end();
+                    if ((opening.outcome=="signed")!=signed_at_opening ||
+                        (career && opening.source!="application" && opening.source!="recruiter") ||
+                        (opening.outcome=="rejected" && (!career || opening.source!="application")) ||
+                        (!career && (std::ranges::find(scenario->founding->backers,id,&content::FoundingOption::id)==scenario->founding->backers.end() ||
+                            (opening.source!="pitch" && (opening.source!="introduction" || id!="frontier")))))
+                        invalid("The opening conversation must match a real founding option and its signed outcome.");
+                }
                 if(management.catalog.people && management.catalog.people->mood && management.people->founding_prestige!=std::min(10U,terms.prestige))
                     invalid("The founder's reputation differs from the saved biography.");
                 for(const auto& employee:management.people->employees) if(employee.terms.profile.role=="Founder / researcher") {

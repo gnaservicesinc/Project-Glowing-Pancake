@@ -5,6 +5,7 @@
 #include <optional>
 #include <map>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <variant>
 #include <utility>
@@ -95,10 +96,17 @@ struct ContactMessage {
     int mood=-1;
     auto operator<=>(const ContactMessage&) const = default;
 };
+inline constexpr std::string_view opening_contact_prefix="opening/";
+inline constexpr std::size_t opening_contact_limit=17;
+struct OpeningConversation {
+    std::string source, outcome;
+    auto operator<=>(const OpeningConversation&) const = default;
+};
 struct PeopleContact {
     std::string person;
     OrdinalDay exchanged_on{0};
     std::vector<ContactMessage> messages;
+    std::optional<OpeningConversation> opening{};
     auto operator<=>(const PeopleContact&) const = default;
 };
 struct PeopleState {

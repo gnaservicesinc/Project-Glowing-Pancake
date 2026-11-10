@@ -13,6 +13,7 @@ struct ScenarioOptions {
     std::string charter;
     std::string difficulty;
     std::optional<content::FoundingSelection> founding{};
+    std::vector<core::PeopleContact> opening_contacts{};
 };
 
 // Initialize implemented foundation fields from validated authored data. No

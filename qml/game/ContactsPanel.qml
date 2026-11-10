@@ -10,7 +10,9 @@ ColumnLayout {
     property int room: 1
     property string selected: ""
     property string pendingTopic: ""
+    property var messageRows: []
     signal revealRequested(Item target)
+    signal governanceRequested()
     readonly property var rooms: campaign.world.headquarters.rooms || []
     readonly property var contacts: {
         campaign.world.reviewToken
@@ -28,18 +30,20 @@ ColumnLayout {
         pendingTopic = topic
         campaign.world.messageContact(selected, topic, conversationRoom, campaign.world.reviewToken)
     }
-    onThreadChanged: {
-        if ((pendingTopic === "check_in" && thread.checkedIn) ||
-            (pendingTopic === "workstation" && thread.checkedWorkstation)) {
-            pendingTopic = ""
-            Qt.callLater(() => {
-                const latest = messageCards.itemAt(0)
-                if (visible && latest) {
-                    latest.forceActiveFocus(Qt.OtherFocusReason)
-                    revealRequested(latest)
-                }
-            })
+    function revealReply() {
+        if (!pendingTopic || !(thread.topics || []).some(topic => topic.id === pendingTopic && topic.asked)) return
+        const latest = messageCards.itemAt(0)
+        if (!latest || latest.modelData.topic !== pendingTopic) return
+        pendingTopic = ""
+        if (visible) {
+            latest.forceActiveFocus(Qt.OtherFocusReason)
+            revealRequested(latest)
         }
+    }
+    onThreadChanged: {
+        const rows = (thread.messages || []).slice().reverse()
+        if (JSON.stringify(rows) !== JSON.stringify(messageRows)) messageRows = rows
+        Qt.callLater(revealReply)
     }
     onSelectedChanged: pendingTopic = ""
 
@@ -97,10 +101,25 @@ ColumnLayout {
                     id: portraitRow
                     spacing: 8
                     Image {
+                        visible: !!modelData.portrait
                         Layout.preferredWidth: panel.textSize * 1.8
                         Layout.preferredHeight: Layout.preferredWidth
-                        source: modelData.portrait
+                        source: modelData.portrait || ""
                         fillMode: Image.PreserveAspectFit
+                    }
+                    Rectangle {
+                        visible: !modelData.portrait
+                        Layout.preferredWidth: panel.textSize * 1.8
+                        Layout.preferredHeight: Layout.preferredWidth
+                        radius: 6
+                        color: "#adbea2"
+                        Label {
+                            anchors.centerIn: parent
+                            text: modelData.initials || ""
+                            color: "#193136"
+                            font.pixelSize: panel.textSize * 0.85
+                            font.bold: true
+                        }
                     }
                     Copy { text: modelData.name }
                 }
@@ -114,6 +133,7 @@ ColumnLayout {
         spacing: 8
         Copy { text: panel.thread.name || ""; font.bold: true; font.pixelSize: panel.textSize * 1.22 }
         Copy { text: panel.thread.role || ""; color: "#9fc2b5" }
+        Copy { visible: !!panel.thread.status; text: panel.thread.status || ""; color: "#bddda7" }
         WorldButton {
             objectName: "exchangeContactButton"
             visible: panel.inPerson && !panel.thread.exchanged
@@ -127,24 +147,32 @@ ColumnLayout {
             visible: !!panel.thread.exchanged
             Layout.fillWidth: true
             spacing: 8
-            WorldButton {
-                objectName: "contactCheckIn"
-                text: qsTr("How's work going?")
-                textSize: panel.textSize
-                enabled: panel.editable && !panel.thread.checkedIn
-                onClicked: panel.ask("check_in")
+            Repeater {
+                model: ["check_in", "workstation", "opening_terms", "board_role"]
+                WorldButton {
+                    required property string modelData
+                    readonly property var option: (panel.thread.topics || []).find(topic => topic.id === modelData)
+                    visible: !!option
+                    objectName: option?.button || ""
+                    text: option?.label || ""
+                    textSize: panel.textSize
+                    width: Math.min(implicitWidth, panel.width)
+                    enabled: panel.editable && !!option && !option.asked
+                    onClicked: panel.ask(modelData)
+                }
             }
-            WorldButton {
-                objectName: "contactWorkstation"
-                text: qsTr("Ask about their computer")
-                textSize: panel.textSize
-                enabled: panel.editable && !panel.thread.checkedWorkstation
-                onClicked: panel.ask("workstation")
-            }
+        }
+        WorldButton {
+            objectName: "contactReviewBoard"
+            visible: !!panel.thread.governance
+            text: qsTr("Open company governance")
+            textSize: panel.textSize
+            onClicked: panel.governanceRequested()
         }
         Repeater {
             id: messageCards
-            model: (panel.thread.messages || []).slice().reverse()
+            model: panel.messageRows
+            onItemAdded: (index, item) => { if (index === 0) Qt.callLater(panel.revealReply) }
             Rectangle {
                 required property var modelData
                 objectName: "contactMessageCard"
@@ -161,7 +189,7 @@ ColumnLayout {
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.margins: 10
-                    Copy { text: qsTr("%1 · You").arg(modelData.date); color: "#a7c4b9"; font.pixelSize: panel.textSize*0.86 }
+                    Copy { text: modelData.incoming ? qsTr("Before signing · %1").arg(panel.thread.name) : qsTr("%1 · You").arg(modelData.date || ""); color: "#a7c4b9"; font.pixelSize: panel.textSize*0.86 }
                     Copy { text: modelData.prompt; font.bold: true }
                     Copy { text: modelData.reply }
                 }

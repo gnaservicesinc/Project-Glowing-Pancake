@@ -168,13 +168,25 @@ QVariantMap FoundingController::homeOffer(const QString& id) const {
     const auto reply=form_.value("home_replies").toMap().value(id).toMap();
     auto status=reply.value("status").toString();
     auto source=reply.value("source").toString();
-    auto selected=selection();
+    const auto selected=selection();
+    if(status.isEmpty() && id=="alder" && selected.leg=="genius") {status="offered";source="recruiter";}
+    if(status.isEmpty() && id=="frontier" && selected.leg=="genius" && selected.family!="rich" &&
+        selected.route!="hired_ceo" && selected.route!="partnership" && selected.backers.empty()) {
+        status="offered";source="introduction";
+    }
+    const bool selected_in_draft=id=="alder"?selected.route=="hired_ceo":
+        std::ranges::find(selected.backers,id.toStdString())!=selected.backers.end();
+    if(selected_in_draft && status=="considering") status="selected";
+    return presentOffer(*catalog_,selected,id,source,status);
+}
+
+QVariantMap FoundingController::presentOffer(const content::FoundingCatalog& catalog,content::FoundingSelection selected,
+                                            const QString& id,const QString& source,const QString& status) {
+    if(!catalog.opening) return {};
     QVariantMap row{{"id",id}};
     if (id=="alder") {
-        const auto route=std::ranges::find(catalog_->routes,std::string_view{"hired_ceo"},&content::FoundingOption::id);
-        if (route==catalog_->routes.end()) return {};
-        if (status.isEmpty() && selected.leg=="genius") {status="offered";source="recruiter";}
-        if (selected.route=="hired_ceo" && status=="considering") status="selected";
+        const auto route=std::ranges::find(catalog.routes,std::string_view{"hired_ceo"},&content::FoundingOption::id);
+        if (route==catalog.routes.end()) return {};
         row["kind"]="career";
         row["name"]=tr("Leena Rao");
         row["organization"]=tr("Alder Research · Recruiting");
@@ -186,16 +198,11 @@ QVariantMap FoundingController::homeOffer(const QString& id) const {
                 ? tr("Your work reached our board before your résumé did. We need someone who can decide what is worth building. Would you consider leading Alder Research?")
                 : tr("The board reviewed your application and would like to offer you the chief executive role. I can send the agreement for your signature.");
         row["terms"]=tr("%1 in company cash · %2 inherited employees · shared office · %3% equity · %4 per month salary.")
-            .arg(money(route->capital_cents)).arg(catalog_->opening->inherited_staff)
-            .arg(percent(catalog_->opening->ceo_equity_bp),money(catalog_->founder_salary_cents));
+            .arg(money(route->capital_cents)).arg(catalog.opening->inherited_staff)
+            .arg(percent(catalog.opening->ceo_equity_bp),money(catalog.founder_salary_cents));
     } else {
-        const auto backer=std::ranges::find(catalog_->backers,id.toStdString(),&content::FoundingOption::id);
-        if (backer==catalog_->backers.end()) return {};
-        if (status.isEmpty() && id=="frontier" && selected.leg=="genius" && selected.family!="rich" &&
-            selected.route!="hired_ceo" && selected.route!="partnership" && selected.backers.empty()) {
-            status="offered";source="introduction";
-        }
-        if (std::ranges::find(selected.backers,backer->id)!=selected.backers.end() && status=="considering") status="selected";
+        const auto backer=std::ranges::find(catalog.backers,id.toStdString(),&content::FoundingOption::id);
+        if (backer==catalog.backers.end()) return {};
         const auto legal=backer->legal_form.empty()?selected.legal_form:backer->legal_form;
         const bool nonprofit=legal=="nonprofit";
         prepare_offer(selected,legal,nonprofit?"mission_director":"investment");
@@ -213,8 +220,8 @@ QVariantMap FoundingController::homeOffer(const QString& id) const {
             selected.personal_investment_cents=0;
             selected.backers.clear();
             try {
-                const auto base=content::founding_terms(*catalog_,selected,false);
-                row["terms"]=tr("%1 · %2 at signing · %3").arg(nonprofit?tr("Nonprofit"):tr("Corporation"),money(backer_amount(*catalog_,base,*backer)),
+                const auto base=content::founding_terms(catalog,selected,false);
+                row["terms"]=tr("%1 · %2 at signing · %3").arg(nonprofit?tr("Nonprofit"):tr("Corporation"),money(backer_amount(catalog,base,*backer)),
                     nonprofit?tr("one trustee seat, no equity"):tr("one board seat, %1% equity").arg(percent(backer->shares_bp)));
             } catch (const std::exception& error) {
                 row["available"]=false;
@@ -235,6 +242,21 @@ QVariantList FoundingController::homeOffers() const {
     if (auto alder=homeOffer("alder"); !alder.isEmpty()) offers.push_back(std::move(alder));
     for (const auto& backer:catalog_->backers) offers.push_back(homeOffer(text(backer.id)));
     return offers;
+}
+
+std::vector<core::PeopleContact> FoundingController::openingContacts() const {
+    std::vector<core::PeopleContact> contacts;
+    const auto replies=form_.value("home_replies").toMap();
+    for(auto reply=replies.cbegin();reply!=replies.cend();++reply) {
+        const auto offer=homeOffer(reply.key());
+        const auto status=offer.value("status").toString();
+        if(status.isEmpty() || status=="listed") continue;
+        const auto outcome=status=="selected"?QStringLiteral("signed"):
+            status=="declined" || status=="rejected"?status:QStringLiteral("unsigned");
+        contacts.push_back({std::string{core::opening_contact_prefix}+reply.key().toStdString(),starts_on_,{},
+            core::OpeningConversation{offer.value("source").toString().toStdString(),outcome.toStdString()}});
+    }
+    return contacts;
 }
 
 QString FoundingController::commitHomeDraft(QVariantMap next) {

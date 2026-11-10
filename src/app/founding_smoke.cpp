@@ -19,6 +19,13 @@ QQuickItem* find(QQuickItem* root, const QString& name) {
     return nullptr;
 }
 
+QQuickItem* find_visible(QQuickItem* root, const QString& name) {
+    if(!root->isVisible()) return nullptr;
+    if(root->objectName()==name) return root;
+    for(auto* child:root->childItems()) if(auto* result=find_visible(child,name)) return result;
+    return nullptr;
+}
+
 bool press(QQuickWindow& window, QQuickItem* item, Qt::Key code = Qt::Key_Space) {
     if (!item || !item->isVisible() || !item->isEnabled()) return false;
     item->forceActiveFocus(Qt::TabFocusReason);
@@ -55,10 +62,11 @@ QString fitting_error(QQuickItem& item, const QRectF& viewport) {
 
 void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
     pgp::persistence::LocalPaths paths, QString screenshot) {
-    enum class Phase { launch, opening, birth, compact, questions, office, step, reload, done };
+    enum class Phase { launch, opening, birth, compact, questions, office, step, reload,
+        company_messages, select_contact, question_contact, verify_contact, done };
     struct State {
         Phase phase = Phase::launch;
-        int ticks = 0,home_phase=0;
+        int ticks = 0,home_phase=0,frames=0;
         bool saw_opening_animation = false;
         bool retried_name = false;
         bool edited_seed = false;
@@ -76,6 +84,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
         const auto fail = [&](const QString& why) {
             std::cerr << "Prologue UI [" << id.toStdString() << "]: " << why.toStdString()
                       << " " << campaign.notice().toStdString() << '\n';
+            if(!screenshot.isEmpty()) window.grabWindow().save(screenshot+".failure.png");
             timer->stop();
             QCoreApplication::exit(3);
         };
@@ -282,7 +291,47 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                     fail("Fresh export and automatic day continuation must reload exactly");return;
                 }
             } catch(const std::exception& error) {fail(QString::fromUtf8(error.what()));return;}
-            state->phase = Phase::done;
+            campaign.setTextScalePercent(200);
+            state->phase = Phase::company_messages;
+            break;
+        }
+        case Phase::company_messages:
+            if(window.visibility()!=QWindow::Windowed || window.size()!=QSize{650,480}) {
+                window.showNormal();window.resize(650,480);return;
+            }
+            if(!click("messagesTab")) {fail("Open the company Messages app");return;}
+            state->phase=Phase::select_contact;
+            break;
+        case Phase::select_contact: {
+            const auto& contacts=campaign.snapshot()->checkpoint.world.simulation.management->people->contacts;
+            if(contacts.size()!=2 || !press(window,find_visible(window.contentItem(),"contactPerson_opening/commercial"))) {
+                fail("Opening conversations must carry into the company contact list");return;
+            }
+            state->phase=Phase::question_contact;
+            break;
+        }
+        case Phase::question_contact:
+            if(!press(window,find_visible(window.contentItem(),"contactOpeningTerms")) ||
+                find_visible(window.contentItem(),"contactCheckIn") || find_visible(window.contentItem(),"contactBoardRole")) {
+                fail("The declined investor must expose a relevant follow-up");return;
+            }
+            state->phase=Phase::verify_contact;
+            state->frames=0;
+            break;
+        case Phase::verify_contact: {
+            if(++state->frames<3)return;
+            const auto& checkpoint=campaign.snapshot()->checkpoint;
+            const auto& contacts=checkpoint.world.simulation.management->people->contacts;
+            const auto& history=contacts.back().messages;
+            auto* reply=find_visible(window.contentItem(),"contactMessageCard");
+            auto* viewport=find_visible(window.contentItem(),"managementScroll");
+            pgp::persistence::CurrentCampaign current{paths.saves_directory/"continuing"};
+            if(history.size()!=1 || history.back().reply!="declined" || !reply || !viewport || !reply->hasActiveFocus() ||
+                reply->mapToItem(viewport,{0,reply->height()}).y()>viewport->height()+1 ||
+                current.resume(*campaign.snapshot()->content)!=std::optional{checkpoint} || !capture(".continued-inbox")) {
+                fail("The visible company reply must use the recorded decline and reload with both opening contacts");return;
+            }
+            state->phase=Phase::done;
             break;
         }
         case Phase::done:
@@ -290,7 +339,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 fail("Exact save continuation"); return;
             }
             std::cout << "Prologue UI passed: hospital opening, resized 650×480 canvas, editable name, branching art and palette, "
-                         "eight chapters, saved application and investor conversations at 200% text, appearance, paused office and fresh-save/day continuation\n";
+                         "eight chapters, saved application and investor conversations at 200% text, appearance, paused office, continued company inbox and fresh-save/day continuation\n";
             timer->stop();
             QCoreApplication::exit(0);
             break;

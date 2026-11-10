@@ -59,8 +59,15 @@ HQ conversations use actual room and desk assignments. The founder can exchange
 details with an onboarded employee and then use a tablet or another working
 device to revisit the conversation. Dated mood and equipment replies persist,
 and available company laptops can be issued from the same view.
+Opening recruiter, application and funding threads now carry into company
+Messages with their original message and final signed, declined, rejected or
+unsigned outcome. Follow-up replies confirm the opening agreement and the
+organization’s current board seat. Unsigned opening offers close at formation.
+Focused checks cover agreement validation, device/topic refusals and reload.
 The Release software walkthrough covers contact exchange, the visible latest
 reply in both views at 650 × 480 and 200% text, laptop issuance and fresh reload.
+The home walkthrough also checks the opening conversations and a saved company
+reply at the same compact size and text scale.
 
 Focused identity/investment, headquarters, creative-team and workplace-research
 checks pass, including refusal and fresh reload. Content review validates 24

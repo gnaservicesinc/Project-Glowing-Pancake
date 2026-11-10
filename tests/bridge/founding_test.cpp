@@ -91,6 +91,51 @@ int main(int argc,char** argv) {
         const auto funded_terms=content::founding_terms(catalog,funded);
         check(offer(setup,"commercial").value("status")=="selected" && funded_terms.backer_shares.at("commercial")==2000 &&
             funded_terms.contributed_cents>terms.contributed_cents && setup.signingError().isEmpty(),"The selected offer must move capital and equity into the actual founding terms.");
+        runtime::ScenarioOptions funded_options;
+        funded_options.founding=funded;
+        funded_options.opening_contacts=setup.openingContacts();
+        funded_options.identity=runtime::CampaignIdentity{"Test lab","Alex Vale","xe/xem"};
+        auto financed=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},funded_options);
+        financed.world.enabled_flows=std::vector<std::string>{};
+        runtime::Runtime conversation{program,financed};
+        check(conversation.prepare_opening(conversation.current_state().world.simulation.revision).accepted(),"The contact's company must prepare its first morning.");
+        const auto send=[&](std::string id,std::string topic,std::string device="laptop",std::uint32_t room=0) {
+            return conversation.submit({conversation.current_state().world.simulation.revision,
+                core::ManagePeopleContact{core::MessagePeopleContact{std::move(id),std::move(topic),std::move(device),room}}});
+        };
+        const auto refuse=[&](std::string id,std::string topic,std::string device="laptop",std::uint32_t room=0) {
+            const auto before=conversation.current_state();
+            check(!send(std::move(id),std::move(topic),std::move(device),room).accepted() && conversation.current_state()==before,
+                "Unsupported contact topics, devices and duplicate replies must refuse atomically.");
+        };
+        refuse("opening/commercial","opening_terms","tablet");
+        refuse("opening/commercial","opening_terms","",1);
+        refuse("opening/unknown","opening_terms");
+        refuse("opening/commercial","workstation");
+        check(send("opening/commercial","opening_terms").accepted() && send("opening/commercial","board_role").accepted(),
+            "The signed investor must answer about the real agreement and board.");
+        check(conversation.current_state().world.simulation.management->people->contacts.back().messages.back().reply=="has_seat",
+            "The investor's board reply must reflect the actual seat created by their signed agreement.");
+        refuse("opening/commercial","opening_terms");
+        refuse("opening/alder","board_role");
+        check(send("opening/alder","opening_terms").accepted(),"An unsigned invitation must remain accessible with its recorded outcome.");
+        const auto update=[&](const runtime::Checkpoint& saved) {
+            world.update(std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{2,saved,{},true,false}),program,true);
+        };
+        update(conversation.current_state());
+        const auto commercial=world.contactThread("opening/commercial");
+        check(world.contacts().size()==static_cast<qsizetype>(funded_options.opening_contacts.size()) && commercial.value("status")=="Signed at opening" &&
+            commercial.value("messages").toList().back().toMap().value("reply").toString().contains("seat on the current board"),
+            "The company app must list the original contact, signed terms and real board reply.");
+        const auto continued=persistence::decode_save(program,persistence::encode_save(program,conversation.current_state()));
+        check(continued.checkpoint==conversation.current_state(),"Opening conversations and replies must reload exactly.");
+        update(continued.checkpoint);
+        check(world.contactThread("opening/commercial")==commercial,"Reload must preserve the projected conversation and topic states.");
+        auto forged=financed;
+        forged.world.simulation.management->people->contacts.front().opening->outcome="signed";
+        bool rejected_forgery=false;
+        try {runtime::validate_checkpoint(program,forged);}catch(const std::invalid_argument&){rejected_forgery=true;}
+        check(rejected_forgery,"A saved contact must not invent a signed agreement absent from the founding selection.");
         setup.setField("route","hired_ceo");
         check(setup.selection().route=="investment","A home form cannot bypass the recruiter's reply.");
         check(setup.contactHomeOffer("alder").isEmpty() && setup.respondHomeOffer("alder","accept").isEmpty(),"An active invitation can open the appointment paperwork.");
@@ -101,6 +146,7 @@ int main(int argc,char** argv) {
             appointment.personal_contribution_cents==0,"Accepting the appointment must use the existing lab's capitalization and leave personal cash alone.");
         runtime::ScenarioOptions appointment_options;
         appointment_options.founding=setup.selection();
+        appointment_options.opening_contacts=setup.openingContacts();
         appointment_options.identity=runtime::CampaignIdentity{"Alder Research","Alex Vale","xe/xem"};
         const auto appointed=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},appointment_options);
         const auto& lab=appointed.world.simulation;
@@ -108,6 +154,10 @@ int main(int argc,char** argv) {
             lab.succession->personal_cash==core::Cents{appointment.personal_remaining_cents} &&
             persistence::decode_save(program,persistence::encode_save(program,appointed)).checkpoint==appointed,
             "The appointment from the inbox must open and reload an existing lab with its staff and separate personal savings.");
+        update(appointed);
+        check(world.contactThread("opening/alder").value("status")=="Signed at opening" &&
+            world.contactThread("opening/commercial").value("status")=="Expired at opening",
+            "Accepting Alder must preserve the signed appointment and the unsigned investor conversation.");
         check(setup.respondHomeOffer("alder","later").isEmpty() && setup.selection().route=="investment" &&
             setup.form().value("company")=="Daybreak Research" && offer(setup,"commercial").value("status")=="considering", "Setting a selected appointment aside must restore the player's own company draft and preserve conversations.");
         std::cout<<"Structured identity, appearance editing, current drafts, founder profile and route dependencies passed\n";

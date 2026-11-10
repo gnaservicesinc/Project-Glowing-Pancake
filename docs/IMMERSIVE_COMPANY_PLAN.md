@@ -128,8 +128,12 @@ keeps recruiter invitations, lab application outcomes and funding replies.
 Actual Genius receives an Alder invitation, and Kestrel approaches a genius
 without family wealth. Accepting an offer selects its real terms for signing.
 Thinking it over keeps it open, and declining removes it from the paperwork.
-Continuing these relationships after formation, media contacts and named
-cofounder personalities and mandates remain open.
+At signing these threads enter the company’s Messages app with the original
+message and recorded outcome. Follow-up replies confirm the opening agreement
+and, for signed agreements, the organization’s current board seat. Unsigned
+opening offers close when the founder commits to their company. New funding
+negotiations with these contacts, media contacts and named cofounder
+personalities and mandates remain open.
 Employee mood uses current pay, the company’s publications, the CEO’s biography
 and record in office, mission and duties, coworker affinity, temperament and
 active amenities. An installed amenity type contributes once for employees with

@@ -123,6 +123,7 @@ ColumnLayout {
         showHeading:!panel.messagesOnly
         textSize:panel.textSize
         onRevealRequested:target=>panel.revealRequested(target)
+        onGovernanceRequested:panel.openApp("office","governance")
     }
     ManagerPanel {Layout.fillWidth:true;visible:panel.page==="branches" && Object.keys(campaign.world.operationsManagement).length>0;textSize:panel.textSize;onProfileRequested:person=>{profileDialog.person=person;profileDialog.open()}}
     Repeater {

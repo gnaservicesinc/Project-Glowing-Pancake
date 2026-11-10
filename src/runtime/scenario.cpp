@@ -133,6 +133,16 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     }
     core::initialize_people(world.simulation,seed,world.identity?world.identity->founder_name:std::string{},world.identity?world.identity->founder_pronouns:std::string{},
         world.founding && world.founding->researcher=="founder",founding_prestige,std::move(recruiting_mission));
+    if(!options.opening_contacts.empty()) {
+        if(!world.founding || !world.simulation.management || !world.simulation.management->people)
+            throw std::invalid_argument("Opening conversations require an authored founder campaign with contacts.");
+        for(auto& contact:options.opening_contacts) {
+            if(!contact.opening || !contact.messages.empty())
+                throw std::invalid_argument("Start with pre-company conversations and no company replies.");
+            contact.exchanged_on=scenario->starts_on;
+        }
+        world.simulation.management->people->contacts=std::move(options.opening_contacts);
+    }
     if(world.founding && world.simulation.management && world.simulation.management->people) {
         for(auto& employee:world.simulation.management->people->employees) {
             auto& p=employee.terms.profile;

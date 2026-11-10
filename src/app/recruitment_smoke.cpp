@@ -36,6 +36,7 @@ void schedule_recruitment_smoke(QQuickWindow &window, pgp::bridge::CampaignContr
         const auto fail = [&](const char *reason) {
             std::cerr << "Recruiting phase " << run->phase << ": " << reason << " · " << campaign.notice().toStdString()
                       << '\n';
+            if(!screenshot.isEmpty()) window.grabWindow().save(screenshot+".failure.png");
             timer->stop();
             QCoreApplication::exit(3);
         };
@@ -65,8 +66,14 @@ void schedule_recruitment_smoke(QQuickWindow &window, pgp::bridge::CampaignContr
         const auto latest_reply_visible = [&](const QString &viewport_name) {
             const auto *viewport = item(viewport_name);
             const auto *reply = item("contactMessageCard");
-            if (!viewport || !reply || !reply->hasActiveFocus()) return false;
+            if (!viewport || !reply || !reply->hasActiveFocus()) {
+                std::cerr << "Reply focus " << (reply && reply->hasActiveFocus()) << " · current "
+                    << (window.activeFocusItem()?window.activeFocusItem()->objectName().toStdString():"none") << '\n';
+                return false;
+            }
             const auto bottom = reply->mapToItem(viewport, {0, reply->height()}).y();
+            if(bottom<=0 || bottom>viewport->height()+1)
+                std::cerr << "Reply bottom " << bottom << " · viewport " << viewport->height() << '\n';
             return bottom > 0 && bottom <= viewport->height() + 1;
         };
         if (++run->ticks > 500) {
@@ -281,8 +288,10 @@ void schedule_recruitment_smoke(QQuickWindow &window, pgp::bridge::CampaignContr
                 fail("Ask a saved contact about their day");
                 return;
             }
+            run->frames = 0;
             break;
         case 25:
+            if (++run->frames < 3) return;
             if (roster.contacts.front().messages.size() != 1 || !latest_reply_visible("roomConversationScroll") || !capture("room-conversation") ||
                 !key("hqCloseTalk")) {
                 fail("Read and close the room conversation");
@@ -302,8 +311,10 @@ void schedule_recruitment_smoke(QQuickWindow &window, pgp::bridge::CampaignContr
                 fail("Open the same contact through the tablet and ask about their computer");
                 return;
             }
+            run->frames = 0;
             break;
         case 28: {
+            if (++run->frames < 3) return;
             const auto &history = roster.contacts.front().messages;
             if (history.size() != 2 || history.front().topic != "check_in" || history.back().topic != "workstation" ||
                 !latest_reply_visible("managementScroll") || !capture("tablet-messages")) {

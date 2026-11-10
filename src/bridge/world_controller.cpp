@@ -1,4 +1,5 @@
 #include "world_controller.hpp"
+#include "founding_controller.hpp"
 #include <pgp/persistence/sha256.hpp>
 #include <QFile>
 #include <QResource>
@@ -44,6 +45,17 @@ QVariantMap profileRow(const core::PersonProfile& p,core::OrdinalDay now,QString
             .arg(q(p.gender),q(p.pronouns)).arg(core::from_ordinal(now).year-p.birth_year)
             .arg(p.experience+static_cast<unsigned>(std::max(0,core::from_ordinal(now).year-core::from_ordinal(p.applied_on).year)))
             .arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation).arg(status)}, {"bio",q(p.bio)}};
+}
+QVariantMap openingOffer(const runtime::CompiledProgram* program,const runtime::WorldState& world,const core::PeopleContact& contact) {
+    if(!program || !world.founding || !contact.opening) return {};
+    const auto* definition=program->collection.find(world.scenario_id);
+    const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
+    if(!scenario || !scenario->founding) return {};
+    return FoundingController::presentOffer(*scenario->founding,*world.founding,
+        q(contact.person.substr(core::opening_contact_prefix.size())),q(contact.opening->source),q(contact.opening->outcome));
+}
+QVariantMap topic(QString id,QString button,QString label,bool asked) {
+    return {{"id",std::move(id)},{"button",std::move(button)},{"label",std::move(label)},{"asked",asked}};
 }
 QString city(std::string_view state) {
     static const QJsonObject cities=[] {
@@ -273,8 +285,17 @@ bool WorldController::contactsAvailable() const {
 QVariantList WorldController::contacts() const {
     QVariantList rows;
     if(!contactsAvailable()) return rows;
-    const auto& roster=*snapshot_->checkpoint.world.simulation.management->people;
+    const auto& world=snapshot_->checkpoint.world;
+    const auto& roster=*world.simulation.management->people;
     for(const auto& contact:roster.contacts) {
+        if(contact.opening) {
+            const auto offer=openingOffer(program_,world,contact);
+            if(offer.isEmpty()) continue;
+            const auto name=offer.value("name").toString();
+            rows.push_back(QVariantMap{{"id",q(contact.person)},{"name",name},{"role",offer.value("organization")},
+                {"initials",name.section(' ',0,0).left(1)+name.section(' ',1,1).left(1)}});
+            continue;
+        }
         const auto found=std::ranges::find_if(roster.employees,[&](const auto& row){return row.terms.profile.id==contact.person;});
         if(found==roster.employees.end()) continue;
         const auto& person=found->terms.profile;
@@ -298,12 +319,49 @@ QVariantList WorldController::roomContacts(int room) const {
 
 QVariantMap WorldController::contactThread(QString person) const {
     if(!contactsAvailable() || person.isEmpty()) return {};
-    const auto& state=snapshot_->checkpoint.world.simulation;
+    const auto& world=snapshot_->checkpoint.world;
+    const auto& state=world.simulation;
     const auto& roster=*state.management->people;
     const auto id=person.toStdString();
+    const auto contact=std::ranges::find(roster.contacts,id,&core::PeopleContact::person);
+    if(contact!=roster.contacts.end() && contact->opening) {
+        const auto offer=openingOffer(program_,world,*contact);
+        if(offer.isEmpty()) return {};
+        const auto& outcome=contact->opening->outcome;
+        const bool signed_offer=outcome=="signed";
+        const bool alder=id==std::string{core::opening_contact_prefix}+"alder";
+        const auto original=offer.value("body").toString();
+        QVariantList messages{QVariantMap{{"incoming",true},{"prompt",offer.value("subject")},
+            {"reply",outcome=="rejected"?original:original+"\n\n"+offer.value("terms").toString()}}};
+        const auto opening_label=tr("Confirm the opening agreement");
+        const auto board_label=tr("Ask about their current board role");
+        bool checked_opening=false,checked_board=false;
+        for(const auto& message:contact->messages) {
+            const bool opening=message.topic=="opening_terms";
+            QString reply;
+            if(message.reply=="signed") reply=tr("We signed the agreement in this thread. Those terms applied when your company opened.");
+            else if(message.reply=="declined") reply=tr("You declined our opening offer. There is no agreement to carry forward.");
+            else if(message.reply=="rejected") reply=tr("The leadership application closed before your company began.");
+            else if(message.reply=="unsigned") reply=tr("The opening offer closed when you signed other paperwork.");
+            else if(message.reply=="has_seat") reply=alder?tr("Alder's existing owners have a seat on the current board."):
+                tr("Our organization has a seat on the current board under the signed agreement.");
+            else reply=tr("Our organization has no seat on the current board.");
+            messages.push_back(QVariantMap{{"topic",q(message.topic)},{"date",q(core::iso_date(message.day))},{"prompt",opening?opening_label:board_label},{"reply",reply}});
+            if(message.day==state.date) {
+                if(opening) checked_opening=true;
+                else checked_board=true;
+            }
+        }
+        QVariantList topics{topic("opening_terms","contactOpeningTerms",opening_label,checked_opening)};
+        if(signed_offer) topics.push_back(topic("board_role","contactBoardRole",board_label,checked_board));
+        const auto status=signed_offer?tr("Signed at opening"):outcome=="declined"?tr("Declined before signing"):
+            outcome=="rejected"?tr("Application closed"):tr("Expired at opening");
+        return {{"id",person},{"name",offer.value("name")},{"role",offer.value("organization")},{"status",status},
+            {"exchanged",true},{"current",false},{"governance",signed_offer && state.management->governance.has_value()},
+            {"messages",messages},{"topics",topics}};
+    }
     const auto employee=std::ranges::find_if(roster.employees,[&](const auto& row){return row.terms.profile.id==id;});
     if(employee==roster.employees.end() || employee->terms.profile.role=="Founder / researcher") return {};
-    const auto contact=std::ranges::find(roster.contacts,id,&core::PeopleContact::person);
     QVariantList messages;
     bool checked_in=false,checked_workstation=false;
     if(contact!=roster.contacts.end()) for(const auto& message:contact->messages) {
@@ -316,7 +374,7 @@ QVariantMap WorldController::contactThread(QString person) const {
         else if(message.reply=="former") reply=tr("I've moved on from the company. Thanks for keeping in touch.");
         else reply=tr("I'm getting settled. Thanks for checking in.");
         const bool check_in=message.topic=="check_in";
-        messages.push_back(QVariantMap{{"date",q(core::iso_date(message.day))},
+        messages.push_back(QVariantMap{{"topic",q(message.topic)},{"date",q(core::iso_date(message.day))},
             {"prompt",check_in?tr("How's work going?"):tr("Do you have a working computer?")},{"reply",reply}});
         if(message.day==state.date) {
             if(check_in) checked_in=true;
@@ -324,9 +382,10 @@ QVariantMap WorldController::contactThread(QString person) const {
         }
     }
     const auto& profile=employee->terms.profile;
+    const QVariantList topics{topic("check_in","contactCheckIn",tr("How's work going?"),checked_in),
+        topic("workstation","contactWorkstation",tr("Ask about their computer"),checked_workstation)};
     return {{"id",person},{"name",q(profile.name)},{"portrait",portraitUrl(profile.portrait)},{"role",q(profile.role)},
-        {"exchanged",contact!=roster.contacts.end()},{"current",!employee->departed_on},{"checkedIn",checked_in},
-        {"checkedWorkstation",checked_workstation},{"messages",messages},
+        {"exchanged",contact!=roster.contacts.end()},{"current",!employee->departed_on},{"topics",topics},{"messages",messages},
         {"room",core::employee_contact_room(state,id)}};
 }
 

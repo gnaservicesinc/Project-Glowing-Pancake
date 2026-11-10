@@ -107,6 +107,12 @@ their computer. **Messages** opens the same saved conversation, using a working
 tablet when available. From the conversation, you can also issue a delivered,
 unassigned company laptop.
 
+Recruiter and funding conversations from the home computer also appear in
+company **Messages**. Select the sender to revisit the original message and
+confirm the recorded outcome. For signed agreements, ask about the organization’s
+current board role or open company governance. Unsigned opening offers close
+when the company begins.
+
 **New Game opens in a California maternity ward in 1997.** Continue after the
 birth narration, then answer one question at a time. Use Enter or Space to
 reveal a beat early, Tab to reach choices, and Back to revisit a decision.

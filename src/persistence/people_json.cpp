@@ -64,7 +64,8 @@ Json people_json(const core::PeopleState& p) {
     for(const auto& contact:p.contacts) {
         Json messages=Json::array();
         for(const auto& m:contact.messages) messages.push_back({{"day",m.day.value()},{"topic",m.topic},{"reply",m.reply},{"mood",m.mood}});
-        contacts.push_back({{"person",contact.person},{"exchanged_on",contact.exchanged_on.value()},{"messages",std::move(messages)}});
+        contacts.push_back({{"person",contact.person},{"exchanged_on",contact.exchanged_on.value()},{"messages",std::move(messages)},
+            {"opening",contact.opening?Json{{"source",contact.opening->source},{"outcome",contact.opening->outcome}}:Json(nullptr)}});
     }
     return {{"stream",p.stream},{"next_id",p.next_id},{"starts_on",p.starts_on.value()},{"next_recruitment",p.next_recruitment.value()},
         {"offered_pay",p.offered_pay.value()},{"mission",p.mission},{"founding_prestige",p.founding_prestige},{"applicants",std::move(applicants)},{"employees",std::move(employees)},{"known_people",std::move(known)},{"contacts",std::move(contacts)}};
@@ -82,10 +83,14 @@ core::PeopleState parse_people(const Json& j) {
         p.employees.push_back({parse_applicant(e.at("terms")),core::OrdinalDay{i64(e.at("joined_on"),"joined_on")},core::OrdinalDay{i64(e.at("ready_on"),"ready_on")},boolean(e.at("opening"),"opening"),
             e.at("departed_on").is_null()?std::nullopt:std::optional{core::OrdinalDay{i64(e.at("departed_on"),"departed_on")}}});
     }
-    array(j.at("contacts"),"contacts",256);
+    array(j.at("contacts"),"contacts",256+core::opening_contact_limit);
     for(const auto& contact:j.at("contacts")) {
-        fields(contact,"contact",{"person","exchanged_on","messages"});
-        core::PeopleContact entry{text(contact.at("person"),"person",64),core::OrdinalDay{i64(contact.at("exchanged_on"),"exchanged_on")},{}};
+        fields(contact,"contact",{"person","exchanged_on","messages","opening"});
+        core::PeopleContact entry{text(contact.at("person"),"person",72),core::OrdinalDay{i64(contact.at("exchanged_on"),"exchanged_on")},{}};
+        if(const auto& opening=contact.at("opening"); !opening.is_null()) {
+            fields(opening,"opening conversation",{"source","outcome"});
+            entry.opening=core::OpeningConversation{text(opening.at("source"),"source",24),text(opening.at("outcome"),"outcome",24)};
+        }
         array(contact.at("messages"),"messages",32);
         for(const auto& m:contact.at("messages")) {
             fields(m,"message",{"day","topic","reply","mood"});
