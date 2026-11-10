@@ -194,6 +194,11 @@ directly. Kestrel also approaches geniuses without family wealth. Review the
 terms and accept, think it over, or decline. Acceptance opens paperwork for
 review and signature. Name the company, choose its purpose, enter your personal investment
 and explicitly accept any outside funding. Choose **Use my savings** to self-fund.
+To start with a cofounder, open **Founders’ Exchange** and discuss a partnership.
+Mina Chen looks for an Actual Genius collaborator. Amara Okafor and Rafael Alvarez are available
+through wealthy family or political connections. Compare their mission, cash,
+equity, salary and board limits in **Messages**. The partner you sign with sets
+the opening mission and joins the research team and board.
 Optional bylaws add a monthly employee program and affect board approval terms.
 Uninvested savings stay personal. For startup credit, open **Redwood Mutual**
 in the browser or select **Borrow from Redwood Mutual** while forming a

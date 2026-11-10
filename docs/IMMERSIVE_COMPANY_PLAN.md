@@ -153,8 +153,12 @@ rewriting the original opening agreement. Open Field and Careful Futures now
 review nonprofit gift proposals. Gifts add institutional contributions without
 private ownership or personal income. Open Field requests a trustee seat;
 Careful Futures requires a publication and a completed independent evaluation.
-Started and self-reported tests do not qualify. Wider outside contacts, media
-contacts and named cofounder personalities and mandates remain open.
+Started and self-reported tests do not qualify. Mina Chen, Amara Okafor and
+Rafael Alvarez offer working partnerships with distinct opening missions and
+terms. Signing enters the cofounder’s contributions, ownership, salary and
+board rules into the company, and the original conversation carries into
+Messages. Wider outside contacts, media contacts and deeper relationship arcs
+remain open.
 Employee mood uses current pay, the company’s publications, the CEO’s biography
 and record in office, mission and duties, coworker affinity, temperament and
 active amenities. An installed amenity type contributes once for employees with

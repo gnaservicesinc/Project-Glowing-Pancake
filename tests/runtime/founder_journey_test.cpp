@@ -17,11 +17,11 @@ int main() {
         const auto& catalog=*scenario.founding;
         content::FoundingSelection selected;
         for(const auto& scene:catalog.scenes) selected.choices.emplace(scene.id,scene.choices.front().id);
-        const auto make=[&](content::FoundingSelection s) {
+        const auto make=[&](content::FoundingSelection s,std::optional<core::ObjectiveSelection> mission=core::ObjectiveSelection{core::ObjectiveKind::survival,{}}) {
             runtime::ScenarioOptions options;
             options.identity=runtime::CampaignIdentity{"Test research",s.first_name+" "+s.last_name,"she/her"};
             options.founding=std::move(s);
-            return runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);
+            return runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",mission,options);
         };
         content::FoundingSelection revised;
         revised.choices=selected.choices;revised.appearance=core::make_portrait(9,"founder");
@@ -92,7 +92,55 @@ int main() {
         runtime::ScenarioOptions with_difficulty;with_difficulty.founding=revised;with_difficulty.difficulty="difficulty.forgiving";
         refuses([&]{(void)runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",{},with_difficulty);});
         revised.route="partnership";
-        require(make(revised).world.simulation.management->people->employees.size()==catalog.opening->cofounder_staff,"A cofounder route supplies only its agreed founding partner.");
+        refuses([&]{(void)make(revised,std::nullopt);});
+        require(catalog.partners.size()==3,"The founder campaign must offer three distinct working cofounders.");
+        for(const auto& partner:catalog.partners) {
+            auto agreement=revised;
+            agreement.partner=partner.id;
+            agreement.family="poor";agreement.leg="charisma";
+            refuses([&]{(void)make(agreement,std::nullopt);});
+            agreement.leg=partner.access=="technical"?"genius":"political";
+            agreement.researcher=partner.access=="technical"?"founder":"none";
+            agreement.personal_investment_cents=0;
+            refuses([&]{(void)make(agreement);});
+            auto signed_opening=make(agreement,std::nullopt);
+            const auto& world=signed_opening.world;
+            const auto& state=world.simulation;
+            const auto terms=content::founding_terms(catalog,agreement);
+            require(state.cash==core::Cents{partner.capital_cents-terms.paid_setup_cents} &&
+                state.succession->personal_cash==core::Cents{terms.personal_remaining_cents},"Cofounder capital must fund the company and leave personal savings intact.");
+            const auto holding=std::ranges::find(state.accounts->holdings,"cofounder",&core::EquityHolding::holder);
+            require(holding!=state.accounts->holdings.end() && holding->shares==core::BasisPoints{partner.shares_bp},"The actual equity ledger must use the agreement.");
+            require(core::objective_key(world.objectives->selections.front().selection.primary)==partner.objective,"Signing must set the cofounder's opening mission.");
+            const auto& people=*state.management->people;
+            const auto employee=std::ranges::find_if(people.employees,[&](const auto& row){return row.terms.profile.name==partner.name;});
+            require(people.employees.size()==terms.opening_staff && employee!=people.employees.end() &&
+                core::employee_monthly_salary(state,*employee)==core::Cents{partner.monthly_salary_cents},"The signed cofounder must join the roster at the quoted salary.");
+            require(people.contacts.size()==1 && people.contacts.front().person=="opening/"+partner.id &&
+                people.contacts.front().opening->outcome=="signed","The conversation must carry into the company inbox as signed.");
+            const auto board=core::current_board(state);
+            const auto seat=std::ranges::find(board,"board."+partner.id,&core::BoardMember::id);
+            require(seat!=board.end() && seat->name==partner.name && seat->seats==partner.seats &&
+                seat->cash_floor==core::Cents{partner.cash_floor_cents} && seat->maximum_dilution==core::BasisPoints{partner.maximum_dilution_bp},"The actual board must use the disclosed cofounder terms.");
+            auto forged=signed_opening;
+            forged.world.simulation.management->people->contacts.front().opening->outcome="unsigned";
+            refuses([&]{runtime::validate_checkpoint(program,forged);});
+            signed_opening.world.enabled_flows=std::vector<std::string>{};
+            runtime::Runtime partnered{program,signed_opening};
+            require(partnered.prepare_opening(state.revision).accepted(),"The cofounder opening must prepare.");
+            const auto command=[&](core::CommandAction action) {
+                const auto result=partnered.submit({partnered.current_state().world.simulation.revision,std::move(action)});
+                require(result.accepted(),result.explanation.c_str());
+            };
+            command(core::ProposePoolExpansion{core::BasisPoints{800}});
+            const auto& governance=*partnered.current_state().world.simulation.management->governance;
+            command(core::VoteBoardMotion{governance.motions.back().id,true});
+            const auto& saved=partnered.current_state();
+            const auto& ballots=saved.world.simulation.management->governance->motions.back().ballots;
+            const auto ballot=std::ranges::find(ballots,"board."+partner.id,&core::BoardBallot::member);
+            require(ballot!=ballots.end() && ballot->seats==partner.seats && ballot->support==(partner.maximum_dilution_bp>=800),"Cofounders must actually vote according to their own dilution limits.");
+            require(persistence::decode_save(program,persistence::encode_save(program,saved)).checkpoint==saved,"Signed terms and the actual cofounder ballot must reload exactly.");
+        }
         revised.route="mission_director";revised.legal_form="nonprofit";revised.office="home";
         refuses([&]{(void)make(revised);});
         revised.backers={"safety"};

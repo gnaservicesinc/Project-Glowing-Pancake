@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.51.0-dev.1",
+  "content_version": "0.52.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -69614,6 +69614,74 @@
           "cofounder_staff": 1,
           "inherited_staff": 3
         },
+        "partners": [
+          {
+            "access": "technical",
+            "capital_cents": 28000000,
+            "cash_floor_cents": 12000000,
+            "gender": "woman",
+            "id": "partner_chen",
+            "letter": "I saw what you built when nobody was watching. I want to find out whether a small lab can demonstrate real general intelligence first. I can fund the first stretch. Show me experiments I can reproduce, and leave room in the budget to run them twice.",
+            "maximum_dilution_bp": 1000,
+            "monthly_salary_cents": 720000,
+            "name": "Mina Chen",
+            "objective": "asi",
+            "pronouns": "she/her",
+            "seats": 1,
+            "shares_bp": 1800,
+            "traits": [
+              "Social: introverted",
+              "Temperament: deliberate",
+              "Specialty: machine learning",
+              "Practice: controlled experiments",
+              "Perspective: reproducibility"
+            ]
+          },
+          {
+            "access": "connected",
+            "capital_cents": 40000000,
+            "cash_floor_cents": 24000000,
+            "gender": "woman",
+            "id": "partner_okafor",
+            "letter": "I spent a year watching public clinics wait for tools that private hospitals already had. Let’s build a lab that makes those lives better. I will invest patient money, and I will vote to keep enough of it on hand to serve the people we promised.",
+            "maximum_dilution_bp": 600,
+            "monthly_salary_cents": 850000,
+            "name": "Amara Okafor",
+            "objective": "utopia",
+            "pronouns": "she/her",
+            "seats": 2,
+            "shares_bp": 2400,
+            "traits": [
+              "Social: outgoing",
+              "Temperament: patient",
+              "Specialty: data quality",
+              "Industry: public service",
+              "Perspective: accessibility"
+            ]
+          },
+          {
+            "access": "connected",
+            "capital_cents": 65000000,
+            "cash_floor_cents": 18000000,
+            "gender": "man",
+            "id": "partner_alvarez",
+            "letter": "People I know are already planning who will steer the AI age. I want us at that table. I can bring serious capital and work beside you, but I want two votes when we decide who else gets a stake.",
+            "maximum_dilution_bp": 1600,
+            "monthly_salary_cents": 1050000,
+            "name": "Rafael Alvarez",
+            "objective": "domination",
+            "pronouns": "he/him",
+            "seats": 2,
+            "shares_bp": 3500,
+            "traits": [
+              "Social: outgoing",
+              "Temperament: adventurous",
+              "Specialty: operations",
+              "Industry: logistics",
+              "Collaboration: open demos"
+            ]
+          }
+        ],
         "prestige_finance_bp": 20,
         "researchers": [
           {
@@ -69662,17 +69730,17 @@
         "routes": [
           {
             "buzz": 0,
-            "capital_cents": 30000000,
-            "detail": "$300,000 from a cofounder for 20%; shared office and payroll.",
+            "capital_cents": 0,
+            "detail": "Review an individual cofounder offer. Your agreement sets the opening mission, contribution, salary, ownership and board votes.",
             "family": "",
             "fee_cents": 0,
             "id": "partnership",
             "leg": "",
             "legal_form": "corporation",
             "monthly_cents": 0,
-            "name": "Found a small partnership",
+            "name": "Start with a cofounder",
             "prestige": 0,
-            "shares_bp": 2000
+            "shares_bp": 0
           },
           {
             "buzz": 0,
@@ -75802,7 +75870,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 22,
+      "revision": 23,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

@@ -10,7 +10,8 @@ continuation. [Campaign flow](docs/CAMPAIGN_FLOW.md),
 direction. New Game creates the founder, then opens their childhood bedroom
 before any company exists. The home computer leads to legal formation, financing
 from banks or investors, and eligible lab appointments. Company and personal money
-stay separate.
+stay separate. Eligible founders can sign with a working cofounder whose offer
+sets the opening mission, equity, salary and board terms.
 
 **Current state.** The 2026-11-09 review identified substantial unfinished main-game
 work; [selected refinement milestones](docs/FEEDBACK_REFINEMENTS.md) now lead the
@@ -52,7 +53,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.51.0-dev.1**, generation **52**.
+The finalized internal content version is **0.52.0-dev.1**, generation **53**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).

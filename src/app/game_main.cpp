@@ -71,6 +71,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("menu-smoke"),QStringLiteral("Exercise the Mac menu, settings, media, New Game entry and recovery.")});
     parser.addOption({QStringLiteral("screenshot"),QStringLiteral("Capture the smoke-test window."),QStringLiteral("file")});
     parser.addOption({QStringLiteral("founding-smoke"),QStringLiteral("Exercise the actual New Game biography, funding and first morning with an isolated local save.")});
+    parser.addOption({QStringLiteral("founding-partner-smoke"),QStringLiteral("Exercise the New Game cofounder conversation, signing and first morning.")});
     parser.addOption({QStringLiteral("device-interface-smoke"),QStringLiteral("Exercise the laptop launcher, device app switching and a compact workspace.")});
     parser.addOption({QStringLiteral("research-smoke"),QStringLiteral("Exercise the research tree with named staff, actual compute and a lost workstation.")});
     parser.addOption({QStringLiteral("recruitment-smoke"),QStringLiteral("Exercise negotiated offers, declined terms and signing with a furnished desk.")});
@@ -109,7 +110,8 @@ int main(int argc, char* argv[]) {
     const bool competition_smoke = parser.isSet(QStringLiteral("competition-smoke"));
     const bool music_smoke = parser.isSet(QStringLiteral("music-smoke"));
     const bool menu_smoke = parser.isSet(QStringLiteral("menu-smoke")) || parser.isSet(QStringLiteral("settings-smoke"));
-    const bool founding_smoke = parser.isSet(QStringLiteral("founding-smoke"));
+    const bool partner_smoke = parser.isSet(QStringLiteral("founding-partner-smoke"));
+    const bool founding_smoke = parser.isSet(QStringLiteral("founding-smoke")) || partner_smoke;
     const bool prototype_smoke = parser.isSet(QStringLiteral("smoke-test")) && !menu_smoke && !founding_smoke && !world_smoke;
     const auto variants = static_cast<int>(world_smoke) + static_cast<int>(society_smoke) + static_cast<int>(institutions_smoke) +
         static_cast<int>(civic_smoke) + static_cast<int>(infrastructure_smoke) + static_cast<int>(competition_smoke) + static_cast<int>(frontier_smoke) + static_cast<int>(leadership_smoke) + static_cast<int>(objectives_smoke) + static_cast<int>(music_smoke) + static_cast<int>(menu_smoke) + static_cast<int>(founding_smoke);
@@ -242,7 +244,7 @@ int main(int argc, char* argv[]) {
                 else if (world_smoke)
                     schedule_world_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")),parser.isSet(QStringLiteral("portrait-smoke")),parser.isSet(QStringLiteral("workplace-smoke")),parser.isSet(QStringLiteral("device-smoke")),parser.isSet(QStringLiteral("contacts-smoke")),parser.isSet(QStringLiteral("manager-smoke")));
                 else if (founding_smoke)
-                    schedule_founding_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));
+                    schedule_founding_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")),partner_smoke);
                 else if (menu_smoke)
                     schedule_menu_smoke(*window,campaign,music,selection.api,paths,parser.value(QStringLiteral("screenshot")),parser.isSet(QStringLiteral("settings-smoke")));
                 else if (music_smoke)

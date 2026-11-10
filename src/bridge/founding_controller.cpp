@@ -466,7 +466,7 @@ QString FoundingController::preview() const {
             const auto desks=selected.office=="home"?0U:terms.opening_staff+(terms.founder_researcher?0U:1U);
             std::int64_t compute=0;
             if(premises_rules_) for(const auto& offer:premises_rules_->equipment) if(offer.id=="desktop") compute=offer.compute.value()*desks;
-            const auto equipment=premises_rules_ && desks?tr("Inherited company equipment: %1 desks and %1 desktop computers. You bring your phone and laptop; no compute lease.").arg(desks):selected.office=="home"?tr("You bring your existing phone and laptop; no desktop or compute lease."):tr("The office includes a workstation; you bring your phone and laptop. No compute lease.");
+            const auto equipment=premises_rules_ && desks?tr("Included with the office: %1 desks and %1 desktop computers. You bring your phone and laptop; no compute lease.").arg(desks):selected.office=="home"?tr("You bring your existing phone and laptop; no desktop or compute lease."):tr("The office includes a workstation; you bring your phone and laptop. No compute lease.");
             QString bylaws;
             for(const auto& c:charters_)if(c.id==form_.value("charter").toString().toStdString())bylaws=tr("\nOptional bylaws: %1 · employee program %2/mo").arg(text(c.name),money(c.monthly_employee_budget.value()));
             return tr("%1\nCash %2 · signing %3\nRent %4/mo · payroll %5/mo · your salary %6/mo\n%7\n%8 research-capable people · %9 CU/day\n%10")

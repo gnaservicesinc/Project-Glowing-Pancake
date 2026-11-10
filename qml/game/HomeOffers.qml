@@ -144,6 +144,7 @@ ColumnLayout {
                 Heading { objectName: "homeOfferSubject"; text: panel.selected?.subject || "" }
                 Copy { objectName: "homeOfferStatus"; text: panel.selected?.statusText || ""; color: "#bddda7"; font.bold: true }
                 Copy {
+                    objectName: "homeOfferTerms"
                     visible: !!panel.selected && panel.selected.status !== "rejected"
                     text: panel.selected?.terms || ""
                     font.bold: true

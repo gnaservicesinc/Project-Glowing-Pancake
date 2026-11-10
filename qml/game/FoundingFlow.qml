@@ -316,7 +316,7 @@ FocusScope {
             y: 52
             width: 700
             height: 28
-            text: opening.beat.date
+            text: opening.beat.date || ""
             font.pixelSize: Math.round(15 * Math.min(opening.zoom, 1.5))
             font.letterSpacing: 3
             color: opening.sceneAccent
@@ -348,7 +348,7 @@ FocusScope {
             y: (opening.narrative ? 192 : 119) + 10 * (1 - opening.titleProgress)
             width: opening.readWidth + 60
             height: 91
-            text: opening.beat.title
+            text: opening.beat.title || ""
             font.family: ink.displayFace
             font.pixelSize: Math.round((opening.narrative ? 65 : 49) * opening.zoom)
             minimumPixelSize: 31
@@ -362,7 +362,7 @@ FocusScope {
             y: (opening.narrative ? 294 : 219) + 9 * (1 - opening.narrationProgress)
             width: opening.readWidth
             height: opening.narrative ? 104 : 101
-            text: opening.beat.narration
+            text: opening.beat.narration || ""
             font.pixelSize: Math.round(26 * opening.zoom)
             minimumPixelSize: 20
             opacity: opening.narrationProgress
@@ -381,12 +381,12 @@ FocusScope {
         }
         StoryText {
             objectName: "foundingQuestion"
-            visible: opening.beat.prompt.length > 0
+            visible: !!opening.beat.prompt
             x: stage.margin
             y: 323
             width: opening.readWidth
             height: 56
-            text: opening.beat.prompt
+            text: opening.beat.prompt || ""
             font.family: ink.displayFace
             font.pixelSize: Math.round(29 * opening.zoom)
             minimumPixelSize: 22
@@ -417,7 +417,7 @@ FocusScope {
                 selectionColor: ink.stage
                 selectedTextColor: ink.paper
                 verticalAlignment: TextInput.AlignVCenter
-                Accessible.name: opening.beat.prompt
+                Accessible.name: opening.beat.prompt || ""
                 onAccepted: opening.advance()
                 onTextEdited: opening.actionError = ""
             }
@@ -573,6 +573,7 @@ FocusScope {
             }
             StoryAction {
                 visible: (opening.choicePage + 1) * decisions.pageSize < decisions.rows.length
+                objectName: "foundingMoreChoices"
                 x: parent.width - width
                 width: 180
                 height: parent.height

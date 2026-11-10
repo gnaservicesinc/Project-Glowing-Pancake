@@ -61,7 +61,7 @@ QString fitting_error(QQuickItem& item, const QRectF& viewport) {
 }
 
 void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
-    pgp::persistence::LocalPaths paths, QString screenshot) {
+    pgp::persistence::LocalPaths paths, QString screenshot, bool partner) {
     enum class Phase { launch, opening, birth, compact, questions, office, step, reload,
         company_messages, select_contact, question_contact, verify_contact, done };
     struct State {
@@ -78,7 +78,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
     auto state = std::make_shared<State>();
     auto* timer = new QTimer(&window);
     timer->setInterval(60);
-    QObject::connect(timer, &QTimer::timeout, &window, [&, timer, state, paths, screenshot] {
+    QObject::connect(timer, &QTimer::timeout, &window, [&, timer, state, paths, screenshot, partner] {
         auto* story = campaign.founding();
         const auto id = story->beat();
         const auto fail = [&](const QString& why) {
@@ -191,6 +191,10 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             }
             if(id=="appearance" && !capture(".appearance")) {fail("Appearance screenshot");return;}
             if (id == "offer-safety" && !capture(".offer")) { fail("Individual offer screenshot"); return; }
+            if (id=="family" && partner) {
+                if(!click("foundingChoice_rich") && !click("foundingMoreChoices"))fail("Choose a background with investor connections");
+                return;
+            }
             if (const auto chosen = answers.find(id); chosen != answers.end()) {
                 if (!click("foundingChoice_" + *chosen)) fail("Expected response is unavailable");
             } else if (id == "home") {
@@ -203,6 +207,45 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                     window.showNormal();window.resize(650,480);return;
                 }
                 if(state->home_phase<=12 && campaign.textScalePercent()!=200) {fail("Home conversations must be tested at 200% text");return;}
+                if(partner) {
+                    switch(state->home_phase) {
+                    case 1:
+                        if(!click("homeService_investors")) {fail("Open the investor and cofounder directory");return;}
+                        break;
+                    case 2:
+                        if(find_visible(window.contentItem(),"homeContact_partner_chen") || !click("homeContact_partner_okafor")) {
+                            fail("The directory must offer eligible cofounders");return;
+                        }
+                        break;
+                    case 3: {
+                        const auto* terms_item=find_visible(window.contentItem(),"homeOfferTerms");
+                        const auto terms=terms_item?terms_item->property("text").toString():QString{};
+                        if(!terms.contains("24% equity") || !terms.contains("2 board vote") || !terms.contains("Opening mission") ||
+                            !capture(".cofounder") || !click("homeDeferOffer")) {fail("Review and defer the named offer");return;}
+                        break;
+                    }
+                    case 4:
+                        if(item("homeOfferStatus")->property("text")!="Saved for later" || !click("homeAcceptOffer")) {
+                            fail("Accept the deferred agreement");return;
+                        }
+                        break;
+                    case 5:
+                        if(story->form().value("partner")!="partner_okafor" || story->form().value("mission")!="utopia" ||
+                            item("homeMission")->isEnabled() || !story->signingError().isEmpty() || !click("homeSign")) {
+                            fail("The chosen person must set the mission in the paperwork");return;
+                        }
+                        break;
+                    case 6:
+                        if(!item("homeEnterCompany")->isVisible()) return;
+                        item("homeEnterCompany")->forceActiveFocus(Qt::TabFocusReason);
+                        break;
+                    case 7:
+                        if(!capture(".cofounder-signed") || !click("homeEnterCompany")) {fail("Sign the partnership and enter the company");return;}
+                        state->phase=Phase::office;
+                        break;
+                    }
+                    ++state->home_phase;return;
+                }
                 if(state->home_phase==1) {if(!click("homeService_labs")){fail("Browser careers service");return;}++state->home_phase;return;}
                 if(state->home_phase==2) {if(!click("homeApplyCEO")){fail("Submit a leadership application");return;}++state->home_phase;return;}
                 if(state->home_phase==3) {
@@ -257,16 +300,20 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
         }
         case Phase::office: {
             const auto& world = campaign.snapshot()->checkpoint.world;
+            const auto& employees=world.simulation.management->people->employees;
+            const bool expected_entry=world.founding && (partner ? world.founding->route=="partnership" &&
+                world.founding->partner=="partner_okafor" && world.simulation.accounts->debts.empty() && employees.size()==1 &&
+                employees.front().terms.profile.name=="Amara Okafor" && world.simulation.capacity->sources.size()==2 : world.founding->route=="bank_loan" &&
+                world.simulation.accounts->debts.size()==1 && world.simulation.accounts->debts.front().principal==pgp::core::Cents{5000000} &&
+                world.simulation.succession->personal_cash==pgp::core::Cents{1500000} && employees.empty() &&
+                world.simulation.capacity->sources.empty() &&
+                pgp::core::active_charter(world.simulation) && pgp::core::active_charter(world.simulation)->id=="charter.shared_research");
             if (campaign.welcome() || story->hasDraft() || !world.founding || !world.identity || world.founding->choices.size() != 8 ||
-                world.founding->legal_form != "corporation" || world.founding->route!="bank_loan" || !world.founding->backers.empty() ||
-                world.simulation.accounts->debts.size()!=1 || world.simulation.accounts->debts.front().principal!=pgp::core::Cents{5000000} ||
-                world.simulation.succession->personal_cash!=pgp::core::Cents{1500000} ||
+                world.founding->legal_form != "corporation" || !expected_entry || !world.founding->backers.empty() ||
                 world.identity->founder_name != "Mira Vale" || world.root_seed != 718 ||
                 world.founding->gender!="woman" || world.identity->founder_pronouns!="she/her" ||
                 !state->customized || world.founding->appearance.parts[1]!=3 ||
-                !pgp::core::active_charter(world.simulation) || pgp::core::active_charter(world.simulation)->id!="charter.shared_research" ||
-                !world.difficulty.empty() || !world.simulation.capacity->sources.empty() ||
-                !world.simulation.management->people->employees.empty() ||
+                !world.difficulty.empty() || !world.simulation.lab->research.empty() ||
                 pgp::core::iso_date(world.simulation.date) != "2015-01-01" ||
                 pgp::core::iso_date(world.simulation.end_date) != "2115-01-01" || !campaign.paused()) {
                 fail("The founding choices did not reach the paused campaign"); return;
@@ -304,14 +351,16 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             break;
         case Phase::select_contact: {
             const auto& contacts=campaign.snapshot()->checkpoint.world.simulation.management->people->contacts;
-            if(contacts.size()!=2 || !press(window,find_visible(window.contentItem(),"contactPerson_opening/commercial"))) {
+            const auto contact=partner?"contactPerson_opening/partner_okafor":"contactPerson_opening/commercial";
+            if(contacts.size()!=(partner?1:2) || !press(window,find_visible(window.contentItem(),contact))) {
                 fail("Opening conversations must carry into the company contact list");return;
             }
             state->phase=Phase::question_contact;
             break;
         }
         case Phase::question_contact:
-            if(!press(window,find_visible(window.contentItem(),"contactOpeningTerms")) ||
+            if(partner ? !press(window,find_visible(window.contentItem(),"contactBoardRole")) :
+                !press(window,find_visible(window.contentItem(),"contactOpeningTerms")) ||
                 find_visible(window.contentItem(),"contactCheckIn") || find_visible(window.contentItem(),"contactBoardRole")) {
                 fail("The declined investor must expose a relevant follow-up");return;
             }
@@ -326,10 +375,10 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             auto* reply=find_visible(window.contentItem(),"contactMessageCard");
             auto* viewport=find_visible(window.contentItem(),"managementScroll");
             pgp::persistence::CurrentCampaign current{paths.saves_directory/"continuing"};
-            if(history.size()!=1 || history.back().reply!="declined" || !reply || !viewport || !reply->hasActiveFocus() ||
+            if(history.size()!=1 || history.back().reply!=(partner?"has_seat":"declined") || !reply || !viewport || !reply->hasActiveFocus() ||
                 reply->mapToItem(viewport,{0,reply->height()}).y()>viewport->height()+1 ||
                 current.resume(*campaign.snapshot()->content)!=std::optional{checkpoint} || !capture(".continued-inbox")) {
-                fail("The visible company reply must use the recorded decline and reload with both opening contacts");return;
+                fail("The visible company reply must match the signed or declined terms and reload exactly");return;
             }
             state->phase=Phase::done;
             break;
@@ -338,7 +387,8 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             if (!campaign.snapshot()->checkpoint.world.founding || campaign.welcome()) {
                 fail("Exact save continuation"); return;
             }
-            std::cout << "Prologue UI passed: hospital opening, resized 650×480 canvas, editable name, branching art and palette, "
+            if(partner) std::cout << "Cofounder UI passed: eligible directory, defer and accept, signed mission, company board reply and exact save continuation\n";
+            else std::cout << "Prologue UI passed: hospital opening, resized 650×480 canvas, editable name, branching art and palette, "
                          "eight chapters, saved application and investor conversations at 200% text, appearance, paused office, continued company inbox and fresh-save/day continuation\n";
             timer->stop();
             QCoreApplication::exit(0);
