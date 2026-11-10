@@ -46,6 +46,10 @@ more detailed equipment, camera fit/zoom controls, a floor-plan toggle and
 hover-to-inspect feedback. Placement previews keep the real equipment loaded.
 Shared controls and the HUD/dock now use coordinated colors and focus feedback;
 pending decisions stay visible and compact docks have explicit scroll controls.
+The flooring follow-up assigns concrete to home utility rooms, carpet to standard
+offices, and oak to finished residential rooms and the larger commercial plan.
+Room labels, property names and finish disclosures agree across 3D, floor plans,
+property previews and family-home return. Equipment hover cards show assignment.
 Native and software HQ walkthroughs cover placement through relocation and
 fresh reload, including 650 × 480 at 200% text. Device checks cover launcher,
 compatible apps, keyboard access and both dock scroll directions without

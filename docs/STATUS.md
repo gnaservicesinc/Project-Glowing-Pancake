@@ -18,14 +18,24 @@ is closed.
 
 ## Main-game visual refinement · 2026-11-10
 
-The headquarters now uses an original oak material, warm/cool lighting, framed
-windows, wall trim and more detailed desks. Its camera fits the premises, with
+The headquarters now uses room-appropriate concrete, carpet and oak materials,
+warm/cool lighting, framed windows, wall trim and more detailed desks. Its camera fits the premises, with
 visible zoom/reset controls and an inspectable floor-plan alternative. Equipment
 hover highlights lead into arrangement; moving the placement preview no longer
 recreates the real furniture. Architectural decoration never intercepts picking.
 The HUD, dock, furnishing panel and shared controls use a coordinated slate/amber
 palette, clear focus states and reduced-motion-aware hover feedback. Pending
 decisions have a HUD action, and compact docks expose scroll buttons.
+
+The flooring follow-up keeps garages, basements and sheds concrete regardless
+of family wealth; home offices and compact/studio commercial space use carpet,
+while libraries, guest houses and the larger commercial floor use oak. The 3D
+scene, floor plans, realtor previews and return-home reviews share those finishes.
+Property titles, room labels, finish descriptions and equipment assignment
+hover details make the scene easier to read. Private-home plans retain wood.
+Focused bridge assertions cover room/listing agreement; native and software
+headquarters walkthroughs pass placement, commercial relocation and fresh reload,
+including compact 200% text. Finishes are presentation, not new financial rules.
 
 The optimized Mac native headquarters walkthrough passes camera/view switching,
 purchases, placement, rotation/cancellation, desk dragging, relocation, compact

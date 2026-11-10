@@ -1,5 +1,6 @@
 import QtQuick
 import "EquipmentArt.js" as Art
+import "FloorMaterials.js" as Floors
 
 Item {
     id: plan
@@ -44,23 +45,43 @@ Item {
     Canvas {
         id: drawing
         anchors.fill: parent
+        Component.onCompleted: ["concrete","carpet","oak"].forEach(kind=>loadImage(Floors.source(kind)))
+        onImageLoaded:requestPaint()
+        function surface(c,kind,x,y,w,h,unit) {
+            c.fillStyle=Floors.base(kind);c.fillRect(x,y,w,h)
+            const image=Floors.source(kind),tile=unit*2
+            if(!isImageLoaded(image))return
+            c.save();c.beginPath();c.rect(x,y,w,h);c.clip()
+            for(let yy=y;yy<y+h;yy+=tile)for(let xx=x;xx<x+w;xx+=tile)c.drawImage(image,xx,yy,tile,tile)
+            c.restore()
+        }
         onPaint: {
             const c=getContext("2d");c.reset();c.fillStyle="#1a2d3c";c.fillRect(0,0,width,height)
             const u=plan.cell,x0=plan.leftEdge,y0=plan.topEdge,w=plan.columns*u,h=plan.rows*u
             c.fillStyle="#0e202c";c.fillRect(x0-7,y0-7,w+14,h+20)
-            c.fillStyle="#bf9f79";c.fillRect(x0,y0,w,h)
-            for(let y=0;y<plan.rows*4;y++) { c.fillStyle=["#ba9b78","#c4a580","#bfa07a","#ccad87"][y%4];c.fillRect(x0,y0+y*u/4,w,u/4-0.5) }
-            c.strokeStyle=plan.editing?"#6c786e":"#b69874";c.lineWidth=0.6
-            for(let x=0;x<=plan.columns;++x){c.beginPath();c.moveTo(x0+x*u,y0);c.lineTo(x0+x*u,y0+h);c.stroke()}
-            for(let y=0;y<=plan.rows;++y){c.beginPath();c.moveTo(x0,y0+y*u);c.lineTo(x0+w,y0+y*u);c.stroke()}
+            surface(c,plan.headquarters.flooring || "concrete",x0,y0,w,h,u)
+            for(const room of plan.headquarters.rooms || []) surface(c,room.flooring || plan.headquarters.flooring || "concrete",x0+room.x*u,y0+room.y*u,room.width*u,room.depth*u,u)
+            if(plan.editing) {
+                c.strokeStyle="#50696d";c.lineWidth=0.6
+                for(let x=0;x<=plan.columns;++x){c.beginPath();c.moveTo(x0+x*u,y0);c.lineTo(x0+x*u,y0+h);c.stroke()}
+                for(let y=0;y<=plan.rows;++y){c.beginPath();c.moveTo(x0,y0+y*u);c.lineTo(x0+w,y0+y*u);c.stroke()}
+            }
             c.strokeStyle="#e1d9bf";c.lineWidth=5
             for(const room of plan.headquarters.rooms || []) {
                 if (plan.highlightedRoom && room.id === plan.highlightedRoom) {
-                    c.fillStyle = "#798a70"
+                    c.fillStyle = "rgba(239,195,137,0.15)"
                     c.fillRect(x0+room.x*u,y0+room.y*u,room.width*u,room.depth*u)
                     c.strokeStyle = "#ffd897"
                 } else c.strokeStyle = "#d9d7bb"
                 c.strokeRect(x0+room.x*u,y0+room.y*u,room.width*u,room.depth*u)
+                if(!plan.editing && room.label && room.width*u>100) {
+                    c.font=Math.max(10,Math.min(14,u*0.24))+"px sans-serif";c.textAlign="left";c.textBaseline="top"
+                    let title=room.label
+                    while(title.length>1 && c.measureText(title).width>room.width*u-28)title=title.slice(0,-1)
+                    if(title!==room.label)title=title.slice(0,-1)+"…"
+                    c.fillStyle="#ecf0e8";c.fillRect(x0+room.x*u+7,y0+room.y*u+7,c.measureText(title).width+10,22)
+                    c.fillStyle="#233641";c.fillText(title,x0+room.x*u+12,y0+room.y*u+11)
+                }
             }
             c.font=Math.max(9,Math.min(14,u*0.22))+"px sans-serif";c.textAlign="center";c.textBaseline="middle"
             for(const item of plan.headquarters.items || []) {
@@ -81,8 +102,8 @@ Item {
                 }
                 if(item){c.globalAlpha=0.55;Art.draw(c,item.kind,x0+p.x*u,y0+p.y*u,p.width*u,p.depth*u,item.powered);c.globalAlpha=1}
             }
-            if(!plan.highlightedRoom && !(plan.headquarters.items || []).some(item=>item.placed)) {
-                c.fillStyle="#f1ead5";c.font=Math.max(11,Math.min(18,u*0.3))+"px sans-serif";c.fillText(qsTr("Empty premises"),x0+w/2,y0+h/2)
+            if(!plan.highlightedRoom && !plan.placing && !(plan.headquarters.items || []).some(item=>item.placed)) {
+                c.fillStyle="#283d48";c.font=Math.max(11,Math.min(18,u*0.3))+"px sans-serif";c.fillText(qsTr("Empty premises"),x0+w/2,y0+h/2)
             }
         }
     }

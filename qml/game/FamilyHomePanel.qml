@@ -60,7 +60,7 @@ ColumnLayout {
     Copy {
         objectName: "familySelectedRoom"
         text: panel.selectedRoom.id === 0 ? qsTr("Your childhood bedroom")
-             : qsTr("%1 · %2 × %3 m").arg(panel.selectedRoom.name).arg(panel.selectedRoom.width).arg(panel.selectedRoom.depth)
+             : qsTr("%1 · %2 × %3 m · %4").arg(panel.selectedRoom.name).arg(panel.selectedRoom.width).arg(panel.selectedRoom.depth).arg(panel.selectedRoom.flooringLabel || "")
         color: "#f0e3c2"; font.bold: true
     }
     Item {

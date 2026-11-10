@@ -12,6 +12,19 @@ bool available(const CampaignSnapshotPtr& s) {return s && s->checkpoint.world.si
 const core::HeadquartersState& hq(const CampaignSnapshotPtr& s) {return *s->checkpoint.world.simulation.infrastructure->workplace->headquarters;}
 const core::HeadquartersRules& rules(const CampaignSnapshotPtr& s) {return *s->checkpoint.world.simulation.infrastructure->catalog.workplace->headquarters;}
 template<class Rows,class Id> const auto& find(const Rows& rows,const Id& id) {const auto it=std::ranges::find(rows,id,[](const auto& row){return row.id;});if(it==rows.end()) throw std::invalid_argument("The selected listing is no longer available.");return *it;}
+// Presentation finishes follow the existing premises and named home rooms.
+// They do not change equipment, costs, construction quality or save state.
+QString floorFinish(std::string_view kind, std::string_view plan, std::string_view room = {}) {
+    if(kind=="home") {
+        if(room=="Library" || room=="Guest house") return QStringLiteral("oak");
+        if(room=="Home office") return QStringLiteral("carpet");
+        return QStringLiteral("concrete");
+    }
+    return plan=="floor" ? QStringLiteral("oak") : QStringLiteral("carpet");
+}
+QString floorLabel(const QString& finish) {
+    return finish=="oak" ? QObject::tr("Oak flooring") : finish=="carpet" ? QObject::tr("Carpet tiles") : QObject::tr("Concrete floor");
+}
 QVariantList planRoomsJson(const std::vector<core::HQRoom>& rows) {QVariantList list;for(const auto& r:rows) list.push_back(QVariantMap{{"x",r.x},{"y",r.y},{"width",r.width},{"depth",r.depth}});return list;}
 std::vector<core::HQRoom> readRooms(const QVariantList& rows) {
     if(rows.size()>16) throw std::invalid_argument("Use at most sixteen rooms.");std::vector<core::HQRoom> result;
@@ -43,12 +56,14 @@ QVariantMap WorldController::headquarters() const {
             const auto& e=find(r.equipment,i.offer);if(e.kind=="desk") ++desks;if(e.kind=="rack") ++racks;if(e.kind=="bench") ++benches;if(e.kind=="evaluation") ++tests;
             for(const auto& child:h.items) if(child.mount==i.id && child.premises==p.id) ++computers;
         }
+        const auto finish=floorFinish(p.kind,p.plan,p.kind=="home"?home.room_names.at(static_cast<std::size_t>(index)):std::string{});
+        const auto roomName=p.kind=="home"?q(home.room_names.at(static_cast<std::size_t>(index))):tr("Room %1").arg(index+1);
         QStringList functions;if(desks) functions<<tr("Office");if(benches) functions<<tr("Research");if(tests) functions<<tr("Evaluation");if(racks) functions<<tr("Compute");
-        roomRows.push_back(QVariantMap{{"id",++index},{"x",room.x},{"y",room.y},{"width",room.width},{"depth",room.depth},{"name",(p.kind=="home"?q(home.room_names.at(static_cast<std::size_t>(index-1))):tr("Room %1").arg(index))+" · "+(functions.empty()?tr("Empty"):functions.join(" / "))},
-            {"detail",tr("%1 desks · %2 computers · %3 racks").arg(desks).arg(computers).arg(racks)}});
+        roomRows.push_back(QVariantMap{{"flooring",finish},{"flooringLabel",floorLabel(finish)},{"label",roomName},{"id",++index},{"x",room.x},{"y",room.y},{"width",room.width},{"depth",room.depth},{"name",(p.kind=="home"?q(home.room_names.at(static_cast<std::size_t>(index-1))):tr("Room %1").arg(index))+" · "+(functions.empty()?tr("Empty"):functions.join(" / "))},
+            {"detail",floorLabel(finish)+tr(" · %1 desks · %2 computers · %3 racks").arg(desks).arg(computers).arg(racks)}});
     }
     for(const auto& n:h.notices) notices.push_back(QVariantMap{{"date",date(n.day)},{"text",q(n.text)}});
-    return {{"width",p.width},{"depth",p.depth},{"rooms",roomRows},{"items",items},{"kind",q(p.kind)},{"address",q(p.address)},{"city",q(city.city)},{"market",q(p.market)},{"landlord",q(p.lessor)},
+    return {{"flooring",floorFinish(p.kind,p.plan)},{"title",p.kind=="home"?q(home.plan.name):q(find(r.plans,p.plan).name)},{"width",p.width},{"depth",p.depth},{"rooms",roomRows},{"items",items},{"kind",q(p.kind)},{"address",q(p.address)},{"city",q(city.city)},{"market",q(p.market)},{"landlord",q(p.lessor)},
         {"rent",money(p.rent)},{"deposit",money(p.deposit)},{"notices",notices},{"summary",tr("%1 · %2\n%3 × %4 m · %5 desks, %6 assigned\n%7\nSecurity deposit held: %8")
             .arg(q(p.address),q(city.city)).arg(p.width).arg(p.depth).arg(core::furnished_hq_desks(s)).arg(core::assigned_hq_desks(s))
             .arg(p.kind=="home"?tr("Your parents' home workspaces · $0 rent"):p.kind=="owned"?tr("Company-owned building · no rent; property taxes accrue"):tr("Rent %1/month to %2").arg(money(p.rent),q(p.lessor)),money(p.deposit))}};
@@ -63,10 +78,11 @@ QVariantMap WorldController::familyHome() const {
     QVariantList rooms;
     for(std::size_t i=0;i<home.plan.rooms.size();++i) {
         const auto& room=home.plan.rooms[i];
-        rooms.push_back(QVariantMap{{"id",static_cast<int>(i+1)},{"name",q(home.room_names[i])},
+        const auto finish=floorFinish("home",home.plan.id,home.room_names[i]);
+        rooms.push_back(QVariantMap{{"flooring",finish},{"flooringLabel",floorLabel(finish)},{"label",q(home.room_names[i])},{"id",static_cast<int>(i+1)},{"name",q(home.room_names[i])},
             {"x",room.x},{"y",room.y},{"width",room.width},{"depth",room.depth}});
     }
-    return {{"name",q(home.plan.name)},{"city",q(market.city)},{"rooms",rooms},
+    return {{"flooring","concrete"},{"name",q(home.plan.name)},{"city",q(market.city)},{"rooms",rooms},
         {"width",home.plan.width},{"depth",home.plan.depth},{"kind","home"},{"atHome",premises.kind=="home"},
         {"items",premises.kind=="home"?headquarters().value("items").toList():QVariantList{}},
         {"founder",world.identity?q(world.identity->founder_name):QString{}},
@@ -102,17 +118,17 @@ QVariantList WorldController::hqEquipmentOffers() const {
 QVariantList WorldController::hqMarkets() const {QVariantList rows;if(!available(snapshot_)) return rows;for(const auto& m:rules(snapshot_).markets) rows.push_back(QVariantMap{{"id",q(m.id)},{"name",q(m.city)},{"agent",q(m.agent)},{"state",q(m.state)}});return rows;}
 QVariantList WorldController::hqListings(QString market) const {
     QVariantList rows;if(!available(snapshot_)) return rows;
-    for(const auto& p:rules(snapshot_).plans) {auto row=hqPropertyQuote(market,q(p.id),false);row["name"]=q(p.name);row["width"]=p.width;row["depth"]=p.depth;row["rooms"]=planRoomsJson(p.rooms);rows.push_back(row);}return rows;
+    for(const auto& p:rules(snapshot_).plans) {auto row=hqPropertyQuote(market,q(p.id),false);row["name"]=q(p.name);row["flooring"]=floorFinish("lease",p.id);row["flooringLabel"]=floorLabel(floorFinish("lease",p.id));row["width"]=p.width;row["depth"]=p.depth;row["rooms"]=planRoomsJson(p.rooms);rows.push_back(row);}return rows;
 }
 QVariantMap WorldController::hqPropertyQuote(QString market,QString plan,bool land) const {
     if(!available(snapshot_)) return {{"error",tr("No property market is available.")}};
     try {
         const auto& s=snapshot_->checkpoint.world.simulation;const auto& m=find(rules(snapshot_).markets,market.toStdString());const auto& p=find(rules(snapshot_).plans,plan.toStdString());
         const auto quote=land?core::preview_hq_land(s,{m.id,p.id}):core::preview_hq_lease(s,{m.id,p.id});
-        return {{"market",market},{"plan",plan},{"land",land},{"revision",reviewToken()},
+        return {{"flooring",floorFinish("lease",p.id)},{"flooringLabel",floorLabel(floorFinish("lease",p.id))},{"market",market},{"plan",plan},{"land",land},{"revision",reviewToken()},
             {"detail",land?tr("%1 · %2\n%3 × %4 m plot · %5 purchase\nLand property tax %6/month. Hire a contractor separately; no building or equipment is included.")
                 .arg(q(m.city),q(m.agent)).arg(p.width).arg(p.depth).arg(money(quote.price),money(quote.monthly)):
-            tr("%1 · %2\nLandlord: %3\n%4 × %5 m · %6/month\nRefundable deposit %7 · minimum %8 days\nEarly departure: %9 months' rent\nThis move: old deposit returned %10 · exit fee %11\nEquipment is moved into storage for you to place in the new rooms.")
+            floorLabel(floorFinish("lease",p.id))+QStringLiteral("\n")+tr("%1 · %2\nLandlord: %3\n%4 × %5 m · %6/month\nRefundable deposit %7 · minimum %8 days\nEarly departure: %9 months' rent\nThis move: old deposit returned %10 · exit fee %11\nEquipment is moved into storage for you to place in the new rooms.")
                 .arg(q(m.street+" / "+p.name),q(m.agent),q(m.landlord)).arg(p.width).arg(p.depth).arg(money(quote.monthly),money(quote.price)).arg(m.minimum_lease_days).arg(m.early_exit_months).arg(money(quote.refund),money(quote.exit_fee))}};
     } catch(const std::exception& e) {return {{"error",QString::fromUtf8(e.what())}};}
 }
@@ -120,7 +136,7 @@ QVariantList WorldController::hqProperties() const {
     QVariantList rows;if(!available(snapshot_)) return rows;const auto& h=hq(snapshot_);const auto& r=rules(snapshot_);
     for(const auto& land:h.land) {
         const auto& m=find(r.markets,land.market);const auto& p=find(r.plans,land.plan);
-        QVariantMap row{{"id",QString::number(land.id)},{"name",q(m.city)+" · "+q(p.name)+tr(" plot")},{"width",p.width},{"depth",p.depth},{"revision",reviewToken()},{"canBuild",true}};
+        QVariantMap row{{"flooring",floorFinish("owned",p.id)},{"id",QString::number(land.id)},{"name",q(m.city)+" · "+q(p.name)+tr(" plot")},{"width",p.width},{"depth",p.depth},{"revision",reviewToken()},{"canBuild",true}};
         row["detail"]=tr("Owned land · %1 × %2 m · paid %3").arg(p.width).arg(p.depth).arg(money(land.paid));
         for(const auto& b:h.construction) if(b.land==land.id) {
             row["canBuild"]=false;row["construction"]=QString::number(b.id);row["ready"]=b.completed_on.has_value();
@@ -146,7 +162,8 @@ QVariantMap WorldController::hqHomeQuote() const {
         const auto& s=snapshot_->checkpoint.world.simulation;
         const auto home=core::headquarters_home(s);
         const auto quote=core::preview_hq_home(s);
-        return {{"revision",reviewToken()},{"width",home.plan.width},{"depth",home.plan.depth},{"rooms",planRoomsJson(home.plan.rooms)},
+        const auto homeRooms=familyHome().value("rooms").toList();
+        return {{"revision",reviewToken()},{"width",home.plan.width},{"depth",home.plan.depth},{"rooms",homeRooms.empty()?planRoomsJson(home.plan.rooms):homeRooms},
             {"detail",tr("Return to %1 in %2.\n%3 free workspaces · $0 rent · no deposit\nOld deposit returned: %4\nOld lease exit fee: %5\nYour equipment is kept in storage for rearranging. Issued laptops stay with their holders. Owned land and building taxes continue.")
                 .arg(q(home.plan.name),q(find(rules(snapshot_).markets,hq(snapshot_).home_market).city)).arg(home.plan.rooms.size()).arg(money(quote.refund),money(quote.exit_fee))}};
     } catch(const std::exception& e) {return {{"error",QString::fromUtf8(e.what())}};}

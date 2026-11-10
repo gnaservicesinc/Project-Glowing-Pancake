@@ -43,6 +43,7 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/HeadquartersPlan.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/EquipmentGlyph.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/EquipmentArt.js"
+          "${PROJECT_SOURCE_DIR}/qml/game/FloorMaterials.js"
           "${PROJECT_SOURCE_DIR}/qml/game/HeadquartersTools.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/HeadquartersPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/LegacyWorkplacePanel.qml"
@@ -181,4 +182,4 @@ qt_add_resources(pgp-game campaign_content
     PREFIX "/pgp/content" BASE "${PROJECT_SOURCE_DIR}/data/runtime"
     FILES ${pgp_game_runtime_content})
 
-qt_add_resources(pgp-game desktop_art PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/ui/desktop-wallpaper.svg" "${PROJECT_SOURCE_DIR}/assets/ui/family-bedroom.svg" "${PROJECT_SOURCE_DIR}/assets/ui/hq-oak-floor.svg")
+qt_add_resources(pgp-game desktop_art PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets" FILES "${PROJECT_SOURCE_DIR}/assets/ui/desktop-wallpaper.svg" "${PROJECT_SOURCE_DIR}/assets/ui/family-bedroom.svg" "${PROJECT_SOURCE_DIR}/assets/ui/hq-oak-floor.svg" "${PROJECT_SOURCE_DIR}/assets/ui/hq-concrete-floor.svg" "${PROJECT_SOURCE_DIR}/assets/ui/hq-carpet-floor.svg")

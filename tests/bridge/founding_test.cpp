@@ -90,6 +90,19 @@ int main(int argc,char** argv) {
         world.update(std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,checkpoint,{},true,false}),program,true);
         check(world.founder().value("portrait")==setup.portrait(),"The world profile must show the customized portrait.");
         check(world.founder().value("bio").toString().contains("Actual Genius"),"The founder's leg up must appear in the profile.");
+        const auto hqRooms=world.headquarters().value("rooms").toList();
+        const QStringList finishes{"concrete","concrete","concrete","carpet","oak","oak"};
+        check(hqRooms.size()==finishes.size(),"The rich family home must keep its six distinct rooms.");
+        for(qsizetype i=0;i<finishes.size();++i) {
+            check(hqRooms[i].toMap().value("flooring")==finishes[i],"Home finishes must follow room use, not family wealth.");
+            check(world.familyHome().value("rooms").toList()[i].toMap().value("flooring")==finishes[i],"Family and HQ views must agree on finishes.");
+        }
+        const auto listings=world.hqListings(world.headquarters().value("market").toString());
+        for(const auto& listing:listings) {
+            const auto row=listing.toMap();
+            check(row.value("flooring")== (row.value("plan")=="floor"?"oak":"carpet"),"Commercial listing finishes must follow the property plan.");
+            check(row.value("detail").toString().contains(row.value("flooringLabel").toString()),"Lease terms must disclose the finish shown in the preview.");
+        }
         bridge::ManagementController management;
         management.update(std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,checkpoint,{},true,false}),program,true);
         check(management.recommended().value("trainingRate").toString()=="0" && management.recommended().value("testingRate").toString()=="0","The lab must open without inventing or dereferencing missing compute.");

@@ -38,5 +38,25 @@
     "license": "GPL-3.0-or-later",
     "modifications": "Original artwork; no external imagery",
     "ai_generated": true
+  },
+  {
+    "path": "assets/ui/hq-concrete-floor.svg",
+    "sha256": "3cf2277f2fa4a2bd1ef0413d64a59aced154d876d417c9ffda7cc338adfc476d",
+    "source_url": "",
+    "creator": "Project Glowing Pancake contributors with Codex",
+    "source": "Original procedural SVG authored in this repository",
+    "license": "GPL-3.0-or-later",
+    "modifications": "Original artwork; no external imagery",
+    "ai_generated": true
+  },
+  {
+    "path": "assets/ui/hq-carpet-floor.svg",
+    "sha256": "f914c1e15d112a08a64686d6f4f3e369d4acee9c3ba4f3abd97b1b98895ac57a",
+    "source_url": "",
+    "creator": "Project Glowing Pancake contributors with Codex",
+    "source": "Original procedural SVG authored in this repository",
+    "license": "GPL-3.0-or-later",
+    "modifications": "Original artwork; no external imagery",
+    "ai_generated": true
   }
 ]

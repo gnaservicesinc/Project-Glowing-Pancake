@@ -37,6 +37,7 @@ cp "$project_root/assets/audio/CREDITS.json" "$staged_bundle/Contents/Resources/
 cp "$project_root/assets/audio/CC-BY-4.0.txt" "$staged_bundle/Contents/Resources/Licenses/CC-BY-4.0.txt"
 cp "$project_root/assets/menu/PROVENANCE.md" "$staged_bundle/Contents/Resources/Licenses/Menu-Provenance.md"
 cp "$project_root/assets/founding/PROVENANCE.json" "$staged_bundle/Contents/Resources/Licenses/Founding-Provenance.json"
+cp "$project_root/assets/ui/PROVENANCE.json" "$staged_bundle/Contents/Resources/Licenses/UI-Provenance.json"
 cp "$project_root/third_party/json/LICENSE.MIT" "$staged_bundle/Contents/Resources/Licenses/nlohmann-json-MIT.txt"
 cp "$project_root/third_party/audio/miniaudio/LICENSE" "$staged_bundle/Contents/Resources/Licenses/miniaudio.txt"
 cp "$project_root/third_party/audio/stb/LICENSE" "$staged_bundle/Contents/Resources/Licenses/stb.txt"

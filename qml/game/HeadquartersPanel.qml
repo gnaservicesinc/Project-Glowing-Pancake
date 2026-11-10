@@ -147,7 +147,7 @@ ColumnLayout {
                 ColumnLayout {
                     id:propertyCard;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:14
                     Heading {text:modelData.name || modelData.error || ""}
-                    HeadquartersPlan {Layout.fillWidth:true;Layout.preferredHeight:panel.textSize*13;headquarters:({width:modelData.width,depth:modelData.depth,rooms:modelData.rooms,items:[]})}
+                    HeadquartersPlan {Layout.fillWidth:true;Layout.preferredHeight:panel.textSize*13;headquarters:({flooring:modelData.flooring,width:modelData.width,depth:modelData.depth,rooms:modelData.rooms,items:[]})}
                     Copy {text:modelData.detail || ""}
                     Flow {
                         Layout.fillWidth:true;spacing:8
@@ -185,7 +185,7 @@ ColumnLayout {
             }
             HeadquartersPlan {
                 objectName:"hqConstructionPlan";Layout.fillWidth:true;Layout.preferredHeight:panel.textSize*19;editing:true
-                headquarters:({width:panel.planWidth,depth:panel.planDepth,rooms:panel.planRooms,items:[]})
+                headquarters:({flooring:(campaign.world.hqProperties.find(row=>row.id===panel.landId) || {}).flooring,width:panel.planWidth,depth:panel.planDepth,rooms:panel.planRooms,items:[]})
                 onTilePicked:(x,y,item)=>{const n=panel.planRooms.findIndex(room=>x>=room.x && y>=room.y && x<room.x+room.width && y<room.y+room.depth);if(n>=0)panel.selectedRoom=n}
             }
             Copy {text:qsTr("Selected room %1. Click a room in the plan, then split it at a chosen metre mark. Equipment will define what each room is used for.").arg(panel.selectedRoom+1)}

@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick3D
+import "FloorMaterials.js" as Floors
 
 View3D {
     id: scene
@@ -42,7 +43,7 @@ View3D {
         verticalMagnification: horizontalMagnification
         clipNear: 1; clipFar: 10000
     }
-    DirectionalLight { eulerRotation: Qt.vector3d(-60,-20,0); brightness: 1.5; color:"#ffe4c0"; castsShadow: true; shadowFactor: 65; shadowMapQuality: Light.ShadowMapQualityHigh }
+    DirectionalLight { eulerRotation: Qt.vector3d(-60,-20,0); brightness: 1.35; color:"#ffeeda"; castsShadow: true; shadowFactor: 65; shadowMapQuality: Light.ShadowMapQualityHigh }
     DirectionalLight { eulerRotation: Qt.vector3d(-25,140,0); brightness: 0.75; color: "#bbd9ed" }
     component Block: Model {
         property vector3d size: Qt.vector3d(100,100,100)
@@ -57,17 +58,27 @@ View3D {
     // Architectural surfaces do not represent purchasable furniture. Only the
     // floor is pickable; trim and glazing never intercept equipment selection.
     Block { size:Qt.vector3d(scene.columns*100+28,24,scene.rows*100+28);y:-18;tint:"#283f4a";equipmentId:-1 }
-    Model {
-        source:"#Cube"; y:-4; scale:Qt.vector3d(scene.columns,0.08,scene.rows)
-        pickable:true
-        property int equipmentId:0
-        materials:PrincipledMaterial {
-            roughness:0.85
-            baseColorMap:Texture {
-                source:"qrc:/pgp/assets/ui/hq-oak-floor.svg"
-                scaleU:scene.columns/2;scaleV:scene.rows/2
-                tilingModeHorizontal:Texture.Repeat;tilingModeVertical:Texture.Repeat
-                generateMipmaps:true; mipFilter:Texture.Linear
+    // A slab fills any gaps; finishes are independent room surfaces, so a
+    // family's garage keeps its concrete even alongside a furnished library.
+    Block {size:Qt.vector3d(scene.columns*100,8,scene.rows*100);y:-4;tint:Floors.base(scene.headquarters.flooring)}
+    Repeater3D {
+        model:scene.headquarters.rooms || []
+        Model {
+            id:roomFloor
+            required property var modelData
+            readonly property string finish:modelData.flooring || scene.headquarters.flooring || "concrete"
+            property int equipmentId:0
+            source:"#Cube";pickable:true
+            position:Qt.vector3d((modelData.x+modelData.width/2)*100-scene.columns*50,0,(modelData.y+modelData.depth/2)*100-scene.rows*50)
+            scale:Qt.vector3d(modelData.width,0.01,modelData.depth)
+            materials:PrincipledMaterial {
+                roughness:Floors.roughness(roomFloor.finish)
+                baseColorMap:Texture {
+                    source:Floors.source(roomFloor.finish)
+                    scaleU:roomFloor.modelData.width/2;scaleV:roomFloor.modelData.depth/2
+                    tilingModeHorizontal:Texture.Repeat;tilingModeVertical:Texture.Repeat
+                    generateMipmaps:true;mipFilter:Texture.Linear
+                }
             }
         }
     }

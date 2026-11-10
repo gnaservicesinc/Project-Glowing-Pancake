@@ -161,10 +161,12 @@ Item {
     Column {
         anchors.left:worldView.left; anchors.top:worldView.top; anchors.margins:24*desktop.uiScale
         visible:desktop.physicalHQ && desktop.place!=="map" && !desktop.compact && !desktop.furnishing
+        width:Math.min(350*desktop.uiScale,worldView.width*0.32)
         spacing:7
         Label {text:qsTr("YOUR HEADQUARTERS");font.pixelSize:desktop.textSize*0.74;font.letterSpacing:2.2;color:ink.accent}
-        Label {text:campaign.world.headquarters.kind==="home"?qsTr("A place to begin."):qsTr("Room to grow.");font.family:ink.displayFace;font.pixelSize:desktop.textSize*2.15;color:ink.paper}
+        Label {width:parent.width;text:campaign.world.headquarters.title || qsTr("Your workspace");textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:ink.displayFace;font.pixelSize:desktop.textSize*1.7;color:ink.paper}
         Label {text:qsTr("%1 rooms · %2 placed furnishings").arg((campaign.world.headquarters.rooms || []).length).arg((campaign.world.headquarters.items || []).filter(row=>row.placed && !row.mount).length);font.pixelSize:desktop.textSize*0.9;color:ink.secondary}
+        Label {width:parent.width;text:[...new Set((campaign.world.headquarters.rooms || []).map(row=>row.flooringLabel))].join(" · ");wrapMode:Text.Wrap;font.pixelSize:desktop.textSize*0.8;color:ink.muted}
     }
     Row {
         anchors.right:worldView.right;anchors.bottom:worldView.bottom;anchors.margins:16
@@ -183,6 +185,7 @@ Item {
         Column {
             id:hoverCopy;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:12;spacing:5
             Label {width:parent.width;text:desktop.hoveredEquipment?desktop.hoveredEquipment.name:"";font.pixelSize:desktop.textSize;font.bold:true;color:ink.paper;wrapMode:Text.Wrap;textFormat:Text.PlainText}
+            Label {width:parent.width;text:desktop.hoveredEquipment ? desktop.hoveredEquipment.detail + (desktop.hoveredEquipment.personName ? " · " + desktop.hoveredEquipment.personName : "") : "";textFormat:Text.PlainText;font.pixelSize:desktop.textSize*0.9;color:ink.secondary;wrapMode:Text.Wrap}
             Label {width:parent.width;text:qsTr("Click to inspect and arrange");font.pixelSize:desktop.textSize*0.85;color:ink.secondary;wrapMode:Text.Wrap}
         }
     }

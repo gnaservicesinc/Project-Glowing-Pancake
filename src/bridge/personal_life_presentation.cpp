@@ -73,7 +73,7 @@ QVariantMap WorldController::personalFloor(int property) const {
         items.push_back(QVariantMap{{"id",item.id},{"kind",q(shape.kind)},{"name",q(shape.name)},{"placed",item.property==property_row.id},
             {"mount",0},{"powered",true},{"x",item.x},{"y",item.y},{"width",item.rotated?shape.depth:shape.width},{"depth",item.rotated?shape.width:shape.depth}});
     }
-    return {{"name",q(offer.name)},{"width",offer.plan.width},{"depth",offer.plan.depth},{"kind","home"},{"rooms",rooms},{"items",items}};
+    return {{"flooring","oak"},{"name",q(offer.name)},{"width",offer.plan.width},{"depth",offer.plan.depth},{"kind","home"},{"rooms",rooms},{"items",items}};
 }
 
 QVariantMap WorldController::personalPlacement(int item,int property,int x,int y,bool rotated) const {
