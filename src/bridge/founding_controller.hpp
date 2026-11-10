@@ -19,6 +19,8 @@ class FoundingController final : public QObject {
     Q_PROPERTY(QString beat READ beat WRITE setBeat NOTIFY beatChanged)
     Q_PROPERTY(bool hasDraft READ hasDraft NOTIFY beatChanged)
     Q_PROPERTY(QVariantMap personalFunds READ personalFunds NOTIFY changed)
+    Q_PROPERTY(QVariantMap familyHome READ familyHome NOTIFY changed)
+    Q_PROPERTY(QVariantList charters READ charters CONSTANT)
     Q_PROPERTY(QString preview READ preview NOTIFY changed)
     Q_PROPERTY(QString error READ error NOTIFY changed)
     Q_PROPERTY(QString portrait READ portrait NOTIFY changed)
@@ -39,6 +41,8 @@ public:
     void setBeat(QString);
     QString preview() const;
     QVariantMap personalFunds() const;
+    QVariantMap familyHome() const;
+    QVariantList charters() const;
     QString error() const {return error_;}
     Q_INVOKABLE QString signingError() const;
     Q_INVOKABLE void setField(QString,QVariant);
@@ -61,6 +65,7 @@ private:
     std::optional<content::FoundingCatalog> catalog_;
     std::vector<std::string> headquarters_;
     std::optional<core::HeadquartersRules> premises_rules_;
+    std::vector<core::OrganizationalCharter> charters_;
     std::filesystem::path draft_path_;
     QVariantMap form_;
     QString beat_ = QStringLiteral("opening");

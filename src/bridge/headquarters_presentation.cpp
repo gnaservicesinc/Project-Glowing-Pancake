@@ -35,6 +35,7 @@ QVariantMap WorldController::headquarters() const {
             {"detail",!i.person.empty() && core::hq_portable(e.kind)?tr("Issued to %1 · work at any desk or from home").arg(names[i.person]):!delivered?tr("Delivery %1").arg(date(i.delivered_on)):placed?tr("Placed in headquarters"):tr("Delivered · in storage")},
             {"ownership",i.inherited?tr("Inherited company equipment"):tr("Purchased from %1 for %2").arg(q(e.supplier),money(i.paid))}});
     }
+    const auto home=core::headquarters_home(s);
     int index=0;
     for(const auto& room:p.rooms) {
         int desks=0,computers=0,racks=0,benches=0,tests=0;
@@ -43,7 +44,7 @@ QVariantMap WorldController::headquarters() const {
             for(const auto& child:h.items) if(child.mount==i.id && child.premises==p.id) ++computers;
         }
         QStringList functions;if(desks) functions<<tr("Office");if(benches) functions<<tr("Research");if(tests) functions<<tr("Evaluation");if(racks) functions<<tr("Compute");
-        roomRows.push_back(QVariantMap{{"id",++index},{"x",room.x},{"y",room.y},{"width",room.width},{"depth",room.depth},{"name",(p.kind=="home" && p.rooms.size()==3?QStringList{tr("Garage"),tr("Basement"),tr("Shed")}[index-1]:tr("Room %1").arg(index))+" · "+(functions.empty()?tr("Empty"):functions.join(" / "))},
+        roomRows.push_back(QVariantMap{{"id",++index},{"x",room.x},{"y",room.y},{"width",room.width},{"depth",room.depth},{"name",(p.kind=="home"?q(home.room_names.at(static_cast<std::size_t>(index-1))):tr("Room %1").arg(index))+" · "+(functions.empty()?tr("Empty"):functions.join(" / "))},
             {"detail",tr("%1 desks · %2 computers · %3 racks").arg(desks).arg(computers).arg(racks)}});
     }
     for(const auto& n:h.notices) notices.push_back(QVariantMap{{"date",date(n.day)},{"text",q(n.text)}});
@@ -102,6 +103,17 @@ QVariantMap WorldController::hqMoveQuote(QString construction) const {
             {"detail",tr("Move into the completed company-owned building.\nOld security deposit returned: %1\nOld lease exit fee: %2\nNo new rent. Land and building property taxes continue. Equipment moves into storage for placement in the new rooms.").arg(money(quote.refund),money(quote.exit_fee))}};
     } catch(const std::exception& e) {return {{"error",QString::fromUtf8(e.what())}};}
 }
+QVariantMap WorldController::hqHomeQuote() const {
+    if(!available(snapshot_)) return {{"error",tr("No family home is available.")}};
+    try {
+        const auto& s=snapshot_->checkpoint.world.simulation;
+        const auto home=core::headquarters_home(s);
+        const auto quote=core::preview_hq_home(s);
+        return {{"revision",reviewToken()},{"width",home.plan.width},{"depth",home.plan.depth},{"rooms",planRoomsJson(home.plan.rooms)},
+            {"detail",tr("Return to %1 in %2.\n%3 free workspaces · $0 rent · no deposit\nOld deposit returned: %4\nOld lease exit fee: %5\nYour equipment is kept in storage for rearranging. Issued laptops stay with their holders. Owned land and building taxes continue.")
+                .arg(q(home.plan.name),q(find(rules(snapshot_).markets,hq(snapshot_).home_market).city)).arg(home.plan.rooms.size()).arg(money(quote.refund),money(quote.exit_fee))}};
+    } catch(const std::exception& e) {return {{"error",QString::fromUtf8(e.what())}};}
+}
 QVariantList WorldController::hqBids(QString land,int width,int depth,QVariantList plan) const {
     QVariantList rows;if(!available(snapshot_)) return rows;
     try {
@@ -148,4 +160,5 @@ void WorldController::leaseHQ(QString market,QString plan,QString revision) {if(
 void WorldController::buyHQLand(QString market,QString plan,QString revision) {if(hqReview(revision)) emit actionRequested(core::ManageHeadquarters{core::BuyHQLand{market.toStdString(),plan.toStdString()}});}
 void WorldController::buildHQ(QString land,QString contractor,int width,int depth,QVariantList layout,QString revision) {if(!hqReview(revision)) return;try {emit actionRequested(core::ManageHeadquarters{core::BuildHQ{id(land),contractor.toStdString(),width,depth,readRooms(layout)}});} catch(const std::exception& e) {emit noticeRaised(QString::fromUtf8(e.what()));}}
 void WorldController::moveToOwnedHQ(QString construction,QString revision) {if(!hqReview(revision)) return;try {emit actionRequested(core::ManageHeadquarters{core::MoveToOwnedHQ{id(construction)}});} catch(const std::exception& e) {emit noticeRaised(QString::fromUtf8(e.what()));}}
+void WorldController::returnHomeHQ(QString revision) {if(hqReview(revision)) emit actionRequested(core::ManageHeadquarters{core::ReturnHomeHQ{}});}
 }

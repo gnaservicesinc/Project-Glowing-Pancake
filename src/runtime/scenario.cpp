@@ -131,7 +131,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
             } else if(world.founding->route=="partnership") p.role="Cofounder / researcher";
         }
     }
-    core::initialize_headquarters(world.simulation,seed);
+    core::initialize_headquarters(world.simulation,seed,world.founding?(world.founding->leg=="political"?"rich":world.founding->family):"");
     core::initialize_departments(world.simulation);
     core::initialize_access(world.simulation,world.founding && (world.founding->family=="rich" || world.founding->leg=="wealthy" || world.founding->leg=="political"));
     if(scenario->counties) world.counties=core::initialize_counties(*scenario->counties,world.simulation.date,seed);

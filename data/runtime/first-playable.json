@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.42.0-dev.1",
+  "content_version": "0.43.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -69569,7 +69569,7 @@
           {
             "buzz": 0,
             "capital_cents": 0,
-            "detail": "Three free workspaces at your parents’ Silicon Valley home: garage, basement and shed. Buy and place furniture during play; empty rooms provide no compute.",
+            "detail": "Free workspaces at your parents’ Silicon Valley home: garage, basement and shed, with additional rooms for larger family homes. The home remains available after an office move.",
             "family": "",
             "fee_cents": 0,
             "id": "home",
@@ -69677,14 +69677,14 @@
           {
             "buzz": 0,
             "capital_cents": 0,
-            "detail": "Start alone at your parents’ house. $0 rent; no outside backers.",
-            "family": "rich",
+            "detail": "Invest an amount you choose and start alone at home, with no outside backers. Leave enough company cash after registration to fund the work.",
+            "family": "",
             "fee_cents": 0,
             "id": "bootstrap",
             "leg": "",
             "legal_form": "",
             "monthly_cents": 0,
-            "name": "Start your own lab",
+            "name": "Use my savings",
             "prestige": 0,
             "shares_bp": 0
           },
@@ -72629,6 +72629,138 @@
             ],
             "home_depth": 3,
             "home_width": 9,
+            "homes": [
+              {
+                "family": "poor",
+                "plan": {
+                  "depth": 3,
+                  "id": "home.poor",
+                  "name": "Parents' house",
+                  "rooms": [
+                    {
+                      "depth": 3,
+                      "width": 3,
+                      "x": 0,
+                      "y": 0
+                    },
+                    {
+                      "depth": 3,
+                      "width": 3,
+                      "x": 3,
+                      "y": 0
+                    },
+                    {
+                      "depth": 3,
+                      "width": 3,
+                      "x": 6,
+                      "y": 0
+                    }
+                  ],
+                  "width": 9
+                },
+                "room_names": [
+                  "Garage",
+                  "Basement",
+                  "Shed"
+                ]
+              },
+              {
+                "family": "middle",
+                "plan": {
+                  "depth": 4,
+                  "id": "home.middle",
+                  "name": "Parents' suburban home",
+                  "rooms": [
+                    {
+                      "depth": 4,
+                      "width": 3,
+                      "x": 0,
+                      "y": 0
+                    },
+                    {
+                      "depth": 4,
+                      "width": 3,
+                      "x": 3,
+                      "y": 0
+                    },
+                    {
+                      "depth": 4,
+                      "width": 3,
+                      "x": 6,
+                      "y": 0
+                    },
+                    {
+                      "depth": 4,
+                      "width": 3,
+                      "x": 9,
+                      "y": 0
+                    }
+                  ],
+                  "width": 12
+                },
+                "room_names": [
+                  "Garage",
+                  "Basement",
+                  "Shed",
+                  "Home office"
+                ]
+              },
+              {
+                "family": "rich",
+                "plan": {
+                  "depth": 8,
+                  "id": "home.rich",
+                  "name": "Parents' hillside estate",
+                  "rooms": [
+                    {
+                      "depth": 4,
+                      "width": 4,
+                      "x": 0,
+                      "y": 0
+                    },
+                    {
+                      "depth": 4,
+                      "width": 4,
+                      "x": 4,
+                      "y": 0
+                    },
+                    {
+                      "depth": 4,
+                      "width": 4,
+                      "x": 8,
+                      "y": 0
+                    },
+                    {
+                      "depth": 4,
+                      "width": 4,
+                      "x": 0,
+                      "y": 4
+                    },
+                    {
+                      "depth": 4,
+                      "width": 4,
+                      "x": 4,
+                      "y": 4
+                    },
+                    {
+                      "depth": 4,
+                      "width": 4,
+                      "x": 8,
+                      "y": 4
+                    }
+                  ],
+                  "width": 12
+                },
+                "room_names": [
+                  "Garage",
+                  "Basement",
+                  "Shed",
+                  "Home office",
+                  "Library",
+                  "Guest house"
+                ]
+              }
+            ],
             "markets": [
               {
                 "agent": "Valley Key Properties",
@@ -75258,7 +75390,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 13,
+      "revision": 14,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

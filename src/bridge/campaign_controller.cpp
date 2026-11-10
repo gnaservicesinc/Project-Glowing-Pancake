@@ -448,6 +448,7 @@ void CampaignController::startFounderCampaign() {
         const auto form=founding_->form();
         runtime::ScenarioOptions options;
         options.founding=founding_->selection();
+        options.charter=form.value("charter").toString().toStdString();
         const auto& selection=*options.founding;
         const auto* definition=program_.collection.find("scenario.founder_campaign");
         if(!definition) throw std::invalid_argument("The campaign introduction is missing from this content collection.");

@@ -39,16 +39,20 @@ int main(int argc,char** argv) {
             setup.choose(chapter.value("id").toString(),chapter.value("choices").toList().front().toMap().value("id").toString());
         }
         setup.setField("investment","100000");
+        setup.setField("charter","charter.independent_lab");
         check(setup.signingError().isEmpty(),"A reviewed investment within personal savings must be signable.");
+        check(setup.preview().contains("employee program $1,500.00/mo"),"The signing preview must disclose optional bylaws' actual recurring cost.");
         setup.setBeat("home");setup.setField("home_app","formation");
         bridge::FoundingController home_draft{program.collection,path};
         check(home_draft.beat()=="home" && home_draft.form().value("investment")=="100000" && home_draft.form().value("home_app")=="formation","Pre-company home and reviewed investment must survive a restart without founding.");
         runtime::ScenarioOptions options;
         options.founding=setup.selection();
+        options.charter=setup.form().value("charter").toString().toStdString();
         options.identity=runtime::CampaignIdentity{"Test lab","Alex Vale","she/her"};
         const auto checkpoint=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);
         const auto& catalog=*std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data).founding;
         const auto terms=content::founding_terms(catalog,*options.founding);
+        check(core::active_charter(checkpoint.world.simulation) && core::active_charter(checkpoint.world.simulation)->id==options.charter,"Founding bylaws must become the actual active charter.");
         check(terms.personal_contribution_cents==10000000 && checkpoint.world.simulation.succession->personal_cash==core::Cents{terms.personal_remaining_cents},"Only the chosen investment enters company funds; remaining savings stay personal.");
         check(persistence::decode_save(program,persistence::encode_save(program,checkpoint)).checkpoint==checkpoint,"Personal savings and appearance styling must reload exactly.");
         bridge::WorldController world{std::filesystem::path{scratch.path().toStdString()}/"world"};
@@ -61,6 +65,7 @@ int main(int argc,char** argv) {
         setup.setField("route","investment");
         check(!setup.backers().empty() && setup.answerOffer("commercial",true).isEmpty(),"The investment route must solicit and accept a named offer.");
         setup.setField("route","hired_ceo");
+        check(setup.form().value("charter").toString().isEmpty(),"A CEO application must clear optional founding bylaws rather than rewriting an existing company.");
         check(setup.backers().empty() && setup.form().value("backers").toStringList().empty() && setup.form().value("company")=="Alder Research","Changing route must discard incompatible funding and identify the existing company.");
         std::cout<<"Structured identity, appearance editing, current drafts, founder profile and route dependencies passed\n";
     } catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;}

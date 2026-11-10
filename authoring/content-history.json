@@ -107291,6 +107291,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "d90b717c1832e1c0f8a29ceaf2310fa41709d39f65260e390dbe6e05a04808ac",
+          "before_hash": "4a6ff95946088143f4b63b53e4eada7bede6d09383b1a5b55077f9068ccb811a",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 13,
+          "revision": 14
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "6c4378cfe7be7eee28856af6f748ff8f3e14ffa96f801da6c56acafdb58af747",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.43.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 44,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.42.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000043.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000044.collection.json",
+      "summary": "Give family backgrounds real home floor plans, preserve a paid route home after relocation, and allow self-funded formation with optional bylaws.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

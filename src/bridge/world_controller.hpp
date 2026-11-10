@@ -117,6 +117,8 @@ public:
     Q_INVOKABLE QVariantList hqListings(QString market) const;
     Q_INVOKABLE QVariantMap hqPropertyQuote(QString market,QString plan,bool land) const;
     Q_INVOKABLE QVariantMap hqMoveQuote(QString construction) const;
+    Q_INVOKABLE QVariantMap hqHomeQuote() const;
+    Q_INVOKABLE void returnHomeHQ(QString revision);
     Q_INVOKABLE QVariantList hqBids(QString land,int width,int depth,QVariantList rooms) const;
     Q_INVOKABLE void buyHQEquipment(QString offer,QString revision);
     Q_INVOKABLE QVariantMap hqPlacement(int item,int x,int y,bool rotated,int target) const;

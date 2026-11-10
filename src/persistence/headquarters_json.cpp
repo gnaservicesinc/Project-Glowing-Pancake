@@ -17,7 +17,7 @@ template<class T,class F> void visit(T& r,F&& f) {
         f("id",r.id);f("land",r.land);f("contractor",r.contractor);f("width",r.width);f("depth",r.depth);f("rooms",r.rooms);f("signed_on",r.signed_on);f("promised_on",r.promised_on);f("finish_on",r.finish_on);
         f("quote",r.quote);f("prepaid",r.prepaid);f("actual",r.actual);f("delay_announced",r.delay_announced);f("completed_on",r.completed_on);
     } else if constexpr(std::is_same_v<V,core::HQNotice>) {f("day",r.day);f("text",r.text);}
-    else if constexpr(std::is_same_v<V,core::HeadquartersState>) {f("stream",r.stream);f("energy_wh",r.energy_wh);f("electricity_remainder",r.electricity_remainder);f("electricity_cost",r.electricity_cost);f("metered_through",r.metered_through);f("premises",r.premises);f("items",r.items);f("land",r.land);f("construction",r.construction);f("notices",r.notices);}
+    else if constexpr(std::is_same_v<V,core::HeadquartersState>) {f("stream",r.stream);f("energy_wh",r.energy_wh);f("electricity_remainder",r.electricity_remainder);f("electricity_cost",r.electricity_cost);f("metered_through",r.metered_through);f("premises",r.premises);f("items",r.items);f("land",r.land);f("construction",r.construction);f("notices",r.notices);f("home_family",r.home_family);f("home_market",r.home_market);}
 }
 [[noreturn]] void bad() {throw PersistenceError("headquarters","Invalid headquarters ownership, floor plan or contract record.");}
 template<class T> T read(const Json& j) {

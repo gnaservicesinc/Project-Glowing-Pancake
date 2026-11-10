@@ -57,6 +57,11 @@ HQPremises leased(const SimulationState& s,const LeaseHQ& request) {
     const auto rent=times(m.rent_per_cell,area(p.width,p.depth));
     return {static_cast<std::uint32_t>(hq(s).premises.size()+1),"lease",m.id,p.id,m.landlord,m.street+" / "+p.name,p.width,p.depth,p.rooms,rent,times(rent,m.deposit_months),s.date,{},0};
 }
+HQPremises home_premises(const SimulationState& s) {
+    const auto home=headquarters_home(s);
+    return {static_cast<std::uint32_t>(hq(s).premises.size()+1),"home",hq(s).home_market,home.plan.id,"Your parents",home.plan.name,
+        home.plan.width,home.plan.depth,home.plan.rooms,Cents{0},Cents{0},s.date,{},0};
+}
 void sync_capacity(SimulationState& s) {
     for(const auto& i:hq(s).items) {
         const auto& model=offer(s,i);if(model.compute.value()==0 || i.delivered_on>s.date) continue;
@@ -117,6 +122,16 @@ void validate_headquarters_rules(const HeadquartersRules& r) {
     validate_hq_plan(r.home_width,r.home_depth,{{0,0,r.home_width,r.home_depth}},r.maximum_edge);
     const auto text=[](const std::string& v){return !v.empty() && v.size()<=128 && v.find('\0')==v.npos;};
     const auto ids=[&](const auto& rows){std::set<std::string> seen;for(const auto& row:rows) if(!text(row.id) || !seen.insert(row.id).second) invalid("Headquarters catalog identities must be unique.");};
+    if(!r.homes.empty()) {
+        if(r.homes.size()!=3) invalid("Provide poor, middle and rich family home plans.");
+        std::set<std::string> families;
+        for(const auto& home:r.homes) {
+            if((home.family!="poor" && home.family!="middle" && home.family!="rich") || !families.insert(home.family).second || !text(home.plan.id) || !text(home.plan.name)) invalid("Home plans need distinct family backgrounds and names.");
+            validate_hq_plan(home.plan.width,home.plan.depth,home.plan.rooms,r.maximum_edge);
+            if(home.plan.rooms.size()<3 || home.room_names.size()!=home.plan.rooms.size()) invalid("Every home needs at least three named free workspaces.");
+            for(const auto& name:home.room_names) if(!text(name)) invalid("Name each free home workspace.");
+        }
+    }
     ids(r.markets);ids(r.plans);ids(r.equipment);ids(r.contractors);
     for(const auto& m:r.markets) if((m.state!="US-CA" && m.state!="US-TX" && m.state!="US-WA") || !text(m.city) || !text(m.agent) || !text(m.landlord) || !text(m.street) || m.rent_per_cell<Cents{100} || m.land_per_cell<Cents{10000} || m.monthly_land_tax_per_cell<Cents{1} || m.deposit_months>6 || m.minimum_lease_days>1095 || m.early_exit_months>6) invalid("Property listings need actual counterparties and bounded prices and lease terms.");
     for(const auto& p:r.plans) {if(!text(p.name)) invalid("Name the floor plan.");validate_hq_plan(p.width,p.depth,p.rooms,r.maximum_edge);}
@@ -126,6 +141,27 @@ void validate_headquarters_rules(const HeadquartersRules& r) {
     for(const auto& c:r.contractors) if(!text(c.name) || c.cost_per_cell<Cents{10000} || c.cost_per_cell>Cents{10000000} || c.base_days<1 || c.base_days>365 || c.cells_per_day<1 || c.cells_per_day>100 || c.delay_bp>10000 || c.overrun_bp>10000 || c.maximum_delay_days>90 || c.maximum_overrun_bp>5000) invalid("Contractor bids need bounded costs, duration and disclosed risks.");
 }
 const HQPremises& current_headquarters(const SimulationState& s) {const auto& p=hq(s).premises;if(p.empty()) invalid("The company has no current premises.");return p.back();}
+HQHomePlan headquarters_home(const HeadquartersRules& r,std::string_view family) {
+    if(!r.homes.empty()) {
+        const auto id=family.empty()?std::string_view{"middle"}:family;
+        const auto found=std::ranges::find(r.homes,id,&HQHomePlan::family);
+        if(found==r.homes.end()) invalid("The family home plan is unavailable.");
+        return *found;
+    }
+    HQHomePlan result{std::string{family},{"home","Parents' house / free workspaces",r.home_width,r.home_depth,{}},{}};
+    if(r.home_width>=9 && r.home_width%3==0) {
+        for(int x=0;x<r.home_width;x+=r.home_width/3) result.plan.rooms.push_back({x,0,r.home_width/3,r.home_depth});
+        result.room_names={"Garage","Basement","Shed"};
+    } else {result.plan.rooms={{0,0,r.home_width,r.home_depth}};result.room_names={"Garage"};}
+    return result;
+}
+HQHomePlan headquarters_home(const SimulationState& s) {return headquarters_home(rules(s),hq(s).home_family);}
+HQQuote preview_hq_home(const SimulationState& s) {
+    if(current_headquarters(s).kind=="home") invalid("The company already operates from your parents' home.");
+    if(hq(s).premises.size()>=64) invalid("The headquarters move register is full.");
+    (void)home_premises(s);
+    return {Cents{0},Cents{0},Cents{0},exit_fee(s),current_headquarters(s).deposit,s.date};
+}
 HQQuote preview_hq_lease(const SimulationState& s,const LeaseHQ& request) {
     const auto p=leased(s,request);const auto& old=current_headquarters(s);
     return {p.deposit,p.deposit,p.rent,exit_fee(s),old.deposit,s.date};
@@ -148,17 +184,18 @@ HQQuote preview_hq_build(const SimulationState& s,const BuildHQ& request) {
     const auto days=c.base_days+(cells+c.cells_per_day-1)/c.cells_per_day;
     return {price,maximum,fraction(maximum,rules(s).building_tax_annual_bp,120000),Cents{0},Cents{0},advance_days(s.date,Days{days})};
 }
-void initialize_headquarters(SimulationState& s,std::uint64_t seed) {
+void initialize_headquarters(SimulationState& s,std::uint64_t seed,std::string_view home_family) {
     if(!enabled(s)) return;
     auto& w=*s.infrastructure->workplace;w.headquarters=HeadquartersState{};auto& h=*w.headquarters;
     SplitMix64 stream{seed ^ UINT64_C(0x4845414451554152)};h.stream=stream.next();
     const auto& r=rules(s);const auto it=std::ranges::find(r.markets,s.infrastructure->executive_base,&HQMarket::state);
     if(it==r.markets.end()) invalid("The opening headquarters has no local property market.");
+    h.home_family=home_family;
+    const auto home_market=home_family.empty()?it:std::ranges::find(r.markets,std::string{"US-CA"},&HQMarket::state);
+    if(home_market==r.markets.end()) invalid("The family home needs a California property market.");
+    h.home_market=home_market->id;
     if(w.opening_office=="home") {
-        std::vector<HQRoom> rooms;
-        if(r.home_width>=9 && r.home_width%3==0) for(int x=0;x<r.home_width;x+=r.home_width/3) rooms.push_back({x,0,r.home_width/3,r.home_depth});
-        else rooms.push_back({0,0,r.home_width,r.home_depth});
-        h.premises.push_back({1,"home",it->id,"home","Your parents","Parents' house / free workspaces",r.home_width,r.home_depth,rooms,Cents{0},Cents{0},s.date,{},0});
+        h.premises.push_back(home_premises(s));
     }
     else {
         const auto& p=find(r.plans,std::string{"studio"});Cents rent{0};
@@ -207,7 +244,7 @@ bool hq_has_lab_equipment(const SimulationState& s,std::span<const std::string> 
         });
     });
 }
-bool headquarters_purchase(const HeadquartersAction& a) {return std::holds_alternative<BuyHQEquipment>(a) || std::holds_alternative<LeaseHQ>(a) || std::holds_alternative<BuyHQLand>(a) || std::holds_alternative<BuildHQ>(a) || std::holds_alternative<MoveToOwnedHQ>(a);}
+bool headquarters_purchase(const HeadquartersAction& a) {return std::holds_alternative<BuyHQEquipment>(a) || std::holds_alternative<LeaseHQ>(a) || std::holds_alternative<BuyHQLand>(a) || std::holds_alternative<BuildHQ>(a) || std::holds_alternative<MoveToOwnedHQ>(a) || std::holds_alternative<ReturnHomeHQ>(a);}
 void manage_headquarters(SimulationState& s,const HeadquartersAction& action,Cents protected_cash) {
     const auto& r=rules(s);auto& h=hq(s);
     std::visit([&](const auto& a) {
@@ -253,7 +290,9 @@ void manage_headquarters(SimulationState& s,const HeadquartersAction& action,Cen
         } else if constexpr(std::is_same_v<A,PowerHQEquipment>) {
             auto& i=item(s,a.item);if(offer(s,i).watts==0) invalid("This furnishing has no power switch.");i.powered=a.powered;
         }
-        else if constexpr(std::is_same_v<A,LeaseHQ>) {
+        else if constexpr(std::is_same_v<A,ReturnHomeHQ>) {
+            (void)preview_hq_home(s);move(s,home_premises(s),protected_cash);
+        } else if constexpr(std::is_same_v<A,LeaseHQ>) {
             if(h.premises.size()>=64) invalid("The headquarters move register is full.");move(s,leased(s,a),protected_cash);
         } else if constexpr(std::is_same_v<A,BuyHQLand>) {
             if(h.land.size()>=r.maximum_properties) invalid("The company has reached its property limit.");const auto q=preview_hq_land(s,a);affordable(s,q.price,protected_cash);
@@ -307,6 +346,10 @@ void validate_headquarters(const SimulationState& s,bool deep) {
     const auto& r=rules(s);const auto& h=hq(s);
     if(h.premises.empty() || h.premises.size()>64 || h.items.size()>r.maximum_items || h.land.size()>r.maximum_properties || h.construction.size()>r.maximum_properties || h.notices.size()>2*r.maximum_properties) invalid("Headquarters records exceed their bounded history.");
     const auto& p=current_headquarters(s);if(p.left_on) invalid("The current headquarters cannot have a departure date.");
+    const auto home=headquarters_home(s);
+    const auto& home_city=find(r.markets,h.home_market);
+    if(!h.home_family.empty() && h.home_family!="poor" && h.home_family!="middle" && h.home_family!="rich") invalid("The family home background is invalid.");
+    if(!h.home_family.empty() && home_city.state!="US-CA") invalid("The founder's family home remains in California.");
     validate_hq_plan(p.width,p.depth,p.rooms,r.maximum_edge);
     std::vector<std::uint32_t> occupancy(static_cast<std::size_t>(p.width*p.depth));std::set<std::string> people,laptop_people;std::set<std::uint32_t> mounts;
     const auto opening_people=opening_staff_count(*s.capacity)+(s.infrastructure->workplace->nonresearch_founder?1U:0U);
@@ -351,7 +394,7 @@ void validate_headquarters(const SimulationState& s,bool deep) {
         validate_hq_plan(location.width,location.depth,location.rooms,r.maximum_edge);
         if(location.id!=n+1 || location.entered_on>s.date || (n==0 && location.entered_on!=s.infrastructure->workplace->starts_on) || (n>0 && h.premises[n-1].left_on!=location.entered_on) || (n+1<h.premises.size() && !location.left_on)) invalid("Headquarters occupancy history must be sequential and dated.");
         if(location.kind=="home") {
-            if(n!=0 || location.rent.value()!=0 || location.deposit.value()!=0 || location.width!=r.home_width || location.depth!=r.home_depth) invalid("The parents' garage cannot invent rent, a deposit or extra space.");
+            if(location.rent.value()!=0 || location.deposit.value()!=0 || location.width!=home.plan.width || location.depth!=home.plan.depth || location.rooms!=home.plan.rooms || location.market!=h.home_market || location.plan!=home.plan.id || location.construction) invalid("The family home must retain its actual free rooms and location.");
         } else if(location.kind=="lease") {
             const auto& plan=find(r.plans,location.plan);
             if(location.width!=plan.width || location.depth!=plan.depth || location.rooms!=plan.rooms || location.lessor!=city.landlord) invalid("Leased rooms must match their actual listed premises and landlord.");

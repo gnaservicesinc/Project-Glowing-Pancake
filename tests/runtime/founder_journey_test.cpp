@@ -39,7 +39,11 @@ int main() {
         require(quiet.prepare_opening(quiet.current_state().world.simulation.revision).accepted(),"A company without research staff must open normally.");
         const auto quiet_day=quiet.submit({quiet.current_state().world.simulation.revision,core::AdvanceDay{}});
         require(quiet_day.accepted(),quiet_day.explanation.c_str());
-        revised.family="poor";refuses([&]{(void)make(revised);});
+        revised.family="poor";revised.personal_investment_cents=0;
+        refuses([&]{(void)make(revised);});
+        revised.personal_investment_cents=catalog.formation_cents+500000;
+        const auto small_bootstrap=make(revised);
+        require(small_bootstrap.world.simulation.cash==core::Cents{500000},"A founder with a modest background can self-fund with their chosen contribution.");
         revised.route="investment";
         refuses([&]{(void)make(revised);});
         revised.backers={"commercial"};

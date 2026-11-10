@@ -23,7 +23,7 @@ QString money(std::int64_t cents) {
 
 QVariantMap defaults() {
     return {{"first_name","Alex"},{"last_name","Vale"},{"gender","nonbinary"},{"pronouns","they/them"},
-        {"home_app","room"},{"home_room","Bedroom"},{"home_guide",""},{"home_contact",""},{"investment","-1"},{"company","Daybreak Research"},{"seed","19972015"},{"headquarters","US-CA"},{"difficulty","difficulty.standard"},
+        {"home_app","room"},{"home_room","Bedroom"},{"home_guide",""},{"home_contact",""},{"investment","-1"},{"charter",""},{"company","Daybreak Research"},{"seed","19972015"},{"headquarters","US-CA"},{"difficulty","difficulty.standard"},
         {"sociability","introverted"},{"activity","sedentary"},{"disposition","deliberate"},
         {"family","middle"},{"leg","genius"},{"route","investment"},{"legal_form","corporation"},
         {"office","home"},{"researcher","founder"},{"mission","survival"},
@@ -39,6 +39,7 @@ FoundingController::FoundingController(const content::Collection& collection, st
         catalog_ = scenario.founding;
         headquarters_ = scenario.headquarters_choices;
         if(scenario.infrastructure && scenario.infrastructure->workplace) premises_rules_=scenario.infrastructure->workplace->headquarters;
+        if(scenario.management && scenario.management->governance)charters_=scenario.management->governance->charters;
     }
     deriveOpening();
     if (!available()) return;
@@ -116,7 +117,17 @@ QVariantList FoundingController::options(const std::vector<content::FoundingOpti
     return result;
 }
 
-QVariantList FoundingController::families() const { return catalog_ ? options(catalog_->families) : QVariantList{}; }
+QVariantList FoundingController::families() const {
+    if(!catalog_)return {};
+    auto rows=options(catalog_->families);
+    for(auto& value:rows) {
+        auto row=value.toMap();const auto id=row.value("id").toString().toStdString();
+        row["detail"]=row.value("detail").toString()+tr(" · Family savings at 18: %1").arg(money(content::founding_option(catalog_->families,id).capital_cents));
+        if(premises_rules_)row["detail"]=row.value("detail").toString()+tr(" · %1 free home workspaces").arg(core::headquarters_home(*premises_rules_,id).plan.rooms.size());
+        value=row;
+    }
+    return rows;
+}
 QVariantList FoundingController::legs() const { return catalog_ ? options(catalog_->legs) : QVariantList{}; }
 QVariantList FoundingController::routes() const {
     return catalog_?options(catalog_->routes):QVariantList{};
@@ -167,12 +178,32 @@ QVariantMap FoundingController::personalFunds() const {
     const auto total=content::founding_option(catalog_->families,family).capital_cents+content::founding_option(catalog_->legs,form_.value("leg").toString().toStdString()).capital_cents;
     return {{"total",money(total)},{"dollars",QString::number(total/100)}};
 }
+QVariantMap FoundingController::familyHome() const {
+    if(!premises_rules_)return {};
+    const auto family=form_.value("leg")=="political"?std::string{"rich"}:form_.value("family").toString().toStdString();
+    const auto home=core::headquarters_home(*premises_rules_,family);
+    QVariantList rooms;QStringList names;
+    for(std::size_t i=0;i<home.plan.rooms.size();++i) {
+        const auto& r=home.plan.rooms[i];const auto name=text(home.room_names[i]);names.push_back(name);
+        rooms.push_back(QVariantMap{{"name",name},{"x",r.x},{"y",r.y},{"width",r.width},{"depth",r.depth}});
+    }
+    return {{"name",text(home.plan.name)},{"width",home.plan.width},{"depth",home.plan.depth},{"rooms",rooms},{"roomNames",names}};
+}
+QVariantList FoundingController::charters() const {
+    QVariantList rows{QVariantMap{{"id",""},{"name",tr("No optional bylaws")},{"detail",tr("Use the ordinary board terms, with no additional employee-program commitment.")}}};
+    for(const auto& c:charters_) rows.push_back(QVariantMap{{"id",text(c.id)},{"name",text(c.name)},
+        {"detail",tr("%1\nEmployees expect %2\nBoard cash floor %3; dilution ceiling %4%. Employee program %5/month. Stricter existing board terms still apply. Later amendments require a board majority.")
+            .arg(text(c.priorities),text(c.employee_expectations),money(c.cash_floor.value())).arg(static_cast<double>(c.maximum_dilution.value())/100).arg(money(c.monthly_employee_budget.value()))}});
+    return rows;
+}
 QString FoundingController::signingError() const {
     if(!catalog_) return tr("The founding catalog is unavailable.");
     try {
         const auto selected=selection();
         if(selected.route=="hired_ceo" && selected.leg!="genius" && selected.leg!="political" && selected.leg!="wealthy") return tr("The lab has declined this leadership application.");
         const auto terms=content::founding_terms(*catalog_,selected);
+        const auto charter=form_.value("charter").toString().toStdString();
+        if(!charter.empty() && (selected.route=="hired_ceo" || std::ranges::none_of(charters_,[&](const auto& c){return c.id==charter;}))) return tr("Choose an available founding charter. A hired CEO inherits the company's existing terms.");
         if(terms.contributed_cents<=terms.paid_setup_cents) return tr("Secure enough funding to pay formation expenses and leave the company some working cash.");
         runtime::validate_campaign_identity({form_.value("company").toString().trimmed().toStdString(),selected.first_name+" "+selected.last_name,form_.value("pronouns").toString().toStdString()});
         return {};
@@ -206,8 +237,10 @@ QString FoundingController::preview() const {
             std::int64_t compute=0;
             if(premises_rules_) for(const auto& offer:premises_rules_->equipment) if(offer.id=="desktop") compute=offer.compute.value()*desks;
             const auto equipment=premises_rules_ && desks?tr("Inherited company equipment: %1 desks and %1 desktop computers. You bring your phone and laptop; no compute lease.").arg(desks):selected.office=="home"?tr("You bring your existing phone and laptop; no desktop or compute lease."):tr("The office includes a workstation; you bring your phone and laptop. No compute lease.");
+            QString bylaws;
+            for(const auto& c:charters_)if(c.id==form_.value("charter").toString().toStdString())bylaws=tr("\nOptional bylaws: %1 · employee program %2/mo").arg(text(c.name),money(c.monthly_employee_budget.value()));
             return tr("%1\nCash %2 · signing %3\nRent %4/mo · payroll %5/mo · your salary %6/mo\n%7\n%8 research-capable people · %9 CU/day\n%10")
-                .arg(sources.join(" · "),money(cash-terms.paid_setup_cents),money(terms.paid_setup_cents),money(terms.office_cents),money(terms.payroll_cents),money(catalog_->founder_salary_cents),equity).arg(terms.opening_staff).arg(static_cast<double>(compute)/1000).arg(equipment);
+                .arg(sources.join(" · "),money(cash-terms.paid_setup_cents),money(terms.paid_setup_cents),money(terms.office_cents),money(terms.payroll_cents),money(catalog_->founder_salary_cents),equity).arg(terms.opening_staff).arg(static_cast<double>(compute)/1000).arg(equipment)+bylaws;
         }
     } catch (const std::exception& error) {
         return QString::fromUtf8(error.what());
@@ -248,7 +281,7 @@ void FoundingController::setField(QString key, QVariant value) {
         auto parts=form_.value("appearance").toList(),style=form_.value("style").toList();
         if(parts.size()==15 && style.size()==8) {parts[1]=answer=="woman"?2:answer=="man"?0:1;parts[9]=0;style[0]=answer=="woman"?5:0;style[2]=answer=="woman"?1:0;form_["appearance"]=parts;form_["style"]=style;}
     }
-    if(key=="route" && answer=="hired_ceo") form_["company"]="Alder Research";
+    if(key=="route" && answer=="hired_ceo") {form_["company"]="Alder Research";form_["charter"]="";}
     if (key == "legal_form" || key == "route") form_["backers"] = QStringList{};
     if (key == "legal_form") {
         form_["route"] = answer == "nonprofit" ? "mission_director" : "investment";
@@ -287,7 +320,7 @@ void FoundingController::deriveOpening() {
     const auto leg=form_.value("leg").toString();
     if(leg=="wealthy" && form_.value("family")!="rich") form_["leg"]="genius";
     auto route=form_.value("route").toString();
-    if(route=="bootstrap" && form_.value("family")!="rich" && form_.value("leg")!="political") route=form_.value("legal_form")=="nonprofit"?"mission_director":"investment";
+    if(route=="bootstrap" && content::founding_option(catalog_->routes,"bootstrap").family=="rich" && form_.value("family")!="rich" && form_.value("leg")!="political") route=form_.value("legal_form")=="nonprofit"?"mission_director":"investment";
     form_["route"]=route;
     form_["researcher"]=form_.value("leg")=="genius"?"founder":"none";
     form_["office"]=(route=="hired_ceo" || route=="partnership")?"shared":"home";

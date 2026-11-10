@@ -73,7 +73,8 @@ press R to rotate, and Escape or right-click to cancel. Visible rotation/cancel
 buttons and column/row controls are also available. Mount computers on desks and
 assign people through the inspector. Empty/storage/powered-off
 machines provide no compute. A research desktop supplies 4 CU/day and consumes
-metered electricity. The garage, basement and shed each have room for one desk and cost $0 rent.
+metered electricity. The garage, basement and shed cost $0 rent. Middle-income homes also have a
+home office, and wealthy homes add a library and guest house.
 Supplier filters show fictional brands. Issuing a delivered laptop lets its holder
 research without an assigned desk. Thin clients and research laptops require a
 powered installed rack; they do not duplicate its compute. Plants, aquariums and
@@ -82,7 +83,10 @@ break-room furnishings can be bought and placed, with no mood bonus yet.
 Alternatively buy land, design rooms and compare three contractor bids. Construction
 can be delayed or exceed its base quote; the prepaid contingency caps the signed
 commitment and unused funds return. Finished owned premises pay property tax,
-with no rent. Moving stores furniture for arrangement in the new space.
+with no rent. Moving stores furniture for arrangement in the new space. Under
+**Realtor**, use **Review a return home** to move back to the original free
+workspaces. Review any lease exit fee and deposit refund before confirming.
+Owned properties and their taxes continue, and issued laptops stay assigned.
 Engineering scenarios retain their earlier facility tools. Saved blueprints buy real sites,
 racks and operators in each state, with inspection and commissioning still
 required. Open **People → Applicants** to compare candidates and their requests.
@@ -110,7 +114,9 @@ computer or **Browser** to visit fictional legal, investor, career and banking
 services. A dismissible guide explains the routes. Cedar & Quill forms corporations
 or nonprofits; Alder considers CEO applications from geniuses and political or
 wealthy elites. Name the company, choose its purpose, enter your personal investment
-and explicitly accept any outside funding. Uninvested savings stay personal.
+and explicitly accept any outside funding. Choose **Use my savings** to self-fund.
+Optional bylaws add a monthly employee program and affect board approval terms.
+Uninvested savings stay personal.
 Review the actual costs and ownership before the signature ceremony. This home
 stage is saved between sessions; it does not advance simulation time.
 

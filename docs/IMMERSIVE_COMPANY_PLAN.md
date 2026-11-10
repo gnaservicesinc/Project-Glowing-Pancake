@@ -105,7 +105,7 @@ in the backlog; this plan is not evidence that all systems already exist.
 
 The first batch implements icon pickup with authoritative placement previews,
 rotation/cancellation, all listed equipment categories and issued laptops,
-fictional supplier filtering, three home furnishing rooms, the extended portrait
+fictional supplier filtering, family homes with three to six furnishing rooms, the extended portrait
 recipe, pronoun choices, birth/formation ceremonies and narrated choice outcomes.
 The introduction ends after appearance at a saved pre-company home desktop.
 Legal formation and eligible lab appointments use actual existing funding terms;
@@ -113,10 +113,12 @@ the chosen investment moves into company capital while uninvested savings remain
 in the personal account. Distinct-trait creativity, compatibility coordination,
 hiring previews and research bypass are implemented with fresh-save coverage.
 
-This is not the whole redesign. The home currently uses a persisted setup draft,
-not a ticking personal-world simulation. Wealth-specific extra furnishing rooms,
-returning home after losing commercial space, loans from the home bank, optional
-bylaws, stock/bond holdings and richer contact conversations remain to implement.
+The realtor offers a return to the original family home. Lease settlement follows
+the contract, existing company properties stay owned, and issued laptops stay
+assigned. Founders can self-fund and adopt optional bylaws that set board limits
+and fund an employee program. The home opening uses a saved setup draft.
+Personal home visits during commercial occupancy, bank loans, stock and bond
+holdings, and richer contact conversations remain to implement.
 Amenities are decorative purchases; mood/retention effects, audience
 identity modifiers, broader role-specific equipment benefits and private-life
 assets/events remain open. Research rules initially use 2015 and difficulty 12;

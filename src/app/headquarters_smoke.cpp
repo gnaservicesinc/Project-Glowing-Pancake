@@ -67,8 +67,8 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
             auto* view=item("hqPhysicalScene");QPointF start,end;
             if(view) {
                 QVector3D a,b;
-                if(!QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,a),Q_ARG(QVector3D,(QVector3D{static_cast<float>(100-pgp::core::current_headquarters(s).width*50),48,0}))) ||
-                   !QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,b),Q_ARG(QVector3D,(QVector3D{static_cast<float>(200-pgp::core::current_headquarters(s).width*50),48,0})))) {fail("Native room projection");return;}
+                if(!QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,a),Q_ARG(QVector3D,(QVector3D{static_cast<float>(100-pgp::core::current_headquarters(s).width*50),48,static_cast<float>(150-pgp::core::current_headquarters(s).depth*50)}))) ||
+                   !QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,b),Q_ARG(QVector3D,(QVector3D{static_cast<float>(200-pgp::core::current_headquarters(s).width*50),48,static_cast<float>(150-pgp::core::current_headquarters(s).depth*50)})))) {fail("Native room projection");return;}
                 start=view->mapToScene(QPointF{a.x(),a.y()});end=view->mapToScene(QPointF{b.x(),b.y()});
             } else {
                 view=item("hqFloorPlan");if(!view) {fail("Interactive scene unavailable");return;}
@@ -79,12 +79,12 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
                 QPointF validPoint,invalidPoint;
                 if(item("hqPhysicalScene")) {
                     QVector3D v,b;
-                    QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,v),Q_ARG(QVector3D,(QVector3D{static_cast<float>(150-pgp::core::current_headquarters(s).width*50),0,-100})));
-                    QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,b),Q_ARG(QVector3D,(QVector3D{static_cast<float>(250-pgp::core::current_headquarters(s).width*50),0,100})));
+                    QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,v),Q_ARG(QVector3D,(QVector3D{static_cast<float>(150-pgp::core::current_headquarters(s).width*50),0,static_cast<float>(50-pgp::core::current_headquarters(s).depth*50)})));
+                    QMetaObject::invokeMethod(view,"mapFrom3DScene",Q_RETURN_ARG(QVector3D,b),Q_ARG(QVector3D,(QVector3D{static_cast<float>(pgp::core::current_headquarters(s).width*50-50),0,static_cast<float>(pgp::core::current_headquarters(s).depth*50-50)})));
                     validPoint=view->mapToScene({v.x(),v.y()});invalidPoint=view->mapToScene({b.x(),b.y()});
                 } else {
                     const auto cell=view->property("cell").toReal(),left=view->property("leftEdge").toReal(),top=view->property("topEdge").toReal();
-                    validPoint=view->mapToScene({left+cell*1.2,top+cell*0.2});invalidPoint=view->mapToScene({left+cell*2.2,top+cell*2.2});
+                    validPoint=view->mapToScene({left+cell*1.2,top+cell*0.2});invalidPoint=view->mapToScene({left+cell*(pgp::core::current_headquarters(s).width-0.8),top+cell*(pgp::core::current_headquarters(s).depth-0.8)});
                 }
                 if(state->previewPhase==0) {
                     if(!press("hqPick_1")) {fail("Pick up illustrated equipment card");return;}
@@ -161,7 +161,24 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
             if(++state->settle<8) return;
             auto* floor=item("hqFloorPlan");if(!floor)floor=item("hqPhysicalScene");
             if(!floor || floor->height()<250 || !capture(".compact-placement")) {fail("Compact room must have space for actual placement");return;}
-            std::cout<<"HQ UI passed: empty garage, paid suppliers/delivery, placement, desk assignment, pointer drag, landlord lease, city land purchase, custom rooms, contractor bids and completion, owned relocation, fresh resume\n";
+            if(!press("hqCancelPreview")) {fail("Finish compact placement");return;}
+            campaign.setTextScalePercent(100);window.resize(1280,720);state->settle=0;++state->phase;break;
+        }
+        case 26:
+            if(++state->settle<10)return;
+            if(!press("hqOpenRealtor")) {fail("Realtor return-home route");return;}++state->phase;break;
+        case 27:
+            if(!press("hqReturnHome")) {fail("The family home must remain available after commercial relocation");return;}++state->phase;break;
+        case 28:
+            if(!capture(".home-return-review") || !press("hqConfirmPurchase")) {fail("Home return terms");return;}++state->phase;break;
+        case 29:
+            if(pgp::core::current_headquarters(s).kind!="home" || pgp::core::current_headquarters(s).rooms!=pgp::core::headquarters_home(s).plan.rooms || world.state_id!="state.us_ca" || !press("closeDeviceButton")) {fail("Actual family home restored in California");return;}
+            state->settle=0;++state->phase;break;
+        case 30: {
+            if(++state->settle<10)return;
+            const auto& program=*campaign.snapshot()->content;pgp::persistence::CurrentCampaign current{paths.saves_directory/"continuing"};
+            if(current.resume(program)!=std::optional{campaign.snapshot()->checkpoint} || !capture(".returned-home")) {fail("Home recovery must render and reload exactly");return;}
+            std::cout<<"HQ UI passed: paid supplies, placement previews, rotation/cancel, assignment/drag, commercial lease, construction, owned relocation, compact 200% layout, return home and fresh resume\n";
             timer->stop();QCoreApplication::exit(0);break;
         }
         }

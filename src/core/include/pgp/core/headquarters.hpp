@@ -36,6 +36,12 @@ struct HQEquipmentOffer {
     std::uint64_t memory_mib=0;
     auto operator<=>(const HQEquipmentOffer&) const = default;
 };
+struct HQHomePlan {
+    std::string family;
+    HQPlan plan;
+    std::vector<std::string> room_names;
+    auto operator<=>(const HQHomePlan&) const = default;
+};
 struct HQContractor {
     std::string id,name;
     Cents cost_per_cell{0};
@@ -49,6 +55,7 @@ struct HeadquartersRules {
     std::vector<HQPlan> plans;
     std::vector<HQEquipmentOffer> equipment;
     std::vector<HQContractor> contractors;
+    std::vector<HQHomePlan> homes;
     auto operator<=>(const HeadquartersRules&) const = default;
 };
 struct HQPremises {
@@ -103,6 +110,7 @@ struct HeadquartersState {
     std::vector<HQLand> land;
     std::vector<HQConstruction> construction;
     std::vector<HQNotice> notices;
+    std::string home_family,home_market;
     auto operator<=>(const HeadquartersState&) const = default;
 };
 struct BuyHQEquipment {std::string offer;};
@@ -115,7 +123,8 @@ struct LeaseHQ {std::string market,plan;};
 struct BuyHQLand {std::string market,plan;};
 struct BuildHQ {std::uint32_t land=0;std::string contractor;int width=0,depth=0;std::vector<HQRoom> rooms;};
 struct MoveToOwnedHQ {std::uint32_t construction=0;};
-using HeadquartersAction=std::variant<BuyHQEquipment,PlaceHQEquipment,StoreHQEquipment,AssignHQDesk,PowerHQEquipment,LeaseHQ,BuyHQLand,BuildHQ,MoveToOwnedHQ,AssignHQLaptop>;
+struct ReturnHomeHQ {};
+using HeadquartersAction=std::variant<BuyHQEquipment,PlaceHQEquipment,StoreHQEquipment,AssignHQDesk,PowerHQEquipment,LeaseHQ,BuyHQLand,BuildHQ,MoveToOwnedHQ,AssignHQLaptop,ReturnHomeHQ>;
 struct ManageHeadquarters {HeadquartersAction action;};
 struct HQQuote {
     Cents price{0},maximum{0},monthly{0},exit_fee{0},refund{0};
@@ -123,7 +132,7 @@ struct HQQuote {
 };
 void validate_headquarters_rules(const HeadquartersRules&);
 void validate_hq_plan(int width,int depth,const std::vector<HQRoom>&,int maximum_edge);
-void initialize_headquarters(SimulationState&,std::uint64_t seed);
+void initialize_headquarters(SimulationState&,std::uint64_t seed,std::string_view home_family="");
 void prepare_headquarters(SimulationState&);
 void meter_headquarters_day(SimulationState&);
 void validate_headquarters(const SimulationState&,bool deep=true);
@@ -132,6 +141,9 @@ bool headquarters_purchase(const HeadquartersAction&);
 const HQPremises& current_headquarters(const SimulationState&);
 HQQuote preview_hq_lease(const SimulationState&,const LeaseHQ&);
 HQQuote preview_hq_move(const SimulationState&,const MoveToOwnedHQ&);
+HQQuote preview_hq_home(const SimulationState&);
+HQHomePlan headquarters_home(const HeadquartersRules&,std::string_view family);
+HQHomePlan headquarters_home(const SimulationState&);
 HQQuote preview_hq_land(const SimulationState&,const BuyHQLand&);
 HQQuote preview_hq_build(const SimulationState&,const BuildHQ&);
 bool hq_computer_available(const SimulationState&);

@@ -122,6 +122,16 @@ ColumnLayout {
     }
     ColumnLayout {
         visible:panel.tab==="property";Layout.fillWidth:true;spacing:12
+        Rectangle {
+            visible:panel.headquarters.kind!=="home"
+            Layout.fillWidth:true;implicitHeight:homeOffer.implicitHeight+28;color:"#334e48";radius:12
+            ColumnLayout {
+                id:homeOffer;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:14
+                Heading {text:qsTr("There is still room at home")}
+                Copy {text:qsTr("Your parents' free workspaces remain available. Return when you need to cut rent, regroup or start again. Review any cost of ending the current lease before moving.")}
+                WorldButton {objectName:"hqReturnHome";text:qsTr("Review a return home");textSize:panel.textSize;enabled:panel.editable;onClicked:reviewPause.begin(()=>{purchase.review=campaign.world.hqHomeQuote();purchase.kind="home";purchase.title=qsTr("Move the company home?");purchase.open()})}
+            }
+        }
         Heading {text:qsTr("Available commercial premises")}
         Copy {text:qsTr("A realtor offers actual spaces in the city you select. Compare floor plans, landlords, rent and deposits. Moving ends your old lease under its terms and puts equipment into storage so you can arrange the new rooms.")}
         GameSelect {
@@ -210,12 +220,26 @@ ColumnLayout {
         modal:true;focus:true;padding:20
         background:Rectangle {radius:12;color:"#142d32";border.color:"#bba775"}
         header:Label {padding:20;text:purchase.title;wrapMode:Text.Wrap;font.pixelSize:panel.textSize*1.4;font.bold:true;color:"#eee5cc"}
-        contentItem:ScrollView {id:purchaseScroll;contentWidth:availableWidth;clip:true;Label {width:purchaseScroll.availableWidth;text:purchase.review.error || purchase.review.detail || "";font.pixelSize:panel.textSize;color:"#c6d9ca";textFormat:Text.PlainText;wrapMode:Text.Wrap}}
+        contentItem:ScrollView {
+            id:purchaseScroll
+            contentWidth:availableWidth
+            clip:true
+            ColumnLayout {
+                width:purchaseScroll.availableWidth
+                Copy {text:purchase.review.error || purchase.review.detail || ""}
+                HeadquartersPlan {
+                    visible:purchase.kind==="home" && !purchase.review.error
+                    Layout.fillWidth:true
+                    Layout.preferredHeight:panel.textSize*13
+                    headquarters:({kind:"home",width:purchase.review.width,depth:purchase.review.depth,rooms:purchase.review.rooms,items:[]})
+                }
+            }
+        }
         footer:RowLayout {
             spacing:10
             Item {Layout.fillWidth:true}
             WorldButton {text:qsTr("Cancel");textSize:panel.textSize;onClicked:purchase.reject()}
-            WorldButton {objectName:"hqConfirmPurchase";text:purchase.kind==="lease" || purchase.kind==="move"?qsTr("Move headquarters"):purchase.kind==="build"?qsTr("Hire contractor"):qsTr("Confirm purchase");textSize:panel.textSize;primary:true;enabled:!purchase.review.error && panel.editable;onClicked:purchase.accept()}
+            WorldButton {objectName:"hqConfirmPurchase";text:["lease","move","home"].includes(purchase.kind)?qsTr("Move headquarters"):purchase.kind==="build"?qsTr("Hire contractor"):qsTr("Confirm purchase");textSize:panel.textSize;primary:true;enabled:!purchase.review.error && panel.editable;onClicked:purchase.accept()}
         }
         onAccepted:{
             const r=review
@@ -224,6 +248,7 @@ ColumnLayout {
             else if(kind==="land") campaign.world.buyHQLand(r.market,r.plan,r.revision)
             else if(kind==="build") campaign.world.buildHQ(r.land,r.contractor,r.width,r.depth,r.rooms,r.revision)
             else if(kind==="move") campaign.world.moveToOwnedHQ(r.construction,r.revision)
+            else if(kind==="home") campaign.world.returnHomeHQ(r.revision)
         }
     }
 }

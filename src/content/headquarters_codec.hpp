@@ -16,6 +16,7 @@ template<class T,class F> void visit(T& r,F&& f) {
         f("rent_cents_per_square_metre",r.rent_per_cell);f("land_cents_per_square_metre",r.land_per_cell);f("monthly_land_tax_cents_per_square_metre",r.monthly_land_tax_per_cell);
         f("deposit_months",r.deposit_months);f("minimum_lease_days",r.minimum_lease_days);f("early_exit_months",r.early_exit_months);
     } else if constexpr(std::is_same_v<V,core::HQPlan>) {f("id",r.id);f("name",r.name);f("width",r.width);f("depth",r.depth);f("rooms",r.rooms);}
+    else if constexpr(std::is_same_v<V,core::HQHomePlan>) {f("family",r.family);f("plan",r.plan);f("room_names",r.room_names);}
     else if constexpr(std::is_same_v<V,core::HQEquipmentOffer>) {
         f("id",r.id);f("name",r.name);f("supplier",r.supplier);f("kind",r.kind);f("price_cents",r.price);f("delivery_days",r.delivery);f("width",r.width);f("depth",r.depth);f("compute_milli_cu_per_day",r.compute);f("watts",r.watts);f("memory_mib",r.memory_mib);
     } else if constexpr(std::is_same_v<V,core::HQContractor>) {
@@ -24,6 +25,7 @@ template<class T,class F> void visit(T& r,F&& f) {
     } else if constexpr(std::is_same_v<V,core::HeadquartersRules>) {
         f("home_width",r.home_width);f("home_depth",r.home_depth);f("maximum_edge",r.maximum_edge);f("maximum_items",r.maximum_items);f("maximum_properties",r.maximum_properties);f("building_tax_annual_bp",r.building_tax_annual_bp);
         f("markets",r.markets);f("plans",r.plans);f("equipment",r.equipment);f("contractors",r.contractors);
+        f("homes",r.homes,true);
     }
 }
 template<class T> T read(const Json& j) {
@@ -38,7 +40,7 @@ template<class T> T read(const Json& j) {
         if(!j.is_array() || j.size()>128) invalid();T rows;for(const auto& value:j) rows.push_back(read<typename T::value_type>(value));return rows;
     } else {
         if(!j.is_object()) invalid();T result;std::size_t count=0;
-        visit(result,[&](const char* name,auto& value){if(!j.contains(name)) invalid();value=read<std::remove_cvref_t<decltype(value)>>(j.at(name));++count;});
+        visit(result,[&](const char* name,auto& value,bool optional=false){if(optional && !j.contains(name)) return;if(!j.contains(name)) invalid();value=read<std::remove_cvref_t<decltype(value)>>(j.at(name));++count;});
         if(j.size()!=count) invalid();return result;
     }
 }
@@ -46,7 +48,7 @@ template<class T> Json write(const T& value) {
     if constexpr(std::is_same_v<T,std::string> || std::is_integral_v<T>) return value;
     else if constexpr(requires{value.value();}) return value.value();
     else if constexpr(requires{value.begin();value.end();}) {auto j=Json::array();for(const auto& row:value) j.push_back(write(row));return j;}
-    else {auto j=Json::object();visit(value,[&](const char* name,const auto& field){j[name]=write(field);});return j;}
+    else {auto j=Json::object();visit(value,[&](const char* name,const auto& field,bool optional=false){if constexpr(requires{field.empty();}) {if(optional && field.empty())return;}j[name]=write(field);});return j;}
 }
 inline core::HeadquartersRules decode(const Json& j) {auto r=read<core::HeadquartersRules>(j);core::validate_headquarters_rules(r);return r;}
 inline Json encode(const core::HeadquartersRules& r) {return write(r);}

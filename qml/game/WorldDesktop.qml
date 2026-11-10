@@ -161,7 +161,7 @@ Item {
         RowLayout {
             Layout.alignment:Qt.AlignHCenter
             WorldButton {objectName:"hqRotatePreview";text:qsTr("Rotate · R");textSize:desktop.textSize;onClicked:hqTools.rotated=!hqTools.rotated}
-            WorldButton {text:qsTr("Cancel · Esc");textSize:desktop.textSize;onClicked:hqTools.placing=false}
+            WorldButton {objectName:"hqCancelPreview";text:qsTr("Cancel · Esc");textSize:desktop.textSize;onClicked:hqTools.placing=false}
         }
     }
     Shortcut {sequence:"R";enabled:desktop.visible && desktop.furnishing && hqTools.placing;onActivated:hqTools.rotated=!hqTools.rotated}

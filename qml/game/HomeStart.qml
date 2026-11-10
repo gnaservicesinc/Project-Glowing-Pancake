@@ -24,6 +24,7 @@ Rectangle {
     function showApp(id) {app=id;story.setField("home_app",id);message="";homeScroll.contentItem.contentY=0}
     function openApp(id) {
         if(app===id)return
+        signing=false
         pendingApp=id
         if(campaign.reducedMotion)showApp(id)
         else pageTransition.restart()
@@ -84,7 +85,7 @@ Rectangle {
             Repeater {model:[{id:"room",name:qsTr("⌂ Home")},{id:"browser",name:qsTr("◉ Browser")},{id:"messages",name:qsTr("✉ Messages")},{id:"bank",name:qsTr("▤ Personal accounts")}]
                 WorldButton {required property var modelData;objectName:"homeApp_"+modelData.id;text:modelData.name;textSize:home.typeSize;checked:home.app===modelData.id;onClicked:home.openApp(modelData.id)}
             }
-            WorldButton {text:qsTr("Appearance");textSize:home.typeSize;onClicked:home.appearanceRequested()}
+            WorldButton {text:qsTr("Appearance");textSize:home.typeSize;onClicked:{home.signing=false;home.appearanceRequested()}}
         }
         Rectangle {
             visible:campaign.showGuide && home.story.form.home_guide!=="dismissed"
@@ -103,7 +104,7 @@ Rectangle {
                 Layout.fillWidth:true;spacing:16
                 ColumnLayout {
                     visible:home.app==="room";Layout.fillWidth:true
-                    Heading {text:qsTr("Your parents’ house · %1").arg(home.room)}
+                    Heading {text:qsTr("%1 · %2").arg(home.story.familyHome.name || qsTr("Your parents’ house")).arg(home.room)}
                     Copy {text:home.rich?qsTr("A quiet house in the hills and people who return your family's calls. The advantages are real. What you do with them is still yours."):qsTr("Yesterday's birthday cards are still on your desk. Your parents have offered the garage, basement and shed while you find your feet. There is no rent, and no company yet.")}
                     Rectangle {
                         Layout.fillWidth:true;Layout.preferredHeight:Math.max(230,home.typeSize*12);color:"#9d9f8c";radius:8;clip:true
@@ -115,7 +116,8 @@ Rectangle {
                         MouseArea {x:parent.width*0.5;y:parent.height*0.18;width:parent.width*0.42;height:parent.height*0.55;cursorShape:Qt.PointingHandCursor;onClicked:home.openApp("browser")}
                         WorldButton {anchors.right:parent.right;anchors.bottom:parent.bottom;anchors.margins:12;objectName:"homeComputer";text:qsTr("Open your computer");textSize:home.typeSize;onClicked:home.openApp("browser")}
                     }
-                    Flow {Layout.fillWidth:true;spacing:8;Repeater {model:["Bedroom","Garage","Basement","Shed"];WorldButton {required property string modelData;text:modelData;textSize:home.typeSize;checked:home.room===modelData;onClicked:{home.room=modelData;home.story.setField("home_room",modelData)}}}}
+                    Flow {Layout.fillWidth:true;spacing:8;Repeater {model:["Bedroom"].concat(home.story.familyHome.roomNames || []);WorldButton {required property string modelData;text:modelData;textSize:home.typeSize;checked:home.room===modelData;onClicked:{home.room=modelData;home.story.setField("home_room",modelData)}}}}
+                    Copy {text:qsTr("%1 free workspaces · %2 × %3 m in total · the family keeps a room for you when the company moves out.").arg((home.story.familyHome.rooms || []).length).arg(home.story.familyHome.width || 0).arg(home.story.familyHome.depth || 0)}
                     Copy {text:home.room==="Bedroom"?qsTr("Your childhood room, your personal computer, and the first morning of something new."):qsTr("Free workspace · available to your company after formation. Equipment arrives through suppliers; empty rooms provide no compute.")}
                 }
                 ColumnLayout {
@@ -164,6 +166,21 @@ Rectangle {
                     Copy {text:home.story.form.route==="hired_ceo"?qsTr("The board offers an existing team, office and a disclosed minority stake. The company owns its cash and equipment; your personal savings remain yours."):qsTr("Name the institution, choose its purpose, and decide what you will personally invest. Outside funding only enters the company when you accept an offer below.")}
                     GameField {objectName:"homeCompanyName";visible:home.story.form.route!=="hired_ceo";Layout.fillWidth:true;text:home.story.form.company;textSize:home.typeSize;Accessible.name:qsTr("Company name");onEditingFinished:home.story.answerText("company",text)}
                     GameSelect {objectName:"homeMission";Layout.fillWidth:true;textSize:home.typeSize;textRole:"name";valueRole:"id";model:[{id:"survival",name:qsTr("Build a lab that lasts")},{id:"utopia",name:qsTr("Make lives better")},{id:"monopoly",name:qsTr("Build the leading platform")},{id:"domination",name:qsTr("Steer the AI age")},{id:"asi",name:qsTr("Demonstrate ASI first")}];currentIndex:Math.max(0,model.findIndex(row=>row.id===home.story.form.mission));onActivated:home.story.setField("mission",currentValue);Accessible.name:qsTr("Mission")}
+                    Copy {visible:home.story.form.route!=="hired_ceo";text:qsTr("How will you fund the company?")}
+                    GameSelect {
+                        id:fundingRoute;objectName:"homeFundingRoute";visible:home.story.form.route!=="hired_ceo";Layout.fillWidth:true;textSize:home.typeSize;textRole:"name";valueRole:"id"
+                        model:home.story.routes.filter(row=>row.id!=="hired_ceo" && row.available)
+                        currentIndex:Math.max(0,model.findIndex(row=>row.id===home.story.form.route))
+                        onActivated:home.story.setField("route",currentValue);Accessible.name:qsTr("Company funding route")
+                    }
+                    Copy {visible:fundingRoute.visible;text:(fundingRoute.model[fundingRoute.currentIndex] || {}).detail || ""}
+                    Copy {visible:home.story.form.route!=="hired_ceo";text:qsTr("Optional founding bylaws")}
+                    GameSelect {
+                        id:bylaws;objectName:"homeBylaws";visible:home.story.form.route!=="hired_ceo";Layout.fillWidth:true;textSize:home.typeSize;textRole:"name";valueRole:"id"
+                        model:home.story.charters;currentIndex:Math.max(0,model.findIndex(row=>row.id===home.story.form.charter))
+                        onActivated:home.story.setField("charter",currentValue);Accessible.name:qsTr("Optional company bylaws")
+                    }
+                    Copy {visible:bylaws.visible;text:(bylaws.model[bylaws.currentIndex] || {}).detail || ""}
                     Copy {visible:home.story.form.route!=="hired_ceo";text:qsTr("Personal investment, whole dollars · savings available %1").arg(home.story.personalFunds.total)}
                     GameField {objectName:"homeInvestment";visible:home.story.form.route!=="hired_ceo";Layout.fillWidth:true;text:home.story.form.investment;textSize:home.typeSize;Accessible.name:qsTr("Personal investment in dollars");onEditingFinished:home.story.setField("investment",text)}
                     WorldButton {visible:home.story.form.route!=="hired_ceo";text:qsTr("Invest all available savings");textSize:home.typeSize;onClicked:home.story.setField("investment",home.story.personalFunds.dollars)}

@@ -9,7 +9,7 @@ Updated 2026-11-09
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive founding/equipment batch advances content to **0.42.0-dev.1**, generation **43**.
+immersive founding/equipment batch advances content to **0.43.0-dev.1**, generation **44**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -24,7 +24,10 @@ company formation: appearance leads to an unemployed eighteen-year-old's saved
 home desktop, with legal, investor and lab-application routes. Explicit personal
 investment leaves the remainder in the personal account. Birth and incorporation
 ceremonies, narrated choice consequences and an expanded portrait editor are
-implemented. The home company has a garage, basement and shed.
+implemented. The family home provides three, four or six furnishing rooms depending on
+background. The realtor can move the company home after settling its lease.
+A founder can choose a self-funded opening and adopt optional bylaws with a
+funded employee program and limits on board approvals.
 
 Furnishing now supports illustrated object pickup, translucent red/green
 footprints, rotation and cancellation using the same core placement validation.
@@ -43,8 +46,8 @@ furnishing walkthrough also passes through valid/blocked previews, visible
 rotation, cancellation, relocation and a compact 200% text layout. The software
 run covers the R shortcut; native terminal activation prevented shortcut testing
 there, so the visible rotation control was used. This does not close
-F-05: moods, audience modifiers, full personal-world simulation, home recovery,
-future EEY/frontier integration, loans/bylaws and private-life purchases/events
+F-05: moods, audience modifiers, full personal-world simulation,
+future EEY/frontier integration, loans and private-life purchases/events
 remain active work, as itemized in the plan and backlog.
 
 The 2026-11-09 review rejects the main interface as complete. The detailed

@@ -33,6 +33,13 @@ int main() {
         check(core::capacity_report(*office.capacity).effective==core::MilliCUPerDay{16000},"Inherited output must be the sum of the four actual modest computers.");
         check(persistence::decode_save(program,persistence::encode_save(program,inherited)).checkpoint==inherited,"The inherited office and roster must reload exactly.");
         auto initial=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);
+        check(core::current_headquarters(initial.world.simulation).rooms.size()==6,"Wealthy families must provide six actual free furnishing rooms.");
+        for(const auto& [family,count]:std::vector<std::pair<std::string,std::size_t>>{{"poor",3},{"middle",4}}) {
+            auto family_options=options;family_options.founding->family=family;family_options.founding->route="investment";family_options.founding->backers={"commercial"};
+            const auto home=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},family_options);
+            check(core::current_headquarters(home.world.simulation).rooms.size()==count,"Family background must select the actual authored home capacity.");
+            check(persistence::decode_save(program,persistence::encode_save(program,home)).checkpoint==home,"Every family home's rooms must reload exactly.");
+        }
         initial.world.enabled_flows=std::vector<std::string>{};
         runtime::Runtime game{program,initial};
         const auto state=[&]() -> const auto& {return game.current_state().world.simulation;};
@@ -61,6 +68,20 @@ int main() {
         check(quote.monthly==core::Cents{224000},"Realtor rent must follow the actual city and office area.");
         action(core::LeaseHQ{"austin","studio"});
         check(game.current_state().world.state_id=="state.us_tx" && core::current_headquarters(state()).width==10 && state().capacity->sources.front().effective.value()==0,"Moving must change geography and store equipment until it is placed again.");
+        {
+            runtime::Runtime recovery{program,game.current_state()};
+            const auto quote=core::preview_hq_home(state());const auto cash=state().cash;
+            const auto returned=recovery.submit({state().revision,core::ManageHeadquarters{core::ReturnHomeHQ{}}});
+            check(returned.accepted(),"A leased company must be able to return to the family home.");
+            const auto& home=recovery.current_state().world.simulation;
+            check(recovery.current_state().world.state_id=="state.us_ca" && core::current_headquarters(home).rooms.size()==6,"Returning home must restore the original California estate's actual rooms.");
+            check(home.cash==core::checked_unit_subtract(core::checked_unit_add(cash,quote.refund),quote.exit_fee),"Home relocation must settle the lease refund and exit fee exactly.");
+            check(std::ranges::any_of(home.accounts->recurring,[&](const auto& bill){return bill.id=="hq.rent/2" && bill.ends_before==home.date;}),"Returning home must end the commercial rent obligation.");
+            check(std::ranges::all_of(home.infrastructure->workplace->headquarters->items,[](const auto& item){return item.premises==0;}),"Home return keeps equipment in storage until placement.");
+            const auto before=recovery.current_state();
+            check(!recovery.submit({home.revision,core::ManageHeadquarters{core::ReturnHomeHQ{}}}).accepted() && recovery.current_state()==before,"Repeated home return must refuse without duplicate refunds.");
+            check(persistence::decode_save(program,persistence::encode_save(program,before)).checkpoint==before,"Home recovery, paid exit and stopped rent must reload exactly.");
+        }
         action(core::PlaceHQEquipment{1,0,0,0,false});action(core::PlaceHQEquipment{2,1,0,0,false});action(core::PlaceHQEquipment{3,0,3,0,false});
         const auto before_preview=game.current_state();
         check(core::hq_placement_blocker(state(),{1,0,3,0,false}).size()>0,"Placement preview must detect another desk.");
@@ -113,6 +134,12 @@ int main() {
         for(const auto& bill:state().accounts->recurring) {if(bill.id=="hq.land.tax/1") land_tax=true;if(bill.id=="hq.build.tax/1") building_tax=true;if(bill.id=="hq.rent/2" && bill.ends_before==state().date) old_rent_ended=true;}
         check(land_tax && building_tax && old_rent_ended,"Land/building taxes must continue while the old office rent ends.");
         check(persistence::decode_save(program,persistence::encode_save(program,game.current_state())).checkpoint==game.current_state(),"Relocation and property ownership must reload exactly.");
+        action(core::ReturnHomeHQ{});
+        check(core::current_headquarters(state()).rooms.size()==6 && headquarters().items[6].person=="founder","Returning from owned premises must retain the family's rooms and issued laptop.");
+        check(std::ranges::any_of(state().accounts->recurring,[](const auto& bill){return bill.id=="hq.build.tax/1" && !bill.ends_before;}),"Moving home must not erase tax on a building the company still owns.");
+        action(core::PlaceHQEquipment{5,0,8,0,false});
+        check(core::hq_workstation_ready(state(),"founder"),"The returning team can reinstall its rack and resume laptop work.");
+        check(persistence::decode_save(program,persistence::encode_save(program,game.current_state())).checkpoint==game.current_state(),"Reinstalled home equipment and retained property taxes must reload exactly.");
         std::cout<<"Empty garage, paid delivery, placement/collision, assignments, physical compute/electricity, city leases, bids, construction risks, ownership taxes and fresh reload passed\n";
     } catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;}
 }

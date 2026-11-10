@@ -192,7 +192,11 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 }
                 if(state->home_phase==1) {if(!click("homeService_legal")){fail("Browser legal service");return;}++state->home_phase;return;}
                 if(state->home_phase==2) {if(!click("homeFoundNonprofit")){fail("Nonprofit formation");return;}++state->home_phase;return;}
-                if(state->home_phase==3) {if(!click("homeBacker_safety")){fail("Named backer offer");return;}++state->home_phase;return;}
+                if(state->home_phase==3) {
+                    if(!click("homeBacker_safety") || !press(window,item("homeBylaws"),Qt::Key_End) ||
+                        story->form().value("charter")!="charter.shared_research") {fail("Named donor and optional bylaws");return;}
+                    ++state->home_phase;return;
+                }
                 if(state->home_phase==4) {if(!capture(".terms") || !click("homeSign")){fail("Reviewed signing");return;}++state->home_phase;return;}
                 if(state->home_phase==5) {
                     if(!item("homeEnterCompany")->isVisible())return;
@@ -210,6 +214,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 world.identity->founder_name != "Mira Vale" || world.root_seed != 718 ||
                 world.founding->gender!="woman" || world.identity->founder_pronouns!="she/her" ||
                 !state->customized || world.founding->appearance.parts[1]!=3 ||
+                !pgp::core::active_charter(world.simulation) || pgp::core::active_charter(world.simulation)->id!="charter.shared_research" ||
                 !world.difficulty.empty() || !world.simulation.capacity->sources.empty() ||
                 !world.simulation.management->people->employees.empty() ||
                 pgp::core::iso_date(world.simulation.date) != "2015-01-01" ||
