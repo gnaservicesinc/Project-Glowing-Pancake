@@ -4,6 +4,7 @@
 #include <pgp/core/portrait.hpp>
 #include <pgp/core/talent.hpp>
 #include <pgp/core/social.hpp>
+#include <pgp/core/romance.hpp>
 #include <pgp/core/infrastructure.hpp>
 #include <optional>
 #include <map>
@@ -70,6 +71,7 @@ struct PeopleRules {
     std::vector<IndustryHQSite> international_headquarters{};
     std::uint32_t industry_team_target=8;
     std::optional<ResearchCollaborationRules> collaboration{};
+    std::optional<RomanceRules> romance{};
     auto operator<=>(const PeopleRules&) const = default;
 };
 struct PersonProfile {
@@ -81,6 +83,7 @@ struct PersonProfile {
     std::vector<std::string> traits{};
     std::vector<std::string> skills{};
     std::string orientation="unrecorded";
+    std::optional<RomanticProfile> romantic{};
     auto operator<=>(const PersonProfile&) const = default;
 };
 struct IndustryPerson {

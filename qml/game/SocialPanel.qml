@@ -28,6 +28,7 @@ ColumnLayout {
         WorldButton {objectName:"socialPeople";text:qsTr("Spend time together");textSize:panel.textSize;checked:!panel.showNetwork;onClicked:panel.showNetwork=false}
         WorldButton {objectName:"socialNetwork";text:qsTr("Close connections");textSize:panel.textSize;checked:panel.showNetwork;onClicked:panel.showNetwork=true}
     }
+    RomancePanel {Layout.fillWidth:true;textSize:panel.textSize;contact:panel.person;visible:!panel.showNetwork && !!campaign.world.romance.available;onInspectPerson:person=>{profile.person=person;profile.open()}}
     ColumnLayout {
         visible:!panel.showNetwork;Layout.fillWidth:true;spacing:12
         Copy {visible:panel.people.length===0;text:qsTr("Your circle starts with the people you meet. Bring someone onto the HQ team to begin.")}
@@ -78,7 +79,7 @@ ColumnLayout {
     }
     ColumnLayout {
         visible:panel.showNetwork;Layout.fillWidth:true;spacing:12
-        Copy {text:qsTr("Only known close friendships appear here. Friends may tell you about their own close connections as you get to know both people.")}
+        Copy {text:qsTr("Known close friendships and shared romantic relationships appear here. Friends may tell you about their own close connections as you get to know both people.")}
         WorldButton {objectName:"socialGraphHome";visible:panel.focusPerson!=="founder";text:qsTr("Back to my connections");textSize:panel.textSize;onClicked:panel.focusOn("founder")}
         GameSelect {objectName:"socialGraphFocus";Layout.fillWidth:true;textSize:panel.textSize;model:panel.network;textRole:"name";currentIndex:Math.max(0,panel.network.findIndex(n=>n.id===panel.focusPerson));onActivated:panel.focusOn(panel.network[currentIndex].id);Accessible.name:qsTr("Center the relationship map on")}
         Copy {visible:panel.connections.length===0;text:qsTr("No known close connections here yet. Little conversations are how it starts.")}

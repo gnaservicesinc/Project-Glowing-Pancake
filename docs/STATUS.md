@@ -9,7 +9,7 @@ Updated 2026-11-11
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.63.0-dev.1**, generation **64**.
+immersive redesign advances content to **0.64.0-dev.1**, generation **65**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -143,9 +143,37 @@ and completion cards inspected.
 The walkthrough seeds an explicitly mature friendship, not its research results;
 natural friendship growth is covered separately by geographic checks.
 
-Romance, family,
-rivalry/repair, further design puzzles, career transitions
-and USCIF remain required work in the active full plan.
+Adult romance is now playable in People → Social circle → A personal chapter.
+People receive exact saved birthdays and romantic preferences independently of
+professional RNG/quality. Romantic attraction and sexual orientation are separate;
+asexual people may seek romance. Private identities become known through public
+sharing or trust, then stay known. The founder can edit their own preferences.
+Reviewed invitations produce saved yes/no replies; refusal preserves friendship.
+Free weekly dates build closeness, engagement needs 180 days and actual dates,
+and marriage needs another 90 days plus closeness and a shared decision.
+Separation preserves an ex-partner/ex-spouse record independently of friendship.
+
+One world relationship register prevents simultaneous partners across companies.
+Nearby NPC friends can form and advance relationships without making commitments
+for the founder. Sustained distance/neglect gives a strain warning and a grace
+period before an actual breakup. Known romantic ties appear alongside close
+friendships in the portrait map/list. Event authors can query typed founder dating,
+engaged and married facts. Tuning is authored in reviewed content; daily disclosure
+uses one indexed friendship pass and checkpoint copies share archived history.
+
+Ten selected runtime/bridge checks pass. The romance check uses the production
+180+90-day calendar with two rival companies, actual invitations/dates/proposals,
+separation, exact saves and identical next-day continuation. Tiny explicit fixtures
+isolate NPC geography/strain and refusal boundaries. Native walkthroughs use a
+seeded mature friendship and consent stream; invitations, preferences, weekly
+dates and process restart use actual controls. Normal and compact 200% layouts
+are inspected; the compact preferences form shows all options together.
+Content review passes 24 prepared-opening save roundtrips; optimized Mac game
+and editor builds pass.
+
+Families and children, rivalry/repair, further design puzzles, specialist skill
+effects, major-HQ property expansion, career transitions and USCIF remain
+required work in the active full plan.
 
 This is an implementation checkpoint, not completion of F-06. Existing human
 review and platform/release gates remain open.

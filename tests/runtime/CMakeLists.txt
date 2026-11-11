@@ -435,3 +435,10 @@ target_include_directories(pgp-world-hiring-test SYSTEM PRIVATE "${PROJECT_SOURC
 target_compile_definitions(pgp-world-hiring-test PRIVATE PGP_WORLD_HIRING_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-world-hiring-test)
 add_test(NAME runtime.world-hiring COMMAND pgp-world-hiring-test)
+
+add_executable(pgp-romance-test romance_test.cpp)
+target_link_libraries(pgp-romance-test PRIVATE pgp::persistence)
+target_include_directories(pgp-romance-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-romance-test PRIVATE PGP_ROMANCE_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-romance-test)
+add_test(NAME runtime.romance COMMAND pgp-romance-test)

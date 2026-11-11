@@ -22,7 +22,11 @@ The HQ social foundation is also implemented: saved friendship strength and
 memories, weekly bounded encounters, intentional meetups with cooldowns, public
 versus learned traits, multiple best friends, workplace morale, known close-
 connection graph/list and registered event facts. Focused tests and native UI
-walkthroughs pass. Romance and rivalry remain unfinished.
+walkthroughs pass. The adult-romance milestone now adds saved identities/preferences,
+mutual invitations, dates, engagement, marriage, separation and known romantic map
+edges across HQs. NPC couples use the same adult/single/mutual rules; the founder
+always chooses their own commitments. Production-timing, save/replay, privacy and
+compact/native restart checks pass. Family generations and rivalry remain unfinished.
 
 The first major-HQ batch is implemented for the authored US roster: actual
 employees, funded salaries, fitting premises/workstations, named research,
@@ -44,7 +48,7 @@ Employee self-funded study is implemented through actual paid-compensation
 budgets, independent practical-course selection and reviewed voluntary enrollment.
 Company sponsorship remains available; employee fees never debit founder savings.
 
-Next: romance/families/rivalry
+Next: families, children entering recruitment, concrete betrayal and rivalry
 repair, data and infrastructure puzzles, career re-entry and the fictional USCIF
 branch. These remain selected, unfinished work; this does not close F-06.
 

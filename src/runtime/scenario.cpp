@@ -1,4 +1,5 @@
 #include <pgp/runtime/scenario.hpp>
+#include <pgp/runtime/romance.hpp>
 
 #include <algorithm>
 #include <stdexcept>
@@ -191,6 +192,9 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         for(auto& e:people.employees)if(e.terms.profile.role=="Founder / researcher") {e.terms.profile.skills=talent.founder_skills;e.terms.profile.orientation=world.founding->orientation;}
         else if(e.terms.profile.role=="Cofounder / researcher" && !core::has_skill(e.terms.profile,"ml_research"))e.terms.profile.skills.push_back("ml_research");
     }
+    if(world.simulation.management && world.simulation.management->people && world.simulation.management->catalog.people->romance)
+        for(auto& e:world.simulation.management->people->employees)if(e.terms.profile.role=="Founder / researcher" || e.terms.profile.role=="Cofounder / researcher")
+            core::initialize_romantic_profile(e.terms.profile,seed,*world.simulation.management->catalog.people->romance);
     if(world.founding && scenario->founding && core::social_rules(world.simulation)) {
         const auto& f=*world.founding;auto& social=*world.simulation.management->people->social;
         social.founder_traits={"Social: "+f.sociability,"Activity: "+f.activity,"Temperament: "+f.disposition,"Upbringing: "+f.family};
@@ -202,6 +206,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     if(scenario->counties) world.counties=core::initialize_counties(*scenario->counties,world.simulation.date,seed);
     initialize_competition(world,program,scenario->rivals,competition);
     synchronize_industry_people(world,program);
+    initialize_romance(world);
     if(scenario->objectives) initialize_objectives(world,*scenario->objectives,std::move(objectives));
     else if(objectives) throw std::invalid_argument("This scenario uses its own introductory ending.");
     validate_checkpoint(program, checkpoint);

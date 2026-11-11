@@ -507,9 +507,25 @@ and you can have several best friends. Friends at work add bounded morale.
 Personal traits become visible as trust grows; professional traits and pronouns
 are public. Close connections opens a portrait map you can explore by selecting
 a person, plus a text list that also works in compact layouts. Only known close
-friendships appear. The current circle covers your HQ team and retained former
-coworker ties and the industry acquaintances you make. Romance and rivalry
-remain future work.
+friendships and shared romantic relationships appear. The current circle covers
+your HQ team, retained former coworkers and the industry acquaintances you make.
+
+**A personal chapter** opens the selected person's romantic relationship card.
+Your romantic preferences are editable separately from sexual orientation.
+Build a friendship, review an invitation, and let the other person answer.
+Only mutually interested single adults can start dating. A polite no leaves your
+friendship intact; give them space before asking again. Private preferences become
+visible through public sharing or trust, and already shared information stays known.
+
+While dating, plan a free walk in the same city, a listening call or a shared hobby.
+One deliberate personal plan fits each day, shared with ordinary friendship outings;
+dates have a weekly cooldown. Closeness, actual dates and time unlock engagement
+conversations after 180 days. Marriage needs another 90 days and sufficient
+closeness. Proposals can receive a request for more time. **End our relationship**
+asks for review and records former partners or ex-spouses without deleting friendship.
+Nearby NPC friends can also date, become engaged or marry under the same requirements.
+Long neglect gives a strain warning and time to reconnect before a breakup.
+Family generations, children and rivalry repair remain unfinished.
 
 
 People → Around the industry lists the public HQ roster of major companies that

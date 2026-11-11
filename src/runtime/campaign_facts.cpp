@@ -1,4 +1,5 @@
 #include "campaign_facts.hpp"
+#include <pgp/runtime/romance.hpp>
 
 #include <algorithm>
 
@@ -24,6 +25,10 @@ content::Scalar campaign_fact(const WorldState& world, std::string_view id) {
     using namespace core;
     const auto& s = world.simulation;
     const auto* founder=world.founding?&*world.founding:nullptr;
+    if(id=="company.founder_dating" || id=="company.founder_engaged" || id=="company.founder_married") {
+        const auto* bond=romantic_partner(world,"founder");
+        return std::int64_t{bond && (id=="company.founder_married"?bond->married_on.has_value():id=="company.founder_engaged"?bond->engaged_on.has_value() && !bond->married_on:!bond->engaged_on)};
+    }
     if(id=="company.industry_contacts" || id=="company.industry_close_friends" || id=="company.referral_contacts") {
         if(!social_rules(s))return INT64_C(0);
         const auto& people=*s.management->people;

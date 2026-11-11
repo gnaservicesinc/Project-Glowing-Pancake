@@ -1,5 +1,6 @@
 #include "world_controller.hpp"
 #include <algorithm>
+#include <pgp/runtime/romance.hpp>
 #include <map>
 #include <set>
 namespace pgp::bridge {
@@ -45,6 +46,18 @@ QVariantMap WorldController::relationships() const {
         visible.insert(bond.first);visible.insert(bond.second);
         edges.push_back(QVariantMap{{"first",q(bond.first)},{"second",q(bond.second)},{"label",q(core::friendship_name(s,bond.affinity,false))},
             {"names",identities.at(bond.first).value("name").toString()+" ↔ "+identities.at(bond.second).value("name").toString()},{"strength",bond.affinity}});
+    }
+    if(const auto& w=snapshot_->checkpoint.world;w.romance) {
+        std::map<std::string,std::string> socialIds;for(const auto& [id,card]:identities){(void)card;socialIds.emplace(runtime::romance_person_id(w,id),id);}
+        for(const auto& [key,bond]:w.romance->active) {
+            (void)key;if(!bond.known || !socialIds.contains(bond.first) || !socialIds.contains(bond.second))continue;
+            const auto first=socialIds.at(bond.first),second=socialIds.at(bond.second);
+            const auto label=bond.married_on?tr("Spouses"):bond.engaged_on?tr("Engaged"):tr("Dating");
+            auto existing=std::find_if(edges.begin(),edges.end(),[&](const auto& value){const auto edge=value.toMap();return (edge.value("first")==q(first) && edge.value("second")==q(second)) || (edge.value("first")==q(second) && edge.value("second")==q(first));});
+            if(existing!=edges.end()){auto row=existing->toMap();row["label"]=row.value("label").toString()+" · "+label;*existing=row;}
+            else edges.push_back(QVariantMap{{"first",q(first)},{"second",q(second)},{"label",label},{"names",identities.at(first).value("name").toString()+" ↔ "+identities.at(second).value("name").toString()},{"strength",bond.affection}});
+            visible.insert(first);visible.insert(second);
+        }
     }
     for(const auto& id:visible){auto row=identities.at(id);row["id"]=q(id);nodes.push_back(row);}
     return {{"people",people},{"nodes",nodes},{"edges",edges},{"moodCap",rules->mood_cap},{"interval",rules->interval_days},{"revision",reviewToken()}};

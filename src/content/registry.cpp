@@ -252,6 +252,9 @@ Registry foundation_registry() {
     number("company.industry_contacts",Scope::company,Unit::count,0,8192,"Industry people the founder has actually met or been introduced to.","campaign");
     number("company.industry_close_friends",Scope::company,Unit::count,0,8192,"Known close-or-better friendships outside the company.","campaign");
     number("company.referral_contacts",Scope::company,Unit::count,0,8192,"Friends who have supplied a real recruiting referral.","campaign");
+    number("company.founder_dating",Scope::company,Unit::count,0,1,"Founder is currently dating, before engagement.","campaign");
+    number("company.founder_engaged",Scope::company,Unit::count,0,1,"Founder is currently engaged, before marriage.","campaign");
+    number("company.founder_married",Scope::company,Unit::count,0,1,"Founder is currently married.","campaign");
     number("company.founder_close_friends",Scope::company,Unit::count,0,256,"Known close-or-better founder friendships; multiple best friends are allowed.","campaign");
     number("company.known_close_relationships",Scope::company,Unit::count,0,8192,"Close relationships actually shared with the founder.","campaign");
     boolean("company.founder_programming","The founder has acquired Programming, independently of education.",Scope::company,"campaign");

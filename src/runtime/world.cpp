@@ -1,6 +1,7 @@
 #include <pgp/runtime/runtime.hpp>
 #include <pgp/runtime/society.hpp>
 #include <pgp/runtime/authority.hpp>
+#include <pgp/runtime/romance.hpp>
 
 #include "duration.hpp"
 #include "committed.hpp"
@@ -640,6 +641,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             invalid("Lab research stream origin differs from its campaign seed");
     }
     validate_competition(world,program,validate_core_simulation);
+    validate_romance(world,validate_core_simulation);
     validate_acquisitions(world,program,validate_core_simulation);
     if(validate_core_simulation) validate_authority_world(world);
     validate_objectives(world,program,validate_core_simulation);

@@ -14,6 +14,7 @@
 #include "talent_smoke.hpp"
 #include "social_smoke.hpp"
 #include "collaboration_smoke.hpp"
+#include "romance_smoke.hpp"
 #include "device_interface_smoke.hpp"
 #include "portrait_images.hpp"
 
@@ -76,6 +77,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("founding-smoke"),QStringLiteral("Exercise the actual New Game biography, funding and first morning with an isolated local save.")});
     parser.addOption({QStringLiteral("founding-partner-smoke"),QStringLiteral("Exercise the New Game cofounder conversation, signing and first morning.")});
     parser.addOption({QStringLiteral("device-interface-smoke"),QStringLiteral("Exercise the laptop launcher, device app switching and a compact workspace.")});
+    parser.addOption({QStringLiteral("romance-smoke"),QStringLiteral("Exercise personal invitations, preferences, actual dating and process reload.")});
     parser.addOption({QStringLiteral("collaboration-smoke"),QStringLiteral("Exercise research jam planning, paid work, save/reload and joint publication.")});
     parser.addOption({QStringLiteral("social-smoke"),QStringLiteral("Exercise social interactions and a seeded close-relationship graph.")});
     parser.addOption({QStringLiteral("talent-smoke"),QStringLiteral("Exercise skills, tuition and software design.")});
@@ -105,7 +107,7 @@ int main(int argc, char* argv[]) {
     }
 #endif
     if (parser.isSet(QStringLiteral("build-info"))) { core::write_build_identity(std::cout); return 0; }
-    const bool world_smoke=parser.isSet(QStringLiteral("collaboration-smoke")) || parser.isSet(QStringLiteral("social-smoke")) || parser.isSet(QStringLiteral("talent-smoke")) || parser.isSet(QStringLiteral("donor-finance-smoke")) || parser.isSet(QStringLiteral("contact-finance-smoke")) || parser.isSet(QStringLiteral("hosted-events-smoke")) || parser.isSet(QStringLiteral("personal-life-smoke")) || parser.isSet(QStringLiteral("device-interface-smoke")) || parser.isSet(QStringLiteral("research-smoke")) || parser.isSet(QStringLiteral("recruitment-smoke")) || parser.isSet(QStringLiteral("headquarters-smoke")) || parser.isSet(QStringLiteral("map-layout-smoke")) || parser.isSet(QStringLiteral("form-drafts-smoke")) || parser.isSet(QStringLiteral("content-recovery-smoke")) || parser.isSet(QStringLiteral("decision-smoke")) || parser.isSet(QStringLiteral("retirement-smoke")) || parser.isSet(QStringLiteral("world-smoke")) || parser.isSet(QStringLiteral("portrait-smoke")) || parser.isSet(QStringLiteral("workplace-smoke")) || parser.isSet(QStringLiteral("device-smoke")) || parser.isSet(QStringLiteral("contacts-smoke")) || parser.isSet(QStringLiteral("manager-smoke"));
+    const bool world_smoke=parser.isSet(QStringLiteral("romance-smoke")) || parser.isSet(QStringLiteral("collaboration-smoke")) || parser.isSet(QStringLiteral("social-smoke")) || parser.isSet(QStringLiteral("talent-smoke")) || parser.isSet(QStringLiteral("donor-finance-smoke")) || parser.isSet(QStringLiteral("contact-finance-smoke")) || parser.isSet(QStringLiteral("hosted-events-smoke")) || parser.isSet(QStringLiteral("personal-life-smoke")) || parser.isSet(QStringLiteral("device-interface-smoke")) || parser.isSet(QStringLiteral("research-smoke")) || parser.isSet(QStringLiteral("recruitment-smoke")) || parser.isSet(QStringLiteral("headquarters-smoke")) || parser.isSet(QStringLiteral("map-layout-smoke")) || parser.isSet(QStringLiteral("form-drafts-smoke")) || parser.isSet(QStringLiteral("content-recovery-smoke")) || parser.isSet(QStringLiteral("decision-smoke")) || parser.isSet(QStringLiteral("retirement-smoke")) || parser.isSet(QStringLiteral("world-smoke")) || parser.isSet(QStringLiteral("portrait-smoke")) || parser.isSet(QStringLiteral("workplace-smoke")) || parser.isSet(QStringLiteral("device-smoke")) || parser.isSet(QStringLiteral("contacts-smoke")) || parser.isSet(QStringLiteral("manager-smoke"));
     const bool civic_smoke = parser.isSet(QStringLiteral("civic-smoke"));
     const bool society_smoke = parser.isSet(QStringLiteral("society-smoke"));
     const bool institutions_smoke = parser.isSet(QStringLiteral("institutions-smoke"));
@@ -231,6 +233,8 @@ int main(int argc, char* argv[]) {
                     schedule_personal_life_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));
                 else if(parser.isSet(QStringLiteral("device-interface-smoke")))
                     schedule_device_interface_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));
+                else if(parser.isSet(QStringLiteral("romance-smoke")))
+                    schedule_romance_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));
                 else if(parser.isSet(QStringLiteral("collaboration-smoke")))
                     schedule_collaboration_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));
                 else if(parser.isSet(QStringLiteral("social-smoke")))

@@ -57,6 +57,7 @@ Applicant applicant(SimulationState& s,bool opening) {
             result.profile.skills.push_back(eligible[draw(rng,static_cast<std::uint32_t>(eligible.size()))]->id);
         }
     }
+    if(r.romance)initialize_romantic_profile(result.profile,p.stream,*r.romance);
     p.stream=rng.state();return result;
 }
 void recruit(SimulationState& s) {
@@ -73,6 +74,7 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
     for(const auto& trait:p.traits) if(trait.empty() || trait.size()>80 || trait.find('\0')!=trait.npos || !unique.insert(trait).second) invalid("Traits must have unique bounded names.");
     const std::array orientations{"unrecorded","straight","gay_or_lesbian","bisexual","pansexual","asexual","queer","questioning","demisexual"};
     if(std::ranges::find(orientations,p.orientation)==orientations.end())invalid("Unknown saved orientation.");
+    if(p.romantic)validate_romantic_profile(*p.romantic,p.birth_year);
     const auto year=from_ordinal(p.applied_on).year;
     if(!p.id.starts_with("employee/") || p.id.size()>64 || p.name.empty() || p.name.size()>128 ||
         p.gender.empty() || p.gender.size()>32 || p.pronouns.empty() || p.pronouns.size()>64 || p.education.size()>128 || p.role.size()>64 || p.bio.size()>512 ||
@@ -86,6 +88,7 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
 }
 void validate_people_rules(const PeopleRules& r) {
     if(r.talent)validate_talent_rules(*r.talent);
+    if(r.romance){if(!r.talent || !r.social)invalid("Romance needs individual skills, identities and social rules.");validate_romance_rules(*r.romance);}
     if(r.collaboration && (!r.talent || !r.social || r.collaboration->coordination_fee<Cents{0} || r.collaboration->coordination_fee>Cents{1000000} ||
        r.collaboration->work_credit<=BasisPoints{0} || r.collaboration->work_credit>BasisPoints{2500} ||
        r.collaboration->minimum_friendship<200 || r.collaboration->minimum_friendship>850 || r.collaboration->cooldown_days<7 || r.collaboration->cooldown_days>365))
@@ -151,6 +154,7 @@ void initialize_people(SimulationState& s,std::uint64_t seed,std::string founder
             terms.profile.name=std::move(founder_name);terms.profile.pronouns=std::move(founder_pronouns);
             terms.profile.gender="Founder identity";terms.profile.role="Founder / researcher";
             terms.profile.birth_year=1997;terms.profile.experience=0;terms.profile.education="Founder's formative experience";terms.profile.bio.clear();
+            if(s.management->catalog.people->romance)initialize_romantic_profile(terms.profile,seed,*s.management->catalog.people->romance);
         }
         s.management->people->employees.push_back({std::move(terms),s.date,s.date,true,{}});
     }
@@ -256,7 +260,7 @@ void validate_people(const SimulationState& s,bool deep) {
            person.state.empty() || person.state.size()>64 || person.city.empty() || person.city.size()>128)invalid("Industry people need a stable scoped identity, employer and location.");
     }
     std::set<std::string> ids;
-    const auto check=[&](const Applicant& a){profile_valid(a.profile,s.date);if(!ids.insert(a.profile.id).second || a.salary<Cents{0} || a.salary>Cents{r.recruitment?30000000:15000000} ||
+    const auto check=[&](const Applicant& a){profile_valid(a.profile,s.date);if(r.romance.has_value()!=a.profile.romantic.has_value())invalid("Romantic identity and rules must agree.");if(!ids.insert(a.profile.id).second || a.salary<Cents{0} || a.salary>Cents{r.recruitment?30000000:15000000} ||
         a.signing<Cents{0} || a.signing>Cents{r.signing_cost.value()*(r.recruitment?r.recruitment->maximum_signing_multiple:1)} || a.evaluation_credit!=BasisPoints{r.maximum_evaluation_credit.value()*a.profile.evaluation/100}) invalid("Applicant identity, pay or evaluation evidence changed.");};
     for(const auto& a:p.applicants) {check(a);if(r.recruitment.has_value()!=a.recruitment.has_value()) invalid("Current applicants need their compensation discussions.");validate_recruitment(a,s,false);}
     const auto known=[&](const auto& offer) {

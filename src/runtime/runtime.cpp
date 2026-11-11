@@ -1,6 +1,7 @@
 #include <pgp/runtime/runtime.hpp>
 #include <pgp/runtime/society.hpp>
 #include <pgp/runtime/authority.hpp>
+#include <pgp/runtime/romance.hpp>
 
 #include "duration.hpp"
 #include "committed.hpp"
@@ -620,6 +621,7 @@ RuntimeResult transaction(const CompiledProgram& program, Checkpoint& original, 
         bool core_already_validated = false;
         action(next, result, steps, core_already_validated);
         synchronize_industry_people(next.world,program);
+        prepare_romance(next.world);
         if(core::prepare_access(next.world.simulation)) core_already_validated=false;
         for(std::size_t i=original.runtime.receipts.size();i<next.runtime.receipts.size();++i) {
             const auto& receipt=next.runtime.receipts[i];
@@ -981,6 +983,20 @@ RuntimeResult Runtime::signWholesale(std::uint64_t expected_revision,std::string
         if (has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date || next.world.simulation.phase!=core::DayPhase::work_ready)
             fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required choices before signing wholesale capacity.");
         sign_wholesale(next.world,program_,plan,source,buyer);
+    });
+}
+RuntimeResult Runtime::pursueRomance(std::uint64_t expected_revision,const RomanceRequest& request) {
+    return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto& result,auto&,auto&) {
+        if(objective_time_stopped(next.world) || observing_world(next.world) || has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date || next.world.simulation.phase!=core::DayPhase::work_ready)
+            fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required decisions before making personal plans.");
+        result.explanation=pursue_romance(next.world,request);
+    });
+}
+RuntimeResult Runtime::setRomanticPreferences(std::uint64_t expected_revision,bool interested,const std::vector<std::string>& genders) {
+    return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto& result,auto&,auto&) {
+        if(objective_time_stopped(next.world) || observing_world(next.world) || has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date)
+            fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required decisions before changing personal plans.");
+        set_romantic_preferences(next.world,interested,genders);result.explanation="Your romantic preferences are saved. Existing commitments remain your choice to discuss.";
     });
 }
 RuntimeResult Runtime::collaborateResearch(std::uint64_t expected_revision,const CollaborationRequest& request) {

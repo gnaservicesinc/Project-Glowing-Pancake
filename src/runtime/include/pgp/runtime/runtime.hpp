@@ -5,6 +5,7 @@
 #include <pgp/runtime/competition.hpp>
 #include <pgp/runtime/objectives.hpp>
 #include <pgp/runtime/campaign_identity.hpp>
+#include <pgp/runtime/romance.hpp>
 
 #include <map>
 #include <optional>
@@ -58,6 +59,7 @@ struct WorldState {
     std::string difficulty{};
     std::optional<content::FoundingSelection> founding{};
     std::optional<core::CountyState> counties{};
+    std::optional<core::RomanceState> romance{};
     auto operator<=>(const WorldState&) const = default;
 };
 
@@ -285,6 +287,8 @@ public:
     [[nodiscard]] RuntimeResult respondToCompetitiveOffer(std::uint64_t expected_revision,std::string_view offer_id,bool accept);
     [[nodiscard]] RuntimeResult proposeAcquisition(std::uint64_t expected_revision,std::string_view target,bool equity);
     [[nodiscard]] RuntimeResult signWholesale(std::uint64_t expected_revision,std::string_view plan,std::string_view source,std::string_view buyer);
+    [[nodiscard]] RuntimeResult pursueRomance(std::uint64_t expected_revision,const RomanceRequest&);
+    [[nodiscard]] RuntimeResult setRomanticPreferences(std::uint64_t expected_revision,bool interested,const std::vector<std::string>& genders);
     [[nodiscard]] RuntimeResult collaborateResearch(std::uint64_t expected_revision,const CollaborationRequest&);
     [[nodiscard]] RuntimeResult publishCollaboration(std::uint64_t expected_revision,std::string_view id);
     [[nodiscard]] RuntimeResult transferSubsidiaryFunds(std::uint64_t expected_revision,std::string_view target,core::Cents amount,bool funding);

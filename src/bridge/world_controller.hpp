@@ -14,6 +14,7 @@ class WorldController final : public QObject {
     Q_PROPERTY(bool atHeadquarters READ atHeadquarters NOTIFY changed)
     Q_PROPERTY(QVariantList industryPeople READ industryPeople NOTIFY changed)
     Q_PROPERTY(QVariantMap relationships READ relationships NOTIFY changed)
+    Q_PROPERTY(QVariantMap romance READ romance NOTIFY changed)
     Q_PROPERTY(QVariantMap researchJams READ researchJams NOTIFY changed)
     Q_PROPERTY(QVariantMap talent READ talent NOTIFY changed)
     Q_PROPERTY(QVariantMap founder READ founder NOTIFY changed)
@@ -69,6 +70,10 @@ public:
     QVariantMap founder() const;
     QVariantMap talent() const;
     QVariantMap relationships() const;
+    QVariantMap romance() const;
+    Q_INVOKABLE QVariantMap romanceDetails(QString person) const;
+    Q_INVOKABLE void pursueRomance(QString person,QString action,QString revision);
+    Q_INVOKABLE void setRomanticPreferences(bool interested,QStringList genders,QString revision);
     QVariantMap researchJams() const;
     Q_INVOKABLE QVariantMap collaborationQuote(QVariantMap draft) const;
     Q_INVOKABLE void collaborateResearch(QVariantMap draft,QString revision);
@@ -191,6 +196,8 @@ public:
     Q_INVOKABLE QVariantMap blueprintQuote(QString blueprint,QString state) const;
     Q_INVOKABLE void buildBlueprint(QVariantMap reviewed);
 signals:
+    void romanceRequested(runtime::RomanceRequest);
+    void romanticPreferencesRequested(bool interested,QStringList genders);
     void collaborationRequested(runtime::CollaborationRequest);
     void jointPublicationRequested(QString id);
     void actionRequested(core::CommandAction);

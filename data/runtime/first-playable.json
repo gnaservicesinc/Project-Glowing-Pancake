@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.63.0-dev.1",
+  "content_version": "0.64.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -77621,6 +77621,32 @@
             "validity_days": 14
           },
           "recruitment_days": 30,
+          "romance": {
+            "ask_acceptance_bp": 7500,
+            "city_gain": 20,
+            "date_cooldown": 7,
+            "date_gain": 35,
+            "dating_days": 180,
+            "demisexual_friendship": 650,
+            "engagement_affection": 650,
+            "engagement_days": 90,
+            "friendship": 400,
+            "initial_affection": 400,
+            "interested_chance_bp": 8500,
+            "interval_days": 7,
+            "marriage_affection": 750,
+            "minimum_dates": 3,
+            "neglect_days": 28,
+            "npc_progress_bp": 2500,
+            "npc_start_bp": 250,
+            "proposal_acceptance_bp": 9000,
+            "proposal_cooldown": 90,
+            "public_orientation_chance_bp": 2500,
+            "remote_decay": 8,
+            "state_gain": 12,
+            "strain_affection": 150,
+            "strain_grace_days": 30
+          },
           "signing_cost_cents": 100000,
           "skill_jitter": 15,
           "social": {
@@ -78844,7 +78870,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 34,
+      "revision": 35,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

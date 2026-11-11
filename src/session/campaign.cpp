@@ -264,6 +264,12 @@ OperationResult Campaign::propose_acquisition(std::uint64_t revision,std::string
 OperationResult Campaign::sign_wholesale(std::uint64_t revision,std::string_view plan,std::string_view source,std::string_view buyer) {
     return operate([&](auto& candidate){return candidate.signWholesale(revision,plan,source,buyer);},true);
 }
+OperationResult Campaign::pursue_romance(std::uint64_t revision,const runtime::RomanceRequest& request) {
+    return operate([&](auto& candidate){return candidate.pursueRomance(revision,request);},true);
+}
+OperationResult Campaign::set_romantic_preferences(std::uint64_t revision,bool interested,const std::vector<std::string>& genders) {
+    return operate([&](auto& candidate){return candidate.setRomanticPreferences(revision,interested,genders);},true);
+}
 OperationResult Campaign::collaborate_research(std::uint64_t revision,const runtime::CollaborationRequest& request) {
     return operate([&](auto& candidate){return candidate.collaborateResearch(revision,request);},true);
 }

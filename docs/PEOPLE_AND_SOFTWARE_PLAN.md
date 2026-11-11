@@ -352,3 +352,38 @@ exact exported state, a fresh-process automatic continuation and joint
 publication. Normal and compact 200% layouts are rendered and inspected. The
 native setup seeds only the mature friendship; subsequent research is actual.
 This milestone does not close the active full plan or establish industry balance.
+
+
+## Adult romance milestone · 2026-11-11
+
+Stage 5 now has dating, engagement, marriage and separation. Exact generated
+birthdays and saved romantic preferences are independent of professional RNG and
+aptitude. Both adults must be single and mutually interested. Sexual orientation
+and romantic attraction are distinct; the founder can deliberately change their
+own preferences. Public/trusted disclosures persist. A reviewed invitation records
+its actual answer; a refusal neither damages friendship nor exposes private reasons.
+
+One world register spans company HQs. The founder chooses every commitment;
+NPC friends can begin and advance their own nearby relationships. Free weekly
+dates build closeness. Production rules require 180 days, sufficient closeness
+and actual dates before engagement, then 90 more days before marriage. Both big
+steps need consent. Sustained neglect produces a warning and grace period before
+separation. Ex-partners and ex-spouses remain in saved history; friendship stays
+independent. Known romantic edges augment the existing map/list. Registered typed
+facts expose the founder's dating, engagement and marriage stages to authored events.
+
+The focused romance check covers the production calendar with two rival companies,
+mutual preferences and adulthood, polite refusal, independent friendship,
+monogamy across HQs, proposals, separation and exact save/continuation. Explicit
+tiny fixtures isolate NPC marriage/strain and privacy boundaries. Ten selected
+runtime/bridge checks and 24 reviewed opening save roundtrips pass. Optimized Mac
+game/editor builds and native UI walkthroughs pass actual invitations/preferences,
+process restart, weekly dates and known map edges. Normal and 200% compact layouts
+are inspected; the latter keeps all preference options together. Native setup seeds
+only mature friendship and a repeatable consent stream, not relationship results.
+
+This is partial stage 5. Biological/adoptive/foster/step families, aging children
+and ordinary recruitment, concrete betrayal/HR/repair/frenemies, broader skill
+and trait effects, major-HQ property growth, further puzzles, career re-entry and
+USCIF remain selected work. It does not close F-06 or establish human balance or
+release qualification.
