@@ -15,7 +15,9 @@ ColumnLayout {
         onReset: panel.choosing = false
     }
     spacing: 10
+    function focusRetrospective() { return edition.focusHeadline() }
     LifeReport {
+        id: edition
         Layout.fillWidth: true
         visible: panel.desk.retrospective
         textSize: panel.textSize

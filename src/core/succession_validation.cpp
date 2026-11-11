@@ -26,10 +26,22 @@ void validate_succession_catalog(const SuccessionCatalog& c) {
     if(c.departure) {
         const auto& rules=*c.departure;
         if(rules.messages.empty() || rules.messages.size()>6) invalid("Departure needs one to six authored messages.");
+        if(rules.press) {
+            if(rules.press->reasons.empty() || rules.press->reasons.size()>8) invalid("Choose one to eight resignation reasons.");
+            std::set<std::string> reasons;
+            for(const auto& reason:rules.press->reasons) {
+                label(reason.id,48);label(reason.title);label(reason.copy,2048);
+                if(!reasons.insert(reason.id).second) invalid("Resignation reasons need distinct IDs.");
+            }
+            for(const auto effect:rules.press->challenged_effect)
+                if(effect < -1000 || effect > 0) invalid("Challenged claims cannot grant public confidence.");
+        }
         std::set<std::string> messages;
         for(const auto& m:rules.messages) {
             label(m.id,48);label(m.title);label(m.copy,2048);
             if(!messages.insert(m.id).second || m.fee.value()<0 || m.fee.value()>10000000) invalid("Departure messages need distinct IDs and bounded fees.");
+            if(m.claim && (!rules.press || (*m.claim!="profit" && *m.claim!="research")))
+                invalid("Departure claims need a supported fact check and press rules.");
             for(auto v:m.completed_effect) if(v < -1000 || v > 1000) invalid("Departure audience effects must be bounded.");
         }
         for(auto v:rules.broken_effect) if(v < -1000 || v > 0) invalid("A broken departure commitment cannot improve public standing.");

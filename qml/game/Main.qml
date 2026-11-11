@@ -135,6 +135,12 @@ ApplicationWindow {
     }
     Connections {
         target: campaign
+        function onCareerRetrospectiveReady() {
+            Qt.callLater(() => {
+                window.openApp("objectives", "", "laptop")
+                Qt.callLater(() => scroll.reveal(objectivesPanel.focusRetrospective()))
+            })
+        }
         function onStateChanged() {
             window.routeStartup(); window.syncOverlayPause()
             if (!campaign.busy && campaign.originalContentReview.length > 0 && !originalContentReview.visible) originalContentReview.open()
@@ -936,7 +942,7 @@ ApplicationWindow {
                     }
                     Panel {
                         visible: !campaign.welcome && campaign.leadership.available && window.room === "leadership" && campaign.world.navigation.section !== "personal"
-                        contentItem: SuccessionPanel { textSize: window.textSize }
+                        contentItem: SuccessionPanel { textSize: window.textSize;onContinueRequested:window.closeApp() }
                     }
                     Panel {
                         visible: !campaign.welcome && window.room === "leadership" && campaign.world.navigation.section === "personal" && !!campaign.world.personalLife.cash
@@ -947,7 +953,7 @@ ApplicationWindow {
                     }
                     Panel {
                         visible: !campaign.welcome && campaign.objectives.available && window.room === "objectives"
-                        contentItem: ObjectivesPanel { textSize: window.textSize }
+                        contentItem: ObjectivesPanel { id:objectivesPanel;textSize: window.textSize }
                     }
                     GridLayout {
                         visible: !campaign.welcome && window.room !== "people" && window.room !== "operations" && window.room !== "civic" && window.room !== "society" && window.room !== "institutions" && window.room !== "frontier" && window.room !== "leadership" && window.room !== "objectives" && (!campaign.management.available || window.room === "inbox" || (window.room === "lab" && managementPanel.section === "projects"))

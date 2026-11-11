@@ -9,7 +9,7 @@ Updated 2026-11-11
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.70.0-dev.1**, generation **71**.
+immersive redesign advances content to **0.71.0-dev.1**, generation **72**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -39,10 +39,25 @@ walkthrough reads actual world/industry and personal records and checks the
 compact headline at 200% text without changing simulation state. Content
 finalization validates 24 prepared-opening save roundtrips.
 
+Voluntary resignation now has four reasons and six PR angles, a live statement
+and coverage preview, and saved announcement evidence. Profit and research claims
+are checked against the dated accounts and earlier publications. Contradicted
+claims affect audience confidence. After the funded handover, the founder can
+continue the same life or choose a current-age career retrospective. Keeping a
+chair role does not prevent the voluntary ending. The newspaper includes the
+announcement and its coverage.
+
+Focused resignation checks pass for a real 44-day funded transition, continued
+life, an ending with the retained chair, protected funds, claim evidence and exact
+save/reload. The native walkthrough completes the ordinary 104-day handover,
+chooses Continue, advances another day, then chooses the retrospective and checks
+its automatically revealed current-age headline. Keyboard statement choices and
+the 650×480 preview at 200% text pass. These are bounded Mac development checks.
+
 Career re-entry remains required. Early company closure currently records its
 chapter at the existing company boundary. The guaranteed funded route back,
-resignation statement/PR coverage, surprising and ASI successor appointments,
-and the optional resignation retrospective are selected next work. Innovation,
+broader press claims and scandal coverage, and surprising and ASI successor
+appointments remain selected work. Innovation,
 development menus, God mode, nonprofit reaction expansion and native rival
 training also remain unfinished.
 

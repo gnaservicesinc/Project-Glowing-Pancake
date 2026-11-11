@@ -7,7 +7,7 @@ add_library(pgp_bridge STATIC campaign_content_recovery.cpp content_recovery_con
     society_controller.cpp society_controller.hpp
     institutions_controller.cpp institutions_controller.hpp
     frontier_controller.cpp frontier_controller.hpp lab_inputs.hpp
-    succession_controller.cpp succession_controller.hpp
+    succession_controller.cpp succession_controller.hpp departure_presentation.cpp departure_presentation.hpp
     objectives_controller.cpp objectives_controller.hpp life_report.cpp life_report.hpp
     campaign_snapshot.hpp flow_presentation.cpp flow_presentation.hpp)
 add_library(pgp::bridge ALIAS pgp_bridge)

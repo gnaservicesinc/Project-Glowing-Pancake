@@ -400,7 +400,7 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
 
 void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,QString screenshot) {
     using namespace pgp;
-    struct Check {int phase=0,ticks=0;bool resumed=false;core::OrdinalDay handover{0};core::Cents cash{0};};
+    struct Check {int phase=0,ticks=0,frames=0;bool resumed=false;core::OrdinalDay handover{0},continued{0};core::Cents cash{0};};
     const auto check=std::make_shared<Check>();auto* timer=new QTimer(&window);timer->setInterval(80);
     QObject::connect(timer,&QTimer::timeout,&window,[&,timer,check,screenshot] {
         const auto fail=[&](const char* why){std::cerr<<"Retirement check "<<check->phase<<": "<<why<<" / "<<campaign.notice().toStdString()<<'\n';if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-failed.png");timer->stop();QCoreApplication::exit(3);};
@@ -408,11 +408,12 @@ void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignControll
         if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
         const auto click=[&](const char* name){if(press(window,find(window.contentItem(),QString::fromUtf8(name))))return true;fail(name);return false;};
         const auto capture=[&](const char* suffix){if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+QString::fromUtf8(suffix)+".png");};
+        const auto reveal=[&](const char* name){auto* target=find(window.contentItem(),QString::fromUtf8(name));auto* viewport=find(window.contentItem(),QStringLiteral("managementScroll"));if(target && viewport) {target->forceActiveFocus(Qt::TabFocusReason);QMetaObject::invokeMethod(viewport,"reveal",Q_ARG(QVariant,QVariant::fromValue(target)));}};
         const auto* desk=campaign.leadership();const auto& s=campaign.snapshot()->checkpoint.world.simulation;
         if(check->phase==0) {
             check->resumed=campaign.currentCampaign();
             if(!check->resumed) {
-                auto* founder=campaign.founding();founder->reset();founder->setField("family","rich");founder->setField("office","leased");
+                auto* founder=campaign.founding();founder->reset();founder->setField("family","rich");founder->setField("route","hired_ceo");founder->setField("office","shared");
                 pgp::bridge::complete_formative_fixture(*founder);
                 campaign.startFounderCampaign();
             }
@@ -423,6 +424,7 @@ void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignControll
             window.setProperty("menuVisible",false);window.setProperty("sessionEntered",true);QMetaObject::invokeMethod(&window,"closeApp");
             window.showNormal();window.resize(campaign.textScalePercent()>=200?650:1280,campaign.textScalePercent()>=200?480:800);
             if(check->resumed) {check->phase=30;return;}
+            campaign.management()->acceptOffer("offer.supplier_small");
             check->phase=100;return;
         }
         if(campaign.requiredKind()=="content") {const auto choices=campaign.requiredChoices();campaign.choose(choices.back().toMap().value("choiceId").toString());return;}
@@ -433,6 +435,7 @@ void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignControll
         case 101: if(click("leadershipApp")) check->phase=2;return;
         case 2:
             if(desk->candidatesAt(desk->recommendedDate()).isEmpty()) {fail("No opening senior candidate");return;}
+            if(auto* source=find(window.contentItem(),"leadershipSource")) {source->forceActiveFocus();QTest::keyClick(&window,Qt::Key_End);}else {fail("Transition compute picker");return;}
             check->cash=s.cash;if(click("reviewLeadershipNomination")) ++check->phase;return;
         case 3:
             if(desk->reviewText().isEmpty() || s.cash!=check->cash) {fail("Nomination preview mutated cash");return;}
@@ -442,30 +445,75 @@ void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignControll
         case 6:
             if(s.succession->plans.front().status!=core::SuccessionStatus::approved) {fail("Board did not fund handover");return;}
             check->handover=s.succession->plans.front().handover_on;check->cash=s.cash;
-            if(click("reviewDepartureAnnouncement")) ++check->phase;return;
+            if(auto* reason=find(window.contentItem(),"departureReason")) {reason->forceActiveFocus();QTest::keyClick(&window,Qt::Key_Home);QTest::keyClick(&window,Qt::Key_Down);QTest::keyClick(&window,Qt::Key_Down);}else {fail("Resignation reason picker");return;}
+            if(auto* angle=find(window.contentItem(),"departureMessage")) {angle->forceActiveFocus();QTest::keyClick(&window,Qt::Key_Home);for(int i=0;i<3;++i)QTest::keyClick(&window,Qt::Key_Down);}else {fail("Resignation PR angle picker");return;}
+            check->frames=0;check->phase=61;return;
+        case 61:
+            if(++check->frames<4)return;
+            if(!desk->announcementPreview("profitable_exit","responsibility").value("assessment").toString().contains("challenged")) {fail("Actual opening accounts must challenge profit claim");return;}
+            reveal("departureCoveragePreview");check->frames=0;check->phase=62;return;
+        case 62:
+            if(++check->frames<4)return;capture("-statement");
+            campaign.setTextScalePercent(200);window.showNormal();window.resize(650,480);check->frames=0;check->phase=63;return;
+        case 63:
+            if(window.width()!=650 || window.height()!=480) {window.showNormal();window.resize(650,480);check->frames=0;return;}
+            if(++check->frames<6)return;reveal("departureStatementPreview");check->frames=0;check->phase=64;return;
+        case 64:
+            if(window.width()!=650 || window.height()!=480) {window.showNormal();window.resize(650,480);check->frames=0;return;}
+            if(++check->frames<6)return;
+            if(window.grabWindow().size()!=QSize{650,480}) {fail("Compact capture did not match the requested window size");return;}
+            capture("-statement-compact");
+            campaign.setTextScalePercent(100);window.showNormal();window.resize(1280,800);
+            check->frames=0;check->phase=65;return;
+        case 65:
+            if(window.width()!=1280 || window.height()!=800) {window.showNormal();window.resize(1280,800);check->frames=0;return;}
+            if(++check->frames<5)return;reveal("reviewDepartureAnnouncement");check->phase=66;return;
+        case 66:
+            if(click("reviewDepartureAnnouncement")) check->phase=7;return;
         case 7:
             if(s.cash!=check->cash || !s.succession->releases->empty()) {fail("Announcement preview mutated company");return;}
             capture("-announcement");if(click("confirmLeadershipAction")) ++check->phase;return;
         case 8:
             if(s.succession->releases->size()!=1 || s.cash>=check->cash || desk->canFinish()) {fail("Release was not paid or allowed premature retirement");return;}
+            if(s.succession->releases->front().message!="profitable_exit" || s.succession->releases->front().reason!="responsibility") {fail("Keyboard statement choices did not reach the saved release");return;}
             campaign.setDaysPerSecond(60);if(click("advanceLeadership")) ++check->phase;return;
         case 9:
             if(!campaign.paused()) return;
             if(s.date<check->handover) {if(campaign.requiredKind()=="leadership") campaign.leadership()->acknowledge();else (void)click("advanceLeadership");return;}
             if(s.succession->plans.front().status!=core::SuccessionStatus::activated || !desk->canFinish() || !campaign.paused()) {fail("Paid work did not produce the announced handover");return;}
             if(campaign.requiredKind()=="leadership") {campaign.leadership()->acknowledge();return;}
-            if(click("reviewFounderRunRetirement")) ++check->phase;return;
+            reveal("continueFounderLife");check->frames=0;check->phase=90;return;
+        case 90:
+            if(++check->frames<4)return;capture("-next-chapter");check->continued=s.date;
+            if(click("continueFounderLife")) check->phase=91;return;
+        case 91:
+            if(campaign.snapshot()->checkpoint.world.objectives->end) {fail("Continue ended the life story");return;}
+            campaign.step();check->phase=92;return;
+        case 92:
+            if(s.date<=check->continued || campaign.snapshot()->checkpoint.world.objectives->end) {fail("Continued life did not advance");return;}
+            if(!campaign.world()->navigate("workspace","hq","laptop","leadership","")) {fail("Reopen leadership after continuing");return;}
+            check->phase=93;return;
+        case 93:
+            if(click("reviewFounderRunRetirement")) check->phase=10;return;
         case 10: capture("-ending-review");if(click("confirmLeadershipAction")) ++check->phase;return;
         case 11:
             if(!campaign.canStartNew() || !runtime::objective_time_stopped(campaign.snapshot()->checkpoint.world) || campaign.snapshot()->checkpoint.world.objectives->end->cause!=runtime::CampaignEndCause::retirement) {fail("Ending did not enable New Game");return;}
-            capture("-retired");QMetaObject::invokeMethod(&window,"closeApp");check->phase=30;return;
+            if(campaign.world()->navigation().value("app")!="objectives") {fail("Ending did not open the retrospective automatically");return;}
+            check->frames=0;check->phase=12;return;
+        case 12:
+            if(++check->frames<5)return;
+            if(auto* headline=find(window.contentItem(),"lifeReportHeadline");!headline || !headline->property("text").toString().contains("looks back at 18")) {fail("Current-age voluntary feature");return;}
+            {auto* headline=find(window.contentItem(),"lifeReportHeadline");auto* viewport=find(window.contentItem(),"managementScroll");
+            const auto top=headline->mapToItem(viewport,{0,0}).y();
+            if(top < -1 || top+headline->height()>viewport->height()+1) {fail("Automatic retrospective did not reveal its headline");return;}}
+            capture("-retrospective");QMetaObject::invokeMethod(&window,"closeApp");check->phase=30;return;
         case 30: if(click("mainMenuButton")) ++check->phase;return;
         case 31: capture("-new-game");if(click("menuNewGameButton")) ++check->phase;return;
         case 32:
             if(press(window,buttonText(window.contentItem(),QStringLiteral("OK")))) ++check->phase;else fail("Archive and New Game review");return;
         default:
             if(!campaign.welcome()) {fail("New Game did not open founding");return;}
-            std::cout<<"Retirement "<<(check->resumed?"resume":"walkthrough")<<" passed: paid release, funded successor, frozen ending and New Game route\n";
+            std::cout<<"Resignation "<<(check->resumed?"resume":"walkthrough")<<" passed: keyboard statement choices, dated challenged claim, compact preview, funded handover, continued life, current-age retrospective and New Game route\n";
             timer->stop();QCoreApplication::exit(0);return;
         }
     });timer->start();

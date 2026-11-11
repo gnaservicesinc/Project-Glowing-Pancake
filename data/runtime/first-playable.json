@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.70.0-dev.1",
+  "content_version": "0.71.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -78789,8 +78789,84 @@
                 "fee_cents": 50000,
                 "id": "founder_legacy",
                 "title": "Celebrate the founding story"
+              },
+              {
+                "claim": "profit",
+                "completed_effect_bp": [
+                  150,
+                  0,
+                  100,
+                  50,
+                  50,
+                  50
+                ],
+                "copy": "I am leaving a company with a record of cumulative profit since it opened.",
+                "fee_cents": 50000,
+                "id": "profitable_exit",
+                "title": "Leave on a profitable high"
+              },
+              {
+                "claim": "research",
+                "completed_effect_bp": [
+                  50,
+                  200,
+                  50,
+                  100,
+                  100,
+                  100
+                ],
+                "copy": "Before today, our lab had already published original research. That work will remain part of its next chapter.",
+                "fee_cents": 75000,
+                "id": "research_record",
+                "title": "Point to the research record"
+              },
+              {
+                "completed_effect_bp": [
+                  0,
+                  50,
+                  50,
+                  50,
+                  50,
+                  50
+                ],
+                "copy": "The incoming leader deserves room to set out their priorities. I will let their work speak for itself.",
+                "fee_cents": 0,
+                "id": "quiet_handover",
+                "title": "Keep the focus on the successor"
               }
-            ]
+            ],
+            "press": {
+              "challenged_effect_bp": [
+                -250,
+                -150,
+                -150,
+                -100,
+                -250,
+                -150
+              ],
+              "reasons": [
+                {
+                  "copy": "I am stepping back to make more time for my life outside the company.",
+                  "id": "personal",
+                  "title": "Personal priorities"
+                },
+                {
+                  "copy": "I am handing over the executive role so a new leader can shape the next chapter.",
+                  "id": "new_generation",
+                  "title": "Make room for a successor"
+                },
+                {
+                  "copy": "I accept responsibility for my decisions and believe the company needs a change of leadership.",
+                  "id": "responsibility",
+                  "title": "Accept responsibility"
+                },
+                {
+                  "copy": "My priorities and the next direction of the company have diverged. I am stepping down from the executive role.",
+                  "id": "direction",
+                  "title": "A different direction"
+                }
+              ]
+            }
           },
           "executive_retirement_age": 70,
           "founder_birth_year": 1997,
@@ -79197,7 +79273,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 40,
+      "revision": 41,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

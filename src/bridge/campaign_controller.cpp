@@ -264,6 +264,10 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
         (snapshot->generation == snapshot_->generation && snapshot->checkpoint.world.simulation.revision < snapshot_->checkpoint.world.simulation.revision))) return;
     const bool first = !snapshot_;
     const bool replace = first || snapshot_->generation != snapshot->generation;
+    const auto& ending=snapshot->checkpoint.world.objectives;
+    const bool voluntary_ending=!replace && snapshot_->checkpoint.world.objectives &&
+        !snapshot_->checkpoint.world.objectives->end && ending && ending->end &&
+        ending->end->cause==runtime::CampaignEndCause::retirement;
     if(snapshot->content || replace) active_content_=snapshot->content;
     const auto& content=activeProgram();
     auto projects = project_rows(snapshot->checkpoint);
@@ -285,6 +289,7 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     if (first) busy_ = false;
     if (changed_settings) emit settingsChanged();
     emit stateChanged(); emit snapshotChanged(); emit selectionChanged();
+    if(voluntary_ending) emit careerRetrospectiveReady();
 }
 bool CampaignController::canStartNew() const {
     return ready() && !busy_ && !storageBlocked() && (!currentCampaign() ||

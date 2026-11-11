@@ -201,6 +201,7 @@ public:
     // C++ smoke/tests can inspect authority without exposing mutation to QML.
     [[nodiscard]] CampaignSnapshotPtr snapshot() const { return snapshot_; }
 signals:
+    void careerRetrospectiveReady();
     void developmentResetFinished();
     void stateChanged();
     void settingsChanged();

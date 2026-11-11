@@ -1,4 +1,5 @@
 #include "succession_controller.hpp"
+#include "departure_presentation.hpp"
 #include "flow_presentation.hpp"
 #include "lab_inputs.hpp"
 #include <pgp/runtime/legacy.hpp>
@@ -68,7 +69,27 @@ QString SuccessionController::recommendedRate() const {
 bool SuccessionController::canFinish() const {
     if(!editable()) return false;
     const auto& w=snapshot_->checkpoint.world;
-    return w.objectives && !w.objectives->end && w.objectives->mode==runtime::ObjectiveMode::scored && runtime::completed_founder_departure(w,company().date).has_value();
+    return w.objectives && !w.objectives->end &&
+        (w.objectives->mode==runtime::ObjectiveMode::scored || w.objectives->mode==runtime::ObjectiveMode::retrospective) &&
+        runtime::completed_founder_departure(w,company().date).has_value();
+}
+QVariantList SuccessionController::departureReasons() const {
+    QVariantList result;
+    if(!available()) return result;
+    const auto& departure=succession_catalog(company()).departure;
+    if(!departure || !departure->press) return result;
+    for(const auto& reason:departure->press->reasons)
+        result.push_back(QVariantMap{{"id",text(reason.id)},{"label",text(reason.title)}});
+    return result;
+}
+QVariantMap SuccessionController::announcementPreview(QString message,QString reason) const {
+    if(!available()) return {};
+    try {
+        const auto release=preview_founder_departure(company(),{plans_.selectedId().toULongLong(),message.toStdString(),reason.toStdString()});
+        return departureArticle(company(),release);
+    } catch(const std::exception& error) {
+        return {{"error",text(error.what())}};
+    }
 }
 QVariantList SuccessionController::departureMessages() const {
     QVariantList rows;if(!available() || !succession_catalog(company()).departure) return rows;
@@ -90,6 +111,9 @@ QString SuccessionController::departureHistory() const {
         const auto& plan=actor().plans.at(release.plan-1);
         lines<<QStringLiteral("%1 · %2 → %3 · %4").arg(date(release.day),text(departure_message(succession_catalog(company()),release.message).title),
             text(leadership_candidate(succession_catalog(company()),plan.candidate).name),status(plan.status));
+        const auto coverage=departureArticle(company(),release);
+        lines<<coverage.value("statement").toString()<<coverage.value("headline").toString()
+             <<coverage.value("response").toString()<<coverage.value("facts").toString();
     }
     return lines.join(u'\n');
 }
@@ -186,22 +210,23 @@ void SuccessionController::reviewRetirement() {
         stage(RetireFounderChair{},QStringLiteral("End the founder's personal chair role and its future stipend. The current executive continues operating. The founder trust keeps its actual beneficial holdings and institutional board rights."));
     }catch(const std::exception& e){emit noticeRaised(text(e.what()));}
 }
-void SuccessionController::reviewAnnouncement(QString message) {
+void SuccessionController::reviewAnnouncement(QString message,QString reason) {
     clearReview();if(!editable()) return;
     try {
-        AnnounceFounderDeparture action{plans_.selectedId().toULongLong(),message.toStdString()};auto candidate=company();Cents reserved{0};
+        AnnounceFounderDeparture action{plans_.selectedId().toULongLong(),message.toStdString(),reason.toStdString()};auto candidate=company();Cents reserved{0};
         for(const auto& row:company().reservations) reserved=checked_unit_add(reserved,row.reserved);
         announce_founder_departure(candidate,action,reserved);
-        const auto& p=candidate.succession->plans.at(action.plan-1);const auto& m=departure_message(succession_catalog(candidate),action.message);
-        stage(action,QStringLiteral("Public founder handover announcement\n%1\nSuccessor: %2. %3 %4.\n%5\nExpense: %6. The board's funded transition, salaries and retained rights still apply. A missed or cancelled commitment affects public confidence.")
-            .arg(text(m.title),text(leadership_candidate(succession_catalog(candidate),p.candidate).name),p.status==SuccessionStatus::activated?QStringLiteral("Took office"):QStringLiteral("Planned handover"),
-                date(p.finished_on.value_or(p.handover_on)),text(m.copy),money(m.fee)));
+        const auto& m=departure_message(succession_catalog(candidate),action.message);
+        const auto report=departureArticle(candidate,candidate.succession->releases->back());
+        stage(action,tr("%1\n\n%2\n\n%3\n%4\n\nCompany expense %5.")
+            .arg(report.value("statement").toString(),report.value("headline").toString(),report.value("response").toString(),
+                 report.value("facts").toString(),money(m.fee)));
     }catch(const std::exception& e){emit noticeRaised(text(e.what()));}
 }
 void SuccessionController::reviewFinish() {
     clearReview();if(!editable()) return;
     try {auto world=snapshot_->checkpoint.world;runtime::finish_founder_run(world);
-        stage(FinishFounderRun{},QStringLiteral("Retire from this company after its completed public handover. The successor, accounts, obligations and founder trust are preserved in this ending. Century distinctions remain unfinished. New Game becomes available; starting another company archives this one. You may instead continue following this company in the sandbox."));
+        stage(FinishFounderRun{},QStringLiteral("Close this life story here? Read a retrospective on the founder's career so far, at their current age. This ends play in this record."));
     }catch(const std::exception& e){emit noticeRaised(text(e.what()));}
 }
 void SuccessionController::acknowledge() {

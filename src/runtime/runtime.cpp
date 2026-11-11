@@ -772,7 +772,7 @@ RuntimeResult Runtime::submit(const core::Command& command) {
                 if(has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date)
                     fail(RuntimeReason::morning_not_ready,"Resolve required content choices before retirement.");
                 finish_founder_run(next.world);
-                result.explanation="The founder retired after the announced, funded handover. This company is preserved; New Game is available.";
+                result.explanation="The founder chose to close the career record after the announced, funded handover.";
             } else if(std::holds_alternative<core::EndWithPostmortem>(action)) {
                 open_campaign_postmortem(next.world);
                 result.explanation="The scored campaign ended at the recorded breach.";

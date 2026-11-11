@@ -86,6 +86,13 @@ Company, World, Other labs, People and Choices. At the founder's age-100
 boundary, the edition becomes an obituary. The development scenarios' earlier
 scored acceptance records below are historical.
 
+**Leadership** lets you prepare a successor and build a resignation statement
+from a reason and PR angle. Preview the statement and possible coverage before
+paying for the announcement. Reporters check profit and research claims against
+the company record from that date. After the handover, choose **Continue this
+life** or **End here and read the retrospective**. The early retrospective uses
+your current age and includes the resignation coverage.
+
 In a fresh founder campaign, use **Suppliers**
 to order a desk and computer. Advance to delivery, choose **Arrange headquarters**,
 then click an owned object’s picture to pick it up. Move its translucent preview

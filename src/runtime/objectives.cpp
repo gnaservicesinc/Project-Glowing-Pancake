@@ -282,7 +282,9 @@ std::optional<std::uint64_t> completed_founder_departure(const WorldState& world
     const auto& state=world.simulation;if(!state.succession || !state.succession->releases) return {};
     const auto& actor=*state.succession;
     const auto control=std::ranges::find_if(actor.controls.rbegin(),actor.controls.rend(),[&](const auto& c){return c.day<=day;});
-    if(control==actor.controls.rend() || control->role!=FounderRole::trust) return {};
+    const bool retrospective=world.objectives && world.objectives->mode==ObjectiveMode::retrospective;
+    if(control==actor.controls.rend() || control->role==FounderRole::executive ||
+        (!retrospective && control->role!=FounderRole::trust)) return {};
     for(const auto& release:*actor.releases) {
         const auto& plan=actor.plans.at(release.plan-1);
         if(release.day<=day && plan.incumbent==1 && plan.status==SuccessionStatus::activated && plan.finished_on && *plan.finished_on<=day)
@@ -291,10 +293,12 @@ std::optional<std::uint64_t> completed_founder_departure(const WorldState& world
     return {};
 }
 void finish_founder_run(WorldState& world) {
-    if(!world.objectives || world.objectives->end || world.objectives->mode!=ObjectiveMode::scored || world.simulation.phase!=DayPhase::work_ready)
+    if(!world.objectives || world.objectives->end ||
+        (world.objectives->mode!=ObjectiveMode::scored && world.objectives->mode!=ObjectiveMode::retrospective) ||
+        world.simulation.phase!=DayPhase::work_ready)
         invalid("Retirement needs an ongoing founder campaign at a prepared morning.");
     const auto plan=completed_founder_departure(world,world.simulation.date);
-    if(!plan) invalid("Complete and announce the funded founder handover, then retire the personal chair role before ending this run.");
+    if(!plan) invalid("Complete and announce the funded founder handover before ending this record.");
     finish(world,CampaignEndCause::retirement,std::to_string(*plan));
 }
 void continue_campaign(WorldState& world) {

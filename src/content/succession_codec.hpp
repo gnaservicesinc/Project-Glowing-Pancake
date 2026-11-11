@@ -20,10 +20,19 @@ template<class T,class F> void fields(T& r,F field) {
         field("personal_life",r.personal_life,true);
     } else if constexpr(std::is_same_v<V,core::DepartureRules>) {
         field("messages",r.messages);field("broken_effect_bp",r.broken_effect);
+        field("press",r.press,true);
     } else if constexpr(std::is_same_v<V,core::DepartureMessage>) {
         field("id",r.id);field("title",r.title);field("copy",r.copy);field("fee_cents",r.fee);field("completed_effect_bp",r.completed_effect);
+        field("claim",r.claim,true);
+    } else if constexpr(std::is_same_v<V,core::DepartureReason>) {
+        field("id",r.id);field("title",r.title);field("copy",r.copy);
+    } else if constexpr(std::is_same_v<V,core::DeparturePressRules>) {
+        field("reasons",r.reasons);field("challenged_effect_bp",r.challenged_effect);
+    } else if constexpr(std::is_same_v<V,core::DepartureEvidence>) {
+        field("cash_cents",r.cash);field("profit_cents",r.profit);field("debt_cents",r.debt);field("publications",r.publications);
     } else if constexpr(std::is_same_v<V,core::DepartureRelease>) {
         field("plan",r.plan);field("posting_cursor",r.posting_cursor);field("message",r.message);field("day",r.day);
+        field("reason",r.reason,true);field("evidence",r.evidence,true);
     } else if constexpr(std::is_same_v<V,core::LeadershipTrack>) {
         field("id",r.id);field("priorities",r.priorities);field("names",r.names);field("first_birth_year",r.first_birth_year);
         field("cohort_years",r.cohort_years);field("signing_cost_cents",r.signing_cost);field("monthly_salary_cents",r.monthly_salary);

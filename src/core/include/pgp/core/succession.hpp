@@ -14,17 +14,35 @@ struct DepartureMessage {
     std::string id,title,copy;
     Cents fee{0};
     std::array<std::int32_t,6> completed_effect{};
+    std::optional<std::string> claim{};
     auto operator<=>(const DepartureMessage&) const = default;
+};
+struct DepartureReason {
+    std::string id,title,copy;
+    auto operator<=>(const DepartureReason&) const = default;
+};
+struct DeparturePressRules {
+    std::vector<DepartureReason> reasons;
+    std::array<std::int32_t,6> challenged_effect{};
+    auto operator<=>(const DeparturePressRules&) const = default;
 };
 struct DepartureRules {
     std::vector<DepartureMessage> messages;
     std::array<std::int32_t,6> broken_effect{};
+    std::optional<DeparturePressRules> press{};
     auto operator<=>(const DepartureRules&) const = default;
+};
+struct DepartureEvidence {
+    Cents cash{0},profit{0},debt{0};
+    std::uint32_t publications=0;
+    auto operator<=>(const DepartureEvidence&) const = default;
 };
 struct DepartureRelease {
     std::uint64_t plan=0,posting_cursor=0;
     std::string message;
     OrdinalDay day{0};
+    std::string reason{};
+    std::optional<DepartureEvidence> evidence{};
     auto operator<=>(const DepartureRelease&) const = default;
 };
 struct LeadershipTrack {
@@ -109,7 +127,7 @@ struct ProposeSuccession { std::string candidate;OrdinalDay handover_on{0};bool 
 struct VoteSuccession { std::uint64_t id=0;bool support=false; };
 struct CancelSuccession { std::uint64_t id=0; };
 struct RetireFounderChair {};
-struct AnnounceFounderDeparture { std::uint64_t plan=0;std::string message; };
+struct AnnounceFounderDeparture { std::uint64_t plan=0;std::string message;std::string reason{}; };
 struct AcknowledgeSuccession { std::uint64_t id=0; };
 
 void validate_succession_catalog(const SuccessionCatalog&);
@@ -132,5 +150,8 @@ void announce_founder_departure(SimulationState&,const AnnounceFounderDeparture&
 void validate_founder_departure(const SimulationState&);
 [[nodiscard]] const DepartureMessage& departure_message(const SuccessionCatalog&,std::string_view);
 [[nodiscard]] std::string departure_reference(std::uint64_t);
+[[nodiscard]] DepartureRelease preview_founder_departure(const SimulationState&,const AnnounceFounderDeparture&);
+[[nodiscard]] std::string departure_assessment(const SimulationState&,const DepartureRelease&);
+[[nodiscard]] const DepartureReason& departure_reason(const SuccessionCatalog&,std::string_view);
 void acknowledge_succession(SimulationState&,std::uint64_t);
 }

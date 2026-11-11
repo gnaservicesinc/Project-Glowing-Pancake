@@ -7,10 +7,15 @@ Rectangle {
     required property int textSize
     required property var report
     property string section: "all"
+    function focusHeadline() {
+        section="all"
+        reportHeadline.forceActiveFocus(Qt.OtherFocusReason)
+        return reportHeadline
+    }
     readonly property var articles: (report.articles || []).filter(article=>section==="all" || article.id===section)
     function sectionName(article) {
         return ({all:qsTr("Full edition"),company:qsTr("Company"),world:qsTr("World"),
-            industry:qsTr("Other labs"),people:qsTr("People"),choices:qsTr("Choices")})[article.id] || article.title
+            industry:qsTr("Other labs"),people:qsTr("People"),departures:qsTr("Departure"),choices:qsTr("Choices")})[article.id] || article.title
     }
     color: "#e8dfc8"
     border.color: "#a99e84"
@@ -42,6 +47,8 @@ Rectangle {
         }
         Rectangle { Layout.fillWidth: true; implicitHeight: 2; color: "#46534b" }
         Label {
+            id: reportHeadline
+            property bool revealAtTop:true
             objectName: "lifeReportHeadline"
             Layout.fillWidth: true
             text: paper.report.headline || ""

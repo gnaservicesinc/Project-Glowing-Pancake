@@ -20,8 +20,13 @@ Implemented the first F-07 batch with the age-100 boundary, unscored player
 campaigns and a newspaper reporting dated company/world/lab/person/choice
 records. Focused ending/save and native compact report checks pass.
 
-Next implement the personal career state across forced departures, guaranteed
-re-entry and reviewed resignation with an optional career-feature ending.
+Reviewed resignation now combines a reason, PR angle and approved successor.
+Profit/research claims have saved dated evidence and contradicted claims affect
+audience confidence. After the actual handover, continue the same life or end
+with a current-age career feature, including when retaining the chair.
+
+Next implement the personal career state across forced departures and guaranteed
+re-entry, broader statement claims/scandals and surprising appointments.
 The press statement and successor choice can change the lead story. The
 company's ASI becomes a possible handover candidate when actually established.
 Distribution/development tools, selective innovation, nonprofit reactions and

@@ -1,4 +1,5 @@
 #include "life_report.hpp"
+#include "departure_presentation.hpp"
 #include <pgp/runtime/family.hpp>
 #include <pgp/runtime/romance.hpp>
 #include <pgp/runtime/competition.hpp>
@@ -36,6 +37,8 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
     const int age=world.romance?runtime::family_age(world.romance->founder.born_on,day):
         core::from_ordinal(day).year-1997;
     const bool obituary=world.founding && completed && age==100;
+    const bool voluntary=world.objectives && world.objectives->end &&
+        world.objectives->end->cause==runtime::CampaignEndCause::retirement;
     QVariantList articles;
     const auto article=[&](const QString& id,const QString& title,const QStringList& paragraphs) {
         if(!paragraphs.empty()) articles.push_back(QVariantMap{{"id",id},{"title",title},{"paragraphs",paragraphs}});
@@ -44,6 +47,7 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
     if(obituary) company_record.push_back(QStringLiteral("%1, whose career included %2, has died at the age of 100. "
         "This account draws on the decisions, relationships and public record of that career.").arg(name,company));
     else company_record.push_back(QStringLiteral("%1's record with %2, as of %3.").arg(name,company,date(day)));
+    if(voluntary) company_record.push_back(QStringLiteral("At age %1, %2 stepped down as chief executive following the announced handover.").arg(age).arg(name));
     if(world.founding) company_record.push_back(QStringLiteral("%1 opened as a %2 in %3.")
         .arg(company,world.founding->legal_form=="nonprofit"?QStringLiteral("nonprofit"):QStringLiteral("corporation"),
             date(world.campaign_start)));
@@ -60,7 +64,7 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
         company_record.push_back(QStringLiteral("Under the %1 bylaws, its commitments included %2.").arg(text(charter->name),text(charter->priorities)));
     if(state.lab) company_record.push_back(QStringLiteral("The lab's record contains %1 publications and %2 trained models.")
         .arg(state.lab->publications.size()).arg(state.lab->models.size()));
-    if(world.objectives && world.objectives->end && !completed)
+    if(world.objectives && world.objectives->end && !completed && !voluntary)
         company_record.push_back(world.objectives->end->cause==runtime::CampaignEndCause::insolvency?
             QStringLiteral("The company's operations closed following an unresolved financial workout."):
             QStringLiteral("The company's operating chapter ended before the planned retrospective."));
@@ -161,6 +165,16 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
     }
     article("people",QStringLiteral("The people who knew the founder"),people_record);
 
+    QStringList departures;
+    if(state.succession && state.succession->releases) for(const auto& release:*state.succession->releases) {
+        const auto coverage=departureArticle(state,release);
+        departures.push_back(QStringLiteral("%1 · %2").arg(coverage.value("date").toString(),coverage.value("headline").toString()));
+        departures.push_back(coverage.value("statement").toString());
+        departures.push_back(coverage.value("response").toString());
+        if(!coverage.value("facts").toString().isEmpty()) departures.push_back(coverage.value("facts").toString());
+    }
+    article("departures",QStringLiteral("The departure and its coverage"),departures);
+
     QStringList choices;
     const auto& history=checkpoint.runtime.presentations;
     for(auto i=history.rbegin();i!=history.rend() && choices.size()<8;++i) {
@@ -180,7 +194,8 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
     }
     article("choices",QStringLiteral("Decisions in the public record"),choices);
     return {{"obituary",obituary},{"date",date(day)},{"masthead",QStringLiteral("THE WORLD REGISTER")},
-        {"headline",obituary?QStringLiteral("%1 dies at 100").arg(name):QStringLiteral("%1 — a life in progress").arg(name)},
+        {"headline",obituary?QStringLiteral("%1 dies at 100").arg(name):
+            voluntary?QStringLiteral("%1 looks back at %2").arg(name).arg(age):QStringLiteral("%1 — a life in progress").arg(name)},
         {"deck",world.founding?QStringLiteral("1997–%1 · %2").arg(core::from_ordinal(day).year).arg(company):company},
         {"articles",articles}};
 }

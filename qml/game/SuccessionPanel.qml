@@ -7,6 +7,14 @@ ColumnLayout {
     required property int textSize
     readonly property var desk: campaign.leadership
     readonly property bool editable: desk.editable && !campaign.busy && campaign.companyEditable
+    signal continueRequested()
+    property var pressDraft: ({})
+    function refreshStatement() {
+        if(message && reason && panel.visible)
+            pressDraft=desk.announcementPreview(message.currentValue || "",reason.currentValue || "")
+    }
+    onVisibleChanged: if(visible) Qt.callLater(refreshStatement)
+    Connections {target:panel.desk;function onChanged(){panel.refreshStatement()}}
     spacing: 10
     component Copy: Label {
         Layout.fillWidth: true
@@ -159,13 +167,33 @@ ColumnLayout {
         enabled: panel.editable
         onClicked: panel.desk.reviewRetirement()
     }
-    Copy { text: qsTr("Announce the founder handover"); font.bold: true; visible: message.model.length > 0 }
-    Copy { text: qsTr("Fund and approve a founder successor plan, then choose its public message. Complete the preparation and handover before retiring. Keeping the personal chair role lets you continue guiding the company."); visible: message.model.length > 0 }
-    Picker { id: message; objectName: "departureMessage"; model: panel.desk.departureMessages; visible: model.length > 0; Accessible.name: qsTr("Public handover message") }
+    Copy { text: qsTr("Resignation statement"); font.bold: true; visible: message.model.length > 0 }
+    Copy { text: qsTr("Reason"); visible: reason.model.length > 0 }
+    Picker {
+        id: reason;objectName:"departureReason";model:panel.desk.departureReasons
+        visible:model.length>0;Accessible.name:qsTr("Reason for resigning")
+        onCurrentValueChanged:panel.refreshStatement()
+    }
+    Copy {text:qsTr("PR angle");visible:message.model.length>0}
+    Picker {
+        id: message; objectName: "departureMessage"; model: panel.desk.departureMessages; visible: model.length > 0
+        Accessible.name: qsTr("Public handover message");onCurrentValueChanged:panel.refreshStatement()
+    }
     Copy { text: message.currentIndex >= 0 ? message.model[message.currentIndex].detail : ""; visible: text.length > 0 }
-    Action { objectName: "reviewDepartureAnnouncement"; text: qsTr("Review public announcement"); visible: message.model.length > 0; enabled: panel.editable && (panel.desk.plans.selectedRow.fields?.announce ?? false); onClicked: panel.desk.reviewAnnouncement(message.currentValue) }
+    Copy {objectName:"departureStatementPreview";text:panel.pressDraft.statement || "";visible:!!text}
+    Copy {text:qsTr("Possible coverage");font.bold:true;visible:!!panel.pressDraft.headline}
+    Copy {objectName:"departureCoveragePreview";text:[panel.pressDraft.headline,panel.pressDraft.response,panel.pressDraft.facts].filter(Boolean).join("\n\n");visible:!!panel.pressDraft.headline;color:panel.pressDraft.assessment==="challenged"?"#f0bc90":"#c5dec9"}
+    Action { objectName: "reviewDepartureAnnouncement"; text: qsTr("Review public announcement"); visible: message.model.length > 0; enabled: panel.editable && (panel.desk.plans.selectedRow.fields?.announce ?? false); onClicked: panel.desk.reviewAnnouncement(message.currentValue,reason.currentValue || "") }
     Copy { objectName: "departureHistory"; text: panel.desk.departureHistory; visible: text.length > 0 }
-    Action { objectName: "reviewFounderRunRetirement"; text: qsTr("Review retirement"); visible: message.model.length > 0; enabled: panel.editable && panel.desk.canFinish; onClicked: panel.desk.reviewFinish() }
+    ColumnLayout {
+        objectName:"departureNextChapter"
+        property bool focusContext:true
+        Layout.fillWidth:true
+        visible:panel.desk.canFinish
+        Copy {text:qsTr("Your next chapter");font.bold:true}
+        Action {objectName:"continueFounderLife";text:qsTr("Continue this life");onClicked:panel.continueRequested()}
+        Action {objectName:"reviewFounderRunRetirement";text:qsTr("End here and read the retrospective");enabled:panel.editable;onClicked:panel.desk.reviewFinish()}
+    }
     Copy { text: qsTr("Executive history"); font.bold: true }
     Records { listName: "leadershipTerms"; rows: panel.desk.terms; emptyText: qsTr("Executive terms") }
     GameDialog {

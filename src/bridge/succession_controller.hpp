@@ -11,6 +11,7 @@ class SuccessionController final : public QObject {
     Q_PROPERTY(bool founderChair READ founderChair NOTIFY changed)
     Q_PROPERTY(bool canFinish READ canFinish NOTIFY changed)
     Q_PROPERTY(QVariantList departureMessages READ departureMessages NOTIFY changed)
+    Q_PROPERTY(QVariantList departureReasons READ departureReasons NOTIFY changed)
     Q_PROPERTY(QString departureHistory READ departureHistory NOTIFY changed)
     Q_PROPERTY(QString recommendedRate READ recommendedRate NOTIFY changed)
     Q_PROPERTY(QString overview READ overview NOTIFY changed)
@@ -28,6 +29,7 @@ public:
     [[nodiscard]] bool founderChair() const;
     [[nodiscard]] bool canFinish() const;
     [[nodiscard]] QVariantList departureMessages() const;
+    [[nodiscard]] QVariantList departureReasons() const;
     [[nodiscard]] QString departureHistory() const;
     [[nodiscard]] QString recommendedRate() const;
     [[nodiscard]] QString overview() const;
@@ -41,7 +43,8 @@ public:
     Q_INVOKABLE void reviewVote(bool support);
     Q_INVOKABLE void reviewCancellation();
     Q_INVOKABLE void reviewRetirement();
-    Q_INVOKABLE void reviewAnnouncement(QString message);
+    Q_INVOKABLE void reviewAnnouncement(QString message,QString reason={});
+    Q_INVOKABLE QVariantMap announcementPreview(QString message,QString reason) const;
     Q_INVOKABLE void reviewFinish();
     Q_INVOKABLE void acknowledge();
     Q_INVOKABLE void confirm();

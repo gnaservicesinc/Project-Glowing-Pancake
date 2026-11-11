@@ -111,6 +111,10 @@ int main(int argc,char** argv) {
         end.cause=runtime::CampaignEndCause::insolvency;
         check(!bridge::lifeReport(obituary,installed).value("obituary").toBool(),
             "A company closure must never fabricate the founder's death.");
+        end.cause=runtime::CampaignEndCause::retirement;
+        const auto voluntary=bridge::lifeReport(obituary,installed);
+        check(!voluntary.value("obituary").toBool() && voluntary.value("headline").toString()=="Alex Vale looks back at 19",
+            "Voluntarily ending after resignation must report the current age without an obituary.");
         std::cout<<"Retrospective deadline, absence of scores/reviews, real terminal save and dated newspaper checks passed.\n";
     } catch(const std::exception& error) {std::cerr<<error.what()<<'\n';return 1;}
 }
