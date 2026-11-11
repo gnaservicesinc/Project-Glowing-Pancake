@@ -133,7 +133,7 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
         std::uint64_t stream=RandomStreams{rival_seed(world,authored)}.snapshot()[static_cast<std::size_t>(RandomStream::rivals)];
         for (std::size_t i=0;i<plan.decisions.size();++i) {
             const auto& decision=plan.decisions[i];SplitMix64 next{stream};const auto draw=next.next();
-            const std::set<std::string> actions{"wait","data","research","train","evaluate","deploy","price","hire","repay","finance","expand","publish","frontier_system","frontier_trial","study","software","software_release","equipment","place"};
+            const std::set<std::string> actions{"wait","data","research","train","evaluate","deploy","price","hire","repay","finance","expand","publish","frontier_system","frontier_trial","study","software","software_release","equipment","place","hire_individual","accept_counter","offer_employment","buy_workstation","equip_workstation"};
             if (decision.day!=advance_days(rival.response?rival.response->ready_on.value_or(entry):entry,Days{static_cast<std::int64_t>(i)*state.setup->review_interval.value()}) || decision.day>simulation.date || decision.stream_before!=stream || decision.stream_after!=next.state() ||
                 !actions.contains(decision.action) || decision.explanation.empty() || decision.explanation.size()>1024 || decision.subject.size()>256 ||
                 decision.observation!=public_observation(world,decision.day,draw))

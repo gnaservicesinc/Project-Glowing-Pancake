@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.60.0-dev.1",
+  "content_version": "0.61.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -76661,8 +76661,887 @@
             "company.century.roster.domestic.5": "san_francisco",
             "company.century.roster.heavyweight.1": "san_francisco",
             "company.century.roster.heavyweight.2": "austin",
-            "company.century.roster.heavyweight.3": "seattle"
+            "company.century.roster.heavyweight.3": "seattle",
+            "company.century.roster.international.1": "toronto",
+            "company.century.roster.international.2": "cambridge",
+            "company.century.roster.international.3": "beijing",
+            "company.century.roster.international.4": "bengaluru",
+            "company.century.roster.international.5": "tokyo",
+            "company.century.roster.international.6": "sao_paulo"
           },
+          "industry_team_target": 10,
+          "international_headquarters": [
+            {
+              "market": {
+                "agent": "Toronto Workspace Exchange",
+                "city": "Toronto",
+                "deposit_months": 2,
+                "early_exit_months": 2,
+                "id": "toronto",
+                "land_cents_per_square_metre": 70000,
+                "landlord": "Toronto Research Properties",
+                "minimum_lease_days": 365,
+                "monthly_land_tax_cents_per_square_metre": 12,
+                "rent_cents_per_square_metre": 3500,
+                "state": "CA-ON",
+                "street": "Innovation Court"
+              },
+              "region": {
+                "air_pue_milli": 1210,
+                "build_lead_days": 45,
+                "connectivity_class": 5,
+                "construction_base_cents": 12000000,
+                "construction_incentive_bp": 0,
+                "construction_per_kw_cents": 145000,
+                "electricity_millicents_per_kwh": 13000,
+                "grid_grams_per_kwh": 120,
+                "grid_lead_days": 70,
+                "grid_watts": 450000,
+                "id": "CA-ON",
+                "incentive_cap_cents": 0,
+                "monthly_overhead_cents": 90000,
+                "monthly_property_cents": 280000,
+                "name": "Ontario, Canada",
+                "operator_hire_lead_days": 14,
+                "operator_monthly_cents": 450000,
+                "operator_signing_cents": 120000,
+                "travel_zone": "overseas",
+                "water_cents_per_1000_liters": 140,
+                "water_limit_ml_per_day": 650000,
+                "water_ml_per_kwh": 2000,
+                "water_pue_milli": 1080
+              },
+              "travel": [
+                {
+                  "fare_cents": 120000,
+                  "from": "alaska",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "atlantic",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "central",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "hawaii",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "lakes",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "mountain",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "pacific",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "south",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "alaska"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "atlantic"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "central"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "hawaii"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "lakes"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "mountain"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "pacific"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "south"
+                },
+                {
+                  "fare_cents": 2500,
+                  "from": "overseas",
+                  "one_way_days": 0,
+                  "to": "overseas"
+                }
+              ]
+            },
+            {
+              "market": {
+                "agent": "Cambridge Workspace Exchange",
+                "city": "Cambridge",
+                "deposit_months": 2,
+                "early_exit_months": 2,
+                "id": "cambridge",
+                "land_cents_per_square_metre": 84000,
+                "landlord": "Cambridge Research Properties",
+                "minimum_lease_days": 365,
+                "monthly_land_tax_cents_per_square_metre": 12,
+                "rent_cents_per_square_metre": 4200,
+                "state": "GB-ENG",
+                "street": "Innovation Court"
+              },
+              "region": {
+                "air_pue_milli": 1210,
+                "build_lead_days": 45,
+                "connectivity_class": 5,
+                "construction_base_cents": 12000000,
+                "construction_incentive_bp": 0,
+                "construction_per_kw_cents": 145000,
+                "electricity_millicents_per_kwh": 17000,
+                "grid_grams_per_kwh": 120,
+                "grid_lead_days": 70,
+                "grid_watts": 450000,
+                "id": "GB-ENG",
+                "incentive_cap_cents": 0,
+                "monthly_overhead_cents": 90000,
+                "monthly_property_cents": 280000,
+                "name": "England, United Kingdom",
+                "operator_hire_lead_days": 14,
+                "operator_monthly_cents": 520000,
+                "operator_signing_cents": 120000,
+                "travel_zone": "overseas",
+                "water_cents_per_1000_liters": 140,
+                "water_limit_ml_per_day": 650000,
+                "water_ml_per_kwh": 2000,
+                "water_pue_milli": 1080
+              },
+              "travel": [
+                {
+                  "fare_cents": 120000,
+                  "from": "alaska",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "atlantic",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "central",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "hawaii",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "lakes",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "mountain",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "pacific",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "south",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "alaska"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "atlantic"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "central"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "hawaii"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "lakes"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "mountain"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "pacific"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "south"
+                },
+                {
+                  "fare_cents": 2500,
+                  "from": "overseas",
+                  "one_way_days": 0,
+                  "to": "overseas"
+                }
+              ]
+            },
+            {
+              "market": {
+                "agent": "Beijing Workspace Exchange",
+                "city": "Beijing",
+                "deposit_months": 2,
+                "early_exit_months": 2,
+                "id": "beijing",
+                "land_cents_per_square_metre": 52000,
+                "landlord": "Beijing Research Properties",
+                "minimum_lease_days": 365,
+                "monthly_land_tax_cents_per_square_metre": 12,
+                "rent_cents_per_square_metre": 2600,
+                "state": "CN-BJ",
+                "street": "Innovation Court"
+              },
+              "region": {
+                "air_pue_milli": 1210,
+                "build_lead_days": 45,
+                "connectivity_class": 5,
+                "construction_base_cents": 12000000,
+                "construction_incentive_bp": 0,
+                "construction_per_kw_cents": 145000,
+                "electricity_millicents_per_kwh": 10000,
+                "grid_grams_per_kwh": 120,
+                "grid_lead_days": 70,
+                "grid_watts": 450000,
+                "id": "CN-BJ",
+                "incentive_cap_cents": 0,
+                "monthly_overhead_cents": 90000,
+                "monthly_property_cents": 280000,
+                "name": "Beijing, China",
+                "operator_hire_lead_days": 14,
+                "operator_monthly_cents": 330000,
+                "operator_signing_cents": 120000,
+                "travel_zone": "overseas",
+                "water_cents_per_1000_liters": 140,
+                "water_limit_ml_per_day": 650000,
+                "water_ml_per_kwh": 2000,
+                "water_pue_milli": 1080
+              },
+              "travel": [
+                {
+                  "fare_cents": 120000,
+                  "from": "alaska",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "atlantic",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "central",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "hawaii",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "lakes",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "mountain",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "pacific",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "south",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "alaska"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "atlantic"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "central"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "hawaii"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "lakes"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "mountain"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "pacific"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "south"
+                },
+                {
+                  "fare_cents": 2500,
+                  "from": "overseas",
+                  "one_way_days": 0,
+                  "to": "overseas"
+                }
+              ]
+            },
+            {
+              "market": {
+                "agent": "Bengaluru Workspace Exchange",
+                "city": "Bengaluru",
+                "deposit_months": 2,
+                "early_exit_months": 2,
+                "id": "bengaluru",
+                "land_cents_per_square_metre": 44000,
+                "landlord": "Bengaluru Research Properties",
+                "minimum_lease_days": 365,
+                "monthly_land_tax_cents_per_square_metre": 12,
+                "rent_cents_per_square_metre": 2200,
+                "state": "IN-KA",
+                "street": "Innovation Court"
+              },
+              "region": {
+                "air_pue_milli": 1210,
+                "build_lead_days": 45,
+                "connectivity_class": 5,
+                "construction_base_cents": 12000000,
+                "construction_incentive_bp": 0,
+                "construction_per_kw_cents": 145000,
+                "electricity_millicents_per_kwh": 11000,
+                "grid_grams_per_kwh": 120,
+                "grid_lead_days": 70,
+                "grid_watts": 450000,
+                "id": "IN-KA",
+                "incentive_cap_cents": 0,
+                "monthly_overhead_cents": 90000,
+                "monthly_property_cents": 280000,
+                "name": "Karnataka, India",
+                "operator_hire_lead_days": 14,
+                "operator_monthly_cents": 280000,
+                "operator_signing_cents": 120000,
+                "travel_zone": "overseas",
+                "water_cents_per_1000_liters": 140,
+                "water_limit_ml_per_day": 650000,
+                "water_ml_per_kwh": 2000,
+                "water_pue_milli": 1080
+              },
+              "travel": [
+                {
+                  "fare_cents": 120000,
+                  "from": "alaska",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "atlantic",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "central",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "hawaii",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "lakes",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "mountain",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "pacific",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "south",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "alaska"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "atlantic"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "central"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "hawaii"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "lakes"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "mountain"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "pacific"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "south"
+                },
+                {
+                  "fare_cents": 2500,
+                  "from": "overseas",
+                  "one_way_days": 0,
+                  "to": "overseas"
+                }
+              ]
+            },
+            {
+              "market": {
+                "agent": "Tokyo Workspace Exchange",
+                "city": "Tokyo",
+                "deposit_months": 2,
+                "early_exit_months": 2,
+                "id": "tokyo",
+                "land_cents_per_square_metre": 88000,
+                "landlord": "Tokyo Research Properties",
+                "minimum_lease_days": 365,
+                "monthly_land_tax_cents_per_square_metre": 12,
+                "rent_cents_per_square_metre": 4400,
+                "state": "JP-13",
+                "street": "Innovation Court"
+              },
+              "region": {
+                "air_pue_milli": 1210,
+                "build_lead_days": 45,
+                "connectivity_class": 5,
+                "construction_base_cents": 12000000,
+                "construction_incentive_bp": 0,
+                "construction_per_kw_cents": 145000,
+                "electricity_millicents_per_kwh": 19000,
+                "grid_grams_per_kwh": 120,
+                "grid_lead_days": 70,
+                "grid_watts": 450000,
+                "id": "JP-13",
+                "incentive_cap_cents": 0,
+                "monthly_overhead_cents": 90000,
+                "monthly_property_cents": 280000,
+                "name": "Tokyo, Japan",
+                "operator_hire_lead_days": 14,
+                "operator_monthly_cents": 480000,
+                "operator_signing_cents": 120000,
+                "travel_zone": "overseas",
+                "water_cents_per_1000_liters": 140,
+                "water_limit_ml_per_day": 650000,
+                "water_ml_per_kwh": 2000,
+                "water_pue_milli": 1080
+              },
+              "travel": [
+                {
+                  "fare_cents": 120000,
+                  "from": "alaska",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "atlantic",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "central",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "hawaii",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "lakes",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "mountain",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "pacific",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "south",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "alaska"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "atlantic"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "central"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "hawaii"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "lakes"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "mountain"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "pacific"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "south"
+                },
+                {
+                  "fare_cents": 2500,
+                  "from": "overseas",
+                  "one_way_days": 0,
+                  "to": "overseas"
+                }
+              ]
+            },
+            {
+              "market": {
+                "agent": "Sao Paulo Workspace Exchange",
+                "city": "Sao Paulo",
+                "deposit_months": 2,
+                "early_exit_months": 2,
+                "id": "sao_paulo",
+                "land_cents_per_square_metre": 54000,
+                "landlord": "Sao Paulo Research Properties",
+                "minimum_lease_days": 365,
+                "monthly_land_tax_cents_per_square_metre": 12,
+                "rent_cents_per_square_metre": 2700,
+                "state": "BR-SP",
+                "street": "Innovation Court"
+              },
+              "region": {
+                "air_pue_milli": 1210,
+                "build_lead_days": 45,
+                "connectivity_class": 5,
+                "construction_base_cents": 12000000,
+                "construction_incentive_bp": 0,
+                "construction_per_kw_cents": 145000,
+                "electricity_millicents_per_kwh": 14000,
+                "grid_grams_per_kwh": 120,
+                "grid_lead_days": 70,
+                "grid_watts": 450000,
+                "id": "BR-SP",
+                "incentive_cap_cents": 0,
+                "monthly_overhead_cents": 90000,
+                "monthly_property_cents": 280000,
+                "name": "Sao Paulo, Brazil",
+                "operator_hire_lead_days": 14,
+                "operator_monthly_cents": 320000,
+                "operator_signing_cents": 120000,
+                "travel_zone": "overseas",
+                "water_cents_per_1000_liters": 140,
+                "water_limit_ml_per_day": 650000,
+                "water_ml_per_kwh": 2000,
+                "water_pue_milli": 1080
+              },
+              "travel": [
+                {
+                  "fare_cents": 120000,
+                  "from": "alaska",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "atlantic",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "central",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "hawaii",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "lakes",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "mountain",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "pacific",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "south",
+                  "one_way_days": 3,
+                  "to": "overseas"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "alaska"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "atlantic"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "central"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "hawaii"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "lakes"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "mountain"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "pacific"
+                },
+                {
+                  "fare_cents": 120000,
+                  "from": "overseas",
+                  "one_way_days": 3,
+                  "to": "south"
+                },
+                {
+                  "fare_cents": 2500,
+                  "from": "overseas",
+                  "one_way_days": 0,
+                  "to": "overseas"
+                }
+              ]
+            }
+          ],
           "last_names": [
             "Smith",
             "Johnson",
@@ -77957,7 +78836,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 31,
+      "revision": 32,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

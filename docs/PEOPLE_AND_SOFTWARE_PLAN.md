@@ -165,8 +165,9 @@ Content 0.59.0-dev.1 authorizes specific companies through the scenario's
 `management.people.industry_headquarters` map of company IDs to existing property
 markets. Shared rival definitions keep their stable identity across scenarios;
 only the selected founder campaign enables these detailed HQs. Current entries
-cover the US major-company roster. International rosters remain aggregated until
-the world-property/encounter layer supports their actual locations.
+cover US majors and six international HQ regions. The overseas profiles are
+merged only into the relevant rival's shared infrastructure rules; the player's
+US map and property listings retain their authored scope.
 
 On entry, the ordinary people generator creates fixed identities, qualifications,
 extra skills and local friendships. Salaries reconcile to the company's funded
@@ -183,9 +184,9 @@ also use the shared qualification, work and release rules.
 The public industry roster uses company-scoped person IDs and displays only public
 professional information. It lists only entered companies and preserves the
 selected company locally. Geographic friendships and introductions/referrals use
-the shared network described below. International individual HQs and replacement
-of the aggregate specialist-recruitment planner, plus actual cross-company
-research collaboration, remain stage-4 work.
+the shared network described below. Detailed-company recruitment now uses the
+individual planner described below. Actual cross-company research collaboration
+remains stage-4 work.
 
 Verification uses a bounded two-company, 35-day scenario, actual named research,
 funded salaries/rent, workstations, an actual tuition transaction, a ten-person
@@ -233,3 +234,37 @@ The focused geographic checks compare the same seed at three distances, verify
 online ceilings and existing remote ties, real close-friend introductions,
 qualified referrals, full-pool atomic refusal, source-location validation and
 exact next-week save continuation. The broader plan remains active.
+
+
+## International HQs and individual industry hiring
+
+Content 0.61.0-dev.1 adds `international_headquarters` profiles under the people
+rules. Each combines a named property market, a province/state utility profile
+and explicit travel routes. The ordinary infrastructure and property validators
+check the merged private company catalogue; the US map continues to require all
+50 states and DC. Regions are Ontario (Canada), England (United Kingdom), Beijing
+(China), Karnataka (India), Tokyo (Japan), and Sao Paulo (Brazil). Prices, utility
+and travel figures are authored fictional game tuning in constant-2014 dollars,
+not statements about present-day local costs. Foreign firms enter on their actual
+authored dates and feed the same geographic social network and public directory.
+
+The individual hiring policy works against actual capacity pressure, a protected
+runway and `industry_team_target`. It prepares a delivered, placed, powered vacant
+workstation before offering employment. It uses the published compensation offer,
+then waits for the actual reply; counteroffers use the revealed terms. A successful
+hire pays the real signing expense, starts payroll, assigns the furnished desk
+and waits for onboarding before adding productive capacity. One weekly strategy
+action still applies. The policy keeps existing discussions ahead of fresh offers
+and cannot invent an employee, buy equipment without funds or bypass the shared
+hiring commands. Small/full premises can constrain its placement; automatic major
+HQ relocation/physical construction planning remains a future extension where
+capacity growth requires more space.
+
+The focused check opens each of the six overseas HQ profiles through the shared
+initializer and validates employees, computers, tariffs and costs. A two-company
+runtime fixture creates real training pressure, then lets the actual weekly
+planner negotiate and complete a paid, equipped hire, with onboarding and exact
+save/next-day continuation. This verifies the hiring loop, not campaign-wide
+business balance. Cross-company paid research collaboration, employee personal
+finance/self-funded study and the later family/career/design-puzzle stages remain
+required work in the full active plan.

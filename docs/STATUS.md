@@ -9,7 +9,7 @@ Updated 2026-11-10
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.60.0-dev.1**, generation **61**.
+immersive redesign advances content to **0.61.0-dev.1**, generation **62**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -86,11 +86,28 @@ referrals, introductions, source reconciliation and exact continuation. The nati
 walkthrough passes an actual regional greeting and its social card at compact
 200% text. Content review passes 24 prepared-opening save roundtrips.
 
-This is still a partial stage-4 delivery: international individual HQs and the
-full individual rival recruitment planner and cross-company research collaboration
-remain pending. Romance, family,
-rivalry/repair, further design puzzles, career transitions and USCIF remain
-required work in the active full plan.
+International majors now use authored HQs in Toronto, Cambridge, Beijing,
+Bengaluru, Tokyo and Sao Paulo, with separate province/state identities, property
+and utility tuning, and explicit travel terms. The shared US campaign map remains
+intact. Their employees participate in the same roster, skills, work and social
+systems, and only appear after actual company entry.
+
+Detailed companies now recruit individuals through paid workstation preparation,
+published offers, counteroffers, signing payments and dated onboarding. The policy
+keeps a protected cash runway and an authored team target, completes existing
+discussions and never reads applicants' hidden minimum terms. Aggregate specialist
+hiring is retained only for scenarios without detailed people. The focused hiring
+fixture creates real training workload, then verifies that the actual weekly
+planner fills a vacancy, pays and equips the new worker and completes onboarding.
+All seven selected runtime/bridge checks pass, along with 24 prepared-opening
+content save roundtrips. The optimized Mac game/editor builds and native social
+walkthrough pass; overseas and domestic rosters remain navigable at compact
+200% text. The six-region initializer check is separate from actual campaign
+entry timing and does not establish long-run industry balance.
+
+Cross-company research collaboration remains stage-4 work. Romance, family,
+rivalry/repair, employee-paid study, further design puzzles, career transitions
+and USCIF remain required work in the active full plan.
 
 This is an implementation checkpoint, not completion of F-06. Existing human
 review and platform/release gates remain open.

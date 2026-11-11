@@ -107993,6 +107993,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "9a9895b383dc7300345129c9b5df6beb39df97a9ac48e34974a69c5e93407a1a",
+          "before_hash": "764988baf301bedc31d9cac04ae8d1aeb29a8d3eeba9e4bfb77bc8169aabfde6",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 31,
+          "revision": 32
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "9389813623d53e71cc02ffd779e57b3eb46e35ca1dd906e4d359dc61e6c9e14f",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.61.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 62,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.60.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000061.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000062.collection.json",
+      "summary": "International major-company HQ regions and full individual recruiting with real workstations, negotiation and onboarding.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

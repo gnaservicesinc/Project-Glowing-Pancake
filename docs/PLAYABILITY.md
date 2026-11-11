@@ -514,8 +514,8 @@ have entered the world. Select a company to see its city, portraits, professiona
 roles, education and acquired skills. Their employees now work and study under
 shared rules; their company pays rent, salaries and new tuition/equipment expenses.
 Personal traits and social connections are not disclosed by this public directory.
-The current individual roster covers authored US companies; international
-individual rosters remain unfinished.
+The individual roster includes the authored US and overseas major-company HQs,
+visible after their actual entry dates.
 
 
 In Around the industry, Say hello can start an acquaintance with someone nearby.
@@ -529,3 +529,12 @@ qualified applicant if there is room in the applicant pool. Decline an applicant
 first if needed; untouched applications are preserved. Referrals have a cooldown.
 You still decide whether to hire and negotiate compensation, onboarding and desk
 space normally. Intentional meetups share the existing daily and weekly limits.
+
+
+The industry roster now includes overseas HQs with named province/state and
+country labels. International people use the same skills, work and relationship
+rules; distant contacts still need an introduction or an actual online encounter.
+New hires show their onboarding date. Detailed companies prepare and pay for
+workstations, negotiate with actual applicants and add productive staff only when
+onboarding completes. Their payroll, equipment and staffing needs can constrain
+how quickly they grow.

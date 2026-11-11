@@ -46,7 +46,7 @@ ColumnLayout {
                     }
                 }
                 Copy {visible:!!panel.person.organization;text:panel.person.organization || "";color:"#c0d8d2"}
-                Copy {visible:!!panel.person.distance;text:panel.person.distance==="city"?qsTr("Same city · easy to make time together"):panel.person.distance==="state"?qsTr("Same state · regional conversations"):qsTr("Online contact · slow growth; established ties take effort");color:"#c0d8d2"}
+                Copy {visible:!!panel.person.distance;text:panel.person.distance==="city"?qsTr("Same city · easy to make time together"):panel.person.distance==="state"?qsTr("Same state or province · regional conversations"):qsTr("Online contact · slow growth; established ties take effort");color:"#c0d8d2"}
                 Copy {text:panel.person.memory || "";font.italic:true}
                 Rectangle {
                     Layout.fillWidth:true;implicitHeight:12;radius:6;color:"#172b32"

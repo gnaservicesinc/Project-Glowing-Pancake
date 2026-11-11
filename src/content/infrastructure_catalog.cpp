@@ -36,7 +36,7 @@ template<class T> T decode(const Json& j) {
         const auto value=j.get<std::int64_t>();if constexpr (std::is_integral_v<T>) {if (!std::in_range<T>(value)) invalid();return static_cast<T>(value);}else return T{value};
     } else if constexpr (requires(T v) {v.push_back(typename T::value_type{});}) {
         using Row=typename T::value_type;
-        constexpr std::size_t maximum=std::is_same_v<Row,core::StateSiteProfile>?51:
+        constexpr std::size_t maximum=std::is_same_v<Row,core::StateSiteProfile>?57:
             (std::is_same_v<Row,core::TravelRoute>?100:
                 (std::is_same_v<Row,core::HardwareFamily>?core::infrastructure_hardware_family_limit:16));
         if (!j.is_array() || j.size()>maximum) invalid();T rows;for (const auto& row:j) rows.push_back(decode<Row>(row));return rows;
@@ -53,6 +53,16 @@ template<class T> Json encode(const T& value) {
     else {auto j=Json::object();visit(value,[&](const char* name,const auto& field){j[name]=encode(field);});return j;}
 }
 }
+core::StateSiteProfile load_site_profile(std::string_view bytes) {
+    if(bytes.size()>16384)invalid();std::set<std::string> keys;std::size_t tokens=0;
+    const auto j=Json::parse(bytes.begin(),bytes.end(),[&](int depth,Json::parse_event_t event,Json& value) {
+        if(depth>4 || ++tokens>256)invalid();
+        if(event==Json::parse_event_t::key && !keys.insert(value.get<std::string>()).second)invalid();
+        return true;
+    });
+    return decode<core::StateSiteProfile>(j);
+}
+std::string canonical_site_profile(const core::StateSiteProfile& profile){return encode(profile).dump();}
 core::InfrastructureCatalog load_infrastructure_catalog(std::string_view bytes) {
     if (bytes.size()>131072) invalid();std::vector<std::set<std::string>> keys;std::size_t tokens=0;
     auto j=Json::parse(bytes.begin(),bytes.end(),[&](int depth,Json::parse_event_t event,Json& value) {

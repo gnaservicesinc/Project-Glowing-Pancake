@@ -87,6 +87,10 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
 void validate_people_rules(const PeopleRules& r) {
     if(r.talent)validate_talent_rules(*r.talent);
     if(r.social)validate_social_rules(*r.social);
+    if(r.industry_team_target<1 || r.industry_team_target>256 || r.international_headquarters.size()>6)invalid("Industry hiring target or overseas HQ count is invalid.");
+    std::set<std::string> overseas;
+    for(const auto& site:r.international_headquarters)if(!overseas.insert(site.market.id).second || site.market.state!=site.region.id || site.region.id.starts_with("US-"))
+        invalid("Overseas HQ property and regional utility profiles must agree.");
     if(r.industry_headquarters.size()>20)invalid("Too many detailed industry headquarters.");
     for(const auto& [company,market]:r.industry_headquarters)if(company.empty() || company.size()>64 || market.empty() || market.size()>64)
         invalid("Industry headquarters need bounded company and market IDs.");

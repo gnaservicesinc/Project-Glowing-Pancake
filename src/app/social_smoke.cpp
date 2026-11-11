@@ -43,12 +43,18 @@ void schedule_social_smoke(QQuickWindow& window,pgp::bridge::CampaignController&
         case 11:if(!press("peopleBackToTeam")){fail("Return to team");return;}break;
         case 12:if(!press("peopleIndustryTab")){fail("Industry people tab");return;}run->frames=0;break;
         case 13:reveal(item("industryCompany"));if(run->frames++<5)return;if(world->industryPeople().size()<2 || !item("industryLocation") || !capture("industry")){fail("Major HQ roster");return;}campaign.setTextScalePercent(200);window.resize(650,480);run->frames=0;break;
-        case 14:reveal(item("industryCompany"));if(run->frames++<5)return;if(!capture("industry-compact")){fail("Compact industry roster");return;}campaign.step();break;
-        case 15:{const auto firms=world->industryPeople();run->industry=firms.front().toMap().value("people").toList().front().toMap().value("id").toString().toStdString();if(!press("industryHello_"+QString::fromStdString(run->industry))){fail("Say hello to a regional colleague");return;}break;}
-        case 16:if(!pgp::core::social_link(s,"founder",run->industry)){fail("Actual regional acquaintance");return;}if(!press("peopleBackToTeam")){fail("Return from industry roster");return;}break;
-        case 17:if(!press("peopleSocialTab")){fail("Reopen social circle");return;}break;
-        case 18:{auto* selector=item("socialPerson");if(!selector){fail("Select industry contact");return;}selector->forceActiveFocus();QTest::keyClick(&window,Qt::Key_End);run->frames=0;break;}
-        case 19:reveal(item("socialCard"));if(run->frames++<4)return;if(!capture("regional-contact")){fail("Regional contact card");return;}std::cout<<"Social UI passed: actual meetup, cooldown and regional introduction; seeded mature graph; compact industry and social cards.\n";timer->stop();QCoreApplication::exit(0);return;
+        case 14:reveal(item("industryCompany"));if(run->frames++<5)return;if(!capture("industry-compact")){fail("Compact industry roster");return;}if(auto* selector=item("industryCompany")){selector->forceActiveFocus();QTest::keyClick(&window,Qt::Key_End);}else {fail("Select overseas HQ");return;}run->frames=0;break;
+        case 15:if(run->frames++<4)return;{
+            const auto overseas=world->industryPeople().back().toMap();const auto contact=overseas.value("people").toList().front().toMap().value("id").toString();
+            if(overseas.value("state").toString().startsWith("US-") || !item("industryLocation")->property("text").toString().contains(overseas.value("stateName").toString()) || !item("industryHello_"+contact) || item("industryHello_"+contact)->isEnabled() || !capture("overseas-compact")){fail("Overseas public roster and distant-contact limit");return;}
+            auto* selector=item("industryCompany");selector->forceActiveFocus();QTest::keyClick(&window,Qt::Key_Home);break;
+        }
+        case 16:campaign.step();break;
+        case 17:{const auto firms=world->industryPeople();run->industry=firms.front().toMap().value("people").toList().front().toMap().value("id").toString().toStdString();if(!press("industryHello_"+QString::fromStdString(run->industry))){fail("Say hello to a regional colleague");return;}break;}
+        case 18:if(!pgp::core::social_link(s,"founder",run->industry)){fail("Actual regional acquaintance");return;}if(!press("peopleBackToTeam")){fail("Return from industry roster");return;}break;
+        case 19:if(!press("peopleSocialTab")){fail("Reopen social circle");return;}break;
+        case 20:{auto* selector=item("socialPerson");if(!selector){fail("Select industry contact");return;}selector->forceActiveFocus();QTest::keyClick(&window,Qt::Key_End);run->frames=0;break;}
+        case 21:reveal(item("socialCard"));if(run->frames++<4)return;if(!capture("regional-contact")){fail("Regional contact card");return;}std::cout<<"Social UI passed: actual meetup, cooldown and regional introduction; seeded mature graph; compact domestic/overseas industry rosters and social cards.\n";timer->stop();QCoreApplication::exit(0);return;
 
         }++run->phase;
     });timer->start();

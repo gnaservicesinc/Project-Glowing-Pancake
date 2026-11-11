@@ -146,7 +146,7 @@ void validate_headquarters_rules(const HeadquartersRules& r) {
         }
     }
     ids(r.markets);ids(r.plans);ids(r.equipment);ids(r.contractors);
-    for(const auto& m:r.markets) if((m.state!="US-CA" && m.state!="US-TX" && m.state!="US-WA") || !text(m.city) || !text(m.agent) || !text(m.landlord) || !text(m.street) || m.rent_per_cell<Cents{100} || m.land_per_cell<Cents{10000} || m.monthly_land_tax_per_cell<Cents{1} || m.deposit_months>6 || m.minimum_lease_days>1095 || m.early_exit_months>6) invalid("Property listings need actual counterparties and bounded prices and lease terms.");
+    for(const auto& m:r.markets) if((m.state!="US-CA" && m.state!="US-TX" && m.state!="US-WA" && m.state!="CA-ON" && m.state!="GB-ENG" && m.state!="CN-BJ" && m.state!="IN-KA" && m.state!="JP-13" && m.state!="BR-SP") || !text(m.city) || !text(m.agent) || !text(m.landlord) || !text(m.street) || m.rent_per_cell<Cents{100} || m.land_per_cell<Cents{10000} || m.monthly_land_tax_per_cell<Cents{1} || m.deposit_months>6 || m.minimum_lease_days>1095 || m.early_exit_months>6) invalid("Property listings need actual counterparties and bounded prices and lease terms.");
     for(const auto& p:r.plans) {if(!text(p.name)) invalid("Name the floor plan.");validate_hq_plan(p.width,p.depth,p.rooms,r.maximum_edge);}
     std::set<std::string> kinds;
     for(const auto& e:r.equipment) {kinds.insert(e.kind);if(!text(e.name) || !text(e.supplier) || e.price<Cents{100} || e.price>Cents{100000000} || e.delivery<Days{0} || e.delivery>Days{90} || e.width<1 || e.depth<1 || e.width>4 || e.depth>4 || e.compute<MilliCUPerDay{0} || e.compute>MilliCUPerDay{1000000} || ((e.kind=="thin_client" || e.kind=="research_laptop") && e.compute.value()!=0) || e.watts>10000 || e.memory_mib>16777216 || (!hq_desk_device(e.kind) && e.kind!="desk" && e.kind!="rack" && e.kind!="bench" && e.kind!="evaluation" && e.kind!="plant" && e.kind!="aquarium" && e.kind!="water" && e.kind!="microwave" && e.kind!="table" && e.kind!="cabinet" && e.kind!="vending")) invalid("Equipment needs physical dimensions, a supplier, a price and bounded delivery/output.");}
@@ -246,12 +246,13 @@ std::uint32_t assigned_hq_desk(const SimulationState& s,std::string_view person)
     const auto found=std::ranges::find_if(items,[&](const auto& i){return offer(s,i).kind=="desk" && i.person==person && working(s,i);});
     return found==items.end()?0:found->id;
 }
-bool hq_workstation_ready(const SimulationState& s,std::string_view person) {
-    const auto desk=assigned_hq_desk(s,person);
-    return hq_laptop_ready(s,person) || (desk && std::ranges::any_of(hq(s).items,[&](const auto& i) {
-        return i.mount==desk && hq_desk_device(offer(s,i).kind) && working(s,i);
-    }));
+bool hq_desk_ready(const SimulationState& s,std::uint32_t desk) {
+    return desk && enabled(s) && s.infrastructure->workplace->headquarters && std::ranges::any_of(hq(s).items,[&](const auto& item){return item.mount==desk && hq_desk_device(offer(s,item).kind) && working(s,item);});
 }
+bool hq_workstation_ready(const SimulationState& s,std::string_view person) {
+    return hq_laptop_ready(s,person) || hq_desk_ready(s,assigned_hq_desk(s,person));
+}
+
 std::uint32_t assigned_hq_room(const SimulationState& s,std::string_view person) {
     const auto id=assigned_hq_desk(s,person);
     if(!id) return 0;

@@ -4,6 +4,8 @@
 #include <limits>
 #include "talent_codec.hpp"
 #include "social_codec.hpp"
+#include "headquarters_codec.hpp"
+#include <pgp/content/infrastructure_catalog.hpp>
 namespace pgp::content::people_codec {
 using Json=nlohmann::json;
 inline void fields(const Json& j,std::initializer_list<const char*> names) {
@@ -40,12 +42,34 @@ inline Json encode(const core::PeopleRules& r) {
             {"role",m.role},{"coworkers",m.coworkers},{"amenity_cap",m.amenity_cap},
             {"temperaments",m.temperaments},{"amenities",m.amenities}};
     }
+    if(r.industry_team_target!=8)j["industry_team_target"]=r.industry_team_target;
+    if(!r.international_headquarters.empty()) {
+        auto& rows=j["international_headquarters"]=Json::array();
+        for(const auto& site:r.international_headquarters) {
+            auto routes=Json::array();for(const auto& route:site.travel)routes.push_back({{"from",route.from},{"to",route.to},{"one_way_days",route.one_way.value()},{"fare_cents",route.fare.value()}});
+            rows.push_back({{"market",headquarters_codec::write(site.market)},{"region",Json::parse(canonical_site_profile(site.region))},{"travel",routes}});
+        }
+    }
     if(!r.industry_headquarters.empty())j["industry_headquarters"]=r.industry_headquarters;
     if(r.social)j["social"]=social_codec::encode(*r.social);
     if(r.talent)j["talent"]=talent_codec::encode(*r.talent);
     return j;
 }
 inline core::PeopleRules decode(Json j) {
+    std::uint32_t industry_team_target=8;
+    if(j.contains("industry_team_target")){industry_team_target=count(j.at("industry_team_target"));j.erase("industry_team_target");}
+    std::vector<core::IndustryHQSite> international;
+    if(j.contains("international_headquarters")) {
+        const auto& rows=j.at("international_headquarters");if(!rows.is_array() || rows.size()>6)throw std::invalid_argument("At most six overseas HQ profiles are supported.");
+        for(const auto& row:rows) {
+            fields(row,{"market","region","travel"});core::IndustryHQSite site;
+            site.market=headquarters_codec::read<core::HQMarket>(row.at("market"));site.region=load_site_profile(row.at("region").dump());
+            const auto& routes=row.at("travel");if(!routes.is_array() || routes.size()>100)throw std::invalid_argument("Too many overseas travel routes.");
+            for(const auto& route:routes){fields(route,{"from","to","one_way_days","fare_cents"});site.travel.push_back({route.at("from").get<std::string>(),route.at("to").get<std::string>(),core::Days{integer(route.at("one_way_days"))},core::Cents{integer(route.at("fare_cents"))}});}
+            international.push_back(std::move(site));
+        }
+        j.erase("international_headquarters");
+    }
     std::map<std::string,std::string> industry_headquarters;
     if(j.contains("industry_headquarters")){industry_headquarters=j.at("industry_headquarters").get<decltype(industry_headquarters)>();j.erase("industry_headquarters");}
     std::optional<core::SocialRules> social;
@@ -107,7 +131,7 @@ inline core::PeopleRules decode(Json j) {
         j.erase("recruitment");
     }
     fields(j,{"first_names","last_names","maximum_hq","candidates","recruitment_days","onboarding_days","monthly_salary_cents","signing_cost_cents","base_skill","skill_jitter","pay_skill_weight","prestige_skill_weight","mission_skill_weight","maximum_evaluation_credit_bp"});
-    core::PeopleRules r;r.industry_headquarters=std::move(industry_headquarters);r.talent=std::move(talent);r.social=std::move(social);r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);r.mood=std::move(mood);r.dismissal=dismissal;r.founder_audiences=std::move(audiences);
+    core::PeopleRules r;r.international_headquarters=std::move(international);r.industry_team_target=industry_team_target;r.industry_headquarters=std::move(industry_headquarters);r.talent=std::move(talent);r.social=std::move(social);r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);r.mood=std::move(mood);r.dismissal=dismissal;r.founder_audiences=std::move(audiences);
     for(const char* name:{"first_names","last_names"}) {
         const auto& list=j.at(name);
         if(!list.is_array() || list.size()>512) throw std::invalid_argument("Name pool exceeds its limit");

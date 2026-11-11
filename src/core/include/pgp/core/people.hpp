@@ -4,6 +4,7 @@
 #include <pgp/core/portrait.hpp>
 #include <pgp/core/talent.hpp>
 #include <pgp/core/social.hpp>
+#include <pgp/core/infrastructure.hpp>
 #include <optional>
 #include <map>
 #include <string>
@@ -39,6 +40,12 @@ struct FounderAudienceRule {
     int salary_bp=0, mood=0;
     auto operator<=>(const FounderAudienceRule&) const = default;
 };
+struct IndustryHQSite {
+    HQMarket market;
+    StateSiteProfile region;
+    std::vector<TravelRoute> travel;
+    auto operator<=>(const IndustryHQSite&) const=default;
+};
 struct PeopleRules {
     std::vector<std::string> first_names,last_names;
     std::uint32_t maximum_hq=128,candidates=4;
@@ -54,6 +61,8 @@ struct PeopleRules {
     std::optional<TalentRules> talent{};
     std::optional<SocialRules> social{};
     std::map<std::string,std::string> industry_headquarters{};
+    std::vector<IndustryHQSite> international_headquarters{};
+    std::uint32_t industry_team_target=8;
     auto operator<=>(const PeopleRules&) const = default;
 };
 struct PersonProfile {

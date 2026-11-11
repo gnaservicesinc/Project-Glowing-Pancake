@@ -90,13 +90,13 @@
     }
   ],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "e410b6d8f2d375c936c0ca2cc0080a437913f2b1995c342bbc87563500e7a36d",
+  "collection_hash": "9389813623d53e71cc02ffd779e57b3eb46e35ca1dd906e4d359dc61e6c9e14f",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.60.0-dev.1",
+  "content_version": "0.61.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -1151,8 +1151,8 @@
     {
       "id": "scenario.founder_campaign",
       "kind": "scenario",
-      "revision": 31,
-      "semantic_hash": "f7d91c8d97b8b3ab1dd4aece3eecf3511a1170ebf49869332d404381ef5caedd"
+      "revision": 32,
+      "semantic_hash": "a9bedf7b513f527df1353fadb9ad6626445bd7468d8fa2112c978b70e981a285"
     },
     {
       "id": "scenario.world_competition",
@@ -1294,7 +1294,7 @@
     }
   ],
   "format": 1,
-  "generation": 61,
+  "generation": 62,
   "messages_hash": "0113c08ef2d7c1c4e5eb1016c281cba8762f911c71ee46008ed4b43e41c56363",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
@@ -1763,5 +1763,5 @@
       "deployment.incident_news"
     ]
   },
-  "source_hash": "f14f2237cc66e8cf5259636ddb42a914851a2ac46fd38e92d6325addae67be15"
+  "source_hash": "66d7d683278186c326d5a8e465e719a280f4ea123467b9f4a6342a8d2d1935b2"
 }

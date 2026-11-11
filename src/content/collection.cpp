@@ -1276,14 +1276,23 @@ void validate_references(const Collection& collection, const Registry& registry)
                                 fail("governance",path,"Executive publication promise requires an actual research node in this scenario");
                     if(scenario_definition->management && scenario_definition->management->people) {
                         const auto& headquarters=scenario_definition->management->people->industry_headquarters;
-                        if(!headquarters.empty() && (!scenario_definition->infrastructure || !scenario_definition->infrastructure->workplace || !scenario_definition->infrastructure->workplace->headquarters))
+                        if((!headquarters.empty() || !scenario_definition->management->people->international_headquarters.empty()) && (!scenario_definition->infrastructure || !scenario_definition->infrastructure->workplace || !scenario_definition->infrastructure->workplace->headquarters))
                             fail("rivals",path,"Detailed major companies need shared property rules.");
+                        for(const auto& site:scenario_definition->management->people->international_headquarters) {
+                            auto catalog=*scenario_definition->infrastructure;
+                            catalog.states.push_back(site.region);catalog.workplace->headquarters->markets.push_back(site.market);
+                            catalog.travel.insert(catalog.travel.end(),site.travel.begin(),site.travel.end());core::validate_infrastructure_catalog(catalog);
+                        }
                         for(const auto& [company,market]:headquarters) {
                             const auto rival=std::ranges::find(scenario_definition->rivals,company,&RivalDefinition::id);
                             if(rival==scenario_definition->rivals.end() || !rival->planning || rival->staff>32)
                                 fail("rivals",path,"A detailed HQ must identify a planned company with a bounded individual roster.");
                             const auto& markets=scenario_definition->infrastructure->workplace->headquarters->markets;
-                            if(std::ranges::find(markets,market,&core::HQMarket::id)==markets.end())fail("rivals",path,"A detailed HQ needs an actual property market.");
+                            if(std::ranges::find(markets,market,&core::HQMarket::id)==markets.end()) {
+                                const auto& overseas=scenario_definition->management->people->international_headquarters;
+                                const auto site=std::ranges::find_if(overseas,[&](const auto& entry){return entry.market.id==market;});
+                                if(site==overseas.end())fail("rivals",path,"A detailed HQ needs an actual property market.");
+                            }
                         }
                     }
                     for (const auto& rival:scenario_definition->rivals) {

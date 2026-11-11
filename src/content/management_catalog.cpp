@@ -24,9 +24,9 @@ void array(const Json& j,std::size_t maximum) {if (!j.is_array() || j.size()>max
 std::uint32_t count(const Json& j,std::uint32_t maximum) {const auto v=integer(j);if (v<0 || v>maximum) invalid();return static_cast<std::uint32_t>(v);}
 }
 core::ManagementCatalog load_management_catalog(std::string_view bytes) {
-    if (bytes.size()>32768) invalid();std::vector<std::set<std::string>> keys;std::size_t tokens=0;
+    if (bytes.size()>131072) invalid();std::vector<std::set<std::string>> keys;std::size_t tokens=0;
     auto j=Json::parse(bytes.begin(),bytes.end(),[&](int depth,Json::parse_event_t event,Json& value) {
-        if (depth>16 || ++tokens>8192) invalid();
+        if (depth>16 || ++tokens>32768) invalid();
         if (event==Json::parse_event_t::object_start) keys.emplace_back();
         else if (event==Json::parse_event_t::object_end) keys.pop_back();
         else if (event==Json::parse_event_t::key && !keys.back().insert(value.get<std::string>()).second) invalid();

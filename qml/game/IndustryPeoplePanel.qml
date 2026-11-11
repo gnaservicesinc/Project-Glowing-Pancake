@@ -13,7 +13,7 @@ ColumnLayout {
     Copy {text:qsTr("Every lab has people behind its name. Explore the public HQ roster of the major companies that have opened their doors.")}
     GameSelect {objectName:"industryCompany";Layout.fillWidth:true;textSize:panel.textSize;model:panel.companies;textRole:"name";currentIndex:Math.max(0,panel.companies.findIndex(c=>c.id===panel.company.id));onActivated:{panel.selected=panel.companies[currentIndex].id;campaign.world.setDraft("people/industry",panel.selected)} Accessible.name:qsTr("Industry company")}
     Copy {text:panel.company.name || qsTr("No major HQs have opened yet.");font.bold:true}
-    Copy {objectName:"industryLocation";text:(panel.company.city || "")+" · "+(panel.company.state || "")}
+    Copy {objectName:"industryLocation";text:(panel.company.city || "")+" · "+(panel.company.stateName || panel.company.state || "")}
     Repeater {
         model:panel.company.people || []
         Rectangle {
@@ -25,6 +25,7 @@ ColumnLayout {
                 ColumnLayout {Layout.fillWidth:true
                     Copy {text:modelData.name;font.bold:true;color:"#e7d299"}
                     Copy {text:modelData.role}
+                    Copy {visible:!!modelData.status;text:modelData.status || "";color:"#c6d5ba"}
                     Copy {text:modelData.detail}
                     WorldButton {objectName:"industryHello_"+modelData.id;text:qsTr("Say hello");textSize:panel.textSize;enabled:campaign.paused && campaign.companyEditable && !campaign.busy && !campaign.storageBlocked && !modelData.socialBlocker;onClicked:campaign.world.socialize(modelData.id,"chat",campaign.world.reviewToken)}
                     Copy {visible:!!modelData.socialBlocker;text:modelData.socialBlocker || "";color:"#b5c6c5"}

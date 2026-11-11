@@ -1,4 +1,5 @@
 #include "competition_internal.hpp"
+#include "competition_people.hpp"
 #include <pgp/runtime/society.hpp>
 #include <pgp/core/workplace_research.hpp>
 #include <pgp/runtime/authority.hpp>
@@ -251,7 +252,8 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
             if(quote.blocker.empty() && affordable(quote.fee))offer(8,"software",design.brief,75,ManageTalent{StartSoftware{design}});
         }
     }
-    if (staff==0) for (const auto& specialist:s.management->catalog.specialists)
+    if(const auto hire=plan_individual_hire(s,usable,protected_runway))offer(6,hire->action,hire->subject,180,hire->command);
+    if (!s.management->people && staff==0) for (const auto& specialist:s.management->catalog.specialists)
         if (affordable(specialist.signing_cost,specialist.monthly_salary) && std::none_of(s.management->specialists.begin(),s.management->specialists.end(),[&](const auto& row){return row.offer_id==specialist.id;}))
             offer(6,"hire",specialist.id,120,HireSpecialist{specialist.id});
     for (const auto& debt:s.accounts->debts) if (debt.principal.value()>0 && advance_days(s.date,review_interval)>=debt.due && affordable(debt.principal))
@@ -375,6 +377,11 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
         if(!state.management->catalog.people || !authored.infrastructure || !authored.infrastructure->workplace || !authored.infrastructure->workplace->headquarters)
             invalid("A detailed industry HQ needs the shared people and property rules.");
         InfrastructureState infrastructure;infrastructure.catalog=*authored.infrastructure;
+        for(const auto& site:state.management->catalog.people->international_headquarters)if(site.market.id==headquarters_market) {
+            infrastructure.catalog.states.push_back(site.region);
+            infrastructure.catalog.workplace->headquarters->markets.push_back(site.market);
+            infrastructure.catalog.travel.insert(infrastructure.catalog.travel.end(),site.travel.begin(),site.travel.end());
+        }
         auto& markets=infrastructure.catalog.workplace->headquarters->markets;
         const auto selected=std::ranges::find(markets,headquarters_market,&HQMarket::id);
         if(selected==markets.end())invalid("The major company has an unknown headquarters market.");
