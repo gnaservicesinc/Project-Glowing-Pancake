@@ -8,11 +8,18 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TalentRules,skills,roles,software,market_bonu
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SoftwareDesign,brief,name,aesthetic,navigation,focus,workers,previous,ai_source)
 }
 namespace pgp::content::talent_codec {
-inline nlohmann::json encode(const core::TalentRules& r) {return r;}
+inline nlohmann::json encode(const core::TalentRules& r) {
+    nlohmann::json j=r;
+    if(r.employee_study_share_bp) {j["employee_study_share_bp"]=r.employee_study_share_bp;j["employee_study_interval_days"]=r.employee_study_interval_days;}
+    return j;
+}
 inline core::TalentRules decode(const nlohmann::json& j) {
     if(!j.is_object() || !j.at("skills").is_array() || j.at("skills").size()>96 || !j.at("software").is_array() || j.at("software").size()>12)throw std::invalid_argument("Talent catalogue is oversized.");
-    const auto result=j.get<core::TalentRules>();
-    if(nlohmann::json(result)!=j)throw std::invalid_argument("Unsupported talent catalogue fields.");
+    auto fields=j;fields.erase("employee_study_share_bp");fields.erase("employee_study_interval_days");
+    auto result=fields.get<core::TalentRules>();
+    result.employee_study_share_bp=j.value("employee_study_share_bp",0);
+    result.employee_study_interval_days=j.value("employee_study_interval_days",30);
+    if(encode(result)!=j)throw std::invalid_argument("Unsupported talent catalogue fields.");
     core::validate_talent_rules(result);return result;
 }
 }

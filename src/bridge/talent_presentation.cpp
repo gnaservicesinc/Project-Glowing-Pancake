@@ -19,17 +19,19 @@ QVariantMap WorldController::talent() const {
     const auto name=[&](const std::string& id){if(id=="founder")return founder().value("name").toString();for(const auto& e:s.management->people->employees)if(e.terms.profile.id==id)return q(e.terms.profile.name);return q(id);};
     const auto addPerson=[&](const std::string& id,QString label) {
         QStringList known,ids;for(const auto& key:core::person_skills(s,id)){ids.push_back(q(key));const auto skill=std::ranges::find(rules->skills,key,&core::SkillDefinition::id);known.push_back(skill==rules->skills.end()?q(key):q(skill->name));}
-        people.push_back(QVariantMap{{"id",q(id)},{"name",label},{"skills",ids},{"detail",known.isEmpty()?tr("No acquired professional skills yet."):known.join(" · ")},{"blocker",q(core::software_worker_blocker(s,id))}});
+        QString learningBudget;double learningCents=0;
+        if(const auto fund=t.study_funds.find(id);fund!=t.study_funds.end()) {learningCents=static_cast<double>(core::checked_unit_subtract(core::Cents{core::mul_div_floor(static_cast<std::uint64_t>(fund->second.compensation.value()),static_cast<std::uint64_t>(rules->employee_study_share_bp),10000).quotient},fund->second.spent).value());learningBudget=money(core::checked_unit_subtract(core::Cents{core::mul_div_floor(static_cast<std::uint64_t>(fund->second.compensation.value()),static_cast<std::uint64_t>(rules->employee_study_share_bp),10000).quotient},fund->second.spent).value());}
+        people.push_back(QVariantMap{{"id",q(id)},{"name",label},{"skills",ids},{"learningBudget",learningBudget},{"learningCents",learningCents},{"detail",known.isEmpty()?tr("No acquired professional skills yet."):known.join(" · ")},{"blocker",q(core::software_worker_blocker(s,id))}});
     };
     addPerson("founder",founder().value("name").toString());
     for(const auto& e:s.management->people->employees)if(!e.departed_on && e.terms.profile.role!="Founder / researcher")addPerson(e.terms.profile.id,q(e.terms.profile.name));
     for(const auto& skill:rules->skills) {
         QString detail=q(skill.description);if(skill.teachable)detail+=tr("\n%1 · %2 days, part-time. %3").arg(money(skill.tuition_cents)).arg(skill.course_days).arg(skill.prerequisite.empty()?tr("No prerequisite."):tr("Requires %1.").arg(q(std::ranges::find(rules->skills,skill.prerequisite,&core::SkillDefinition::id)->name)));
         if(skill.engineering || skill.research)detail+=tr(" For working HQ staff: +%1 engineering, +%2 research on completion (up to 100).").arg(skill.engineering).arg(skill.research);
-        skills.push_back(QVariantMap{{"id",q(skill.id)},{"name",q(skill.name)},{"detail",detail},{"teachable",skill.teachable},{"prerequisite",q(skill.prerequisite)}});
+        skills.push_back(QVariantMap{{"id",q(skill.id)},{"name",q(skill.name)},{"detail",detail},{"tuitionCents",static_cast<double>(skill.tuition_cents)},{"teachable",skill.teachable},{"prerequisite",q(skill.prerequisite)}});
     }
     for(const auto& c:t.courses)courses.push_back(QVariantMap{{"id",c.id},{"name",name(c.person)+" · "+q(std::ranges::find(rules->skills,c.skill,&core::SkillDefinition::id)->name)},
-        {"completed",c.completed},{"progress",static_cast<int>(std::clamp<std::int64_t>((s.date.value()-c.started_on.value())*100/(c.completes_on.value()-c.started_on.value()),0,100))},{"detail",tr("%1 · %2 · %3").arg(c.payer=="company"?tr("Company sponsored"):tr("Personal tuition"),c.completed?tr("Completed"):tr("Studying until"),q(core::iso_date(c.completes_on)))}});
+        {"completed",c.completed},{"progress",static_cast<int>(std::clamp<std::int64_t>((s.date.value()-c.started_on.value())*100/(c.completes_on.value()-c.started_on.value()),0,100))},{"detail",tr("%1 · %2 · %3").arg(c.payer=="company"?tr("Company sponsored"):c.person=="founder"?tr("Your personal tuition"):tr("Employee self-funded"),c.completed?tr("Completed"):tr("Studying until"),q(core::iso_date(c.completes_on)))}});
     for(const auto& b:rules->software){QStringList features;for(const auto& f:b.features)features.push_back(q(f));briefs.push_back(QVariantMap{{"id",q(b.id)},{"name",q(b.name)},{"description",q(b.description)},{"advanced",b.advanced},{"features",features},{"fee",money(b.setup_cents)}});}
     for(const auto& p:t.software) {
         const auto& w=*std::ranges::find(s.capacity->projects,p.project,&core::CapacityProject::id);
@@ -38,7 +40,12 @@ QVariantMap WorldController::talent() const {
             {"released",p.released_on.has_value()},{"canRelease",!p.released_on && w.status==core::ProjectStatus::completed},{"canPause",w.status==core::ProjectStatus::active},{"canCancel",w.status==core::ProjectStatus::active || w.status==core::ProjectStatus::paused},{"canResume",w.status==core::ProjectStatus::paused},
             {"detail",tr("%1 · %2 / %3 staff-days\nUsability %4 · Reliability %5 · Capability %6\n%7").arg(status).arg(w.completed_staff_days).arg(w.required_staff_days).arg(p.usability).arg(p.reliability).arg(p.capability).arg(q(p.blocker))}});
     }
-    return {{"aiLevel",core::software_ai_level(s)},{"aiCompute",rules->ai_compute_milli/1000},{"aiWorkPercent",rules->ai_work_percent},{"aiSources",sources},{"maximumDesignBonus",rules->market_bonus_max_bp/100},{"people",people},{"skills",skills},{"courses",courses},{"briefs",briefs},{"projects",projects},{"companyCash",money(core::uncommitted_cash(s).value())},{"personalCash",s.succession?money(s.succession->personal_cash.value()):QString{}},{"revision",reviewToken()}};
+    return {{"employeeStudyShare",rules->employee_study_share_bp/100},{"employeeStudyInterval",rules->employee_study_interval_days},{"aiLevel",core::software_ai_level(s)},{"aiCompute",rules->ai_compute_milli/1000},{"aiWorkPercent",rules->ai_work_percent},{"aiSources",sources},{"maximumDesignBonus",rules->market_bonus_max_bp/100},{"people",people},{"skills",skills},{"courses",courses},{"briefs",briefs},{"projects",projects},{"companyCash",money(core::uncommitted_cash(s).value())},{"personalCash",s.succession?money(s.succession->personal_cash.value()):QString{}},{"revision",reviewToken()}};
+}
+QVariantMap WorldController::courseQuote(QString person,QString skill,QString payer) const {
+    if(!snapshot_)return {};
+    const auto quote=core::course_quote(snapshot_->checkpoint.world.simulation,{person.toStdString(),skill.toStdString(),payer.toStdString()});
+    return {{"fee",money(quote.fee.value())},{"budget",money(quote.budget.value())},{"blocker",q(quote.blocker)},{"valid",quote.blocker.empty()}};
 }
 QVariantMap WorldController::softwareQuote(QVariantMap draft) const {
     if(!snapshot_)return {};const auto& s=snapshot_->checkpoint.world.simulation;

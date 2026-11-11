@@ -16,7 +16,7 @@ and qualified staffing, courses, role-qualified applicants, forty-one skill IDs,
 eight activities, eight camps and sixteen follow-ups. Money illustrations and
 progress feedback use actual simulation state. Personal tuition is optional;
 investing all savings remains allowed. See the plan for the exact active skill
-effects and current employee-study limitation.
+effects and the employee learning-budget model.
 
 The HQ social foundation is also implemented: saved friendship strength and
 memories, weekly bounded encounters, intentional meetups with cooldowns, public
@@ -38,7 +38,11 @@ reconcile with the actual source employers. New remote ties have a shallow ceili
 strong existing friendships can continue online. Player actions honor contact
 cooldowns, and referrals preserve untouched applications and ordinary hiring terms.
 
-Next: cross-company research collaboration and employee personal study, then romance/families/rivalry
+Employee self-funded study is implemented through actual paid-compensation
+budgets, independent practical-course selection and reviewed voluntary enrollment.
+Company sponsorship remains available; employee fees never debit founder savings.
+
+Next: cross-company research collaboration, then romance/families/rivalry
 repair, data and infrastructure puzzles, career re-entry and the fictional USCIF
 branch. These remain selected, unfinished work; this does not close F-06.
 

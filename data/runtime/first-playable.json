@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.61.0-dev.1",
+  "content_version": "0.62.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -77652,6 +77652,8 @@
             "ai_work_percent": 75,
             "ai_workflow_floor": 8500,
             "design_bonus": 10,
+            "employee_study_interval_days": 30,
+            "employee_study_share_bp": 2000,
             "extra_skills": 2,
             "focus_bonus": 20,
             "focus_penalty": 10,
@@ -78836,7 +78838,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 32,
+      "revision": 33,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

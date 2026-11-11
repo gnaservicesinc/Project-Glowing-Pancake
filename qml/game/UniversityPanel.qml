@@ -12,6 +12,8 @@ ColumnLayout {
     Connections {target:campaign.world;function onDraftsReset(){panel.selectedStudent=campaign.world.draft("university/student","founder");panel.selectedSkill=campaign.world.draft("university/skill","programming")}}
     readonly property var student: people[students.currentIndex] || ({})
     readonly property var course: skills[classes.currentIndex] || ({})
+    readonly property var personalQuote: {const current=panel.university.revision;return campaign.world.courseQuote(panel.student.id || "",panel.course.id || "","personal")}
+    readonly property var companyQuote: {const current=panel.university.revision;return campaign.world.courseQuote(panel.student.id || "",panel.course.id || "","company")}
     readonly property bool editable: campaign.paused && campaign.companyEditable && !campaign.busy && !campaign.storageBlocked
     spacing: 12
     component Copy: Label { Layout.fillWidth:true;wrapMode:Text.Wrap;textFormat:Text.PlainText;font.pixelSize:panel.textSize;color:"#d9e3e9" }
@@ -25,21 +27,30 @@ ColumnLayout {
     Copy { text:qsTr("Student") }
     GameSelect { id:students;objectName:"universityStudent";Layout.fillWidth:true;textSize:panel.textSize;model:panel.people;textRole:"name";currentIndex:Math.max(0,panel.people.findIndex(p=>p.id===panel.selectedStudent));onActivated:{panel.selectedStudent=panel.people[currentIndex].id;campaign.world.setDraft("university/student",panel.selectedStudent)} Accessible.name:qsTr("Student") }
     Copy { text:panel.student.detail || "" }
+    MoneyCard {
+        objectName:"universityStudySavings";Layout.fillWidth:true;textSize:panel.textSize;personal:true
+        visible:panel.student.id!=="founder" && !!panel.student.learningBudget
+        caption:qsTr("%1’s learning jar").arg(panel.student.name || "")
+        amount:panel.student.learningBudget || ""
+        progress:panel.course.teachable && panel.course.tuitionCents>0?Math.min(1,(panel.student.learningCents || 0)/panel.course.tuitionCents):-1
+        progressLabel:progress>=1?qsTr("★ Tuition saved! Check the class requirements below."):qsTr("Tuition jar · %1% filled for this class").arg(Math.floor(progress*100))
+        detail:qsTr("They set aside %1% of compensation actually received for new skills. Every %2 days they may choose an affordable research, engineering or design class. Unpaid wages do not fill the jar; other personal savings stay theirs.").arg(panel.university.employeeStudyShare || 0).arg(panel.university.employeeStudyInterval || 30)
+    }
     Copy { text:qsTr("Course or professional qualification") }
     GameSelect { id:classes;objectName:"universityCourse";Layout.fillWidth:true;textSize:panel.textSize;model:panel.skills;textRole:"name";currentIndex:Math.max(0,panel.skills.findIndex(p=>p.id===panel.selectedSkill));onActivated:{panel.selectedSkill=panel.skills[currentIndex].id;campaign.world.setDraft("university/skill",panel.selectedSkill)} Accessible.name:qsTr("Course") }
     Copy { objectName:"universityCourseDetail";text:panel.course.detail || "" }
     Copy { visible:(panel.student.skills || []).includes(panel.course.id);text:qsTr("Already acquired.");color:"#b8dcaa" }
+    Copy {objectName:"universitySelfStudyStatus";visible:panel.student.id!=="founder" && !!panel.course.teachable;text:panel.personalQuote.blocker || qsTr("They’re happy to pay from their learning jar. You can also offer a scholarship!");color:panel.personalQuote.valid?"#c3dca6":"#dfca84"}
     Flow {
         Layout.fillWidth:true;spacing:8
         WorldButton {
-            objectName:"universityPersonal";text:qsTr("Pay from personal savings");textSize:panel.textSize
-            visible:panel.student.id==="founder"
-            enabled:panel.editable && !!panel.course.teachable && !(panel.student.skills || []).includes(panel.course.id)
+            objectName:"universityPersonal";text:panel.student.id==="founder"?qsTr("Pay from personal savings"):qsTr("Ask them to self-fund");textSize:panel.textSize
+            enabled:panel.editable && !!panel.personalQuote.valid
             onClicked:{review.payer="personal";review.open()}
         }
         WorldButton {
             objectName:"universityCompany";text:qsTr("Sponsor with company funds");textSize:panel.textSize
-            enabled:panel.editable && !!panel.course.teachable && !(panel.student.skills || []).includes(panel.course.id)
+            enabled:panel.editable && !!panel.companyQuote.valid
             onClicked:{review.payer="company";review.open()}
         }
     }
@@ -65,7 +76,7 @@ ColumnLayout {
         anchors.centerIn:Overlay.overlay;width:Math.min(panel.textSize*38,Overlay.overlay.width-32)
         height:Math.min(panel.textSize*18,Overlay.overlay.height-32)
         modal:true;focus:true;title:qsTr("Enroll in this course?")
-        onAboutToShow:{studentId=panel.student.id;skillId=panel.course.id;revision=campaign.world.reviewToken;copy=panel.student.name+"\n"+panel.course.name+"\n"+panel.course.detail+"\n"+(payer==="personal"?qsTr("Tuition leaves your personal savings now."):qsTr("Tuition is a company expense paid now."))}
+        onAboutToShow:{studentId=panel.student.id;skillId=panel.course.id;revision=campaign.world.reviewToken;copy=panel.student.name+"\n"+panel.course.name+"\n"+panel.course.detail+"\n"+(payer==="personal"?(studentId==="founder"?qsTr("Tuition leaves your personal savings now."):qsTr("They agreed to pay from their learning jar. Company funds and your savings are untouched.")):qsTr("Tuition is a company expense paid now."))}
         contentItem:ScrollView { id:reviewScroll;contentWidth:availableWidth;clip:true;Label { id:details;width:reviewScroll.availableWidth;text:review.copy;wrapMode:Text.Wrap;font.pixelSize:panel.textSize } }
         footer:Flow {
             spacing:8;padding:10

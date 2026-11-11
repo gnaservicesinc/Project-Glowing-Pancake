@@ -8,9 +8,10 @@
 #include <QTimer>
 #include <QtTest/QTest>
 #include <iostream>
+#include <algorithm>
 namespace {QQuickItem* find(QQuickItem* root,const QString& id){if(!root->isVisible())return nullptr;if(root->objectName()==id)return root;for(auto* child:root->childItems())if(auto* value=find(child,id))return value;return nullptr;}}
 void schedule_social_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths,QString screenshot) {
-    struct Run {int phase=0,ticks=0,frames=0;std::string person,industry;pgp::bridge::CampaignSnapshotPtr preview;};auto run=std::make_shared<Run>();auto* timer=new QTimer(&window);timer->setInterval(100);
+    struct Run {int phase=0,ticks=0,frames=0;pgp::core::OrdinalDay study_until{0};std::string person,industry,student,course;pgp::core::Cents company_cash{0},personal_cash{0};pgp::bridge::CampaignSnapshotPtr preview;};auto run=std::make_shared<Run>();auto* timer=new QTimer(&window);timer->setInterval(100);
     QObject::connect(timer,&QTimer::timeout,&window,[&,run,timer,screenshot]{
         const auto fail=[&](const char* why){std::cerr<<"Social UI "<<run->phase<<": "<<why<<" · "<<campaign.notice().toStdString()<<'\n';if(!screenshot.isEmpty())window.grabWindow().save(screenshot+".failure.png");timer->stop();QCoreApplication::exit(3);};
         if(++run->ticks>500){fail("Timeout");return;}if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy())return;
@@ -54,7 +55,26 @@ void schedule_social_smoke(QQuickWindow& window,pgp::bridge::CampaignController&
         case 18:if(!pgp::core::social_link(s,"founder",run->industry)){fail("Actual regional acquaintance");return;}if(!press("peopleBackToTeam")){fail("Return from industry roster");return;}break;
         case 19:if(!press("peopleSocialTab")){fail("Reopen social circle");return;}break;
         case 20:{auto* selector=item("socialPerson");if(!selector){fail("Select industry contact");return;}selector->forceActiveFocus();QTest::keyClick(&window,Qt::Key_End);run->frames=0;break;}
-        case 21:reveal(item("socialCard"));if(run->frames++<4)return;if(!capture("regional-contact")){fail("Regional contact card");return;}std::cout<<"Social UI passed: actual meetup, cooldown and regional introduction; seeded mature graph; compact domestic/overseas industry rosters and social cards.\n";timer->stop();QCoreApplication::exit(0);return;
+        case 21:reveal(item("socialCard"));if(run->frames++<4)return;if(!capture("regional-contact")){fail("Regional contact card");return;}campaign.setTextScalePercent(100);window.resize(1280,800);if(!press("peopleBackToTeam")){fail("Return for employee study");return;}break;
+        case 22:if(!press("peopleUniversityTab")){fail("Employee university");return;}break;
+        case 23:{
+            const auto university=world->talent();const auto students=university.value("people").toList(),skills=university.value("skills").toList();
+            bool selected=false;for(qsizetype i=1;i<students.size() && !selected;++i)for(qsizetype j=0;j<skills.size() && !selected;++j) {
+                const auto student=students[i].toMap().value("id").toString(),course=skills[j].toMap().value("id").toString();
+                const auto definition=std::ranges::find(pgp::core::talent_rules(s)->skills,course.toStdString(),&pgp::core::SkillDefinition::id);
+                if(!definition->teachable || definition->tuition_cents<=0 || (!definition->engineering && !definition->research) || !definition->prerequisite.empty() || pgp::core::person_has_skill(s,student.toStdString(),course.toStdString()))continue;
+                run->student=student.toStdString();run->course=course.toStdString();const auto select=[&](const char* name,qsizetype index){auto* control=item(name);control->forceActiveFocus();QTest::keyClick(&window,Qt::Key_Home);for(qsizetype step=0;step<index;++step)QTest::keyClick(&window,Qt::Key_Down);};select("universityStudent",i);select("universityCourse",j);selected=true;
+            }
+            if(!selected){fail("Select professional self-study");return;}run->frames=0;break;}
+        case 24:reveal(item("universityStudySavings"));if(run->frames++<4)return;if(!item("universityStudySavings") || item("universityPersonal")->isEnabled() || !capture("learning-jar-saving")){fail("Learning jar saving and refusal");return;}run->study_until=pgp::core::advance_days(s.date,pgp::core::Days{32});break;
+        case 25:
+            if(campaign.requiredKind()=="content") {const auto choices=campaign.requiredChoices();QString choice;for(const auto& row:choices){const auto id=row.toMap().value("choiceId").toString();if(choice.isEmpty() || id.contains("decline",Qt::CaseInsensitive))choice=id;}if(choice.isEmpty()){fail("Required choice while waiting for payday");return;}campaign.choose(choice);return;}
+            if(s.date<run->study_until){if(!campaign.canAdvance()){fail("Unexpected block before payday");return;}campaign.step();return;}run->frames=0;break;
+        case 26:reveal(item("universityPersonal"));if(run->frames++<4)return;if(!press("universityPersonal")){fail("Ask employee to self-fund");return;}run->company_cash=s.cash;run->personal_cash=s.succession->personal_cash;break;
+        case 27:if(!press("universityConfirm")){fail("Confirm voluntary employee tuition");return;}break;
+        case 28:if(s.cash!=run->company_cash || s.succession->personal_cash!=run->personal_cash || !std::ranges::any_of(s.management->people->talent->courses,[&](const auto& c){return c.person==run->student && c.skill==run->course && c.payer=="personal";})){fail("Employee tuition separation and course");return;}campaign.setTextScalePercent(200);window.resize(650,480);run->frames=0;break;
+        case 29:reveal(item("universityStudySavings"));if(run->frames++<5)return;if(!capture("learning-jar-compact")){fail("Compact learning jar");return;}reveal(item("universitySelfStudyStatus"));run->frames=0;break;
+        case 30:if(run->frames++<4)return;if(!capture("self-study-compact")){fail("Compact self-study controls");return;}std::cout<<"Social UI passed: actual meetup, regional greeting, overseas rosters, employee-funded tuition from paid wages and separate company/founder cash; compact 200% layouts. Mature friendship graph uses an explicit preview fixture.\n";timer->stop();QCoreApplication::exit(0);return;
 
         }++run->phase;
     });timer->start();

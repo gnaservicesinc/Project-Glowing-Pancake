@@ -480,7 +480,10 @@ marketed services, rather than creating a separate passive-income stream.
 
 People → Open Path University lists your founder and HQ employees, their skills,
 course prerequisites, tuition and duration. The founder can pay from personal
-savings or use company sponsorship; staff currently use company sponsorship.
+savings or use company sponsorship. Select an employee to see their learning jar:
+a share of compensation actually paid, minus their own tuition. Unpaid wages do
+not count. Ask them to self-fund an affordable class or offer a company scholarship.
+They also periodically pick practical classes on their own.
 Courses complete after their dated part-time study period. Personal and company
 money remain distinct. Investing all savings is allowed; you can hire people or
 use company sponsorship instead of paying personal tuition.
@@ -512,7 +515,8 @@ remain future work.
 People → Around the industry lists the public HQ roster of major companies that
 have entered the world. Select a company to see its city, portraits, professional
 roles, education and acquired skills. Their employees now work and study under
-shared rules; their company pays rent, salaries and new tuition/equipment expenses.
+shared rules; their company pays rent, salaries, sponsored tuition and equipment
+expenses, while employees can also save for their own classes.
 Personal traits and social connections are not disclosed by this public directory.
 The individual roster includes the authored US and overseas major-company HQs,
 visible after their actual entry dates.

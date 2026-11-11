@@ -151,6 +151,7 @@ void initialize_people(SimulationState& s,std::uint64_t seed,std::string founder
         s.management->people->employees.push_back({std::move(terms),s.date,s.date,true,{}});
     }
     initialize_individual_payroll(s);
+    reconcile_employee_study(s);
     for(const auto& offer:s.management->catalog.specialists) {
         auto person=applicant(s,true).profile;person.name=offer.name;person.role="Evaluation specialist";
         s.management->people->known_people.emplace(offer.id,std::move(person));
@@ -193,6 +194,7 @@ void hire_employee(SimulationState& s,std::string_view id,Cents protected_cash,s
     if(r.recruitment) manage_headquarters(s,AssignHQDesk{desk,p.employees.back().terms.profile.id},protected_cash);
     s.cash=accounts_report(*s.accounts).cash;
     if(ready==s.date) {const auto& employee=p.employees.back();add_staff_capacity(*s.capacity,s.date,employee.terms.profile.id,1,employee.terms.evaluation_credit);}
+    reconcile_employee_study(s);
 }
 void add_referred_applicant(SimulationState& s,std::string_view referrer) {
     const auto& r=rules(s);auto& p=*s.management->people;
@@ -285,7 +287,7 @@ void validate_people(const SimulationState& s,bool deep) {
     if(opening!=opening_staff_count(*s.capacity) || static_cast<std::size_t>(std::ranges::count_if(s.capacity->staff_additions,[](const auto& row){return row.id.starts_with("employee/");}))!=added)
         invalid("Individual HQ people do not reconcile with their staffing capacity.");
     validate_people_contacts(s);
-    validate_talent(s);
+    validate_talent(s,deep);
     validate_social(s);
     if(deep) {validate_employee_departures(s);validate_contact_funding(s);}
 }

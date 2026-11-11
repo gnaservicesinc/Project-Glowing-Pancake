@@ -71,6 +71,7 @@ public:
     QVariantList industryPeople() const;
     Q_INVOKABLE void socialize(QString person,QString activity,QString revision);
     Q_INVOKABLE QVariantMap softwareQuote(QVariantMap draft) const;
+    Q_INVOKABLE QVariantMap courseQuote(QString person,QString skill,QString payer) const;
     Q_INVOKABLE void enrollSkill(QString person,QString skill,QString payer,QString revision);
     Q_INVOKABLE void startSoftware(QVariantMap draft,QString revision);
     Q_INVOKABLE void releaseSoftware(int id,QString revision);

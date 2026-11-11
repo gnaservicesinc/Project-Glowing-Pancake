@@ -108032,6 +108032,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "b002561abaefc81fc8a4177ed48bd5b8afcf6cefc68472ecd83888a241626ba1",
+          "before_hash": "9a9895b383dc7300345129c9b5df6beb39df97a9ac48e34974a69c5e93407a1a",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 32,
+          "revision": 33
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "aae7a9e207a151eda31e446f24ed3b90f263fd053d1f4803599f80d55c4929c4",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.62.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 63,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.61.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000062.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000063.collection.json",
+      "summary": "Voluntary employee study funded by actual paid compensation, learning budgets and independent practical course choices.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

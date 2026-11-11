@@ -1,15 +1,24 @@
 #include "talent_json.hpp"
 #include "../content/talent_codec.hpp"
+#include <pgp/core/accounts.hpp>
 namespace pgp::persistence::detail {
 Json talent_json(const core::TalentState& t) {
     Json courses=Json::array(),software=Json::array();
     for(const auto& c:t.courses)courses.push_back({{"id",c.id},{"person",c.person},{"skill",c.skill},{"payer",c.payer},{"started_on",c.started_on.value()},{"completes_on",c.completes_on.value()},{"completed",c.completed}});
     for(const auto& p:t.software)software.push_back({{"id",p.id},{"design",p.design},{"project",p.project},{"started_on",p.started_on.value()},
         {"released_on",p.released_on?Json(p.released_on->value()):Json(nullptr)},{"usability",p.usability},{"reliability",p.reliability},{"capability",p.capability},{"blocker",p.blocker}});
-    return {{"founder_skills",t.founder_skills},{"founder_genius",t.founder_genius},{"courses",courses},{"software",software}};
+    Json funds=Json::object();
+    for(const auto& [who,fund]:t.study_funds)funds[who]={{"compensation",fund.compensation.value()},{"spent",fund.spent.value()},{"next_review",fund.next_review.value()}};
+    return {{"founder_skills",t.founder_skills},{"founder_genius",t.founder_genius},{"courses",courses},{"software",software},{"study_funds",funds},{"compensation_cursor",t.compensation_cursor}};
 }
 core::TalentState parse_talent(const Json& j) {
-    fields(j,"talent",{"founder_skills","founder_genius","courses","software"});core::TalentState t;
+    fields(j,"talent",{"founder_skills","founder_genius","courses","software","study_funds","compensation_cursor"});core::TalentState t;
+    t.compensation_cursor=u64(j.at("compensation_cursor"),"compensation cursor",core::accounts_posting_limit);
+    const auto& funds=j.at("study_funds");if(!funds.is_object() || funds.size()>256)invalid("study funds","Employee count exceeds limit");
+    for(const auto& [who,fund]:funds.items()) {
+        fields(fund,"study fund",{"compensation","spent","next_review"});
+        t.study_funds.emplace(text(Json(who),"employee",64),core::TalentState::StudyFund{core::Cents{i64(fund.at("compensation"),"compensation")},core::Cents{i64(fund.at("spent"),"spent")},core::OrdinalDay{i64(fund.at("next_review"),"review date")}});
+    }
     array(j.at("founder_skills"),"founder skills",96);for(const auto& id:j.at("founder_skills"))t.founder_skills.push_back(text(id,"skill",64));
     t.founder_genius=boolean(j.at("founder_genius"),"genius");
     array(j.at("courses"),"courses",2048);for(const auto& c:j.at("courses")) {

@@ -42,6 +42,7 @@ const TalentRules* talent_rules(const SimulationState& s) {
 }
 void validate_talent_rules(const TalentRules& r) {
     if(r.skills.empty() || r.skills.size()>96 || r.software.empty() || r.software.size()>12 || r.roles.size()>24 || r.market_bonus_max_bp<0 || r.market_bonus_max_bp>2000 || r.extra_skills<0 || r.extra_skills>4 ||
+       r.employee_study_share_bp<0 || r.employee_study_share_bp>5000 || r.employee_study_interval_days<7 || r.employee_study_interval_days>365 ||
        r.design_bonus<0 || r.design_bonus>20 || r.focus_bonus<0 || r.focus_bonus>30 || r.focus_penalty<0 || r.focus_penalty>20)invalid("Talent catalogue exceeds its supported limits.");
     if(r.ai_architecture_floor<7500 || r.ai_programming_floor<r.ai_architecture_floor || r.ai_programming_floor>10000 ||
        r.ai_reliability_floor<7500 || r.ai_reliability_floor>10000 || r.ai_workflow_floor<7500 || r.ai_workflow_floor>10000 ||
@@ -162,20 +163,19 @@ void manage_talent(SimulationState& s,const TalentAction& action,Cents protected
     std::visit([&](const auto& a) {
         using T=std::decay_t<decltype(a)>;
         if constexpr(std::is_same_v<T,EnrollSkill>) {
+            reconcile_employee_study(s);
+            const auto quote=course_quote(s,a);if(!quote.blocker.empty())invalid(quote.blocker);
             const auto& skill=find(r.skills,a.skill);const auto key=canonical_person(s,a.person);
-            if(t.courses.size()>=2048 || !skill.teachable)invalid("This qualification is not available through an online class.");
-            if(key!="founder") {const auto* e=employee(s,a.person);if(!e || e->departed_on || e->ready_on>s.date)invalid("Choose an onboarded employee.");}
-            if(person_has_skill(s,key,a.skill))invalid("This person already has that skill.");
-            if(!skill.prerequisite.empty() && !person_has_skill(s,key,skill.prerequisite))invalid("Complete the prerequisite skill first.");
-            if(std::ranges::any_of(t.courses,[&](const auto& c){return c.person==key && !c.completed;}))invalid("Finish the current part-time course before enrolling again.");
-            const auto end=advance_days(s.date,Days{skill.course_days});if(end>=s.end_date)invalid("The course would finish after the campaign.");
+            const auto end=advance_days(s.date,Days{skill.course_days});
             const auto fee=Cents{skill.tuition_cents};
             if(a.payer=="personal" && key=="founder") {
                 if(!s.succession || !s.succession->personal_life || s.succession->personal_cash<fee || s.succession->personal_life->unpaid.value())invalid("Settle personal bills and retain enough savings for tuition.");
                 s.succession->personal_cash=checked_unit_subtract(s.succession->personal_cash,fee);
                 s.succession->personal_life->spent=checked_unit_add(s.succession->personal_life->spent,fee);
             } else if(a.payer=="company") pay_company(s,fee,protected_cash,"Online university tuition","course/"+std::to_string(t.courses.size()+1));
-            else invalid("Choose personal tuition for the founder or company sponsorship.");
+            else if(a.payer=="personal") {
+                auto& fund=t.study_funds.at(key);fund.spent=checked_unit_add(fund.spent,fee);
+            } else invalid("Choose personal tuition or company sponsorship.");
             t.courses.push_back({static_cast<std::uint32_t>(t.courses.size()+1),key,a.skill,a.payer,s.date,end,false});
         } else if constexpr(std::is_same_v<T,StartSoftware>) {
             if(t.software.size()>=256)invalid("The software portfolio is full.");
@@ -203,6 +203,7 @@ void manage_talent(SimulationState& s,const TalentAction& action,Cents protected
 }
 void prepare_talent(SimulationState& s) {
     if(!talent_rules(s))return;
+    reconcile_employee_study(s);
     auto& t=talent(s);const auto& rules=*talent_rules(s);
     for(auto& c:t.courses)if(!c.completed && c.completes_on<=s.date) {
         const auto& skill=find(rules.skills,c.skill);
@@ -217,6 +218,7 @@ void prepare_talent(SimulationState& s) {
         }
         c.completed=true;s.paused=true;
     }
+    prepare_employee_study(s);
 }
 void reconcile_software(SimulationState& s) {
     if(!talent_rules(s))return;
@@ -239,10 +241,10 @@ BasisPoints software_market_bonus(const SimulationState& s,ProductChannel channe
 }
 Cents personal_tuition(const SimulationState& s,OrdinalDay before) {
     Cents total{0};if(!talent_rules(s))return total;
-    for(const auto& c:s.management->people->talent->courses)if(c.payer=="personal" && c.started_on<before)total=checked_unit_add(total,Cents{find(talent_rules(s)->skills,c.skill).tuition_cents});
+    for(const auto& c:s.management->people->talent->courses)if(c.payer=="personal" && c.person=="founder" && c.started_on<before)total=checked_unit_add(total,Cents{find(talent_rules(s)->skills,c.skill).tuition_cents});
     return total;
 }
-void validate_talent(const SimulationState& s) {
+void validate_talent(const SimulationState& s,bool deep) {
     if(!s.management || !s.management->people)return;
     const auto* r=talent_rules(s);const auto& state=s.management->people->talent;
     if(static_cast<bool>(r)!=state.has_value())invalid("Talent state and content must agree.");if(!r)return;
@@ -256,10 +258,11 @@ void validate_talent(const SimulationState& s) {
     for(std::size_t i=0;i<t.courses.size();++i) {
         const auto& c=t.courses[i];const auto& skill=find(r->skills,c.skill);
         if(c.id!=i+1 || !skill.teachable || c.started_on>s.date || c.completes_on!=advance_days(c.started_on,Days{skill.course_days}) ||
-           c.completed!=(c.completes_on<=s.date) || (c.payer!="company" && (c.payer!="personal" || c.person!="founder")) ||
+           c.completed!=(c.completes_on<=s.date) || (c.payer!="company" && c.payer!="personal") ||
            (c.person!="founder" && !employee(s,c.person)) || (!c.completed && !active.insert(c.person).second) ||
            (c.completed && !person_has_skill(s,c.person,c.skill)))invalid("Course identity, dates, payer or acquired skill differs from its record.");
     }
+    validate_employee_study(s,deep);
     if(static_cast<std::size_t>(std::ranges::count(s.capacity->projects,ProjectKind::software,&CapacityProject::kind))!=t.software.size())invalid("Software work must belong to a recorded design.");
     for(std::size_t i=0;i<t.software.size();++i) {
         const auto& p=t.software[i];const auto& work=find(s.capacity->projects,p.project);

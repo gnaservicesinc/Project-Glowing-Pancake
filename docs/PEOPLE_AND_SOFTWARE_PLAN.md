@@ -99,9 +99,10 @@ Stages 1–2 now provide the first playable slice: 41 named skills; founder and
 employee courses; six software briefs with live prototypes, qualified teams,
 real work, pause/resume, release and refinement; and sampled childhood chains.
 The current human founder-work route is the existing working-genius opening;
-other founders can hire qualified staff. Employee tuition currently uses company
-sponsorship. Employee personal savings/self-funded study still needs the social
-world's individual financial records. Only Programming, Architecture, ML Research
+other founders can hire qualified staff. Employee tuition now supports company
+sponsorship and voluntary self-funding from a saved learning budget, described
+below. This budget does not attempt to represent an employee's entire household
+finances. Only Programming, Architecture, ML Research
 and UI Design have specialist work gates/bonuses in this slice; course proficiency
 bonuses also apply. Other skills and interests are saved vocabulary for later
 jobs, events and relationship effects, not claims those activities already exist.
@@ -155,8 +156,7 @@ person skill queries still need the later event-authoring extension.
 
 The remaining stage-4 HQ behavior and stages 5–8 remain required work, along
 with broader person preferences/event vocabulary. Romance/families/rivalry repair,
-employee-paid study, infrastructure/data puzzles, career re-entry and USCIF are
-unfinished. Geographic networking delivery is described below.
+infrastructure/data puzzles, career re-entry and USCIF are unfinished. Geographic networking delivery is described below.
 
 
 ## Major-company HQ progress
@@ -265,6 +265,35 @@ initializer and validates employees, computers, tariffs and costs. A two-company
 runtime fixture creates real training pressure, then lets the actual weekly
 planner negotiate and complete a paid, equipped hire, with onboarding and exact
 save/next-day continuation. This verifies the hiring loop, not campaign-wide
-business balance. Cross-company paid research collaboration, employee personal
-finance/self-funded study and the later family/career/design-puzzle stages remain
-required work in the full active plan.
+business balance. Cross-company paid research collaboration and the later
+family/career/design-puzzle stages remain required work in the full active plan.
+
+
+## Voluntary employee learning
+
+The founder campaign authors a 20% employee learning allocation and a 30-day
+independent course review. Each employee's learning jar is calculated from actual
+paid salary, signing compensation and severance, less their own tuition. Accrued
+or unpaid salary contributes nothing. The remainder of their compensation stays
+outside this limited study model; this is not their complete household wealth.
+A saved posting cursor processes new payments incrementally. Deep save validation
+reconciles the fund to the company's real cash payments and personal course fees.
+
+Employees periodically choose an affordable research, engineering or UI design
+course with satisfied prerequisites. The player can ask them to self-fund another
+available course within their budget, or pay company sponsorship instead. One
+part-time course at a time and real completion dates still apply; non-teachable
+professional licenses remain unavailable online. The university shows the selected
+employee's learning jar, reasons for refusal, a payment review, and a separate
+self-funded receipt. Quotes and enrollment use the same core eligibility check.
+Employee tuition never contributes to the founder's personal spending ledger.
+Independent study also applies to detailed rival-company employees.
+
+The focused study check crosses an actual month-end payday, keeps unpaid wage
+liabilities out of learning savings, verifies completion and autonomous enrollment,
+rejects invented income and compares exact resumed continuation. Eight selected
+runtime/bridge checks and 24 content prepared-opening save roundtrips pass. The
+native walkthrough uses keyboard selections, resolves ordinary supplier choices,
+waits for actual salary payment and confirms employee-paid enrollment without
+changing founder or company cash; learning cards and controls are inspected at
+compact 200% text. Human balance and visual review remain open.

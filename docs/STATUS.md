@@ -9,7 +9,7 @@ Updated 2026-11-10
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.61.0-dev.1**, generation **62**.
+immersive redesign advances content to **0.62.0-dev.1**, generation **63**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -26,8 +26,8 @@ software needs Architecture; verified deployed AI may reduce technical requireme
 with allocated compute. Released designs improve matching service utility, capped
 by content rules, rather than granting arbitrary passive income.
 
-Open Path University offers paid part-time study for the founder and company-
-sponsored staff. Skills are separate from degrees; new applicants carry their
+Open Path University offers paid part-time study for the founder, sponsored staff
+and employees who fund their own classes. Skills are separate from degrees; new applicants carry their
 role's base skill and seeded extras. Forty-one skills are recorded; only the
 implemented development/research gates and proficiency bonuses are active so far.
 The childhood catalogue samples one of eight activities and one of eight camps,
@@ -105,8 +105,22 @@ walkthrough pass; overseas and domestic rosters remain navigable at compact
 200% text. The six-region initializer check is separate from actual campaign
 entry timing and does not establish long-run industry balance.
 
+Employees now save an authored share of actual paid compensation in a learning
+jar. Unpaid salaries cannot fund classes. Independent reviews select affordable
+practical courses; the university also offers voluntary self-funding requests and
+company scholarships. The founder's savings, company cash and employee tuition
+remain distinct, with shared quote/enrollment checks and saved payment cursors.
+This is a bounded study budget, not a full household-finance simulation.
+Eight focused runtime/bridge checks pass, including unpaid-wage refusal,
+month-end receipts, real employee tuition, skill completion, independent course
+selection, forged-income rejection and identical continuation after reload.
+Content review passes 24 prepared-opening save roundtrips. Optimized Mac
+game/editor builds and the native university walkthrough pass, including normal
+supplier decisions, payday, voluntary enrollment and compact 200% text. The
+tuition bar reflects the selected class's real fee and employee learning balance.
+
 Cross-company research collaboration remains stage-4 work. Romance, family,
-rivalry/repair, employee-paid study, further design puzzles, career transitions
+rivalry/repair, further design puzzles, career transitions
 and USCIF remain required work in the active full plan.
 
 This is an implementation checkpoint, not completion of F-06. Existing human

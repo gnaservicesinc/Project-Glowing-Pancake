@@ -396,6 +396,13 @@ target_compile_definitions(pgp-talent-test PRIVATE PGP_TALENT_SOURCE="${PROJECT_
 pgp_project_target(pgp-talent-test)
 add_test(NAME runtime.talent COMMAND pgp-talent-test)
 
+add_executable(pgp-employee-study-test employee_study_test.cpp)
+target_link_libraries(pgp-employee-study-test PRIVATE pgp::persistence)
+target_include_directories(pgp-employee-study-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-employee-study-test PRIVATE PGP_STUDY_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-employee-study-test)
+add_test(NAME runtime.employee-study COMMAND pgp-employee-study-test)
+
 add_executable(pgp-social-test social_test.cpp)
 target_link_libraries(pgp-social-test PRIVATE pgp::persistence)
 target_compile_definitions(pgp-social-test PRIVATE PGP_SOCIAL_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")

@@ -35,6 +35,7 @@ struct TalentRules {
     int ai_architecture_floor=8500,ai_programming_floor=9500,ai_reliability_floor=9000,ai_workflow_floor=8500;
     int ai_compute_milli=1000,ai_work_percent=75;
     int extra_skills=2,design_bonus=10,focus_bonus=20,focus_penalty=10;
+    int employee_study_share_bp=0,employee_study_interval_days=30;
     auto operator<=>(const TalentRules&) const = default;
 };
 struct SkillCourse {
@@ -66,6 +67,13 @@ struct TalentState {
     bool founder_genius=false;
     std::vector<SkillCourse> courses;
     std::vector<SoftwareProject> software;
+    struct StudyFund {
+        Cents compensation{0},spent{0};
+        OrdinalDay next_review{0};
+        auto operator<=>(const StudyFund&) const=default;
+    };
+    std::map<std::string,StudyFund> study_funds;
+    std::uint64_t compensation_cursor=0;
     auto operator<=>(const TalentState&) const = default;
 };
 struct EnrollSkill {std::string person,skill,payer;};
@@ -79,6 +87,11 @@ struct SoftwareQuote {
     Cents fee{0},monthly_revenue{0};
     std::string blocker;
 };
+struct CourseQuote {Cents fee{0},budget{0};std::string blocker;};
+CourseQuote course_quote(const SimulationState&,const EnrollSkill&);
+void reconcile_employee_study(SimulationState&);
+void prepare_employee_study(SimulationState&);
+void validate_employee_study(const SimulationState&,bool deep);
 void validate_talent_rules(const TalentRules&);
 const TalentRules* talent_rules(const SimulationState&);
 bool has_skill(const PersonProfile&,std::string_view);
@@ -89,7 +102,7 @@ SoftwareQuote software_quote(const SimulationState&,const SoftwareDesign&,std::s
 void manage_talent(SimulationState&,const TalentAction&,Cents protected_cash);
 void prepare_talent(SimulationState&);
 void reconcile_software(SimulationState&);
-void validate_talent(const SimulationState&);
+void validate_talent(const SimulationState&,bool deep=true);
 int software_ai_level(const SimulationState&);
 BasisPoints software_market_bonus(const SimulationState&,ProductChannel,std::optional<OrdinalDay> day={});
 Cents personal_tuition(const SimulationState&,OrdinalDay before);
