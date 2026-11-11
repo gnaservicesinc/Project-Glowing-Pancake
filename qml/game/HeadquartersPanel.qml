@@ -55,10 +55,19 @@ ColumnLayout {
     }
     function splitRoom(vertical) {
         const r=planRooms[selectedRoom],cut=Number(splitAt.text)
-        if(!r || !Number.isInteger(cut) || cut<2 || cut>(vertical?r.width:r.depth)-2) {error=qsTr("Each new room needs at least two metres on either side of the split.");return}
+        const hall=hallwaySplit.checked?2:0
+        if(!r || r.passage || !Number.isInteger(cut) || cut<2 || cut+hall>(vertical?r.width:r.depth)-2) {
+            error=hall?qsTr("Leave two metres for the hallway and at least two metres for each room."):
+                       qsTr("Each new room needs at least two metres on either side of the split.")
+            return
+        }
         const next=planRooms.slice()
-        if(vertical) next.splice(selectedRoom,1,{x:r.x,y:r.y,width:cut,depth:r.depth},{x:r.x+cut,y:r.y,width:r.width-cut,depth:r.depth})
-        else next.splice(selectedRoom,1,{x:r.x,y:r.y,width:r.width,depth:cut},{x:r.x,y:r.y+cut,width:r.width,depth:r.depth-cut})
+        const first=vertical?{x:r.x,y:r.y,width:cut,depth:r.depth}:{x:r.x,y:r.y,width:r.width,depth:cut}
+        const second=vertical?{x:r.x+cut+hall,y:r.y,width:r.width-cut-hall,depth:r.depth}:
+                              {x:r.x,y:r.y+cut+hall,width:r.width,depth:r.depth-cut-hall}
+        next.splice(selectedRoom,1,first,second)
+        if(hall) next.push(vertical?{x:r.x+cut,y:r.y,width:hall,depth:r.depth,passage:true}:
+                                    {x:r.x,y:r.y+cut,width:r.width,depth:hall,passage:true})
         planRooms=next;error="";preservePlan()
     }
     function reviewProperty(plan,land) {
@@ -147,7 +156,7 @@ ColumnLayout {
                 ColumnLayout {
                     id:propertyCard;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:14
                     Heading {text:modelData.name || modelData.error || ""}
-                    HeadquartersPlan {Layout.fillWidth:true;Layout.preferredHeight:panel.textSize*13;headquarters:({flooring:modelData.flooring,width:modelData.width,depth:modelData.depth,rooms:modelData.rooms,items:[]})}
+                    HeadquartersPlan {Layout.fillWidth:true;Layout.preferredHeight:panel.textSize*13;headquarters:({flooring:modelData.flooring,width:modelData.width,depth:modelData.depth,rooms:modelData.rooms,access:modelData.access,items:[]})}
                     Copy {text:modelData.detail || ""}
                     Flow {
                         Layout.fillWidth:true;spacing:8
@@ -184,18 +193,24 @@ ColumnLayout {
                 WorldButton {text:qsTr("Use whole plot / remove splits");textSize:panel.textSize;onClicked:panel.resetPlan()}
             }
             HeadquartersPlan {
-                objectName:"hqConstructionPlan";Layout.fillWidth:true;Layout.preferredHeight:panel.textSize*19;editing:true
-                headquarters:({flooring:(campaign.world.hqProperties.find(row=>row.id===panel.landId) || {}).flooring,width:panel.planWidth,depth:panel.planDepth,rooms:panel.planRooms,items:[]})
-                onTilePicked:(x,y,item)=>{const n=panel.planRooms.findIndex(room=>x>=room.x && y>=room.y && x<room.x+room.width && y<room.y+room.depth);if(n>=0)panel.selectedRoom=n}
+                id:constructionPlan;objectName:"hqConstructionPlan";Layout.fillWidth:true;Layout.preferredHeight:panel.textSize*19;editing:true
+                headquarters:({flooring:(campaign.world.hqProperties.find(row=>row.id===panel.landId) || {}).flooring,width:panel.planWidth,depth:panel.planDepth,rooms:panel.planRooms,
+                    access:campaign.world.hqPlanAccess(panel.planWidth,panel.planDepth,panel.planRooms),items:[]})
+                onTilePicked:(x,y,item)=>{const n=panel.planRooms.findIndex(room=>!room.passage && x>=room.x && y>=room.y && x<room.x+room.width && y<room.y+room.depth);if(n>=0)panel.selectedRoom=n}
             }
-            Copy {text:qsTr("Selected room %1. Click a room in the plan, then split it at a chosen metre mark. Equipment will define what each room is used for.").arg(panel.selectedRoom+1)}
+            Copy {visible:!!constructionPlan.access.error;text:constructionPlan.access.error || "";color:"#edbd90"}
+            GameCheck {
+                id:hallwaySplit;objectName:"hqHallwaySplit"
+                text:qsTr("Leave a two-metre hallway");checked:true
+                font.pixelSize:panel.textSize;Accessible.name:text
+            }
             Flow {
                 Layout.fillWidth:true;spacing:8
-                GameSelect {width:panel.textSize*12;textSize:panel.textSize;model:panel.planRooms.map((room,index)=>({id:index,name:qsTr("Room %1").arg(index+1)}));textRole:"name";valueRole:"id";currentIndex:panel.selectedRoom;Accessible.name:qsTr("Room to split");onActivated:panel.selectedRoom=currentValue}
+                GameSelect {width:panel.textSize*12;textSize:panel.textSize;model:panel.planRooms.map((room,index)=>({id:index,passage:room.passage,name:qsTr("Room %1").arg(index+1)})).filter(room=>!room.passage);textRole:"name";valueRole:"id";currentIndex:model.findIndex(room=>room.id===panel.selectedRoom);Accessible.name:qsTr("Room to split");onActivated:panel.selectedRoom=currentValue}
                 GameField {id:splitAt;objectName:"hqRoomSplit";width:panel.textSize*6;text:"3";textSize:panel.textSize;maximumLength:2;Accessible.name:qsTr("Split position in metres")}
-                WorldButton {objectName:"hqSplitVertical";text:qsTr("Split left / right");textSize:panel.textSize;enabled:panel.planRooms.length<16;onClicked:panel.splitRoom(true)}
-                WorldButton {text:qsTr("Split top / bottom");textSize:panel.textSize;enabled:panel.planRooms.length<16;onClicked:panel.splitRoom(false)}
-                WorldButton {objectName:"hqGetBids";text:qsTr("Get three contractor bids");textSize:panel.textSize;enabled:panel.editable;onClicked:{panel.bids=campaign.world.hqBids(panel.landId,panel.planWidth,panel.planDepth,panel.planRooms);panel.error=""}}
+                WorldButton {objectName:"hqSplitVertical";text:qsTr("Split left / right");textSize:panel.textSize;enabled:panel.planRooms.length+(hallwaySplit.checked?2:1)<=16;onClicked:panel.splitRoom(true)}
+                WorldButton {text:qsTr("Split top / bottom");textSize:panel.textSize;enabled:panel.planRooms.length+(hallwaySplit.checked?2:1)<=16;onClicked:panel.splitRoom(false)}
+                WorldButton {objectName:"hqGetBids";text:qsTr("Get three contractor bids");textSize:panel.textSize;enabled:panel.editable && !constructionPlan.access.error;onClicked:{panel.bids=campaign.world.hqBids(panel.landId,panel.planWidth,panel.planDepth,panel.planRooms);panel.error=""}}
             }
             Copy {visible:panel.error.length>0;text:panel.error;color:"#edbd90"}
             Repeater {
@@ -231,7 +246,7 @@ ColumnLayout {
                     visible:purchase.kind==="home" && !purchase.review.error
                     Layout.fillWidth:true
                     Layout.preferredHeight:panel.textSize*13
-                    headquarters:({kind:"home",width:purchase.review.width,depth:purchase.review.depth,rooms:purchase.review.rooms,items:[]})
+                    headquarters:({kind:"home",width:purchase.review.width,depth:purchase.review.depth,rooms:purchase.review.rooms,access:purchase.review.access,items:[]})
                 }
             }
         }

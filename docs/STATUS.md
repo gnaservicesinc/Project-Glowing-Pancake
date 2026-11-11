@@ -9,7 +9,7 @@ Updated 2026-11-11
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.68.0-dev.1**, generation **69**.
+immersive redesign advances content to **0.69.0-dev.1**, generation **70**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -223,7 +223,13 @@ records and their quality, relevance and coverage. Clones, checkpoints and
 continued training carry the same balance. Source selection and weights save as
 unfinished UI drafts.
 
-Infrastructure and layout puzzles, specialist skill effects, major-HQ property
+Arrange headquarters now projects walking routes through actual hallway
+and doorway geometry. Family workspaces have common access paths.
+Placement previews show reachable desks and walkable area. Assigned desk
+routes reveal congested doorways and narrow aisles. Blocked or lengthy walks
+affect mood, and amenities help employees who can reach them from their desks.
+
+Infrastructure puzzles, specialist skill effects, major-HQ property
 expansion, career transitions and USCIF remain required work.
 
 This is an implementation checkpoint, not completion of F-06. Existing human

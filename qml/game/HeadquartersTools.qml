@@ -10,6 +10,7 @@ Rectangle {
     property var headquarters:campaign.world.headquarters
     property int selectedItem:Number(campaign.world.draft("hq/selected-item","0"))
     property bool compactOverlay:false
+    property bool arranging:false
     property bool placing:false
     property bool pending:false
     property bool rotated:false
@@ -20,17 +21,36 @@ Rectangle {
     property int hoverX:-1
     property int hoverY:-1
     property int hoverTarget:0
-    function hover(x,y,target) {
-        hoverX=x;hoverY=y;hoverTarget=target
-        preview=placing && item?campaign.world.hqPlacement(item.id,x,y,rotated,target):({})
+    readonly property var traffic: arranging && headquarters.trafficEnabled ? campaign.world.hqTraffic() : ({})
+    readonly property var coordinates: arranging && item && !placing && !item.deskDevice
+        ? campaign.world.hqPlacement(item.id, Number(column.text)-1, Number(row.text)-1, rotated, 0) : ({})
+    readonly property var deskWalk: ((placing ? preview.traffic : coordinates.traffic)?.desks || traffic.desks || [])
+        .find(desk => desk.id === selectedItem) || ({})
+    readonly property var changedDesks: (coordinates.traffic?.desks || []).filter(desk => {
+        if(!desk.assigned || desk.id === selectedItem) return false
+        const before = (traffic.desks || []).find(row => row.id === desk.id)
+        return !before || before.detail !== desk.detail || before.amenities !== desk.amenities || before.mood !== desk.mood
+    })
+    function describeWalk(desk) {
+        return (desk.detail || "")+(desk.mood<0?qsTr(" · %1 mood").arg(desk.mood):"")
+            +(desk.amenities?"\n"+desk.amenities:"")
     }
-    onRotatedChanged:hover(hoverX,hoverY,hoverTarget)
-    onPlacingChanged:hover(hoverX,hoverY,hoverTarget)
-    onHeadquartersChanged:hover(hoverX,hoverY,hoverTarget)
+    function refreshPreview() {
+        preview=placing && item?campaign.world.hqPlacement(item.id,hoverX,hoverY,rotated,hoverTarget):({})
+    }
+    function hover(x,y,target) {
+        if(hoverX===x && hoverY===y && hoverTarget===target) return
+        hoverX=x;hoverY=y;hoverTarget=target
+        refreshPreview()
+    }
+    onRotatedChanged:refreshPreview()
+    onPlacingChanged:refreshPreview()
+    onHeadquartersChanged:refreshPreview()
     function pickup(id) {select(id);if(item && item.delivered && editable){placing=true;hover(hoverX,hoverY,hoverTarget)}}
     signal doneRequested()
     signal shopRequested()
     signal propertiesRequested()
+    signal walksRequested()
     color:ink.panel;radius:11;border.color:ink.border
     function refreshSelection() {if(item){rotated=item.rotated;column.text=String(item.x+1);row.text=String(item.y+1);mount=item.mount || (desks[0] || {}).id || 0}}
     onItemChanged: refreshSelection()
@@ -67,7 +87,9 @@ Rectangle {
             component Copy:Label {Layout.fillWidth:true;wrapMode:Text.Wrap;textFormat:Text.PlainText;font.pixelSize:tools.textSize;color:"#c9dacb"}
             Copy {text:qsTr("Arrange headquarters");font.bold:true;font.pixelSize:tools.textSize*1.2;color:"#eee4c9"}
             WorldButton {objectName:"hqDoneArranging";visible:tools.compactOverlay;text:qsTr("Done arranging");textSize:tools.textSize;onClicked:tools.doneRequested()}
-            Copy {text:tools.headquarters.kind==="home"?qsTr("Your home workspace. Pick up a delivered object, then click a valid floor tile or desk."):qsTr("Arrange your actual furnishings. Drag placed items, or use the coordinates below. Rooms take their purpose from their equipment.")}
+            Copy {objectName:"hqTrafficSummary";visible:!!tools.traffic.summary;text:tools.traffic.summary || ""}
+            Copy {visible:!!tools.traffic.crowded?.length;text:qsTr("%1 crowded floor tiles").arg(tools.traffic.crowded?.length || 0);color:"#edc088"}
+            WorldButton {objectName:"hqViewWalks";visible:tools.compactOverlay && !!tools.traffic.summary;text:qsTr("View walking routes");textSize:tools.textSize;onClicked:tools.walksRequested()}
             Flow {
                 Layout.fillWidth:true;spacing:6
                 WorldButton {objectName:"hqOpenShop";text:qsTr("Suppliers");textSize:tools.textSize;onClicked:tools.shopRequested()}
@@ -121,6 +143,15 @@ Rectangle {
                     GameField {id:row;objectName:"hqItemRow";Layout.fillWidth:true;text:"1";textSize:tools.textSize;maximumLength:2;Accessible.name:qsTr("Floor row, starting at one")}
                 }
                 WorldButton {visible:tools.item && !tools.item.deskDevice;text:tools.rotated?qsTr("Orientation · rotated"):qsTr("Orientation · normal");textSize:tools.textSize;enabled:tools.editable;onClicked:tools.rotated=!tools.rotated}
+                Copy {
+                    visible:!!tools.coordinates.traffic?.summary
+                    text:qsTr("After placement · %1").arg(tools.coordinates.traffic?.summary || "")
+                }
+                Copy {
+                    objectName:"hqDeskWalk"
+                    visible:!!tools.deskWalk.detail
+                    text:tools.describeWalk(tools.deskWalk)
+                }
                 WorldButton {objectName:"hqPlaceAtCoordinates";text:tools.item && tools.item.deskDevice?qsTr("Mount on selected desk"):qsTr("Place at column / row");textSize:tools.textSize;enabled:tools.editable && !!tools.item && tools.item.delivered;onClicked:tools.place(tools.item.id,Number(column.text)-1,Number(row.text)-1,tools.rotated,tools.item.deskDevice?tools.mount:0)}
                 GameSelect {
                     objectName:"hqDeskPerson";visible:tools.item && tools.item.kind==="desk" && tools.item.placed
@@ -138,7 +169,15 @@ Rectangle {
                 WorldButton {objectName:"hqEquipmentPower";visible:tools.item && tools.item.watts>0;text:tools.item && tools.item.powered?qsTr("Turn power off"):qsTr("Turn power on");textSize:tools.textSize;enabled:tools.editable;onClicked:campaign.world.powerHQEquipment(tools.item.id,!tools.item.powered,campaign.world.reviewToken)}
                 WorldButton {objectName:"hqStoreItem";visible:tools.item && tools.item.placed;text:qsTr("Move to storage");textSize:tools.textSize;enabled:tools.editable;onClicked:campaign.world.storeHQEquipment(tools.item.id,campaign.world.reviewToken)}
             }
-            Repeater {model:tools.headquarters.rooms || [];Copy {required property var modelData;text:modelData.name+"\n"+modelData.detail}}
+            Repeater {
+                model:tools.changedDesks
+                Copy {
+                    required property var modelData
+                    readonly property var desk:tools.desks.find(row => row.id === modelData.id) || ({})
+                    text:(desk.personName || qsTr("Desk %1").arg(modelData.id))+" · "+tools.describeWalk(modelData)
+                }
+            }
+            Repeater {model:(tools.headquarters.rooms || []).filter(room=>!room.passage);Copy {required property var modelData;text:modelData.name+"\n"+modelData.detail}}
         }
     }
 }

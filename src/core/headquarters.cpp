@@ -2,9 +2,11 @@
 #include <pgp/core/simulation.hpp>
 #include <algorithm>
 #include <array>
+#include <limits>
 #include <map>
 #include <set>
 #include <stdexcept>
+#include <tuple>
 
 namespace pgp::core {
 namespace {
@@ -74,6 +76,56 @@ void sync_capacity(SimulationState& s) {
         } else it->effective=effective;
     }
 }
+constexpr auto no_tile=std::numeric_limits<std::size_t>::max();
+struct WalkSearch {
+    std::vector<int> distance;
+    std::vector<std::size_t> order,origin;
+};
+using WalkEdges=std::array<std::size_t,4>;
+WalkSearch walk(const std::vector<WalkEdges>& floor,std::span<const std::size_t> starts) {
+    const auto count=floor.size();
+    WalkSearch search{std::vector<int>(count,-1),{},std::vector<std::size_t>(count,no_tile)};
+    search.order.reserve(count);
+    for(const auto start:starts) {
+        if(search.distance[start]>=0) continue;
+        search.distance[start]=0;
+        search.origin[start]=start;
+        search.order.push_back(start);
+    }
+    for(std::size_t i=0;i<search.order.size();++i) {
+        const auto tile=search.order[i];
+        for(const auto next:floor[tile]) {
+            if(next==no_tile || search.distance[next]>=0) continue;
+            search.distance[next]=search.distance[tile]+1;
+            search.origin[next]=search.origin[tile];
+            search.order.push_back(next);
+        }
+    }
+    return search;
+}
+struct WalkHeading {
+    int bends=std::numeric_limits<int>::max();
+    std::size_t previous=no_tile;
+};
+using WalkHeadings=std::array<WalkHeading,4>;
+std::vector<WalkHeadings> straightest_routes(const std::vector<WalkEdges>& floor,const WalkSearch& search) {
+    std::vector<WalkHeadings> routes(floor.size());
+    if(search.order.empty()) return routes;
+    for(auto& heading:routes[search.order.front()]) heading.bends=0;
+    // Visit tiles in distance order so each heading has its best shortest predecessor.
+    for(const auto t:search.order) for(std::size_t d=0;d<4;++d) {
+        const auto next=floor[t][d];
+        if(next==no_tile || search.distance[next]!=search.distance[t]+1) continue;
+        auto& heading=routes[next][d];
+        for(std::size_t previous=0;previous<4;++previous) {
+            const auto bends=routes[t][previous].bends;
+            if(bends==std::numeric_limits<int>::max()) continue;
+            const int candidate=bends+(d!=previous?1:0);
+            if(candidate<heading.bends) heading={candidate,previous};
+        }
+    }
+    return routes;
+}
 }
 bool hq_portable(std::string_view kind) {return kind=="laptop" || kind=="research_laptop";}
 bool hq_desk_device(std::string_view kind) {return kind=="desktop" || kind=="workstation" || kind=="thin_client" || hq_portable(kind);}
@@ -112,6 +164,8 @@ std::string hq_placement_blocker(const SimulationState& s,const PlaceHQEquipment
     // Bound coordinates before addition to keep arbitrary command inputs safe.
     if(a.x<0 || a.y<0 || a.x>p.width-w || a.y>p.depth-d) return "The whole object must fit inside the floor.";
     if(std::ranges::none_of(p.rooms,[&](const auto& r){return a.x>=r.x && a.y>=r.y && a.x+w<=r.x+r.width && a.y+d<=r.y+r.depth;})) return "The object crosses a room wall.";
+    if(std::ranges::any_of(p.rooms,[&](const auto& r){return r.passage && a.x>=r.x && a.x<r.x+r.width && a.y>=r.y && a.y<r.y+r.depth;}))
+        return "Keep the hallway clear.";
     for(const auto& other:items) {
         if(other.id==i.id || other.mount || other.premises!=p.id) continue;
         const auto& model=offer(s,other);const int ow=other.rotated?model.depth:model.width,od=other.rotated?model.width:model.depth;
@@ -119,20 +173,227 @@ std::string hq_placement_blocker(const SimulationState& s,const PlaceHQEquipment
     }
     return {};
 }
+HQAccess hq_access(int width,int depth,std::span<const HQRoom> rooms) {
+    HQAccess result;
+    result.entry=(depth-1)*width+width/2;
+    const bool has_halls=std::ranges::any_of(rooms,&HQRoom::passage);
+    if(has_halls) {
+        // Prefer a south-facing entrance, then west, east and north.
+        for(int side=0;side<4;++side) {
+            const auto hall=std::ranges::find_if(rooms,[&](const HQRoom& room){
+                return room.passage && (side==0?room.y+room.depth==depth:
+                    side==1?room.x==0:side==2?room.x+room.width==width:room.y==0);
+            });
+            if(hall==rooms.end()) continue;
+            const int x=side==1?0:side==2?width-1:hall->x+hall->width/2;
+            const int y=side==0?depth-1:side==3?0:hall->y+hall->depth/2;
+            result.entry=y*width+x;
+            result.entry_x=side==1?-1:side==2?1:0;
+            result.entry_y=side==0?1:side==3?-1:0;
+            break;
+        }
+    }
+    for(const auto& r:rooms) for(const auto& next:rooms) {
+        if(r.passage && next.passage) continue;
+        const bool doorway=!has_halls || r.passage!=next.passage;
+        const int top=std::max(r.y,next.y),bottom=std::min(r.y+r.depth,next.y+next.depth);
+        const int left=std::max(r.x,next.x),right=std::min(r.x+r.width,next.x+next.width);
+        if(r.x+r.width==next.x && top<bottom) {
+            if(!doorway) {result.walls.push_back({next.x,top,bottom-top,true});continue;}
+            const int cut=top+(bottom-top-1)/2;
+            const int t=cut*width+next.x-1;
+            result.doors.emplace_back(t,t+1);
+            if(cut>top) result.walls.push_back({next.x,top,cut-top,true});
+            if(cut+1<bottom) result.walls.push_back({next.x,cut+1,bottom-cut-1,true});
+        }
+        if(r.y+r.depth==next.y && left<right) {
+            if(!doorway) {result.walls.push_back({left,next.y,right-left,false});continue;}
+            const int cut=left+(right-left-1)/2;
+            const int t=(next.y-1)*width+cut;
+            result.doors.emplace_back(t,t+width);
+            if(cut>left) result.walls.push_back({left,next.y,cut-left,false});
+            if(cut+1<right) result.walls.push_back({cut+1,next.y,right-cut-1,false});
+        }
+    }
+    return result;
+}
+HQTraffic hq_traffic(const SimulationState& s,const PlaceHQEquipment* preview) {
+    HQTraffic result;
+    if(!enabled(s) || !s.infrastructure->workplace->headquarters || !rules(s).traffic) return result;
+    if(preview) {
+        const auto blocker=hq_placement_blocker(s,*preview);
+        if(!blocker.empty()) throw std::invalid_argument(blocker);
+    }
+    const auto& p=current_headquarters(s);
+    const auto& traffic=*rules(s).traffic;
+    const int width=p.width;
+    const auto stride=static_cast<std::size_t>(width);
+    const auto cells=static_cast<std::size_t>(width*p.depth);
+    const auto tile=[&](int x,int y){return static_cast<std::size_t>(y*width+x);};
+    result.access=hq_access(width,p.depth,p.rooms);
+    const auto entry=static_cast<std::size_t>(result.access.entry);
+    std::vector<std::size_t> room_at(cells);
+    for(std::size_t i=0;i<p.rooms.size();++i) {
+        const auto& r=p.rooms[i];
+        for(int y=r.y;y<r.y+r.depth;++y) for(int x=r.x;x<r.x+r.width;++x) room_at[tile(x,y)]=i;
+    }
+    struct Fixture {
+        const HQEquipment* item;
+        const HQEquipmentOffer* model;
+        int x,y,w,d;
+    };
+    std::vector<Fixture> fixtures;
+    std::vector<bool> occupied(cells);
+    for(const auto& item:hq(s).items) {
+        const bool moving=preview && preview->item==item.id;
+        if(item.delivered_on>s.date || (moving?preview->mount!=0:item.mount!=0 || item.premises!=p.id)) continue;
+        const auto& e=offer(s,item);
+        const bool rotated=moving?preview->rotated:item.rotated;
+        const Fixture f{&item,&e,moving?preview->x:item.x,moving?preview->y:item.y,rotated?e.depth:e.width,rotated?e.width:e.depth};
+        fixtures.push_back(f);
+        for(int y=f.y;y<f.y+f.d;++y) for(int x=f.x;x<f.x+f.w;++x) occupied[tile(x,y)]=true;
+    }
+    std::vector<WalkEdges> floor(cells,WalkEdges{no_tile,no_tile,no_tile,no_tile});
+    const auto connect=[&](std::size_t a,std::size_t b,std::size_t direction) {
+        if(occupied[a] || occupied[b]) return;
+        floor[a][direction]=b;
+        floor[b][direction+2]=a;
+    };
+    for(int y=0;y<p.depth;++y) for(int x=0;x<width;++x) {
+        const auto t=tile(x,y);
+        const auto open=[&](std::size_t next){return room_at[t]==room_at[next] ||
+            (p.rooms[room_at[t]].passage && p.rooms[room_at[next]].passage);};
+        if(x+1<width && open(t+1)) connect(t,t+1,0);
+        if(y+1<p.depth && open(t+stride)) connect(t,t+stride,1);
+    }
+    // Every shared wall has one centred doorway. Furniture can obstruct either side.
+    std::vector<bool> doorway(cells);
+    for(const auto& [first,second]:result.access.doors) {
+        const auto a=static_cast<std::size_t>(first),b=static_cast<std::size_t>(second);
+        doorway[a]=true;
+        connect(a,b,b-a==1?0U:1U);
+    }
+    const auto approach=[&](const Fixture& f) {
+        std::vector<std::size_t> nearby;
+        const auto room=room_at[tile(f.x,f.y)];
+        const auto add=[&](int x,int y) {
+            if(x<0 || x>=width || y<0 || y>=p.depth) return;
+            const auto t=tile(x,y);
+            if(!occupied[t] && room_at[t]==room) nearby.push_back(t);
+        };
+        for(int x=f.x;x<f.x+f.w;++x) {add(x,f.y-1);add(x,f.y+f.d);}
+        for(int y=f.y;y<f.y+f.d;++y) {add(f.x-1,y);add(f.x+f.w,y);}
+        return nearby;
+    };
+    // On arrival, use the hall for transit. A room can be the destination of
+    // a route, but cannot serve as a shortcut between two parts of the hall.
+    auto arrival_edges=floor;
+    for(const auto& [first,second]:result.access.doors) {
+        const auto a=static_cast<std::size_t>(first),b=static_cast<std::size_t>(second);
+        const auto direction=b-a==1?0U:1U;
+        if(p.rooms[room_at[a]].passage) arrival_edges[b][direction+2]=no_tile;
+        if(p.rooms[room_at[b]].passage) arrival_edges[a][direction]=no_tile;
+    }
+    const auto from_door=walk(arrival_edges,occupied[entry]?std::span<const std::size_t>{}:std::span<const std::size_t>{&entry,1});
+    const auto routes=straightest_routes(arrival_edges,from_door);
+    result.open_tiles=static_cast<int>(std::ranges::count(occupied,false));
+    result.reachable_tiles=static_cast<int>(from_door.order.size());
+    std::vector<int> load(cells);
+    std::map<std::string,std::map<std::size_t,const std::string*>> amenity_starts;
+    for(const auto& f:fixtures) {
+        if(f.model->kind=="desk") {
+            HQDeskWalk desk;
+            desk.desk=f.item->id;
+            desk.person=f.item->person;
+            auto nearest=no_tile;
+            std::size_t heading=0;
+            const auto rank=[&](std::size_t t,std::size_t d){return std::tuple{from_door.distance[t],routes[t][d].bends,t};};
+            for(const auto t:approach(f)) {
+                if(from_door.distance[t]<0) continue;
+                const auto d=static_cast<std::size_t>(std::ranges::min_element(routes[t],{},&WalkHeading::bends)-routes[t].begin());
+                if(nearest==no_tile || rank(t,d)<rank(nearest,heading)) {nearest=t;heading=d;}
+            }
+            for(auto t=nearest;t!=no_tile;) {
+                desk.route.push_back(static_cast<int>(t));
+                if(!desk.person.empty()) ++load[t];
+                if(t==entry) break;
+                const auto previous=routes[t][heading].previous;
+                t=floor[t][(heading+2)%4];
+                heading=previous;
+            }
+            std::ranges::reverse(desk.route);
+            result.desks.push_back(std::move(desk));
+        } else if(f.item->powered && hq_amenity_kind(f.model->kind)) {
+            for(const auto t:approach(f)) amenity_starts[f.model->kind].try_emplace(t,&f.model->name);
+        }
+    }
+    std::vector<bool> crowded(cells);
+    for(std::size_t t=0;t<cells;++t) {
+        if(t!=entry && load[t]>=traffic.crowded_at && (doorway[t] || std::ranges::count(floor[t],no_tile)>=2)) {
+            crowded[t]=true;
+            result.crowded_tiles.push_back(static_cast<int>(t));
+        }
+    }
+    for(auto& desk:result.desks) {
+        if(desk.route.empty()) {desk.mood=-traffic.blocked_mood;continue;}
+        desk.congestion=static_cast<int>(std::ranges::count_if(desk.route,[&](int t){return crowded[static_cast<std::size_t>(t)];}));
+        const int excess=std::max(0,static_cast<int>(desk.route.size())-1-traffic.comfortable_walk);
+        desk.mood=-std::min(traffic.maximum_friction,(excess+2)/3+desk.congestion);
+    }
+    for(const auto& [kind,names]:amenity_starts) {
+        std::vector<std::size_t> starts;
+        for(const auto& [t,name]:names) starts.push_back(t);
+        const auto from_amenity=walk(floor,starts);
+        for(auto& desk:result.desks) {
+            if(desk.route.empty()) continue;
+            const auto end=static_cast<std::size_t>(desk.route.back());
+            const int distance=from_amenity.distance[end];
+            if(distance>=0 && distance<=traffic.amenity_walk)
+                desk.amenities.push_back({kind,*names.at(from_amenity.origin[end]),distance});
+        }
+    }
+    return result;
+}
 void validate_hq_plan(int width,int depth,const std::vector<HQRoom>& rooms,int maximum_edge) {
     if(width<3 || depth<3 || width>maximum_edge || depth>maximum_edge || rooms.empty() || rooms.size()>16) invalid("Choose a floor plan within the plot, with one to sixteen rooms.");
     std::vector<bool> covered(static_cast<std::size_t>(width*depth));
     for(const auto& r:rooms) {
-        if(r.x<0 || r.y<0 || r.width<2 || r.depth<2 || r.x+r.width>width || r.y+r.depth>depth) invalid("Rooms must fit inside the building and be at least two metres wide and deep.");
+        const int minimum=r.passage?1:2;
+        if(r.x<0 || r.y<0 || r.width<minimum || r.depth<minimum || r.x>width-r.width || r.y>depth-r.depth)
+            invalid("Rooms must fit inside the building and be at least two metres wide and deep.");
         for(int y=r.y;y<r.y+r.depth;++y) for(int x=r.x;x<r.x+r.width;++x) {
             const auto index=static_cast<std::size_t>(y*width+x);if(covered[index]) invalid("Rooms cannot overlap.");covered[index]=true;
         }
     }
     if(std::ranges::find(covered,false)!=covered.end()) invalid("The rooms must cover the complete building floor.");
+    const auto hall=std::ranges::find(rooms,true,&HQRoom::passage);
+    if(hall==rooms.end()) return;
+    const auto adjacent=[](const HQRoom& a,const HQRoom& b){
+        return ((a.x+a.width==b.x || b.x+b.width==a.x) && std::max(a.y,b.y)<std::min(a.y+a.depth,b.y+b.depth)) ||
+            ((a.y+a.depth==b.y || b.y+b.depth==a.y) && std::max(a.x,b.x)<std::min(a.x+a.width,b.x+b.width));
+    };
+    std::vector<const HQRoom*> connected{&*hall};
+    for(std::size_t i=0;i<connected.size();++i) for(const auto& room:rooms)
+        if(room.passage && adjacent(*connected[i],room) && std::ranges::find(connected,&room)==connected.end())
+            connected.push_back(&room);
+    const auto exterior=[&](const HQRoom* room){return room->x==0 || room->y==0 || room->x+room->width==width || room->y+room->depth==depth;};
+    if(std::ranges::none_of(connected,exterior) ||
+        static_cast<std::ptrdiff_t>(connected.size())!=std::ranges::count(rooms,true,&HQRoom::passage))
+        invalid("Hallways must connect to each other and to the outside.");
+    for(const auto& room:rooms) if(!room.passage && std::ranges::none_of(connected,[&](const HQRoom* path){return adjacent(room,*path);}))
+        invalid("Every room needs a wall along the hallway for its door.");
+    if(connected.size()==rooms.size()) invalid("Leave space for at least one room.");
 }
 void validate_headquarters_rules(const HeadquartersRules& r) {
     if(r.maximum_edge<3 || r.maximum_edge>40 || r.maximum_items<4 || r.maximum_items>128 || r.maximum_properties<1 || r.maximum_properties>16 || r.building_tax_annual_bp>1000 || r.markets.empty() || r.markets.size()>16 || r.plans.empty() || r.plans.size()>8 || r.equipment.empty() || r.equipment.size()>48 || r.contractors.size()!=3) invalid("Headquarters catalogs exceed their supported bounds.");
     validate_hq_plan(r.home_width,r.home_depth,{{0,0,r.home_width,r.home_depth}},r.maximum_edge);
+    if(r.traffic) {
+        const auto& t=*r.traffic;
+        if(t.comfortable_walk<1 || t.comfortable_walk>40 || t.amenity_walk<1 || t.amenity_walk>40 ||
+            t.crowded_at<2 || t.crowded_at>16 || t.blocked_mood<1 || t.blocked_mood>20 ||
+            t.maximum_friction<1 || t.maximum_friction>=t.blocked_mood)
+            invalid("Office traffic rules need bounded walking distances and mood effects.");
+    }
     const auto text=[](const std::string& v){return !v.empty() && v.size()<=128 && v.find('\0')==v.npos;};
     const auto ids=[&](const auto& rows){std::set<std::string> seen;for(const auto& row:rows) if(!text(row.id) || !seen.insert(row.id).second) invalid("Headquarters catalog identities must be unique.");};
     if(!r.homes.empty()) {
@@ -141,7 +402,8 @@ void validate_headquarters_rules(const HeadquartersRules& r) {
         for(const auto& home:r.homes) {
             if((home.family!="poor" && home.family!="middle" && home.family!="rich") || !families.insert(home.family).second || !text(home.plan.id) || !text(home.plan.name)) invalid("Home plans need distinct family backgrounds and names.");
             validate_hq_plan(home.plan.width,home.plan.depth,home.plan.rooms,r.maximum_edge);
-            if(home.plan.rooms.size()<3 || home.room_names.size()!=home.plan.rooms.size()) invalid("Every home needs at least three named free workspaces.");
+            if(home.room_names.size()<3 || static_cast<std::ptrdiff_t>(home.room_names.size())!=std::ranges::count(home.plan.rooms,false,&HQRoom::passage))
+                invalid("Every home needs at least three named free workspaces.");
             for(const auto& name:home.room_names) if(!text(name)) invalid("Name each free home workspace.");
         }
     }
@@ -212,7 +474,7 @@ void initialize_headquarters(SimulationState& s,std::uint64_t seed,std::string_v
     }
     else {
         const auto headcount=s.management && s.management->people?s.management->people->employees.size()+(w.nonresearch_founder?1U:0U):0U;
-        const auto slots=[&](const HQPlan& plan){std::size_t count=0;for(const auto& room:plan.rooms)count+=static_cast<std::size_t>(room.width/3)*static_cast<std::size_t>(room.depth/3);return count;};
+        const auto slots=[&](const HQPlan& plan){std::size_t count=0;for(const auto& room:plan.rooms)if(!room.passage)count+=static_cast<std::size_t>(room.width/3)*static_cast<std::size_t>(room.depth/3);return count;};
         auto chosen=std::ranges::find(r.plans,std::string{"studio"},&HQPlan::id);
         if(chosen==r.plans.end())invalid("The opening headquarters needs a studio plan.");
         if(slots(*chosen)<headcount) {
@@ -228,7 +490,7 @@ void initialize_headquarters(SimulationState& s,std::uint64_t seed,std::string_v
         if(w.nonresearch_founder) people.insert(people.begin(),"founder");
         const auto& desk=find(r.equipment,std::string{"desk"});const auto& computer=find(r.equipment,std::string{"desktop"});
         std::vector<std::pair<int,int>> positions;
-        for(const auto& room:p.rooms)for(int y=room.y;y+3<=room.y+room.depth;y+=3)for(int x=room.x;x+3<=room.x+room.width;x+=3)positions.emplace_back(x,y);
+        for(const auto& room:p.rooms)if(!room.passage)for(int y=room.y;y+3<=room.y+room.depth;y+=3)for(int x=room.x;x+3<=room.x+room.width;x+=3)positions.emplace_back(x,y);
         for(std::size_t n=0;n<people.size();++n) {
             const auto id=static_cast<std::uint32_t>(h.items.size()+1);
             h.items.push_back({id,desk.id,people[n],s.date,s.date,Cents{0},true,true,false,1,0,positions[n].first,positions[n].second});
@@ -402,7 +664,9 @@ void validate_headquarters(const SimulationState& s,bool deep) {
         if(i.mount) {const auto& desk=find(h.items,i.mount);if(!hq_desk_device(e.kind) || offer(s,desk).kind!="desk" || desk.premises!=p.id || !mounts.insert(i.mount).second) invalid("A computer needs its own placed desk.");continue;}
         if(hq_desk_device(e.kind)) invalid("Computers require a desk attachment or an issued laptop assignment.");
         const auto width=i.rotated?e.depth:e.width,depth=i.rotated?e.width:e.depth;
-        if(i.x<0 || i.y<0 || i.x+width>p.width || i.y+depth>p.depth || std::ranges::none_of(p.rooms,[&](const auto& room){return i.x>=room.x && i.y>=room.y && i.x+width<=room.x+room.width && i.y+depth<=room.y+room.depth;})) invalid("The item must fit inside one room, without crossing a wall.");
+        if(i.x<0 || i.y<0 || i.x>p.width-width || i.y>p.depth-depth ||
+            std::ranges::none_of(p.rooms,[&](const auto& room){return !room.passage && i.x>=room.x && i.y>=room.y && i.x+width<=room.x+room.width && i.y+depth<=room.y+room.depth;}))
+            invalid("The item must fit inside a room and leave the hallway clear.");
         for(int y=i.y;y<i.y+depth;++y) for(int x=i.x;x<i.x+width;++x) {auto& cell=occupancy[static_cast<std::size_t>(y*p.width+x)];if(cell) invalid("Equipment cannot overlap. Move the other item or choose another position.");cell=i.id;}
     }
     for(const auto& i:h.items) if(offer(s,i).compute.value()>0 && i.delivered_on<=s.date) {

@@ -14,7 +14,11 @@ int main() {
         using namespace pgp;
         auto json=nlohmann::json::parse(persistence::read_bounded(PGP_HQ_SOURCE,content::maximum_document_bytes));
         for(auto& d:json["definitions"]) if(d["id"]=="scenario.founder_campaign") {
-            auto& c=d["infrastructure"]["workplace"]["headquarters"]["contractors"][0];
+            auto& headquarters=d["infrastructure"]["workplace"]["headquarters"];
+            headquarters["traffic"]={{"comfortable_walk",8},{"amenity_walk",10},{"crowded_at",2},{"blocked_mood",8},{"maximum_friction",4}};
+            d["management"]["people"]["mood"]={{"pay",0},{"company_prestige",0},{"ceo_prestige",0},{"role",0},
+                {"coworkers",0},{"amenity_cap",14},{"temperaments",nlohmann::json::object()},{"amenities",{{"plant",2}}}};
+            auto& c=headquarters["contractors"][0];
             c["delay_bp"]=10000;c["overrun_bp"]=10000;c["maximum_delay_days"]=2;c["maximum_overrun_bp"]=1000;
         }
         const auto registry=content::foundation_registry();
@@ -32,6 +36,55 @@ int main() {
         check(core::furnished_hq_desks(office)==4 && core::assigned_hq_desks(office)==4 && office.capacity->sources.size()==4,"The CEO inherits furnishings for the three actual employees and their own desk.");
         check(core::capacity_report(*office.capacity).effective==core::MilliCUPerDay{16000},"Inherited output must be the sum of the four actual modest computers.");
         check(persistence::decode_save(program,persistence::encode_save(program,inherited)).checkpoint==inherited,"The inherited office and roster must reload exactly.");
+        {
+            auto setup=inherited;
+            setup.world.enabled_flows=std::vector<std::string>{};
+            runtime::Runtime design{program,std::move(setup)};
+            const auto& staff=office.management->people->employees;
+            const auto person=staff.front().terms.profile.id;
+            const auto snapshot=[&]() -> const auto& {return design.current_state().world.simulation;};
+            const auto submit=[&](core::CommandAction action) {
+                const auto receipt=design.submit({snapshot().revision,std::move(action)});
+                if(!receipt.accepted()) throw std::runtime_error(receipt.explanation);
+            };
+            const auto place=[&](core::HeadquartersAction action){submit(core::ManageHeadquarters{std::move(action)});};
+            check(design.prepare_opening(snapshot().revision).accepted(),"Office puzzle fixture must prepare.");
+            place(core::LeaseHQ{"los_angeles","compact"});
+            place(core::PlaceHQEquipment{3,0,0,0,false});
+            place(core::AssignHQDesk{3,person});
+            place(core::BuyHQEquipment{"plant"});
+            submit(core::AdvanceDay{});submit(core::AdvanceDay{});
+            const auto id=snapshot().infrastructure->workplace->headquarters->items.back().id;
+            place(core::PlaceHQEquipment{id,0,4,3,false});
+            const auto open=core::hq_traffic(snapshot());
+            const auto comfortable=core::workplace_moods(snapshot()).at(person);
+            check(open.desks.size()==1 && open.access.doors.size()==1 && open.reachable_tiles==19 &&
+                open.desks.front().route==std::vector{21,15,9,8} &&
+                comfortable.amenities>0 && comfortable.office_walk==0,
+                "The assigned desk and nearby plant should be reached by walking through the interior doorway.");
+            const core::PlaceHQEquipment obstruction{id,0,2,1,false};
+            const auto before=design.current_state();
+            const auto blocked=core::hq_traffic(snapshot(),&obstruction);
+            check(design.current_state()==before && blocked.open_tiles==open.open_tiles &&
+                blocked.reachable_tiles==12 && blocked.desks.front().route.empty(),
+                "A doorway obstruction should strand a room without consuming cash or time in the preview.");
+            place(obstruction);
+            const auto frustrated=core::workplace_moods(snapshot()).at(person);
+            check(core::hq_traffic(snapshot())==blocked && frustrated.office_walk==-8 &&
+                frustrated.amenities==0 && frustrated.score<comfortable.score,
+                "Committed traffic and amenity access must match the preview and change the occupant's mood.");
+            const auto reopened=persistence::decode_save(program,persistence::encode_save(program,design.current_state())).checkpoint;
+            check(core::hq_traffic(reopened.world.simulation)==blocked,"Walking routes must reproduce after loading.");
+            place(core::PlaceHQEquipment{id,0,4,3,false});
+            check(core::hq_traffic(snapshot())==open && core::workplace_moods(snapshot()).at(person).score==comfortable.score,
+                "Clearing a route must immediately restore its amenity and mood benefits.");
+            place(core::PlaceHQEquipment{5,0,0,2,false});
+            place(core::AssignHQDesk{5,staff.at(1).terms.profile.id});
+            const auto shared=core::hq_traffic(snapshot());
+            check(shared.crowded_tiles==std::vector{8} && shared.desks.front().congestion==1 &&
+                core::workplace_moods(snapshot()).at(person).office_walk==-1,
+                "Assigned routes that funnel through the same doorway must show congestion and walking friction.");
+        }
         auto initial=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);
         check(core::current_headquarters(initial.world.simulation).rooms.size()==6,"Wealthy families must provide six actual free furnishing rooms.");
         for(const auto& [family,count]:std::vector<std::pair<std::string,std::size_t>>{{"poor",3},{"middle",4}}) {
@@ -114,11 +167,12 @@ int main() {
         refuse(core::PlaceHQEquipment{8,0,0,0,false});
         check(persistence::decode_save(program,persistence::encode_save(program,game.current_state())).checkpoint==game.current_state(),"Portable assignments and remote dependencies must reload exactly.");
         action(core::BuyHQLand{"seattle","compact"});
-        const std::vector<core::HQRoom> layout{{0,0,3,4},{3,0,3,4}};
+        const std::vector<core::HQRoom> layout{{0,0,2,4},{4,0,2,4},{2,0,2,4,true}};
         const auto random_before=headquarters().stream;
         for(const auto& c:scenario.infrastructure->workplace->headquarters->contractors) (void)core::preview_hq_build(state(),{1,c.id,6,4,layout});
         check(headquarters().stream==random_before,"Comparing contractor bids must not consume future random outcomes.");
         refuse(core::BuildHQ{1,"budget",7,4,{{0,0,7,4}}});
+        refuse(core::BuildHQ{1,"budget",6,4,{{0,0,2,4,true},{2,0,2,4},{4,0,2,4}}});
         action(core::BuildHQ{1,"budget",6,4,layout});
         const auto contract=headquarters().construction.front();
         check(contract.actual>contract.quote && contract.finish_on>contract.promised_on,"Forced risk fixture must create actual overrun and delay.");
@@ -130,6 +184,11 @@ int main() {
         check(headquarters().construction.front().completed_on.has_value(),"The contractor must finish after the actual delay.");
         action(core::MoveToOwnedHQ{1});
         check(game.current_state().world.state_id=="state.us_wa" && core::current_headquarters(state()).rent==core::Cents{0},"Owned premises must be in their purchased city and have no rent.");
+        refuse(core::PlaceHQEquipment{3,0,2,0,false});
+        action(core::PlaceHQEquipment{3,0,0,2,false});
+        const auto walk=core::hq_traffic(state());
+        check(walk.access.entry==21 && walk.access.doors.size()==2 && walk.desks.front().route==std::vector{21,15,9,8,7},
+            "A central hallway must lead to two real door openings and stay clear of furniture.");
         bool land_tax=false,building_tax=false,old_rent_ended=false;
         for(const auto& bill:state().accounts->recurring) {if(bill.id=="hq.land.tax/1") land_tax=true;if(bill.id=="hq.build.tax/1") building_tax=true;if(bill.id=="hq.rent/2" && bill.ends_before==state().date) old_rent_ended=true;}
         check(land_tax && building_tax && old_rent_ended,"Land/building taxes must continue while the old office rent ends.");

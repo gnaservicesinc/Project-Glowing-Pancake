@@ -15,10 +15,14 @@ Item {
     readonly property bool physicalHQ: Object.keys(campaign.world.headquarters).length>0 && campaign.world.atHeadquarters
     property bool furnishing:false
     property bool planView: softwareWorld
+    property bool inspectingWalks: false
+    readonly property bool layoutPlan: furnishing && !!hqTools.traffic.summary
+    readonly property bool showingPlan: planView || layoutPlan
+    onFurnishingChanged: if(!furnishing) inspectingWalks=false
     readonly property var hoveredEquipment: (campaign.world.headquarters.items || []).find(row => row.id === hqTools.hoverTarget) || null
     GameInk { id: ink }
-    function zoomScene(delta) { if(worldView.item && !planView) worldView.item.zoom=Math.max(0.5,Math.min(2,worldView.item.zoom+delta)) }
-    function fitScene() { if(worldView.item && !planView) worldView.item.zoom=1 }
+    function zoomScene(delta) { if(worldView.item && !showingPlan) worldView.item.zoom=Math.max(0.5,Math.min(2,worldView.item.zoom+delta)) }
+    function fitScene() { if(worldView.item && !showingPlan) worldView.item.zoom=1 }
     readonly property bool placementView:physicalHQ && furnishing && compact && hqTools.placing
     readonly property var nav: campaign.world.navigation
     readonly property string place: nav.place || "workspace"
@@ -43,17 +47,23 @@ Item {
     Loader {
         id: worldView
         objectName: "workspaceScene"
-        anchors.top: desktop.placementView?parent.top:desktop.physicalHQ?places.bottom:hud.bottom
+        anchors.top: desktop.placementView || desktop.inspectingWalks?parent.top:desktop.physicalHQ?places.bottom:hud.bottom
         anchors.bottom: dock.top
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.rightMargin: desktop.physicalHQ ? (desktop.furnishing && !desktop.compact ? Math.min(360*desktop.uiScale,desktop.width*0.38)+24 : 0) : desktop.compact || desktop.place === "map" ? 0 : 270*desktop.uiScale
         active: true
         visible: desktop.place !== "map"
-        source: desktop.physicalHQ ? (desktop.planView ? "HeadquartersPlan.qml" : "Headquarters3D.qml") : softwareWorld ? "RoomScene.qml" : "Workspace3D.qml"
+        source: desktop.physicalHQ ? (desktop.showingPlan ? "HeadquartersPlan.qml" : "Headquarters3D.qml") : softwareWorld ? "RoomScene.qml" : "Workspace3D.qml"
         onLoaded: {
             if(desktop.physicalHQ) {
-                if(desktop.planView) { item.objectName="hqFloorPlan"; item.inspectionEnabled=true }
+                if(desktop.showingPlan) {
+                    item.objectName="hqFloorPlan"
+                    item.inspectionEnabled=true
+                    item.traffic=Qt.binding(()=>desktop.layoutPlan?hqTools.traffic:({}))
+                    item.topInset=Qt.binding(()=>desktop.furnishing && hqTools.placing?placementControls.height+8
+                                               :desktop.inspectingWalks?backFromWalks.height+8:0)
+                }
                 item.headquarters=Qt.binding(()=>campaign.world.headquarters)
                 item.editing=Qt.binding(()=>desktop.furnishing)
                 item.selectedItem=Qt.binding(()=>desktop.furnishing ? hqTools.selectedItem : 0)
@@ -94,7 +104,7 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        visible:!desktop.placementView
+        visible:!desktop.placementView && !desktop.inspectingWalks
         height:visible?hudContent.implicitHeight + (desktop.shortLayout?16:28*desktop.uiScale):0
         color: ink.chrome
         Rectangle {anchors.bottom:parent.bottom;width:parent.width;height:1;color:"#425263"}
@@ -141,7 +151,7 @@ Item {
         id: places
         anchors.top:hud.bottom;anchors.left:parent.left;anchors.right:parent.right;anchors.margins:16*desktop.uiScale
         spacing:8
-        visible:!desktop.placementView && desktop.place!=="map" && (!desktop.shortLayout || desktop.physicalHQ)
+        visible:!desktop.placementView && !desktop.inspectingWalks && desktop.place!=="map" && (!desktop.shortLayout || desktop.physicalHQ)
         Repeater {
             model:desktop.physicalHQ?[]:campaign.world.rooms
             WorldButton {required property var modelData;objectName:"place_"+modelData.id;text:modelData.name;textSize:desktop.textSize;checked:desktop.place===modelData.id;onClicked:desktop.visit(modelData.id)}
@@ -165,12 +175,12 @@ Item {
         spacing:7
         Label {text:qsTr("YOUR HEADQUARTERS");font.pixelSize:desktop.textSize*0.74;font.letterSpacing:2.2;color:ink.accent}
         Label {width:parent.width;text:campaign.world.headquarters.title || qsTr("Your workspace");textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:ink.displayFace;font.pixelSize:desktop.textSize*1.7;color:ink.paper}
-        Label {text:qsTr("%1 rooms · %2 placed furnishings").arg((campaign.world.headquarters.rooms || []).length).arg((campaign.world.headquarters.items || []).filter(row=>row.placed && !row.mount).length);font.pixelSize:desktop.textSize*0.9;color:ink.secondary}
+        Label {text:qsTr("%1 rooms · %2 placed furnishings").arg((campaign.world.headquarters.rooms || []).filter(room=>!room.passage).length).arg((campaign.world.headquarters.items || []).filter(row=>row.placed && !row.mount).length);font.pixelSize:desktop.textSize*0.9;color:ink.secondary}
         Label {width:parent.width;text:[...new Set((campaign.world.headquarters.rooms || []).map(row=>row.flooringLabel))].join(" · ");wrapMode:Text.Wrap;font.pixelSize:desktop.textSize*0.8;color:ink.muted}
     }
     Row {
         anchors.right:worldView.right;anchors.bottom:worldView.bottom;anchors.margins:16
-        visible:desktop.physicalHQ && desktop.place!=="map" && !desktop.shortLayout && !hqTools.placing
+        visible:desktop.physicalHQ && desktop.place!=="map" && !desktop.shortLayout && !hqTools.placing && !desktop.layoutPlan
         spacing:6
         WorldButton {objectName:"hqPlanToggle";text:desktop.planView?qsTr("3D view"):qsTr("Floor plan");textSize:desktop.textSize;visible:!softwareWorld;checked:desktop.planView;onClicked:desktop.planView=!desktop.planView}
         WorldButton {objectName:"hqZoomOut";text:"−";hint:qsTr("Zoom out");Accessible.name:hint;textSize:desktop.textSize;visible:!desktop.planView;onClicked:desktop.zoomScene(-0.15)}
@@ -238,9 +248,12 @@ Item {
         anchors.margins:12
         width:Math.min(360*desktop.uiScale,desktop.width-24)
         visible:desktop.physicalHQ && desktop.furnishing && desktop.place!=="map" && (!desktop.compact || !placing)
+                && !desktop.inspectingWalks
         textSize:desktop.textSize
+        arranging:desktop.physicalHQ && desktop.furnishing
         compactOverlay:desktop.compact
         onDoneRequested:desktop.furnishing=false
+        onWalksRequested:desktop.inspectingWalks=true
         editable:campaign.companyEditable && !campaign.busy && !campaign.storageBlocked
         onShopRequested:desktop.openApp("facilities","equipment","laptop")
         onPropertiesRequested:desktop.openApp("facilities","property","laptop")
@@ -251,12 +264,29 @@ Item {
         visible:desktop.physicalHQ && desktop.furnishing && hqTools.placing
         anchors.horizontalCenter:worldView.horizontalCenter;anchors.top:worldView.top;anchors.topMargin:8
         width:Math.min(worldView.width-24,580)
-        Label {Layout.fillWidth:true;text:hqTools.preview.reason || qsTr("Move over the floor to preview placement");font.pixelSize:desktop.textSize;color:hqTools.preview.valid?"#b9f2ce":"#ffd0bc";wrapMode:Text.Wrap;horizontalAlignment:Text.AlignHCenter}
+        Label {
+            objectName:"hqPlacementTraffic"
+            Layout.fillWidth:true
+            Layout.preferredHeight:desktop.textSize*2.6
+            text:hqTools.preview.traffic?.summary || hqTools.preview.reason || qsTr("Move over the floor to preview placement")
+            font.pixelSize:desktop.textSize;color:hqTools.preview.valid?"#b9f2ce":"#ffd0bc"
+            wrapMode:Text.Wrap;maximumLineCount:2;elide:Text.ElideRight
+            horizontalAlignment:Text.AlignHCenter;verticalAlignment:Text.AlignVCenter
+        }
         RowLayout {
             Layout.alignment:Qt.AlignHCenter
             WorldButton {objectName:"hqRotatePreview";text:qsTr("Rotate · R");textSize:desktop.textSize;onClicked:hqTools.rotated=!hqTools.rotated}
             WorldButton {objectName:"hqCancelPreview";text:qsTr("Cancel · Esc");textSize:desktop.textSize;onClicked:hqTools.placing=false}
         }
+    }
+    WorldButton {
+        id:backFromWalks
+        objectName:"hqBackFromWalks"
+        anchors.top:worldView.top;anchors.horizontalCenter:worldView.horizontalCenter;anchors.topMargin:8
+        visible:desktop.physicalHQ && desktop.furnishing && desktop.inspectingWalks
+        text:qsTr("Back to arranging")
+        textSize:desktop.textSize
+        onClicked:desktop.inspectingWalks=false
     }
     Shortcut {sequence:"R";enabled:desktop.visible && desktop.furnishing && hqTools.placing;onActivated:hqTools.rotated=!hqTools.rotated}
     Shortcut {sequence:"Escape";enabled:desktop.visible && desktop.furnishing && hqTools.placing;onActivated:hqTools.placing=false}

@@ -9,7 +9,7 @@ ColumnLayout {
     signal messagesRequested()
     signal realtorRequested()
     property int roomId: Number(campaign.world.draft("personal/family-room", "0"))
-    readonly property var rooms: [{id: 0, name: qsTr("Bedroom")}].concat(home.rooms || [])
+    readonly property var rooms: [{id: 0, name: qsTr("Bedroom")}].concat((home.rooms || []).filter(room=>!room.passage))
     readonly property var selectedRoom: rooms.find(room => room.id === roomId) || rooms[0]
     spacing: 12
     Connections {
@@ -84,10 +84,8 @@ ColumnLayout {
             headquarters: panel.home
             highlightedRoom: panel.selectedRoom.id
             Accessible.name: qsTr("Family workspace plan. Selected room: %1").arg(panel.selectedRoom.name)
-            TapHandler {
-                onTapped: point => panel.showWorkspace(Math.floor((point.position.x - parent.leftEdge) / parent.cell),
-                                                       Math.floor((point.position.y - parent.topEdge) / parent.cell))
-            }
+            inspectionEnabled: true
+            onTilePicked: (x,y,item) => panel.showWorkspace(x,y)
         }
     }
     WorldButton {

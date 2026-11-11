@@ -81,23 +81,32 @@ State** and select a state to see its outline and neighboring boundaries.
 Select a county on the map or in the county list to read its local conditions.
 
 In a fresh founder campaign, use **Suppliers**
-to order a desk and computer. Advance to delivery, choose **Furnish headquarters**,
+to order a desk and computer. Advance to delivery, choose **Arrange headquarters**,
 then click an owned object’s picture to pick it up. Move its translucent preview
 over the floor: green fits, red explains why placement is blocked. Click to place,
 press R to rotate, and Escape or right-click to cancel. Visible rotation/cancel
 buttons and column/row controls are also available. Mount computers on desks and
-assign people through the inspector. Empty/storage/powered-off
+assign people through the inspector. The floor plan shows doors and traces
+routes from the entrance through shared halls or outdoor paths. Keep room
+doorways clear. Amber dots mark crowded tiles and an exclamation mark
+identifies an unreachable desk. On compact screens choose **View walking
+routes**. Pointer placement and the column and row fields preview reachability
+before you commit. Select a desk to read its walk length, mood effect and nearby
+amenities. Shorter routes, clear doorways and convenient break areas improve the
+assigned employee's mood.
+
+Empty/storage/powered-off
 machines provide no compute. A research desktop supplies 4 CU/day and consumes
 metered electricity. The garage, basement and shed cost $0 rent. Middle-income homes also have a
 home office, and wealthy homes add a library and guest house.
 Supplier filters show fictional brands. Issuing a delivered laptop lets its holder
 research without an assigned desk. Thin clients and research laptops require a
 powered installed rack; they do not duplicate its compute. Plants, aquariums and
-break-room furnishings improve mood for employees with assigned HQ desks after
-installation and any required power. The supplier shows each effect. Additional
-copies of the same type do not add more mood points.
+break-room furnishings improve mood when they are installed, powered and within
+a short walk of an assigned desk. The supplier shows each effect.
 **Realtor** compares named landlords, city prices, layouts, deposits and lease terms.
-Alternatively buy land, design rooms and compare three contractor bids. Construction
+Alternatively buy land, lay out rooms and a two-metre hallway, and compare three
+contractor bids. Each room needs a door onto the connected hallway. Construction
 can be delayed or exceed its base quote; the prepaid contingency caps the signed
 commitment and unused funds return. Finished owned premises pay property tax,
 with no rent. Moving stores furniture for arrangement in the new space. Under

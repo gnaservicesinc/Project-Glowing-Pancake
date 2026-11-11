@@ -108395,6 +108395,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "c3f6120833457b98d56af0386375f4595ebd54276a8362ff30a9c5f38b00a45f",
+          "before_hash": "efa27b78ee4b1a8bf5f4c7bddf95289f9b3af6ba86c68447fdf6ab1314a95bc6",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 38,
+          "revision": 39
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "ec953c8d7d3ab07e51636715f5075f0bf54a65b5b4653e25b7fc01464a201da6",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.69.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 70,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.68.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000069.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000070.collection.json",
+      "summary": "Redesign premises around clear hallways and make desk routes part of office planning",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

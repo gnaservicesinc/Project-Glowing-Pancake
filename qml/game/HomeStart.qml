@@ -144,7 +144,7 @@ Rectangle {
                         onRecordRequested: birthKeepsake.open()
                     }
                     Flow {Layout.fillWidth:true;spacing:8;Repeater {model:["Bedroom"].concat(home.story.familyHome.roomNames || []);WorldButton {required property string modelData;text:modelData;textSize:home.typeSize;checked:home.room===modelData;onClicked:{home.room=modelData;home.story.setField("home_room",modelData)}}}}
-                    Copy {text:qsTr("%1 free workspaces · %2 × %3 m in total · the family keeps a room for you when the company moves out.").arg((home.story.familyHome.rooms || []).length).arg(home.story.familyHome.width || 0).arg(home.story.familyHome.depth || 0)}
+                    Copy {text:qsTr("%1 free workspaces · %2 × %3 m in total · the family keeps a room for you when the company moves out.").arg((home.story.familyHome.roomNames || []).length).arg(home.story.familyHome.width || 0).arg(home.story.familyHome.depth || 0)}
                     Copy {text:home.room==="Bedroom"?qsTr("Your childhood room, your personal computer, and the first morning of something new."):qsTr("Free workspace · available to your company after formation. Equipment arrives through suppliers; empty rooms provide no compute.")}
                 }
                 ColumnLayout {

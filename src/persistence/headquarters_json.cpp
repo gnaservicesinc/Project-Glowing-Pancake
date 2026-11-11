@@ -6,7 +6,7 @@ namespace pgp::persistence::detail {
 namespace {
 template<class T,class F> void visit(T& r,F&& f) {
     using V=std::remove_cvref_t<T>;
-    if constexpr(std::is_same_v<V,core::HQRoom>) {f("x",r.x);f("y",r.y);f("width",r.width);f("depth",r.depth);}
+    if constexpr(std::is_same_v<V,core::HQRoom>) {f("x",r.x);f("y",r.y);f("width",r.width);f("depth",r.depth);f("passage",r.passage,true);}
     else if constexpr(std::is_same_v<V,core::HQPremises>) {
         f("id",r.id);f("kind",r.kind);f("market",r.market);f("plan",r.plan);f("lessor",r.lessor);f("address",r.address);f("width",r.width);f("depth",r.depth);f("rooms",r.rooms);
         f("rent",r.rent);f("deposit",r.deposit);f("entered_on",r.entered_on);f("left_on",r.left_on);f("construction",r.construction);
@@ -29,14 +29,17 @@ template<class T> T read(const Json& j) {
     } else if constexpr(requires(T v){v.has_value();}) {if(j.is_null()) return {};return T{read<typename T::value_type>(j)};}
     else if constexpr(requires(T v){v.value();}) {return T{read<std::int64_t>(j)};}
     else if constexpr(requires(T v){v.push_back(typename T::value_type{});}) {if(!j.is_array() || j.size()>128) bad();T values;for(const auto& row:j) values.push_back(read<typename T::value_type>(row));return values;}
-    else {if(!j.is_object()) bad();T r;std::size_t count=0;visit(r,[&](const char* name,auto& value){if(!j.contains(name)) bad();try {value=read<std::remove_cvref_t<decltype(value)>>(j.at(name));} catch(const PersistenceError& e) {throw PersistenceError("headquarters",std::string{name}+": "+e.what());}++count;});if(j.size()!=count) bad();return r;}
+    else {if(!j.is_object()) bad();T r;std::size_t count=0;visit(r,[&](const char* name,auto& value,bool optional=false){if(!j.contains(name)) {if(optional)return;bad();}try {value=read<std::remove_cvref_t<decltype(value)>>(j.at(name));} catch(const PersistenceError& e) {throw PersistenceError("headquarters",std::string{name}+": "+e.what());}++count;});if(j.size()!=count) bad();return r;}
 }
 template<class T> Json write(const T& v) {
     if constexpr(std::is_same_v<T,std::string> || std::is_integral_v<T>) return v;
     else if constexpr(requires{v.has_value();}) return v?write(*v):Json(nullptr);
     else if constexpr(requires{v.value();}) return v.value();
     else if constexpr(requires{v.begin();v.end();}) {auto j=Json::array();for(const auto& r:v) j.push_back(write(r));return j;}
-    else {auto j=Json::object();visit(v,[&](const char* name,const auto& value){j[name]=write(value);});return j;}
+    else {auto j=Json::object();visit(v,[&](const char* name,const auto& value,bool optional=false){
+        if constexpr(std::is_same_v<std::remove_cvref_t<decltype(value)>,bool>) {if(optional && !value)return;}
+        j[name]=write(value);
+    });return j;}
 }
 }
 Json headquarters_json(const core::HeadquartersState& h) {return write(h);}

@@ -61,8 +61,12 @@ The Lab's training form now has an interactive dataset mix. Recipe sample budget
 source weights, shortages and coverage feed the same calculation used by training
 and immutable checkpoints.
 
+Arranging headquarters now previews entrance-to-desk routes, crowded tiles and
+amenity access. Walking distance, obstructions and reachable amenities affect
+the assigned employee's mood.
+
 Next: remaining specialist skill effects, major-HQ property growth,
-infrastructure/layout puzzles, career re-entry and
+infrastructure design puzzles, career re-entry and
 the fictional USCIF branch. These remain selected, unfinished work; this does not close F-06.
 
 ## Selected immersive redesign (F-05, in progress)

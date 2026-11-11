@@ -106,7 +106,7 @@ struct EmployeeMood {
     int score=50, pay=0, company_prestige=0, ceo_prestige=0, role=0, coworkers=0, amenities=0, temperament_effect=0, gatherings=0;
     std::string temperament;
     std::vector<std::string> accessible_amenities;
-    int founder_audience=0,friendships=0;
+    int founder_audience=0,friendships=0,office_walk=0;
 };
 [[nodiscard]] std::map<std::string,EmployeeMood> workplace_moods(const SimulationState&);
 struct EmploymentOffer {

@@ -65,15 +65,17 @@ std::map<std::string, EmployeeMood> workplace_moods(const SimulationState& state
     }
 
     const auto* manager = operations_manager_on(state, state.date);
+    const auto traffic=hq_traffic(state);
+    const int amenity_cap=static_cast<int>(mood.amenity_cap);
     int amenity_points = 0;
     std::vector<std::string> amenity_names;
-    for (const auto& [kind, name] : hq_active_amenities(state)) {
+    if(traffic.access.entry<0) for (const auto& [kind, name] : hq_active_amenities(state)) {
         const auto benefit = mood.amenities.find(kind);
         if (benefit == mood.amenities.end()) continue;
         amenity_points += static_cast<int>(benefit->second);
         amenity_names.push_back(name);
     }
-    amenity_points = std::min(amenity_points, static_cast<int>(mood.amenity_cap));
+    amenity_points = std::min(amenity_points, amenity_cap);
     const auto gathering_points=personal_event_moods(state);
 
     for (const auto& worker : workers) {
@@ -107,12 +109,25 @@ std::map<std::string, EmployeeMood> workplace_moods(const SimulationState& state
                 report.temperament_effect = effect->second;
             break;
         }
-        if (assigned_hq_desk(state, person.id)) {
+        if(traffic.access.entry>=0) {
+            const auto desk=std::ranges::find(traffic.desks,person.id,&HQDeskWalk::person);
+            if(desk!=traffic.desks.end()) {
+                report.office_walk=desk->mood;
+                for(const auto& amenity:desk->amenities) {
+                    const auto benefit=mood.amenities.find(amenity.kind);
+                    if(benefit==mood.amenities.end()) continue;
+                    report.amenities+=static_cast<int>(benefit->second);
+                    report.accessible_amenities.push_back(amenity.name);
+                }
+                report.amenities=std::min(report.amenities,amenity_cap);
+            }
+        } else if (assigned_hq_desk(state, person.id)) {
             report.amenities = amenity_points;
             report.accessible_amenities = amenity_names;
         }
         report.score = std::clamp(50 + report.pay + report.company_prestige + report.ceo_prestige +
-            report.role + report.coworkers + report.amenities + report.temperament_effect + report.gatherings + report.founder_audience + report.friendships, 0, 100);
+            report.role + report.coworkers + report.amenities + report.office_walk + report.temperament_effect +
+            report.gatherings + report.founder_audience + report.friendships, 0, 100);
         results.emplace(person.id, std::move(report));
     }
     return results;

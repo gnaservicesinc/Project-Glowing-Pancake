@@ -185,6 +185,8 @@ public:
     Q_INVOKABLE QVariantList hqBids(QString land,int width,int depth,QVariantList rooms) const;
     Q_INVOKABLE void buyHQEquipment(QString offer,QString revision);
     Q_INVOKABLE QVariantMap hqPlacement(int item,int x,int y,bool rotated,int target) const;
+    Q_INVOKABLE QVariantMap hqTraffic() const;
+    Q_INVOKABLE QVariantMap hqPlanAccess(int width,int depth,QVariantList layout) const;
     Q_INVOKABLE void assignHQLaptop(int item,QString person,QString revision);
     Q_INVOKABLE void placeHQEquipment(int item,int x,int y,bool rotated,int mount,QString revision);
     Q_INVOKABLE void storeHQEquipment(int item,QString revision);

@@ -9,6 +9,7 @@
 #include <QTimer>
 #include <QVector3D>
 #include <QtTest/QTest>
+#include <algorithm>
 #include <iostream>
 #include <memory>
 
@@ -17,7 +18,7 @@ QQuickItem* find(QQuickItem* root,const char* name) {if(root->objectName()==QLat
 bool key(QQuickWindow& window,QQuickItem* item,Qt::Key code=Qt::Key_Space) {if(!item || !item->isVisible() || !item->isEnabled()) return false;item->forceActiveFocus(Qt::TabFocusReason);QTest::keyClick(&window,code);return true;}
 }
 void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot) {
-    struct State {int phase=0,ticks=0,days=0,settle=0,reported=-1,previewPhase=0,viewPhase=0;std::uint64_t familyRevision=0;};auto state=std::make_shared<State>();
+    struct State {int phase=0,ticks=0,days=0,settle=0,reported=-1,previewPhase=0,viewPhase=0,reveals=0;std::uint64_t familyRevision=0;};auto state=std::make_shared<State>();
     auto* timer=new QTimer(&window);timer->setInterval(70);
     QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot] {
         const auto item=[&](const char* name){return find(window.contentItem(),name);};
@@ -91,7 +92,11 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
                 const auto cell=view->property("cell").toReal(),left=view->property("leftEdge").toReal(),top=view->property("topEdge").toReal();
                 start=view->mapToScene(QPointF{left+cell*1.25,top+cell*1.25});end=view->mapToScene(QPointF{left+cell*2.25,top+cell*1.25});
             }
-            if(state->previewPhase<4) {
+            if(state->previewPhase<5) {
+                if(state->previewPhase==0) {
+                    if(!press("hqPick_1")) {fail("Pick up illustrated equipment card");return;}
+                    ++state->previewPhase;return;
+                }
                 QPointF validPoint,invalidPoint;
                 if(item("hqPhysicalScene")) {
                     QVector3D v,b;
@@ -102,12 +107,13 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
                     const auto cell=view->property("cell").toReal(),left=view->property("leftEdge").toReal(),top=view->property("topEdge").toReal();
                     validPoint=view->mapToScene({left+cell*1.2,top+cell*0.2});invalidPoint=view->mapToScene({left+cell*(pgp::core::current_headquarters(s).width-0.8),top+cell*(pgp::core::current_headquarters(s).depth-0.8)});
                 }
-                if(state->previewPhase==0) {
-                    if(!press("hqPick_1")) {fail("Pick up illustrated equipment card");return;}
+                if(state->previewPhase==1) {
                     QTest::mouseMove(&window,validPoint.toPoint(),20);++state->previewPhase;return;
                 }
-                if(state->previewPhase==1) {
+                if(state->previewPhase==2) {
                     if(!tools->property("placing").toBool() || !tools->property("preview").toMap().value("valid").toBool() || !capture(".placement-valid")) {const auto p=tools->property("preview").toMap();std::cerr<<"Preview: "<<p.value("x").toInt()<<","<<p.value("y").toInt()<<" target="<<p.value("mount").toInt()<<" reason="<<p.value("reason").toString().toStdString()<<"\n";fail("Valid translucent placement preview");return;}
+                    const auto traffic=tools->property("preview").toMap().value("traffic").toMap();
+                    if(traffic.value("desks").toList().size()!=1 || traffic.value("summary").toString().isEmpty()) {fail("Walking routes must update during placement");return;}
                     // Native terminal launches may lack OS activation. In that
                     // case exercise the equivalent visible rotation control;
                     // the active offscreen run covers the R shortcut.
@@ -115,7 +121,7 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
                     else if(!press("hqRotatePreview")) {fail("Visible placement rotation control");return;}
                     QTest::mouseMove(&window,invalidPoint.toPoint(),20);++state->previewPhase;return;
                 }
-                if(state->previewPhase==2) {
+                if(state->previewPhase==3) {
                     if(!capture(".placement-blocked") || !tools->property("rotated").toBool() || tools->property("preview").toMap().value("valid").toBool()) {
                         const auto preview=tools->property("preview").toMap();
                         std::cerr<<"Placement rotated="<<tools->property("rotated").toBool()<<" x="<<preview.value("x").toInt()<<" y="<<preview.value("y").toInt()<<" valid="<<preview.value("valid").toBool()<<" active="<<window.isActive()<<'\n';
@@ -151,7 +157,10 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
         case 19:
             if(!press("hqConfirmPurchase")) {fail("Signed construction and authorized contingency");return;}++state->phase;break;
         case 20:
-            if(headquarters->construction.size()!=1 || headquarters->construction[0].rooms.size()!=2) {fail("The signed contract must retain the actual room design");return;}
+            if(headquarters->construction.size()!=1 || headquarters->construction[0].rooms.size()!=3 ||
+                !headquarters->construction[0].rooms.back().passage || headquarters->construction[0].rooms.back().width!=2) {
+                fail("The signed contract must retain both rooms and the two-metre hallway");return;
+            }
             if(!headquarters->construction[0].completed_on) {if(campaign.requiredKind()=="content") {for(const auto& choice:campaign.requiredChoices()) {const auto row=choice.toMap();if(row.value("choiceId").toString().contains("decline")) {campaign.choose(row.value("choiceId").toString());return;}}}
                 if(!campaign.canAdvance()){capture(".blocked");std::cerr<<"Advance blocked: "<<campaign.requiredKind().toStdString()<<" · "<<campaign.requiredTitle().toStdString()<<" · paused "<<campaign.paused()<<" · ready "<<campaign.ready()<<"\n";fail("Construction wait cannot advance");return;}campaign.step();return;}
             if(!press("hqMoveOwned_1")) {fail("Completed building move offer");return;}++state->phase;break;
@@ -165,14 +174,29 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
         }
         case 23:
             if(++state->settle<8) return;
-            if(!capture(".owned-building")) {fail("Owned building render");return;}
-            campaign.setTextScalePercent(200);window.resize(650,480);state->settle=0;++state->phase;break;
+            if(!capture(".owned-building") || !press("hqPlaceAtCoordinates")) {fail("Furnish the completed office");return;}
+            state->phase=42;break;
+        case 42:
+            if(headquarters->items[0].premises!=pgp::core::current_headquarters(s).id) {fail("The desk must be installed in the new office");return;}
+            campaign.setTextScalePercent(200);window.resize(650,480);state->settle=0;state->phase=24;break;
         case 24:
             if(window.visibility()!=QWindow::Windowed || window.width()!=650 || window.height()!=480) {window.showNormal();window.resize(650,480);state->settle=0;return;}
             campaign.clearNotice();
             if(++state->settle<10) return;
-            if(!capture(".compact-200") || !press("hqStartPlacement")) {fail("Compact high-text placement controls");return;}
-            state->settle=0;++state->phase;break;
+            if(!capture(".compact-200") || !press("hqViewWalks")) {fail("Compact walking-route control");return;}
+            state->settle=0;state->phase=40;break;
+        case 40: {
+            if(++state->settle<5) return;
+            const auto traffic=pgp::core::hq_traffic(s);
+            if(!item("hqFloorPlan") || traffic.desks.size()!=1 || traffic.desks.front().route.empty() ||
+                std::ranges::count(pgp::core::current_headquarters(s).rooms,true,&pgp::core::HQRoom::passage)!=1 ||
+                !capture(".compact-walks") || !press("hqBackFromWalks")) {fail("Compact hallway view and return control");return;}
+            state->settle=0;state->phase=41;break;
+        }
+        case 41:
+            if(++state->settle<5) return;
+            if(!press("hqStartPlacement")) {fail("Compact high-text placement controls");return;}
+            state->settle=0;state->phase=25;break;
         case 25: {
             if(++state->settle<8) return;
             auto* floor=item("hqFloorPlan");if(!floor)floor=item("hqPhysicalScene");
@@ -198,7 +222,7 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
             if(++state->settle<10)return;
             const auto& program=*campaign.snapshot()->content;pgp::persistence::CurrentCampaign current{paths.saves_directory/"continuing"};
             if(current.resume(program)!=std::optional{campaign.snapshot()->checkpoint} || !capture(".returned-home")) {fail("Home recovery must render and reload exactly");return;}
-            std::cout<<"HQ UI passed: paid supplies, placement previews, rotation/cancel, assignment/drag, commercial lease, construction, owned relocation, family rooms and keepsake at 200% text, return home and fresh resume\n";
+            std::cout<<"HQ UI passed: paid supplies, placement and walking-route previews, rotation/cancel, assignment/drag, commercial lease, construction, owned relocation, compact walking routes, family rooms and keepsake at 200% text, return home and fresh resume\n";
             timer->stop();QCoreApplication::exit(0);break;
         }
         case 31:
@@ -236,20 +260,32 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
         }
         case 37: {
             if(++state->settle<5)return;
-            auto* plan=item("familyWorkspacePlan");const auto* viewport=item("managementScroll");
-            if(!plan || !viewport || plan->mapToItem(viewport,{0,plan->height()}).y()>viewport->height()+1 ||
-                !capture(".family-workspaces-compact")) {fail("Show the complete family plan at 200% text");return;}
+            auto* plan=item("familyWorkspacePlan");auto* viewport=item("managementScroll");
+            if(!plan || !viewport) {fail("Open the family floor plan");return;}
+            const auto top=plan->mapToItem(viewport,{0,0}).y();
+            if(top<-1 || top+plan->height()>viewport->height()+1) {
+                if(++state->reveals>3 || !QMetaObject::invokeMethod(viewport,"reveal",Q_ARG(QVariant,QVariant::fromValue(plan)))) {
+                    fail("Show the complete family plan at 200% text");return;
+                }
+                state->settle=0;
+                return;
+            }
+            if(!capture(".family-workspaces-compact")) {fail("Capture the complete family floor plan");return;}
             const auto garage=pgp::core::headquarters_home(s).plan.rooms.front();
             const auto cell=plan->property("cell").toReal();
-            const auto point=plan->mapToScene({plan->property("leftEdge").toReal()+(garage.x+0.5)*cell,
-                plan->property("topEdge").toReal()+(garage.y+0.5)*cell});
+            const auto point=plan->mapToScene({plan->property("leftEdge").toReal()+(garage.x+garage.width/2.0)*cell,
+                plan->property("topEdge").toReal()+(garage.y+garage.depth/2.0)*cell});
+            QTest::mouseMove(&window,point.toPoint(),20);
             QTest::mouseClick(&window,Qt::LeftButton,Qt::NoModifier,point.toPoint());
+            if(campaign.world()->draft("personal/family-room","")!="1")
+                std::cerr<<"Family plan click at "<<point.x()<<','<<point.y()<<" · received tile "
+                    <<plan->property("pressedX").toInt()<<','<<plan->property("pressedY").toInt()
+                    <<" · window active "<<window.isActive()<<'\n';
             ++state->phase;break;
         }
         case 38:
-            if(campaign.world()->draft("personal/family-room","")!="1" || !press("familyHomeRealtor")) {
-                fail("Select a room on the plan and open the realtor from the family home");return;
-            }
+            if(campaign.world()->draft("personal/family-room","")!="1") {fail("Select the garage on the family plan");return;}
+            if(!press("familyHomeRealtor")) {fail("Open the realtor from the family home");return;}
             if(s.revision!=state->familyRevision || pgp::core::current_headquarters(s).kind!="owned") {fail("Opening the realtor must not relocate the company");return;}
             campaign.setTextScalePercent(100);window.resize(1280,720);state->settle=0;state->phase=26;break;
         }

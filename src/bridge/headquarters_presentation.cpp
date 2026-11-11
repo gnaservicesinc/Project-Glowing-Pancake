@@ -25,14 +25,54 @@ QString floorFinish(std::string_view kind, std::string_view plan, std::string_vi
 QString floorLabel(const QString& finish) {
     return finish=="oak" ? QObject::tr("Oak flooring") : finish=="carpet" ? QObject::tr("Carpet tiles") : QObject::tr("Concrete floor");
 }
-QVariantList planRoomsJson(const std::vector<core::HQRoom>& rows) {QVariantList list;for(const auto& r:rows) list.push_back(QVariantMap{{"x",r.x},{"y",r.y},{"width",r.width},{"depth",r.depth}});return list;}
+QVariantMap roomGeometry(const core::HQRoom& room) {
+    return {{"x",room.x},{"y",room.y},{"width",room.width},{"depth",room.depth},{"passage",room.passage}};
+}
+QVariantList planRoomsJson(const std::vector<core::HQRoom>& rows) {
+    QVariantList list;
+    for(const auto& room:rows) list.push_back(roomGeometry(room));
+    return list;
+}
+QVariantMap floorAccess(const core::HQAccess& access) {
+    QVariantList doors,walls;
+    for(const auto& [a,b]:access.doors) doors.push_back(QVariantList{a,b});
+    for(const auto& wall:access.walls) walls.push_back(QVariantMap{{"x",wall.x},{"y",wall.y},{"length",wall.length},{"vertical",wall.vertical}});
+    return {{"entry",access.entry},{"entryX",access.entry_x},{"entryY",access.entry_y},{"doors",doors},{"walls",walls}};
+}
 std::vector<core::HQRoom> readRooms(const QVariantList& rows) {
     if(rows.size()>16) throw std::invalid_argument("Use at most sixteen rooms.");std::vector<core::HQRoom> result;
     for(const auto& row:rows) {const auto m=row.toMap();core::HQRoom r;int* fields[]{&r.x,&r.y,&r.width,&r.depth};const char* names[]{"x","y","width","depth"};
-        for(int i=0;i<4;++i) {bool okay=false;const auto value=m.value(names[i]).toInt(&okay);if(!okay || m.value(names[i]).toDouble()!=value) throw std::invalid_argument("Use whole-metre room boundaries.");*fields[i]=value;}result.push_back(r);}
+        for(int i=0;i<4;++i) {bool okay=false;const auto value=m.value(names[i]).toInt(&okay);if(!okay || m.value(names[i]).toDouble()!=value) throw std::invalid_argument("Use whole-metre room boundaries.");*fields[i]=value;}
+        if(m.contains("passage") && m.value("passage").metaType()!=QMetaType::fromType<bool>()) throw std::invalid_argument("Choose a room or a hallway.");
+        r.passage=m.value("passage").toBool();result.push_back(r);}
     return result;
 }
 std::uint32_t id(const QString& value) {bool okay=false;const auto n=value.toUInt(&okay);if(!okay || !n) throw std::invalid_argument("Choose a current property.");return n;}
+QVariantList tiles(const std::vector<int>& route) {
+    QVariantList values;
+    values.reserve(static_cast<qsizetype>(route.size()));
+    for(const int tile:route) values.push_back(tile);
+    return values;
+}
+QVariantMap trafficRow(const core::HQTraffic& walk) {
+    if(walk.access.entry<0) return {};
+    QVariantList desks;
+    int reachable=0;
+    for(const auto& desk:walk.desks) {
+        QStringList amenities;
+        for(const auto& amenity:desk.amenities)
+            amenities.push_back(QObject::tr("%1 · %2 m").arg(q(amenity.name)).arg(amenity.metres));
+        const bool open=!desk.route.empty();
+        if(open) ++reachable;
+        const auto status=open?QObject::tr("%1 m from entrance").arg(desk.route.size()-1):QObject::tr("No route from entrance");
+        const auto detail=desk.congestion?status+QObject::tr(" · %1 crowded tiles").arg(desk.congestion):status;
+        desks.push_back(QVariantMap{{"id",desk.desk},{"route",tiles(desk.route)},{"assigned",!desk.person.empty()},
+            {"detail",detail},{"mood",desk.mood},{"amenities",amenities.join(QStringLiteral("\n"))}});
+    }
+    return {{"desks",desks},{"crowded",tiles(walk.crowded_tiles)},
+        {"summary",QObject::tr("%1/%2 desks reachable · %3/%4 m² walkable from the entrance")
+            .arg(reachable).arg(walk.desks.size()).arg(walk.reachable_tiles).arg(walk.open_tiles)}};
+}
 }
 QVariantMap WorldController::headquarters() const {
     if(!available(snapshot_)) return {};
@@ -51,6 +91,12 @@ QVariantMap WorldController::headquarters() const {
     const auto home=core::headquarters_home(s);
     int index=0;
     for(const auto& room:p.rooms) {
+        auto geometry=roomGeometry(room);
+        if(room.passage) {
+            geometry.insert("flooring",p.kind=="home"?"concrete":"oak");
+            roomRows.push_back(std::move(geometry));
+            continue;
+        }
         int desks=0,computers=0,racks=0,benches=0,tests=0;
         for(const auto& i:h.items) if(i.premises==p.id && !i.mount && i.x>=room.x && i.y>=room.y && i.x<room.x+room.width && i.y<room.y+room.depth) {
             const auto& e=find(r.equipment,i.offer);if(e.kind=="desk") ++desks;if(e.kind=="rack") ++racks;if(e.kind=="bench") ++benches;if(e.kind=="evaluation") ++tests;
@@ -59,11 +105,17 @@ QVariantMap WorldController::headquarters() const {
         const auto finish=floorFinish(p.kind,p.plan,p.kind=="home"?home.room_names.at(static_cast<std::size_t>(index)):std::string{});
         const auto roomName=p.kind=="home"?q(home.room_names.at(static_cast<std::size_t>(index))):tr("Room %1").arg(index+1);
         QStringList functions;if(desks) functions<<tr("Office");if(benches) functions<<tr("Research");if(tests) functions<<tr("Evaluation");if(racks) functions<<tr("Compute");
-        roomRows.push_back(QVariantMap{{"flooring",finish},{"flooringLabel",floorLabel(finish)},{"label",roomName},{"id",++index},{"x",room.x},{"y",room.y},{"width",room.width},{"depth",room.depth},{"name",(p.kind=="home"?q(home.room_names.at(static_cast<std::size_t>(index-1))):tr("Room %1").arg(index))+" · "+(functions.empty()?tr("Empty"):functions.join(" / "))},
-            {"detail",floorLabel(finish)+tr(" · %1 desks · %2 computers · %3 racks").arg(desks).arg(computers).arg(racks)}});
+        geometry.insert("flooring",finish);
+        geometry.insert("flooringLabel",floorLabel(finish));
+        geometry.insert("label",roomName);
+        geometry.insert("id",++index);
+        geometry.insert("name",roomName+" · "+(functions.empty()?tr("Empty"):functions.join(" / ")));
+        geometry.insert("detail",floorLabel(finish)+tr(" · %1 desks · %2 computers · %3 racks").arg(desks).arg(computers).arg(racks));
+        roomRows.push_back(std::move(geometry));
     }
     for(const auto& n:h.notices) notices.push_back(QVariantMap{{"date",date(n.day)},{"text",q(n.text)}});
-    return {{"flooring",floorFinish(p.kind,p.plan)},{"title",p.kind=="home"?q(home.plan.name):q(find(r.plans,p.plan).name)},{"width",p.width},{"depth",p.depth},{"rooms",roomRows},{"items",items},{"kind",q(p.kind)},{"address",q(p.address)},{"city",q(city.city)},{"market",q(p.market)},{"landlord",q(p.lessor)},
+    return {{"flooring",floorFinish(p.kind,p.plan)},{"title",p.kind=="home"?q(home.plan.name):q(find(r.plans,p.plan).name)},{"width",p.width},{"depth",p.depth},{"rooms",roomRows},{"items",items},{"kind",q(p.kind)},{"address",q(p.address)},{"city",q(city.city)},{"market",q(p.market)},{"landlord",q(p.lessor)},{"trafficEnabled",r.traffic.has_value()},
+        {"access",floorAccess(core::hq_access(p.width,p.depth,p.rooms))},
         {"rent",money(p.rent)},{"deposit",money(p.deposit)},{"notices",notices},{"summary",tr("%1 · %2\n%3 × %4 m · %5 desks, %6 assigned\n%7\nSecurity deposit held: %8")
             .arg(q(p.address),q(city.city)).arg(p.width).arg(p.depth).arg(core::furnished_hq_desks(s)).arg(core::assigned_hq_desks(s))
             .arg(p.kind=="home"?tr("Your parents' home workspaces · $0 rent"):p.kind=="owned"?tr("Company-owned building · no rent; property taxes accrue"):tr("Rent %1/month to %2").arg(money(p.rent),q(p.lessor)),money(p.deposit))}};
@@ -76,13 +128,21 @@ QVariantMap WorldController::familyHome() const {
     const auto home=core::headquarters_home(state);
     const auto& premises=core::current_headquarters(state);
     QVariantList rooms;
-    for(std::size_t i=0;i<home.plan.rooms.size();++i) {
-        const auto& room=home.plan.rooms[i];
-        const auto finish=floorFinish("home",home.plan.id,home.room_names[i]);
-        rooms.push_back(QVariantMap{{"flooring",finish},{"flooringLabel",floorLabel(finish)},{"label",q(home.room_names[i])},{"id",static_cast<int>(i+1)},{"name",q(home.room_names[i])},
-            {"x",room.x},{"y",room.y},{"width",room.width},{"depth",room.depth}});
+    std::size_t i=0;
+    for(const auto& room:home.plan.rooms) {
+        auto row=roomGeometry(room);
+        if(!room.passage) {
+            const auto finish=floorFinish("home",home.plan.id,home.room_names[i]);
+            row.insert("flooring",finish);
+            row.insert("flooringLabel",floorLabel(finish));
+            row.insert("label",q(home.room_names[i]));
+            row.insert("name",q(home.room_names[i]));
+            row.insert("id",static_cast<int>(++i));
+        }
+        rooms.push_back(std::move(row));
     }
-    return {{"flooring","concrete"},{"name",q(home.plan.name)},{"city",q(market.city)},{"rooms",rooms},
+    return {{"flooring","concrete"},{"kind","home"},{"name",q(home.plan.name)},{"city",q(market.city)},{"rooms",rooms},
+        {"access",floorAccess(core::hq_access(home.plan.width,home.plan.depth,home.plan.rooms))},
         {"width",home.plan.width},{"depth",home.plan.depth},{"kind","home"},{"atHome",premises.kind=="home"},
         {"items",premises.kind=="home"?headquarters().value("items").toList():QVariantList{}},
         {"founder",world.identity?q(world.identity->founder_name):QString{}},
@@ -103,8 +163,12 @@ QVariantList WorldController::hqEquipmentOffers() const {
         if(e.compute.value()>0) use+=(use.isEmpty()?QString{}:QStringLiteral("\n"))+tr("%1 CU/day · %2 W when on. Requires delivery, placement or issue, and power.").arg(static_cast<double>(e.compute.value())/1000).arg(e.watts);
         if(people && people->mood) {
             const auto bonus=people->mood->amenities.find(e.kind);
-            if(bonus!=people->mood->amenities.end()) use=tr("+%1 mood for employees with assigned HQ desks when installed%2. One benefit per amenity type, up to +%3 total.")
-                .arg(bonus->second).arg(e.watts?tr(" and powered"):QString{}).arg(people->mood->amenity_cap);
+            if(bonus!=people->mood->amenities.end()) {
+                const auto& traffic=rules(snapshot_).traffic;
+                use=traffic?tr("+%1 mood within a %2 m walk of an assigned desk").arg(bonus->second).arg(traffic->amenity_walk)
+                           :tr("+%1 mood for employees with assigned desks").arg(bonus->second);
+                if(e.watts) use+=tr(" when powered");
+            }
         }
         if(use.isEmpty()) use=tr("Office furnishing");
         rows.push_back(QVariantMap{{"id",q(e.id)},{"name",q(e.name)},{"price",money(e.price)},{"kind",q(e.kind)},{"revision",reviewToken()},{"supplier",q(e.supplier)},
@@ -118,7 +182,7 @@ QVariantList WorldController::hqEquipmentOffers() const {
 QVariantList WorldController::hqMarkets() const {QVariantList rows;if(!available(snapshot_)) return rows;for(const auto& m:rules(snapshot_).markets) rows.push_back(QVariantMap{{"id",q(m.id)},{"name",q(m.city)},{"agent",q(m.agent)},{"state",q(m.state)}});return rows;}
 QVariantList WorldController::hqListings(QString market) const {
     QVariantList rows;if(!available(snapshot_)) return rows;
-    for(const auto& p:rules(snapshot_).plans) {auto row=hqPropertyQuote(market,q(p.id),false);row["name"]=q(p.name);row["flooring"]=floorFinish("lease",p.id);row["flooringLabel"]=floorLabel(floorFinish("lease",p.id));row["width"]=p.width;row["depth"]=p.depth;row["rooms"]=planRoomsJson(p.rooms);rows.push_back(row);}return rows;
+    for(const auto& p:rules(snapshot_).plans) {auto row=hqPropertyQuote(market,q(p.id),false);row["name"]=q(p.name);row["flooring"]=floorFinish("lease",p.id);row["flooringLabel"]=floorLabel(floorFinish("lease",p.id));row["width"]=p.width;row["depth"]=p.depth;row["rooms"]=planRoomsJson(p.rooms);row["access"]=floorAccess(core::hq_access(p.width,p.depth,p.rooms));rows.push_back(row);}return rows;
 }
 QVariantMap WorldController::hqPropertyQuote(QString market,QString plan,bool land) const {
     if(!available(snapshot_)) return {{"error",tr("No property market is available.")}};
@@ -164,8 +228,9 @@ QVariantMap WorldController::hqHomeQuote() const {
         const auto quote=core::preview_hq_home(s);
         const auto homeRooms=familyHome().value("rooms").toList();
         return {{"revision",reviewToken()},{"width",home.plan.width},{"depth",home.plan.depth},{"rooms",homeRooms.empty()?planRoomsJson(home.plan.rooms):homeRooms},
+            {"access",floorAccess(core::hq_access(home.plan.width,home.plan.depth,home.plan.rooms))},
             {"detail",tr("Return to %1 in %2.\n%3 free workspaces · $0 rent · no deposit\nOld deposit returned: %4\nOld lease exit fee: %5\nYour equipment is kept in storage for rearranging. Issued laptops stay with their holders. Owned land and building taxes continue.")
-                .arg(q(home.plan.name),q(find(rules(snapshot_).markets,hq(snapshot_).home_market).city)).arg(home.plan.rooms.size()).arg(money(quote.refund),money(quote.exit_fee))}};
+                .arg(q(home.plan.name),q(find(rules(snapshot_).markets,hq(snapshot_).home_market).city)).arg(home.room_names.size()).arg(money(quote.refund),money(quote.exit_fee))}};
     } catch(const std::exception& e) {return {{"error",QString::fromUtf8(e.what())}};}
 }
 QVariantList WorldController::hqBids(QString land,int width,int depth,QVariantList plan) const {
@@ -189,6 +254,19 @@ QVariantList WorldController::hqEmployees() const {
 }
 bool WorldController::hqReview(QString revision) {if(!available(snapshot_)) return false;if(companyArchive()) {emit noticeRaised(tr("This company is no longer accepting new commitments."));return false;}if(revision!=reviewToken()) {emit noticeRaised(tr("The company changed. Review the headquarters action again."));return false;}return true;}
 void WorldController::buyHQEquipment(QString offer,QString revision) {if(hqReview(revision)) emit actionRequested(core::ManageHeadquarters{core::BuyHQEquipment{offer.toStdString()}});}
+QVariantMap WorldController::hqTraffic() const {
+    return available(snapshot_)?trafficRow(core::hq_traffic(snapshot_->checkpoint.world.simulation)):QVariantMap{};
+}
+QVariantMap WorldController::hqPlanAccess(int width,int depth,QVariantList layout) const {
+    if(!available(snapshot_)) return {};
+    try {
+        const auto rooms=readRooms(layout);
+        core::validate_hq_plan(width,depth,rooms,rules(snapshot_).maximum_edge);
+        return floorAccess(core::hq_access(width,depth,rooms));
+    } catch(const std::invalid_argument& error) {
+        return {{"error",QString::fromUtf8(error.what())}};
+    }
+}
 QVariantMap WorldController::hqPlacement(int item,int x,int y,bool rotated,int target) const {
     if(!available(snapshot_) || item<=0) return {{"valid",false},{"reason",tr("Choose an owned object.")}};
     const auto& s=snapshot_->checkpoint.world.simulation;const auto& items=hq(snapshot_).items;
@@ -201,9 +279,11 @@ QVariantMap WorldController::hqPlacement(int item,int x,int y,bool rotated,int t
         mount=find(rules(snapshot_).equipment,hit->offer).kind=="desk"?hit->id:hit->mount;
         if(mount) {const auto& desk=find(items,mount);const auto& shape=find(rules(snapshot_).equipment,desk.offer);x=desk.x;y=desk.y;width=desk.rotated?shape.depth:shape.width;depth=desk.rotated?shape.width:shape.depth;}
     }
-    const auto why=core::hq_placement_blocker(s,{selected->id,mount,x,y,rotated});
+    const core::PlaceHQEquipment placement{selected->id,mount,x,y,rotated};
+    const auto why=core::hq_placement_blocker(s,placement);
     return {{"valid",why.empty()},{"reason",why.empty()?tr("Click to place · R rotates · right-click cancels"):q(why)},
-        {"x",x},{"y",y},{"width",width},{"depth",depth},{"mount",mount},{"rotated",rotated},{"revision",reviewToken()}};
+        {"x",x},{"y",y},{"width",width},{"depth",depth},{"mount",mount},{"rotated",rotated},{"revision",reviewToken()},
+        {"traffic",why.empty() && !mount?trafficRow(core::hq_traffic(s,&placement)):QVariantMap{}}};
 }
 void WorldController::assignHQLaptop(int item,QString person,QString revision) {if(hqReview(revision) && item>0) emit actionRequested(core::ManageHeadquarters{core::AssignHQLaptop{static_cast<std::uint32_t>(item),person.toStdString()}});}
 void WorldController::placeHQEquipment(int item,int x,int y,bool rotated,int mount,QString revision) {if(hqReview(revision) && item>0 && mount>=0) emit actionRequested(core::ManageHeadquarters{core::PlaceHQEquipment{static_cast<std::uint32_t>(item),static_cast<std::uint32_t>(mount),x,y,rotated}});}

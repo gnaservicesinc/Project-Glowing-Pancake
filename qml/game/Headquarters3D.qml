@@ -83,14 +83,26 @@ View3D {
         }
     }
     Block {position:Qt.vector3d(0,105,-scene.rows*50);size:Qt.vector3d(scene.columns*100,210,10);tint:"#c5c6b8";equipmentId:-1}
-    Block {position:Qt.vector3d(-scene.columns*50,105,0);size:Qt.vector3d(10,210,scene.rows*100);tint:"#839b99";equipmentId:-1}
+    Repeater3D {
+        model: {
+            const access=scene.headquarters.access
+            if(!access || access.entryX!==-1) return [{start:0,length:scene.rows}]
+            const door=Math.floor(access.entry/scene.columns)
+            return [{start:0,length:door},{start:door+1,length:scene.rows-door-1}].filter(segment=>segment.length>0)
+        }
+        Node {
+            required property var modelData
+            z:(modelData.start+modelData.length/2)*100-scene.rows*50
+            Block {position:Qt.vector3d(-scene.columns*50,105,0);size:Qt.vector3d(10,210,parent.modelData.length*100);tint:"#839b99";equipmentId:-1}
+            Block {position:Qt.vector3d(-scene.columns*50+8,6,0);size:Qt.vector3d(6,12,parent.modelData.length*100);tint:"#e2d7bd";equipmentId:-1}
+            Block {position:Qt.vector3d(-scene.columns*50,211,0);size:Qt.vector3d(16,6,parent.modelData.length*100);tint:"#c4ccbb";equipmentId:-1}
+        }
+    }
     // Baseboards, a warm lower wall and continuous top rail frame the cutaway.
     Block {position:Qt.vector3d(0,28,-scene.rows*50+6);size:Qt.vector3d(scene.columns*100,56,3);tint:"#80938a";equipmentId:-1}
     Block {position:Qt.vector3d(0,58,-scene.rows*50+8);size:Qt.vector3d(scene.columns*100,4,5);tint:"#d6d5bd";equipmentId:-1}
     Block {position:Qt.vector3d(0,6,-scene.rows*50+8);size:Qt.vector3d(scene.columns*100,12,6);tint:"#e2d7bd";equipmentId:-1}
-    Block {position:Qt.vector3d(-scene.columns*50+8,6,0);size:Qt.vector3d(6,12,scene.rows*100);tint:"#e2d7bd";equipmentId:-1}
     Block {position:Qt.vector3d(0,211,-scene.rows*50);size:Qt.vector3d(scene.columns*100+10,6,16);tint:"#e2d7bd";equipmentId:-1}
-    Block {position:Qt.vector3d(-scene.columns*50,211,0);size:Qt.vector3d(16,6,scene.rows*100);tint:"#c4ccbb";equipmentId:-1}
     Repeater3D {
         model:Math.max(1,Math.floor(scene.columns/3))
         Node {
@@ -116,11 +128,14 @@ View3D {
         Block {required property int index;position:Qt.vector3d(0,1,index*100-scene.rows*50);size:Qt.vector3d(scene.columns*100,0.7,0.7);tint:"#738f86"}
     }
     Repeater3D {
-        model: scene.headquarters.rooms || []
-        Node {
+        model: scene.headquarters.access?.walls || []
+        Block {
             required property var modelData
-            Block {visible:parent.modelData.x>0;position:Qt.vector3d(parent.modelData.x*100-scene.columns*50,22,(parent.modelData.y+parent.modelData.depth/2)*100-scene.rows*50);size:Qt.vector3d(5,44,Math.max(0,parent.modelData.depth*100-80));tint:"#8a9d92";equipmentId:-1}
-            Block {visible:parent.modelData.y>0;position:Qt.vector3d((parent.modelData.x+parent.modelData.width/2)*100-scene.columns*50,22,parent.modelData.y*100-scene.rows*50);size:Qt.vector3d(Math.max(0,parent.modelData.width*100-80),44,5);tint:"#8a9d92";equipmentId:-1}
+            position:Qt.vector3d((modelData.x+(modelData.vertical?0:modelData.length/2))*100-scene.columns*50,22,
+                                (modelData.y+(modelData.vertical?modelData.length/2:0))*100-scene.rows*50)
+            size:Qt.vector3d(modelData.vertical?5:modelData.length*100,44,modelData.vertical?modelData.length*100:5)
+            tint:"#8a9d92"
+            equipmentId:-1
         }
     }
     component Furnishing: Node {

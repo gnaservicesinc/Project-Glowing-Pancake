@@ -416,9 +416,11 @@ QVariantMap FoundingController::familyHome() const {
     const auto family=form_.value("leg")=="political"?std::string{"rich"}:form_.value("family").toString().toStdString();
     const auto home=core::headquarters_home(*premises_rules_,family);
     QVariantList rooms;QStringList names;
-    for(std::size_t i=0;i<home.plan.rooms.size();++i) {
-        const auto& r=home.plan.rooms[i];const auto name=text(home.room_names[i]);names.push_back(name);
-        rooms.push_back(QVariantMap{{"name",name},{"x",r.x},{"y",r.y},{"width",r.width},{"depth",r.depth}});
+    std::size_t i=0;
+    for(const auto& r:home.plan.rooms) {
+        const auto name=r.passage?tr("Walkway"):text(home.room_names[i++]);
+        if(!r.passage) names.push_back(name);
+        rooms.push_back(QVariantMap{{"name",name},{"x",r.x},{"y",r.y},{"width",r.width},{"depth",r.depth},{"passage",r.passage}});
     }
     return {{"name",text(home.plan.name)},{"width",home.plan.width},{"depth",home.plan.depth},{"rooms",rooms},{"roomNames",names}};
 }

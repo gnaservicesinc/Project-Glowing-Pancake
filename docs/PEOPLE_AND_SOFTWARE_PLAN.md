@@ -458,6 +458,17 @@ Licenses retain their existing prices and use rights. Model lineage retains
 the sampled sources and weights. Keyboard and pointer controls update the
 mix, and draft weights survive a restart.
 
-Remaining specialist skill effects, major-HQ property growth, infrastructure and
-layout puzzles, career re-entry and USCIF remain selected work. The full plan
+## Headquarters layout
+
+Commercial plans have shared halls, and family workspaces open onto a common
+walkway. Each enclosed room opens onto that route. The building designer can
+reserve a two-metre hallway and checks access before quoting. The floor plan
+traces short walks with fewer turns and highlights narrow paths. Candidate placements
+recalculate routes before any move. A blocked, long or crowded walk lowers the
+assigned employee's mood, while reachable amenities help it. The text inspector
+shows distance and affected occupants. Routes are derived from the saved floor
+plan and equipment positions.
+
+Remaining specialist skill effects, major-HQ property growth, infrastructure
+puzzles, career re-entry and USCIF remain selected work. The full plan
 and F-06 stay active.

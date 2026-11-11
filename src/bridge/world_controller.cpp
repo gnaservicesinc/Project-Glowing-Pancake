@@ -28,6 +28,7 @@ QVariantMap moodRow(const core::EmployeeMood& mood) {
     add(QObject::tr("Shared traits with coworkers"),mood.coworkers);
     add(QObject::tr("Friends at work"),mood.friendships);
     add(QObject::tr("Office amenities"),mood.amenities);
+    if(mood.office_walk) add(QObject::tr("Walking route to desk"),mood.office_walk);
     add(QObject::tr("Temperament"),mood.temperament_effect);
     add(QObject::tr("Recent hosted gatherings"),mood.gatherings);
     if(mood.founder_audience) add(QObject::tr("Reaction to the founder’s gender"),mood.founder_audience);

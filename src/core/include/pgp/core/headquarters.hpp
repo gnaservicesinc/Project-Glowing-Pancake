@@ -13,6 +13,7 @@ namespace pgp::core {
 struct SimulationState;
 struct HQRoom {
     int x=0,y=0,width=0,depth=0;
+    bool passage=false;
     auto operator<=>(const HQRoom&) const = default;
 };
 struct HQMarket {
@@ -49,6 +50,10 @@ struct HQContractor {
     std::uint32_t base_days=0,cells_per_day=0,delay_bp=0,overrun_bp=0,maximum_delay_days=0,maximum_overrun_bp=0;
     auto operator<=>(const HQContractor&) const = default;
 };
+struct HQTrafficRules {
+    int comfortable_walk=0,amenity_walk=0,crowded_at=0,blocked_mood=0,maximum_friction=0;
+    auto operator<=>(const HQTrafficRules&) const = default;
+};
 struct HeadquartersRules {
     int home_width=3,home_depth=3,maximum_edge=40;
     std::uint32_t maximum_items=128,maximum_properties=16,building_tax_annual_bp=100;
@@ -57,6 +62,7 @@ struct HeadquartersRules {
     std::vector<HQEquipmentOffer> equipment;
     std::vector<HQContractor> contractors;
     std::vector<HQHomePlan> homes;
+    std::optional<HQTrafficRules> traffic;
     auto operator<=>(const HeadquartersRules&) const = default;
 };
 struct HQPremises {
@@ -131,6 +137,40 @@ struct HQQuote {
     Cents price{0},maximum{0},monthly{0},exit_fee{0},refund{0};
     OrdinalDay ready_on{0};
 };
+struct HQAmenityWalk {
+    std::string kind,name;
+    int metres=0;
+    auto operator<=>(const HQAmenityWalk&) const = default;
+};
+struct HQDeskWalk {
+    std::uint32_t desk=0;
+    std::string person;
+    // Tile indices are row-major in the active floor plan.
+    std::vector<int> route;
+    std::vector<HQAmenityWalk> amenities;
+    int congestion=0,mood=0;
+    auto operator<=>(const HQDeskWalk&) const = default;
+};
+struct HQWall {
+    int x=0,y=0,length=0;
+    bool vertical=false;
+    auto operator<=>(const HQWall&) const = default;
+};
+struct HQAccess {
+    int entry=-1,entry_x=0,entry_y=1;
+    std::vector<std::pair<int,int>> doors;
+    std::vector<HQWall> walls;
+    auto operator<=>(const HQAccess&) const = default;
+};
+struct HQTraffic {
+    HQAccess access;
+    int open_tiles=0,reachable_tiles=0;
+    std::vector<int> crowded_tiles;
+    std::vector<HQDeskWalk> desks;
+    auto operator<=>(const HQTraffic&) const = default;
+};
+[[nodiscard]] HQAccess hq_access(int width,int depth,std::span<const HQRoom> rooms);
+[[nodiscard]] HQTraffic hq_traffic(const SimulationState&,const PlaceHQEquipment* preview=nullptr);
 void validate_headquarters_rules(const HeadquartersRules&);
 void validate_hq_plan(int width,int depth,const std::vector<HQRoom>&,int maximum_edge);
 void initialize_headquarters(SimulationState&,std::uint64_t seed,std::string_view home_family="");
