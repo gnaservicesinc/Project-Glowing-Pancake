@@ -36,7 +36,9 @@ childhood learning and children growing into ordinary applicants. People → App
 includes **Employee recommended candidates** for friends and family, with saved
 recommender names and an application waiting list. Mission reversals can put
 work relationships under strain. Mediate concerns, rebuild trust, or face a
-resignation. Further design puzzles and career transitions remain in progress.
+resignation. The Lab now lets players balance training samples across datasets and
+see how the mix affects coverage. Infrastructure puzzles and career transitions
+remain in progress.
 
 **My life** now offers private homes, furnishings and gallery art, bought from
 personal savings with monthly upkeep, resale and room decoration.
@@ -61,7 +63,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.67.0-dev.1**, generation **68**.
+The finalized internal content version is **0.68.0-dev.1**, generation **69**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).

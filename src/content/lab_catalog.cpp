@@ -161,14 +161,16 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
         catalog.research.push_back(std::move(topic));
     }
     for (const auto& row : doc.at("recipes")) {
-        fields(row, {"id", "name", "requires_research", "baseline_bp", "gain_bp", "ceiling_bp", "fit_bp", "data_scale", "compute_scale_milli_CU",
+        auto shape=row;
+        shape.erase("sample_budget");
+        fields(shape, {"id", "name", "requires_research", "baseline_bp", "gain_bp", "ceiling_bp", "fit_bp", "data_scale", "compute_scale_milli_CU",
             "minimum_work_milli_CU", "maximum_work_milli_CU", "preview_uncertainty_bp", "inference_milli_CU_per_task", "minimum_memory_mib", "interconnect"});
         catalog.recipes.push_back({text(row.at("id")), text(row.at("name")), ids(row.at("requires_research")),
             profile(row.at("baseline_bp")), profile(row.at("gain_bp")), profile(row.at("ceiling_bp")), profile(row.at("fit_bp")),
             data_scale(row.at("data_scale")),
             core::MilliCU{integer(row.at("compute_scale_milli_CU"))}, core::MilliCU{integer(row.at("minimum_work_milli_CU"))},
             core::MilliCU{integer(row.at("maximum_work_milli_CU"))}, core::BasisPoints{integer(row.at("preview_uncertainty_bp"))},
-            core::MilliCU{integer(row.at("inference_milli_CU_per_task"))}, integer(row.at("minimum_memory_mib")), text(row.at("interconnect"))});
+            core::MilliCU{integer(row.at("inference_milli_CU_per_task"))}, integer(row.at("minimum_memory_mib")), text(row.at("interconnect")),row.contains("sample_budget")?integer(row.at("sample_budget")):0});
     }
     for (const auto& row : doc.at("evaluations")) {
         fields(row, {"id", "name", "requires_research", "coverage_bp", "required_bp", "uncertainty_bp", "independent", "work_milli_CU", "cash_cents"});
@@ -226,12 +228,15 @@ std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
             research.back()["setback"] = {{"failure_bp",risk->failure_chance.value()},{"retry_credit_bp",risk->retry_credit.value()},
                 {"safeguard",risk->safeguard},{"finding",risk->finding}};
     }
-    for (const auto* row : ordered(catalog.recipes)) recipes.push_back({{"id",row->id},{"name",row->name},{"requires_research",row->requires_research},
+    for (const auto* row : ordered(catalog.recipes)) {
+        recipes.push_back({{"id",row->id},{"name",row->name},{"requires_research",row->requires_research},
         {"baseline_bp",profile_json(row->baseline)},{"gain_bp",profile_json(row->gain)},{"ceiling_bp",profile_json(row->ceiling)},{"fit_bp",profile_json(row->fit)},
         {"data_scale",data_scale_json(row->data_scale)},{"compute_scale_milli_CU",row->compute_scale.value()},
         {"minimum_work_milli_CU",row->minimum_work.value()},{"maximum_work_milli_CU",row->maximum_work.value()},
         {"preview_uncertainty_bp",row->preview_uncertainty.value()},{"inference_milli_CU_per_task",row->inference_per_task.value()},
         {"minimum_memory_mib",row->minimum_memory_mib},{"interconnect",row->interconnect}});
+        if(row->sample_budget)recipes.back()["sample_budget"]=row->sample_budget;
+    }
     for (const auto* row : ordered(catalog.evaluations)) evaluations.push_back({{"id",row->id},{"name",row->name},{"requires_research",row->requires_research},
         {"coverage_bp",profile_json(row->coverage)},{"required_bp",profile_json(row->required)},{"uncertainty_bp",row->uncertainty.value()},
         {"independent",row->independent},{"work_milli_CU",row->work.value()},{"cash_cents",row->cash.value()}});

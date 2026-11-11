@@ -37,6 +37,7 @@ Json lab_json(const core::LabState& state) {
     for (const auto& row : state.models) {models.push_back({{"id",row.id},{"recipe_id",row.recipe_id},{"parent_id",row.parent_id},{"project_id",row.project_id},
         {"data_ids",row.data_ids},{"created_on",row.created_on.value()},{"inherited_work_milli_CU",row.inherited_work.value()},
         {"consumed_work_milli_CU",row.consumed_work.value()},{"capability_bp",lab_profile_json(row.capability)}});
+        if(!row.data_weights.empty())models.back()["data_weights"]=row.data_weights;
         if(row.checkpoint_cursor) models.back()["checkpoint_cursor"]=*row.checkpoint_cursor;
     }
     for (const auto& row : state.evaluations) evaluations.push_back({{"id",row.id},{"model_id",row.model_id},{"plan_id",row.plan_id},{"project_id",row.project_id},
@@ -117,11 +118,17 @@ core::LabState parse_lab(const Json& value) {
         }
     }
     for (const auto& row : value.at("models")) {
-        fields(row,"lab/model",{"id","recipe_id","parent_id","project_id","data_ids","created_on","inherited_work_milli_CU","consumed_work_milli_CU","capability_bp"},{"checkpoint_cursor"});
+        fields(row,"lab/model",{"id","recipe_id","parent_id","project_id","data_ids","created_on","inherited_work_milli_CU","consumed_work_milli_CU","capability_bp"},{"checkpoint_cursor","data_weights"});
         state.models.push_back({label(row.at("id")),label(row.at("recipe_id")),label(row.at("parent_id"),true),label(row.at("project_id"),true),
             strings(row.at("data_ids"),core::lab_catalog_limit),core::OrdinalDay{i64(row.at("created_on"),"lab/model/created_on")},
             core::MilliCU{i64(row.at("inherited_work_milli_CU"),"lab/model/inherited_work")},
             core::MilliCU{i64(row.at("consumed_work_milli_CU"),"lab/model/consumed_work")},parse_lab_profile(row.at("capability_bp"))});
+        if(row.contains("data_weights")) {
+            const auto& weights=row.at("data_weights");
+            if(!weights.is_object() || weights.empty() || weights.size()>core::lab_catalog_limit)invalid("lab/model","Invalid data weights");
+            for(const auto& [id,value]:weights.items())
+                state.models.back().data_weights.emplace(label(Json(id)),static_cast<std::uint32_t>(u64(value,"lab/model/data_weights",100)));
+        }
         if(row.contains("checkpoint_cursor")) state.models.back().checkpoint_cursor=u64(row.at("checkpoint_cursor"),"lab/model/checkpoint_cursor",core::capacity_day_limit);
     }
     for (const auto& row : value.at("evaluations")) {

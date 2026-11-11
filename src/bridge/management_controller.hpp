@@ -177,7 +177,8 @@ public:
     Q_INVOKABLE QVariantMap cashScenarios() const;
     QString guide() const;
     QString ending() const;
-    Q_INVOKABLE QVariantMap trainingPreview(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent={}) const;
+    Q_INVOKABLE QVariantMap dataMixPreview(QString recipe,QStringList data,QVariantMap weights,QString parent={}) const;
+    Q_INVOKABLE QVariantMap trainingPreview(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent={},QVariantMap weights={}) const;
     Q_INVOKABLE QString servicePreview(QString service,QString model,bool review,QString tools={},QString oversight={}) const;
     Q_INVOKABLE QVariantList weightAudiences(QString service,QString region) const;
     Q_INVOKABLE QVariantMap publicationQuote(QString service,QString model,QString evidence,QString source,
@@ -195,7 +196,7 @@ public:
     Q_INVOKABLE void publishResearch(QString id);
     Q_INVOKABLE void acquirePublication(QString id);
     Q_INVOKABLE void setProductPrice(QString id,QString cents);
-    Q_INVOKABLE void train(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent={});
+    Q_INVOKABLE void train(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent={},QVariantMap weights={});
     Q_INVOKABLE void clone(QString id);
     Q_INVOKABLE void checkpoint(QString id);
     Q_INVOKABLE void evaluate(QString model,QString plan,QString source,QString rate,QString staff,QString specialist={});

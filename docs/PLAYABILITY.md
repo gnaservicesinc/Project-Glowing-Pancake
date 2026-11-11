@@ -262,6 +262,14 @@ For the original small-campaign engineering route, launch explicitly with
 6. To broaden the promise, license consented scans and train a **fresh** model on both datasets. Evaluate that model, then deploy the documents-and-tables service with its matching evidence. Paid human review is another offered response, with lower throughput, extra staff and a real recurring cost.
 7. Keep the company funded while time advances through January 2017. Required choices stop work. Inspect public rival notices, contracts, unpaid obligations and the tiered inbox. Save/load preserves the exact campaign boundary.
 
+### Dataset balance
+
+In **Lab → Train**, pick a recipe and select datasets. Adjust source weights to
+shift the recipe's sample budget. A source with fewer records than its allocation
+leaves unfilled slots. The coverage bars show how the mix serves each domain,
+and the training estimate updates as you adjust the weights. **Even mix** resets
+the weights. Continuing from a checkpoint shows its saved mix.
+
 Once a service is live, select a different qualified checkpoint, report or review
 setting in **Lab → Deploy**. Review a trial of 1–30 days and up to 50% of eligible
 discretionary orders. The quoted reservation uses your staff and compute budget.
@@ -546,9 +554,7 @@ does not grant a job or degree.
 
 Grown children may apply independently through family connections, or you can
 invite an application. People → Applicants → **Employee recommended candidates**
-groups friend and family referrals and shows who recommended each person. New
-applications can wait for the next normal recruitment review without replacing
-existing discussions. The recommendation stays attached to the application and later employee record.
+groups friend and family referrals and shows who recommended each person.
 
 In **People → Social circle**, use **Change direction** to review a new company
 mission. Employees invested in the previous mission may ask to talk. Select their

@@ -108356,6 +108356,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "efa27b78ee4b1a8bf5f4c7bddf95289f9b3af6ba86c68447fdf6ab1314a95bc6",
+          "before_hash": "79eb99b5cc63e3ab2c58de7275be3a9a36f395378c573e2f5c5b39e353ecbee4",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 37,
+          "revision": 38
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "2298d3c8b6c27a6bd9b95f327d30c345e81e3346c6bcc78e7a3d8e5ed043c4de",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.68.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 69,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.67.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000068.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000069.collection.json",
+      "summary": "Give founder training recipes sample budgets and expose weighted data balance, shortages, and coverage.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

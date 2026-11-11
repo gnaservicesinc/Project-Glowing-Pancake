@@ -135,20 +135,89 @@ std::vector<std::string> data_union(const LabState& state, const TrainingRequest
     for (const auto& id : ids) (void)lab_data(state,id);
     return ids;
 }
-std::array<std::uint64_t, lab_domain_count> effective_data(const LabCatalog& catalog, const LabModel& model,std::span<const GeneratedDataset> generated,
-        std::span<const DataAcquisition> acquired) {
-    std::array<std::uint64_t, lab_domain_count> result{};
-    for (const auto& id : model.data_ids) {
-        const auto& offer = lookup_data(catalog,generated,acquired,id);
-        for (std::size_t j = 0; j < lab_domain_count; ++j) {
-            const std::uint64_t factors[]{offer.unique_units, static_cast<std::uint64_t>(offer.quality.value()),
-                static_cast<std::uint64_t>(offer.relevance[j].value()), static_cast<std::uint64_t>(offer.coverage[j].value())};
-            const auto contribution = mul_div_round_half_up(factors, 1'000'000'000'000ULL);
-            // Authored per-source units are bounded to 10^12, at most 64 sources.
-            result[j] += contribution;
+bool even_weights(const TrainingRecipe& recipe,const std::vector<std::string>& ids,const DataMixWeights& weights) {
+    if(weights.empty())return true;
+    if(!recipe.sample_budget)invalid("This recipe uses each selected dataset in full");
+    if(weights.size()!=ids.size())invalid("Set a weight for every selected dataset");
+    for(const auto& id:ids) {
+        const auto found=weights.find(id);
+        if(found==weights.end() || found->second<1 || found->second>100)invalid("Dataset weights must be between 1 and 100");
+    }
+    // The empty representation denotes an even allocation.
+    return std::ranges::all_of(weights,[&](const auto& row){return row.second==weights.begin()->second;});
+}
+
+LabModel training_mixture(const LabState& state,const TrainingRequest& request) {
+    LabModel model;
+    model.recipe_id=request.recipe_id;
+    model.data_ids=data_union(state,request);
+    if(!request.parent_id.empty()) {
+        if(!request.data_weights.empty())invalid("Continue with the checkpoint's saved data balance");
+        model.data_weights=find(state.models,request.parent_id).data_weights;
+    } else if(!even_weights(find(state.catalog.recipes,request.recipe_id),model.data_ids,request.data_weights)) {
+        model.data_weights=request.data_weights;
+    }
+    return model;
+}
+
+struct SampleAllocation {
+    const DataOffer* offer=nullptr;
+    std::uint32_t weight=1;
+    std::uint64_t planned=0,remainder=0;
+    [[nodiscard]] std::uint64_t retained() const {return std::min(planned,offer->unique_units);}
+};
+
+using Allocations=std::array<SampleAllocation,lab_catalog_limit>;
+void allocate_samples(std::span<SampleAllocation> allocations,const TrainingRecipe& recipe,const LabCatalog& catalog,
+        const LabModel& model,std::span<const GeneratedDataset> generated,std::span<const DataAcquisition> acquired) {
+    std::uint64_t total_weight=0;
+    for(std::size_t i=0;i<allocations.size();++i) {
+        const auto& id=model.data_ids[i];
+        auto& source=allocations[i];
+        source.offer=&lookup_data(catalog,generated,acquired,id);
+        source.weight=model.data_weights.empty()?1U:model.data_weights.at(id);
+        source.planned=source.offer->unique_units;
+        total_weight+=source.weight;
+    }
+    if(!recipe.sample_budget)return;
+
+    std::uint64_t allocated=0;
+    std::array<std::size_t,lab_catalog_limit> order{};
+    for(std::size_t i=0;i<allocations.size();++i) {
+        auto& source=allocations[i];
+        const auto numerator=recipe.sample_budget*source.weight;
+        source.planned=numerator/total_weight;
+        source.remainder=numerator%total_weight;
+        allocated+=source.planned;
+        order[i]=i;
+    }
+    // Stable source order breaks equal remainders so preview and replay agree.
+    std::ranges::sort(std::span{order}.first(allocations.size()),[&](std::size_t left,std::size_t right){
+        if(allocations[left].remainder!=allocations[right].remainder)return allocations[left].remainder>allocations[right].remainder;
+        return left<right;
+    });
+    for(std::size_t i=0;i<recipe.sample_budget-allocated;++i)++allocations[order[i]].planned;
+}
+
+std::array<std::uint64_t,lab_domain_count> effective_data(std::span<const SampleAllocation> allocations) {
+    std::array<std::uint64_t,lab_domain_count> result{};
+    for(const auto& source:allocations) {
+        const auto& offer=*source.offer;
+        for(std::size_t domain=0;domain<lab_domain_count;++domain) {
+            const std::uint64_t factors[]{source.retained(),static_cast<std::uint64_t>(offer.quality.value()),
+                static_cast<std::uint64_t>(offer.relevance[domain].value()),static_cast<std::uint64_t>(offer.coverage[domain].value())};
+            result[domain]+=mul_div_round_half_up(factors,1'000'000'000'000ULL);
         }
     }
     return result;
+}
+
+std::array<std::uint64_t,lab_domain_count> effective_data(const TrainingRecipe& recipe,const LabCatalog& catalog,const LabModel& model,
+        std::span<const GeneratedDataset> generated,std::span<const DataAcquisition> acquired) {
+    Allocations storage;
+    auto allocations=std::span{storage}.first(model.data_ids.size());
+    allocate_samples(allocations,recipe,catalog,model,generated,acquired);
+    return effective_data(allocations);
 }
 std::uint64_t saturation(std::uint64_t amount, std::uint64_t scale) {
     if (scale == 0 || amount > static_cast<std::uint64_t>(INT64_MAX) - scale)
@@ -267,6 +336,8 @@ void validate_lab_catalog(const LabCatalog& catalog) {
             recipe.minimum_work.value() == 0 || recipe.maximum_work < recipe.minimum_work ||
             recipe.maximum_work.value() > 1'000'000'000'000LL || recipe.inference_per_task.value() == 0)
             invalid("Recipe has an invalid finite compute or inference bound");
+        if(recipe.sample_budget && (recipe.sample_budget<10000 || recipe.sample_budget>1'000'000'000'000ULL))
+            invalid("Recipe sampling budget is outside the supported range");
         for (std::size_t j = 0; j < lab_domain_count; ++j) {
             if (j>=introductory_lab_domains && recipe.data_scale[j]==0 && recipe.baseline[j].value()==0 &&
                 recipe.gain[j].value()==0 && recipe.ceiling[j].value()==0 && recipe.fit[j].value()==0) continue;
@@ -286,7 +357,7 @@ void validate_lab_catalog(const LabCatalog& catalog) {
 LabProfile model_capability(const LabCatalog& catalog, const LabModel& model,
         std::span<const GeneratedDataset> generated,std::span<const DataAcquisition> acquired) {
     const auto& recipe = find(catalog.recipes, model.recipe_id);
-    const auto units = effective_data(catalog,model,generated,acquired);
+    const auto units = effective_data(recipe,catalog,model,generated,acquired);
     const auto compute = saturation(static_cast<std::uint64_t>(model.consumed_work.value()),
                                     static_cast<std::uint64_t>(recipe.compute_scale.value()));
     LabProfile result = empty_lab_profile;
@@ -301,11 +372,29 @@ LabProfile model_capability(const LabCatalog& catalog, const LabModel& model,
     return result;
 }
 
+DataMixPreview preview_data_mix(const LabState& state,const TrainingRequest& request) {
+    const auto& recipe=find(state.catalog.recipes,request.recipe_id);
+    const auto model=training_mixture(state,request);
+    Allocations storage;
+    auto allocations=std::span{storage}.first(model.data_ids.size());
+    allocate_samples(allocations,recipe,state.catalog,model,state.generated,state.acquisitions);
+    DataMixPreview result;
+    result.budget=recipe.sample_budget;
+    result.effective_units=effective_data(allocations);
+    for(const auto& source:allocations) {
+        result.sources.push_back({source.offer->id,source.offer->name,source.weight,source.planned,source.retained()});
+        result.retained+=source.retained();
+    }
+    for(std::size_t domain=0;domain<lab_domain_count;++domain)
+        if(recipe.data_scale[domain])result.saturation[domain]=BasisPoints{static_cast<std::int64_t>(saturation(result.effective_units[domain],recipe.data_scale[domain]))};
+    return result;
+}
+
 TrainingPreview preview_training(const LabState& state, const TrainingRequest& request) {
     const auto& recipe = find(state.catalog.recipes, request.recipe_id);
     if (request.daily_compute.value() == 0 || request.staff == 0 || request.work < recipe.minimum_work || request.work > recipe.maximum_work)
         invalid("Training allocation is outside the recipe's finite work limits");
-    LabModel model; model.recipe_id = request.recipe_id; model.data_ids = data_union(state, request);
+    auto model=training_mixture(state,request);
     model.consumed_work = request.work;
     if (!request.parent_id.empty()) model.consumed_work = checked_unit_add(model.consumed_work, find(state.models, request.parent_id).consumed_work);
     TrainingPreview result;
@@ -318,7 +407,7 @@ TrainingPreview preview_training(const LabState& state, const TrainingRequest& r
     }
     result.prerequisites_met = requires_met(state, recipe.requires_research);
     const auto profile = model_capability(state.catalog,model,state.generated,state.acquisitions);
-    const auto units = effective_data(state.catalog,model,state.generated,state.acquisitions);
+    const auto units = effective_data(recipe,state.catalog,model,state.generated,state.acquisitions);
     const auto compute = saturation(static_cast<std::uint64_t>(model.consumed_work.value()), static_cast<std::uint64_t>(recipe.compute_scale.value()));
     for (std::size_t j = 0; j < lab_domain_count; ++j) {
         if (recipe.data_scale[j]==0) continue;
@@ -453,8 +542,8 @@ void start_training(LabState& state, CapacityState& capacity, OrdinalDay day, co
     const auto preview = preview_training(state, request);
     if (!preview.licensed || !preview.prerequisites_met) invalid("Acquire the data licenses and complete recipe research before training");
     const auto& recipe = find(state.catalog.recipes, request.recipe_id);
-    LabModel model; model.id = request.model_id; model.recipe_id = request.recipe_id; model.parent_id = request.parent_id;
-    model.data_ids = data_union(state, request); model.created_on = day;
+    auto model=training_mixture(state,request);
+    model.id=request.model_id; model.parent_id=request.parent_id; model.created_on=day;
     if (!model.parent_id.empty()) {
         const auto& parent = find(state.models, model.parent_id); frozen(parent, capacity);
         model.inherited_work = parent.consumed_work;
@@ -619,6 +708,7 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         if (model.created_on < state.starts_on || model.created_on > today || model.data_ids.empty() || model.data_ids.size() > lab_catalog_limit ||
             !std::is_sorted(model.data_ids.begin(), model.data_ids.end()) || std::adjacent_find(model.data_ids.begin(), model.data_ids.end()) != model.data_ids.end())
             invalid("Model creation or unique data mixture is invalid");
+        if(!model.data_weights.empty() && even_weights(recipe,model.data_ids,model.data_weights))invalid("Model has a noncanonical data balance");
         for (const auto& id : model.data_ids) {
             const auto available=data_available_on(state,capacity,id);
             if(!available || *available>model.created_on)
@@ -629,7 +719,7 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         if (!model.parent_id.empty()) {
             if (!prior_models.contains(model.parent_id)) invalid("Model lineage is cyclic or references a later model");
             const auto& parent = find(state.models, model.parent_id);
-            if (model.recipe_id != parent.recipe_id || model.data_ids != parent.data_ids || parent.created_on > model.created_on)
+            if (model.recipe_id != parent.recipe_id || model.data_ids != parent.data_ids || model.data_weights!=parent.data_weights || parent.created_on > model.created_on)
                 invalid("Model lineage changed its recipe, data rights or creation order");
             if(model.checkpoint_cursor) {
                 if(!model.project_id.empty() || model.consumed_work.value()==0 || *model.checkpoint_cursor>capacity.days.size() ||

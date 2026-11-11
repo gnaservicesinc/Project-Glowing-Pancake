@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.67.0-dev.1",
+  "content_version": "0.68.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -75855,7 +75855,8 @@
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.data_deduplication"
-            ]
+            ],
+            "sample_budget": 800000
           },
           {
             "baseline_bp": {
@@ -75887,7 +75888,8 @@
             "minimum_work_milli_CU": 60000,
             "name": "Compact document classifier",
             "preview_uncertainty_bp": 600,
-            "requires_research": []
+            "requires_research": [],
+            "sample_budget": 800000
           },
           {
             "baseline_bp": {
@@ -75927,7 +75929,8 @@
             "requires_research": [
               "research.efficient_serving",
               "research.reproducible_tooling"
-            ]
+            ],
+            "sample_budget": 1800000
           },
           {
             "baseline_bp": {
@@ -75961,7 +75964,8 @@
             "preview_uncertainty_bp": 220,
             "requires_research": [
               "research.integrated_science"
-            ]
+            ],
+            "sample_budget": 8000000
           },
           {
             "baseline_bp": {
@@ -75995,7 +75999,8 @@
             "preview_uncertainty_bp": 220,
             "requires_research": [
               "research.integrated_science"
-            ]
+            ],
+            "sample_budget": 8000000
           },
           {
             "baseline_bp": {
@@ -76034,7 +76039,8 @@
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.efficient_image_features"
-            ]
+            ],
+            "sample_budget": 2400000
           },
           {
             "baseline_bp": {
@@ -76068,7 +76074,8 @@
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.data.table_indexing"
-            ]
+            ],
+            "sample_budget": 800000
           },
           {
             "baseline_bp": {
@@ -76102,7 +76109,8 @@
             "preview_uncertainty_bp": 300,
             "requires_research": [
               "research.public.local_rollout"
-            ]
+            ],
+            "sample_budget": 800000
           },
           {
             "baseline_bp": {
@@ -76136,7 +76144,8 @@
             "preview_uncertainty_bp": 300,
             "requires_research": [
               "research.models.budgeted_refresh"
-            ]
+            ],
+            "sample_budget": 800000
           },
           {
             "baseline_bp": {
@@ -76170,7 +76179,8 @@
             "preview_uncertainty_bp": 300,
             "requires_research": [
               "research.models.bounded_tools"
-            ]
+            ],
+            "sample_budget": 1800000
           },
           {
             "baseline_bp": {
@@ -76204,7 +76214,8 @@
             "preview_uncertainty_bp": 220,
             "requires_research": [
               "research.frontier.integrated_measurement"
-            ]
+            ],
+            "sample_budget": 2400000
           },
           {
             "baseline_bp": {
@@ -76248,7 +76259,8 @@
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.sequence_modeling"
-            ]
+            ],
+            "sample_budget": 2400000
           },
           {
             "baseline_bp": {
@@ -76282,7 +76294,8 @@
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.models.supervised_agents"
-            ]
+            ],
+            "sample_budget": 1800000
           },
           {
             "baseline_bp": {
@@ -76316,7 +76329,8 @@
             "preview_uncertainty_bp": 600,
             "requires_research": [
               "research.sequence_modeling"
-            ]
+            ],
+            "sample_budget": 1800000
           }
         ],
         "research": [],
@@ -79124,7 +79138,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 37,
+      "revision": 38,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

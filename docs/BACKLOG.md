@@ -57,8 +57,12 @@ Employee self-funded study is implemented through actual paid-compensation
 budgets, independent practical-course selection and reviewed voluntary enrollment.
 Company sponsorship remains available; employee fees never debit founder savings.
 
-Next: remaining specialist skill effects,
-major-HQ property growth, data/infrastructure/layout puzzles, career re-entry and
+The Lab's training form now has an interactive dataset mix. Recipe sample budgets,
+source weights, shortages and coverage feed the same calculation used by training
+and immutable checkpoints.
+
+Next: remaining specialist skill effects, major-HQ property growth,
+infrastructure/layout puzzles, career re-entry and
 the fictional USCIF branch. These remain selected, unfinished work; this does not close F-06.
 
 ## Selected immersive redesign (F-05, in progress)

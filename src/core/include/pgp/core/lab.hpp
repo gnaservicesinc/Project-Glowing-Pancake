@@ -65,6 +65,7 @@ struct TrainingRecipe {
     MilliCU inference_per_task{0};
     std::uint64_t minimum_memory_mib = 0;
     std::string interconnect = "general";
+    std::uint64_t sample_budget=0;
     auto operator<=>(const TrainingRecipe&) const = default;
 };
 struct EvaluationPlan {
@@ -158,6 +159,7 @@ struct ResearchInsight {
     BasisPoints credit{0};
     auto operator<=>(const ResearchInsight&) const = default;
 };
+using DataMixWeights=std::map<std::string,std::uint32_t>;
 struct LabModel {
     std::string id, recipe_id, parent_id, project_id;
     std::vector<std::string> data_ids;
@@ -167,6 +169,7 @@ struct LabModel {
     LabProfile capability = empty_lab_profile;
     // Immutable snapshot of the parent's settled work at this capacity-day cursor.
     std::optional<std::uint64_t> checkpoint_cursor{};
+    DataMixWeights data_weights{};
     auto operator<=>(const LabModel&) const = default;
 };
 struct EvaluationEvidence {
@@ -215,6 +218,7 @@ struct TrainingRequest {
     MilliCUPerDay daily_compute{0};
     std::uint32_t staff = 0;
     MilliCU work{0};
+    DataMixWeights data_weights{};
 };
 struct LabAllocation {
     std::string source_id;
@@ -244,6 +248,17 @@ struct SyntheticPreview {
     Days minimum_days{0};
     std::uint64_t retained_lower=0,retained_upper=0,diversity_remaining=0;
     bool commercial_use=false,open_weight_release=false;
+};
+struct DataMixSlice {
+    std::string id,name;
+    std::uint32_t weight=1;
+    std::uint64_t planned=0,retained=0;
+};
+struct DataMixPreview {
+    std::uint64_t budget=0,retained=0;
+    std::vector<DataMixSlice> sources;
+    std::array<std::uint64_t,lab_domain_count> effective_units{};
+    LabProfile saturation=empty_lab_profile;
 };
 struct TrainingPreview {
     Days minimum_days{0};
@@ -293,6 +308,7 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
                   const RandomSnapshot& random, bool deep = true);
 [[nodiscard]] LabProfile model_capability(const LabCatalog& catalog, const LabModel& model,
     std::span<const GeneratedDataset> generated={},std::span<const DataAcquisition> acquired={});
+[[nodiscard]] DataMixPreview preview_data_mix(const LabState&,const TrainingRequest&);
 [[nodiscard]] TrainingPreview preview_training(const LabState& state, const TrainingRequest& request);
 [[nodiscard]] LabReport lab_report(const LabState& state, const CapacityState& capacity);
 // Mutators operate inside Simulation's copied transaction; costs and capacity

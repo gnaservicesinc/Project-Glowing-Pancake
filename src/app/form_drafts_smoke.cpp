@@ -23,27 +23,32 @@ bool key(QQuickWindow& window,QQuickItem* item,int code,Qt::KeyboardModifiers mo
     QCoreApplication::sendEvent(&window,&down);QCoreApplication::sendEvent(&window,&up);return true;
 }
 }
-void schedule_form_drafts_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot) {
+void schedule_form_drafts_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot,bool data_mix_only) {
     using namespace pgp;
     struct Check{int phase=0,ticks=0;bool resumed=false;std::optional<runtime::Checkpoint> initial;std::string fingerprint;};
     auto check=std::make_shared<Check>();auto* timer=new QTimer(&window);timer->setInterval(200);
-    QObject::connect(timer,&QTimer::timeout,&window,[&,check,timer,paths,screenshot] {
+    QObject::connect(timer,&QTimer::timeout,&window,[&,check,timer,paths,screenshot,data_mix_only] {
         const auto fail=[&](const char* reason){std::cerr<<"Form drafts: "<<reason<<'\n';timer->stop();QCoreApplication::exit(3);};
         const auto item=[&](const char* name){return find(window.contentItem(),QString::fromUtf8(name));};
-        const auto remember=[&](const QString& name,const QString& value){campaign.world()->setDraft("test/forms/"+name,value);};
-        const auto expected=[&](const QString& name){return campaign.world()->draft("test/forms/"+name,{});};
+        const QString test_scope=data_mix_only?"test/data-mix/":"test/forms/";
+        const auto remember=[&](const QString& name,const QString& value){campaign.world()->setDraft(test_scope+name,value);};
+        const auto expected=[&](const QString& name){return campaign.world()->draft(test_scope+name,{});};
         const auto open=[&](const char* app,const char* section){return campaign.world()->navigate("workspace","hq","laptop",app,section);};
         if(++check->ticks>180){fail("timed out");return;}
         if(!campaign.ready() || campaign.busy()) return;
         if(check->initial && campaign.snapshot()->checkpoint!=*check->initial){fail("restoring or editing a draft must not change the simulation");return;}
         if(check->phase==0) {
             if(!campaign.currentCampaign() || campaign.storageBlocked()){fail("needs an isolated continuing company");return;}
+            if(auto* resume=item("menuResumeButton")) {
+                key(window,resume,Qt::Key_Space);
+                return;
+            }
             check->initial=campaign.snapshot()->checkpoint;
             check->fingerprint=persistence::CurrentCampaign{paths.saves_directory/"continuing"}.fingerprint();
             check->resumed=expected("ready")=="yes";
             if(campaign.management()->researchTopics()->objectName()!="management/researchTopics"){fail("model selections need stable shared names");return;}
-            if(!open("lab",check->resumed?"train":"research")){fail("open Lab");return;}
-            ++check->phase;return;
+            if(!open("lab",data_mix_only || check->resumed?"train":"research")){fail("open Lab");return;}
+            check->phase=data_mix_only?2:1;return;
         }
         if(check->phase==1) {
             if(!check->resumed) {
@@ -53,17 +58,48 @@ void schedule_form_drafts_smoke(QQuickWindow& window,pgp::bridge::CampaignContro
             } else if(campaign.management()->researchTopics()->selectedId()!=expected("topic")){fail("selected topic did not resume by ID");return;}
             if(!open("lab","train")){fail("open training form");return;}++check->phase;return;
         }
-        if(check->phase==2) {
+        if(check->phase==2 || check->phase==22) {
             auto* recipe=item("recipeChoiceInput");auto* continuing=item("continueTrainingChoice");
             auto* rate=item("trainingRateFieldInput");
             const auto data_id=campaign.management()->dataOffers()->idAt(0);
-            auto* mixture=find(window.contentItem(),"trainingData_"+data_id);
-            if(!recipe || !continuing || !mixture || !rate || recipe->property("count").toInt()<2){fail("training controls and real options");return;}
+            const auto second_id=campaign.management()->dataOffers()->idAt(1);
+            const auto mixture_item=[&](const QString& id){return find(window.contentItem(),"trainingData_"+id);};
+            const auto weight_item=[&]{return find(window.contentItem(),"mixWeight_"+data_id);};
+            if(!recipe || !continuing || !rate || recipe->property("count").toInt()<2){fail("training controls and real options");return;}
             if(check->resumed) {
-                if(recipe->property("currentValue").toString()!=expected("recipe") || !continuing->property("checked").toBool() || !mixture->property("checked").toBool() || rate->property("text").toString()!="37"){fail("recipe, checkbox, text or checked mixture did not resume");return;}
+                if(check->phase==2) {
+                    if(recipe->property("currentValue").toString()!=expected("recipe") || !continuing->property("checked").toBool() || rate->property("text").toString()!="37"){fail("recipe, checkbox or text did not resume");return;}
+                    if(!key(window,continuing,Qt::Key_Space)){fail("Return to fresh mixture");return;}
+                    check->phase=22;
+                    return;
+                }
+                auto* mixture=mixture_item(data_id);
+                if(!mixture || !mixture->property("checked").toBool()){fail("Checked mixture did not resume");return;}
+                if(!expected("weight").isEmpty()) {
+                    auto* slider=weight_item();
+                    if(!slider){fail("Restored dataset mix slider missing");return;}
+                    if(slider->property("value").toInt()!=expected("weight").toInt()){
+                        std::cerr<<"Sampling weight is "<<slider->property("value").toInt()<<" instead of "<<expected("weight").toInt()<<'\n';
+                        fail("Sampling weight did not resume");return;
+                    }
+                }
+                if(!key(window,continuing,Qt::Key_Space)){fail("Restore checkpoint selection");return;}
             } else {
-                if(!key(window,recipe,Qt::Key_End) || recipe->property("currentIndex").toInt()!=recipe->property("count").toInt()-1 ||
-                    !key(window,continuing,Qt::Key_Space) || !continuing->property("checked").toBool() || !key(window,mixture,Qt::Key_Space) || !mixture->property("checked").toBool()){fail("keyboard draft choices");return;}
+                if(!key(window,recipe,Qt::Key_End) || recipe->property("currentIndex").toInt()!=recipe->property("count").toInt()-1){fail("Keyboard recipe selection");return;}
+                auto* mixture=mixture_item(data_id);
+                if(!key(window,mixture,Qt::Key_Space) || !mixture->property("checked").toBool()){fail("Keyboard dataset selection");return;}
+                if(auto* slider=weight_item()) {
+                    if(!key(window,mixture_item(second_id),Qt::Key_Space)){fail("Select second dataset");return;}
+                    auto* share=find(window.contentItem(),"mixShare_"+data_id);
+                    if(!share){fail("Sampling share label");return;}
+                    const auto even=share->property("text").toString();
+                    slider=weight_item();
+                    if(!key(window,slider,Qt::Key_Right) || slider!=weight_item() || slider->property("value").toInt()!=11 ||
+                        share->property("text").toString()==even){fail("Keyboard sampling adjustment updates share without rebuilding controls");return;}
+                    remember("weight",QString::number(slider->property("value").toInt()));
+                    if(!screenshot.isEmpty())window.grabWindow().save(screenshot+".mix.png");
+                }
+                if(!key(window,continuing,Qt::Key_Space) || !continuing->property("checked").toBool()){fail("Keyboard checkpoint selection");return;}
                 remember("recipe",recipe->property("currentValue").toString());
                 if(!key(window,rate,Qt::Key_A,Qt::ControlModifier) || !key(window,rate,Qt::Key_3) || !key(window,rate,Qt::Key_7) || rate->property("text").toString()!="37"){fail("edit numeric draft by keyboard");return;}
                 const auto saved=campaign.world()->draft("form/choice/recipeChoiceInput/",{});
@@ -71,6 +107,16 @@ void schedule_form_drafts_smoke(QQuickWindow& window,pgp::bridge::CampaignContro
                 campaign.world()->setDraft("form/choice/recipeChoiceInput/","\"missing-recipe\"");
                 if(!QMetaObject::invokeMethod(recipe,"restoreDraft") || recipe->property("currentValue").toString()!=expected("recipe")){fail("unavailable draft ID must leave a valid selection");return;}
                 campaign.world()->setDraft("form/choice/recipeChoiceInput/",saved);
+            }
+            if(data_mix_only) {
+                if(expected("weight").isEmpty()){fail("No weighted recipe");return;}
+                if(check->fingerprint!=persistence::CurrentCampaign{paths.saves_directory/"continuing"}.fingerprint()){
+                    fail("Weight edits changed the campaign journal");
+                    return;
+                }
+                remember("ready","yes");
+                std::cout<<"Dataset mix keyboard editing, live shares and draft retention passed; resumed="<<check->resumed<<'\n';
+                timer->stop();QCoreApplication::exit(0);return;
             }
             if(!open("frontier","")){fail("open research planning");return;}check->phase=20;return;
         }

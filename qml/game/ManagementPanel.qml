@@ -10,13 +10,23 @@ ColumnLayout {
     property string officeSection: "offers"
     property var manager: campaign.management
     property var trainingData: []
+    property var trainingWeights: ({})
     signal openSuppliers()
     DraftState {
         id: mixtureDraft
         draftKey: "training/mixture"
         accepts: value => Array.isArray(value) && value.length <= 64 && value.every(id => typeof id === "string") && new Set(value).size === value.length
-        onRestored: value => panel.trainingData = value.filter(id => manager.dataOffers.containsSourceId(id))
+        onRestored: value => { panel.trainingData = value.filter(id => manager.dataOffers.containsSourceId(id)); training.refresh() }
         onReset: panel.trainingData = []
+    }
+    DraftState {
+        id: weightsDraft
+        draftKey: "training/weights"
+        accepts: value => value && typeof value === "object" && !Array.isArray(value)
+                          && Object.keys(value).length <= 64
+                          && Object.values(value).every(weight => Number.isInteger(weight) && weight >= 1 && weight <= 100)
+        onRestored: value => { panel.trainingWeights = value; training.refresh() }
+        onReset: panel.trainingWeights = ({})
     }
     DraftState {
         id: labPageDraft
@@ -352,12 +362,37 @@ ColumnLayout {
         onVisibleChanged: if (visible) refresh()
         Connections { target: campaign; function onStateChanged() { if (training.visible && campaign.paused) training.refresh() } }
         Connections { target: manager; function onChanged() { training.refresh() } }
-        function refresh() { if (!visible || !campaign.paused || campaign.busy) return; if (!recipe || !trainingSource || !trainingRate || !trainingStaff || !trainingWork || !continueTraining || !parentModel) return; preview = manager.trainingPreview(recipe.value, trainingSource.value, panel.trainingData, trainingRate.value, trainingStaff.value, trainingWork.value, continueTraining.checked ? parentModel.value : "") }
+        property var mix: ({})
+        property bool refreshing: false
+        readonly property string parentId: continueTraining.checked ? parentModel.value : ""
+        readonly property var selectedData: continueTraining.checked ? [] : panel.trainingData
+        function weightsForRequest() {
+            if (continueTraining.checked || !recipe.selectedOption.sampleBudget) return ({})
+            const weights = {}
+            for (const id of selectedData) weights[id] = panel.trainingWeights[id] || 10
+            return weights
+        }
+        function refresh() {
+            if (!visible || !campaign.paused || campaign.busy) return
+            if (!recipe || !trainingSource || !trainingRate || !trainingStaff || !trainingWork || !continueTraining || !parentModel) return
+            mix = manager.dataMixPreview(recipe.value, selectedData, weightsForRequest(), parentId)
+            refreshing = true
+            forecast.restart()
+        }
+        Timer {
+            id: forecast
+            interval: 140
+            onTriggered: {
+                training.preview = manager.trainingPreview(recipe.value, trainingSource.value, training.selectedData,
+                    trainingRate.value, trainingStaff.value, trainingWork.value, training.parentId, training.weightsForRequest())
+                training.refreshing = false
+            }
+        }
         Choice { id: recipe; objectName: "recipeChoice"; label: qsTr("Training recipe"); options: manager.recipes; onValueChanged: training.refresh() }
         Copy { text: recipe.selectedOption.detail || "" }
-        Copy { text: qsTr("Training mixture (licenses are purchased in Data)") }
+        Copy { visible: !continueTraining.checked; text: qsTr("Select datasets") }
         Repeater {
-            model: manager.dataOffers
+            model: continueTraining.checked ? null : manager.dataOffers
             GameCheck {
                 required property string entityId
                 objectName: "trainingData_" + entityId
@@ -369,6 +404,12 @@ ColumnLayout {
                 checked: panel.trainingData.indexOf(entityId) >= 0
                 onClicked: {
                     panel.trainingData = checked ? panel.trainingData.concat([entityId]) : panel.trainingData.filter(id => id !== entityId)
+                    if (!checked) {
+                        const weights = Object.assign({}, panel.trainingWeights)
+                        delete weights[entityId]
+                        panel.trainingWeights = weights
+                        weightsDraft.remember(weights)
+                    }
                     mixtureDraft.remember(panel.trainingData)
                     training.refresh()
                 }
@@ -378,6 +419,28 @@ ColumnLayout {
                     wrapMode: Text.Wrap
                 }
                 Layout.fillWidth: true
+            }
+        }
+        DataMixBoard {
+            objectName: "dataMixBoard"
+            Layout.fillWidth: true
+            visible: !!training.mix.weighted || !!recipe.selectedOption.sampleBudget
+            textSize: panel.textSize
+            mix: training.mix
+            weights: panel.trainingWeights
+            editable: panel.editable
+            checkpoint: continueTraining.checked
+            onWeightEdited: (source, weight) => {
+                const weights = Object.assign({}, panel.trainingWeights)
+                weights[source] = weight
+                panel.trainingWeights = weights
+                training.refresh()
+            }
+            onWeightsSettled: weightsDraft.remember(panel.trainingWeights)
+            onResetWeights: {
+                panel.trainingWeights = ({})
+                weightsDraft.remember(panel.trainingWeights)
+                training.refresh()
             }
         }
         Choice { objectName: "managementTrainingSourceChoice"; id: trainingSource; label: qsTr("Training compute source"); options: manager.sources; onValueChanged: training.refresh() }
@@ -391,7 +454,7 @@ ColumnLayout {
             text: qsTr("Continue a stopped checkpoint with the same recipe and data")
             font.pixelSize: panel.textSize
             Accessible.name: text
-            onCheckedChanged: training.refresh()
+            onCheckedChanged: Qt.callLater(training.refresh)
             contentItem: Text {
                 text: continueTraining.text; font: continueTraining.font; color: "#f2f4f7"
                 leftPadding: continueTraining.indicator.width + continueTraining.spacing
@@ -403,8 +466,8 @@ ColumnLayout {
         Action {
             objectName: "startTrainingButton"
             text: qsTr("Reserve resources and start training")
-            enabled: panel.editable && training.preview.ready === true
-            onClicked: manager.train(recipe.value, trainingSource.value, panel.trainingData, trainingRate.value, trainingStaff.value, trainingWork.value, continueTraining.checked ? parentModel.value : "")
+            enabled: panel.editable && !training.refreshing && training.preview.ready === true
+            onClicked: manager.train(recipe.value, trainingSource.value, training.selectedData, trainingRate.value, trainingStaff.value, trainingWork.value, training.parentId, training.weightsForRequest())
         }
     }
     ColumnLayout {

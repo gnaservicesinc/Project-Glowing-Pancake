@@ -457,3 +457,9 @@ target_include_directories(pgp-mission-conflict-test SYSTEM PRIVATE "${PROJECT_S
 target_compile_definitions(pgp-mission-conflict-test PRIVATE PGP_MISSION_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-mission-conflict-test)
 add_test(NAME runtime.mission-conflict COMMAND pgp-mission-conflict-test)
+
+add_executable(pgp-data-mix-test data_mix_test.cpp)
+target_link_libraries(pgp-data-mix-test PRIVATE pgp::persistence)
+target_compile_definitions(pgp-data-mix-test PRIVATE PGP_DATA_MIX_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-data-mix-test)
+add_test(NAME runtime.data-mix COMMAND pgp-data-mix-test)

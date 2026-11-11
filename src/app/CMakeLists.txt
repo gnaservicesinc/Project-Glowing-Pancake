@@ -63,6 +63,7 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/RomancePanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/FamilyAlbum.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MissionReview.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/DataMixBoard.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MissionConcern.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/UniversityPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MoneyCard.qml"

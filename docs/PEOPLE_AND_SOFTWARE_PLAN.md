@@ -447,5 +447,17 @@ Frenemies, which prevents a subsequent mission reversal from recreating the
 rivalry. Concerns and history save with the social circle. Three authored news
 entries follow the concern, rivalry and resignation facts.
 
-Remaining specialist skill effects, major-HQ property growth, design puzzles,
-career re-entry and USCIF remain selected work. The full plan and F-06 stay active.
+## Dataset mix
+
+Founder recipes have a finite sampling budget. The Lab divides it by source
+weight, distributing whole-slot rounding remainders in stable source order.
+A source can fill up to its unique record count. The board shows planned and
+retained samples, unfilled slots and quality-adjusted coverage by domain. The
+same retained counts feed training outcomes and the existing estimate.
+Licenses retain their existing prices and use rights. Model lineage retains
+the sampled sources and weights. Keyboard and pointer controls update the
+mix, and draft weights survive a restart.
+
+Remaining specialist skill effects, major-HQ property growth, infrastructure and
+layout puzzles, career re-entry and USCIF remain selected work. The full plan
+and F-06 stay active.

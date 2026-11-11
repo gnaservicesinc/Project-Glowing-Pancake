@@ -452,10 +452,16 @@ void add_release_details(CampaignRow& row,const core::SimulationState& state,con
     else row.detail+=QObject::tr(" Up to %1 of discretionary orders through the day before %2. Production serves signed contracts.")
         .arg(percent(route.share),text(core::iso_date(route.ends_before)));
 }
-core::TrainingRequest request(QString id,QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent) {
+void set_mixture(core::TrainingRequest& request,const QStringList& data,const QVariantMap& weights) {
+    for(const auto& value:data)request.data_ids.push_back(value.toStdString());
+    for(auto it=weights.cbegin();it!=weights.cend();++it)
+        request.data_weights.emplace(it.key().toStdString(),static_cast<std::uint32_t>(integer(it.value().toString(),100)));
+}
+
+core::TrainingRequest request(QString id,QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent,const QVariantMap& weights) {
     core::TrainingRequest result; result.model_id=id.toStdString(); result.recipe_id=recipe.toStdString();
     result.parent_id=parent.toStdString(); result.source_id=source.toStdString();
-    for (const auto& value:data) result.data_ids.push_back(value.toStdString());
+    set_mixture(result,data,weights);
     result.daily_compute=core::MilliCUPerDay{compute(rate)}; result.staff=static_cast<std::uint32_t>(integer(staff,1'000'000));
     result.work=core::MilliCU{compute(work)}; return result;
 }
@@ -882,6 +888,7 @@ QVariantList ManagementController::recipes() const {
     for (const auto& row:ordered) {
         auto value=option(row.id,text(row.name));QStringList prerequisites;
         for (const auto& id:row.requires_research) prerequisites.push_back(readable(id));
+        value.insert(QStringLiteral("sampleBudget"),QVariant::fromValue<qulonglong>(row.sample_budget));
         value.insert(QStringLiteral("detail"),QStringLiteral("Requires research: %1. Allowed budget %2–%3 CU. Serving cost %4 CU/task.").arg(prerequisites.isEmpty()?QStringLiteral("none"):prerequisites.join(QStringLiteral(", ")),cu(row.minimum_work.value()),cu(row.maximum_work.value()),cu(row.inference_per_task.value())));
         result.push_back(value);
     }
@@ -1534,10 +1541,36 @@ QString ManagementController::ending() const {
     if (state().phase!=core::DayPhase::finished && state().phase!=core::DayPhase::closed) return {};
     return (state().phase==core::DayPhase::finished?QStringLiteral("The 2014–2017 campaign is complete.\n"):QStringLiteral("The company has closed.\n"))+briefing()+QStringLiteral("\nFinal cash ")+money(state().cash)+QStringLiteral("\n\n")+scoreText();
 }
-QVariantMap ManagementController::trainingPreview(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent) const {
+QVariantMap ManagementController::dataMixPreview(QString recipe,QStringList data,QVariantMap weights,QString parent) const {
+    if(!snapshot_ || !state().lab || recipe.isEmpty() || (data.isEmpty() && parent.isEmpty()))return {};
+    try {
+        core::TrainingRequest request;
+        request.recipe_id=recipe.toStdString();
+        request.parent_id=parent.toStdString();
+        set_mixture(request,data,weights);
+        const auto mix=core::preview_data_mix(*state().lab,request);
+        const auto* rules=find(state().lab->catalog.recipes,request.recipe_id);
+        QVariantList sources,domains;
+        for(const auto& row:mix.sources) {
+            const auto share=mix.budget?core::mul_div_floor(10000,row.planned,mix.budget).quotient:0;
+            sources.push_back(QVariantMap{{"id",text(row.id)},{"name",text(row.name)},{"weight",row.weight},
+                {"used",number(row.retained)},{"planned",number(row.planned)},{"limited",row.retained<row.planned},
+                {"share",static_cast<double>(share)/10000.0},{"filled",row.planned?static_cast<double>(row.retained)/static_cast<double>(row.planned):0.0}});
+        }
+        for(std::size_t i=0;i<core::lab_domain_count;++i)if(rules->data_scale[i])
+            domains.push_back(QVariantMap{{"name",lab_domain(i)},{"coverage",percent(mix.saturation[i])},
+                {"ratio",static_cast<double>(mix.saturation[i].value())/10000.0},{"units",number(mix.effective_units[i])}});
+        return {{"sources",sources},{"domains",domains},{"used",number(mix.retained)},
+            {"budget",number(mix.budget)},{"missing",mix.budget>mix.retained?number(mix.budget-mix.retained):QString{}},
+            {"weighted",mix.budget>0}};
+    } catch(const std::exception& error) {
+        return {{"error",QString::fromUtf8(error.what())}};
+    }
+}
+QVariantMap ManagementController::trainingPreview(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent,QVariantMap weights) const {
     if (!available()) return {};
     try {
-        const auto req=request(QStringLiteral("preview"),recipe,source,data,rate,staff,work,parent);
+        const auto req=request(QStringLiteral("preview"),recipe,source,data,rate,staff,work,parent,weights);
         const auto p=runtime::preview_campaign_training(*program_,snapshot_->checkpoint.world,req);
         std::int64_t reserved=0; const auto* supply=find(state().capacity->sources,req.source_id);
         for (const auto& row:state().capacity->projects) if (row.status==core::ProjectStatus::active && row.source_id==req.source_id) reserved=core::checked_add(reserved,row.requested.value());
@@ -1783,8 +1816,8 @@ void ManagementController::setProductPrice(QString id,QString cents) {
     try {emit actionRequested(core::SetMarketPrice{id.toStdString(),core::Cents{cents==QStringLiteral("0")?0:integer(cents,core::market_price_limit)}});}
     catch (const std::exception& error) {emit noticeRaised(QString::fromUtf8(error.what()));}
 }
-void ManagementController::train(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent) {
-    if (!editable()) return; try { emit actionRequested(core::StartTraining{request(nextId(QStringLiteral("model.")),recipe,source,data,rate,staff,work,parent)}); } catch (const std::exception& e) { emit noticeRaised(QString::fromUtf8(e.what())); }
+void ManagementController::train(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent,QVariantMap weights) {
+    if (!editable()) return; try { emit actionRequested(core::StartTraining{request(nextId(QStringLiteral("model.")),recipe,source,data,rate,staff,work,parent,weights)}); } catch (const std::exception& e) { emit noticeRaised(QString::fromUtf8(e.what())); }
 }
 void ManagementController::checkpoint(QString id) {if(editable()) emit actionRequested(core::CheckpointModel{id.toStdString(),nextId(QStringLiteral("checkpoint.")).toStdString()});}
 void ManagementController::clone(QString id) { if (editable()) emit actionRequested(core::CloneModel{id.toStdString(),nextId(QStringLiteral("checkpoint.")).toStdString()}); }

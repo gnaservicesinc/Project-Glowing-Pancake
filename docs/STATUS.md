@@ -9,7 +9,7 @@ Updated 2026-11-11
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.67.0-dev.1**, generation **68**.
+immersive redesign advances content to **0.68.0-dev.1**, generation **69**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -216,8 +216,15 @@ handover can delay a departure while staffing commitments are still outstanding.
 Empathetic Listening opens reconciliation, and a rebuilt friendship earns the
 Frenemies relationship. Further mission changes cannot restart that rivalry.
 
-Further design puzzles, specialist skill effects, major-HQ property expansion,
-career transitions and USCIF remain required work in the active full plan.
+Lab → Train now includes a dataset mix with live sample allocation and domain
+coverage. Authored recipe budgets divide across selected sources by weight.
+Shortages are visible as unfilled sample slots. Actual training uses retained
+records and their quality, relevance and coverage. Clones, checkpoints and
+continued training carry the same balance. Source selection and weights save as
+unfinished UI drafts.
+
+Infrastructure and layout puzzles, specialist skill effects, major-HQ property
+expansion, career transitions and USCIF remain required work.
 
 This is an implementation checkpoint, not completion of F-06. Existing human
 review and platform/release gates remain open.
