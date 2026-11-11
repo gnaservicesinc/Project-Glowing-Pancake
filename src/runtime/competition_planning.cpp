@@ -1,5 +1,6 @@
 #include "competition_internal.hpp"
 #include <pgp/runtime/society.hpp>
+#include <pgp/core/workplace_research.hpp>
 #include <pgp/runtime/authority.hpp>
 #include <algorithm>
 #include <set>
@@ -140,7 +141,15 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
         });
         if (can_work && !committed && frontier_technology_block(s,FrontierTechnology::research,node.id,s.date).empty() &&
             requires_met(lab,node.all_of) && (node.any_of.empty() || std::any_of(node.any_of.begin(),node.any_of.end(),[&](const auto& id){return completed(lab,id);})) && affordable(node.cash))
-            offer(1,"research",node.id,350-static_cast<std::int64_t>(i),StartResearch{node.id,allocation});
+        {
+            auto research=allocation;
+            if(s.management->people) {
+                research.researchers.clear();
+                for(const auto& worker:research_workers(s))if(worker.unavailable.empty() && research.researchers.size()<research.staff)research.researchers.push_back(worker.id);
+                research.staff=static_cast<std::uint32_t>(research.researchers.size());
+            }
+            if(research.staff>0 && (!s.management->people || research_workplace_blocker(s,node.id,research).empty()))offer(1,"research",node.id,350-static_cast<std::int64_t>(i),StartResearch{node.id,research});
+        }
         if (profile.publish_results && completed(lab,node.id) && std::none_of(lab.publications.begin(),lab.publications.end(),[&](const auto& row){return row.research_id==node.id;}))
             offer(9,"publish",node.id,80,PublishResearch{node.id});
     }
@@ -200,6 +209,47 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
         if (product.channel==ProductChannel::open_weights) continue;
         const auto desired=observation.public_price.value()>0?Cents{std::clamp(checked_add(observation.public_price.value(),static_cast<std::int64_t>(profile.priorities[5]%21)-10),viable_price.value(),profile.price_ceiling.value())}:product.price_per_task;
         if (desired!=product.price_per_task) offer(5,"price",product.id,60,SetMarketPrice{product.id,desired});
+    }
+    if(talent_rules(s)) {
+        const auto& hq=*s.infrastructure->workplace->headquarters;
+        const auto& premises=current_headquarters(s);
+        std::set<std::string> needed;
+        for(const auto& topic:profile.research) {
+            const auto& node=find(lab.catalog.research,topic);
+            if(completed(lab,topic) || !requires_met(lab,node.all_of) || (!node.any_of.empty() && std::ranges::none_of(node.any_of,[&](const auto& id){return completed(lab,id);})))continue;
+            for(const auto& equipment:research_equipment(s,topic))needed.insert(equipment);
+        }
+        for(const auto& item:hq.items)if(!item.premises && item.delivered_on<=s.date) {
+            bool found=false;
+            for(int y=0;y<premises.depth && !found;++y)for(int x=0;x<premises.width && !found;++x) {
+                PlaceHQEquipment placement{item.id,0,x,y,false};
+                if(hq_placement_blocker(s,placement).empty()){offer(8,"place",std::to_string(item.id),160,ManageHeadquarters{placement});found=true;}
+            }
+        }
+        for(const auto& id:needed)if(std::ranges::none_of(hq.items,[&](const auto& item){return item.offer==id;})) {
+            const auto& equipment=find(s.infrastructure->catalog.workplace->headquarters->equipment,id);
+            if(affordable(equipment.price))offer(8,"equipment",id,150,ManageHeadquarters{BuyHQEquipment{id}});
+        }
+        const auto& talents=*s.management->people->talent;
+        for(const auto& employee:s.management->people->employees)if(!employee.departed_on && employee.ready_on<=s.date &&
+            std::ranges::none_of(talents.courses,[&](const auto& c){return c.person==employee.terms.profile.id && !c.completed;})) {
+            const auto& person=employee.terms.profile;
+            const std::string desired=has_skill(person,"ml_research")?(has_skill(person,"programming")?"architecture":"programming"):(has_skill(person,"programming")?"ml_research":"programming");
+            if(!has_skill(person,desired)) {
+                const auto& course=find(talent_rules(s)->skills,desired);
+                if(affordable(Cents{course.tuition_cents}))offer(6,"study",person.id+"/"+desired,70,ManageTalent{EnrollSkill{person.id,desired,"company"}});
+            }
+        }
+        for(const auto& project:talents.software) {
+            const auto& work=find(s.capacity->projects,project.project);
+            if(work.status==ProjectStatus::completed && !project.released_on)offer(9,"software_release",project.project,100,ManageTalent{ReleaseSoftware{project.id}});
+        }
+        if(talents.software.empty()) {
+            SoftwareDesign design;design.name=definition.name+" Workspace";design.brief="chat";
+            for(const auto& employee:s.management->people->employees)if(person_has_skill(s,employee.terms.profile.id,"programming") && software_worker_blocker(s,employee.terms.profile.id).empty()){design.workers={employee.terms.profile.id};break;}
+            const auto quote=software_quote(s,design);
+            if(quote.blocker.empty() && affordable(quote.fee))offer(8,"software",design.brief,75,ManageTalent{StartSoftware{design}});
+        }
     }
     if (staff==0) for (const auto& specialist:s.management->catalog.specialists)
         if (affordable(specialist.signing_cost,specialist.monthly_salary) && std::none_of(s.management->specialists.begin(),s.management->specialists.end(),[&](const auto& row){return row.offer_id==specialist.id;}))
@@ -287,9 +337,14 @@ SimulationState dormant_company(const WorldState& world,const content::RivalDefi
 }
 SimulationState opening_rival(const WorldState& world,const CompiledProgram& program,const content::RivalDefinition& definition,OrdinalDay day) {
     const auto& authored=scenario(world,program);SimulationState state;
+    std::string headquarters_market;
+    if(authored.management && authored.management->people) {
+        const auto& markets=authored.management->people->industry_headquarters;
+        if(const auto market=markets.find(definition.id);market!=markets.end())headquarters_market=market->second;
+    }
     state.date=day;state.end_date=campaign_calendar_limit(world);state.cash=definition.cash;state.random=RandomStreams{rival_seed(world,definition)}.snapshot();
     state.accounts=opening_accounts(definition.cash,day,definition.id);
-    add_recurring(*state.accounts,{"payroll",definition.monthly_payroll,day,std::nullopt,"Rival payroll"});
+    add_recurring(*state.accounts,{headquarters_market.empty()?"payroll":"payroll_with_benefits",definition.monthly_payroll,day,std::nullopt,"Rival payroll"});
     add_recurring(*state.accounts,{"compute_lease",definition.monthly_lease,day,std::nullopt,"Rival compute lease"});
     state.capacity=opening_capacity({{"lease.initial","cloud/"+definition.id,definition.id,"supplier.rival",CapacitySourceKind::leased,definition.capacity,definition.capacity,0,"general",true}},definition.staff,day,definition.id);
     state.liquidity=opening_liquidity(day,definition.id);
@@ -303,8 +358,8 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
     if (world.simulation.frontier)
         state.frontier=opening_frontier(world.simulation.frontier->catalog,world.simulation.frontier->seed);
     state.management=ManagementState{*authored.management,{},{},{},{},{},{}};state.management->catalog.setbacks.clear();
-    // Distant companies retain aggregate teams; only the player's HQ has biographies.
-    state.management->catalog.people.reset();
+    // Only explicitly authored major HQs receive individual simulation.
+    if(headquarters_market.empty())state.management->catalog.people.reset();
     if (authored.management->staff_workload) state.capacity->workload=StaffWorkload{*authored.management->staff_workload};
     if (authored.management->corporate_tax) state.accounts->taxes=CorporateTaxes{*authored.management->corporate_tax,day};
     state.management->catalog.governance.reset();
@@ -316,6 +371,25 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
     BusinessOffersState growth;
     for (auto offer:authored.business_offers) if (offer.kind==BusinessOfferKind::compute_lease) {offer.id+="."+definition.id;growth.catalog.push_back(std::move(offer));}
     if (!growth.catalog.empty()) state.business_offers=std::move(growth);
+    if(!headquarters_market.empty()) {
+        if(!state.management->catalog.people || !authored.infrastructure || !authored.infrastructure->workplace || !authored.infrastructure->workplace->headquarters)
+            invalid("A detailed industry HQ needs the shared people and property rules.");
+        InfrastructureState infrastructure;infrastructure.catalog=*authored.infrastructure;
+        auto& markets=infrastructure.catalog.workplace->headquarters->markets;
+        const auto selected=std::ranges::find(markets,headquarters_market,&HQMarket::id);
+        if(selected==markets.end())invalid("The major company has an unknown headquarters market.");
+        infrastructure.executive_base=selected->state;
+        // The ordinary opening helper picks the first market in this state.
+        std::rotate(markets.begin(),selected,selected+1);
+        state.infrastructure=std::move(infrastructure);initialize_workplace(state,"leased",false);
+        initialize_people(state,rival_seed(world,definition),"","",false,0,"research");
+        initialize_headquarters(state,rival_seed(world,definition));
+        auto& premises=state.infrastructure->workplace->headquarters->premises.front();
+        const auto& market=find(state.infrastructure->catalog.workplace->headquarters->markets,premises.market);
+        premises.rent=Cents{mul_div_round_half_up(static_cast<std::uint64_t>(market.rent_per_cell.value()),static_cast<std::uint64_t>(premises.width)*static_cast<std::uint64_t>(premises.depth),1)};
+        add_recurring(*state.accounts,{"office_and_admin",premises.rent,day,{},"HQ lease: "+market.city});
+        initialize_departments(state);initialize_access(state,false);
+    }
     return Simulation{std::move(state)}.checkpoint();
 }
 RivalObservation public_observation(const WorldState& world,OrdinalDay day,std::uint64_t draw) {return observe(world,day,draw);}

@@ -87,6 +87,9 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
 void validate_people_rules(const PeopleRules& r) {
     if(r.talent)validate_talent_rules(*r.talent);
     if(r.social)validate_social_rules(*r.social);
+    if(r.industry_headquarters.size()>20)invalid("Too many detailed industry headquarters.");
+    for(const auto& [company,market]:r.industry_headquarters)if(company.empty() || company.size()>64 || market.empty() || market.size()>64)
+        invalid("Industry headquarters need bounded company and market IDs.");
     if(r.dismissal && r.dismissal->severance_months>6) invalid("Dismissal severance must be between zero and six months of salary.");
     if(r.recruitment) validate_recruitment_rules(*r.recruitment);
     std::set<std::pair<std::string,std::string>> audience_pairs;

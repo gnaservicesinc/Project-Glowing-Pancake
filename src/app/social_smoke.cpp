@@ -39,7 +39,12 @@ void schedule_social_smoke(QQuickWindow& window,pgp::bridge::CampaignController&
         case 7:reveal(item("socialGraph"));if(run->frames++<5)return;if(!item("socialGraph") || world->relationships().value("edges").toList().size()<3 || !capture("graph")){fail("Known close graph");return;}if(!press("socialConnection_0")){fail("Explore a friend’s connections");return;}run->frames=0;break;
         case 8:if(run->frames++<3)return;if(!press("socialGraphHome")){fail("Return to own connections");return;}campaign.setTextScalePercent(200);window.showNormal();window.resize(650,480);run->frames=0;break;
         case 9:if(run->frames==0)world->update(run->preview,*run->preview->content,false);if(run->frames++<5)return;if(!capture("list-compact") || !press("socialPeople")){fail("Compact accessible list");return;}run->frames=0;break;
-        case 10:reveal(item("socialCard"));if(run->frames++<5)return;if(!capture("person-compact")){fail("Compact person");return;}std::cout<<"Social UI passed: actual meetup and daily limit; seeded mature graph, compact relationship list and person card.\n";timer->stop();QCoreApplication::exit(0);return;
+        case 10:reveal(item("socialCard"));if(run->frames++<5)return;if(!capture("person-compact")){fail("Compact person");return;}campaign.setTextScalePercent(100);window.resize(1280,800);break;
+        case 11:if(!press("peopleBackToTeam")){fail("Return to team");return;}break;
+        case 12:if(!press("peopleIndustryTab")){fail("Industry people tab");return;}run->frames=0;break;
+        case 13:reveal(item("industryCompany"));if(run->frames++<5)return;if(world->industryPeople().size()<2 || !item("industryLocation") || !capture("industry")){fail("Major HQ roster");return;}campaign.setTextScalePercent(200);window.resize(650,480);run->frames=0;break;
+        case 14:reveal(item("industryCompany"));if(run->frames++<5)return;if(!capture("industry-compact")){fail("Compact industry roster");return;}std::cout<<"Social UI passed: actual meetup and daily limit; seeded mature graph navigation, compact list/person and public industry HQ rosters.\n";timer->stop();QCoreApplication::exit(0);return;
+
         }++run->phase;
     });timer->start();
 }

@@ -107915,6 +107915,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "c884ebe290a300275d29716f42982ea4e0bfed22faf969f6d13b4e518bfb2063",
+          "before_hash": "4a97ea2db533552f8f8f013f3ae45e8104f58867f858ea3321d7895c75e0e6a8",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 29,
+          "revision": 30
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "90915c1b72e9a0a7180af00fb1d9e75a25e2a753979c587b6321a679cb4adecb",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.59.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 60,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.58.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000059.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000060.collection.json",
+      "summary": "Explicit major-company HQ rosters use shared people, payroll, property, learning, software and named research rules.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

@@ -26,10 +26,15 @@ void resources(const WorldState& world,const CompiledProgram& program,const Riva
         const auto expected=!suspended && state.date<lease_expiry(*state.business_offers,offer.id)?offer.capacity:MilliCUPerDay{0};
         if (source.effective!=expected || source.nominal!=offer.capacity) invalid("Rival leased capacity bypassed paid availability or expiry");
     }
+    if(state.infrastructure && state.infrastructure->workplace && state.infrastructure->workplace->headquarters) {
+        const auto& equipment=state.infrastructure->catalog.workplace->headquarters->equipment;
+        for(const auto& item:state.infrastructure->workplace->headquarters->items)if(item.delivered_on<=state.date && find(equipment,item.offer).compute.value()>0)
+            allowed_sources.insert("hq.equipment/"+std::to_string(item.id));
+    }
     const auto ordinary=std::count_if(state.capacity->sources.begin(),state.capacity->sources.end(),[](const auto& row){return row.kind!=CapacitySourceKind::imported;});
     if (static_cast<std::size_t>(ordinary)!=allowed_sources.size()) invalid("Rival invented unbudgeted capacity");
     for (const auto& source:state.capacity->sources) if (source.kind!=CapacitySourceKind::imported && !allowed_sources.contains(source.id)) invalid("Rival uses an unowned capacity source");
-    auto initial_source=initial.capacity->sources.front();
+    auto initial_source=find(initial.capacity->sources,"lease.initial");
     if (rival.response && !rival.response->retired_on && std::any_of(rival.response->transitions.begin(),rival.response->transitions.end(),[](const auto& row){return row.cause=="compete";})) initial_source.effective=initial_source.nominal;
     if (find(state.capacity->sources,"lease.initial")!=initial_source) invalid("Rival initial compute capacity differs from its finite opening/delivery terms");
     for (auto obligation:initial.accounts->recurring) {
@@ -62,6 +67,7 @@ void resources(const WorldState& world,const CompiledProgram& program,const Riva
     if (state.deployments->risk) for (const auto& row:state.deployments->risk->responses) projects.insert(row.project_id);
     if (state.frontier) for (const auto& row:state.frontier->trials) projects.insert(row.project);
     if (state.succession) for (const auto& row:state.succession->plans) if(!row.project.empty()) projects.insert(row.project);
+    if(talent_rules(state))for(const auto& software:state.management->people->talent->software)projects.insert(software.project);
     if (state.capacity->projects.size()!=projects.size()) invalid("Rival work is not owned by actual research, training, evaluation or qualified serving");
     for (const auto& project:state.capacity->projects) if (!projects.contains(project.id)) invalid("Rival has an unowned work project");
     for (const auto& change:state.market->demand_changes) {
@@ -127,7 +133,7 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
         std::uint64_t stream=RandomStreams{rival_seed(world,authored)}.snapshot()[static_cast<std::size_t>(RandomStream::rivals)];
         for (std::size_t i=0;i<plan.decisions.size();++i) {
             const auto& decision=plan.decisions[i];SplitMix64 next{stream};const auto draw=next.next();
-            const std::set<std::string> actions{"wait","data","research","train","evaluate","deploy","price","hire","repay","finance","expand","publish","frontier_system","frontier_trial"};
+            const std::set<std::string> actions{"wait","data","research","train","evaluate","deploy","price","hire","repay","finance","expand","publish","frontier_system","frontier_trial","study","software","software_release","equipment","place"};
             if (decision.day!=advance_days(rival.response?rival.response->ready_on.value_or(entry):entry,Days{static_cast<std::int64_t>(i)*state.setup->review_interval.value()}) || decision.day>simulation.date || decision.stream_before!=stream || decision.stream_after!=next.state() ||
                 !actions.contains(decision.action) || decision.explanation.empty() || decision.explanation.size()>1024 || decision.subject.size()>256 ||
                 decision.observation!=public_observation(world,decision.day,draw))

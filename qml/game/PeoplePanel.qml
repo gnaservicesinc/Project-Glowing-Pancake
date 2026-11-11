@@ -19,7 +19,7 @@ ColumnLayout {
     function changePage(value) {page=value;campaign.world.setDraft("people/page",value)}
     function restorePage() {
         const value=messagesOnly?"messages":campaign.world.draft("people/page","team")
-        page=["team","applicants","branches","messages","university","social"].includes(value)?value:"team"
+        page=["team","applicants","branches","messages","university","social","industry"].includes(value)?value:"team"
     }
     Component.onCompleted:restorePage()
     Connections {
@@ -28,11 +28,12 @@ ColumnLayout {
         function onNavigationChanged(){if(campaign.world.navigation.app==="people")panel.restorePage()}
     }
     spacing:16
-    Label {visible:!panel.showDiscussion && panel.page!=="messages" && panel.page!=="university" && panel.page!=="social";text:qsTr("The people behind the company");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize*1.4;font.bold:true;color:"#eee5d2"}
-    Label {visible:!panel.showDiscussion && panel.page!=="messages" && panel.page!=="university" && panel.page!=="social";text:qsTr("Your founder and named HQ specialists. Site operators remain grouped with their facilities.");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
+    Label {visible:!panel.showDiscussion && panel.page!=="messages" && panel.page!=="university" && panel.page!=="social" && panel.page!=="industry";text:qsTr("The people behind the company");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize*1.4;font.bold:true;color:"#eee5d2"}
+    Label {visible:!panel.showDiscussion && panel.page!=="messages" && panel.page!=="university" && panel.page!=="social" && panel.page!=="industry";text:qsTr("Your founder and named HQ specialists. Site operators remain grouped with their facilities.");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
     Flow {
-        visible:!panel.showDiscussion && !panel.messagesOnly && panel.page!=="university" && panel.page!=="social"
+        visible:!panel.showDiscussion && !panel.messagesOnly && panel.page!=="university" && panel.page!=="social" && panel.page!=="industry"
         Layout.fillWidth:true;spacing:8
+        WorldButton {objectName:"peopleIndustryTab";visible:campaign.world.industryPeople.length>0;text:qsTr("Around the industry");textSize:panel.textSize;onClicked:panel.changePage("industry")}
         WorldButton {objectName:"peopleSocialTab";visible:!!campaign.world.relationships.people;text:qsTr("Social circle");textSize:panel.textSize;onClicked:panel.changePage("social")}
         WorldButton {objectName:"peopleUniversityTab";visible:!!campaign.world.talent.skills;text:qsTr("Online university");textSize:panel.textSize;checked:panel.page==="university";onClicked:panel.changePage("university")}
         WorldButton {objectName:"peopleTeamTab";text:qsTr("HQ team");textSize:panel.textSize;checked:panel.page==="team";onClicked:panel.changePage("team")}
@@ -40,7 +41,7 @@ ColumnLayout {
         WorldButton {objectName:"peopleBranchesTab";text:qsTr("Branch departments");textSize:panel.textSize;checked:panel.page==="branches";onClicked:panel.changePage("branches")}
         WorldButton {objectName:"peopleMessagesTab";visible:campaign.world.contactsAvailable;text:qsTr("Messages");textSize:panel.textSize;checked:panel.page==="messages";onClicked:panel.changePage("messages")}
     }
-    Label {visible:!panel.showDiscussion && panel.page!=="messages" && panel.page!=="university" && panel.page!=="social" && campaign.world.recruitingSummary.length>0;Layout.fillWidth:true;text:campaign.world.recruitingSummary;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
+    Label {visible:!panel.showDiscussion && panel.page!=="messages" && panel.page!=="university" && panel.page!=="social" && panel.page!=="industry" && campaign.world.recruitingSummary.length>0;Layout.fillWidth:true;text:campaign.world.recruitingSummary;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b9cfc4"}
     Flow {
         visible:!panel.showDiscussion && panel.page==="applicants" && campaign.world.recruitingSummary.length>0
         Layout.fillWidth:true;spacing:8
@@ -69,7 +70,7 @@ ColumnLayout {
         onSuppliersRequested:panel.openApp("facilities","equipment")
     }
     Repeater {
-        model:panel.showDiscussion || panel.page==="branches" || panel.page==="messages" || panel.page==="university" || panel.page==="social" ? [] : panel.page==="applicants" ? campaign.world.applicants : campaign.world.people
+        model:panel.showDiscussion || panel.page==="branches" || panel.page==="messages" || panel.page==="university" || panel.page==="social" || panel.page==="industry" ? [] : panel.page==="applicants" ? campaign.world.applicants : campaign.world.people
         Rectangle {
             required property var modelData
             Layout.fillWidth:true;implicitHeight:person.implicitHeight+28;color:"#213b40";radius:10
@@ -118,7 +119,8 @@ ColumnLayout {
             }
         }
     }
-    WorldButton {visible:panel.page==="university" || panel.page==="social";text:qsTr("Back to people");textSize:panel.textSize;onClicked:panel.changePage("team")}
+    WorldButton {objectName:"peopleBackToTeam";visible:panel.page==="university" || panel.page==="social" || panel.page==="industry";text:qsTr("Back to people");textSize:panel.textSize;onClicked:panel.changePage("team")}
+    IndustryPeoplePanel {Layout.fillWidth:true;visible:panel.page==="industry";textSize:panel.textSize}
     SocialPanel {Layout.fillWidth:true;visible:panel.page==="social";textSize:panel.textSize}
     UniversityPanel {Layout.fillWidth:true;visible:panel.page==="university";textSize:panel.textSize}
     PersonProfileDialog {id:profileDialog;textSize:panel.textSize}

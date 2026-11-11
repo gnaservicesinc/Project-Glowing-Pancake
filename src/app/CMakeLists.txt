@@ -57,6 +57,7 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/WorldMap.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MapHoverCard.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/PeoplePanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/IndustryPeoplePanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/SocialPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/UniversityPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MoneyCard.qml"

@@ -1274,6 +1274,18 @@ void validate_references(const Collection& collection, const Registry& registry)
                         for (const auto& executive:scenario_definition->management->governance->executives)
                             if (!executive.publication_research.empty() && std::none_of(catalog.research.begin(),catalog.research.end(),[&](const auto& r){return r.id==executive.publication_research;}))
                                 fail("governance",path,"Executive publication promise requires an actual research node in this scenario");
+                    if(scenario_definition->management && scenario_definition->management->people) {
+                        const auto& headquarters=scenario_definition->management->people->industry_headquarters;
+                        if(!headquarters.empty() && (!scenario_definition->infrastructure || !scenario_definition->infrastructure->workplace || !scenario_definition->infrastructure->workplace->headquarters))
+                            fail("rivals",path,"Detailed major companies need shared property rules.");
+                        for(const auto& [company,market]:headquarters) {
+                            const auto rival=std::ranges::find(scenario_definition->rivals,company,&RivalDefinition::id);
+                            if(rival==scenario_definition->rivals.end() || !rival->planning || rival->staff>32)
+                                fail("rivals",path,"A detailed HQ must identify a planned company with a bounded individual roster.");
+                            const auto& markets=scenario_definition->infrastructure->workplace->headquarters->markets;
+                            if(std::ranges::find(markets,market,&core::HQMarket::id)==markets.end())fail("rivals",path,"A detailed HQ needs an actual property market.");
+                        }
+                    }
                     for (const auto& rival:scenario_definition->rivals) {
                         const auto recipe=std::find_if(catalog.recipes.begin(),catalog.recipes.end(),[&](const auto& row){return row.id==rival.recipe_id;});
                         const auto data=std::find_if(catalog.data.begin(),catalog.data.end(),[&](const auto& row){return row.id==rival.data_id;});

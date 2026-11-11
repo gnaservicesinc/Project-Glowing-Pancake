@@ -9,7 +9,7 @@ Updated 2026-11-10
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.58.0-dev.1**, generation **59**.
+immersive redesign advances content to **0.59.0-dev.1**, generation **60**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -56,6 +56,25 @@ Focused social/talent/workplace/founding checks pass. The native social walkthro
 passes an actual meetup and its cooldown, then uses an explicitly seeded mature-
 friendship fixture to inspect graph navigation and compact 200% layouts. That
 fixture is visual evidence; the core progression test establishes natural growth.
+
+The first industry-roster batch gives explicitly authored US major-company HQs
+individual employees under the shared people rules. Existing teams have funded
+payroll, leased premises and inherited workstations. Larger teams choose a fitting
+authored office plan. Rival planning now selects named qualified researchers,
+checks workplace prerequisites, buys/places missing research equipment, sponsors
+courses and can build/release software under the ordinary commands and budget.
+People → Around the industry exposes public roster, skill and city information
+for firms that have actually entered the campaign; future entrants remain absent.
+A focused two-company, 35-day check covers actual named research, costs, exact
+save reload and identical next-day continuation; a separate opening check covers
+the ten-person major HQ. All five selected industry/social/talent/workplace/founding
+checks pass. Optimized Mac game/editor builds and the native industry roster
+walkthrough pass, including compact 200% text.
+
+This is a partial stage-4 delivery: cross-company friendships, geographic encounter
+rates, introductions/referrals and international individual HQs are still pending.
+Rival recruitment expansion also still uses the older specialist planner. These
+remain required work in the full plan, alongside the later relationship/career work.
 
 This is an implementation checkpoint, not completion of F-06. Major-company
 individual rosters and geographic contact, romance/families/rivalry, the additional

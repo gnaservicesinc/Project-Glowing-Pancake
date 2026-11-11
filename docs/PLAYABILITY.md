@@ -506,3 +506,12 @@ are public. Close connections opens a portrait map you can explore by selecting
 a person, plus a text list that also works in compact layouts. Only known close
 friendships appear. The current circle covers your HQ team and retained former
 coworker ties; cross-company geography, romance and rivalry remain future work.
+
+
+People → Around the industry lists the public HQ roster of major companies that
+have entered the world. Select a company to see its city, portraits, professional
+roles, education and acquired skills. Their employees now work and study under
+shared rules; their company pays rent, salaries and new tuition/equipment expenses.
+Personal traits and social connections are not disclosed by this public directory.
+The current individual roster covers authored US companies; geographic networking
+and international individual rosters remain unfinished.

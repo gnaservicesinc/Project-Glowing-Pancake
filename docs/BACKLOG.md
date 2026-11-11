@@ -24,7 +24,14 @@ versus learned traits, multiple best friends, workplace morale, known close-
 connection graph/list and registered event facts. Focused tests and native UI
 walkthroughs pass. No cross-company friendships or romance/rivalry yet.
 
-Next: major-company HQ people and geographic contact, then romance/families/rivalry
+The first major-HQ batch is implemented for the authored US roster: actual
+employees, funded salaries, fitting premises/workstations, named research,
+equipment purchases, paid courses and software commands. The industry people
+screen shows opened firms' public rosters and cities. This is partial stage 4;
+international individual HQs, new cross-company connections, geographic rates,
+referrals and the individual recruitment planner remain unfinished.
+
+Next: geographic cross-company contact and the remaining major-HQ behavior, then romance/families/rivalry
 repair, data and infrastructure puzzles, career re-entry and the fictional USCIF
 branch. These remain selected, unfinished work; this does not close F-06.
 

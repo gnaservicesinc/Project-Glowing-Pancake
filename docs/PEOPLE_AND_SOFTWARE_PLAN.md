@@ -157,3 +157,35 @@ Stages 4–8 remain planned work, along with the broader stage-3 preferences/eve
 vocabulary. This batch does not implement cross-company ties or geographic rates,
 romance/families/rivalry repair, employee-paid study, the other infrastructure/data
 puzzles, career re-entry or USCIF.
+
+
+## Major-company HQ progress
+
+Content 0.59.0-dev.1 authorizes specific companies through the scenario's
+`management.people.industry_headquarters` map of company IDs to existing property
+markets. Shared rival definitions keep their stable identity across scenarios;
+only the selected founder campaign enables these detailed HQs. Current entries
+cover the US major-company roster. International rosters remain aggregated until
+the world-property/encounter layer supports their actual locations.
+
+On entry, the ordinary people generator creates fixed identities, qualifications,
+extra skills and local friendships. Salaries reconcile to the company's funded
+opening payroll; property rent is an additional real recurring expense. Desks and
+computers belong to the authored pre-existing company, using the same inherited
+furnishing rule as the MC's CEO opening. A fitting authored office plan supports
+the ten-person late entrant. Equipment, course and software purchases thereafter
+use actual transactions. Research uses named eligible employees and the same
+computer, skill, equipment and creativity checks. The planner avoids knowingly
+blocked research, installs delivered lab equipment, and sponsors prerequisite
+study when it can afford the course and its protected runway. Software commands
+also use the shared qualification, work and release rules.
+
+The public industry roster uses company-scoped person IDs and displays only public
+professional information. It lists only entered companies and preserves the
+selected company locally. This batch does not create cross-company friendships.
+Geographic encounters, introductions/referrals, international individual HQs and
+replacement of the aggregate specialist-recruitment planner remain stage-4 work.
+
+Verification uses a bounded two-company, 35-day scenario, actual named research,
+funded salaries/rent, workstations, an actual tuition transaction, a ten-person
+opening and exact fresh saves. Broader campaign balance remains unqualified.

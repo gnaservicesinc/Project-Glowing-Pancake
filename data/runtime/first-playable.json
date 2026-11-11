@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.58.0-dev.1",
+  "content_version": "0.59.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -76652,6 +76652,17 @@
             "Ellis",
             "Remy"
           ],
+          "industry_headquarters": {
+            "company.century.frontier": "austin",
+            "company.century.roster.domestic.1": "san_francisco",
+            "company.century.roster.domestic.2": "austin",
+            "company.century.roster.domestic.3": "seattle",
+            "company.century.roster.domestic.4": "los_angeles",
+            "company.century.roster.domestic.5": "san_francisco",
+            "company.century.roster.heavyweight.1": "san_francisco",
+            "company.century.roster.heavyweight.2": "austin",
+            "company.century.roster.heavyweight.3": "seattle"
+          },
           "last_names": [
             "Smith",
             "Johnson",
@@ -77937,7 +77948,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 29,
+      "revision": 30,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

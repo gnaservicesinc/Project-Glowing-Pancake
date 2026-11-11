@@ -211,16 +211,27 @@ void initialize_headquarters(SimulationState& s,std::uint64_t seed,std::string_v
         h.premises.push_back(home_premises(s));
     }
     else {
-        const auto& p=find(r.plans,std::string{"studio"});Cents rent{0};
+        const auto headcount=s.management && s.management->people?s.management->people->employees.size()+(w.nonresearch_founder?1U:0U):0U;
+        const auto slots=[&](const HQPlan& plan){std::size_t count=0;for(const auto& room:plan.rooms)count+=static_cast<std::size_t>(room.width/3)*static_cast<std::size_t>(room.depth/3);return count;};
+        auto chosen=std::ranges::find(r.plans,std::string{"studio"},&HQPlan::id);
+        if(chosen==r.plans.end())invalid("The opening headquarters needs a studio plan.");
+        if(slots(*chosen)<headcount) {
+            chosen=std::ranges::find_if(r.plans,[&](const auto& plan){return slots(plan)>=headcount;});
+            if(chosen==r.plans.end())invalid("No authored opening office fits the funded team.");
+        }
+        const auto& p=*chosen;
+        Cents rent{0};
         for(const auto& term:s.accounts->recurring) if(term.id=="office_and_admin") rent=term.monthly_amount;
         h.premises.push_back({1,"lease",it->id,p.id,it->landlord,it->street+" / inherited office",p.width,p.depth,p.rooms,rent,Cents{0},s.date,{},0});
         std::vector<std::string> people;
         if(s.management && s.management->people) for(const auto& e:s.management->people->employees) people.push_back(e.terms.profile.role=="Founder / researcher"?"founder":e.terms.profile.id);
         if(w.nonresearch_founder) people.insert(people.begin(),"founder");
         const auto& desk=find(r.equipment,std::string{"desk"});const auto& computer=find(r.equipment,std::string{"desktop"});
+        std::vector<std::pair<int,int>> positions;
+        for(const auto& room:p.rooms)for(int y=room.y;y+3<=room.y+room.depth;y+=3)for(int x=room.x;x+3<=room.x+room.width;x+=3)positions.emplace_back(x,y);
         for(std::size_t n=0;n<people.size();++n) {
             const auto id=static_cast<std::uint32_t>(h.items.size()+1);
-            h.items.push_back({id,desk.id,people[n],s.date,s.date,Cents{0},true,true,false,1,0,static_cast<int>(n%3)*3,static_cast<int>(n/3)*3});
+            h.items.push_back({id,desk.id,people[n],s.date,s.date,Cents{0},true,true,false,1,0,positions[n].first,positions[n].second});
             h.items.push_back({id+1,computer.id,{},s.date,s.date,Cents{0},true,true,false,1,id,0,0});
         }
     }

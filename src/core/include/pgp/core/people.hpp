@@ -53,6 +53,7 @@ struct PeopleRules {
     std::vector<FounderAudienceRule> founder_audiences{};
     std::optional<TalentRules> talent{};
     std::optional<SocialRules> social{};
+    std::map<std::string,std::string> industry_headquarters{};
     auto operator<=>(const PeopleRules&) const = default;
 };
 struct PersonProfile {
