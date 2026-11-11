@@ -408,3 +408,9 @@ target_include_directories(pgp-industry-people-test SYSTEM PRIVATE "${PROJECT_SO
 target_compile_definitions(pgp-industry-people-test PRIVATE PGP_INDUSTRY_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-industry-people-test)
 add_test(NAME runtime.industry-people COMMAND pgp-industry-people-test)
+
+add_executable(pgp-geographic-social-test geographic_social_test.cpp)
+target_link_libraries(pgp-geographic-social-test PRIVATE pgp::persistence)
+target_compile_definitions(pgp-geographic-social-test PRIVATE PGP_NETWORK_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-geographic-social-test)
+add_test(NAME runtime.geographic-social COMMAND pgp-geographic-social-test)

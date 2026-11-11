@@ -107954,6 +107954,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "764988baf301bedc31d9cac04ae8d1aeb29a8d3eeba9e4bfb77bc8169aabfde6",
+          "before_hash": "c884ebe290a300275d29716f42982ea4e0bfed22faf969f6d13b4e518bfb2063",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 30,
+          "revision": 31
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "e410b6d8f2d375c936c0ca2cc0080a437913f2b1995c342bbc87563500e7a36d",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.60.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 61,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.59.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000060.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000061.collection.json",
+      "summary": "Geographic industry friendships, slow online ties, introductions through close friends and qualified recruiting referrals with saved cooldowns.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

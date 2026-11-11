@@ -249,6 +249,9 @@ Registry foundation_registry() {
     boolean("company.is_operating", "Whether company operations remain active.");
     number("company.campaign_days",Scope::company,Unit::days,0,maximum,
         "Days elapsed since this campaign opened.", "campaign");
+    number("company.industry_contacts",Scope::company,Unit::count,0,8192,"Industry people the founder has actually met or been introduced to.","campaign");
+    number("company.industry_close_friends",Scope::company,Unit::count,0,8192,"Known close-or-better friendships outside the company.","campaign");
+    number("company.referral_contacts",Scope::company,Unit::count,0,8192,"Friends who have supplied a real recruiting referral.","campaign");
     number("company.founder_close_friends",Scope::company,Unit::count,0,256,"Known close-or-better founder friendships; multiple best friends are allowed.","campaign");
     number("company.known_close_relationships",Scope::company,Unit::count,0,8192,"Close relationships actually shared with the founder.","campaign");
     boolean("company.founder_programming","The founder has acquired Programming, independently of education.",Scope::company,"campaign");

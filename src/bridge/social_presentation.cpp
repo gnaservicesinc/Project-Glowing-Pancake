@@ -22,6 +22,24 @@ QVariantMap WorldController::relationships() const {
         card["lastContact"]=bond?q(core::iso_date(bond->last_contact)):QString{};
         people.push_back(card);
     }
+    for(const auto& [id,peer]:s.management->people->industry) {
+        const auto& p=peer.profile;QString portrait=QStringLiteral("image://portraits/%1").arg(p.portrait.kit);
+        for(const auto part:p.portrait.parts)portrait+='/'+QString::number(part);for(const auto part:p.portrait.style)portrait+='/'+QString::number(part);
+        QStringList skills;if(const auto* talents=core::talent_rules(s))for(const auto& skill:talents->skills)if(core::has_skill(p,skill.id))skills.push_back(q(skill.name));
+        auto card=QVariantMap{{"id",q(id)},{"name",q(p.name)},{"portrait",portrait},{"role",q(p.role)},{"detail",q(p.pronouns)+" · "+q(p.education)+"\n"+skills.join(" · ")}};
+        identities.emplace(id,card);
+        const auto* bond=core::social_link(s,"founder",id);
+        if(!bond)continue;
+        QStringList known;for(const auto& trait:core::visible_traits(s,p,id))known.push_back(q(trait));
+        int next=0;for(const auto threshold:rules->thresholds)if(threshold>bond->affinity){next=threshold;break;}
+        card["relationship"]=q(core::friendship_name(s,bond->affinity,false));card["coworker"]=false;card["external"]=true;card["affinity"]=bond->affinity;card["next"]=next;
+        card["organization"]=q(peer.organization)+" · "+q(peer.city);card["distance"]=q(core::social_distance(s,"founder",id));
+        card["traits"]=known.join(" · ");card["memory"]=q(bond->memory);card["blocker"]=q(core::social_blocker(s,id));card["moodBonus"]=0;people.push_back(card);
+    }
+    for(auto& value:people) {
+        auto card=value.toMap();const auto id=card.value("id").toString().toStdString();
+        card["introduction"]=!core::social_introduction(s,id).empty();card["referralBlocker"]=q(core::social_referral_blocker(s,id));value=card;
+    }
     std::set<std::string> visible{"founder"};
     for(const auto& bond:social.links)if(bond.known && bond.affinity>=rules->thresholds[3] && identities.contains(bond.first) && identities.contains(bond.second)) {
         visible.insert(bond.first);visible.insert(bond.second);

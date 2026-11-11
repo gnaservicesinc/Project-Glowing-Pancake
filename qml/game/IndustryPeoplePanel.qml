@@ -26,6 +26,8 @@ ColumnLayout {
                     Copy {text:modelData.name;font.bold:true;color:"#e7d299"}
                     Copy {text:modelData.role}
                     Copy {text:modelData.detail}
+                    WorldButton {objectName:"industryHello_"+modelData.id;text:qsTr("Say hello");textSize:panel.textSize;enabled:campaign.paused && campaign.companyEditable && !campaign.busy && !campaign.storageBlocked && !modelData.socialBlocker;onClicked:campaign.world.socialize(modelData.id,"chat",campaign.world.reviewToken)}
+                    Copy {visible:!!modelData.socialBlocker;text:modelData.socialBlocker || "";color:"#b5c6c5"}
                 }
             }
         }

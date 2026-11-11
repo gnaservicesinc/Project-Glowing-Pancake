@@ -52,6 +52,9 @@ int main(){using namespace pgp;try {
     for(int week=0;week<6;++week){social.date=core::advance_days(social.date,core::Days{7});core::prepare_social(social);}
     check(core::social_link(social,"founder",ids[0])->affinity<old,"Lost routine contact slowly weakens a tie");
     check(core::visible_traits(social,person).size()==person.traits.size(),"A weaker tie does not erase what was shared");
+    check(core::social_blocker(social,ids[0]).empty(),"Former coworkers can still catch up");
+    const auto before_chat=core::social_link(social,"founder",ids[0])->affinity;core::socialize(social,{ids[0],"chat"});
+    check(core::social_link(social,"founder",ids[0])->affinity>before_chat,"An established former coworker tie can be maintained online");
     auto forged=social;forged.management->people->social->links.front().second="missing";bool invalid=false;try{core::validate_social(forged);}catch(const std::invalid_argument&){invalid=true;}check(invalid,"Unknown relationship endpoint refused");
     std::cout<<"Social: private/public knowledge, interaction limits, opposing traits, multiple best friends, morale, loss of contact and exact continuation passed.\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

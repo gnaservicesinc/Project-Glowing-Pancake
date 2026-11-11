@@ -9,7 +9,7 @@ Updated 2026-11-10
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.59.0-dev.1**, generation **60**.
+immersive redesign advances content to **0.60.0-dev.1**, generation **61**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -71,15 +71,29 @@ the ten-person major HQ. All five selected industry/social/talent/workplace/foun
 checks pass. Optimized Mac game/editor builds and the native industry roster
 walkthrough pass, including compact 200% text.
 
-This is a partial stage-4 delivery: cross-company friendships, geographic encounter
-rates, introductions/referrals and international individual HQs are still pending.
-Rival recruitment expansion also still uses the older specialist planner. These
-remain required work in the full plan, alongside the later relationship/career work.
+Geographic networking now connects employees across opened major HQs, including
+the founder's circle. Same-city encounters are fastest, same-state contact is
+slower, and new online-only ties normally plateau at casual acquaintance. A rare
+breakthrough remains possible; existing strong ties can be maintained online.
+Nearby labs support repeat contact and clustering; moves change future rates.
+The industry directory's Say hello action and the social circle share actual
+commands and daily/weekly limits. Close friends can introduce their own close
+connections. Friends can recommend qualified applicants when a slot is available,
+with a saved cooldown; compensation, onboarding and workspace remain ordinary
+recruitment. Untouched applications are preserved. Former coworkers can catch up. Six focused
+runtime/bridge checks pass, including geographic rates, online ceilings, actual
+referrals, introductions, source reconciliation and exact continuation. The native
+walkthrough passes an actual regional greeting and its social card at compact
+200% text. Content review passes 24 prepared-opening save roundtrips.
 
-This is an implementation checkpoint, not completion of F-06. Major-company
-individual rosters and geographic contact, romance/families/rivalry, the additional
-design puzzles, career transitions and USCIF remain in the plan. Existing human review
-and platform/release gates remain open.
+This is still a partial stage-4 delivery: international individual HQs and the
+full individual rival recruitment planner and cross-company research collaboration
+remain pending. Romance, family,
+rivalry/repair, further design puzzles, career transitions and USCIF remain
+required work in the active full plan.
+
+This is an implementation checkpoint, not completion of F-06. Existing human
+review and platform/release gates remain open.
 
 ## Main-game visual refinement · 2026-11-10
 

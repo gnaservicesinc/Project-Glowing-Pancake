@@ -22,7 +22,7 @@ ColumnLayout {
     spacing:14
     component Copy:Label {Layout.fillWidth:true;wrapMode:Text.Wrap;textFormat:Text.PlainText;font.pixelSize:panel.textSize;color:"#dbe4e3"}
     Copy {text:qsTr("Your social circle");font.pixelSize:panel.textSize*1.5;font.bold:true}
-    Copy {text:qsTr("A coworker can also be a friend. Make time for people, discover shared interests, and let friendships grow. There is room for more than one best friend.")}
+    Copy {text:qsTr("A coworker can also be a friend. Nearby labs make it easier to meet and keep in touch; distant friendships need more effort. Make time, discover shared interests, and grow your circle. There is room for more than one best friend.")}
     Flow {
         Layout.fillWidth:true;spacing:8
         WorldButton {objectName:"socialPeople";text:qsTr("Spend time together");textSize:panel.textSize;checked:!panel.showNetwork;onClicked:panel.showNetwork=false}
@@ -42,9 +42,11 @@ ColumnLayout {
                     ColumnLayout {
                         Layout.fillWidth:true
                         Copy {text:panel.person.name || "";font.bold:true}
-                        Copy {objectName:"socialRelationship";text:(panel.person.relationship || "")+(panel.person.coworker?qsTr(" · Coworker"):qsTr(" · Former coworker"));color:"#e2cc8d"}
+                        Copy {objectName:"socialRelationship";text:(panel.person.relationship || "")+(panel.person.coworker?qsTr(" · Coworker"):panel.person.external?qsTr(" · Industry contact"):qsTr(" · Former coworker"));color:"#e2cc8d"}
                     }
                 }
+                Copy {visible:!!panel.person.organization;text:panel.person.organization || "";color:"#c0d8d2"}
+                Copy {visible:!!panel.person.distance;text:panel.person.distance==="city"?qsTr("Same city · easy to make time together"):panel.person.distance==="state"?qsTr("Same state · regional conversations"):qsTr("Online contact · slow growth; established ties take effort");color:"#c0d8d2"}
                 Copy {text:panel.person.memory || "";font.italic:true}
                 Rectangle {
                     Layout.fillWidth:true;implicitHeight:12;radius:6;color:"#172b32"
@@ -58,6 +60,13 @@ ColumnLayout {
                     WorldButton {objectName:"socialListen";text:qsTr("Ask, then listen");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker;onClicked:campaign.world.socialize(panel.person.id,"listen",campaign.world.reviewToken)}
                     WorldButton {objectName:"socialHobby";text:qsTr("Explore an interest");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker;onClicked:campaign.world.socialize(panel.person.id,"hobby",campaign.world.reviewToken)}
                 }
+                Flow {
+                    Layout.fillWidth:true;spacing:8
+                    WorldButton {objectName:"socialIntroduction";text:qsTr("Ask for an introduction");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker && !!panel.person.introduction;onClicked:campaign.world.socialize(panel.person.id,"introduce",campaign.world.reviewToken)}
+                    WorldButton {objectName:"socialReferral";text:qsTr("Ask for a recruiting referral");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker && !panel.person.referralBlocker;onClicked:campaign.world.socialize(panel.person.id,"referral",campaign.world.reviewToken)}
+                }
+                Copy {visible:!panel.person.introduction;text:qsTr("Close friends may introduce you to their own close connections as those relationships develop.");color:"#b5c6c5"}
+                Copy {text:panel.person.referralBlocker || qsTr("Your friend can recommend a qualified applicant. You still negotiate pay, provide workspace and decide whether to hire.");color:"#c6d5ba"}
                 Copy {objectName:"socialAvailability";text:panel.person.blocker || qsTr("One intentional meetup per day; reconnect with this person after %1 days. No fee for spending time together.").arg(panel.circle.interval || 7);color:"#c7d5b3"}
                 Copy {text:qsTr("What you know");font.bold:true}
                 Copy {text:panel.person.traits || qsTr("You are still getting to know one another.")}

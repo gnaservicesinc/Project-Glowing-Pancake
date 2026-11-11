@@ -201,6 +201,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     core::initialize_access(world.simulation,world.founding && (world.founding->family=="rich" || world.founding->leg=="wealthy" || world.founding->leg=="political"));
     if(scenario->counties) world.counties=core::initialize_counties(*scenario->counties,world.simulation.date,seed);
     initialize_competition(world,program,scenario->rivals,competition);
+    synchronize_industry_people(world,program);
     if(scenario->objectives) initialize_objectives(world,*scenario->objectives,std::move(objectives));
     else if(objectives) throw std::invalid_argument("This scenario uses its own introductory ending.");
     validate_checkpoint(program, checkpoint);

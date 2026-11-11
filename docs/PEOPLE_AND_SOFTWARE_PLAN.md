@@ -153,10 +153,10 @@ Registered event facts are `company.founder_close_friends` and
 `company.known_close_relationships`. Arbitrary relationship effects and general
 person skill queries still need the later event-authoring extension.
 
-Stages 4–8 remain planned work, along with the broader stage-3 preferences/event
-vocabulary. This batch does not implement cross-company ties or geographic rates,
-romance/families/rivalry repair, employee-paid study, the other infrastructure/data
-puzzles, career re-entry or USCIF.
+The remaining stage-4 HQ behavior and stages 5–8 remain required work, along
+with broader person preferences/event vocabulary. Romance/families/rivalry repair,
+employee-paid study, infrastructure/data puzzles, career re-entry and USCIF are
+unfinished. Geographic networking delivery is described below.
 
 
 ## Major-company HQ progress
@@ -182,10 +182,54 @@ also use the shared qualification, work and release rules.
 
 The public industry roster uses company-scoped person IDs and displays only public
 professional information. It lists only entered companies and preserves the
-selected company locally. This batch does not create cross-company friendships.
-Geographic encounters, introductions/referrals, international individual HQs and
-replacement of the aggregate specialist-recruitment planner remain stage-4 work.
+selected company locally. Geographic friendships and introductions/referrals use
+the shared network described below. International individual HQs and replacement
+of the aggregate specialist-recruitment planner, plus actual cross-company
+research collaboration, remain stage-4 work.
 
 Verification uses a bounded two-company, 35-day scenario, actual named research,
 funded salaries/rent, workstations, an actual tuition transaction, a ten-person
 opening and exact fresh saves. Broader campaign balance remains unqualified.
+
+
+## Geographic networking and useful connections
+
+Content 0.60.0-dev.1 adds authored city/state/remote encounter chances and gains,
+an online-only acquaintance ceiling, rare breakthrough probability and referral
+cooldown. The player's saved social network holds company-scoped mirrors of
+actual HQ people; it does not create a second workforce or replace source skill,
+employment or location authority. Snapshot validation reconciles every contact
+with the source person and employer. Public directories do not reveal private
+traits or imply that the founder has met someone.
+
+Weekly shuffled encounters cross company boundaries. Established cross-company
+edges receive one bounded opportunity to keep in touch; there is no daily
+all-pairs scan. Existing within-company friendships are mirrored from their
+owning HQ weekly. Same-city contact is most frequent and effective, same-state
+contact is slower, and remote contact is rare with a normally shallow ceiling.
+A rare remote breakthrough can exceed that ceiling. Existing strong ties can
+continue online. Lost contact decays gradually. Relocating HQ changes future
+contact rates. Retained former coworkers can keep in touch without workplace
+morale benefits. A former industry worker remains a person after leaving a firm.
+Their last known city is retained until a later residence/career model updates it.
+
+Say hello in the industry roster starts a nearby acquaintance through the actual
+Socialize command. An unintroduced distant stranger cannot be spammed into a
+friendship. Established contacts appear in the same circle and known-close map as
+coworkers. A close friend can introduce an actual close connection the founder
+has not met; introductions disclose the new acquaintance, not their private
+traits. Friendship permits recruiting referrals, subject to a saved cooldown and
+an available applicant slot. A referral generates an ordinary role-qualified
+applicant through the existing saved people stream. It never discards an untouched
+application, grants a free employee, duplicates a rival worker or skips pay,
+negotiation, onboarding or desk requirements. The user can decline an application
+first to create room. Intentional contact retains one meetup per day and one
+invitation per person per week.
+
+Registered author facts include `company.industry_contacts`,
+`company.industry_close_friends` and `company.referral_contacts`. General person
+skill/trait queries and arbitrary relationship event effects remain unfinished.
+The focused geographic checks compare the same seed at three distances, verify
+online ceilings and existing remote ties, real close-friend introductions,
+qualified referrals, full-pool atomic refusal, source-location validation and
+exact next-week save continuation. The broader plan remains active.

@@ -67,6 +67,12 @@ struct PersonProfile {
     std::string orientation="unrecorded";
     auto operator<=>(const PersonProfile&) const = default;
 };
+struct IndustryPerson {
+    PersonProfile profile;
+    std::string company,organization,state,city;
+    bool active=true;
+    auto operator<=>(const IndustryPerson&) const=default;
+};
 struct TeamDynamics {
     std::uint32_t creativity=0,compatibility_bp=0;
     std::vector<std::string> traits;
@@ -155,6 +161,7 @@ struct PeopleState {
     std::string founder_gender{};
     std::optional<TalentState> talent{};
     std::optional<SocialState> social{};
+    std::map<std::string,IndustryPerson> industry{};
     auto operator<=>(const PeopleState&) const = default;
 };
 struct SetRecruitingTerms {SalaryRate pay{10000};std::string mission;};
@@ -194,6 +201,7 @@ void validate_contact_funding(const SimulationState&);
 void validate_people_rules(const PeopleRules&);
 void initialize_people(SimulationState&,std::uint64_t seed,std::string founder_name={},std::string founder_pronouns={},bool founder_researcher=false,std::uint32_t prestige=0,std::string mission="research");
 void prepare_people(SimulationState&);
+void add_referred_applicant(SimulationState&,std::string_view referrer);
 void validate_people(const SimulationState&,bool deep=true);
 void hire_employee(SimulationState&,std::string_view,Cents protected_cash,std::uint32_t desk=0);
 void set_recruiting_terms(SimulationState&,const SetRecruitingTerms&);

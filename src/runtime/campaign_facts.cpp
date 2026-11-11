@@ -24,6 +24,14 @@ content::Scalar campaign_fact(const WorldState& world, std::string_view id) {
     using namespace core;
     const auto& s = world.simulation;
     const auto* founder=world.founding?&*world.founding:nullptr;
+    if(id=="company.industry_contacts" || id=="company.industry_close_friends" || id=="company.referral_contacts") {
+        if(!social_rules(s))return INT64_C(0);
+        const auto& people=*s.management->people;
+        if(id=="company.referral_contacts")return static_cast<std::int64_t>(people.social->referrals.size());
+        return static_cast<std::int64_t>(std::ranges::count_if(people.social->links,[&](const auto& bond){
+            const auto other=bond.first=="founder"?bond.second:bond.second=="founder"?bond.first:std::string{};
+            return bond.known && people.industry.contains(other) && (id=="company.industry_contacts" || bond.affinity>=social_rules(s)->thresholds[3]);}));
+    }
     if(id=="company.founder_close_friends" || id=="company.known_close_relationships") {
         if(!social_rules(s))return INT64_C(0);
         return static_cast<std::int64_t>(std::ranges::count_if(s.management->people->social->links,[&](const auto& bond){

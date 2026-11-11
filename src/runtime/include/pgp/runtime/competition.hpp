@@ -73,6 +73,8 @@ void initialize_competition(WorldState& world,const CompiledProgram& program,con
 [[nodiscard]] std::vector<core::MarketAdoption> industry_adoption_snapshot(const WorldState& world,
     std::optional<core::OrdinalDay> work_day = {});
 void advance_competition(WorldState& world,const CompiledProgram& program,core::OrdinalDay prior_day,const IndustryAllocations& assignments = {});
+void synchronize_industry_people(WorldState&,const CompiledProgram&);
+void validate_industry_people(const WorldState&,const CompiledProgram&);
 void validate_public_insight(const WorldState& world,const core::ResearchInsight& insight);
 void validate_competition(const WorldState& world,const CompiledProgram& program,bool deep);
 }

@@ -190,6 +190,16 @@ void hire_employee(SimulationState& s,std::string_view id,Cents protected_cash,s
     s.cash=accounts_report(*s.accounts).cash;
     if(ready==s.date) {const auto& employee=p.employees.back();add_staff_capacity(*s.capacity,s.date,employee.terms.profile.id,1,employee.terms.evaluation_credit);}
 }
+void add_referred_applicant(SimulationState& s,std::string_view referrer) {
+    const auto& r=rules(s);auto& p=*s.management->people;
+    std::erase_if(p.applicants,[&](const auto& a){const auto status=recruitment_status(a,s.date);return status!="available" && status!="fixed" && status!="waiting" && status!="counter" && status!="agreed";});
+    if(p.applicants.size()>=r.candidates)invalid("Make room by declining an applicant before asking for a referral.");
+    std::string name{referrer};
+    if(const auto person=p.industry.find(name);person!=p.industry.end())name=person->second.profile.name;
+    else for(const auto& employee:p.employees)if(employee.terms.profile.id==referrer)name=employee.terms.profile.name;
+    auto referred=applicant(s,false);referred.profile.bio="Introduced by "+name+", a trusted professional connection.";
+    p.applicants.push_back(std::move(referred));
+}
 void prepare_people(SimulationState& s) {
     if(!s.management || !s.management->people) return;
     auto& p=*s.management->people;
@@ -229,6 +239,12 @@ void validate_people(const SimulationState& s,bool deep) {
         p.next_recruitment>advance_days(s.date,r.recruitment_interval) || p.founding_prestige>10 || p.community_prestige>10 || p.community_buzz>20 ||
         (!p.founder_gender.empty() && p.founder_gender!="woman" && p.founder_gender!="man" && p.founder_gender!="nonbinary" && p.founder_gender!="unspecified") ||
         (p.mission!="research" && p.mission!="public benefit" && p.mission!="commercial")) invalid("HQ roster or recruitment state is outside its bounds.");
+    if(p.industry.size()>8192)invalid("The industry people register is full.");
+    for(const auto& [id,person]:p.industry) {
+        profile_valid(person.profile,s.date);
+        if(id!=person.company+"/"+person.profile.id || id.size()>160 || person.company.empty() || person.company.size()>64 || person.organization.empty() || person.organization.size()>128 ||
+           person.state.empty() || person.state.size()>64 || person.city.empty() || person.city.size()>128)invalid("Industry people need a stable scoped identity, employer and location.");
+    }
     std::set<std::string> ids;
     const auto check=[&](const Applicant& a){profile_valid(a.profile,s.date);if(!ids.insert(a.profile.id).second || a.salary<Cents{0} || a.salary>Cents{r.recruitment?30000000:15000000} ||
         a.signing<Cents{0} || a.signing>Cents{r.signing_cost.value()*(r.recruitment?r.recruitment->maximum_signing_multiple:1)} || a.evaluation_credit!=BasisPoints{r.maximum_evaluation_credit.value()*a.profile.evaluation/100}) invalid("Applicant identity, pay or evaluation evidence changed.");};

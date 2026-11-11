@@ -505,7 +505,8 @@ Personal traits become visible as trust grows; professional traits and pronouns
 are public. Close connections opens a portrait map you can explore by selecting
 a person, plus a text list that also works in compact layouts. Only known close
 friendships appear. The current circle covers your HQ team and retained former
-coworker ties; cross-company geography, romance and rivalry remain future work.
+coworker ties and the industry acquaintances you make. Romance and rivalry
+remain future work.
 
 
 People → Around the industry lists the public HQ roster of major companies that
@@ -513,5 +514,18 @@ have entered the world. Select a company to see its city, portraits, professiona
 roles, education and acquired skills. Their employees now work and study under
 shared rules; their company pays rent, salaries and new tuition/equipment expenses.
 Personal traits and social connections are not disclosed by this public directory.
-The current individual roster covers authored US companies; geographic networking
-and international individual rosters remain unfinished.
+The current individual roster covers authored US companies; international
+individual rosters remain unfinished.
+
+
+In Around the industry, Say hello can start an acquaintance with someone nearby.
+Distant strangers need an introduction. People you meet appear in Social circle,
+with their organization and proximity. City contact grows fastest, state contact
+is slower, and new online-only ties usually stay shallow. Established friendships
+can continue from afar, and HQ moves change the contact you get in future.
+
+Close friends can introduce their own close connections. Friends can recommend a
+qualified applicant if there is room in the applicant pool. Decline an applicant
+first if needed; untouched applications are preserved. Referrals have a cooldown.
+You still decide whether to hire and negotiate compensation, onboarding and desk
+space normally. Intentional meetups share the existing daily and weekly limits.

@@ -619,6 +619,7 @@ RuntimeResult transaction(const CompiledProgram& program, Checkpoint& original, 
         std::size_t steps = 0;
         bool core_already_validated = false;
         action(next, result, steps, core_already_validated);
+        synchronize_industry_people(next.world,program);
         if(core::prepare_access(next.world.simulation)) core_already_validated=false;
         for(std::size_t i=original.runtime.receipts.size();i<next.runtime.receipts.size();++i) {
             const auto& receipt=next.runtime.receipts[i];

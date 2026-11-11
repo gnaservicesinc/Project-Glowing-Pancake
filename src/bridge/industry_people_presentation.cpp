@@ -20,7 +20,7 @@ QVariantList WorldController::industryPeople() const {
             for(const auto part:p.portrait.style)portrait+='/'+QString::number(part);
             QStringList skills;if(const auto* rules=core::talent_rules(s))for(const auto& skill:rules->skills)if(core::has_skill(p,skill.id))skills.push_back(text(skill.name));
             roster.push_back(QVariantMap{{"id",text(rival.definition_id)+"/"+text(p.id)},{"name",text(p.name)},{"portrait",portrait},{"role",text(p.role)},
-                {"detail",text(p.pronouns)+" · "+text(p.education)+"\n"+skills.join(" · ")}});
+                {"socialBlocker",text(core::social_blocker(w.simulation,rival.definition_id+"/"+p.id))},{"detail",text(p.pronouns)+" · "+text(p.education)+"\n"+skills.join(" · ")}});
         }
         result.push_back(QVariantMap{{"id",text(rival.definition_id)},{"name",text(definition.name)},{"city",city},{"state",state},{"people",roster}});
     }

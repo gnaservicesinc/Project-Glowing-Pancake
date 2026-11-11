@@ -22,16 +22,20 @@ The HQ social foundation is also implemented: saved friendship strength and
 memories, weekly bounded encounters, intentional meetups with cooldowns, public
 versus learned traits, multiple best friends, workplace morale, known close-
 connection graph/list and registered event facts. Focused tests and native UI
-walkthroughs pass. No cross-company friendships or romance/rivalry yet.
+walkthroughs pass. Romance and rivalry remain unfinished.
 
 The first major-HQ batch is implemented for the authored US roster: actual
 employees, funded salaries, fitting premises/workstations, named research,
 equipment purchases, paid courses and software commands. The industry people
 screen shows opened firms' public rosters and cities. This is partial stage 4;
-international individual HQs, new cross-company connections, geographic rates,
-referrals and the individual recruitment planner remain unfinished.
+international individual HQs, the individual recruitment planner and paid/shared
+research collaboration remain unfinished. Geographic cross-company ties, close-friend introductions and qualified
+recruiting referrals are now implemented. Location, identity and skill snapshots
+reconcile with the actual source employers. New remote ties have a shallow ceiling;
+strong existing friendships can continue online. Player actions honor contact
+cooldowns, and referrals preserve untouched applications and ordinary hiring terms.
 
-Next: geographic cross-company contact and the remaining major-HQ behavior, then romance/families/rivalry
+Next: the remaining major-HQ behavior, then romance/families/rivalry
 repair, data and infrastructure puzzles, career re-entry and the fictional USCIF
 branch. These remain selected, unfinished work; this does not close F-06.
 

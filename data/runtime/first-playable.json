@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.59.0-dev.1",
+  "content_version": "0.60.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -76739,14 +76739,23 @@
           "signing_cost_cents": 100000,
           "skill_jitter": 15,
           "social": {
+            "city_chance_bp": 8000,
+            "city_gain": 14,
             "friction": 3,
             "interaction_gain": 18,
             "interval_days": 7,
             "mood_cap": 6,
             "outgoing_threshold": 40,
             "private_threshold": 400,
+            "referral_days": 90,
+            "remote_breakthrough_bp": 10,
+            "remote_ceiling": 200,
+            "remote_chance_bp": 200,
             "remote_decay": 2,
+            "remote_gain": 1,
             "shared_gain": 2,
+            "state_chance_bp": 4000,
+            "state_gain": 7,
             "thresholds": [
               80,
               200,
@@ -77948,7 +77957,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 30,
+      "revision": 31,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
