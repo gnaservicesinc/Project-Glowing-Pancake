@@ -403,6 +403,13 @@ target_compile_definitions(pgp-employee-study-test PRIVATE PGP_STUDY_SOURCE="${P
 pgp_project_target(pgp-employee-study-test)
 add_test(NAME runtime.employee-study COMMAND pgp-employee-study-test)
 
+add_executable(pgp-research-collaboration-test research_collaboration_test.cpp)
+target_link_libraries(pgp-research-collaboration-test PRIVATE pgp::persistence)
+target_include_directories(pgp-research-collaboration-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-research-collaboration-test PRIVATE PGP_COLLABORATION_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-research-collaboration-test)
+add_test(NAME runtime.research-collaboration COMMAND pgp-research-collaboration-test)
+
 add_executable(pgp-social-test social_test.cpp)
 target_link_libraries(pgp-social-test PRIVATE pgp::persistence)
 target_compile_definitions(pgp-social-test PRIVATE PGP_SOCIAL_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")

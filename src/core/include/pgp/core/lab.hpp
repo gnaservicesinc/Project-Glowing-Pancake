@@ -130,6 +130,11 @@ struct DataLicense {
     OrdinalDay acquired_on{0};
     auto operator<=>(const DataLicense&) const = default;
 };
+struct ResearchCooperation {
+    std::string agreement,partner;
+    BasisPoints credit{0};
+    auto operator<=>(const ResearchCooperation&) const=default;
+};
 struct ResearchRun {
     std::string research_id, project_id;
     bool completed = false;
@@ -139,6 +144,7 @@ struct ResearchRun {
     BasisPoints retry_credit{0};
     std::vector<std::string> researchers{};
     std::uint32_t creativity=0,compatibility_bp=0;
+    std::optional<ResearchCooperation> cooperation{};
     auto operator<=>(const ResearchRun&) const = default;
 };
 struct ResearchPublication {
@@ -294,10 +300,11 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
 void buy_data(LabState& state, AccountsState& accounts, OrdinalDay day, std::string_view offer_id, Cents protected_cash);
 void start_research(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day,
                     std::string_view research_id, const LabAllocation& allocation, Cents protected_cash,
-                    Cents sponsored_fee=Cents{0},std::uint32_t creativity=0,std::uint32_t compatibility_bp=0);
+                    Cents sponsored_fee=Cents{0},std::uint32_t creativity=0,std::uint32_t compatibility_bp=0,
+                    std::optional<ResearchCooperation> cooperation={});
 [[nodiscard]] std::uint32_t research_creativity_threshold(const LabState&,const CapacityState&,std::string_view,OrdinalDay);
 [[nodiscard]] ResearchPacing research_pacing(const LabState&,const CapacityState&,std::string_view,OrdinalDay);
-[[nodiscard]] std::uint32_t coordinated_staff_days(const LabCatalog&,const LabResearch&,std::uint32_t compatibility_bp);
+[[nodiscard]] std::uint32_t coordinated_staff_days(const LabCatalog&,const LabResearch&,std::uint32_t compatibility_bp,BasisPoints cooperation=BasisPoints{0});
 void publish_research(LabState& state, const CapacityState& capacity, OrdinalDay day, std::string_view research_id);
 void acquire_research_insight(LabState& state, OrdinalDay day, ResearchInsight insight);
 void start_training(LabState& state, CapacityState& capacity, OrdinalDay day, const TrainingRequest& request);

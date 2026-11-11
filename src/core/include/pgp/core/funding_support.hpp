@@ -5,6 +5,7 @@
 namespace pgp::core {
 struct SimulationState;
 struct LabAllocation;
+struct ResearchCooperation;
 
 enum class FundingSupportKind { research_grant, cloud_credit };
 inline constexpr std::size_t funding_offer_limit=8;
@@ -52,6 +53,6 @@ void validate_funding_support(const SimulationState&,bool deep);
 [[nodiscard]] FundingSupportStatus funding_support_status(const SimulationState&,const FundingSupportOffer&);
 void accept_funding_support(SimulationState&,const FundingSupportOffer&);
 [[nodiscard]] Cents research_cash_fee(const SimulationState&,std::string_view research);
-Cents start_funded_research(SimulationState&,std::string_view research,const LabAllocation&,Cents protected_cash);
+Cents start_funded_research(SimulationState&,std::string_view research,const LabAllocation&,Cents protected_cash,const ResearchCooperation* cooperation=nullptr);
 [[nodiscard]] std::vector<RecurringCredit> redeem_cloud_credits(SimulationState&);
 }

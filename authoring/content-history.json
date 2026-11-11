@@ -108071,6 +108071,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "f961806f2ebc6f3f4fa5c90cc1d59d49ad3e80f575f9f0fcd5b51970682e5360",
+          "before_hash": "b002561abaefc81fc8a4177ed48bd5b8afcf6cefc68472ecd83888a241626ba1",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 33,
+          "revision": 34
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "c68bb75db96e7ab913b6dfca27d9f94835b3c6b40bb1c34e36ce3ce3b359a4b7",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.63.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 64,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.62.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000063.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000064.collection.json",
+      "summary": "Research jams through industry friendships with bilateral costs, named staff, actual compute, bounded joint-work savings and shared publication.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

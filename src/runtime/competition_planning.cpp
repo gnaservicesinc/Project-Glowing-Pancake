@@ -411,10 +411,12 @@ void review_rival(WorldState& world,const CompiledProgram& program,RivalCompany&
     const auto stream_index=static_cast<std::size_t>(RandomStream::rivals);const auto before=rival.simulation.random[stream_index];
     SplitMix64 stream{before};const auto draw=stream.next();rival.simulation.random[stream_index]=stream.state();
     const auto observation=observe(world,rival.simulation.date,draw);
-    auto actions=candidates(rival,definition,observation,draw,world.simulation.civic ? &*world.simulation.civic : nullptr,
-        world.society?&*world.society:nullptr,world.competition->setup->review_interval);
+    const auto collaboration=plan_research_collaboration(world,program,rival.definition_id);
+    auto actions=collaboration.empty()?candidates(rival,definition,observation,draw,world.simulation.civic ? &*world.simulation.civic : nullptr,
+        world.society?&*world.society:nullptr,world.competition->setup->review_interval):std::vector<Candidate>{};
     RivalDecision decision{rival.simulation.date,"wait","","Conserve runway; no feasible action met the company's resource and reserve limits.",false,before,stream.state(),observation};
-    if (!actions.empty()) {
+    if(!collaboration.empty()){decision.action="collaborate";decision.subject=collaboration;decision.explanation="A trusted industry connection arranged funded joint research, with named staff and compute committed at both labs.";decision.accepted=true;rival.attempted=true;}
+    else if (!actions.empty()) {
         auto selected=std::move(actions.front());decision.action=std::move(selected.action);decision.subject=std::move(selected.subject);
         decision.accepted=submit(rival,std::move(selected.command),&decision.explanation);
         rival.attempted=true;
@@ -517,6 +519,7 @@ void advance_planning(WorldState& world,const CompiledProgram& program,OrdinalDa
     collect_public_results(world,prior);append_industry_adoption(world,prior);enter_due(world,program);
     update_competitive_offers(world,program);update_heavyweight_responses(world,program);
     for (auto& rival:world.competition->companies) review_rival(world,program,rival);
+    publish_industry_collaborations(world,program);
     collect_public_results(world,prior);
 }
 }

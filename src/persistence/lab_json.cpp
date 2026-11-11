@@ -32,6 +32,7 @@ Json lab_json(const core::LabState& state) {
         if (row.retry_credit.value()!=0) research.back()["retry_credit"]=row.retry_credit.value();
         if(row.creativity || row.compatibility_bp) {research.back()["creativity"]=row.creativity;research.back()["compatibility_bp"]=row.compatibility_bp;}
         if (!row.researchers.empty()) research.back()["researchers"]=row.researchers;
+        if(row.cooperation)research.back()["cooperation"]={{"agreement",row.cooperation->agreement},{"partner",row.cooperation->partner},{"credit",row.cooperation->credit.value()}};
     }
     for (const auto& row : state.models) {models.push_back({{"id",row.id},{"recipe_id",row.recipe_id},{"parent_id",row.parent_id},{"project_id",row.project_id},
         {"data_ids",row.data_ids},{"created_on",row.created_on.value()},{"inherited_work_milli_CU",row.inherited_work.value()},
@@ -101,7 +102,7 @@ core::LabState parse_lab(const Json& value) {
         state.licenses.push_back({label(row.at("offer_id")),core::OrdinalDay{i64(row.at("acquired_on"),"lab/license/acquired_on")}});
     }
     for (const auto& row : value.at("research")) {
-        fields(row,"lab/research_run",{"research_id","project_id","completed"},{"insight_credit","sponsored_fee","failed","retry_credit","researchers","creativity","compatibility_bp"});
+        fields(row,"lab/research_run",{"research_id","project_id","completed"},{"insight_credit","sponsored_fee","failed","retry_credit","researchers","creativity","compatibility_bp","cooperation"});
         state.research.push_back({label(row.at("research_id")),label(row.at("project_id")),boolean(row.at("completed"),"lab/research_run/completed"),
             core::BasisPoints{row.contains("insight_credit")?i64(row.at("insight_credit"),"lab/research_run/insight_credit"):0},
             core::Cents{row.contains("sponsored_fee")?i64(row.at("sponsored_fee"),"lab/research_run/sponsored_fee"):0},
@@ -110,6 +111,10 @@ core::LabState parse_lab(const Json& value) {
             row.contains("researchers")?strings(row.at("researchers"),32,64):std::vector<std::string>{},
             static_cast<std::uint32_t>(row.contains("creativity")?u64(row.at("creativity"),"creativity",1024):0),
             static_cast<std::uint32_t>(row.contains("compatibility_bp")?u64(row.at("compatibility_bp"),"compatibility",10000):0)});
+        if(row.contains("cooperation")) {
+            const auto& c=row.at("cooperation");fields(c,"research cooperation",{"agreement","partner","credit"});
+            state.research.back().cooperation=core::ResearchCooperation{text(c.at("agreement"),"agreement",64),text(c.at("partner"),"partner",64),core::BasisPoints{i64(c.at("credit"),"credit")}};
+        }
     }
     for (const auto& row : value.at("models")) {
         fields(row,"lab/model",{"id","recipe_id","parent_id","project_id","data_ids","created_on","inherited_work_milli_CU","consumed_work_milli_CU","capability_bp"},{"checkpoint_cursor"});

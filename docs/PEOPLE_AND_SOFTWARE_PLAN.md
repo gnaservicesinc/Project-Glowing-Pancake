@@ -185,8 +185,8 @@ The public industry roster uses company-scoped person IDs and displays only publ
 professional information. It lists only entered companies and preserves the
 selected company locally. Geographic friendships and introductions/referrals use
 the shared network described below. Detailed-company recruitment now uses the
-individual planner described below. Actual cross-company research collaboration
-remains stage-4 work.
+individual planner described below. Cross-company research collaboration uses the
+Research jam pact described below.
 
 Verification uses a bounded two-company, 35-day scenario, actual named research,
 funded salaries/rent, workstations, an actual tuition transaction, a ten-person
@@ -265,8 +265,9 @@ initializer and validates employees, computers, tariffs and costs. A two-company
 runtime fixture creates real training pressure, then lets the actual weekly
 planner negotiate and complete a paid, equipped hire, with onboarding and exact
 save/next-day continuation. This verifies the hiring loop, not campaign-wide
-business balance. Cross-company paid research collaboration and the later
-family/career/design-puzzle stages remain required work in the full active plan.
+business balance. Cross-company paid research collaboration is described below;
+the later family/career/design-puzzle stages remain required work in the full
+active plan.
 
 
 ## Voluntary employee learning
@@ -297,3 +298,57 @@ native walkthrough uses keyboard selections, resolves ordinary supplier choices,
 waits for actual salary payment and confirms employee-paid enrollment without
 changing founder or company cash; learning cards and controls are inspected at
 compact 200% text. Human balance and visual review remain open.
+
+
+## Research jams through industry friendships · 2026-11-11
+
+Content 0.63.0-dev.1 authors a research-collaboration policy: friendship 400,
+$300 coordination, 20% joint-work credit, and a 90-day pair cooldown, in the
+same constant-2014 units as the rest of the game. These are fictional game
+parameters. If the two labs have different policies, the stricter trust/cost/
+cooldown and smaller work credit apply. Each lab can join one active pact.
+
+The social-circle planning board groups topic, local teammate, compute source
+and rate, with a read-only quote and a reviewed payment commitment. An available
+researcher at the partner lab must be a friend of the founder or a current
+employee whose connection the player knows. Each lab independently satisfies
+skills, onboarding, computer, lab equipment, prerequisite, frontier, staff,
+compute, cash and reserve requirements. Remote collaboration can use an existing
+friendship; geography still controls how those ties form and survive. Private
+personality traits are not exposed by the quote.
+
+Signing creates two ordinary named research runs linked by one saved agreement.
+The initiator pays the partner an earned coordination fee, and each pays its own
+research fee through normal grant and cash rules. Each consumes its own actual
+staff time and finite compute. Joint work reduces the labor budget by the authored
+credit, rounded up to whole staff-days; experiment work takes the best of joint,
+public-insight and retry credit, never their sum. Each completed successful run
+creates its ordinary knowledge result. This is collaborative development with
+independent validation, not instant shared knowledge or invented staff capacity.
+
+Both labs consent to a joint publication when both have completed successfully.
+Publication goes through the existing public-result rules and industry notices;
+other labs adopt it under normal delay and credit limits. There is no publication
+bonus payment. A paused side must resume its ordinary project; a cancelled side
+cannot produce a joint paper. The other lab may finish its own research, retaining
+its actual work. Spent fees and used compute are not refunded.
+
+The bounded weekly rival policy may choose the same pact using an actual employee
+friendship, looking at at most sixteen eligible candidate combinations per review.
+It never starts a project for the player automatically. Two rival labs publish
+together only when both existing strategies favor public results. Bilateral
+validation reconciles agreements, both named runs, actual budgets, payment legs
+and publication, without copying full histories for each candidate.
+
+The focused check seeds an explicitly mature friendship to isolate its benefit;
+the geographic-social checks cover natural friendship progression. It verifies
+actual payment, work savings, power pause/resume, cancellation refusal, both real
+publications, exact save/continuation, forged terms/missing-partner rejection and
+a collaboration selected by a real weekly rival review. A separate pure formula
+projection checks non-stacking credits. Nine selected runtime/bridge checks and
+24 content prepared-opening save roundtrips pass. The optimized Mac game/editor
+builds and native walkthrough pass live planning, read-only portrait inspection, actual company payment/work,
+exact exported state, a fresh-process automatic continuation and joint
+publication. Normal and compact 200% layouts are rendered and inspected. The
+native setup seeds only the mature friendship; subsequent research is actual.
+This milestone does not close the active full plan or establish industry balance.

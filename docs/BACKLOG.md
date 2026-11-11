@@ -1,6 +1,6 @@
 # Feedback and later-phase backlog
 
-Updated 2026-11-10
+Updated 2026-11-11
 
 **The initial skeleton implementation queue is closed.** The current core is
 the starting point for human feedback. Work now follows the user's selected
@@ -31,7 +31,9 @@ screen shows opened firms' public rosters and cities. This is partial stage 4;
 international individual HQs and the individual recruitment planner are now
 implemented. Overseas firms use actual authored cities, regional utility and
 property profiles; individual hiring uses real equipment, offers/counteroffers,
-signing cash and onboarding. Paid/shared research collaboration remains unfinished.
+signing cash and onboarding. Research jams now commit both companies' named
+researchers, compute and real costs through industry friendships, with bounded
+work savings, shared publication and ordinary interruption/refusal paths.
 Geographic cross-company ties, close-friend introductions and qualified
 recruiting referrals are now implemented. Location, identity and skill snapshots
 reconcile with the actual source employers. New remote ties have a shallow ceiling;
@@ -42,7 +44,7 @@ Employee self-funded study is implemented through actual paid-compensation
 budgets, independent practical-course selection and reviewed voluntary enrollment.
 Company sponsorship remains available; employee fees never debit founder savings.
 
-Next: cross-company research collaboration, then romance/families/rivalry
+Next: romance/families/rivalry
 repair, data and infrastructure puzzles, career re-entry and the fictional USCIF
 branch. These remain selected, unfinished work; this does not close F-06.
 

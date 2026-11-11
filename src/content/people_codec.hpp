@@ -53,9 +53,16 @@ inline Json encode(const core::PeopleRules& r) {
     if(!r.industry_headquarters.empty())j["industry_headquarters"]=r.industry_headquarters;
     if(r.social)j["social"]=social_codec::encode(*r.social);
     if(r.talent)j["talent"]=talent_codec::encode(*r.talent);
+    if(r.collaboration){const auto& c=*r.collaboration;j["collaboration"]={{"coordination_fee_cents",c.coordination_fee.value()},{"work_credit_bp",c.work_credit.value()},{"minimum_friendship",c.minimum_friendship},{"cooldown_days",c.cooldown_days}};}
     return j;
 }
 inline core::PeopleRules decode(Json j) {
+    std::optional<core::ResearchCollaborationRules> collaboration;
+    if(j.contains("collaboration")) {
+        const auto& c=j.at("collaboration");fields(c,{"coordination_fee_cents","work_credit_bp","minimum_friendship","cooldown_days"});
+        collaboration=core::ResearchCollaborationRules{core::Cents{integer(c.at("coordination_fee_cents"))},core::BasisPoints{integer(c.at("work_credit_bp"))},static_cast<int>(count(c.at("minimum_friendship"))),static_cast<int>(count(c.at("cooldown_days")))};
+        j.erase("collaboration");
+    }
     std::uint32_t industry_team_target=8;
     if(j.contains("industry_team_target")){industry_team_target=count(j.at("industry_team_target"));j.erase("industry_team_target");}
     std::vector<core::IndustryHQSite> international;
@@ -131,7 +138,7 @@ inline core::PeopleRules decode(Json j) {
         j.erase("recruitment");
     }
     fields(j,{"first_names","last_names","maximum_hq","candidates","recruitment_days","onboarding_days","monthly_salary_cents","signing_cost_cents","base_skill","skill_jitter","pay_skill_weight","prestige_skill_weight","mission_skill_weight","maximum_evaluation_credit_bp"});
-    core::PeopleRules r;r.international_headquarters=std::move(international);r.industry_team_target=industry_team_target;r.industry_headquarters=std::move(industry_headquarters);r.talent=std::move(talent);r.social=std::move(social);r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);r.mood=std::move(mood);r.dismissal=dismissal;r.founder_audiences=std::move(audiences);
+    core::PeopleRules r;r.collaboration=collaboration;r.international_headquarters=std::move(international);r.industry_team_target=industry_team_target;r.industry_headquarters=std::move(industry_headquarters);r.talent=std::move(talent);r.social=std::move(social);r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);r.mood=std::move(mood);r.dismissal=dismissal;r.founder_audiences=std::move(audiences);
     for(const char* name:{"first_names","last_names"}) {
         const auto& list=j.at(name);
         if(!list.is_array() || list.size()>512) throw std::invalid_argument("Name pool exceeds its limit");

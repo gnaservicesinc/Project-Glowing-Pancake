@@ -264,6 +264,12 @@ OperationResult Campaign::propose_acquisition(std::uint64_t revision,std::string
 OperationResult Campaign::sign_wholesale(std::uint64_t revision,std::string_view plan,std::string_view source,std::string_view buyer) {
     return operate([&](auto& candidate){return candidate.signWholesale(revision,plan,source,buyer);},true);
 }
+OperationResult Campaign::collaborate_research(std::uint64_t revision,const runtime::CollaborationRequest& request) {
+    return operate([&](auto& candidate){return candidate.collaborateResearch(revision,request);},true);
+}
+OperationResult Campaign::publish_collaboration(std::uint64_t revision,std::string_view id) {
+    return operate([&](auto& candidate){return candidate.publishCollaboration(revision,id);},true);
+}
 OperationResult Campaign::transfer_subsidiary_funds(std::uint64_t revision,std::string_view id,core::Cents amount,bool funding) {
     return operate([&](auto& candidate){return candidate.transferSubsidiaryFunds(revision,id,amount,funding);},true);
 }

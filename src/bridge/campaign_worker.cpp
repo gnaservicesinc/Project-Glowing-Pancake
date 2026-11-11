@@ -216,6 +216,16 @@ void CampaignWorker::signWholesale(std::uint64_t token,std::uint64_t revision,st
     try {complete(token,campaign_.sign_wholesale(revision,plan,source,buyer));}
     catch (const std::exception& error) {pauseDriver();emit noticeRaised(error_text(error));publish();emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));}
 }
+void CampaignWorker::collaborateResearch(std::uint64_t token,std::uint64_t revision,runtime::CollaborationRequest request) {
+    requireOwningThread();
+    try {complete(token,campaign_.collaborate_research(revision,request));}
+    catch(const std::exception& error){pauseDriver();emit noticeRaised(error_text(error));publish();emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));}
+}
+void CampaignWorker::publishCollaboration(std::uint64_t token,std::uint64_t revision,std::string id) {
+    requireOwningThread();
+    try {complete(token,campaign_.publish_collaboration(revision,id));}
+    catch(const std::exception& error){pauseDriver();emit noticeRaised(error_text(error));publish();emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));}
+}
 void CampaignWorker::transferSubsidiaryFunds(std::uint64_t token,std::uint64_t revision,std::string id,core::Cents amount,bool funding) {
     requireOwningThread();
     try {complete(token,campaign_.transfer_subsidiary_funds(revision,id,amount,funding));}

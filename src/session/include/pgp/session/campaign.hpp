@@ -45,6 +45,8 @@ public:
     [[nodiscard]] OperationResult respond_competitive_offer(std::uint64_t expected_revision,std::string_view offer_id,bool accept);
     [[nodiscard]] OperationResult propose_acquisition(std::uint64_t expected_revision,std::string_view target,bool equity);
     [[nodiscard]] OperationResult sign_wholesale(std::uint64_t expected_revision,std::string_view plan,std::string_view source,std::string_view buyer);
+    [[nodiscard]] OperationResult collaborate_research(std::uint64_t expected_revision,const runtime::CollaborationRequest&);
+    [[nodiscard]] OperationResult publish_collaboration(std::uint64_t expected_revision,std::string_view id);
     [[nodiscard]] OperationResult transfer_subsidiary_funds(std::uint64_t expected_revision,std::string_view target,core::Cents amount,bool funding);
     [[nodiscard]] OperationResult choose(std::uint64_t expected_revision, std::uint64_t presentation_id,
                                         std::string_view choice_id);

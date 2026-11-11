@@ -86,6 +86,10 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
 }
 void validate_people_rules(const PeopleRules& r) {
     if(r.talent)validate_talent_rules(*r.talent);
+    if(r.collaboration && (!r.talent || !r.social || r.collaboration->coordination_fee<Cents{0} || r.collaboration->coordination_fee>Cents{1000000} ||
+       r.collaboration->work_credit<=BasisPoints{0} || r.collaboration->work_credit>BasisPoints{2500} ||
+       r.collaboration->minimum_friendship<200 || r.collaboration->minimum_friendship>850 || r.collaboration->cooldown_days<7 || r.collaboration->cooldown_days>365))
+        invalid("Research collaboration needs social/skill rules and bounded cost, trust, work and cooldown terms.");
     if(r.social)validate_social_rules(*r.social);
     if(r.industry_team_target<1 || r.industry_team_target>256 || r.international_headquarters.size()>6)invalid("Industry hiring target or overseas HQ count is invalid.");
     std::set<std::string> overseas;

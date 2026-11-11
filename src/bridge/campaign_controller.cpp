@@ -157,6 +157,16 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
     nameModels(society_,QStringLiteral("society"));nameModels(institutions_,QStringLiteral("institutions"));
     nameModels(frontier_,QStringLiteral("frontier"));nameModels(leadership_,QStringLiteral("leadership"));nameModels(objectives_,QStringLiteral("objectives"));
     connect(world_,&WorldController::actionRequested,this,&CampaignController::submit);
+    connect(world_,&WorldController::collaborationRequested,this,[this](runtime::CollaborationRequest request) {
+        if(!paused() || !beginOperation())return;
+        const auto revision=snapshot_->checkpoint.world.simulation.revision;
+        QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,revision,request=std::move(request)]{worker->collaborateResearch(token,revision,request);},Qt::QueuedConnection);
+    });
+    connect(world_,&WorldController::jointPublicationRequested,this,[this](QString id) {
+        if(!paused() || !beginOperation())return;
+        const auto revision=snapshot_->checkpoint.world.simulation.revision;
+        QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,revision,id=id.toStdString()]{worker->publishCollaboration(token,revision,id);},Qt::QueuedConnection);
+    });
     connect(world_,&WorldController::noticeRaised,this,&CampaignController::setNotice);
     connect(management_,&ManagementController::actionRequested,this,&CampaignController::submit);
     connect(infrastructure_,&InfrastructureController::actionRequested,this,&CampaignController::submit);

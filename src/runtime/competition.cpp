@@ -135,6 +135,7 @@ void advance_competition(WorldState& world,const CompiledProgram& program,Ordina
 }
 void validate_competition(const WorldState& world,const CompiledProgram& program,bool deep) {
     validate_industry_people(world,program);
+    validate_collaborations(world,program,deep);
     competition_detail::validate_wholesale(world,program,deep);
     if (!world.competition) return;
     if (world.competition->setup) {competition_detail::validate_planning(world,program,deep);return;}

@@ -1,6 +1,6 @@
 # Project status and next handoff
 
-Updated 2026-11-10
+Updated 2026-11-11
 
 ## Implementation progress
 
@@ -9,7 +9,7 @@ Updated 2026-11-10
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.62.0-dev.1**, generation **63**.
+immersive redesign advances content to **0.63.0-dev.1**, generation **64**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -119,7 +119,31 @@ game/editor builds and the native university walkthrough pass, including normal
 supplier decisions, payday, voluntary enrollment and compact 200% text. The
 tuition bar reflects the selected class's real fee and employee learning balance.
 
-Cross-company research collaboration remains stage-4 work. Romance, family,
+Industry friendships now unlock Research jams in the social circle. The planning
+board offers topic, teammate and compute choices together with a live quote.
+A signed pact commits one qualified equipped researcher and real compute at each
+lab, pays the coordination fee between the companies and pays each lab's research
+cost through its ordinary funding rules. Authored joint-work credit trims labor
+and experiment budgets with rounding; experiment discounts take the best credit
+instead of stacking. Both labs retain their earned results; joint publication
+requires both to finish successfully. Pauses, power loss, cancellation and setbacks
+use the ordinary research projects. Used work and fees are not refunded.
+
+Rivals can choose a joint project through their employees' friendships at a normal
+weekly strategy review, protecting their own runway and using the same pact rules.
+Each lab has at most one active pact; a pair has an authored cooldown. A bilateral
+validator reconciles both employers, actual named work, cost postings and joint
+publication. Nine focused runtime/bridge checks pass, including a real weekly
+rival collaboration, exact saves, paused continuation, cancelled-publication
+refusal, and a separate non-stacking calculation check. Content review passes
+24 prepared-opening save roundtrips. Optimized Mac game/editor builds and the
+native walkthrough pass actual paid work, exact export, a fresh process restart
+and joint publication, with portrait profile inspection, compact 200% choices
+and completion cards inspected.
+The walkthrough seeds an explicitly mature friendship, not its research results;
+natural friendship growth is covered separately by geographic checks.
+
+Romance, family,
 rivalry/repair, further design puzzles, career transitions
 and USCIF remain required work in the active full plan.
 

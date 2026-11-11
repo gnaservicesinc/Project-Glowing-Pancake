@@ -391,14 +391,15 @@ ResearchPacing research_pacing(const LabState& state,const CapacityState& capaci
 std::uint32_t research_creativity_threshold(const LabState& state,const CapacityState& capacity,std::string_view id,OrdinalDay day) {
     return research_pacing(state,capacity,id,day).threshold;
 }
-std::uint32_t coordinated_staff_days(const LabCatalog& catalog,const LabResearch& node,std::uint32_t compatibility) {
+std::uint32_t coordinated_staff_days(const LabCatalog& catalog,const LabResearch& node,std::uint32_t compatibility,BasisPoints cooperation) {
     const auto found=catalog.creative_research.find(node.id);
     const std::uint64_t bonus=found==catalog.creative_research.end()?0:static_cast<std::uint64_t>(found->second.coordination_bonus_bp)*compatibility/10000;
     const auto numerator=static_cast<std::uint64_t>(node.staff_days.value())*10000;
-    return static_cast<std::uint32_t>((numerator+10000+bonus-1)/(10000+bonus));
+    const auto coordinated=(numerator+10000+bonus-1)/(10000+bonus);
+    return static_cast<std::uint32_t>(insight_work(MilliCU{static_cast<std::int64_t>(coordinated)},cooperation).value());
 }
 void start_research(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day,
-                    std::string_view research_id, const LabAllocation& allocation, Cents protected_cash,Cents sponsored_fee,std::uint32_t creativity,std::uint32_t compatibility_bp) {
+                    std::string_view research_id, const LabAllocation& allocation, Cents protected_cash,Cents sponsored_fee,std::uint32_t creativity,std::uint32_t compatibility_bp,std::optional<ResearchCooperation> cooperation) {
     require_day(state, day);
     const auto& node = find(state.catalog.research, research_id);
     if (sponsored_fee.value()<0 || sponsored_fee>node.cash) invalid("A research sponsor cannot pay more than the fee");
@@ -422,13 +423,15 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
     const auto retry_credit = node.setback && has_failure && completed_runs == 0 ? node.setback->retry_credit : BasisPoints{0};
     const bool grounded=state.catalog.research_workplaces.has_value();
     if(grounded && allocation.researchers.size()!=allocation.staff) invalid("Choose the people who will do the research");
-    const auto work = grounded?insight_work(node.experiment_work,std::max(credit,retry_credit)):
+    const auto cooperative=cooperation?cooperation->credit:BasisPoints{0};
+    if(cooperation && (!grounded || cooperative.value()<=0 || cooperative.value()>2500 || cooperation->agreement.empty() || cooperation->agreement.size()>64 || cooperation->partner==state.owner || cooperation->partner.empty()))invalid("Research cooperation needs a named partner and bounded agreement credit.");
+    const auto work = grounded?insight_work(node.experiment_work,std::max({credit,retry_credit,cooperative})):
         research_work(node, allocation.daily_compute, allocation.staff, credit, retry_credit);
     auto row = project("lab/research/" + node.id + "/" + std::to_string(attempt), ProjectKind::research, day, allocation, work);
-    if(grounded) row.required_staff_days=coordinated_staff_days(state.catalog,node,compatibility_bp);
+    if(grounded) row.required_staff_days=coordinated_staff_days(state.catalog,node,compatibility_bp,cooperative);
     reserve_project(capacity, day, row);
     charge(accounts, day, checked_unit_subtract(node.cash,sponsored_fee), protected_cash, row.id);
-    state.research.push_back({node.id, row.id, false,credit,sponsored_fee,false,retry_credit,allocation.researchers,creativity,compatibility_bp});
+    state.research.push_back({node.id, row.id, false,credit,sponsored_fee,false,retry_credit,allocation.researchers,creativity,compatibility_bp,std::move(cooperation)});
 }
 void publish_research(LabState& state,const CapacityState& capacity,OrdinalDay day,std::string_view id) {
     require_day(state,day);
@@ -577,9 +580,11 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         const auto credit=insight_on(state,node.id,work.starts_on);
         const auto retry = node.setback && prior.failed && prior.successes == 0 ? node.setback->retry_credit : BasisPoints{0};
         const bool grounded=state.catalog.research_workplaces.has_value();
-        const auto minimum = grounded?insight_work(node.experiment_work,std::max(credit,retry)):
+        const auto cooperative=run.cooperation?run.cooperation->credit:BasisPoints{0};
+        if(run.cooperation && (!grounded || cooperative.value()<=0 || cooperative.value()>2500 || run.cooperation->agreement.empty() || run.cooperation->agreement.size()>64 || run.cooperation->partner.empty() || run.cooperation->partner==state.owner))invalid("Research cooperation lost its bounded partner agreement.");
+        const auto minimum = grounded?insight_work(node.experiment_work,std::max({credit,retry,cooperative})):
             research_work(node, work.requested, std::max(work.staff, 1U), credit, retry);
-        if(work.required_staff_days!=(grounded?coordinated_staff_days(state.catalog,node,run.compatibility_bp):0) ||
+        if(work.required_staff_days!=(grounded?coordinated_staff_days(state.catalog,node,run.compatibility_bp,cooperative):0) ||
             (grounded && (run.researchers.size()!=work.staff || run.researchers.size()>32 ||
                 std::set<std::string_view>(run.researchers.begin(),run.researchers.end()).size()!=run.researchers.size())) ||
             (!grounded && !run.researchers.empty()))

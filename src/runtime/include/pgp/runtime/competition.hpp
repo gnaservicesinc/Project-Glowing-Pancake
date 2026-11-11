@@ -4,6 +4,7 @@
 #include <pgp/runtime/heavyweight.hpp>
 #include <pgp/runtime/mergers.hpp>
 #include <pgp/runtime/wholesale.hpp>
+#include <pgp/runtime/collaboration.hpp>
 #include <map>
 
 namespace pgp::runtime {
@@ -63,6 +64,7 @@ struct CompetitionState {
     std::vector<CompetitiveOffer> offers{};
     std::vector<AcquisitionRecord> acquisitions{};
     std::vector<WholesaleContract> wholesale{};
+    std::vector<ResearchCollaboration> collaborations{};
     auto operator<=>(const CompetitionState&) const = default;
 };
 [[nodiscard]] const content::RivalDefinition& rival_definition(const CompiledProgram& program,std::string_view id);

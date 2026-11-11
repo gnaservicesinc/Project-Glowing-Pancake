@@ -10,6 +10,7 @@
 #include "market_json.hpp"
 #include "liquidity_json.hpp"
 #include "lab_json.hpp"
+#include "collaboration_json.hpp"
 #include "deployment_json.hpp"
 #include "management_json.hpp"
 #include "infrastructure_json.hpp"
@@ -452,6 +453,7 @@ Json competition_json(const CompetitionState& state, bool packed_world) {
         result["offers"]=detail::competitive_offers_json(state.offers);
         if (!state.acquisitions.empty()) result["acquisitions"]=detail::acquisitions_json(state.acquisitions);
         if (!state.wholesale.empty()) result["wholesale"]=wholesale_json(state.wholesale);
+        if(!state.collaborations.empty())result["collaborations"]=detail::collaborations_json(state.collaborations);
         result["releases"]=Json::array();for (const auto& row:state.releases) result["releases"].push_back({{"company",row.company_id},{"product",row.product_id},{"day",row.day.value()}});
         detail::HistoryRows adoptions{packed_world};
         for (const auto& row:state.adoptions) {
@@ -463,7 +465,8 @@ Json competition_json(const CompetitionState& state, bool packed_world) {
     return result;
 }
 CompetitionState parse_competition(const Json& value, bool packed_world, const CompiledProgram& program, std::uint64_t root_seed) {
-    detail::fields(value,"competition",{"companies","notices"},{"setup","releases","adoptions","offers","acquisitions","wholesale"}); CompetitionState result;
+    detail::fields(value,"competition",{"companies","notices"},{"setup","releases","adoptions","offers","acquisitions","wholesale","collaborations"}); CompetitionState result;
+    if(value.contains("collaborations"))result.collaborations=detail::parse_collaborations(value.at("collaborations"));
     if (value.contains("acquisitions")) result.acquisitions=detail::parse_acquisitions(value.at("acquisitions"));
     if (value.contains("offers")) result.offers=detail::parse_competitive_offers(value.at("offers"));
     if (value.contains("wholesale")) result.wholesale=parse_wholesale(value.at("wholesale"));
@@ -488,7 +491,7 @@ CompetitionState parse_competition(const Json& value, bool packed_world, const C
             result.adoptions.push_back(std::move(adoption));
         });
     } else if (value.contains("releases") || value.contains("adoptions") || value.contains("offers") ||
-        value.contains("acquisitions") || value.contains("wholesale")) detail::invalid("competition","Public industry state has no authored setup");
+        value.contains("acquisitions") || value.contains("wholesale") || value.contains("collaborations")) detail::invalid("competition","Public industry state has no authored setup");
     detail::array(value.at("companies"),"competition/companies",32); detail::array(value.at("notices"),"competition/notices",result.setup?4096:128);
     detail::CompetitionHistoryBudget history_budget;
     for (const auto& row:value.at("companies")) {

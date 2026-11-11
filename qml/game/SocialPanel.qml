@@ -72,6 +72,7 @@ ColumnLayout {
                 Copy {text:panel.person.traits || qsTr("You are still getting to know one another.")}
                 Copy {text:qsTr("Pronouns and professional skills are public. Other traits are shared through contact and trust; outgoing people tend to open up sooner. What they have shared stays known.");color:"#b6c6ca"}
                 Copy {text:qsTr("Friends at work: +%1 morale (up to +%2). Close friends contribute more.").arg(panel.person.moodBonus || 0).arg(panel.circle.moodCap || 0);color:"#d9c68f"}
+                ResearchJam {Layout.fillWidth:true;textSize:panel.textSize;contact:panel.person;onInspectPerson:person=>{profile.person=person;profile.open()}}
             }
         }
     }

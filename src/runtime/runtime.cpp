@@ -983,6 +983,27 @@ RuntimeResult Runtime::signWholesale(std::uint64_t expected_revision,std::string
         sign_wholesale(next.world,program_,plan,source,buyer);
     });
 }
+RuntimeResult Runtime::collaborateResearch(std::uint64_t expected_revision,const CollaborationRequest& request) {
+    return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto& result,auto&,auto&) {
+        if(objective_time_stopped(next.world) || observing_world(next.world))fail(RuntimeReason::campaign_finished,"This institution cannot make a new research commitment.");
+        if(has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date || next.world.simulation.phase!=core::DayPhase::work_ready)
+            fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required decisions before signing a research jam.");
+        start_collaboration(next.world,program_,next.world.company_id,request);
+        result.explanation="Research jam signed: both labs committed named staff, compute and real costs.";
+    });
+}
+RuntimeResult Runtime::publishCollaboration(std::uint64_t expected_revision,std::string_view id) {
+    return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto& result,auto&,auto&) {
+        if(objective_time_stopped(next.world) || observing_world(next.world) || has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date)
+            fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required decisions before publishing.");
+        if(!next.world.competition)fail(RuntimeReason::effect_rejected,"There is no joint research agreement.");
+        const auto& rows=next.world.competition->collaborations;const auto c=std::ranges::find(rows,id,&ResearchCollaboration::id);
+        if(c==rows.end() || (c->first_company!=next.world.company_id && c->second_company!=next.world.company_id))fail(RuntimeReason::effect_rejected,"Choose your own lab's joint result.");
+        publish_collaboration(next.world,id);
+        competition_detail::collect_public_results(next.world,core::OrdinalDay{next.world.simulation.date.value()-1});
+        result.explanation="Both labs published the completed joint result.";
+    });
+}
 RuntimeResult Runtime::transferSubsidiaryFunds(std::uint64_t expected_revision,std::string_view target,core::Cents amount,bool funding) {
     return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto&,auto&,auto&) {
         if (objective_time_stopped(next.world) || observing_world(next.world)) fail(RuntimeReason::campaign_finished,"The scored institution is no longer accepting commitments.");

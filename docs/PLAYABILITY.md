@@ -542,3 +542,20 @@ New hires show their onboarding date. Detailed companies prepare and pay for
 workstations, negotiate with actual applicants and add productive staff only when
 onboarding completes. Their payroll, equipment and staffing needs can constrain
 how quickly they grow.
+
+
+## Making a research pact
+
+In People → Social circle, choose a researcher at another company and open
+**Plan a research jam**. A friendship with you, or a known friendship with someone
+on your team, opens the door. Choose a topic, teammate, compute source and rate
+on the planning board. The live quote explains costs, work and any missing
+requirements. Review the pact before signing: both labs commit a real qualified
+researcher and compute, and your company pays the coordination fee.
+
+Watch both progress bars. Joint work saves a bounded share of labor and
+experiment effort; you still need actual equipment and paid staff. Manage your
+side in Lab to pause, resume or cancel ordinary research. Paid fees and used
+work are not returned. Both labs keep their successful results. When both finish,
+**Publish together** opens a review and publishes a real result for each lab.
+Other firms can then learn from it under normal public-research rules.

@@ -14,6 +14,7 @@ class WorldController final : public QObject {
     Q_PROPERTY(bool atHeadquarters READ atHeadquarters NOTIFY changed)
     Q_PROPERTY(QVariantList industryPeople READ industryPeople NOTIFY changed)
     Q_PROPERTY(QVariantMap relationships READ relationships NOTIFY changed)
+    Q_PROPERTY(QVariantMap researchJams READ researchJams NOTIFY changed)
     Q_PROPERTY(QVariantMap talent READ talent NOTIFY changed)
     Q_PROPERTY(QVariantMap founder READ founder NOTIFY changed)
     Q_PROPERTY(QVariantList people READ people NOTIFY changed)
@@ -68,6 +69,10 @@ public:
     QVariantMap founder() const;
     QVariantMap talent() const;
     QVariantMap relationships() const;
+    QVariantMap researchJams() const;
+    Q_INVOKABLE QVariantMap collaborationQuote(QVariantMap draft) const;
+    Q_INVOKABLE void collaborateResearch(QVariantMap draft,QString revision);
+    Q_INVOKABLE void publishCollaboration(QString id,QString revision);
     QVariantList industryPeople() const;
     Q_INVOKABLE void socialize(QString person,QString activity,QString revision);
     Q_INVOKABLE QVariantMap softwareQuote(QVariantMap draft) const;
@@ -186,6 +191,8 @@ public:
     Q_INVOKABLE QVariantMap blueprintQuote(QString blueprint,QString state) const;
     Q_INVOKABLE void buildBlueprint(QVariantMap reviewed);
 signals:
+    void collaborationRequested(runtime::CollaborationRequest);
+    void jointPublicationRequested(QString id);
     void actionRequested(core::CommandAction);
     void changed();
     void navigationChanged();

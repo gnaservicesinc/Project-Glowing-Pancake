@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.62.0-dev.1",
+  "content_version": "0.63.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -76619,6 +76619,12 @@
         "people": {
           "base_skill": 50,
           "candidates": 4,
+          "collaboration": {
+            "cooldown_days": 90,
+            "coordination_fee_cents": 30000,
+            "minimum_friendship": 400,
+            "work_credit_bp": 2000
+          },
           "dismissal": {
             "severance_months": 1
           },
@@ -78838,7 +78844,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 33,
+      "revision": 34,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

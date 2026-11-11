@@ -46,6 +46,12 @@ struct IndustryHQSite {
     std::vector<TravelRoute> travel;
     auto operator<=>(const IndustryHQSite&) const=default;
 };
+struct ResearchCollaborationRules {
+    Cents coordination_fee{30000};
+    BasisPoints work_credit{2000};
+    int minimum_friendship=400,cooldown_days=90;
+    auto operator<=>(const ResearchCollaborationRules&) const=default;
+};
 struct PeopleRules {
     std::vector<std::string> first_names,last_names;
     std::uint32_t maximum_hq=128,candidates=4;
@@ -63,6 +69,7 @@ struct PeopleRules {
     std::map<std::string,std::string> industry_headquarters{};
     std::vector<IndustryHQSite> international_headquarters{};
     std::uint32_t industry_team_target=8;
+    std::optional<ResearchCollaborationRules> collaboration{};
     auto operator<=>(const PeopleRules&) const = default;
 };
 struct PersonProfile {
