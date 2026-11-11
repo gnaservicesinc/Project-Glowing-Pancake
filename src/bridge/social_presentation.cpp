@@ -15,9 +15,23 @@ QVariantMap WorldController::relationships() const {
         auto card=person(q(p.id),s.date);identities.emplace(p.id,card);
         const auto* bond=core::social_link(s,"founder",p.id);const int affinity=bond?bond->affinity:0;
         QStringList known;for(const auto& t:core::visible_traits(s,p))known.push_back(q(t));
-        const auto status=core::friendship_name(s,affinity,!employee.departed_on);
+        const auto* concern=core::mission_concern(s,p.id);
+        const bool rival=core::is_personal_rival(s,"founder",p.id);
+        const bool frenemy=concern && concern->frenemy;
+        const auto status=rival?tr("Rivals"):frenemy?tr("Frenemies"):q(core::friendship_name(s,affinity,!employee.departed_on));
+        card["rival"]=rival;
+        if(concern && !concern->settled_on) {
+            const auto& policy=*core::mission_conflict_rules(s);
+            const auto deadline=concern->rivalry_on?
+                core::advance_days(concern->heard_on.value_or(*concern->rivalry_on),core::Days{policy.notice_days}):
+                core::advance_days(concern->raised_on,core::Days{policy.concern_days});
+            card["concern"]=QVariantMap{{"before",q(concern->previous_mission)},{"after",q(concern->new_mission)},
+                {"deadline",q(core::iso_date(deadline))},{"noticeDue",s.date>=deadline},{"rival",rival},{"heard",concern->heard_on.has_value()},
+                {"resigned",employee.resigned},{"atWork",!employee.departed_on},{"busyToday",social.last_outing==s.date},
+                {"blocker",q(core::mission_response_blocker(s,{p.id,{}}))}};
+        }
         int next=0;for(const auto threshold:rules->thresholds)if(threshold>affinity){next=threshold;break;}
-        card["relationship"]=q(status);card["coworker"]=!employee.departed_on;card["affinity"]=affinity;card["next"]=next;
+        card["relationship"]=status;card["coworker"]=!employee.departed_on;card["affinity"]=affinity;card["next"]=next;
         card["traits"]=known.join(" · ");card["memory"]=bond?q(bond->memory):tr("You have not spent time together yet.");
         card["blocker"]=q(core::social_blocker(s,p.id));card["moodBonus"]=core::friendship_mood(s,p.id);
         card["lastContact"]=bond?q(core::iso_date(bond->last_contact)):QString{};
@@ -67,9 +81,59 @@ QVariantMap WorldController::relationships() const {
         if(!familyIds.contains(a) || !familyIds.contains(b))continue;
         const auto first=familyIds.at(a),second=familyIds.at(b);edge["first"]=q(first);edge["second"]=q(second);edges.push_back(edge);visible.insert(first);visible.insert(second);
     }
+    QVariantList mediators;
+    if(social.mission_conflict) {
+        for(const auto& worker:s.management->people->employees) {
+            const auto& person=worker.terms.profile;
+            if(core::mission_mediator_available(s,person.id))mediators.push_back(QVariantMap{{"id",q(person.id)},{"name",q(person.name)}});
+        }
+        for(const auto& [id,concern]:social.mission_conflict->concerns) {
+            if(!identities.contains(id) || (!concern.frenemy && !core::is_personal_rival(s,"founder",id)))continue;
+            const auto label=concern.frenemy?tr("Frenemies"):tr("Rivals");
+            auto existing=std::find_if(edges.begin(),edges.end(),[&](const auto& value){
+                const auto edge=value.toMap();
+                return (edge.value("first")==q(id) && edge.value("second")=="founder") ||
+                       (edge.value("second")==q(id) && edge.value("first")=="founder");
+            });
+            if(existing!=edges.end()) {
+                auto edge=existing->toMap();
+                edge["label"]=edge.value("label").toString()+" · "+label;
+                *existing=edge;
+            } else {
+                edges.push_back(QVariantMap{{"first","founder"},{"second",q(id)},{"label",label},
+                    {"names",me.value("name").toString()+" ↔ "+identities.at(id).value("name").toString()},{"strength",0}});
+            }
+            visible.insert(id);
+        }
+    }
     for(const auto& id:visible){auto row=identities.at(id);row["id"]=q(id);nodes.push_back(row);}
-    return {{"people",people},{"nodes",nodes},{"edges",edges},{"moodCap",rules->mood_cap},{"interval",rules->interval_days},{"revision",reviewToken()}};
+    return {{"people",people},{"nodes",nodes},{"edges",edges},{"mission",social.mission_conflict?q(social.mission_conflict->mission):QString{}},{"mediators",mediators},{"moodCap",rules->mood_cap},{"interval",rules->interval_days},{"revision",reviewToken()}};
 }
+QStringList WorldController::missionPreview(QString mission) const {
+    if(!snapshot_)return {};
+    const auto& state=snapshot_->checkpoint.world.simulation;
+    QStringList names;
+    for(const auto& id:core::mission_pivot_concerns(state,mission.toStdString()))
+        names.push_back(person(q(id),state.date).value("name").toString());
+    return names;
+}
+
+void WorldController::changeCompanyMission(QString mission,QString revision) {
+    if(!snapshot_ || companyArchive() || revision!=reviewToken()){
+        emit noticeRaised(tr("Review the current company mission."));
+        return;
+    }
+    emit actionRequested(core::ChangeCompanyMission{mission.toStdString()});
+}
+
+void WorldController::respondToMissionConcern(QString person,QString mediator,QString revision) {
+    if(!snapshot_ || companyArchive() || revision!=reviewToken()){
+        emit noticeRaised(tr("Review the latest conversation."));
+        return;
+    }
+    emit actionRequested(core::RespondToMissionConcern{person.toStdString(),mediator.toStdString()});
+}
+
 void WorldController::socialize(QString person,QString activity,QString revision) {
     if(!snapshot_ || companyArchive() || revision!=reviewToken()){emit noticeRaised(tr("Circumstances changed. Review your plans again."));return;}
     emit actionRequested(core::Socialize{person.toStdString(),activity.toStdString()});

@@ -89,7 +89,7 @@ std::map<std::string, EmployeeMood> workplace_moods(const SimulationState& state
         report.company_prestige = prestige_points(company_reputation, mood.company_prestige);
         report.ceo_prestige = prestige_points(ceo_reputation, mood.ceo_prestige);
         const auto role_weight = static_cast<int>(mood.role);
-        report.role = person.preferred_mission == people.mission ? role_weight / 2 : -role_weight / 2;
+        report.role = person.preferred_mission == committed_company_mission(state) ? role_weight / 2 : -role_weight / 2;
         if (manager && manager->person == person.id) {
             report.role += person.role == "Software engineer" ? role_weight / 2 : -role_weight / 2;
         } else if (researching.contains(person.id)) {

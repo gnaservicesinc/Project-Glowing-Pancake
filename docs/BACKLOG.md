@@ -32,7 +32,10 @@ plans, school-age learning choices and adulthood. Recommended candidates retain
 identity and a named source, wait without displacing existing applications, and
 use ordinary skills/pay/workspace/onboarding requirements. Family and friend
 referrals appear under Employee recommended candidates. Focused tests and native
-arrival/restart/compact checks pass. Rivalry and repair remain unfinished.
+arrival/restart/compact checks pass. Mission reversals now create concerns for
+employees with tenure, alignment and actual work on company projects. HR mediation,
+trait privacy, personal rivalry, resignation, reconciliation and frenemies are
+playable.
 
 The first major-HQ batch is implemented for the authored US roster: actual
 employees, funded salaries, fitting premises/workstations, named research,
@@ -54,7 +57,7 @@ Employee self-funded study is implemented through actual paid-compensation
 budgets, independent practical-course selection and reviewed voluntary enrollment.
 Company sponsorship remains available; employee fees never debit founder savings.
 
-Next: concrete betrayal and rivalry repair, remaining specialist skill effects,
+Next: remaining specialist skill effects,
 major-HQ property growth, data/infrastructure/layout puzzles, career re-entry and
 the fictional USCIF branch. These remain selected, unfinished work; this does not close F-06.
 

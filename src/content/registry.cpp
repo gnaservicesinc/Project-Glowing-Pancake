@@ -259,6 +259,9 @@ Registry foundation_registry() {
     number("company.founder_dating",Scope::company,Unit::count,0,1,"Founder is currently dating, before engagement.","campaign");
     number("company.founder_engaged",Scope::company,Unit::count,0,1,"Founder is currently engaged, before marriage.","campaign");
     number("company.founder_married",Scope::company,Unit::count,0,1,"Founder is currently married.","campaign");
+    number("company.mission_concerns",Scope::company,Unit::count,0,256,"Open concerns about abandoning a company mission.","campaign");
+    number("company.personal_rivals",Scope::company,Unit::count,0,256,"People currently in a personal rivalry with the founder.","campaign");
+    number("company.rivalry_resignations",Scope::company,Unit::count,0,256,"Employees who resigned over a broken mission commitment.","campaign");
     number("company.founder_close_friends",Scope::company,Unit::count,0,256,"Known close-or-better founder friendships; multiple best friends are allowed.","campaign");
     number("company.known_close_relationships",Scope::company,Unit::count,0,8192,"Close relationships actually shared with the founder.","campaign");
     boolean("company.founder_programming","The founder has acquired Programming, independently of education.",Scope::company,"campaign");

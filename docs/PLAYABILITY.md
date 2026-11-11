@@ -548,7 +548,17 @@ Grown children may apply independently through family connections, or you can
 invite an application. People → Applicants → **Employee recommended candidates**
 groups friend and family referrals and shows who recommended each person. New
 applications can wait for the next normal recruitment review without replacing
-existing discussions. The recommendation stays attached to the application and later employee record. Rivalry repair remains unfinished.
+existing discussions. The recommendation stays attached to the application and later employee record.
+
+In **People → Social circle**, use **Change direction** to review a new company
+mission. Employees invested in the previous mission may ask to talk. Select their
+card and check the response date. A colleague with Empathetic Listening or
+Psychology can mediate while the concern is still open.
+
+After an ignored concern turns into a rivalry, the employee may give notice.
+Empathetic Listening opens a conversation. Follow up on the date shown, then
+spend time rebuilding the friendship. When it recovers, the relationship becomes
+**Frenemies**.
 
 
 People → Around the industry lists the public HQ roster of major companies that

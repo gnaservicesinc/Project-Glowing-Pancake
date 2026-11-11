@@ -59,6 +59,7 @@ std::string other(const RomanceBond& b,std::string_view id){return b.first==id?b
 bool romantic_identity_known(const WorldState& w,std::string_view person) {
     if(!w.romance){return false;}
     const auto id=romance_person_id(w,person);if(id=="founder")return true;
+    if(core::is_personal_rival(w.simulation,"founder",romance_detail::social_key(w,id)))return false;
     if(w.romance->known_identities.contains(id))return true;
     const auto& people=*w.simulation.management->people;const PersonProfile* profile=nullptr;
     for(const auto& e:people.employees)if(w.company_id+"/"+e.terms.profile.id==id)profile=&e.terms.profile;

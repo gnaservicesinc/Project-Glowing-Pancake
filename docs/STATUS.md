@@ -9,7 +9,7 @@ Updated 2026-11-11
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.66.0-dev.1**, generation **67**.
+immersive redesign advances content to **0.67.0-dev.1**, generation **68**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -207,8 +207,17 @@ review passes 24 prepared-opening save roundtrips; optimized Mac game/editor
 builds pass. These are focused development checks, not multi-generation balance
 or human playtest acceptance.
 
-Rivalry/repair, further design puzzles, specialist skill effects, major-HQ property
-expansion, career transitions and USCIF remain required work in the active full plan.
+People → Social circle now offers a separate company mission review. Reversing a
+long-standing mission can upset employees who backed it and worked on a project.
+The preview names those affected. Empathetic colleagues or employees with Psychology
+can mediate before the response window expires. Rivalry hides traits and can lead
+to resignation, ending payroll and releasing work and equipment assignments. A
+handover can delay a departure while staffing commitments are still outstanding.
+Empathetic Listening opens reconciliation, and a rebuilt friendship earns the
+Frenemies relationship. Further mission changes cannot restart that rivalry.
+
+Further design puzzles, specialist skill effects, major-HQ property expansion,
+career transitions and USCIF remain required work in the active full plan.
 
 This is an implementation checkpoint, not completion of F-06. Existing human
 review and platform/release gates remain open.

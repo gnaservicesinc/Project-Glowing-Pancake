@@ -141,6 +141,7 @@ struct Employee {
     bool opening=false;
     std::optional<OrdinalDay> departed_on;
     std::optional<Cents> dismissal_severance{};
+    bool resigned=false;
     auto operator<=>(const Employee&) const = default;
 };
 struct ContactMessage {
@@ -214,6 +215,7 @@ struct DismissalQuote {
 };
 [[nodiscard]] Cents employee_monthly_salary(const SimulationState&,const Employee&);
 [[nodiscard]] DismissalQuote dismissal_quote(const SimulationState&,std::string_view);
+void resign_employee(SimulationState&,std::string_view);
 void dismiss_employee(SimulationState&,std::string_view,Cents protected_cash);
 void initialize_individual_payroll(SimulationState&);
 void validate_employee_departures(const SimulationState&);

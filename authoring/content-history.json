@@ -108283,6 +108283,79 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "52dfff845c7f36df26b36af679397a8e7c85e479821d82fc9fa31244ed17e4e6",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "life.mission.concern",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "5a2b31811800a2f12f3a3b8bbf3f1fd5e7800ae3c3d0f5ae875f4574373f44fc",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "life.mission.resignation",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "cca8cfe2f9098e025c7694a92b6c5acf83477f77fe34f2251fa03ca95e32049b",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "life.mission.rival",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "79eb99b5cc63e3ab2c58de7275be3a9a36f395378c573e2f5c5b39e353ecbee4",
+          "before_hash": "5dfb9f8378dcac63613f73ca23a977dc7577597308ce9cf76264937322fb6ced",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 36,
+          "revision": 37
+        }
+      ],
+      "changed_text_keys": [
+        "life.mission.concern.body",
+        "life.mission.concern.title",
+        "life.mission.resignation.body",
+        "life.mission.resignation.title",
+        "life.mission.rival.body",
+        "life.mission.rival.title"
+      ],
+      "collection_hash": "84b07ef9c5bb974b35b71df1dd7e1c1dda3bb9ab16b7c8e680075f0f6a4d033d",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.67.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 68,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.66.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000067.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000068.collection.json",
+      "summary": "Mission reversals, HR mediation, personal rivals, resignation and reconciliation.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

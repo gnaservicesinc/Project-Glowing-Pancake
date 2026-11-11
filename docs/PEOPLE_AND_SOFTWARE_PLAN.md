@@ -429,6 +429,23 @@ Normal and actual 650×480 / 200% layouts are inspected. Content review passes 2
 opening save roundtrips; optimized Mac game/editor builds pass. Multi-generation
 balance, human acceptance and release qualification remain separate.
 
-Rivalry/betrayal/HR/repair/frenemies, remaining specialist skill effects, major-HQ
-property growth, further puzzles, career re-entry and USCIF remain selected work.
-The full plan and F-06 stay active.
+## Mission reversal and repair
+
+Company mission changes now have an explicit review and a read-only list of
+colleagues likely to object. Concerns require the previous mission to have been in place for 60 days.
+An affected employee has at least 30 days of tenure after onboarding, backed
+the previous mission and did actual research or software work. Recruiting terms
+remain a separate choice.
+
+A 14-day response window gives the founder time to talk or choose an employee
+with Empathetic Listening or Psychology to mediate. An unresolved concern becomes
+a rivalry, reduces friendship and hides traits. A further 14 days can end in a
+resignation with ordinary payroll, work and desk release. Existing commitments
+can require a handover before departure. Empathetic Listening lets the founder
+hear the rival out and follow up after seven days. Rebuilding the friendship earns
+Frenemies, which prevents a subsequent mission reversal from recreating the
+rivalry. Concerns and history save with the social circle. Three authored news
+entries follow the concern, rivalry and resignation facts.
+
+Remaining specialist skill effects, major-HQ property growth, design puzzles,
+career re-entry and USCIF remain selected work. The full plan and F-06 stay active.

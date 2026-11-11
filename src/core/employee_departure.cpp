@@ -8,6 +8,7 @@
 namespace pgp::core {
 namespace {
 constexpr std::string_view departure_prefix="dismissal/";
+constexpr std::string_view resignation_prefix="resignation/";
 const PeopleRules& rules(const SimulationState& state) {
     if(!state.management || !state.management->catalog.people || !state.management->people || !state.accounts || !state.capacity)
         throw std::invalid_argument("This company has no individual employment records.");
@@ -85,10 +86,8 @@ DismissalQuote dismissal_quote(const SimulationState& state,std::string_view id)
     return quote;
 }
 
-void dismiss_employee(SimulationState& state,std::string_view id,Cents protected_cash) {
-    const auto quote=dismissal_quote(state,id);
-    if(checked_unit_subtract(state.cash,protected_cash)<quote.severance)
-        throw std::invalid_argument("Uncommitted company cash does not cover this employee's severance.");
+namespace {
+void end_employment(SimulationState& state,std::string_view id,const DismissalQuote& quote,bool resigned) {
     std::string manager_project;
     if(quote.operations_manager) {
         manager_project=operations_manager_on(state,state.date)->project;
@@ -97,16 +96,29 @@ void dismiss_employee(SimulationState& state,std::string_view id,Cents protected
     for(const auto& project:quote.projects) if(project!=manager_project) cancel_project(*state.capacity,state.date,project);
     auto& roster=state.management->people->employees;
     auto& worker=*std::ranges::find(roster,id,[](const auto& row){return row.terms.profile.id;});
-    const auto key=std::string{departure_prefix}+std::string{id};
+    const auto key=std::string{resigned?resignation_prefix:departure_prefix}+std::string{id};
     if(worker.ready_on<=state.date) remove_staff_capacity(*state.capacity,state.date,key,1);
     end_recurring(*state.accounts,id,state.date);
-    if(quote.severance>Cents{0}) record_cash(*state.accounts,state.date,Cents{-quote.severance.value()},Account::expenses,
+    if(!resigned && quote.severance>Cents{0}) record_cash(*state.accounts,state.date,Cents{-quote.severance.value()},Account::expenses,
         "Employee severance: "+worker.terms.profile.name,key);
     if(state.infrastructure && state.infrastructure->workplace && state.infrastructure->workplace->headquarters)
         for(auto& item:state.infrastructure->workplace->headquarters->items) if(item.person==id) item.person.clear();
     worker.departed_on=state.date;
-    worker.dismissal_severance=quote.severance;
+    worker.resigned=resigned;
+    if(!resigned)worker.dismissal_severance=quote.severance;
     state.cash=accounts_report(*state.accounts).cash;
+}
+}
+
+void dismiss_employee(SimulationState& state,std::string_view id,Cents protected_cash) {
+    const auto quote=dismissal_quote(state,id);
+    if(checked_unit_subtract(state.cash,protected_cash)<quote.severance)
+        throw std::invalid_argument("Uncommitted company cash does not cover this employee's severance.");
+    end_employment(state,id,quote,false);
+}
+
+void resign_employee(SimulationState& state,std::string_view id) {
+    end_employment(state,id,dismissal_quote(state,id),true);
 }
 
 void validate_employee_departures(const SimulationState& state) {
@@ -115,7 +127,7 @@ void validate_employee_departures(const SimulationState& state) {
     std::map<std::string_view,const RecurringObligation*> salaries;
     for(const auto& row:state.accounts->recurring) salaries.emplace(row.id,&row);
     std::map<std::string_view,const StaffAddition*> departures;
-    for(const auto& row:state.capacity->staff_departures) if(row.id.starts_with(departure_prefix)) departures.emplace(row.id,&row);
+    for(const auto& row:state.capacity->staff_departures) if((row.id.starts_with(departure_prefix) || row.id.starts_with(resignation_prefix))) departures.emplace(row.id,&row);
     std::map<std::string_view,const Posting*> severances;
     for(const auto& row:state.accounts->postings) if(row.key.starts_with(departure_prefix))
         if(!severances.emplace(row.key,&row).second) throw std::invalid_argument("Employee severance cannot be paid twice.");
@@ -127,19 +139,19 @@ void validate_employee_departures(const SimulationState& state) {
             if(salary==salaries.end() || salary->second->starts_on!=worker.joined_on || salary->second->ends_before!=worker.departed_on)
                 throw std::invalid_argument("Inherited employee payroll must end on their departure date.");
         }
-        if(!worker.dismissal_severance) continue;
+        if(!worker.dismissal_severance && !worker.resigned) continue;
         dismissed.insert(worker.terms.profile.id);
         if(!policy.dismissal || !worker.departed_on || worker.terms.profile.role=="Founder / researcher" ||
-            *worker.dismissal_severance!=Cents{mul_div_round_half_up(static_cast<std::uint64_t>(employee_monthly_salary(state,worker).value()),policy.dismissal->severance_months,1)})
+            (worker.resigned && worker.dismissal_severance) || (worker.dismissal_severance && *worker.dismissal_severance!=Cents{mul_div_round_half_up(static_cast<std::uint64_t>(employee_monthly_salary(state,worker).value()),policy.dismissal->severance_months,1)}))
             throw std::invalid_argument("A dismissal must retain its dated employment and authored severance.");
-        const auto key=std::string{departure_prefix}+worker.terms.profile.id;
+        const auto key=std::string{worker.resigned?resignation_prefix:departure_prefix}+worker.terms.profile.id;
         if(worker.ready_on<=*worker.departed_on) {
             ++expected_departures;
             const auto departure=departures.find(key);
             if(departure==departures.end() || departure->second->day!=*worker.departed_on || departure->second->people!=1)
                 throw std::invalid_argument("A dismissal must release exactly one onboarded employee.");
         }
-        if(*worker.dismissal_severance>Cents{0}) {
+        if(worker.dismissal_severance && *worker.dismissal_severance>Cents{0}) {
             ++expected_payments;
             const auto posting=severances.find(key);
             if(posting==severances.end() || posting->second->day!=*worker.departed_on || posting->second->amount!=*worker.dismissal_severance ||

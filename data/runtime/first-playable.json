@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.66.0-dev.1",
+  "content_version": "0.67.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -8059,6 +8059,102 @@
       ],
       "trigger": {
         "fact": "company.founder_married",
+        "op": "gte",
+        "unit": "count",
+        "value": 1
+      }
+    },
+    {
+      "entry_node": "briefing",
+      "id": "life.mission.concern",
+      "kind": "flow",
+      "lifecycle": {
+        "max_occurrences_per_scope": 1,
+        "mode": "once",
+        "occurrence_scope": "company"
+      },
+      "nodes": {
+        "briefing": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "life.mission.concern.body"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "revision": 1,
+      "scope": "company",
+      "tags": [
+        "personal_life",
+        "workplace"
+      ],
+      "trigger": {
+        "fact": "company.mission_concerns",
+        "op": "gte",
+        "unit": "count",
+        "value": 1
+      }
+    },
+    {
+      "entry_node": "briefing",
+      "id": "life.mission.resignation",
+      "kind": "flow",
+      "lifecycle": {
+        "max_occurrences_per_scope": 1,
+        "mode": "once",
+        "occurrence_scope": "company"
+      },
+      "nodes": {
+        "briefing": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "life.mission.resignation.body"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "revision": 1,
+      "scope": "company",
+      "tags": [
+        "personal_life",
+        "workplace"
+      ],
+      "trigger": {
+        "fact": "company.rivalry_resignations",
+        "op": "gte",
+        "unit": "count",
+        "value": 1
+      }
+    },
+    {
+      "entry_node": "briefing",
+      "id": "life.mission.rival",
+      "kind": "flow",
+      "lifecycle": {
+        "max_occurrences_per_scope": 1,
+        "mode": "once",
+        "occurrence_scope": "company"
+      },
+      "nodes": {
+        "briefing": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "life.mission.rival.body"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "revision": 1,
+      "scope": "company",
+      "tags": [
+        "personal_life",
+        "workplace"
+      ],
+      "trigger": {
+        "fact": "company.personal_rivals",
         "op": "gte",
         "unit": "count",
         "value": 1
@@ -69471,7 +69567,10 @@
         "deployment.incident_news",
         "life.family.first_child",
         "life.family.first_application",
-        "life.family.marriage"
+        "life.family.marriage",
+        "life.mission.concern",
+        "life.mission.rival",
+        "life.mission.resignation"
       ],
       "founding": {
         "backers": [
@@ -77799,6 +77898,15 @@
             "friction": 3,
             "interaction_gain": 18,
             "interval_days": 7,
+            "mission_conflict": {
+              "commitment_days": 60,
+              "concern_days": 14,
+              "employee_days": 30,
+              "notice_days": 14,
+              "repair_days": 7,
+              "trust_ceiling": 200,
+              "trust_loss": 450
+            },
             "mood_cap": 6,
             "outgoing_threshold": 40,
             "private_threshold": 400,
@@ -79016,7 +79124,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 36,
+      "revision": 37,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -99393,6 +99501,12 @@
     "life.family.first_child.title": "A new page in the family album",
     "life.family.marriage.body": "A new chapter together. For once, the calendar is about more than launch dates.",
     "life.family.marriage.title": "A different kind of commitment",
+    "life.mission.concern.body": "Some people joined to build something specific. They want to talk about what happens to that work now.",
+    "life.mission.concern.title": "The old mission still has believers",
+    "life.mission.resignation.body": "An employee has left over the mission change.",
+    "life.mission.resignation.title": "A desk goes quiet",
+    "life.mission.rival.body": "The mission change has turned personal. You can find the conversation in the social circle.",
+    "life.mission.rival.title": "A promise broken",
     "operations.site.outcome": "Operations recorded a site outcome. Review its cause, current capacity and recovery terms in Operations.",
     "research.compute.fabric_qos.detail": "Unlocks additional memory-first and fabric v1 racks.",
     "research.compute.fabric_qos.title": "Shared fabric scheduling",

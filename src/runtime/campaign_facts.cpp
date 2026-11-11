@@ -44,6 +44,16 @@ content::Scalar campaign_fact(const WorldState& world, std::string_view id) {
             const auto other=bond.first=="founder"?bond.second:bond.second=="founder"?bond.first:std::string{};
             return bond.known && people.industry.contains(other) && (id=="company.industry_contacts" || bond.affinity>=social_rules(s)->thresholds[3]);}));
     }
+    if(id=="company.mission_concerns" || id=="company.personal_rivals" || id=="company.rivalry_resignations") {
+        if(!mission_conflict_rules(s))return INT64_C(0);
+        const auto& people=*s.management->people;
+        if(id=="company.rivalry_resignations")return static_cast<std::int64_t>(
+            std::ranges::count_if(people.employees,[](const auto& employee){return employee.resigned;}));
+        return static_cast<std::int64_t>(std::ranges::count_if(people.social->mission_conflict->concerns,[&](const auto& row){
+            const auto& concern=row.second;
+            return !concern.settled_on && (id=="company.personal_rivals")==concern.rivalry_on.has_value();
+        }));
+    }
     if(id=="company.founder_close_friends" || id=="company.known_close_relationships") {
         if(!social_rules(s))return INT64_C(0);
         return static_cast<std::int64_t>(std::ranges::count_if(s.management->people->social->links,[&](const auto& bond){

@@ -83,6 +83,9 @@ public:
     Q_INVOKABLE void collaborateResearch(QVariantMap draft,QString revision);
     Q_INVOKABLE void publishCollaboration(QString id,QString revision);
     QVariantList industryPeople() const;
+    Q_INVOKABLE QStringList missionPreview(QString mission) const;
+    Q_INVOKABLE void changeCompanyMission(QString mission,QString revision);
+    Q_INVOKABLE void respondToMissionConcern(QString person,QString mediator,QString revision);
     Q_INVOKABLE void socialize(QString person,QString activity,QString revision);
     Q_INVOKABLE QVariantMap softwareQuote(QVariantMap draft) const;
     Q_INVOKABLE QVariantMap courseQuote(QString person,QString skill,QString payer) const;

@@ -71,10 +71,12 @@ void reveal(SimulationState& s,const SocialLink& bond) {
     }
 }
 void advance_bond(SimulationState& s,SocialLink& bond,int base,std::string memory,int ceiling=1000,bool affinity_fit=true) {
+    if(is_personal_rival(s,bond.first,bond.second))return;
     bond.affinity=std::min(std::max(bond.affinity,ceiling),bond.affinity+std::max(1,base+(affinity_fit?fit(s,bond.first,bond.second):0)));
     bond.encounters=std::min(100000,bond.encounters+1);bond.last_contact=s.date;bond.memory=std::move(memory);reveal(s,bond);
 }
 void encounter(SimulationState& s,std::string_view a,std::string_view b,int base,std::string memory,int ceiling=1000,bool affinity_fit=true) {
+    if(is_personal_rival(s,a,b))return;
     advance_bond(s,link(s,a,b),base,std::move(memory),ceiling,affinity_fit);
 }
 }
@@ -90,6 +92,7 @@ void validate_social_rules(const SocialRules& r) {
        r.remote_chance_bp<0 || r.remote_chance_bp>r.state_chance_bp || r.city_gain<1 || r.city_gain>40 || r.state_gain<1 || r.state_gain>r.city_gain ||
        r.remote_gain<1 || r.remote_gain>r.state_gain || r.remote_ceiling<1 || r.remote_ceiling>r.thresholds[2] || r.remote_breakthrough_bp<0 || r.remote_breakthrough_bp>100 ||
        r.referral_days<30 || r.referral_days>365)invalid("Geographic social rates, online limits or referral intervals are invalid.");
+    if(r.mission_conflict)validate_mission_conflict_rules(*r.mission_conflict);
     int previous=0;for(int threshold:r.thresholds){if(threshold<=previous || threshold>1000)invalid("Friendship thresholds must increase.");previous=threshold;}
 }
 std::string social_id(const SimulationState& s,std::string_view id) {
@@ -103,6 +106,7 @@ const SocialLink* social_link(const SimulationState& s,std::string_view a,std::s
 void initialize_social(SimulationState& s,std::uint64_t seed) {
     if(!social_rules(s))return;
     SocialState state;SplitMix64 rng{seed^UINT64_C(0x534f4349414c5631)};state.stream=rng.next();state.industry_stream=rng.next();state.next_industry_meeting=advance_days(s.date,Days{social_rules(s)->interval_days});state.next_meeting=advance_days(s.date,Days{social_rules(s)->interval_days});
+    if(social_rules(s)->mission_conflict)state.mission_conflict=MissionConflictState{s.management->people->mission,s.date,{}};
     s.management->people->social=std::move(state);
 }
 void prepare_social(SimulationState& s) {
@@ -120,7 +124,7 @@ void prepare_social(SimulationState& s) {
         encounter(s,roster[i-1],roster[i],r.weekly_gain,"A conversation in the office");
     }
     for(auto& bond:state.links) {
-        if(external(s,bond.first) || external(s,bond.second) || bond.last_contact==s.date)continue;
+        if(is_personal_rival(s,bond.first,bond.second) || external(s,bond.first) || external(s,bond.second) || bond.last_contact==s.date)continue;
         if(present(s,bond.first) && present(s,bond.second) && bond.affinity>=r.thresholds[1]) {
             bond.affinity=std::min(1000,bond.affinity+std::max(1,r.weekly_gain+fit(s,bond.first,bond.second)));
             bond.last_contact=s.date;bond.encounters=std::min(100000,bond.encounters+1);bond.memory="Caught up with an office friend";reveal(s,bond);
@@ -197,7 +201,9 @@ std::string social_referral_blocker(const SimulationState& s,std::string_view id
 }
 std::string social_blocker(const SimulationState& s,std::string_view person) {
     if(!social_rules(s))return "The social circle is unavailable.";
-    const auto id=social_id(s,person);const auto& state=*s.management->people->social;
+    const auto id=social_id(s,person);
+    if(is_personal_rival(s,"founder",id))return "They are keeping their distance.";
+    const auto& state=*s.management->people->social;
     if(id=="founder" || !available(s,id))return "Choose an available coworker or industry contact.";
     if(external(s,id) && social_distance(s,"founder",id)=="remote" && !social_link(s,"founder",id))return "An introduction helps bridge the distance; meet through a close friend first.";
     const auto location=executive_location(s);
@@ -231,7 +237,16 @@ void socialize(SimulationState& s,const Socialize& action) {
     if(external(s,id) || former(s,id)) {
         const auto distance=social_distance(s,"founder",id);
         if(distance=="state")gain=std::max(1,gain*r.state_gain/r.city_gain);
-        if(distance=="remote") {gain=r.remote_gain;fit_enabled=false;const auto* old=social_link(s,"founder",id);ceiling=old && old->affinity>=r.thresholds[2]?1000:r.remote_ceiling;memory="Made time to catch up online";}
+        if(distance=="remote") {
+            gain=r.remote_gain;
+            fit_enabled=false;
+            const auto* old=social_link(s,"founder",id);
+            const auto* concern=mission_concern(s,id);
+            const bool rebuilding=concern && concern->rivalry_on && concern->settled_on;
+            if(rebuilding)gain=std::max(gain,r.interaction_gain/2);
+            ceiling=rebuilding || (old && old->affinity>=r.thresholds[2])?1000:r.remote_ceiling;
+            memory="Made time to catch up online";
+        }
     }
     encounter(s,"founder",id,gain,memory,ceiling,fit_enabled);link(s,"founder",id).last_invited=s.date;s.management->people->social->last_outing=s.date;
 }
@@ -248,12 +263,13 @@ std::string friendship_name(const SimulationState& s,int affinity,bool coworker)
 }
 std::vector<std::string> visible_traits(const SimulationState& s,const PersonProfile& p,std::string_view identity) {
     if(!social_rules(s))return p.traits;const auto id=social_id(s,identity.empty()?std::string_view{p.id}:identity);if(id=="founder")return p.traits;
+    if(is_personal_rival(s,"founder",id))return {};
     const auto& known=s.management->people->social->known_traits;const auto it=known.find(id);std::vector<std::string> result;
     for(const auto& t:p.traits)if(public_trait(t) || (it!=known.end() && std::ranges::find(it->second,t)!=it->second.end()))result.push_back(t);return result;
 }
 int friendship_mood(const SimulationState& s,std::string_view person) {
     if(!social_rules(s))return 0;int points=0;const auto id=social_id(s,person);
-    for(const auto& bond:s.management->people->social->links)if(bond.affinity>=social_rules(s)->thresholds[2] && (bond.first==id || bond.second==id)) {
+    for(const auto& bond:s.management->people->social->links)if(!is_personal_rival(s,bond.first,bond.second) && bond.affinity>=social_rules(s)->thresholds[2] && (bond.first==id || bond.second==id)) {
         const auto& other=bond.first==id?bond.second:bond.first;if(present(s,other))points+=bond.affinity>=social_rules(s)->thresholds[3]?2:1;
     }
     return std::min(points,social_rules(s)->mood_cap);
@@ -274,6 +290,7 @@ void validate_social(const SimulationState& s) {
            (bond.last_invited && (*bond.last_invited<bond.met_on || *bond.last_invited>bond.last_contact)) || bond.memory.empty() || bond.memory.size()>160)
             invalid("A relationship has invalid participants, progression or dates.");
     }
+    validate_mission_conflicts(s);
     for(const auto& [id,known]:p.known_traits) {
         if(id=="founder" || !exists(s,id) || known.size()>16)invalid("Unknown trait disclosure recipient.");
         const auto& all=traits(s,id);std::set<std::string> unique;for(const auto& t:known)if(std::ranges::find(all,t)==all.end() || !unique.insert(t).second)invalid("Disclosed traits must belong to this person.");

@@ -90,13 +90,13 @@
     }
   ],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "903ae17bcd04b2dad753242ae18aaea8c5c00f661643ca0581ea8c3ef9443db6",
+  "collection_hash": "84b07ef9c5bb974b35b71df1dd7e1c1dda3bb9ab16b7c8e680075f0f6a4d033d",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.66.0-dev.1",
+  "content_version": "0.67.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -765,6 +765,24 @@
       "semantic_hash": "dbdd94c7c6250d3c07b51a6eb00f35b4d9c4a840b8f24cb7012143afb1af00a4"
     },
     {
+      "id": "life.mission.concern",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "b66dccc2f4960be2b0cfddd9fcf4480607a9c7c4bd880a6d0ac009afdae8d697"
+    },
+    {
+      "id": "life.mission.resignation",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "b6d92804d97e1592eea84000feaf2e755fa5743ebcf1922fdd6b293ad87b54da"
+    },
+    {
+      "id": "life.mission.rival",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "2788539d9eb9653c88ec35fb2d32f1c19a8cdc2cd3b3e40d6284e90381e98f90"
+    },
+    {
       "id": "market.century",
       "kind": "regional_markets",
       "revision": 4,
@@ -1169,8 +1187,8 @@
     {
       "id": "scenario.founder_campaign",
       "kind": "scenario",
-      "revision": 36,
-      "semantic_hash": "ecf13446520ca3009f49a92e2d645093db828184b17d629a609b3b263ec4fd0b"
+      "revision": 37,
+      "semantic_hash": "0d372b49f604d86ab3881b75906fd907d8f3810bbb49bb5e63151a6d7ae2e972"
     },
     {
       "id": "scenario.world_competition",
@@ -1312,8 +1330,8 @@
     }
   ],
   "format": 1,
-  "generation": 67,
-  "messages_hash": "4f95dde3e3292b5b48dc686761a0bb64951dc8e6e3fe2dc7c7363b5f67683f9f",
+  "generation": 68,
+  "messages_hash": "d323d0f85e007cc15b827cfcb07d546e49abce851469ef2ff11c4e11c151cf20",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
     "scenario.century_frontier": [
@@ -1705,7 +1723,10 @@
       "deployment.incident_news",
       "life.family.first_child",
       "life.family.first_application",
-      "life.family.marriage"
+      "life.family.marriage",
+      "life.mission.concern",
+      "life.mission.rival",
+      "life.mission.resignation"
     ],
     "scenario.world_competition": [
       "slice.research_milestone",
@@ -1784,5 +1805,5 @@
       "deployment.incident_news"
     ]
   },
-  "source_hash": "75542dc8602fa507391c8e96add667c5c3bd7064dfc109d1904e3aaaa0b3bd5c"
+  "source_hash": "01c4e7323caaf194e5812f66187c1c76dd09f1d9082b8e21de137cfadae013b7"
 }

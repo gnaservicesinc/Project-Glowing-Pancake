@@ -450,3 +450,10 @@ target_include_directories(pgp-family-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}
 target_compile_definitions(pgp-family-test PRIVATE PGP_FAMILY_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-family-test)
 add_test(NAME runtime.family COMMAND pgp-family-test)
+
+add_executable(pgp-mission-conflict-test mission_conflict_test.cpp)
+target_link_libraries(pgp-mission-conflict-test PRIVATE pgp::persistence)
+target_include_directories(pgp-mission-conflict-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-mission-conflict-test PRIVATE PGP_MISSION_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-mission-conflict-test)
+add_test(NAME runtime.mission-conflict COMMAND pgp-mission-conflict-test)

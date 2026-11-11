@@ -1,5 +1,6 @@
 #pragma once
 #include <pgp/core/calendar.hpp>
+#include <pgp/core/mission_conflict.hpp>
 #include <array>
 #include <map>
 #include <optional>
@@ -15,6 +16,7 @@ struct SocialRules {
     int city_chance_bp=8000,state_chance_bp=4000,remote_chance_bp=200,remote_ceiling=200;
     int city_gain=12,state_gain=6,remote_gain=1,remote_breakthrough_bp=10,referral_days=90;
     std::array<int,5> thresholds{80,200,400,650,850};
+    std::optional<MissionConflictRules> mission_conflict;
     auto operator<=>(const SocialRules&) const=default;
 };
 struct SocialLink {
@@ -34,6 +36,7 @@ struct SocialState {
     std::vector<std::string> founder_traits;
     std::vector<SocialLink> links;
     std::map<std::string,std::vector<std::string>> known_traits;
+    std::optional<MissionConflictState> mission_conflict;
     auto operator<=>(const SocialState&) const=default;
 };
 struct Socialize {std::string person,activity;};

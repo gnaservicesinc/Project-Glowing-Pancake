@@ -34,6 +34,7 @@ std::string blocked(const WorldState& w,const People& people,const RomanceReques
     const auto* r=romance_rules(w);if(!r || !w.romance)return "Romance is unavailable in this campaign.";
     const auto day=campaign_day(w);const auto id=romance_person_id(w,request.person);const auto me=people.find("founder"),them=people.find(id);
     if(me==people.end() || them==people.end() || id=="founder")return "Choose someone in your social circle.";
+    if(request.action!="separate" && core::is_personal_rival(w.simulation,"founder",romance_detail::social_key(w,id)))return "They are keeping their distance.";
     if(family_related(w,"founder",id))return "Family relationships stay separate from romance.";
     if(!adult_on(*me->second.romantic,day) || !adult_on(*them->second.romantic,day))return "Romantic relationships are for adults only.";
     const auto* current=romantic_partner(w,"founder");const bool together=current && other(*current,"founder")==id;

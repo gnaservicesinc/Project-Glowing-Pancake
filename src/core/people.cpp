@@ -99,7 +99,10 @@ void validate_people_rules(const PeopleRules& r) {
        r.collaboration->work_credit<=BasisPoints{0} || r.collaboration->work_credit>BasisPoints{2500} ||
        r.collaboration->minimum_friendship<200 || r.collaboration->minimum_friendship>850 || r.collaboration->cooldown_days<7 || r.collaboration->cooldown_days>365))
         invalid("Research collaboration needs social/skill rules and bounded cost, trust, work and cooldown terms.");
-    if(r.social)validate_social_rules(*r.social);
+    if(r.social) {
+        validate_social_rules(*r.social);
+        if(r.social->mission_conflict && (!r.talent || !r.dismissal))invalid("Mission conflict needs individual employment and skills.");
+    }
     if(r.industry_team_target<1 || r.industry_team_target>256 || r.international_headquarters.size()>6)invalid("Industry hiring target or overseas HQ count is invalid.");
     std::set<std::string> overseas;
     for(const auto& site:r.international_headquarters)if(!overseas.insert(site.market.id).second || site.market.state!=site.region.id || site.region.id.starts_with("US-"))
@@ -228,6 +231,7 @@ void prepare_people(SimulationState& s) {
         add_staff_capacity(*s.capacity,s.date,employee.terms.profile.id,1,employee.terms.evaluation_credit);
     prepare_recruitment(s);
     prepare_talent(s);
+    prepare_mission_conflicts(s);
     prepare_social(s);
     if(s.date>=p.next_recruitment && (rules(s).recruitment || s.capacity->available_staff>0)) recruit(s);
 }

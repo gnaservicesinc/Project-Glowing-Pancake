@@ -28,7 +28,14 @@ ColumnLayout {
         WorldButton {objectName:"socialPeople";text:qsTr("Spend time together");textSize:panel.textSize;checked:!panel.showNetwork;onClicked:panel.showNetwork=false}
         WorldButton {objectName:"socialNetwork";text:qsTr("Close connections");textSize:panel.textSize;checked:panel.showNetwork;onClicked:panel.showNetwork=true}
     }
-    RomancePanel {Layout.fillWidth:true;textSize:panel.textSize;contact:panel.person;visible:!panel.showNetwork && !!campaign.world.romance.available;onInspectPerson:person=>{profile.person=person;profile.open()}}
+    MissionReview {
+        Layout.fillWidth: true
+        visible: !panel.showNetwork && mission.length > 0
+        mission: panel.circle.mission || ""
+        editable: panel.editable
+        textSize: panel.textSize
+    }
+    RomancePanel {Layout.fillWidth:true;textSize:panel.textSize;contact:panel.person;visible:!panel.showNetwork && !panel.person.rival && !!campaign.world.romance.available;onInspectPerson:person=>{profile.person=person;profile.open()}}
     ColumnLayout {
         visible:!panel.showNetwork;Layout.fillWidth:true;spacing:12
         Copy {visible:panel.people.length===0;text:qsTr("Your circle starts with the people you meet. Bring someone onto the HQ team to begin.")}
@@ -46,33 +53,45 @@ ColumnLayout {
                         Copy {objectName:"socialRelationship";text:(panel.person.relationship || "")+(panel.person.coworker?qsTr(" · Coworker"):panel.person.external?qsTr(" · Industry contact"):qsTr(" · Former coworker"));color:"#e2cc8d"}
                     }
                 }
-                Copy {visible:!!panel.person.organization;text:panel.person.organization || "";color:"#c0d8d2"}
-                Copy {visible:!!panel.person.distance;text:panel.person.distance==="city"?qsTr("Same city · easy to make time together"):panel.person.distance==="state"?qsTr("Same state or province · regional conversations"):qsTr("Online contact · slow growth; established ties take effort");color:"#c0d8d2"}
-                Copy {text:panel.person.memory || "";font.italic:true}
-                Rectangle {
-                    Layout.fillWidth:true;implicitHeight:12;radius:6;color:"#172b32"
-                    Rectangle {height:parent.height;width:parent.width*(panel.person.affinity || 0)/1000;radius:6;color:"#d8b776";Behavior on width {NumberAnimation {duration:campaign.reducedMotion?0:250}}}
-                    Accessible.role:Accessible.ProgressBar;Accessible.name:qsTr("Friendship strength %1 of 1000").arg(panel.person.affinity || 0)
+                MissionConcern {
+                    Layout.fillWidth: true
+                    person: panel.person
+                    mediators: panel.circle.mediators || []
+                    textSize: panel.textSize
+                    editable: panel.editable
                 }
-                Copy {text:panel.person.next>0?qsTr("Friendship %1 / 1000 · %2 for the next milestone").arg(panel.person.affinity || 0).arg(panel.person.next):qsTr("Best friends · keep making memories together")}
-                Flow {
-                    Layout.fillWidth:true;spacing:8
-                    WorldButton {objectName:"socialChat";text:qsTr("Take a break together");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker;onClicked:campaign.world.socialize(panel.person.id,"chat",campaign.world.reviewToken)}
-                    WorldButton {objectName:"socialListen";text:qsTr("Ask, then listen");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker;onClicked:campaign.world.socialize(panel.person.id,"listen",campaign.world.reviewToken)}
-                    WorldButton {objectName:"socialHobby";text:qsTr("Explore an interest");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker;onClicked:campaign.world.socialize(panel.person.id,"hobby",campaign.world.reviewToken)}
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: !panel.person.rival
+                    spacing: 12
+                    Copy {visible:!!panel.person.organization;text:panel.person.organization || "";color:"#c0d8d2"}
+                    Copy {visible:!!panel.person.distance;text:panel.person.distance==="city"?qsTr("Same city · easy to make time together"):panel.person.distance==="state"?qsTr("Same state or province · regional conversations"):qsTr("Online contact · slow growth; established ties take effort");color:"#c0d8d2"}
+                    Copy {text:panel.person.memory || "";font.italic:true}
+                    Rectangle {
+                        Layout.fillWidth:true;implicitHeight:12;radius:6;color:"#172b32"
+                        Rectangle {height:parent.height;width:parent.width*(panel.person.affinity || 0)/1000;radius:6;color:"#d8b776";Behavior on width {NumberAnimation {duration:campaign.reducedMotion?0:250}}}
+                        Accessible.role:Accessible.ProgressBar;Accessible.name:qsTr("Friendship strength %1 of 1000").arg(panel.person.affinity || 0)
+                    }
+                    Copy {text:panel.person.next>0?qsTr("Friendship %1 / 1000 · %2 for the next milestone").arg(panel.person.affinity || 0).arg(panel.person.next):qsTr("Best friends · keep making memories together")}
+                    Flow {
+                        Layout.fillWidth:true;spacing:8
+                        WorldButton {objectName:"socialChat";text:qsTr("Take a break together");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker;onClicked:campaign.world.socialize(panel.person.id,"chat",campaign.world.reviewToken)}
+                        WorldButton {objectName:"socialListen";text:qsTr("Ask, then listen");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker;onClicked:campaign.world.socialize(panel.person.id,"listen",campaign.world.reviewToken)}
+                        WorldButton {objectName:"socialHobby";text:qsTr("Explore an interest");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker;onClicked:campaign.world.socialize(panel.person.id,"hobby",campaign.world.reviewToken)}
+                    }
+                    Flow {
+                        Layout.fillWidth:true;spacing:8
+                        WorldButton {objectName:"socialIntroduction";text:qsTr("Ask for an introduction");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker && !!panel.person.introduction;onClicked:campaign.world.socialize(panel.person.id,"introduce",campaign.world.reviewToken)}
+                        WorldButton {objectName:"socialReferral";text:qsTr("Ask for a recruiting referral");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker && !panel.person.referralBlocker;onClicked:campaign.world.socialize(panel.person.id,"referral",campaign.world.reviewToken)}
+                    }
+                    Copy {visible:!panel.person.introduction;text:qsTr("Close friends may introduce you to their own close connections as those relationships develop.");color:"#b5c6c5"}
+                    Copy {visible:!!panel.person.referralBlocker;text:panel.person.referralBlocker || "";color:"#c6d5ba"}
+                    Copy {objectName:"socialAvailability";text:panel.person.blocker || qsTr("One intentional meetup per day; reconnect with this person after %1 days. No fee for spending time together.").arg(panel.circle.interval || 7);color:"#c7d5b3"}
+                    Copy {text:qsTr("What you know");font.bold:true}
+                    Copy {text:panel.person.traits || qsTr("You are still getting to know one another.")}
+                    Copy {text:qsTr("Pronouns and professional skills are public. Other traits are shared through contact and trust; outgoing people tend to open up sooner. What they have shared stays known.");color:"#b6c6ca"}
+                    Copy {text:qsTr("Friends at work: +%1 morale (up to +%2). Close friends contribute more.").arg(panel.person.moodBonus || 0).arg(panel.circle.moodCap || 0);color:"#d9c68f"}
                 }
-                Flow {
-                    Layout.fillWidth:true;spacing:8
-                    WorldButton {objectName:"socialIntroduction";text:qsTr("Ask for an introduction");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker && !!panel.person.introduction;onClicked:campaign.world.socialize(panel.person.id,"introduce",campaign.world.reviewToken)}
-                    WorldButton {objectName:"socialReferral";text:qsTr("Ask for a recruiting referral");textSize:panel.textSize;enabled:panel.editable && !panel.person.blocker && !panel.person.referralBlocker;onClicked:campaign.world.socialize(panel.person.id,"referral",campaign.world.reviewToken)}
-                }
-                Copy {visible:!panel.person.introduction;text:qsTr("Close friends may introduce you to their own close connections as those relationships develop.");color:"#b5c6c5"}
-                Copy {text:panel.person.referralBlocker || qsTr("Your friend can recommend a qualified applicant. You still negotiate pay, provide workspace and decide whether to hire.");color:"#c6d5ba"}
-                Copy {objectName:"socialAvailability";text:panel.person.blocker || qsTr("One intentional meetup per day; reconnect with this person after %1 days. No fee for spending time together.").arg(panel.circle.interval || 7);color:"#c7d5b3"}
-                Copy {text:qsTr("What you know");font.bold:true}
-                Copy {text:panel.person.traits || qsTr("You are still getting to know one another.")}
-                Copy {text:qsTr("Pronouns and professional skills are public. Other traits are shared through contact and trust; outgoing people tend to open up sooner. What they have shared stays known.");color:"#b6c6ca"}
-                Copy {text:qsTr("Friends at work: +%1 morale (up to +%2). Close friends contribute more.").arg(panel.person.moodBonus || 0).arg(panel.circle.moodCap || 0);color:"#d9c68f"}
                 ResearchJam {Layout.fillWidth:true;textSize:panel.textSize;contact:panel.person;onInspectPerson:person=>{profile.person=person;profile.open()}}
             }
         }
