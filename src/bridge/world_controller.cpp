@@ -25,6 +25,7 @@ QVariantMap moodRow(const core::EmployeeMood& mood) {
     add(QObject::tr("CEO reputation"),mood.ceo_prestige);
     add(QObject::tr("Mission and duties"),mood.role);
     add(QObject::tr("Shared traits with coworkers"),mood.coworkers);
+    add(QObject::tr("Friends at work"),mood.friendships);
     add(QObject::tr("Office amenities"),mood.amenities);
     add(QObject::tr("Temperament"),mood.temperament_effect);
     add(QObject::tr("Recent hosted gatherings"),mood.gatherings);
@@ -234,7 +235,7 @@ QVariantMap WorldController::founder() const {
         const auto& f=*w.founding;
         const QString advantage=f.leg=="genius"?tr("Actual Genius"):f.leg=="wealthy"?tr("Wealthy Elite"):f.leg=="political"?tr("Child of Political Elite"):tr("Extremely Charismatic");
         bio=tr("%1\nFamily: %2\n%3 · %4 · %5").arg(advantage,q(f.family),q(f.sociability),q(f.activity),q(f.disposition));
-        const auto* definition=snapshot_->content->collection.find(w.scenario_id);
+        const auto* definition=program_?program_->collection.find(w.scenario_id):nullptr;
         const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
         if(scenario && scenario->founding)for(const auto& trait:content::formative_traits(*scenario->founding,f))bio+="\n"+q(trait);
         if(content::transgender_founder(f)) bio+=tr("\nTransgender");
@@ -277,8 +278,12 @@ QVariantList WorldController::people() const {
                 {"detail",tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8\n%9")
                     .arg(q(p.gender),q(p.pronouns)).arg(core::from_ordinal(s.date).year-p.birth_year).arg(p.experience+static_cast<unsigned>(years))
                     .arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation)
-                    .arg(s.date<employee.ready_on?tr("Onboarding until %1").arg(q(core::iso_date(employee.ready_on))):managing?tr("Dedicated to branch coordination; one staff allocation is reserved"):tr("Onboarding complete"))+workplace+([&]{QStringList traits;for(const auto& t:p.traits)traits.push_back(q(t));return QStringLiteral("\n")+traits.join(" · ")+skillNames(s,p);})()}, {"bio",q(p.bio)}};
-            if(const auto mood=moods.find(p.id);mood!=moods.end()) row["mood"]=moodRow(mood->second);
+                    .arg(s.date<employee.ready_on?tr("Onboarding until %1").arg(q(core::iso_date(employee.ready_on))):managing?tr("Dedicated to branch coordination; one staff allocation is reserved"):tr("Onboarding complete"))+workplace+([&]{QStringList traits;for(const auto& t:core::visible_traits(s,p))traits.push_back(q(t));return QStringLiteral("\n")+traits.join(" · ")+skillNames(s,p);})()}, {"bio",q(p.bio)}};
+            if(const auto mood=moods.find(p.id);mood!=moods.end()) {
+                auto report=moodRow(mood->second);const auto known=core::visible_traits(s,p);
+                if(std::ranges::find(known,"Temperament: "+mood->second.temperament)==known.end())report["temperament"]="";
+                row["mood"]=report;
+            }
             rows.push_back(std::move(row));
         }
         for(const auto& hire:s.management->specialists) {
@@ -492,7 +497,7 @@ QVariantList WorldController::applicants() const {
         std::vector<const core::PersonProfile*> team;
         for(const auto& employee:s.management->people->employees) if(!employee.departed_on) team.push_back(&employee.terms.profile);
         const auto before=core::team_dynamics(team);team.push_back(&p);const auto after=core::team_dynamics(team);
-        QStringList traits;for(const auto& trait:p.traits) traits.push_back(q(trait));
+        QStringList traits;for(const auto& trait:core::visible_traits(s,p)) traits.push_back(q(trait));
         row["detail"]=row["detail"].toString()+tr("\nDistinct perspectives added to the current roster: +%1 · team total %2\nShared-trait compatibility after hiring: %3%\n%4")
             .arg(after.creativity-before.creativity).arg(after.creativity).arg(static_cast<double>(after.compatibility_bp)/100,0,'f',1).arg(traits.join(" · "));
         row["detail"]=row["detail"].toString()+skillNames(s,p);

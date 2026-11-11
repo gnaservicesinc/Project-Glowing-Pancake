@@ -1,3 +1,4 @@
+#include "founding_fixture.hpp"
 #include "world_smoke.hpp"
 #include "campaign_controller.hpp"
 #include <pgp/runtime/objectives.hpp>
@@ -46,10 +47,7 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             if(!state->resumed) {
                 auto* founding=campaign.founding();founding->reset();founding->setField("family","rich");
                 if(workplaces) founding->setField("office","home");
-                for(const auto& chapter:founding->chapters()) {
-                    const auto row=chapter.toMap();const auto choices=row.value("choices").toList();
-                    founding->choose(row.value("id").toString(),choices.front().toMap().value("id").toString());
-                }
+                pgp::bridge::complete_formative_fixture(*founding);
                 campaign.startFounderCampaign();
             }
             state->phase=1;return;
@@ -415,7 +413,7 @@ void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignControll
             check->resumed=campaign.currentCampaign();
             if(!check->resumed) {
                 auto* founder=campaign.founding();founder->reset();founder->setField("family","rich");founder->setField("office","leased");
-                for(const auto& chapter:founder->chapters()) {const auto row=chapter.toMap();founder->choose(row.value("id").toString(),row.value("choices").toList().front().toMap().value("id").toString());}
+                pgp::bridge::complete_formative_fixture(*founder);
                 campaign.startFounderCampaign();
             }
             ++check->phase;return;
@@ -487,7 +485,7 @@ void schedule_decision_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             state->resumed=campaign.currentCampaign();
             if(!state->resumed) {
                 auto* founder=campaign.founding();founder->reset();founder->setField("family","rich");founder->setField("office","leased");
-                for(const auto& chapter:founder->chapters()) {const auto row=chapter.toMap();founder->choose(row.value("id").toString(),row.value("choices").toList().front().toMap().value("id").toString());}
+                pgp::bridge::complete_formative_fixture(*founder);
                 campaign.startFounderCampaign();
             }
             ++state->phase;return;

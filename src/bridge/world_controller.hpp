@@ -12,6 +12,7 @@ class WorldController final : public QObject {
     Q_PROPERTY(QString location READ location NOTIFY changed)
     Q_PROPERTY(QString setting READ setting NOTIFY changed)
     Q_PROPERTY(bool atHeadquarters READ atHeadquarters NOTIFY changed)
+    Q_PROPERTY(QVariantMap relationships READ relationships NOTIFY changed)
     Q_PROPERTY(QVariantMap talent READ talent NOTIFY changed)
     Q_PROPERTY(QVariantMap founder READ founder NOTIFY changed)
     Q_PROPERTY(QVariantList people READ people NOTIFY changed)
@@ -65,6 +66,8 @@ public:
     bool atHeadquarters() const;
     QVariantMap founder() const;
     QVariantMap talent() const;
+    QVariantMap relationships() const;
+    Q_INVOKABLE void socialize(QString person,QString activity,QString revision);
     Q_INVOKABLE QVariantMap softwareQuote(QVariantMap draft) const;
     Q_INVOKABLE void enrollSkill(QString person,QString skill,QString payer,QString revision);
     Q_INVOKABLE void startSoftware(QVariantMap draft,QString revision);

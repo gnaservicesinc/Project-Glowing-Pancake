@@ -129,6 +129,31 @@ and Accounts. Account cards reveal explanatory notes, courses show progress and
 completion, and the software prototype changes with the player's design choices.
 Asset originals and rights metadata are retained under `assets/finance`.
 
-Stages 3–8 remain planned work. In particular, this batch does not yet implement
-the industry friendship graph, romance/families/rivalry repair, employee-paid
-study, the other infrastructure/dataset puzzles, career re-entry or USCIF.
+The HQ social portion of stage 3 is implemented. A separate social state stores
+bounded pair relationships, memories, known-trait disclosures, weekly scheduling
+and a saved independent random stream. Shuffled weekly encounters avoid a full
+all-pairs daily scan. Intentional conversations, listening and hobbies permit one
+meetup per day and one invitation per person per week. Empathy and shared interests
+help; opposite personalities retain positive progression. Friends and close friends
+at work provide bounded morale. Multiple best friends are ordinary.
+
+Professional traits, pronouns and skills are public. Personal traits require
+contact and affinity, with outgoing people opening sooner and upbringing requiring
+more trust. Known traits remain known after contact fades. Cards, applicants and
+research team presentation use this disclosure projection. Aggregate team work
+estimates still reflect the actual team. Close friendships between coworkers are
+shown only once both have sufficiently befriended the founder. The map has portrait
+nodes, selectable neighbors, paging and an equivalent compact text list.
+
+The native UI walkthrough uses a real meetup to check commands/cooldowns and an
+explicitly seeded mature-relationship fixture for the graph. Core tests separately
+prove gradual progression, opposite personalities, multiple best friends, morale,
+trait disclosure, lost-contact decay and exact deterministic save continuation.
+Registered event facts are `company.founder_close_friends` and
+`company.known_close_relationships`. Arbitrary relationship effects and general
+person skill queries still need the later event-authoring extension.
+
+Stages 4–8 remain planned work, along with the broader stage-3 preferences/event
+vocabulary. This batch does not implement cross-company ties or geographic rates,
+romance/families/rivalry repair, employee-paid study, the other infrastructure/data
+puzzles, career re-entry or USCIF.

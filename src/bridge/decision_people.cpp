@@ -44,8 +44,11 @@ QVariantMap WorldController::person(QString id,core::OrdinalDay day) const {
         if(const auto known=people.known_people.find(id.toStdString());known!=people.known_people.end()) {
             auto row=profile(known->second,day,tr("Company hiring record"));row["id"]=id;return row;
         }
-        for(const auto& employee:people.employees) if(text(employee.terms.profile.id)==id)
-            return profile(employee.terms.profile,day,employee.departed_on && *employee.departed_on<=day?tr("Former employee"):tr("HQ employee"));
+        for(const auto& employee:people.employees) if(text(employee.terms.profile.id)==id) {
+            auto row=profile(employee.terms.profile,day,employee.departed_on && *employee.departed_on<=day?tr("Former employee"):tr("HQ employee"));
+            QStringList known;for(const auto& trait:core::visible_traits(s,employee.terms.profile))known.push_back(text(trait));
+            row["detail"]=row["detail"].toString()+"\n"+known.join(" · ");return row;
+        }
         for(const auto& applicant:people.applicants) if(text(applicant.profile.id)==id) return profile(applicant.profile,day,tr("Applicant"));
     }
     if(s.management->catalog.governance) for(const auto& p:s.management->catalog.governance->executives)

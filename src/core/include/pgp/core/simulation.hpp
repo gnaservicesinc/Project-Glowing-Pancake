@@ -175,7 +175,7 @@ struct CheckpointModel { std::string source_id,id; };
 struct StartEvaluation { std::string id, model_id, plan_id; LabAllocation allocation; std::string specialist_id{}; };
 struct AcceptBusinessOffer { std::string id; };
 struct AddMarketDemandChange { MarketDemandChange change; };
-using CommandAction = std::variant<ManageTalent,ManagePeopleContact,ManagePersonalLife,ManageRecruitment,ManageHeadquarters,AssignOperationsManager, OpenLiaisonOffice, CloseLiaisonOffice, BuyPersonalDevice, ServicePersonalDevice, SetDevicePower, RetirePersonalDevice, ExpandHeadquarters, CreateFacilityBlueprint, BuildFromBlueprint, HireEmployee, SetRecruitingTerms, ReserveFunds, ConsumeReservation, CancelReservation,
+using CommandAction = std::variant<Socialize,ManageTalent,ManagePeopleContact,ManagePersonalLife,ManageRecruitment,ManageHeadquarters,AssignOperationsManager, OpenLiaisonOffice, CloseLiaisonOffice, BuyPersonalDevice, ServicePersonalDevice, SetDevicePower, RetirePersonalDevice, ExpandHeadquarters, CreateFacilityBlueprint, BuildFromBlueprint, HireEmployee, SetRecruitingTerms, ReserveFunds, ConsumeReservation, CancelReservation,
                                    AdvanceDay, SetPaused, ResolveOpeningChoice,
                                    AddRecurringObligation, IssueInvoice, SettleInvoice,
                                    DrawDebt, RepayDebt, InvestEquity,

@@ -1,3 +1,4 @@
+#include "founding_fixture.hpp"
 #include "personal_life_smoke.hpp"
 #include "campaign_controller.hpp"
 #include <pgp/persistence/current_campaign.hpp>
@@ -41,9 +42,7 @@ void schedule_personal_life_smoke(QQuickWindow& window,pgp::bridge::CampaignCont
             if(!press("menuNewGameButton")){fail("New Game");return;}
             auto* story=campaign.founding();story->setField("family","rich");story->setField("leg","genius");
             story->setField("route","bootstrap");story->setField("investment","100000");
-            for(const auto& row:story->chapters()) {
-                const auto chapter=row.toMap();story->choose(chapter.value("id").toString(),chapter.value("choices").toList().front().toMap().value("id").toString());
-            }
+            pgp::bridge::complete_formative_fixture(*story);
             campaign.startFounderCampaign();break;
         }
         case 1:

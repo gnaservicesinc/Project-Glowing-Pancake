@@ -1,3 +1,4 @@
+#include "founding_fixture.hpp"
 #include "contact_finance_smoke.hpp"
 #include "campaign_controller.hpp"
 #include <pgp/persistence/current_campaign.hpp>
@@ -36,9 +37,7 @@ void schedule_contact_finance_smoke(QQuickWindow& window,pgp::bridge::CampaignCo
         case 0: {
             if(!press("menuNewGameButton")){fail("New Game");return;}
             auto* story=campaign.founding();story->setField("family","rich");story->setField("leg","genius");story->setField("route","bootstrap");story->setField("office","home");
-            for(const auto& value:story->chapters()) {
-                const auto chapter=value.toMap();story->choose(chapter.value("id").toString(),chapter.value("choices").toList().front().toMap().value("id").toString());
-            }
+            pgp::bridge::complete_formative_fixture(*story);
             story->setBeat("home");
             if(donor) {
                 story->setField("legal_form","nonprofit");story->setField("route","mission_director");

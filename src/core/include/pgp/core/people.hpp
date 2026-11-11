@@ -3,6 +3,7 @@
 #include <pgp/core/calendar.hpp>
 #include <pgp/core/portrait.hpp>
 #include <pgp/core/talent.hpp>
+#include <pgp/core/social.hpp>
 #include <optional>
 #include <map>
 #include <string>
@@ -51,6 +52,7 @@ struct PeopleRules {
     std::optional<DismissalRules> dismissal{};
     std::vector<FounderAudienceRule> founder_audiences{};
     std::optional<TalentRules> talent{};
+    std::optional<SocialRules> social{};
     auto operator<=>(const PeopleRules&) const = default;
 };
 struct PersonProfile {
@@ -76,7 +78,7 @@ struct EmployeeMood {
     int score=50, pay=0, company_prestige=0, ceo_prestige=0, role=0, coworkers=0, amenities=0, temperament_effect=0, gatherings=0;
     std::string temperament;
     std::vector<std::string> accessible_amenities;
-    int founder_audience=0;
+    int founder_audience=0,friendships=0;
 };
 [[nodiscard]] std::map<std::string,EmployeeMood> workplace_moods(const SimulationState&);
 struct EmploymentOffer {
@@ -151,6 +153,7 @@ struct PeopleState {
     std::vector<PeopleContact> contacts{};
     std::string founder_gender{};
     std::optional<TalentState> talent{};
+    std::optional<SocialState> social{};
     auto operator<=>(const PeopleState&) const = default;
 };
 struct SetRecruitingTerms {SalaryRate pay{10000};std::string mission;};

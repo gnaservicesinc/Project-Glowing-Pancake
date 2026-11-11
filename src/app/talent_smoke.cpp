@@ -1,3 +1,4 @@
+#include "founding_fixture.hpp"
 #include "talent_smoke.hpp"
 #include "campaign_controller.hpp"
 #include <QCoreApplication>
@@ -21,7 +22,7 @@ void schedule_talent_smoke(QQuickWindow& window,pgp::bridge::CampaignController&
         if(++run->ticks>600){fail("Timeout");return;}if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy())return;
         auto* world=campaign.world();const auto& s=campaign.snapshot()->checkpoint.world.simulation;
         switch(run->phase){
-        case 0:{if(!press("menuNewGameButton")){fail("New Game");return;}auto* f=campaign.founding();f->setField("family","rich");f->setField("route","bootstrap");f->setField("investment","100000");for(int pass=0;pass<3;++pass)for(const auto& row:f->chapters()){const auto chapter=row.toMap();f->choose(chapter.value("id").toString(),chapter.value("choices").toList().front().toMap().value("id").toString());}campaign.startFounderCampaign();break;}
+        case 0:{if(!press("menuNewGameButton")){fail("New Game");return;}auto* f=campaign.founding();f->setField("family","rich");f->setField("route","bootstrap");f->setField("investment","100000");pgp::bridge::complete_formative_fixture(*f);campaign.startFounderCampaign();break;}
         case 1:world->buyHQEquipment("desk",world->reviewToken());break;
         case 2:world->buyHQEquipment("desktop",world->reviewToken());break;
         case 3:if(run->days++<3){campaign.step();return;}world->placeHQEquipment(1,0,0,false,0,world->reviewToken());break;
@@ -39,7 +40,7 @@ void schedule_talent_smoke(QQuickWindow& window,pgp::bridge::CampaignController&
         case 15:if(!press("universityConfirm")){fail("Confirm tuition");return;}break;
         case 16:if(s.management->people->talent->courses.size()!=1){fail("Actual course");return;}window.showNormal();window.resize(650,480);break;
         case 17:if(run->frames++<6)return;if(!capture("university-compact")){fail("Capture compact university");return;}world->navigate("workspace","hq","laptop","office","software");break;
-        case 18:if(!item("softwarePrototype")){fail("Reopen studio");return;}reveal(item("softwarePrototype"));run->frames=0;break;
+        case 18:if(!item("softwarePrototype") || !item("softwareWorker_founder")->property("checked").toBool()){fail("Reopen studio with saved team draft");return;}reveal(item("softwarePrototype"));run->frames=0;break;
         case 19:if(run->frames++<6)return;if(!capture("studio-compact")){fail("Capture compact studio");return;}std::cout<<"Talent UI passed: rendered studio, qualified team, actual development, sponsored tuition and compact layouts.\n";timer->stop();QCoreApplication::exit(0);return;
         }++run->phase;
     });timer->start();

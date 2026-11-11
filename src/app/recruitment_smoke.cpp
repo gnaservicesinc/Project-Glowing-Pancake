@@ -1,3 +1,4 @@
+#include "founding_fixture.hpp"
 #include "recruitment_smoke.hpp"
 #include "campaign_controller.hpp"
 #include <pgp/persistence/current_campaign.hpp>
@@ -98,11 +99,7 @@ void schedule_recruitment_smoke(QQuickWindow &window, pgp::bridge::CampaignContr
             founding->setField("family", "rich");
             founding->setField("route", "bootstrap");
             founding->setField("leg", "charisma");
-            for (const auto &row : founding->chapters()) {
-                const auto chapter = row.toMap();
-                founding->choose(chapter.value("id").toString(),
-                                 chapter.value("choices").toList().front().toMap().value("id").toString());
-            }
+            pgp::bridge::complete_formative_fixture(*founding);
             campaign.startFounderCampaign();
             break;
         }

@@ -9,7 +9,7 @@ Updated 2026-11-10
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.57.0-dev.1**, generation **58**.
+immersive redesign advances content to **0.58.0-dev.1**, generation **59**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -42,9 +42,24 @@ prepared-opening save roundtrips. The actual prologue walkthrough passes sampled
 chains, company entry and reload at compact 200% text; the native talent walkthrough
 passes real development and sponsored study. Human playtesting remains open.
 
-This is an implementation checkpoint, not completion of F-06. Relationships,
-major-company individual rosters, family progression, the additional design
-puzzles, career transitions and USCIF remain in the plan. Existing human review
+People → Social circle now provides deliberate meetups, weekly spontaneous
+encounters and separate coworker/friendship labels. Shared traits ease progression;
+differences add friction but allow best friendship. Many best friends are supported.
+Friends at work contribute bounded morale. Public professional traits are visible;
+other traits become known through contact, openness and trust, then stay known.
+The close-connection map has portraits, selectable neighbors, paging and a compact
+text-list alternative. Only known close-or-better ties appear. Saved friendship
+history and its random stream resume exactly. Event authors can query registered
+close-friend counts. Software Studio now preserves its design/team draft correctly.
+
+Focused social/talent/workplace/founding checks pass. The native social walkthrough
+passes an actual meetup and its cooldown, then uses an explicitly seeded mature-
+friendship fixture to inspect graph navigation and compact 200% layouts. That
+fixture is visual evidence; the core progression test establishes natural growth.
+
+This is an implementation checkpoint, not completion of F-06. Major-company
+individual rosters and geographic contact, romance/families/rivalry, the additional
+design puzzles, career transitions and USCIF remain in the plan. Existing human review
 and platform/release gates remain open.
 
 ## Main-game visual refinement · 2026-11-10

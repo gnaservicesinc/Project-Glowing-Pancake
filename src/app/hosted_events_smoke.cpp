@@ -1,3 +1,4 @@
+#include "founding_fixture.hpp"
 #include "hosted_events_smoke.hpp"
 #include "campaign_controller.hpp"
 #include <pgp/persistence/current_campaign.hpp>
@@ -34,9 +35,7 @@ void schedule_hosted_events_smoke(QQuickWindow& window,pgp::bridge::CampaignCont
         case 0: {
             if(!press("menuNewGameButton")){fail("New Game");return;}
             auto* story=campaign.founding();story->setField("family","rich");story->setField("leg","political");
-            for(const auto& value:story->chapters()) {
-                const auto chapter=value.toMap();story->choose(chapter.value("id").toString(),chapter.value("choices").toList().front().toMap().value("id").toString());
-            }
+            pgp::bridge::complete_formative_fixture(*story);
             story->setBeat("home");
             if(!story->contactHomeOffer("alder").isEmpty() || !story->respondHomeOffer("alder","accept").isEmpty()){fail("Accept an actual appointment");return;}
             campaign.startFounderCampaign();break;

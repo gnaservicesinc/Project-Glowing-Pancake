@@ -107876,6 +107876,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "4a97ea2db533552f8f8f013f3ae45e8104f58867f858ea3321d7895c75e0e6a8",
+          "before_hash": "f6d5c7c99ecf72e7af034d03948bf6ec42c55056e0570a9b42f49836231b0563",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 28,
+          "revision": 29
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "6794a5c69cb369d73605668fdf223cbf078e9bc4845cdf916b5f4a64ce860330",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.58.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 59,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.57.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000058.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000059.collection.json",
+      "summary": "HQ friendships, shared trait disclosure, bounded weekly encounters, deliberate meetups and known close-relationship views.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

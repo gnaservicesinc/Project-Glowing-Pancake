@@ -191,6 +191,11 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
         for(auto& e:people.employees)if(e.terms.profile.role=="Founder / researcher") {e.terms.profile.skills=talent.founder_skills;e.terms.profile.orientation=world.founding->orientation;}
         else if(e.terms.profile.role=="Cofounder / researcher" && !core::has_skill(e.terms.profile,"ml_research"))e.terms.profile.skills.push_back("ml_research");
     }
+    if(world.founding && scenario->founding && core::social_rules(world.simulation)) {
+        const auto& f=*world.founding;auto& social=*world.simulation.management->people->social;
+        social.founder_traits={"Social: "+f.sociability,"Activity: "+f.activity,"Temperament: "+f.disposition,"Upbringing: "+f.family};
+        for(const auto& trait:content::formative_traits(*scenario->founding,f))if(std::ranges::find(social.founder_traits,trait)==social.founder_traits.end())social.founder_traits.push_back(trait);
+    }
     core::initialize_headquarters(world.simulation,seed,world.founding?(world.founding->leg=="political"?"rich":world.founding->family):"");
     core::initialize_departments(world.simulation);
     core::initialize_access(world.simulation,world.founding && (world.founding->family=="rich" || world.founding->leg=="wealthy" || world.founding->leg=="political"));

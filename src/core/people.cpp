@@ -86,6 +86,7 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
 }
 void validate_people_rules(const PeopleRules& r) {
     if(r.talent)validate_talent_rules(*r.talent);
+    if(r.social)validate_social_rules(*r.social);
     if(r.dismissal && r.dismissal->severance_months>6) invalid("Dismissal severance must be between zero and six months of salary.");
     if(r.recruitment) validate_recruitment_rules(*r.recruitment);
     std::set<std::pair<std::string,std::string>> audience_pairs;
@@ -152,6 +153,7 @@ void initialize_people(SimulationState& s,std::uint64_t seed,std::string founder
         s.management->people->known_people.emplace(offer.id,std::move(person));
     }
     recruit(s);
+    initialize_social(s,seed);
 }
 void set_recruiting_terms(SimulationState& s,const SetRecruitingTerms& action) {
     (void)rules(s);
@@ -193,6 +195,7 @@ void prepare_people(SimulationState& s) {
         add_staff_capacity(*s.capacity,s.date,employee.terms.profile.id,1,employee.terms.evaluation_credit);
     prepare_recruitment(s);
     prepare_talent(s);
+    prepare_social(s);
     if(s.date>=p.next_recruitment && (rules(s).recruitment || s.capacity->available_staff>0)) recruit(s);
 }
 void withdraw_people(SimulationState& s) {
@@ -260,6 +263,7 @@ void validate_people(const SimulationState& s,bool deep) {
         invalid("Individual HQ people do not reconcile with their staffing capacity.");
     validate_people_contacts(s);
     validate_talent(s);
+    validate_social(s);
     if(deep) {validate_employee_departures(s);validate_contact_funding(s);}
 }
 }

@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <limits>
 #include "talent_codec.hpp"
+#include "social_codec.hpp"
 namespace pgp::content::people_codec {
 using Json=nlohmann::json;
 inline void fields(const Json& j,std::initializer_list<const char*> names) {
@@ -39,10 +40,13 @@ inline Json encode(const core::PeopleRules& r) {
             {"role",m.role},{"coworkers",m.coworkers},{"amenity_cap",m.amenity_cap},
             {"temperaments",m.temperaments},{"amenities",m.amenities}};
     }
+    if(r.social)j["social"]=social_codec::encode(*r.social);
     if(r.talent)j["talent"]=talent_codec::encode(*r.talent);
     return j;
 }
 inline core::PeopleRules decode(Json j) {
+    std::optional<core::SocialRules> social;
+    if(j.contains("social")){social=social_codec::decode(j.at("social"));j.erase("social");}
     std::optional<core::TalentRules> talent;
     if(j.contains("talent")){talent=talent_codec::decode(j.at("talent"));j.erase("talent");}
     std::vector<core::FounderAudienceRule> audiences;
@@ -100,7 +104,7 @@ inline core::PeopleRules decode(Json j) {
         j.erase("recruitment");
     }
     fields(j,{"first_names","last_names","maximum_hq","candidates","recruitment_days","onboarding_days","monthly_salary_cents","signing_cost_cents","base_skill","skill_jitter","pay_skill_weight","prestige_skill_weight","mission_skill_weight","maximum_evaluation_credit_bp"});
-    core::PeopleRules r;r.talent=std::move(talent);r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);r.mood=std::move(mood);r.dismissal=dismissal;r.founder_audiences=std::move(audiences);
+    core::PeopleRules r;r.talent=std::move(talent);r.social=std::move(social);r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);r.mood=std::move(mood);r.dismissal=dismissal;r.founder_audiences=std::move(audiences);
     for(const char* name:{"first_names","last_names"}) {
         const auto& list=j.at(name);
         if(!list.is_array() || list.size()>512) throw std::invalid_argument("Name pool exceeds its limit");

@@ -81,6 +81,7 @@ std::map<std::string, EmployeeMood> workplace_moods(const SimulationState& state
         const auto& terms = employee.terms;
         const auto& person = terms.profile;
         EmployeeMood report;
+        report.friendships=friendship_mood(state,person.id);
         if(const auto found=gathering_points.find(person.id);found!=gathering_points.end())report.gatherings=found->second;
         if(const auto* reaction=founder_audience_on(state,person.gender,state.date)) report.founder_audience=reaction->mood;
         report.pay = pay_points(employee.opening && !rules.dismissal ? inherited_salary : employee_monthly_salary(state,employee),
@@ -111,7 +112,7 @@ std::map<std::string, EmployeeMood> workplace_moods(const SimulationState& state
             report.accessible_amenities = amenity_names;
         }
         report.score = std::clamp(50 + report.pay + report.company_prestige + report.ceo_prestige +
-            report.role + report.coworkers + report.amenities + report.temperament_effect + report.gatherings + report.founder_audience, 0, 100);
+            report.role + report.coworkers + report.amenities + report.temperament_effect + report.gatherings + report.founder_audience + report.friendships, 0, 100);
         results.emplace(person.id, std::move(report));
     }
     return results;

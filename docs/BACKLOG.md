@@ -18,10 +18,15 @@ progress feedback use actual simulation state. Personal tuition is optional;
 investing all savings remains allowed. See the plan for the exact active skill
 effects and current employee-study limitation.
 
-Next: social knowledge and known-close-relationship visualization, then major-
-company HQ people, geographic contact, romance/families/rivalry repair, data and
-infrastructure puzzles, career re-entry and the fictional USCIF branch. These are
-selected, unfinished work; the first two stages do not close F-06.
+The HQ social foundation is also implemented: saved friendship strength and
+memories, weekly bounded encounters, intentional meetups with cooldowns, public
+versus learned traits, multiple best friends, workplace morale, known close-
+connection graph/list and registered event facts. Focused tests and native UI
+walkthroughs pass. No cross-company friendships or romance/rivalry yet.
+
+Next: major-company HQ people and geographic contact, then romance/families/rivalry
+repair, data and infrastructure puzzles, career re-entry and the fictional USCIF
+branch. These remain selected, unfinished work; this does not close F-06.
 
 ## Selected immersive redesign (F-05, in progress)
 

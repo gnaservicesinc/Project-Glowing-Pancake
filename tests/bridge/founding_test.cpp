@@ -1,3 +1,4 @@
+#include "../../src/bridge/founding_fixture.hpp"
 #include "founding_controller.hpp"
 #include "world_controller.hpp"
 #include "management_controller.hpp"
@@ -41,10 +42,7 @@ int main(int argc,char** argv) {
         check(reopened.portrait()==setup.portrait() && reopened.beat()=="appearance","Current-build drafts must retain the edited portrait.");
         setup.setField("family","rich");setup.setField("route","bootstrap");
         check(setup.backers().empty() && setup.form().value("office")=="home","A self-funded founder must not receive unsolicited backers.");
-        for(const auto& row:setup.chapters()) {
-            const auto chapter=row.toMap();
-            setup.choose(chapter.value("id").toString(),chapter.value("choices").toList().front().toMap().value("id").toString());
-        }
+        pgp::bridge::complete_formative_fixture(setup);
         setup.setField("investment","100000");
         setup.setField("charter","charter.independent_lab");
         check(setup.signingError().isEmpty(),"A reviewed investment within personal savings must be signable.");

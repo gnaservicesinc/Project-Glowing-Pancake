@@ -126,6 +126,7 @@ void manage_people_contact(SimulationState& state, const ContactAction& action,C
                 }
                 if (messages.size() == message_limit) messages.erase(messages.begin());
                 messages.push_back(std::move(message));
+                if(!contact->opening && request.topic=="check_in")note_social_contact(state,request.person);
             }
         }
     }, action);

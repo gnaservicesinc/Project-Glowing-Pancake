@@ -490,3 +490,19 @@ shared childhood scenes. Choosing to join opens a follow-up; another pursuit
 can bypass it. Skills and interests are disclosed beside choices and retained
 on the founder. Backtracking removes inactive answers. Reloading preserves the
 same selection. The larger relationship/career expansion remains unfinished.
+
+
+## Making friends
+
+Open People → Social circle. Pick a coworker and choose a break, a listening
+conversation or a shared interest. One deliberate meetup fits each day; invite
+the same person again after a week. Ordinary office encounters also happen weekly.
+Differences slow the first steps but never forbid friendship. Shared interests
+and Empathetic Listening can help. Friendship is independent of coworker status,
+and you can have several best friends. Friends at work add bounded morale.
+
+Personal traits become visible as trust grows; professional traits and pronouns
+are public. Close connections opens a portrait map you can explore by selecting
+a person, plus a text list that also works in compact layouts. Only known close
+friendships appear. The current circle covers your HQ team and retained former
+coworker ties; cross-company geography, romance and rivalry remain future work.

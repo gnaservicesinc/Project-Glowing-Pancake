@@ -268,7 +268,9 @@ QVariantMap ManagementController::researchTeam(QString id,QStringList workers) c
         const auto pacing=core::research_pacing(*s.lab,*s.capacity,topic->id,s.date);
         const auto& rule=s.lab->catalog.creative_research.at(topic->id);
         const auto staff_days=core::coordinated_staff_days(s.lab->catalog,*topic,team.compatibility_bp);
-        QStringList traits;for(const auto& trait:team.traits) traits.push_back(q(trait));
+        QStringList traits;
+        for(const auto& worker:s.management->people->employees)if(std::ranges::find(ids,worker.terms.profile.id)!=ids.end())
+            for(const auto& trait:core::visible_traits(s,worker.terms.profile))if(!traits.contains(q(trait)))traits.push_back(q(trait));
         const auto calculation=pacing.missing_groups
             ? tr("Expected year %1 (year %2 of the campaign). Difficulty %3 · %4 of %5 prerequisite groups missing · ×%6 early start multiplier.")
                 .arg(rule.earliest_year).arg(pacing.expected_offset).arg(rule.difficulty).arg(pacing.missing_groups).arg(pacing.prerequisite_groups).arg(pacing.early_multiplier)

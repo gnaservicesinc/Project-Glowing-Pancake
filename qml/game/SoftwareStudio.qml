@@ -9,6 +9,8 @@ ColumnLayout {
     property int previous:0
     property bool restoring:true
     function restore(value) {
+        if(typeof value === "string") {try {value=JSON.parse(value)} catch(error) {value={}}}
+        if(!value || typeof value !== "object")value={}
         restoring=true
         const rows=catalog.briefs || []
         briefChoice.currentIndex=Math.max(0,rows.findIndex(b=>b.id===value.brief))
@@ -19,11 +21,11 @@ ColumnLayout {
         workers=Array.isArray(value.workers)?value.workers.filter(id=>(catalog.people || []).some(p=>p.id===id)):[]
         automation.currentIndex=Math.max(0,(catalog.aiSources || []).findIndex(b=>b.id===value.ai_source))
         previous=Number.isInteger(value.previous)?value.previous:0
-        Qt.callLater(()=>restoring=false)
+        Qt.callLater(()=>{restoring=false;campaign.world.setDraft("software/design",JSON.stringify(design))})
     }
-    Component.onCompleted:restore(campaign.world.draft("software/design",{}))
-    Connections {target:campaign.world;function onDraftsReset(){panel.restore(campaign.world.draft("software/design",{}))}}
-    onDesignChanged:if(!restoring)campaign.world.setDraft("software/design",design)
+    Component.onCompleted:restore(campaign.world.draft("software/design","{}"))
+    Connections {target:campaign.world;function onDraftsReset(){panel.restore(campaign.world.draft("software/design","{}"))}}
+    onDesignChanged:if(!restoring)campaign.world.setDraft("software/design",JSON.stringify(design))
     readonly property var brief:(catalog.briefs || [])[briefChoice.currentIndex] || ({})
     readonly property var design:({brief:brief.id || "",name:titleInput.text,aesthetic:aesthetics.currentValue || "calm",navigation:navigation.currentValue || "sidebar",focus:priorities.currentValue || "balanced",workers:workers,previous:previous,ai_source:automation.currentValue || ""})
     readonly property var quote:{const revision=campaign.world.reviewToken;return campaign.world.softwareQuote(design)}
@@ -114,7 +116,7 @@ ColumnLayout {
                 WorldButton {visible:modelData.canPause;text:qsTr("Pause development");textSize:panel.textSize;enabled:panel.editable;onClicked:campaign.world.stopSoftware(modelData.id,false,campaign.world.reviewToken)}
                 WorldButton {visible:modelData.canCancel;text:qsTr("Cancel development · no refund");textSize:panel.textSize;enabled:panel.editable;onClicked:campaign.world.stopSoftware(modelData.id,true,campaign.world.reviewToken)}
                 WorldButton {visible:modelData.canResume;text:qsTr("Resume with current team");textSize:panel.textSize;enabled:panel.editable;onClicked:campaign.world.resumeSoftware(modelData.id,campaign.world.reviewToken)}
-                WorldButton {visible:modelData.released;text:qsTr("Refine this design");textSize:panel.textSize;onClicked:{briefChoice.currentIndex=panel.catalog.briefs.findIndex(b=>b.id===modelData.brief);panel.previous=modelData.id;titleInput.text=modelData.name+" II"}}
+                WorldButton {visible:modelData.released;text:qsTr("Refine this design");textSize:panel.textSize;onClicked:panel.restore({brief:modelData.brief,name:modelData.name+" II",aesthetic:modelData.aesthetic,navigation:modelData.navigation,focus:modelData.focus,previous:modelData.id,workers:panel.workers,ai_source:panel.design.ai_source})}
             }
         }
     }
