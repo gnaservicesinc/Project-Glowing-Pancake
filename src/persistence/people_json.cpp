@@ -54,17 +54,22 @@ core::Recruitment parse_recruitment(const Json& j) {
             core::OrdinalDay{i64(o.at("submitted_on"),"submitted_on")},core::OrdinalDay{i64(o.at("respond_on"),"respond_on")},core::OrdinalDay{i64(o.at("expires_on"),"expires_on")},text(o.at("reply"),"reply",16)});
     }return n;
 }
-Json applicant(const core::Applicant& a) {return {{"profile",profile(a.profile)},{"salary",a.salary.value()},{"signing",a.signing.value()},{"evaluation_credit",a.evaluation_credit.value()},{"recruitment",a.recruitment?recruitment(*a.recruitment):Json(nullptr)}};}
+Json applicant(const core::Applicant& a) {return {{"profile",profile(a.profile)},{"salary",a.salary.value()},{"signing",a.signing.value()},{"evaluation_credit",a.evaluation_credit.value()},{"recruitment",a.recruitment?recruitment(*a.recruitment):Json(nullptr)},{"recommendation",a.recommendation?Json{{"person",a.recommendation->person},{"name",a.recommendation->name},{"kind",a.recommendation->kind},{"received_on",a.recommendation->received_on.value()}}:Json(nullptr)}};}
 core::Applicant parse_applicant(const Json& j) {
-    fields(j,"applicant",{"profile","salary","signing","evaluation_credit","recruitment"});
-    return {parse_profile(j.at("profile")),core::Cents{i64(j.at("salary"),"salary")},core::Cents{i64(j.at("signing"),"signing")},core::BasisPoints{i64(j.at("evaluation_credit"),"evaluation_credit")},
+    fields(j,"applicant",{"profile","salary","signing","evaluation_credit","recruitment","recommendation"});
+    core::Applicant result{parse_profile(j.at("profile")),core::Cents{i64(j.at("salary"),"salary")},core::Cents{i64(j.at("signing"),"signing")},core::BasisPoints{i64(j.at("evaluation_credit"),"evaluation_credit")},
         j.at("recruitment").is_null()?std::nullopt:std::optional{parse_recruitment(j.at("recruitment"))}};
+    if(const auto& rec=j.at("recommendation");!rec.is_null()){fields(rec,"recommendation",{"person","name","kind","received_on"});result.recommendation=core::ApplicantRecommendation{text(rec.at("person"),"referrer",160),text(rec.at("name"),"referrer name",128),text(rec.at("kind"),"recommendation",16),core::OrdinalDay{i64(rec.at("received_on"),"recommendation date")}};}
+    return result;
 }
 }
+Json person_profile_json(const core::PersonProfile& p){return profile(p);}
+core::PersonProfile parse_person_profile(const Json& j){return parse_profile(j);}
 Json people_json(const core::PeopleState& p) {
     Json applicants=Json::array(),employees=Json::array(),known=Json::object(),contacts=Json::array();
     for(const auto& [id,person]:p.known_people) known[id]=profile(person);
     for(const auto& a:p.applicants) applicants.push_back(applicant(a));
+    Json queued=Json::array();for(const auto& a:p.queued_applicants)queued.push_back(applicant(a));
     for(const auto& e:p.employees) employees.push_back({{"terms",applicant(e.terms)},{"joined_on",e.joined_on.value()},{"ready_on",e.ready_on.value()},
         {"opening",e.opening},{"departed_on",e.departed_on?Json(e.departed_on->value()):Json(nullptr)},
         {"dismissal_severance",e.dismissal_severance?Json(e.dismissal_severance->value()):Json(nullptr)}});
@@ -80,7 +85,7 @@ Json people_json(const core::PeopleState& p) {
             {"opening",contact.opening?Json{{"source",contact.opening->source},{"outcome",contact.opening->outcome}}:Json(nullptr)}});
     }
     Json result{{"stream",p.stream},{"next_id",p.next_id},{"starts_on",p.starts_on.value()},{"next_recruitment",p.next_recruitment.value()},
-        {"offered_pay",p.offered_pay.value()},{"mission",p.mission},{"founding_prestige",p.founding_prestige},{"community_prestige",p.community_prestige},{"community_buzz",p.community_buzz},{"applicants",std::move(applicants)},{"employees",std::move(employees)},{"known_people",std::move(known)},{"contacts",std::move(contacts)}};
+        {"offered_pay",p.offered_pay.value()},{"mission",p.mission},{"founding_prestige",p.founding_prestige},{"community_prestige",p.community_prestige},{"community_buzz",p.community_buzz},{"applicants",std::move(applicants)},{"queued_applicants",std::move(queued)},{"employees",std::move(employees)},{"known_people",std::move(known)},{"contacts",std::move(contacts)}};
     auto& industry=result["industry"]=Json::object();
     for(const auto& [id,person]:p.industry)industry[id]={{"profile",profile(person.profile)},{"company",person.company},{"organization",person.organization},{"state",person.state},{"city",person.city},{"active",person.active}};
     result["social"]=p.social?social_json(*p.social):Json(nullptr);
@@ -89,7 +94,7 @@ Json people_json(const core::PeopleState& p) {
     return result;
 }
 core::PeopleState parse_people(const Json& j) {
-    fields(j,"people",{"stream","next_id","starts_on","next_recruitment","offered_pay","mission","founding_prestige","community_prestige","community_buzz","applicants","employees","known_people","contacts","talent","social","industry"},{"founder_gender"});
+    fields(j,"people",{"stream","next_id","starts_on","next_recruitment","offered_pay","mission","founding_prestige","community_prestige","community_buzz","applicants","queued_applicants","employees","known_people","contacts","talent","social","industry"},{"founder_gender"});
     core::PeopleState p;if(!j.at("social").is_null())p.social=parse_social(j.at("social"));if(!j.at("talent").is_null())p.talent=parse_talent(j.at("talent"));p.stream=u64(j.at("stream"),"stream");p.next_id=u64(j.at("next_id"),"next_id");
     const auto& industry=j.at("industry");if(!industry.is_object() || industry.size()>8192)invalid("industry","Too many people");
     for(const auto& [id,row]:industry.items()) {
@@ -102,6 +107,7 @@ core::PeopleState parse_people(const Json& j) {
     p.community_buzz=static_cast<std::uint32_t>(u64(j.at("community_buzz"),"community buzz",20));
     if(j.contains("founder_gender")) p.founder_gender=text(j.at("founder_gender"),"founder_gender",32);
     array(j.at("applicants"),"applicants",12);for(const auto& a:j.at("applicants")) p.applicants.push_back(parse_applicant(a));
+    array(j.at("queued_applicants"),"queued applicants",12);for(const auto& a:j.at("queued_applicants"))p.queued_applicants.push_back(parse_applicant(a));
     if(!j.at("known_people").is_object() || j.at("known_people").size()>512) invalid("known_people","Authored identity count out of bounds");
     for(const auto& [id,row]:j.at("known_people").items()) p.known_people.emplace(text(Json(id),"offer id",128),parse_profile(row));
     array(j.at("employees"),"employees",256);for(const auto& e:j.at("employees")) {

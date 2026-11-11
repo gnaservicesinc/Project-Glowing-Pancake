@@ -96,6 +96,7 @@ ColumnLayout {
         Repeater {
             model:[{id:"homes",name:qsTr("Juniper Estates")},{id:"rooms",name:qsTr("My rooms")},{id:"interiors",name:qsTr("Interiors & gallery")}]
                 .concat(panel.family.name ? [{id:"family",name:qsTr("Family home")}] : [])
+                .concat(campaign.world.familyAlbum.available ? [{id:"album",name:qsTr("Family album")}] : [])
                 .concat(campaign.world.personalEvents.packages ? [{id:"events",name:qsTr("Gatherings")}] : [])
             WorldButton {
                 required property var modelData
@@ -105,6 +106,7 @@ ColumnLayout {
             }
         }
     }
+    FamilyAlbum {Layout.fillWidth:true;visible:panel.page==="album";textSize:panel.textSize;onRecruitmentRequested:{campaign.world.setDraft("people/page","applicants");campaign.world.setDraft("people/applicantFilter","recommended");panel.openApp("people","","laptop")}}
     FamilyHomePanel {
         Layout.fillWidth: true
         visible: panel.page === "family" && !!panel.family.name

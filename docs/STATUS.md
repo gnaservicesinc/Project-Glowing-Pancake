@@ -9,7 +9,7 @@ Updated 2026-11-11
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.64.0-dev.1**, generation **65**.
+immersive redesign advances content to **0.66.0-dev.1**, generation **67**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -171,9 +171,44 @@ are inspected; the compact preferences form shows all options together.
 Content review passes 24 prepared-opening save roundtrips; optimized Mac game
 and editor builds pass.
 
-Families and children, rivalry/repair, further design puzzles, specialist skill
-effects, major-HQ property expansion, career transitions and USCIF remain
-required work in the active full plan.
+My life → Family album now gives the founder named parents and maintains one
+shared family register across HQs. Reviewed birth/assisted-parenthood, adoption
+and foster plans have real waiting periods and saved outcomes. Foster care has an
+agreed term; adoption preserves the earlier care record. New marriages add step
+relationships; separation keeps legal/intended parenthood and records past step
+context. Siblings and known family links appear in the existing portrait map/list.
+Kinship prevents romance, including across later employee identities.
+
+Children keep exact birthdays, identity and eventual adult portraits from generation.
+Original sprout/sapling/tree SVGs mark childhood without showing adult faces as
+babies. School-age caregivers can explore four learning paths; older children may
+prefer their own interests. Skills arrive after adulthood and sufficient practical
+study. Family traits/identity do not improve professional quality or waive job gates.
+NPC households use the same care-plan owner through bounded monthly reviews.
+Three authored life-news flows consume registered marriage, family and application
+facts through the shared event runtime.
+
+People → Applicants now includes Employee recommended candidates for both friend
+and family referrals. Each application saves its actual recommender and connection.
+A bounded waiting list retains new applications until ordinary recruitment has room;
+it does not replace active discussions. Grown children can apply voluntarily or be
+invited to apply. Pay, signing cost, a real desk, onboarding and later work use the
+existing commands; family identity survives becoming an employee.
+
+Eleven selected runtime/bridge checks pass. Family checks cover actual care clocks,
+a teenager reaching adulthood, qualification, a queued recommendation, ordinary
+compensation/workspace refusal and actual paid hiring/onboarding, exact saves and
+identical continuation. Explicit calendar-only fixtures isolate later learning and
+foster expiry; a mature-marriage/review-rate fixture isolates NPC household policy.
+Native checks pass a reviewed plan, exact export, a fresh process restart, actual
+90-day arrival, child markers and a voluntary family application with named
+recommendation. Normal and actual 650×480 / 200% layouts are inspected. Content
+review passes 24 prepared-opening save roundtrips; optimized Mac game/editor
+builds pass. These are focused development checks, not multi-generation balance
+or human playtest acceptance.
+
+Rivalry/repair, further design puzzles, specialist skill effects, major-HQ property
+expansion, career transitions and USCIF remain required work in the active full plan.
 
 This is an implementation checkpoint, not completion of F-06. Existing human
 review and platform/release gates remain open.

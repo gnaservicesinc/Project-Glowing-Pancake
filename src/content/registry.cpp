@@ -252,6 +252,10 @@ Registry foundation_registry() {
     number("company.industry_contacts",Scope::company,Unit::count,0,8192,"Industry people the founder has actually met or been introduced to.","campaign");
     number("company.industry_close_friends",Scope::company,Unit::count,0,8192,"Known close-or-better friendships outside the company.","campaign");
     number("company.referral_contacts",Scope::company,Unit::count,0,8192,"Friends who have supplied a real recruiting referral.","campaign");
+    number("company.founder_children",Scope::company,Unit::count,0,1024,"Known children in the founder's active or past family care.","campaign");
+    number("company.founder_dependents",Scope::company,Unit::count,0,1024,"Children under eighteen currently in the founder's care.","campaign");
+    number("company.family_plans",Scope::company,Unit::count,0,128,"Pending family plans involving the founder.","campaign");
+    number("company.family_applications",Scope::company,Unit::count,0,1024,"Independent family applications received by this company.","campaign");
     number("company.founder_dating",Scope::company,Unit::count,0,1,"Founder is currently dating, before engagement.","campaign");
     number("company.founder_engaged",Scope::company,Unit::count,0,1,"Founder is currently engaged, before marriage.","campaign");
     number("company.founder_married",Scope::company,Unit::count,0,1,"Founder is currently married.","campaign");

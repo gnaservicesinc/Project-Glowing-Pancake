@@ -15,6 +15,7 @@ void validate_romance(const WorldState& w,bool deep) {
        state.active.size()>4096 || state.history.size()>romance_history_limit || state.replies.size()>romance_history_limit || state.next_id!=state.active.size()+state.history.size()+1 || state.next_id>romance_history_limit+1)invalid();
     if(state.known_identities.size()>8192)invalid();
     for(const auto& id:state.known_identities)if(id=="founder" || !people.contains(id))invalid();
+    const auto ancestors=deep?family_ancestors(w):std::map<std::string,std::set<std::string>>{};
     std::set<std::uint32_t> ids;std::set<std::string> partners;
     std::map<std::string,std::vector<std::pair<OrdinalDay,OrdinalDay>>> intervals;
     std::map<std::uint32_t,const RomanceBond*> bonds;
@@ -25,6 +26,11 @@ void validate_romance(const WorldState& w,bool deep) {
            b.last_time_together<b.started_on || b.last_time_together>day || b.affection<0 || b.affection>1000 || b.dates<0 || b.dates>10000 ||
            b.memory.empty() || b.memory.size()>256 || b.end_reason.size()>256 || b.ended_on.has_value()==active ||
            ((b.first=="founder" || b.second=="founder") && !b.known))invalid();
+        if(deep) {
+            const auto first=ancestors.find(b.first),second=ancestors.find(b.second);
+            if((first!=ancestors.end() && first->second.contains(b.second)) || (second!=ancestors.end() && second->second.contains(b.first)))invalid();
+            if(first!=ancestors.end() && second!=ancestors.end())for(const auto& parent:first->second)if(second->second.contains(parent))invalid();
+        }
         const auto end=b.ended_on.value_or(day);
         if(end<b.started_on || end>day || b.last_time_together>end || (b.strained_on && (*b.strained_on<b.started_on || *b.strained_on>end)) ||
            (b.last_proposal && (*b.last_proposal<b.started_on || *b.last_proposal>end)) || (b.ended_on && b.end_reason.empty()) || (!b.ended_on && !b.end_reason.empty()))invalid();

@@ -31,6 +31,7 @@ public:
     void respondCompetitiveOffer(std::uint64_t token,std::uint64_t revision,std::string id,bool accept);
     void proposeAcquisition(std::uint64_t token,std::uint64_t revision,std::string id,bool equity);
     void signWholesale(std::uint64_t token,std::uint64_t revision,std::string plan,std::string source,std::string buyer);
+    void manageFamily(std::uint64_t token,std::uint64_t revision,runtime::FamilyRequest request);
     void pursueRomance(std::uint64_t token,std::uint64_t revision,runtime::RomanceRequest request);
     void setRomanticPreferences(std::uint64_t token,std::uint64_t revision,bool interested,std::vector<std::string> genders);
     void collaborateResearch(std::uint64_t token,std::uint64_t revision,runtime::CollaborationRequest request);

@@ -90,13 +90,13 @@
     }
   ],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "f604497095760201f00254489a3df222dacafb030eaa9da28a3ca41346ae45b6",
+  "collection_hash": "903ae17bcd04b2dad753242ae18aaea8c5c00f661643ca0581ea8c3ef9443db6",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.64.0-dev.1",
+  "content_version": "0.66.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -747,6 +747,24 @@
       "semantic_hash": "9b3bda68a8283f949fa1e49d29abc0442ae1dca00abdf656521ecf543f30aa53"
     },
     {
+      "id": "life.family.first_application",
+      "kind": "flow",
+      "revision": 2,
+      "semantic_hash": "281b35bbadb21e7124ec8e2d133ee2febd89eeecbbd48fe67de7efcdefd98712"
+    },
+    {
+      "id": "life.family.first_child",
+      "kind": "flow",
+      "revision": 2,
+      "semantic_hash": "19f25294f91fae40392cad9b561329802aa1c498f43e93de2b50b57110f7407c"
+    },
+    {
+      "id": "life.family.marriage",
+      "kind": "flow",
+      "revision": 2,
+      "semantic_hash": "dbdd94c7c6250d3c07b51a6eb00f35b4d9c4a840b8f24cb7012143afb1af00a4"
+    },
+    {
       "id": "market.century",
       "kind": "regional_markets",
       "revision": 4,
@@ -1151,8 +1169,8 @@
     {
       "id": "scenario.founder_campaign",
       "kind": "scenario",
-      "revision": 35,
-      "semantic_hash": "679e3e85bc4ee9ca05dfb73246ead69fe2216a36194547f4aefe88b425f2d9f8"
+      "revision": 36,
+      "semantic_hash": "ecf13446520ca3009f49a92e2d645093db828184b17d629a609b3b263ec4fd0b"
     },
     {
       "id": "scenario.world_competition",
@@ -1294,8 +1312,8 @@
     }
   ],
   "format": 1,
-  "generation": 65,
-  "messages_hash": "0113c08ef2d7c1c4e5eb1016c281cba8762f911c71ee46008ed4b43e41c56363",
+  "generation": 67,
+  "messages_hash": "4f95dde3e3292b5b48dc686761a0bb64951dc8e6e3fe2dc7c7363b5f67683f9f",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
     "scenario.century_frontier": [
@@ -1684,7 +1702,10 @@
       "century.product_customer.cedar_quarter",
       "century.product_customer.district_rollout",
       "century.product_customer.harbormark_cycle",
-      "deployment.incident_news"
+      "deployment.incident_news",
+      "life.family.first_child",
+      "life.family.first_application",
+      "life.family.marriage"
     ],
     "scenario.world_competition": [
       "slice.research_milestone",
@@ -1763,5 +1784,5 @@
       "deployment.incident_news"
     ]
   },
-  "source_hash": "d336b4d66c341f070e7e2acf1fb5b04cbcae9f8f3475d6b6a6f54d498148fca8"
+  "source_hash": "75542dc8602fa507391c8e96add667c5c3bd7064dfc109d1904e3aaaa0b3bd5c"
 }

@@ -7,10 +7,10 @@ const RomanceRules* romance_rules(const WorldState& w) {
 }
 std::string romance_person_id(const WorldState& w,std::string_view id) {
     if(id=="founder")return "founder";
-    if(!id.starts_with("employee/"))return std::string{id};
+    if(!id.starts_with("employee/"))return family_person_id(w,id);
     if(w.simulation.management && w.simulation.management->people)for(const auto& e:w.simulation.management->people->employees)if(e.terms.profile.id==id)
-        return e.terms.profile.role=="Founder / researcher"?"founder":w.company_id+"/"+std::string{id};
-    return std::string{id};
+        return e.terms.profile.role=="Founder / researcher"?"founder":family_person_id(w,w.company_id+"/"+std::string{id});
+    return family_person_id(w,id);
 }
 const RomanceBond* romantic_partner(const WorldState& w,std::string_view person) {
     if(!w.romance){return nullptr;}
@@ -39,13 +39,14 @@ People roster(const WorldState& w) {
             if(e.terms.profile.role=="Founder / researcher"){continue;}
             const auto& p=e.terms.profile;if(!p.romantic)continue;
             const bool employed=!e.departed_on && e.ready_on<=s.date && s.phase!=DayPhase::closed && s.phase!=DayPhase::finished;
-            const auto id=owner+"/"+p.id;people.emplace(id,Person{id,p.gender,p.orientation,employed?state:std::string{},employed?city:std::string{},&*p.romantic,employed});
+            const auto id=family_person_id(w,owner+"/"+p.id);people.insert_or_assign(id,Person{id,p.gender,p.orientation,employed?state:std::string{},employed?city:std::string{},&*p.romantic,employed});
         }
     };
     add(w.simulation,w.company_id);if(w.competition)for(const auto& company:w.competition->companies)add(company.simulation,company.definition_id);
+    if(w.family)for(const auto& member:w.family->members)if(!people.contains(member.profile.id))people.emplace(member.profile.id,Person{member.profile.id,member.profile.gender,member.profile.orientation,{},{},&*member.profile.romantic,false});
     return people;
 }
-std::string social_key(const WorldState& w,std::string_view id) {const auto prefix=w.company_id+"/";return id.starts_with(prefix)?std::string{id.substr(prefix.size())}:std::string{id};}
+std::string social_key(const WorldState& w,std::string_view input) {auto id=std::string{input};if(w.family)for(const auto& [alias,member]:w.family->aliases)if(member==id){id=alias;break;}const auto prefix=w.company_id+"/";return id.starts_with(prefix)?std::string{id.substr(prefix.size())}:std::string{id};}
 int friendship(const WorldState& w,std::string_view a,std::string_view b) {
     const auto* bond=social_link(w.simulation,social_key(w,a),social_key(w,b));return bond?bond->affinity:0;
 }
@@ -62,6 +63,7 @@ bool romantic_identity_known(const WorldState& w,std::string_view person) {
     const auto& people=*w.simulation.management->people;const PersonProfile* profile=nullptr;
     for(const auto& e:people.employees)if(w.company_id+"/"+e.terms.profile.id==id)profile=&e.terms.profile;
     if(const auto found=people.industry.find(id);found!=people.industry.end())profile=&found->second.profile;
+    if(!profile)if(const auto* member=family_member(w,id))profile=&member->profile;
     if(!profile || !profile->romantic)return false;
     const auto* social=social_rules(w.simulation);
     return profile->romantic->preferences.public_orientation || (social && romance_detail::friendship(w,"founder",id)>=social->private_threshold);

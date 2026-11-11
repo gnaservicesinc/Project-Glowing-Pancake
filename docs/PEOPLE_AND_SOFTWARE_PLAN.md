@@ -387,3 +387,48 @@ and ordinary recruitment, concrete betrayal/HR/repair/frenemies, broader skill
 and trait effects, major-HQ property growth, further puzzles, career re-entry and
 USCIF remain selected work. It does not close F-06 or establish human balance or
 release qualification.
+
+
+## Family and recommended-candidate milestone · 2026-11-11
+
+Stage 5 now has a shared family register with named founder parents, exact child
+identities and birthdays, birth/adoptive/foster/step edges and derived siblings.
+The founder reviews care plans and receives a saved actual answer. Birth/assisted
+parenthood waits 280 days, adoption 90 and foster placement 30. Sustained foster
+care can lead to an adoption review; earlier care is retained. A placement's agreed
+term ends active care without deleting the person. New marriages add step context;
+separation preserves parenthood and records past step ties. Historical kinship
+prevents family romance. These are fictional game abstractions, not legal or
+medical eligibility guidance.
+
+Children retain identity through growth and recruitment. Childhood uses original
+CC0 vector growth markers; saved adult portraits appear after eighteen. Caregivers
+can explore four authored practical learning paths after school age. Older children
+may decline; skill qualification waits for adulthood and sufficient study. NPC
+households use the same plan owner through bounded monthly decisions. Family
+records and archived plans use shared history pages. Registered family facts feed
+three authored life-news flows through the existing event system.
+
+The user's selected presentation groups children and employees' friends as
+**Employee recommended candidates**. Friend and family applications save their
+actual recommender, relationship and received date. A bounded queue waits for the
+normal recruitment review rather than replacing current candidates. Children can
+apply voluntarily through a parent connection or accept a reviewed invitation.
+Their skills, compensation agreement, signing payment, furnished desk, onboarding
+and work requirements remain ordinary. Stable family IDs are retained when a
+person acquires an employee ID; recommendation is provenance, not a stat bonus.
+
+Eleven focused runtime/bridge checks pass. The family check covers production care
+waiting periods, separate refusal paths, actual adolescent aging/qualification and
+ordinary queued application/pay/workspace/hiring/onboarding with exact saves and
+replay. Explicit family-calendar fixtures cover later learning and foster expiry;
+a mature-marriage/review-rate fixture covers NPC plan selection. Native checks use
+only a seeded consent stream: reviewed care, real 90-day arrival, exact export,
+process restart, a voluntary ordinary family application and named recommendation.
+Normal and actual 650×480 / 200% layouts are inspected. Content review passes 24
+opening save roundtrips; optimized Mac game/editor builds pass. Multi-generation
+balance, human acceptance and release qualification remain separate.
+
+Rivalry/betrayal/HR/repair/frenemies, remaining specialist skill effects, major-HQ
+property growth, further puzzles, career re-entry and USCIF remain selected work.
+The full plan and F-06 stay active.

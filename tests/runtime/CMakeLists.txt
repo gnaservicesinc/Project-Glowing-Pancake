@@ -442,3 +442,11 @@ target_include_directories(pgp-romance-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR
 target_compile_definitions(pgp-romance-test PRIVATE PGP_ROMANCE_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
 pgp_project_target(pgp-romance-test)
 add_test(NAME runtime.romance COMMAND pgp-romance-test)
+
+add_executable(pgp-family-test family_test.cpp)
+target_link_libraries(pgp-family-test PRIVATE pgp::persistence)
+target_include_directories(pgp-family-test PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+target_include_directories(pgp-family-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-family-test PRIVATE PGP_FAMILY_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json")
+pgp_project_target(pgp-family-test)
+add_test(NAME runtime.family COMMAND pgp-family-test)

@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.64.0-dev.1",
+  "content_version": "0.66.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -7964,6 +7964,105 @@
       "id": "frontier.plateau_paths",
       "kind": "frontier_research",
       "revision": 2
+    },
+    {
+      "entry_node": "briefing",
+      "id": "life.family.first_application",
+      "kind": "flow",
+      "lifecycle": {
+        "max_occurrences_per_scope": 1,
+        "mode": "once",
+        "occurrence_scope": "company"
+      },
+      "nodes": {
+        "briefing": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "life.family.first_application.body"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "revision": 2,
+      "scope": "company",
+      "tags": [
+        "ai_assisted",
+        "personal_life",
+        "family"
+      ],
+      "trigger": {
+        "fact": "company.family_applications",
+        "op": "gte",
+        "unit": "count",
+        "value": 1
+      }
+    },
+    {
+      "entry_node": "briefing",
+      "id": "life.family.first_child",
+      "kind": "flow",
+      "lifecycle": {
+        "max_occurrences_per_scope": 1,
+        "mode": "once",
+        "occurrence_scope": "company"
+      },
+      "nodes": {
+        "briefing": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "life.family.first_child.body"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "revision": 2,
+      "scope": "company",
+      "tags": [
+        "ai_assisted",
+        "personal_life",
+        "family"
+      ],
+      "trigger": {
+        "fact": "company.founder_children",
+        "op": "gte",
+        "unit": "count",
+        "value": 1
+      }
+    },
+    {
+      "entry_node": "briefing",
+      "id": "life.family.marriage",
+      "kind": "flow",
+      "lifecycle": {
+        "max_occurrences_per_scope": 1,
+        "mode": "once",
+        "occurrence_scope": "company"
+      },
+      "nodes": {
+        "briefing": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "life.family.marriage.body"
+        },
+        "end": {
+          "kind": "end"
+        }
+      },
+      "revision": 2,
+      "scope": "company",
+      "tags": [
+        "ai_assisted",
+        "personal_life",
+        "family"
+      ],
+      "trigger": {
+        "fact": "company.founder_married",
+        "op": "gte",
+        "unit": "count",
+        "value": 1
+      }
     },
     {
       "id": "market.century",
@@ -69369,7 +69468,10 @@
         "century.product_customer.cedar_quarter",
         "century.product_customer.district_rollout",
         "century.product_customer.harbormark_cycle",
-        "deployment.incident_news"
+        "deployment.incident_news",
+        "life.family.first_child",
+        "life.family.first_application",
+        "life.family.marriage"
       ],
       "founding": {
         "backers": [
@@ -76628,6 +76730,48 @@
           "dismissal": {
             "severance_months": 1
           },
+          "family": {
+            "adoption_days": 90,
+            "adoption_weight": 25,
+            "application_bp": 2500,
+            "application_interval_days": 90,
+            "birth_days": 280,
+            "birth_weight": 60,
+            "consent_bp": 8500,
+            "foster_adoption_days": 180,
+            "foster_days": 30,
+            "foster_term_days": 365,
+            "household_cooldown": 365,
+            "interval_days": 30,
+            "married_days": 90,
+            "maximum_children": 4,
+            "minimum_parent_gap": 18,
+            "npc_family_bp": 800,
+            "older_child_consent_bp": 8500,
+            "study_days": 365,
+            "tracks": [
+              {
+                "name": "Build little programs",
+                "role": "Software engineer",
+                "skill": "programming"
+              },
+              {
+                "name": "Explore machine learning",
+                "role": "Researcher",
+                "skill": "ml_research"
+              },
+              {
+                "name": "Design useful interfaces",
+                "role": "UI designer",
+                "skill": "ui_design"
+              },
+              {
+                "name": "Make digital art",
+                "role": "Digital artist",
+                "skill": "digital_art"
+              }
+            ]
+          },
           "first_names": [
             "Alex",
             "Jordan",
@@ -77691,9 +77835,11 @@
             "focus_penalty": 10,
             "market_bonus_max_bp": 1500,
             "roles": {
+              "Digital artist": "digital_art",
               "Evaluation researcher": "ml_research",
               "Researcher": "ml_research",
-              "Software engineer": "programming"
+              "Software engineer": "programming",
+              "UI designer": "ui_design"
             },
             "skills": [
               {
@@ -78870,7 +79016,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 35,
+      "revision": 36,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -99241,6 +99387,12 @@
     "frontier.agi_notice.body": "Independent game AGI assessment. Three independent observation windows established the fictional game AGI criteria for a deployed system.",
     "frontier.asi_notice.body": "Independent game ASI evidence. Independent panels and three physically replicated improvements established the fictional game ASI criteria.",
     "frontier.conditional_era.body": "The conditional future. Energy, cooperation and research now shape technology availability. Review the scenario conditions in Frontier.",
+    "life.family.first_application.body": "A familiar name has landed in the applicant pile. Find them under Employee recommended candidates.",
+    "life.family.first_application.title": "A familiar name in the applicant pile",
+    "life.family.first_child.body": "The family album has a new page. There will be small adventures, peculiar hobbies and plenty of firsts.",
+    "life.family.first_child.title": "A new page in the family album",
+    "life.family.marriage.body": "A new chapter together. For once, the calendar is about more than launch dates.",
+    "life.family.marriage.title": "A different kind of commitment",
     "operations.site.outcome": "Operations recorded a site outcome. Review its cause, current capacity and recovery terms in Operations.",
     "research.compute.fabric_qos.detail": "Unlocks additional memory-first and fabric v1 racks.",
     "research.compute.fabric_qos.title": "Shared fabric scheduling",

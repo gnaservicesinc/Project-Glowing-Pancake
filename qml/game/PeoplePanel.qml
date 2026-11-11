@@ -7,6 +7,7 @@ ColumnLayout {
     signal openApp(string app,string section)
     signal revealRequested(Item target)
     property string page: "team"
+    property string applicantFilter:campaign.world.draft("people/applicantFilter","all")
     property string selectedApplicant: campaign.world.draft("people/applicant", "")
     readonly property bool showDiscussion: page === "applicants" && discussion.offer.id !== undefined
     readonly property bool messagesOnly: campaign.world.navigation.app === "people" && campaign.world.navigation.section === "messages"
@@ -18,13 +19,14 @@ ColumnLayout {
     }
     function changePage(value) {page=value;campaign.world.setDraft("people/page",value)}
     function restorePage() {
+        applicantFilter=campaign.world.draft("people/applicantFilter","all")
         const value=messagesOnly?"messages":campaign.world.draft("people/page","team")
         page=["team","applicants","branches","messages","university","social","industry"].includes(value)?value:"team"
     }
     Component.onCompleted:restorePage()
     Connections {
         target:campaign.world
-        function onDraftsReset(){panel.restorePage();panel.selectedApplicant=campaign.world.draft("people/applicant","")}
+        function onDraftsReset(){panel.restorePage();panel.applicantFilter=campaign.world.draft("people/applicantFilter","all");panel.selectedApplicant=campaign.world.draft("people/applicant","")}
         function onNavigationChanged(){if(campaign.world.navigation.app==="people")panel.restorePage()}
     }
     spacing:16
@@ -59,6 +61,11 @@ ColumnLayout {
             onActivated:campaign.world.setRecruitingTerms(campaign.world.recruitingTerms.pay || 100,model[currentIndex])
         }
     }
+    Label {visible:panel.page==="applicants" && (campaign.world.familyAlbum.queued || 0)>0;Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;text:qsTr("%1 application(s) are waiting for the next recruitment review. Existing discussions keep their place.").arg(campaign.world.familyAlbum.queued || 0);color:"#ddc48b"}
+    Flow {visible:panel.page==="applicants" && !panel.showDiscussion;Layout.fillWidth:true;spacing:8
+        WorldButton {objectName:"applicantsAll";text:qsTr("All candidates");textSize:panel.textSize;checked:panel.applicantFilter==="all";onClicked:{panel.applicantFilter="all";campaign.world.setDraft("people/applicantFilter","all")}}
+        WorldButton {objectName:"applicantsRecommended";text:qsTr("Employee recommended candidates");textSize:panel.textSize;checked:panel.applicantFilter==="recommended";onClicked:{panel.applicantFilter="recommended";campaign.world.setDraft("people/applicantFilter","recommended")}}
+    }
     RecruitmentDiscussion {
         id:discussion
         Layout.fillWidth:true
@@ -70,7 +77,7 @@ ColumnLayout {
         onSuppliersRequested:panel.openApp("facilities","equipment")
     }
     Repeater {
-        model:panel.showDiscussion || panel.page==="branches" || panel.page==="messages" || panel.page==="university" || panel.page==="social" || panel.page==="industry" ? [] : panel.page==="applicants" ? campaign.world.applicants : campaign.world.people
+        model:panel.showDiscussion || panel.page==="branches" || panel.page==="messages" || panel.page==="university" || panel.page==="social" || panel.page==="industry" ? [] : panel.page==="applicants" ? campaign.world.applicants.filter(a=>panel.applicantFilter==="all" || a.recommended) : campaign.world.people
         Rectangle {
             required property var modelData
             Layout.fillWidth:true;implicitHeight:person.implicitHeight+28;color:"#213b40";radius:10
@@ -89,6 +96,7 @@ ColumnLayout {
                 ColumnLayout {
                     Layout.fillWidth:true;spacing:5
                     Label {Layout.fillWidth:true;text:modelData.name || "";textFormat:Text.PlainText;wrapMode:Text.Wrap;font.pixelSize:panel.textSize*1.2;font.bold:true;color:"#f3ead8"}
+                    Label {objectName:"employeeRecommendation_"+(modelData.id || "");visible:!!modelData.recommended;Layout.fillWidth:true;text:modelData.recommendation || "";wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#ecd093"}
                     Label {Layout.fillWidth:true;text:modelData.role || "";wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#b2d6c4"}
                     Label {
                         visible:!!modelData.mood
@@ -105,7 +113,7 @@ ColumnLayout {
                     }
                     WorldButton {
                         objectName:"hireApplicant_"+(modelData.id || "")
-                        visible:panel.page==="applicants"
+                        visible:panel.page==="applicants" && !modelData.queued
                         text:modelData.negotiated?qsTr("Discuss terms"):qsTr("Review offer for %1").arg(modelData.name)
                         textSize:panel.textSize
                         enabled:modelData.negotiated || panel.editable

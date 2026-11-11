@@ -264,6 +264,9 @@ OperationResult Campaign::propose_acquisition(std::uint64_t revision,std::string
 OperationResult Campaign::sign_wholesale(std::uint64_t revision,std::string_view plan,std::string_view source,std::string_view buyer) {
     return operate([&](auto& candidate){return candidate.signWholesale(revision,plan,source,buyer);},true);
 }
+OperationResult Campaign::manage_family(std::uint64_t revision,const runtime::FamilyRequest& request) {
+    return operate([&](auto& candidate){return candidate.manageFamily(revision,request);},true);
+}
 OperationResult Campaign::pursue_romance(std::uint64_t revision,const runtime::RomanceRequest& request) {
     return operate([&](auto& candidate){return candidate.pursueRomance(revision,request);},true);
 }

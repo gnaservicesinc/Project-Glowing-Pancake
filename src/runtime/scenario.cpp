@@ -207,6 +207,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     initialize_competition(world,program,scenario->rivals,competition);
     synchronize_industry_people(world,program);
     initialize_romance(world);
+    initialize_family(world);
     if(scenario->objectives) initialize_objectives(world,*scenario->objectives,std::move(objectives));
     else if(objectives) throw std::invalid_argument("This scenario uses its own introductory ending.");
     validate_checkpoint(program, checkpoint);

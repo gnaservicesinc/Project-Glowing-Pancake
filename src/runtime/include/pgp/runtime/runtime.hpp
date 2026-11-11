@@ -6,6 +6,7 @@
 #include <pgp/runtime/objectives.hpp>
 #include <pgp/runtime/campaign_identity.hpp>
 #include <pgp/runtime/romance.hpp>
+#include <pgp/runtime/family.hpp>
 
 #include <map>
 #include <optional>
@@ -60,6 +61,7 @@ struct WorldState {
     std::optional<content::FoundingSelection> founding{};
     std::optional<core::CountyState> counties{};
     std::optional<core::RomanceState> romance{};
+    std::optional<core::FamilyState> family{};
     auto operator<=>(const WorldState&) const = default;
 };
 
@@ -287,6 +289,7 @@ public:
     [[nodiscard]] RuntimeResult respondToCompetitiveOffer(std::uint64_t expected_revision,std::string_view offer_id,bool accept);
     [[nodiscard]] RuntimeResult proposeAcquisition(std::uint64_t expected_revision,std::string_view target,bool equity);
     [[nodiscard]] RuntimeResult signWholesale(std::uint64_t expected_revision,std::string_view plan,std::string_view source,std::string_view buyer);
+    [[nodiscard]] RuntimeResult manageFamily(std::uint64_t expected_revision,const FamilyRequest&);
     [[nodiscard]] RuntimeResult pursueRomance(std::uint64_t expected_revision,const RomanceRequest&);
     [[nodiscard]] RuntimeResult setRomanticPreferences(std::uint64_t expected_revision,bool interested,const std::vector<std::string>& genders);
     [[nodiscard]] RuntimeResult collaborateResearch(std::uint64_t expected_revision,const CollaborationRequest&);

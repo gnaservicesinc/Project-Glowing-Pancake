@@ -34,6 +34,7 @@ std::string blocked(const WorldState& w,const People& people,const RomanceReques
     const auto* r=romance_rules(w);if(!r || !w.romance)return "Romance is unavailable in this campaign.";
     const auto day=campaign_day(w);const auto id=romance_person_id(w,request.person);const auto me=people.find("founder"),them=people.find(id);
     if(me==people.end() || them==people.end() || id=="founder")return "Choose someone in your social circle.";
+    if(family_related(w,"founder",id))return "Family relationships stay separate from romance.";
     if(!adult_on(*me->second.romantic,day) || !adult_on(*them->second.romantic,day))return "Romantic relationships are for adults only.";
     const auto* current=romantic_partner(w,"founder");const bool together=current && other(*current,"founder")==id;
     if(request.action=="separate")return together?std::string{}:"Choose your current partner.";
@@ -115,21 +116,24 @@ void prepare_romance(WorldState& w) {
     // Index ties once instead of scanning every link for every identity.
     std::map<std::string,int> founder_friends;
     std::map<std::string,std::string> local_ids;
-    for(const auto& e:p.employees)local_ids.emplace(e.terms.profile.id,e.terms.profile.role=="Founder / researcher"?"founder":w.company_id+"/"+e.terms.profile.id);
+    for(const auto& e:p.employees)local_ids.emplace(e.terms.profile.id,e.terms.profile.role=="Founder / researcher"?"founder":family_person_id(w,w.company_id+"/"+e.terms.profile.id));
     const auto canonical=[&](const std::string& id){const auto found=local_ids.find(id);return found==local_ids.end()?id:found->second;};
     if(p.social)for(const auto& edge:p.social->links)if(edge.first=="founder" || edge.second=="founder") {
         auto id=edge.first=="founder"?edge.second:edge.first;
         if(id.starts_with("employee/"))id=w.company_id+"/"+id;
+        id=family_person_id(w,id);
         founder_friends.emplace(std::move(id),edge.affinity);
     }
     const auto affinity=[&](const std::string& id){const auto found=founder_friends.find(id);return found==founder_friends.end()?0:found->second;};
     const auto remember=[&](const PersonProfile& person,const std::string& id) {
         if(person.romantic && (person.romantic->preferences.public_orientation || (social && affinity(id)>=social->private_threshold)))state.known_identities.insert(id);
     };
-    for(const auto& e:p.employees)if(e.terms.profile.role!="Founder / researcher")remember(e.terms.profile,w.company_id+"/"+e.terms.profile.id);
-    for(const auto& [id,person]:p.industry)remember(person.profile,id);
+    for(const auto& e:p.employees)if(e.terms.profile.role!="Founder / researcher")remember(e.terms.profile,family_person_id(w,w.company_id+"/"+e.terms.profile.id));
+    for(const auto& [id,person]:p.industry)remember(person.profile,family_person_id(w,id));
     if(day<state.next_review)return;
-    const auto people=romance_detail::roster(w);SplitMix64 rng{state.stream};std::map<std::string,std::uint32_t> partners;
+    const auto people=romance_detail::roster(w);const auto ancestors=family_ancestors(w);
+    const auto related=[&](const std::string& first,const std::string& second){const auto a=ancestors.find(first),b=ancestors.find(second);if((a!=ancestors.end() && a->second.contains(second)) || (b!=ancestors.end() && b->second.contains(first)))return true;if(a!=ancestors.end() && b!=ancestors.end())for(const auto& person:a->second)if(b->second.contains(person))return true;return false;};
+    SplitMix64 rng{state.stream};std::map<std::string,std::uint32_t> partners;
     std::vector<std::uint32_t> ended;
     for(auto& [id,bond]:state.active) {
         partners.emplace(bond.first,id);partners.emplace(bond.second,id);const auto a=people.find(bond.first),b=people.find(bond.second);
@@ -154,7 +158,7 @@ void prepare_romance(WorldState& w) {
         for(const auto& b:state.history)if(b.ended_on){latest_end.insert_or_assign(b.first,*b.ended_on);latest_end.insert_or_assign(b.second,*b.ended_on);}
         for(const auto& edge:w.simulation.management->people->social->links) {
             if(edge.affinity<rules.friendship || edge.first=="founder" || edge.second=="founder")continue;
-            const auto first=canonical(edge.first),second=canonical(edge.second);if(partners.contains(first) || partners.contains(second))continue;
+            const auto first=canonical(edge.first),second=canonical(edge.second);if(partners.contains(first) || partners.contains(second) || related(first,second))continue;
             const auto a=people.find(first),b=people.find(second);if(a==people.end() || b==people.end() || !a->second.employed || !b->second.employed ||
                 !adult_on(*a->second.romantic,day) || !adult_on(*b->second.romantic,day) || romance_detail::distance(a->second,b->second)=="remote" ||
                 !mutual_romantic_interest(a->second.gender,a->second.romantic->preferences,b->second.gender,b->second.romantic->preferences,edge.affinity))continue;

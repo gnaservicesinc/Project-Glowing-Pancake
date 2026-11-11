@@ -253,6 +253,7 @@ void validate_talent(const SimulationState& s,bool deep) {
     skills(t.founder_skills);
     for(const auto& e:s.management->people->employees)skills(e.terms.profile.skills);
     for(const auto& a:s.management->people->applicants){skills(a.profile.skills);const auto role=r->roles.find(a.profile.role);if(role!=r->roles.end() && !has_skill(a.profile,role->second))invalid("Applicants need their advertised job's base skill.");}
+    for(const auto& a:s.management->people->queued_applicants){skills(a.profile.skills);const auto role=r->roles.find(a.profile.role);if(role!=r->roles.end() && !has_skill(a.profile,role->second))invalid("Queued applicants need their advertised job skill.");}
     if(t.courses.size()>2048 || t.software.size()>256)invalid("Talent history exceeds its limits.");
     std::set<std::string> active;
     for(std::size_t i=0;i<t.courses.size();++i) {

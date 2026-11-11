@@ -59,6 +59,14 @@ QVariantMap WorldController::relationships() const {
             visible.insert(first);visible.insert(second);
         }
     }
+    const auto album=familyAlbum();std::map<std::string,std::string> familyIds;
+    for(const auto& [id,card]:identities){(void)card;familyIds.emplace(runtime::romance_person_id(snapshot_->checkpoint.world,id),id);}
+    for(const auto& value:album.value("cards").toList()){auto card=value.toMap();const auto id=card.value("id").toString().toStdString();const auto canonical=runtime::romance_person_id(snapshot_->checkpoint.world,id);if(!familyIds.contains(canonical)){familyIds.emplace(canonical,id);identities.emplace(id,card);}}
+    for(const auto& value:album.value("edges").toList()) {
+        auto edge=value.toMap();const auto a=edge.value("first").toString().toStdString(),b=edge.value("second").toString().toStdString();
+        if(!familyIds.contains(a) || !familyIds.contains(b))continue;
+        const auto first=familyIds.at(a),second=familyIds.at(b);edge["first"]=q(first);edge["second"]=q(second);edges.push_back(edge);visible.insert(first);visible.insert(second);
+    }
     for(const auto& id:visible){auto row=identities.at(id);row["id"]=q(id);nodes.push_back(row);}
     return {{"people",people},{"nodes",nodes},{"edges",edges},{"moodCap",rules->mood_cap},{"interval",rules->interval_days},{"revision",reviewToken()}};
 }

@@ -622,6 +622,7 @@ RuntimeResult transaction(const CompiledProgram& program, Checkpoint& original, 
         action(next, result, steps, core_already_validated);
         synchronize_industry_people(next.world,program);
         prepare_romance(next.world);
+        prepare_family(next.world);
         if(core::prepare_access(next.world.simulation)) core_already_validated=false;
         for(std::size_t i=original.runtime.receipts.size();i<next.runtime.receipts.size();++i) {
             const auto& receipt=next.runtime.receipts[i];
@@ -983,6 +984,13 @@ RuntimeResult Runtime::signWholesale(std::uint64_t expected_revision,std::string
         if (has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date || next.world.simulation.phase!=core::DayPhase::work_ready)
             fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required choices before signing wholesale capacity.");
         sign_wholesale(next.world,program_,plan,source,buyer);
+    });
+}
+RuntimeResult Runtime::manageFamily(std::uint64_t expected_revision,const FamilyRequest& request) {
+    return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto& result,auto&,auto&) {
+        if(objective_time_stopped(next.world) || observing_world(next.world) || has_choice(next.runtime) || next.runtime.prepared_day!=next.world.simulation.date || next.world.simulation.phase!=core::DayPhase::work_ready)
+            fail(RuntimeReason::morning_not_ready,"Prepare the morning and resolve required decisions before making family plans.");
+        result.explanation=manage_family(next.world,request);
     });
 }
 RuntimeResult Runtime::pursueRomance(std::uint64_t expected_revision,const RomanceRequest& request) {

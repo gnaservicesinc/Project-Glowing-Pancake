@@ -108149,6 +108149,140 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "5ef4d59a88eceabb99c7d79f3c3f684aab6c6f25e27b26f46611a951031d8115",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "life.family.first_application",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "42cb5be78dc715d772411d3461ff4994f3a19f82715498c82bc2e1ef66fb13e6",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "life.family.first_child",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "1d50bf340fc521f43bd17c548f83816e4b8d488abbcef11390228dbd9cc0abff",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "life.family.marriage",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "5dfb9f8378dcac63613f73ca23a977dc7577597308ce9cf76264937322fb6ced",
+          "before_hash": "026e55db9c5d54caba4846b064ed713a19b75064e285b7ac9ec5086692120acb",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 35,
+          "revision": 36
+        }
+      ],
+      "changed_text_keys": [
+        "life.family.first_application.body",
+        "life.family.first_application.title",
+        "life.family.first_child.body",
+        "life.family.first_child.title",
+        "life.family.marriage.body",
+        "life.family.marriage.title"
+      ],
+      "collection_hash": "2ca8a6b0fdec8201e480661597460fa8133595a085980d4d2154a1b71bea3864",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.65.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 66,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.64.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000065.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000066.collection.json",
+      "summary": "Family album, authored life news, birth/adoptive/foster/step kinship, childhood learning and ordinary Employee recommended candidates with named sources.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "5930b3c21ec3cd681a234df6a1561097e05744ecae164a3ddba0d9a928bd73a0",
+          "before_hash": "5ef4d59a88eceabb99c7d79f3c3f684aab6c6f25e27b26f46611a951031d8115",
+          "change": "changed",
+          "id": "life.family.first_application",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "8aaada572136cbd405e14ae2b0effe1d4c55a46295ec70622eba8b942586bcd7",
+          "before_hash": "42cb5be78dc715d772411d3461ff4994f3a19f82715498c82bc2e1ef66fb13e6",
+          "change": "changed",
+          "id": "life.family.first_child",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "0f0d2e6cc1b641b0b079154bcb44b1e4a95f5acf73e981823e0865c049b23983",
+          "before_hash": "1d50bf340fc521f43bd17c548f83816e4b8d488abbcef11390228dbd9cc0abff",
+          "change": "changed",
+          "id": "life.family.marriage",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        }
+      ],
+      "changed_text_keys": [
+        "life.family.first_application.body",
+        "life.family.first_child.body",
+        "life.family.marriage.body"
+      ],
+      "collection_hash": "903ae17bcd04b2dad753242ae18aaea8c5c00f661643ca0581ea8c3ef9443db6",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.66.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 67,
+      "minimum_game_change": "patch",
+      "previous_content_version": "0.65.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000066.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000067.collection.json",
+      "summary": "Trim family and recommended-candidate news to concise in-world copy.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

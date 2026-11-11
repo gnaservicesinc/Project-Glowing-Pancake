@@ -64,6 +64,7 @@ void recruit(SimulationState& s) {
     auto& p=*s.management->people;
     const auto& r=rules(s);
     std::erase_if(p.applicants,[&](const auto& a){const auto status=recruitment_status(a,s.date);return status!="waiting" && status!="counter" && status!="agreed";});
+    while(p.applicants.size()<r.candidates && !p.queued_applicants.empty()){p.applicants.push_back(std::move(p.queued_applicants.front()));p.queued_applicants.erase(p.queued_applicants.begin());}
     for(auto i=p.applicants.size();i<r.candidates;++i) p.applicants.push_back(applicant(s,false));
     p.next_recruitment=advance_days(s.date,r.recruitment_interval);
 }
@@ -89,6 +90,11 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
 void validate_people_rules(const PeopleRules& r) {
     if(r.talent)validate_talent_rules(*r.talent);
     if(r.romance){if(!r.talent || !r.social)invalid("Romance needs individual skills, identities and social rules.");validate_romance_rules(*r.romance);}
+    if(r.family) {
+        if(!r.romance || !r.talent)invalid("Families need shared romance and skills rules.");
+        validate_family_rules(*r.family);
+        for(const auto& track:r.family->tracks)if(!r.talent->roles.contains(track.role) || r.talent->roles.at(track.role)!=track.skill)invalid("Family learning must qualify for its advertised job.");
+    }
     if(r.collaboration && (!r.talent || !r.social || r.collaboration->coordination_fee<Cents{0} || r.collaboration->coordination_fee>Cents{1000000} ||
        r.collaboration->work_credit<=BasisPoints{0} || r.collaboration->work_credit>BasisPoints{2500} ||
        r.collaboration->minimum_friendship<200 || r.collaboration->minimum_friendship>850 || r.collaboration->cooldown_days<7 || r.collaboration->cooldown_days>365))
@@ -207,12 +213,12 @@ void hire_employee(SimulationState& s,std::string_view id,Cents protected_cash,s
 void add_referred_applicant(SimulationState& s,std::string_view referrer) {
     const auto& r=rules(s);auto& p=*s.management->people;
     std::erase_if(p.applicants,[&](const auto& a){const auto status=recruitment_status(a,s.date);return status!="available" && status!="fixed" && status!="waiting" && status!="counter" && status!="agreed";});
-    if(p.applicants.size()>=r.candidates)invalid("Make room by declining an applicant before asking for a referral.");
+    if(p.applicants.size()>=r.candidates && p.queued_applicants.size()>=12)invalid("The recommended-candidate waiting list is full.");
     std::string name{referrer};
     if(const auto person=p.industry.find(name);person!=p.industry.end())name=person->second.profile.name;
     else for(const auto& employee:p.employees)if(employee.terms.profile.id==referrer)name=employee.terms.profile.name;
-    auto referred=applicant(s,false);referred.profile.bio="Introduced by "+name+", a trusted professional connection.";
-    p.applicants.push_back(std::move(referred));
+    auto referred=applicant(s,false);referred.recommendation=ApplicantRecommendation{std::string{referrer},name,"friend",s.date};
+    if(p.applicants.size()<r.candidates)p.applicants.push_back(std::move(referred));else p.queued_applicants.push_back(std::move(referred));
 }
 void prepare_people(SimulationState& s) {
     if(!s.management || !s.management->people) return;
@@ -248,7 +254,7 @@ void validate_people(const SimulationState& s,bool deep) {
     if(m.people.has_value()!=m.catalog.people.has_value()) invalid("HQ people and recruitment rules must agree.");
     if(!m.people) return;
     const auto& r=rules(s);const auto& p=*m.people;
-    if(p.employees.size()>r.maximum_hq || p.applicants.size()>r.candidates || p.next_id==0 || p.next_id>1000000 ||
+    if(p.employees.size()>r.maximum_hq || p.applicants.size()>r.candidates || p.queued_applicants.size()>12 || p.next_id==0 || p.next_id>1000000 ||
         p.offered_pay<SalaryRate{7500} || p.offered_pay>SalaryRate{15000} || p.starts_on>s.date || p.next_recruitment<p.starts_on ||
         p.next_recruitment>advance_days(s.date,r.recruitment_interval) || p.founding_prestige>10 || p.community_prestige>10 || p.community_buzz>20 ||
         (!p.founder_gender.empty() && p.founder_gender!="woman" && p.founder_gender!="man" && p.founder_gender!="nonbinary" && p.founder_gender!="unspecified") ||
@@ -260,9 +266,12 @@ void validate_people(const SimulationState& s,bool deep) {
            person.state.empty() || person.state.size()>64 || person.city.empty() || person.city.size()>128)invalid("Industry people need a stable scoped identity, employer and location.");
     }
     std::set<std::string> ids;
-    const auto check=[&](const Applicant& a){profile_valid(a.profile,s.date);if(r.romance.has_value()!=a.profile.romantic.has_value())invalid("Romantic identity and rules must agree.");if(!ids.insert(a.profile.id).second || a.salary<Cents{0} || a.salary>Cents{r.recruitment?30000000:15000000} ||
+    const auto check=[&](const Applicant& a){
+        if(a.recommendation){const auto& rec=*a.recommendation;if(rec.person.empty() || rec.person.size()>160 || rec.name.empty() || rec.name.size()>128 || (rec.kind!="friend" && rec.kind!="family") || rec.received_on!=a.profile.applied_on)invalid("Recommended candidates need a saved source and application date.");}
+        profile_valid(a.profile,s.date);if(r.romance.has_value()!=a.profile.romantic.has_value())invalid("Romantic identity and rules must agree.");if(!ids.insert(a.profile.id).second || a.salary<Cents{0} || a.salary>Cents{r.recruitment?30000000:15000000} ||
         a.signing<Cents{0} || a.signing>Cents{r.signing_cost.value()*(r.recruitment?r.recruitment->maximum_signing_multiple:1)} || a.evaluation_credit!=BasisPoints{r.maximum_evaluation_credit.value()*a.profile.evaluation/100}) invalid("Applicant identity, pay or evaluation evidence changed.");};
     for(const auto& a:p.applicants) {check(a);if(r.recruitment.has_value()!=a.recruitment.has_value()) invalid("Current applicants need their compensation discussions.");validate_recruitment(a,s,false);}
+    for(const auto& a:p.queued_applicants){check(a);if(!r.recruitment || !a.recruitment || !a.recruitment->offers.empty())invalid("Queued applications must await their first review.");validate_recruitment(a,s,false);}
     const auto known=[&](const auto& offer) {
         const auto it=p.known_people.find(offer.id);
         if(it==p.known_people.end() || it->second.name!=offer.name) invalid("Authored hiring offer has lost its stable identity.");

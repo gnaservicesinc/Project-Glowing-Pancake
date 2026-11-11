@@ -5,6 +5,7 @@
 #include <pgp/core/talent.hpp>
 #include <pgp/core/social.hpp>
 #include <pgp/core/romance.hpp>
+#include <pgp/core/family_rules.hpp>
 #include <pgp/core/infrastructure.hpp>
 #include <optional>
 #include <map>
@@ -72,6 +73,7 @@ struct PeopleRules {
     std::uint32_t industry_team_target=8;
     std::optional<ResearchCollaborationRules> collaboration{};
     std::optional<RomanceRules> romance{};
+    std::optional<FamilyRules> family{};
     auto operator<=>(const PeopleRules&) const = default;
 };
 struct PersonProfile {
@@ -120,11 +122,17 @@ struct Recruitment {
     std::optional<OrdinalDay> agreed_on,withdrawn_on,hired_on;
     auto operator<=>(const Recruitment&) const = default;
 };
+struct ApplicantRecommendation {
+    std::string person,name,kind;
+    OrdinalDay received_on{0};
+    auto operator<=>(const ApplicantRecommendation&) const=default;
+};
 struct Applicant {
     PersonProfile profile;
     Cents salary{0},signing{0};
     BasisPoints evaluation_credit{0};
     std::optional<Recruitment> recruitment{};
+    std::optional<ApplicantRecommendation> recommendation{};
     auto operator<=>(const Applicant&) const = default;
 };
 struct Employee {
@@ -173,6 +181,7 @@ struct PeopleState {
     std::uint32_t founding_prestige=0;
     std::uint32_t community_prestige=0, community_buzz=0;
     std::vector<Applicant> applicants;
+    std::vector<Applicant> queued_applicants{};
     std::vector<Employee> employees;
     // Authored specialist/executive offers also have stable, saved personal profiles.
     std::map<std::string,PersonProfile> known_people;

@@ -216,6 +216,11 @@ void CampaignWorker::signWholesale(std::uint64_t token,std::uint64_t revision,st
     try {complete(token,campaign_.sign_wholesale(revision,plan,source,buyer));}
     catch (const std::exception& error) {pauseDriver();emit noticeRaised(error_text(error));publish();emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));}
 }
+void CampaignWorker::manageFamily(std::uint64_t token,std::uint64_t revision,runtime::FamilyRequest request) {
+    requireOwningThread();
+    try {complete(token,campaign_.manage_family(revision,request));}
+    catch(const std::exception& error){pauseDriver();emit noticeRaised(error_text(error));publish();emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));}
+}
 void CampaignWorker::pursueRomance(std::uint64_t token,std::uint64_t revision,runtime::RomanceRequest request) {
     requireOwningThread();
     try {complete(token,campaign_.pursue_romance(revision,request));}

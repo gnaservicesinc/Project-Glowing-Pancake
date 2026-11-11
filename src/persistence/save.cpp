@@ -12,6 +12,7 @@
 #include "lab_json.hpp"
 #include "collaboration_json.hpp"
 #include "romance_json.hpp"
+#include "family_json.hpp"
 #include "deployment_json.hpp"
 #include "management_json.hpp"
 #include "infrastructure_json.hpp"
@@ -570,6 +571,7 @@ Json world_json(const WorldState& world) {
     if (!world.difficulty.empty()) result["difficulty"] = world.difficulty;
     if (!world.background.empty()) result["background"] = world.background;
     if (world.counties) result["counties"]=detail::counties_json(*world.counties);
+    if (world.family) result["family"]=detail::family_json(*world.family);
     if (world.romance) result["romance"]=detail::romance_json(*world.romance);
     if (world.founding) result["founding"]=Json::parse(content::canonical_founding_selection(*world.founding));
     if (world.identity) result["identity"] = {{"company_name",world.identity->company_name},
@@ -583,7 +585,7 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
         if (name!="variables" && name!="competition" && name!="competition_mode" && name!="scenario_id" && name!="society" &&
-            name!="authority" && name!="objectives" && name!="simulation_storage" && name!="identity" && name!="background" && name!="difficulty" && name!="founding" && name!="counties" && name!="romance") prior_shape[name]=nullptr;
+            name!="authority" && name!="objectives" && name!="simulation_storage" && name!="identity" && name!="background" && name!="difficulty" && name!="founding" && name!="counties" && name!="romance" && name!="family") prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"world",{"simulation","company_id","world_id","state_id","campaign_start","scope_created",
                                    "root_seed","enabled_flows","facts","counterparty_cash_cents","decisions","negotiations"});
@@ -591,6 +593,7 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
         return entry.second.default_value.has_value();
     })) detail::invalid("variables","Registered variables require an explicit value collection");
     WorldState result;
+    if(value.contains("family")) result.family=detail::parse_family(value.at("family"));
     if(value.contains("romance")) result.romance=detail::parse_romance(value.at("romance"));
     if(value.contains("counties")) result.counties=detail::parse_counties(value.at("counties"));
     if(value.contains("founding")) result.founding=content::load_founding_selection(value.at("founding").dump());

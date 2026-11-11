@@ -25,6 +25,13 @@ content::Scalar campaign_fact(const WorldState& world, std::string_view id) {
     using namespace core;
     const auto& s = world.simulation;
     const auto* founder=world.founding?&*world.founding:nullptr;
+    if(id=="company.founder_children" || id=="company.founder_dependents" || id=="company.family_plans" || id=="company.family_applications") {
+        if(!world.family)return INT64_C(0);const auto& family=*world.family;
+        if(id=="company.family_plans")return static_cast<std::int64_t>(std::ranges::count_if(family.pending,[](const auto& row){return row.second.first=="founder" || row.second.second=="founder";}));
+        if(id=="company.family_applications")return static_cast<std::int64_t>(std::ranges::count_if(family.members,[&](const auto& member){return member.application && member.application->company==world.company_id;}));
+        std::set<std::string> children;for(const auto& edge:family.edges)if(edge.parent=="founder")if(const auto* child=family_member(world,edge.child);child && (id=="company.founder_children" || (!edge.ended_on && !adult_on(*child->profile.romantic,campaign_day(world)))))children.insert(edge.child);
+        return static_cast<std::int64_t>(children.size());
+    }
     if(id=="company.founder_dating" || id=="company.founder_engaged" || id=="company.founder_married") {
         const auto* bond=romantic_partner(world,"founder");
         return std::int64_t{bond && (id=="company.founder_married"?bond->married_on.has_value():id=="company.founder_engaged"?bond->engaged_on.has_value() && !bond->married_on:!bond->engaged_on)};

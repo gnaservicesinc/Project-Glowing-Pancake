@@ -5,6 +5,7 @@
 #include "talent_codec.hpp"
 #include "social_codec.hpp"
 #include "romance_codec.hpp"
+#include "family_codec.hpp"
 #include "headquarters_codec.hpp"
 #include <pgp/content/infrastructure_catalog.hpp>
 namespace pgp::content::people_codec {
@@ -53,12 +54,15 @@ inline Json encode(const core::PeopleRules& r) {
     }
     if(!r.industry_headquarters.empty())j["industry_headquarters"]=r.industry_headquarters;
     if(r.social)j["social"]=social_codec::encode(*r.social);
+    if(r.family)j["family"]=family_codec::encode(*r.family);
     if(r.romance)j["romance"]=romance_codec::encode(*r.romance);
     if(r.talent)j["talent"]=talent_codec::encode(*r.talent);
     if(r.collaboration){const auto& c=*r.collaboration;j["collaboration"]={{"coordination_fee_cents",c.coordination_fee.value()},{"work_credit_bp",c.work_credit.value()},{"minimum_friendship",c.minimum_friendship},{"cooldown_days",c.cooldown_days}};}
     return j;
 }
 inline core::PeopleRules decode(Json j) {
+    std::optional<core::FamilyRules> family;
+    if(j.contains("family")){family=family_codec::decode(j.at("family"));j.erase("family");}
     std::optional<core::RomanceRules> romance;
     if(j.contains("romance")){romance=romance_codec::decode(j.at("romance"));j.erase("romance");}
     std::optional<core::ResearchCollaborationRules> collaboration;
@@ -142,7 +146,7 @@ inline core::PeopleRules decode(Json j) {
         j.erase("recruitment");
     }
     fields(j,{"first_names","last_names","maximum_hq","candidates","recruitment_days","onboarding_days","monthly_salary_cents","signing_cost_cents","base_skill","skill_jitter","pay_skill_weight","prestige_skill_weight","mission_skill_weight","maximum_evaluation_credit_bp"});
-    core::PeopleRules r;r.romance=romance;r.collaboration=collaboration;r.international_headquarters=std::move(international);r.industry_team_target=industry_team_target;r.industry_headquarters=std::move(industry_headquarters);r.talent=std::move(talent);r.social=std::move(social);r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);r.mood=std::move(mood);r.dismissal=dismissal;r.founder_audiences=std::move(audiences);
+    core::PeopleRules r;r.family=family;r.romance=romance;r.collaboration=collaboration;r.international_headquarters=std::move(international);r.industry_team_target=industry_team_target;r.industry_headquarters=std::move(industry_headquarters);r.talent=std::move(talent);r.social=std::move(social);r.recruitment=std::move(recruitment);r.trait_groups=std::move(traits);r.mood=std::move(mood);r.dismissal=dismissal;r.founder_audiences=std::move(audiences);
     for(const char* name:{"first_names","last_names"}) {
         const auto& list=j.at(name);
         if(!list.is_array() || list.size()>512) throw std::invalid_argument("Name pool exceeds its limit");

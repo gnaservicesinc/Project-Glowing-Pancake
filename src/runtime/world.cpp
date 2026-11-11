@@ -642,6 +642,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     }
     validate_competition(world,program,validate_core_simulation);
     validate_romance(world,validate_core_simulation);
+    validate_family(world,validate_core_simulation);
     validate_acquisitions(world,program,validate_core_simulation);
     if(validate_core_simulation) validate_authority_world(world);
     validate_objectives(world,program,validate_core_simulation);

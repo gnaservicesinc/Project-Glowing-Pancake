@@ -525,7 +525,30 @@ closeness. Proposals can receive a request for more time. **End our relationship
 asks for review and records former partners or ex-spouses without deleting friendship.
 Nearby NPC friends can also date, become engaged or marry under the same requirements.
 Long neglect gives a strain warning and time to reconnect before a breakup.
-Family generations, children and rivalry repair remain unfinished.
+My life → **Family album** contains your parents, known children and family history.
+Choose a baby, adoption or foster-care plan, an age group and whether to plan with
+a spouse. Existing children keep their names; a birth plan can name the new baby.
+A shared plan needs a settled marriage and mutual agreement; individual caregivers
+can adopt or foster. The review can decline.
+Agreed plans show their actual review/arrival date and progress on the calendar.
+
+Foster placements have an agreed term. After sustained care, you can request an
+adoption review; the young person's voice matters and the original foster record
+remains. New spouses gain step relationships to existing children. Separation ends
+that step context while retaining parent/child ties and past care. Known family
+connections also appear on Social circle → Close connections.
+
+Childhood uses sprout, sapling and tree markers. Exact birthdays drive age and the
+adult portrait. From school age, caregivers can explore programming, ML, interface
+design or digital art together. Older children can keep their own interests. A
+practical skill requires adulthood and enough study time; the conversation itself
+does not grant a job or degree.
+
+Grown children may apply independently through family connections, or you can
+invite an application. People → Applicants → **Employee recommended candidates**
+groups friend and family referrals and shows who recommended each person. New
+applications can wait for the next normal recruitment review without replacing
+existing discussions. The recommendation stays attached to the application and later employee record. Rivalry repair remains unfinished.
 
 
 People → Around the industry lists the public HQ roster of major companies that

@@ -17,7 +17,7 @@ int main(){using namespace pgp;try {
     auto base=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);base.world.enabled_flows=std::vector<std::string>{};
     runtime::Runtime start{program,base};check(start.prepare_opening(base.world.simulation.revision).accepted(),"Opening");base=start.current_state();
     const auto& rules=*runtime::romance_rules(base.world);check(rules.dating_days==180 && rules.engagement_days==90,"Production milestones are six months and three months");
-    auto without_romance=doc;for(auto& d:without_romance["definitions"])if(d["id"]=="scenario.founder_campaign")d["management"]["people"].erase("romance");
+    auto without_romance=doc;for(auto& d:without_romance["definitions"])if(d["id"]=="scenario.founder_campaign"){d["management"]["people"].erase("romance");d["management"]["people"].erase("family");}
     const auto ordinary_program=runtime::compile_collection(content::load_collection(without_romance.dump(),registry),registry);
     auto ordinary=runtime::begin_scenario(ordinary_program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);ordinary.world.enabled_flows=std::vector<std::string>{};
     runtime::Runtime ordinary_start{ordinary_program,ordinary};check(ordinary_start.prepare_opening(ordinary.world.simulation.revision).accepted(),"Ordinary comparison opening");ordinary=ordinary_start.current_state();

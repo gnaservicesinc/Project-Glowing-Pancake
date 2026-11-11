@@ -45,6 +45,7 @@ public:
     [[nodiscard]] OperationResult respond_competitive_offer(std::uint64_t expected_revision,std::string_view offer_id,bool accept);
     [[nodiscard]] OperationResult propose_acquisition(std::uint64_t expected_revision,std::string_view target,bool equity);
     [[nodiscard]] OperationResult sign_wholesale(std::uint64_t expected_revision,std::string_view plan,std::string_view source,std::string_view buyer);
+    [[nodiscard]] OperationResult manage_family(std::uint64_t expected_revision,const runtime::FamilyRequest&);
     [[nodiscard]] OperationResult pursue_romance(std::uint64_t expected_revision,const runtime::RomanceRequest&);
     [[nodiscard]] OperationResult set_romantic_preferences(std::uint64_t expected_revision,bool interested,const std::vector<std::string>& genders);
     [[nodiscard]] OperationResult collaborate_research(std::uint64_t expected_revision,const runtime::CollaborationRequest&);

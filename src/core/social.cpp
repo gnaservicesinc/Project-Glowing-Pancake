@@ -192,7 +192,7 @@ std::string social_referral_blocker(const SimulationState& s,std::string_view id
     if(const auto last=referrals.find(std::string(id));last!=referrals.end() && s.date<advance_days(last->second,Days{social_rules(s)->referral_days}))return "Give this friend time to find another referral.";
     const auto& applicants=s.management->people->applicants;
     const auto current=std::ranges::count_if(applicants,[&](const auto& a){const auto status=recruitment_status(a,s.date);return status=="available" || status=="fixed" || status=="waiting" || status=="counter" || status=="agreed";});
-    if(static_cast<std::size_t>(current)>=s.management->catalog.people->candidates)return "Decline an applicant to make room for a referral first.";
+    if(static_cast<std::size_t>(current)>=s.management->catalog.people->candidates && s.management->people->queued_applicants.size()>=12)return "The recommended-candidate waiting list is full. Review current applications before asking for another referral.";
     return {};
 }
 std::string social_blocker(const SimulationState& s,std::string_view person) {

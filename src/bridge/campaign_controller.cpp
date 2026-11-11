@@ -157,6 +157,11 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
     nameModels(society_,QStringLiteral("society"));nameModels(institutions_,QStringLiteral("institutions"));
     nameModels(frontier_,QStringLiteral("frontier"));nameModels(leadership_,QStringLiteral("leadership"));nameModels(objectives_,QStringLiteral("objectives"));
     connect(world_,&WorldController::actionRequested,this,&CampaignController::submit);
+    connect(world_,&WorldController::familyRequested,this,[this](runtime::FamilyRequest request) {
+        if(!paused() || !beginOperation())return;
+        const auto revision=snapshot_->checkpoint.world.simulation.revision;
+        QMetaObject::invokeMethod(worker_,[worker=worker_,token=token_,revision,request=std::move(request)]{worker->manageFamily(token,revision,request);},Qt::QueuedConnection);
+    });
     connect(world_,&WorldController::romanceRequested,this,[this](runtime::RomanceRequest request) {
         if(!paused() || !beginOperation())return;
         const auto revision=snapshot_->checkpoint.world.simulation.revision;

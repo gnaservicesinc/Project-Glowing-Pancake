@@ -31,7 +31,11 @@ Team creativity counts unique traits across the team, with shared traits providi
 a separate coordination benefit. Employee profiles show mood factors, including
 pay, reputation, duties and installed amenities. The social circle now includes reviewed romantic invitations, free dates, engagement,
 marriage and separation, with shared relationship maps and saved personal preferences.
-Families, rivalry repair and career transitions remain in progress.
+My life → Family album adds birth, adoption, foster and step relationships,
+childhood learning and children growing into ordinary applicants. People → Applicants
+includes **Employee recommended candidates** for friends and family, with saved
+recommender names and an application waiting list. Rivalry repair, further design
+puzzles and career transitions remain in progress.
 
 **My life** now offers private homes, furnishings and gallery art, bought from
 personal savings with monthly upkeep, resale and room decoration.
@@ -56,7 +60,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.64.0-dev.1**, generation **65**.
+The finalized internal content version is **0.66.0-dev.1**, generation **67**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).

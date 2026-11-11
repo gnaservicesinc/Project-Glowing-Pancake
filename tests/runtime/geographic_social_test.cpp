@@ -41,13 +41,15 @@ int main(){using namespace pgp;try{
     social.links.push_back({first,"founder",700,80,actual.date,actual.date,{},"Mature referral fixture",true});
     runtime::Runtime game{program,mature};
     const auto submit=[&](core::CommandAction action){const auto result=game.submit({game.current_state().world.simulation.revision,std::move(action)});if(!result.accepted())throw std::runtime_error(result.explanation);};
-    const auto before=game.current_state();const auto full=game.submit({before.world.simulation.revision,core::Socialize{first,"referral"}});
-    check(!full.accepted() && game.current_state()==before,"A full applicant pool refuses atomically");
-    const auto declined=game.current_state().world.simulation.management->people->applicants.front().profile.id;
-    submit(core::ManageRecruitment{core::DeclineApplicant{declined}});
+    const auto before=game.current_state();
+    // Explicit capacity fixture: recommendations use the same bounded waiting
+    // list as relatives, without dropping anybody's current application.
+    auto full_state=before;for(int i=0;i<12;++i)core::add_referred_applicant(full_state.world.simulation,first);
+    runtime::Runtime full{program,full_state};check(!full.submit({full_state.world.simulation.revision,core::Socialize{first,"referral"}}).accepted() && full.current_state()==full_state,"A full recommendation waiting list refuses atomically");
     submit(core::Socialize{first,"referral"});
-    const auto& referred=game.current_state().world.simulation.management->people->applicants.back();
-    check(referred.profile.bio.starts_with("Introduced by "),"A real applicant records their referral");
+    check(game.current_state().world.simulation.management->people->applicants==before.world.simulation.management->people->applicants && game.current_state().world.simulation.management->people->queued_applicants.size()==1,"A friend's recommendation joins the waiting list while current candidates keep their place");
+    const auto& referred=game.current_state().world.simulation.management->people->queued_applicants.back();
+    check(referred.recommendation && referred.recommendation->person==first && referred.recommendation->kind=="friend" && referred.recommendation->name==actual.management->people->industry.at(first).profile.name,"Employee recommended friends retain their actual named source");
     check(core::has_skill(referred.profile,core::talent_rules(game.current_state().world.simulation)->roles.at(referred.profile.role)),"Referral qualifies for their job");
     check(game.current_state().world.simulation.management->people->social->referrals.contains(first),"Referral cooldown is saved");
     auto loaded=persistence::decode_save(program,persistence::encode_save(program,game.current_state()));check(loaded.checkpoint==game.current_state(),"Exact geographic network save");
