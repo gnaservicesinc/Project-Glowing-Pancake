@@ -148,7 +148,7 @@ ColumnLayout {
         Repeater {
             model: [{id:"software",label:qsTr("Software Studio")}, {id:"offers",label:qsTr("Compare offers")}, {id:"products",label:qsTr("Services")}, {id:"contracts",label:qsTr("Contracts")},
                     {id:"markets",label:qsTr("Regional markets")},
-                    {id:"rivals",label:qsTr("Rivals")}, {id:"accounts",label:qsTr("Accounts")}, {id:"funding",label:qsTr("Funding and team")}, {id:"governance",label:qsTr("Board and people")}, {id:"policies",label:qsTr("Policies and alerts")}, {id:"score",label:qsTr("Slice score")}]
+                    {id:"rivals",label:qsTr("Rivals")}, {id:"accounts",label:qsTr("Accounts")}, {id:"funding",label:qsTr("Funding and team")}, {id:"governance",label:qsTr("Board and people")}, {id:"policies",label:qsTr("Policies and alerts")}, {id:"score",label:qsTr("Company record")}]
             WorldButton {
                 required property var modelData
                 objectName: "office_" + modelData.id
@@ -1032,7 +1032,6 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "score" && !campaign.objectives.available
         Copy { text: manager.scoreText }
-        Copy { text: qsTr("Survival is awarded at the ending; work counts actual delivered tasks. Profit excludes financing proceeds. Evidence counts independently measured domains used by deployed checkpoints. Ownership points reflect retained founder stake. Scores remain provisional while time can advance.") }
     }
     ColumnLayout {
         Layout.fillWidth: true

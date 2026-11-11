@@ -9,12 +9,42 @@ Updated 2026-11-11
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.69.0-dev.1**, generation **70**.
+immersive redesign advances content to **0.70.0-dev.1**, generation **71**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
 next tasks are candidates for that review. The initial implementation queue
 is closed.
+
+## Selected life and development expansion (F-07, in progress)
+
+The user's [life and development plan](LIFE_AND_DEVELOPMENT_PLAN.md) supersedes
+player victory conditions and the age-118 ending. The new ending is a newspaper
+retrospective at age 100. Missions and bylaws remain consequential. Selective
+technology innovation, distribution build gating, repository Content Studio,
+God mode and native learned rival policies extend the active implementation.
+The AI work starts from LoomFactory's measured native custom graph lessons.
+
+The first F-07 batch replaces shipped player objective results with World &
+legacy, a newspaper built from actual company, industry, regional, relationship
+and choice records. It records the first ASI qualification without ending play
+or awarding a victory. Founder content now ends at age 100 in 2097, with an
+obituary distinct from a living founder's company report. The basic engineering
+scenario's numeric slice score is replaced by its actual company record.
+
+Focused checks cover a three-day terminal scenario, exact save/reload, absence
+of score/review actions, canonical content and obituary wording. The age-100
+presentation case uses an explicitly constructed terminal biography. A native
+walkthrough reads actual world/industry and personal records and checks the
+compact headline at 200% text without changing simulation state. Content
+finalization validates 24 prepared-opening save roundtrips.
+
+Career re-entry remains required. Early company closure currently records its
+chapter at the existing company boundary. The guaranteed funded route back,
+resignation statement/PR coverage, surprising and ASI successor appointments,
+and the optional resignation retrospective are selected next work. Innovation,
+development menus, God mode, nonprofit reaction expansion and native rival
+training also remain unfinished.
 
 ## People and software foundation · F-06
 

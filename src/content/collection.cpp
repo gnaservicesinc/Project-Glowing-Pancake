@@ -1007,9 +1007,10 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
     if (value.contains("objectives")) {
         const auto p=child(path,"objectives");
         const auto& row=value.at("objectives");
-        fields(row,p,{"primary","secondary","receivables_realizable_bp","physical_assets_realizable_bp","profit_multiple"},
+        fields(row,p,{"primary","secondary","receivables_realizable_bp","physical_assets_realizable_bp","profit_multiple","retrospective"},
                      {"primary","secondary","receivables_realizable_bp","physical_assets_realizable_bp","profit_multiple"});
-        if (result.authority.empty() || result.frontier.empty() || !result.management->succession || !result.competition)
+        const bool retrospective=row.contains("retrospective") && row.at("retrospective")==true;
+        if (result.authority.empty() || (!retrospective && result.frontier.empty()) || !result.management->succession || !result.competition)
             fail("objectives",p,"Century objectives need world welfare, authority, frontier research, a succession charter and shared markets.");
         const auto objective=[&](const Json& token) {
             const auto kind=core::objective_kind(text(token,p,32));
@@ -1025,9 +1026,13 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
         charter.receivables_realizable=core::BasisPoints{integer(row.at("receivables_realizable_bp"),p,0,10000)};
         charter.physical_assets_realizable=core::BasisPoints{integer(row.at("physical_assets_realizable_bp"),p,0,10000)};
         charter.profit_multiple=static_cast<std::uint32_t>(integer(row.at("profit_multiple"),p,0,5));
+        if(row.contains("retrospective")) {
+            if(!row.at("retrospective").is_boolean()) fail("objectives",p,"Retrospective must be true or false.");
+            charter.retrospective=row.at("retrospective").get<bool>();
+        }
         try {
             core::validate_objective_charter(charter);
-            if (result.starts_on>core::objective_window_start(result.ends_before,core::ObjectiveKind::utopia))
+            if (!charter.retrospective && result.starts_on>core::objective_window_start(result.ends_before,core::ObjectiveKind::utopia))
                 fail("objectives",p,"A scored campaign must include the entire ten-year welfare window.");
         } catch (const std::exception& error) { fail("objectives",p,error.what()); }
         result.objectives=std::move(charter);

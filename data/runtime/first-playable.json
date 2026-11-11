@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.69.0-dev.1",
+  "content_version": "0.70.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -25042,6 +25042,7 @@
         "primary": "survival",
         "profit_multiple": 3,
         "receivables_realizable_bp": 8000,
+        "retrospective": true,
         "secondary": [
           "profit"
         ]
@@ -25116,7 +25117,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 18,
+      "revision": 19,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -30462,6 +30463,7 @@
         "primary": "survival",
         "profit_multiple": 3,
         "receivables_realizable_bp": 8000,
+        "retrospective": true,
         "secondary": [
           "profit"
         ]
@@ -30536,7 +30538,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 18,
+      "revision": 19,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -34692,7 +34694,7 @@
       "authority": "authority.institutions",
       "business_offers": [
         {
-          "available_before": "2114-10-01",
+          "available_before": "2097-01-01",
           "available_from": "2015-05-01",
           "capacity_milli_CU_per_day": 16000,
           "id": "offer.cooperative_burst",
@@ -34738,7 +34740,7 @@
           "term_days": 1096
         },
         {
-          "available_before": "2115-01-01",
+          "available_before": "2097-01-01",
           "available_from": "2028-01-01",
           "capacity_milli_CU_per_day": 180000,
           "id": "offer.independent_lab",
@@ -34768,7 +34770,7 @@
           "term_days": 90
         },
         {
-          "available_before": "2114-10-01",
+          "available_before": "2097-01-01",
           "available_from": "2018-01-01",
           "capacity_milli_CU_per_day": 0,
           "id": "offer.regional_recovery",
@@ -69442,7 +69444,7 @@
           "starting_cash_percent": 80
         }
       ],
-      "ends_before": "2115-01-01",
+      "ends_before": "2097-01-01",
       "flows": [
         "slice.research_milestone",
         "slice.evaluation_finding",
@@ -79122,6 +79124,7 @@
         "primary": "survival",
         "profit_multiple": 3,
         "receivables_realizable_bp": 8000,
+        "retrospective": true,
         "secondary": []
       },
       "ownership_basis_points": {
@@ -79194,7 +79197,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 39,
+      "revision": 40,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

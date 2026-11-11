@@ -90,13 +90,13 @@
     }
   ],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "ec953c8d7d3ab07e51636715f5075f0bf54a65b5b4653e25b7fc01464a201da6",
+  "collection_hash": "a0bc09a4a8c9003b3a82837a9e6107dc793c360b37c7d56056f5e2ab0f83680a",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.69.0-dev.1",
+  "content_version": "0.70.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -1169,14 +1169,14 @@
     {
       "id": "scenario.century_frontier",
       "kind": "scenario",
-      "revision": 18,
-      "semantic_hash": "d871d0c38aece8e55935d0f0133b4a68c3f18732cdf932fb07fee7d5317a7a12"
+      "revision": 19,
+      "semantic_hash": "455aa5bcc65017fe8e8bb3a30724c74c0d63e7127fa2ff127fdc27d07ba14b78"
     },
     {
       "id": "scenario.century_plateau",
       "kind": "scenario",
-      "revision": 18,
-      "semantic_hash": "9ac2feaefe4a3c939853deb338917cf8d92124738ebbbd138eec4d65b66f5209"
+      "revision": 19,
+      "semantic_hash": "c2637ff9edfb9ee6ee3e73f53d250a59309083c5f44f031bd5b90d399d580073"
     },
     {
       "id": "scenario.first_playable",
@@ -1187,8 +1187,8 @@
     {
       "id": "scenario.founder_campaign",
       "kind": "scenario",
-      "revision": 39,
-      "semantic_hash": "a0d02335dddf64b4cdf465f66f710475706f759d0425e796721cade084810bca"
+      "revision": 40,
+      "semantic_hash": "fafd5403902a54d41ca797ceaca683d3ea8ea55b6b8ae0417dba08b82b0f2ab5"
     },
     {
       "id": "scenario.world_competition",
@@ -1330,7 +1330,7 @@
     }
   ],
   "format": 1,
-  "generation": 70,
+  "generation": 71,
   "messages_hash": "d323d0f85e007cc15b827cfcb07d546e49abce851469ef2ff11c4e11c151cf20",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
@@ -1805,5 +1805,5 @@
       "deployment.incident_news"
     ]
   },
-  "source_hash": "8808894386c019131c7420b14a01ea76570308f070d7430fd6cb98e1a71b9acb"
+  "source_hash": "f926c3b2b3a87de91c3feedc1c75fd3e8508c252d0d1bf43a406062a0d98859e"
 }

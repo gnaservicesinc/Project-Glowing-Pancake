@@ -80,6 +80,12 @@ the device. On short displays, **Time** opens the clock controls. Open **Map →
 State** and select a state to see its outline and neighboring boundaries.
 Select a county on the map or in the county list to read its local conditions.
 
+**World & legacy** opens a newspaper edition drawn from the current company,
+industry, world and relationship records. Use its section buttons to read
+Company, World, Other labs, People and Choices. At the founder's age-100
+boundary, the edition becomes an obituary. The development scenarios' earlier
+scored acceptance records below are historical.
+
 In a fresh founder campaign, use **Suppliers**
 to order a desk and computer. Advance to delivery, choose **Arrange headquarters**,
 then click an owned object’s picture to pick it up. Move its translucent preview
@@ -335,9 +341,8 @@ The supplier announces a temporary opening-source reduction two weeks before it
 starts. Serving keeps priority, optional work can finish later, and recovery is
 on a disclosed date. Acknowledge the start, then choose whether to wait, reduce
 optional work or pay for capacity elsewhere. Past costs are retained. The ending
-and Office score panel explain survival, delivered work, operating profit,
-independent deployed evidence and retained founder stake. Century objectives
-are not awarded by this slice rubric.
+and Office company record show delivered work, operating profit and retained
+founder ownership.
 
 The guide derives its stage from actual company progress, can be hidden, and can
 be restored from Settings. Project cancellation keeps consumed work and costs;

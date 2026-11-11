@@ -31,7 +31,7 @@ ApplicationWindow {
         facilities:qsTr("Headquarters"),lab:qsTr("Research notebook"),inbox:qsTr("News & decisions"),
         operations:qsTr("Infrastructure & travel"),civic:qsTr("Public affairs"),society:qsTr("World affairs"),
         institutions:qsTr("Institutions"),frontier:qsTr("Frontier"),leadership:qsTr("Leadership & retirement"),
-        objectives:qsTr("Company mission")})[room] || room
+        objectives:qsTr("World & legacy")})[room] || room
     function openApp(app, section, device) {
         if (!campaign.world.navigate(campaign.world.navigation.place || "workspace", campaign.world.navigation.scale || "hq", device || "laptop", app, section || "")) return false
         restoreNavigation()
@@ -891,7 +891,7 @@ ApplicationWindow {
                         contentItem: ColumnLayout {
                             Heading { text: qsTr("Campaign outcome recorded") }
                             Copy { text: campaign.objectives.overview }
-                            Action { text: qsTr("Review objectives and postmortem"); onClicked: window.room = "objectives" }
+                            Action { text: campaign.objectives.retrospective ? qsTr("Read the newspaper") : qsTr("Review objectives and postmortem"); onClicked: window.room = "objectives" }
                         }
                     }
                     Panel {

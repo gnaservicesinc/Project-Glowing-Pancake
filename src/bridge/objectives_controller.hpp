@@ -12,6 +12,8 @@ namespace pgp::bridge {
 class ObjectivesController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool available READ available NOTIFY changed)
+    Q_PROPERTY(bool retrospective READ retrospective NOTIFY changed)
+    Q_PROPERTY(QVariantMap report READ report NOTIFY changed)
     Q_PROPERTY(bool editable READ editable NOTIFY changed)
     Q_PROPERTY(bool ended READ ended NOTIFY changed)
     Q_PROPERTY(bool observer READ observer NOTIFY changed)
@@ -30,6 +32,8 @@ public:
     explicit ObjectivesController(QObject* parent=nullptr):QObject(parent) {}
     void update(CampaignSnapshotPtr,const runtime::CompiledProgram&,bool replace);
     [[nodiscard]] bool available() const;
+    [[nodiscard]] bool retrospective() const;
+    [[nodiscard]] QVariantMap report() const;
     [[nodiscard]] bool editable() const;
     [[nodiscard]] bool ended() const;
     [[nodiscard]] bool observer() const;

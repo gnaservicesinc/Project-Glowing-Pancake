@@ -51,11 +51,11 @@ void clean_owned_journal(const fs::path& root,const SnapshotJson& journal) {
 }
 }
 [[noreturn]] void snapshot_refuse(std::string code,std::string message) {throw persistence::PersistenceError(std::move(code),std::move(message));}
-SnapshotJson snapshot_parse(std::string_view bytes,std::size_t maximum_bytes) {
+SnapshotJson snapshot_parse(std::string_view bytes,std::size_t maximum_bytes,std::size_t maximum_tokens) {
     if (bytes.size()>maximum_bytes) snapshot_refuse("oversized","Snapshot metadata exceeds its byte bound.");
     std::size_t tokens=0;std::vector<std::set<std::string>> keys;
     return SnapshotJson::parse(bytes.begin(),bytes.end(),[&](int depth,SnapshotJson::parse_event_t event,SnapshotJson& value){
-        if (depth>64 || ++tokens>200000) snapshot_refuse("budget","Snapshot metadata exceeds its structural bound.");
+        if (depth>64 || ++tokens>maximum_tokens) snapshot_refuse("budget","Snapshot metadata exceeds its structural bound.");
         if (event==SnapshotJson::parse_event_t::object_start) keys.emplace_back();
         else if (event==SnapshotJson::parse_event_t::object_end) keys.pop_back();
         else if (event==SnapshotJson::parse_event_t::key && !keys.back().insert(value.get<std::string>()).second) snapshot_refuse("duplicate_key","Duplicate snapshot metadata key.");

@@ -21,7 +21,7 @@ Popup {
         {id:"institutions",name:qsTr("Institutions"),tint:"#8c7eaa"},
         {id:"frontier",name:qsTr("Frontier"),tint:"#6c9a89"},
         {id:"leadership",name:qsTr("Leadership"),tint:"#a58572"},
-        {id:"objectives",name:qsTr("Company mission"),tint:"#6789a0"},
+        {id:"objectives",name:qsTr("World & legacy"),tint:"#6789a0"},
         {id:"devices",objectName:"equipmentApp",name:qsTr("Equipment"),tint:"#7d8d9b"}
     ]
     anchors.centerIn: Overlay.overlay

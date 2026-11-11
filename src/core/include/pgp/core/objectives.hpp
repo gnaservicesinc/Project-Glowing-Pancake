@@ -26,6 +26,7 @@ struct ObjectiveCharter {
     ObjectiveSelection opening;
     BasisPoints receivables_realizable{8000}, physical_assets_realizable{6000};
     std::uint32_t profit_multiple = 3;
+    bool retrospective = false;
     auto operator<=>(const ObjectiveCharter&) const = default;
 };
 // These requests require the world transaction: several sources belong to

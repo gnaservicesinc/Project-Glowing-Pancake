@@ -88,12 +88,17 @@ int main(int argc,char** argv) {
         world.update(std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,checkpoint,{},true,false}),program,true);
         check(world.founder().value("portrait")==setup.portrait(),"The world profile must show the customized portrait.");
         check(world.founder().value("bio").toString().contains("Actual Genius"),"The founder's leg up must appear in the profile.");
-        const auto hqRooms=world.headquarters().value("rooms").toList();
+        const auto workspaces=[](QVariantList rooms){
+            rooms.erase(std::remove_if(rooms.begin(),rooms.end(),[](const auto& room){return room.toMap().value("passage").toBool();}),rooms.end());
+            return rooms;
+        };
+        const auto hqRooms=workspaces(world.headquarters().value("rooms").toList());
+        const auto familyRooms=workspaces(world.familyHome().value("rooms").toList());
         const QStringList finishes{"concrete","concrete","concrete","carpet","oak","oak"};
         check(hqRooms.size()==finishes.size(),"The rich family home must keep its six distinct rooms.");
         for(qsizetype i=0;i<finishes.size();++i) {
             check(hqRooms[i].toMap().value("flooring")==finishes[i],"Home finishes must follow room use, not family wealth.");
-            check(world.familyHome().value("rooms").toList()[i].toMap().value("flooring")==finishes[i],"Family and HQ views must agree on finishes.");
+            check(familyRooms[i].toMap().value("flooring")==finishes[i],"Family and HQ views must agree on finishes.");
         }
         const auto listings=world.hqListings(world.headquarters().value("market").toString());
         for(const auto& listing:listings) {

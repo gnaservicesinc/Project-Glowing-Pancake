@@ -27,7 +27,12 @@ CompiledProgram compile(const Json& source) {
 }
 Json source() {
     std::ifstream stream{PGP_OBJECTIVE_SOURCE};
-    return Json::parse(stream);
+    auto document=Json::parse(stream);
+    // Keep the threshold calculations as an isolated numerical fixture.
+    // Shipped player campaigns use the unscored retrospective.
+    for(auto& definition:document["definitions"]) if(definition.contains("objectives"))
+        definition["objectives"]["retrospective"]=false;
+    return document;
 }
 const SimulationState& state(const Runtime& game) {return game.checkpoint().world.simulation;}
 const ObjectivesState& objectives(const Runtime& game) {return *game.checkpoint().world.objectives;}

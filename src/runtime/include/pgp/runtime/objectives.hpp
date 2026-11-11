@@ -47,7 +47,7 @@ struct CampaignEnd {
     std::uint64_t posting_cursor = 0;
     auto operator<=>(const CampaignEnd&) const = default;
 };
-enum class ObjectiveMode { scored, sandbox, observer, freeplay };
+enum class ObjectiveMode { scored, sandbox, observer, freeplay, retrospective };
 struct ObjectivesState {
     core::OrdinalDay deadline{0};
     std::vector<ObjectiveSelectionEvent> selections;

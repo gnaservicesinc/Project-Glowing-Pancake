@@ -8,7 +8,7 @@ add_library(pgp_bridge STATIC campaign_content_recovery.cpp content_recovery_con
     institutions_controller.cpp institutions_controller.hpp
     frontier_controller.cpp frontier_controller.hpp lab_inputs.hpp
     succession_controller.cpp succession_controller.hpp
-    objectives_controller.cpp objectives_controller.hpp
+    objectives_controller.cpp objectives_controller.hpp life_report.cpp life_report.hpp
     campaign_snapshot.hpp flow_presentation.cpp flow_presentation.hpp)
 add_library(pgp::bridge ALIAS pgp_bridge)
 target_sources(pgp_bridge PRIVATE family_presentation.cpp romance_presentation.cpp collaboration_presentation.cpp industry_people_presentation.cpp social_presentation.cpp talent_presentation.cpp development_reset.cpp headquarters_presentation.cpp personal_life_presentation.cpp contact_finance_presentation.cpp)

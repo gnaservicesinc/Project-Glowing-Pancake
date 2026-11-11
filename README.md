@@ -3,8 +3,9 @@
 A free, offline strategy game about founding an AI company and guiding it through a century of research, products, competition, politics, and consequences.
 
 The selected campaign redesign starts with a California birth in 1997, company
-play at 18 in 2015 and an ending at 118 in 2115, followed by optional sandbox
-continuation. [Campaign flow](docs/CAMPAIGN_FLOW.md),
+play at 18 in 2015 and a newspaper retrospective on the founder's passing at
+100 in 2097. [Life and development](docs/LIFE_AND_DEVELOPMENT_PLAN.md),
+[campaign flow](docs/CAMPAIGN_FLOW.md),
 [technology design](docs/TECHNOLOGY.md) and the
 [140-candidate technology catalog](docs/TECHNOLOGY_CATALOG.md) describe the new
 direction. New Game creates the founder, then opens their childhood bedroom
@@ -63,7 +64,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.69.0-dev.1**, generation **70**.
+The finalized internal content version is **0.70.0-dev.1**, generation **71**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).

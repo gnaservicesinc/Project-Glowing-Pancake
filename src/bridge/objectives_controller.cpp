@@ -1,4 +1,5 @@
 #include "objectives_controller.hpp"
+#include "life_report.hpp"
 #include <algorithm>
 #include <stdexcept>
 
@@ -102,7 +103,14 @@ void ObjectivesController::update(CampaignSnapshotPtr snapshot,const runtime::Co
     snapshot_=std::move(snapshot);program_=&program;emit changed();
 }
 bool ObjectivesController::available() const {return snapshot_ && world().objectives.has_value();}
-bool ObjectivesController::editable() const {return available() && !objectives().end &&
+bool ObjectivesController::retrospective() const {
+    if(!available()) return false;
+    const auto* definition=program_->collection.find(world().scenario_id);
+    const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
+    return scenario && scenario->objectives && scenario->objectives->retrospective;
+}
+QVariantMap ObjectivesController::report() const {return retrospective()?lifeReport(snapshot_->checkpoint,*program_):QVariantMap{};}
+bool ObjectivesController::editable() const {return available() && !retrospective() && !objectives().end &&
     (snapshot_->driver_halted || runtime::campaign_paused(world()));}
 bool ObjectivesController::ended() const {return available() && objectives().end.has_value();}
 bool ObjectivesController::observer() const {return available() && runtime::observing_world(world());}
@@ -110,9 +118,9 @@ bool ObjectivesController::canEndEarly() const {
     return editable() && objective_postmortem_candidate(world()).has_value();
 }
 bool ObjectivesController::canContinue() const {
-    return available() && objectives().mode==ObjectiveMode::scored && (ended() || canEndEarly());
+    return available() && !retrospective() && objectives().mode==ObjectiveMode::scored && (ended() || canEndEarly());
 }
-bool ObjectivesController::nextCheck() const {return available() && runtime::next_objective_boundary(world()).has_value();}
+bool ObjectivesController::nextCheck() const {return available() && !retrospective() && runtime::next_objective_boundary(world()).has_value();}
 QString ObjectivesController::primary() const {return available()?text(objective_key(objectives().selections.back().selection.primary)):QString{};}
 QStringList ObjectivesController::secondary() const {
     QStringList result;
@@ -122,6 +130,8 @@ QStringList ObjectivesController::secondary() const {
 QVariantList ObjectivesController::options() const {return available()?objectiveOptions(runtime::has_asi_objective(world())):QVariantList{};}
 QString ObjectivesController::overview() const {
     if(!available()) return {};
+    if(retrospective()) return ended()?QStringLiteral("The recorded life and world"):
+        QStringLiteral("World & legacy");
     const auto& o=objectives();
     if(o.mode==ObjectiveMode::freeplay) return QStringLiteral("Sandbox · no campaign deadline or scored ending. Your chosen mission is a direction; systemic play continues.");
     const auto mode=o.mode==ObjectiveMode::observer?QStringLiteral("Observer · institution frozen"):
@@ -131,13 +141,13 @@ QString ObjectivesController::overview() const {
     return QStringLiteral("%1 · primary: %2 · final work day %3.").arg(mode,text(objective_name(o.selections.back().selection.primary)),date(deadline));
 }
 QString ObjectivesController::breachText() const {
-    if(!available()) return {};
+    if(!available() || retrospective()) return {};
     const auto breach=runtime::required_objective_review(world());
     if(!breach) return {};
     return QStringLiteral("%1 can no longer be won. %2").arg(text(objective_name(*breach)),text(objective_breach_explanation(world(),*breach)));
 }
 QString ObjectivesController::postmortem() const {
-    if(!available()) return {};
+    if(!available() || retrospective()) return {};
     const auto& w=world();const auto& o=objectives();
     if(!o.end && !canEndEarly() && breachText().isEmpty()) return {};
     const auto through=o.end?o.end->day:w.simulation.date;
@@ -175,7 +185,7 @@ QString ObjectivesController::postmortem() const {
 
 QVariantList ObjectivesController::rows() const {
     QVariantList result;
-    if(!available()) return result;
+    if(!available() || retrospective()) return result;
     const auto& o=objectives();const auto& w=world();
     const auto& selection=o.selections.back().selection;
     const auto& charter=*std::get<content::ScenarioDefinition>(program_->collection.find(w.scenario_id)->data).objectives;

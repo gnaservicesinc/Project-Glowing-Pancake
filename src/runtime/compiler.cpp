@@ -343,6 +343,7 @@ Json definition_json(const Definition& definition, const std::string& key) {
             result["objectives"]={{"primary",core::objective_key(rules.opening.primary)},{"secondary",std::move(secondary)},
                 {"receivables_realizable_bp",rules.receivables_realizable.value()},
                 {"physical_assets_realizable_bp",rules.physical_assets_realizable.value()},{"profit_multiple",rules.profit_multiple}};
+            if(rules.retrospective) result["objectives"]["retrospective"]=true;
         }
         if (scenario->service_catalog) result["service_catalog"]=Json::parse(canonical_market_setup_bytes(*scenario->service_catalog,scenario->starts_on));
         if (scenario->market)

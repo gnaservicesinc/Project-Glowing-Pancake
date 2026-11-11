@@ -2,6 +2,10 @@
 
 Design baseline 1.3 · 2026-11-07 · Setup implemented; later stages remain design
 
+The 2026-11-11 [life and development revision](LIFE_AND_DEVELOPMENT_PLAN.md)
+replaces the age-118 ending and player victory conditions with the founder's
+age-100 newspaper retrospective. Earlier ending sections below are superseded.
+
 This expands the user's campaign/opening feedback. It supersedes the old
 2014–2114 default and four-background setup in the product design. The Mac New Game path implements the introduction and founding setup. Older
 prototype presets remain engineering fixtures. Later gameplay stages and
@@ -21,29 +25,21 @@ The player remains connected to the founding character throughout the campaign,
 even if another person becomes CEO. Delegation, retirement, chairmanship and
 institutional representation can change daily responsibilities and control;
 they do not kill the founder or replace the player's biography. Guaranteed
-campaign longevity to 118 is a declared premise, independent of athletic traits,
-medical research, random incidents or retirement. Institutional failure can
-still end a run early with its own review and continuation options.
+campaign longevity to 100 is a declared premise. Forced departures change the
+founder's circumstances and offer a playable route back. Resignation can
+continue into another chapter or deliberately end with a career feature.
 
 ## Calendar and the campaign boundary
 
 Use **1997-01-01** as the initial authored birth date, **2015-01-01** as the
-18th-birthday company start and **2115-01-01** as the 118th-birthday ending.
-These exact days are design defaults, not extra identity questions. This gives
-18 years of narrated introduction and exactly 100 years of company play.
+18th-birthday company start and **2097-01-01** as the 100th-birthday ending.
+These exact days are design defaults. Company play spans 82 years.
 
-Settle the final playable day, 2114-12-31, then close the campaign before any
-2115 opening work, deliveries or research execute. Freeze objective results
-and the historical snapshot. The concluding narrative covers the founder's
-passing at 118, the company's subsequent direction and different audiences'
-reactions. Its future passages are conditional epilogue projections, clearly
-separate from recorded simulated facts.
-
-An ASI-race result can be secured or lost earlier; show that dated result and
-continue the campaign to 118. Do not force an early ending for success. A player
-may voluntarily end or leave the game at any point. In post-game, institutional
-leadership continues; any playful founder-longevity Easter egg cannot rewrite
-the completed campaign's ending.
+Settle 2096-12-31, then close the personal record before 2097 opening work,
+deliveries or research execute. The newspaper reports the founder's passing,
+company and world conditions, public response, other major labs, named personal
+relationships, decisions and their observed consequences. First ASI is a dated
+industry event. It does not end the player's life story.
 
 The [2026-11-09 selected refinements](FEEDBACK_REFINEMENTS.md) supersede the
 earlier setup assumptions below. Starting conditions determine challenge; there
@@ -61,7 +57,7 @@ flowchart TD
     Charter --> Funding[Founders, investors or donors and terms]
     Funding --> Budget[Capital and obligations preview]
     Budget --> Play[Paused first morning: solo home, agreed cofounder or inherited office]
-    Play --> End[2115: campaign review and epilogue]
+    Play --> End[2097: age-100 newspaper retrospective]
     End --> Continue[Optional post-game sandbox]
 ```
 
@@ -154,23 +150,11 @@ first operating loop.
 
 ### Company, mission, charter and capital
 
-Choose company name, founding mission and organizational form before committing
-funding. Mission selects the scored objective, while charter sets real initial
-promises and governance constraints. Show exact objective rules before confirmation.
-
-| Example mission | Primary objective | Important compatibility |
-| --- | --- | --- |
-| Build the world's leading AI platform | World Monopoly | Useful delivered work, including defined license attribution |
-| Become the institution that steers the AI age | World Domination | Enforceable authority, not popularity or ordinary sales |
-| Make advanced AI improve life broadly | World Utopia | Distributed real outcomes and sustained final-decade conditions |
-| Create an enduring financial legacy | Profit | For-profit ownership route; nonprofit assets are not founder wealth |
-| Be first to independently demonstrate ASI | ASI Race | A scenario with a feasible route; early result retained to the ending |
-| Build a lab that lasts | Simple Survival | A real operating institution; nonprofit and specialist routes eligible |
-
-The six objective families remain; mission wording supplies narrative identity,
-not six new incompatible scoring engines. Changing a mission's wording is
-cosmetic. Changing its primary objective during play labels the run custom;
-amending charter promises uses governance and can affect public perception.
+Choose company name, mission and organizational form before committing funding.
+Mission and bylaws define promises and governance constraints. They influence
+public opinion and applicant interests. Changes of direction have social and
+institutional consequences. Player success is described through actual outcomes
+and personal relationships in the retrospective.
 
 For-profit corporations have equity holders and negotiated board/financing
 rights. A nonprofit has donors, grantors and trustees rather than saleable
@@ -253,7 +237,7 @@ as funding crises can recur under their own bounded rules.
 | Profitability / nonprofit crisis | Conditional company overlay when funding, charter and obligations diverge | Revenue and margin discipline, grants/mission continuity, lawful partnerships, restructuring or closure; preventable with planning |
 | Midgame | Established operations and broad market saturation; stage can also follow a long specialist/plateau path | Retention, incremental gains, long research horizons, diversification, governance and capital allocation |
 | Late game | Mature large institution or a late-life durable smaller institution | Manage the empire or chosen niche, infrastructure replacement, institutional power, succession and founder legacy |
-| Post-game review | Age-118 boundary, or an earlier genuine terminal outcome | Dated objective result, history, world consequences, epilogue and charts |
+| Post-game review | Age-100 boundary, or a chosen resignation ending | Dated career record, world consequences, personal reactions and newspaper |
 | I want more | Explicit choice from completed review | Same systemic world in an unscored post-game sandbox |
 
 An initial boom gate could require a general conversational service with
@@ -301,8 +285,8 @@ delivered benefits and harms; avoid a single narrator-assigned moral grade.
 Include charts/tables for cash, burn, revenue/profit, financing and founder stake;
 research spending, discoveries, publications, adoptions and prestige; products,
 active users and useful tasks; incidents, reliability and service access; staff,
-sites, compute and energy; competitors, regional welfare/authority and objective
-progress. Distinguish actual observations from unavailable data. Preserve major
+sites, compute and energy; competitors, regional welfare/authority and public
+commitments. Distinguish actual observations from unavailable data. Preserve major
 events and dates, monthly aggregates and older annual summaries without keeping
 all daily history or inventing unrecorded statistics. Data stays local.
 
@@ -312,12 +296,9 @@ historical facts from narrative projections. A sandbox continuation starts from
 the **actual saved boundary**, rather than simulating the epilogue's projected
 decades or resetting finances, commitments, rivals or knowledge.
 
-Create a protected completed-campaign snapshot before offering **I want more**.
-Continue into a distinct sandbox state/save with the original result attached.
-Campaign rewards and final windows cannot be farmed or revised there. Core
-markets, research, incidents, rivals and repeatable improvements keep running;
-campaign-only chapters stop. The interface says the campaign story is complete.
-A few optional Easter eggs may exist without promising another authored era.
+Any future posthumous world continuation preserves the completed life record in
+its own snapshot. Further company and world developments have their own dates
+and do not change the founder's biography.
 
 ## State, integration and implementation handoff
 
@@ -342,7 +323,7 @@ route, a rich self-funded route, a genius personally doing research, and a
 political-family rise. Verify blocked choices explain themselves, every offered
 package can start, Back cannot multiply capital, public/private callbacks are
 respected, stages can be reached/skipped, retirement preserves the founder,
-and age-118 save/reload/continuation freezes the same result exactly once.
+and age-100 save/reload preserves the same life record exactly once.
 
 ## Deferred tutorial TODO
 

@@ -8,7 +8,7 @@ using namespace core;
 namespace {
 using namespace objective_detail;
 constexpr std::array<std::string_view,8> end_keys{"deadline","asi_race","insolvency","institutional_control","final_order","catastrophe","postmortem","retirement"};
-constexpr std::array<std::string_view,4> mode_keys{"scored","sandbox","observer","freeplay"};
+constexpr std::array<std::string_view,5> mode_keys{"scored","sandbox","observer","freeplay","retrospective"};
 std::size_t index(ObjectiveKind kind) {
     const auto i=static_cast<std::size_t>(kind);
     if(i>=objective_kinds.size()) throw std::invalid_argument("Unknown campaign objective.");
@@ -82,7 +82,8 @@ bool objective_is_custom(const ObjectivesState& objectives) noexcept {
 }
 bool objective_time_stopped(const WorldState& world) noexcept {
     return world.objectives && world.objectives->end &&
-        (world.objectives->mode==ObjectiveMode::scored || world.objectives->mode==ObjectiveMode::freeplay);
+        (world.objectives->mode==ObjectiveMode::scored || world.objectives->mode==ObjectiveMode::freeplay ||
+         world.objectives->mode==ObjectiveMode::retrospective);
 }
 bool observing_world(const WorldState& world) noexcept {
     return world.objectives && world.objectives->mode==ObjectiveMode::observer;
@@ -100,7 +101,8 @@ bool has_asi_objective(const WorldState& world) noexcept {
     return world.simulation.frontier && world.simulation.frontier->catalog.asi_route;
 }
 std::optional<ObjectiveKind> required_objective_review(const WorldState& world) {
-    if(!world.objectives || world.objectives->end || world.objectives->mode==ObjectiveMode::freeplay) return {};
+    if(!world.objectives || world.objectives->end || world.objectives->mode==ObjectiveMode::freeplay ||
+        world.objectives->mode==ObjectiveMode::retrospective) return {};
     const auto& o=*world.objectives;
     const auto& selection=o.selections.back().selection;
     const auto pending=[&](ObjectiveKind kind){const auto& b=o.breaches[index(kind)];return b.first && !b.acknowledged_on;};
@@ -110,7 +112,7 @@ std::optional<ObjectiveKind> required_objective_review(const WorldState& world) 
 }
 std::optional<ObjectiveKind> objective_postmortem_candidate(const WorldState& world) {
     if(const auto required=required_objective_review(world)) return required;
-    if(!world.objectives || world.objectives->end) return {};
+    if(!world.objectives || world.objectives->end || world.objectives->mode==ObjectiveMode::retrospective) return {};
     const auto& o=*world.objectives;const auto& selection=o.selections.back().selection;
     if(o.breaches[index(selection.primary)].first) return selection.primary;
     for(auto kind:selection.secondary) if(o.breaches[index(kind)].first) return kind;
@@ -129,6 +131,7 @@ ObjectiveResult objective_result(const WorldState& world,ObjectiveKind kind) {
     if(kind==ObjectiveKind::profit && world.founding && world.founding->legal_form=="nonprofit") return ObjectiveResult::unavailable;
     if(!world.objectives || (kind==ObjectiveKind::asi && !has_asi_objective(world))) return ObjectiveResult::unavailable;
     const auto& o=*world.objectives;
+    if(o.mode==ObjectiveMode::retrospective) return ObjectiveResult::unavailable;
     if(o.mode==ObjectiveMode::freeplay) return o.end?ObjectiveResult::lost:ObjectiveResult::unfinished;
     if(kind==ObjectiveKind::asi && o.race) return lost_race(world,*o.race)?ObjectiveResult::lost:ObjectiveResult::won;
     if(o.breaches[index(kind)].first) return ObjectiveResult::lost;
@@ -199,9 +202,10 @@ void initialize_objectives(WorldState& world,const ObjectiveCharter& charter,std
     auto opening=selection.value_or(charter.opening);
     validate_objective_selection(opening,has_asi_objective(world));
     if(!world.society || !world.authority || !world.simulation.succession || !world.competition || !world.competition->setup ||
-       world.campaign_start>objective_window_start(world.simulation.end_date,ObjectiveKind::utopia))
+       (!charter.retrospective && world.campaign_start>objective_window_start(world.simulation.end_date,ObjectiveKind::utopia)))
         invalid("Campaign objectives need their complete world and institutional sources.");
     auto& o=world.objectives.emplace();o.deadline=world.simulation.end_date;
+    if(charter.retrospective) o.mode=ObjectiveMode::retrospective;
     o.selections.push_back({world.campaign_start,std::move(opening)});
 }
 void objective_detail::finish(WorldState& world,CampaignEndCause cause,std::string source) {
@@ -227,11 +231,11 @@ void settle_objectives(WorldState& world,std::optional<OrdinalDay> settled,const
     if(settled && *settled>=objective_window_start(o.deadline,ObjectiveKind::utopia) &&
         *settled<o.deadline && objective_month_end(*settled)) {
         o.months.push_back(month(world,*settled));
-        review_month(world,o.months,o.breaches);
+        if(o.mode!=ObjectiveMode::retrospective) review_month(world,o.months,o.breaches);
     }
     if(!o.race && settled && has_asi_objective(world) && new_frontier_evidence(world)) {
         o.race=race_through(world,state.date);
-        if(o.race && lost_race(world,*o.race)) breach(o.breaches[index(ObjectiveKind::asi)],o.race->day);
+        if(o.mode!=ObjectiveMode::retrospective && o.race && lost_race(world,*o.race)) breach(o.breaches[index(ObjectiveKind::asi)],o.race->day);
     }
     if(state.phase==DayPhase::closed) {
         finish(world,CampaignEndCause::insolvency,std::to_string(state.liquidity->workouts.back().id));return;
@@ -246,7 +250,7 @@ void settle_objectives(WorldState& world,std::optional<OrdinalDay> settled,const
     if(const auto order=final_closure(state,state.date)) {
         finish(world,CampaignEndCause::final_order,*order);return;
     }
-    if(o.race && o.selections.back().selection.primary==ObjectiveKind::asi) {
+    if(o.mode!=ObjectiveMode::retrospective && o.race && o.selections.back().selection.primary==ObjectiveKind::asi) {
         finish(world,CampaignEndCause::asi_race);return;
     }
     if(required_objective_review(world)) state.paused=true;
@@ -254,6 +258,7 @@ void settle_objectives(WorldState& world,std::optional<OrdinalDay> settled,const
 void select_objectives(WorldState& world,const ObjectiveSelection& selection) {
     if(!world.objectives || world.objectives->end) invalid("Choose objectives during a scored campaign.");
     auto& o=*world.objectives;
+    if(o.mode==ObjectiveMode::retrospective) invalid("Company direction is chosen through its mission and bylaws.");
     if(world.founding && world.founding->legal_form=="nonprofit" &&
         (selection.primary==ObjectiveKind::profit || std::ranges::find(selection.secondary,ObjectiveKind::profit)!=selection.secondary.end()))
         invalid("Nonprofit assets belong to the institution and cannot be scored as founder wealth.");
@@ -314,6 +319,8 @@ void validate_objectives(const WorldState& world,const CompiledProgram& program,
         invalid("The save and source scenario disagree about campaign objectives.");
     if(!world.objectives) return;
     const auto& o=*world.objectives;const auto& state=world.simulation;
+    if(scenario->objectives->retrospective!=(o.mode==ObjectiveMode::retrospective))
+        invalid("The campaign's retrospective mode must match its authored rules.");
     if(o.deadline!=scenario->ends_before || o.selections.empty() || o.selections.size()>objective_selection_limit ||
         o.selections.front().day!=world.campaign_start || o.months.size()>utopia_months || objective_mode_key(o.mode).empty() ||
         !state.accounts || !state.liquidity || !state.succession || !state.market || !world.society || !world.authority ||
@@ -334,7 +341,9 @@ void validate_objectives(const WorldState& world,const CompiledProgram& program,
             invalid("Sandbox insolvency needs the actual closed workout.");
         return;
     }
-    const auto first=objective_window_start(o.deadline,ObjectiveKind::utopia);
+    const auto first=o.mode==ObjectiveMode::retrospective?
+        std::max(world.campaign_start,objective_window_start(o.deadline,ObjectiveKind::utopia)):
+        objective_window_start(o.deadline,ObjectiveKind::utopia);
     const auto month_end_count=[&](OrdinalDay day) {
         if(day<=first) return std::size_t{0};
         const auto date=from_ordinal(day),start=from_ordinal(first);
@@ -342,7 +351,7 @@ void validate_objectives(const WorldState& world,const CompiledProgram& program,
     };
     if(through<world.campaign_start || through>o.deadline || o.months.size()!=month_end_count(through))
         invalid("Saved objective window is missing or contains an unsettled calendar month.");
-    if(o.mode==ObjectiveMode::scored) {
+    if(o.mode==ObjectiveMode::scored || o.mode==ObjectiveMode::retrospective) {
         if(state.end_date!=o.deadline || o.observer_day || !o.observer_paused || (o.end && (!state.paused || o.end->day!=state.date)))
             invalid("Scored campaign clock differs from its recorded ending.");
     } else if(!o.end || o.end->day>state.date ||
@@ -367,11 +376,11 @@ void validate_objectives(const WorldState& world,const CompiledProgram& program,
         const auto date=from_ordinal(start);
         const auto end=to_ordinal({date.year,date.month,days_in_month(date.year,date.month)});
         if(o.months[i]!=month(world,end)) invalid("Saved objective check differs from its settled delivery, authority or welfare.");
-        review_month(world,std::span{o.months}.first(i+1),expected);
+        if(o.mode!=ObjectiveMode::retrospective) review_month(world,std::span{o.months}.first(i+1),expected);
         start=advance_days(end,Days{1});
     }
     if(o.race!=race_through(world,through)) invalid("The ASI race does not match independent qualification dates and same-day ties.");
-    if(o.race && lost_race(world,*o.race)) breach(expected[index(ObjectiveKind::asi)],o.race->day);
+    if(o.mode!=ObjectiveMode::retrospective && o.race && lost_race(world,*o.race)) breach(expected[index(ObjectiveKind::asi)],o.race->day);
     for(auto kind:objective_kinds) {
         const auto& got=o.breaches[index(kind)];auto& wanted=expected[index(kind)];
         if(got.acknowledged_on && (!wanted.first || *got.acknowledged_on>through || *got.acknowledged_on<

@@ -18,7 +18,8 @@ struct PreparedSnapshot {
     std::map<std::filesystem::path,std::pair<std::string,std::size_t>> asset_observations;
 };
 [[noreturn]] void snapshot_refuse(std::string code,std::string message);
-[[nodiscard]] SnapshotJson snapshot_parse(std::string_view bytes,std::size_t maximum_bytes=4U*1024U*1024U);
+[[nodiscard]] SnapshotJson snapshot_parse(std::string_view bytes,std::size_t maximum_bytes=4U*1024U*1024U,
+    std::size_t maximum_tokens=200000);
 void snapshot_fields(const SnapshotJson& value,std::initializer_list<std::string_view> required,std::initializer_list<std::string_view> optional = {});
 [[nodiscard]] std::optional<std::string> snapshot_read(const std::filesystem::path& root,const std::filesystem::path& path,std::size_t limit=4U*1024U*1024U);
 [[nodiscard]] PreparedSnapshot prepare_snapshot(const std::filesystem::path& root,const SnapshotRequest& request);

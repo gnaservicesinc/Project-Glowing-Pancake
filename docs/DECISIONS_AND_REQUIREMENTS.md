@@ -132,6 +132,13 @@ The final documents record adopted design decisions. Mechanical thresholds and s
 
 ## What was retained from Gemini
 
+The 2026-11-11 user decision removes player victory and defeat, sets the personal
+ending at age 100 and reports actual life/world outcomes as a newspaper article.
+Mission statements and bylaws retain their systemic effects. Technology innovation,
+distribution-gated development tools and native small rival policies are selected
+in the [life and development plan](LIFE_AND_DEVELOPMENT_PLAN.md). That decision
+supersedes the earlier score thresholds, first-ASI player win and age-118 ending.
+
 Retain the separable simulation/UI architecture, room-based navigation, geography/infrastructure connections, publication tradeoffs, incumbent mobilization, and phased delivery. Expand the original roadmap into dependencies, acceptance gates, save/replay contracts, executable task briefs, and explicit resource needs.
 
 Correct or replace: Windows graphics defaults; automatic cross-platform/ARM packaging assumptions; a scalar intelligence formula with a fixed safety tax; guaranteed post-2026 eras; ideological executive stereotypes; corporate-plus-founder wealth double counting; automatic local-history prohibition; macro definitions that would leave debug code enabled under `#ifdef`; claims of universally patent-free video; relabeling third-party assets GPL; and incomplete victory definitions.

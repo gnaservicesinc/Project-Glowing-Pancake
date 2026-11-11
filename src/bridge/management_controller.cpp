@@ -1345,10 +1345,9 @@ QString ManagementController::guide() const {
 }
 QString ManagementController::scoreText() const {
     if (!snapshot_ || !state().management) return {};
-    const auto score=core::slice_score(state());const auto& rubric=state().management->catalog.scoring;
-    return QStringLiteral("%1 slice score %2 / 100\nSurvive to the ending: %3 / %4\nDelivered useful work: %5 / %6 (%7 / %8 tasks)\nPositive operating profit: %9 / %10 (%11)\nDeployed independent domain evidence: %12 / %13\nRetained founder stake: %14 / %15 (%16)\nThis development-slice rubric does not award century objectives.")
-        .arg(score.final?QStringLiteral("Final"):QStringLiteral("Provisional")).arg(score.total).arg(score.points[0]).arg(rubric.weights[0]).arg(score.points[1]).arg(rubric.weights[1])
-        .arg(number(score.delivered_tasks),number(rubric.task_target)).arg(score.points[2]).arg(rubric.weights[2]).arg(money(score.profit)).arg(score.points[3]).arg(rubric.weights[3]).arg(score.points[4]).arg(rubric.weights[4]).arg(percent(score.founder_share));
+    const auto record=core::slice_score(state());
+    return tr("Company record through %1\nDelivered work · %2 tasks\nOperating profit · %3\nFounder ownership · %4")
+        .arg(text(core::iso_date(state().date)),number(record.delivered_tasks),money(record.profit),percent(record.founder_share));
 }
 QVariantMap ManagementController::policyDefaults() const {
     if (!snapshot_ || !state().management) return {};
@@ -1539,7 +1538,8 @@ QString ManagementController::alertDetail(const core::ManagementNotice& n) const
 QString ManagementController::ending() const {
     if (!snapshot_) return {};
     if (state().phase!=core::DayPhase::finished && state().phase!=core::DayPhase::closed) return {};
-    return (state().phase==core::DayPhase::finished?QStringLiteral("The 2014–2017 campaign is complete.\n"):QStringLiteral("The company has closed.\n"))+briefing()+QStringLiteral("\nFinal cash ")+money(state().cash)+QStringLiteral("\n\n")+scoreText();
+    return (state().phase==core::DayPhase::finished?tr("The campaign record closes here.\n"):tr("The company has closed.\n"))
+        +tr("\nRecorded cash ")+money(state().cash)+QStringLiteral("\n\n")+scoreText();
 }
 QVariantMap ManagementController::dataMixPreview(QString recipe,QStringList data,QVariantMap weights,QString parent) const {
     if(!snapshot_ || !state().lab || recipe.isEmpty() || (data.isEmpty() && parent.isEmpty()))return {};

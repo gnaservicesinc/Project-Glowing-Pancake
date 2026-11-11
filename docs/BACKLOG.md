@@ -7,6 +7,26 @@ the starting point for human feedback. Work now follows the user's selected
 feedback changes. Proposed deeper mechanics from the initial pass await
 that review.
 
+## Selected life and development expansion (F-07, in progress)
+
+The user's [life and development plan](LIFE_AND_DEVELOPMENT_PLAN.md) supersedes
+player victory conditions and the age-118 ending. The new ending is a newspaper
+retrospective at age 100. Missions and bylaws remain consequential. Selective
+technology innovation, distribution build gating, repository Content Studio,
+God mode and native learned rival policies extend the active implementation.
+The AI work starts from LoomFactory's measured native custom graph lessons.
+
+Implemented the first F-07 batch with the age-100 boundary, unscored player
+campaigns and a newspaper reporting dated company/world/lab/person/choice
+records. Focused ending/save and native compact report checks pass.
+
+Next implement the personal career state across forced departures, guaranteed
+re-entry and reviewed resignation with an optional career-feature ending.
+The press statement and successor choice can change the lead story. The
+company's ASI becomes a possible handover candidate when actually established.
+Distribution/development tools, selective innovation, nonprofit reactions and
+native rival learning remain selected work.
+
 ## Selected people/software expansion (F-06, in progress)
 
 [People, software and changing careers](PEOPLE_AND_SOFTWARE_PLAN.md) turns the

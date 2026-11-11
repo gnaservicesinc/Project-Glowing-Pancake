@@ -108434,6 +108434,63 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "4d4603099fc2853fe437b42c1297896093e814d1ad9d75e5b083f59746d2f161",
+          "before_hash": "beab8d38436fe2c0ccb912d3d9b43c91837ba29e2f1c7b14a148483290d952b9",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 18,
+          "revision": 19
+        },
+        {
+          "after_hash": "55af56e3b0d78707d796a7ced9c01835adb7c62268eb67e64814574d40c639e4",
+          "before_hash": "786ded8fba9212fa633ed7d29af8c13aabc1c1c535b0f2493c896d1565738127",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 18,
+          "revision": 19
+        },
+        {
+          "after_hash": "aefa60020e1b34fc1d0afd1f9f3b39e4647a44fee3e53c65e58948cbd4b7e34c",
+          "before_hash": "c3f6120833457b98d56af0386375f4595ebd54276a8362ff30a9c5f38b00a45f",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 39,
+          "revision": 40
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "a0bc09a4a8c9003b3a82837a9e6107dc793c360b37c7d56056f5e2ab0f83680a",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.70.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 71,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.69.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000070.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000071.collection.json",
+      "summary": "Replace player victory conditions with a dated life and world retrospective at age 100",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

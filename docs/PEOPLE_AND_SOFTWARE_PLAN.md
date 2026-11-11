@@ -4,6 +4,11 @@ Selected expansion F-06, 2026-11-10. This develops the user's software, skills,
 social-world and alternate-career draft. It extends F-05; technical aptitude
 alone will no longer qualify the founder for specialist work.
 
+The selected [life and development expansion](LIFE_AND_DEVELOPMENT_PLAN.md)
+adds an age-100 newspaper retrospective, technology innovation, development
+menus and native learned rival policies. It supersedes player victory
+conditions throughout this plan.
+
 ## Experience and delivery order
 
 1. **Skills, university and software studio.** A validated skill catalogue,
@@ -45,7 +50,10 @@ alone will no longer qualify the founder for specialist work.
    balance, racks/network topology and power/cooling/redundancy. Room layout
    exposes walking routes, accessible desks, congestion and amenity travel.
    Preview and commit use the same calculation; every score has a real effect.
-7. **Career transitions.** A CEO without controlling ownership can face dismissal
+7. **Career transitions.** Voluntary resignation, retirement/delegation,
+   acquisition and bankruptcy change the founder's job and company relationship.
+   Review the handover and retained board/share rights, then return home with
+   formation and employment routes. A CEO without controlling ownership can face dismissal
    after repeated missed expectations, poor finances, a scandal and a final board
    trigger. Strong employee ties/respect can support reinstatement and a negotiated
    governance reset. A replacement-led AI trajectory with independently proven

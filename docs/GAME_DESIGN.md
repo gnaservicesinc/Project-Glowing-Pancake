@@ -4,9 +4,13 @@ Design baseline 1.3 · 2026-11-07 · Working title · Campaign/technology revisi
 
 This is the product design for the full 1.0 game. Numeric balance targets are starting values to test, not claims about the real world. [Decisions and requirements](DECISIONS_AND_REQUIREMENTS.md) explains the relationship to the two drafts. [The roadmap](ROADMAP.md) separates the complete design from the first playable release.
 
+The 2026-11-11 [life and development revision](LIFE_AND_DEVELOPMENT_PLAN.md)
+supersedes the victory conditions and age-118 ending below. The founder's death
+at 100 is reported through an evidence-based newspaper retrospective.
+
 ## 1. The game in one paragraph
 
-Born in California in 1997, you make formative choices before taking charge of an AI startup at 18 in 2015. Guide the founder and institution through a century of technical, commercial, and political change, ending at age 118 in 2115. Design models, acquire data and compute, recruit people, find customers, build infrastructure, negotiate power, and live with what your products change. A small specialist business, an open research institution, a profitable platform, and an ambitious frontier lab are all credible strategies. Review the founder's legacy and world response, then optionally continue in a post-game sandbox. The game never requires real AI training, an online account, or a connection to a model provider.
+Born in California in 1997, you make formative choices before taking charge of an AI startup at 18 in 2015. Guide the founder and institution through a century of technical, commercial, and political change, ending at age 100 in 2097. Design models, acquire data and compute, recruit people, find customers, build infrastructure, negotiate power, and live with what your products change. A small specialist business, an open research institution, a profitable platform, and an ambitious frontier lab are all credible strategies. Review the founder's legacy and world response, then optionally continue in a post-game sandbox. The game never requires real AI training, an online account, or a connection to a model provider.
 
 **Genre:** single-player, pauseable business and political strategy simulation. **View:** clickable first-person location sets with management overlays and maps. **Audience:** players of management and grand-strategy games; no machine-learning knowledge required. **Price/license:** free; GPLv3 code, with separately credited compatible asset licenses. **Primary release:** downloadable desktop game on itch.io.
 
@@ -216,26 +220,31 @@ After 2026, each seed combines progress rate, energy availability, social adapta
 
 **Game AGI** means broad competence across the game's domains plus sustained reliable transfer on unseen tasks. **Game ASI** adds a higher sustained research/engineering threshold and a demonstrated scalable improvement process. These are fictional operational definitions, not scientific claims or consciousness tests. Evaluation gates and resource commitments are explicit. Capability, controllability, social benefit, and legal permission are separate properties.
 
-Research assistance can accelerate experiments and software work subject to verification, physical lead times, compute, energy, data, and organization. No instantaneous infinite recursive improvement. High autonomy with weak control can create systemic risk. Catastrophic endings require escalating evidence and opportunities to reduce exposure. Their presentation is a short, non-graphic bulletin and a campaign review.
+Research assistance can accelerate experiments and software work subject to verification,
+physical lead times, compute, energy, data and organization. High autonomy with
+weak control can create systemic risk. Major disruptions require escalating
+evidence and opportunities to reduce exposure. They change the founder's
+circumstances and offer a playable next chapter.
 
-### Objective rules
+### Life and the retrospective
 
-The founding mission selects one primary objective, with optional secondary goals. Progress is visible with exact definitions; changing the primary objective marks the run custom. An ASI-race result can be secured or lost early and remains recorded while the campaign continues to 118. All other victories are assessed at the century deadline using sustained conditions, so an early lead is not automatically permanent. A pure nonprofit cannot select founder-wealth Profit; nonprofit assets are not the founder's property.
+The player receives a newspaper account of their life and its consequences,
+with an obituary at age 100. Reports use actual choices, outcomes, public
+attitudes, company records, other major labs and named relationships. Benefits,
+costs and disagreements can coexist. There is no perfect-utopia result or
+universal moral grade.
 
-| Objective | Winning condition |
-| --- | --- |
-| World Monopoly | At least 85% of useful AI task units delivered globally across the final five years, with at least 60% in every world region. Includes licensed deployments with a defined attribution rule. |
-| World Domination | Durable governing authority over regions representing at least 80% of world population **and** economic output, with at least 60/100 authority in each covered region, for the final five years. Soft institutional control or abstract hard coercive control can qualify; coercion carries resistance and failure risk. |
-| World Utopia | For the final ten years: global basic-needs access ≥90, health access ≥85, civic agency ≥80, ecological resilience ≥80, and shared prosperity ≥75; every region ≥70 on each; no world-ending catastrophe. Values are disclosed fictional indices. |
-| Profit | Highest founder-legacy net wealth among competing institutions at the deadline, measured in constant 2014 dollars without counting the same company equity twice. |
-| ASI Race | First institution to complete and independently validate the game ASI gates. Unsafe development can qualify; safe operation is a separate campaign distinction. Same-day qualifiers share the win. |
-| Simple Survival | The founding institution is operating and solvent at the deadline, with an active organization and meaningful product/research activity. Founder succession, an IPO, and approved mergers under retained institutional control are allowed. |
+Mission statements and bylaws shape recruiting, pay expectations, morale and
+public reaction. Nonprofits receive the selected goodwill, public attention and
+corporate income-tax exemption. Commitment and follow-through affect credibility.
 
-An ASI objective uses a scenario family with at least one feasible ASI route; plateau-only scenarios explain that incompatibility in setup. Utopia can be reached through broadly distributed useful AI and institutions without ASI. Financial success does not automatically imply political control or social benefit.
-
-The objective panel distinguishes progress from whether the deadline remains attainable. A failed mandatory month in the final Domination/Utopia window immediately explains the irreversible breach and auto-pauses by default, offering a postmortem, continued play or a custom sandbox. A bad Monopoly month alone does not imply failure: that objective uses aggregate work over five years. Do not force players through years of a known lost objective. Default thresholds/windows remain strict; early rolling victories or grace months are separate balance choices, not hidden exceptions.
-
-Failure conditions are unresolved insolvency after a warned 30-day workout, complete loss of institutional control, final closure under enforceable orders, or a scenario-ending catastrophe. A takeover offer, bad launch, executive departure, or lost election is not automatically game over. Postmortems show causal chains, unfulfilled obligations, lessons, and alternative actions that were available at the time.
+Resignation includes a statement, PR angle and proposed successor. Reporters can
+question claims using dated facts, while an unexpected appointment, including
+the company's own ASI, can become the lead story. The player can continue their
+life or deliberately end with a career retrospective at their current age.
+Forced departures, closure and nationalization always offer a playable route
+back into the world. The full behavior is selected in
+[Life and development](LIFE_AND_DEVELOPMENT_PLAN.md).
 
 ## 11. Interface, atmosphere, and accessibility
 

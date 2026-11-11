@@ -354,7 +354,7 @@ QVariantList CampaignController::scenarios() const {
             difficulties.push_back(QVariantMap{{"id",text(d.id)},{"label",text(d.name)},{"detail",detail}});
         }
         choice.insert("difficulties",difficulties);
-        if(scenario->objectives) {
+        if(scenario->objectives && !scenario->objectives->retrospective) {
             const auto& opening=scenario->objectives->opening;
             const bool asi=content::frontier_catalog(program_.collection,*scenario)->asi_route;
             QStringList secondary;for(auto kind:opening.secondary) secondary.push_back(text(core::objective_key(kind)));

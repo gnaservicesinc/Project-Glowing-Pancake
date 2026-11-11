@@ -53,7 +53,10 @@ int main(int argc,char** argv) {
             const auto selected=plan_path(take("--plan"));ensure_empty();
             // The public finalizer rebuilds the plan with the actual validator,
             // then compares its digest; editable plan text grants no write paths.
-            const auto plan=studio::detail::snapshot_parse(persistence::read_bounded(selected,4U*1024U*1024U));const auto& row=plan.at("request");
+            // Review documents include before/after definition bodies. Their
+            // event budget is larger than the compact state/history metadata.
+            const auto plan=studio::detail::snapshot_parse(persistence::read_bounded(selected,4U*1024U*1024U),
+                4U*1024U*1024U,800000);const auto& row=plan.at("request");
             studio::SnapshotRequest request;request.source=row.at("source").get<std::string>();request.target=row.at("target").get<std::string>();
             request.content_version=row.at("content_version").get<std::string>();request.summary=row.at("summary").get<std::string>();request.save_policy=row.at("save_policy").get<std::string>();
             if (!row.at("game_version").is_null()) request.game_version=row.at("game_version").get<std::string>();
