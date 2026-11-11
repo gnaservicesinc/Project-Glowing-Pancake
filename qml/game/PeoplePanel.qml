@@ -61,7 +61,7 @@ ColumnLayout {
             onActivated:campaign.world.setRecruitingTerms(campaign.world.recruitingTerms.pay || 100,model[currentIndex])
         }
     }
-    Label {visible:panel.page==="applicants" && (campaign.world.familyAlbum.queued || 0)>0;Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;text:qsTr("%1 application(s) are waiting for the next recruitment review. Existing discussions keep their place.").arg(campaign.world.familyAlbum.queued || 0);color:"#ddc48b"}
+    Label {visible:panel.page==="applicants" && (campaign.world.familyAlbum.queued || 0)>0;Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;text:qsTr("Awaiting review · %1").arg(campaign.world.familyAlbum.queued || 0);color:"#ddc48b"}
     Flow {visible:panel.page==="applicants" && !panel.showDiscussion;Layout.fillWidth:true;spacing:8
         WorldButton {objectName:"applicantsAll";text:qsTr("All candidates");textSize:panel.textSize;checked:panel.applicantFilter==="all";onClicked:{panel.applicantFilter="all";campaign.world.setDraft("people/applicantFilter","all")}}
         WorldButton {objectName:"applicantsRecommended";text:qsTr("Employee recommended candidates");textSize:panel.textSize;checked:panel.applicantFilter==="recommended";onClicked:{panel.applicantFilter="recommended";campaign.world.setDraft("people/applicantFilter","recommended")}}
