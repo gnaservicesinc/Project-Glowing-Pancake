@@ -108670,6 +108670,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "061c48eb5b05d72273de125ae9ab0a6c795671039f42a0efb4c75274ca7ab89c",
+          "before_hash": "72f155290e180432cc206c46ee79782d93ec883895cac63ed1747580a8f4b649",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 43,
+          "revision": 44
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "7d39a1404f925446f7019ffe7531974bb3ec307b0b4e72e7fc4818ae61b480cf",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.73.1-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 75,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.73.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000074.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000075.collection.json",
+      "summary": "Clarify the founder’s childhood scenes and raise wealthy-family savings to five million dollars.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

@@ -239,7 +239,7 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
         if(resetting_local_data_) {
             resetting_local_data_=false;
             if(accepted) {
-                founding_->reset();welcome_=true;original_content_review_.clear();
+                founding_->reset(false);welcome_=true;original_content_review_.clear();
                 emit stateChanged();emit developmentResetFinished();
             }
         }

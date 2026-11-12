@@ -113,7 +113,7 @@ Dialog {
             ColumnLayout {
                 Readout {
                     visible: dialog.reviewer.comparison.length > 0
-                    caption: qsTr("Compared generation versions and hashes")
+                    caption: qsTr("Compared content versions")
                     detail: dialog.reviewer.comparison
                     Layout.preferredHeight: Math.min(135, dialog.height / 4)
                 }
@@ -303,7 +303,7 @@ Dialog {
                                 model: dialog.reviewer.comparison.length ? dialog.reviewer.mappingIds(0, "", false) : []
                                 Accessible.name: qsTr("Source flow owning the renamed node")
                             }
-                            Label { text: qsTr("Before ID") }
+                            Label { text: qsTr("Earlier reference") }
                             ComboBox {
                                 id: from
                                 objectName: "migrationFrom"
@@ -312,7 +312,7 @@ Dialog {
                                 model: dialog.reviewer.comparison.length ? dialog.reviewer.mappingIds(mappingKind.currentIndex, owner.currentText, false) : []
                                 Accessible.name: qsTr("Source identity")
                             }
-                            Label { text: qsTr("After ID") }
+                            Label { text: qsTr("Replacement reference") }
                             ComboBox {
                                 id: to
                                 objectName: "migrationTo"

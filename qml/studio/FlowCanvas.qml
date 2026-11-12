@@ -104,7 +104,7 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
-        TextField { id: nodeSearch; objectName: "canvasSearch"; Layout.fillWidth: true; placeholderText: qsTr("Find a box by ID or label"); Accessible.name: qsTr("Find canvas box") }
+        TextField { id: nodeSearch; objectName: "canvasSearch"; Layout.fillWidth: true; placeholderText: qsTr("Find a box by name"); Accessible.name: qsTr("Find canvas box") }
         ComboBox { id: navigator; objectName: "canvasNavigator"; Layout.preferredWidth: 180; model: graph.filteredNodes; textRole: "title"; valueRole: "key"; Accessible.name: qsTr("Canvas box navigator") }
         Button { objectName: "focusCanvasNode"; text: qsTr("Focus"); enabled: navigator.currentIndex >= 0; onClicked: graph.focusNode(navigator.currentValue, true) }
     }
@@ -125,14 +125,19 @@ ColumnLayout {
     }
     RowLayout {
         Layout.fillWidth: true
-        TextField { id: paletteSearch; Layout.fillWidth: true; placeholderText: qsTr("Search this port's palette"); Accessible.name: qsTr("Search node palette") }
-        ComboBox { id: palette; objectName: "canvasPalette"; Layout.preferredWidth: 190; model: graph.filteredPalette; textRole: "label"; valueRole: "value"; Accessible.name: qsTr("Node palette") }
-        Button { objectName: "insertCanvasNode"; text: qsTr("Create"); enabled: palette.currentIndex >= 0; onClicked: graph.createSelected() }
+        Button {
+            text: qsTr("Add a box…")
+            onClicked: graph.author.prepareInsert()
+        }
+        TextField { id: paletteSearch;
+            visible: graph.width >= 560; Layout.fillWidth: true; placeholderText: qsTr("Search this port's palette"); Accessible.name: qsTr("Search node palette") }
+        ComboBox { id: palette; objectName: "canvasPalette"; Layout.fillWidth: true; Layout.maximumWidth: 230; model: graph.filteredPalette; textRole: "label"; valueRole: "value"; Accessible.name: qsTr("Node palette") }
+        Button { objectName: "insertCanvasNode"; text: qsTr("Add"); enabled: palette.currentIndex >= 0; onClicked: graph.createSelected() }
         Button { objectName: "cancelCanvasLink"; text: qsTr("Cancel link"); enabled: !!graph.author.pendingOutput; onClicked: graph.author.cancelConnection() }
     }
     Label {
         Layout.fillWidth: true
-        text: author.portLabel || qsTr("Select an output, then a compatible input or palette item. Drag a box header; arrows move by 16, Ctrl+arrows pan.")
+        text: author.portLabel || qsTr("Select a box to edit its settings. Add a box to the current route, or select a connection point to choose a different route.")
         textFormat: Text.PlainText
         wrapMode: Text.Wrap
     }

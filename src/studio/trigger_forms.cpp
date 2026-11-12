@@ -98,7 +98,7 @@ FormControl scalar_control(ValueType type) {
 std::vector<FormOption> relations(const Registry& registry, Scope scope) {
     std::vector<FormOption> options;
     for (const auto& [id, relation] : registry.relations())
-        if (relation.owner_scope == scope) options.push_back({id, id, relation.help});
+        if (relation.owner_scope == scope) options.push_back({id, readable_name(id), relation.help});
     return options;
 }
 std::string condition_kind(ConditionKind kind) {
@@ -120,13 +120,13 @@ std::string condition_label(const Condition& condition) {
         const auto op = std::find_if(comparisons.begin(), comparisons.end(), [&](const auto& entry) {
             return entry.comparison == clause.comparison;
         });
-        return clause.fact + " · " + op->label + " · " + (clause.expression ? "expression" : scalar_text(clause.value));
+        return readable_name(clause.fact) + " · " + op->label + " · " + (clause.expression ? "expression" : scalar_text(clause.value));
     }
     case ConditionKind::all_of: return "All of these conditions";
     case ConditionKind::any_of: return "Any of these conditions";
-    case ConditionKind::not_condition: return "Negate condition";
-    case ConditionKind::holds_for_days: return "Holds for " + std::to_string(condition.duration_days) + " days · " + condition.predicate_id;
-    case ConditionKind::quantified: return "Related entities · " + condition.quantifier->relation;
+    case ConditionKind::not_condition: return "When this condition is false";
+    case ConditionKind::holds_for_days: return "Holds for " + std::to_string(condition.duration_days) + " days";
+    case ConditionKind::quantified: return "Related entities · " + readable_name(condition.quantifier->relation);
     }
     throw std::invalid_argument("Unknown condition type.");
 }
@@ -167,7 +167,7 @@ void clause_form(FormBuilder& builder, const ConditionRow& row) {
     const auto& registry = builder.draft.registry();
     const auto* fact = registry.fact(clause.fact);
     const auto path = row.path;
-    builder.add("fact", "Fact", clause.fact, fact_help(*fact) + "\nChanging facts starts a new comparison using the selected fact's unit.",
+    builder.add("fact", "What to check", clause.fact, fact_help(*fact) + "\nChanging facts starts a new comparison using the selected fact's unit.",
                 FormControl::choice, [path, &registry](FlowDefinition& flow, std::string_view id) {
         auto& target = *path.edit(flow).clause;
         if (target.fact == id) return;

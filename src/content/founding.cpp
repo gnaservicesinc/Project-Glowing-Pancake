@@ -245,7 +245,7 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
     if(!s.partner.empty() && (s.route!="partnership" || !partner)) invalid("Choose a known cofounder for the partnership route.");
     if(complete && s.route=="partnership" && !c.partners.empty() && !partner) invalid("Agree terms with a cofounder before signing.");
     if(partner) if(const auto reason=partner_ineligibility(*partner,s);!reason.empty()) invalid(reason);
-    if(ceo && s.leg!="genius" && s.leg!="political" && s.leg!="wealthy") invalid("This lab considers leadership applications from an Actual Genius or a political or wealthy elite background.");
+    if(ceo && s.family!="rich" && s.leg!="genius" && s.leg!="political" && s.leg!="wealthy") invalid("This lab considers leadership applications from an Actual Genius or a political or wealthy elite background.");
     {
         if(!c.opening) invalid("Complete your appearance and founding terms.");
         if(s.researcher!=(s.leg=="genius"?"founder":"none")) invalid("Research ability follows the biography; hiring takes place during play.");

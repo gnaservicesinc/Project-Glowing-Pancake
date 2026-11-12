@@ -26,7 +26,19 @@ int main() {
         content::FoundingSelection revised;
         revised.choices=selected.choices;revised.appearance=core::make_portrait(9,"founder");
         revised.family="rich";revised.route="bootstrap";revised.office="home";
+        revised.personal_investment_cents=1'000'000;
         auto solo=make(revised);
+        require(solo.world.simulation.succession->personal_cash==core::Cents{499'000'000} &&
+            content::founding_terms(catalog,revised).personal_contribution_cents==1'000'000,
+            "A wealthy founder starts with $5 million before the chosen personal investment.");
+        auto political=revised;
+        political.leg="political";political.researcher="none";
+        const auto already_wealthy=content::founding_terms(catalog,political).personal_remaining_cents;
+        political.family="poor";
+        require(already_wealthy==509'000'000 &&
+            content::founding_terms(catalog,political).personal_remaining_cents==already_wealthy,
+            "Political families reach the wealthy tier once; existing wealth is preserved.");
+        revised.personal_investment_cents=-1;
         require(solo.world.difficulty.empty() && solo.world.simulation.capacity->sources.empty(),"New openings must not inherit difficulty or a compute lease.");
         require(solo.world.simulation.management->people->employees.size()==1,"A genius starts alone, without a forced first hire.");
         require(std::ranges::none_of(solo.world.simulation.accounts->recurring,[](const auto& r){return r.id=="office_and_admin" || r.id=="compute_lease" || r.id=="payroll_with_benefits";}),"The parents' house has no rent, employee payroll or compute subscription.");

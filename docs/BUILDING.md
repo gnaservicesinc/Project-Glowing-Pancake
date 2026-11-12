@@ -76,6 +76,10 @@ Unknown existing directories, symlinked build paths and owner-marker mismatches
 are refused. Changed toolchain selections require an explicit clean of that
 configuration. User saves and unrelated outputs are outside cleanup.
 
+For a Mac Debug check using the installed Qt SDK and a plain executable,
+configure a separate build tree with `-DPGP_MACOS_BUNDLE=OFF` and leave off
+`--package`. Game QML and assets compiled into the executable remain available.
+
 ## Run matched century strategies
 
 These workloads are deferred under the 2026-11-06 feature-first instruction.

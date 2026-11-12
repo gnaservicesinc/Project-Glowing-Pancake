@@ -10,6 +10,8 @@ qt_add_resources(pgp-editor studio_ui
     PREFIX "/pgp/studio" BASE "${PROJECT_SOURCE_DIR}/qml/studio"
     FILES "${PROJECT_SOURCE_DIR}/qml/studio/Main.qml"
           "${PROJECT_SOURCE_DIR}/qml/studio/FlowForms.qml"
+          "${PROJECT_SOURCE_DIR}/qml/studio/ChildhoodScene.qml"
+          "${PROJECT_SOURCE_DIR}/qml/studio/EventStory.qml"
           "${PROJECT_SOURCE_DIR}/qml/studio/FlowInspection.qml"
           "${PROJECT_SOURCE_DIR}/qml/studio/FlowCanvas.qml"
           "${PROJECT_SOURCE_DIR}/qml/studio/CanvasNode.qml"

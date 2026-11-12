@@ -103,7 +103,7 @@ void authorized(const DraftDocument& d,const Json& doc,std::string_view scenario
 }
 std::string index_label(std::string_view,std::size_t,std::size_t);
 void outline(std::vector<WorldOutlineRow>& out,const Json& value,const std::string& path,std::string name,std::size_t depth) {
-    if(out.size()>=8192) throw std::invalid_argument("World outline exceeds its bounded section count.");
+    if(out.size()>=32768) throw std::invalid_argument("World outline exceeds its bounded section count.");
     std::string search=path+" "+name;
     if(value.is_object()) for(const auto& [key,v]:value.items()) if(v.is_primitive()) search+=" "+key+" "+label(key)+" "+scalar(v);
     out.push_back({path,std::move(name),std::move(search),depth});

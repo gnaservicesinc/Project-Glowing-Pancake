@@ -51,6 +51,7 @@ public:
     Q_INVOKABLE void selectNode(QString key);
     Q_INVOKABLE bool pickPort(QString ticket, QString port);
     Q_INVOKABLE void cancelConnection();
+    Q_INVOKABLE bool prepareInsert();
     Q_INVOKABLE bool insertNode(QString ticket, QString type);
     Q_INVOKABLE bool moveNode(QString ticket, QString key, double x, double y);
     Q_INVOKABLE void autoLayout();

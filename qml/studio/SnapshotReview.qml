@@ -181,11 +181,10 @@ Dialog {
                 DiffList { objectName: "revisionTextDiff"; visible: review.finalizer.textChanges.length > 0; entries: review.finalizer.textChanges }
                 Label { visible: review.finalizer.collectionChanges.length > 0; text: qsTr("Changed collection variables"); font.bold: true }
                 DiffList { visible: review.finalizer.collectionChanges.length > 0; entries: review.finalizer.collectionChanges }
-                Label { text: qsTr("Proposed files · SHA-256 before / after"); font.bold: true }
+                Label { text: qsTr("Files to update"); font.bold: true }
                 DiffList { objectName: "revisionFileDiff"; entries: review.finalizer.writes }
                 Label { visible: review.finalizer.notices.length > 0; text: qsTr("Compiler notices"); font.bold: true }
                 TextArea { visible: review.finalizer.notices.length > 0; Layout.fillWidth: true; text: review.finalizer.notices.join("\n\n"); textFormat: TextEdit.PlainText; readOnly: true; selectByMouse: true; wrapMode: TextEdit.WrapAnywhere }
-                Label { Layout.fillWidth: true; text: qsTr("Reviewed plan SHA-256 %1").arg(review.finalizer.planId); textFormat: Text.PlainText; wrapMode: Text.WrapAnywhere }
             }
         }
     }

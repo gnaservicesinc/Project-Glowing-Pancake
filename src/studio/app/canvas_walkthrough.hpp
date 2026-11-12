@@ -17,7 +17,7 @@ QJsonObject run_canvas_walkthrough(Browser& browser, QQuickWindow& window) {
     const fs::path draft{"data/drafts/e1a05-walkthrough.json"};
     const auto runtime_bytes = persistence::read_bounded(root / "data/runtime/first-playable.json", 4U * 1024U * 1024U);
     const auto version_bytes = persistence::read_bounded(root / "project-versions.json", 65536);
-    window.setProperty("outlineMode", false); window.setProperty("inspectorOnly", false); settle();
+    window.setProperty("page", 2); settle();
     const auto item = [&](const QString& name) {
         settle(); auto* value = find(window.contentItem(), name);
         require(value != nullptr, QStringLiteral("Missing canvas control: ") + name); return value;
@@ -82,7 +82,9 @@ QJsonObject run_canvas_walkthrough(Browser& browser, QQuickWindow& window) {
     require(QMetaObject::invokeMethod(notices, "close"), QStringLiteral("The compiler notice did not dismiss.")); settle();
     const auto saved_bytes = persistence::read_bounded(root / draft, 4U * 1024U * 1024U);
     DraftDocument saved{root, draft}; const auto semantic_hash = persistence::sha256(saved.program().canonical_content_bytes);
+    window.setProperty("page", 3);
     item(QStringLiteral("flowTestSeed"))->setProperty("text", QStringLiteral("42")); click(QStringLiteral("startFlowTest"));
+    window.setProperty("page", 2);
     require(inspector->ready() && inspector->graphTrace().value(QStringLiteral("node/sequence/child/1")).toMap().value(QStringLiteral("state")).toString() == QStringLiteral("queued"),
         QStringLiteral("The actual saved sibling wait was not projected on the canvas."));
     focus(QStringLiteral("node/sequence"));
@@ -113,27 +115,27 @@ QJsonObject run_canvas_walkthrough(Browser& browser, QQuickWindow& window) {
     require(layout.at("node/sequence").x == moved.value(QStringLiteral("x")).toInt(), QStringLiteral("Integer layout positions did not persist."));
     require(persistence::read_bounded(root / draft, 4U * 1024U * 1024U) == saved_bytes && !browser.draftDirty(), QStringLiteral("Layout or viewport gestures rewrote authored runtime semantics."));
     click(QStringLiteral("closeWorkingDraft")); require(!browser.editing(), QStringLiteral("The saved canvas document did not close."));
-    const auto index = browser.locate(QString::fromLatin1("data/drafts/e1a05-walkthrough.json"), QStringLiteral("walkthrough.branching"));
-    require(index >= 0, QStringLiteral("The canvas-authored draft is missing from the library."));
-    item(QStringLiteral("studioLibrary"))->setProperty("currentIndex", index); click(QStringLiteral("editSelectedDefinition"));
+    require(browser.beginDraft(QStringLiteral("data/drafts/e1a05-walkthrough.json"), QStringLiteral("walkthrough.branching")), browser.draftMessage());
     require(canvas->nodeLookup().value(QStringLiteral("node/sequence")).toMap().value(QStringLiteral("x")).toInt() == moved.value(QStringLiteral("x")).toInt(),
         QStringLiteral("Reopening lost shared layout positions."));
     require(canvas->view().value(QStringLiteral("x")) == local_view.value(QStringLiteral("x")) && canvas->view().value(QStringLiteral("zoom")) == local_view.value(QStringLiteral("zoom")),
         QStringLiteral("Reopening lost ignored viewport state."));
     require(DraftDocument{root, draft}.program().canonical_content_bytes == saved.program().canonical_content_bytes,
         QStringLiteral("Reopening graph/forms changed the saved logic."));
+    window.setProperty("page", 3);
     item(QStringLiteral("flowTestSeed"))->setProperty("text", QStringLiteral("42")); click(QStringLiteral("startFlowTest"));
-    click(QStringLiteral("reloadFlowTest")); focus(QStringLiteral("node/sequence"));
+    click(QStringLiteral("reloadFlowTest"));
+    window.setProperty("page", 2); focus(QStringLiteral("node/sequence"));
     require(inspector->graphTrace().value(QStringLiteral("node/sequence/child/1")).toMap().value(QStringLiteral("state")).toString() == QStringLiteral("queued"),
         QStringLiteral("Exact checkpoint reload lost the waiting sibling overlay."));
     window.resize(900, 720); settle();
     auto* viewport = item(QStringLiteral("canvasViewport"));
     QElapsedTimer resize_timer; resize_timer.start();
-    while (viewport->width() <= 700 && resize_timer.elapsed() < 3000) QCoreApplication::processEvents();
-    require(viewport->width() > 700, QStringLiteral("The narrow-window canvas did not use its pane: viewport %1, window %2, inspector visible %3.")
+    while (viewport->width() <= 450 && resize_timer.elapsed() < 3000) QCoreApplication::processEvents();
+    require(viewport->width() > 450, QStringLiteral("The narrow-window canvas did not use its pane: viewport %1, window %2, inspector visible %3.")
         .arg(viewport->width()).arg(window.width()).arg(item(QStringLiteral("studioInspector"))->isVisible()));
     click(QStringLiteral("showStudioSettings"));
-    require(item(QStringLiteral("studioInspector"))->isVisible() && !item(QStringLiteral("flowCanvas"))->isVisible(), QStringLiteral("Narrow-window settings navigation failed."));
+    require(item(QStringLiteral("studioPreview"))->isVisible() && !item(QStringLiteral("flowCanvas"))->isVisible(), QStringLiteral("Narrow-window settings navigation failed."));
     click(QStringLiteral("showStudioCanvas"));
     require(item(QStringLiteral("flowCanvas"))->isVisible(), QStringLiteral("Narrow-window navigation lost the canvas."));
     for (int i = 0; i < 4; ++i) click(QStringLiteral("canvasZoomIn"));

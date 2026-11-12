@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,9 @@ struct DefinitionEntry {
     std::vector<std::string> uses;
     std::vector<std::string> used_by;
     std::string state{};
+    std::string title{};
+    std::string synopsis{};
+    std::string owner{};
 };
 struct LibraryDocument {
     std::filesystem::path relative_path;
@@ -35,5 +39,5 @@ struct Library {
 
 // Scans the selected development checkout only. Both unknown checkout
 // schemas and failed documents are surfaced without interpreting their fields.
-[[nodiscard]] Library inspect_checkout(const std::filesystem::path& selected);
+[[nodiscard]] Library inspect_checkout(const std::filesystem::path& selected, std::optional<Origin> only = {});
 } // namespace pgp::studio

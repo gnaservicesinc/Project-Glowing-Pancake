@@ -31,8 +31,8 @@ Dialog {
                     objectName: "newReusableGroupId"
                     Layout.fillWidth: true
                     maximumLength: 128
-                    placeholderText: qsTr("New group ID")
-                    Accessible.name: qsTr("New reusable group ID")
+                    placeholderText: qsTr("Name for the group")
+                    Accessible.name: qsTr("Name for the group")
                 }
                 Button {
                     objectName: "createReusableGroup"

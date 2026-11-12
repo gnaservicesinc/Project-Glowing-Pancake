@@ -148,16 +148,20 @@ qt_add_resources(pgp-game founding_images
 if(APPLE)
     set(CMAKE_OBJCXX_COMPILER "${CMAKE_CXX_COMPILER}")
     enable_language(OBJCXX)
-    target_sources(pgp-game PRIVATE menu_video_mac.mm
-        "${PROJECT_SOURCE_DIR}/assets/menu/Pancake.icns"
-        "${PROJECT_SOURCE_DIR}/assets/menu/horizon.mp4")
+    target_sources(pgp-game PRIVATE menu_video_mac.mm)
     set_source_files_properties(menu_video_mac.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
-    set_source_files_properties("${PROJECT_SOURCE_DIR}/assets/menu/Pancake.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-    set_source_files_properties("${PROJECT_SOURCE_DIR}/assets/menu/horizon.mp4" PROPERTIES MACOSX_PACKAGE_LOCATION Resources/Menu)
     target_link_libraries(pgp-game PRIVATE "-framework AVFoundation" "-framework CoreVideo" "-framework QuartzCore")
-    set_target_properties(pgp-game PROPERTIES
-        MACOSX_BUNDLE TRUE OUTPUT_NAME "Project Glowing Pancake" OBJCXX_STANDARD 20
-        MACOSX_BUNDLE_INFO_PLIST "${PROJECT_SOURCE_DIR}/src/app/Info.plist.in")
+    set_target_properties(pgp-game PROPERTIES OBJCXX_STANDARD 20)
+    option(PGP_MACOS_BUNDLE "Stage the macOS game bundle with its icon and video" ON)
+    if(PGP_MACOS_BUNDLE)
+        target_sources(pgp-game PRIVATE "${PROJECT_SOURCE_DIR}/assets/menu/Pancake.icns"
+            "${PROJECT_SOURCE_DIR}/assets/menu/horizon.mp4")
+        set_source_files_properties("${PROJECT_SOURCE_DIR}/assets/menu/Pancake.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+        set_source_files_properties("${PROJECT_SOURCE_DIR}/assets/menu/horizon.mp4" PROPERTIES MACOSX_PACKAGE_LOCATION Resources/Menu)
+        set_target_properties(pgp-game PROPERTIES
+            MACOSX_BUNDLE TRUE OUTPUT_NAME "Project Glowing Pancake"
+            MACOSX_BUNDLE_INFO_PLIST "${PROJECT_SOURCE_DIR}/src/app/Info.plist.in")
+    endif()
 endif()
 qt_add_resources(pgp-game domestic_map
     PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"

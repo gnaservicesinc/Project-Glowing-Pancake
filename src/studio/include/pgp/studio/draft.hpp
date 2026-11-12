@@ -28,6 +28,9 @@ public:
     // With no name, save the currently opened draft in place. Save As
     // accepts a new basename only and never adopts an existing file.
     void save(const std::filesystem::path& new_name = {});
+    // Save the edited collection over the project's reviewed source, using the
+    // same versioned transaction as the maintainer snapshot writer.
+    void save_reviewed(std::string_view summary);
 private:
     bool restore(std::deque<std::string>& from, std::deque<std::string>& to);
     std::filesystem::path checkout_;

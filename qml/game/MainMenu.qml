@@ -8,6 +8,7 @@ FocusScope {
     objectName: "mainMenu"
     property string page: "home"
     property bool canResume: false
+    property bool canDelete: false
     property string message: ""
     property int textSize: 16
     property Item lastFocusItem: null
@@ -21,11 +22,14 @@ FocusScope {
     signal resumeRequested()
     signal quitRequested()
     signal settingsSubmitted()
-    signal auxiliarySessionReset()
 
     GameInk { id: ink }
 
-    function home() { page = "home"; if (newGameButton.visible) newGameButton.forceActiveFocus() }
+    function home() {
+        page = "home"
+        if (resumeButton.visible) resumeButton.forceActiveFocus()
+        else if (newGameButton.visible) newGameButton.forceActiveFocus()
+    }
     function keepFocusVisible() {
         Qt.callLater(() => menu.reveal(menu.lastFocusItem))
     }
@@ -69,7 +73,7 @@ FocusScope {
         id: video
         objectName: "menuVideo"
         anchors.fill: parent
-        active: menu.visible && campaign.motionBackground && !campaign.reducedMotion && Qt.application.state === Qt.ApplicationActive
+        active: supported && menu.visible && campaign.motionBackground && !campaign.reducedMotion && Qt.application.state === Qt.ApplicationActive
         visible: active && frameReady
     }
     Rectangle {
@@ -113,27 +117,22 @@ FocusScope {
         anchors.bottom: footer.top
         anchors.leftMargin: menu.margin
         anchors.rightMargin: menu.margin
-        anchors.topMargin: menu.compact ? 78 : Math.max(108, menu.height * 0.14)
+        anchors.topMargin: menu.compact ? 70 : 85
         anchors.bottomMargin: 20
         contentWidth: availableWidth
         clip: true
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+        ScrollBar.vertical.policy: ScrollBar.AsNeeded
         ColumnLayout {
             id: homeContent
             onHeightChanged: menu.keepFocusVisible()
             width: homeScroll.availableWidth
-            spacing: menu.compact ? 14 : 24
-            Label {
-                text: qsTr("THE FUTURE STARTS WITH AN IDEA")
-                font.pixelSize: 10
-                font.letterSpacing: 3
-                color: ink.accent
-            }
+            spacing: menu.compact ? 8 : 16
             Label {
                 objectName: "menuTitle"
                 text: qsTr("GLOWING\nPANCAKE")
                 font.family: ink.displayFace
-                font.pixelSize: Math.min(menu.compact ? 44 : 66, (menu.width - 2 * menu.margin) / 6.5)
+                font.pixelSize: Math.min(menu.compact ? 37 : 59, (menu.width - 2 * menu.margin) / 6.5)
                 font.letterSpacing: 1.8
                 lineHeight: 0.96
                 color: ink.paper
@@ -145,6 +144,7 @@ FocusScope {
                 Layout.preferredWidth: Math.min(340, menu.width - 2 * menu.margin)
                 Layout.maximumWidth: Math.min(440, menu.width - 2 * menu.margin)
                 MenuButton {
+                    id: resumeButton
                     objectName: "menuResumeButton"
                     visible: menu.canResume
                     text: qsTr("Resume")
@@ -152,6 +152,12 @@ FocusScope {
                     textSize: menu.textSize * 1.3
                     Layout.fillWidth: true
                     onClicked: { menuAudio.select(); menu.resumeRequested() }
+                }
+                Loader {
+                    Layout.fillWidth: true
+                    active: menu.canDelete
+                    visible: active && status === Loader.Ready
+                    sourceComponent: optionalMenu.item ? optionalMenu.item.deleteAction : null
                 }
                 MenuButton {
                     id: newGameButton
@@ -224,7 +230,6 @@ FocusScope {
                     Layout.minimumWidth: 0
                     visible: status === Loader.Ready
                     source: optionalMenuSource
-                    onLoaded: item.sessionReset.connect(menu.auxiliarySessionReset)
                     Binding {
                         target: optionalMenu.item
                         property: "textSize"

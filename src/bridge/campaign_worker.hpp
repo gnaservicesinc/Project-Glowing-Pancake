@@ -26,7 +26,7 @@ public:
     void start();
     void stop();
 #if !PGP_DISTRIBUTION
-    void resetLocalData(std::uint64_t token);
+    void resetLocalData(std::uint64_t token, bool current_only);
     void editPlaytestFounder(std::uint64_t token,std::uint64_t revision,std::vector<std::string> traits,bool genius);
 #endif
     void retryPersistence(std::uint64_t token);

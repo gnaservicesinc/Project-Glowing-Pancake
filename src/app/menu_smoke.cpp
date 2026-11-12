@@ -194,10 +194,16 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
             state->revision=campaign.revision(); ++state->phase; break;
         }
         case 5:
-            if (!press(campaign.founding()->available() ? "foundingMainMenuButton" : "mainMenuButton")) { fail("main menu from setup"); return; }
+            if (item("foundingMainMenuButton") || item("mainMenuButton") ||
+                !key(window,window.contentItem(),Qt::Key_Escape)) { fail("Escape opens the menu from setup"); return; }
             ++state->phase; break;
         case 6:
-            if (!menu->isVisible() || !campaign.paused() || !press("menuResumeButton")) { fail("resume entry"); return; }
+            if (!menu->isVisible() || !campaign.paused() || !press("menuResumeButton")) {
+                const auto* resume=item("menuResumeButton");
+                qWarning() << "Menu visible" << menu->isVisible() << "paused" << campaign.paused()
+                           << "Resume visible" << (resume && resume->isVisible());
+                fail("resume entry"); return;
+            }
             ++state->phase; break;
         case 7:
             if (menu->isVisible()) { fail("resume route"); return; }
@@ -246,7 +252,7 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
                 if (video->decodedFrames() < state->frames_before+150 || !video->error().isEmpty()) { fail("native video loop"); return; }
             }
             if (!screenshot.isEmpty() && !window.grabWindow().save(screenshot)) { fail("menu screenshot"); return; }
-            if (!key(window,window.contentItem(),Qt::Key_Escape)) { fail("escape on main menu"); return; }
+            if (!press("menuQuitButton")) { fail("Quit opens confirmation"); return; }
             ++state->phase; break;
         case 12: {
             auto* dialog=window.findChild<QObject*>(QStringLiteral("exitConfirmDialog"));
@@ -267,24 +273,45 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
         }
         case 15: {
             auto* dialog=window.findChild<QObject*>(QStringLiteral("exitConfirmDialog"));
-            if (!dialog->property("visible").toBool() || !menu->isVisible()) {fail("paused menu exit confirmation");return;}
+            if (dialog->property("visible").toBool() || menu->isVisible()) {fail("Escape returns to the paused game");return;}
+            if (!key(window,window.contentItem(),Qt::Key_Escape) || !press("menuQuitButton")) {fail("Quit from the paused menu");return;}
             if (!screenshot.isEmpty()) window.grabWindow().save(screenshot+QStringLiteral(".exit.png"));
             if (!key(window,item("exitCancelButton"),Qt::Key_Escape)) { fail("escape cancels confirmation"); return; }
             ++state->phase; break;
         }
         case 16: {
             auto* dialog=window.findChild<QObject*>(QStringLiteral("exitConfirmDialog"));
-            if (dialog->property("visible").toBool() || !menu->isVisible() || !press("menuQuitButton")) {
-                fail("cancel keeps game and quit uses confirmation"); return;
+            if (dialog->property("visible").toBool() || !menu->isVisible() || !press("deleteCurrentGameButton")) {
+                fail("cancel keeps the current game and its delete action"); return;
             }
             ++state->phase; break;
         }
-        case 17:
+        case 17: {
+            auto* dialog=window.findChild<QObject*>(QStringLiteral("deleteCampaignDialog"));
+            auto* remove=item("confirmDeleteCurrentGame");
+            if (!dialog || !dialog->property("visible").toBool() || !remove ||
+                !key(window,remove,Qt::Key_Escape)) { fail("Escape cancels the delete confirmation"); return; }
+            ++state->phase; break;
+        }
+        case 18:
+            if (!campaign.currentCampaign() || !press("deleteCurrentGameButton") ||
+                !press("confirmDeleteCurrentGame")) { fail("confirm deletion from the menu"); return; }
+            ++state->phase; break;
+        case 19:
+            if (campaign.currentCampaign() || campaign.founding()->hasDraft() ||
+                std::filesystem::exists(paths.saves_directory/"continuing/current.pgpsave") ||
+                !std::filesystem::exists(paths.saves_directory/"menu-check.pgpsave") ||
+                !campaign.fullScreen() || !press("menuQuitButton")) {
+                fail("delete clears the continuing game and keeps manual saves and settings"); return;
+            }
+            ++state->phase; break;
+        case 20:
             if (!press("exitConfirmButton") || !window.property("exitConfirmed").toBool()) { fail("confirmed exit"); return; }
             window.setProperty("menuSmokePassed",true);
             std::cout << "Main menu check passed, including the confirmed exit." << std::endl;
-            qInfo() << "Main menu smoke passed: launch, keyboard, credits, 200% settings, persistence, music, video loop,"
-                       " setup, resume, load/error recovery and Escape/quit confirmation with cancel and actual exit.";
+            qInfo() << "Main menu smoke passed: keyboard, settings, load/error recovery, Escape/Resume,"
+                       " confirmed deletion with manual saves retained, and quit confirmation.";
+            if (video->supported()) qInfo() << "Native menu video loop verified.";
             timer->stop(); break;
         }
     });

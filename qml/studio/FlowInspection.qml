@@ -6,7 +6,7 @@ ColumnLayout {
     id: panel
     required property QtObject inspector
     spacing: 8
-    Label { text: qsTr("Test on isolated scenario state"); font.bold: true }
+    Label { text: qsTr("Preview this event"); font.bold: true }
     Label {
         Layout.fillWidth: true
         visible: panel.inspector.scenarios.length === 0
@@ -43,10 +43,10 @@ ColumnLayout {
                 placeholderText: qsTr("Seed · blank uses scenario seed")
                 Accessible.name: qsTr("Test seed")
             }
-            CheckBox { id: isolate; text: qsTr("Selected flow only"); checked: true }
+            CheckBox { id: isolate; text: qsTr("Show this event only"); checked: true }
             Button {
                 objectName: "startFlowTest"
-                text: qsTr("Start test")
+                text: qsTr("Start preview")
                 enabled: !panel.inspector.busy && headquarters.currentIndex >= 0
                 onClicked: panel.inspector.start(scenario.currentText, headquarters.currentText, seed.text, isolate.checked)
             }
@@ -69,7 +69,7 @@ ColumnLayout {
             Layout.fillWidth: true
             maximumLength: 10
             text: panel.inspector.nextDate
-            Accessible.name: qsTr("Advance test through date")
+            Accessible.name: qsTr("Preview through this date")
         }
         Button {
             objectName: "advanceFlowTest"

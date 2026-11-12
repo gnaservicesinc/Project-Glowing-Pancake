@@ -18,8 +18,8 @@ sets the opening mission, equity, salary and board terms.
 
 **Current state.** The 2026-11-09 review identified substantial unfinished main-game
 work; [selected refinement milestones](docs/FEEDBACK_REFINEMENTS.md) now lead the
-backlog. Release playtest builds include **Content Studio** and **Playtest
-Environment**, where testers can reset local data. Use `--enable-distribution`
+backlog. Development builds include **Content Studio** and a confirmed **Delete current
+game** menu action. **Playtest Environment** can reset all local playtest data. Use `--enable-distribution`
 to build the game for distribution.
 The ongoing [immersive redesign](docs/IMMERSIVE_COMPANY_PLAN.md) expands this work.
 Fresh founder companies have three to six family workspaces or an inherited office,
@@ -65,7 +65,7 @@ and objectives. The separate Content Studio shares the typed event runtime
 and versioned content tools. The [playability guide](docs/PLAYABILITY.md)
 describes the controls and starting paths.
 
-The finalized internal content version is **0.70.0-dev.1**, generation **71**.
+The finalized internal content version is **0.73.1-dev.1**, generation **75**.
 Game and editor versions remain development placeholders. Human validation,
 extended QA, native packaging and release gates are carried into later
 phases in the [backlog](docs/BACKLOG.md).
@@ -92,8 +92,8 @@ same place. Otherwise New Game opens the 1997 prologue and leads through foundin
 to the 2015 workspace. The HUD, room controls and device dock open the company's
 tools. Select a person's vector portrait to inspect their profile. Devices & apps includes
 owned equipment, reviewed purchases, delivery, service and power controls. Apps
-choose an available compatible device; workstations remain at HQ. Escape pauses
-and opens the menu; Quit uses an exit confirmation. [World and portrait design](docs/GAMEPLAY_INTERFACE.md).
+choose an available compatible device; workstations remain at HQ. Escape opens the pause menu. Press Escape again or choose Resume to return to
+the game. Quit asks for confirmation. [World and portrait design](docs/GAMEPLAY_INTERFACE.md).
 The Codex Run action uses `./script/build_and_run.sh` to explicitly build,
 package and launch. Use the in-game guide
 or [player path](docs/PLAYABILITY.md) for the first loop. The headless executable

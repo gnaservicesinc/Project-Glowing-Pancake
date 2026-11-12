@@ -21,7 +21,7 @@ std::vector<FormOption> group_variable_options(const DraftDocument& draft, conte
     }
     return result;
 }
-bool create_flow_group(DraftDocument& draft, std::string_view source, std::string_view id) {
+bool create_flow_group(DraftDocument& draft, std::string_view source, std::string_view id, std::string_view title) {
     if (!content::valid_id(id) || draft.collection().find(id)) throw std::invalid_argument("Choose a new stable lowercase group ID.");
     auto group = detail::find_flow(draft, source);
     if (!group.on_committed.empty() || detail::seeded_root(group) || group.lifecycle.mode == content::LifecycleMode::continuous)
@@ -33,6 +33,7 @@ bool create_flow_group(DraftDocument& draft, std::string_view source, std::strin
     if (!group.group) group.group.emplace();
     std::erase(group.tags,"base_event");
     auto candidate = draft.collection();
+    if (!title.empty()) candidate.messages[std::string(id) + ".editor_title"] = title;
     candidate.definitions.emplace(id, content::Definition{std::string(id),1,std::move(group)});
     return draft.replace(candidate);
 }

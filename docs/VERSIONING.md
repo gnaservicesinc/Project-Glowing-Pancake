@@ -23,7 +23,11 @@ A human-readable release version identifies one immutable published payload. Nev
 
 ## 2. Authoring workflow and version controls
 
-Ordinary saves preserve drafts/work in progress and mark pending content changes. They do not create a public version, tag, commit, push, or store upload. E1A-04 implements the following workflow through the shared writer and maintainer CLI. E1B-02 exposes **Review content revision** and **Finalize reviewed batch** using that same writer:
+**Save to project** validates the edited collection and replaces the reviewed
+runtime source in the selected checkout. A semantic change creates an internal
+content revision with the same journaled writer used by the maintainer CLI.
+Git history, tags and public releases remain separate. The explicit batch
+review also accepts separately prepared sources:
 
 1. Gather the selected content change set and compare with the last finalized content snapshot. Include referenced text/assets and show the actual file/semantic diff.
 2. Validate the collection, references, trigger/effect graphs, lifecycle rules, units, and required local test fixtures. Invalid drafts may be saved but cannot enter the reviewed runtime collection.

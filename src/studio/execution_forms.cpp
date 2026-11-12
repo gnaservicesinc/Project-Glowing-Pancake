@@ -57,7 +57,7 @@ std::vector<FormOption> subflow_choices(const FormBuilder& builder) {
             (flow->group && !flow->group->empty()))
             continue;
         std::set<std::string> visited;
-        if (!reaches_caller(collection, *flow, builder.id, visited)) options.push_back({id, id});
+        if (!reaches_caller(collection, *flow, builder.id, visited)) options.push_back({id, event_name(collection, definition)});
     }
     return options;
 }
@@ -74,16 +74,26 @@ Effect initial_effect(const DraftDocument& draft, Scope scope) {
     if (options.empty()) throw std::invalid_argument("No effect operation is available in this scope.");
     return new_effect(draft, scope, (decision != options.end() ? *decision : options.front()).value);
 }
-void insert_node(FlowDefinition& flow, std::string& link, std::string_view choice, const DraftDocument& draft) {
+std::string new_message(Collection& collection, std::string_view stem, std::string_view copy) {
+    const auto base = std::string(stem.substr(0, 110));
+    auto key = base;
+    for (unsigned suffix = 2; collection.messages.contains(key); ++suffix)
+        key = base + "." + std::to_string(suffix);
+    collection.messages.emplace(key, copy);
+    return key;
+}
+void insert_node(Collection& collection, FlowDefinition& flow, std::string& link, std::string_view choice,
+                 const DraftDocument& draft, const std::string& flow_id) {
     if (choice.empty()) return;
     Node node{};
     const auto kind = choice.substr(0, choice.find('/'));
     auto id = available_node_id(flow, kind);
     if (kind == "dialogue") {
         node.kind = NodeKind::dialogue;
-        node.title_key = id + ".title";
-        node.text_key = id + ".text";
-        node.choices.push_back({"continue", id + ".continue", link});
+        const auto key = flow_id + "." + id;
+        node.title_key = new_message(collection, key + ".title", "New dialogue");
+        node.text_key = new_message(collection, key + ".text", "Write the dialogue here.");
+        node.choices.push_back({"continue", new_message(collection, key + ".continue", "Continue"), link});
         node.default_choice = "continue";
     } else if (kind == "random") {
         node.kind = NodeKind::random;
@@ -96,7 +106,7 @@ void insert_node(FlowDefinition& flow, std::string& link, std::string_view choic
             node.effects.push_back(initial_effect(draft, flow.scope));
         } else if (kind == "news" || kind == "result") {
             node.kind = kind == "news" ? NodeKind::news : NodeKind::result;
-            node.text_key = id + ".text";
+            node.text_key = new_message(collection, flow_id + "." + id + ".text", "Write what the player sees here.");
         } else if (kind == "delay") {
             node.kind = NodeKind::delay;
             node.delay_days = 1;
@@ -112,10 +122,10 @@ void insert_node(FlowDefinition& flow, std::string& link, std::string_view choic
     link = std::move(id);
 }
 std::vector<FormOption> insert_choices(const FormBuilder& builder) {
-    std::vector<FormOption> options{{"", "Choose a node to insert"}, {"news", "News"}, {"dialogue", "Dialogue"},
-        {"result", "Result"}, {"delay", "Delay"}, {"sequence", "Sequence"}, {"random", "Weighted branches"}};
+    std::vector<FormOption> options{{"", "Choose what to add"}, {"news", "News"}, {"dialogue", "Dialogue"},
+        {"result", "Result"}, {"delay", "Delay"}, {"sequence", "Sequence"}, {"random", "Pick a random outcome"}};
     if (!effect_choices(builder.draft, builder.flow.scope).empty())
-        options.insert(options.begin() + 1, {"effect", "Effects"});
+        options.insert(options.begin() + 1, {"effect", "Change something"});
     for (const auto& target : subflow_choices(builder))
         options.push_back({"subflow/" + target.value, "Call " + target.label});
     return options;
@@ -156,6 +166,14 @@ void node_fields(FormBuilder& builder, const std::string& id, const Node& node, 
     if (!node.text_key.empty())
         builder.add("text", "Text key", node.text_key, "Reference a stable localized text key.", FormControl::text,
                     [access](FlowDefinition& flow, std::string_view value) { access(flow).text_key = value; });
+    if (!node.text_key.empty()) {
+        const auto* copy = builder.draft.collection().message(node.text_key);
+        builder.add_document("body_copy", "What the player reads", copy ? *copy : "",
+            "Changes this text wherever the event uses it.", FormControl::paragraph,
+            [access](Collection& collection, FlowDefinition& flow, std::string_view value) {
+                collection.messages[access(flow).text_key] = value;
+            });
+    }
     if(node.kind==NodeKind::dialogue || node.kind==NodeKind::news || node.kind==NodeKind::result) {
         for(std::size_t i=0;i<node.participants.size();++i) {
             const auto& p=node.participants[i];const auto prefix="participant/"+std::to_string(i)+"/";
@@ -186,18 +204,26 @@ void node_fields(FormBuilder& builder, const std::string& id, const Node& node, 
     if (node.kind == NodeKind::dialogue) {
         builder.add("title", "Title key", node.title_key, "Reference a stable localized title key.", FormControl::text,
                     [access](FlowDefinition& flow, std::string_view value) { access(flow).title_key = value; });
+        const auto* title = builder.draft.collection().message(node.title_key);
+        builder.add_document("title_copy", "Title the player sees", title ? *title : "",
+            {}, FormControl::text, [access](Collection& collection, FlowDefinition& flow, std::string_view value) {
+                collection.messages[access(flow).title_key] = value;
+            });
         std::vector<FormOption> options;
-        for (const auto& choice : node.choices) options.push_back({choice.id, choice.id});
+        for (const auto& choice : node.choices) {
+            const auto* label = builder.draft.collection().message(choice.label_key);
+            options.push_back({choice.id, label ? *label : readable_name(choice.id)});
+        }
         builder.add("default_choice", "Default on dismissal", node.default_choice, "The existing choice used on dismissal.",
                     FormControl::choice, [access](FlowDefinition& flow, std::string_view value) { access(flow).default_choice = value; }, std::move(options));
         if (node.choices.size() < 32)
-            builder.action("append", "Add dialogue choice", "Add a choice using the first choice's continuation. Edit its own link from the outline.",
-                           [id, access](FlowDefinition& flow, std::string_view) {
-                auto& choices = access(flow).choices;
-                const auto key = unique_row(choices, "choice");
-                const auto label = id.size() + key.size() + 1 <= 128 ? id + "." + key : "studio." + key;
-                choices.push_back({key, label, choices.front().next});
-            });
+            builder.add_document("append", "Add a player choice", "","Edit its wording and destination in the outline.",
+                FormControl::button, [id, owner = builder.id, access](Collection& collection, FlowDefinition& flow, std::string_view) {
+                    auto& choices = access(flow).choices;
+                    const auto key = unique_row(choices, "choice");
+                    const auto label = new_message(collection, owner + "." + id + "." + key, "New choice");
+                    choices.push_back({key, label, choices.front().next});
+                });
     }
     if (node.kind == NodeKind::delay)
         builder.add("days", "Simulated days", std::to_string(node.delay_days), "Work resumes at the due morning.",
@@ -278,7 +304,12 @@ void choice_fields(FormBuilder& builder, const Node& node, const NodeAccess& acc
     });
     builder.add("label", "Label key", choice.label_key, "Reference a stable localized choice label.", FormControl::text,
                 [access, index](FlowDefinition& flow, std::string_view value) { access(flow).choices.at(index).label_key = value; });
-    add_link_fields(builder, "next", "On choice", choice.next,
+    const auto* label = builder.draft.collection().message(choice.label_key);
+    builder.add_document("choice_copy", "Button text", label ? *label : "", {}, FormControl::text,
+        [access, index](Collection& collection, FlowDefinition& flow, std::string_view value) {
+            collection.messages[access(flow).choices.at(index).label_key] = value;
+        });
+    add_link_fields(builder, "next", "After this choice", choice.next,
                     [access, index](FlowDefinition& flow) -> std::string& { return access(flow).choices.at(index).next; });
     order_fields(builder, node.choices.size(), index,
                  [access](FlowDefinition& flow) -> std::vector<Choice>& { return access(flow).choices; });
@@ -349,29 +380,33 @@ void effect_fields(FormBuilder& builder, const Node& node, const NodeAccess& acc
             effects.erase(effects.begin() + static_cast<std::ptrdiff_t>(index));
         });
 }
-void append_node_outline(std::vector<OutlineRow>& rows, const FlowDefinition& flow, const std::string& id, std::set<std::string>& reached) {
+void append_node_outline(std::vector<OutlineRow>& rows, const Collection& collection, const FlowDefinition& flow, const std::string& id, std::set<std::string>& reached) {
     if (!reached.insert(id).second) return;
     const auto& node = flow.nodes.at(id);
     const auto key = "node/" + id;
-    auto label = std::string(node_label(node.kind)) + " · " + id;
+    const auto* title = collection.message(node.title_key);
+    auto label = std::string(node_label(node.kind)) + " · " + (title ? *title : readable_name(id));
     if (id == flow.entry_node) label = "Entry · " + label;
     if (id == flow.exit_node) label = "Exit path · " + label;
     rows.push_back({key, std::move(label), 1});
     for (std::size_t index = 0; index < node.effects.size(); ++index) {
         const auto& effect = node.effects[index];
         const auto part = key + "/effect/" + std::to_string(index);
-        rows.push_back({part, std::to_string(index + 1) + ". " + effect.operation + " · " + effect.target, 2});
+        rows.push_back({part, std::to_string(index + 1) + ". " + readable_name(effect.operation), 2});
         if (effect.value_expression) append_expression_outline(rows, *effect.value_expression, part + "/expression", 3);
     }
-    for (std::size_t index = 0; index < node.choices.size(); ++index)
+    for (std::size_t index = 0; index < node.choices.size(); ++index) {
+        const auto& choice = node.choices[index];
+        const auto* label = collection.message(choice.label_key);
         rows.push_back({key + "/choice/" + std::to_string(index),
-                        "Choice " + std::to_string(index + 1) + " · " + node.choices[index].id + " → " + node.choices[index].next, 2});
+                        "Choice · " + (label ? *label : readable_name(choice.id)), 2});
+    }
     for (std::size_t index = 0; index < node.children.size(); ++index)
-        rows.push_back({key + "/child/" + std::to_string(index), "Step " + std::to_string(index + 1) + " → " + node.children[index], 2});
+        rows.push_back({key + "/child/" + std::to_string(index), "Step " + std::to_string(index + 1) + " → " + readable_name(node.children[index]), 2});
     for (std::size_t index = 0; index < node.branches.size(); ++index)
         rows.push_back({key + "/branch/" + std::to_string(index),
-                        "Outcome " + std::to_string(index + 1) + " · " + node.branches[index].id + " → " + node.branches[index].next, 2});
-    visit_node_links(node, [&](const auto& target) { append_node_outline(rows, flow, target, reached); });
+                        "Outcome " + std::to_string(index + 1) + " · " + readable_name(node.branches[index].id) + " → " + readable_name(node.branches[index].next), 2});
+    visit_node_links(node, [&](const auto& target) { append_node_outline(rows, collection, flow, target, reached); });
 }
 } // namespace
 
@@ -379,16 +414,16 @@ void add_link_fields(FormBuilder& builder, std::string key, std::string label, c
     builder.add(key, std::move(label), target, "Retarget this link and remove only paths no longer reachable from entry/exit. Undo restores the whole change. The compiler rejects cycles and incompatible continuations.",
                 FormControl::choice, [access](FlowDefinition& flow, std::string_view value) { access(flow) = value; prune_unused(flow); },
                 node_choices(builder.flow));
-    builder.add(key + "/insert", "Insert on this link", {}, "Keep the current continuation after the new node or authored branch.",
-                FormControl::choice, [access, &draft = builder.draft](FlowDefinition& flow, std::string_view choice) {
-        insert_node(flow, access(flow), choice, draft);
+    builder.add_document(key + "/insert", "Add a box here", {}, "The new step goes before the current destination.",
+                FormControl::choice, [access, &draft = builder.draft, id = builder.id](Collection& collection, FlowDefinition& flow, std::string_view choice) {
+        insert_node(collection, flow, access(flow), choice, draft, id);
     }, insert_choices(builder));
 }
-void append_execution_outline(std::vector<OutlineRow>& rows, const DraftDocument&, const FlowDefinition& flow) {
-    rows.push_back({"execution", "Execution graph"});
+void append_execution_outline(std::vector<OutlineRow>& rows, const DraftDocument& draft, const FlowDefinition& flow) {
+    rows.push_back({"execution", "What happens"});
     std::set<std::string> reached;
-    append_node_outline(rows, flow, flow.entry_node, reached);
-    if (!flow.exit_node.empty()) append_node_outline(rows, flow, flow.exit_node, reached);
+    append_node_outline(rows, draft.collection(), flow, flow.entry_node, reached);
+    if (!flow.exit_node.empty()) append_node_outline(rows, draft.collection(), flow, flow.exit_node, reached);
 }
 void build_execution_form(FormBuilder& builder, std::string_view row) {
     if (row == "execution") {

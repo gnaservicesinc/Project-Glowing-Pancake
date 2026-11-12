@@ -74,6 +74,12 @@ Continuous modifiers have an owner and a stable key. Entry registers the modifie
 
 ## 4. Studio layout and current-content management
 
+The event editor opens on the current project content. Use **Story** to read
+and edit the player-facing text, **Steps** or **Graph** for timing and effects,
+and **Preview in game** to simulate the event within Studio. **Save to project**
+updates the reviewed repository source and its internal content revision.
+
+
 Use an original three-pane workspace, with persistent project/version status and clear **Browse**, **Build**, **Test**, and **Review changes** stages:
 
 ```text

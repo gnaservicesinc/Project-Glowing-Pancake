@@ -7,7 +7,6 @@ FocusScope {
     id: opening
     objectName: "foundingScreen"
     required property real textScale
-    signal menuRequested()
     readonly property var story: campaign.founding
     readonly property bool reducedMotion: campaign.reducedMotion
     readonly property int beatIndex: Math.max(0, script.beats.findIndex(page => page.id === story.beat))
@@ -35,6 +34,8 @@ FocusScope {
             givenName.text = story.form.first_name
             surname.text = story.form.last_name
         }
+        if (choiceView.contentItem) choiceView.contentItem.contentY = 0
+        if (narrativeView.contentItem) narrativeView.contentItem.contentY = 0
         reveal.restart()
         forceActiveFocus()
     }
@@ -95,90 +96,100 @@ FocusScope {
         RowLayout {
             Layout.fillWidth: true
             Label { Layout.fillWidth: true; text: opening.beat.date || ""; color: "#d9b583"; font.pixelSize: opening.typeSize*0.8; font.letterSpacing: 2; elide: Text.ElideRight }
-            WorldButton { objectName: "foundingMainMenuButton"; text: qsTr("Menu"); textSize: opening.typeSize; padding: opening.compact ? 8 : 14; onClicked: opening.menuRequested() }
         }
         Item {
             id: body
             Layout.fillWidth: true; Layout.fillHeight: true
-            ColumnLayout {
+            ScrollView {
+                id: choiceView
+                objectName: "foundingChoiceScroll"
                 anchors.fill: parent
                 visible: !opening.birthPaper && opening.beat.kind !== "appearance" && !opening.narrative
-                spacing: opening.compact ? 10 : 20
-                Label {
-                    objectName: "foundingTitle"
-                    visible: opening.narrative || !opening.compact || opening.textScale < 1.5
-                    Layout.fillWidth: true
-                    text: opening.beat.title || ""; color: ink.paper
-                    font.family: ink.displayFace; font.pixelSize: opening.compact ? opening.typeSize*1.3 : Math.min(54,opening.typeSize*2.6)
-                    wrapMode: Text.Wrap
-                }
-                Label {
-                    objectName: "foundingNarration"
-                    Layout.fillWidth: true; Layout.maximumWidth: opening.narrative ? 860 : 1200
-                    visible: opening.narrative || !opening.compact
-                    text: opening.beat.narration || ""; color: "#c9d0d4"
-                    font.pixelSize: opening.typeSize*(opening.compact ? 0.85 : 1.12); wrapMode: Text.Wrap
-                }
-                RowLayout {
-                    visible: !opening.narrative
-                    Layout.fillWidth: true
+                contentWidth: availableWidth
+                clip: true
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                ColumnLayout {
+                    width: choiceView.availableWidth
+                    spacing: opening.compact ? 8 : 14
                     Label {
-                        objectName: "foundingQuestion"; Layout.fillWidth: true
+                        objectName: "foundingTitle"
+                        Layout.fillWidth: true
+                        text: opening.beat.title || ""; color: ink.paper
+                        font.family: ink.displayFace; font.pixelSize: opening.typeSize*(opening.compact ? 1.25 : 2.6)
+                        wrapMode: Text.Wrap
+                    }
+                    Label {
+                        objectName: "foundingNarration"
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: 1000
+                        text: opening.beat.narration || ""; color: "#c9d0d4"
+                        font.pixelSize: opening.typeSize; wrapMode: Text.Wrap
+                    }
+                    Label {
+                        objectName: "foundingQuestion"
+                        Layout.fillWidth: true
                         text: opening.beat.prompt || ""; color: "#e7c28b"
                         font.pixelSize: opening.typeSize; wrapMode: Text.Wrap
                     }
-                    WorldButton { visible: opening.compact; text: qsTr("Scene"); textSize: opening.typeSize*0.8; onClicked: sceneText.open() }
-                }
-                GridLayout {
-                    id: decisions
-                    objectName: "foundingChoices"
-                    Layout.fillWidth: true; Layout.fillHeight: true
-                    visible: !opening.narrative
-                    readonly property var rows: opening.beat.choices || []
-                    columns: rows.length > 8 ? (width < 750 ? 3 : 4) : rows.length > 4 ? (width < 750 ? 2 : 4) : rows.length === 3 ? (width < 650 ? 1 : 3) : 2
-                    rowSpacing: opening.compact ? 6 : 14; columnSpacing: rowSpacing
-                    Repeater {
-                        model: decisions.rows
-                        Button {
-                            id: choice
-                            required property var modelData
-                            objectName: "foundingChoice_" + modelData.id
-                            property string detail: modelData.available === false ? modelData.reason : modelData.detail || ""
-                            Layout.fillWidth: true; Layout.fillHeight: true; Layout.preferredWidth: 1; Layout.preferredHeight: 1
-                            Layout.minimumWidth: 0; Layout.minimumHeight: 0
-                            padding: opening.compact ? 8 : 22
-                            enabled: modelData.available !== false
-                            activeFocusOnTab: true
-                            Accessible.name: modelData.name; Accessible.description: detail
-                            ToolTip.visible: hovered && !!detail; ToolTip.text: detail
-                            background: Rectangle {
-                                radius: 6; color: choice.down ? "#43505c" : choice.hovered || choice.activeFocus ? "#314354" : "#d9203040"
-                                border.color: choice.activeFocus ? "#f5c47d" : choice.hovered ? "#ab9474" : "#56616b"
-                                border.width: choice.activeFocus ? 2 : 1
-                                Rectangle { width: 3; height: parent.height*0.4; anchors.verticalCenter: parent.verticalCenter; color: "#c7a779"; visible: choice.hovered || choice.activeFocus }
-                            }
-                            contentItem: Column {
-                                spacing: opening.compact ? 2 : 10
-                                Text {
-                                    id: choiceName
-                                    width: parent.width
-                                    text: choice.modelData.name; textFormat: Text.PlainText
-                                    color: choice.enabled ? "#f5ebda" : "#9da5ac"
-                                    font.pixelSize: opening.typeSize*(opening.compact ? 0.85 : 1.15)
-                                    font.weight: Font.Medium; wrapMode: Text.Wrap
+                    GridLayout {
+                        id: decisions
+                        objectName: "foundingChoices"
+                        Layout.fillWidth: true
+                        readonly property var rows: opening.beat.choices || []
+                        columns: width < opening.typeSize * 17 ? 1 : rows.length >= 3 && width >= opening.typeSize * 44 ? 3 : 2
+                        rowSpacing: opening.compact ? 6 : 14; columnSpacing: rowSpacing
+                        Repeater {
+                            model: decisions.rows
+                            Button {
+                                id: choice
+                                required property var modelData
+                                objectName: "foundingChoice_" + modelData.id
+                                property string detail: modelData.available === false ? modelData.reason : modelData.detail || ""
+                                Layout.fillWidth: true; Layout.preferredWidth: 1; Layout.alignment: Qt.AlignTop
+                                Layout.minimumWidth: 0; Layout.minimumHeight: 0
+                                padding: opening.compact ? 9 : 14
+                                enabled: modelData.available !== false
+                                activeFocusOnTab: true
+                                onActiveFocusChanged: {
+                                    if (!activeFocus) return
+                                    const view = choiceView.contentItem
+                                    const top = mapToItem(view.contentItem, 0, 0).y
+                                    if (top < view.contentY) view.contentY = top
+                                    else if (top + height > view.contentY + view.height)
+                                        view.contentY = top + height - view.height
                                 }
-                                Text {
-                                    width: parent.width
-                                    visible: choice.height-choiceName.implicitHeight-2*choice.padding > implicitHeight+12 && !!text
-                                    text: choice.detail; textFormat: Text.PlainText; color: "#b9c7ce"
-                                    font.pixelSize: opening.typeSize*0.85; wrapMode: Text.Wrap
+                                Accessible.name: modelData.name; Accessible.description: detail
+                                ToolTip.visible: hovered && !!detail; ToolTip.text: detail
+                                background: Rectangle {
+                                    radius: 6; color: choice.down ? "#43505c" : choice.hovered || choice.activeFocus ? "#314354" : "#d9203040"
+                                    border.color: choice.activeFocus ? "#f5c47d" : choice.hovered ? "#ab9474" : "#56616b"
+                                    border.width: choice.activeFocus ? 2 : 1
+                                    Rectangle { width: 3; height: parent.height*0.4; anchors.verticalCenter: parent.verticalCenter; color: "#c7a779"; visible: choice.hovered || choice.activeFocus }
                                 }
+                                implicitHeight: choiceCopy.implicitHeight + topPadding + bottomPadding
+                                contentItem: Column {
+                                    id: choiceCopy
+                                    spacing: opening.compact ? 2 : 10
+                                    Text {
+                                        id: choiceName
+                                        width: parent.width
+                                        text: choice.modelData.name; textFormat: Text.PlainText
+                                        color: choice.enabled ? "#f5ebda" : "#9da5ac"
+                                        font.pixelSize: opening.typeSize
+                                        font.weight: Font.Medium; wrapMode: Text.Wrap
+                                    }
+                                    Text {
+                                        width: parent.width
+                                        visible: !!text
+                                        text: choice.detail; textFormat: Text.PlainText; color: "#b9c7ce"
+                                        font.pixelSize: opening.typeSize*0.84; wrapMode: Text.Wrap
+                                    }
+                                }
+                                onClicked: opening.answer(modelData.id)
                             }
-                            onClicked: opening.answer(modelData.id)
                         }
                     }
                 }
-                Item { visible: opening.narrative; Layout.fillHeight: true }
             }
             ScrollView {
                 id: narrativeView
@@ -280,7 +291,7 @@ FocusScope {
         RowLayout {
             Layout.fillWidth: true
             WorldButton { objectName: "foundingBackButton"; visible: opening.beatIndex > 0; text: qsTr("← Back"); textSize: opening.typeSize; padding: opening.compact ? 8 : 14; onClicked: opening.previousBeat() }
-            Label { Layout.fillWidth: true; text: opening.birthPaper ? qsTr("A family keepsake") : opening.beat.kind === "appearance" ? qsTr("Every feature is yours to change") : qsTr("Your story, before the company"); font.pixelSize: opening.typeSize*0.7; color: "#a3adb7"; elide: Text.ElideRight }
+            Item { Layout.fillWidth: true }
             WorldButton {
                 id: continueAction; objectName: "foundingNextButton"
                 visible: opening.narrative || opening.birthPaper || opening.beat.kind === "appearance"
@@ -291,12 +302,5 @@ FocusScope {
             }
         }
     }
-    GameDialog {
-        id: sceneText; anchors.centerIn: Overlay.overlay
-        title: opening.beat.title || ""; width: Math.min(opening.width-32,700); height: Math.min(opening.height-32,400)
-        modal: true
-        contentItem: Label { text: opening.beat.narration || ""; wrapMode: Text.Wrap; color: "#eee5d2"; font.pixelSize: opening.typeSize }
-        standardButtons: Dialog.Close
-    }
-    HomeStart { anchors.fill: parent; visible: opening.beat.kind === "home"; story: opening.story; textScale: opening.textScale; onMenuRequested: opening.menuRequested(); onAppearanceRequested: opening.moveTo("appearance") }
+    HomeStart { anchors.fill: parent; visible: opening.beat.kind === "home"; story: opening.story; textScale: opening.textScale; onAppearanceRequested: opening.moveTo("appearance") }
 }

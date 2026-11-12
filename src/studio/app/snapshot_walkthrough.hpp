@@ -42,7 +42,9 @@ QJsonObject run_snapshot_walkthrough(Browser& browser, QQuickWindow& window, con
         click(QStringLiteral("finalizeReviewedContent"));
     };
     const auto open = [&] {
-        click(QStringLiteral("openContentRevision"));
+        auto* dialog = window.findChild<QObject*>(QStringLiteral("contentRevisionReview"));
+        require(dialog && QMetaObject::invokeMethod(dialog, "open"), QStringLiteral("The review dialog did not open."));
+        settle();
         require(window.findChild<QObject*>(QStringLiteral("contentRevisionReview"))->property("visible").toBool(), QStringLiteral("The review dialog did not open."));
     };
     const auto reveal = [&](QQuickItem* target) {

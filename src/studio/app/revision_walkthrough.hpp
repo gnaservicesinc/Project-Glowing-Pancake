@@ -55,7 +55,9 @@ QJsonObject run_revision_walkthrough(Browser& browser, QQuickWindow& window, con
         require(index >= 0 && control->setProperty("currentIndex", index), QStringLiteral("Mapping option unavailable ") + text);
         settle();
     };
-    press(QStringLiteral("openRevisionComparison"));
+    auto* dialog = window.findChild<QObject*>(QStringLiteral("finalizedRevisionComparison"));
+    require(dialog && QMetaObject::invokeMethod(dialog, "open"), QStringLiteral("The comparison dialog did not open."));
+    settle();
     press(QStringLiteral("compareSelectedGenerations"));
     require(!reviewer->differences().isEmpty() && reviewer->canMigrate(), reviewer->message());
     const auto fields = reviewer->differences().size();

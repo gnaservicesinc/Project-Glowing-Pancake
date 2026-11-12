@@ -65,7 +65,7 @@ public:
     QString portrait() const;
     QVariantList appearanceParts() const;
     QStringList pronounOptions() const;
-    void reset();
+    void reset(bool save = true);
     [[nodiscard]] content::FoundingSelection selection() const;
     [[nodiscard]] std::vector<core::PeopleContact> openingContacts() const;
     static QVariantMap presentOffer(const content::FoundingCatalog&,content::FoundingSelection,

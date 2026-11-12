@@ -6,7 +6,7 @@
 
 namespace pgp::studio {
 
-enum class FormControl { note, text, integer, choice, button };
+enum class FormControl { note, text, paragraph, integer, choice, button };
 struct FormOption {
     std::string value;
     std::string label;
@@ -50,6 +50,11 @@ private:
 };
 [[nodiscard]] std::vector<OutlineRow> flow_outline(const DraftDocument& draft, std::string_view flow);
 [[nodiscard]] std::vector<FormOption> flow_scope_options(const DraftDocument& draft);
-bool create_flow(DraftDocument& draft, std::string_view id, std::string_view scope);
+[[nodiscard]] std::string readable_name(std::string_view name);
+[[nodiscard]] std::string_view event_presentation(const content::FlowDefinition&);
+[[nodiscard]] std::string event_name(const content::Collection&, const content::Definition&);
+bool create_flow(DraftDocument& draft, std::string_view id, std::string_view scope,
+                 std::string_view title = {}, std::string_view presentation = {}, std::string_view body = {});
+
 
 } // namespace pgp::studio

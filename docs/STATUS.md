@@ -1,6 +1,6 @@
 # Project status and next handoff
 
-Updated 2026-11-11
+Updated 2026-11-12
 
 ## Implementation progress
 
@@ -9,12 +9,27 @@ Updated 2026-11-11
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.73.0-dev.1**, generation **74**.
+immersive redesign advances content to **0.73.1-dev.1**, generation **75**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
 next tasks are candidates for that review. The initial implementation queue
 is closed.
+
+## Founding and event editor playtest fixes
+
+Escape opens the menu and returns to the paused campaign. The development menu
+offers a confirmed deletion of the continuing checkpoint and founder draft while
+preserving manual saves and settings. Distribution builds exclude the action.
+Founding decisions now size to their content, keep story context in the same
+scrollable scene and connect childhood activities to earlier decisions. Wealthy
+family savings start at $5 million.
+
+Content Studio opens on named company events and childhood scenes. An author
+can start from dialogue, news, hidden logic or a childhood scene, edit what
+players read, add steps or choices and save directly to the reviewed project content. The graph uses the same
+forms and compiler as the ordered event outline. A first-time human author study
+remains open.
 
 ## Selected life and development expansion (F-07, in progress)
 

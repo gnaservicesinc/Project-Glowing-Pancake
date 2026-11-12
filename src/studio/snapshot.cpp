@@ -15,7 +15,7 @@ namespace pgp::studio::detail {
 namespace {
 namespace fs=std::filesystem;
 using Json=SnapshotJson;
-constexpr auto history_path="authoring/content-history.json";
+constexpr auto history_path=snapshot_history_path;
 constexpr auto state_path="authoring/content-state.json";
 constexpr auto runtime_manifest="data/runtime/content-manifest.json";
 std::string required_read(PreparedSnapshot& p,const fs::path& root,const fs::path& path,std::size_t limit=4U*1024U*1024U) {
@@ -95,13 +95,13 @@ Json result_json(const SnapshotResult& r) {
 Json read_state(const fs::path& root) {
     const auto bytes=snapshot_read(root,state_path);if (!bytes) snapshot_refuse("missing_snapshot","No finalized internal content snapshot exists.");
     auto j=snapshot_parse(*bytes);snapshot_fields(j,{"format","generation","target","content_version","collection_hash","runtime_manifest_hash","history_hash","snapshot","snapshot_hash","required_game_version","save_policy","write_sequence"});
-    if (j.at("format")!=1 || !j.at("generation").is_number_unsigned() || j.at("generation")==0 || j.at("generation")>128 || !j.at("write_sequence").is_number_unsigned() || j.at("write_sequence")==0 || j.at("save_policy")!="reject-prior-content") snapshot_refuse("snapshot","Unsupported snapshot marker or generation.");
+    if (j.at("format")!=1 || !j.at("generation").is_number_unsigned() || j.at("generation")==0 || j.at("generation")>snapshot_history_generations || !j.at("write_sequence").is_number_unsigned() || j.at("write_sequence")==0 || j.at("save_policy")!="reject-prior-content") snapshot_refuse("snapshot","Unsupported snapshot marker or generation.");
     return j;
 }
 void validate_owned_artifacts(PreparedSnapshot& plan,const fs::path& root,const Json& state,Json& history,Json& baseline) {
-    const auto history_bytes=required_read(plan,root,history_path);history=snapshot_parse(history_bytes);
+    const auto history_bytes=required_read(plan,root,history_path);history=snapshot_parse(history_bytes,snapshot_history_bytes,snapshot_history_tokens);
     snapshot_fields(history,{"format","batches"});
-    if (history.at("format")!=1 || !history.at("batches").is_array() || history.at("batches").empty() || history.at("batches").size()>128 ||
+    if (history.at("format")!=1 || !history.at("batches").is_array() || history.at("batches").empty() || history.at("batches").size()>snapshot_history_generations ||
         state.at("history_hash")!=persistence::sha256(history_bytes)) snapshot_refuse("snapshot","Content history differs from its committed snapshot marker.");
     const auto& batch=history.at("batches").back();
     if (batch.at("generation")!=state.at("generation") || batch.at("content_version")!=state.at("content_version") || batch.at("collection_hash")!=state.at("collection_hash")) snapshot_refuse("snapshot","Content history and the committed generation disagree.");
@@ -115,21 +115,26 @@ void validate_owned_artifacts(PreparedSnapshot& plan,const fs::path& root,const 
     if (state.at("runtime_manifest_hash")!=persistence::sha256(manifest_bytes) || manifest.at("collection_hash")!=state.at("collection_hash") || manifest.at("generation")!=state.at("generation")) snapshot_refuse("snapshot","Runtime manifest differs from its committed generation.");
 }
 }
-PreparedSnapshot prepare_snapshot(const fs::path& root,const SnapshotRequest& request) {
+PreparedSnapshot prepare_snapshot(const fs::path& root,const SnapshotRequest& request,std::optional<EditedSnapshot> edited) {
     if (checkout_schema(root)!=content::content_schema) snapshot_refuse("unsupported_schema","The selected checkout is read-only for this validator.");
     if (fs::exists(checked_path(root,".pgp-editor/snapshot-transaction"))) snapshot_refuse("pending_snapshot","Recover the existing snapshot transaction before review/finalization.");
     const auto allowed=[](const fs::path& path){const auto s=path.generic_string();return path.extension()==".json" && (s.starts_with("data/drafts/") || s.starts_with("data/runtime/")) && s!="data/runtime/content-manifest.json";};
     if (!allowed(request.source) || !request.target.generic_string().starts_with("data/runtime/") || !allowed(request.target)) snapshot_refuse("path","Choose a local collection draft and a reviewed runtime collection target.");
     if (request.save_policy!="reject-prior-content") snapshot_refuse("compatibility","This internal writer cannot claim a migration. Use the actual exact-content save refusal policy.");
     PreparedSnapshot plan;
-    auto versions=snapshot_parse(required_read(plan,root,"project-versions.json",65536));snapshot_manifest(versions);
+    const auto versions_bytes=required_read(plan,root,"project-versions.json",65536);
+    if (edited && (request.source!=request.target || persistence::sha256(versions_bytes)!=edited->expected_versions))
+        snapshot_refuse("conflict","The project changed since it was opened. Reopen the project before saving.");
+    auto versions=snapshot_parse(versions_bytes);snapshot_manifest(versions);
     const auto versions_before=versions.at("components");
     const auto& identity=core::build_identity();
     if (versions.at("compatibility")!=Json{{"content_schema",identity.content_schema},{"simulation_rules",identity.simulation_rules},{"save_format",identity.save_format}})
         snapshot_refuse("compatibility","The checkout compatibility contract differs from the installed compiler/runtime.");
     const auto source=required_read(plan,root,request.source,content::maximum_document_bytes);
-    const auto current=required_read(plan,root,request.target,content::maximum_document_bytes);
-    const auto source_program=compile_source(source,content::foundation_registry());
+    if (edited && persistence::sha256(source)!=edited->expected_source)
+        snapshot_refuse("conflict","The content changed on disk. Reopen the project before saving.");
+    const auto current=request.source==request.target ? source : required_read(plan,root,request.target,content::maximum_document_bytes);
+    const auto source_program=compile_source(edited ? edited->collection : std::string_view{source},content::foundation_registry());
     auto candidate=snapshot_parse(source_program.canonical_content_bytes);
     auto current_program=compile_source(current,content::foundation_registry());
     const auto state_bytes=observe(plan,root,state_path);
@@ -174,10 +179,11 @@ PreparedSnapshot prepare_snapshot(const fs::path& root,const SnapshotRequest& re
     auto proposed_version=current_version;
     if (runtime_changed) {
         if (request.summary.empty() || request.summary.size()>2048 || request.summary.find('\0')!=std::string::npos) snapshot_refuse("summary","Provide a short explicit reviewed change summary.");
-        (void)snapshot_version(request.content_version);
-        if (snapshot_compare(request.content_version,current_version)<=0) snapshot_refuse("version","Finalized content needs a strictly newer Semantic Version.");
-        proposed_version=request.content_version;
-        if (generation>=128) snapshot_refuse("budget","Internal content history reached its bounded batch count.");
+        const auto requested_version=edited ? snapshot_game_bump(current_version,feature) : request.content_version;
+        (void)snapshot_version(requested_version);
+        if (snapshot_compare(requested_version,current_version)<=0) snapshot_refuse("version","Finalized content needs a strictly newer Semantic Version.");
+        proposed_version=requested_version;
+        if (generation>=snapshot_history_generations) snapshot_refuse("budget","Internal content history reached its bounded batch count.");
         ++generation;
     }
     candidate["content_version"]=proposed_version;
@@ -250,7 +256,10 @@ PreparedSnapshot prepare_snapshot(const fs::path& root,const SnapshotRequest& re
         // The marker remains last even for a formatting-only reconciliation.
         if (!plan.writes.empty()) {const auto bytes=required_read(plan,root,state_path);auto marker=snapshot_parse(bytes);marker["write_sequence"]=write_sequence+1;plan.writes.push_back({state_path,bytes,pretty(marker)});}
     }
-    for (const auto& file:plan.writes) { (void)snapshot_parse(file.after);actual_files.push_back({{"path",file.path.generic_string()},
+    for (const auto& file:plan.writes) {
+        if (file.path==fs::path{history_path}) (void)snapshot_parse(file.after,snapshot_history_bytes,snapshot_history_tokens);
+        else (void)snapshot_parse(file.after);
+        actual_files.push_back({{"path",file.path.generic_string()},
         {"before_hash",file.before?Json(persistence::sha256(*file.before)):Json(nullptr)},{"after_hash",persistence::sha256(file.after)}}); }
     Json observed=Json::object();for (const auto& [path,bytes]:plan.observed) observed[path.generic_string()]=bytes?Json(persistence::sha256(*bytes)):Json(nullptr);
     for (const auto& [path,identity]:plan.asset_observations) observed[path.generic_string()]=identity.first;

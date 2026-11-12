@@ -165,6 +165,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             }
             if(!click("birthSex_male")) {fail("Edit birth sex beside both name fields");return;}
             type(window, *input, QStringLiteral("Mira"));
+            type(window, *item("foundingSurname"), QStringLiteral("Vale"));
             if (!capture(".compact") || !press(window, input, Qt::Key_Return)) { fail("Compact name entry"); return; }
             state->phase = Phase::questions;
             break;
@@ -186,11 +187,20 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                     campaign.setTextScalePercent(200);window.resize(650,480);state->layout_phase=2;return;
                 }
                 if(state->layout_phase==2) {
+                    auto* choices_scroll=item("foundingChoiceScroll");
+                    if (!choices_scroll) { fail("The compact decision view needs a scrollable scene."); return; }
+                    const auto scroll_bounds=choices_scroll->mapRectToScene({0,0,choices_scroll->width(),choices_scroll->height()});
                     for(const auto& row:choices) {
                         const auto option=row.toMap();
                         auto* control=find_visible(window.contentItem(),"foundingChoice_"+option.value("id").toString());
-                        if(!control || control->height()<22 || !viewport.contains(control->mapRectToScene({0,0,control->width(),control->height()}))) {
-                            fail("Every choice must remain on the screen without pagination");return;
+                        if(!control || control->height()<22 || control->height()>scroll_bounds.height() ||
+                           control->height()>control->implicitHeight()+1) {
+                            fail("Every choice must fit its content and be reachable in the same scene");return;
+                        }
+                        control->forceActiveFocus(Qt::TabFocusReason);
+                        const auto bounds=control->mapRectToScene({0,0,control->width(),control->height()});
+                        if (!scroll_bounds.adjusted(-1,-1,1,1).contains(bounds)) {
+                            fail("Keyboard focus must reveal the complete choice");return;
                         }
                     }
                     if(!capture(".choices-"+id+"-compact")) {fail("Enlarged choice layout");return;}
@@ -406,7 +416,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 !state->customized || world.founding->appearance.parts[1]!=3 ||
                 !world.difficulty.empty() || !world.simulation.lab->research.empty() ||
                 pgp::core::iso_date(world.simulation.date) != "2015-01-01" ||
-                pgp::core::iso_date(world.simulation.end_date) != "2115-01-01" || !campaign.paused()) {
+                pgp::core::iso_date(world.simulation.end_date) != "2097-01-01" || !campaign.paused()) {
                 fail("The founding choices did not reach the paused campaign"); return;
             }
             state->opening = campaign.snapshot()->checkpoint;

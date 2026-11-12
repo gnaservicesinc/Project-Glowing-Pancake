@@ -27,7 +27,6 @@ Item {
     readonly property var nav: campaign.world.navigation
     readonly property string place: nav.place || "workspace"
     signal openApp(string app, string section, string device)
-    signal menuRequested()
     signal launcherRequested()
     function visit(id) { campaign.world.navigate(id, nav.scale || "hq", "", "", "") }
     function placeApp() {return place==="lab" || place==="research_annex" || place==="evaluation_suite"?"lab":place==="meeting" || place==="collaboration"?"inbox":place==="compute"?"operations":"office"}
@@ -132,7 +131,6 @@ Item {
                     Label {text:qsTr("AVAILABLE %1").arg(campaign.availableText);font.pixelSize:desktop.textSize;color:"#b7dfc7"}
                     Label {text:qsTr("Cash %1").arg(campaign.cashText);font.pixelSize:desktop.textSize*0.85;color:"#adbfbd"}
                 }
-                WorldButton {objectName:"mainMenuButton";text:qsTr("Menu");textSize:desktop.textSize;onClicked:desktop.menuRequested()}
             }
             Flow {
                 Layout.fillWidth:true;spacing:8

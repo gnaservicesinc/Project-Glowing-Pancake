@@ -1,6 +1,7 @@
 #include <pgp/studio/draft.hpp>
 
 #include "checkout.hpp"
+#include "snapshot_internal.hpp"
 
 #include <pgp/persistence/sha256.hpp>
 #include <pgp/persistence/storage.hpp>
@@ -103,5 +104,18 @@ void DraftDocument::save(const fs::path& new_name) {
     base_ = std::move(destination);
     base_hash_ = std::move(hash);
     saved_semantics_ = std::move(semantics);
+}
+void DraftDocument::save_reviewed(std::string_view summary) {
+    if (!below(base_, "data/runtime"))
+        throw PersistenceError("path", "Open the project's current content before editing.");
+    if (!dirty()) return;
+    SnapshotRequest request;
+    request.source = base_;
+    request.target = base_;
+    request.summary = summary;
+    const detail::EditedSnapshot edits{program_.canonical_content_bytes, base_hash_, marker_hash_};
+    const auto plan = detail::prepare_snapshot(checkout_, request, edits);
+    detail::write_snapshot_batch(checkout_, plan, {});
+    *this = DraftDocument{checkout_, base_};
 }
 } // namespace pgp::studio

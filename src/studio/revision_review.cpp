@@ -65,7 +65,7 @@ RevisionArchive::RevisionArchive(const fs::path& checkout) : root_(detail::check
     const auto marker = detail::snapshot_parse(marker_bytes);
     const auto versions = detail::snapshot_parse(versions_bytes);
     const auto history_bytes = required(root_, history_path);
-    const auto history = detail::snapshot_parse(history_bytes);
+    const auto history = detail::snapshot_parse(history_bytes, detail::snapshot_history_bytes, detail::snapshot_history_tokens);
     if (marker.at("generation") != current.generation || marker.at("collection_hash") != current.collection_hash ||
         marker.at("history_hash") != persistence::sha256(history_bytes) ||
         marker_bytes != required(root_, state_path) || versions_bytes != required(root_, versions_path, 65536) ||

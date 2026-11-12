@@ -7,9 +7,17 @@ ColumnLayout {
     id: tools
     property int textSize: 16
     property bool openAfterChoosing: false
-    readonly property bool dialogOpen: studio.visible || playtest.visible || founderEditor.visible || checkoutPicker.visible
+    readonly property bool dialogOpen: studio.visible || playtest.visible || founderEditor.visible || checkoutPicker.visible || deleteCampaignDialog.visible
     property bool savingFounder: false
-    signal sessionReset()
+    readonly property Component deleteAction: Component {
+        MenuButton {
+            objectName: "deleteCurrentGameButton"
+            text: qsTr("Delete current game…")
+            textSize: tools.textSize
+            enabled: campaign.ready && !campaign.busy
+            onClicked: deleteCampaignDialog.open()
+        }
+    }
     spacing: 8
 
     RowLayout {
@@ -43,6 +51,36 @@ ColumnLayout {
         textSize: tools.textSize
         text: qsTr("Playtest Environment")
         onClicked: playtest.open()
+    }
+
+    GameDialog {
+        id: deleteCampaignDialog
+        objectName: "deleteCampaignDialog"
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(520, (Overlay.overlay ? Overlay.overlay.width : 520) - 32)
+        font.pixelSize: tools.textSize
+        title: qsTr("Delete current game?")
+        modal: true
+        focus: true
+        standardButtons: Dialog.Cancel
+        contentItem: ColumnLayout {
+            Label {
+                Layout.fillWidth: true
+                text: qsTr("Delete the current campaign and any unfinished founder setup? Manual saves and settings will still be available.")
+                font.pixelSize: tools.textSize
+                wrapMode: Text.Wrap
+            }
+            WorldButton {
+                textSize: tools.textSize
+                objectName: "confirmDeleteCurrentGame"
+                text: qsTr("Delete current game")
+                onClicked: {
+                    deleteCampaignDialog.close()
+                    campaign.deleteCurrentGame()
+                }
+            }
+        }
+        onOpened: standardButton(Dialog.Cancel).forceActiveFocus()
     }
 
     FolderDialog {
@@ -230,7 +268,6 @@ ColumnLayout {
     }
     Connections {
         target: campaign
-        function onDevelopmentResetFinished() { tools.sessionReset() }
         function onCommandFinished(accepted, explanation) {
             if (!tools.savingFounder) return
             tools.savingFounder = false

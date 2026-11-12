@@ -9,7 +9,13 @@ namespace pgp::studio {
 namespace {
 using Json = nlohmann::json;
 QString text(std::string_view value) { return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size())); }
-QString value_text(const Json& value) { return value.is_null() ? QStringLiteral("(absent)") : value.is_string() ? text(value.get_ref<const std::string&>()) : text(value.dump(2)); }
+QString value_text(const Json& value) {
+    if (value.is_null()) return QStringLiteral("(absent)");
+    if (!value.is_string()) return text(value.dump(2));
+    const auto copy = text(value.get_ref<const std::string&>());
+    static const QRegularExpression digest(QStringLiteral("^[a-fA-F0-9]{64}$"));
+    return digest.match(copy).hasMatch() ? QStringLiteral("Recorded fingerprint") : copy;
+}
 // Exact integer strings, never QJson's floating-point conversion of game units.
 void differences(const Json& before, const Json& after, const QString& path, QVariantList& rows) {
     if (before == after) return;
@@ -57,8 +63,8 @@ void SnapshotController::read_status() {
     pending_ = false;
     try {
         const auto result = check_snapshot(std::filesystem::path{checkout_.toStdU16String()});
-        status_ = QStringLiteral("Current content %1 · generation %2\nSHA-256 %3\nRequired game %4 · %5. Release qualification remains open.")
-            .arg(text(result.content_version)).arg(result.generation).arg(text(result.collection_hash), text(result.required_game_version),
+        status_ = QStringLiteral("Current content %1 · generation %2\nRequired game %3 · %4.")
+            .arg(text(result.content_version)).arg(result.generation).arg(text(result.required_game_version),
                 result.game_version_requirement_resolved ? QStringLiteral("version requirement satisfied") : QStringLiteral("version requirement unresolved"));
         suggested_ = suggest(result.content_version);
     } catch (const persistence::PersistenceError& error) {
@@ -100,7 +106,8 @@ bool SnapshotController::review(const QString& source, const QString& version, c
             {QStringLiteral("before"), value_text(change.at("before"))}, {QStringLiteral("after"), value_text(change.at("after"))}});
         for (const auto& change : report.at("collection_changes")) differences(change.at("before"), change.at("after"), text(change.at("path").get<std::string>()), collections_);
         for (const auto& file : report.at("writes")) writes_.push_back(QVariantMap{{QStringLiteral("path"), text(file.at("path").get<std::string>())},
-            {QStringLiteral("before"), value_text(file.at("before_hash"))}, {QStringLiteral("after"), value_text(file.at("after_hash"))}});
+            {QStringLiteral("before"), file.at("before_hash").is_null() ? QStringLiteral("New file") : QStringLiteral("Existing file")},
+            {QStringLiteral("after"), QStringLiteral("Update on finalize")}});
         const auto& before = report.at("versions_before"); const auto& after = report.at("versions_after");
         versions_ = QStringLiteral("Content %1 → %2\nGame %3 → %4\nEditor %5 → %6\n%7. %8 file(s) proposed.")
             .arg(value_text(before.at("content")), value_text(after.at("content")), value_text(before.at("game")), value_text(after.at("game")), value_text(before.at("editor")), value_text(after.at("editor")),
@@ -122,9 +129,9 @@ bool SnapshotController::finalizeReview() {
     reset_review(); message_.clear();
     try {
         const auto result = finalize_snapshot(std::filesystem::path{checkout_.toStdU16String()}, request_, id);
-        outcome_ = QStringLiteral("%1 Content %2 · generation %3\nSHA-256 %4\nRequired game %5 · %6. Release qualification remains open.")
+        outcome_ = QStringLiteral("%1 Content %2 · generation %3\nRequired game %4 · %5.")
             .arg(writing ? QStringLiteral("Finalized internal batch.") : QStringLiteral("No-op verified; files and versions are unchanged."), text(result.content_version))
-            .arg(result.generation).arg(text(result.collection_hash), text(result.required_game_version), result.game_version_requirement_resolved ? QStringLiteral("version requirement satisfied") : QStringLiteral("version requirement unresolved"));
+            .arg(result.generation).arg(text(result.required_game_version), result.game_version_requirement_resolved ? QStringLiteral("version requirement satisfied") : QStringLiteral("version requirement unresolved"));
         read_status();
         if (writing) emit finalized(QString::fromStdU16String(request_.target.generic_u16string()));
         emit changed(); return true;

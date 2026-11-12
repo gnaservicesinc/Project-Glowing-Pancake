@@ -77,8 +77,8 @@ ColumnLayout {
             objectName: "catalogNewId"
             Layout.fillWidth: true
             maximumLength: 128
-            placeholderText: qsTr("New stable ID")
-            Accessible.name: qsTr("New stable catalog ID")
+            placeholderText: qsTr("Name for the new entry")
+            Accessible.name: qsTr("Name for the new entry")
         }
         Button {
             objectName: "catalogReviewRename"

@@ -24,6 +24,7 @@
 #endif
 
 #include <pgp/core/build_identity.hpp>
+#include <pgp/core/calendar.hpp>
 #include <pgp/graphics/graphics_policy.hpp>
 #include <pgp/resources/resource_guards.hpp>
 #include <pgp/studio/draft.hpp>
@@ -44,6 +45,8 @@
 #include <QQuickItem>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <QRegularExpression>
+#include <QUuid>
 #include <QSGRendererInterface>
 #include <QStyleHints>
 #include <QVariant>
@@ -51,6 +54,8 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <set>
+#include <thread>
 
 namespace {
 using namespace pgp;
@@ -89,6 +94,7 @@ QString control(studio::FormControl kind) {
     switch (kind) {
     case studio::FormControl::note: return QStringLiteral("note");
     case studio::FormControl::text: return QStringLiteral("text");
+    case studio::FormControl::paragraph: return QStringLiteral("paragraph");
     case studio::FormControl::integer: return QStringLiteral("integer");
     case studio::FormControl::choice: return QStringLiteral("choice");
     case studio::FormControl::button: return QStringLiteral("button");
@@ -104,11 +110,14 @@ class Browser final : public QObject {
     Q_PROPERTY(QObject* worldController READ worldController CONSTANT)
     Q_PROPERTY(QObject* assetController READ assetController CONSTANT)
     Q_PROPERTY(bool worldMode READ worldMode NOTIFY draftChanged)
+    Q_PROPERTY(QVariantMap chapter READ chapter NOTIFY draftChanged)
+    Q_PROPERTY(QVariantMap eventStory READ eventStory NOTIFY draftChanged)
     Q_PROPERTY(QVariantList rows READ rows NOTIFY changed)
     Q_PROPERTY(QString checkout READ checkout NOTIFY changed)
     Q_PROPERTY(QString message READ message NOTIFY changed)
     Q_PROPERTY(bool editing READ editing NOTIFY draftChanged)
     Q_PROPERTY(QString workingFlow READ workingFlow NOTIFY draftChanged)
+    Q_PROPERTY(QString workingTitle READ workingTitle NOTIFY draftChanged)
     Q_PROPERTY(QString workingVersion READ workingVersion NOTIFY draftChanged)
     Q_PROPERTY(QStringList workingFlows READ workingFlows NOTIFY formChanged)
     Q_PROPERTY(QVariantList flowScopes READ flowScopes NOTIFY formChanged)
@@ -117,6 +126,7 @@ class Browser final : public QObject {
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY draftChanged)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY draftChanged)
     Q_PROPERTY(bool draftDirty READ draftDirty NOTIFY draftChanged)
+    Q_PROPERTY(bool saving READ saving NOTIFY savingChanged)
     Q_PROPERTY(bool existingDraft READ existingDraft NOTIFY draftChanged)
     Q_PROPERTY(QString draftMessage READ draftMessage NOTIFY draftChanged)
     Q_PROPERTY(QVariantList flowOutline READ flowOutline NOTIFY formChanged)
@@ -158,8 +168,193 @@ public:
     [[nodiscard]] QObject* worldController() noexcept { return &world_; }
     [[nodiscard]] QObject* assetController() noexcept { return &assets_; }
     [[nodiscard]] bool worldMode() const noexcept { return world_mode_; }
+    [[nodiscard]] QVariantMap chapter() const {
+        if (!draft_ || chapter_id_.empty()) return {};
+        const auto* definition = draft_->collection().find(chapter_owner_);
+        if (!definition) return {};
+        const auto& catalog = std::get<content::ScenarioDefinition>(definition->data).founding.value();
+        const auto scene = std::ranges::find(catalog.scenes, chapter_id_, &content::FormativeScene::id);
+        if (scene == catalog.scenes.end()) return {};
+        QVariantList choices;
+        for (const auto& choice : scene->choices) {
+            const auto skill = catalog.skill_rewards.find(scene->id + "/" + choice.id);
+            choices.push_back(QVariantMap{{"name", text(choice.name)}, {"detail", text(choice.detail)},
+                {"skill", skill == catalog.skill_rewards.end() ? QString{} : strings(skill->second).join(", ")}});
+        }
+        return {{"title", text(scene->title)}, {"date", text(scene->date)}, {"body", text(scene->text)},
+            {"choices", choices}, {"pool", text(studio::readable_name(scene->pool))}};
+    }
+    [[nodiscard]] QVariantMap eventStory() const {
+        const auto* definition = draft_ ? draft_->collection().find(flow_) : nullptr;
+        if (!definition || !chapter_id_.empty()) return {};
+        const auto& collection = draft_->collection();
+        const auto& event = std::get<content::FlowDefinition>(definition->data);
+        const auto key = studio::event_presentation(event);
+        const auto node = event.nodes.find(key);
+        const auto copy = [&](const auto& message) {
+            const auto* value = collection.message(message);
+            return value ? text(*value) : QString{};
+        };
+        QVariantList choices;
+        if (node != event.nodes.end()) for (const auto& choice : node->second.choices)
+            choices.push_back(QVariantMap{{"text", copy(choice.label_key)},
+                {"next", text(studio::readable_name(choice.next))}});
+        QString timing;
+        if (event.group) timing = QStringLiteral("Another event starts these steps.");
+        else if (!event.on_committed.empty())
+            timing = QStringLiteral("Starts after %1.").arg(text(studio::readable_name(event.on_committed)).toLower());
+        else switch (event.lifecycle.mode) {
+            case content::LifecycleMode::once: timing = QStringLiteral("Happens once, when its conditions are met."); break;
+            case content::LifecycleMode::recurring: timing = QStringLiteral("Can happen again after %1 game days.").arg(event.lifecycle.cooldown_days); break;
+            case content::LifecycleMode::interval: timing = QStringLiteral("Checks every %1 %2, up to %3 times.")
+                .arg(event.lifecycle.interval->value).arg(event.lifecycle.interval->unit == content::IntervalUnit::days
+                    ? QStringLiteral("game day(s)") : QStringLiteral("calendar month(s)")).arg(event.lifecycle.max_occurrences); break;
+            case content::LifecycleMode::scheduled: timing = QStringLiteral("Checks on %1.").arg(text(core::iso_date(*event.lifecycle.due_date))); break;
+            case content::LifecycleMode::continuous: timing = QStringLiteral("Stays active until its end conditions are met."); break;
+        }
+        QStringList scenarios;
+        for (const auto& [id, item] : collection.definitions) {
+            const auto* scenario = std::get_if<content::ScenarioDefinition>(&item.data);
+            if (scenario && std::ranges::find(scenario->flows, flow_) != scenario->flows.end())
+                scenarios << text(studio::event_name(collection, item));
+        }
+        return {{"hasMessage", node != event.nodes.end()},
+            {"dialogue", node != event.nodes.end() && node->second.kind == content::NodeKind::dialogue},
+            {"title", node == event.nodes.end() ? QString{} : copy(node->second.title_key)},
+            {"body", node == event.nodes.end() ? QString{} : copy(node->second.text_key)},
+            {"choices", choices}, {"timing", timing}, {"scenarios", scenarios}};
+    }
+    Q_INVOKABLE bool changeEventStory(const QString& name, const QString& title, const QString& body,
+                                      const QVariantList& labels) {
+        if (!draft_ || flow_.empty()) return false;
+        return edit([&] {
+            auto candidate = draft_->collection();
+            auto& event = std::get<content::FlowDefinition>(candidate.definitions.at(flow_).data);
+            const auto new_name = name.trimmed();
+            if (new_name.isEmpty()) throw std::invalid_argument("Give this event a name.");
+            const auto editor_key = flow_ + ".editor_title";
+            const auto node = event.nodes.find(studio::event_presentation(event));
+            if (node != event.nodes.end()) {
+                auto& message = node->second;
+                if (body.trimmed().isEmpty()) throw std::invalid_argument("Write the message players will read.");
+                if (!message.title_key.empty()) {
+                    if (title.trimmed().isEmpty()) throw std::invalid_argument("Give the dialogue a title.");
+                    if (message.title_key == editor_key && title != new_name)
+                        message.title_key = flow_ + ".dialogue_title";
+                    candidate.messages[message.title_key] = title.trimmed().toStdString();
+                }
+                if (message.choices.size() != static_cast<std::size_t>(labels.size()))
+                    throw std::invalid_argument("The choices have changed. Reopen the event and try again.");
+                for (qsizetype index = 0; index < labels.size(); ++index) {
+                    const auto label = labels[index].toString().trimmed();
+                    if (label.isEmpty()) throw std::invalid_argument("Give each player choice a button label.");
+                    candidate.messages[message.choices[static_cast<std::size_t>(index)].label_key] = label.toStdString();
+                }
+                candidate.messages[message.text_key] = body.trimmed().toStdString();
+            }
+            if (studio::event_name(candidate, candidate.definitions.at(flow_)) != new_name.toStdString())
+                candidate.messages[editor_key] = new_name.toStdString();
+            (void)draft_->replace(candidate);
+        });
+    }
+    Q_INVOKABLE bool appendStoryChoice() {
+        if (!draft_ || flow_.empty()) return false;
+        const auto& event = std::get<content::FlowDefinition>(draft_->collection().definitions.at(flow_).data);
+        const auto node = studio::event_presentation(event);
+        if (node.empty()) return false;
+        return edit([&] {
+            (void)studio::FlowForm::open(*draft_, flow_, "node/" + std::string(node)).apply(*draft_, "append", {});
+        });
+    }
+    Q_INVOKABLE void selectEventStep(const QString& step, int choice = -1) {
+        if (!draft_ || flow_.empty()) return;
+        if (step != QStringLiteral("story")) {
+            selectOutline(step);
+            return;
+        }
+        const auto& event = std::get<content::FlowDefinition>(draft_->collection().definitions.at(flow_).data);
+        const auto key = studio::event_presentation(event);
+        if (key.empty()) { selectOutline(QStringLiteral("flow")); return; }
+        auto row = QStringLiteral("node/") + text(key);
+        if (choice >= 0) row += QStringLiteral("/choice/") + QString::number(choice);
+        selectOutline(row);
+    }
+    Q_INVOKABLE bool openChapter(const QString& file, const QString& owner, const QString& id) {
+        if (!beginDraft(file, owner, true)) return false;
+        chapter_owner_ = owner.toStdString();
+        chapter_id_ = id.toStdString();
+        world_mode_ = false;
+        emit draftChanged();
+        return !chapter().isEmpty();
+    }
+    Q_INVOKABLE bool changeChapter(const QString& title, const QString& date, const QString& body,
+                                   const QVariantList& choices) {
+        return editChapter([&](auto&, auto& scene) {
+            const auto day = core::parse_iso_date(date.toStdString());
+            if (day < core::parse_iso_date("2003-09-01") || day >= core::parse_iso_date("2015-01-01"))
+                throw std::invalid_argument("Choose a scene date between September 2003 and the end of 2014.");
+            scene.title = title.trimmed().toStdString();
+            scene.date = core::iso_date(day);
+            scene.text = body.simplified().toStdString();
+            if (scene.choices.size() != static_cast<std::size_t>(choices.size()))
+                throw std::invalid_argument("The scene choices changed. Reopen the scene and try again.");
+            for (qsizetype index = 0; index < choices.size(); ++index) {
+                const auto row = choices[index].toMap();
+                auto& choice = scene.choices[static_cast<std::size_t>(index)];
+                choice.name = row.value("name").toString().trimmed().toStdString();
+                choice.detail = row.value("detail").toString().trimmed().toStdString();
+            }
+        });
+    }
+    Q_INVOKABLE bool changeChapterChoice(int index, const QString& name, const QString& detail) {
+        return editChapter([&](auto&, auto& scene) {
+            auto& choice = scene.choices.at(static_cast<std::size_t>(index));
+            choice.name = name.trimmed().toStdString();
+            choice.detail = detail.trimmed().toStdString();
+        });
+    }
+    Q_INVOKABLE bool addChapterChoice() {
+        return editChapter([](auto&, auto& scene) {
+            if (scene.choices.size() >= 16) throw std::invalid_argument("A scene can have up to 16 choices.");
+            content::FoundingOption choice{};
+            choice.id = ("choice_" + QUuid::createUuid().toString(QUuid::Id128).left(12)).toStdString();
+            choice.name = "New choice";
+            choice.detail = "Describe what happens.";
+            scene.choices.push_back(std::move(choice));
+        });
+    }
+    Q_INVOKABLE bool createChapter(const QString& title, const QString& body) {
+        const auto owner = QStringLiteral("scenario.founder_campaign");
+        if (!editing() && !beginDraft(QStringLiteral("data/runtime/first-playable.json"), owner, true)) return false;
+        return edit([&] {
+            auto candidate = draft_->collection();
+            auto& scenario = std::get<content::ScenarioDefinition>(candidate.definitions.at(owner.toStdString()).data);
+            if (!scenario.founding) throw std::invalid_argument("This project has no founder story.");
+            const auto key = authorKey(title, 38);
+            content::FoundingOption choice{};
+            choice.id = "continue";
+            choice.name = "Continue";
+            choice.detail = "The experience stays with you.";
+            scenario.founding->scenes.push_back({key, title.trimmed().toStdString(), "2014-06-01",
+                body.simplified().toStdString(), {std::move(choice)}, {}, {}});
+            if (draft_->replace(candidate)) {
+                chapter_owner_ = owner.toStdString();
+                chapter_id_ = key;
+                world_mode_ = false;
+            }
+        });
+    }
     Q_INVOKABLE void selectWorkspace(bool world, bool catalogs = false) {
-        if (world && !world_.setCatalogMode(catalogs)) return;
+        if (world) {
+            try {
+                world_.set_document(draft_.get());
+                if (!world_.setCatalogMode(catalogs)) return;
+            } catch (const std::exception& error) {
+                draft_message_ = text(error.what());
+                emit draftChanged();
+                return;
+            }
+        }
         world_mode_=world;
         emit draftChanged();
     }
@@ -184,6 +379,10 @@ public:
     [[nodiscard]] QString message() const { return message_; }
     [[nodiscard]] bool editing() const noexcept { return draft_ != nullptr; }
     [[nodiscard]] QString workingFlow() const { return text(flow_); }
+    [[nodiscard]] QString workingTitle() const {
+        const auto* definition = draft_ ? draft_->collection().find(flow_) : nullptr;
+        return definition ? text(studio::event_name(draft_->collection(), *definition)) : QString{};
+    }
     [[nodiscard]] QString workingVersion() const { return draft_ ? text(draft_->collection().content_version) : QString{}; }
     [[nodiscard]] const QStringList& workingFlows() const noexcept { return working_flows_; }
     [[nodiscard]] const QVariantList& flowScopes() const noexcept { return flow_scopes_; }
@@ -196,6 +395,7 @@ public:
     [[nodiscard]] bool canUndo() const noexcept { return draft_ && !world_.hasStaged() && !world_.hasUnapplied() && draft_->can_undo(); }
     [[nodiscard]] bool canRedo() const noexcept { return draft_ && !world_.hasStaged() && !world_.hasUnapplied() && draft_->can_redo(); }
     [[nodiscard]] bool draftDirty() const noexcept { return draft_ && (draft_->dirty() || world_.hasStaged() || world_.hasUnapplied()); }
+    [[nodiscard]] bool saving() const noexcept { return saving_; }
     [[nodiscard]] bool existingDraft() const { return draft_ && draft_->is_draft(); }
     [[nodiscard]] QString draftMessage() const { return draft_message_; }
     [[nodiscard]] const QVariantList& flowOutline() const noexcept { return outline_; }
@@ -217,7 +417,7 @@ public:
                 ports.push_back(QVariantMap{{"name",text(port.name)},{"label",text((port.output?"Output · ":"Input · ")+port.name)},
                     {"options",std::move(options)}});
             }
-            groups.push_back(QVariantMap{{"value",text(id)},{"label",text(id+" · revision "+std::to_string(definition.revision))},
+            groups.push_back(QVariantMap{{"value",text(id)},{"label",text(studio::event_name(draft_->collection(), definition))},
                 {"ports",std::move(ports)}});
         }
         return groups;
@@ -228,15 +428,16 @@ public:
         const auto& flow=std::get<content::FlowDefinition>(draft_->collection().definitions.at(flow_).data);
         for (const auto& [id, node]:flow.nodes) {
             (void)node;
-            nodes.push_back(QVariantMap{{"value",text(id)},{"label",text(id+(id==flow.entry_node?" · entry":""))}});
+            nodes.push_back(QVariantMap{{"value",text(id)},{"label",text(studio::readable_name(id)+(id==flow.entry_node?" · first step":""))}});
         }
         return nodes;
     }
     Q_INVOKABLE bool createGroup(const QString& id) {
         return edit([&] {
             if (!draft_ || flow_.empty()) throw std::invalid_argument("Open a working flow first.");
-            if (studio::create_flow_group(*draft_,flow_,id.toStdString())) {
-                flow_=id.toStdString();
+            const auto key = authorKey(id);
+            if (studio::create_flow_group(*draft_,flow_,key,id.trimmed().toStdString())) {
+                flow_=key;
                 outline_key_="group";
             }
         });
@@ -256,39 +457,15 @@ public:
             return false;
         }
         try {
-            const auto library = studio::inspect_checkout(std::filesystem::path{folder.toStdU16String()});
-            QVariantList next;
-            for (const auto& document : library.documents) {
-                const auto file = QString::fromStdU16String(document.relative_path.generic_u16string());
-                const QVariantMap common{{QStringLiteral("file"), file}, {QStringLiteral("origin"), origin(document.origin)},
-                    {QStringLiteral("validation"), status(document.validation)}, {QStringLiteral("diagnostic"), text(document.diagnostic)},
-                    {QStringLiteral("version"), text(document.content_version)}, {QStringLiteral("fingerprint"), text(document.source_hash)}};
-                if (document.definitions.empty()) {
-                    auto row = common;
-                    row.insert(QStringLiteral("id"), file);
-                    row.insert(QStringLiteral("kind"), QStringLiteral("document"));
-                    next.push_back(std::move(row));
-                }
-                for (const auto& definition : document.definitions) {
-                    auto row = common;
-                    row.insert(QStringLiteral("id"), text(definition.id));
-                    row.insert(QStringLiteral("kind"), text(definition.kind));
-                    row.insert(QStringLiteral("revision"), definition.revision);
-                    row.insert(QStringLiteral("tags"), strings(definition.tags));
-                    row.insert(QStringLiteral("uses"), strings(definition.uses));
-                    row.insert(QStringLiteral("usedBy"), strings(definition.used_by));
-                    row.insert(QStringLiteral("state"), text(definition.state));
-                    next.push_back(std::move(row));
-                }
-            }
+            const auto library = studio::inspect_checkout(std::filesystem::path{folder.toStdU16String()}, studio::Origin::reviewed);
             const auto opened = QString::fromStdU16String(library.checkout.u16string());
             if (opened != checkout_) closeDraft();
             checkout_ = opened;
             refreshSnapshotContext();
-            message_ = QStringLiteral("%1 collections · checkout schema %2")
-                .arg(static_cast<qulonglong>(library.documents.size()))
-                .arg(library.checkout_schema == 0 ? QStringLiteral("unknown") : QString::number(library.checkout_schema));
-            source_ = std::move(next);
+            message_.clear();
+            source_ = libraryRows(library);
+            indexed_ = {studio::Origin::reviewed};
+            loadSources();
             refresh();
             return true;
         } catch (const std::exception& error) {
@@ -301,6 +478,11 @@ public:
         search_ = search.trimmed();
         kind_ = std::move(kind);
         origin_ = std::move(source);
+        try {
+            loadSources();
+        } catch (const std::exception& error) {
+            message_ = text(error.what());
+        }
         refresh();
     }
     Q_INVOKABLE qsizetype locate(const QString& file, const QString& id) const {
@@ -310,24 +492,28 @@ public:
         }
         return -1;
     }
-    Q_INVOKABLE void beginDraft(const QString& file, const QString& id) {
-        if (draftDirty()) {
+    Q_INVOKABLE bool beginDraft(const QString& file, const QString& id, bool chapter = false) {
+        if (draftDirty() || canvas_.hasLayoutEdits()) {
             draft_message_ = QStringLiteral("Save or close the working draft first.");
             emit draftChanged();
-            return;
+            return false;
         }
-        edit([&] {
+        return edit([&] {
             auto next = std::make_unique<studio::DraftDocument>(std::filesystem::path{checkout_.toStdU16String()},
                 std::filesystem::path{file.toStdU16String()});
             const auto key = id.toStdString();
             const auto* definition = next->collection().find(key);
             if (!definition) throw std::invalid_argument("Select a validated definition to open its collection.");
-            world_mode_=!std::holds_alternative<content::FlowDefinition>(definition->data);
-            flow_ = world_mode_ ? std::string{} : key;
+            chapter_owner_.clear();
+            chapter_id_.clear();
+            const auto is_flow = std::holds_alternative<content::FlowDefinition>(definition->data);
+            world_mode_=!chapter && !is_flow;
+            flow_ = is_flow ? key : std::string{};
             canvas_.set_document(nullptr, {}, {});
             world_.set_document(nullptr);
             draft_ = std::move(next);
-            world_.set_document(draft_.get(),std::holds_alternative<content::ScenarioDefinition>(definition->data)?key:std::string{});
+            if (world_mode_)
+                world_.set_document(draft_.get(),std::holds_alternative<content::ScenarioDefinition>(definition->data)?key:std::string{});
             if (world_mode_ && !std::holds_alternative<content::ScenarioDefinition>(definition->data)) {
                 (void)world_.setCatalogMode(true);
                 world_.selectSection(text("/definitions/"+key));
@@ -341,6 +527,80 @@ public:
         outline_key_.clear();
         refreshForm();
         emit draftChanged();
+    }
+    Q_INVOKABLE bool createEvent(const QString& title, const QString& presentation, const QString& body,
+                                 const QString& scope = QStringLiteral("company")) {
+        if (!editing()) {
+            const auto row = std::find_if(source_.cbegin(), source_.cend(), [](const auto& entry) {
+                const auto item = entry.toMap();
+                return item.value("file") == QStringLiteral("data/runtime/first-playable.json") &&
+                    item.value("kind") == QStringLiteral("flow");
+            });
+            if (row == source_.cend()) {
+                draft_message_ = QStringLiteral("Open a project with reviewed events first.");
+                emit draftChanged();
+                return false;
+            }
+            if (!beginDraft(row->toMap().value("file").toString(), row->toMap().value("id").toString())) return false;
+        }
+        return edit([&] {
+            const auto name = title.trimmed();
+            if (name.isEmpty()) throw std::invalid_argument("Enter a name for this event.");
+            const auto key = authorKey(name);
+            chapter_owner_.clear();
+            chapter_id_.clear();
+            if (studio::create_flow(*draft_, key, scope.toStdString(), name.toStdString(), presentation.toStdString(), body.trimmed().toStdString())) {
+                flow_ = key;
+                world_mode_ = false;
+                outline_key_ = presentation == QStringLiteral("logic") ? "flow" : "node/message";
+            }
+        });
+    }
+    Q_INVOKABLE bool saveEvent() {
+        if (!draft_ || saving_) return false;
+        if (world_.hasStaged() || world_.hasUnapplied()) {
+            draft_message_ = QStringLiteral("Apply the edited values and staged sections before saving the project.");
+            emit draftChanged();
+            return false;
+        }
+        if (!draft_->dirty()) return true;
+        auto next = std::make_shared<studio::DraftDocument>(*draft_);
+        const auto active_chapter = chapter();
+        auto name = active_chapter.value("title").toString();
+        if (name.isEmpty()) name = world_mode_ ? QStringLiteral("game data") : workingTitle();
+        const auto summary = QStringLiteral("Edit %1 in Content Studio.").arg(name.left(300)).toStdString();
+        saving_ = true;
+        emit savingChanged();
+        save_thread_ = std::jthread([this, next, summary] {
+            QString error;
+            try {
+                next->save_reviewed(summary);
+            } catch (const std::exception& failure) {
+                error = text(failure.what());
+            }
+            QMetaObject::invokeMethod(this, [this, next, error] {
+                if (error.isEmpty()) {
+                    const auto scenario = world_.scenario();
+                    const auto section = world_.path();
+                    const auto browsing_data = world_.catalogMode();
+                    canvas_.set_document(nullptr, {}, {});
+                    world_.set_document(nullptr);
+                    draft_ = std::make_unique<studio::DraftDocument>(std::move(*next));
+                    if (world_mode_) {
+                        world_.set_document(draft_.get(), scenario.toStdString());
+                        if (browsing_data) (void)world_.setCatalogMode(true);
+                        if (!section.isEmpty()) world_.selectSection(section);
+                    }
+                    refreshForm();
+                    (void)openCheckout(checkout_);
+                    draft_message_ = QStringLiteral("Saved to the project.");
+                } else draft_message_ = error;
+                saving_ = false;
+                emit savingChanged();
+                emit draftChanged();
+            }, Qt::QueuedConnection);
+        });
+        return true;
     }
     Q_INVOKABLE bool createFlow(const QString& id, const QString& scope) {
         if (!draft_) return false;
@@ -401,10 +661,13 @@ public:
         return true;
     }
     Q_INVOKABLE void closeDraft() {
+        if (saving_) return;
         canvas_.set_document(nullptr, {}, {});
         canvas_.discard_layouts();
         world_.set_document(nullptr);
         draft_.reset();
+        chapter_owner_.clear();
+        chapter_id_.clear();
         flow_.clear();
         draft_message_.clear();
         refreshForm();
@@ -414,7 +677,63 @@ signals:
     void changed();
     void draftChanged();
     void formChanged();
+    void savingChanged();
 private:
+    static QVariantList libraryRows(const studio::Library& library) {
+        QVariantList next;
+        for (const auto& document : library.documents) {
+            const auto file = QString::fromStdU16String(document.relative_path.generic_u16string());
+            const QVariantMap common{{QStringLiteral("file"), file}, {QStringLiteral("origin"), origin(document.origin)},
+                {QStringLiteral("validation"), status(document.validation)}, {QStringLiteral("diagnostic"), text(document.diagnostic)},
+                {QStringLiteral("version"), text(document.content_version)}};
+            if (document.definitions.empty()) {
+                auto row = common;
+                row.insert(QStringLiteral("id"), file);
+                row.insert(QStringLiteral("kind"), QStringLiteral("document"));
+                next.push_back(std::move(row));
+            }
+            for (const auto& definition : document.definitions) {
+                auto row = common;
+                row.insert(QStringLiteral("id"), text(definition.id));
+                row.insert(QStringLiteral("kind"), text(definition.kind));
+                row.insert(QStringLiteral("title"), text(definition.title));
+                row.insert(QStringLiteral("synopsis"), text(definition.synopsis));
+                row.insert(QStringLiteral("owner"), text(definition.owner));
+                row.insert(QStringLiteral("revision"), definition.revision);
+                row.insert(QStringLiteral("tags"), strings(definition.tags));
+                row.insert(QStringLiteral("uses"), strings(definition.uses));
+                row.insert(QStringLiteral("usedBy"), strings(definition.used_by));
+                row.insert(QStringLiteral("state"), text(definition.state));
+                next.push_back(std::move(row));
+            }
+        }
+        return next;
+    }
+    void loadSources() {
+        if (checkout_.isEmpty()) return;
+        for (auto candidate : {studio::Origin::draft, studio::Origin::engineering_fixture}) {
+            if (indexed_.contains(candidate) || (!origin_.isEmpty() && origin(candidate) != origin_)) continue;
+            const auto library = studio::inspect_checkout(std::filesystem::path{checkout_.toStdU16String()}, candidate);
+            source_.append(libraryRows(library));
+            indexed_.insert(candidate);
+        }
+    }
+    template<class Action> bool editChapter(Action action) {
+        if (!draft_ || chapter_id_.empty()) return false;
+        return edit([&] {
+            auto candidate = draft_->collection();
+            auto& catalog = std::get<content::ScenarioDefinition>(candidate.definitions.at(chapter_owner_).data).founding.value();
+            const auto scene = std::ranges::find(catalog.scenes, chapter_id_, &content::FormativeScene::id);
+            if (scene == catalog.scenes.end()) throw std::invalid_argument("This childhood scene is unavailable.");
+            action(catalog, *scene);
+            (void)draft_->replace(candidate);
+        });
+    }
+    static std::string authorKey(const QString& name, qsizetype maximum = 70) {
+        auto stem = name.toLower().replace(QRegularExpression(QStringLiteral("[^a-z0-9]+")), QStringLiteral("_")).left(maximum);
+        return (QStringLiteral("author.") + stem + QStringLiteral(".") +
+            QUuid::createUuid().toString(QUuid::Id128).left(12)).toStdString();
+    }
     void refreshSnapshotContext() {
         snapshot_.set_context(checkout_, workingFile(), draft_ ? draft_->edit_revision() : 0, draftDirty(), canvas_.hasLayoutEdits());
     }
@@ -448,6 +767,7 @@ private:
         }
     }
     template<class Action> bool edit(Action action) {
+        if (saving_) return false;
         try {
             if(world_.hasStaged() || world_.hasUnapplied()) throw std::invalid_argument("Apply or reset the pending world fields and staged sections before editing another surface.");
             action();
@@ -468,7 +788,7 @@ private:
         form_.reset();
         outline_index_ = -1;
         refreshWorkingFlows();
-        if (draft_ && !flow_.empty()) {
+        if (draft_ && !flow_.empty() && chapter_id_.empty()) {
             canvas_.set_document(draft_.get(), flow_, std::filesystem::path{checkout_.toStdU16String()});
             if (outline_key_.empty()) outline_key_ = canvas_.restored_row().toStdString();
             const auto rows = studio::flow_outline(*draft_, flow_);
@@ -502,8 +822,8 @@ private:
             }
         }
         else canvas_.set_document(nullptr, {}, {});
-        probe_.set_document(draft_ ? &draft_->program() : nullptr, flow_);
-        world_.set_document(draft_.get());
+        probe_.set_document(draft_ && chapter_id_.empty() ? &draft_->program() : nullptr, flow_);
+        if (world_mode_) world_.set_document(draft_.get());
         refreshSnapshotContext();
         emit formChanged();
     }
@@ -529,16 +849,23 @@ private:
         QVariantList visible;
         for (const auto& entry : source_) {
             const auto row = entry.toMap();
-            if ((!kind_.isEmpty() && row.value(QStringLiteral("kind")) != kind_) ||
+            const auto kind = row.value(QStringLiteral("kind")).toString();
+            const bool event = kind == QStringLiteral("flow") || kind == QStringLiteral("chapter");
+            if ((!kind_.isEmpty() && (kind_ == QStringLiteral("events") ? !event : kind != kind_)) ||
                 (!origin_.isEmpty() && row.value(QStringLiteral("origin")) != origin_)) continue;
             if (!search_.isEmpty()) {
                 const QStringList searchable{row.value(QStringLiteral("id")).toString(), row.value(QStringLiteral("file")).toString(),
+                    row.value(QStringLiteral("title")).toString(), row.value(QStringLiteral("synopsis")).toString(),
                     row.value(QStringLiteral("tags")).toStringList().join(u' '), row.value(QStringLiteral("validation")).toString(),
                     row.value(QStringLiteral("state")).toString()};
                 if (!searchable.join(u' ').contains(search_, Qt::CaseInsensitive)) continue;
             }
             visible.push_back(entry);
         }
+        std::stable_sort(visible.begin(), visible.end(), [](const auto& left, const auto& right) {
+            return QString::compare(left.toMap().value("title").toString(),
+                right.toMap().value("title").toString(), Qt::CaseInsensitive) < 0;
+        });
         visible_ = std::move(visible);
         emit changed();
     }
@@ -549,9 +876,10 @@ private:
     studio::WorldController world_;
     bool world_mode_=false;
     QVariantList source_, visible_;
-    QString checkout_, message_, search_, kind_, origin_;
+    QString checkout_, message_, search_, kind_, origin_ = QStringLiteral("Reviewed");
+    std::set<studio::Origin> indexed_;
     std::unique_ptr<studio::DraftDocument> draft_;
-    std::string flow_;
+    std::string flow_, chapter_owner_, chapter_id_;
     QString draft_message_;
     QVariantList outline_, fields_;
     QStringList working_flows_;
@@ -562,6 +890,8 @@ private:
     std::uint64_t form_ticket_ = 0;
     // Destruct before the draft so the final ignored view flush has live data.
     studio::CanvasController canvas_;
+    bool saving_ = false;
+    std::jthread save_thread_;
 };
 } // namespace
 
@@ -571,7 +901,7 @@ int main(int argc, char* argv[]) {
     QCoreApplication::setApplicationName(QStringLiteral("Glowing Pancake Content Studio"));
     QCoreApplication::setApplicationVersion(text(core::build_identity().editor_version));
     QCommandLineParser parser;
-    parser.setApplicationDescription(QStringLiteral("Offline development checkout library."));
+    parser.setApplicationDescription(QStringLiteral("Offline game event editor."));
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addOption({QStringLiteral("project"), QStringLiteral("Open an explicitly selected absolute checkout."), QStringLiteral("folder")});
@@ -635,10 +965,19 @@ int main(int argc, char* argv[]) {
             if (!list || list->property("count").toLongLong() != all_rows || guards->denied_requests.load() != 0) throw std::runtime_error("Studio view check: Library row count/filter or resource guard failed.");
             browser.filter({}, QStringLiteral("invalid_type"), {});
             if (list->property("count").toLongLong() != 0) throw std::runtime_error("Studio view check: Library type filtering failed.");
-            browser.filter({}, {}, {});
+            browser.filter({}, QStringLiteral("events"), QStringLiteral("Reviewed"));
             if (list->property("count").toLongLong() != all_rows) throw std::runtime_error("Studio view check: Library filter reset failed.");
+            if (browser.locate(QStringLiteral("data/runtime/first-playable.json"), QStringLiteral("curiosity")) >= 0) {
+                const auto created = browser.createChapter(QStringLiteral("An afternoon at the fair"), QStringLiteral("Your class takes the bus to the fair."));
+                const auto added = created && browser.addChapterChoice();
+                const auto edited = added && browser.changeChapterChoice(1, QStringLiteral("I enter the art show"), QStringLiteral("A teacher gives you a sketchbook."));
+                if (!edited) throw std::runtime_error("Childhood scene edit failed: " + browser.draftMessage().toStdString());
+                browser.closeDraft();
+            }
             const auto flow = std::find_if(browser.rows().begin(), browser.rows().end(), [](const auto& entry) {
-                return entry.toMap().value(QStringLiteral("kind")) == QStringLiteral("flow");
+                const auto row = entry.toMap();
+                return row.value(QStringLiteral("kind")) == QStringLiteral("flow") &&
+                    row.value(QStringLiteral("file")) == QStringLiteral("data/runtime/first-playable.json");
             });
             if (flow != browser.rows().end()) {
                 const auto row = flow->toMap();
@@ -706,6 +1045,19 @@ int main(int argc, char* argv[]) {
                     verify(!inspector->ready(), "A document edit retained a stale fixture.");
                 }
                 browser.closeDraft();
+                verify(browser.createEvent(QStringLiteral("The mayor sends a letter"), QStringLiteral("dialogue"),
+                    QStringLiteral("The mayor invites you to the town hall.")), "A named dialogue could not be created.");
+                verify(browser.workingTitle() == QStringLiteral("The mayor sends a letter") &&
+                    browser.changeForm(browser.formTicket(), QStringLiteral("body_copy"), QStringLiteral("Meet the mayor after lunch.")),
+                    "The event must expose editable player text.");
+                auto* canvas = qobject_cast<studio::CanvasController*>(browser.canvasController());
+                verify(canvas && canvas->prepareInsert() && canvas->insertNode(canvas->ticket(), QStringLiteral("insert/delay")),
+                    "The graph must add a box on an execution route.");
+                verify(inspector->start(scenario, headquarters.front(), QStringLiteral("42"), true) &&
+                    inspector->presentations().size() == 1 &&
+                    inspector->presentations().front().toMap().value("detail").toString().startsWith(QStringLiteral("Meet the mayor after lunch.")),
+                    "The shared runtime preview must show the edited copy.");
+                browser.closeDraft();
             }
             std::cout << "Studio library view loaded and filtered " << all_rows << " rows\n";
             return 0;
@@ -745,7 +1097,7 @@ int main(int argc, char* argv[]) {
             return 0;
         }
         if (run_walkthrough) {
-            window->setProperty("outlineMode", true);
+            window->setProperty("page", 0);
             auto report = studio::run_authoring_walkthrough(browser, *window);
             if (canvas_walkthrough || finalizer_walkthrough) { report.insert(QStringLiteral("canvas"), studio::run_canvas_walkthrough(browser, *window)); }
             if (finalizer_walkthrough) {

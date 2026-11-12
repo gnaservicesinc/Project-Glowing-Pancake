@@ -107,12 +107,6 @@ Dialog {
                     checked: !!editor.record.ai_generated
                     onToggled: editor.setField("ai_generated", checked)
                 }
-                Label {
-                    visible: !!editor.record.sha256
-                    Layout.fillWidth: true
-                    wrapMode: Text.WrapAnywhere
-                    text: "SHA-256 " + (editor.record.sha256 || "")
-                }
             }
         }
         Label {

@@ -21,7 +21,6 @@ Rectangle {
     property string pendingApp:"room"
     property bool desktopOpen:false
     readonly property bool transitioning:pageTransition.running
-    signal menuRequested()
     signal appearanceRequested()
     color:"#142333"
     BirthKeepsake {
@@ -107,7 +106,6 @@ Rectangle {
                 Heading {text:home.story.form.first_name+" "+home.story.form.last_name}
                 Copy {text:qsTr("January 2015 · Age 18 · Unemployed · No company");font.pixelSize:home.typeSize*0.8}
             }
-            WorldButton {objectName:"homeMenu";text:qsTr("Menu");textSize:home.typeSize;onClicked:home.menuRequested()}
         }
         Copy {text:qsTr("Personal savings %1 · Company funds $0 · Silicon Valley").arg(home.story.personalFunds.total);color:"#b9dba7"}
         Flow {

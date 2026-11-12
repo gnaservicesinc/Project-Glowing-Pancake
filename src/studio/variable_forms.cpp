@@ -89,17 +89,17 @@ void rename_uses(Collection& collection, std::string_view before, std::string_vi
 } // namespace
 
 void append_variable_outline(std::vector<OutlineRow>& rows, const DraftDocument& draft, Scope scope) {
-    rows.push_back({"variables", "Scoped variables"});
+    rows.push_back({"variables", "Things the game remembers"});
     for (const auto& variable : draft.collection().variables)
         if (variable.scope == scope)
-            rows.push_back({"variables/" + variable.id, variable.id + " · " + unit_label(variable.unit), 1});
+            rows.push_back({"variables/" + variable.id, (variable.help == "Author-defined scoped value." ? readable_name(variable.id) : variable.help) + " · " + unit_label(variable.unit), 1});
 }
 void build_variable_form(FormBuilder& builder, std::string_view row) {
     const auto& registry = builder.draft.registry();
     const auto scope = builder.flow.scope;
     builder.note("Variable scope", std::string(scope_name(scope)), "A stored value belongs to this scope. Unset values read the declared default.");
     if (row == "variables") {
-        builder.add_document("append", "Add scoped flag", {}, "Create a false boolean flag. Rename it and choose a type from its outline row.",
+        builder.add_document("append", "Add a value to remember", {}, "Starts with a yes/no value set to no. Select it to name it or change what it can store.",
                              FormControl::button, [&registry, scope](Collection& collection, FlowDefinition&, std::string_view) {
             auto id = std::string("story.flag");
             for (unsigned suffix = 2; registry.fact(id); ++suffix) id = "story.flag." + std::to_string(suffix);
@@ -151,7 +151,7 @@ void build_variable_form(FormBuilder& builder, std::string_view row) {
                          FormControl::choice, [id](Collection& collection, FlowDefinition&, std::string_view value) {
         find_variable(collection, id).visibility = value == "visible" ? Visibility::player_known : Visibility::hidden_truth;
     }, {{"visible", "Player known"}, {"hidden", "Hidden truth"}});
-    builder.add_document("help", "Author help", selected->help, "Describe what the value measures and when to use it.",
+    builder.add_document("help", "What this value remembers", selected->help, "Give this value a name or short description authors can recognize.",
                          FormControl::text, [id](Collection& collection, FlowDefinition&, std::string_view value) {
         find_variable(collection, id).help = value;
     });

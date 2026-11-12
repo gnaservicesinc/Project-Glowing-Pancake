@@ -73,7 +73,7 @@ void snapshot_fields(const SnapshotJson& j,std::initializer_list<std::string_vie
 std::optional<std::string> snapshot_read(const fs::path& root,const fs::path& path,std::size_t limit) {
     const auto status=checked_path(root,path);if (!fs::exists(status)) return {};
     if (!fs::is_regular_file(status)) snapshot_refuse("path","Snapshot files must be ordinary files inside the selected checkout.");
-    return persistence::read_bounded(root/path,limit);
+    return persistence::read_bounded(root/path,path==std::filesystem::path{snapshot_history_path} ? snapshot_history_bytes : limit);
 }
 void write_snapshot_batch(const fs::path& root,const PreparedSnapshot& plan,const SnapshotWriteObserver& observer) {
     if (plan.writes.empty()) return;

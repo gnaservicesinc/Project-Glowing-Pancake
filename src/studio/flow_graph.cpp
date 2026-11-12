@@ -215,7 +215,7 @@ struct Builder {
             if (current.kind == NodeKind::random) detail += " · weighted " + current.random_stream + " draw on actual execution";
             if (current.kind == NodeKind::end) detail += " · return to saved frame; continuous owner persists until exit";
             if (current.kind == NodeKind::effect) detail += " · atomic ordered effects, then continue";
-            node(key, key, id + " · " + std::string(node_label(current.kind)), detail, "execution", flow.scope);
+            node(key, key, std::string(node_label(current.kind)) + " · " + readable_name(id), detail, "execution", flow.scope);
             GraphEndpoint input; input.kind = GraphBinding::execution; input.row = key; input.node_id = id;
             (void)port(key, "in", "Execute", PortType::execution, flow.scope, false, std::move(input));
             if (!current.next.empty()) execution_link(key, "next", "Continue", key, "next", current.next);

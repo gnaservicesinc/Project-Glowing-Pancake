@@ -1,4 +1,5 @@
 #include <pgp/studio/library.hpp>
+#include <pgp/studio/flow_forms.hpp>
 #include <pgp/studio/catalog.hpp>
 
 #include "checkout.hpp"
@@ -155,15 +156,30 @@ LibraryDocument inspect(const Library& library, const Candidate& candidate, cons
     for (const auto& [id, definition] : program.collection.definitions) {
         DefinitionEntry entry{id, std::string(content::definition_kind(definition)), definition.revision, {},
                               {}, {}};
+        entry.title = event_name(program.collection, definition);
         const auto& uses=by_owner[id];
         entry.uses.assign(uses.begin(),uses.end());
         if (const auto* flow = std::get_if<content::FlowDefinition>(&definition.data)) {
             entry.tags = flow->tags;
+            const auto first = flow->nodes.find(event_presentation(*flow));
+            if (first != flow->nodes.end())
+                if (const auto* copy = program.collection.message(first->second.text_key))
+                    entry.synopsis = copy->substr(0, copy->find('\n'));
             entry.state=flow->group?"Reusable group":!has_scenarios || enabled.contains(id)?"Enabled":"Disabled";
         }
         if(definition.deprecated) entry.state=entry.state.empty()?"Deprecated":entry.state+" · Deprecated";
         for (const auto& target : entry.uses) reverse[target].push_back(id);
         document.definitions.push_back(std::move(entry));
+        if (const auto* scenario = std::get_if<content::ScenarioDefinition>(&definition.data); scenario && scenario->founding) {
+            for (const auto& scene : scenario->founding->scenes) {
+                DefinitionEntry chapter{scene.id, "chapter", definition.revision, {}, {}, {}};
+                chapter.title = scene.title;
+                chapter.synopsis = scene.text;
+                chapter.owner = id;
+                chapter.state = "Childhood scene";
+                document.definitions.push_back(std::move(chapter));
+            }
+        }
     }
     for (auto& entry : document.definitions) {
         const auto found = reverse.find(entry.id);
@@ -181,14 +197,15 @@ fs::path checkout_root(const fs::path& selected) {
 }
 } // namespace detail
 
-Library inspect_checkout(const fs::path& selected) {
+Library inspect_checkout(const fs::path& selected, std::optional<Origin> only) {
     const auto root = detail::checkout_root(selected);
     Library library{root, detail::checkout_schema(root), {}};
     std::vector<Candidate> candidates;
     std::size_t visited = 0;
-    collect(root, "data/runtime", Origin::reviewed, candidates, visited);
-    collect(root, "data/drafts", Origin::draft, candidates, visited);
-    collect(root, "tests/content/fixtures", Origin::engineering_fixture, candidates, visited);
+    if (!only || only == Origin::reviewed) collect(root, "data/runtime", Origin::reviewed, candidates, visited);
+    if (!only || only == Origin::draft) collect(root, "data/drafts", Origin::draft, candidates, visited);
+    if (!only || only == Origin::engineering_fixture)
+        collect(root, "tests/content/fixtures", Origin::engineering_fixture, candidates, visited);
     std::sort(candidates.begin(), candidates.end(), [](const auto& left, const auto& right) {
         return left.relative.generic_u8string() < right.relative.generic_u8string();
     });

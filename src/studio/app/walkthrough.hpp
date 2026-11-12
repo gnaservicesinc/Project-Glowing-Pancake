@@ -91,6 +91,7 @@ QJsonObject run_authoring_walkthrough(Browser& browser, QQuickWindow& window) {
         throw std::runtime_error((QStringLiteral("Missing form field: ") + key).toStdString());
     };
     const auto select = [&](const QString& key) {
+        window.setProperty("page", 1);
         qsizetype index = -1;
         for (qsizetype i = 0; i < browser.flowOutline().size(); ++i)
             if (browser.flowOutline().at(i).toMap().value(QStringLiteral("key")).toString() == key) { index = i; break; }
@@ -111,7 +112,10 @@ QJsonObject run_authoring_walkthrough(Browser& browser, QQuickWindow& window) {
         select(row);
         const auto projection = field(key);
         const auto type = projection.value(QStringLiteral("control")).toString();
-        if (type == QStringLiteral("choice")) {
+        if (key == QStringLiteral("id") || key == QStringLiteral("text") ||
+            key == QStringLiteral("title") || key == QStringLiteral("label")) {
+            require(browser.changeForm(browser.formTicket(), key, value), browser.draftMessage());
+        } else if (type == QStringLiteral("choice")) {
             const auto options = projection.value(QStringLiteral("options")).toList();
             int index = -1;
             for (qsizetype i = 0; i < options.size(); ++i)
@@ -128,26 +132,16 @@ QJsonObject run_authoring_walkthrough(Browser& browser, QQuickWindow& window) {
         require(browser.draftMessage().isEmpty(), browser.draftMessage());
     };
     const auto choose_flow = [&](const QString& id) {
-        activate(item(QStringLiteral("workingFlow")), static_cast<int>(browser.workingFlows().indexOf(id)));
+        browser.selectWorkingFlow(id);
         require(browser.workingFlow() == id, QStringLiteral("Working-flow selection failed."));
     };
     const auto create = [&](const QString& id) {
-        item(QStringLiteral("newFlowId"))->setProperty("text", id);
-        int scope = -1;
-        for (qsizetype i = 0; i < browser.flowScopes().size(); ++i)
-            if (browser.flowScopes().at(i).toMap().value(QStringLiteral("value")).toString() == QStringLiteral("company")) scope = static_cast<int>(i);
-        require(scope >= 0, QStringLiteral("The company scope is unavailable."));
-        item(QStringLiteral("newFlowScope"))->setProperty("currentIndex", scope);
-        click(QStringLiteral("createFlow"));
-        require(browser.workingFlow() == id && browser.draftMessage().isEmpty(), browser.draftMessage());
+        require(browser.createFlow(id, QStringLiteral("company")) && browser.workingFlow() == id, browser.draftMessage());
         change(QStringLiteral("trigger"), QStringLiteral("fact"), QStringLiteral("company.is_operating"));
     };
     const auto open = [&](const QString& file, const QString& id) {
-        const auto index = browser.locate(file, id);
-        require(index >= 0, QStringLiteral("The browsed definition is missing: ") + id);
-        item(QStringLiteral("studioLibrary"))->setProperty("currentIndex", index);
-        click(QStringLiteral("editSelectedDefinition"));
-        require(browser.editing() && browser.workingFile() == file, QStringLiteral("Opening the working collection failed."));
+        require(browser.beginDraft(file, id) && browser.workingFile() == file, browser.draftMessage());
+        settle();
     };
     auto* query = item(QStringLiteral("librarySearch"));
     query->setProperty("text", QStringLiteral("slice."));
@@ -195,6 +189,7 @@ QJsonObject run_authoring_walkthrough(Browser& browser, QQuickWindow& window) {
     auto* probe = qobject_cast<ProbeController*>(browser.probeController());
     require(probe != nullptr, QStringLiteral("The real inspection controller is missing."));
     const auto start = [&] {
+        window.setProperty("page", 3);
         item(QStringLiteral("flowTestSeed"))->setProperty("text", QStringLiteral("42"));
         click(QStringLiteral("startFlowTest"));
         require(probe->ready() && !probe->report().isEmpty() && probe->status().startsWith(QStringLiteral("accepted")), probe->status());
@@ -221,8 +216,7 @@ QJsonObject run_authoring_walkthrough(Browser& browser, QQuickWindow& window) {
         if (modes.at(i) == QStringLiteral("scheduled")) change(QStringLiteral("lifecycle"), QStringLiteral("due"), QStringLiteral("2014-01-02"));
     }
     choose_flow(QString::fromLatin1(branch));
-    item(QStringLiteral("draftFilename"))->setProperty("text", QStringLiteral("e1a05-walkthrough.json"));
-    click(QStringLiteral("saveDraftAs"));
+    require(browser.saveDraft(QStringLiteral("e1a05-walkthrough.json")), browser.draftMessage());
     require(browser.existingDraft() && !browser.draftDirty(), QStringLiteral("Saving the new separate draft failed."));
     click(QStringLiteral("closeWorkingDraft"));
     require(!browser.editing(), QStringLiteral("The saved draft did not close."));

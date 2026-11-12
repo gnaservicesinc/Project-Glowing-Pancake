@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.73.0-dev.1",
+  "content_version": "0.73.1-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -69782,8 +69782,8 @@
           },
           {
             "buzz": 0,
-            "capital_cents": 80000000,
-            "detail": "Access to substantial family capital, with expectations attached.",
+            "capital_cents": 500000000,
+            "detail": "Your family has substantial savings and can afford to support a lab.",
             "family": "",
             "fee_cents": 0,
             "id": "rich",
@@ -69843,7 +69843,7 @@
           {
             "buzz": 10,
             "capital_cents": 10000000,
-            "detail": "Available from any childhood. Your family rises into wealth by 18, with contacts and public scrutiny.",
+            "detail": "A parent’s political career brings connections and public scrutiny. Families with modest means build wealth by age 18.",
             "family": "",
             "fee_cents": 0,
             "id": "political",
@@ -70154,8 +70154,8 @@
             ],
             "date": "2003-09-01",
             "id": "curiosity",
-            "text": "At six, an old computer, a library club and a neighborhood sports group all compete for your attention.",
-            "title": "A first fascination"
+            "text": "At six, you can stay after school on your own street. An old computer hums beside the library window. A club meets at the long table, and outside you can hear the neighborhood team practicing.",
+            "title": "After school"
           },
           {
             "choices": [
@@ -70204,8 +70204,8 @@
             ],
             "date": "2008-10-01",
             "id": "setback",
-            "text": "At eleven, the economic downturn reaches your family. People respond with caution, mutual help or a search for a new opportunity.",
-            "title": "An uncertain year"
+            "text": "In 2008, a shop closes at the end of your street. Then another. Neighbors trade rides and tools while they wait for work to come back.",
+            "title": "The year the phones stopped ringing"
           },
           {
             "choices": [
@@ -70254,7 +70254,7 @@
             ],
             "date": "2010-09-01",
             "id": "circle",
-            "text": "At thirteen, you can devote your spare time to a science team, a community organization or a small local business.",
+            "text": "At thirteen, you know who stays late at the library. One group is building for a science fair. Another is organizing a neighborhood project. Across the street, a shopkeeper could use help.",
             "title": "Finding your people"
           },
           {
@@ -70304,8 +70304,8 @@
             ],
             "date": "2012-08-01",
             "id": "promise",
-            "text": "At fifteen, your project produces an exciting result. The first demonstration works, but you do not yet know how often.",
-            "title": "A promising result"
+            "text": "One evening, your first experiment works. You run it again. This time the result is less clear. Someone is already asking for a demonstration.",
+            "title": "The result"
           },
           {
             "choices": [
@@ -70354,8 +70354,8 @@
             ],
             "date": "2013-07-01",
             "id": "ownership",
-            "text": "At sixteen, someone offers to support your project. They want a say in what becomes public.",
-            "title": "Who should benefit?"
+            "text": "After hearing about your project, a visitor offers to pay for equipment. Before leaving, they ask who will own the method once it works.",
+            "title": "The price of help"
           },
           {
             "choices": [
@@ -70404,8 +70404,8 @@
             ],
             "date": "2014-04-01",
             "id": "record",
-            "text": "At seventeen, a panel asks what your work actually demonstrates. A weak case appears in the evaluation.",
-            "title": "Your first public test"
+            "text": "Three reviewers pull up chairs at your workbench. One points to an example your system handled badly and asks how often it happens.",
+            "title": "On the record"
           },
           {
             "choices": [
@@ -79393,7 +79393,7 @@
         "research.compute.batched_serving"
       ],
       "resilience": "resilience.domestic",
-      "revision": 43,
+      "revision": 44,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

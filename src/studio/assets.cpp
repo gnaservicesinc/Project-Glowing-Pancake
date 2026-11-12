@@ -124,7 +124,7 @@ std::string AssetRegister::inspect(std::string_view id) const {
     media_type(*found,bytes,found->path);
     evidence(root_,*found);
     if (persistence::sha256(bytes) != found->sha256) throw std::invalid_argument("The file bytes differ from the recorded asset hash.");
-    return found->credit_text + "\n" + found->license_id + " · " + found->license_evidence_path + "\nSHA-256 " + found->sha256;
+    return found->credit_text + "\n" + found->license_id + " · " + found->license_evidence_path;
 }
 AssetSeal AssetRegister::seal(std::string_view id) const {
     const auto found = std::find_if(records_.begin(),records_.end(),[&](const auto& row) { return row.id == id; });

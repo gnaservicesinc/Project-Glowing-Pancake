@@ -8,7 +8,7 @@ namespace {
 std::vector<FormOption> variables(const Registry& registry, Scope scope) {
     std::vector<FormOption> options;
     for (const auto& [id, fact] : registry.facts())
-        if (fact.scope == scope && fact.default_value) options.push_back({id, id, fact.help});
+        if (fact.scope == scope && fact.default_value) options.push_back({id, fact.help.empty() ? readable_name(id) : fact.help, fact.help});
     return options;
 }
 std::vector<FormOption> argument_choices(const Collection& collection, const ArgumentMetadata& argument) {
@@ -17,7 +17,7 @@ std::vector<FormOption> argument_choices(const Collection& collection, const Arg
     if (argument.type == ValueType::reference) {
         std::set<std::string> included;
         for (const auto& [id, definition] : collection.definitions)
-            if (definition_kind(definition) == argument.reference_kind) options.push_back({id, id});
+            if (definition_kind(definition) == argument.reference_kind) options.push_back({id, event_name(collection, definition)});
         for (const auto& [id,definition]:collection.definitions) {
             (void)id;
             const auto* scenario=std::get_if<ScenarioDefinition>(&definition.data);
@@ -29,11 +29,11 @@ std::vector<FormOption> argument_choices(const Collection& collection, const Arg
                 const auto* regional=regional_markets(collection,*scenario);
                 const auto& segments=regional?regional->products.segments:scenario->market->segments;
                 for (const auto& segment:segments)
-                    if (included.insert(segment.id).second) options.push_back({segment.id,segment.id});
+                    if (included.insert(segment.id).second) options.push_back({segment.id,readable_name(segment.id)});
             }
         }
     } else {
-        for (const auto& choice : argument.choices) options.push_back({choice, choice});
+        for (const auto& choice : argument.choices) options.push_back({choice, readable_name(choice)});
     }
     return options;
 }
@@ -58,7 +58,7 @@ std::vector<FormOption> effect_choices(const DraftDocument& draft, Scope scope) 
         const auto missing = std::any_of(effect.arguments.begin(), effect.arguments.end(), [&](const auto& argument) {
             return argument.required && argument.type == ValueType::reference && argument_choices(draft.collection(), argument).empty();
         });
-        if (!missing) result.push_back({id, id, effect.help});
+        if (!missing) result.push_back({id, readable_name(id), effect.help});
     }
     return result;
 }
@@ -80,22 +80,22 @@ void build_effect_fields(FormBuilder& builder, const Effect& effect, EffectAcces
     const auto& draft = builder.draft;
     const auto& registry = draft.registry();
     const auto& metadata = *registry.effect(effect.operation);
-    builder.add("operation", "Effect operation", effect.operation, metadata.help +
+    builder.add("operation", "What changes", effect.operation, metadata.help +
                 "\nChanging operation initializes the new arguments.", FormControl::choice,
                 [access, &draft](FlowDefinition& flow, std::string_view value) {
         auto& target = access(flow);
         if (target.operation != value) target = new_effect(draft, flow.scope, value);
     }, effect_choices(draft, builder.flow.scope));
-    builder.add("target", "Explicit target", effect.target,
-                "This foundation operation binds to the flow's " + std::string(scope_name(builder.flow.scope)) + " scope.",
+    builder.add("target", "Who it affects", effect.target,
+                "The change applies to the same subject as the event.",
                 FormControl::choice, [access](FlowDefinition& flow, std::string_view value) {
         auto& target = access(flow);
         target.target = value;
         target.target_scope = flow.scope;
-    }, {{"self", "Self · " + std::string(scope_name(builder.flow.scope))}});
+    }, {{"self", "This " + std::string(scope_name(builder.flow.scope))}});
     if (effect.operation == "set_variable") {
         const auto& id = std::get<std::string>(effect.arguments.at("variable"));
-        builder.add("variable", "Writable variable", id, registry.fact(id)->help +
+        builder.add("variable", "Story value to change", id, registry.fact(id)->help +
                     "\nChanging variables resets the assigned expression to the new variable's default.", FormControl::choice,
                     [access, &registry](FlowDefinition& flow, std::string_view value) {
             auto& target = access(flow);
@@ -108,8 +108,7 @@ void build_effect_fields(FormBuilder& builder, const Effect& effect, EffectAcces
         const auto found = effect.arguments.find(argument.name);
         auto options = argument_choices(draft.collection(), argument);
         const auto value = found == effect.arguments.end() ? std::string{} : scalar_text(found->second);
-        auto label = argument.name;
-        std::replace(label.begin(), label.end(), '_', ' ');
+        auto label = readable_name(argument.name);
         auto help = argument.help;
         if (argument.type == ValueType::integer) {
             label += " · " + unit_label(argument.unit);

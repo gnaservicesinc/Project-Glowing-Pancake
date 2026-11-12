@@ -109,6 +109,11 @@ ApplicationWindow {
         menuVisible = true
         frontMenu.home()
     }
+    function resumeGame() {
+        if (campaign.storageBlocked || !frontMenu.canResume) return
+        sessionEntered = true
+        menuVisible = false
+    }
     function locateOriginalContent() {
         if (campaign.canRestoreBundledContent) campaign.reviewOriginalContent("")
         else originalContentDialog.open()
@@ -141,8 +146,10 @@ ApplicationWindow {
         sequence: "Escape"
         enabled: !saveDialog.visible && !loadDialog.visible && !originalContentDialog.visible && !originalContentReview.visible && !restartDialog.visible && !musicCredits.visible && !cancelDialog.visible && !exitDialog.visible && !deviceHome.visible && !frontMenu.auxiliaryDialogOpen
         onActivated: {
-            if (window.menuVisible) window.requestExit()
-            else window.openMainMenu()
+            if (!window.menuVisible) window.openMainMenu()
+            else if (frontMenu.page !== "home") frontMenu.home()
+            else if (frontMenu.canResume) window.resumeGame()
+            else window.requestExit()
         }
     }
     Connections {
@@ -185,7 +192,6 @@ ApplicationWindow {
         enabled: visible
         textSize: window.textSize
         onOpenApp: (app,section,device) => window.openApp(app,section,device)
-        onMenuRequested: window.openMainMenu()
         onLauncherRequested: deviceHome.showFor(window.activeDevice)
     }
     DeviceHome {
@@ -294,7 +300,7 @@ ApplicationWindow {
         }
         onOpened: cancelExitButton.forceActiveFocus()
         onAccepted: { window.exitConfirmed = true; window.close(); Qt.quit() }
-        onRejected: {
+        onClosed: {
             window.exitCancelPending = window.resumeAfterExitCancel
             window.resumeAfterExitCancel = false
             window.syncOverlayPause()
@@ -1143,7 +1149,15 @@ ApplicationWindow {
         enabled: visible
         textScale: campaign.textScalePercent / 100
         onVisibleChanged: soundtrack.setIntroduction(visible)
-        onMenuRequested: window.openMainMenu()
+    }
+    Connections {
+        target: optionalMenuSource.length ? campaign : null
+        function onDevelopmentResetFinished() {
+            window.sessionEntered = false
+            window.deviceOpen = false
+            window.menuVisible = true
+            frontMenu.home()
+        }
     }
     MainMenu {
         id: frontMenu
@@ -1151,7 +1165,8 @@ ApplicationWindow {
         visible: window.menuVisible
         enabled: visible
         focus: visible
-        canResume: campaign.currentCampaign || window.sessionEntered || (campaign.welcome && campaign.founding.hasDraft)
+        canResume: !campaign.storageBlocked && (campaign.currentCampaign || window.sessionEntered || (campaign.welcome && campaign.founding.hasDraft))
+        canDelete: optionalMenuSource.length > 0 && (canResume || campaign.storageBlocked)
         textSize: Math.round(16 * campaign.textScalePercent / 100)
         onNewGameRequested: {
             if (window.sessionEntered && !campaign.welcome) restartDialog.open()
@@ -1164,17 +1179,8 @@ ApplicationWindow {
         onLeadershipRequested: { window.menuVisible = false; window.openApp("leadership","","laptop") }
         onLoadRequested: { campaign.clearNotice(); loadDialog.open() }
         onOriginalContentRequested: window.locateOriginalContent()
-        onResumeRequested: {
-            window.sessionEntered = true
-            window.menuVisible = false
-        }
+        onResumeRequested: window.resumeGame()
         onQuitRequested: window.requestExit()
         onSettingsSubmitted: window.pendingMenuSettings = true
-        onAuxiliarySessionReset: {
-            window.sessionEntered = false
-            window.deviceOpen = false
-            window.menuVisible = true
-            frontMenu.home()
-        }
     }
 }

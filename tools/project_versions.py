@@ -183,8 +183,9 @@ def content_snapshot_record(root: Path, manifest: dict) -> dict:
                 if current.is_symlink():
                     raise VersionError("snapshot record paths cannot follow symbolic links")
             with current.open("rb") as source:
-                raw = source.read(4 * 1024 * 1024 + 1)
-            if len(raw) > 4 * 1024 * 1024:
+                limit = 8 * 1024 * 1024 if relative == "authoring/content-history.json" else 4 * 1024 * 1024
+                raw = source.read(limit + 1)
+            if len(raw) > limit:
                 raise VersionError("snapshot record exceeds its byte bound")
             value = json.loads(raw.decode("utf-8"), object_pairs_hook=_object)
             if not isinstance(value, dict):

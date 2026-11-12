@@ -106,7 +106,7 @@ QJsonObject run_world_walkthrough(Browser& browser,QQuickWindow& window,const QS
     click(QStringLiteral("previewWorldOpening"));
     require(author->report().contains(QStringLiteral("120001234")) && author->report().contains(QStringLiteral("Exact save reload")) &&
         author->report().contains(QStringLiteral("Enabled trigger targets")),QStringLiteral("Actual opening/target report is incomplete."));
-    auto* filename=item(QStringLiteral("worldDraftFilename"));filename->setProperty("text",QStringLiteral("e2-01-walkthrough.json"));click(QStringLiteral("saveWorldDraft"));
+    require(browser.saveDraft(QStringLiteral("e2-01-walkthrough.json")), browser.draftMessage());
     require(!browser.draftDirty(),QStringLiteral("Saved world draft remained dirty."));
     const auto saved=persistence::read_bounded(root/draft,content::maximum_document_bytes);
     browser.closeDraft();browser.beginDraft(QString::fromLatin1(draft),QStringLiteral("scenario.first_playable"));settle();

@@ -1,12 +1,57 @@
 #include "form_builder.hpp"
 #include "graph_forms.hpp"
+#include "references.hpp"
 
 #include <pgp/core/integer_codec.hpp>
 
 #include <algorithm>
+#include <cctype>
+#include <set>
 #include <type_traits>
 
 namespace pgp::studio {
+std::string readable_name(std::string_view name) {
+    std::string result;
+    bool initial = true;
+    for (char character : name) {
+        if (character == '.' || character == '_' || character == '/') {
+            if (!result.empty() && result.back() != ' ') result.push_back(' ');
+        } else {
+            result.push_back(initial ? static_cast<char>(std::toupper(static_cast<unsigned char>(character))) : static_cast<char>(character));
+            initial = false;
+        }
+    }
+    return result;
+}
+std::string_view event_presentation(const content::FlowDefinition& flow) {
+    std::vector<std::string_view> pending{flow.entry_node};
+    std::set<std::string_view> seen;
+    while (!pending.empty()) {
+        const auto id = pending.back();
+        pending.pop_back();
+        if (!seen.insert(id).second) continue;
+        const auto node = flow.nodes.find(id);
+        if (node == flow.nodes.end()) continue;
+        if (node->second.kind == content::NodeKind::dialogue || node->second.kind == content::NodeKind::news)
+            return node->first;
+        const auto start = pending.size();
+        detail::visit_node_links(node->second, [&](const auto& next) { pending.push_back(next); });
+        std::reverse(pending.begin() + static_cast<std::ptrdiff_t>(start), pending.end());
+    }
+    return {};
+}
+std::string event_name(const content::Collection& collection, const content::Definition& definition) {
+    if (const auto* flow = std::get_if<content::FlowDefinition>(&definition.data)) {
+        if (const auto* title = collection.message(definition.id + ".editor_title"); title && !title->empty())
+            return *title;
+        const auto entry = flow->nodes.find(event_presentation(*flow));
+        if (entry != flow->nodes.end())
+            if (const auto* title = collection.message(entry->second.title_key); title && !title->empty())
+                return title->substr(0, title->find('\n'));
+    }
+    const auto start = definition.id.find('.');
+    return readable_name(start == std::string::npos ? definition.id : definition.id.substr(start + 1));
+}
 namespace detail {
 const FlowDefinition& find_flow(const DraftDocument& draft, std::string_view id) {
     const auto* definition = draft.collection().find(id);
@@ -55,7 +100,7 @@ std::vector<FormOption> boolean_choices() { return {{"false", "False"}, {"true",
 std::vector<FormOption> fact_choices(const Registry& registry, Scope scope) {
     std::vector<FormOption> result;
     for (const auto& [id, fact] : registry.facts())
-        if (fact.scope == scope) result.push_back({id, id, fact.help});
+        if (fact.scope == scope) result.push_back({id, fact.default_value && !fact.help.empty() ? fact.help : readable_name(id), fact.help});
     return result;
 }
 Scalar default_scalar(const FactMetadata& fact) {
@@ -101,7 +146,7 @@ std::string_view lifecycle_label(LifecycleMode mode) {
 std::vector<FormOption> node_choices(const FlowDefinition& flow) {
     std::vector<FormOption> result;
     for (const auto& [id, node] : flow.nodes)
-        result.push_back({id, id + " · " + std::string(node_label(node.kind))});
+        result.push_back({id, std::string(node_label(node.kind)) + " · " + readable_name(id)});
     return result;
 }
 std::string available_node_id(const FlowDefinition& flow, std::string_view base) {
@@ -145,10 +190,10 @@ void FormBuilder::action(std::string key, std::string label, std::string help, C
 
 std::vector<OutlineRow> flow_outline(const DraftDocument& draft, std::string_view id) {
     const auto& flow = detail::find_flow(draft, id);
-    std::vector<OutlineRow> rows{{"flow", "Flow settings"}};
-    if (flow.group) rows.push_back({"group", "Named group ports"});
+    std::vector<OutlineRow> rows{{"flow", "Event settings"}};
+    if (flow.group) rows.push_back({"group", "What the group needs and returns"});
     else {
-        rows.push_back({"lifecycle", "Lifecycle"});
+        rows.push_back({"lifecycle", "When it runs"});
         detail::append_trigger_outline(rows, draft, flow);
     }
     detail::append_variable_outline(rows, draft, flow.scope);

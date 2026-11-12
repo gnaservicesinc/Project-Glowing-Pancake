@@ -18,9 +18,9 @@ void put(const fs::path& path,std::string_view bytes) {fs::create_directories(pa
 std::string read(const fs::path& path) {return persistence::read_bounded(path,4U*1024U*1024U);}
 struct Scratch {
     fs::path root=fs::path{PGP_SNAPSHOT_SCRATCH}/("snapshot-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    Scratch() {
+    explicit Scratch(bool small_fixture=false) {
         fs::create_directories(root/".git");put(root/"CMakeLists.txt","# fixture\n");put(root/"src/content/collection.cpp","// fixture\n");
-        put(root/"project-versions.json",read(PGP_VERSION_SOURCE));put(root/"data/runtime/first-playable.json",read(PGP_SNAPSHOT_SOURCE));
+        put(root/"project-versions.json",read(PGP_VERSION_SOURCE));put(root/"data/runtime/first-playable.json",read(small_fixture ? PGP_DIRECT_SAVE_SOURCE : PGP_SNAPSHOT_SOURCE));
         // Tests always begin from an unfinalized fixture, even once the owning
         // checkout's content component has its first reviewed development version.
         auto versions=Json::parse(read(root/"project-versions.json"));versions["components"]["content"]="0.0.0-dev";put(root/"project-versions.json",versions.dump(2));
@@ -118,6 +118,26 @@ void changes_and_versions() {
     check(resolved.generation==3 && resolved.game_version_requirement_resolved && studio::check_snapshot(scratch.root).game_version_requirement_resolved,"Explicit game-version update did not satisfy the recorded pending requirement");
     refused([&]{(void)studio::review_snapshot(scratch.root,request);},"version");
 }
+void direct_save() {
+    Scratch scratch{true};
+    first_snapshot(scratch);
+    const auto source=initial().target;
+    studio::DraftDocument document{scratch.root,source}, stale{scratch.root,source};
+    auto collection=document.collection();
+    const auto& flow=std::get<content::FlowDefinition>(collection.definitions.at("flow.news.first_public_breakthrough").data);
+    const auto key=flow.nodes.at(flow.entry_node).text_key;
+    collection.messages[key]="A new instruction from the event editor.";
+    check(document.replace(collection) && stale.replace(collection),"The authored text must be editable.");
+    document.save_reviewed("Update the briefing from Content Studio.");
+    check(!document.dirty() && document.relative_file()==source &&
+        Json::parse(read(scratch.root/source)).at("messages").at(key)==collection.messages.at(key),
+        "Save must replace the project's runtime source and reopen the written revision.");
+    check(!fs::exists(scratch.root/"data/drafts") && studio::check_snapshot(scratch.root).generation==2,
+        "Saving the project must produce a consistent revision without a draft file.");
+    const auto saved=read(scratch.root/source);
+    refused([&]{stale.save_reviewed("Attempt a stale edit.");},"conflict");
+    check(read(scratch.root/source)==saved,"A stale editor must preserve the newer project source.");
+}
 void conflicts_and_faults() {
     for (const auto phase:{studio::SnapshotWritePhase::staged,studio::SnapshotWritePhase::replaced,studio::SnapshotWritePhase::committed}) {
         Scratch scratch;const auto before=tracked(scratch.root);const auto request=initial();const auto review=studio::review_snapshot(scratch.root,request);
@@ -158,4 +178,5 @@ void malformed() {
     bool blocked=false;try {(void)studio::review_snapshot(scratch.root,request);}catch(const std::exception&){blocked=true;}check(blocked,"Snapshot followed a linked draft outside its ordinary checkout path");
 }
 }
-int main(){try {changes_and_versions();conflicts_and_faults();malformed();std::cout<<checks<<" snapshot checks passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(int argc,char** argv){try {if (argc==2 && std::string_view{argv[1]}=="--direct-save") direct_save();
+    else {changes_and_versions();conflicts_and_faults();malformed();}std::cout<<checks<<" snapshot checks passed\n";return 0;}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

@@ -12,6 +12,7 @@ QVariantMap option(const FormOption& o) {return {{"value",text(o.value)},{"label
 QString control(FormControl c) {
     switch(c) {
     case FormControl::note:return QStringLiteral("note");
+    case FormControl::paragraph:return QStringLiteral("text");
     case FormControl::choice:return QStringLiteral("choice");
     case FormControl::integer:return QStringLiteral("integer");
     default:return QStringLiteral("text");
@@ -70,7 +71,7 @@ void WorldController::set_document(DraftDocument* d,std::string_view preferred) 
 void WorldController::refresh() {
     scenarios_.clear();sections_.clear();states_.clear();fields_.clear();templates_.clear();form_.reset();++ticket_;
     if(!draft_) {scenario_.clear();path_.clear();emit changed();return;}
-    for(const auto& [id,d]:draft_->collection().definitions) if(std::holds_alternative<content::ScenarioDefinition>(d.data)) scenarios_.push_back(option({id,id,{}}));
+    for(const auto& [id,d]:draft_->collection().definitions) if(std::holds_alternative<content::ScenarioDefinition>(d.data)) scenarios_.push_back(option({id,event_name(draft_->collection(),d),{}}));
     const auto* selected=draft_->collection().find(scenario_);
     if(!selected || !std::holds_alternative<content::ScenarioDefinition>(selected->data)) {
         scenario_=scenarios_.isEmpty()?std::string{}:scenarios_.front().toMap().value(QStringLiteral("value")).toString().toStdString();path_.clear();

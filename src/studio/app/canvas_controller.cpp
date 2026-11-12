@@ -159,6 +159,21 @@ bool CanvasController::pickPort(QString value, QString id) {
     } catch (const std::exception& error) { fail(error); return false; }
 }
 void CanvasController::cancelConnection() { pending_.clear(); port_.clear(); refresh_palette(); }
+bool CanvasController::prepareInsert() {
+    if (!verify(ticket())) return false;
+    if (!palette_.empty()) return true;
+    const auto& ports = graph_->ports();
+    const auto find = [&](const QString& key) {
+        return std::find_if(ports.begin(), ports.end(), [&](const auto& port) {
+            return text(port.node) == key && port.output && port.connectable &&
+                port.type == content::PortType::execution && !graph_->palette(port.id).empty();
+        });
+    };
+    auto port = find(selected_);
+    if (port == ports.end()) port = find(QStringLiteral("flow"));
+    if (port == ports.end()) port = find(QStringLiteral("group"));
+    return port != ports.end() && pickPort(ticket(), text(port->id));
+}
 bool CanvasController::insertNode(QString value, QString type) {
     if (!verify(value) || port_.isEmpty()) return false;
     try {

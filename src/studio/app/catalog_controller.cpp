@@ -57,10 +57,10 @@ bool WorldController::setCatalogMode(bool enabled) {
 void WorldController::selectCatalogEntry(QString selected) {
     if(!draft_) return;
     perform([&] {
-        if(hasStaged() || hasUnapplied()) throw std::invalid_argument("Apply pending fields and staged sections before selecting another catalog entry.");
+        if(hasStaged() || hasUnapplied()) throw std::invalid_argument("Apply pending fields and staged sections before selecting another entry.");
         const auto& index=catalog();
         const auto found=std::find_if(index.entries.begin(),index.entries.end(),[&](const auto& e){return record_path(e)==selected.toStdString();});
-        if(found==index.entries.end()) throw std::invalid_argument("Choose a current catalog entry.");
+        if(found==index.entries.end()) throw std::invalid_argument("Choose an entry in this project.");
         (void)WorldForm::open_catalog(*draft_,scenario_,selected.toStdString());
         catalog_mode_=true;path_=selected.toStdString();search_.clear();adding_=false;refresh();
     });
@@ -100,7 +100,7 @@ bool WorldController::applyRename() {
 }
 bool WorldController::cloneCatalogEntry(QString id) {
     return perform([&] {
-        if(!draft_ || identity_path_.empty() || hasStaged() || hasUnapplied()) throw std::invalid_argument("Choose a catalog entry and apply pending fields first.");
+        if(!draft_ || identity_path_.empty() || hasStaged() || hasUnapplied()) throw std::invalid_argument("Choose an entry and apply pending fields first.");
         const auto record=path_parent(identity_path_);
         if(path_parent(record)=="/definitions") {
             if(duplicate_catalog_definition(*draft_,identity_,id.toStdString())) {path_="/definitions/"+id.toStdString();emit documentEdited();}
@@ -113,13 +113,13 @@ bool WorldController::cloneCatalogEntry(QString id) {
 }
 bool WorldController::beginCatalogTemplate(QString source) {
     return perform([&] {
-        if(!draft_ || !catalog_mode_ || hasStaged() || hasUnapplied()) throw std::invalid_argument("Choose a catalog list and apply pending fields first.");
+        if(!draft_ || !catalog_mode_ || hasStaged() || hasUnapplied()) throw std::invalid_argument("Choose an entry list and apply pending fields first.");
         form_=WorldForm::append_catalog_from(*draft_,scenario_,path_,source.toStdString());adding_=true;project_form();emit changed();
     });
 }
 bool WorldController::removeIdentity() {
     return perform([&] {
-        if(!draft_ || identity_path_.empty() || hasStaged() || hasUnapplied()) throw std::invalid_argument("Choose a catalog identity and apply pending fields first.");
+        if(!draft_ || identity_path_.empty() || hasStaged() || hasUnapplied()) throw std::invalid_argument("Choose an entry and apply pending fields first.");
         if(remove_catalog_entry(*draft_,identity_path_)) {path_.clear();emit documentEdited();}
     });
 }

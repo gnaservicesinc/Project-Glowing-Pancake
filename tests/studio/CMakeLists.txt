@@ -10,9 +10,11 @@ add_executable(pgp-snapshot-test snapshot_test.cpp)
 target_link_libraries(pgp-snapshot-test PRIVATE pgp::studio_library)
 target_include_directories(pgp-snapshot-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
 target_compile_definitions(pgp-snapshot-test PRIVATE PGP_SNAPSHOT_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json"
+    PGP_DIRECT_SAVE_SOURCE="${PROJECT_SOURCE_DIR}/tests/content/fixtures/foundation.json"
     PGP_VERSION_SOURCE="${PROJECT_SOURCE_DIR}/project-versions.json" PGP_SNAPSHOT_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
 pgp_project_target(pgp-snapshot-test)
 add_test(NAME studio.snapshots COMMAND pgp-snapshot-test)
+add_test(NAME studio.save-to-project COMMAND pgp-snapshot-test --direct-save)
 add_executable(pgp-canvas-test canvas_test.cpp)
 target_link_libraries(pgp-canvas-test PRIVATE pgp::studio_library)
 target_include_directories(pgp-canvas-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")

@@ -27,13 +27,18 @@ MenuVideo::~MenuVideo() {
     [native_->looper disableLooping];
     [native_->player removeAllItems];
 }
-bool MenuVideo::supported() const { return true; }
+namespace {
+QString menu_video_path() {
+    return QCoreApplication::applicationDirPath() + QStringLiteral("/../Resources/Menu/horizon.mp4");
+}
+}
+bool MenuVideo::supported() const { return QFileInfo::exists(menu_video_path()); }
 void MenuVideo::setActive(bool active) {
     if (active_==active) return;
     active_=active;
     if (active_ && !native_->failed) {
         if (!native_->player) {
-            const auto path=QFileInfo{QCoreApplication::applicationDirPath()+QStringLiteral("/../Resources/Menu/horizon.mp4")}.canonicalFilePath();
+            const auto path=QFileInfo{menu_video_path()}.canonicalFilePath();
             if (path.isEmpty()) {
                 native_->failed=true; error_=tr("The background video is unavailable. Showing the still image.");
                 emit frameReadyChanged(); emit activeChanged(); return;

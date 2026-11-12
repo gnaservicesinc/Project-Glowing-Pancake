@@ -197,9 +197,17 @@ void build_flow_settings(FormBuilder& builder) {
                          FormControl::text, [id = builder.id](Collection& collection, FlowDefinition&, std::string_view value) {
         rename_flow(collection, id, value);
     });
-    builder.note("Flow scope", std::string(scope_name(builder.flow.scope)), "Choose the scope when creating a flow.");
+    const auto title_key = builder.id + ".editor_title";
+    builder.add_document("event_name", "Name in the editor",
+        event_name(builder.draft.collection(), builder.draft.collection().definitions.at(builder.id)),
+        "Use a short name that helps you find this event.", FormControl::text,
+        [title_key](Collection& collection, FlowDefinition&, std::string_view value) {
+            if (value.empty()) throw std::invalid_argument("Enter a name for this event.");
+            collection.messages[title_key] = value;
+        });
+    builder.note("Who this event applies to", std::string(scope_name(builder.flow.scope)), "Choose the scope when creating a flow.");
     const bool deprecated=builder.draft.collection().definitions.at(builder.id).deprecated;
-    builder.add_document("deprecated", "Catalog status", deprecated ? "true" : "false",
+    builder.add_document("deprecated", "Event status", deprecated ? "true" : "false",
         "Deprecation keeps the flow and existing references available. Scenario enrollment controls execution.",
         FormControl::choice,[id=builder.id](Collection& collection, FlowDefinition&, std::string_view value) {
             collection.definitions.at(id).deprecated=value=="true";
@@ -216,7 +224,7 @@ void build_flow_settings(FormBuilder& builder) {
     if (builder.flow.lifecycle.mode == LifecycleMode::once || builder.flow.lifecycle.mode == LifecycleMode::recurring) {
         std::vector<FormOption> sources{{"", "Normal lifecycle check"}};
         for (const auto& [id, source] : registry.committed_facts())
-            if (source.owner_scope == builder.flow.scope) sources.push_back({id, id, source.help});
+            if (source.owner_scope == builder.flow.scope) sources.push_back({id, readable_name(id), source.help});
         if (sources.size() > 1) {
             const auto* selected = registry.committed_fact(builder.flow.on_committed);
             builder.add("source", "Activation source", builder.flow.on_committed,
@@ -228,7 +236,7 @@ void build_flow_settings(FormBuilder& builder) {
         const auto* scenario = std::get_if<ScenarioDefinition>(&definition.data);
         if (!scenario) continue;
         const bool enabled = std::find(scenario->flows.begin(), scenario->flows.end(), builder.id) != scenario->flows.end();
-        builder.add_document("scenario/" + id, id, enabled ? "true" : "false", "Enable this flow as a scenario root.",
+        builder.add_document("scenario/" + id, event_name(builder.draft.collection(), definition), enabled ? "true" : "false", "Enable this flow as a scenario root.",
                              FormControl::choice, [id, flow_id = builder.id](Collection& collection, FlowDefinition&, std::string_view value) {
             auto& list = std::get<ScenarioDefinition>(collection.definitions.at(id).data).flows;
             const auto found = std::find(list.begin(), list.end(), flow_id);
@@ -286,7 +294,8 @@ std::vector<FormOption> flow_scope_options(const DraftDocument& draft) {
     }
     return result;
 }
-bool create_flow(DraftDocument& draft, std::string_view id, std::string_view scope) {
+bool create_flow(DraftDocument& draft, std::string_view id, std::string_view scope,
+                 std::string_view title, std::string_view presentation, std::string_view body) {
     const auto typed_scope = std::find_if(detail::root_scopes.begin(), detail::root_scopes.end(), [scope](auto value) {
         return content::scope_name(value) == scope;
     });
@@ -303,6 +312,29 @@ bool create_flow(DraftDocument& draft, std::string_view id, std::string_view sco
     content::Node terminal{};
     terminal.kind = content::NodeKind::end;
     flow.nodes.emplace(flow.entry_node, std::move(terminal));
+    if (!title.empty()) {
+        const auto key = std::string(id);
+        candidate.messages.emplace(key + ".editor_title", title);
+        const auto check = flow.trigger;
+        flow.trigger = {content::ConditionKind::any_of, {},
+            {check, content::Condition{content::ConditionKind::not_condition, {}, {check}}}};
+        if (presentation == "news" || presentation == "dialogue") {
+            content::Node node{};
+            node.kind = presentation == "dialogue" ? content::NodeKind::dialogue : content::NodeKind::news;
+            node.text_key = key + ".body";
+            candidate.messages.emplace(node.text_key, body);
+            if (node.kind == content::NodeKind::dialogue) {
+                node.title_key = key + ".editor_title";
+                node.choices.push_back({"continue", key + ".continue", "end"});
+                node.default_choice = "continue";
+                candidate.messages.emplace(key + ".continue", "Continue");
+            } else node.next = "end";
+            flow.entry_node = "message";
+            flow.nodes.emplace(flow.entry_node, std::move(node));
+        } else if (presentation != "logic") {
+            throw std::invalid_argument("Choose what the player should see.");
+        }
+    }
     candidate.definitions.emplace(std::string(id), content::Definition{std::string(id), 1, std::move(flow)});
     return draft.replace(candidate);
 }

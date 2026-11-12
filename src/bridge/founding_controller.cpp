@@ -36,7 +36,7 @@ QVariantMap defaults() {
 }
 
 bool eligible_ceo(const content::FoundingSelection& selection) {
-    return selection.leg == "genius" || selection.leg == "political" || selection.leg == "wealthy";
+    return selection.family == "rich" || selection.leg == "genius" || selection.leg == "political" || selection.leg == "wealthy";
 }
 
 QString percent(std::uint32_t basis_points) {
@@ -86,12 +86,12 @@ FoundingController::FoundingController(const content::Collection& collection, st
     deriveOpening();
 }
 
-void FoundingController::reset() {
+void FoundingController::reset(bool save) {
     form_ = defaults();
     deriveOpening();
     beat_ = QStringLiteral("opening");
     error_.clear();
-    if (available()) saveDraft();
+    if (save && available()) saveDraft();
     emit changed();
     emit beatChanged();
 }
@@ -387,7 +387,7 @@ QVariantList FoundingController::chapters() const {
                 }
             }
             result.push_back(QVariantMap{{"id",text(scene.id)},{"title",text(scene.title)},
-                {"date",text(scene.date)},{"text",text(scene.text)},{"choices",rows}});
+                {"date",text(scene.date)},{"text",text(scene.text)},{"requiresChoice",text(scene.requires_choice)},{"choices",rows}});
         }
     }
     return result;
@@ -444,8 +444,7 @@ QString FoundingController::genderAudience(QString gender) const {
     identity.birth_sex=form_.value("birth_sex").toString().toStdString();
     identity.gender=gender.toStdString();
     identity.orientation="straight";
-    return content::queer_founder(identity) ? communitySupport(gender) :
-        tr("Your identity does not set employees’ pay or workplace mood.");
+    return content::queer_founder(identity) ? tr("Community recognition applies.") : QString{};
 }
 QString FoundingController::communitySupport(QString gender) const {
     if(!catalog_) return {};
@@ -458,12 +457,12 @@ QString FoundingController::communitySupport(QString gender) const {
 }
 QString FoundingController::recognitionTerms() const {
     if(!catalog_) return {};
-    return tr("Queer community recognition: +%1 company prestige and +%2 public founding buzz. Applied once across gender and orientation. Company mood and funding conversations use this reputation. Employees keep their own pay preferences.")
+    return tr("Queer community recognition adds %1 company prestige and %2 public founding buzz once. Employees keep their own pay preferences.")
         .arg(catalog_->queer_community_prestige).arg(catalog_->queer_community_buzz);
 }
 QString FoundingController::orientationAudience(QString orientation) const {
     auto identity=selection();identity.orientation=orientation.toStdString();
-    return content::queer_founder(identity)?recognitionTerms():tr("No additional community recognition from this orientation.");
+    return content::queer_founder(identity) ? tr("Community recognition applies.") : QString{};
 }
 
 QString FoundingController::signingError() const {

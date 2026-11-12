@@ -6,6 +6,7 @@
 
 #include <nlohmann/json.hpp>
 #include <QVariantMap>
+#include <QRegularExpression>
 #include <algorithm>
 
 namespace pgp::studio {
@@ -19,8 +20,7 @@ QString label(const RevisionInfo& info) {
     return QStringLiteral("Generation %1 · %2").arg(number(info.generation), text(info.content_version));
 }
 QString description(const RevisionInfo& info) {
-    return QStringLiteral("%1 · game %2\n%3\nSHA-256 %4")
-        .arg(label(info), text(info.game_version), text(info.summary), text(info.collection_hash));
+    return QStringLiteral("%1 · game %2\n%3").arg(label(info), text(info.game_version), text(info.summary));
 }
 QStringList scenarios(const std::optional<FinalizedRevision>& revision) {
     QStringList result;
@@ -62,8 +62,7 @@ QString migration_summary(const Json& report) {
         QStringLiteral("%1 protected graphs · %2 occurrence records · %3 effect receipts · %4 owned modifiers · %5 resolved random draws")
             .arg(value(report.at("protected_graphs")), value(report.at("occurrence_states")), value(report.at("receipts")),
                 value(report.at("owned_modifiers")), value(report.at("resolved_random_draws"))),
-        QStringLiteral("Original save SHA-256 %1").arg(value(report.at("source_save_sha256"))),
-        QStringLiteral("Validated copy SHA-256 %1").arg(value(report.at("export_save_sha256")))};
+        QStringLiteral("Original and exported copy verified.")};
     for (const auto& row : report.at("mappings"))
         lines << QStringLiteral("%1 %2 %3 → %4").arg(value(row.at("kind")), value(row.at("owner")),
             value(row.at("from")), value(row.at("to")));
@@ -147,11 +146,15 @@ void RevisionController::filter(const QString& section, int page) {
     const auto selected = section.toStdString();
     differences_.clear();
     const auto first = static_cast<std::int64_t>(std::max(page, 0)) * page_size;
+    static const QRegularExpression digest(QStringLiteral(R"(\b[a-fA-F0-9]{64}\b)"));
+    const auto readable = [&](std::string_view value) {
+        return text(value).replace(digest, QStringLiteral("Recorded fingerprint"));
+    };
     int count = 0;
     for (const auto& change : changes_) {
         if (!selected.empty() && change.section != selected) continue;
         if (count >= first && count < first + page_size)
-            differences_.push_back(QVariantMap{{"path", text(change.path)}, {"before", text(change.before)}, {"after", text(change.after)}});
+            differences_.push_back(QVariantMap{{"path", text(change.path)}, {"before", readable(change.before)}, {"after", readable(change.after)}});
         ++count;
     }
     pages_ = (count + page_size - 1) / page_size;

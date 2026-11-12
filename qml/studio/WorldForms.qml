@@ -50,20 +50,6 @@ ColumnLayout {
         }
         Button { text: qsTr("Undo"); enabled: session.canUndo && !forms.hasPending; onClicked: session.undo() }
         Button { text: qsTr("Redo"); enabled: session.canRedo && !forms.hasPending; onClicked: session.redo() }
-        Button { text: qsTr("Save draft"); enabled: session.existingDraft && session.draftDirty && !forms.hasPending && !author.hasStaged; onClicked: session.saveDraft("") }
-    }
-    RowLayout {
-        Layout.fillWidth: true
-        TextField {
-            id: filename
-            objectName: "worldDraftFilename"
-            Layout.fillWidth: true
-            maximumLength: 133
-            placeholderText: qsTr("new-world-draft.json")
-            Accessible.name: qsTr("New world draft filename")
-        }
-        Button { objectName: "saveWorldDraft"; text: qsTr("Save as draft"); enabled: filename.text.length > 0 && !forms.hasPending && !author.hasStaged; onClicked: { if (session.saveDraft(filename.text.trim())) filename.clear() } }
-        Button { text: qsTr("Close draft"); onClicked: forms.closeRequested() }
     }
     Label { Layout.fillWidth: true; text: session.workingFile + (session.draftDirty ? qsTr(" · unsaved content") : ""); wrapMode: Text.WrapAnywhere }
     Flow {
@@ -71,7 +57,7 @@ ColumnLayout {
         visible: author.hasStaged
         Button { objectName: "applyWorldBatch"; text: qsTr("Apply staged sections together"); enabled: !forms.hasPending; onClicked: author.applyStaged() }
         Button { text: qsTr("Discard staged sections"); enabled: !forms.hasPending; onClicked: author.discardStaged() }
-        Label { text: qsTr("Staged fields remain outside the draft until the whole batch validates.") }
+        Label { text: qsTr("Apply staged changes together before saving to the project.") }
     }
     RowLayout {
         visible: forms.width < 1000
@@ -88,7 +74,7 @@ ColumnLayout {
             Layout.preferredWidth: forms.width * 0.38
             RowLayout {
                 Button { text: qsTr("Sections"); checkable: true; checked: !forms.mapMode && (!author.catalogMode || !forms.catalogRecords); enabled: !forms.hasPending; onClicked: { forms.mapMode = false; forms.catalogRecords = false } }
-                Button { visible: author.catalogMode; text: qsTr("Catalog records"); checkable: true; checked: forms.catalogRecords; enabled: !forms.hasPending; onClicked: forms.catalogRecords = true }
+                Button { visible: author.catalogMode; text: qsTr("Game records"); checkable: true; checked: forms.catalogRecords; enabled: !forms.hasPending; onClicked: forms.catalogRecords = true }
                 Button { objectName: "worldMapTab"; visible: !author.catalogMode; text: qsTr("States map and list"); checkable: true; checked: forms.mapMode; enabled: !forms.hasPending && author.states.length > 0; onClicked: forms.mapMode = true }
             }
             TextField {
@@ -97,7 +83,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 maximumLength: 256
                 enabled: !forms.hasPending && !author.adding
-                placeholderText: author.catalogMode ? qsTr("Find catalog family, title or ID") : qsTr("Find scoring, policy, rival, region or field")
+                placeholderText: author.catalogMode ? qsTr("Search by group or name") : qsTr("Find scoring, policy, rival, region or field")
                 Accessible.name: qsTr("Search authoring records and sections")
                 onTextEdited: author.filter(text)
             }

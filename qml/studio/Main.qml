@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
+import QtQuick.Dialogs
 
 ApplicationWindow {
     id: window
@@ -10,451 +11,497 @@ ApplicationWindow {
     minimumHeight: 480
     title: qsTr("Glowing Pancake Content Studio")
     visible: false
+    color: "#151c25"
+    palette.window: "#151c25"
+    palette.windowText: "#eff2f7"
+    palette.base: "#101720"
+    palette.text: "#eff2f7"
+    palette.button: "#2a3748"
+    palette.buttonText: "#eff2f7"
+    palette.highlight: "#4375ad"
+    palette.highlightedText: "#ffffff"
+
     property bool closeWindowAfterDiscard: false
     property bool showLibrary: true
-    property bool outlineMode: false
-    property bool inspectorOnly: false
+    property int page: 0
     property bool wasEditing: false
-    onClosing: event => {
-        if (studio.draftDirty || studio.canvasController.hasLayoutEdits) {
-            event.accepted = false
-            closeWindowAfterDiscard = true
-            discardDraft.open()
-        }
-    }
+    readonly property bool editingChapter: !!studio.chapter.title
+    readonly property bool unsaved: studio.draftDirty || studio.canvasController.hasLayoutEdits || eventStory.changed || childhoodScene.changed
+    readonly property string statusMessage: studio.saving ? qsTr("Validating and saving the project…") : studio.draftMessage || studio.message
 
     function updateFilter() {
-        studio.filter(query.text, kinds.currentValue, origins.currentValue)
+        studio.filter(query.text, kinds.currentValue, "Reviewed")
+        library.currentIndex = library.count ? 0 : -1
     }
-    function follow(file, definition) {
-        query.text = definition
-        kinds.currentIndex = 0
-        origins.currentIndex = 0
-        updateFilter()
-        const index = studio.locate(file, definition)
-        if (index >= 0) {
-            library.currentIndex = index
-            library.positionViewAtIndex(index, ListView.Contain)
+    function editSelected() {
+        const entry = library.currentItem ? library.currentItem.modelData : null
+        if (eventStory.changed && !eventStory.applyEdits()) return
+        if (childhoodScene.changed && !childhoodScene.applyEdits()) return
+        if (!entry || entry.validation !== "Validated" || entry.kind === "document") return
+        const opened = entry.kind === "chapter" ? studio.openChapter(entry.file, entry.owner, entry.id)
+            : studio.beginDraft(entry.file, entry.id)
+        if (opened) {
+            window.showLibrary = false
+            window.page = 0
+        }
+    }
+    function save() {
+        if (studio.saving) return
+        if (eventStory.changed && !eventStory.applyEdits()) return
+        if (childhoodScene.changed && !childhoodScene.applyEdits()) return
+        if (studio.draftDirty && !studio.saveEvent()) return
+        if (studio.canvasController.layoutDirty) studio.canvasController.saveLayout()
+    }
+    function browse() {
+        window.showLibrary = true
+        Qt.callLater(() => query.forceActiveFocus())
+    }
+    onClosing: event => {
+        if (studio.saving) { event.accepted = false; return }
+        if (!unsaved) return
+        event.accepted = false
+        closeWindowAfterDiscard = true
+        discardDraft.open()
+    }
+    Shortcut { sequences: [StandardKey.Save]; enabled: studio.editing && window.unsaved && !studio.saving; onActivated: window.save() }
+
+    header: ToolBar {
+        enabled: !studio.saving
+        background: Rectangle { color: "#202b38" }
+        contentItem: RowLayout {
+            spacing: 8
+            Item { implicitWidth: 8 }
+            Button {
+                text: qsTr("Events")
+                checkable: true
+                checked: window.showLibrary
+                onClicked: window.browse()
+            }
+            Button {
+                text: qsTr("New event")
+                enabled: studio.checkout.length > 0
+                onClicked: newEvent.open()
+            }
+            Button {
+                visible: studio.editing && window.showLibrary
+                text: qsTr("Back to editing")
+                onClicked: window.showLibrary = false
+            }
+            Item { Layout.fillWidth: true }
+            Button {
+                id: tools
+                objectName: "studioProjectMenu"
+                text: qsTr("Project ▾")
+                onClicked: projectMenu.open()
+                Menu {
+                    id: projectMenu
+                    MenuItem { text: qsTr("Open project folder…"); onTriggered: projectPicker.open() }
+                    MenuItem {
+                        text: qsTr("Game data")
+                        enabled: studio.editing && !window.editingChapter
+                        onTriggered: { studio.selectWorkspace(true, true); window.showLibrary = false }
+                    }
+                    MenuItem {
+                        objectName: "openAssetRegister"
+                        text: qsTr("Assets and credits")
+                        enabled: studio.checkout.length > 0
+                        onTriggered: { if (studio.openAssets()) assetEditor.open() }
+                    }
+                    MenuItem {
+                        objectName: "openContentRevision"
+                        text: qsTr("Review content revision")
+                        enabled: studio.checkout.length > 0
+                        onTriggered: revisionReview.open()
+                    }
+                    MenuItem {
+                        objectName: "openRevisionComparison"
+                        text: qsTr("Compare revisions")
+                        enabled: studio.checkout.length > 0
+                        onTriggered: revisionComparison.open()
+                    }
+                }
+            }
+            Item { implicitWidth: 8 }
+        }
+    }
+    FolderDialog {
+        id: projectPicker
+        title: qsTr("Open the game project folder")
+        onAccepted: {
+            if (studio.openCheckout(decodeURIComponent(selectedFolder.toString().replace(/^file:\/\/(?:localhost)?/, "")))) {
+                window.browse()
+                window.updateFilter()
+            }
         }
     }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 20
+        anchors.margins: 16
         spacing: 12
-        GridLayout {
-            id: libraryHeader
-            Layout.fillWidth: true
-            columns: window.width >= 960 ? 4 : window.width >= 820 ? 3 : 2
-            Label {
-                Layout.fillWidth: true
-                Layout.columnSpan: libraryHeader.columns === 4 ? 1 : libraryHeader.columns
-                text: window.showLibrary || !studio.editing ? qsTr("Content library") : qsTr("Content Studio")
-                font.pixelSize: 25
-                font.bold: true
-            }
-            Button {
-                objectName: "openAssetRegister"
-                text: qsTr("Assets and credits")
-                enabled: studio.checkout.length > 0
-                onClicked: { if (studio.openAssets()) assetEditor.open() }
-            }
-            Button {
-                objectName: "openContentRevision"
-                text: qsTr("Review content revision")
-                enabled: studio.checkout.length > 0
-                onClicked: revisionReview.open()
-            }
-            Button {
-                objectName: "openRevisionComparison"
-                text: qsTr("Compare revisions")
-                enabled: studio.checkout.length > 0
-                onClicked: revisionComparison.open()
-            }
-        }
-        RowLayout {
-            visible: window.showLibrary || !studio.editing
-            Layout.fillWidth: true
-            TextField {
-                id: folder
-                Layout.fillWidth: true
-                maximumLength: 4096
-                text: studio.checkout
-                placeholderText: qsTr("Absolute checkout folder")
-                Accessible.name: qsTr("Checkout folder")
-                onAccepted: studio.openCheckout(text)
-            }
-            Button {
-                text: qsTr("Open checkout")
-                enabled: folder.text.length > 0
-                onClicked: studio.openCheckout(folder.text)
-            }
-        }
-        Label {
-            visible: window.showLibrary || !studio.editing
-            Layout.fillWidth: true
-            text: studio.message || qsTr("Choose a local development checkout to browse its definitions.")
-            textFormat: Text.PlainText
-            wrapMode: Text.Wrap
-        }
-        RowLayout {
-            visible: window.showLibrary || !studio.editing
-            Layout.fillWidth: true
-            TextField {
-                id: query
-                objectName: "librarySearch"
-                Layout.fillWidth: true
-                maximumLength: 256
-                placeholderText: qsTr("Search ID, tag, file or validation")
-                Accessible.name: qsTr("Search content library")
-                onTextEdited: window.updateFilter()
-            }
-            ComboBox {
-                id: kinds
-                Accessible.name: qsTr("Definition type")
-                textRole: "label"
-                valueRole: "value"
-                model: [
-                    { label: qsTr("All types"), value: "" }, { label: qsTr("Flows"), value: "flow" },
-                    { label: qsTr("Scenarios"), value: "scenario" }, { label: qsTr("Research"), value: "research" },
-                    { label: qsTr("Deals"), value: "deal" }, { label: qsTr("Documents"), value: "document" }
-                ]
-                onActivated: window.updateFilter()
-            }
-            ComboBox {
-                id: origins
-                Accessible.name: qsTr("Content source")
-                textRole: "label"
-                valueRole: "value"
-                model: [
-                    { label: qsTr("All sources"), value: "" }, { label: qsTr("Reviewed"), value: "Reviewed" },
-                    { label: qsTr("Drafts"), value: "Draft" }, { label: qsTr("Engineering fixtures"), value: "Engineering fixture" }
-                ]
-                onActivated: window.updateFilter()
-            }
-        }
-        RowLayout {
-            visible: studio.editing
-            Layout.fillWidth: true
-            Button { text: qsTr("Browse library"); checkable: true; checked: window.showLibrary; onClicked: window.showLibrary = true }
-            Button { text: qsTr("Build flow"); enabled: !studio.worldController.hasStaged && !studio.worldController.hasUnapplied; checkable: true; checked: !window.showLibrary && !studio.worldMode; onClicked: { studio.selectWorkspace(false); window.showLibrary = false } }
-            Button { objectName: "showStudioWorld"; text: qsTr("Scenario and world"); checkable: true; checked: !window.showLibrary && studio.worldMode && !studio.worldController.catalogMode; onClicked: { studio.selectWorkspace(true,false); window.showLibrary = false } }
-            Button { objectName: "showStudioCatalog"; text: qsTr("Catalogs"); checkable: true; checked: !window.showLibrary && studio.worldMode && studio.worldController.catalogMode; onClicked: { studio.selectWorkspace(true,true); window.showLibrary = false } }
-            Button { objectName: "showStudioCanvas"; text: qsTr("Canvas"); visible: !window.showLibrary && !studio.worldMode; checkable: true; checked: !window.outlineMode && !window.inspectorOnly; onClicked: { window.outlineMode = false; window.inspectorOnly = false } }
-            Button { text: qsTr("Outline"); visible: !window.showLibrary && !studio.worldMode; checkable: true; checked: window.outlineMode && !window.inspectorOnly; onClicked: { window.outlineMode = true; window.inspectorOnly = false } }
-            Button { objectName: "showStudioSettings"; text: qsTr("Settings and test"); visible: !window.showLibrary && !studio.worldMode && window.width < 1100; onClicked: window.inspectorOnly = true }
-            Label { Layout.fillWidth: true; text: (studio.worldMode ? studio.worldController.scenario : studio.workingFlow) + qsTr(" · content %1").arg(studio.workingVersion) + (studio.canvasController.hasLayoutEdits ? qsTr(" · unsaved layout moves") : ""); wrapMode: Text.Wrap }
-        }
-        WorldForms {
-            visible: studio.editing && studio.worldMode && !window.showLibrary
-            Layout.fillWidth: true; Layout.fillHeight: true
-            author: studio.worldController
-            session: studio
-            onCloseRequested: {
-                if (studio.draftDirty || studio.canvasController.hasLayoutEdits) {
-                    window.closeWindowAfterDiscard = false
-                    discardDraft.open()
-                } else studio.closeDraft()
-            }
-        }
-        GridLayout {
-            visible: !studio.editing || !studio.worldMode || window.showLibrary
+
+        ColumnLayout {
+            visible: window.showLibrary
+            enabled: !studio.saving
             Layout.fillWidth: true
             Layout.fillHeight: true
-            columns: window.width < 1100 ? 1 : 2
-            columnSpacing: 16
-            rowSpacing: 16
-            ScrollView {
-                visible: window.showLibrary || !studio.editing
+            Label { text: qsTr("Events"); font.pixelSize: 28; font.bold: true }
+            RowLayout {
+                Layout.fillWidth: true
+                TextField {
+                    id: query
+                    objectName: "librarySearch"
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("Search event titles or story text")
+                    Accessible.name: qsTr("Search events")
+                    onTextEdited: window.updateFilter()
+                    Keys.onDownPressed: { library.forceActiveFocus(); if (library.currentIndex < 0) library.currentIndex = 0 }
+                }
+                ComboBox {
+                    id: kinds
+                    Accessible.name: qsTr("What to browse")
+                    textRole: "label"
+                    valueRole: "value"
+                    model: [
+                        { label: qsTr("All events"), value: "events" },
+                        { label: qsTr("Company events"), value: "flow" },
+                        { label: qsTr("Childhood scenes"), value: "chapter" },
+                        { label: qsTr("Scenarios"), value: "scenario" },
+                        { label: qsTr("All game content"), value: "" }
+                    ]
+                    onActivated: window.updateFilter()
+                }
+            }
+            RowLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.preferredWidth: window.width * 0.45
+                spacing: 16
                 ListView {
                     id: library
                     objectName: "studioLibrary"
-                    clip: true
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.preferredWidth: window.width * 0.6
                     model: studio.rows
-                    Accessible.name: qsTr("Definitions and documents")
+                    clip: true
+                    activeFocusOnTab: true
                     keyNavigationEnabled: true
+                    Accessible.name: qsTr("Event list")
+                    Keys.onReturnPressed: window.editSelected()
+                    ScrollBar.vertical: ScrollBar {}
                     delegate: ItemDelegate {
                         required property var modelData
                         required property int index
-                        width: ListView.view.width
+                        width: ListView.view.width - 12
                         highlighted: ListView.isCurrentItem
-                        text: modelData.id + "\n" + modelData.file
-                        onClicked: library.currentIndex = index
+                        text: modelData.title || qsTr("Content file")
+                        onClicked: { library.currentIndex = index; library.forceActiveFocus() }
+                        onDoubleClicked: window.editSelected()
                     }
                     Label {
                         anchors.centerIn: parent
                         visible: library.count === 0
-                        text: qsTr("No matching definitions or documents")
+                        text: studio.checkout.length ? qsTr("No events match this search.") : qsTr("Open a project folder to begin.")
+                    }
+                }
+                Rectangle {
+                    Layout.preferredWidth: window.width * 0.32
+                    Layout.fillHeight: true
+                    color: "#202b38"
+                    radius: 8
+                    ScrollView {
+                        id: overview
+                        anchors.fill: parent
+                        anchors.margins: 16
+                        contentWidth: availableWidth
+                        readonly property var entry: library.currentItem ? library.currentItem.modelData : ({})
+                        ColumnLayout {
+                            width: overview.availableWidth
+                            spacing: 12
+                            Label {
+                                Layout.fillWidth: true
+                                text: overview.entry.title || qsTr("Choose an event")
+                                wrapMode: Text.Wrap
+                                font.bold: true
+                                font.pixelSize: 20
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                visible: !!overview.entry.state
+                                text: overview.entry.state || ""
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                visible: !!overview.entry.synopsis
+                                text: overview.entry.synopsis || ""
+                                textFormat: Text.PlainText
+                                wrapMode: Text.Wrap
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                visible: !!overview.entry.diagnostic
+                                text: overview.entry.diagnostic || ""
+                                textFormat: Text.PlainText
+                                wrapMode: Text.Wrap
+                            }
+                            Button {
+                                objectName: "editSelectedDefinition"
+                                visible: !!overview.entry.title && overview.entry.validation === "Validated"
+                                text: ["flow", "chapter"].includes(overview.entry.kind) ? qsTr("Edit event") : qsTr("Open editor")
+                                onClicked: window.editSelected()
+                            }
+                        }
                     }
                 }
             }
-            ColumnLayout {
-                visible: studio.editing && !window.showLibrary && (window.width >= 1100 || !window.inspectorOnly)
+        }
+
+        ColumnLayout {
+            visible: studio.editing && !window.showLibrary
+            enabled: !studio.saving
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            RowLayout {
+                Layout.fillWidth: true
+                Label {
+                    Layout.fillWidth: true
+                    text: window.editingChapter ? studio.chapter.title : studio.worldMode ? qsTr("Game content") : studio.workingTitle
+                    textFormat: Text.PlainText
+                    elide: Text.ElideRight
+                    font.pixelSize: 24
+                    font.bold: true
+                }
+                Button { objectName: "undoStudioContent"; text: qsTr("Undo"); enabled: studio.canUndo; onClicked: studio.undo() }
+                Button { objectName: "redoStudioContent"; text: qsTr("Redo"); enabled: studio.canRedo; onClicked: studio.redo() }
+                Button { objectName: "saveExistingDraft"; text: qsTr("Save to project"); enabled: window.unsaved; onClicked: window.save() }
+                Button {
+                    objectName: "closeWorkingDraft"
+                    text: qsTr("Close")
+                    onClicked: {
+                        if (window.unsaved) {
+                            window.closeWindowAfterDiscard = false
+                            discardDraft.open()
+                        } else { studio.closeDraft(); window.browse() }
+                    }
+                }
+            }
+            RowLayout {
+                visible: !studio.worldMode && !window.editingChapter
+                Layout.fillWidth: true
+                TabBar {
+                    currentIndex: window.page
+                    onCurrentIndexChanged: {
+                        if (currentIndex !== 0 && eventStory.changed && !eventStory.applyEdits()) {
+                            window.page = 0
+                            setCurrentIndex(0)
+                        } else window.page = currentIndex
+                    }
+                    TabButton { text: qsTr("Story"); width: implicitWidth }
+                    TabButton { text: qsTr("Steps"); width: implicitWidth }
+                    TabButton { objectName: "showStudioCanvas"; text: qsTr("Graph"); width: implicitWidth }
+                    TabButton { objectName: "showStudioSettings"; text: qsTr("Preview in game"); width: implicitWidth }
+                }
+                Item { Layout.fillWidth: true }
+                Button {
+                    objectName: "openGroupTools"
+                    text: qsTr("Reusable steps…")
+                    onClicked: groupTools.open()
+                }
+            }
+            ChildhoodScene {
+                id: childhoodScene
+                visible: window.editingChapter
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.preferredWidth: Math.max(480, window.width - 480)
-                FlowCanvas {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    visible: !window.outlineMode
-                    author: studio.canvasController
-                    inspector: studio.probeController
+                author: studio
+            }
+            WorldForms {
+                visible: studio.worldMode
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                author: studio.worldController
+                session: studio
+                onCloseRequested: window.browse()
+            }
+            EventStory {
+                id: eventStory
+                visible: !studio.worldMode && !window.editingChapter && window.page === 0
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                author: studio
+                onStepRequested: (step, choice) => {
+                    studio.selectEventStep(step, choice)
+                    window.page = 1
                 }
+            }
+            RowLayout {
+                visible: !studio.worldMode && !window.editingChapter && (window.page === 1 || window.page === 2)
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                spacing: 12
                 FlowForms {
-                    id: centerOutline
-                    Layout.fillWidth: true
+                    id: outline
+                    visible: window.page === 1
+                    Layout.preferredWidth: Math.min(window.width * 0.33, 340)
                     Layout.fillHeight: true
-                    visible: window.outlineMode
                     author: studio
                     showFields: false
                     fillOutline: true
                 }
+                FlowCanvas {
+                    visible: window.page === 2
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    author: studio.canvasController
+                    inspector: studio.probeController
+                }
+                Rectangle {
+                    Layout.fillWidth: window.page === 1
+                    Layout.preferredWidth: window.page === 2 ? Math.min(window.width * 0.37, 410) : 420
+                    Layout.fillHeight: true
+                    radius: 8
+                    color: "#202b38"
+                    ScrollView {
+                        id: inspector
+                        objectName: "studioInspector"
+                        anchors.fill: parent
+                        anchors.margins: 14
+                        contentWidth: availableWidth
+                        FlowForms {
+                            width: inspector.availableWidth
+                            author: studio
+                            showOutline: false
+                            outlineObjectName: "hiddenFormOutline"
+                            outlineFocusTarget: outline.outlineView
+                        }
+                    }
+                }
             }
             ScrollView {
-                id: inspector
-                objectName: "studioInspector"
-                visible: window.showLibrary || !studio.editing || window.width >= 1100 || window.inspectorOnly
+                id: preview
+                objectName: "studioPreview"
+                visible: !studio.worldMode && !window.editingChapter && window.page === 3
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.preferredWidth: studio.editing && !window.showLibrary ? 400 : window.width * 0.45
-                Layout.minimumWidth: studio.editing && !window.showLibrary ? 330 : 0
                 contentWidth: availableWidth
-                readonly property var entry: library.currentIndex >= 0 ? studio.rows[library.currentIndex] || {} : {}
-                ColumnLayout {
-                    width: inspector.availableWidth
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        visible: window.showLibrary || !studio.editing
-                    Label {
-                        Layout.fillWidth: true
-                        text: inspector.entry.id || qsTr("Select a library row")
-                        textFormat: Text.PlainText
-                        wrapMode: Text.WrapAnywhere
-                        font.bold: true
-                    }
-                    Label {
-                        visible: !!inspector.entry.id
-                        text: (inspector.entry.origin || "") + " · " + (inspector.entry.validation || "") +
-                            (inspector.entry.state ? " · " + inspector.entry.state : "")
-                    }
-                    Label {
-                        Layout.fillWidth: true
-                        visible: !!inspector.entry.revision
-                        text: qsTr("%1 · revision %2 · content %3").arg(inspector.entry.kind || "")
-                              .arg(inspector.entry.revision || "").arg(inspector.entry.version || "")
-                    }
-                    Label {
-                        Layout.fillWidth: true
-                        visible: !!inspector.entry.diagnostic
-                        text: inspector.entry.diagnostic || ""
-                        textFormat: Text.PlainText
-                        wrapMode: Text.WrapAnywhere
-                    }
-                    Label {
-                        visible: !!inspector.entry.tags && inspector.entry.tags.length > 0
-                        Layout.fillWidth: true
-                        text: (inspector.entry.tags || []).join(" · ")
-                        textFormat: Text.PlainText
-                        wrapMode: Text.WrapAnywhere
-                    }
-                    Label { visible: !!inspector.entry.revision; text: qsTr("Uses"); font.bold: true }
-                    Repeater {
-                        model: inspector.entry.uses || []
-                        delegate: Button {
-                            required property string modelData
-                            Layout.fillWidth: true
-                            text: modelData
-                            onClicked: window.follow(inspector.entry.file, modelData)
-                        }
-                    }
-                    Label { visible: !!inspector.entry.revision; text: qsTr("Used by"); font.bold: true }
-                    Repeater {
-                        model: inspector.entry.usedBy || []
-                        delegate: Button {
-                            required property string modelData
-                            Layout.fillWidth: true
-                            text: modelData
-                            onClicked: window.follow(inspector.entry.file, modelData)
-                        }
-                    }
-                    Label {
-                        Layout.fillWidth: true
-                        visible: !!inspector.entry.fingerprint
-                        text: qsTr("Source SHA-256 %1").arg(inspector.entry.fingerprint || "")
-                        textFormat: Text.PlainText
-                        wrapMode: Text.WrapAnywhere
-                    }
+                FlowInspection { width: Math.min(900, preview.availableWidth); inspector: studio.probeController }
+            }
+        }
+
+        Label {
+            Layout.fillWidth: true
+            visible: text.length > 0
+            text: window.statusMessage
+            wrapMode: Text.Wrap
+            textFormat: Text.PlainText
+            Accessible.role: Accessible.AlertMessage
+        }
+    }
+
+    Dialog {
+        id: newEvent
+        anchors.centerIn: parent
+        modal: true
+        title: qsTr("Create an event")
+        width: Math.min(520, window.width - 36)
+        closePolicy: Popup.CloseOnEscape
+        onOpened: eventTitle.forceActiveFocus()
+        height: Math.min(490, window.height - 36)
+        contentItem: ScrollView {
+            id: newEventScroll
+            contentWidth: availableWidth
+            clip: true
+            ColumnLayout {
+                width: newEventScroll.availableWidth
+                spacing: 10
+                Label { text: qsTr("Name this event") }
+                TextField { id: eventTitle; objectName: "newEventTitle"; Layout.fillWidth: true; maximumLength: 120; placeholderText: qsTr("Example: A letter from the mayor") }
+                Label { text: qsTr("What should the player see?") }
+                ComboBox {
+                    id: presentation
+                    Layout.fillWidth: true
+                    textRole: "label"
+                    valueRole: "value"
+                    model: [
+                        { label: qsTr("Dialogue with a choice"), value: "dialogue" },
+                        { label: qsTr("News or a notification"), value: "news" },
+                        { label: qsTr("Nothing on screen"), value: "logic" },
+                        { label: qsTr("A childhood scene"), value: "chapter" }
+                    ]
+                }
+                Label { visible: presentation.currentValue !== "chapter"; text: qsTr("Who can this happen to?") }
+                ComboBox {
+                    id: scope
+                    visible: presentation.currentValue !== "chapter"
+                    Layout.fillWidth: true
+                    textRole: "label"
+                    valueRole: "value"
+                    model: [
+                        { label: qsTr("A company"), value: "company" },
+                        { label: qsTr("The whole game world"), value: "world" },
+                        { label: qsTr("An individual state"), value: "state" }
+                    ]
+                }
+                Label { visible: presentation.currentValue !== "logic"; text: qsTr("Write the first message") }
+                ScrollView {
+                    visible: presentation.currentValue !== "logic"
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 100
+                    TextArea { id: eventBody; objectName: "newEventBody"; wrapMode: TextEdit.Wrap; placeholderText: qsTr("What happens?") }
+                }
+                Label {
+                    Layout.fillWidth: true
+                    text: presentation.currentValue === "chapter"
+                        ? qsTr("After creating it, choose a date and write the player’s choices.")
+                        : qsTr("After creating it, choose when it happens and which scenarios use it.")
+                    wrapMode: Text.Wrap
+                }
+                Label {
+                    Layout.fillWidth: true
+                    visible: studio.draftMessage.length > 0
+                    text: studio.draftMessage
+                    wrapMode: Text.Wrap
+                    textFormat: Text.PlainText
+                }
+                RowLayout {
+                    Layout.alignment: Qt.AlignRight
+                    Button { text: qsTr("Cancel"); onClicked: newEvent.close() }
                     Button {
-                        objectName: "editSelectedDefinition"
-                        visible: !!inspector.entry.revision && inspector.entry.validation === "Validated"
-                        text: inspector.entry.kind === "flow" ? qsTr("Edit flow") : inspector.entry.kind === "scenario" ? qsTr("Edit scenario and world") : qsTr("Open working collection")
-                        onClicked: studio.beginDraft(inspector.entry.file, inspector.entry.id)
-                    }
-                    }
-                    GroupBox {
-                        Layout.fillWidth: true
-                        visible: studio.editing
-                        title: qsTr("Working draft")
-                        ColumnLayout {
-                            width: parent.width
-                            Label {
-                                Layout.fillWidth: true
-                                text: studio.workingFlow + "\n" + studio.workingFile
-                                textFormat: Text.PlainText
-                                wrapMode: Text.WrapAnywhere
-                            }
-                            RowLayout {
-                                Button { objectName: "undoStudioContent"; text: qsTr("Undo content"); enabled: studio.canUndo; onClicked: studio.undo() }
-                                Button { objectName: "redoStudioContent"; text: qsTr("Redo content"); enabled: studio.canRedo; onClicked: studio.redo() }
-                                Button { objectName: "saveExistingDraft"; text: qsTr("Save draft"); enabled: studio.existingDraft && studio.draftDirty; onClicked: studio.saveDraft("") }
-                            }
-                            RowLayout {
-                                Layout.fillWidth: true
-                                TextField {
-                                    id: draftName
-                                    objectName: "draftFilename"
-                                    Layout.fillWidth: true
-                                    maximumLength: 133
-                                    placeholderText: qsTr("new-draft.json")
-                                    Accessible.name: qsTr("New draft filename")
-                                }
-                                Button {
-                                    objectName: "saveDraftAs"
-                                    text: qsTr("Save as draft")
-                                    enabled: draftName.text.length > 0
-                                    onClicked: { if (studio.saveDraft(draftName.text.trim())) draftName.clear() }
-                                }
-                            }
-                            ComboBox {
-                                objectName: "workingFlow"
-                                Layout.fillWidth: true
-                                visible: studio.workingFlows.length > 0
-                                Accessible.name: qsTr("Working flow")
-                                model: studio.workingFlows
-                                currentIndex: find(studio.workingFlow)
-                                onActivated: studio.selectWorkingFlow(currentText)
-                            }
-                            RowLayout {
-                                Layout.fillWidth: true
-                                TextField {
-                                    id: newFlowId
-                                    objectName: "newFlowId"
-                                    Layout.fillWidth: true
-                                    maximumLength: 128
-                                    placeholderText: qsTr("New flow ID")
-                                    Accessible.name: qsTr("New flow ID")
-                                }
-                                ComboBox {
-                                    id: newFlowScope
-                                    objectName: "newFlowScope"
-                                    Accessible.name: qsTr("New flow scope")
-                                    model: studio.flowScopes
-                                    textRole: "label"
-                                    valueRole: "value"
-                                }
-                                Button {
-                                    objectName: "createFlow"
-                                    text: qsTr("Create flow")
-                                    enabled: newFlowId.text.length > 0 && newFlowScope.currentIndex >= 0
-                                    onClicked: { if (studio.createFlow(newFlowId.text, newFlowScope.currentValue)) newFlowId.clear() }
-                                }
-                            }
-                            FlowForms {
-                                Layout.fillWidth: true
-                                visible: studio.workingFlow.length > 0
-                                author: studio
-                                showOutline: false
-                                outlineObjectName: "hiddenFormOutline"
-                                outlineFocusTarget: centerOutline.outlineView
-                            }
-                            Button {
-                                objectName: "openGroupTools"
-                                text: qsTr("Reusable flow groups")
-                                visible: studio.workingFlow.length > 0
-                                onClicked: groupTools.open()
-                            }
-                            FlowInspection {
-                                Layout.fillWidth: true
-                                inspector: studio.probeController
-                            }
-                            Label { visible: studio.workingFlow.length > 0; text: qsTr("Flow tags"); font.bold: true }
-                            Flow {
-                                Layout.fillWidth: true
-                                spacing: 6
-                                Repeater {
-                                    model: studio.workingTags
-                                    delegate: Button {
-                                        required property string modelData
-                                        text: qsTr("Remove %1").arg(modelData)
-                                        onClicked: studio.changeTag(modelData, true)
-                                    }
-                                }
-                            }
-                            RowLayout {
-                                Layout.fillWidth: true
-                                visible: studio.workingFlow.length > 0
-                                TextField {
-                                    id: tag
-                                    Layout.fillWidth: true
-                                    maximumLength: 128
-                                    placeholderText: qsTr("New lowercase tag")
-                                    Accessible.name: qsTr("New tag")
-                                    onAccepted: { if (studio.changeTag(text, false)) clear() }
-                                }
-                                Button {
-                                    text: qsTr("Add")
-                                    enabled: tag.text.length > 0
-                                    onClicked: { if (studio.changeTag(tag.text, false)) tag.clear() }
-                                }
-                            }
-                            Button {
-                                objectName: "closeWorkingDraft"
-                                text: qsTr("Close draft")
-                                onClicked: {
-                                    if (studio.draftDirty || studio.canvasController.hasLayoutEdits) {
-                                        window.closeWindowAfterDiscard = false
-                                        discardDraft.open()
-                                    } else studio.closeDraft()
-                                }
+                        objectName: "createFlow"
+                        text: qsTr("Create event")
+                        enabled: eventTitle.text.trim().length > 0 && (presentation.currentValue === "logic" || eventBody.text.trim().length > 0)
+                        onClicked: {
+                            const created = presentation.currentValue === "chapter"
+                                ? studio.createChapter(eventTitle.text, eventBody.text)
+                                : studio.createEvent(eventTitle.text, presentation.currentValue, eventBody.text, scope.currentValue)
+                            if (created) {
+                                newEvent.close()
+                                eventTitle.clear()
+                                eventBody.clear()
+                                window.page = 0
+                                window.showLibrary = false
                             }
                         }
-                    }
-                    Label {
-                        Layout.fillWidth: true
-                        visible: studio.draftMessage.length > 0
-                        text: studio.draftMessage
-                        textFormat: Text.PlainText
-                        wrapMode: Text.WrapAnywhere
                     }
                 }
             }
         }
     }
-
     Dialog {
         id: discardDraft
         anchors.centerIn: parent
         modal: true
-        title: qsTr("Discard unsaved content or layout changes?")
+        title: qsTr("Discard unsaved changes?")
         standardButtons: Dialog.Discard | Dialog.Cancel
         onDiscarded: {
             studio.closeDraft()
             if (window.closeWindowAfterDiscard) window.close()
+            else window.browse()
             close()
         }
     }
-    SnapshotReview {
-        id: revisionReview
-        finalizer: studio.snapshotController
-    }
-    RevisionComparison {
-        id: revisionComparison
-        reviewer: studio.revisionController
-        checkout: studio.checkout
-    }
+    SnapshotReview { id: revisionReview; finalizer: studio.snapshotController }
+    RevisionComparison { id: revisionComparison; reviewer: studio.revisionController; checkout: studio.checkout }
     AssetEditor { id: assetEditor; author: studio.assetController; session: studio }
     GroupTools { id: groupTools; author: studio }
     Connections {
@@ -465,4 +512,5 @@ ApplicationWindow {
             window.wasEditing = studio.editing
         }
     }
+    Component.onCompleted: window.updateFilter()
 }

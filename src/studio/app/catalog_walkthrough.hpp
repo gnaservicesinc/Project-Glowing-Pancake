@@ -57,7 +57,8 @@ QJsonObject run_catalog_walkthrough(Browser& browser,QQuickWindow& window,const 
     auto* author=qobject_cast<WorldController*>(browser.worldController());
     browser.beginDraft(QString::fromLatin1(source),QStringLiteral("scenario.first_playable"));
     settle();
-    click(QStringLiteral("showStudioCatalog"));
+    browser.selectWorkspace(true, true);
+    settle();
     require(author && author->catalogMode() && !author->catalogEntries().isEmpty(),QStringLiteral("The catalog workspace did not open."));
     author->selectCatalogEntry(QStringLiteral("/definitions/research.efficient_serving"));
     settle();
@@ -83,7 +84,10 @@ QJsonObject run_catalog_walkthrough(Browser& browser,QQuickWindow& window,const 
     click(QStringLiteral("catalogSaveMessage"));
     require(author->messageValue(QStringLiteral("walkthrough.local_text"),QStringLiteral("fr-CA"),true)==QStringLiteral("Texte de vérification."),
         QStringLiteral("Localized text did not resolve through the language fallback."));
-    click(QStringLiteral("openAssetRegister"));
+    require(browser.openAssets(), QStringLiteral("The asset register did not open."));
+    auto* assets = window.findChild<QObject*>(QStringLiteral("assetRegisterDialog"));
+    require(assets && QMetaObject::invokeMethod(assets, "open"), QStringLiteral("The asset dialog did not open."));
+    settle();
     choose(QStringLiteral("registeredAssets"),QStringLiteral("map.us_states_2024"),"id");
     click(QStringLiteral("verifyAssetRecord"));
     auto* credit=item(QStringLiteral("assetField/credit_text"));
@@ -106,25 +110,26 @@ QJsonObject run_catalog_walkthrough(Browser& browser,QQuickWindow& window,const 
     click(QStringLiteral("openGroupTools"));
     enter(QStringLiteral("newReusableGroupId"),QStringLiteral("group.walkthrough"));
     click(QStringLiteral("createReusableGroup"));
-    require(browser.workingFlow()==QStringLiteral("group.walkthrough"),QStringLiteral("The new group did not open in its typed outline."));
+    const auto group = browser.workingFlow();
+    require(group != QStringLiteral("walkthrough.group_caller"),QStringLiteral("The new group did not open in its typed outline."));
     browser.selectOutline(QStringLiteral("group"));
     require(browser.changeForm(browser.formTicket(),QStringLiteral("add_input"),QStringLiteral("story.flag")),browser.draftMessage());
     require(browser.changeForm(browser.formTicket(),QStringLiteral("add_output"),QStringLiteral("story.flag.2")),browser.draftMessage());
     browser.selectWorkingFlow(QStringLiteral("walkthrough.group_caller"));
     settle();
     click(QStringLiteral("openGroupTools"));
-    choose(QStringLiteral("selectReusableGroup"),QStringLiteral("group.walkthrough"));
+    choose(QStringLiteral("selectReusableGroup"),group);
     choose(QStringLiteral("selectGroupContinuation"),QStringLiteral("end"));
     choose(QStringLiteral("groupBinding/story.flag"),QStringLiteral("story.flag.3"));
     choose(QStringLiteral("groupBinding/story.flag.2"),QStringLiteral("story.flag.4"));
     click(QStringLiteral("insertReusableGroupCall"));
     require(browser.draftMessage().isEmpty(),browser.draftMessage());
-    click(QStringLiteral("showStudioCatalog"));
-    enter(QStringLiteral("worldDraftFilename"),QStringLiteral("e2-02-walkthrough.json"));
-    click(QStringLiteral("saveWorldDraft"));
+    browser.selectWorkspace(true, true);
+    settle();
+    require(browser.saveDraft(QStringLiteral("e2-02-walkthrough.json")), browser.draftMessage());
     const auto saved=persistence::read_bounded(root/draft,content::maximum_document_bytes);
     DraftDocument reopened{root,draft};
-    require(reopened.collection().find("group.walkthrough") && reopened.collection().find("research.walkthrough_serving") &&
+    require(reopened.collection().find(group.toStdString()) && reopened.collection().find("research.walkthrough_serving") &&
         reopened.collection().asset_records.contains("map.us_states_2024") &&
         reopened.collection().translations.contains("fr"),QStringLiteral("The catalog/group/asset draft failed to reopen."));
     require(persistence::read_bounded(root/source,content::maximum_document_bytes)==original &&

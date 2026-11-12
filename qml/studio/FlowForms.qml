@@ -44,7 +44,7 @@ ColumnLayout {
         function onFormChanged() { forms.errorKey = ""; forms.errorText = "" }
     }
 
-    Label { visible: forms.showOutline; text: qsTr("Flow outline"); font.bold: true }
+    Label { visible: forms.showOutline; text: qsTr("Event steps"); font.bold: true }
     ScrollView {
         visible: forms.showOutline
         Layout.fillWidth: true
@@ -59,7 +59,7 @@ ColumnLayout {
             keyNavigationEnabled: false
             model: forms.author.flowOutline
             currentIndex: forms.author.outlineIndex
-            Accessible.name: qsTr("Flow outline")
+            Accessible.name: qsTr("Event steps")
             Keys.onPressed: event => {
                 switch (event.key) {
                 case Qt.Key_Up: forms.selectAt(currentIndex - 1); break
@@ -91,6 +91,9 @@ ColumnLayout {
         model: forms.showFields ? forms.author.formFields : []
         delegate: ColumnLayout {
             id: row
+            visible: !["id", "title", "text", "label", "predicate_id"].includes(row.field.key)
+                && !row.field.key.endsWith("/id")
+            Layout.bottomMargin: 8
             required property var modelData
             readonly property var field: modelData
             readonly property alias loader: editor
@@ -112,6 +115,7 @@ ColumnLayout {
                     if (row.field.control === "choice") return picker
                     if (row.field.control === "button") return action
                     if (row.field.control === "note") return note
+                    if (row.field.control === "paragraph") return paragraph
                     return input
                 }
             }
@@ -162,6 +166,28 @@ ColumnLayout {
                     onActivated: {
                         if (!forms.commit(row.ticket, row.field.key, currentValue))
                             currentIndex = indexOfValue(row.field.value)
+                    }
+                }
+            }
+            Component {
+                id: paragraph
+                ColumnLayout {
+                    function focusEditor() { copy.forceActiveFocus(Qt.OtherFocusReason) }
+                    ScrollView {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 140
+                        TextArea {
+                            id: copy
+                            text: row.field.value
+                            textFormat: TextEdit.PlainText
+                            wrapMode: TextEdit.Wrap
+                            Accessible.name: row.field.label
+                        }
+                    }
+                    Button {
+                        text: qsTr("Apply text")
+                        enabled: copy.text !== row.field.value
+                        onClicked: forms.commit(row.ticket, row.field.key, copy.text)
                     }
                 }
             }

@@ -227,13 +227,14 @@ QStringList ProbeController::cleanupOwners() const {
 }
 QVariantList ProbeController::presentations() const {
     QVariantList rows;
-    if (!probe_) return rows;
+    if (!probe_ || !program_) return rows;
+    const auto& collection = program_->collection;
     for (const auto& row : probe_->state().runtime.presentations) {
         QVariantList choices;
         if (!row.resolved) for (const auto& choice : row.choices)
-            choices.push_back(QVariantMap{{"choiceId", text(choice.id)}, {"label", bridge::choice_label(choice)}});
-        rows.push_back(QVariantMap{{"id", number(row.id)}, {"title", bridge::presentation_title(row.kind)},
-            {"detail", bridge::presentation_detail(probe_->state(), row)}, {"choices", choices},
+            choices.push_back(QVariantMap{{"choiceId", text(choice.id)}, {"label", bridge::choice_label(choice, &collection)}});
+        rows.push_back(QVariantMap{{"id", number(row.id)}, {"title", bridge::presentation_heading(row, collection)},
+            {"detail", bridge::presentation_detail(probe_->state(), row, &collection)}, {"choices", choices},
             {"source", text(row.flow_id) + QStringLiteral(" / ") + text(row.node_id)}});
     }
     return rows;
