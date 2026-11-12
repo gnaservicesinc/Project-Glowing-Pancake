@@ -91,6 +91,24 @@ ColumnLayout {
         enabled: panel.editable
         onClicked: panel.desk.acknowledge()
     }
+    ColumnLayout {
+        objectName: "departureNextChapter"
+        property bool focusContext: true
+        Layout.fillWidth: true
+        visible: panel.desk.canFinish
+        Copy { text: qsTr("Keep playing or end the game?"); font.bold: true }
+        Action {
+            objectName: "continueFounderLife"
+            text: qsTr("Keep playing")
+            onClicked: panel.continueRequested()
+        }
+        Action {
+            objectName: "reviewFounderRunRetirement"
+            text: qsTr("End game and read the retrospective")
+            enabled: panel.editable
+            onClicked: panel.desk.reviewFinish()
+        }
+    }
     Copy { text: qsTr("Plan a successor"); font.bold: true }
     Field { id: handover; inputName: "leadershipHandoverDate"; label: qsTr("Handover date (YYYY-MM-DD)"); initialValue: panel.desk.recommendedDate }
     Picker {
@@ -187,15 +205,6 @@ ColumnLayout {
     Copy {objectName:"departureCoverageFacts";text:panel.pressDraft.facts || "";visible:!!text}
     Action { objectName: "reviewDepartureAnnouncement"; text: qsTr("Review public announcement"); visible: message.model.length > 0; enabled: panel.editable && (panel.desk.plans.selectedRow.fields?.announce ?? false); onClicked: panel.desk.reviewAnnouncement(message.currentValue,reason.currentValue || "") }
     Copy { objectName: "departureHistory"; text: panel.desk.departureHistory; visible: text.length > 0 }
-    ColumnLayout {
-        objectName:"departureNextChapter"
-        property bool focusContext:true
-        Layout.fillWidth:true
-        visible:panel.desk.canFinish
-        Copy {text:qsTr("Your next chapter");font.bold:true}
-        Action {objectName:"continueFounderLife";text:qsTr("Continue this life");onClicked:panel.continueRequested()}
-        Action {objectName:"reviewFounderRunRetirement";text:qsTr("End here and read the retrospective");enabled:panel.editable;onClicked:panel.desk.reviewFinish()}
-    }
     Copy { text: qsTr("Executive history"); font.bold: true }
     Records { listName: "leadershipTerms"; rows: panel.desk.terms; emptyText: qsTr("Executive terms") }
     GameDialog {

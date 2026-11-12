@@ -87,11 +87,10 @@ opens the player's choice of the next chapter, including home, a new company or
 employment. Forced career events pause for a playable next chapter.
 As long as the player continues, they can reach 100.
 
-Resignation explicitly offers Continue this life or End here and read the
-retrospective. Ending voluntarily produces a dated career feature using the
-founder's current age and record. It does not claim a death. Save that choice
-and the final report boundary. The age-100 ending remains the obituary.
-Neither path assigns a victory or defeat.
+After the handover, the player can choose **Keep playing** or **End game and
+read the retrospective**. Ending voluntarily produces a dated career feature
+using the founder's current age and record. Save that choice and the final
+report boundary. The age-100 ending is the obituary.
 
 Retire the former perfect-utopia result. World reports describe particular
 benefits, costs, distributional effects and disagreements using the simulation's
