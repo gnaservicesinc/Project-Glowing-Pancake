@@ -2,6 +2,7 @@
 #include <pgp/runtime/society.hpp>
 #include <pgp/runtime/authority.hpp>
 #include <pgp/runtime/romance.hpp>
+#include <pgp/core/workplace_research.hpp>
 
 #include "duration.hpp"
 #include "committed.hpp"
@@ -13,6 +14,7 @@
 #include <functional>
 #include <iterator>
 #include <limits>
+#include <set>
 #include <stdexcept>
 #include <tuple>
 #include <utility>
@@ -1037,6 +1039,44 @@ RuntimeResult Runtime::transferSubsidiaryFunds(std::uint64_t expected_revision,s
         transfer_subsidiary_funds(next.world,target,amount,funding);
     });
 }
+#if !PGP_DISTRIBUTION
+RuntimeResult Runtime::editPlaytestFounder(std::uint64_t expected_revision,
+                                         std::vector<std::string> traits, bool genius) {
+    const auto revision=checkpoint_.world.simulation.revision;
+    if(traits.size()>16 || std::ranges::any_of(traits,[](const auto& trait) {
+        return trait.empty() || trait.size()>80 || trait.find_first_of("\r\n\t")!=trait.npos ||
+            trait.find('\0')!=trait.npos;
+    })) return {RuntimeReason::effect_rejected,revision,"Enter up to 16 traits of up to 80 bytes each.",{},{}};
+    if(std::set<std::string_view>{traits.begin(),traits.end()}.size()!=traits.size())
+        return {RuntimeReason::effect_rejected,revision,"Use each trait once.",{},{}};
+    return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto& result,auto&,auto&) {
+        auto& world=next.world;
+        auto& state=world.simulation;
+        if(!world.developer_playtest || !world.founding)
+            fail(RuntimeReason::effect_rejected,"Open a founder campaign in God mode.");
+        if(objective_time_stopped(world) || observing_world(world))
+            fail(RuntimeReason::campaign_finished,"This founder's campaign has ended.");
+        if(has_choice(next.runtime) || next.runtime.prepared_day!=state.date || state.phase!=core::DayPhase::work_ready)
+            fail(RuntimeReason::morning_not_ready,"Resolve the required decisions before editing the founder.");
+        if(!core::social_rules(state) || !core::talent_rules(state))
+            fail(RuntimeReason::effect_rejected,"This campaign has no founder traits to edit.");
+        auto& people=*state.management->people;
+        people.social->founder_traits=traits;
+        people.talent->founder_genius=genius;
+        for(auto& employee:people.employees) {
+            auto& profile=employee.terms.profile;
+            if(profile.role!="Founder / researcher" || profile.traits==traits) continue;
+            if(state.lab) for(auto& run:state.lab->research)
+                if(state.lab->catalog.creative_research.contains(run.research_id) &&
+                   std::ranges::find(run.researchers,profile.id)!=run.researchers.end())
+                    run.original_traits.try_emplace(profile.id,profile.traits);
+            profile.traits=traits;
+        }
+        core::reconcile_workplace_research(state);
+        result.explanation="Founder traits updated for this playtest.";
+    });
+}
+#endif
 RuntimeResult Runtime::synthetic_cleanup(std::uint64_t expected_revision, std::uint64_t activation_id) {
     return transaction(program_, checkpoint_, expected_revision, [&](auto& next, auto& result, auto&, bool&) {
         if (objective_time_stopped(next.world) || observing_world(next.world) || next.world.simulation.phase == core::DayPhase::closed)

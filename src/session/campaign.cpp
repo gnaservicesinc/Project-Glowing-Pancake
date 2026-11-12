@@ -184,6 +184,14 @@ OperationResult Campaign::prepare_opening(std::uint64_t expected_revision) {
         result.halt_requested = true;
     return result;
 }
+#if !PGP_DISTRIBUTION
+OperationResult Campaign::editPlaytestFounder(std::uint64_t expected_revision,
+                                              std::vector<std::string> traits,bool genius) {
+    return operate([&](auto& candidate) {
+        return candidate.editPlaytestFounder(expected_revision,std::move(traits),genius);
+    },false);
+}
+#endif
 OperationResult Campaign::submit(const core::Command& command) {
     const auto* reservation = std::get_if<core::ReserveFunds>(&command.action);
     const auto* headquarters=std::get_if<core::ManageHeadquarters>(&command.action);
@@ -292,6 +300,8 @@ void Campaign::save(const std::filesystem::path& path) const {
 LoadResult Campaign::load(const std::filesystem::path& path) {
     try {
         auto loaded = persistence::load_file(engine_.program(), path);
+        if(loaded.checkpoint.world.developer_playtest!=checkpoint().world.developer_playtest)
+            return {false,StorageNotice{"playtest_mode","This save belongs to a different campaign mode."}};
         runtime::Runtime candidate{engine_.program(), std::move(loaded.checkpoint)};
         engine_ = std::move(candidate);
         return {true, {}};

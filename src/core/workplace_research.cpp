@@ -177,9 +177,17 @@ void validate_workplace_research(const SimulationState &state) {
                 throw std::invalid_argument("A research assignment must name an onboarded person in the company.");
         }
         if(state.lab->catalog.creative_research.contains(run.research_id)) {
-            const auto team=research_team(state,run.researchers);
+            for(const auto& [id,traits]:run.original_traits) {
+                if(std::ranges::find(run.researchers,id)==run.researchers.end() || traits.size()>16 ||
+                   std::set<std::string_view>{traits.begin(),traits.end()}.size()!=traits.size() ||
+                   std::ranges::any_of(traits,[](const auto& value) {
+                       return value.empty() || value.size()>80 || value.find('\0')!=value.npos;
+                   })) throw std::invalid_argument("Invalid recorded research team traits.");
+            }
+            const auto team=research_team(state,run.researchers,run.original_traits);
             if(run.creativity!=team.creativity || run.compatibility_bp!=team.compatibility_bp) throw std::invalid_argument("Research team characteristics must match the actual saved people.");
-        } else if(run.creativity || run.compatibility_bp) throw std::invalid_argument("This research has no creative-team rule.");
+        } else if(run.creativity || run.compatibility_bp || !run.original_traits.empty())
+            throw std::invalid_argument("This research has no creative-team rule.");
         if (work->status == ProjectStatus::active &&
             !research_workplace_blocker(state, run.research_id, allocation(run, *work), work->id).empty())
             throw std::invalid_argument("Active research is missing its staff, physical equipment or compute.");

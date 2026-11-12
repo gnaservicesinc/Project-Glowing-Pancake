@@ -66,7 +66,12 @@ content::Scalar campaign_fact(const WorldState& world, std::string_view id) {
     }
     if(id=="company.completed_courses")return talent_rules(s)?static_cast<std::int64_t>(std::ranges::count_if(s.management->people->talent->courses,[](const auto& c){return c.completed;})):INT64_C(0);
     if(id=="company.released_software")return talent_rules(s)?static_cast<std::int64_t>(std::ranges::count_if(s.management->people->talent->software,[](const auto& p){return p.released_on.has_value();})):INT64_C(0);
-    if(id=="company.founder_genius") return founder && founder->leg=="genius";
+    if(id=="company.founder_genius") {
+#if !PGP_DISTRIBUTION
+        if(world.developer_playtest && talent_rules(s)) return s.management->people->talent->founder_genius;
+#endif
+        return founder && founder->leg=="genius";
+    }
     if(id=="company.founder_outgoing") return founder && founder->sociability=="outgoing";
     if(id=="company.founder_athletic") return founder && founder->activity=="athletic";
     if(id=="company.is_nonprofit") return founder && founder->legal_form=="nonprofit";

@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("software"),QStringLiteral("Use the explicit software renderer." )});
     parser.addOption({QStringLiteral("build-info"),QStringLiteral("Print configure-time identity, then exit.")});
 #if !PGP_DISTRIBUTION
+    parser.addOption({QStringLiteral("god-mode"),QStringLiteral("Open the isolated God mode playtest campaign.")});
     parser.addOption({QStringLiteral("smoke-test"),QStringLiteral("Explicit keyboard/campaign/save check, then exit; requires --portable-root.")});
     parser.addOption({QStringLiteral("competition-smoke"),QStringLiteral("Use the standard rival roster, publication/adoption and pricing path in the explicit playable smoke.")});
     parser.addOption({QStringLiteral("infrastructure-smoke"),QStringLiteral("Exercise the map, paid owned infrastructure and calendar in the explicit playable smoke.")});
@@ -169,8 +170,28 @@ int main(int argc, char* argv[]) {
         if (scenario_id.empty()) for (const auto& [id,definition]:program.collection.definitions)
             if (std::holds_alternative<content::ScenarioDefinition>(definition.data)) { scenario_id=id;break; }
         auto initial = runtime::begin_scenario(program,scenario_id,parser.value(QStringLiteral("headquarters")).toStdString());
-        const auto paths = persistence::local_paths(parser.isSet(QStringLiteral("portable-root")) ?
+        auto paths = persistence::local_paths(parser.isSet(QStringLiteral("portable-root")) ?
             std::optional{path(parser.value(QStringLiteral("portable-root")))} : std::nullopt);
+#if !PGP_DISTRIBUTION
+        const bool god_mode=parser.isSet(QStringLiteral("god-mode"));
+        QStringList god_arguments;
+        for(const auto* option:{"portable-root","content","scenario","headquarters","text-scale"}) {
+            const auto name=QString::fromLatin1(option);
+            if(!parser.isSet(name)) continue;
+            auto value=parser.value(name);
+            if(name=="portable-root" || name=="content") value=QFileInfo(value).absoluteFilePath();
+            god_arguments << QStringLiteral("--")+name << value;
+        }
+        if(parser.isSet(QStringLiteral("software"))) god_arguments << QStringLiteral("--software");
+        const auto development_settings=paths.settings_file.parent_path()/"development-tools.ini";
+        if(god_mode) {
+            const auto root=paths.saves_directory.parent_path()/"playtest-god-mode";
+            if(std::filesystem::is_symlink(root) || std::filesystem::is_symlink(root/"saves"))
+                throw std::runtime_error("The God mode directory cannot be a symbolic link.");
+            paths=persistence::local_paths(root);
+            initial.world.developer_playtest=true;
+        }
+#endif
         auto settings = persistence::load_settings(paths.settings_file);
         if (!prototype_smoke && !std::filesystem::exists(paths.settings_file)) {
             settings.music_enabled=true;
@@ -204,7 +225,7 @@ int main(int argc, char* argv[]) {
         qmlRegisterModule("Pgp.Menu",1,0);
         qmlProtectModule("Pgp.Menu",1);
 #if !PGP_DISTRIBUTION
-        pgp::app::DevelopmentTools development_tools(QString::fromStdU16String((paths.settings_file.parent_path()/"development-tools.ini").u16string()));
+        pgp::app::DevelopmentTools development_tools(QString::fromStdU16String(development_settings.u16string()),std::move(god_arguments));
 #endif
         QQmlApplicationEngine engine;
         engine.addImageProvider(QStringLiteral("portraits"),new pgp::app::PortraitImages);
@@ -222,9 +243,12 @@ int main(int argc, char* argv[]) {
         engine.rootContext()->setContextProperty(QStringLiteral("campaign"),&campaign);
 #if !PGP_DISTRIBUTION
         engine.rootContext()->setContextProperty(QStringLiteral("developmentTools"),&development_tools);
+        engine.rootContext()->setContextProperty(QStringLiteral("godMode"),god_mode);
+        engine.rootContext()->setContextProperty(QStringLiteral("sessionLabel"),god_mode?QCoreApplication::translate("Game","God mode · Playtest"):QString{});
         engine.rootContext()->setContextProperty(QStringLiteral("optionalMenuSource"),QStringLiteral("qrc:/pgp/game/DevelopmentMenu.qml"));
 #else
         engine.rootContext()->setContextProperty(QStringLiteral("optionalMenuSource"),QString{});
+        engine.rootContext()->setContextProperty(QStringLiteral("sessionLabel"),QString{});
 #endif
         engine.rootContext()->setContextProperty(QStringLiteral("soundtrack"),&music);
         engine.rootContext()->setContextProperty(QStringLiteral("menuAudio"),&menu_audio);
@@ -299,6 +323,8 @@ int main(int argc, char* argv[]) {
                     schedule_world_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")),parser.isSet(QStringLiteral("portrait-smoke")),parser.isSet(QStringLiteral("workplace-smoke")),parser.isSet(QStringLiteral("device-smoke")),parser.isSet(QStringLiteral("contacts-smoke")),parser.isSet(QStringLiteral("manager-smoke")));
                 else if (founding_smoke)
                     schedule_founding_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")),partner_smoke);
+                else if(god_mode && parser.isSet(QStringLiteral("development-menu-smoke")))
+                    schedule_playtest_founder_smoke(*window,campaign,parser.value(QStringLiteral("screenshot")));
                 else if (menu_smoke)
                     schedule_menu_smoke(*window,campaign,music,selection.api,paths,parser.value(QStringLiteral("screenshot")),
                         parser.isSet(QStringLiteral("settings-smoke")),parser.isSet(QStringLiteral("development-menu-smoke")));

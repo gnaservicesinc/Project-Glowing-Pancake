@@ -62,6 +62,7 @@ struct WorldState {
     std::optional<core::CountyState> counties{};
     std::optional<core::RomanceState> romance{};
     std::optional<core::FamilyState> family{};
+    bool developer_playtest = false;
     auto operator<=>(const WorldState&) const = default;
 };
 
@@ -295,6 +296,10 @@ public:
     [[nodiscard]] RuntimeResult collaborateResearch(std::uint64_t expected_revision,const CollaborationRequest&);
     [[nodiscard]] RuntimeResult publishCollaboration(std::uint64_t expected_revision,std::string_view id);
     [[nodiscard]] RuntimeResult transferSubsidiaryFunds(std::uint64_t expected_revision,std::string_view target,core::Cents amount,bool funding);
+#if !PGP_DISTRIBUTION
+    [[nodiscard]] RuntimeResult editPlaytestFounder(std::uint64_t expected_revision,
+                                                   std::vector<std::string> traits, bool genius);
+#endif
     // Explicit author-fixture operation on this copied Runtime. It does not
     // claim that a natural continuous exit condition became true.
     [[nodiscard]] RuntimeResult synthetic_cleanup(std::uint64_t expected_revision,

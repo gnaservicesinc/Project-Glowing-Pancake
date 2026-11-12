@@ -30,6 +30,7 @@ void CampaignWorker::reviewOriginalContent(std::uint64_t token,std::filesystem::
             if(review.fingerprint!=persistence::sha256(persistence::read_bounded(review.target)))
                 throw std::runtime_error("The save changed during review. Review its current file again.");
         }
+        requireCampaignMode(review.checkpoint);
         const auto& world=review.checkpoint.world;
         const auto name=world.identity?QString::fromStdString(world.identity->company_name):tr("Saved company");
         const auto raw=world.simulation.cash.value();

@@ -99,7 +99,8 @@ struct TeamDynamics {
     std::vector<std::string> traits;
 };
 [[nodiscard]] TeamDynamics team_dynamics(std::span<const PersonProfile* const>);
-[[nodiscard]] TeamDynamics research_team(const SimulationState&,std::span<const std::string>);
+[[nodiscard]] TeamDynamics research_team(const SimulationState&,std::span<const std::string>,
+    const std::map<std::string,std::vector<std::string>,std::less<>>& original_traits={});
 [[nodiscard]] std::vector<std::string> distinct_person_traits(const PersonProfile&);
 [[nodiscard]] std::uint32_t shared_trait_compatibility(std::uint64_t matches,std::uint64_t pairs);
 struct EmployeeMood {

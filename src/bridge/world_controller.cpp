@@ -235,11 +235,22 @@ QVariantMap WorldController::founder() const {
     QString bio;
     if(w.founding) {
         const auto& f=*w.founding;
-        const QString advantage=f.leg=="genius"?tr("Actual Genius"):f.leg=="wealthy"?tr("Wealthy Elite"):f.leg=="political"?tr("Child of Political Elite"):tr("Extremely Charismatic");
-        bio=tr("%1\nFamily: %2\n%3 · %4 · %5").arg(advantage,q(f.family),q(f.sociability),q(f.activity),q(f.disposition));
-        const auto* definition=program_?program_->collection.find(w.scenario_id):nullptr;
-        const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
-        if(scenario && scenario->founding)for(const auto& trait:content::formative_traits(*scenario->founding,f))bio+="\n"+q(trait);
+#if !PGP_DISTRIBUTION
+        if(w.developer_playtest && core::social_rules(w.simulation)) {
+            const auto& people=*w.simulation.management->people;
+            QStringList traits;
+            if(people.talent && people.talent->founder_genius) traits.push_back(tr("Actual Genius"));
+            for(const auto& trait:people.social->founder_traits) traits.push_back(q(trait));
+            bio=traits.join('\n');
+        } else
+#endif
+        {
+            const QString advantage=f.leg=="genius"?tr("Actual Genius"):f.leg=="wealthy"?tr("Wealthy Elite"):f.leg=="political"?tr("Child of Political Elite"):tr("Extremely Charismatic");
+            bio=tr("%1\nFamily: %2\n%3 · %4 · %5").arg(advantage,q(f.family),q(f.sociability),q(f.activity),q(f.disposition));
+            const auto* definition=program_?program_->collection.find(w.scenario_id):nullptr;
+            const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
+            if(scenario && scenario->founding)for(const auto& trait:content::formative_traits(*scenario->founding,f))bio+="\n"+q(trait);
+        }
         if(content::transgender_founder(f)) bio+=tr("\nTransgender");
         const QString orientation=f.orientation=="straight"?tr("Straight"):f.orientation=="gay_or_lesbian"?tr("Gay or lesbian"):
             f.orientation=="bisexual"?tr("Bisexual"):f.orientation=="pansexual"?tr("Pansexual"):f.orientation=="asexual"?tr("Asexual"):

@@ -81,17 +81,28 @@ reload and the native compact preview.
 Career re-entry remains required. Early company closure currently records its
 chapter at the existing company boundary. The guaranteed funded route back,
 broader press claims and scandal coverage, and surprising human successor
-appointments remain selected work. God mode, nonprofit reaction expansion and
-native rival training also remain unfinished.
+appointments remain selected work. Nonprofit reaction expansion and native
+rival training also remain unfinished.
 
 The Release development edition has two main menu entries. Content Studio
 launches the repository editor and remembers the selected checkout. Playtest
-Environment contains the local-data reset. `--enable-distribution` uses a
-separate Release build and excludes the editor targets, both menus, their QML
+Environment launches God mode and contains the local-data reset. God mode has
+its own window, settings and marked campaign saves. The founder trait editor
+updates the active relationship traits and the Actual Genius ability. Existing
+research retains its starting team evidence. Person stats, other people's
+traits, unlimited resources, instant delivery and instant research remain
+open. `--enable-distribution` uses a separate Release build and excludes the
+editor targets, both menus, their QML
 resource and callable development APIs. Studio's library accepts the current
 checkout's full collection index. Mac checks cover both binaries, Debug and
 multi-configuration rejection, the Studio library, and both development menus
 at 650×480 with 200% text.
+
+The God mode walkthrough rejects an ordinary save, checks the editor at
+650×480 with 200% text, applies a trait replacement and activates Actual
+Genius. A fresh process resumes both changes. Resetting the ordinary game
+leaves that playtest save intact. Focused tests also cover the recorded
+research team and mixed-mode overwrite refusal.
 
 ## People and software foundation · F-06
 

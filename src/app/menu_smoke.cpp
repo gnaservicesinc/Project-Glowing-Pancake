@@ -1,6 +1,7 @@
 #include "menu_smoke.hpp"
 #include "campaign_controller.hpp"
 #include "development_tools.hpp"
+#include "founding_fixture.hpp"
 #include "menu_media.hpp"
 #include "music_controller.hpp"
 #include <pgp/persistence/settings.hpp>
@@ -176,7 +177,8 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
             state->phase=31;return;
         }
         case 31:
-            if(!item("developmentResetButton") || !item("developmentResetButton")->isVisible() ||
+            if(!item("openGodModeButton") || !item("openGodModeButton")->isVisible() ||
+                !item("developmentResetButton") || !item("developmentResetButton")->isVisible() ||
                 item("developmentResetButton")->mapToScene(QPointF{}).y()+item("developmentResetButton")->height()>window.height()) {
                 fail("Compact Playtest Environment action must fit");return;
             }
@@ -284,6 +286,121 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
             qInfo() << "Main menu smoke passed: launch, keyboard, credits, 200% settings, persistence, music, video loop,"
                        " setup, resume, load/error recovery and Escape/quit confirmation with cancel and actual exit.";
             timer->stop(); break;
+        }
+    });
+    timer->start();
+}
+
+void schedule_playtest_founder_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,QString screenshot) {
+    struct State { int phase=0, ticks=0; QString revision; };
+    auto state=std::make_shared<State>();
+    auto* timer=new QTimer(&window);
+    timer->setInterval(80);
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,screenshot] {
+        const auto item=[&](const char* name) { return find(window.contentItem(),name); };
+        const auto press=[&](const char* name) { return key(window,item(name),Qt::Key_Space); };
+        const auto fail=[&](const char* reason) {
+            qCritical()<<"God mode walkthrough"<<state->phase<<reason<<campaign.notice();
+            if(!screenshot.isEmpty()) window.grabWindow().save(screenshot+".failed.png");
+            timer->stop();
+            QCoreApplication::exit(3);
+        };
+        const auto pass=[&](const char* message) {
+            std::cout<<message<<'\n';
+            window.setProperty("menuSmokePassed",true);
+            timer->stop();
+            QCoreApplication::exit(0);
+        };
+        if(++state->ticks>400) {fail("timed out");return;}
+        if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy()) return;
+        const auto& world=campaign.snapshot()->checkpoint.world;
+        if(!world.developer_playtest || campaign.storageBlocked()) {fail("isolated playtest save");return;}
+        const auto founder=campaign.playtestFounder();
+        const QStringList expected{"Interest: Skateboarding","Social: Outgoing"};
+        const auto regular_save=std::filesystem::path{campaign.saveFolder().toLocalFile().toStdU16String()}/"ordinary-mode-fixture.pgpsave";
+        if(state->phase==0) {
+            if(campaign.currentCampaign()) {
+                if(founder.value("traits").toStringList()!=expected || !founder.value("genius").toBool()) {
+                    fail("saved traits did not resume");return;
+                }
+                pass("God mode founder traits and genius resumed from the dedicated save.");
+                return;
+            }
+            auto regular=campaign.snapshot()->checkpoint;
+            regular.world.developer_playtest=false;
+            try {
+                pgp::persistence::save_file(*campaign.snapshot()->content,regular,regular_save);
+            } catch(const std::exception&) {
+                fail("could not write the ordinary save fixture");return;
+            }
+            campaign.loadFrom(QUrl::fromLocalFile(QString::fromStdU16String(regular_save.u16string())));
+            state->phase=10;
+            return;
+        }
+        if(state->phase==10) {
+            if(campaign.currentCampaign() || !campaign.notice().contains("regular game")) {
+                fail("God mode accepted an ordinary campaign");return;
+            }
+            std::filesystem::remove(regular_save);
+            auto* founding=campaign.founding();
+            founding->reset();
+            founding->setField("family","rich");
+            founding->setField("leg","political");
+            founding->setField("route","hired_ceo");
+            pgp::bridge::complete_formative_fixture(*founding);
+            campaign.startFounderCampaign();
+            state->phase=1;
+            return;
+        }
+        if(campaign.requiredKind()=="content") {
+            campaign.choose(campaign.requiredChoices().back().toMap().value("choiceId").toString());
+            return;
+        }
+        switch(state->phase) {
+        case 1:
+            if(!campaign.currentCampaign() || founder.isEmpty() || founder.value("genius").toBool()) {
+                fail("non-genius founder campaign did not start");return;
+            }
+            campaign.applyPresentationSettings(false,1024,640,false,40,60,200,true,false);
+            ++state->phase;
+            return;
+        case 2:
+            if(window.size()!=QSize{650,480}) {window.showNormal();window.resize(650,480);return;}
+            QMetaObject::invokeMethod(&window,"openMainMenu");
+            if(!press("playtestEnvironmentButton") || !press("playtestFounderButton")) {fail("founder editor launcher");return;}
+            state->revision=campaign.revision();
+            ++state->phase;
+            return;
+        case 3: {
+            auto* entry=item("playtestFounderTraits");
+            auto* apply=item("savePlaytestFounder");
+            if(!entry || !apply || !window.title().contains("God mode") ||
+               apply->mapToScene(QPointF{}).y()+apply->height()>window.height()) {fail("compact editor layout");return;}
+            if(!screenshot.isEmpty()) window.grabWindow().save(screenshot+".compact.png");
+            entry->setProperty("text","Duplicate\nDuplicate");
+            if(!press("savePlaytestFounder")) {fail("apply edited traits");return;}
+            ++state->phase;
+            return;
+        }
+        case 4: {
+            auto* apply=item("savePlaytestFounder");
+            auto* entry=item("playtestFounderTraits");
+            if(!apply || !entry || !entry->isVisible() || campaign.revision()!=state->revision ||
+               !campaign.notice().contains("Use each trait once.") ||
+               apply->mapToScene(QPointF{}).y()+apply->height()>window.height()) {
+                fail("duplicate traits must be rejected without changing the campaign");return;
+            }
+            if(!screenshot.isEmpty()) window.grabWindow().save(screenshot+".validation.png");
+            entry->setProperty("text",expected.join("\n"));
+            item("playtestFounderGenius")->setProperty("checked",true);
+            if(!press("savePlaytestFounder")) {fail("apply corrected traits");return;}
+            ++state->phase;
+            return;
+        }
+        default:
+            if(campaign.revision()==state->revision || founder.value("traits").toStringList()!=expected ||
+               !founder.value("genius").toBool() || campaign.storageBlocked()) {fail("playtest edits did not commit");return;}
+            pass("God mode founder traits passed compact editing, rejection and durable commit.");
         }
     });
     timer->start();

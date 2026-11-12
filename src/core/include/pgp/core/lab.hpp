@@ -152,6 +152,8 @@ struct ResearchRun {
     std::vector<std::string> researchers{};
     std::uint32_t creativity=0,compatibility_bp=0;
     std::optional<ResearchCooperation> cooperation{};
+    // Preserve the launch team's evidence when a person's live traits change.
+    std::map<std::string,std::vector<std::string>,std::less<>> original_traits{};
     auto operator<=>(const ResearchRun&) const = default;
 };
 struct ResearchPublication {

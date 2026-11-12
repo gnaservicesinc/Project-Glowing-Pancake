@@ -20,7 +20,8 @@ void CampaignWorker::resetLocalData(std::uint64_t token) {
         if(paths_.saves_directory.filename()!="saves" || root.empty() || root==root.root_path() ||
             fs::is_symlink(root) || fs::is_symlink(paths_.saves_directory))
             throw std::runtime_error("The game data directory cannot be reset through a redirected path.");
-        const auto initial=runtime::begin_scenario(*installed_,"scenario.first_playable","US-CA");
+        auto initial=runtime::begin_scenario(*installed_,"scenario.first_playable","US-CA");
+        initial.world.developer_playtest=campaign_.checkpoint().world.developer_playtest;
         session::Campaign next{*installed_,initial,paths_.saves_directory/"autosaves"/persistence::save_identity(*installed_).content_hash,{}};
         // Keep the writer lock while clearing this app's save directory. A
         // symlink inside it is removed as a link, never followed.

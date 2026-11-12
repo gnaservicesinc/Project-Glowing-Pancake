@@ -43,6 +43,12 @@ CampaignWorker::CampaignWorker(runtime::CompiledProgram program, runtime::Checkp
 void CampaignWorker::requireOwningThread() const {
     if (QThread::currentThread() != thread()) throw std::logic_error("Campaign operation requires its worker thread");
 }
+void CampaignWorker::requireCampaignMode(const runtime::Checkpoint& checkpoint) const {
+    if(checkpoint.world.developer_playtest!=campaign_.checkpoint().world.developer_playtest)
+        throw std::runtime_error(checkpoint.world.developer_playtest
+            ? "Open this save in God mode."
+            : "Open this save in the regular game.");
+}
 void CampaignWorker::publish() {
     last_publish_.restart();
     auto checkpoint = campaign_.checkpoint();
@@ -107,6 +113,7 @@ void CampaignWorker::newCampaign(std::uint64_t token,std::string headquarters,bo
         const auto* selected_scenario=selected?std::get_if<content::ScenarioDefinition>(&selected->data):nullptr;
         if (!selected_scenario || !selected_scenario->service_catalog) throw std::invalid_argument("Choose a playable scenario from this content collection");
         auto initial=runtime::begin_scenario(*installed_,id,headquarters,std::move(objectives),std::move(options));
+        initial.world.developer_playtest=campaign_.checkpoint().world.developer_playtest;
         if (!stories && initial.world.enabled_flows) {
             auto& roots=*initial.world.enabled_flows;
             roots.erase(std::remove_if(roots.begin(),roots.end(),[&](const auto& flow_id) {
@@ -146,6 +153,7 @@ void CampaignWorker::start() {
             // handled by the playtest reset, without reviving an earlier game.
             auto selected=installed_;
             if (auto checkpoint=current_.resume(*selected)) {
+                requireCampaignMode(*checkpoint);
                 current_.content().preserve(*selected);
                 campaign_=session::Campaign{*selected,std::move(*checkpoint),autosave_path(paths_,*selected),campaign_.settings()};
                 active_content_=std::move(selected);
@@ -283,6 +291,7 @@ void CampaignWorker::loadFrom(std::uint64_t token,std::filesystem::path path) {
             // Decode first; a bad import must not move or replace current files.
             auto selected=current_.content().for_save(installed_,path);
             auto recovered=persistence::load_file(*selected,path);
+            requireCampaignMode(recovered.checkpoint);
             session::Campaign next{*selected,std::move(recovered.checkpoint),autosave_path(paths_,*selected),campaign_.settings()};
             current_.content().preserve(*selected);
             current_.preserve_for_recovery();

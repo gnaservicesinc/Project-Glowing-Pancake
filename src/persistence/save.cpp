@@ -572,6 +572,7 @@ Json world_json(const WorldState& world) {
     if (!world.background.empty()) result["background"] = world.background;
     if (world.counties) result["counties"]=detail::counties_json(*world.counties);
     if (world.family) result["family"]=detail::family_json(*world.family);
+    if (world.developer_playtest) result["developer_playtest"]=true;
     if (world.romance) result["romance"]=detail::romance_json(*world.romance);
     if (world.founding) result["founding"]=Json::parse(content::canonical_founding_selection(*world.founding));
     if (world.identity) result["identity"] = {{"company_name",world.identity->company_name},
@@ -585,7 +586,7 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
         if (name!="variables" && name!="competition" && name!="competition_mode" && name!="scenario_id" && name!="society" &&
-            name!="authority" && name!="objectives" && name!="simulation_storage" && name!="identity" && name!="background" && name!="difficulty" && name!="founding" && name!="counties" && name!="romance" && name!="family") prior_shape[name]=nullptr;
+            name!="authority" && name!="objectives" && name!="simulation_storage" && name!="identity" && name!="background" && name!="difficulty" && name!="founding" && name!="counties" && name!="romance" && name!="family" && name!="developer_playtest") prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"world",{"simulation","company_id","world_id","state_id","campaign_start","scope_created",
                                    "root_seed","enabled_flows","facts","counterparty_cash_cents","decisions","negotiations"});
@@ -593,6 +594,11 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
         return entry.second.default_value.has_value();
     })) detail::invalid("variables","Registered variables require an explicit value collection");
     WorldState result;
+    if(value.contains("developer_playtest"))
+        result.developer_playtest=detail::boolean(value.at("developer_playtest"),"world/developer_playtest");
+#if PGP_DISTRIBUTION
+    if(result.developer_playtest) detail::invalid("world/developer_playtest","Open this save in Playtest Environment.");
+#endif
     if(value.contains("family")) result.family=detail::parse_family(value.at("family"));
     if(value.contains("romance")) result.romance=detail::parse_romance(value.at("romance"));
     if(value.contains("counties")) result.counties=detail::parse_counties(value.at("counties"));
@@ -1018,7 +1024,11 @@ void save_file(const runtime::CompiledProgram& program,const runtime::Checkpoint
                const std::filesystem::path& path,std::uint64_t autosave_sequence,SaveLimits limits) {
     if (path.extension()!=".pgpsave") throw PersistenceError("extension","Save/export filenames must end in .pgpsave");
     const auto bytes=encode_save(program,checkpoint,autosave_sequence,limits);
-    atomic_write(path,bytes,[&](auto prior){(void)decode_save(program,prior,limits);},limits.maximum_bytes);
+    atomic_write(path,bytes,[&](auto prior){
+        const auto saved=decode_save(program,prior,limits);
+        if(saved.checkpoint.world.developer_playtest!=checkpoint.world.developer_playtest)
+            throw PersistenceError("playtest_mode","Choose a new filename for this campaign mode.");
+    },limits.maximum_bytes);
 }
 LoadedSave load_file(const runtime::CompiledProgram& program,const std::filesystem::path& path,SaveLimits limits) {
     limits_valid(limits);return decode_save(program,read_bounded(path,limits.maximum_bytes),limits);

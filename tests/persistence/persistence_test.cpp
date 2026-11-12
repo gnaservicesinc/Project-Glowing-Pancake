@@ -210,6 +210,22 @@ void storage(const runtime::CompiledProgram& compiled,const runtime::Checkpoint&
     check(first!=second && load_file(compiled,path).checkpoint==advanced,"Atomic replacement commits new complete save");
     auto backup=path;backup+=".bak";
     check(read_bounded(backup)==first && load_file(compiled,backup).checkpoint==checkpoint,"Prior valid save retained byte-for-byte");
+#if !PGP_DISTRIBUTION
+    auto playtest=checkpoint;
+    playtest.world.developer_playtest=true;
+    const auto playtest_path=directory/"playtest.pgpsave";
+    save_file(compiled,playtest,playtest_path);
+    const auto playtest_bytes=read_bounded(playtest_path);
+    check(load_file(compiled,playtest_path).checkpoint==playtest,"Playtest save retains its mode");
+    rejects([&]{save_file(compiled,playtest,path);},"playtest_mode");
+    rejects([&]{save_file(compiled,checkpoint,playtest_path);},"playtest_mode");
+    check(read_bounded(path)==second && read_bounded(backup)==first && read_bounded(playtest_path)==playtest_bytes,
+          "Campaign modes preserve both existing saves and backups");
+#else
+    auto playtest=Json::parse(first);
+    playtest["checkpoint"]["world"]["developer_playtest"]=true;
+    rejects([&]{(void)decode_save(compiled,rehash(playtest));});
+#endif
     check(!std::filesystem::exists(std::filesystem::path{path.string()+".tmp"}),"Successful commit leaves no temporary sibling");
     const auto exported=directory/"export.pgpsave";save_file(compiled,checkpoint,exported);
     check(read_bounded(exported)==first && read_bounded(path)==second,"Explicit export leaves original save intact");

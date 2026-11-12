@@ -6,7 +6,8 @@ import QtQuick.Dialogs
 ApplicationWindow {
     id: window
     objectName: "gameWindow"
-    title: menuVisible || campaign.welcome ? qsTr("Project Glowing Pancake") : qsTr("%1 · Project Glowing Pancake").arg(campaign.companyName)
+    title: sessionLabel ? qsTr("%1 · Project Glowing Pancake").arg(sessionLabel)
+        : menuVisible || campaign.welcome ? qsTr("Project Glowing Pancake") : qsTr("%1 · Project Glowing Pancake").arg(campaign.companyName)
     visible: false
     width: 1280
     height: 720
@@ -22,6 +23,17 @@ ApplicationWindow {
     palette.mid: "#70869b"
     palette.highlight: "#335c7a"
     palette.highlightedText: "#ffffff"
+    header: Label {
+        objectName: "sessionEditionLabel"
+        visible: !!sessionLabel
+        text: sessionLabel
+        font.pixelSize: window.textSize
+        font.bold: true
+        padding: 4
+        horizontalAlignment: Text.AlignHCenter
+        color: gameInk.ink
+        background: Rectangle { color: gameInk.accent }
+    }
 
     property string room: "office"
     property bool deviceOpen: prototypeSmoke

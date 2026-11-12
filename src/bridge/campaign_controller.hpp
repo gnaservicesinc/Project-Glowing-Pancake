@@ -87,6 +87,8 @@ class CampaignController final : public QObject {
 public:
 #if !PGP_DISTRIBUTION
     Q_INVOKABLE void resetLocalData();
+    Q_INVOKABLE QVariantMap playtestFounder() const;
+    Q_INVOKABLE void editPlaytestFounder(const QStringList& traits,bool genius);
 #endif
     CampaignController(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
                        persistence::LocalPaths paths, persistence::Settings initial_settings = {},

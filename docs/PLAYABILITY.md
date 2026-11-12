@@ -64,9 +64,12 @@ On Mac, build with `./make.sh --package --jobs 4`, then open
 New Game, Settings, Credits and Quit when no company is underway. A current
 company resumes automatically in its last place, with time paused. Recovery/import
 preserves original files. Settings persists display, audio, text and motion choices.
-Development saves have no compatibility guarantee. Use **Playtest Environment → Reset local data**
-in the menu for a one-click fresh start after a breaking change. This clears local
-saves, autosaves, setup/navigation drafts, cached rules and game settings.
+Development saves have no compatibility guarantee. Open **Playtest Environment
+→ God mode** from the main menu to start or resume a separate playtest campaign.
+After starting a founder campaign, return to Playtest Environment in that window
+and choose **Edit founder traits**. Enter one trait per line and toggle **Actual
+Genius** to test its effects. Each window's **Reset local data** clears that
+mode's saves, autosaves, setup and navigation drafts, cached rules and settings.
 **Content Studio** opens the repository editor and remembers the chosen checkout.
 Both tools are available in ordinary Release playtest builds.
 Escape during play pauses into the menu; Escape there, Quit and window close

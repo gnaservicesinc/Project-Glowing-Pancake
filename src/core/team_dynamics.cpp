@@ -38,14 +38,21 @@ TeamDynamics team_dynamics(std::span<const PersonProfile* const> people) {
     if(people.size()>1) result.compatibility_bp=shared_trait_compatibility(shared,people.size()*(people.size()-1));
     return result;
 }
-TeamDynamics research_team(const SimulationState& state,std::span<const std::string> ids) {
+TeamDynamics research_team(const SimulationState& state,std::span<const std::string> ids,
+                           const std::map<std::string,std::vector<std::string>,std::less<>>& original_traits) {
     if(!state.management || !state.management->people) return {};
     std::vector<const PersonProfile*> people;
+    std::vector<PersonProfile> recorded;
+    if(!original_traits.empty()) recorded.reserve(ids.size());
     for(const auto& id:ids) {
         const auto& employees=state.management->people->employees;
         const auto found=std::ranges::find_if(employees,[&](const auto& employee){return employee.terms.profile.id==id;});
         if(found==employees.end()) throw std::invalid_argument("Research team member is missing.");
-        people.push_back(&found->terms.profile);
+        if(const auto prior=original_traits.find(id);prior!=original_traits.end()) {
+            recorded.push_back(found->terms.profile);
+            recorded.back().traits=prior->second;
+            people.push_back(&recorded.back());
+        } else people.push_back(&found->terms.profile);
     }
     return team_dynamics(people);
 }

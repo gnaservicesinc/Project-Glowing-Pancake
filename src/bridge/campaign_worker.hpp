@@ -27,6 +27,7 @@ public:
     void stop();
 #if !PGP_DISTRIBUTION
     void resetLocalData(std::uint64_t token);
+    void editPlaytestFounder(std::uint64_t token,std::uint64_t revision,std::vector<std::string> traits,bool genius);
 #endif
     void retryPersistence(std::uint64_t token);
     void submitCommand(std::uint64_t token, core::Command command);
@@ -55,6 +56,7 @@ signals:
     void originalContentReviewReady(QString review);
 private:
     void requireOwningThread() const;
+    void requireCampaignMode(const runtime::Checkpoint&) const;
     void publish();
     void tick();
     void pauseDriver();

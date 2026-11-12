@@ -135,6 +135,20 @@ int main() {
         check(run.creativity==team_value.creativity && run.compatibility_bp==team_value.compatibility_bp,"Acceptance records actual team characteristics.");
         check(after.lab->research.size()==1 && !run.completed,"Bypassing prerequisites must start real work, not grant the technology.");
         check(persistence::decode_save(program,persistence::encode_save(program,game.current_state())).checkpoint==game.current_state(),"Creative research and traits must reload exactly.");
+#if !PGP_DISTRIBUTION
+        check(!game.editPlaytestFounder(after.revision,{"Interest: film"},true).accepted(),
+              "The playtest command must refuse an ordinary campaign.");
+        auto edited=game.current_state();
+        auto& simulation=edited.world.simulation;
+        auto& researcher=simulation.management->people->employees.front().terms.profile;
+        simulation.lab->research.back().original_traits.emplace(researcher.id,researcher.traits);
+        researcher.traits.push_back("Interest: playtest-specific film");
+        check(core::research_team(simulation,plan.researchers).creativity!=run.creativity,
+              "New projects use the edited traits.");
+        edited.world.developer_playtest=true;
+        check(persistence::decode_save(program,persistence::encode_save(program,edited)).checkpoint==edited,
+              "Existing projects retain their original research team evidence after an edit.");
+#endif
         std::cout<<"Distinct-trait union, identical-team compatibility, early-year threshold, atomic refusal, prerequisite bypass and fresh reload passed\n";
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

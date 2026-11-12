@@ -45,7 +45,8 @@ QString editor_path(const QString& checkout) {
 }
 }
 
-DevelopmentTools::DevelopmentTools(QString settings_path) : settings_path_(std::move(settings_path)) {
+DevelopmentTools::DevelopmentTools(QString settings_path,QStringList launch_arguments)
+    : settings_path_(std::move(settings_path)),launch_arguments_(std::move(launch_arguments)) {
     QSettings settings(settings_path_,QSettings::IniFormat);
     remembered_checkout_=settings.value("contentStudio/checkout").toString();
 }
@@ -94,5 +95,11 @@ bool DevelopmentTools::openContentStudio() {
     }
     setMessage({});
     return true;
+}
+
+bool DevelopmentTools::openGodMode() {
+    auto arguments=launch_arguments_;
+    arguments.push_back(QStringLiteral("--god-mode"));
+    return QProcess::startDetached(QCoreApplication::applicationFilePath(),arguments);
 }
 }

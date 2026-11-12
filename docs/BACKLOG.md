@@ -40,9 +40,11 @@ Sorting and efficient serving now have finite innovation paths. Required levels,
 actual project costs and dated serving compute effects use the ordinary research
 and deployment commands. Rival profiles can pursue batched inference.
 
-Release distribution gating, the repository Content Studio launcher and the
-Playtest Environment launcher are implemented. God mode, nonprofit reactions
-and native rival learning remain selected work.
+Release distribution gating and the repository Content Studio launcher are
+implemented. Playtest Environment opens an isolated God mode campaign with
+saved founder trait and genius editing. Editing other people and stats,
+unlimited resources, instant deliveries and instant research remain selected
+work, alongside nonprofit reactions and native rival learning.
 
 ## Selected people/software expansion (F-06, in progress)
 

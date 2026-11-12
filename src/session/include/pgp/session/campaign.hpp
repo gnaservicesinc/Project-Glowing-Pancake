@@ -42,6 +42,10 @@ public:
     void set_settings(persistence::Settings settings);
     [[nodiscard]] OperationResult prepare_opening(std::uint64_t expected_revision);
     [[nodiscard]] OperationResult submit(const core::Command& command);
+#if !PGP_DISTRIBUTION
+    [[nodiscard]] OperationResult editPlaytestFounder(std::uint64_t expected_revision,
+                                                     std::vector<std::string> traits,bool genius);
+#endif
     [[nodiscard]] OperationResult respond_competitive_offer(std::uint64_t expected_revision,std::string_view offer_id,bool accept);
     [[nodiscard]] OperationResult propose_acquisition(std::uint64_t expected_revision,std::string_view target,bool equity);
     [[nodiscard]] OperationResult sign_wholesale(std::uint64_t expected_revision,std::string_view plan,std::string_view source,std::string_view buyer);
