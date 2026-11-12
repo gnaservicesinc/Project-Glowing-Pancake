@@ -36,7 +36,11 @@ Next implement the personal career state across forced departures and guaranteed
 re-entry, broader statement claims/scandals and surprising appointments.
 Surprising human appointments and broader circumstances can also change the
 lead story and remain selected work.
-Distribution/development tools, selective innovation, nonprofit reactions and
+Sorting and efficient serving now have finite innovation paths. Required levels,
+actual project costs and dated serving compute effects use the ordinary research
+and deployment commands. Rival profiles can pursue batched inference.
+
+Distribution/development tools, nonprofit reactions and
 native rival learning remain selected work.
 
 ## Selected people/software expansion (F-06, in progress)

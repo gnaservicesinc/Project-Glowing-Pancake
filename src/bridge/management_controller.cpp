@@ -618,8 +618,11 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             for (const auto& id:row.all_of) prerequisites.push_back(title_for(id));
             QStringList alternatives; for (const auto& id:row.any_of) alternatives.push_back(title_for(id));
             if (!alternatives.empty()) prerequisites.push_back(QStringLiteral("one of: ")+alternatives.join(QStringLiteral(", ")));
-            const auto status=research_status(*s.lab,*s.capacity,row);
+            auto status=research_status(*s.lab,*s.capacity,row);
             const bool completed=std::any_of(s.lab->research.begin(),s.lab->research.end(),[&](const auto& run){return run.research_id==row.id && run.completed;});
+            const bool locked=!s.lab->catalog.research_workplaces && !completed &&
+                core::research_creativity_threshold(*s.lab,*s.capacity,row.id,s.date)==UINT32_MAX;
+            if(locked) status=tr("Requires earlier research");
             const bool published=std::any_of(s.lab->publications.begin(),s.lab->publications.end(),[&](const auto& publication){return publication.research_id==row.id;});
             const auto insight=public_insight(snapshot_->checkpoint.world,row.id);
             const bool has_insight=std::any_of(s.lab->insights.begin(),s.lab->insights.end(),[&](const auto& value){return value.research_id==row.id;});
@@ -629,8 +632,9 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             research.push_back({text(row.id),title_for(row.id),(s.lab->catalog.research_workplaces?QString{}:money(cash_fee)+QStringLiteral(" · "))+QString::number(row.staff_days.value())+QStringLiteral(" staff-days"),
                 QStringLiteral("%1 CU of finite experiments plus %2 staff-days. Both must complete.\nPrerequisites: %3\nPaid work and staff time are not refunded when stopped.")
                     .arg(cu(row.experiment_work.value()),QString::number(row.staff_days.value()),prerequisites.isEmpty()?QStringLiteral("none"):prerequisites.join(QStringLiteral(", "))),status,
-                status!=QStringLiteral("Completed") && status!=QStringLiteral("In progress") && status!=QStringLiteral("Paused"),
-                {{QStringLiteral("completed"),completed},{QStringLiteral("published"),published},{QStringLiteral("canAdopt"),can_adopt}}});
+                !locked && status!=QStringLiteral("Completed") && status!=QStringLiteral("In progress") && status!=QStringLiteral("Paused"),
+                {{QStringLiteral("completed"),completed},{QStringLiteral("published"),published},{QStringLiteral("canAdopt"),can_adopt},
+                    {QStringLiteral("innovation"),row.innovation.has_value()}}});
             if (const auto& risk = row.setback) {
                 const auto failed = std::ranges::find_if(report.research, [&](const auto& run) {return run.research_id == row.id && run.failed;});
                 const auto safeguard = std::ranges::any_of(report.research, [&](const auto& run) {return run.research_id == risk->safeguard && run.completed;});
@@ -1622,7 +1626,7 @@ QString ManagementController::servicePreview(QString id,QString model,bool revie
         return tr("Required lower bounds · %1\n%2 tasks/day · %3 staff · %4 support/month\n%5\n%6\n%7%8%9")
             .arg(lab_profile(row.required,QStringLiteral(" ≥ ")),number(tasks),QString::number(row.serving.staff+(review?row.review_staff:0)),
                 money(core::checked_unit_add(row.serving.monthly_support_cost,review?row.review_monthly_cost:core::Cents{0})),
-                recipe?cu(core::required_inference(tasks,recipe->inference_per_task).value())+QStringLiteral(" CU/day using this checkpoint"):QStringLiteral("Choose a checkpoint to see serving compute"),
+                recipe?cu(core::required_inference(tasks,core::research_inference_cost(*state().lab,*state().capacity,*recipe,state().date)).value())+QStringLiteral(" CU/day using this checkpoint"):QStringLiteral("Choose a checkpoint to see serving compute"),
                 tr("Discretionary price %1/task. Review credits · %2.")
                     .arg(money(row.product.price_per_task),lab_profile(review?row.review_credit:core::empty_lab_profile)),
                 hardware,prerequisites.isEmpty()?QString{}:QStringLiteral("\nRequired research · %1.").arg(prerequisites.join(QStringLiteral(", "))),rights);

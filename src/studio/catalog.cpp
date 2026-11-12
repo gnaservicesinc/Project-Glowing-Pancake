@@ -64,7 +64,8 @@ std::string reference_family(std::string_view key,std::string_view path,std::str
     if(kind=="frontier_research" && (key=="refresh_research" || key=="research")) return "research";
     if(array=="setback" && key=="safeguard") return "research";
     if(array=="flows") return "flow";
-    if(array=="research" || array=="requires_research" || array=="all_of" || array=="any_of" || key=="publication_node" || key=="publication_research") return "research";
+    if(array=="research" || array=="requires_research" || array=="all_of" || array=="any_of" || key=="publication_node" || key=="publication_research" ||
+        (key=="previous" && path.find("/innovation/")!=std::string_view::npos)) return "research";
     if(array=="recipes" || key=="recipe_id" || key=="required_recipe") return "recipe";
     if(array=="data_ids" || key=="data_id") return "dataset";
     if(key=="plan_id" || key=="evaluation_id") return "evaluation";

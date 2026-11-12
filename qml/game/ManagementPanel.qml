@@ -334,7 +334,8 @@ ColumnLayout {
         Field { id: researchStaff; objectName: "researchStaffField"; label: qsTr("Research staff"); initialValue: manager.recommended.researchStaff || "" }
         Action {
             objectName: "startResearchButton"
-            text: (manager.researchTopics.selectedRow.fields || {}).canRetry === true
+            text: (manager.researchTopics.selectedRow.fields || {}).innovation === true ? qsTr("Start innovation")
+                  : (manager.researchTopics.selectedRow.fields || {}).canRetry === true
                   ? qsTr("Pay and retry research") : qsTr("Pay and start research")
             enabled: panel.editable && manager.researchTopics.selectedRow.actionable === true
             onClicked: manager.research(manager.researchTopics.selectedId, researchSource.value, researchRate.value, researchStaff.value)

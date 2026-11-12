@@ -88,7 +88,7 @@ std::string research_workplace_blocker(const SimulationState &state, std::string
     if(except_project.empty()) {
         const auto threshold=research_creativity_threshold(*state.lab,*state.capacity,topic,state.date);
         const auto team=research_team(state,plan.researchers);
-        if(threshold==UINT32_MAX) return "Complete the linked prerequisites.";
+        if(threshold==UINT32_MAX) return "Complete the required technology levels and prerequisites.";
         if(team.creativity<threshold) return "Team creativity is "+std::to_string(team.creativity)+" distinct traits; this research needs "+std::to_string(threshold)+". Add new perspectives or complete more prerequisites.";
     }
     const auto equipment = research_equipment(state, topic);

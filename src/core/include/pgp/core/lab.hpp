@@ -44,6 +44,11 @@ struct ResearchSetback {
     std::string safeguard, finding;
     auto operator<=>(const ResearchSetback&) const = default;
 };
+struct ResearchInnovation {
+    std::string previous;
+    std::map<std::string,BasisPoints> inference_savings;
+    auto operator<=>(const ResearchInnovation&) const = default;
+};
 struct LabResearch {
     std::string id;
     std::vector<std::string> all_of, any_of;
@@ -52,6 +57,7 @@ struct LabResearch {
     MilliCU experiment_work{0};
     std::uint32_t repeat_limit = 1;
     std::optional<ResearchSetback> setback{};
+    std::optional<ResearchInnovation> innovation{};
     auto operator<=>(const LabResearch&) const = default;
 };
 struct TrainingRecipe {
@@ -320,6 +326,7 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
                     std::optional<ResearchCooperation> cooperation={});
 [[nodiscard]] std::uint32_t research_creativity_threshold(const LabState&,const CapacityState&,std::string_view,OrdinalDay);
 [[nodiscard]] ResearchPacing research_pacing(const LabState&,const CapacityState&,std::string_view,OrdinalDay);
+[[nodiscard]] MilliCU research_inference_cost(const LabState&,const CapacityState&,const TrainingRecipe&,OrdinalDay);
 [[nodiscard]] std::uint32_t coordinated_staff_days(const LabCatalog&,const LabResearch&,std::uint32_t compatibility_bp,BasisPoints cooperation=BasisPoints{0});
 void publish_research(LabState& state, const CapacityState& capacity, OrdinalDay day, std::string_view research_id);
 void acquire_research_insight(LabState& state, OrdinalDay day, ResearchInsight insight);

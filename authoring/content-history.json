@@ -108569,6 +108569,107 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "d5a3590cfcdc227fcabb0995a1800df01bb6beb97ad29e30655965bc8c64895f",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.compute.batched_serving",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "1800f93677d2304d7d63950419fe4fa053191851f77490cc9603db753274d66f",
+          "before_hash": "e2e538921f009324c6a407a8a0e6d790a2ac0355ada3d7086029898655b54264",
+          "change": "changed",
+          "id": "research.compute.low_precision",
+          "kind": "research",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "296a5847df4d283d83a6c9b9fc1630fdc50e36c45e088e8cb0a6ff21fdbc64bc",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.data.sorting_adaptive",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "b285bf01f929bba6ba75a812e5bec73d724bc29129321a250cd22a22733eb3ad",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.data.sorting_external",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "42d642c46db52a77758d1db18ea64ff9c7526f62fd3543a5c99fe71a45032872",
+          "before_hash": "4d4603099fc2853fe437b42c1297896093e814d1ad9d75e5b083f59746d2f161",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 19,
+          "revision": 20
+        },
+        {
+          "after_hash": "9cd4a213383dc45be680f8cb546ee0b319e7607f3e93d8e4468ffa9828403191",
+          "before_hash": "55af56e3b0d78707d796a7ced9c01835adb7c62268eb67e64814574d40c639e4",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 19,
+          "revision": 20
+        },
+        {
+          "after_hash": "72f155290e180432cc206c46ee79782d93ec883895cac63ed1747580a8f4b649",
+          "before_hash": "c8deb3f44bcdb68ed378d309f60f8a801306b979198ee43ca2f5341d20053a06",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 42,
+          "revision": 43
+        }
+      ],
+      "changed_text_keys": [
+        "research.compute.batched_serving.detail",
+        "research.compute.batched_serving.title",
+        "research.data.sorting_adaptive.detail",
+        "research.data.sorting_adaptive.title",
+        "research.data.sorting_external.detail",
+        "research.data.sorting_external.title",
+        "research.data.table_indexing.title"
+      ],
+      "collection_hash": "458bc32a5517e8a98ffe1f6d14499d788fa7bc45096ac1c21cb832d70c052afc",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.73.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 74,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.72.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000073.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000074.collection.json",
+      "summary": "Add finite sorting and serving innovation levels, required technology levels and dated serving compute improvements.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

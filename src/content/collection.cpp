@@ -1131,7 +1131,7 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
     return result;
 }
 ResearchDefinition research(const Json& value, const std::string& path) {
-    fields(value, path, {"id", "kind", "revision", "prerequisites", "cash_cents", "staff_days", "work_milli_CU", "repeat_limit", "setback"},
+    fields(value, path, {"id", "kind", "revision", "prerequisites", "cash_cents", "staff_days", "work_milli_CU", "repeat_limit", "setback", "innovation"},
            {"id", "kind", "revision", "prerequisites", "cash_cents", "staff_days", "work_milli_CU"});
     const auto& prerequisites = value.at("prerequisites");
     fields(prerequisites, child(path, "prerequisites"), {"all_of", "any_of"}, {"all_of", "any_of"});
@@ -1141,6 +1141,18 @@ ResearchDefinition research(const Json& value, const std::string& path) {
             pgp::core::Days{integer(value.at("staff_days"), child(path, "staff_days"))},
             pgp::core::MilliCU{integer(value.at("work_milli_CU"), child(path, "work_milli_CU"))},
             value.contains("repeat_limit") ? positive(value.at("repeat_limit"),child(path,"repeat_limit"),12) : 1};
+    if (value.contains("innovation")) {
+        const auto& row=value.at("innovation");
+        const auto location=child(path,"innovation");
+        fields(row,location,{"previous","inference_savings_bp"},{"previous","inference_savings_bp"});
+        result.innovation=core::ResearchInnovation{id(row.at("previous"),child(location,"previous")),{}};
+        const auto& savings=row.at("inference_savings_bp");
+        if(!savings.is_object() || savings.size()>8) fail("innovation",location,"Specify at most eight recipe effects");
+        for(const auto& [recipe,amount]:savings.items())
+            result.innovation->inference_savings.emplace(recipe,core::BasisPoints{integer(amount,child(location,recipe),1,5000)});
+        if(result.repeat_limit!=1 || std::ranges::find(result.all_of,result.innovation->previous)==result.all_of.end())
+            fail("innovation",location,"An innovation needs one completion and its previous level as a required prerequisite");
+    }
     if (value.contains("setback")) {
         const auto& risk = value.at("setback");
         const auto p = child(path, "setback");

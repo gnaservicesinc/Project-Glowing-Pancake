@@ -209,11 +209,34 @@ void schedule_research_smoke(QQuickWindow &window, pgp::bridge::CampaignControll
                 fail("Compact graph and keyboard selector");
                 return;
             }
-            std::cout << "Research UI passed: graph selection, prerequisite lock, named staff, local compute, "
-                         "progress, power loss, paid rental and exact fresh reload\n";
+            if(!manager->researchTopic("research.compute.batched_serving").isEmpty()) {
+                if(!press("technology_research.compute.batched_serving")) {fail("Select batched serving in the graph");return;}
+                run->frames=0;
+                break;
+            }
+            [[fallthrough]];
+        case 16: {
+            if (++run->frames<6) return;
+            const auto detail=manager->researchTopic("research.compute.batched_serving");
+            if(!detail.isEmpty()) {
+                const auto* level=item("innovationLevel");
+                auto* start=item("startGroundedResearch");
+                if(!level || !level->property("text").toString().contains("level 2") || !start || start->isEnabled() ||
+                    start->property("text").toString()!="Start innovation" ||
+                    !detail.value("blocker").toString().contains(manager->researchTopic("research.efficient_serving").value("name").toString())) {
+                    fail("Innovation must show its level and name the prerequisite blocking the action");return;
+                }
+                if(auto* scroll=item("managementScroll")) {
+                    start->forceActiveFocus();
+                    QMetaObject::invokeMethod(scroll,"reveal",Q_ARG(QVariant,QVariant::fromValue(start)));
+                }
+                if(!capture("innovation-compact")){fail("Capture compact innovation");return;}
+            }
+            std::cout << "Research UI passed: graph selection, named staff, local compute, paid rental, fresh reload and compact innovation prerequisite preview\n";
             timer->stop();
             QCoreApplication::exit(0);
             return;
+        }
         }
         ++run->phase;
     });

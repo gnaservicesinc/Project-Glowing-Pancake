@@ -224,7 +224,7 @@ WorldForm WorldForm::append_catalog_from(const DraftDocument& d,std::string_view
     if(path.ends_with("/lab/research") && prototype.value("kind",std::string{})=="research") {
         Json topic={{"id",prototype.at("id")},{"all_of",prototype.at("prerequisites").at("all_of")},{"any_of",prototype.at("prerequisites").at("any_of")},
             {"cash_cents",prototype.at("cash_cents")},{"staff_days",prototype.at("staff_days")},{"experiment_milli_CU",prototype.at("work_milli_CU")}};
-        for (const auto* key : {"repeat_limit", "setback"}) if (prototype.contains(key)) topic[key]=prototype.at(key);
+        for (const auto* key : {"repeat_limit", "setback", "innovation"}) if (prototype.contains(key)) topic[key]=prototype.at(key);
         prototype=std::move(topic);
     }
     WorldForm result{d,std::string(scenario),std::string(path)};result.catalog_=true;result.adding_=true;result.prototype_=prototype.dump();result.build(d,true);return result;

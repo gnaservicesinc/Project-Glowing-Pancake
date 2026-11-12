@@ -314,12 +314,27 @@ void validate_lab_catalog(const LabCatalog& catalog) {
             for(const auto& equipment:required) {label(equipment);if(!seen.insert(equipment).second) invalid("Research equipment requirements must be distinct");}
         }
     }
+    std::set<std::string_view> innovation_predecessors;
+    std::map<std::string,std::int64_t> total_inference_savings;
     for (const auto& node : catalog.research) {
         references(node.all_of); references(node.any_of);
-        if (node.cash.value() < 0 || (catalog.research_workplaces && node.cash.value()!=0) || node.staff_days.value() == 0 || node.staff_days.value() > 1'000'000 ||
+        if (node.cash.value() < 0 || (catalog.research_workplaces && !node.innovation && node.cash.value()!=0) || node.staff_days.value() == 0 || node.staff_days.value() > 1'000'000 ||
             node.repeat_limit<1 || node.repeat_limit>12 ||
             node.experiment_work.value() == 0 || node.experiment_work.value() > 1'000'000'000'000LL)
             invalid("Research requires bounded positive staff-days and experiment work");
+        if(node.innovation) {
+            const auto& level=*node.innovation;
+            if(node.repeat_limit!=1 || std::ranges::find(node.all_of,level.previous)==node.all_of.end() ||
+                !innovation_predecessors.insert(level.previous).second || level.inference_savings.size()>8 ||
+                find(catalog.research,level.previous).repeat_limit!=1)
+                invalid("Innovation levels need one completion and a unique, required previous level");
+            for(const auto& [recipe,savings]:level.inference_savings) {
+                (void)find(catalog.recipes,recipe);
+                auto& total=total_inference_savings[recipe];
+                total+=savings.value();
+                if(savings.value()==0 || total>5000) invalid("Total innovation savings cannot exceed half the recipe's serving compute");
+            }
+        }
         if (node.setback) {
             const auto& risk = *node.setback;
             (void)find(catalog.research, risk.safeguard);
@@ -459,9 +474,20 @@ ResearchPacing research_pacing(const LabState& state,const CapacityState& capaci
     const auto& node=find(state.catalog.research,id);
     ResearchPacing pacing;
     pacing.prerequisite_groups=static_cast<std::uint32_t>(node.all_of.size())+(node.any_of.empty()?0U:1U);
-    for(const auto& required:node.all_of) if(!knowledge_on(state,capacity,required,day)) ++pacing.missing_groups;
-    if(!node.any_of.empty() && std::ranges::none_of(node.any_of,[&](const auto& required){return knowledge_on(state,capacity,required,day);}))
+    const auto level_required=[&](const auto& required){return find(state.catalog.research,required).innovation.has_value();};
+    bool strict_missing=false;
+    for(const auto& required:node.all_of) if(!knowledge_on(state,capacity,required,day)) {
         ++pacing.missing_groups;
+        strict_missing=strict_missing || level_required(required);
+    }
+    if(!node.any_of.empty() && std::ranges::none_of(node.any_of,[&](const auto& required){return knowledge_on(state,capacity,required,day);})) {
+        ++pacing.missing_groups;
+        strict_missing=strict_missing || std::ranges::any_of(node.any_of,level_required);
+    }
+    if(pacing.missing_groups && (strict_missing || node.innovation)) {
+        pacing.threshold=UINT32_MAX;
+        return pacing;
+    }
     const auto rule=state.catalog.creative_research.find(std::string{id});
     if(rule==state.catalog.creative_research.end()) {
         pacing.threshold=pacing.missing_groups?UINT32_MAX:0;
@@ -476,6 +502,18 @@ ResearchPacing research_pacing(const LabState& state,const CapacityState& capaci
         pacing.threshold=static_cast<std::uint32_t>((scaled+pacing.prerequisite_groups-1)/pacing.prerequisite_groups);
     }
     return pacing;
+}
+MilliCU research_inference_cost(const LabState& lab,const CapacityState& capacity,const TrainingRecipe& recipe,OrdinalDay day) {
+    std::int64_t savings=0;
+    for(const auto& topic:lab.catalog.research) if(topic.innovation) {
+        const auto& effects=topic.innovation->inference_savings;
+        if(const auto effect=effects.find(recipe.id);effect!=effects.end() && knowledge_on(lab,capacity,topic.id,day))
+            savings+=effect->second.value();
+    }
+    if(!savings) return recipe.inference_per_task;
+    const auto rate=static_cast<std::uint64_t>(10000-savings);
+    const auto scaled=mul_div_floor(static_cast<std::uint64_t>(recipe.inference_per_task.value()),rate,10000);
+    return MilliCU{static_cast<std::int64_t>(scaled.quotient+(scaled.remainder?1U:0U))};
 }
 std::uint32_t research_creativity_threshold(const LabState& state,const CapacityState& capacity,std::string_view id,OrdinalDay day) {
     return research_pacing(state,capacity,id,day).threshold;
@@ -494,6 +532,7 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
     if (sponsored_fee.value()<0 || sponsored_fee>node.cash) invalid("A research sponsor cannot pay more than the fee");
     if(creativity>1024 || compatibility_bp>10000) invalid("Research team characteristics exceed their bounds.");
     const auto threshold=research_creativity_threshold(state,capacity,research_id,day);
+    if(threshold==UINT32_MAX) invalid("Complete the required technology levels and prerequisites.");
     if(threshold>creativity) invalid("Complete the prerequisites or assign a team with enough distinct traits.");
     std::size_t attempt = 1;
     std::uint32_t completed_runs = 0;

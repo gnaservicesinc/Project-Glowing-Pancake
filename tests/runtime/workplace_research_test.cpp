@@ -124,14 +124,41 @@ int main() {
         advance(2);
         check(project(fast).status == core::ProjectStatus::completed,
               "Both labor and experimental compute settle before completion.");
+        const auto efficient="research.efficient_serving";
+        const auto batched="research.compute.batched_serving";
+        const auto low_precision="research.compute.low_precision";
+        refuse(core::StartResearch{batched,cloud},"technology levels");
+        apply(core::StartResearch{efficient,cloud});
+        advance(6);
+        refuse(core::StartResearch{low_precision,cloud},"technology levels");
+        refuse(core::StartResearch{batched,cloud},"Compact server rack");
+        hq(core::BuyHQEquipment{"rack"});
+        advance(7);
+        hq(core::PlaceHQEquipment{3,0,0,2,false});
+        const auto inference=[&](core::OrdinalDay day) {
+            const auto& lab=*state().lab;
+            const auto recipe=std::ranges::find(lab.catalog.recipes,"recipe.efficient",&core::TrainingRecipe::id);
+            return core::research_inference_cost(lab,*state().capacity,*recipe,day);
+        };
+        const auto before_innovation=state().date;
+        const auto funds=state().cash;
+        apply(core::StartResearch{batched,cloud});
+        check(state().cash==core::checked_unit_subtract(funds,core::Cents{80000}),"Innovation pays its authored project fee.");
+        check(inference(state().date)==core::MilliCU{12},"An unfinished innovation cannot discount a deployment.");
+        advance(12);
+        check(inference(state().date)==core::MilliCU{10} && inference(before_innovation)==core::MilliCU{12},
+              "New deployments receive the completed level once and historical releases retain their original compute.");
+        refuse(core::StartResearch{batched,cloud},"limit");
+        apply(core::StartResearch{low_precision,cloud});
+        apply(core::CancelProject{state().lab->research.back().project_id});
         hq(core::BuyHQEquipment{"evaluation"});
         advance(10);
         refuse(core::StartResearch{specialized, local}, "evaluation station");
-        hq(core::PlaceHQEquipment{3, 0, 0, 2, false});
+        hq(core::PlaceHQEquipment{4, 0, 0, 3, false});
         apply(core::StartResearch{specialized, local});
         exact_save();
         std::cout << "Named labor, prerequisites, equipment, paid compute, independent work budgets, power loss and "
-                     "fresh saves passed\n";
+                     "innovation fees, equipment, strict level prerequisites, dated serving savings and fresh saves passed\n";
     } catch (const std::exception &error) {
         std::cerr << error.what() << '\n';
         return 1;

@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.72.0-dev.1",
+  "content_version": "0.73.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -15190,6 +15190,26 @@
       "work_milli_CU": 2000000
     },
     {
+      "cash_cents": 80000,
+      "id": "research.compute.batched_serving",
+      "innovation": {
+        "inference_savings_bp": {
+          "recipe.efficient": 2000
+        },
+        "previous": "research.efficient_serving"
+      },
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.efficient_serving"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 12,
+      "work_milli_CU": 120000
+    },
+    {
       "cash_cents": 1350000,
       "id": "research.compute.fabric_qos",
       "kind": "research",
@@ -15251,11 +15271,11 @@
       "kind": "research",
       "prerequisites": {
         "all_of": [
-          "research.efficient_serving"
+          "research.compute.batched_serving"
         ],
         "any_of": []
       },
-      "revision": 1,
+      "revision": 2,
       "staff_days": 44,
       "work_milli_CU": 1100000
     },
@@ -15384,6 +15404,46 @@
       "revision": 1,
       "staff_days": 28,
       "work_milli_CU": 520000
+    },
+    {
+      "cash_cents": 48000,
+      "id": "research.data.sorting_adaptive",
+      "innovation": {
+        "inference_savings_bp": {
+          "recipe.ledger_extractor": 1000
+        },
+        "previous": "research.data.table_indexing"
+      },
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.data.table_indexing"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 8,
+      "work_milli_CU": 60000
+    },
+    {
+      "cash_cents": 120000,
+      "id": "research.data.sorting_external",
+      "innovation": {
+        "inference_savings_bp": {
+          "recipe.ledger_extractor": 1500
+        },
+        "previous": "research.data.sorting_adaptive"
+      },
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.data.sorting_adaptive"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 16,
+      "work_milli_CU": 160000
     },
     {
       "cash_cents": 420000,
@@ -25114,10 +25174,13 @@
         "research.public.local_rollout",
         "research.public.publication_package",
         "research.public.replication_handbook",
-        "research.public.benchmark_exchange"
+        "research.public.benchmark_exchange",
+        "research.data.sorting_adaptive",
+        "research.data.sorting_external",
+        "research.compute.batched_serving"
       ],
       "resilience": "resilience.domestic",
-      "revision": 19,
+      "revision": 20,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -25215,7 +25278,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -25269,7 +25333,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 3,
@@ -25324,7 +25389,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 1,
@@ -25380,7 +25446,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -25434,7 +25501,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 3,
@@ -25735,7 +25803,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -25789,7 +25858,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 3,
@@ -25844,7 +25914,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 1,
@@ -25900,7 +25971,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -25954,7 +26026,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 3,
@@ -26009,7 +26082,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 1,
@@ -30535,10 +30609,13 @@
         "research.public.local_rollout",
         "research.public.publication_package",
         "research.public.replication_handbook",
-        "research.public.benchmark_exchange"
+        "research.public.benchmark_exchange",
+        "research.data.sorting_adaptive",
+        "research.data.sorting_external",
+        "research.compute.batched_serving"
       ],
       "resilience": "resilience.domestic",
-      "revision": 19,
+      "revision": 20,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -30636,7 +30713,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -30690,7 +30768,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 3,
@@ -30745,7 +30824,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 1,
@@ -30801,7 +30881,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -30855,7 +30936,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 3,
@@ -31156,7 +31238,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -31210,7 +31293,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 3,
@@ -31265,7 +31349,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 1,
@@ -31321,7 +31406,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -31375,7 +31461,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 3,
@@ -31430,7 +31517,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 1,
@@ -76393,6 +76481,12 @@
         ],
         "research": [],
         "research_workplaces": {
+          "research.compute.batched_serving": [
+            "rack"
+          ],
+          "research.data.sorting_external": [
+            "rack"
+          ],
           "research.efficient_image_features": [
             "bench"
           ],
@@ -79293,10 +79387,13 @@
         "research.public.local_rollout",
         "research.public.publication_package",
         "research.public.replication_handbook",
-        "research.public.benchmark_exchange"
+        "research.public.benchmark_exchange",
+        "research.data.sorting_adaptive",
+        "research.data.sorting_external",
+        "research.compute.batched_serving"
       ],
       "resilience": "resilience.domestic",
-      "revision": 42,
+      "revision": 43,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -79394,7 +79491,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -79448,7 +79546,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 3,
@@ -79503,7 +79602,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 1,
@@ -79559,7 +79659,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -79613,7 +79714,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 3,
@@ -79914,7 +80016,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -79968,7 +80071,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 3,
@@ -80023,7 +80127,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 1,
@@ -80079,7 +80184,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -80133,7 +80239,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 3,
@@ -80188,7 +80295,8 @@
               "research.reproducible_tooling",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features"
+              "research.efficient_image_features",
+              "research.compute.batched_serving"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 1,
@@ -99680,6 +99788,8 @@
     "life.mission.rival.body": "The mission change has turned personal. You can find the conversation in the social circle.",
     "life.mission.rival.title": "A promise broken",
     "operations.site.outcome": "Operations recorded a site outcome. Review its cause, current capacity and recovery terms in Operations.",
+    "research.compute.batched_serving.detail": "Schedule compatible requests together to reduce the compute reserved by new releases of the efficient recipe.",
+    "research.compute.batched_serving.title": "Batched inference",
     "research.compute.fabric_qos.detail": "Unlocks additional memory-first and fabric v1 racks.",
     "research.compute.fabric_qos.title": "Shared fabric scheduling",
     "research.compute.flexible_duty.detail": "Unlocks the variable load and continuous duty racks.",
@@ -99708,8 +99818,12 @@
     "research.data.partition_audit.title": "Holdout partition audit",
     "research.data.receipt_layout.detail": "Measure the difference between scanned receipts and typed documents.",
     "research.data.receipt_layout.title": "Receipt layout sampling",
+    "research.data.sorting_adaptive.detail": "Use the existing order of routine records to reduce sorting work in new ledger extraction releases.",
+    "research.data.sorting_adaptive.title": "Adaptive table sorting",
+    "research.data.sorting_external.detail": "Reuse sorted batches across tables that exceed working memory. New ledger extraction releases reserve less compute.",
+    "research.data.sorting_external.title": "External merge sorting",
     "research.data.table_indexing.detail": "Unlocks the ledger extraction recipe for routine tables.",
-    "research.data.table_indexing.title": "Compact table indexing",
+    "research.data.table_indexing.title": "Table indexing and sorting",
     "research.evidence.edge_failures.detail": "Retain a separate list of recurring operational errors.",
     "research.evidence.edge_failures.title": "Failure sampling",
     "research.evidence.rare_cases.detail": "Design an audit set for consequential failures with low average frequency.",

@@ -1,6 +1,7 @@
 #include "management_controller.hpp"
 #include "lab_inputs.hpp"
 #include <pgp/core/workplace_research.hpp>
+#include <pgp/core/funding_support.hpp>
 #include <QLocale>
 #include <algorithm>
 #include <functional>
@@ -29,9 +30,11 @@ const core::ResearchRun *latest_run(const core::LabState &lab, std::string_view 
 bool has_result(const core::LabState &lab, std::string_view id) {
     return std::ranges::any_of(lab.research, [&](const auto &row) { return row.research_id == id && row.completed; });
 }
-bool prerequisites(const core::LabState &lab, const core::LabResearch &topic) {
-    const auto met = [&](const auto &id) { return has_result(lab, id); };
-    return std::ranges::all_of(topic.all_of, met) && (topic.any_of.empty() || std::ranges::any_of(topic.any_of, met));
+unsigned innovation_level(const core::LabCatalog& catalog,const core::LabResearch& topic) {
+    unsigned level=1;
+    for(auto* previous=&topic;previous && previous->innovation;
+        previous=find_id(catalog.research,previous->innovation->previous)) ++level;
+    return level;
 }
 std::uint32_t results(const core::LabState &lab, std::string_view id) {
     return static_cast<std::uint32_t>(
@@ -163,10 +166,10 @@ QVariantList ManagementController::researchGraph() const {
         const auto slot = next_slot[level]++;
         const auto *run = latest_run(lab, topic.id);
         const auto *work = run ? find_id(s.capacity->projects, run->project_id) : nullptr;
-        const bool missing = !prerequisites(lab, topic);
-        const bool creative = lab.catalog.creative_research.contains(topic.id);
+        const auto pacing=core::research_pacing(lab,*s.capacity,topic.id,s.date);
+        const bool missing=pacing.missing_groups!=0;
         const bool locked =
-            (missing && !creative) ||
+            pacing.threshold==UINT32_MAX ||
             !core::frontier_technology_block(s, core::FrontierTechnology::research, topic.id, s.date).empty();
         QString status = locked ? QStringLiteral("locked") : missing ? QStringLiteral("creative") : QStringLiteral("ready");
         if (results(lab, topic.id) >= topic.repeat_limit)
@@ -214,8 +217,18 @@ QVariantMap ManagementController::researchTopic(QString id) const {
     QString why;
     if (!technology.empty())
         why = q(technology);
-    else if (!prerequisites(*s.lab, *topic) && !s.lab->catalog.creative_research.contains(topic->id))
-        why = tr("Complete the linked prerequisites.");
+    else if (core::research_creativity_threshold(*s.lab,*s.capacity,topic->id,s.date)==UINT32_MAX) {
+        QStringList missing;
+        const auto title=[&](const auto& prerequisite){return research_->sourceRow(q(prerequisite)).value("title",q(prerequisite)).toString();};
+        for(const auto& prerequisite:topic->all_of)
+            if(!has_result(*s.lab,prerequisite)) missing.push_back(title(prerequisite));
+        if(!topic->any_of.empty() && std::ranges::none_of(topic->any_of,[&](const auto& prerequisite){return has_result(*s.lab,prerequisite);})) {
+            QStringList alternatives;
+            for(const auto& prerequisite:topic->any_of) alternatives.push_back(title(prerequisite));
+            missing.push_back(tr("one of %1").arg(alternatives.join(", ")));
+        }
+        why=tr("Requires %1.").arg(missing.join(" · "));
+    }
     else if (!core::hq_has_lab_equipment(s, required))
         why = tr("Install the required equipment together in one room.");
     QString progress, hold;
@@ -241,6 +254,14 @@ QVariantMap ManagementController::researchTopic(QString id) const {
         if (run->failed && topic->setback)
             progress += "\n" + q(topic->setback->finding);
     }
+    const auto next=std::ranges::find_if(s.lab->catalog.research,[&](const auto& row){return row.innovation && row.innovation->previous==topic->id;});
+    QStringList effects;
+    if(topic->innovation) for(const auto& [recipe,amount]:topic->innovation->inference_savings) {
+        const auto* terms=find_id(s.lab->catalog.recipes,recipe);
+        if(terms) effects.push_back(tr("%1 · %2% less base compute for future releases before rounding")
+            .arg(q(terms->name)).arg(static_cast<double>(amount.value())/100.0));
+    }
+    const auto fee=core::research_cash_fee(s,topic->id);
     return {{"name", authored.value("title", id)},
             {"description", authored.value("detail")},
             {"published", authored.value("fields").toMap().value("published")},
@@ -248,6 +269,11 @@ QVariantMap ManagementController::researchTopic(QString id) const {
             {"knowledge", has_result(*s.lab, topic->id)},
             {"staffDays", topic->staff_days.value()},
             {"experiment", cu(topic->experiment_work.value())},
+            {"innovation", topic->innovation.has_value()},
+            {"innovationLevel", innovation_level(s.lab->catalog,*topic)},
+            {"nextInnovation",next==s.lab->catalog.research.end()?QString{}:q(next->id)},
+            {"effects",effects.join(u'\n')},
+            {"fee",fee.value()>0?money(fee):QString{}},
             {"equipment", equipment},
             {"blocker", why},
             {"active", active},
@@ -298,6 +324,8 @@ QString ManagementController::researchBlocker(QString id, QString source, QStrin
     try {
         const auto plan = allocation(source, rate, workers);
         const auto &s = state();
+        if(core::research_cash_fee(s,id.toStdString())>core::discretionary_cash(s))
+            return tr("Available company cash does not cover the project fee.");
         const auto blocker = core::research_workplace_blocker(s, id.toStdString(), plan);
         if (!blocker.empty())
             return q(blocker);

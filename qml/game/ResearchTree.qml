@@ -207,7 +207,10 @@ GridLayout {
         Layout.alignment: Qt.AlignTop
         spacing: 10
         Copy { text: tree.selected.name || ""; font.bold: true; font.pixelSize: tree.textSize * 1.25; color: "#f1e5c5" }
-        Copy { text: qsTr("%1 staff-days and %2 CU of experiments. Staff work and compute settle separately.").arg(tree.selected.staffDays || 0).arg(tree.selected.experiment || "0") }
+        Copy { objectName: "innovationLevel"; visible: !!tree.selected.innovation; text: qsTr("Innovation · level %1").arg(tree.selected.innovationLevel || 0); color: "#ebc887" }
+        Copy { visible: !!tree.selected.effects; text: tree.selected.effects || "" }
+        Copy { visible: !!tree.selected.fee && !tree.selected.completed && !tree.selected.active && !tree.selected.paused; text: qsTr("Project fee %1").arg(tree.selected.fee || "") }
+        Copy { text: qsTr("%1 staff-days · %2 CU of experiments").arg(tree.selected.staffDays || 0).arg(tree.selected.experiment || "0") }
         Copy {
             visible: (tree.selected.equipment || []).length > 0
             text: qsTr("One equipped room needs: %1.").arg((tree.selected.equipment || []).join(", "))
@@ -217,6 +220,7 @@ GridLayout {
         Flow {
             Layout.fillWidth: true
             spacing: 8
+            WorldButton { objectName: "reviewNextInnovation"; visible: !!tree.selected.completed && !!tree.selected.nextInnovation; text: qsTr("Review next innovation"); textSize: tree.textSize; onClicked: tree.select(tree.selected.nextInnovation, true) }
             WorldButton { visible: !!tree.selected.active; text: qsTr("Pause project"); textSize: tree.textSize; enabled: tree.editable; onClicked: campaign.projectPause(tree.selected.project) }
             WorldButton { visible: !!tree.selected.paused; text: qsTr("Resume project"); textSize: tree.textSize; enabled: tree.editable && !tree.selected.hold; onClicked: campaign.projectResume(tree.selected.project) }
             WorldButton { visible: !!tree.selected.active || !!tree.selected.paused; text: qsTr("Cancel remaining work"); textSize: tree.textSize; enabled: tree.editable; onClicked: campaign.projectCancel(tree.selected.project) }
@@ -278,7 +282,7 @@ GridLayout {
             Copy { visible: !!tree.blocker; text: tree.blocker; color: "#ebc887" }
             WorldButton {
                 objectName: "startGroundedResearch"
-                text: qsTr("Start research")
+                text: tree.selected.innovation ? qsTr("Start innovation") : qsTr("Start research")
                 textSize: tree.textSize
                 primary: true
                 enabled: tree.editable && !tree.blocker

@@ -293,6 +293,11 @@ Json definition_json(const Definition& definition, const std::string& key) {
         result["cash_cents"] = research->cash.value(); result["staff_days"] = research->staff_days.value();
         result["work_milli_CU"] = research->work.value();
         if (research->repeat_limit!=1) result["repeat_limit"] = research->repeat_limit;
+        if (const auto& level=research->innovation) {
+            Json savings=Json::object();
+            for(const auto& [recipe,amount]:level->inference_savings) savings[recipe]=amount.value();
+            result["innovation"]={{"previous",level->previous},{"inference_savings_bp",std::move(savings)}};
+        }
         if (const auto& risk = research->setback)
             result["setback"] = {{"failure_bp",risk->failure_chance.value()},{"retry_credit_bp",risk->retry_credit.value()},
                 {"safeguard",risk->safeguard},{"finding",risk->finding}};

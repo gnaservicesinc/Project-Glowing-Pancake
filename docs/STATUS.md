@@ -9,7 +9,7 @@ Updated 2026-11-11
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.72.0-dev.1**, generation **73**.
+immersive redesign advances content to **0.73.0-dev.1**, generation **74**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -70,11 +70,18 @@ for keyboard nomination, board review, control-led coverage, actual appointment,
 650×480 at 200% text and a separate-process reload. Content finalization validates
 24 prepared-opening save roundtrips. This does not qualify a full life campaign.
 
+The technology tree offers finite sorting and serving innovations with their own
+staff days, experimental compute, fees and equipment. Batched inference is a
+required level for low-precision kernels. Completed innovations reduce compute
+for matching new deployments, using the deployment date to preserve earlier
+reservations. Rival plans can pursue the same batched inference project. Focused
+checks cover actual prerequisites, cost, equipment, work, dated savings, exact
+reload and the native compact preview.
+
 Career re-entry remains required. Early company closure currently records its
 chapter at the existing company boundary. The guaranteed funded route back,
 broader press claims and scandal coverage, and surprising human successor
-appointments remain selected work. Innovation,
-development menus, God mode, nonprofit reaction expansion and native rival
+appointments remain selected work. Development menus, God mode, nonprofit reaction expansion and native rival
 training also remain unfinished.
 
 ## People and software foundation · F-06

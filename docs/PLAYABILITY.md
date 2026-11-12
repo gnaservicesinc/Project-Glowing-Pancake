@@ -97,6 +97,11 @@ Once your company independently establishes an ASI, it appears in the successor
 list. Its nomination shows recorded control evidence, a finite mandate and
 monthly hosting/oversight costs. The appointment can become the lead story.
 
+In **Lab → Research**, completed topics with another level offer **Review next
+innovation**. The project card shows the fee, equipment and serving effect.
+Batched inference unlocks low-precision kernels, and sorting has two upgrades
+for future ledger extraction releases.
+
 In a fresh founder campaign, use **Suppliers**
 to order a desk and computer. Advance to delivery, choose **Arrange headquarters**,
 then click an owned object’s picture to pick it up. Move its translucent preview

@@ -120,13 +120,13 @@ CapacityProject qualified_project(const ServiceDefinition& definition,const LabS
         project.monthly_support_cost=checked_unit_add(project.monthly_support_cost,definition.review_monthly_cost);
     }
     if (request.agent_controls) project.tasks_per_day=agent_review_capacity(project.tasks_per_day,*request.agent_controls);
-    project.inference_milli_CU_per_task=recipe.inference_per_task;
+    project.inference_milli_CU_per_task=research_inference_cost(lab,capacity,recipe,day);
     project.customer_inference=customer_hosted(definition.product.channel);
     if (project.customer_inference) {
         if (!request.source_id.empty()) invalid("Choose customer hardware for this distribution channel");
         project.requested = MilliCUPerDay{0};
     } else {
-        project.requested = MilliCUPerDay{required_inference(project.tasks_per_day, recipe.inference_per_task).value()};
+        project.requested = MilliCUPerDay{required_inference(project.tasks_per_day, project.inference_milli_CU_per_task).value()};
     }
     project.minimum_memory_mib=std::max(project.minimum_memory_mib,recipe.minimum_memory_mib);
     project.interconnect=recipe.interconnect;
