@@ -19,6 +19,9 @@
 #include "mission_smoke.hpp"
 #include "device_interface_smoke.hpp"
 #include "portrait_images.hpp"
+#if !PGP_DISTRIBUTION
+#include "development_tools.hpp"
+#endif
 
 #include <pgp/core/build_identity.hpp>
 #include <pgp/graphics/graphics_policy.hpp>
@@ -64,6 +67,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("text-scale"),QStringLiteral("Initial text percent, 100 through 200; does not change saved preferences."),QStringLiteral("percent")});
     parser.addOption({QStringLiteral("software"),QStringLiteral("Use the explicit software renderer." )});
     parser.addOption({QStringLiteral("build-info"),QStringLiteral("Print configure-time identity, then exit.")});
+#if !PGP_DISTRIBUTION
     parser.addOption({QStringLiteral("smoke-test"),QStringLiteral("Explicit keyboard/campaign/save check, then exit; requires --portable-root.")});
     parser.addOption({QStringLiteral("competition-smoke"),QStringLiteral("Use the standard rival roster, publication/adoption and pricing path in the explicit playable smoke.")});
     parser.addOption({QStringLiteral("infrastructure-smoke"),QStringLiteral("Exercise the map, paid owned infrastructure and calendar in the explicit playable smoke.")});
@@ -106,14 +110,17 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("form-drafts-smoke"),QStringLiteral("Exercise unsubmitted form choices, exact state and UI-only restart.")});
     parser.addOption({QStringLiteral("map-layout-smoke"),QStringLiteral("Check responsive map geometry, country hover and pointer selection.")});
     parser.addOption({QStringLiteral("settings-smoke"),QStringLiteral("Check visible settings scrolling, pinned apply and saved preferences.")});
+    parser.addOption({QStringLiteral("development-menu-smoke"),QStringLiteral("Check development menus, checkout preferences and the reset tool.")});
     parser.addOption({QStringLiteral("asi-leadership-smoke"),QStringLiteral("Exercise a saved independently qualified ASI appointment."),QStringLiteral("save")});
+#endif
     parser.process(application);
-#if !PGP_TEST_HOOKS
+#if !PGP_DISTRIBUTION && !PGP_TEST_HOOKS
     if(parser.isSet(QStringLiteral("smoke-test"))) {
         std::cerr << "GUI checks require an explicit --enable-tests build.\n";return 2;
     }
 #endif
     if (parser.isSet(QStringLiteral("build-info"))) { core::write_build_identity(std::cout); return 0; }
+#if !PGP_DISTRIBUTION
     const bool world_smoke=parser.isSet(QStringLiteral("asi-leadership-smoke")) || parser.isSet(QStringLiteral("life-report-smoke")) || parser.isSet(QStringLiteral("mission-smoke")) || parser.isSet(QStringLiteral("family-smoke")) || parser.isSet(QStringLiteral("romance-smoke")) || parser.isSet(QStringLiteral("collaboration-smoke")) || parser.isSet(QStringLiteral("social-smoke")) || parser.isSet(QStringLiteral("talent-smoke")) || parser.isSet(QStringLiteral("donor-finance-smoke")) || parser.isSet(QStringLiteral("contact-finance-smoke")) || parser.isSet(QStringLiteral("hosted-events-smoke")) || parser.isSet(QStringLiteral("personal-life-smoke")) || parser.isSet(QStringLiteral("device-interface-smoke")) || parser.isSet(QStringLiteral("research-smoke")) || parser.isSet(QStringLiteral("recruitment-smoke")) || parser.isSet(QStringLiteral("headquarters-smoke")) || parser.isSet(QStringLiteral("map-layout-smoke")) || parser.isSet(QStringLiteral("form-drafts-smoke")) || parser.isSet(QStringLiteral("data-mix-smoke")) || parser.isSet(QStringLiteral("content-recovery-smoke")) || parser.isSet(QStringLiteral("decision-smoke")) || parser.isSet(QStringLiteral("retirement-smoke")) || parser.isSet(QStringLiteral("world-smoke")) || parser.isSet(QStringLiteral("portrait-smoke")) || parser.isSet(QStringLiteral("workplace-smoke")) || parser.isSet(QStringLiteral("device-smoke")) || parser.isSet(QStringLiteral("contacts-smoke")) || parser.isSet(QStringLiteral("manager-smoke"));
     const bool civic_smoke = parser.isSet(QStringLiteral("civic-smoke"));
     const bool society_smoke = parser.isSet(QStringLiteral("society-smoke"));
@@ -124,7 +131,7 @@ int main(int argc, char* argv[]) {
     const bool infrastructure_smoke = parser.isSet(QStringLiteral("infrastructure-smoke"));
     const bool competition_smoke = parser.isSet(QStringLiteral("competition-smoke"));
     const bool music_smoke = parser.isSet(QStringLiteral("music-smoke"));
-    const bool menu_smoke = parser.isSet(QStringLiteral("menu-smoke")) || parser.isSet(QStringLiteral("settings-smoke"));
+    const bool menu_smoke = parser.isSet(QStringLiteral("menu-smoke")) || parser.isSet(QStringLiteral("settings-smoke")) || parser.isSet(QStringLiteral("development-menu-smoke"));
     const bool partner_smoke = parser.isSet(QStringLiteral("founding-partner-smoke"));
     const bool founding_smoke = parser.isSet(QStringLiteral("founding-smoke")) || partner_smoke;
     const bool prototype_smoke = parser.isSet(QStringLiteral("smoke-test")) && !menu_smoke && !founding_smoke && !world_smoke;
@@ -138,6 +145,11 @@ int main(int argc, char* argv[]) {
         std::cerr << "Invalid combination of game/check arguments.\n";
         parser.showHelp(2);
     }
+#else
+    if(!parser.positionalArguments().isEmpty()) parser.showHelp(2);
+    constexpr bool prototype_smoke=false,world_smoke=false,founding_smoke=false,menu_smoke=false;
+    constexpr bool competition_smoke=false,infrastructure_smoke=false,institutions_smoke=false,music_smoke=false;
+#endif
     try {
         const bool bundled=!parser.isSet(QStringLiteral("content"));
         std::string bytes;
@@ -191,6 +203,9 @@ int main(int argc, char* argv[]) {
         qmlRegisterType<MenuVideo>("Pgp.Menu",1,0,"MenuVideo");
         qmlRegisterModule("Pgp.Menu",1,0);
         qmlProtectModule("Pgp.Menu",1);
+#if !PGP_DISTRIBUTION
+        pgp::app::DevelopmentTools development_tools(QString::fromStdU16String((paths.settings_file.parent_path()/"development-tools.ini").u16string()));
+#endif
         QQmlApplicationEngine engine;
         engine.addImageProvider(QStringLiteral("portraits"),new pgp::app::PortraitImages);
         QObject::connect(&engine,&QQmlEngine::warnings,&application,[](const QList<QQmlError>& warnings) {
@@ -205,6 +220,12 @@ int main(int argc, char* argv[]) {
         const auto resource_stats = resources::install_resource_guards(engine,std::move(policy));
         Q_UNUSED(resource_stats);
         engine.rootContext()->setContextProperty(QStringLiteral("campaign"),&campaign);
+#if !PGP_DISTRIBUTION
+        engine.rootContext()->setContextProperty(QStringLiteral("developmentTools"),&development_tools);
+        engine.rootContext()->setContextProperty(QStringLiteral("optionalMenuSource"),QStringLiteral("qrc:/pgp/game/DevelopmentMenu.qml"));
+#else
+        engine.rootContext()->setContextProperty(QStringLiteral("optionalMenuSource"),QString{});
+#endif
         engine.rootContext()->setContextProperty(QStringLiteral("soundtrack"),&music);
         engine.rootContext()->setContextProperty(QStringLiteral("menuAudio"),&menu_audio);
         engine.rootContext()->setContextProperty(QStringLiteral("prototypeSmoke"),prototype_smoke);
@@ -279,7 +300,8 @@ int main(int argc, char* argv[]) {
                 else if (founding_smoke)
                     schedule_founding_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")),partner_smoke);
                 else if (menu_smoke)
-                    schedule_menu_smoke(*window,campaign,music,selection.api,paths,parser.value(QStringLiteral("screenshot")),parser.isSet(QStringLiteral("settings-smoke")));
+                    schedule_menu_smoke(*window,campaign,music,selection.api,paths,parser.value(QStringLiteral("screenshot")),
+                        parser.isSet(QStringLiteral("settings-smoke")),parser.isSet(QStringLiteral("development-menu-smoke")));
                 else if (music_smoke)
                     schedule_music_smoke(*window,campaign,music,selection.api,paths,parser.value(QStringLiteral("screenshot")));
                 else if (objectives_smoke)

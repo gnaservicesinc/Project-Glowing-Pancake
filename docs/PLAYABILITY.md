@@ -64,11 +64,11 @@ On Mac, build with `./make.sh --package --jobs 4`, then open
 New Game, Settings, Credits and Quit when no company is underway. A current
 company resumes automatically in its last place, with time paused. Recovery/import
 preserves original files. Settings persists display, audio, text and motion choices.
-Development saves have no compatibility guarantee. Use **DEV · Reset local data**
+Development saves have no compatibility guarantee. Use **Playtest Environment → Reset local data**
 in the menu for a one-click fresh start after a breaking change. This clears local
-saves, autosaves, setup/navigation drafts, cached rules and settings; external
-exports are outside its scope. It is included in current optimized Release
-playtest builds and must be removed before shipping v1.0.
+saves, autosaves, setup/navigation drafts, cached rules and game settings.
+**Content Studio** opens the repository editor and remembers the chosen checkout.
+Both tools are available in ordinary Release playtest builds.
 Escape during play pauses into the menu; Escape there, Quit and window close
 open exit confirmation.
 

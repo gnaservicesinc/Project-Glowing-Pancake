@@ -1,5 +1,6 @@
 #include "menu_smoke.hpp"
 #include "campaign_controller.hpp"
+#include "development_tools.hpp"
 #include "menu_media.hpp"
 #include "music_controller.hpp"
 #include <pgp/persistence/settings.hpp>
@@ -7,6 +8,8 @@
 #include <QCoreApplication>
 #include <QFile>
 #include <QKeyEvent>
+#include <QQmlContext>
+#include <QQmlEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QTimer>
@@ -28,11 +31,11 @@ bool key(QQuickWindow& window,QQuickItem* item,Qt::Key code) {
 }
 }
 void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,MusicController& music,
-    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot,bool settingsOnly) {
-    struct State { int phase=0,ticks=0,loop_ticks=0,frames_before=0,display_ticks=0,layout_ticks=0,reported=-1; bool reset_checked=false; QString revision; };
+    QSGRendererInterface::GraphicsApi expected,pgp::persistence::LocalPaths paths,QString screenshot,bool settingsOnly,bool developmentOnly) {
+    struct State { int phase=0,ticks=0,loop_ticks=0,frames_before=0,display_ticks=0,layout_ticks=0,reported=-1; bool studio_opened=false,studio_checked=false,reset_checked=false; QString revision; };
     auto state=std::make_shared<State>();
     auto* timer=new QTimer(&window); timer->setInterval(60);
-    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot,expected,settingsOnly] {
+    QObject::connect(timer,&QTimer::timeout,&window,[&,timer,state,paths,screenshot,expected,settingsOnly,developmentOnly] {
         const auto item=[&](const char* name) { return find(window.contentItem(),name); };
         const auto press=[&](const char* name) { return key(window,item(name),Qt::Key_Space); };
         const auto fail=[&](const char* reason) {
@@ -47,10 +50,43 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
         if (state->reported!=state->phase) { state->reported=state->phase; std::cout << "Menu check phase " << state->phase << std::endl; }
         switch (state->phase) {
         case 0: {
-            if(campaign.metaObject()->indexOfMethod("resetLocalData()")<0) {fail("playtest reset availability");return;}
+            if(campaign.metaObject()->indexOfMethod("resetLocalData()")<0 || !item("contentStudioButton")) {fail("development menu availability");return;}
+            if(!state->studio_checked) {
+                auto* tools=qobject_cast<pgp::app::DevelopmentTools*>(qmlContext(menu)->contextProperty("developmentTools").value<QObject*>());
+                if(!tools) {fail("Content Studio launcher context");return;}
+                const auto checkout=tools->checkout();
+                if(!checkout.isEmpty()) {
+                    if(!state->studio_opened) {
+                        if(!tools->selectCheckout(QUrl::fromLocalFile(checkout))) {fail("Remember Content Studio checkout");return;}
+                        const auto settings=QString::fromStdU16String((paths.settings_file.parent_path()/"development-tools.ini").u16string());
+                        pgp::app::DevelopmentTools restored(settings);
+                        if(restored.checkout()!=checkout || restored.selectCheckout(QUrl::fromLocalFile(settings)) || restored.checkout()!=checkout) {
+                            fail("Reloaded checkout preference or invalid folder rejection");return;
+                        }
+                        if(!press("contentStudioSettingsButton")) {fail("Content Studio repository menu");return;}
+                        state->studio_opened=true;
+                        return;
+                    }
+                    if(!item("openContentStudioButton") || !item("openContentStudioButton")->isEnabled() || !item("contentStudioFolderButton")) {
+                        fail("Content Studio open and folder actions");return;
+                    }
+                    if(!screenshot.isEmpty()) window.grabWindow().save(screenshot+"-content-studio.png");
+                    if(!key(window,item("openContentStudioButton"),Qt::Key_Escape)) {fail("Close Content Studio menu by keyboard");return;}
+                    state->studio_checked=true;
+                    return;
+                }
+                if(developmentOnly) {fail("A checkout is required for the development menu walkthrough");return;}
+                state->studio_checked=true;
+            }
             if(!state->reset_checked) {
+                if(!press("playtestEnvironmentButton")) {fail("Playtest Environment launcher");return;}
                 if(!press("developmentResetButton")) {fail("one-click development reset");return;}
                 state->reset_checked=true;return;
+            }
+            if(developmentOnly) {
+                campaign.applyPresentationSettings(false,1024,640,false,40,60,200,false,false);
+                state->phase=29;
+                return;
             }
             const auto* accessible=QAccessible::queryAccessibleInterface(item("menuNewGameButton"));
             if (!menu->isVisible() || !campaign.paused() || (item("statusLine") && item("statusLine")->isVisible()) ||
@@ -122,6 +158,32 @@ void schedule_menu_smoke(QQuickWindow& window,pgp::bridge::CampaignController& c
             if (!press("menuBackButton") || !press("menuNewGameButton")) { fail("new game entry"); return; }
             ++state->phase; break;
         }
+        case 29:
+            if(window.visibility()!=QWindow::Windowed || window.size()!=QSize{650,480}) {window.showNormal();window.resize(650,480);return;}
+            if(campaign.textScalePercent()!=200 || !press("contentStudioSettingsButton")) {fail("Open Content Studio repository settings at 200 percent");return;}
+            state->phase=30;return;
+        case 30: {
+            if(window.size()!=QSize{650,480}) {window.resize(650,480);return;}
+            const auto within=[&](const char* name) {
+                const auto* control=item(name);
+                if(!control || !control->isVisible()) return false;
+                const auto point=control->mapToScene(QPointF{});
+                return point.x()>=0 && point.y()>=0 && point.x()+control->width()<=window.width() && point.y()+control->height()<=window.height();
+            };
+            if(!within("openContentStudioButton") || !within("contentStudioFolderButton")) {fail("Compact Content Studio actions must fit");return;}
+            if(!screenshot.isEmpty()) window.grabWindow().save(screenshot+".compact-studio.png");
+            if(!key(window,item("openContentStudioButton"),Qt::Key_Escape) || !press("playtestEnvironmentButton")) {fail("Switch to Playtest Environment at 200 percent");return;}
+            state->phase=31;return;
+        }
+        case 31:
+            if(!item("developmentResetButton") || !item("developmentResetButton")->isVisible() ||
+                item("developmentResetButton")->mapToScene(QPointF{}).y()+item("developmentResetButton")->height()>window.height()) {
+                fail("Compact Playtest Environment action must fit");return;
+            }
+            if(!screenshot.isEmpty()) window.grabWindow().save(screenshot+".compact-playtest.png");
+            window.setProperty("menuSmokePassed",true);timer->stop();
+            std::cout<<"Development menus passed at 650x480 with 200% text, including checkout preference reload and playtest reset.\n";
+            QCoreApplication::exit(0);return;
         case 4: {
             const bool has_prologue = campaign.founding()->available();
             if (menu->isVisible() || !campaign.welcome() || item("foundingScreen")->isVisible() != has_prologue ||

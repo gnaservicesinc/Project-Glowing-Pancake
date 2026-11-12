@@ -235,6 +235,7 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
         if (accepted && starting_founder_) founding_->reset();
         starting_founder_ = false;
         busy_ = false; emit stateChanged();
+#if !PGP_DISTRIBUTION
         if(resetting_local_data_) {
             resetting_local_data_=false;
             if(accepted) {
@@ -242,6 +243,7 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
                 emit stateChanged();emit developmentResetFinished();
             }
         }
+#endif
         if (!accepted || !explanation.isEmpty()) setNotice(explanation);
         emit commandFinished(accepted,explanation);
     });

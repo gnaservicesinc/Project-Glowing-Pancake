@@ -40,8 +40,9 @@ Sorting and efficient serving now have finite innovation paths. Required levels,
 actual project costs and dated serving compute effects use the ordinary research
 and deployment commands. Rival profiles can pursue batched inference.
 
-Distribution/development tools, nonprofit reactions and
-native rival learning remain selected work.
+Release distribution gating, the repository Content Studio launcher and the
+Playtest Environment launcher are implemented. God mode, nonprofit reactions
+and native rival learning remain selected work.
 
 ## Selected people/software expansion (F-06, in progress)
 
@@ -167,15 +168,14 @@ F-02/F-03 engineering checks do not constitute player acceptance.
 | 4 | F-04D: connected research and finite compute | Technology graph selection, staff work, actual equipment/lab prerequisites and bought/rented compute; replace arbitrary research fees. Implemented. The focused runtime and rendered tree checks pass, including power loss and fresh saves. |
 | 5 | F-04E: game interface, devices and state map | Implemented. Game-styled controls, a laptop desktop and compatible phone apps, and actual state outlines with selectable county briefings. Focused native and compact walkthroughs pass. Human interface review remains open. |
 
-Current optimized **Release playtest builds include DEV · Reset local data**.
+Current optimized Release playtest builds include **Playtest Environment → Reset local data**.
 It clears this game's local test data in one click, including when an incompatible
 save blocks play. Development saves have no compatibility requirement; do not
 spend milestone time on migrations or support for previous development saves.
 Fresh saves still need to reload within the current build.
 
-**Before shipping v1.0: remove DEV · Reset local data from the menu and remove its
-callable implementation. Verify both are absent from every shipped package.**
-No separate build flag is needed during current development.
+**Use `--enable-distribution` for shipping. Verify that the development menus,
+their resources and callable implementations are absent from every package.**
 
 ## Next phase
 

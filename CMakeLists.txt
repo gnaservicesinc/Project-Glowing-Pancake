@@ -10,11 +10,20 @@ endif()
 option(PGP_CORE_ONLY "Build without looking for Qt or desktop dependencies" OFF)
 option(PGP_BUILD_EDITOR "Enable the separate Content Studio targets" ON)
 option(BUILD_TESTING "Build tests only when explicitly requested" OFF)
+option(PGP_DISTRIBUTION "Exclude development tools from the distributed game" OFF)
 include(cmake/AppleToolchain.cmake)
 
 include(cmake/VersionIdentity.cmake)
 # CMake's VERSION field accepts the numeric core, never a SemVer suffix.
 project(ProjectGlowingPancake VERSION "${PGP_VERSION_GAME_NUMERIC}" LANGUAGES CXX)
+
+if(PGP_DISTRIBUTION)
+    if((CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_CONFIGURATION_TYPES STREQUAL "Release") OR
+       (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE STREQUAL "Release"))
+        message(FATAL_ERROR "PGP_DISTRIBUTION requires a Release-only configuration.")
+    endif()
+    set(PGP_BUILD_EDITOR OFF)
+endif()
 
 string(TOLOWER "${CMAKE_SYSTEM_NAME}" PGP_TARGET_OS)
 if(APPLE)

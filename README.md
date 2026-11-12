@@ -18,8 +18,9 @@ sets the opening mission, equity, salary and board terms.
 
 **Current state.** The 2026-11-09 review identified substantial unfinished main-game
 work; [selected refinement milestones](docs/FEEDBACK_REFINEMENTS.md) now lead the
-backlog. Current Release playtest builds include **DEV · Reset local data** in
-the menu; remove this action and its implementation before shipping v1.0.
+backlog. Release playtest builds include **Content Studio** and **Playtest
+Environment**, where testers can reset local data. Use `--enable-distribution`
+to build the game for distribution.
 The ongoing [immersive redesign](docs/IMMERSIVE_COMPANY_PLAN.md) expands this work.
 Fresh founder companies have three to six family workspaces or an inherited office,
 paid suppliers, city property listings and contracted construction. Applicants

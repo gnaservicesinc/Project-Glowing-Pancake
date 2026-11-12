@@ -31,7 +31,7 @@ Button {
         color: !control.enabled ? "#172431" : control.down ? "#496074" : control.primary ? (control.hovered ? Qt.lighter(control.accent,1.12) : control.accent) : control.checked ? "#384c5c" : control.hovered ? ink.hover : control.quiet ? "transparent" : ink.control
         border.color: control.activeFocus ? ink.paper : control.checked ? control.accent : control.hovered ? "#80929b" : control.quiet ? "transparent" : ink.border
         border.width: control.activeFocus ? 2 : 1
-        Behavior on color { ColorAnimation { duration: campaign.reducedMotion ? 0 : 100 } }
+        Behavior on color { ColorAnimation { duration: typeof campaign !== "undefined" && campaign && campaign.reducedMotion ? 0 : 100 } }
         Rectangle { anchors.left:parent.left; anchors.right:parent.right; anchors.top:parent.top; anchors.margins:1; height:1; radius:1; color:"#22ffffff"; visible: !control.quiet && !control.down }
     }
 }

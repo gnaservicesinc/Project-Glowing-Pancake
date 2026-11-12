@@ -21,7 +21,9 @@ namespace fs = std::filesystem;
 using Json = nlohmann::json;
 constexpr std::size_t maximum_entries = 4096;
 constexpr std::size_t maximum_documents = 128;
-constexpr std::size_t maximum_definitions = 8192;
+// Reviewed collections and full-size historical drafts each contain their own
+// definitions. Keep a separate bound for the combined library index.
+constexpr std::size_t maximum_definitions = 32768;
 
 [[noreturn]] void refuse(const char* detail) { throw std::invalid_argument(detail); }
 fs::file_status status_at(const fs::path& path) {

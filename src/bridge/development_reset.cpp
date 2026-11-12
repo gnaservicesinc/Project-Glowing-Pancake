@@ -2,8 +2,6 @@
 #include <pgp/persistence/save.hpp>
 #include <pgp/runtime/scenario.hpp>
 
-// TODO(v1.0): remove this implementation and its menu/API entry before shipping.
-// Human testers currently use optimized Release builds, so it is included now.
 namespace pgp::bridge {
 void CampaignController::resetLocalData() {
     if(!beginOperation(true)) return;

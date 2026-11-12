@@ -12,6 +12,8 @@ Usage: ./make.sh [options]
   --game-only      Build only the game
   --package        Build and stage the Mac game app with Qt, icon and resources
   --enable-debugging  Build Debug with developer diagnostics (--debugging/--debug aliases)
+  --enable-distribution   Release game without development tools
+  --disable-distribution  Keep development tools (default); both flags accept =true or =false
   --enable-tests   Enable test targets and GUI checks, without running tests
   --portable       Disable native-CPU tuning for a portable build
   --test           Build, then run CTest; failures return a nonzero exit code
@@ -22,17 +24,19 @@ Usage: ./make.sh [options]
   --help           Show this help without configuring or building
 
 Requires Bash, CMake, Ninja and a C++20 compiler; tests also use CTest.
-Outputs: build/{release,debug,core-release,core-debug} beneath this checkout.
+Outputs: build/{release,debug,distribution,core-release,core-debug,core-distribution} beneath this checkout.
 On macOS, DEVELOPER_DIR (or xcode-select -p) selects one existing Xcode compiler
 and SDK. Global settings are never changed. The known local Qt installation
 is a build-time fallback only. No SDKs or dependencies are downloaded.
---package stages dist/Project Glowing Pancake.app on macOS. This is a local
-development build, not a notarized release. Builds never launch applications.
+--package stages dist/Project Glowing Pancake.app on macOS. Use
+--enable-distribution for the distribution edition. Packaging does not notarize
+or launch applications.
 USAGE
 }
 
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 configuration=Release
+distribution=OFF
 core_only=OFF
 editor=ON
 build_scope=both
@@ -49,6 +53,20 @@ while (($#)); do
     case "$1" in
         --help|-h) usage; exit 0 ;;
         --enable-debugging|--debugging|--debug) configuration=Debug ;;
+        --enable-distribution|--disable-distribution|--enable-distribution=*|--disable-distribution=*)
+            distribution_flag="${1%%=*}"
+            if [[ "$1" == *=* ]]; then
+                distribution_value="${1#*=}"
+            elif [[ "${2:-}" =~ ^(true|false|on|off|yes|no|1|0)$ ]]; then
+                distribution_value="$2"; shift
+            else
+                distribution_value=true
+            fi
+            case "$distribution_value" in
+                true|on|yes|1) [[ "$distribution_flag" == --enable-distribution ]] && distribution=ON || distribution=OFF ;;
+                false|off|no|0) [[ "$distribution_flag" == --disable-distribution ]] && distribution=ON || distribution=OFF ;;
+                *) fail "$distribution_flag needs a boolean value" ;;
+            esac ;;
         --core-only) core_only=ON ;;
         --editor) build_scope=editor ;;
         --game-only) build_scope=game ;;
@@ -78,12 +96,18 @@ done
 [[ "$clean" == 0 || "$run_tests" == 0 ]] || fail '--clean cannot be combined with --test'
 [[ "$build_scope" != editor || "$core_only" == OFF ]] || fail '--editor needs desktop Qt'
 [[ "$build_scope" != editor || "$clean" == 0 ]] || fail '--clean selects a whole build tree; omit --editor'
+if [[ "$distribution" == ON ]]; then
+    [[ "$configuration" == Release ]] || fail '--enable-distribution requires Release'
+    [[ "$build_scope" != editor ]] || fail 'Build Content Studio separately from the distribution game'
+    build_scope=game
+fi
 [[ "$package" == 0 || ( "$build_scope" != editor && "$core_only" == OFF && "$clean" == 0 && "$(uname -s)" == Darwin ) ]] || fail '--package requires a Mac desktop game build'
 
 [[ "$core_only" == OFF && "$build_scope" != game ]] || editor=OFF
 
 preset=release
 [[ "$configuration" != Debug ]] || preset=debug
+[[ "$distribution" != ON ]] || preset=distribution
 [[ "$core_only" != ON ]] || preset="core-$preset"
 build_parent="$project_root/build"
 build_dir="$build_parent/$preset"
@@ -120,7 +144,7 @@ if [[ "$run_tests" == 1 ]]; then
     command -v ctest >/dev/null 2>&1 || fail 'missing required tool: ctest'
 fi
 
-cmake_args=(--preset "$preset" "-DPGP_BUILD_EDITOR=$editor" "-DBUILD_TESTING=$enable_tests" "-DPGP_NATIVE_OPTIMIZATION=$native_cpu")
+cmake_args=(--preset "$preset" "-DPGP_BUILD_EDITOR=$editor" "-DBUILD_TESTING=$enable_tests" "-DPGP_NATIVE_OPTIMIZATION=$native_cpu" "-DPGP_DISTRIBUTION=$distribution")
 developer_dir=""
 compiler=""
 sdk=""

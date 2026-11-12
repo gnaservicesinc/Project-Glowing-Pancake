@@ -85,7 +85,9 @@ class CampaignController final : public QObject {
     Q_PROPERTY(int effectsVolume READ effectsVolume NOTIFY settingsChanged)
     Q_PROPERTY(bool motionBackground READ motionBackground NOTIFY settingsChanged)
 public:
+#if !PGP_DISTRIBUTION
     Q_INVOKABLE void resetLocalData();
+#endif
     CampaignController(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
                        persistence::LocalPaths paths, persistence::Settings initial_settings = {},
                        QObject* parent = nullptr, bool welcome = false, bool continuous = false);
@@ -202,7 +204,9 @@ public:
     [[nodiscard]] CampaignSnapshotPtr snapshot() const { return snapshot_; }
 signals:
     void careerRetrospectiveReady();
+#if !PGP_DISTRIBUTION
     void developmentResetFinished();
+#endif
     void stateChanged();
     void settingsChanged();
     void selectionChanged();
@@ -234,7 +238,9 @@ private:
     WorldController* world_;
     bool welcome_ = false;
     bool starting_founder_ = false;
+#if !PGP_DISTRIBUTION
     bool resetting_local_data_ = false;
+#endif
     int days_per_second_ = 1;
     QThread thread_;
     CampaignWorker* worker_ = nullptr;

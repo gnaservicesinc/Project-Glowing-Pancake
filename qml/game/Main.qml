@@ -127,7 +127,7 @@ ApplicationWindow {
     Shortcut {
         objectName:"gameEscapeShortcut"
         sequence: "Escape"
-        enabled: !saveDialog.visible && !loadDialog.visible && !originalContentDialog.visible && !originalContentReview.visible && !restartDialog.visible && !musicCredits.visible && !cancelDialog.visible && !exitDialog.visible && !deviceHome.visible
+        enabled: !saveDialog.visible && !loadDialog.visible && !originalContentDialog.visible && !originalContentReview.visible && !restartDialog.visible && !musicCredits.visible && !cancelDialog.visible && !exitDialog.visible && !deviceHome.visible && !frontMenu.auxiliaryDialogOpen
         onActivated: {
             if (window.menuVisible) window.requestExit()
             else window.openMainMenu()
@@ -146,12 +146,6 @@ ApplicationWindow {
             if (!campaign.busy && campaign.originalContentReview.length > 0 && !originalContentReview.visible) originalContentReview.open()
         }
         function onSettingsChanged() { window.applyDisplayPreferences() }
-        function onDevelopmentResetFinished() {
-            window.sessionEntered=false
-            window.deviceOpen=false
-            window.menuVisible=true
-            frontMenu.home()
-        }
         function onCommandFinished(accepted, explanation) {
             if (window.pendingMenuSettings) {
                 window.pendingMenuSettings = false
@@ -1164,5 +1158,11 @@ ApplicationWindow {
         }
         onQuitRequested: window.requestExit()
         onSettingsSubmitted: window.pendingMenuSettings = true
+        onAuxiliarySessionReset: {
+            window.sessionEntered = false
+            window.deviceOpen = false
+            window.menuVisible = true
+            frontMenu.home()
+        }
     }
 }

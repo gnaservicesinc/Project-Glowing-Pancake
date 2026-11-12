@@ -32,6 +32,7 @@ class BuildWrapperTests(unittest.TestCase):
         for key in ("CC", "CXX", "QT_ROOT", "CMAKE_PREFIX_PATH", "DEVELOPER_DIR"):
             self.env.pop(key, None)
         self.env.update(PATH=f"{self.bin}{os.pathsep}{self.env['PATH']}", PGP_TEST_LOG=str(self.log))
+        self.env["CMAKE_BUILD_PARALLEL_LEVEL"] = "4"
         self.write_tool("uname", '#!/bin/sh\nprintf "Linux\\n"\n')
         self.write_tool("ninja", '#!/bin/sh\nexit 0\n')
         self.write_tool("cmake", '''#!/bin/sh
@@ -180,6 +181,37 @@ exit "${PGP_TEST_CTEST_STATUS:-0}"
         self.assertIn("cmake --preset debug",self.commands())
         self.assertIn("-DPGP_NATIVE_OPTIMIZATION=OFF",self.commands())
         self.assertIn("-DBUILD_TESTING=OFF",self.commands())
+
+    def test_distribution_and_explicit_boolean_forms(self):
+        for flags, preset in (
+            (("--enable-distribution",), "distribution"),
+            (("--enable-distribution=true",), "distribution"),
+            (("--disable-distribution", "false"), "distribution"),
+            (("--disable-distribution=true",), "release"),
+            (("--enable-distribution", "false"), "release"),
+            (("--enable-distribution", "--disable-distribution"), "release"),
+        ):
+            with self.subTest(flags=flags):
+                before = len(self.commands())
+                result = self.run_build(*flags)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                commands = self.commands()[before:]
+                self.assertIn(f"--preset {preset}", commands)
+                if preset == "distribution":
+                    self.assertIn("-DPGP_DISTRIBUTION=ON", commands)
+                    self.assertIn("-DPGP_BUILD_EDITOR=OFF", commands)
+                    self.assertIn("--target pgp-game --parallel", commands)
+                else:
+                    self.assertIn("-DPGP_DISTRIBUTION=OFF", commands)
+                    self.assertIn("--target pgp-game pgp-editor", commands)
+
+    def test_distribution_rejects_debug_and_invalid_flags(self):
+        for flags in (("--enable-distribution", "--debug"), ("--enable-distribution=maybe",),
+                      ("--enable-distribution", "--editor")):
+            with self.subTest(flags=flags):
+                self.assertNotEqual(self.run_build(*flags).returncode, 0)
+                self.assertFalse((self.root / "build").exists())
+                self.assertEqual(self.commands(), "")
 
 
 if __name__ == "__main__":

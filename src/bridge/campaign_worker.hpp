@@ -25,7 +25,9 @@ public:
     void setSpeed(int days_per_second);
     void start();
     void stop();
+#if !PGP_DISTRIBUTION
     void resetLocalData(std::uint64_t token);
+#endif
     void retryPersistence(std::uint64_t token);
     void submitCommand(std::uint64_t token, core::Command command);
     void respondCompetitiveOffer(std::uint64_t token,std::uint64_t revision,std::string id,bool accept);

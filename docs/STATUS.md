@@ -81,8 +81,17 @@ reload and the native compact preview.
 Career re-entry remains required. Early company closure currently records its
 chapter at the existing company boundary. The guaranteed funded route back,
 broader press claims and scandal coverage, and surprising human successor
-appointments remain selected work. Development menus, God mode, nonprofit reaction expansion and native rival
-training also remain unfinished.
+appointments remain selected work. God mode, nonprofit reaction expansion and
+native rival training also remain unfinished.
+
+The Release development edition has two main menu entries. Content Studio
+launches the repository editor and remembers the selected checkout. Playtest
+Environment contains the local-data reset. `--enable-distribution` uses a
+separate Release build and excludes the editor targets, both menus, their QML
+resource and callable development APIs. Studio's library accepts the current
+checkout's full collection index. Mac checks cover both binaries, Debug and
+multi-configuration rejection, the Studio library, and both development menus
+at 650×480 with 200% text.
 
 ## People and software foundation · F-06
 
@@ -603,10 +612,10 @@ Focused Mac walkthroughs cover the device and map controls at normal size and
 650×480 with 200% text. The five F-04 milestones are implemented. The broader
 interface still awaits human playtesting.
 
-All current builds, including optimized Release builds for human testers, include
-**DEV · Reset local data**, which clears game-local saves, cached rules, drafts
-and settings and returns to New Game. It works from a broken-save menu. Remove
-its UI and implementation before shipping v1.0. Development saves have no
+Development builds, including optimized Release for human testers, include
+**Playtest Environment → Reset local data**, which clears game-local saves,
+cached rules, drafts and campaign settings and returns to New Game. It works
+from a broken-save menu. Distribution builds exclude this tool. Development saves have no
 compatibility guarantee; verify only fresh current-build save/reload behavior.
 
 ## Selected feedback: Mac application and main menu

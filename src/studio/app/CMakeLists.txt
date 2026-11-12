@@ -25,7 +25,10 @@ qt_add_resources(pgp-editor studio_map PREFIX "/pgp/studio" BASE "${PROJECT_SOUR
     FILES "${PROJECT_SOURCE_DIR}/assets/maps/us-states-2024.json" "${PROJECT_SOURCE_DIR}/assets/maps/CENSUS_TERMS.txt")
 qt_add_resources(pgp-editor studio_presentations
     PREFIX "/pgp/studio" BASE "${PROJECT_SOURCE_DIR}/qml/game"
-    FILES "${PROJECT_SOURCE_DIR}/qml/game/FlowPresentation.qml")
+    FILES "${PROJECT_SOURCE_DIR}/qml/game/FlowPresentation.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/WorldButton.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/GameInk.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/DeviceGlyph.qml")
 
 # The opt-in editor component contains only the editor executable. Native Qt
 # deployment and source/license bundles are separate qualification work.

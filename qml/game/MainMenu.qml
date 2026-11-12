@@ -13,6 +13,7 @@ FocusScope {
     property Item lastFocusItem: null
     readonly property real margin: width < 800 ? 28 : Math.max(56, width * 0.055)
     readonly property bool compact: width < 850 || height < 650
+    readonly property bool auxiliaryDialogOpen: optionalMenu.item ? optionalMenu.item.dialogOpen : false
     signal newGameRequested()
     signal leadershipRequested()
     signal loadRequested()
@@ -20,6 +21,7 @@ FocusScope {
     signal resumeRequested()
     signal quitRequested()
     signal settingsSubmitted()
+    signal auxiliarySessionReset()
 
     GameInk { id: ink }
 
@@ -216,15 +218,19 @@ FocusScope {
                     Layout.fillWidth: true
                     onClicked: { menuAudio.select(); menu.quitRequested() }
                 }
-                // TODO(v1.0): remove local-data reset before shipping.
-                MenuButton {
-                    objectName: "developmentResetButton"
-                    text: qsTr("DEV · Reset local data")
-                    textSize: menu.textSize
+                Loader {
+                    id: optionalMenu
                     Layout.fillWidth: true
-                    enabled: campaign.ready && !campaign.busy
-                    Accessible.description: qsTr("Deletes local saves, autosaves, setup, drafts and settings for this game. Starts fresh immediately.")
-                    onClicked: campaign.resetLocalData()
+                    Layout.minimumWidth: 0
+                    visible: status === Loader.Ready
+                    source: optionalMenuSource
+                    onLoaded: item.sessionReset.connect(menu.auxiliarySessionReset)
+                    Binding {
+                        target: optionalMenu.item
+                        property: "textSize"
+                        value: menu.textSize
+                        when: optionalMenu.status === Loader.Ready
+                    }
                 }
             }
             Label {

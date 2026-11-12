@@ -30,6 +30,8 @@ downloads dependencies or launches a program during builds.
 | `./make.sh --enable-tests` | Include test targets and GUI checks without running tests |
 | `./make.sh --portable` | Release without local CPU tuning |
 | `./make.sh --game-only` | Build only the game |
+| `./make.sh --enable-distribution` | Build the Release game in `build/distribution`, with development menus, editor targets and playtest code excluded |
+| `./make.sh --disable-distribution` | Build the ordinary development edition, the default |
 | `./make.sh --core-only` | Release in `build/core-release`, no Qt discovery/linkage |
 | `./make.sh --editor` | Build only Content Studio in `build/release/bin/pgp-editor` |
 | `./make.sh --editor --test` | Build the editor and test its library, draft workflow and typed flow forms |
@@ -48,6 +50,12 @@ code are excluded. `--enable-tests` includes checks but does not run them;
 `--test` explicitly builds/runs the suite and may be expensive. Prefer a focused
 target and CTest filter while developing a selected feature. `--portable`
 disables host tuning for a build intended for other CPUs. Caches are retained.
+
+Use `--enable-distribution --package` to stage a Mac distribution build. The
+distribution flags accept `=true` and `=false`, or a separate boolean value.
+The last distribution flag applies. Direct CMake uses `-DPGP_DISTRIBUTION=ON`.
+Distribution requires Release and rejects Debug or a multi-configuration build
+that offers other modes. Use `--editor` separately for Content Studio.
 
 For example, a focused setup check is explicitly opted in:
 

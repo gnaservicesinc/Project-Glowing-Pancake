@@ -32,18 +32,34 @@
       "inherits": "debug",
       "displayName": "Debug core without Qt",
       "cacheVariables": {"PGP_CORE_ONLY": "ON"}
+    },
+    {
+      "name": "distribution",
+      "inherits": "release",
+      "displayName": "Release game for distribution",
+      "cacheVariables": {"PGP_DISTRIBUTION": "ON"}
+    },
+    {
+      "name": "core-distribution",
+      "inherits": "distribution",
+      "displayName": "Release distribution core without Qt",
+      "cacheVariables": {"PGP_CORE_ONLY": "ON"}
     }
   ],
   "buildPresets": [
     {"name": "release", "configurePreset": "release"},
     {"name": "debug", "configurePreset": "debug"},
     {"name": "core-release", "configurePreset": "core-release"},
-    {"name": "core-debug", "configurePreset": "core-debug"}
+    {"name": "core-debug", "configurePreset": "core-debug"},
+    {"name": "distribution", "configurePreset": "distribution"},
+    {"name": "core-distribution", "configurePreset": "core-distribution"}
   ],
   "testPresets": [
     {"name": "release", "configurePreset": "release", "output": {"outputOnFailure": true}, "execution": {"noTestsAction": "error"}},
     {"name": "debug", "configurePreset": "debug", "output": {"outputOnFailure": true}, "execution": {"noTestsAction": "error"}},
     {"name": "core-release", "configurePreset": "core-release", "output": {"outputOnFailure": true}, "execution": {"noTestsAction": "error"}},
-    {"name": "core-debug", "configurePreset": "core-debug", "output": {"outputOnFailure": true}, "execution": {"noTestsAction": "error"}}
+    {"name": "core-debug", "configurePreset": "core-debug", "output": {"outputOnFailure": true}, "execution": {"noTestsAction": "error"}},
+    {"name": "distribution", "configurePreset": "distribution", "output": {"outputOnFailure": true}, "execution": {"noTestsAction": "error"}},
+    {"name": "core-distribution", "configurePreset": "core-distribution", "output": {"outputOnFailure": true}, "execution": {"noTestsAction": "error"}}
   ]
 }
