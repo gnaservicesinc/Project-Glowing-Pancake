@@ -9,7 +9,7 @@ Updated 2026-11-11
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.71.0-dev.1**, generation **72**.
+immersive redesign advances content to **0.72.0-dev.1**, generation **73**.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
@@ -54,9 +54,25 @@ chooses Continue, advances another day, then chooses the retrospective and check
 its automatically revealed current-age headline. Keyboard statement choices and
 the 650×480 preview at 200% text pass. These are bounded Mac development checks.
 
+An independently established ASI belonging to this company now appears in the
+successor list. Nomination freezes its qualification date and independent control
+bound. Ordinary board approval, paid transition work, the chief executive seat,
+a finite mandate and contracted hosting/human-oversight expenses are implemented.
+The ASI appointment can take over resignation coverage; weak control evidence
+draws scrutiny and additional audience effects. Human age, portrait and salary
+labels are kept out of the ASI record.
+
+The focused test earns the ASI through actual research, training, deployment,
+three assessment panels and three independently replicated improvements in a
+2027 near-frontier scenario. It then completes a funded handover, pays operating
+bills and reloads exactly. The native walkthrough uses that real qualified save
+for keyboard nomination, board review, control-led coverage, actual appointment,
+650×480 at 200% text and a separate-process reload. Content finalization validates
+24 prepared-opening save roundtrips. This does not qualify a full life campaign.
+
 Career re-entry remains required. Early company closure currently records its
 chapter at the existing company boundary. The guaranteed funded route back,
-broader press claims and scandal coverage, and surprising and ASI successor
+broader press claims and scandal coverage, and surprising human successor
 appointments remain selected work. Innovation,
 development menus, God mode, nonprofit reaction expansion and native rival
 training also remain unfinished.

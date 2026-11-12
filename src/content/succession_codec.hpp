@@ -18,6 +18,13 @@ template<class T,class F> void fields(T& r,F field) {
         field("personal_cash_cents",r.personal_cash);field("personal_liabilities_cents",r.personal_liabilities);field("tracks",r.tracks);
         field("departure",r.departure,true);
         field("personal_life",r.personal_life,true);
+        field("asi",r.asi,true);
+    } else if constexpr(std::is_same_v<V,core::AsiLeadershipRules>) {
+        field("priorities",r.priorities);field("signing_cost_cents",r.signing_cost);field("monthly_operations_cents",r.monthly_operations);
+        field("maximum_term_years",r.maximum_term_years);field("control_scrutiny_below_bp",r.control_scrutiny_below);
+        field("appointment_effect_bp",r.appointment_effect);field("weak_control_effect_bp",r.weak_control_effect);
+    } else if constexpr(std::is_same_v<V,core::AsiLeadershipEvidence>) {
+        field("system",r.system);field("qualified_on",r.qualified_on);field("control_bp",r.control);
     } else if constexpr(std::is_same_v<V,core::DepartureRules>) {
         field("messages",r.messages);field("broken_effect_bp",r.broken_effect);
         field("press",r.press,true);
@@ -39,6 +46,7 @@ template<class T,class F> void fields(T& r,F field) {
     } else if constexpr(std::is_same_v<V,core::LeadershipTerm>) {
         field("id",r.id);field("plan",r.plan);field("person",r.person);field("name",r.name);field("birth_year",r.birth_year);
         field("starts_on",r.starts_on);field("due_on",r.due_on);field("ended_on",r.ended_on);field("caretaker",r.caretaker);field("portrait",r.portrait,true);
+        field("asi",r.asi,true);
     } else if constexpr(std::is_same_v<V,core::PortraitRecipe>) {
         field("kit",r.kit);field("parts",r.parts);field("style",r.style,true);
     } else if constexpr(std::is_same_v<V,core::LeadershipControl>) {
@@ -49,6 +57,7 @@ template<class T,class F> void fields(T& r,F field) {
         field("retain_chair",r.retain_chair);field("allocation",r.allocation);field("status",r.status);
         field("decided_on",r.decided_on);field("finished_on",r.finished_on);field("player_vote",r.player_vote);
         field("reviewed_cash_cents",r.reviewed_cash);field("posting_cursor",r.posting_cursor);field("control_cursor",r.control_cursor);field("ballots",r.ballots);
+        field("asi",r.asi,true);
     } else if constexpr(std::is_same_v<V,core::BoardBallot>) {
         field("member",r.member);field("seats",r.seats);field("support",r.support);
     } else if constexpr(std::is_same_v<V,core::SuccessionNotice>) {

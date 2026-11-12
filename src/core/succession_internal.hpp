@@ -16,7 +16,7 @@ inline OrdinalDay anniversary(OrdinalDay day,unsigned years) {
     auto date=from_ordinal(day);date.year+=static_cast<int>(years);
     date.day=std::min(date.day,days_in_month(date.year,date.month));return to_ordinal(date);
 }
-[[nodiscard]] OrdinalDay term_due(const SuccessionCatalog&,int birth,OrdinalDay start,bool caretaker);
+[[nodiscard]] OrdinalDay term_due(const SuccessionCatalog&,int birth,OrdinalDay start,bool caretaker,bool asi=false);
 [[nodiscard]] std::string salary_id(const LeadershipTerm&);
 [[nodiscard]] bool founder_payment(const Posting&);
 [[nodiscard]] std::vector<BoardBallot> succession_ballots(const SimulationState&,const SuccessionPlan&,bool,Cents);

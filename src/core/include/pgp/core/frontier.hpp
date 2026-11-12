@@ -222,7 +222,7 @@ void register_frontier_system(SimulationState&, const RegisterFrontierSystem&);
 [[nodiscard]] FrontierTrialQuote quote_frontier_trial(const SimulationState&, const StartFrontierTrial&, Cents protected_cash);
 void start_frontier_trial(SimulationState&, const StartFrontierTrial&, Cents protected_cash);
 void prepare_frontier(SimulationState&);
-[[nodiscard]] FrontierQualification frontier_qualification(const FrontierState&, std::uint64_t system);
+[[nodiscard]] FrontierQualification frontier_qualification(const FrontierState&, std::uint64_t system,std::optional<OrdinalDay> through={});
 [[nodiscard]] std::optional<OrdinalDay> earliest_frontier_qualification(const FrontierState&, bool asi);
 void authorize_frontier_research(SimulationState&, FrontierResearchPlan);
 void authorize_frontier_refresh(SimulationState&, FrontierRefreshPlan);

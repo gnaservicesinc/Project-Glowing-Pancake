@@ -25,10 +25,17 @@ Profit/research claims have saved dated evidence and contradicted claims affect
 audience confidence. After the actual handover, continue the same life or end
 with a current-age career feature, including when retaining the chair.
 
+The company's independently established ASI can now be nominated through the
+ordinary funded board/transition process, with saved control evidence, a finite
+mandate, actual operating expenses and the executive board seat. Its appointment
+can lead the resignation story, including control scrutiny and audience effects.
+Earned qualification, real handover/costs, exact persistence and native compact/
+separate-process reload checks pass.
+
 Next implement the personal career state across forced departures and guaranteed
 re-entry, broader statement claims/scandals and surprising appointments.
-The press statement and successor choice can change the lead story. The
-company's ASI becomes a possible handover candidate when actually established.
+Surprising human appointments and broader circumstances can also change the
+lead story and remain selected work.
 Distribution/development tools, selective innovation, nonprofit reactions and
 native rival learning remain selected work.
 

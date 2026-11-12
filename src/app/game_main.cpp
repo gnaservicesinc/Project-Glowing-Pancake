@@ -106,6 +106,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("form-drafts-smoke"),QStringLiteral("Exercise unsubmitted form choices, exact state and UI-only restart.")});
     parser.addOption({QStringLiteral("map-layout-smoke"),QStringLiteral("Check responsive map geometry, country hover and pointer selection.")});
     parser.addOption({QStringLiteral("settings-smoke"),QStringLiteral("Check visible settings scrolling, pinned apply and saved preferences.")});
+    parser.addOption({QStringLiteral("asi-leadership-smoke"),QStringLiteral("Exercise a saved independently qualified ASI appointment."),QStringLiteral("save")});
     parser.process(application);
 #if !PGP_TEST_HOOKS
     if(parser.isSet(QStringLiteral("smoke-test"))) {
@@ -113,7 +114,7 @@ int main(int argc, char* argv[]) {
     }
 #endif
     if (parser.isSet(QStringLiteral("build-info"))) { core::write_build_identity(std::cout); return 0; }
-    const bool world_smoke=parser.isSet(QStringLiteral("life-report-smoke")) || parser.isSet(QStringLiteral("mission-smoke")) || parser.isSet(QStringLiteral("family-smoke")) || parser.isSet(QStringLiteral("romance-smoke")) || parser.isSet(QStringLiteral("collaboration-smoke")) || parser.isSet(QStringLiteral("social-smoke")) || parser.isSet(QStringLiteral("talent-smoke")) || parser.isSet(QStringLiteral("donor-finance-smoke")) || parser.isSet(QStringLiteral("contact-finance-smoke")) || parser.isSet(QStringLiteral("hosted-events-smoke")) || parser.isSet(QStringLiteral("personal-life-smoke")) || parser.isSet(QStringLiteral("device-interface-smoke")) || parser.isSet(QStringLiteral("research-smoke")) || parser.isSet(QStringLiteral("recruitment-smoke")) || parser.isSet(QStringLiteral("headquarters-smoke")) || parser.isSet(QStringLiteral("map-layout-smoke")) || parser.isSet(QStringLiteral("form-drafts-smoke")) || parser.isSet(QStringLiteral("data-mix-smoke")) || parser.isSet(QStringLiteral("content-recovery-smoke")) || parser.isSet(QStringLiteral("decision-smoke")) || parser.isSet(QStringLiteral("retirement-smoke")) || parser.isSet(QStringLiteral("world-smoke")) || parser.isSet(QStringLiteral("portrait-smoke")) || parser.isSet(QStringLiteral("workplace-smoke")) || parser.isSet(QStringLiteral("device-smoke")) || parser.isSet(QStringLiteral("contacts-smoke")) || parser.isSet(QStringLiteral("manager-smoke"));
+    const bool world_smoke=parser.isSet(QStringLiteral("asi-leadership-smoke")) || parser.isSet(QStringLiteral("life-report-smoke")) || parser.isSet(QStringLiteral("mission-smoke")) || parser.isSet(QStringLiteral("family-smoke")) || parser.isSet(QStringLiteral("romance-smoke")) || parser.isSet(QStringLiteral("collaboration-smoke")) || parser.isSet(QStringLiteral("social-smoke")) || parser.isSet(QStringLiteral("talent-smoke")) || parser.isSet(QStringLiteral("donor-finance-smoke")) || parser.isSet(QStringLiteral("contact-finance-smoke")) || parser.isSet(QStringLiteral("hosted-events-smoke")) || parser.isSet(QStringLiteral("personal-life-smoke")) || parser.isSet(QStringLiteral("device-interface-smoke")) || parser.isSet(QStringLiteral("research-smoke")) || parser.isSet(QStringLiteral("recruitment-smoke")) || parser.isSet(QStringLiteral("headquarters-smoke")) || parser.isSet(QStringLiteral("map-layout-smoke")) || parser.isSet(QStringLiteral("form-drafts-smoke")) || parser.isSet(QStringLiteral("data-mix-smoke")) || parser.isSet(QStringLiteral("content-recovery-smoke")) || parser.isSet(QStringLiteral("decision-smoke")) || parser.isSet(QStringLiteral("retirement-smoke")) || parser.isSet(QStringLiteral("world-smoke")) || parser.isSet(QStringLiteral("portrait-smoke")) || parser.isSet(QStringLiteral("workplace-smoke")) || parser.isSet(QStringLiteral("device-smoke")) || parser.isSet(QStringLiteral("contacts-smoke")) || parser.isSet(QStringLiteral("manager-smoke"));
     const bool civic_smoke = parser.isSet(QStringLiteral("civic-smoke"));
     const bool society_smoke = parser.isSet(QStringLiteral("society-smoke"));
     const bool institutions_smoke = parser.isSet(QStringLiteral("institutions-smoke"));
@@ -229,7 +230,9 @@ int main(int argc, char* argv[]) {
 #if PGP_TEST_HOOKS
             if (parser.isSet(QStringLiteral("smoke-test"))) {
                 window->resize(1280,720);
-                if(parser.isSet(QStringLiteral("donor-finance-smoke")))
+                if(parser.isSet(QStringLiteral("asi-leadership-smoke")))
+                    schedule_asi_leadership_smoke(*window,campaign,paths,parser.value(QStringLiteral("asi-leadership-smoke")),parser.value(QStringLiteral("screenshot")));
+                else if(parser.isSet(QStringLiteral("donor-finance-smoke")))
                     schedule_contact_finance_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")),true);
                 else if(parser.isSet(QStringLiteral("contact-finance-smoke")))
                     schedule_contact_finance_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));

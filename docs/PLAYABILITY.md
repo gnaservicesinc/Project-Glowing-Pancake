@@ -93,6 +93,10 @@ the company record from that date. After the handover, choose **Continue this
 life** or **End here and read the retrospective**. The early retrospective uses
 your current age and includes the resignation coverage.
 
+Once your company independently establishes an ASI, it appears in the successor
+list. Its nomination shows recorded control evidence, a finite mandate and
+monthly hosting/oversight costs. The appointment can become the lead story.
+
 In a fresh founder campaign, use **Suppliers**
 to order a desk and computer. Advance to delivery, choose **Arrange headquarters**,
 then click an owned object’s picture to pick it up. Move its translucent preview

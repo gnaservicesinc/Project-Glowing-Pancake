@@ -53,6 +53,20 @@ struct LeadershipTrack {
     Cents signing_cost{0},monthly_salary{0};
     auto operator<=>(const LeadershipTrack&) const = default;
 };
+struct AsiLeadershipRules {
+    std::string priorities;
+    Cents signing_cost{0},monthly_operations{0};
+    unsigned maximum_term_years=5;
+    std::uint32_t control_scrutiny_below=8500;
+    std::array<std::int32_t,6> appointment_effect{},weak_control_effect{};
+    auto operator<=>(const AsiLeadershipRules&) const = default;
+};
+struct AsiLeadershipEvidence {
+    std::uint64_t system=0;
+    OrdinalDay qualified_on{0};
+    std::uint32_t control=0;
+    auto operator<=>(const AsiLeadershipEvidence&) const = default;
+};
 struct SuccessionCatalog {
     std::string founder_name,founder_board;
     int founder_birth_year=1980;
@@ -65,12 +79,14 @@ struct SuccessionCatalog {
     std::vector<LeadershipTrack> tracks;
     std::optional<DepartureRules> departure;
     std::optional<PersonalLifeCatalog> personal_life{};
+    std::optional<AsiLeadershipRules> asi{};
     auto operator<=>(const SuccessionCatalog&) const = default;
 };
 struct LeadershipCandidate {
     std::string id,name,priorities;
     int birth_year=0;
     Cents signing_cost{0},monthly_salary{0};
+    std::optional<AsiLeadershipEvidence> asi{};
     auto operator<=>(const LeadershipCandidate&) const = default;
 };
 struct LeadershipTerm {
@@ -81,6 +97,7 @@ struct LeadershipTerm {
     std::optional<OrdinalDay> ended_on;
     bool caretaker=false;
     std::optional<PortraitRecipe> portrait{};
+    std::optional<AsiLeadershipEvidence> asi{};
     auto operator<=>(const LeadershipTerm&) const = default;
 };
 struct LeadershipControl {
@@ -101,6 +118,7 @@ struct SuccessionPlan {
     Cents reviewed_cash{0};
     std::uint64_t posting_cursor=0,control_cursor=0;
     std::vector<BoardBallot> ballots;
+    std::optional<AsiLeadershipEvidence> asi{};
     auto operator<=>(const SuccessionPlan&) const = default;
 };
 struct SuccessionNotice {
@@ -138,6 +156,8 @@ void validate_succession(const SimulationState&,bool deep=true);
 [[nodiscard]] const SuccessionCatalog& succession_catalog(const SimulationState&);
 [[nodiscard]] std::vector<LeadershipCandidate> leadership_candidates(const SuccessionCatalog&,OrdinalDay);
 [[nodiscard]] LeadershipCandidate leadership_candidate(const SuccessionCatalog&,std::string_view);
+[[nodiscard]] std::vector<LeadershipCandidate> leadership_candidates(const SimulationState&,OrdinalDay);
+[[nodiscard]] LeadershipCandidate leadership_candidate(const SimulationState&,std::string_view,std::optional<OrdinalDay> as_of={});
 [[nodiscard]] FounderRole founder_role(const SuccessionState&);
 [[nodiscard]] const SuccessionNotice* required_succession_notice(const SimulationState&);
 [[nodiscard]] std::optional<OrdinalDay> next_succession_boundary(const SimulationState&);

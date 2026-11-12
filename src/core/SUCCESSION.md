@@ -23,6 +23,27 @@ can return while eligible and remains subject to their original birth year.
 Neither a new term nor a repeated name restarts an individual's career clock.
 The compiler checks that a campaign's first retirement has an eligible cohort.
 
+### An ASI chief executive
+
+The optional `asi` charter adds the company's own independently established ASI
+systems to the candidate list. AGI and research forecasts do not qualify. System
+IDs resolve only within this company's immutable Frontier deployment bundles.
+Qualification is read as of the nomination date, preserving its independent
+control bound in the plan and eventual executive term. Save validation compares
+those records with the dated Frontier evidence.
+
+An ASI uses ordinary board approval and paid transition exercises. On appointment
+it takes the normal chief executive seat and its authored finite mandate.
+It has no human age or portrait. Contracted hosting and human oversight create
+ordinary recurring company expenses from appointment until the term ends.
+Human caretaker cohorts remain the automatic fallback at a mandate boundary.
+
+Resignation coverage can lead with the ASI appointment or scrutiny over its
+independent control evidence. Both the announcement and weak-control reaction
+use authored audience effects. The original PR claim and its dated financial/
+research assessment remain in the story. Later company performance cannot
+rewrite that nomination evidence.
+
 The charter warns 365 days before a term ends. Private notices retain their
 source, deadline and acknowledgment, and stop the normal clock and milestone
 driver. They can be read through Leadership or the required-decision banner.

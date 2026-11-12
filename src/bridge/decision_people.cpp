@@ -32,11 +32,11 @@ QVariantMap WorldController::person(QString id,core::OrdinalDay day) const {
         const auto found=std::ranges::find_if(terms,[&](const auto& t){return t.starts_on<=day && (!t.ended_on || day<*t.ended_on);});
         if(found==terms.end()) return {};
         if(found->person=="founder") return founder();
-        return {{"id",QStringLiteral("leadership/%1").arg(found->id)},{"name",text(found->name)},{"role",tr("Chief executive")},
+        return {{"id",QStringLiteral("leadership/%1").arg(found->id)},{"name",text(found->name)},{"role",found->asi?tr("AI chief executive"):tr("Chief executive")},
             {"portrait",found->portrait?portrait(*found->portrait):QString{}},
-            {"detail",tr("Born %1 · appointed %2\nExecutive term through %3\n%4")
-                .arg(found->birth_year).arg(text(core::iso_date(found->starts_on)),text(core::iso_date(found->ended_on.value_or(found->due_on))),
-                    text(core::leadership_candidate(core::succession_catalog(s),found->person).priorities))}};
+            {"detail",tr("%1 · appointed %2\nExecutive term through %3\n%4")
+                .arg(found->asi?tr("ASI"):tr("Born %1").arg(found->birth_year),text(core::iso_date(found->starts_on)),text(core::iso_date(found->ended_on.value_or(found->due_on))),
+                    text(core::leadership_candidate(s,found->person,found->plan?s.succession->plans.at(found->plan-1).proposed_on:found->starts_on).priorities))}};
     }
     if(!s.management) return {};
     if(s.management->people) {

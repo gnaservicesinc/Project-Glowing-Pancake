@@ -46,10 +46,18 @@ void validate_succession_catalog(const SuccessionCatalog& c) {
         }
         for(auto v:rules.broken_effect) if(v < -1000 || v > 0) invalid("A broken departure commitment cannot improve public standing.");
     }
+    if(c.asi) {
+        const auto& ai=*c.asi;label(ai.priorities,512);
+        if(ai.signing_cost.value()<0 || ai.signing_cost.value()>100000000 || ai.monthly_operations.value()<=0 || ai.monthly_operations.value()>10000000 ||
+            !ai.maximum_term_years || ai.maximum_term_years>c.maximum_term_years || ai.control_scrutiny_below>10000)
+            invalid("ASI appointments need finite terms and disclosed hosted-operation costs.");
+        for(const auto effect:ai.appointment_effect) if(effect < -1000 || effect > 1000) invalid("AI leadership reactions must be bounded.");
+        for(const auto effect:ai.weak_control_effect) if(effect < -1000 || effect > 0) invalid("Weak control evidence cannot grant public confidence.");
+    }
     std::set<std::string> ids;
     for(const auto& track:c.tracks) {
         label(track.id,48);label(track.priorities,512);
-        if(!ids.insert(track.id).second || track.first_birth_year<1800 || track.first_birth_year>9000 || track.names.empty() || track.names.size()>8 ||
+        if(track.id=="asi" || track.id.starts_with("asi.") || !ids.insert(track.id).second || track.first_birth_year<1800 || track.first_birth_year>9000 || track.names.empty() || track.names.size()>8 ||
             track.cohort_years<10 || track.cohort_years>c.maximum_candidate_age-c.minimum_candidate_age+1 ||
             track.signing_cost.value()<0 || track.signing_cost.value()>100000000 || track.monthly_salary.value()<=0 || track.monthly_salary.value()>10000000)
             invalid("Leadership tracks need distinct identities, recurring cohorts and explicit paid terms.");
@@ -69,6 +77,7 @@ void validate_succession(const SimulationState& s,bool deep) {
     if(configured!=s.succession.has_value()) invalid("The leadership charter and its saved history must be present together.");
     if(!s.succession) return;
     const auto& actor=*s.succession;const auto& c=succession_catalog(s);
+    if(c.asi && (!s.frontier || !s.frontier->catalog.asi_route)) invalid("ASI leadership requires this company's independent qualification route.");
     if (actor.founder_name) label(*actor.founder_name);
     if(!s.accounts || !s.capacity || actor.terms.empty() || actor.controls.empty() || actor.terms.size()>succession_term_limit ||
         actor.controls.size()>succession_notice_limit || actor.plans.size()>succession_plan_limit || actor.notices.size()>succession_notice_limit ||
@@ -95,25 +104,27 @@ void validate_succession(const SimulationState& s,bool deep) {
     for(std::size_t i=0;i<actor.terms.size();++i) {
         const auto& term=actor.terms[i];
         if(term.portrait) validate_portrait(*term.portrait);
-        if(term.id!=i+1 || !in_time(term.starts_on) || term.due_on!=term_due(c,term.birth_year,term.starts_on,term.caretaker) || term.due_on<=term.starts_on ||
+        if(term.id!=i+1 || !in_time(term.starts_on) || term.due_on!=term_due(c,term.birth_year,term.starts_on,term.caretaker,term.asi.has_value()) || term.due_on<=term.starts_on ||
             (i==0?term.starts_on!=s.accounts->starts_on:term.starts_on<=actor.terms[i-1].starts_on || actor.terms[i-1].ended_on!=term.starts_on) ||
             (i+1==actor.terms.size()?term.ended_on.has_value():!term.ended_on || *term.ended_on>term.due_on))
             invalid("An executive term bypassed its actual handover or finite retirement boundary.");
         Cents salary{0};
         if(term.person=="founder") {
-            if(i!=0 || term.plan || term.caretaker || term.name!=actor.founder_name.value_or(c.founder_name) || term.birth_year!=c.founder_birth_year)
+            if(i!=0 || term.plan || term.caretaker || term.asi || term.name!=actor.founder_name.value_or(c.founder_name) || term.birth_year!=c.founder_birth_year)
                 invalid("A successor inherited the original founder's identity.");
             salary=c.founder_salary;
         } else {
-            const auto person=leadership_candidate(c,term.person);
-            const auto eligible=leadership_candidates(c,term.starts_on);
-            if(term.name!=person.name || term.birth_year!=person.birth_year || std::ranges::none_of(eligible,[&](const auto& p){return p.id==term.person;}))
+            if(term.plan>actor.plans.size()) invalid("A handover has no actual approved plan.");
+            const auto person=leadership_candidate(s,term.person,term.plan?actor.plans[term.plan-1].proposed_on:term.starts_on);
+            const auto eligible=term.caretaker?leadership_candidates(c,term.starts_on):leadership_candidates(s,term.starts_on);
+            if(term.name!=person.name || term.birth_year!=person.birth_year || term.asi!=person.asi || (term.asi && term.portrait) ||
+                std::ranges::none_of(eligible,[&](const auto& p){return p.id==term.person;}))
                 invalid("The executive's person or age differs from the actual eligible cohort.");
             salary=person.monthly_salary;
             if(term.plan) {
                 if(term.plan>actor.plans.size()) invalid("A handover has no actual approved plan.");
                 const auto& p=actor.plans[term.plan-1];
-                if(p.status!=SuccessionStatus::activated || p.candidate!=term.person || p.incumbent+1!=term.id || p.finished_on!=term.starts_on || term.caretaker)
+                if(p.status!=SuccessionStatus::activated || p.candidate!=term.person || p.incumbent+1!=term.id || p.finished_on!=term.starts_on || term.caretaker || p.asi!=term.asi)
                     invalid("The executive term differs from its approved handover.");
             } else {
                 if(!term.caretaker || (i && term.starts_on!=actor.terms[i-1].due_on)) invalid("An unplanned appointment bypassed the charter's caretaker boundary.");
@@ -170,7 +181,8 @@ void validate_succession(const SimulationState& s,bool deep) {
             if(p.incumbent!=actor.terms.back().id || p.finished_on || (p.status==SuccessionStatus::proposed && s.date>=p.vote_before))
                 invalid("A pending leadership plan outlived its executive or decision window.");
         } else if(!p.finished_on) invalid("A closed leadership proposal needs an actual finish date.");
-        const auto person=leadership_candidate(c,p.candidate);
+        const auto person=leadership_candidate(s,p.candidate,p.proposed_on);
+        if(p.asi!=person.asi) invalid("The ASI nomination differs from its dated independent qualification and control evidence.");
         if(p.decided_on) {
             if(!p.player_vote || !in_time(*p.decided_on) || *p.decided_on<p.proposed_on || *p.decided_on>=p.vote_before || p.posting_cursor>s.accounts->postings.size() ||
                 p.control_cursor==0 || p.control_cursor>actor.controls.size() || actor.controls[p.control_cursor-1].day>*p.decided_on ||

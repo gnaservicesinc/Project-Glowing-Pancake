@@ -108530,6 +108530,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "c8deb3f44bcdb68ed378d309f60f8a801306b979198ee43ca2f5341d20053a06",
+          "before_hash": "3511ff03d586bf033e57bbe64fd8fa57ff6414ebb46216528515607c8c1ead4b",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 41,
+          "revision": 42
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "95c65b88894ee17c23534fd7a6fcd896bb1b4b7ccf891f0fdba3baf83cef5e58",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.72.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 73,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.71.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000072.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000073.collection.json",
+      "summary": "Independently established company ASI as a board-approved successor, with finite mandates, hosted operation costs and evidence-based resignation coverage.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

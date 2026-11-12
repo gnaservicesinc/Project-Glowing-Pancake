@@ -230,9 +230,9 @@ FrontierResult observe_trial(const SimulationState& state, const FrontierTrial& 
 }
 }
 
-FrontierQualification frontier_qualification(const FrontierState& state, std::uint64_t id) {
+FrontierQualification frontier_qualification(const FrontierState& state, std::uint64_t id,std::optional<OrdinalDay> through) {
     (void)frontier_detail::system(state,id);
-    auto result = progress(state.trials,id);
+    auto result = progress(state.trials,id,through);
     if (panels_complete(result)) {
         if (frontier_detail::meets_agi(result.view.conservative)) result.view.agi_on = result.last_panel;
         if (state.catalog.asi_route && frontier_detail::meets_asi(result.view.conservative) &&

@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.71.0-dev.1",
+  "content_version": "0.72.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -78733,6 +78733,29 @@
           "strain_tolerance_bp": 2000
         },
         "succession": {
+          "asi": {
+            "appointment_effect_bp": [
+              100,
+              200,
+              -50,
+              -200,
+              -100,
+              -100
+            ],
+            "control_scrutiny_below_bp": 9000,
+            "maximum_term_years": 5,
+            "monthly_operations_cents": 2200000,
+            "priorities": "Run the executive office using this company’s independently established ASI, with contracted hosting and a human oversight team.",
+            "signing_cost_cents": 6000000,
+            "weak_control_effect_bp": [
+              -100,
+              -50,
+              -100,
+              -150,
+              -250,
+              -200
+            ]
+          },
           "caretaker_term_years": 5,
           "cash_floor_cents": 10000000,
           "chair_retirement_age": 80,
@@ -79273,7 +79296,7 @@
         "research.public.benchmark_exchange"
       ],
       "resilience": "resilience.domestic",
-      "revision": 41,
+      "revision": 42,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

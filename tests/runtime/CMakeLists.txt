@@ -262,6 +262,13 @@ target_compile_definitions(pgp-founder-departure-test PRIVATE PGP_DEPARTURE_SOUR
 pgp_project_target(pgp-founder-departure-test)
 add_test(NAME runtime.founder-departure COMMAND pgp-founder-departure-test)
 
+add_executable(pgp-asi-leadership-test asi_leadership_test.cpp)
+target_link_libraries(pgp-asi-leadership-test PRIVATE pgp::session)
+target_include_directories(pgp-asi-leadership-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
+target_compile_definitions(pgp-asi-leadership-test PRIVATE PGP_ASI_SOURCE="${PROJECT_SOURCE_DIR}/data/runtime/first-playable.json" PGP_ASI_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}/asi-leadership")
+pgp_project_target(pgp-asi-leadership-test)
+add_test(NAME runtime.asi-leadership COMMAND pgp-asi-leadership-test)
+
 add_executable(pgp-objectives-test objectives_test.cpp)
 target_link_libraries(pgp-objectives-test PRIVATE pgp::session)
 target_include_directories(pgp-objectives-test PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")

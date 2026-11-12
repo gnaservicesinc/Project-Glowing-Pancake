@@ -1330,7 +1330,7 @@ void schedule_succession_smoke(QQuickWindow& window,pgp::bridge::CampaignControl
             if(capture(QStringLiteral("-board"),"leadershipReview") && press("confirmLeadershipAction")) ++run->phase;return;
         case 6: {
             const auto& p=company.succession->plans.front();
-            const auto person=core::leadership_candidate(core::succession_catalog(company),p.candidate);
+            const auto person=core::leadership_candidate(company,p.candidate,p.proposed_on);
             if(p.status!=core::SuccessionStatus::approved || core::checked_unit_subtract(run->cash,company.cash)!=person.signing_cost || p.ballots.empty()) {fail("paid board-approved transition");return;}
             if(press("advanceLeadership")) ++run->phase;return;
         }
