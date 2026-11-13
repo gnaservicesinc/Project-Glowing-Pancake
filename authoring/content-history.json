@@ -109019,6 +109019,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "9ec6ea5e4c3a7ae14bdbeaa77deb7fd7959d41a7ab5eadee0d0379d2c303ddc3",
+          "before_hash": "55e8548e9d3e559dfe6101b535d848bc78d010ba07146652d2e716ec7551bb2f",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 47,
+          "revision": 48
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "9c254724b1b3a735983ea09767d179adbd77a96b97afcd7b01d8782e608baf8e",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.76.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 80,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.75.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000079.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000080.collection.json",
+      "summary": "Fact-check delivery and publication claims in resignation coverage using the dated company record.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

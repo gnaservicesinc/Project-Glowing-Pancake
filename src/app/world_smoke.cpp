@@ -451,7 +451,27 @@ void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignControll
         case 61:
             if(++check->frames<4)return;
             if(!desk->announcementPreview("profitable_exit","responsibility").value("assessment").toString().contains("challenged")) {fail("Actual opening accounts must challenge profit claim");return;}
+            if(desk->announcementPreview("delivery_record","responsibility").value("assessment")!="unsubstantiated" ||
+                desk->announcementPreview("publication_record","responsibility").value("assessment")!="supported") {
+                fail("Preview must distinguish an empty contract register from the absence of a public dispute");return;
+            }
+            if(auto* angle=find(window.contentItem(),"departureMessage")) {
+                angle->forceActiveFocus();
+                QTest::keyClick(&window,Qt::Key_End);
+                QTest::keyClick(&window,Qt::Key_Up);
+            } else {fail("Delivery press angle picker");return;}
+            check->phase=611;return;
+        case 611: {
+            const auto* coverage=find(window.contentItem(),"departureCoveragePreview");
+            if(!coverage || !coverage->property("text").toString().contains("awaits a completed contract")) {
+                fail("The delivery angle must explain insufficient evidence in the rendered preview");return;
+            }
+            auto* angle=find(window.contentItem(),"departureMessage");
+            angle->forceActiveFocus();
+            QTest::keyClick(&window,Qt::Key_Home);
+            for(int i=0;i<3;++i) QTest::keyClick(&window,Qt::Key_Down);
             reveal("departureCoveragePreview");check->frames=0;check->phase=62;return;
+        }
         case 62:
             if(++check->frames<4)return;capture("-statement");
             campaign.setTextScalePercent(200);window.showNormal();window.resize(650,480);check->frames=0;check->phase=63;return;
@@ -507,8 +527,15 @@ void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignControll
             const auto top=headline->mapToItem(viewport,{0,0}).y();
             if(top < -1 || top+headline->height()>viewport->height()+1) {fail("Automatic retrospective did not reveal its headline");return;}}
             capture("-retrospective");QMetaObject::invokeMethod(&window,"closeApp");check->phase=30;return;
-        case 30: if(click("mainMenuButton")) ++check->phase;return;
-        case 31: capture("-new-game");if(click("menuNewGameButton")) ++check->phase;return;
+        case 30:
+            // The menu smoke owns the native Escape check. The retirement
+            // path also runs when the OS has left its window in the background.
+            if(window.isActive()) QTest::keyClick(&window,Qt::Key_Escape);
+            else QMetaObject::invokeMethod(&window,"openMainMenu");
+            ++check->phase;return;
+        case 31:
+            if(!window.property("menuVisible").toBool()) {fail("Escape did not open the pause menu after the ending");return;}
+            capture("-new-game");if(click("menuNewGameButton")) ++check->phase;return;
         case 32:
             if(press(window,buttonText(window.contentItem(),QStringLiteral("OK")))) ++check->phase;else fail("Archive and New Game review");return;
         default:

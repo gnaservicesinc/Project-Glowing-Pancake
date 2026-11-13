@@ -212,7 +212,8 @@ std::vector<PublicIdentityEvent> public_identity_events(const WorldState& w,Ordi
             const auto& p=actor.plans.at(release.plan-1);const auto& message=departure_message(succession_catalog(w.simulation),release.message);
             const auto subject=leadership_candidate(w.simulation,p.candidate,p.proposed_on).name;
             result.push_back({7,release.day,subject,"Founder announcement: "+message.title,std::array<std::int32_t,society_audiences>{}});
-            if(rules.press && departure_assessment(w.simulation,release)=="challenged")
+            const auto assessment=departure_assessment(w.simulation,release);
+            if(rules.press && assessment=="challenged")
                 result.push_back({7,release.day,subject,"Reporters challenged a resignation claim using the company record",rules.press->challenged_effect});
             if(p.asi && succession_catalog(w.simulation).asi) {
                 const auto& ai=*succession_catalog(w.simulation).asi;
@@ -220,8 +221,12 @@ std::vector<PublicIdentityEvent> public_identity_events(const WorldState& w,Ordi
                 if(p.asi->control<ai.control_scrutiny_below)
                     result.push_back({7,release.day,subject,"Independent control evidence drew scrutiny over the ASI succession",ai.weak_control_effect});
             }
-            if(p.status==SuccessionStatus::activated && p.finished_on && *p.finished_on<=day)
-                result.push_back({7,std::max(release.day,*p.finished_on),subject,"Completed the publicly announced founder handover",message.completed_effect});
+            if(p.status==SuccessionStatus::activated && p.finished_on && *p.finished_on<=day) {
+                auto effect=message.completed_effect;
+                if(assessment=="challenged" || assessment=="unsubstantiated")
+                    for(auto& change:effect) change=std::min(change,0);
+                result.push_back({7,std::max(release.day,*p.finished_on),subject,"Completed the publicly announced founder handover",effect});
+            }
             const bool stopped=p.status==SuccessionStatus::cancelled || p.status==SuccessionStatus::obsolete;
             const bool late=p.handover_on<=day && (!p.finished_on || *p.finished_on>p.handover_on);
             if((stopped && p.finished_on && *p.finished_on<=day) || late) {

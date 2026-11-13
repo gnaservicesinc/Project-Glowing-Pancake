@@ -70,7 +70,7 @@ template<class T> constexpr std::size_t maximum_rows() {
     if constexpr (requires { Extension<T>::maximum_rows; }) return Extension<T>::maximum_rows;
     else if constexpr (std::is_same_v<T,core::LeadershipTerm>) return core::succession_term_limit;
     else if constexpr (std::is_same_v<T,core::LeadershipControl> || std::is_same_v<T,core::SuccessionNotice>) return core::succession_notice_limit;
-    else if constexpr (std::is_same_v<T,core::DepartureMessage>) return 6;
+    else if constexpr (std::is_same_v<T,core::DepartureMessage>) return 8;
     else if constexpr (std::is_same_v<T,core::DepartureRelease>) return core::succession_plan_limit;
     else if constexpr (std::is_same_v<T,core::SuccessionPlan>) return core::succession_plan_limit;
     else if constexpr (std::is_same_v<T,core::LeadershipTrack>) return 4;

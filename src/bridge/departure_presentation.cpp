@@ -1,6 +1,7 @@
 #include "departure_presentation.hpp"
 #include <QObject>
 #include <QStringList>
+#include <algorithm>
 
 namespace pgp::bridge {
 namespace {
@@ -25,19 +26,39 @@ QVariantMap departureArticle(const core::SimulationState& state,const core::Depa
     statement.push_back(QObject::tr("The approved handover to %1 is dated %2.").arg(text(person.name),text(core::iso_date(plan.handover_on))));
     if(plan.retain_chair) statement.push_back(QObject::tr("I will stay on as chair."));
     const auto assessment=core::departure_assessment(state,release);
+    const auto claim=message.claim.value_or("");
     QString headline,response,focus=QStringLiteral("handover");
     if(assessment=="challenged") {
         focus=QStringLiteral("claim");
         headline=QObject::tr("Company record challenges founder's resignation statement");
-        response=message.claim && *message.claim=="profit"?
-            QObject::tr("The statement calls the company profitable. Its accounts show no cumulative profit at the announcement."):
-            QObject::tr("The statement points to an established research record. The lab had no publications before the announcement day.");
+        if(claim=="profit") response=QObject::tr("The statement calls the company profitable. Its accounts show no cumulative profit at the announcement.");
+        if(claim=="research") response=QObject::tr("The statement points to an established research record. The lab had no publications before the announcement day.");
+        if(claim=="delivery") response=QObject::tr("The statement says the company met every customer start date. Missed starts in the contract register: %1.")
+            .arg(release.evidence->missed_starts);
+        if(claim=="publication_commitment") response=QObject::tr("The statement denies any executive departure over publication. The company has already recorded one.");
     } else if(assessment=="supported") {
         headline=QObject::tr("Founder announces handover to %1").arg(text(person.name));
         response=QObject::tr("The claim is supported by the dated company record.");
+    } else if(assessment=="unsubstantiated" && claim=="delivery") {
+        focus=QStringLiteral("claim");
+        headline=QObject::tr("Delivery claim awaits a completed contract");
+        response=QObject::tr("The register shows no missed start, but it also shows no customer contract that reached the end of its term.");
     } else {
         headline=QObject::tr("%1 named as founder prepares to step down").arg(text(person.name));
         response=QObject::tr("Coverage follows the funded handover and the commitments made to the incoming leader.");
+    }
+    if(release.evidence && release.evidence->public_dispute && state.management && state.management->governance) {
+        const auto& governance=*state.management->governance;
+        const auto dispute=std::ranges::find(governance.disputes,*release.evidence->public_dispute,&core::CorporateDispute::id);
+        if(dispute!=governance.disputes.end() && dispute->resolved_on) {
+            const auto& executives=state.management->catalog.governance->executives;
+            const auto executive=std::ranges::find(executives,dispute->subject,&core::ExecutiveCandidate::id);
+            const auto name=executive==executives.end()?QObject::tr("An executive"):text(executive->name);
+            headline=QObject::tr("Publication dispute follows founder’s resignation");
+            response=QObject::tr("%1 left on %2 after a publication commitment went unmet. That departure shapes how reporters read the founder’s statement.")
+                .arg(name,text(core::iso_date(*dispute->resolved_on)))+QStringLiteral("\n\n")+response;
+            focus=QStringLiteral("public_dispute");
+        }
     }
     if(plan.asi) {
         const bool weak=plan.asi->control<catalog.asi->control_scrutiny_below;
@@ -55,6 +76,8 @@ QVariantMap departureArticle(const core::SimulationState& state,const core::Depa
         const auto& record=*release.evidence;
         facts=QObject::tr("At announcement · cash %1 · debt %2 · profit since opening %3 · publications before that day %4")
             .arg(money(record.cash),money(record.debt),money(record.profit)).arg(record.publications);
+        facts+=QObject::tr("\nCustomer contracts that reached term end: %1 · missed start dates: %2")
+            .arg(record.completed_contracts).arg(record.missed_starts);
     }
     return {{"headline",headline},{"statement",statement.join(QStringLiteral("\n\n"))},{"response",response},
         {"facts",facts},{"assessment",text(assessment)},{"focus",focus},{"successor",text(person.name)},{"date",text(core::iso_date(release.day))}};

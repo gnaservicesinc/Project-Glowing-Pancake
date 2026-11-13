@@ -100,8 +100,10 @@ scored acceptance records below are historical.
 
 **Leadership** lets you prepare a successor and build a resignation statement
 from a reason and PR angle. Preview the statement and possible coverage before
-paying for the announcement. Reporters check profit and research claims against
-the company record from that date. After the handover, choose **Continue this
+paying for the announcement. Reporters check profit, publications, customer start
+dates and documented executive departures against the company record from that
+date. A delivery claim with no completed contracts remains unsubstantiated.
+After the handover, choose **Continue this
 life** or **End here and read the retrospective**. The early retrospective uses
 your current age and includes the resignation coverage.
 

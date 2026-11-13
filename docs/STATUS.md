@@ -9,8 +9,8 @@ Updated 2026-11-13
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign and journal update advance content to **0.75.0-dev.1**,
-generation **79**.
+immersive redesign, journal and press coverage advance content to
+**0.76.0-dev.1**, generation **80**.
 
 ## Campaign journal and founder walkthrough
 
@@ -72,10 +72,14 @@ walkthrough reads actual world/industry and personal records and checks the
 compact headline at 200% text without changing simulation state. Content
 finalization validates 24 prepared-opening save roundtrips.
 
-Voluntary resignation now has four reasons and six PR angles, a live statement
+Voluntary resignation now has four reasons and eight PR angles, a live statement
 and coverage preview, and saved announcement evidence. Profit and research claims
 are checked against the dated accounts and earlier publications. Contradicted
-claims affect audience confidence. After the funded handover, the founder can
+claims affect audience confidence. The press also checks the customer start
+record and executive departures over missed publication commitments. An empty
+contract register leaves a delivery claim unsubstantiated. A documented executive
+departure can lead the story even when the founder chooses another angle.
+After the funded handover, the founder can
 continue the same life or choose a current-age career retrospective. Keeping a
 chair role does not prevent the voluntary ending. The newspaper includes the
 announcement and its coverage.
@@ -86,6 +90,10 @@ save/reload. The native walkthrough completes the ordinary 104-day handover,
 chooses Continue, advances another day, then chooses the retrospective and checks
 its automatically revealed current-age headline. Keyboard statement choices and
 the 650×480 preview at 200% text pass. These are bounded Mac development checks.
+The expanded coverage also passed a paid appointment followed by an actual
+publication dispute and departure. Save validation rejects a rewritten public
+record. The native preview distinguishes unsubstantiated delivery from the
+publication record, and the completed retrospective reopens in a new process.
 
 An independently established ASI belonging to this company now appears in the
 successor list. Nomination freezes its qualification date and independent control
@@ -113,7 +121,7 @@ reload and the native compact preview.
 
 Career re-entry remains required. Early company closure currently records its
 chapter at the existing company boundary. The guaranteed funded route back,
-broader press claims and scandal coverage, and surprising human successor
+other public controversies, and surprising human successor
 appointments remain selected work. Nonprofit reaction expansion and native
 rival training also remain unfinished.
 

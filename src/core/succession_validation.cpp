@@ -25,7 +25,7 @@ void validate_succession_catalog(const SuccessionCatalog& c) {
         invalid("The leadership charter needs finite careers, preparation, board rights and compensation.");
     if(c.departure) {
         const auto& rules=*c.departure;
-        if(rules.messages.empty() || rules.messages.size()>6) invalid("Departure needs one to six authored messages.");
+        if(rules.messages.empty() || rules.messages.size()>8) invalid("Departure needs one to eight authored messages.");
         if(rules.press) {
             if(rules.press->reasons.empty() || rules.press->reasons.size()>8) invalid("Choose one to eight resignation reasons.");
             std::set<std::string> reasons;
@@ -40,7 +40,8 @@ void validate_succession_catalog(const SuccessionCatalog& c) {
         for(const auto& m:rules.messages) {
             label(m.id,48);label(m.title);label(m.copy,2048);
             if(!messages.insert(m.id).second || m.fee.value()<0 || m.fee.value()>10000000) invalid("Departure messages need distinct IDs and bounded fees.");
-            if(m.claim && (!rules.press || (*m.claim!="profit" && *m.claim!="research")))
+            if(m.claim && (!rules.press || (*m.claim!="profit" && *m.claim!="research" &&
+                *m.claim!="delivery" && *m.claim!="publication_commitment")))
                 invalid("Departure claims need a supported fact check and press rules.");
             for(auto v:m.completed_effect) if(v < -1000 || v > 1000) invalid("Departure audience effects must be bounded.");
         }

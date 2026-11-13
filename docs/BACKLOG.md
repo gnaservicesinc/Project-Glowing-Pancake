@@ -39,10 +39,14 @@ can lead the resignation story, including control scrutiny and audience effects.
 Earned qualification, real handover/costs, exact persistence and native compact/
 separate-process reload checks pass.
 
+Resignation coverage checks customer start dates and public departures over
+publication commitments, with evidence preserved at announcement. A documented
+executive departure can lead coverage. An unsupported claim earns no positive
+audience effect from the handover; a contradiction also reduces confidence.
+
 Next implement the personal career state across forced departures and guaranteed
-re-entry, broader statement claims/scandals and surprising appointments.
-Surprising human appointments and broader circumstances can also change the
-lead story and remain selected work.
+re-entry. Broader public controversies and surprising human appointments remain
+selected work.
 Sorting and efficient serving now have finite innovation paths. Required levels,
 actual project costs and dated serving compute effects use the ordinary research
 and deployment commands. Rival profiles can pursue batched inference.

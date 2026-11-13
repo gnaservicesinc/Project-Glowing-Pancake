@@ -200,7 +200,7 @@ ColumnLayout {
     Copy { text: message.currentIndex >= 0 ? message.model[message.currentIndex].detail : ""; visible: text.length > 0 }
     Copy {objectName:"departureStatementPreview";text:panel.pressDraft.statement || "";visible:!!text}
     Copy {text:qsTr("Possible coverage");font.bold:true;visible:!!panel.pressDraft.headline}
-    Copy {objectName:"departureCoveragePreview";property bool revealAtTop:true;text:panel.pressDraft.headline || "";font.bold:true;visible:!!text;color:panel.pressDraft.assessment==="challenged" || panel.pressDraft.focus==="ai_control"?"#f0bc90":"#c5dec9"}
+    Copy {objectName:"departureCoveragePreview";property bool revealAtTop:true;text:panel.pressDraft.headline || "";font.bold:true;visible:!!text;color:panel.pressDraft.assessment==="challenged" || panel.pressDraft.focus==="ai_control" || panel.pressDraft.focus==="public_dispute"?"#f0bc90":"#c5dec9"}
     Copy {objectName:"departureCoverageResponse";text:panel.pressDraft.response || "";visible:!!text}
     Copy {objectName:"departureCoverageFacts";text:panel.pressDraft.facts || "";visible:!!text}
     Action { objectName: "reviewDepartureAnnouncement"; text: qsTr("Review public announcement"); visible: message.model.length > 0; enabled: panel.editable && (panel.desk.plans.selectedRow.fields?.announce ?? false); onClicked: panel.desk.reviewAnnouncement(message.currentValue,reason.currentValue || "") }

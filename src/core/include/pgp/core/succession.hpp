@@ -35,6 +35,8 @@ struct DepartureRules {
 struct DepartureEvidence {
     Cents cash{0},profit{0},debt{0};
     std::uint32_t publications=0;
+    std::uint32_t completed_contracts=0,missed_starts=0;
+    std::optional<std::string> public_dispute{};
     auto operator<=>(const DepartureEvidence&) const = default;
 };
 struct DepartureRelease {

@@ -1,5 +1,6 @@
 #include "succession_internal.hpp"
 #include <set>
+#include <tuple>
 
 namespace pgp::core {
 using namespace succession_detail;
@@ -7,7 +8,21 @@ namespace {
 DepartureEvidence evidence_at(const SimulationState& s,OrdinalDay day,std::size_t cursor) {
     const auto report=accounts_report_at(*s.accounts,cursor);
     const auto published=s.lab?std::ranges::count_if(s.lab->publications,[&](const auto& publication){return publication.day<day;}):0;
-    return {report.cash,report.profit,report.debt,static_cast<std::uint32_t>(published)};
+    DepartureEvidence result{report.cash,report.profit,report.debt,static_cast<std::uint32_t>(published)};
+    if(s.market) for(const auto& contract:s.market->contracts) {
+        if(!contract.stopped_on || *contract.stopped_on>day) continue;
+        if(contract.status==ContractStatus::completed) ++result.completed_contracts;
+        if(contract.status==ContractStatus::missed && *contract.stopped_on<day) ++result.missed_starts;
+    }
+    // Corporate responses settle on the prepared morning. A completed
+    // publication dispute is public; a private concern is not evidence.
+    const CorporateDispute* latest=nullptr;
+    if(s.management && s.management->governance) for(const auto& dispute:s.management->governance->disputes)
+        if(dispute.kind=="publication" && dispute.status==CorporateDisputeStatus::departed &&
+            dispute.resolved_on && *dispute.resolved_on<=day &&
+            (!latest || std::tie(dispute.resolved_on,dispute.id)>std::tie(latest->resolved_on,latest->id))) latest=&dispute;
+    if(latest) result.public_dispute=latest->id;
+    return result;
 }
 }
 std::string departure_reference(std::uint64_t plan) {return "leadership.release/"+std::to_string(plan);}
@@ -43,8 +58,14 @@ std::string departure_assessment(const SimulationState& s,const DepartureRelease
     if(!message.claim) return "framing";
     if(!release.evidence) return "unsubstantiated";
     const auto& record=*release.evidence;
-    const bool supported=*message.claim=="profit"?record.profit.value()>0:record.publications>0;
-    return supported?"supported":"challenged";
+    if(*message.claim=="profit") return record.profit.value()>0?"supported":"challenged";
+    if(*message.claim=="research") return record.publications>0?"supported":"challenged";
+    if(*message.claim=="delivery") {
+        if(record.missed_starts) return "challenged";
+        return record.completed_contracts?"supported":"unsubstantiated";
+    }
+    if(*message.claim=="publication_commitment") return record.public_dispute?"challenged":"supported";
+    invalid("This departure claim has no evidence rule.");
 }
 void announce_founder_departure(SimulationState& s,const AnnounceFounderDeparture& request,Cents protected_cash) {
     auto release=preview_founder_departure(s,request);

@@ -37,6 +37,7 @@ template<class T,class F> void fields(T& r,F field) {
         field("reasons",r.reasons);field("challenged_effect_bp",r.challenged_effect);
     } else if constexpr(std::is_same_v<V,core::DepartureEvidence>) {
         field("cash_cents",r.cash);field("profit_cents",r.profit);field("debt_cents",r.debt);field("publications",r.publications);
+        field("completed_contracts",r.completed_contracts);field("missed_starts",r.missed_starts);field("public_dispute",r.public_dispute,true);
     } else if constexpr(std::is_same_v<V,core::DepartureRelease>) {
         field("plan",r.plan);field("posting_cursor",r.posting_cursor);field("message",r.message);field("day",r.day);
         field("reason",r.reason,true);field("evidence",r.evidence,true);

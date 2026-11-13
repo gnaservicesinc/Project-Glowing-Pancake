@@ -34,6 +34,11 @@ void day(runtime::Runtime& game) {
     }
     while(const auto* n=required_succession_notice(state(game))) apply(game,AcknowledgeSuccession{n->id});
     if(const auto* n=required_site_alert(state(game))) apply(game,AcknowledgeSiteAlert{n->id});
+    if(core::required_governance_notice(state(game))) {
+        const auto& disputes=state(game).management->governance->disputes;
+        const auto next=std::ranges::find_if(disputes,[](const auto& row){return !row.acknowledged;});
+        apply(game,RespondCorporateDispute{next->id,false});
+    }
     apply(game,AdvanceDay{});
 }
 template<class F> void rejects(F f) {try {f();}catch(const std::exception&){return;}throw std::runtime_error("Forged departure proof accepted.");}
@@ -43,8 +48,10 @@ int main() {
         const auto registry=content::foundation_registry();
         auto source=content::load_collection(persistence::read_bounded(PGP_DEPARTURE_SOURCE,content::maximum_document_bytes),registry);
         // Keep the actual paid transition, with a bounded 44-day focused fixture.
-        auto& transition=*std::get<content::ScenarioDefinition>(source.definitions.at("scenario.founder_campaign").data).management->succession;
+        auto& fixture=std::get<content::ScenarioDefinition>(source.definitions.at("scenario.founder_campaign").data);
+        auto& transition=*fixture.management->succession;
         transition.transition_days=Days{30};transition.transition_work=MilliCU{300000};
+        fixture.management->governance->executives.front().promise_term=Days{30};
         const auto program=runtime::compile_collection(source,registry);
         const auto& definition=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
         content::FoundingSelection selection;selection.family="rich";selection.route="hired_ceo";selection.office="shared";
@@ -94,6 +101,48 @@ int main() {
         auto published=state(game);published.lab->publications.push_back({"fixture.earlier",OrdinalDay{published.date.value()-1}});
         check(departure_assessment(published,preview_founder_departure(published,{1,"research_record","direction"}))=="supported",
             "An earlier publication must support the research claim.");
+        const auto delivery=preview_founder_departure(state(game),{1,"delivery_record","personal"});
+        check(departure_assessment(state(game),delivery)=="unsubstantiated",
+            "An empty contract register does not substantiate an on-time delivery record.");
+        auto delivered=state(game);
+        MarketContract pilot;pilot.id="fixture.on_time";pilot.status=ContractStatus::completed;pilot.stopped_on=delivered.date;
+        delivered.market->contracts.push_back(pilot);
+        check(departure_assessment(delivered,preview_founder_departure(delivered,{1,"delivery_record","personal"}))=="supported",
+            "A settled contract with no missed start supports the claim.");
+        pilot.id="fixture.missed";pilot.status=ContractStatus::missed;pilot.stopped_on=OrdinalDay{delivered.date.value()-1};
+        delivered.market->contracts.push_back(pilot);
+        check(departure_assessment(delivered,preview_founder_departure(delivered,{1,"delivery_record","personal"}))=="challenged",
+            "An actual missed start contradicts the claim regardless of other completed contracts.");
+        auto disclosure=game;
+        apply(disclosure,AppointExecutive{"executive.research",false});
+        const auto pre_dispute=preview_founder_departure(state(disclosure),{1,"publication_record","direction"});
+        check(departure_assessment(state(disclosure),pre_dispute)=="supported" && !pre_dispute.evidence->public_dispute,
+            "An appointment with an unexpired commitment is not a public dispute.");
+        const auto departure_day=advance_days(state(disclosure).date,Days{60});
+        while(state(disclosure).date<OrdinalDay{departure_day.value()-1}) day(disclosure);
+        const auto before_disclosure=preview_founder_departure(state(disclosure),{1,"publication_record","direction"});
+        check(!before_disclosure.evidence->public_dispute,
+            "A formal concern before its response deadline must not be described as a departure.");
+        while(state(disclosure).date<departure_day) day(disclosure);
+        if(const auto* notice=required_succession_notice(state(disclosure))) apply(disclosure,AcknowledgeSuccession{notice->id});
+        if(core::required_governance_notice(state(disclosure)))
+            apply(disclosure,RespondCorporateDispute{state(disclosure).management->governance->disputes.front().id,false});
+        apply(disclosure,AnnounceFounderDeparture{1,"publication_record","direction"});
+        const auto& press_release=state(disclosure).succession->releases->back();
+        check(press_release.evidence->public_dispute==state(disclosure).management->governance->disputes.front().id &&
+            departure_assessment(state(disclosure),press_release)=="challenged" &&
+            departure_assessment(state(disclosure),pre_dispute)=="supported",
+            "The confirmed public departure should shape coverage without rewriting earlier evidence.");
+        const auto reaction=runtime::public_identity_events(disclosure.current_state().world,state(disclosure).date);
+        check(std::ranges::any_of(reaction,[](const auto& row){
+            return row.cause.starts_with("Reporters challenged") && row.direct_effect && (*row.direct_effect)[4]<0;
+        }) && std::ranges::none_of(reaction,[](const auto& row){
+            return row.cause.starts_with("Completed the publicly announced") && row.direct_effect && (*row.direct_effect)[4]>0;
+        }),"A completed handover should not reward a contradicted claim.");
+        exact(disclosure);
+        auto forged_press=disclosure.checkpoint();
+        forged_press.world.simulation.succession->releases->back().evidence->public_dispute.reset();
+        rejects([&]{runtime::validate_checkpoint(program,forged_press);});
         auto reserved=game;apply(reserved,ReserveFunds{"Protected company funds",state(reserved).cash,true});
         refuse(reserved,AnnounceFounderDeparture{1,"continuity"});
         auto quiet=reserved;const auto quiet_cash=state(quiet).cash;

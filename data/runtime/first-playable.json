@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.75.0-dev.1",
+  "content_version": "0.76.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -80158,6 +80158,36 @@
                 "fee_cents": 0,
                 "id": "quiet_handover",
                 "title": "Keep the focus on the successor"
+              },
+              {
+                "claim": "delivery",
+                "completed_effect_bp": [
+                  50,
+                  20,
+                  50,
+                  25,
+                  50,
+                  10
+                ],
+                "copy": "Our customers could count on us to open service on time. We have met every start date on the contract register.",
+                "fee_cents": 25000,
+                "id": "delivery_record",
+                "title": "Stand on our delivery record"
+              },
+              {
+                "claim": "publication_commitment",
+                "completed_effect_bp": [
+                  20,
+                  25,
+                  60,
+                  40,
+                  50,
+                  35
+                ],
+                "copy": "No executive has left this company over an unmet publication commitment. The handover gives the next leader a chance to build on that record.",
+                "fee_cents": 25000,
+                "id": "publication_record",
+                "title": "Defend our publication record"
               }
             ],
             "press": {
@@ -80601,7 +80631,7 @@
         "research.compute.batched_serving"
       ],
       "resilience": "resilience.domestic",
-      "revision": 47,
+      "revision": 48,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
