@@ -108826,6 +108826,199 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "5cf22ad7db189781501cedc3705e81c377b73a22b50d1a7a3205c54add4bc43d",
+          "before_hash": "a7a89e4186801dd81a73c53f5aace27133e76d01b6d47a1a85d659c1f2743680",
+          "change": "changed",
+          "id": "civic.election_briefing",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "3d98007a497193bf3f78effd94c6ce525abffa5b2ba7221d4787c6e8344d6850",
+          "before_hash": "80b811c9f78f4ff645506b249e93e24602895aa89745174973be8d02a588a29f",
+          "change": "changed",
+          "id": "civic.implementation_briefing",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "041978122f7e7ab32280b99a2629635f1e8cef7d157250395417021d721b1bb4",
+          "before_hash": "72b14a9dbdf0483194568adcdf5e9be82df2e36ebe0e8cb9464cd016ff198a07",
+          "change": "changed",
+          "id": "deployment.incident_news",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "9a090c0434e335b393773418ee12e26c620c3ba3ebe8cbf4a37f232c4e54fee3",
+          "before_hash": "3f5f752799c0fc709f2e025fac9d145e64adaae164a3d691b8b075a74d2bff93",
+          "change": "changed",
+          "id": "operations.site_outcome",
+          "kind": "flow",
+          "old_revision": 1,
+          "revision": 2
+        },
+        {
+          "after_hash": "a4c76f82ad66e518f4fe942ed67b280ffcf2507ceea082415e50f2ecbacee60a",
+          "before_hash": "eb78da1e6addb753039b8dd57eabfc38b73deab9ad5b22ec3bef2fef5381efae",
+          "change": "changed",
+          "id": "slice.evaluation_finding",
+          "kind": "flow",
+          "old_revision": 2,
+          "revision": 3
+        },
+        {
+          "after_hash": "ffd17f306b195b7bd727e360e56270edb065b0b9521d5d3ceaf4e3d6c3084f5d",
+          "before_hash": "6d5f887dc24def8e589d75b69c3d90a242a61d120b2a98c6775d84451d42f14e",
+          "change": "changed",
+          "id": "slice.liquidity_warning",
+          "kind": "flow",
+          "old_revision": 2,
+          "revision": 3
+        },
+        {
+          "after_hash": "6679a29e4f9a6b29974532cc0ffd8fe8af4a90e39ca74825429c6af0cc8ef220",
+          "before_hash": "7c1ac35b7c4302e9c63406e864f12c4ce1cf4e5da1fc9ed8c4971b45d1bd88a6",
+          "change": "changed",
+          "id": "slice.market_shift",
+          "kind": "flow",
+          "old_revision": 2,
+          "revision": 3
+        },
+        {
+          "after_hash": "8b023d749b8f4071ef720b29bce996a10c4deae704811a685933928dac89e1e7",
+          "before_hash": "f6b3603406640305304bd8d40924ab560bb10208f28d29c6549cbbe20ce8b891",
+          "change": "changed",
+          "id": "slice.pilot_result",
+          "kind": "flow",
+          "old_revision": 2,
+          "revision": 3
+        },
+        {
+          "after_hash": "bf149bddcfbfc388115622b13f2945532762757e6851b737b9155715948d6b6e",
+          "before_hash": "4c64221c1f1dcc4d1d4b2ae1b27bed094d383d9131e576c30d1dd41b8eca671f",
+          "change": "changed",
+          "id": "slice.recovery_opportunity",
+          "kind": "flow",
+          "old_revision": 4,
+          "revision": 5
+        },
+        {
+          "after_hash": "67cd0c390a36b92f9a14e437f9f02900fce1fac98ef64eb03ed90502f242d4ec",
+          "before_hash": "67564b67e49c978e647ec8d433e3df5abc328287540f5e0b9307de5339205174",
+          "change": "changed",
+          "id": "slice.research_milestone",
+          "kind": "flow",
+          "old_revision": 2,
+          "revision": 3
+        },
+        {
+          "after_hash": "3d9877d67ce6da4b74b5ad8e90e29423aab4f80f07611c34193a121a4364d95b",
+          "before_hash": "1a348965d9a03403cd8a76d5a19c690ab49d798920c89884c8d0307aa05106d0",
+          "change": "changed",
+          "id": "slice.rival_notice",
+          "kind": "flow",
+          "old_revision": 2,
+          "revision": 3
+        },
+        {
+          "after_hash": "4c26a76a995592a9d2561dbe180bd59068ec25063c494dac0380a56a0369ef07",
+          "before_hash": "fa65a5ae19dca7762bfe1f7aa285e2a377e9b0a2eec2ee235af461afa85c0204",
+          "change": "changed",
+          "id": "slice.supplier_offer",
+          "kind": "flow",
+          "old_revision": 4,
+          "revision": 5
+        },
+        {
+          "after_hash": "773e33f875e182f98ad0d92b679d05e94b0d4f93fccea258899269887b0f4eb2",
+          "before_hash": "8e44c2bd81ecf5026bc1f793aaf261b11a1cea37ef68b85a1b65c5f87013585e",
+          "change": "changed",
+          "id": "story.after_the_vote",
+          "kind": "flow",
+          "old_revision": 2,
+          "revision": 3
+        },
+        {
+          "after_hash": "f2a4fa9993121506212d76614ec7857052755a2f7d5714c4d030c11f097e13e6",
+          "before_hash": "aeef5b6061860343f670887d250853a2ddf89fef8f216c3cd5fca5aecdcd143a",
+          "change": "changed",
+          "id": "story.harbormark_continuity",
+          "kind": "flow",
+          "old_revision": 2,
+          "revision": 3
+        },
+        {
+          "after_hash": "40facb2a00acb4e38604c9ebfb18e340582362ff9d6a9fe891c09fb959392fab",
+          "before_hash": "938f8cb1fed2e9a382b5e40cad4786d9a07d2a845b6d4fc0a9c26c32a9fbef56",
+          "change": "changed",
+          "id": "story.morrow_cooperative",
+          "kind": "flow",
+          "old_revision": 2,
+          "revision": 3
+        }
+      ],
+      "changed_text_keys": [
+        "civic.election_briefing",
+        "civic.implementation_briefing",
+        "deployment.incident.news",
+        "operations.site.outcome",
+        "slice.demand.decrease",
+        "slice.demand.expired",
+        "slice.demand.increase",
+        "slice.evaluation.finding",
+        "slice.finance.recovered",
+        "slice.finance.workout",
+        "slice.pilot.outcome",
+        "slice.recovery.accept",
+        "slice.recovery.accepted",
+        "slice.recovery.decline",
+        "slice.recovery.declined",
+        "slice.research.completed",
+        "slice.rival.notice",
+        "slice.supplier.accept",
+        "slice.supplier.accepted",
+        "slice.supplier.decline",
+        "slice.supplier.declined",
+        "slice.supplier.expired",
+        "slice.supplier.text",
+        "slice.supplier.title",
+        "story.after_the_vote.followup",
+        "story.harbormark_continuity.followup",
+        "story.morrow_cooperative.followup"
+      ],
+      "collection_hash": "13a8a3fb0b2948d672d8553446611ac77ae8bded536e889d671fa168aa772e44",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.75.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 79,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.74.0-dev.3",
+      "previous_snapshot": "authoring/snapshots/000078.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000079.collection.json",
+      "summary": "Clarify decision terms, record declined offers, and follow up on supplier expiry in the campaign journal.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

@@ -131,6 +131,13 @@ void supplier_paths(const Json& source) {
     accepted(declined.choose(revision(declined),choice,"decline"));
     check(declined.current_state().world.simulation.cash==pending.world.simulation.cash && declined.current_state().world.simulation.capacity->sources.size()==1,
           "Declining the supplier offer spent money or granted capacity");
+    const auto decline_record=std::ranges::find(declined.current_state().runtime.presentations,
+        std::string{"slice.supplier.declined"},&runtime::Presentation::text_key);
+    check(decline_record!=declined.current_state().runtime.presentations.end() &&
+        decline_record->kind==runtime::PresentationKind::result &&
+        std::ranges::none_of(declined.current_state().runtime.activations,[](const auto& activation) {
+            return activation.status==runtime::ActivationStatus::delayed;
+        }),"Only a signed supplier offer should schedule a term review.");
     accepted(engine.choose(revision(engine),choice,"accept"));
     const auto& signed_state=engine.current_state().world.simulation;
     check(signed_state.cash.value()==pending.world.simulation.cash.value()-100000 && signed_state.capacity->sources.size()==2 &&
@@ -154,6 +161,11 @@ void supplier_paths(const Json& source) {
     const auto supply=std::find_if(expired.capacity->sources.begin(),expired.capacity->sources.end(),[](const auto& row){return row.id=="lease/offer.supplier_small";});
     check(expired.date.value()==194 && supply!=expired.capacity->sources.end() && supply->effective.value()==0,
           "Fixed-term supply did not end at its exclusive expiry");
+    const auto followup=std::ranges::find(engine.current_state().runtime.presentations,
+        std::string{"slice.supplier.expired"},&runtime::Presentation::text_key);
+    check(followup!=engine.current_state().runtime.presentations.end() &&
+        followup->kind==runtime::PresentationKind::news && followup->day==expired.date,
+        "The supplier follow-up must appear at the original term boundary after reload.");
     check(runtime::read_fact(engine.current_state().world,*program.registry.fact("company.monthly_compute_bill_cents"),
         {content::Scope::company,"company.player"})==content::Scalar{std::int64_t{1800000}},"Expired supplier bill remained in the current commitment fact");
     check(persistence::decode_save(program,persistence::encode_save(program,engine.checkpoint())).checkpoint==engine.checkpoint(),"Expired supplier terms lost exact history");

@@ -28,6 +28,9 @@ Item {
     readonly property string place: nav.place || "workspace"
     signal openApp(string app, string section, string device)
     signal launcherRequested()
+    signal journalRequested()
+    signal newspaperRequested()
+    readonly property bool newspaperReady: campaign.objectives.retrospective && campaign.objectives.ended
     function visit(id) { campaign.world.navigate(id, nav.scale || "hq", "", "", "") }
     function placeApp() {return place==="lab" || place==="research_annex" || place==="evaluation_suite"?"lab":place==="meeting" || place==="collaboration"?"inbox":place==="compute"?"operations":"office"}
     function openPlace() {desktop.openApp(placeApp(),place==="evaluation_suite"?"evaluate":placeApp()==="lab"?"research":"",campaign.world.atHeadquarters && campaign.world.officeKind!=="home"?"desktop":"laptop")}
@@ -151,9 +154,10 @@ Item {
                 WorldButton {objectName:"pauseButton";text:campaign.paused?qsTr("▶ Resume"):qsTr("Ⅱ Pause");textSize:desktop.textSize;primary:campaign.paused;enabled:!campaign.busy && !campaign.storageBlocked && (!campaign.paused || campaign.canPlay);onClicked:campaign.togglePaused()}
                 WorldButton {objectName:"stepButton";visible:!desktop.shortLayout;text:qsTr("Next day");textSize:desktop.textSize;enabled:campaign.paused && campaign.canAdvance && !campaign.storageBlocked;onClicked:campaign.step()}
                 GameSelect {textSize:desktop.textSize;objectName:"speedControl";visible:!desktop.shortLayout;model:[1,10,30,60];currentIndex:model.indexOf(campaign.daysPerSecond);displayText:qsTr("%1 days/s").arg(campaign.daysPerSecond);Accessible.name:qsTr("Days per second");font.pixelSize:desktop.textSize;implicitWidth:desktop.textSize*9;onActivated:campaign.daysPerSecond=model[currentIndex]}
-                WorldButton {objectName:"hudDecisionButton";visible:!desktop.shortLayout && campaign.requiredKind!=="none";text:qsTr("Decision waiting");hint:campaign.requiredTitle;textSize:desktop.textSize;primary:true;onClicked:desktop.openApp("inbox","","phone")}
+                WorldButton {objectName:"hudDecisionButton";visible:campaign.requiredKind!=="none";text:qsTr("Review decision");hint:campaign.requiredTitle;textSize:desktop.textSize;primary:true;onClicked:desktop.journalRequested()}
+                WorldButton {objectName:"hudNewspaperButton";visible:desktop.newspaperReady;text:qsTr("Read the newspaper");textSize:desktop.textSize;primary:true;onClicked:desktop.newspaperRequested()}
                 WorldButton {visible:!desktop.shortLayout;text:qsTr("Advance…");textSize:desktop.textSize;onClicked:advanceMenu.open()}
-                WorldButton {visible:desktop.shortLayout;text:campaign.requiredKind!=="none"?qsTr("Review decision"):qsTr("Time & funds");textSize:desktop.textSize;primary:campaign.requiredKind!=="none";onClicked:campaign.requiredKind!=="none"?desktop.openApp("inbox","","phone"):compactTime.open()}
+                WorldButton {visible:desktop.shortLayout && campaign.requiredKind==="none" && !desktop.newspaperReady;text:qsTr("Time & funds");textSize:desktop.textSize;onClicked:compactTime.open()}
                 Label {visible:desktop.compact && !desktop.shortLayout;height:42*desktop.uiScale;text:qsTr("Available %1").arg(campaign.availableText);font.pixelSize:desktop.textSize;color:"#b7dfc7";verticalAlignment:Text.AlignVCenter}
             }
         }
@@ -331,7 +335,7 @@ Item {
                 Label {text:qsTr("TODAY");font.pixelSize:desktop.textSize*0.85;font.letterSpacing:2;color:"#e5bc7e"}
                 Label {Layout.fillWidth:true;text:campaign.requiredKind!=="none"?campaign.requiredTitle:qsTr("Your next move");textFormat:Text.PlainText;wrapMode:Text.Wrap;font.pixelSize:desktop.textSize*1.2;font.bold:true;color:"#eee6d5"}
                 Label {Layout.fillWidth:true;text:campaign.requiredKind!=="none"?qsTr("A decision needs your attention. Time waits for you."):qsTr("Review the team, check your research, or let the next day begin.");wrapMode:Text.Wrap;font.pixelSize:desktop.textSize;color:"#b7cac2"}
-                WorldButton {objectName:"agendaDecisionButton";Layout.fillWidth:true;text:campaign.requiredKind!=="none"?qsTr("Review decision"):qsTr("Open journal (%1)").arg(campaign.inbox.count);textSize:desktop.textSize;primary:campaign.requiredKind!=="none";onClicked:desktop.openApp("inbox","","phone")}
+                WorldButton {objectName:"agendaDecisionButton";Layout.fillWidth:true;text:campaign.requiredKind!=="none"?qsTr("Review decision"):qsTr("Open journal");textSize:desktop.textSize;primary:campaign.requiredKind!=="none";onClicked:desktop.journalRequested()}
                 Rectangle {Layout.fillWidth:true;height:1;color:"#4e6175"}
                 Label {Layout.fillWidth:true;text:qsTr("%1 projects in your notebook").arg(campaign.projects.count);wrapMode:Text.Wrap;font.pixelSize:desktop.textSize;color:"#d9e3d7"}
                 WorldButton {Layout.fillWidth:true;text:qsTr("Review research");textSize:desktop.textSize;onClicked:desktop.openApp("lab","projects","laptop")}
@@ -371,7 +375,7 @@ Item {
                 WorldButton {objectName:"personalLifeTab";iconApp:"leadership";visible:!!campaign.world.personalLife.cash;quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("My life");textSize:desktop.textSize;onClicked:desktop.openApp("leadership","personal","tablet")}
                 WorldButton {objectName:"headquartersTab";iconApp:"facilities";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Headquarters");textSize:desktop.textSize;onClicked:desktop.openApp("facilities","","laptop")}
                 WorldButton {objectName:"labTab";iconApp:"lab";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Lab");textSize:desktop.textSize;onClicked:desktop.openApp("lab","research","laptop")}
-                WorldButton {objectName:"inboxTab";iconApp:"inbox";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("News & decisions");textSize:desktop.textSize;onClicked:desktop.openApp("inbox","","phone")}
+                WorldButton {objectName:"inboxTab";iconApp:"inbox";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("News & decisions");textSize:desktop.textSize;onClicked:desktop.journalRequested()}
                 WorldButton {objectName:"mapTab";iconApp:"society";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Map");textSize:desktop.textSize;checked:desktop.place==="map";onClicked:desktop.showMap(desktop.nav.scale || "hq")}
                 WorldButton {objectName:"devicesButton";iconApp:"devices";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Devices & apps");textSize:desktop.textSize;onClicked:desktop.launcherRequested()}
             }

@@ -7,6 +7,7 @@ ColumnLayout {
     property var participants: []
     property int textSize: 14
     property bool reducedMotion: true
+    readonly property bool profileOpen: profile.visible
     readonly property real windowHeight: ApplicationWindow.window ? ApplicationWindow.window.height : 800
     readonly property bool compact: windowHeight < textSize * 24
     readonly property real portraitEdge: compact ? Math.max(48, Math.min(textSize * 4, windowHeight * 0.15)) : textSize * 6
@@ -23,8 +24,9 @@ ColumnLayout {
                 required property var modelData
                 width: strip.compact ? strip.width : Math.min(strip.width, strip.textSize * 11)
                 height: strip.compact ? Math.max(strip.portraitEdge, labels.implicitHeight) : strip.portraitEdge + 4 + labels.implicitHeight
-                function inspect() { profile.person = modelData; profile.open() }
+                function inspect(button) { profile.returnFocus = button; profile.person = modelData; profile.open() }
                 EmployeePortrait {
+                    id: portrait
                     objectName: "decisionParticipant_" + entry.modelData.id
                     x: strip.compact ? 0 : (parent.width - width) / 2
                     width: strip.portraitEdge
@@ -33,7 +35,7 @@ ColumnLayout {
                     portraitSource: entry.modelData.portrait || ""
                     personName: entry.modelData.name || ""
                     reducedMotion: strip.reducedMotion
-                    onClicked: entry.inspect()
+                    onClicked: entry.inspect(portrait)
                 }
                 AbstractButton {
                     id: monogram
@@ -52,7 +54,7 @@ ColumnLayout {
                         color: "#f0e6d3"
                     }
                     background: Rectangle { radius: 10; color: monogram.hovered ? "#3b5e58" : "#294841"; border.color: monogram.visualFocus ? "#f1d196" : "#819c8e"; border.width: monogram.visualFocus ? 2 : 1 }
-                    onClicked: entry.inspect()
+                    onClicked: entry.inspect(monogram)
                 }
                 Column {
                     id: labels
@@ -66,5 +68,11 @@ ColumnLayout {
             }
         }
     }
-    PersonProfileDialog { id: profile; objectName: "decisionProfileDialog"; textSize: strip.textSize }
+    PersonProfileDialog {
+        id: profile
+        objectName: "decisionProfileDialog"
+        textSize: strip.textSize
+        property Item returnFocus
+        onClosed: if (strip.visible && returnFocus) returnFocus.forceActiveFocus(Qt.OtherFocusReason)
+    }
 }

@@ -66,6 +66,14 @@ FocusScope {
         else story.setField(beatId, id)
         if (opening.multiSelect) {
             menuAudio.select()
+            // Choosing a club updates the available choices and can rebuild
+            // their delegates. Return keyboard focus to the toggled club.
+            Qt.callLater(() => {
+                const index = decisions.rows.findIndex(option => option.id === id)
+                const choice = choiceOptions.itemAt(index)
+                if (choice && choice.visible && choice.enabled)
+                    choice.forceActiveFocus(Qt.OtherFocusReason)
+            })
             return
         }
         advance()
@@ -218,6 +226,7 @@ FocusScope {
                         columns: width < opening.typeSize * 17 ? 1 : rows.length >= 3 && width >= opening.typeSize * 44 ? 3 : 2
                         rowSpacing: opening.compact ? 6 : 14; columnSpacing: rowSpacing
                         Repeater {
+                            id: choiceOptions
                             model: decisions.rows
                             AbstractButton {
                                 id: choice
@@ -236,7 +245,7 @@ FocusScope {
                                     if (!activeFocus) return
                                     const view = choiceView.contentItem
                                     const top = mapToItem(view.contentItem, 0, 0).y
-                                    if (top < view.contentY) view.contentY = top
+                                    if (height >= view.height || top < view.contentY) view.contentY = top
                                     else if (top + height > view.contentY + view.height)
                                         view.contentY = top + height - view.height
                                 }

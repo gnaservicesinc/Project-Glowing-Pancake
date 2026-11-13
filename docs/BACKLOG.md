@@ -1,6 +1,6 @@
 # Feedback and later-phase backlog
 
-Updated 2026-11-11
+Updated 2026-11-13
 
 **The initial skeleton implementation queue is closed.** The current core is
 the starting point for human feedback. Work now follows the user's selected
@@ -19,6 +19,13 @@ The AI work starts from LoomFactory's measured native custom graph lessons.
 Implemented the first F-07 batch with the age-100 boundary, unscored player
 campaigns and a newspaper reporting dated company/world/lab/person/choice
 records. Focused ending/save and native compact report checks pass.
+
+The player journal now stays reachable without a working device, with a pinned
+review action in other apps, date ordering, full-text search and explicit
+offer outcomes. A supplier term follow-up is saved with the accepted decision.
+The newspaper opens at the ending; early company closure has its own headline.
+The updated school-to-company path and the compact decision/restart path pass
+native walkthroughs.
 
 Reviewed resignation now combines a reason, PR angle and approved successor.
 Profit/research claims have saved dated evidence and contradicted claims affect

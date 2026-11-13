@@ -39,6 +39,7 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
     const bool obituary=world.founding && completed && age==100;
     const bool voluntary=world.objectives && world.objectives->end &&
         world.objectives->end->cause==runtime::CampaignEndCause::retirement;
+    const bool chapter_closed=world.objectives && world.objectives->end && !completed && !voluntary;
     QVariantList articles;
     const auto article=[&](const QString& id,const QString& title,const QStringList& paragraphs) {
         if(!paragraphs.empty()) articles.push_back(QVariantMap{{"id",id},{"title",title},{"paragraphs",paragraphs}});
@@ -64,10 +65,19 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
         company_record.push_back(QStringLiteral("Under the %1 bylaws, its commitments included %2.").arg(text(charter->name),text(charter->priorities)));
     if(state.lab) company_record.push_back(QStringLiteral("The lab's record contains %1 publications and %2 trained models.")
         .arg(state.lab->publications.size()).arg(state.lab->models.size()));
-    if(world.objectives && world.objectives->end && !completed && !voluntary)
-        company_record.push_back(world.objectives->end->cause==runtime::CampaignEndCause::insolvency?
-            QStringLiteral("The company's operations closed following an unresolved financial workout."):
-            QStringLiteral("The company's operating chapter ended before the planned retrospective."));
+    if(chapter_closed) {
+        switch(world.objectives->end->cause) {
+        case runtime::CampaignEndCause::insolvency:
+            company_record.push_back(QStringLiteral("The company's operations closed after its deadline to settle overdue obligations passed."));
+            break;
+        case runtime::CampaignEndCause::institutional_control:
+            company_record.push_back(QStringLiteral("The founder lost the last right to direct the company. Its ownership and obligations remain in the record."));
+            break;
+        default:
+            company_record.push_back(QStringLiteral("The founder's chapter at the company ended before the planned retrospective."));
+            break;
+        }
+    }
     article("company",QStringLiteral("A company and its commitments"),company_record);
 
     QStringList world_record;
@@ -195,7 +205,9 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
     article("choices",QStringLiteral("Decisions in the public record"),choices);
     return {{"obituary",obituary},{"date",date(day)},{"masthead",QStringLiteral("THE WORLD REGISTER")},
         {"headline",obituary?QStringLiteral("%1 dies at 100").arg(name):
-            voluntary?QStringLiteral("%1 looks back at %2").arg(name).arg(age):QStringLiteral("%1 — a life in progress").arg(name)},
+            voluntary?QStringLiteral("%1 looks back at %2").arg(name).arg(age):
+            chapter_closed?QStringLiteral("%1’s chapter at %2 closes").arg(name,company):
+            QStringLiteral("%1 — a life in progress").arg(name)},
         {"deck",world.founding?QStringLiteral("1997–%1 · %2").arg(core::from_ordinal(day).year).arg(company):company},
         {"articles",articles}};
 }

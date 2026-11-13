@@ -80,6 +80,10 @@ The [supplier example](examples/supplier-event.example.json) demonstrates a trig
 
 Baseline detectors and story layers share a source occurrence/receipt. Declare whether a story replaces its presentation or follows it; neither path may reapply the system result. News may report only known committed results, with uncertainty disclosed. Seeded world incidents need explicit eligibility, chance, bounds, cooldown and expiry; they do not invent an effect solely to justify a headline.
 
+For news and result text, start with a short headline on its own line followed
+by the body. The journal uses that first line to label the item and keeps the
+body in its detail. Dialogue uses its separate title and body fields.
+
 ## Visual production
 
 Use silhouettes and restrained scene colors as the game's visual language.

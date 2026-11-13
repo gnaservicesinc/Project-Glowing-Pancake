@@ -90,13 +90,13 @@
     }
   ],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "eaf8130dd6258827d0f5c961578b9e277f2e12415091208f89a88fb508d6090e",
+  "collection_hash": "13a8a3fb0b2948d672d8553446611ac77ae8bded536e889d671fa168aa772e44",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.74.0-dev.3",
+  "content_version": "0.75.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -701,20 +701,20 @@
     {
       "id": "civic.election_briefing",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "affa684257f46f0dec6854553bcdb84a022895f77ca01616a707b5cb82869d54"
+      "revision": 2,
+      "semantic_hash": "a8c6de3324b9637f15d8d1043be1558dce3665ed8132072bdf899edec455bf20"
     },
     {
       "id": "civic.implementation_briefing",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "df7ac5015ecd35bc39bb25c986b8e0610b9ecdfb4aa0555447ce43bf0f16b5f6"
+      "revision": 2,
+      "semantic_hash": "0449efd9944ade4727cc4c307a4533ac1114020a6f939fea4443826a05cc7a9f"
     },
     {
       "id": "deployment.incident_news",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "8f4ddfaaf76b4659a1bae36645a75824f86bfab7fd9210aad73ab3fd9c957ddf"
+      "revision": 2,
+      "semantic_hash": "fbacc34f89d63578f8521bb7fa3766ccf26fbf0b0e37f91c685a2c85f88b571b"
     },
     {
       "id": "frontier.agi_notice",
@@ -797,8 +797,8 @@
     {
       "id": "operations.site_outcome",
       "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "dfe7fbb1820c429ba0d4134830c85cb4d886da085598fc372f3cd8ae2caaff60"
+      "revision": 2,
+      "semantic_hash": "e8ef84992882e80d498513768233d2b375e421d2a79f01b40862523ccf71350e"
     },
     {
       "id": "research.attention_systems",
@@ -1235,50 +1235,50 @@
     {
       "id": "slice.evaluation_finding",
       "kind": "flow",
-      "revision": 2,
-      "semantic_hash": "ce14e5439b12d379b3844b6ee7a31ee7770ee1d87b7e448195dbf8185a91330d"
+      "revision": 3,
+      "semantic_hash": "12497a5e34c533ec50280f106b123cb503e5669a0d2bcce340be5806f4a5d426"
     },
     {
       "id": "slice.liquidity_warning",
       "kind": "flow",
-      "revision": 2,
-      "semantic_hash": "71e546eae0071614c3330b18760ad9d105e8aef2cd68605c576382942701e682"
+      "revision": 3,
+      "semantic_hash": "ba9dcec791252b1ecbe01c2609355785be9ecbc8aac720a75abdc8df3ecf6010"
     },
     {
       "id": "slice.market_shift",
       "kind": "flow",
-      "revision": 2,
-      "semantic_hash": "b877097cb7b411a69a161d7197f7e59ed16e20a00394058c103955497b52899f"
+      "revision": 3,
+      "semantic_hash": "44e87ddc49162f5f6bd2d9ecd51ca7a3b7e596c4c719ed9337ef4d5356133223"
     },
     {
       "id": "slice.pilot_result",
       "kind": "flow",
-      "revision": 2,
-      "semantic_hash": "e96868f307017c43996d00ce25caf547e88c41cd6a445d7c91acdce8f6d26256"
+      "revision": 3,
+      "semantic_hash": "0d6885f8a69b88dc4a77ce62dd8e46a9fcec7bc628dadbf67b1743d4e0067430"
     },
     {
       "id": "slice.recovery_opportunity",
       "kind": "flow",
-      "revision": 4,
-      "semantic_hash": "13122a769a611994ea240a1c8cfb8c4a71cde0cd0e30d820458c2d576dcb11e4"
+      "revision": 5,
+      "semantic_hash": "82c2d9ae15fd614a968f6d13a693c77d854d3fb111153af2c2b99345c5abc579"
     },
     {
       "id": "slice.research_milestone",
       "kind": "flow",
-      "revision": 2,
-      "semantic_hash": "49f2315c2a996e2ed0c182a9db873eb1b9fb502ec7b1f93c5a049883b8e3fd6b"
+      "revision": 3,
+      "semantic_hash": "ac3b0b12e7a61b6f05babadcd8d61ec5ad2ec6ba0c9b1d710b0b718670aa1bb9"
     },
     {
       "id": "slice.rival_notice",
       "kind": "flow",
-      "revision": 2,
-      "semantic_hash": "3ca9126b9133b2a820cc2ab285e043f95c56a3eee1e57391601cc9badeb372c8"
+      "revision": 3,
+      "semantic_hash": "f50fa4ea9fc0b463594c2eb0b5eb666e7a82d94570c7e15ab1254862fb8a18cf"
     },
     {
       "id": "slice.supplier_offer",
       "kind": "flow",
-      "revision": 4,
-      "semantic_hash": "d9fc08a17c05b6a66d6a446d60841dfd009a7664b9b914883aa2e9930eea6093"
+      "revision": 5,
+      "semantic_hash": "043357fd72561f922262b9b5483d86046341c261521f3b55eaa44e5b7703ad4d"
     },
     {
       "id": "society.century",
@@ -1313,8 +1313,8 @@
     {
       "id": "story.after_the_vote",
       "kind": "flow",
-      "revision": 2,
-      "semantic_hash": "e1443234b393c6b76ef07044b5e8460a7b9a0b97d700417629134b095e319f56"
+      "revision": 3,
+      "semantic_hash": "4bbef4b43bd164be38ad2489347348ba951afd32742340ade5b67ff5ab0c7965"
     },
     {
       "id": "story.cedar_delivery_review",
@@ -1331,14 +1331,14 @@
     {
       "id": "story.harbormark_continuity",
       "kind": "flow",
-      "revision": 2,
-      "semantic_hash": "cc11919a424af3b8151a321a689227c0ac8a2ddb5bfabd2d36530cc734b1c36b"
+      "revision": 3,
+      "semantic_hash": "ed6853a6b7d330fc571e937bd612ac34dd9de21dccaa4f90061aec91aeefc588"
     },
     {
       "id": "story.morrow_cooperative",
       "kind": "flow",
-      "revision": 2,
-      "semantic_hash": "79fe50d01533f8504b1e16b89a9dad97851b2d187ab327c20f74d85aaf163459"
+      "revision": 3,
+      "semantic_hash": "92d570b5995e8a822c3df99941ec4d3661a3a54bfade7c2e6a2d1f90e6f0cd33"
     },
     {
       "id": "story.willow_council",
@@ -1348,8 +1348,8 @@
     }
   ],
   "format": 1,
-  "generation": 78,
-  "messages_hash": "b7322ccfd3c86415aaa72c4f874c5cd1019c7dd9cc095eba78f273b8eda6ffd0",
+  "generation": 79,
+  "messages_hash": "f79cbc598ad67720637d8b94ff3347567a032ff18098bc3380b7f8bc5dfb3bad",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
     "scenario.century_frontier": [
@@ -1823,5 +1823,5 @@
       "deployment.incident_news"
     ]
   },
-  "source_hash": "2a5827faaca89062feaa0694b41033162e6ec5d493020678962197b89ac4fb72"
+  "source_hash": "8a328720882afaa61337560b33c3a35e81eef2e978ee48da49b77039cad48422"
 }

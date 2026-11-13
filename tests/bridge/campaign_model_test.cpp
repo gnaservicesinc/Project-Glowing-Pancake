@@ -134,6 +134,21 @@ void filtered_inbox() {
     check(std::isfinite(inbox.anchorOffset()),"Invalid scroll offset must not poison viewport restoration");
     check(inbox.indexOf(QStringLiteral("absent")) == -1 && inbox.row(QStringLiteral("absent")).isEmpty() && inbox.idAt(-1).isEmpty(),
           "Absent selection references must be safe presentation queries");
+    auto old=row("digest:old","Early digest");
+    old.sort_date="2015-01-01";
+    old.detail="A repair was finished.";
+    auto recent=row("digest:new","Later digest");
+    recent.sort_date="2022-07-01";
+    recent.detail="A test exposed a local coverage gap.";
+    auto urgent=row("alert:old","Required response","Waiting",true);
+    urgent.sort_date="2015-01-01";
+    inbox.setSortByTitle(false);
+    inbox.setRows({old,recent,urgent});
+    check(inbox.idAt(0)==urgent.entity_id && inbox.idAt(1)==recent.entity_id,
+          "The journal should show required items first, then the newest news.");
+    inbox.setFilterText("coverage gap");
+    check(inbox.rowCount()==1 && inbox.selectedId()==recent.entity_id,
+          "Search must find text inside an article even when its headline does not match.");
 }
 }
 int main(int argc,char* argv[]) {

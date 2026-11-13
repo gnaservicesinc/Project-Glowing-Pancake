@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.74.0-dev.3",
+  "content_version": "0.75.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -6727,7 +6727,7 @@
           "kind": "end"
         }
       },
-      "revision": 1,
+      "revision": 2,
       "scope": "world",
       "tags": [
         "base_event",
@@ -6761,7 +6761,7 @@
           "kind": "end"
         }
       },
-      "revision": 1,
+      "revision": 2,
       "scope": "world",
       "tags": [
         "base_event",
@@ -6796,7 +6796,7 @@
         }
       },
       "on_committed": "deployment.incident_outcome",
-      "revision": 1,
+      "revision": 2,
       "scope": "company",
       "tags": [
         "base_event",
@@ -15162,7 +15162,7 @@
         }
       },
       "on_committed": "infrastructure.site_outcome",
-      "revision": 1,
+      "revision": 2,
       "scope": "company",
       "tags": [
         "base_event",
@@ -98835,7 +98835,7 @@
         }
       },
       "on_committed": "lab.evaluation_finding",
-      "revision": 2,
+      "revision": 3,
       "scope": "company",
       "tags": [
         "base_event",
@@ -98881,7 +98881,7 @@
           "text_key": "slice.finance.recovered"
         }
       },
-      "revision": 2,
+      "revision": 3,
       "scope": "company",
       "tags": [
         "base_event",
@@ -98988,7 +98988,7 @@
           "next": "expired"
         }
       },
-      "revision": 2,
+      "revision": 3,
       "scope": "company",
       "tags": [
         "base_event",
@@ -99033,7 +99033,7 @@
         }
       },
       "on_committed": "market.pilot_outcome",
-      "revision": 2,
+      "revision": 3,
       "scope": "company",
       "tags": [
         "base_event",
@@ -99077,7 +99077,7 @@
             {
               "id": "decline",
               "label_key": "slice.recovery.decline",
-              "next": "end"
+              "next": "declined"
             }
           ],
           "default_choice_if_dismissed": "decline",
@@ -99098,6 +99098,12 @@
           "text_key": "slice.recovery.text",
           "title_key": "slice.recovery.title"
         },
+        "declined": {
+          "kind": "result",
+          "next": "end",
+          "show_committed_changes": true,
+          "text_key": "slice.recovery.declined"
+        },
         "end": {
           "kind": "end"
         },
@@ -99108,7 +99114,7 @@
           "text_key": "slice.recovery.accepted"
         }
       },
-      "revision": 4,
+      "revision": 5,
       "scope": "company",
       "tags": [
         "base_event",
@@ -99163,7 +99169,7 @@
         }
       },
       "on_committed": "lab.research_completed",
-      "revision": 2,
+      "revision": 3,
       "scope": "company",
       "tags": [
         "base_event",
@@ -99211,7 +99217,7 @@
           "next": "end"
         }
       },
-      "revision": 2,
+      "revision": 3,
       "scope": "company",
       "tags": [
         "base_event",
@@ -99270,7 +99276,7 @@
             {
               "id": "decline",
               "label_key": "slice.supplier.decline",
-              "next": "end"
+              "next": "declined"
             }
           ],
           "default_choice_if_dismissed": "decline",
@@ -99291,12 +99297,28 @@
           "text_key": "slice.supplier.text",
           "title_key": "slice.supplier.title"
         },
+        "declined": {
+          "kind": "result",
+          "next": "end",
+          "show_committed_changes": true,
+          "text_key": "slice.supplier.declined"
+        },
         "end": {
           "kind": "end"
         },
+        "expiry": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "slice.supplier.expired"
+        },
+        "lease_term": {
+          "duration_days": 180,
+          "kind": "delay",
+          "next": "expiry"
+        },
         "result": {
           "kind": "result",
-          "next": "end",
+          "next": "lease_term",
           "show_committed_changes": true,
           "text_key": "slice.supplier.accepted"
         },
@@ -99317,7 +99339,7 @@
           "stream": "markets"
         }
       },
-      "revision": 4,
+      "revision": 5,
       "scope": "company",
       "tags": [
         "base_event",
@@ -100277,7 +100299,7 @@
           "next": "followup"
         }
       },
-      "revision": 2,
+      "revision": 3,
       "scope": "company",
       "tags": [
         "story",
@@ -100607,7 +100629,7 @@
           "next": "followup"
         }
       },
-      "revision": 2,
+      "revision": 3,
       "scope": "company",
       "tags": [
         "story",
@@ -100706,7 +100728,7 @@
           "next": "followup"
         }
       },
-      "revision": 2,
+      "revision": 3,
       "scope": "company",
       "tags": [
         "story",
@@ -100977,9 +100999,9 @@
     "century.research_data.restricted_archive.body": "A research archive has different rights\nAt least one acquired archive is research-only. An experiment with it can be informative. For commercial deployment, train a separate checkpoint from cleared sources and commission its own evaluation.",
     "century.research_data.rights_ledger.body": "Separate the release and study mixtures\nThe company owns both open and research-only data. Keep an exportable release candidate with a cleared mixture and retain the research-only checkpoint for private comparison.",
     "century.research_data.scan_shortfall.body": "The evaluation leaves a repairable gap\nAt least one independent report lists a concrete limitation. The Lab offers complementary scan and table corpora. A fresh test or a narrower promise can keep existing customers served while you investigate.",
-    "civic.election_briefing": "The election count is in. Open Civic for the seat breakdown, economic inputs and dates when the new terms begin.",
-    "civic.implementation_briefing": "A policy completed agency implementation today. Open Civic for the effective jurisdiction, eligibility rules and expiration.",
-    "deployment.incident.news": "A deployment incident reached a new stage. Open Office Services to review containment, customer compensation and recovery.",
+    "civic.election_briefing": "Election results are published\nThe election count is in. Open Civic for the seat breakdown, economic inputs and dates when the new terms begin.",
+    "civic.implementation_briefing": "A new policy takes effect\nA policy completed agency implementation today. Open Civic for the effective jurisdiction, eligibility rules and expiration.",
+    "deployment.incident.news": "A service incident reaches a new stage\nA deployment incident reached a new stage. Open Office Services to review containment, customer compensation and recovery.",
     "frontier.agi_notice.body": "Independent game AGI assessment. Three independent observation windows established the fictional game AGI criteria for a deployed system.",
     "frontier.asi_notice.body": "Independent game ASI evidence. Independent panels and three physically replicated improvements established the fictional game ASI criteria.",
     "frontier.conditional_era.body": "The conditional future. Energy, cooperation and research now shape technology availability. Review the scenario conditions in Frontier.",
@@ -100995,7 +101017,7 @@
     "life.mission.resignation.title": "A desk goes quiet",
     "life.mission.rival.body": "The mission change has turned personal. You can find the conversation in the social circle.",
     "life.mission.rival.title": "A promise broken",
-    "operations.site.outcome": "Operations recorded a site outcome. Review its cause, current capacity and recovery terms in Operations.",
+    "operations.site.outcome": "An owned site reports a change\nOperations recorded a site outcome. Review its cause, current capacity and recovery terms in Operations.",
     "research.compute.batched_serving.detail": "Schedule compatible requests together to reduce the compute reserved by new releases of the efficient recipe.",
     "research.compute.batched_serving.title": "Batched inference",
     "research.compute.fabric_qos.detail": "Unlocks additional memory-first and fabric v1 racks.",
@@ -101092,31 +101114,34 @@
     "research.public.replication_handbook.title": "External replication handbook",
     "research.public.translated_tables.detail": "Measure layout coverage across alternate public forms.",
     "research.public.translated_tables.title": "Translated public forms",
-    "slice.demand.decrease": "A fictional business spending cycle lowers discretionary enterprise demand by 20% for 30 days. Existing signed task promises remain protected.",
-    "slice.demand.expired": "The temporary demand condition has expired. Base demand resumes; completed work and settled bills are unchanged.",
-    "slice.demand.increase": "A fictional business spending cycle raises enterprise demand by 20% for 30 days. Customer budgets and existing signed commitments do not change.",
-    "slice.evaluation.finding": "Held-out evidence found a task limitation. Read the named subgroup result in the Lab. Compare the available consented scans ($8,000), paid retraining and a fresh test, or limit the product promise. Opening this report buys nothing.",
-    "slice.finance.recovered": "The warned obligations have been resolved. Past expenses and the original response window remain in the accounts.",
-    "slice.finance.workout": "An actual liquidity warning opened a 30-day response window. Review unpaid obligations, cash commitments and financing. This alert does not reset the deadline.",
-    "slice.pilot.outcome": "Customer settlement recorded. The attached cause reports actual delivery or a missed start. Fees, credits and penalties are already in the accounts; this bulletin creates no second payment.",
-    "slice.recovery.accept": "Accept disclosed terms",
-    "slice.recovery.accepted": "The narrower pilot is active. Actual useful work, fees and service credits will flow through the ordinary market and accounts.",
-    "slice.recovery.decline": "Decline without a commitment",
+    "slice.demand.decrease": "Enterprise customers defer purchases\nA fictional business spending cycle lowers discretionary enterprise demand by 20% for 30 days. Existing signed task promises remain protected.",
+    "slice.demand.expired": "Enterprise demand returns to its baseline\nThe temporary demand condition has expired. Base demand resumes; completed work and settled bills are unchanged.",
+    "slice.demand.increase": "Enterprise customers bring purchases forward\nA fictional business spending cycle raises enterprise demand by 20% for 30 days. Customer budgets and existing signed commitments do not change.",
+    "slice.evaluation.finding": "An independent test exposes a gap\nHeld-out evidence found a task limitation. Read the named subgroup result in the Lab. Compare the available consented scans ($8,000), paid retraining and a fresh test, or limit the product promise. Opening this report buys nothing.",
+    "slice.finance.recovered": "The overdue bills have been settled\nThe warned obligations have been resolved. Past expenses and the original response window remain in the accounts.",
+    "slice.finance.workout": "Unpaid bills open a response window\nAn actual liquidity warning opened a 30-day response window. Review unpaid obligations, cash commitments and financing. This alert does not reset the deadline.",
+    "slice.pilot.outcome": "A customer pilot reaches settlement\nCustomer settlement recorded. The attached cause reports actual delivery or a missed start. Fees, credits and penalties are already in the accounts; this bulletin creates no second payment.",
+    "slice.recovery.accept": "Commit to the 90-day pilot",
+    "slice.recovery.accepted": "The customer confirmed the narrower pilot\nThe contract is active. Actual work, fees and any credits for shortfalls will appear in Markets and Accounts.",
+    "slice.recovery.decline": "Pass on the pilot",
+    "slice.recovery.declined": "The customer will seek another supplier\nYour company made no new delivery commitment and received no payment.",
     "slice.recovery.text": "A customer offers a 90-day document-only pilot: 500 useful tasks/day for $45,000/month. It needs an eligible available product, protected serving capacity and existing support. Acceptance starts real service today; payment follows actual delivery. No setup payment or new capital is granted.",
     "slice.recovery.title": "A narrower pilot",
-    "slice.research.completed": "Research completed. The new method unlocks its listed recipes or evaluation options; this bulletin grants no additional research.",
-    "slice.rival.notice": "A competitor has a new public development. Check the visible company notices and any dated warning. Private scores and research plans are not disclosed. A heavyweight warning provides at least 90 days before its financed work can start.",
-    "slice.supplier.accept": "Accept disclosed terms",
-    "slice.supplier.accepted": "The lease is signed. Its source, setup expense, monthly obligation and expiry are recorded. Declining would have created no commitment.",
-    "slice.supplier.decline": "Decline without a commitment",
-    "slice.supplier.text": "Optional: 30 CU/day for 180 days, $1,000 setup and $4,000 per calendar month including power. This adds a separate source; it does not replace or refund the initial lease. Capacity ends at the disclosed expiry.",
-    "slice.supplier.title": "A smaller cloud lease",
+    "slice.research.completed": "The lab finishes a research milestone\nResearch completed. The new method unlocks its listed recipes or evaluation options; this bulletin grants no additional research.",
+    "slice.rival.notice": "A competitor makes a public move\nA competitor has a new public development. Check the visible company notices and any dated warning. Private scores and research plans are not disclosed. A heavyweight warning provides at least 90 days before its financed work can start.",
+    "slice.supplier.accept": "Sign the 180-day lease",
+    "slice.supplier.accepted": "The cloud supplier countersigned\nYour company paid the $1,000 setup fee and added a temporary source. Operations lists the expiry; Accounts lists the monthly obligation.",
+    "slice.supplier.decline": "Decline and keep current capacity",
+    "slice.supplier.declined": "The cloud offer was declined\nThe supplier kept the rack. Your company made no payment and took on no new obligation.",
+    "slice.supplier.expired": "The supplier’s original term is up\nThe original 180-day term is over. Check Operations to see whether a renewal went through, and review any unfinished Lab work assigned to this source.",
+    "slice.supplier.text": "The cloud supplier has a rack coming free. The offer gives you 30 CU/day for 180 days, including power, for $1,000 now and $4,000 per calendar month, prorated. Your current lease stays in place. The extra capacity ends automatically after 180 days; any work still assigned to it will need another source.",
+    "slice.supplier.title": "A spare rack comes up for lease",
     "society.forum_briefing": "The standards forum has a dated update. Review each member’s support, implementation date and expiration in World. Effective agent access requires the disclosed independent lower bound; a report and redeployment can restore eligibility.",
     "society.monthly_briefing": "Regional work has settled. World shows actual delivery, public-service access, energy demand and concentration. Welfare changes follow the published lag; population-weighted values and each region are shown separately.",
     "story.after_the_vote.accept": "Schedule the first-month review",
     "story.after_the_vote.body": "A completed handover put a new executive in office. The board secretary asks whether to review the first month’s budget alongside the inherited customer and regional obligations. The founder trust and signed terms remain in their own records.",
     "story.after_the_vote.decline": "Use the existing board calendar",
-    "story.after_the_vote.followup": "The board’s first-month review is due. Compare paid salaries, signed obligations and the new voting authority in Leadership and Office.",
+    "story.after_the_vote.followup": "The new executive’s first review is due\nThe board’s first-month review is due. Compare paid salaries, signed obligations and the new voting authority in Leadership and Office.",
     "story.after_the_vote.result": "The first-month review reminder is recorded.",
     "story.after_the_vote.title": "The new term inherits the work",
     "story.cedar_delivery_review.accept": "Schedule the ledger reminder",
@@ -101133,13 +101158,13 @@
     "story.harbormark_continuity.accept": "Schedule a two-week check",
     "story.harbormark_continuity.body": "“When the repair finished, we still needed the backup operator,” says Maren Pell from Harbormark’s field desk. At least one replica is ready and a repair is on record. Record a follow-up check of the reserved backup source and the service it protects.",
     "story.harbormark_continuity.decline": "Keep the current log",
-    "story.harbormark_continuity.followup": "Harbormark continuity review is due. Verify that the replica still matches the deployment and inspect its reservation beside any wholesale commitments.",
+    "story.harbormark_continuity.followup": "Harbormark is waiting for its backup review\nHarbormark continuity review is due. Verify that the replica still matches the deployment and inspect its reservation beside any wholesale commitments.",
     "story.harbormark_continuity.result": "A continuity review reminder is recorded.",
     "story.harbormark_continuity.title": "Harbormark wants the backup handover in writing",
     "story.morrow_cooperative.accept": "Lease the 60-day allocation",
     "story.morrow_cooperative.body": "Morrow Cooperative can lend a spare slice of its lab for 60 days. The offer includes power and 16 CU per day, with $1,200 setup and $1,600 per calendar month, prorated. It is a fixed term with no automatic renewal.",
     "story.morrow_cooperative.decline": "Keep current capacity",
-    "story.morrow_cooperative.followup": "The original cooperative allocation reached the end of its term. Check where any long-running work is now placed and confirm your next capacity plan.",
+    "story.morrow_cooperative.followup": "Morrow’s lease term has ended\nThe original cooperative allocation reached the end of its term. Check where any long-running work is now placed and confirm your next capacity plan.",
     "story.morrow_cooperative.result": "The cooperative lease was accepted. The finite allocation and charges are recorded in Operations and Finance.",
     "story.morrow_cooperative.title": "A cooperative read your methods",
     "story.willow_council.accept": "Schedule an evidence review",

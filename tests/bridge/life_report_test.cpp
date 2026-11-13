@@ -109,8 +109,10 @@ int main(int argc,char** argv) {
             "The obituary must use the founder's actual birth date and name.");
         end.day=core::to_ordinal({2016,1,1});
         end.cause=runtime::CampaignEndCause::insolvency;
-        check(!bridge::lifeReport(obituary,installed).value("obituary").toBool(),
-            "A company closure must never fabricate the founder's death.");
+        const auto closure=bridge::lifeReport(obituary,installed);
+        check(!closure.value("obituary").toBool() && closure.value("headline").toString().contains("Cedar Works") &&
+            closure.value("headline").toString().endsWith("closes"),
+            "A closure must name the company chapter without reporting the founder's death.");
         end.cause=runtime::CampaignEndCause::retirement;
         const auto voluntary=bridge::lifeReport(obituary,installed);
         check(!voluntary.value("obituary").toBool() && voluntary.value("headline").toString()=="Alex Vale looks back at 19",

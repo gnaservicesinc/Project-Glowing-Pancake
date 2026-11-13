@@ -548,37 +548,63 @@ void schedule_decision_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             if(campaign.requiredKind()=="site") {campaign.acknowledgeSiteAlert();return;}
             if(++state->days>30) {fail("Normal supplier decision did not arrive");return;}
             campaign.step();return;
-        case 3: if(click("inboxTab")) ++state->phase;return;
+        case 3:
+            if (!state->resumed) {
+                const auto inventory=campaign.world()->deviceInventory();
+                const auto powered=std::ranges::find_if(inventory,[](const auto& value) {return value.toMap().value("powered").toBool();});
+                if (powered!=inventory.end()) {
+                    campaign.world()->powerDevice(powered->toMap().value("id").toString(),false);
+                    return;
+                }
+            }
+            campaign.clearNotice();
+            if(click("hudDecisionButton")) ++state->phase;
+            return;
         case 4: {
+            auto* heading=find(window.contentItem(),"flowDecisionHeading");
+            auto* viewport=find(window.contentItem(),"managementScroll");
+            if(!heading || !viewport || !heading->hasActiveFocus() ||
+                heading->mapToItem(viewport,QPointF{}).y() < -1 ||
+                heading->mapToItem(viewport,QPointF{0,heading->height()}).y() > viewport->height()+1 ||
+                campaign.world()->navigation().value("app")!="inbox" ||
+                !campaign.world()->navigation().value("device").toString().isEmpty() || campaign.canPlay() ||
+                campaign.world()->appAvailable("inbox","phone")) {fail("Focused journal must open with all devices powered off");return;}
             const auto rows=campaign.requiredParticipants();
             if(rows.size()!=2 || rows.front().toMap().value("portrait")!=campaign.world()->founder().value("portrait") || rows.back().toMap().value("name").toString().isEmpty()) {fail("Explicit founder and counterparty cast");return;}
             if(campaign.requiredText().contains("Morrow Cooperative") || campaign.requiredText().contains("Independent compute lab term")) {fail("Supplier review included unrelated future offers");return;}
-            capture("-cast");state->before=campaign.snapshot();if(click("decisionParticipant_founder")) ++state->phase;return;
+            capture("-decision");state->before=campaign.snapshot();if(click("decisionParticipant_founder")) ++state->phase;return;
         }
         case 5: {
             auto* dialog=window.findChild<QObject*>("decisionProfileDialog");
             if(!dialog || !dialog->property("visible").toBool() || campaign.snapshot()->checkpoint!=state->before->checkpoint) {fail("Profile inspection changed the pending decision or RNG");return;}
-            capture("-profile");if(!press(window,buttonText(window.contentItem(),QStringLiteral("Close")))) {fail("Close the founder profile by keyboard");return;}++state->phase;return;
+            capture("-profile");QTest::keyClick(&window,Qt::Key_Escape);++state->phase;return;
         }
         case 6: {
-            capture("-cast");
+            if(window.property("menuVisible").toBool()) {fail("Escape should close the profile, leaving the decision open");return;}
             const auto name=("decisionParticipant_"+campaign.requiredParticipants().back().toMap().value("id").toString()).toUtf8();
             if(click(name.constData())) ++state->phase;return;
         }
         case 7: {
             auto* dialog=window.findChild<QObject*>("decisionProfileDialog");
             if(!dialog || !dialog->property("visible").toBool() || dialog->property("person").toMap().value("name")!=campaign.requiredParticipants().back().toMap().value("name") || campaign.snapshot()->checkpoint!=state->before->checkpoint) {fail("Counterparty inspection changed the pending decision");return;}
-            capture("-counterparty");if(!press(window,buttonText(window.contentItem(),QStringLiteral("Close")))) {fail("Close the counterparty profile by keyboard");return;}++state->phase;return;
+            capture("-counterparty");if(click("closePersonProfile")) ++state->phase;return;
         }
         case 8:
             if(!state->resumed) {
                 std::cout<<"Decision cast and profile interaction passed; required choice retained for automatic restart\n";
                 timer->stop();QCoreApplication::exit(0);return;
             }
+            if(!find(window.contentItem(),"appDecisionButton")) {fail("Pinned decision action missing");return;}
             if(click("flowChoice_decline")) ++state->phase;return;
         default:
             if(campaign.requiredKind()=="content") {fail("Keyboard choice did not commit");return;}
-            std::cout<<"Decision cast resumed exactly; profile inspection and keyboard decline passed\n";
+            campaign.inbox()->setFilterText(QStringLiteral("took on no new obligation"));
+            if(campaign.inbox()->rowCount()!=1 ||
+                campaign.inbox()->selectedRow().value("title")!=QStringLiteral("The cloud offer was declined") ||
+                campaign.snapshot()->checkpoint.world.simulation.cash!=state->before->checkpoint.world.simulation.cash) {
+                fail("Decline receipt must be searchable and carry no expense");return;
+            }
+            std::cout<<"Device-independent journal, profile keyboard recovery, saved pending decision and searchable decline outcome passed\n";
             timer->stop();QCoreApplication::exit(0);return;
         }
     });timer->start();

@@ -197,10 +197,16 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                            control->height()>control->implicitHeight()+1) {
                             fail("Every choice must fit its content and be reachable in the same scene");return;
                         }
+                        if(!control->isEnabled()) {
+                            if(control->property("detail").toString().isEmpty()) {
+                                fail("An unavailable choice must explain why it is locked");return;
+                            }
+                            continue;
+                        }
                         control->forceActiveFocus(Qt::TabFocusReason);
                         const auto bounds=control->mapRectToScene({0,0,control->width(),control->height()});
                         if (!scroll_bounds.adjusted(-1,-1,1,1).contains(bounds)) {
-                            fail("Keyboard focus must reveal the complete choice");return;
+                            fail("Keyboard focus must reveal the complete choice: "+option.value("id").toString());return;
                         }
                     }
                     if(!capture(".choices-"+id+"-compact")) {fail("Enlarged choice layout");return;}

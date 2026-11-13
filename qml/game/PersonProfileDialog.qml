@@ -12,7 +12,17 @@ GameDialog {
         width:Math.min(profileDialog.textSize*48,Overlay.overlay.width-32)
         height:Math.min(implicitHeight,maximumHeight)
         modal:true;focus:true;title:person.name || qsTr("Employee profile")
-        standardButtons:Dialog.Close
+        footer: DialogButtonBox {
+            alignment: Qt.AlignRight
+            padding: 12
+            WorldButton {
+                objectName: "closePersonProfile"
+                text: qsTr("Close")
+                textSize: profileDialog.textSize
+                onClicked: profileDialog.close()
+            }
+            background: Item {}
+        }
         header:Label {
             text:profileDialog.title;textFormat:Text.PlainText;wrapMode:Text.Wrap
             font.pixelSize:profileDialog.textSize;font.bold:true

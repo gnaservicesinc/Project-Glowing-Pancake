@@ -40,18 +40,38 @@ ApplicationWindow {
     property bool startupRouted: false
     property string activeDevice: "laptop"
     readonly property string appTitle: room === "leadership" && campaign.world.navigation.section === "personal" ? qsTr("Personal life") : room === "people" && campaign.world.navigation.section === "messages" ? qsTr("Messages") : ({devices:qsTr("Equipment"),office:qsTr("Company"),people:qsTr("People"),
-        facilities:qsTr("Headquarters"),lab:qsTr("Research notebook"),inbox:qsTr("News & decisions"),
+        facilities:qsTr("Headquarters"),lab:qsTr("Research notebook"),inbox:activeDevice ? qsTr("News & decisions") : qsTr("Journal"),
         operations:qsTr("Infrastructure & travel"),civic:qsTr("Public affairs"),society:qsTr("World affairs"),
         institutions:qsTr("Institutions"),frontier:qsTr("Frontier"),leadership:qsTr("Leadership & retirement"),
         objectives:qsTr("World & legacy")})[room] || room
     function openApp(app, section, device) {
-        if (!campaign.world.navigate(campaign.world.navigation.place || "workspace", campaign.world.navigation.scale || "hq", device || "laptop", app, section || "")) return false
+        if (!campaign.world.navigate(campaign.world.navigation.place || "workspace", campaign.world.navigation.scale || "hq",
+                                     device === undefined ? "laptop" : device, app, section || "")) return false
         restoreNavigation()
         return true
     }
     function closeApp() {
         deviceOpen = false
         campaign.world.navigate(campaign.world.navigation.place || "workspace", campaign.world.navigation.scale || "hq", "", "", "")
+    }
+    function openJournal() {
+        if (!openApp("inbox", "", "")) return
+        Qt.callLater(() => {
+            if (campaign.requiredKind !== "none") window.revealDecision()
+            else if (scroll.contentItem) scroll.contentItem.contentY = 0
+        })
+    }
+    function revealDecision() {
+        if (!requiredPanel.visible) return
+        if (flowDecision.visible) scroll.reveal(flowDecision.focusHeading())
+        else {
+            requiredHeading.forceActiveFocus(Qt.OtherFocusReason)
+            scroll.reveal(requiredHeading)
+        }
+    }
+    function openNewspaper() {
+        if (!openApp("objectives", "", "")) return
+        Qt.callLater(() => scroll.reveal(objectivesPanel.focusRetrospective()))
     }
     function restoreNavigation() {
         const nav = campaign.world.navigation
@@ -144,7 +164,7 @@ ApplicationWindow {
     Shortcut {
         objectName:"gameEscapeShortcut"
         sequence: "Escape"
-        enabled: !saveDialog.visible && !loadDialog.visible && !originalContentDialog.visible && !originalContentReview.visible && !restartDialog.visible && !musicCredits.visible && !cancelDialog.visible && !exitDialog.visible && !deviceHome.visible && !frontMenu.auxiliaryDialogOpen
+        enabled: !saveDialog.visible && !loadDialog.visible && !originalContentDialog.visible && !originalContentReview.visible && !restartDialog.visible && !musicCredits.visible && !cancelDialog.visible && !exitDialog.visible && !deviceHome.visible && !frontMenu.auxiliaryDialogOpen && !flowDecision.profileOpen && !requiredParticipants.profileOpen
         onActivated: {
             if (!window.menuVisible) window.openMainMenu()
             else if (frontMenu.page !== "home") frontMenu.home()
@@ -155,10 +175,7 @@ ApplicationWindow {
     Connections {
         target: campaign
         function onCareerRetrospectiveReady() {
-            Qt.callLater(() => {
-                window.openApp("objectives", "", "laptop")
-                Qt.callLater(() => scroll.reveal(objectivesPanel.focusRetrospective()))
-            })
+            if (!window.menuVisible && !exitDialog.visible) Qt.callLater(window.openNewspaper)
         }
         function onStateChanged() {
             window.routeStartup(); window.syncOverlayPause()
@@ -166,6 +183,8 @@ ApplicationWindow {
         }
         function onSettingsChanged() { window.applyDisplayPreferences() }
         function onCommandFinished(accepted, explanation) {
+            if (!accepted && !window.menuVisible && requiredPanel.visible && operationNotice.visible)
+                Qt.callLater(() => scroll.reveal(operationNotice))
             if (window.pendingMenuSettings) {
                 window.pendingMenuSettings = false
                 frontMenu.message = accepted ? qsTr("Settings saved.") : explanation
@@ -192,6 +211,8 @@ ApplicationWindow {
         enabled: visible
         textSize: window.textSize
         onOpenApp: (app,section,device) => window.openApp(app,section,device)
+        onJournalRequested: window.openJournal()
+        onNewspaperRequested: window.openNewspaper()
         onLauncherRequested: deviceHome.showFor(window.activeDevice)
     }
     DeviceHome {
@@ -405,14 +426,15 @@ ApplicationWindow {
         enabled: visible
         kind: window.activeDevice || "desktop"
         textSize: window.textSize
-        readonly property int sideInset: window.height < window.textSize*24 ? 6 : 14
+        readonly property bool compactChrome: window.height < window.textSize*24
+        readonly property int sideInset: compactChrome ? 6 : 14
         readonly property bool narrowContent: width < 1030
         width: Math.min(parent.width - 2*sideInset, kind === "phone" ? textSize*34 : parent.width)
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        anchors.topMargin: campaign.welcome || window.height < window.textSize*24 ? 6 : worldDesktop.headerHeight + 4
-        anchors.bottomMargin: campaign.welcome ? 8 : worldDesktop.footerHeight + 4
+        anchors.topMargin: campaign.welcome || compactChrome ? 6 : worldDesktop.headerHeight + 4
+        anchors.bottomMargin: campaign.welcome || compactChrome ? 8 : worldDesktop.footerHeight + 4
 
         ColumnLayout {
             anchors.fill: parent
@@ -420,61 +442,81 @@ ApplicationWindow {
             Rectangle {
                 objectName: "deviceApplicationBar"
                 Layout.fillWidth: true
-                implicitHeight: appBar.implicitHeight+10
+                implicitHeight: appChrome.implicitHeight+10
                 color: "#203449"
-                RowLayout {
-                    id: appBar
+                ColumnLayout {
+                    id: appChrome
                     anchors.fill: parent
                     anchors.margins: 5
-                    spacing: 9
-                    WorldButton {
-                        objectName: "deviceHomeButton"
-                        text: qsTr("Desktop")
-                        textSize: window.textSize
-                        visible: !campaign.welcome
-                        onClicked: deviceHome.showFor(window.activeDevice)
-                    }
-                    DeviceGlyph {
-                        visible: appBar.width>window.textSize*29
-                        Layout.preferredWidth: window.textSize*1.6
-                        Layout.preferredHeight: Layout.preferredWidth
-                        app: window.room
-                    }
-                    ColumnLayout {
+                    spacing: 5
+                    RowLayout {
+                        id: appBar
                         Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        spacing: 2
-                        Label {
-                            Layout.fillWidth: true
-                            text: window.appTitle
-                            textFormat: Text.PlainText
-                            elide: Text.ElideRight
-                            font.pixelSize: window.textSize
-                            font.bold: true
-                            color: "#f2e7cd"
+                        spacing: 9
+                        WorldButton {
+                            objectName: "deviceHomeButton"
+                            text: window.activeDevice ? qsTr("Desktop") : qsTr("Apps")
+                            textSize: window.textSize
+                            padding: deviceWindow.compactChrome ? 10 : Math.max(12, font.pixelSize * 0.85)
+                            visible: !campaign.welcome
+                            onClicked: deviceHome.showFor(window.activeDevice)
                         }
-                        Label {
+                        DeviceGlyph {
+                            visible: appBar.width>window.textSize*29
+                            Layout.preferredWidth: window.textSize*1.6
+                            Layout.preferredHeight: Layout.preferredWidth
+                            app: window.room
+                        }
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            visible: appBar.width>window.textSize*31
-                            text: qsTr("Pancake Desktop · %1").arg(campaign.date)
-                            elide: Text.ElideRight
-                            font.pixelSize: window.textSize*0.75
-                            color: "#aac6b9"
+                            Layout.minimumWidth: 0
+                            spacing: 2
+                            Label {
+                                Layout.fillWidth: true
+                                text: window.appTitle
+                                textFormat: Text.PlainText
+                                elide: Text.ElideRight
+                                font.pixelSize: window.textSize
+                                font.bold: true
+                                color: "#f2e7cd"
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                visible: appBar.width>window.textSize*31
+                                text: qsTr("Pancake Desktop · %1").arg(campaign.date)
+                                elide: Text.ElideRight
+                                font.pixelSize: window.textSize*0.75
+                                color: "#aac6b9"
+                            }
+                        }
+                        WorldButton {
+                            objectName: "deviceTimeButton"
+                            visible: !campaign.welcome && deviceWindow.compactChrome
+                            text: qsTr("Time")
+                            textSize: window.textSize
+                            padding: 10
+                            onClicked: worldDesktop.openTime()
+                        }
+                        WorldButton {
+                            objectName: "closeDeviceButton"
+                            text: appBar.width<window.textSize*36 ? qsTr("Close") : qsTr("Return to world")
+                            Accessible.name: qsTr("Return to world")
+                            textSize: window.textSize
+                            padding: deviceWindow.compactChrome ? 10 : Math.max(12, font.pixelSize * 0.85)
+                            onClicked:window.closeApp()
                         }
                     }
                     WorldButton {
-                        objectName: "deviceTimeButton"
-                        visible: !campaign.welcome && window.height<window.textSize*24
-                        text: qsTr("Time")
+                        objectName: "appDecisionButton"
+                        Layout.fillWidth: true
+                        visible: !campaign.welcome && (campaign.requiredKind !== "none" ||
+                            (campaign.objectives.ended && campaign.objectives.retrospective && window.room !== "objectives"))
+                        text: campaign.requiredKind !== "none" ? qsTr("Decision waiting · review") : qsTr("Read the newspaper")
+                        hint: campaign.requiredKind !== "none" ? campaign.requiredTitle : ""
                         textSize: window.textSize
-                        onClicked: worldDesktop.openTime()
-                    }
-                    WorldButton {
-                        objectName: "closeDeviceButton"
-                        text: appBar.width<window.textSize*36 ? qsTr("Close") : qsTr("Return to world")
-                        Accessible.name: qsTr("Return to world")
-                        textSize: window.textSize
-                        onClicked:window.closeApp()
+                        padding: deviceWindow.compactChrome ? 8 : Math.max(12, font.pixelSize * 0.85)
+                        primary: true
+                        onClicked: campaign.requiredKind !== "none" ? window.revealDecision() : window.openNewspaper()
                     }
                 }
             }
@@ -521,21 +563,43 @@ ApplicationWindow {
                     spacing: 8
 
                     Panel {
+                        id: operationNotice
+                        objectName: "operationNotice"
+                        readonly property bool revealAtTop: true
+                        visible: !campaign.welcome && campaign.notice.length > 0
+                        contentItem: ColumnLayout {
+                            Copy { text: campaign.notice }
+                            Action { text: qsTr("Dismiss"); visible: !campaign.storageBlocked; onClicked: { campaign.clearNotice(); window.revealDecision() } }
+                            Action { text: qsTr("Retry saving"); visible: campaign.storageBlocked && !campaign.needsOriginalContent; enabled: !campaign.busy; onClicked: campaign.retryPersistence() }
+                            Action { text: qsTr("Restore original rules…"); visible: campaign.needsOriginalContent; onClicked: window.locateOriginalContent() }
+                        }
+                    }
+                    Panel {
+                        id: requiredPanel
                         objectName: "requiredPanel"
                         visible: !campaign.welcome && campaign.requiredKind !== "none"
                         contentItem: ColumnLayout {
-                            DecisionParticipants {Layout.fillWidth:true;participants:campaign.requiredParticipants;textSize:window.textSize;reducedMotion:campaign.reducedMotion}
                             FlowPresentation {
+                                id: flowDecision
                                 Layout.fillWidth: true
                                 visible: campaign.requiredKind === "content"
                                 heading: campaign.requiredTitle
                                 detail: campaign.requiredText
                                 choices: campaign.requiredChoices
-                                enabled: !campaign.busy
+                                participants: campaign.requiredParticipants
+                                textSize: window.textSize
+                                enabled: !campaign.busy && !campaign.storageBlocked
                                 onChosen: choiceId => campaign.choose(choiceId)
                             }
-                            Heading { visible: campaign.requiredKind !== "content"; text: campaign.requiredTitle }
+                            Heading {
+                                id: requiredHeading
+                                readonly property bool revealAtTop: true
+                                Accessible.role: Accessible.Heading
+                                visible: campaign.requiredKind !== "content"
+                                text: campaign.requiredTitle
+                            }
                             Copy { visible: campaign.requiredKind !== "content"; text: campaign.requiredText }
+                            DecisionParticipants {id: requiredParticipants;visible: campaign.requiredKind !== "content" && participants.length > 0;Layout.fillWidth:true;participants:campaign.requiredParticipants;textSize:window.textSize;reducedMotion:campaign.reducedMotion}
                             Flow {
                                 Layout.fillWidth: true
                                 spacing: 6
@@ -578,7 +642,7 @@ ApplicationWindow {
                                 Action {
                                     objectName: "openInstitutionNotice"; text: qsTr("Open dispute")
                                     visible: campaign.requiredKind === "institution" || campaign.requiredKind === "executive"
-                                    onClicked: { window.room = "institutions"; institutionsPanel.showDisputes() }
+                                    onClicked: { if (window.openApp("institutions", "", "laptop") && window.room === "institutions") institutionsPanel.showDisputes() }
                                 }
                                 Action {
                                     objectName: "acknowledgeInstitutionalNotice"; text: qsTr("Acknowledge notice")
@@ -589,7 +653,7 @@ ApplicationWindow {
                                 Action {
                                     objectName: "openLeadershipNotice"; text: qsTr("Open Leadership")
                                     visible: campaign.requiredKind === "leadership"
-                                    onClicked: window.room = "leadership"
+                                    onClicked: window.openApp("leadership", "", "laptop")
                                 }
                                 Action {
                                     objectName: "acknowledgeLeadershipNotice"; text: qsTr("Acknowledge leadership notice")
@@ -600,7 +664,7 @@ ApplicationWindow {
                                 Action {
                                     objectName: "openObjectivePostmortem"; text: qsTr("Open postmortem")
                                     visible: campaign.requiredKind === "objective"
-                                    onClicked: window.room = "objectives"
+                                    onClicked: window.openApp("objectives", "", "laptop")
                                 }
                                 Action {
                                     objectName: "continueAfterObjectiveBreach"; text: qsTr("Continue scored play")
@@ -611,10 +675,8 @@ ApplicationWindow {
                             }
                         }
                     }
-
-
                     Panel {
-                        visible: campaign.notice.length > 0
+                        visible: campaign.welcome && campaign.notice.length > 0
                         contentItem: RowLayout {
                             Copy { text: campaign.notice }
                             Action { text: qsTr("Dismiss"); onClicked: campaign.clearNotice() }
@@ -909,7 +971,7 @@ ApplicationWindow {
                         contentItem: ColumnLayout {
                             Heading { text: qsTr("Campaign outcome recorded") }
                             Copy { text: campaign.objectives.overview }
-                            Action { text: campaign.objectives.retrospective ? qsTr("Read the newspaper") : qsTr("Review objectives and postmortem"); onClicked: window.room = "objectives" }
+                            Action { text: campaign.objectives.retrospective ? qsTr("Read the newspaper") : qsTr("Review objectives and postmortem"); onClicked: campaign.objectives.retrospective ? window.openNewspaper() : window.openApp("objectives", "", "laptop") }
                         }
                     }
                     Panel {
@@ -984,7 +1046,7 @@ ApplicationWindow {
                                 Copy { text: campaign.capacityText }
                                 Action {
                                     text: qsTr("Review inbox (%1)").arg(campaign.inbox.count)
-                                    onClicked: window.room = "inbox"
+                                    onClicked: window.openJournal()
                                 }
                             }
                         }
@@ -994,8 +1056,9 @@ ApplicationWindow {
                             Layout.alignment: Qt.AlignTop
                             Layout.preferredWidth: 5
                             contentItem: ColumnLayout {
-                                Heading { text: window.room === "lab" ? qsTr("Lab projects") : qsTr("Inbox") }
-                                RowLayout {
+                                Heading { text: window.room === "lab" ? qsTr("Lab projects") : qsTr("Campaign journal") }
+                                ColumnLayout {
+                                    Layout.fillWidth: true
                                     GameField {
                                         objectName: "projectSearch"
                                         Layout.fillWidth: true
@@ -1009,23 +1072,28 @@ ApplicationWindow {
                                         objectName: "inboxSearch"
                                         Layout.fillWidth: true
                                         visible: window.room === "inbox"
-                                        placeholderText: qsTr("Filter inbox")
+                                        placeholderText: qsTr("Search headlines and event text")
                                         Accessible.name: placeholderText
                                         font.pixelSize: window.textSize
+                                        text: campaign.inbox.filterText
                                         onTextEdited: campaign.inbox.filterText = text
                                     }
-                                    Action {
-                                        visible: window.room === "inbox" && !deviceWindow.narrowContent
-                                        text: qsTr("Required only")
-                                        checked: campaign.inbox.requiredOnly
-                                        onClicked: campaign.inbox.requiredOnly = !campaign.inbox.requiredOnly
-                                    }
-                                    Action {
-                                        text: qsTr("Sort A–Z")
-                                        checked: window.room === "lab" ? campaign.projects.sortByTitle : campaign.inbox.sortByTitle
-                                        onClicked: {
-                                            const rows = window.room === "lab" ? campaign.projects : campaign.inbox
-                                            rows.sortByTitle = !rows.sortByTitle
+                                    Flow {
+                                        Layout.fillWidth: true
+                                        spacing: 6
+                                        Action {
+                                            visible: window.room === "inbox"
+                                            text: qsTr("Required only")
+                                            checked: campaign.inbox.requiredOnly
+                                            onClicked: campaign.inbox.requiredOnly = !campaign.inbox.requiredOnly
+                                        }
+                                        Action {
+                                            text: qsTr("Sort A–Z")
+                                            checked: window.room === "lab" ? campaign.projects.sortByTitle : campaign.inbox.sortByTitle
+                                            onClicked: {
+                                                const rows = window.room === "lab" ? campaign.projects : campaign.inbox
+                                                rows.sortByTitle = !rows.sortByTitle
+                                            }
                                         }
                                     }
                                 }

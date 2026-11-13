@@ -83,10 +83,19 @@ the device. On short displays, **Time** opens the clock controls. Open **Map →
 State** and select a state to see its outline and neighboring boundaries.
 Select a county on the map or in the county list to read its local conditions.
 
+**Review decision** opens the campaign journal from the world even if every
+device is off. In an open app, **Decision waiting · review** brings the pending
+choice into view. Time stays paused until you answer. The journal puts required
+items first and shows the latest dated news underneath. Search looks inside
+articles as well as headlines. You can revisit the response you chose and any
+recorded outcome, such as a declined offer or a later lease term review.
+
 **World & legacy** opens a newspaper edition drawn from the current company,
 industry, world and relationship records. Use its section buttons to read
 Company, World, Other labs, People and Choices. At the founder's age-100
-boundary, the edition becomes an obituary. The development scenarios' earlier
+boundary, the edition opens as an obituary. An early company closure reports
+the company chapter instead. **Read the newspaper** reopens the edition from
+the workspace. The development scenarios' earlier
 scored acceptance records below are historical.
 
 **Leadership** lets you prepare a successor and build a resignation statement

@@ -91,8 +91,11 @@ OperationResult Campaign::operate(
         }
     }
     if(runtime::observing_world(after.world)) return {std::move(outcome),{},false};
-    if(runtime::objective_time_stopped(after.world))
-        return {std::move(outcome),{},true,ended?std::optional<std::string>{"Campaign outcome is ready in Objectives."}:std::nullopt};
+    if(runtime::objective_time_stopped(after.world)) {
+        const bool newspaper=after.world.objectives->mode==runtime::ObjectiveMode::retrospective;
+        return {std::move(outcome),{},true,ended?std::optional<std::string>{newspaper?
+            "A new edition is ready in World & legacy.":"Campaign outcome is ready in Objectives."}:std::nullopt};
+    }
     if(const auto breach=runtime::required_objective_review(after.world))
         return {std::move(outcome),{},true,runtime::objective_breach_explanation(after.world,*breach)};
     const bool liquidity_halt = after.world.simulation.liquidity &&

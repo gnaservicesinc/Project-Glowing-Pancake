@@ -8,8 +8,8 @@
 #include <stdexcept>
 
 namespace pgp::bridge {
-StableListModel::StableListModel(QObject* parent, bool required_first)
-    : QAbstractListModel(parent), required_first_(required_first) {}
+StableListModel::StableListModel(QObject* parent, bool journal)
+    : QAbstractListModel(parent), journal_(journal) {}
 int StableListModel::rowCount(const QModelIndex& parent) const {
     return parent.isValid() ? 0 : static_cast<int>(rows_.size());
 }
@@ -75,12 +75,14 @@ std::vector<CampaignRow> StableListModel::visibleRows(const std::vector<Campaign
     for (const auto& value : rows) {
         if (required_only_ && !value.required) continue;
         if (!filter_text_.isEmpty() && !value.title.contains(filter_text_,Qt::CaseInsensitive) &&
-            !value.subtitle.contains(filter_text_,Qt::CaseInsensitive) && !value.status.contains(filter_text_,Qt::CaseInsensitive)) continue;
+            !value.subtitle.contains(filter_text_,Qt::CaseInsensitive) && !value.status.contains(filter_text_,Qt::CaseInsensitive) &&
+            (!journal_ || !value.detail.contains(filter_text_,Qt::CaseInsensitive))) continue;
         visible.push_back(value);
     }
     std::sort(visible.begin(),visible.end(),[&](const auto& left,const auto& right) {
-        if (required_first_ && left.required != right.required) return left.required;
+        if (journal_ && left.required != right.required) return left.required;
         if (sort_by_title_ && left.title != right.title) return left.title < right.title;
+        if (journal_ && left.sort_date != right.sort_date) return left.sort_date > right.sort_date;
         return left.entity_id < right.entity_id;
     });
     return visible;
@@ -137,6 +139,7 @@ void StableListModel::reconcile(std::vector<CampaignRow> desired) {
             if (current.status != desired[i].status) changed.push_back(StatusRole);
             if (current.fields != desired[i].fields) changed.push_back(FieldsRole);
             if (current.required != desired[i].required) { changed.push_back(RequiredRole); changed.push_back(ActionableRole); }
+            current.sort_date = desired[i].sort_date;
             if (!changed.empty()) {
                 current = std::move(desired[i]);
                 emit dataChanged(index(target),index(target),changed);

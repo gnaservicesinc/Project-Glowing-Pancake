@@ -92,35 +92,43 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const 
     std::vector<CampaignRow> rows;
     for (const auto& row : checkpoint.runtime.presentations) {
         if (row.kind == runtime::PresentationKind::news) continue;
-        rows.push_back({QStringLiteral("flow:") + integer(row.id),presentation_heading(row,collection),text(core::iso_date(row.day)),
-            presentation_detail(checkpoint,row,&collection),row.kind == runtime::PresentationKind::dialogue && !row.resolved ? QStringLiteral("Response required") : QStringLiteral("Recorded"),
-            row.kind == runtime::PresentationKind::dialogue && !row.resolved});
+        const auto day=text(core::iso_date(row.day));
+        const bool pending=row.kind == runtime::PresentationKind::dialogue && !row.resolved;
+        rows.push_back({QStringLiteral("flow:%1").arg(row.id,20,10,QLatin1Char('0')),presentation_heading(row,collection),day,
+            presentation_detail(checkpoint,row,&collection),pending?QStringLiteral("Response required"):
+            row.kind==runtime::PresentationKind::result?QStringLiteral("Outcome"):QStringLiteral("Answered"),pending,{},day});
     }
     constexpr std::size_t headlines_per_part = 8;
     for (const auto& [week, entries] : session::group_weekly_news(checkpoint)) {
         const auto date = text(core::iso_date(week));
-        const auto parts = (entries.size() + headlines_per_part - 1) / headlines_per_part;
-        for (std::size_t part = 0; part < parts; ++part) {
-            const auto first = part * headlines_per_part;
-            const auto limit = std::min(first + headlines_per_part, entries.size());
-            QString detail;
-            for (std::size_t index = first; index < limit; ++index) {
-                const auto& news = *entries[index];
-                if (!detail.isEmpty()) detail += QStringLiteral("\n\n");
-                detail += QStringLiteral("%1\n%2").arg(text(core::iso_date(news.day)), presentation_context(checkpoint, news,&collection));
-            }
-            const auto status = parts == 1 ? (entries.size() == 1 ? QStringLiteral("1 update") : QStringLiteral("%1 updates").arg(integer(entries.size()))) :
-                QStringLiteral("Part %1 of %2 · %3 updates").arg(integer(part + 1), integer(parts), integer(entries.size()));
-            const auto id = QStringLiteral("digest:%1:%2").arg(date).arg(static_cast<qulonglong>(part), 5, 10, QLatin1Char('0'));
-            rows.push_back({id, QStringLiteral("Weekly news digest"), QStringLiteral("Week of %1").arg(date),
-                            std::move(detail), status, false});
+        QStringList headlines;
+        QString detail;
+        std::size_t part=0;
+        const auto publish=[&] {
+            if (headlines.isEmpty()) return;
+            const auto id=QStringLiteral("digest:%1:%2").arg(date).arg(static_cast<qulonglong>(part++),5,10,QLatin1Char('0'));
+            rows.push_back({id,headlines.front(),QStringLiteral("Weekly digest · %1").arg(date),std::move(detail),
+                headlines.size()==1?QStringLiteral("News"):QStringLiteral("%1 headlines").arg(headlines.size()),false,{},date});
+            headlines.clear();
+            detail.clear();
+        };
+        for (const auto* news : entries) {
+            const auto headline=presentation_heading(*news,collection);
+            const auto article=QStringLiteral("%1 · %2\n%3").arg(text(core::iso_date(news->day)),headline,
+                presentation_context(checkpoint,*news,&collection));
+            // Long but valid authored articles must not overflow a journal row.
+            if (headlines.size()==headlines_per_part || detail.size()+article.size()+2>16384) publish();
+            if (!detail.isEmpty()) detail+=QStringLiteral("\n\n");
+            headlines.push_back(headline);
+            detail+=article;
         }
+        publish();
     }
     const auto& state = checkpoint.world.simulation;
     if (state.management) for (const auto& n:state.management->notices)
         rows.push_back({QStringLiteral("management:")+text(n.id),readable(n.kind),text(core::iso_date(n.day))+(n.deadline?QStringLiteral(" · deadline ")+text(core::iso_date(*n.deadline)):QString{}),
             management.alertDetail(n),n.acknowledged?QStringLiteral("Acknowledged"):n.required?QStringLiteral("Required response"):QStringLiteral("Company alert"),n.required && !n.acknowledged,
-            {{QStringLiteral("noticeId"),text(n.id)},{QStringLiteral("acknowledged"),n.acknowledged}}});
+            {{QStringLiteral("noticeId"),text(n.id)},{QStringLiteral("acknowledged"),n.acknowledged}},text(core::iso_date(n.day))});
     if (state.liquidity) for (const auto& workout : state.liquidity->workouts) {
         const auto ended = workout.resolved_on.has_value() || workout.closed_on.has_value();
         QString status = workout.resolved_on ? QStringLiteral("Resolved") : workout.closed_on ? QStringLiteral("Closed") : QStringLiteral("Workout active");
@@ -128,7 +136,7 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const 
             text(core::iso_date(workout.warned_on)),
             QStringLiteral("%1\nInitial unpaid obligations: %2\nRespond by %3. Financing must be followed by payment; partial payments preserve this deadline.")
                 .arg(text(workout.trigger.cause),money(workout.initial_shortfall),text(core::iso_date(workout.deadline))),
-            status,!ended});
+            status,!ended,{},text(core::iso_date(workout.warned_on))});
     }
     return rows;
 }
@@ -267,9 +275,9 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     const bool first = !snapshot_;
     const bool replace = first || snapshot_->generation != snapshot->generation;
     const auto& ending=snapshot->checkpoint.world.objectives;
-    const bool voluntary_ending=!replace && snapshot_->checkpoint.world.objectives &&
+    const bool life_ending=!replace && snapshot_->checkpoint.world.objectives &&
         !snapshot_->checkpoint.world.objectives->end && ending && ending->end &&
-        ending->end->cause==runtime::CampaignEndCause::retirement;
+        ending->mode==runtime::ObjectiveMode::retrospective;
     if(snapshot->content || replace) active_content_=snapshot->content;
     const auto& content=activeProgram();
     auto projects = project_rows(snapshot->checkpoint);
@@ -291,7 +299,7 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     if (first) busy_ = false;
     if (changed_settings) emit settingsChanged();
     emit stateChanged(); emit snapshotChanged(); emit selectionChanged();
-    if(voluntary_ending) emit careerRetrospectiveReady();
+    if(life_ending) emit careerRetrospectiveReady();
 }
 bool CampaignController::canStartNew() const {
     return ready() && !busy_ && !storageBlocked() && (!currentCampaign() ||
@@ -507,7 +515,8 @@ QString CampaignController::availableText() const { return snapshot_ ? money(cor
 QString CampaignController::phaseText() const {
     if (!snapshot_) return QStringLiteral("Preparing");
     if(runtime::observing_world(snapshot_->checkpoint.world)) return paused()?QStringLiteral("Observer paused"):QStringLiteral("Observing");
-    if(runtime::objective_time_stopped(snapshot_->checkpoint.world)) return QStringLiteral("Campaign ended");
+    if(runtime::objective_time_stopped(snapshot_->checkpoint.world)) return tr("Final report ready");
+    if(requiredKind()!=QStringLiteral("none")) return tr("Decision required");
     switch (snapshot_->checkpoint.world.simulation.phase) {
     case core::DayPhase::opening: return QStringLiteral("Morning briefing");
     case core::DayPhase::awaiting_choice: return QStringLiteral("Decision required");

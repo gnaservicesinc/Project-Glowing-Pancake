@@ -1,6 +1,6 @@
 # Project status and next handoff
 
-Updated 2026-11-12
+Updated 2026-11-13
 
 ## Implementation progress
 
@@ -9,7 +9,25 @@ Updated 2026-11-12
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign advances content to **0.73.1-dev.1**, generation **75**.
+immersive redesign and journal update advance content to **0.75.0-dev.1**,
+generation **79**.
+
+## Campaign journal and founder walkthrough
+
+The journal opens from the world even if every device is off. An open app
+keeps a decision review button visible while the clock waits. Participants'
+profiles return keyboard focus to the decision. News uses authored headlines,
+the journal shows required items before dated news, and search includes article
+text. Supplier and recovery offers record declines, and a signed supplier
+offer schedules a follow-up at the original term boundary. The newspaper opens
+when a retrospective becomes available and distinguishes an early company
+closure from the founder's death.
+
+The native 650×480 walkthrough at 200% text resumed the pending offer in a
+second process and found the decline receipt without an expense. The founder
+walkthrough reached the paused company through the revised school arc, played
+the first day and checked fresh-save continuation. Content finalization passed
+24 prepared-opening save roundtrips; funded career re-entry remains open.
 
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as

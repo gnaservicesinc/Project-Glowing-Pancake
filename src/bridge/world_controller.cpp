@@ -145,7 +145,7 @@ bool WorldController::navigate(QString place,QString scale,QString device,QStrin
     if(!snapshot_ || !valid(next)) return false;
     if(place!="map" && std::ranges::none_of(rooms(),[&](const QVariant& row){return row.toMap().value("id")==place;})) return false;
     const auto& s=snapshot_->checkpoint.world.simulation;
-    if(app=="devices" || app.isEmpty() || companyArchive()) next["device"]="";
+    if(app=="devices" || app.isEmpty() || (app=="inbox" && device.isEmpty()) || companyArchive()) next["device"]="";
     else if(s.infrastructure && s.infrastructure->workplace && s.infrastructure->workplace->devices) {
         const auto resolved=core::resolve_app_device(s,device.toStdString(),app.toStdString(),atHeadquarters());
         if(resolved.empty()) {

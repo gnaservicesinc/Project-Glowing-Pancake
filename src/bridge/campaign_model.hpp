@@ -14,6 +14,8 @@ struct CampaignRow {
     QString status;
     bool required = false;
     QVariantMap fields{};
+    // Journal rows can carry a chronological key independently of their ID.
+    QString sort_date{};
     bool operator==(const CampaignRow&) const = default;
 };
 
@@ -35,7 +37,7 @@ public:
         StatusRole, RequiredRole, ActionableRole, FieldsRole
     };
     Q_ENUM(Role)
-    explicit StableListModel(QObject* parent = nullptr, bool required_first = false);
+    explicit StableListModel(QObject* parent = nullptr, bool journal = false);
     [[nodiscard]] int rowCount(const QModelIndex& parent = {}) const override;
     [[nodiscard]] QVariant data(const QModelIndex& index, int role) const override;
     [[nodiscard]] QHash<int,QByteArray> roleNames() const override;
@@ -81,7 +83,7 @@ private:
                        const QString& old_anchor, qreal old_offset);
     std::vector<CampaignRow> source_rows_;
     std::vector<CampaignRow> rows_;
-    const bool required_first_;
+    const bool journal_;
     bool sort_by_title_ = false;
     QString filter_text_;
     bool required_only_ = false;

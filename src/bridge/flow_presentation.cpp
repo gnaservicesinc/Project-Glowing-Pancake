@@ -13,6 +13,11 @@ const std::string* localized(const content::Collection& collection, std::string_
     locale.replace(QLatin1Char('_'), QLatin1Char('-'));
     return collection.message(key, locale.toStdString());
 }
+// Authored news can open with a short headline on its own line.
+bool has_news_headline(const QString& copy) {
+    const auto line = copy.indexOf(u'\n');
+    return line > 0 && line <= 120 && !copy.mid(line + 1).trimmed().isEmpty();
+}
 }
 QString cu(std::int64_t amount) {
     const auto whole = amount / 1000;
@@ -38,8 +43,18 @@ QString choice_label(const runtime::PresentedChoice& choice, const content::Coll
     return readable(choice.id);
 }
 QString presentation_heading(const runtime::Presentation& row, const content::Collection& collection) {
-    const auto* value=localized(collection,row.title_key);
-    return value?text(*value):presentation_title(row.kind);
+    if (!row.title_key.empty())
+        if (const auto* value=localized(collection,row.title_key)) return text(*value);
+    if (row.kind != runtime::PresentationKind::dialogue) {
+        if (const auto* value=localized(collection,row.text_key)) {
+            const auto copy=text(*value);
+            if (has_news_headline(copy)) return copy.section(u'\n',0,0);
+        }
+        if (row.kind == runtime::PresentationKind::result) return presentation_title(row.kind);
+        if (const auto* value=localized(collection,row.flow_id+".title")) return text(*value);
+        return readable(row.flow_id);
+    }
+    return presentation_title(row.kind);
 }
 QString presentation_title(runtime::PresentationKind kind) {
     if (kind == runtime::PresentationKind::dialogue) return QStringLiteral("Campaign decision");
@@ -53,6 +68,8 @@ QString presentation_context(const runtime::Checkpoint& checkpoint, const runtim
         if (localized != text(row.text_key)) context = localized;
     }
     if (collection) if (const auto* value=localized(*collection,row.text_key)) context=text(*value);
+    if (collection && row.kind != runtime::PresentationKind::dialogue && has_news_headline(context))
+        context=context.mid(context.indexOf(u'\n')+1).trimmed();
     const auto& activations = checkpoint.runtime.activations;
     const auto found = std::lower_bound(activations.begin(), activations.end(), row.activation_id,
         [](const auto& activation, std::uint64_t id) { return activation.id < id; });
@@ -69,7 +86,11 @@ QString presentation_detail(const runtime::Checkpoint& checkpoint, const runtime
     const auto context = presentation_context(checkpoint, row, collection);
     if (row.kind == runtime::PresentationKind::dialogue && !row.resolved)
         return QStringLiteral("%1\nA response is required before work continues. Review the available options.").arg(context);
-    if (!row.selected_choice.empty()) return QStringLiteral("%1\nSelected response: %2").arg(context,readable(row.selected_choice));
-    return QStringLiteral("%1\nThis briefing records a committed campaign outcome.").arg(context);
+    if (!row.selected_choice.empty()) {
+        const auto choice=std::ranges::find(row.choices,row.selected_choice,&runtime::PresentedChoice::id);
+        if (choice!=row.choices.end())
+            return QCoreApplication::translate("CampaignNews","%1\n\nYou chose: %2").arg(context,choice_label(*choice,collection));
+    }
+    return context;
 }
 } // namespace pgp::bridge
