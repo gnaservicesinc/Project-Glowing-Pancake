@@ -63,7 +63,7 @@ QString fitting_error(QQuickItem& item, const QRectF& viewport) {
 
 void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignController& campaign,
     pgp::persistence::LocalPaths paths, QString screenshot, bool partner) {
-    enum class Phase { launch, opening, birth, compact, questions, office, step, reload,
+    enum class Phase { launch, opening, birth, compact, questions, office, guide, step, reload,
         company_messages, select_contact, question_contact, verify_contact, done };
     struct State {
         Phase phase = Phase::launch;
@@ -437,7 +437,25 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             }
             state->opening = campaign.snapshot()->checkpoint;
             campaign.saveTo(QUrl::fromLocalFile(QString::fromStdU16String((paths.saves_directory / "founder-ui.pgpsave").u16string())));
-            state->phase = Phase::step;
+            state->phase = partner ? Phase::step : Phase::guide;
+            break;
+        }
+        case Phase::guide: {
+            if(!campaign.world()->navigate("workspace","hq","laptop","office","")) {fail("Open the first-company guide");return;}
+            auto* title=find_visible(window.contentItem(),"firstCompanyStepTitle");
+            if(!title || title->property("text")!="Set up a place to work" ||
+                !press(window,find_visible(window.contentItem(),"openFirstCompanyStep")) ||
+                campaign.world()->navigation().value("app")!="facilities" ||
+                campaign.world()->navigation().value("section")!="equipment" ||
+                campaign.snapshot()->checkpoint!=state->opening) {
+                fail("The empty office guide must open suppliers without committing resources");return;
+            }
+            if(!click("closeDeviceButton") || !click("worldFirstCompanyStep") ||
+                campaign.world()->navigation().value("app")!="facilities" ||
+                campaign.snapshot()->checkpoint!=state->opening) {
+                fail("The workspace shortcut must reach the same suppliers without changing the simulation");return;
+            }
+            state->phase=Phase::step;
             break;
         }
         case Phase::step:

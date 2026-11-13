@@ -99,8 +99,11 @@ QVariantList SuccessionController::departureMessages() const {
             const auto n=message.completed_effect[i];
             effects<<QStringLiteral("%1 %2%3/100").arg(text(society_audience_name(i)),n>=0?QStringLiteral("+"):QString{},QString::number(n/100.0,'f',2));
         }
+        const auto effectLabel=message.claim?tr("If the company record supports the claim and the handover completes: %1.").arg(effects.join(QStringLiteral(" · "))):
+            tr("After the handover completes: %1.").arg(effects.join(QStringLiteral(" · ")));
         rows.push_back(QVariantMap{{"id",text(message.id)},{"label",text(message.title)},
-            {"detail",text(message.copy)+QStringLiteral("\nCompany expense %1. After completion: %2. Confidence effects fade with the existing public-record memory; a delayed or cancelled announcement harms confidence.").arg(money(message.fee),effects.join(QStringLiteral(" · ")))}});
+            {"detail",text(message.copy)+tr("\nCompany expense %1. %2 A delayed or cancelled handover harms confidence.")
+                .arg(money(message.fee),effectLabel)}});
     }
     return rows;
 }

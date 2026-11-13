@@ -7,6 +7,7 @@ struct SimulationState;
 struct ResearchWorker {
     std::string id, name, unavailable;
     std::uint32_t skill = 0;
+    bool needs_workstation = false;
 };
 
 [[nodiscard]] bool workplace_research_enabled(const SimulationState &);

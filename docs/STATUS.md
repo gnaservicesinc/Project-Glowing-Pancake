@@ -29,6 +29,13 @@ walkthrough reached the paused company through the revised school arc, played
 the first day and checked fresh-save continuation. Content finalization passed
 24 prepared-opening save roundtrips; funded career re-entry remains open.
 
+The founder company now has a **Next step** shortcut in the workspace and
+contextual guidance in Company and Lab. The guide uses the actual equipment,
+staff and research state. In the native walkthrough, an empty HQ opened
+Suppliers through both entry points and paid equipment orders moved the guide
+to room setup. The guide leaves purchases, hiring and time in the player's
+hands.
+
 The detailed game design remains a reference for feedback and future work.
 Working-condition programs and other deeper mechanics previously proposed as
 next tasks are candidates for that review. The initial implementation queue

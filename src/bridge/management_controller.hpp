@@ -58,6 +58,7 @@ class ManagementController final : public QObject {
     Q_PROPERTY(bool corporateTaxAvailable READ corporateTaxAvailable NOTIFY changed)
     Q_PROPERTY(QVariantMap corporateTax READ corporateTax NOTIFY changed)
     Q_PROPERTY(QString guide READ guide NOTIFY changed)
+    Q_PROPERTY(QVariantMap firstCompanyStep READ firstCompanyStep NOTIFY changed)
     Q_PROPERTY(QString ending READ ending NOTIFY changed)
     Q_PROPERTY(bool plannedCompetition READ plannedCompetition NOTIFY changed)
     Q_PROPERTY(QString competitionSummary READ competitionSummary NOTIFY changed)
@@ -176,6 +177,7 @@ public:
     QVariantMap corporateTax() const;
     Q_INVOKABLE QVariantMap cashScenarios() const;
     QString guide() const;
+    QVariantMap firstCompanyStep() const;
     QString ending() const;
     Q_INVOKABLE QVariantMap dataMixPreview(QString recipe,QStringList data,QVariantMap weights,QString parent={}) const;
     Q_INVOKABLE QVariantMap trainingPreview(QString recipe,QString source,QStringList data,QString rate,QString staff,QString work,QString parent={},QVariantMap weights={}) const;

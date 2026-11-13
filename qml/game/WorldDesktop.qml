@@ -30,7 +30,10 @@ Item {
     signal launcherRequested()
     signal journalRequested()
     signal newspaperRequested()
+    signal firstStepRequested()
     readonly property bool newspaperReady: campaign.objectives.retrospective && campaign.objectives.ended
+    readonly property var firstStep: visible && campaign.showGuide && campaign.requiredKind === "none" &&
+        !newspaperReady && !furnishing && campaign.world.navigation.app === "" ? campaign.management.firstCompanyStep : ({})
     function visit(id) { campaign.world.navigate(id, nav.scale || "hq", "", "", "") }
     function placeApp() {return place==="lab" || place==="research_annex" || place==="evaluation_suite"?"lab":place==="meeting" || place==="collaboration"?"inbox":place==="compute"?"operations":"office"}
     function openPlace() {desktop.openApp(placeApp(),place==="evaluation_suite"?"evaluate":placeApp()==="lab"?"research":"",campaign.world.atHeadquarters && campaign.world.officeKind!=="home"?"desktop":"laptop")}
@@ -40,6 +43,11 @@ Item {
         else if(left+item.width>view.contentX+dockScroll.availableWidth) view.contentX=left+item.width-dockScroll.availableWidth
     }
     function openTime() { compactTime.open() }
+    function arrangeHeadquarters() {
+        if (!physicalHQ) return
+        furnishing = true
+        if (!campaign.paused) campaign.togglePaused()
+    }
     function showMap(scale) {campaign.world.navigate("map",scale,"","","")}
 
     Rectangle {
@@ -156,6 +164,15 @@ Item {
                 GameSelect {textSize:desktop.textSize;objectName:"speedControl";visible:!desktop.shortLayout;model:[1,10,30,60];currentIndex:model.indexOf(campaign.daysPerSecond);displayText:qsTr("%1 days/s").arg(campaign.daysPerSecond);Accessible.name:qsTr("Days per second");font.pixelSize:desktop.textSize;implicitWidth:desktop.textSize*9;onActivated:campaign.daysPerSecond=model[currentIndex]}
                 WorldButton {objectName:"hudDecisionButton";visible:campaign.requiredKind!=="none";text:qsTr("Review decision");hint:campaign.requiredTitle;textSize:desktop.textSize;primary:true;onClicked:desktop.journalRequested()}
                 WorldButton {objectName:"hudNewspaperButton";visible:desktop.newspaperReady;text:qsTr("Read the newspaper");textSize:desktop.textSize;primary:true;onClicked:desktop.newspaperRequested()}
+                WorldButton {
+                    objectName: "worldFirstCompanyStep"
+                    visible: !!desktop.firstStep.action
+                    enabled: !campaign.busy
+                    text: qsTr("Next step")
+                    hint: desktop.firstStep.title || ""
+                    textSize: desktop.textSize
+                    onClicked: desktop.firstStepRequested()
+                }
                 WorldButton {visible:!desktop.shortLayout;text:qsTr("Advance…");textSize:desktop.textSize;onClicked:advanceMenu.open()}
                 WorldButton {visible:desktop.shortLayout && campaign.requiredKind==="none" && !desktop.newspaperReady;text:qsTr("Time & funds");textSize:desktop.textSize;onClicked:compactTime.open()}
                 Label {visible:desktop.compact && !desktop.shortLayout;height:42*desktop.uiScale;text:qsTr("Available %1").arg(campaign.availableText);font.pixelSize:desktop.textSize;color:"#b7dfc7";verticalAlignment:Text.AlignVCenter}

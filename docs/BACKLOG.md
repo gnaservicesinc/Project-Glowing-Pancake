@@ -181,6 +181,10 @@ F-02/F-03 engineering checks do not constitute player acceptance.
 | 4 | F-04D: connected research and finite compute | Technology graph selection, staff work, actual equipment/lab prerequisites and bought/rented compute; replace arbitrary research fees. Implemented. The focused runtime and rendered tree checks pass, including power loss and fresh saves. |
 | 5 | F-04E: game interface, devices and state map | Implemented. Game-styled controls, a laptop desktop and compatible phone apps, and actual state outlines with selectable county briefings. Focused native and compact walkthroughs pass. Human interface review remains open. |
 
+The founder workspace and Company and Lab guides now link to a suggested action
+based on current equipment, staff and research. Native checks cover the empty
+HQ and the transition from ordering equipment to room setup.
+
 Current optimized Release playtest builds include **Playtest Environment → Reset local data**.
 It clears this game's local test data in one click, including when an incompatible
 save blocks play. Development saves have no compatibility requirement; do not

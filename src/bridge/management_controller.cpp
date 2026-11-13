@@ -5,6 +5,7 @@
 #include "governance_presentation.hpp"
 #include <pgp/core/company_finance.hpp>
 #include <pgp/core/integer_codec.hpp>
+#include <pgp/core/workplace_research.hpp>
 #include <pgp/runtime/authority.hpp>
 #include <pgp/runtime/competition.hpp>
 #include <pgp/runtime/scenario.hpp>
@@ -1337,6 +1338,88 @@ QVariantMap ManagementController::cashScenarios() const {
     } catch (const std::exception& error) {
         return {{QStringLiteral("error"),tr("Cash scenarios are unavailable for this snapshot. %1").arg(QString::fromUtf8(error.what()))}};
     }
+}
+QVariantMap ManagementController::firstCompanyStep() const {
+    if(!snapshot_ || !snapshot_->checkpoint.world.founding || !available() ||
+        runtime::objective_time_stopped(snapshot_->checkpoint.world)) return {};
+    const auto& s=state();
+    if(s.phase==core::DayPhase::closed || s.phase==core::DayPhase::finished) return {};
+    const auto step=[](QString title,QString detail,QString action,QString app,QString section={}) {
+        return QVariantMap{{"title",title},{"detail",detail},{"action",action},{"app",app},{"section",section}};
+    };
+    if(!s.lab->models.empty()) {
+        const auto& model=s.lab->models.back();
+        const auto work=std::ranges::find(s.capacity->projects,model.project_id,&core::CapacityProject::id);
+        if(work!=s.capacity->projects.end() && work->status==core::ProjectStatus::active && s.lab->evaluations.empty())
+            return step(tr("Let training finish"),
+                tr("Training is using the resources you assigned. Advance time to make progress, or inspect the project to see the work remaining."),
+                tr("View projects"),"lab","projects");
+    }
+    if(s.lab->research.empty() && s.lab->models.empty() && core::workplace_research_enabled(s) && s.infrastructure &&
+        s.infrastructure->workplace && s.infrastructure->workplace->headquarters) {
+        const auto& workers=core::research_workers(s);
+        const bool ready=std::ranges::any_of(workers,[](const auto& worker){return worker.unavailable.empty();});
+        const auto& hq=*s.infrastructure->workplace->headquarters;
+        const auto& equipment=s.infrastructure->catalog.workplace->headquarters->equipment;
+        if(!ready && std::ranges::any_of(workers,&core::ResearchWorker::needs_workstation) &&
+            core::furnished_hq_desks(s)>0 && core::hq_computer_available(s))
+            return step(tr("Assign a workspace"),
+                tr("A researcher is available but needs a working computer or an assigned desk. In Arrange headquarters, select the desk and review who uses it and which computer is mounted."),
+                tr("Arrange headquarters"),"arrange");
+        const auto ordered=[&](auto matches) {
+            return std::ranges::any_of(hq.items,[&](const auto& item) {
+                const auto offer=std::ranges::find(equipment,item.offer,&core::HQEquipmentOffer::id);
+                return offer!=equipment.end() && matches(offer->kind);
+            });
+        };
+        if(!ready && (!core::furnished_hq_desks(s) || !core::hq_computer_available(s))) {
+            if(!ordered([](const auto& kind){return kind=="desk";}) ||
+                !ordered([](const auto& kind){return core::hq_desk_device(kind) || core::hq_portable(kind);}))
+                return step(tr("Set up a place to work"),
+                    tr("Compare a desk and a computer in Suppliers. Check the delivery dates and your available funds. You can also review a short compute lease in Company → Compare offers."),
+                    tr("Open suppliers"),"facilities","equipment");
+            return step(tr("Get the workspace ready"),
+                tr("Check the delivery dates of your equipment. When it arrives, use Arrange headquarters to place a desk and mount a computer. Power it on, then assign the desk to the person who will use it."),
+                tr("Arrange headquarters"),"arrange");
+        }
+        const bool open_desk=std::ranges::any_of(hq.items,[&](const auto& item) {
+            return item.person.empty() && core::hq_desk_ready(s,item.id);
+        });
+        if(!ready && !open_desk)
+            return step(tr("Prepare a desk for a researcher"),
+                tr("There is no unassigned desk with a working computer. Review the room, or order another workstation if you want to hire. Your current team can also learn new skills through People → University."),
+                tr("Arrange headquarters"),"arrange");
+        if(!ready)
+            return step(tr("Staff the first experiment"),
+                tr("A project needs a qualified researcher with a working computer. Review applicants and their compensation, or check University for a skill your team is missing. A new hire needs a ready desk and time to onboard."),
+                tr("Review applicants"),"people","applicants");
+        return step(tr("Plan the first experiment"),
+            tr("Open the technology tree and compare available topics. Select the researchers, check their equipment and choose a compute source. Start work when the plan fits your budget."),
+            tr("Open the technology tree"),"lab","research");
+    }
+    if(s.lab->licenses.empty())
+        return step(tr("Choose training data"),
+            tr("Review the license, coverage and price before buying or collecting data. Your choice determines which examples the model can learn from and how you can use it."),
+            tr("Review data"),"lab","data");
+    if(s.lab->models.empty())
+        return step(tr("Train a first model"),
+            tr("Choose a recipe, set the dataset mix and review the work and costs. Time must advance for training to finish."),
+            tr("Plan training"),"lab","train");
+    if(s.lab->evaluations.empty())
+        return step(tr("Measure the model"),
+            tr("Once training finishes, run an independent evaluation. Its coverage and weaknesses help determine what you can promise to customers."),
+            tr("Open evaluation"),"lab","evaluate");
+    if(s.market && s.market->products.empty())
+        return step(tr("Review a first release"),
+            tr("Compare the evaluation with the service's requirements. Choose a scope your model and paid capacity can support."),
+            tr("Review deployment"),"lab","deploy");
+    if(s.market && s.market->contracts.empty())
+        return step(tr("Find a first customer"),
+            tr("Compare the delivery deadline, reserved capacity and payment before accepting a pilot. Delivery determines what you actually earn."),
+            tr("Compare offers"),"office","offers");
+    return step(tr("Keep your commitments"),
+        tr("Review delivery, incoming payments and upcoming bills. Keep enough capacity and cash for existing promises before taking on more work."),
+        tr("Review accounts"),"office","accounts");
 }
 QString ManagementController::guide() const {
     if (!available()) return {};

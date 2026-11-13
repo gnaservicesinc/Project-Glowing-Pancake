@@ -68,7 +68,8 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
         case 5:
             if(!capture(".supplier-review") || !press("hqConfirmPurchase")) {fail("Computer signing review");return;}++state->phase;break;
         case 6:
-            if(headquarters->items.size()!=2 || !press("closeDeviceButton")) {fail("Owned purchases and room return");return;}++state->phase;break;
+            if(headquarters->items.size()!=2 || campaign.management()->firstCompanyStep().value("app")!="arrange" ||
+                !press("closeDeviceButton")) {fail("Owned purchases should move the guide from suppliers to arrangement");return;}++state->phase;break;
         case 7:
             if(state->days++<3) {campaign.step();return;}
             if(!select(1) || !press("hqPlaceAtCoordinates")) {fail("Delivered desk placement controls");return;}++state->phase;break;

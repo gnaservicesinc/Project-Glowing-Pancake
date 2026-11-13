@@ -51,10 +51,13 @@ std::vector<ResearchWorker> research_workers(const SimulationState &state, std::
             worker.unavailable = "Assigned to operations management";
         else if (committed.contains(person.id))
             worker.unavailable = "Already working on another research project";
-        else if (!assigned_hq_desk(state, desk_identity) && !hq_laptop_ready(state, desk_identity))
+        else if (!assigned_hq_desk(state, desk_identity) && !hq_laptop_ready(state, desk_identity)) {
             worker.unavailable = "Needs an assigned HQ desk";
-        else if (!hq_workstation_ready(state, desk_identity))
+            worker.needs_workstation = true;
+        } else if (!hq_workstation_ready(state, desk_identity)) {
             worker.unavailable = "Needs a powered computer on their desk";
+            worker.needs_workstation = true;
+        }
         workers.push_back(std::move(worker));
     }
     return workers;

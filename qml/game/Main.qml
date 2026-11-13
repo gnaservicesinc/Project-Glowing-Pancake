@@ -73,6 +73,17 @@ ApplicationWindow {
         if (!openApp("objectives", "", "")) return
         Qt.callLater(() => scroll.reveal(objectivesPanel.focusRetrospective()))
     }
+    function openFirstCompanyStep() {
+        const step = campaign.management.firstCompanyStep
+        if (!step.app || campaign.requiredKind !== "none") return
+        if (step.app === "arrange") {
+            if (!campaign.world.navigate("workspace", "hq", "", "", "")) return
+            restoreNavigation()
+            worldDesktop.arrangeHeadquarters()
+        } else if (openApp(step.app, step.section, "laptop") && scroll.contentItem) {
+            scroll.contentItem.contentY = 0
+        }
+    }
     function restoreNavigation() {
         const nav = campaign.world.navigation
         if (nav.app) {
@@ -213,6 +224,7 @@ ApplicationWindow {
         onOpenApp: (app,section,device) => window.openApp(app,section,device)
         onJournalRequested: window.openJournal()
         onNewspaperRequested: window.openNewspaper()
+        onFirstStepRequested: window.openFirstCompanyStep()
         onLauncherRequested: deviceHome.showFor(window.activeDevice)
     }
     DeviceHome {
@@ -975,11 +987,32 @@ ApplicationWindow {
                         }
                     }
                     Panel {
-                        visible: !campaign.welcome && campaign.management.available && (window.room === "office" || window.room === "lab") && campaign.showGuide && campaign.management.ending.length === 0
+                        id: gettingStarted
+                        readonly property var step: visible ? campaign.management.firstCompanyStep : ({})
+                        visible: !campaign.welcome && campaign.management.available && (window.room === "office" || window.room === "lab") &&
+                            campaign.showGuide && campaign.management.ending.length === 0 && !campaign.objectives.ended
                         contentItem: ColumnLayout {
-                            Heading { text: qsTr("Getting started") }
-                            Copy { text: campaign.management.guide }
-                            Action { text: qsTr("Hide guide"); enabled: !campaign.busy; onClicked: campaign.showGuide = false }
+                            Heading {
+                                objectName: "firstCompanyStepTitle"
+                                text: gettingStarted.step.title || qsTr("Getting started")
+                            }
+                            Copy {
+                                text: gettingStarted.step.detail || campaign.management.guide
+                            }
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 6
+                                Action {
+                                    objectName: "openFirstCompanyStep"
+                                    visible: !!gettingStarted.step.action &&
+                                        (gettingStarted.step.app !== window.room ||
+                                            (window.room === "lab" ? managementPanel.section : managementPanel.officeSection) !== gettingStarted.step.section)
+                                    enabled: campaign.requiredKind === "none" && !campaign.busy
+                                    text: gettingStarted.step.action || ""
+                                    onClicked: window.openFirstCompanyStep()
+                                }
+                                Action { text: qsTr("Hide guide"); enabled: !campaign.busy; onClicked: campaign.showGuide = false }
+                            }
                         }
                     }
                     Panel {

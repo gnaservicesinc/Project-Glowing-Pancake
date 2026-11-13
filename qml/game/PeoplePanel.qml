@@ -17,10 +17,17 @@ ColumnLayout {
         campaign.world.setDraft("people/applicant", id)
         Qt.callLater(() => discussion.focusDiscussion())
     }
-    function changePage(value) {page=value;campaign.world.setDraft("people/page",value)}
+    function changePage(value) {
+        page=value
+        campaign.world.setDraft("people/page",value)
+        const nav=campaign.world.navigation
+        if (nav.app==="people" && nav.section && !messagesOnly)
+            campaign.world.navigate(nav.place,nav.scale,nav.device,nav.app,"")
+    }
     function restorePage() {
         applicantFilter=campaign.world.draft("people/applicantFilter","all")
-        const value=messagesOnly?"messages":campaign.world.draft("people/page","team")
+        const requested=campaign.world.navigation.section
+        const value=requested || campaign.world.draft("people/page","team")
         page=["team","applicants","branches","messages","university","social","industry"].includes(value)?value:"team"
     }
     Component.onCompleted:restorePage()

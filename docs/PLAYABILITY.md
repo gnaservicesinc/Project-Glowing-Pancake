@@ -116,7 +116,13 @@ innovation**. The project card shows the fee, equipment and serving effect.
 Batched inference unlocks low-precision kernels, and sorting has two upgrades
 for future ledger extraction releases.
 
-In a fresh founder campaign, use **Suppliers**
+In a fresh founder campaign, **Next step** on the workspace and the guide in
+Company or Lab link to the work your company can do next. An empty HQ points
+to Suppliers. Once you order equipment, the guide points to room setup; it
+then helps you find a researcher, choose a project and prepare a first release.
+You can follow it in any order or hide it in preferences.
+
+Use **Suppliers**
 to order a desk and computer. Advance to delivery, choose **Arrange headquarters**,
 then click an owned object’s picture to pick it up. Move its translucent preview
 over the floor: green fits, red explains why placement is blocked. Click to place,
